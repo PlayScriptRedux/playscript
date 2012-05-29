@@ -11,6 +11,7 @@ EXTRA_DISTFILES = \
 	compiler.doc		\
 	mcs.sln		\
 	cs-parser.jay		\
+	as-parser.jay		\
 	mcs.exe.sources		\
 	NOTES			\
 	TODO			\
@@ -32,11 +33,14 @@ PROGRAM_INSTALL_DIR = $(mono_libdir)/mono/4.5
 
 PROGRAM_COMPILE = $(BOOT_COMPILE)
 
-BUILT_SOURCES = cs-parser.cs
+BUILT_SOURCES = cs-parser.cs as-parser.cs
 
 CLEAN_FILES += y.output
 
-%-parser.cs: %-parser.jay $(topdir)/jay/skeleton.cs
+cs-parser.cs: cs-parser.jay $(topdir)/jay/skeleton.cs
+	$(topdir)/jay/jay $(JAY_FLAGS) < $(topdir)/jay/skeleton.cs $< > jay-tmp.out && mv jay-tmp.out $@
+
+as-parser.cs: as-parser.jay $(topdir)/jay/skeleton.cs
 	$(topdir)/jay/jay $(JAY_FLAGS) < $(topdir)/jay/skeleton.cs $< > jay-tmp.out && mv jay-tmp.out $@
 
 KEEP_OUTPUT_FILE_COPY = yes
@@ -109,7 +113,7 @@ debug-parser:
 # quick hack target, to quickly develop the gmcs compiler
 # Update manually.
 
-q: cs-parser.cs qh
+q: cs-parser.cs as-parser.cs qh
 	echo 'System.Console.WriteLine ("Hello");' | mono csharp.exe
 	echo -e 'using System;\nConsole.WriteLine ("hello");' | mono csharp.exe
 	echo -e '"foo" == "bar";' | mono csharp.exe

@@ -218,7 +218,7 @@ namespace Mono.CSharp
 			if (compiler.Settings.StdLib) {
 				string sdk_path = null;
 
-				string sdk_version = compiler.Settings.SdkVersion ?? "4.5";
+				string sdk_version = compiler.Settings.SdkVersion ?? "4.0";
 				string[] sdk_sub_dirs;
 
 				if (!sdk_directory.TryGetValue (sdk_version, out sdk_sub_dirs))

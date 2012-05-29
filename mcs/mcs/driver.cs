@@ -20,6 +20,7 @@ using System.IO;
 using System.Text;
 using System.Globalization;
 using System.Diagnostics;
+using Mono.ActionScript;
 
 namespace Mono.CSharp
 {
@@ -52,19 +53,31 @@ namespace Mono.CSharp
 				return;
 			}
 
-			using (input){
+			using (input) {
 				SeekableStreamReader reader = new SeekableStreamReader (input, ctx.Settings.Encoding);
 				var file = new CompilationSourceFile (module, sourceFile);
 
-				Tokenizer lexer = new Tokenizer (reader, file);
-				int token, tokens = 0, errors = 0;
-
-				while ((token = lexer.token ()) != Token.EOF){
-					tokens++;
-					if (token == Token.ERROR)
-						errors++;
+				if (sourceFile.FileType == SourceFileType.CSharp) {
+					Tokenizer lexer = new Tokenizer (reader, file);
+					int token, tokens = 0, errors = 0;
+	
+					while ((token = lexer.token ()) != Token.EOF) {
+						tokens++;
+						if (token == Token.ERROR)
+							errors++;
+					}
+					Console.WriteLine ("Tokenized: " + tokens + " found " + errors + " errors");
+				} else {
+					Mono.ActionScript.Tokenizer lexer = new Mono.ActionScript.Tokenizer (reader, file);
+					int token, tokens = 0, errors = 0;
+	
+					while ((token = lexer.token ()) != Mono.ActionScript.Token.EOF) {
+						tokens++;
+						if (token == Mono.ActionScript.Token.ERROR)
+							errors++;
+					}
+					Console.WriteLine ("Tokenized: " + tokens + " found " + errors + " errors");
 				}
-				Console.WriteLine ("Tokenized: " + tokens + " found " + errors + " errors");
 			}
 			
 			return;
@@ -118,8 +131,13 @@ namespace Mono.CSharp
 			var file = new CompilationSourceFile (module, sourceFile);
 			module.AddTypeContainer (file);
 
-			CSharpParser parser = new CSharpParser (reader, file);
-			parser.parse ();
+			if (sourceFile.FileType == SourceFileType.CSharp) {
+				CSharpParser parser = new CSharpParser (reader, file);
+				parser.parse ();
+			} else {
+				ActionScriptParser parser = new ActionScriptParser (reader, file);
+				parser.parse ();
+			}
 		}
 		
 		public static int Main (string[] args)

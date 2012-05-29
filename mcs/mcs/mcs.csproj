@@ -10,7 +10,6 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Mono.CSharp</RootNamespace>
     <AssemblyName>mcs</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
@@ -18,11 +17,12 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>.\</OutputPath>
+    <OutputPath>.</OutputPath>
     <DefineConstants>TRACE;DEBUG;NET_4_0;STATIC;NO_SYMBOL_WRITER</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>false</UseVSHostingProcess>
+    <Commandlineparameters>test.as</Commandlineparameters>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -31,14 +31,13 @@
     <ErrorReport>prompt</ErrorReport>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <OutputPath>.\</OutputPath>
+    <OutputPath>.</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug - AST|AnyCPU'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>.\</OutputPath>
+    <OutputPath>.</OutputPath>
     <DefineConstants>TRACE;DEBUG;NET_4_0;STATIC;NO_SYMBOL_WRITER;FULL_AST</DefineConstants>
     <DebugType>full</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
     <CodeAnalysisLogFile>mcs.exe.CodeAnalysisLog.xml</CodeAnalysisLogFile>
     <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
     <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
@@ -50,6 +49,8 @@
     <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
     <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
+    <WarningLevel>4</WarningLevel>
+    <Optimize>false</Optimize>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -156,31 +157,33 @@
     <Compile Include="field.cs" />
     <Compile Include="typespec.cs" />
     <Compile Include="visit.cs" />
+    <Compile Include="as-parser.cs" />
+    <Compile Include="as-tokenizer.cs" />
   </ItemGroup>
   <ItemGroup Label="IKVM.Reflection">
     <Compile Include="..\class\IKVM.Reflection\*.cs">
-      <Visible>false</Visible>
+      <Visible>False</Visible>
     </Compile>
     <Compile Include="..\class\IKVM.Reflection\Emit\*.cs">
-      <Visible>false</Visible>
+      <Visible>False</Visible>
     </Compile>
     <Compile Include="..\class\IKVM.Reflection\Metadata\*.cs">
-      <Visible>false</Visible>
+      <Visible>False</Visible>
     </Compile>
     <Compile Include="..\class\IKVM.Reflection\Reader\*.cs">
-      <Visible>false</Visible>
+      <Visible>False</Visible>
     </Compile>
     <Compile Include="..\class\IKVM.Reflection\Writer\*.cs">
-      <Visible>false</Visible>
+      <Visible>False</Visible>
     </Compile>
     <Compile Include="..\class\IKVM.Reflection\Impl\CryptoHack.cs">
-      <Visible>false</Visible>
+      <Visible>False</Visible>
     </Compile>
     <Compile Include="..\class\IKVM.Reflection\Impl\ITypeOwner.cs">
-      <Visible>false</Visible>
+      <Visible>False</Visible>
     </Compile>
     <Compile Include="..\class\IKVM.Reflection\Impl\SymbolSupport.cs">
-      <Visible>false</Visible>
+      <Visible>False</Visible>
     </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
@@ -191,4 +194,10 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <ItemGroup>
+    <Content Include="cs-parser.jay">
+      <Gettext-ScanForTranslations>false</Gettext-ScanForTranslations>
+    </Content>
+    <Content Include="as-parser.jay" />
+  </ItemGroup>
 </Project>
