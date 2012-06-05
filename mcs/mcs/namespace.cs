@@ -680,6 +680,7 @@ namespace Mono.CSharp {
 	public class NamespaceContainer : TypeContainer, IMemberContext
 	{
 		static readonly Namespace[] empty_namespaces = new Namespace[0];
+		static readonly Tuple<TypeExpr,TypeSpec>[] empty_types = new Tuple<TypeExpr,TypeSpec>[0]; /* AS SUPPORT */
 
 		readonly Namespace ns;
 
@@ -691,6 +692,7 @@ namespace Mono.CSharp {
 		public bool DeclarationFound;
 
 		Namespace[] namespace_using_table;
+		Tuple<TypeExpr,TypeSpec>[] type_using_table; /* AS SUPPORT */
 		Dictionary<string, UsingAliasNamespace> aliases;
 
 		public NamespaceContainer (MemberName name, NamespaceContainer parent)
@@ -1051,11 +1053,23 @@ namespace Mono.CSharp {
 			if (namespace_using_table == null) {
 				DoDefineNamespace ();
 			}
+			
+			FullNamedExpression match = null;
 
+			//
+			// Check using types.
+			//
+			foreach (Tuple<TypeExpr,TypeSpec> using_type in type_using_table) {
+				var texpr = using_type.Item1;
+				var tspec = using_type.Item2;
+				if (tspec.Name == name && tspec.Arity == arity) {
+					match = texpr;
+				}
+			}
+			
 			//
 			// Check using entries.
 			//
-			FullNamedExpression match = null;
 			foreach (Namespace using_ns in namespace_using_table) {
 				//
 				// A using directive imports only types contained in the namespace, it
@@ -1149,13 +1163,16 @@ namespace Mono.CSharp {
 		void DoDefineNamespace ()
 		{
 			namespace_using_table = empty_namespaces;
+			type_using_table = empty_types; /* AS SUPPORT */
 
 			if (clauses != null) {
-				var list = new List<Namespace> (clauses.Count);
+				var ns_list = new List<Namespace> (clauses.Count);
+				var t_list = new List<Tuple<TypeExpr,TypeSpec>> (clauses.Count); /* AS SUPPORT */
+				
 				bool post_process_using_aliases = false;
 
 				for (int i = 0; i < clauses.Count; ++i) {
-					var entry = clauses[i];
+					var entry = clauses [i];
 
 					if (entry.Alias != null) {
 						if (aliases == null)
@@ -1168,7 +1185,7 @@ namespace Mono.CSharp {
 						if (entry is UsingExternAlias) {
 							entry.Define (this);
 							if (entry.ResolvedExpression != null)
-								aliases.Add (entry.Alias.Value, (UsingExternAlias) entry);
+								aliases.Add (entry.Alias.Value, (UsingExternAlias)entry);
 
 							clauses.RemoveAt (i--);
 						} else {
@@ -1189,22 +1206,44 @@ namespace Mono.CSharp {
 						continue;
 					}
 
+					var ut_entry = entry as UsingType;
+					if (ut_entry != null) { /* AS SUPPORT */
+						
+						TypeExpr using_te = ut_entry.ResolvedExpression as TypeExpr;
+						TypeSpec using_ts = ut_entry.ResolvedType as TypeSpec;
+						
+						if (using_te != null && using_ts != null) {
+							if (t_list.Find (t => t.Item1 == using_te) != null) {
+								// Ensure we don't report the warning multiple times in repl
+								clauses.RemoveAt (i--);
+		
+								Compiler.Report.Warning (105, 3, entry.Location,
+									"The using directive for `{0}' appeared previously in this namespace", using_te.GetSignatureForError ());
+							} else {
+								t_list.Add (new Tuple<TypeExpr, TypeSpec> (using_te, using_ts));
+							}
+						}
+							
+						continue;
+					}
+						
 					Namespace using_ns = entry.ResolvedExpression as Namespace;
 					if (using_ns == null)
 						continue;
 
-					if (list.Contains (using_ns)) {
+					if (ns_list.Contains (using_ns)) {
 						// Ensure we don't report the warning multiple times in repl
 						clauses.RemoveAt (i--);
 
 						Compiler.Report.Warning (105, 3, entry.Location,
 							"The using directive for `{0}' appeared previously in this namespace", using_ns.GetSignatureForError ());
 					} else {
-						list.Add (using_ns);
+						ns_list.Add (using_ns);
 					}
 				}
 
-				namespace_using_table = list.ToArray ();
+				namespace_using_table = ns_list.ToArray ();
+				type_using_table = t_list.ToArray (); /* AS SUPPORT */
 
 				if (post_process_using_aliases) {
 					for (int i = 0; i < clauses.Count; ++i) {
@@ -1339,6 +1378,28 @@ namespace Mono.CSharp {
 		}
 	}
 
+	public class UsingType : UsingNamespace
+	{
+		protected TypeSpec resolvedType;
+		
+		public UsingType (ATypeNameExpression expr, Location loc)
+			: base (expr, loc)
+		{
+		}
+
+		public override void Define (NamespaceContainer ctx)
+		{
+			resolved = NamespaceExpression.ResolveAsTypeOrNamespace (ctx);
+			if (resolved != null) {
+				resolvedType = resolved.ResolveAsType (ctx);
+			}
+		}
+		
+		public TypeSpec ResolvedType {
+			get { return resolvedType; }
+		}
+	}		
+		
 	public class UsingAliasNamespace : UsingNamespace
 	{
 		readonly SimpleMemberName alias;

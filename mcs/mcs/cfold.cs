@@ -9,6 +9,7 @@
 // Copyright 2003-2011, Novell, Inc.
 // 
 using System;
+using System.Collections.Generic;
 
 namespace Mono.CSharp {
 
@@ -34,6 +35,11 @@ namespace Mono.CSharp {
 		//		
 		static bool DoBinaryNumericPromotions (ResolveContext rc, ref Constant left, ref Constant right)
 		{
+			Type q = null;
+			if (q == typeof(Dictionary<,>)) {
+				
+			}
+			
 			TypeSpec ltype = left.Type;
 			TypeSpec rtype = right.Type;
 

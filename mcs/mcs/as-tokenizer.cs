@@ -560,6 +560,7 @@ namespace Mono.ActionScript
 			AddKeyword ("implicit", Token.IMPLICIT);
 			AddKeyword ("import", Token.IMPORT);
 			AddKeyword ("in", Token.IN);
+			AddKeyword ("indexer", Token.INDEXER);
 			AddKeyword ("int", Token.INT);
 			AddKeyword ("interface", Token.INTERFACE);
 			AddKeyword ("internal", Token.INTERNAL);
@@ -575,6 +576,7 @@ namespace Mono.ActionScript
 			AddKeyword ("override", Token.OVERRIDE);
 			AddKeyword ("package", Token.PACKAGE);
 			AddKeyword ("params", Token.PARAMS);
+			AddKeyword ("property", Token.PROPERTY);
 			AddKeyword ("private", Token.PRIVATE);
 			AddKeyword ("protected", Token.PROTECTED);
 			AddKeyword ("public", Token.PUBLIC);
@@ -683,11 +685,11 @@ namespace Mono.ActionScript
 
 			int next_token;
 			switch (res) {
-			case Token.GET:
-			case Token.SET:
-				if (!handle_get_set)
-					res = -1;
-				break;
+//			case Token.GET:
+//			case Token.SET:
+//				if (!handle_get_set)
+//					res = -1;
+//				break;
 			case Token.REMOVE:
 			case Token.ADD:
 				if (!handle_remove_add)
@@ -3175,7 +3177,7 @@ namespace Mono.ActionScript
 					val = LocatedToken.Create (ref_line, col);
 					d = peek_char ();
 
-					if (d == '='){
+					if (d == '=') {
 						get_char ();
 						return Token.OP_GE;
 					}
@@ -3228,7 +3230,7 @@ namespace Mono.ActionScript
 
 				case '!':
 					val = LocatedToken.Create (ref_line, col);
-					if (peek_char () == '='){
+					if (peek_char () == '=') {
 						get_char ();
 						return Token.OP_NE;
 					}
@@ -3237,11 +3239,11 @@ namespace Mono.ActionScript
 				case '=':
 					val = LocatedToken.Create (ref_line, col);
 					d = peek_char ();
-					if (d == '='){
+					if (d == '=') {
 						get_char ();
 						return Token.OP_EQ;
 					}
-					if (d == '>'){
+					if (d == '>') {
 						get_char ();
 						return Token.ARROW;
 					}
@@ -3251,11 +3253,11 @@ namespace Mono.ActionScript
 				case '&':
 					val = LocatedToken.Create (ref_line, col);
 					d = peek_char ();
-					if (d == '&'){
+					if (d == '&') {
 						get_char ();
 						return Token.OP_AND;
 					}
-					if (d == '='){
+					if (d == '=') {
 						get_char ();
 						return Token.OP_AND_ASSIGN;
 					}
@@ -3264,11 +3266,11 @@ namespace Mono.ActionScript
 				case '|':
 					val = LocatedToken.Create (ref_line, col);
 					d = peek_char ();
-					if (d == '|'){
+					if (d == '|') {
 						get_char ();
 						return Token.OP_OR;
 					}
-					if (d == '='){
+					if (d == '=') {
 						get_char ();
 						return Token.OP_OR_ASSIGN;
 					}
@@ -3276,7 +3278,7 @@ namespace Mono.ActionScript
 
 				case '*':
 					val = LocatedToken.Create (ref_line, col);
-					if (peek_char () == '='){
+					if (peek_char () == '=') {
 						get_char ();
 						return Token.OP_MULT_ASSIGN;
 					}
@@ -3284,14 +3286,14 @@ namespace Mono.ActionScript
 
 				case '/':
 					d = peek_char ();
-					if (d == '='){
+					if (d == '=') {
 						val = LocatedToken.Create (ref_line, col);
 						get_char ();
 						return Token.OP_DIV_ASSIGN;
 					}
 
 					// Handle double-slash comments.
-					if (d == '/'){
+					if (d == '/') {
 						get_char ();
 						if (doc_processing) {
 							if (peek_char () == '/') {
@@ -3309,13 +3311,14 @@ namespace Mono.ActionScript
 							}
 						}
 
-						while ((d = get_char ()) != -1 && d != '\n');
+						while ((d = get_char ()) != -1 && d != '\n')
+							;
 
 						any_token_seen |= tokens_seen;
 						tokens_seen = false;
 						comments_seen = false;
 						continue;
-					} else if (d == '*'){
+					} else if (d == '*') {
 						get_char ();
 						bool docAppend = false;
 						if (doc_processing && peek_char () == '*') {
@@ -3338,16 +3341,16 @@ namespace Mono.ActionScript
 							xml_comment_buffer.Append (Environment.NewLine);
 						}
 
-						while ((d = get_char ()) != -1){
-							if (d == '*' && peek_char () == '/'){
+						while ((d = get_char ()) != -1) {
+							if (d == '*' && peek_char () == '/') {
 								get_char ();
 								comments_seen = true;
 								break;
 							}
 							if (docAppend)
-								xml_comment_buffer.Append ((char) d);
+								xml_comment_buffer.Append ((char)d);
 							
-							if (d == '\n'){
+							if (d == '\n') {
 								any_token_seen |= tokens_seen;
 								tokens_seen = false;
 								// 
@@ -3369,7 +3372,7 @@ namespace Mono.ActionScript
 
 				case '%':
 					val = LocatedToken.Create (ref_line, col);
-					if (peek_char () == '='){
+					if (peek_char () == '=') {
 						get_char ();
 						return Token.OP_MOD_ASSIGN;
 					}
@@ -3377,7 +3380,7 @@ namespace Mono.ActionScript
 
 				case '^':
 					val = LocatedToken.Create (ref_line, col);
-					if (peek_char () == '='){
+					if (peek_char () == '=') {
 						get_char ();
 						return Token.OP_XOR_ASSIGN;
 					}
@@ -3391,8 +3394,16 @@ namespace Mono.ActionScript
 					}
 					return Token.COLON;
 
-				case '0': case '1': case '2': case '3': case '4':
-				case '5': case '6': case '7': case '8': case '9':
+				case '0':
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+				case '5':
+				case '6':
+				case '7':
+				case '8':
+				case '9':
 					tokens_seen = true;
 					return is_number (c);
 
@@ -3412,8 +3423,16 @@ namespace Mono.ActionScript
 					if (d != '<') {
 						return Token.DOT;
 					}
-					get_char();
+					get_char ();
 					parsing_generic_less_than++;
+					int dim;
+					PushPosition ();
+					if (parse_generic_dimension (out dim)) {
+						val = dim;
+						DiscardPosition ();
+						return Token.GENERIC_DIMENSION;
+					}
+					PopPosition ();
 					return Token.OP_GENERICS_LT;
 				
 				case '#':
@@ -3557,17 +3576,6 @@ namespace Mono.ActionScript
 
 		int TokenizeLessThan ()
 		{
-			int d;
-			if (handle_typeof) {
-				PushPosition ();
-				if (parse_generic_dimension (out d)) {
-					val = d;
-					DiscardPosition ();
-					return Token.GENERIC_DIMENSION;
-				}
-				PopPosition ();
-			}
-
 			// Save current position and parse next token.
 //			PushPosition ();
 //			if (parse_less_than ()) {
@@ -3583,7 +3591,7 @@ namespace Mono.ActionScript
 //			PopPosition ();
 //			parsing_generic_less_than = 0;
 
-			d = peek_char ();
+			int d = peek_char ();
 			if (d == '<') {
 				get_char ();
 				d = peek_char ();

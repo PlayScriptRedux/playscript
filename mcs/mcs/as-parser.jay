@@ -47,6 +47,8 @@ namespace Mono.ActionScript
 		
 		static readonly object ModifierNone = 0;
 	
+		const string RootNs = "_root";
+	
 		NamespaceContainer current_namespace;
 		TypeContainer current_container;
 		TypeDefinition current_type;
@@ -194,7 +196,8 @@ namespace Mono.ActionScript
 %token IMPLICIT	
 %token IMPLEMENTS
 %token IMPORT
-%token IN	
+%token IN
+%token INDEXER	
 %token INT	
 %token INTERFACE
 %token INTERNAL	
@@ -210,7 +213,8 @@ namespace Mono.ActionScript
 %token OVERRIDE	
 %token PACKAGE
 %token PARAMS	
-%token PRIVATE	
+%token PRIVATE
+%token PROPERTY	
 %token PROTECTED
 %token PUBLIC	
 %token READONLY	
@@ -468,12 +472,19 @@ import_directive
 	;
 
 import_package
-	: IMPORT namespace_or_type_expr SEMICOLON 
+	: IMPORT namespace_or_type_expr DOT STAR SEMICOLON 
 	  {
 		var un = new UsingNamespace ((ATypeNameExpression) $2, GetLocation ($1));
 		current_namespace.AddUsing (un);
 		
 		lbag.AddLocation (un, GetLocation ($3));
+	  }	
+	| IMPORT typeof_type_expression SEMICOLON 
+	  {
+		var ut = new UsingType ((ATypeNameExpression) $2, GetLocation ($1));
+		current_namespace.AddUsing (ut);
+		
+		lbag.AddLocation (ut, GetLocation ($3));
 	  }
 	| IMPORT IDENTIFIER ASSIGN namespace_or_type_expr SEMICOLON
 	  {
@@ -506,7 +517,7 @@ package_declaration
 		Attributes attrs = (Attributes) $1;
 		var name = $3 as MemberName;
 		if (name == null) {
-			name = new MemberName("_root");
+			name = new MemberName(RootNs);
 		}
 		if (attrs != null) {
 			bool valid_global_attrs = true;
@@ -531,7 +542,8 @@ package_declaration
 		var ns = new NamespaceContainer (name, current_namespace);
 		current_namespace.AddTypeContainer (ns);
 		current_container = current_namespace = ns;
-		current_namespace.AddUsing
+		var un = new UsingNamespace (new SimpleName (RootNs, GetLocation ($1)), GetLocation ($1));
+		current_namespace.AddUsing(un);
 	  }
 	  OPEN_BRACE
 	  {
@@ -882,7 +894,7 @@ class_member_declaration
 	| event_declaration
 	| indexer_declaration
 	| operator_declaration
-	| constructor_declaration
+//	| constructor_declaration
 	| destructor_declaration
 	| type_declaration
 	| attributes_without_members
@@ -947,11 +959,11 @@ struct_declaration
 constant_declaration
 	: opt_attributes 
 	  opt_modifiers
-	  CONST type IDENTIFIER
+	  CONST IDENTIFIER COLON type
 	  {
-		var lt = (Tokenizer.LocatedToken) $5;
+		var lt = (Tokenizer.LocatedToken) $4;
 		var mod = (Modifiers) $2;
-		current_field = new Const (current_type, (FullNamedExpression) $4, mod, new MemberName (lt.Value, lt.Location), (Attributes) $1);
+		current_field = new Const (current_type, (FullNamedExpression) $6, mod, new MemberName (lt.Value, lt.Location), (Attributes) $1);
 		current_type.AddMember (current_field);
 		
 		if ((mod & Modifiers.STATIC) != 0) {
@@ -1197,32 +1209,49 @@ method_declaration
 			Lexer.doc_state = XmlCommentState.NotAllowed;
 
 		// Add it early in the case of body being eof for full ast
-		Method m = (Method) $1;
-		async_block = (m.ModFlags & Modifiers.ASYNC) != 0;
-		current_type.AddMember (m);
+		Method m = $1 as Method;
+		if (m != null) {
+			async_block = (m.ModFlags & Modifiers.ASYNC) != 0;
+			current_type.AddMember (m);
+		}
 	  }
 	  method_body
 	  {
-		Method method = (Method) $1;
-		method.Block = (ToplevelBlock) $3;
-		async_block = false;
-		
-		if (method.Block == null) {
-			method.ParameterInfo.CheckParameters (method);
+	 	async_block = false;
 
-			if ((method.ModFlags & Modifiers.ASYNC) != 0) {
-				report.Error (1994, method.Location, "`{0}': The async modifier can only be used with methods that have a body",
-					method.GetSignatureForError ());
+		Method method = $1 as Method;
+		if (method != null) {
+			if ($3 == null) {
+				method.ParameterInfo.CheckParameters (method);
+	
+				if ((method.ModFlags & Modifiers.ASYNC) != 0) {
+					report.Error (1994, method.Location, "`{0}': The async modifier can only be used with methods that have a body",
+						method.GetSignatureForError ());
+				}
+			} else {
+				method.Block = (ToplevelBlock) $3;
+				
+				if (current_container.Kind == MemberKind.Interface) {
+					report.Error (531, method.Location, "`{0}': interface members cannot have a definition",
+						method.GetSignatureForError ());
+				}
 			}
 		} else {
-			if (current_container.Kind == MemberKind.Interface) {
-				report.Error (531, method.Location, "`{0}': interface members cannot have a definition",
-					method.GetSignatureForError ());
+			Property.PropertyMethod propMethod = $1 as Property.PropertyMethod;
+			
+			if ($3 != null) {
+		  		propMethod.Block = (ToplevelBlock) $3;			
+		  	
+				if (current_container.Kind == MemberKind.Interface) {
+					report.Error (531, propMethod.Block.StartLocation,
+						"`{0}': interface members cannot have a definition", propMethod.GetSignatureForError ());
+				}
 			}
 		}
 
 		current_local_parameters = null;
-
+		current_property = null;
+	
 		if (doc_support)
 			Lexer.doc_state = XmlCommentState.Allowed;
 	  }
@@ -1258,6 +1287,78 @@ method_header
 
 		lbag.AddMember (method, mod_locations, GetLocation ($5), GetLocation ($8));
 		$$ = method;
+	  }
+	| opt_attributes
+	  opt_modifiers
+	  FUNCTION
+	  GET method_declaration_name OPEN_PARENS CLOSE_PARENS COLON member_type
+	  {
+		var type = (FullNamedExpression) $9;
+		var name = (MemberName) $5;
+		
+		MemberCore member;
+		if (current_type.DefinedNames.TryGetValue(name.Name, out member)) {
+			current_property = member as Property;
+		} else {
+			current_property = null;
+		}
+		
+		if (current_property == null) {
+			current_property = new Property (current_type, type, (Modifiers) $2, name, (Attributes) $1);
+			current_type.AddMember (current_property);
+		}
+		
+		if (type.Type != null && type.Type.Kind == MemberKind.Void)
+			report.Error (547, GetLocation ($8), "`{0}': property or indexer cannot have void type", current_property.GetSignatureForError ());					
+			
+		if (current_property.Get != null) {
+			report.Error (1007, GetLocation ($3), "Property accessor already defined");
+		}
+		
+		current_property.Get = new Property.GetMethod (current_property,
+			(Modifiers) $2, (Attributes) $1, GetLocation ($3));
+	  
+		lbag.AddMember (current_property, mod_locations, GetLocation ($8));
+		current_local_parameters = current_property.Get.ParameterInfo;
+		$$ = current_property.Get;
+	  }
+    | opt_attributes
+	  opt_modifiers
+	  FUNCTION
+	  SET method_declaration_name OPEN_PARENS  
+	  {
+		valid_param_mod = ParameterModifierType.All;
+	  }
+	  opt_formal_parameter_list CLOSE_PARENS COLON member_type
+	  {
+		var type = (FullNamedExpression) $11;
+		var name = (MemberName) $5;
+		
+		MemberCore member;
+		if (current_type.DefinedNames.TryGetValue(name.Name, out member)) {
+			current_property = member as Property;
+		} else {
+			current_property = null;
+		}
+		
+		if (current_property == null) {
+			current_property = new Property (current_type, type, (Modifiers) $2, name, (Attributes) $1);
+			current_type.AddMember (current_property);
+		}
+		
+		if (type.Type != null && type.Type.Kind == MemberKind.Void)
+			report.Error (547, GetLocation ($11), "`{0}': property or indexer cannot have void type", current_property.GetSignatureForError ());					
+			
+		if (current_property.Set != null) {
+			report.Error (1007, GetLocation ($3), "Property accessor already defined");
+		}
+		
+		current_property.Set = new Property.SetMethod (current_property, (Modifiers) $2,
+			(ParametersCompiled) $8, (Attributes) $1, GetLocation ($3));
+	  
+		lbag.AddMember (current_property, mod_locations, GetLocation ($11));
+		current_local_parameters = (ParametersCompiled) $8;
+		$$ = current_property.Set;
 	  }
 	| opt_attributes
 	  opt_modifiers
@@ -1627,19 +1728,18 @@ arglist_modifier
 	  		report.Error (1669, GetLocation ($1), "__arglist is not valid in this context");
 	  }
 	;
-	
+
 property_declaration
 	: opt_attributes
 	  opt_modifiers
-	  member_type
-	  member_declaration_name
+	  PROPERTY member_declaration_name COLON member_type
 	  {
 		if (doc_support)
 			tmpComment = Lexer.consume_doc_comment ();
 	  }
 	  OPEN_BRACE
 	  {
-		var type = (FullNamedExpression) $3;
+		var type = (FullNamedExpression) $6;
 		current_property = new Property (current_type, type, (Modifiers) $2,
 			(MemberName) $4, (Attributes) $1);
 			
@@ -1647,7 +1747,7 @@ property_declaration
 			report.Error (547, GetLocation ($3), "`{0}': property or indexer cannot have void type", current_property.GetSignatureForError ());					
 			
 		current_type.AddMember (current_property);
-		lbag.AddMember (current_property, mod_locations, GetLocation ($6));
+		lbag.AddMember (current_property, mod_locations, GetLocation ($8));
 		
 		lexer.PropertyParsing = true;
 	  }
@@ -1660,23 +1760,22 @@ property_declaration
 	  }
 	  CLOSE_BRACE
 	  {
-		lbag.AppendToMember (current_property, GetLocation ($10));
+		lbag.AppendToMember (current_property, GetLocation ($12));
 		current_property = null;
 	  }
 	;
 
-
 indexer_declaration
 	: opt_attributes opt_modifiers
-	  member_type indexer_declaration_name OPEN_BRACKET
+	  INDEXER indexer_declaration_name COLON member_type OPEN_BRACKET
 	  {
 	  	valid_param_mod = ParameterModifierType.Params | ParameterModifierType.DefaultValue;
 	  }
 	  opt_formal_parameter_list CLOSE_BRACKET OPEN_BRACE
 	  {
 		valid_param_mod = 0;
-		var type = (FullNamedExpression) $3;
-		Indexer indexer = new Indexer (current_type, type, (MemberName) $4, (Modifiers) $2, (ParametersCompiled) $7, (Attributes) $1);
+		var type = (FullNamedExpression) $6;
+		Indexer indexer = new Indexer (current_type, type, (MemberName) $4, (Modifiers) $2, (ParametersCompiled) $9, (Attributes) $1);
 			
 		current_property = indexer;
 
@@ -1916,10 +2015,10 @@ interface_member_declaration
 	  {
 	  	report.Error (567, GetLocation ($1), "Interfaces cannot contain operators");
 	  }
-	| constructor_declaration
-	  {
-	  	report.Error (526, GetLocation ($1), "Interfaces cannot contain contructors");
-	  }
+//	| constructor_declaration
+//	  {
+//	  	report.Error (526, GetLocation ($1), "Interfaces cannot contain contructors");
+//	  }
 	| type_declaration
 	  {
 	  	report.Error (524, GetLocation ($1), "Interfaces cannot declare classes, structs, interfaces, delegates, or enumerations");
@@ -1972,17 +2071,17 @@ operator_type
 	;
 
 operator_declarator
-	: operator_type OPERATOR overloadable_operator OPEN_PARENS
+	: OPERATOR overloadable_operator OPEN_PARENS
 	  {
 		valid_param_mod = ParameterModifierType.DefaultValue;
 	  }
-	  opt_formal_parameter_list CLOSE_PARENS
+	  opt_formal_parameter_list CLOSE_PARENS COLON operator_type 
 	  {
 		valid_param_mod = 0;
 
-		Location loc = GetLocation ($2);
-		Operator.OpType op = (Operator.OpType) $3;
-		current_local_parameters = (ParametersCompiled)$6;
+		Location loc = GetLocation ($1);
+		Operator.OpType op = (Operator.OpType) $8;
+		current_local_parameters = (ParametersCompiled)$5;
 		
 		int p_count = current_local_parameters.Count;
 		if (p_count == 1) {
@@ -2013,8 +2112,8 @@ operator_declarator
 			Lexer.doc_state = XmlCommentState.NotAllowed;
 		}
 
-		$$ = new OperatorDeclaration (op, (FullNamedExpression) $1, loc);
-		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($3), GetLocation ($4), GetLocation ($7));
+		$$ = new OperatorDeclaration (op, (FullNamedExpression) $8, loc);
+		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($2), GetLocation ($3), GetLocation ($6));
 	  }
 	| conversion_operator_declarator
 	;
@@ -2048,43 +2147,43 @@ overloadable_operator
 	;
 
 conversion_operator_declarator
-	: IMPLICIT OPERATOR type OPEN_PARENS
+	: IMPLICIT OPERATOR OPEN_PARENS
 	  {
 		valid_param_mod = ParameterModifierType.DefaultValue;
 	  }
-	  opt_formal_parameter_list CLOSE_PARENS
+	  opt_formal_parameter_list CLOSE_PARENS COLON type
 	  {
 		valid_param_mod = 0;
 
 		Location loc = GetLocation ($2);
-		current_local_parameters = (ParametersCompiled)$6;  
+		current_local_parameters = (ParametersCompiled)$5;  
 		  
 		if (doc_support) {
 			tmpComment = Lexer.consume_doc_comment ();
 			Lexer.doc_state = XmlCommentState.NotAllowed;
 		}
 
-		$$ = new OperatorDeclaration (Operator.OpType.Implicit, (FullNamedExpression) $3, loc);
-		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($2), GetLocation ($4), GetLocation ($7));
+		$$ = new OperatorDeclaration (Operator.OpType.Implicit, (FullNamedExpression) $8, loc);
+		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($2), GetLocation ($3), GetLocation ($6));
 	  }
-	| EXPLICIT OPERATOR type OPEN_PARENS
+	| EXPLICIT OPERATOR OPEN_PARENS
 	  {
 		valid_param_mod = ParameterModifierType.DefaultValue;
 	  }
-	  opt_formal_parameter_list CLOSE_PARENS
+	  opt_formal_parameter_list CLOSE_PARENS COLON type
 	  {
 		valid_param_mod = 0;
 		
 		Location loc = GetLocation ($2);
-		current_local_parameters = (ParametersCompiled)$6;  
+		current_local_parameters = (ParametersCompiled)$5;  
 		  
 		if (doc_support) {
 			tmpComment = Lexer.consume_doc_comment ();
 			Lexer.doc_state = XmlCommentState.NotAllowed;
 		}
 
-		$$ = new OperatorDeclaration (Operator.OpType.Explicit, (FullNamedExpression) $3, loc);
-		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($2), GetLocation ($4), GetLocation ($7));
+		$$ = new OperatorDeclaration (Operator.OpType.Explicit, (FullNamedExpression) $8, loc);
+		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($2), GetLocation ($3), GetLocation ($6));
 	  }
 	| IMPLICIT error 
 	  {
@@ -2100,126 +2199,138 @@ conversion_operator_declarator
 	  }
 	;
 
-constructor_declaration
-	: constructor_declarator
-	  constructor_body
-	  { 
-		Constructor c = (Constructor) $1;
-		c.Block = (ToplevelBlock) $2;
-		
-		if (doc_support)
-			c.DocComment = ConsumeStoredComment ();
-
-		current_local_parameters = null;
-		if (doc_support)
-			Lexer.doc_state = XmlCommentState.Allowed;
-	  }
-	;
-
-constructor_declarator
-	: opt_attributes
-	  opt_modifiers
-	  IDENTIFIER
-	  {
-		if (doc_support) {
-			tmpComment = Lexer.consume_doc_comment ();
-			Lexer.doc_state = XmlCommentState.Allowed;
-		}
-		
-		valid_param_mod = ParameterModifierType.All;
-	  }
-	  OPEN_PARENS opt_formal_parameter_list CLOSE_PARENS
-	  {
-		valid_param_mod = 0;
-		current_local_parameters = (ParametersCompiled) $6;
-		
-		var lt = (Tokenizer.LocatedToken) $3;
-		var mods = (Modifiers) $2;
-		var c = new Constructor (current_type, lt.Value, mods, (Attributes) $1, current_local_parameters, lt.Location);
-
-		if (lt.Value != current_container.MemberName.Name) {
-			report.Error (1520, c.Location, "Class, struct, or interface method must have a return type");
-		} else if ((mods & Modifiers.STATIC) != 0) {
-			if ((mods & Modifiers.AccessibilityMask) != 0){
-				report.Error (515, c.Location,
-					"`{0}': static constructor cannot have an access modifier",
-					c.GetSignatureForError ());
-			}
-		}
-
-		current_type.AddConstructor (c);
-		lbag.AddMember (c, mod_locations, GetLocation ($5), GetLocation ($7));
-		$$ = c;
-
-		//
-		// start block here, so possible anonymous methods inside
-		// constructor initializer can get correct parent block
-		//
-	  	start_block (lexer.Location);
-	  }
-	  opt_constructor_initializer
-	  {
-		if ($9 != null) {
-			var c = (Constructor) $8;
-			c.Initializer = (ConstructorInitializer) $9;
-			
-			if (c.IsStatic) {
-				report.Error (514, c.Location,
-					"`{0}': static constructor cannot have an explicit `this' or `base' constructor call",
-					c.GetSignatureForError ());
-			}
-		}
-
-		$$ = $8;
-	  }
-	;
-
-constructor_body
-	: block_prepared
-	| SEMICOLON 		{ current_block = null; $$ = null; }
-	;
-
-opt_constructor_initializer
-	: /* Empty */
-	| constructor_initializer
-	;
-
-constructor_initializer
-	: COLON SUPER OPEN_PARENS
-	  {
-		++lexer.parsing_block;
-	  }
-	  opt_argument_list CLOSE_PARENS
-	  {
-	  	--lexer.parsing_block;
-		$$ = new ConstructorBaseInitializer ((Arguments) $5, GetLocation ($2));
-		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($3), GetLocation ($6));
-	  }
-	| COLON THIS OPEN_PARENS
-	  {
-		++lexer.parsing_block;
-	  }
-	  opt_argument_list CLOSE_PARENS
-	  {
-	  	--lexer.parsing_block;
-		$$ = new ConstructorThisInitializer ((Arguments) $5, GetLocation ($2));
-		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($3), GetLocation ($6));
-	  }
-	| COLON error
-	  {
-		Error_SyntaxError (yyToken);	  
-		$$ = new ConstructorThisInitializer (null, GetLocation ($2));
-		lbag.AddLocation ($$, GetLocation ($1));
-	  }
-	| error
-	  {
-		Error_SyntaxError (yyToken);
-		$$ = null;
-	  }
-	;
+//constructor_declaration
+//	: constructor_declarator
+//	  constructor_body
+//	  { 
+//		Constructor c = (Constructor) $1;
+//		c.Block = (ToplevelBlock) $2;
+//		
+//		if (doc_support)
+//			c.DocComment = ConsumeStoredComment ();
+//
+//		current_local_parameters = null;
+//		if (doc_support)
+//			Lexer.doc_state = XmlCommentState.Allowed;
+//	  }
+//	;
+//
+//constructor_declarator
+//	: opt_attributes
+//	  opt_modifiers
+//	  FUNCTION
+//	  IDENTIFIER
+//	  {
+//		if (doc_support) {
+//			tmpComment = Lexer.consume_doc_comment ();
+//			Lexer.doc_state = XmlCommentState.Allowed;
+//		}
+//		
+//		valid_param_mod = ParameterModifierType.All;
+//	  }
+//	  OPEN_PARENS opt_formal_parameter_list CLOSE_PARENS opt_constructor_type
+//	  {
+//		valid_param_mod = 0;
+//		current_local_parameters = (ParametersCompiled) $7;
+//		
+//		var lt = (Tokenizer.LocatedToken) $4;
+//		var mods = (Modifiers) $2;
+//		var c = new Constructor (current_type, lt.Value, mods, (Attributes) $1, current_local_parameters, lt.Location);
+//
+//		if (lt.Value != current_container.MemberName.Name) {
+//			report.Error (1520, c.Location, "Class, struct, or interface method must have a return type");
+//		} else if ((mods & Modifiers.STATIC) != 0) {
+//			if ((mods & Modifiers.AccessibilityMask) != 0){
+//				report.Error (515, c.Location,
+//					"`{0}': static constructor cannot have an access modifier",
+//					c.GetSignatureForError ());
+//			}
+//		}
+//
+//		current_type.AddConstructor (c);
+//		lbag.AddMember (c, mod_locations, GetLocation ($6), GetLocation ($8));
+//		$$ = c;
+//
+//		
+//		 start block here, so possible anonymous methods inside
+//		 constructor initializer can get correct parent block
+//		
+//	  	start_block (lexer.Location);
+//	  }
+//	  opt_constructor_initializer
+//	  {
+//		if ($9 != null) {
+//			var c = (Constructor) $8;
+//			c.Initializer = (ConstructorInitializer) $9;
+//			
+//			if (c.IsStatic) {
+//				report.Error (514, c.Location,
+//					"`{0}': static constructor cannot have an explicit `this' or `base' constructor call",
+//					c.GetSignatureForError ());
+//			}
+//		}
+//
+//		$$ = $8;
+//	  }
+//	;
+//
+//constructor_body
+//	: block_prepared
+//	| SEMICOLON 		{ current_block = null; $$ = null; }
+//	;
+//
+//opt_constructor_type
+//	: /* Empty */
+//	| COLON IDENTIFIER
+//	  {
+//		var lt = (Tokenizer.LocatedToken) $2;
+//		if (lt.Value != "Void"){
+//			report.Error (1525, GetLocation ($2), "Unexpected symbol expected 'Void'");
+//		}	  
+//	  }
+//	;
+//
+//opt_constructor_initializer
+//	: /* Empty */
+//	| constructor_initializer
+//	;
+//
+//constructor_initializer
+//	: COLON SUPER OPEN_PARENS
+//	  {
+//		++lexer.parsing_block;
+//	  }
+//	  opt_argument_list CLOSE_PARENS
+//	  {
+//	  	--lexer.parsing_block;
+//		$$ = new ConstructorBaseInitializer ((Arguments) $5, GetLocation ($2));
+//		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($3), GetLocation ($6));
+//	  }
+//	| COLON THIS OPEN_PARENS
+//	  {
+//		++lexer.parsing_block;
+//	  }
+//	  opt_argument_list CLOSE_PARENS
+//	  {
+//	  	--lexer.parsing_block;
+//		$$ = new ConstructorThisInitializer ((Arguments) $5, GetLocation ($2));
+//		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($3), GetLocation ($6));
+//	  }
+//	| COLON error
+//	  {
+//		Error_SyntaxError (yyToken);	  
+//		$$ = new ConstructorThisInitializer (null, GetLocation ($2));
+//		lbag.AddLocation ($$, GetLocation ($1));
+//	  }
+//	| error
+//	  {
+//		Error_SyntaxError (yyToken);
+//		$$ = null;
+//	  }
+//	;
 
 destructor_declaration
-	: opt_attributes opt_modifiers TILDE 
+	: opt_attributes opt_modifiers FUNCTION TILDE 
 	  {
 		if (doc_support) {
 			tmpComment = Lexer.consume_doc_comment ();
@@ -2230,7 +2341,7 @@ destructor_declaration
 	  }
 	  IDENTIFIER OPEN_PARENS CLOSE_PARENS method_body
 	  {
-		var lt = (Tokenizer.LocatedToken) $5;
+		var lt = (Tokenizer.LocatedToken) $6;
 		if (lt.Value != current_container.MemberName.Name){
 			report.Error (574, lt.Location, "Name of destructor must match name of class");
 		} else if (current_container.Kind != MemberKind.Class){
@@ -2242,9 +2353,9 @@ destructor_declaration
 		if (doc_support)
 			d.DocComment = ConsumeStoredComment ();
 		  
-		d.Block = (ToplevelBlock) $8;
+		d.Block = (ToplevelBlock) $9;
 		current_type.AddMember (d);
-		lbag.AddMember (d, mod_locations, GetLocation ($3), GetLocation ($6), GetLocation ($7));
+		lbag.AddMember (d, mod_locations, GetLocation ($4), GetLocation ($7), GetLocation ($8));
 
 		current_local_parameters = null;
 	  }
@@ -2253,9 +2364,9 @@ destructor_declaration
 event_declaration
 	: opt_attributes
 	  opt_modifiers
-	  EVENT type member_declaration_name
+	  EVENT member_declaration_name COLON type 
 	  {
-		current_event_field = new EventField (current_type, (FullNamedExpression) $4, (Modifiers) $2, (MemberName) $5, (Attributes) $1);
+		current_event_field = new EventField (current_type, (FullNamedExpression) $6, (Modifiers) $2, (MemberName) $4, (Attributes) $1);
 		current_type.AddMember (current_event_field);
 		
 		if (current_event_field.MemberName.ExplicitInterface != null) {
@@ -2274,24 +2385,24 @@ event_declaration
 			Lexer.doc_state = XmlCommentState.Allowed;
 		}
 		
-		lbag.AddMember (current_event_field, mod_locations, GetLocation ($3), GetLocation ($9));
+		lbag.AddMember (current_event_field, mod_locations, GetLocation ($3), GetLocation ($10));
 		current_event_field = null;
 	  }
 	| opt_attributes
 	  opt_modifiers
-	  EVENT type member_declaration_name
+	  EVENT member_declaration_name COLON type 
 	  OPEN_BRACE
 	  {
-		current_event = new EventProperty (current_type, (FullNamedExpression) $4, (Modifiers) $2, (MemberName) $5, (Attributes) $1);
+		current_event = new EventProperty (current_type, (FullNamedExpression) $6, (Modifiers) $2, (MemberName) $4, (Attributes) $1);
 		current_type.AddMember (current_event);
-		lbag.AddMember (current_event, mod_locations, GetLocation ($3), GetLocation ($6));
+		lbag.AddMember (current_event, mod_locations, GetLocation ($3), GetLocation ($7));
 		
 		lexer.EventParsing = true;
 	  }
 	  event_accessor_declarations
 	  {
 		if (current_container.Kind == MemberKind.Interface)
-			report.Error (69, GetLocation ($6), "Event in interface cannot have add or remove accessors");
+			report.Error (69, GetLocation ($7), "Event in interface cannot have add or remove accessors");
 	  
 		lexer.EventParsing = false;
 	  }
@@ -2302,7 +2413,7 @@ event_declaration
 			Lexer.doc_state = XmlCommentState.Allowed;
 		}
 		
-		lbag.AppendToMember (current_event, GetLocation ($9));
+		lbag.AppendToMember (current_event, GetLocation ($10));
 	  	current_event = null;	
 		current_local_parameters = null;
 	  }
@@ -2885,20 +2996,9 @@ type_expression
 			$$ = new ComposedCast ((ATypeNameExpression) $1, (ComposedTypeSpecifier) $2);
 		} else {
 			var sn = $1 as SimpleName;
-			if (sn != null) {
-				if (sn.Name == "var")
-					$$ = new VarExpr (sn.Location);
-				else if (sn.Name == "Boolean") 
-					$$ = new TypeExpression (compiler.BuiltinTypes.Bool, GetLocation ($1));
-				else if (sn.Name == "Number")
-					$$ = new TypeExpression (compiler.BuiltinTypes.Double, GetLocation ($1));
-				else if (sn.Name == "String")
-					$$ = new TypeExpression (compiler.BuiltinTypes.String, GetLocation ($1));
-				else if (sn.Name == "Void")
-					$$ = new TypeExpression (compiler.BuiltinTypes.Void, GetLocation ($1));
-				else
-					$$ = $1;
-			} else
+			if (sn != null)
+				$$ = ConvertAsType(sn, $1);
+			else
 				$$ = $1;
 		}
 	  }
@@ -4764,8 +4864,8 @@ variable_type_simple
 		Expression expr = (Expression) $1;
 		if ($2 == null) {
 			SimpleName sn = expr as SimpleName;
-			if (sn != null && sn.Name == "var")
-				$$ = new VarExpr (sn.Location);
+			if (sn != null)
+				$$ = ConvertAsType(sn, $1);
 			else
 				$$ = $1;
 		} else if (expr is ATypeNameExpression) {
@@ -4848,6 +4948,19 @@ block_variable_declaration
 		$$ = current_variable;
 		current_variable = null;
 		lbag.AddLocation ($$, GetLocation ($6));
+	  }
+	| VAR identifier_inside_body 
+	  {
+		var lt = (Tokenizer.LocatedToken) $2;
+		var li = new LocalVariable (current_block, lt.Value, lt.Location);
+		current_block.AddLocalName (li);
+		current_variable = new BlockVariableDeclaration (new VarExpr (GetLocation($1)), li);
+	  }
+	  opt_local_variable_initializer opt_variable_declarators SEMICOLON
+	  {
+		$$ = current_variable;
+		current_variable = null;
+		lbag.AddLocation ($$, GetLocation ($4));
 	  }
 	| CONST identifier_inside_body COLON variable_type 
 	  {
@@ -6781,6 +6894,22 @@ void Error_SyntaxError (int error_code, int token, string msg)
 		report.Error (error_code, loc, "{1} `{0}'", symbol, msg);
 	else
 		report.Error (error_code, loc, "{2} `{0}', expecting {1}", symbol, expecting, msg);	  
+}
+
+object ConvertAsType(SimpleName sn, object e)
+{
+	if (sn.Name == "Object") 
+		return new TypeExpression (compiler.BuiltinTypes.Dynamic, GetLocation (e));
+	else if (sn.Name == "Boolean") 
+		return new TypeExpression (compiler.BuiltinTypes.Bool, GetLocation (e));
+	else if (sn.Name == "Number")
+		return new TypeExpression (compiler.BuiltinTypes.Double, GetLocation (e));
+	else if (sn.Name == "String")
+		return new TypeExpression (compiler.BuiltinTypes.String, GetLocation (e));
+	else if (sn.Name == "Void")
+		return new TypeExpression (compiler.BuiltinTypes.Void, GetLocation (e));
+	else
+		return e;
 }
 
 string GetExpecting ()
