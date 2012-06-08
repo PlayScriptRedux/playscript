@@ -1,7 +1,7 @@
 %{
+//ipt compiler
 //
-// as-parser.jay: The Parser for the ActionScript compiler
-//
+// as-parser.jay: The Parser for the ActionScr
 // Authors: Miguel de Icaza (miguel@gnome.org)
 //          Ravi Pratap     (ravi@ximian.com)
 //          Marek Safar	    (marek.safar@gmail.com)
@@ -178,6 +178,7 @@ namespace Mono.ActionScript
 %token DELEGATE	
 %token DO	
 %token DOUBLE	
+%token EACH	
 %token ELSE	
 %token ENUM	
 %token EVENT	
@@ -189,8 +190,10 @@ namespace Mono.ActionScript
 %token FIXED	
 %token FLOAT	
 %token FOR	
-%token FOREACH	
+%token FOR_EACH	
 %token FUNCTION 
+%token FUNCTION_GET
+%token FUNCTION_SET
 %token GOTO	
 %token IF	
 %token IMPLICIT	
@@ -919,13 +922,14 @@ struct_declaration
 	  { 
 		push_current_container (new Struct (current_container, (MemberName) $6, (Modifiers) $2, (Attributes) $1), $3);
 	  }
-	  opt_class_base
+	  opt_class_extends
+	  opt_class_implements
 	  opt_type_parameter_constraints_clauses
 	  {
 		lexer.ConstraintsParsing = false;
 
-		if ($9 != null)
-			current_container.SetConstraints ((List<Constraints>) $9);
+		if ($10 != null)
+			current_container.SetConstraints ((List<Constraints>) $10);
 
 		if (doc_support)
 			current_container.PartialContainer.DocComment = Lexer.consume_doc_comment ();
@@ -947,7 +951,7 @@ struct_declaration
 	  }
 	  opt_semicolon
 	  {
-		lbag.AppendToMember (current_container, GetLocation ($11), GetLocation ($14), GetLocation ($16));
+		lbag.AppendToMember (current_container, GetLocation ($12), GetLocation ($15), GetLocation ($17));
 		$$ = pop_current_class ();
 	  }
 	| opt_attributes opt_modifiers opt_partial STRUCT error
@@ -1276,7 +1280,13 @@ method_header
 		MemberName name = (MemberName) $4;
 		current_local_parameters = (ParametersCompiled) $7;
 
-		var method = Method.Create (current_type, (FullNamedExpression) $10, (Modifiers) $2,
+		var modifiers = (Modifiers) $2;
+		
+		if (current_container.Kind == MemberKind.Class && 
+			(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
+				modifiers |= Modifiers.VIRTUAL;
+
+		var method = Method.Create (current_type, (FullNamedExpression) $10, modifiers,
 				     name, current_local_parameters, (Attributes) $1, $12 != null);
 
 		if ($12 != null)
@@ -1290,11 +1300,15 @@ method_header
 	  }
 	| opt_attributes
 	  opt_modifiers
-	  FUNCTION
-	  GET method_declaration_name OPEN_PARENS CLOSE_PARENS COLON member_type
+	  FUNCTION_GET method_declaration_name OPEN_PARENS CLOSE_PARENS COLON member_type
 	  {
-		var type = (FullNamedExpression) $9;
-		var name = (MemberName) $5;
+		var type = (FullNamedExpression) $8;
+		var name = (MemberName) $4;
+		var modifiers = (Modifiers) $2;
+		
+		if (current_container.Kind == MemberKind.Class && 
+			(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
+				modifiers |= Modifiers.VIRTUAL;
 		
 		MemberCore member;
 		if (current_type.DefinedNames.TryGetValue(name.Name, out member)) {
@@ -1304,8 +1318,19 @@ method_header
 		}
 		
 		if (current_property == null) {
-			current_property = new Property (current_type, type, (Modifiers) $2, name, (Attributes) $1);
+			current_property = new Property (current_type, type, modifiers, name, (Attributes) $1);
 			current_type.AddMember (current_property);
+			modifiers = (Modifiers) 0;
+		} else {
+			current_property.ModFlags |= modifiers & ~Modifiers.AccessibilityMask;
+			if (!type.Equals(current_property.TypeExpression)) {
+				report.Error (7002, GetLocation ($8), "Type of property getter and setter must match", current_property.GetSignatureForError ());
+			}
+			if (current_property.Set != null && !ModifiersExtensions.IsRestrictedModifier (modifiers & Modifiers.AccessibilityMask, current_property.ModFlags & Modifiers.AccessibilityMask)) {
+				current_property.Set.ModFlags |= current_property.ModFlags & Modifiers.AccessibilityMask;
+				current_property.ModFlags = (current_property.ModFlags & ~Modifiers.AccessibilityMask) | (modifiers & Modifiers.AccessibilityMask);
+				modifiers = (Modifiers) 0;
+			}
 		}
 		
 		if (type.Type != null && type.Type.Kind == MemberKind.Void)
@@ -1316,7 +1341,7 @@ method_header
 		}
 		
 		current_property.Get = new Property.GetMethod (current_property,
-			(Modifiers) $2, (Attributes) $1, GetLocation ($3));
+			modifiers & Modifiers.AccessibilityMask, (Attributes) $1, GetLocation ($3));
 	  
 		lbag.AddMember (current_property, mod_locations, GetLocation ($8));
 		current_local_parameters = current_property.Get.ParameterInfo;
@@ -1324,40 +1349,65 @@ method_header
 	  }
     | opt_attributes
 	  opt_modifiers
-	  FUNCTION
-	  SET method_declaration_name OPEN_PARENS  
+	  FUNCTION_SET method_declaration_name OPEN_PARENS  
 	  {
 		valid_param_mod = ParameterModifierType.All;
 	  }
 	  opt_formal_parameter_list CLOSE_PARENS COLON member_type
 	  {
-		var type = (FullNamedExpression) $11;
-		var name = (MemberName) $5;
+		var void_type = (FullNamedExpression) $10;
+		var name = (MemberName) $4;
+		var modifiers = (Modifiers) $2;
+		var parameters = (ParametersCompiled) $7;
 		
+		if (current_container.Kind == MemberKind.Class && 
+			(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
+				modifiers |= Modifiers.VIRTUAL;
+		
+		if (void_type.Type != null && void_type.Type.Kind != MemberKind.Void)
+			report.Error (7003, GetLocation ($10), "Property setter function must not be of type void", current_property.GetSignatureForError ());					
+			
 		MemberCore member;
 		if (current_type.DefinedNames.TryGetValue(name.Name, out member)) {
 			current_property = member as Property;
 		} else {
 			current_property = null;
 		}
+
+		FullNamedExpression type; 
 		
+		if (parameters.Count != 1 || parameters.FixedParameters.Length != parameters.Count) {
+			report.Error (7001, GetLocation ($7), "Property setter must have a single parameter", current_property.GetSignatureForError ());
+			type = new TypeExpression (compiler.BuiltinTypes.Int, GetLocation ($7));
+		} else {
+			type = ((Parameter)parameters.FixedParameters[0]).TypeExpression;	
+		}
+				
 		if (current_property == null) {
-			current_property = new Property (current_type, type, (Modifiers) $2, name, (Attributes) $1);
+			current_property = new Property (current_type, type, modifiers, name, (Attributes) $1);
 			current_type.AddMember (current_property);
+			modifiers = (Modifiers) 0;			
+		} else {
+			current_property.ModFlags |= modifiers & ~Modifiers.AccessibilityMask;		
+			if (!type.Equals(current_property.TypeExpression)) {
+				report.Error (7002, GetLocation ($10), "Type of property getter and setter must match", current_property.GetSignatureForError ());
+			}
+			if (current_property.Get != null && !ModifiersExtensions.IsRestrictedModifier (modifiers & Modifiers.AccessibilityMask, current_property.ModFlags & Modifiers.AccessibilityMask)) {
+				current_property.Get.ModFlags |= current_property.ModFlags & Modifiers.AccessibilityMask;
+				current_property.ModFlags = (current_property.ModFlags & ~Modifiers.AccessibilityMask) | (modifiers & Modifiers.AccessibilityMask);
+				modifiers = (Modifiers) 0;
+			}
 		}
 		
-		if (type.Type != null && type.Type.Kind == MemberKind.Void)
-			report.Error (547, GetLocation ($11), "`{0}': property or indexer cannot have void type", current_property.GetSignatureForError ());					
-			
 		if (current_property.Set != null) {
 			report.Error (1007, GetLocation ($3), "Property accessor already defined");
 		}
 		
-		current_property.Set = new Property.SetMethod (current_property, (Modifiers) $2,
-			(ParametersCompiled) $8, (Attributes) $1, GetLocation ($3));
+		current_property.Set = new Property.SetMethod (current_property, 
+			modifiers & Modifiers.AccessibilityMask, (ParametersCompiled) $7, (Attributes) $1, GetLocation ($3));
 	  
-		lbag.AddMember (current_property, mod_locations, GetLocation ($11));
-		current_local_parameters = (ParametersCompiled) $8;
+		lbag.AddMember (current_property, mod_locations, GetLocation ($10));
+		current_local_parameters = parameters;
 		$$ = current_property.Set;
 	  }
 	| opt_attributes
@@ -1388,6 +1438,9 @@ method_header
 		var modifiers = (Modifiers) $2;
 		modifiers |= Modifiers.PARTIAL;
 
+		if ((modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
+			modifiers |= Modifiers.VIRTUAL;
+			
 		var method = Method.Create (current_type, new TypeExpression (compiler.BuiltinTypes.Void, GetLocation ($12)),
 				     modifiers, name, current_local_parameters, (Attributes) $1, $14 != null);
 
@@ -1441,7 +1494,11 @@ method_header
 
 method_body
 	: block
-	| SEMICOLON		{ $$ = null; }
+	| SEMICOLON		
+	  { 
+	  	// method body.
+	   	$$ = null; 
+	  }
 	;
 
 opt_formal_parameter_list
@@ -1950,13 +2007,14 @@ interface_declaration
 		push_current_container (new Interface (current_container, (MemberName) $6, (Modifiers) $2, (Attributes) $1), $3);
 		lbag.AddMember (current_container, mod_locations, GetLocation ($4));		
 	  }
-	  opt_class_base
+	  opt_class_extends
+	  opt_class_implements
 	  opt_type_parameter_constraints_clauses
 	  {
 		lexer.ConstraintsParsing = false;
 
-		if ($9 != null)
-			current_container.SetConstraints ((List<Constraints>) $9);
+		if ($10 != null)
+			current_container.SetConstraints ((List<Constraints>) $10);
 
 		if (doc_support) {
 			current_container.PartialContainer.DocComment = Lexer.consume_doc_comment ();
@@ -1973,7 +2031,7 @@ interface_declaration
 	  }
 	  opt_semicolon 
 	  {
-	    lbag.AppendToMember (current_container, GetLocation ($11), GetLocation ($13));
+	    lbag.AppendToMember (current_container, GetLocation ($12), GetLocation ($14));
 		$$ = pop_current_class ();
 	  }
 	| opt_attributes opt_modifiers opt_partial INTERFACE error
@@ -2033,8 +2091,14 @@ operator_declaration
 	  {
 		OperatorDeclaration decl = (OperatorDeclaration) $3;
 		if (decl != null) {
+			var modifiers = (Modifiers) $2;
+			
+			if (current_container.Kind == MemberKind.Class && 
+				(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
+					modifiers |= Modifiers.VIRTUAL;			
+		
 			Operator op = new Operator (
-				current_type, decl.optype, decl.ret_type, (Modifiers) $2, 
+				current_type, decl.optype, decl.ret_type, modifiers, 
 				current_local_parameters,
 				(ToplevelBlock) $5, (Attributes) $1, decl.location);
 				
@@ -2284,8 +2348,8 @@ conversion_operator_declarator
 //	| COLON IDENTIFIER
 //	  {
 //		var lt = (Tokenizer.LocatedToken) $2;
-//		if (lt.Value != "Void"){
-//			report.Error (1525, GetLocation ($2), "Unexpected symbol expected 'Void'");
+//		if (lt.Value != "void"){
+//			report.Error (1525, GetLocation ($2), "Unexpected symbol expected 'void'");
 //		}	  
 //	  }
 //	;
@@ -4359,13 +4423,14 @@ class_declaration
 			
 		push_current_container (c, $3);
 	  }
-	  opt_class_base
+	  opt_class_extends
+	  opt_class_implements
 	  opt_type_parameter_constraints_clauses
 	  {
 		lexer.ConstraintsParsing = false;
 
-		if ($9 != null)
-			current_container.SetConstraints ((List<Constraints>) $9);
+		if ($10 != null)
+			current_container.SetConstraints ((List<Constraints>) $10);
 		lbag.AddMember (current_container, mod_locations, GetLocation ($4));
 
 		if (doc_support) {
@@ -4383,7 +4448,7 @@ class_declaration
 	  }
 	  opt_semicolon 
 	  {
-		lbag.AppendToMember (current_container, GetLocation ($11), GetLocation ($13), GetLocation ($15));
+		lbag.AppendToMember (current_container, GetLocation ($12), GetLocation ($14), GetLocation ($16));
 		$$ = pop_current_class ();
 	  }
 	;	
@@ -4511,19 +4576,33 @@ modifier
 	  }
 	;
 	
-opt_class_base
+opt_class_extends
 	: /* empty */
-	| EXTENDS type_list
+	| EXTENDS base_type_name
+	 {
+		current_type.AddBaseForPart ((FullNamedExpression) $2);
+	 }
+	| EXTENDS base_type_name error
+	  {
+		Error_SyntaxError (yyToken);
+
+		current_type.AddBaseForPart ((FullNamedExpression) $2);
+	  }
+	;
+	
+opt_class_implements
+	: /* empty */
+	| IMPLEMENTS type_list
 	 {
 		current_type.AddBasesForPart ((List<FullNamedExpression>) $2);
 	 }
-	| EXTENDS type_list error
+	| IMPLEMENTS type_list error
 	  {
 		Error_SyntaxError (yyToken);
 
 		current_type.AddBasesForPart ((List<FullNamedExpression>) $2);
 	  }
-	;
+	;	
 
 opt_type_parameter_constraints_clauses
 	: /* empty */
@@ -5450,9 +5529,9 @@ statement_expression_list
 	;
 
 foreach_statement
-	: FOREACH open_parens_any type error
+	: FOR_EACH open_parens_any type error
 	  {
-		report.Error (230, GetLocation ($1), "Type and identifier are both required in a foreach statement");
+		report.Error (7006, GetLocation ($1), "A for each statement must begin with a 'var' keyword");
 
 		start_block (GetLocation ($2));
 		current_block.IsCompilerGenerated = true;
@@ -5463,24 +5542,7 @@ foreach_statement
 		lbag.AddStatement (f, GetLocation ($2));
 		$$ = end_block (GetLocation ($4));
 	  }
-	| FOREACH open_parens_any type identifier_inside_body error
-	  {
-		Error_SyntaxError (yyToken);
-	
-		start_block (GetLocation ($2));
-		current_block.IsCompilerGenerated = true;
-		
-		var lt = (Tokenizer.LocatedToken) $4;
-		var li = new LocalVariable (current_block, lt.Value, LocalVariable.Flags.ForeachVariable | LocalVariable.Flags.Used, lt.Location);
-		current_block.AddLocalName (li);
-		
-		Foreach f = new Foreach ((Expression) $3, li, null, null, null, GetLocation ($1));
-		current_block.AddStatement (f);
-		
-		lbag.AddStatement (f, GetLocation ($2));
-		$$ = end_block (GetLocation ($5));
-	  }
-	| FOREACH open_parens_any type identifier_inside_body IN expression CLOSE_PARENS 
+	| FOR_EACH open_parens_any VAR identifier_inside_body COLON type IN expression CLOSE_PARENS 
 	  {
 		start_block (GetLocation ($2));
 		current_block.IsCompilerGenerated = true;
@@ -5492,12 +5554,12 @@ foreach_statement
 	  } 
 	  embedded_statement
 	  {
-		if ($9 is EmptyStatement && lexer.peek_token () == Token.OPEN_BRACE)
-			Warning_EmptyStatement (GetLocation ($9));
+		if ($11 is EmptyStatement && lexer.peek_token () == Token.OPEN_BRACE)
+			Warning_EmptyStatement (GetLocation ($11));
 		
-		Foreach f = new Foreach ((Expression) $3, (LocalVariable) $8, (Expression) $6, (Statement) $9, current_block, GetLocation ($1));
-		lbag.AddStatement (f, GetLocation ($2), GetLocation ($5), GetLocation ($7));
-		end_block (GetLocation ($7));
+		Foreach f = new Foreach ((Expression) $6, (LocalVariable) $10, (Expression) $8, (Statement) $11, current_block, GetLocation ($1));
+		lbag.AddStatement (f, GetLocation ($2), GetLocation ($7), GetLocation ($9));
+		end_block (GetLocation ($9));
 		
 		$$ = f;
 	  }
@@ -6906,7 +6968,7 @@ object ConvertAsType(SimpleName sn, object e)
 		return new TypeExpression (compiler.BuiltinTypes.Double, GetLocation (e));
 	else if (sn.Name == "String")
 		return new TypeExpression (compiler.BuiltinTypes.String, GetLocation (e));
-	else if (sn.Name == "Void")
+	else if (sn.Name == "void")
 		return new TypeExpression (compiler.BuiltinTypes.Void, GetLocation (e));
 	else
 		return e;
@@ -7106,6 +7168,8 @@ static string GetTokenName (int token)
 		return "delegate";
 	case Token.DO:
 		return "do";
+	case Token.EACH:
+		return "each";
 	case Token.ELSE:
 		return "else";
 	case Token.ENUM:
@@ -7114,6 +7178,8 @@ static string GetTokenName (int token)
 		return "event";
 	case Token.EXPLICIT:
 		return "explicit";
+	case Token.EXTENDS:
+		return "extends";
 	case Token.EXTERN:
 	case Token.EXTERN_ALIAS:
 		return "extern";
@@ -7125,12 +7191,20 @@ static string GetTokenName (int token)
 		return "fixed";
 	case Token.FOR:
 		return "for";
-	case Token.FOREACH:
-		return "foreach";
+	case Token.FOR_EACH:
+		return "for each";
+	case Token.FUNCTION:
+		return "function";
+	case Token.FUNCTION_GET:
+		return "function get";
+	case Token.FUNCTION_SET:
+		return "function set";
 	case Token.GOTO:
 		return "goto";
 	case Token.IF:
 		return "if";
+	case Token.IMPLEMENTS:
+		return "implements";
 	case Token.IMPLICIT:
 		return "implicit";
 	case Token.IN:
@@ -7199,6 +7273,8 @@ static string GetTokenName (int token)
 		return "unsafe";
 	case Token.USING:
 		return "using";
+	case Token.VAR:
+		return "var";
 	case Token.VIRTUAL:
 		return "virtual";
 	case Token.VOLATILE:

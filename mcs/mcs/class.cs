@@ -1032,9 +1032,20 @@ namespace Mono.CSharp
 			}
 		}
 
+		public virtual void AddBaseForPart (FullNamedExpression aBase)
+		{
+			if (type_bases == null)
+				type_bases = new List<FullNamedExpression> ();
+			type_bases.Add (aBase);
+		}		
+		
 		public virtual void AddBasesForPart (List<FullNamedExpression> bases)
 		{
-			type_bases = bases;
+			if (bases.Count > 0) {
+				if (type_bases == null)
+					type_bases = new List<FullNamedExpression> ();
+				type_bases.AddRange (bases);
+			}
 		}
 
 		/// <summary>

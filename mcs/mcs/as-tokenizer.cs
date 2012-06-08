@@ -188,6 +188,7 @@ namespace Mono.ActionScript
 		int current_token;
 		readonly int tab_size;
 		bool handle_get_set = false;
+		bool handle_each = false;
 		bool handle_remove_add = false;
 		bool handle_where = false;
 		bool handle_typeof = false;
@@ -540,6 +541,7 @@ namespace Mono.ActionScript
 			AddKeyword ("delegate", Token.DELEGATE);
 			AddKeyword ("do", Token.DO);
 			AddKeyword ("double", Token.DOUBLE);
+			AddKeyword ("each", Token.EACH);
 			AddKeyword ("else", Token.ELSE);
 			AddKeyword ("enum", Token.ENUM);
 			AddKeyword ("event", Token.EVENT);
@@ -551,7 +553,6 @@ namespace Mono.ActionScript
 			AddKeyword ("fixed", Token.FIXED);
 			AddKeyword ("float", Token.FLOAT);
 			AddKeyword ("for", Token.FOR);
-			AddKeyword ("foreach", Token.FOREACH);
 			AddKeyword ("function", Token.FUNCTION);
 			AddKeyword ("goto", Token.GOTO);
 			AddKeyword ("get", Token.GET);
@@ -685,11 +686,36 @@ namespace Mono.ActionScript
 
 			int next_token;
 			switch (res) {
-//			case Token.GET:
-//			case Token.SET:
-//				if (!handle_get_set)
-//					res = -1;
-//				break;
+			case Token.FOR:
+				this.handle_each = true;
+				next_token = peek_token ();
+				if (next_token == Token.EACH) {
+					token ();
+					res = Token.FOR_EACH;
+				}
+				this.handle_each = false;
+				break;
+			case Token.FUNCTION:
+				this.handle_get_set = true;
+				next_token = peek_token ();
+				if (next_token == Token.GET) {
+					token ();
+					res = Token.FUNCTION_GET;
+				} else if (next_token == Token.SET) {
+					token ();
+					res = Token.FUNCTION_SET;
+				}
+				this.handle_get_set = false;
+				break;
+			case Token.GET:
+			case Token.SET:
+				if (!handle_get_set)
+					res = -1;
+				break;
+			case Token.EACH:
+				if (!handle_each)
+					res = -1;
+				break;
 			case Token.REMOVE:
 			case Token.ADD:
 				if (!handle_remove_add)
@@ -2837,7 +2863,7 @@ namespace Mono.ActionScript
 			throw new NotImplementedException (directive.ToString ());
 		}
 
-		private int consume_string (bool quoted)
+		private int consume_string (bool quoted, char quoteChar = '"')
 		{
 			int c;
 			int pos = 0;
@@ -2849,10 +2875,10 @@ namespace Mono.ActionScript
 			int reader_pos = reader.Position;
 #endif
 
-			while (true){
+			while (true) {
 				c = get_char ();
-				if (c == '"') {
-					if (quoted && peek_char () == '"') {
+				if (c == quoteChar) {
+					if (quoted && peek_char () == quoteChar) {
 						if (pos == value_builder.Length)
 							Array.Resize (ref value_builder, pos * 2);
 
@@ -3121,7 +3147,7 @@ namespace Mono.ActionScript
 						case Token.IDENTIFIER:
 						case Token.IF:
 						case Token.FOR:
-						case Token.FOREACH:
+						case Token.FOR_EACH:
 						case Token.TYPEOF:
 						case Token.WHILE:
 						case Token.USING:
@@ -3457,7 +3483,7 @@ namespace Mono.ActionScript
 							continue;
 						}
 
-						if (c == ' ' || c == '\t' || c == '\n' || c == '\f' || c == '\v' )
+						if (c == ' ' || c == '\t' || c == '\n' || c == '\f' || c == '\v')
 							continue;
 
 						if (c == '#') {
@@ -3475,10 +3501,12 @@ namespace Mono.ActionScript
 					return Token.EOF;
 				
 				case '"':
-					return consume_string (false);
-
+					return consume_string (false, '"');
 				case '\'':
-					return TokenizeBackslash ();
+					return consume_string (false, '\'');
+
+//				case '\'':
+//					return TokenizeBackslash ();
 				
 				case '@':
 					c = get_char ();
@@ -3527,52 +3555,52 @@ namespace Mono.ActionScript
 			return Token.EOF;
 		}
 
-		int TokenizeBackslash ()
-		{
-#if FULL_AST
-			int read_start = reader.Position;
-#endif
-			Location start_location = Location;
-			int c = get_char ();
-			tokens_seen = true;
-			if (c == '\'') {
-				val = new CharLiteral (context.BuiltinTypes, (char) c, start_location);
-				Report.Error (1011, start_location, "Empty character literal");
-				return Token.LITERAL;
-			}
-
-			if (c == '\n') {
-				Report.Error (1010, start_location, "Newline in constant");
-				return Token.ERROR;
-			}
-
-			int d;
-			c = escape (c, out d);
-			if (c == -1)
-				return Token.ERROR;
-			if (d != 0)
-				throw new NotImplementedException ();
-
-			ILiteralConstant res = new CharLiteral (context.BuiltinTypes, (char) c, start_location);
-			val = res;
-			c = get_char ();
-
-			if (c != '\'') {
-				Report.Error (1012, start_location, "Too many characters in character literal");
-
-				// Try to recover, read until newline or next "'"
-				while ((c = get_char ()) != -1) {
-					if (c == '\n' || c == '\'')
-						break;
-				}
-			}
-
-#if FULL_AST
-			res.ParsedValue = reader.ReadChars (read_start - 1, reader.Position);
-#endif
-
-			return Token.LITERAL;
-		}
+//		int TokenizeBackslash ()
+//		{
+//#if FULL_AST
+//			int read_start = reader.Position;
+//#endif
+//			Location start_location = Location;
+//			int c = get_char ();
+//			tokens_seen = true;
+//			if (c == '\'') {
+//				val = new CharLiteral (context.BuiltinTypes, (char) c, start_location);
+//				Report.Error (1011, start_location, "Empty character literal");
+//				return Token.LITERAL;
+//			}
+//
+//			if (c == '\n') {
+//				Report.Error (1010, start_location, "Newline in constant");
+//				return Token.ERROR;
+//			}
+//
+//			int d;
+//			c = escape (c, out d);
+//			if (c == -1)
+//				return Token.ERROR;
+//			if (d != 0)
+//				throw new NotImplementedException ();
+//
+//			ILiteralConstant res = new CharLiteral (context.BuiltinTypes, (char) c, start_location);
+//			val = res;
+//			c = get_char ();
+//
+//			if (c != '\'') {
+//				Report.Error (1012, start_location, "Too many characters in character literal");
+//
+//				// Try to recover, read until newline or next "'"
+//				while ((c = get_char ()) != -1) {
+//					if (c == '\n' || c == '\'')
+//						break;
+//				}
+//			}
+//
+//#if FULL_AST
+//			res.ParsedValue = reader.ReadChars (read_start - 1, reader.Position);
+//#endif
+//
+//			return Token.LITERAL;
+//		}
 
 		int TokenizeLessThan ()
 		{
