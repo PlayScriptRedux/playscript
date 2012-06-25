@@ -4524,6 +4524,8 @@ namespace Mono.CSharp {
 			bool error_mode = false;
 			MemberSpec invocable_member = null;
 
+			bool isAs = rc.Module.Location.SourceFile.FileType == SourceFileType.ActionScript;
+
 			while (true) {
 				best_candidate = null;
 				best_candidate_rate = int.MaxValue;

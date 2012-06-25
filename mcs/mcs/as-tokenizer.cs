@@ -569,6 +569,7 @@ namespace Mono.ActionScript
 			AddKeyword ("lock", Token.LOCK);
 			AddKeyword ("long", Token.LONG);
 			AddKeyword ("namespace", Token.NAMESPACE);
+			AddKeyword ("native", Token.NATIVE);
 			AddKeyword ("new", Token.NEW);
 			AddKeyword ("null", Token.NULL);
 			AddKeyword ("object", Token.OBJECT);
@@ -722,8 +723,8 @@ namespace Mono.ActionScript
 					res = -1;
 				break;
 			case Token.EXTERN:
-				if (parsing_declaration == 0)
-					res = Token.EXTERN_ALIAS;
+				if (parsing_declaration != 0)
+					res = -1;
 				break;
 			case Token.DEFAULT:
 				if (peek_token () == Token.COLON) {
@@ -3346,6 +3347,23 @@ namespace Mono.ActionScript
 						continue;
 					} else if (d == '*') {
 						get_char ();
+						// Handle /*@asx conditional comment
+						if (peek_char () == '@') {
+							PushPosition();
+							get_char ();
+							if (peek_char() == 'a') {
+								get_char ();
+								if (peek_char () == 's') {
+									get_char ();
+									if (peek_char () == 'x') {
+										get_char ();
+										DiscardPosition();
+										continue;
+									}
+								}
+							}
+							PopPosition();
+						}
 						bool docAppend = false;
 						if (doc_processing && peek_char () == '*') {
 							get_char ();
@@ -3514,6 +3532,26 @@ namespace Mono.ActionScript
 						tokens_seen = true;
 						return consume_string (true);
 					}
+
+					// Handle end @asx*/ conditional comment
+					PushPosition();
+					if (c == 'a') {
+						if (peek_char () == 's') {
+							get_char ();
+							if (peek_char () == 'x') {
+								get_char ();
+								if (peek_char () == '*') {
+									get_char ();
+									if (peek_char () == '/') {
+										get_char ();
+										DiscardPosition();
+										continue;
+									}
+								}
+							}
+						}
+					}
+					PopPosition();
 
 					if (is_identifier_start_character (c)){
 						return consume_identifier (c, true);

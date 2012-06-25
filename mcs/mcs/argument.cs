@@ -38,6 +38,7 @@ namespace Mono.CSharp
 
 		public readonly AType ArgType;
 		public Expression Expr;
+		public TypeSpec ParamType;
 
 		public Argument (Expression expr, AType type)
 		{

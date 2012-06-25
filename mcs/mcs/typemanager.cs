@@ -198,6 +198,7 @@ namespace Mono.CSharp
 		public readonly PredefinedType SecurityAction;
 		public readonly PredefinedType Dictionary;
 		public readonly PredefinedType Hashtable;
+		public readonly PredefinedType List;
 
 		//
 		// C# 3.0
@@ -258,6 +259,7 @@ namespace Mono.CSharp
 			SecurityAction = new PredefinedType (module, MemberKind.Enum, "System.Security.Permissions", "SecurityAction");
 			Dictionary = new PredefinedType (module, MemberKind.Class, "System.Collections.Generic", "Dictionary", 2);
 			Hashtable = new PredefinedType (module, MemberKind.Class, "System.Collections", "Hashtable");
+			List = new PredefinedType (module, MemberKind.Class, "System.Collections.Generic", "List", 1);
 
 			Expression = new PredefinedType (module, MemberKind.Class, "System.Linq.Expressions", "Expression");
 			ExpressionGeneric = new PredefinedType (module, MemberKind.Class, "System.Linq.Expressions", "Expression", 1);

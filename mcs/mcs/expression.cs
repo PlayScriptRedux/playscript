@@ -5934,6 +5934,8 @@ namespace Mono.CSharp
 	{
 		List<Expression> elements;
 		BlockVariableDeclaration variable;
+		Argument argument;
+		Assign assign;
 
 		public ArrayInitializer (List<Expression> init, Location loc)
 		{
@@ -5978,6 +5980,24 @@ namespace Mono.CSharp
 			}
 		}
 
+		public Argument Argument {
+			get {
+				return argument;
+			}
+			set {
+				argument = value;
+			}
+		}
+
+		public Assign Assign {
+			get {
+				return assign;
+			}
+			set {
+				assign = value;
+			}
+		}
+
 		#endregion
 
 		public void Add (Expression expr)
@@ -6012,16 +6032,45 @@ namespace Mono.CSharp
 				type = new TypeExpression (current_field.MemberType, current_field.Location);
 			} else if (variable != null) {
 				if (variable.TypeExpression is VarExpr) {
-					rc.Report.Error (820, loc, "An implicitly typed local variable declarator cannot use an array initializer");
-					return EmptyExpression.Null;
+					if (Location.SourceFile.FileType == SourceFileType.ActionScript) {
+						type = new TypeExpression (rc.Module.PredefinedTypes.List.Resolve().MakeGenericType(
+							rc, new [] { rc.BuiltinTypes.Object }), Location);
+					} else {
+						rc.Report.Error (820, loc, "An implicitly typed local variable declarator cannot use an array initializer");
+						return EmptyExpression.Null;
+					}
+				} else {
+					type = new TypeExpression (variable.Variable.Type, variable.Variable.Location);
 				}
-
-				type = new TypeExpression (variable.Variable.Type, variable.Variable.Location);
+			} else if (argument != null) {
+				if (argument.ParamType == null) {
+					type = new TypeExpression(ArrayContainer.MakeType(rc.Module, rc.BuiltinTypes.Object), Location);
+				} else {
+					type = new TypeExpression (argument.ParamType, Location);
+				}
+			} else if (assign != null) {
+				type = new TypeExpression (assign.Target.Type, assign.Target.Location);
 			} else {
-				throw new NotImplementedException ("Unexpected array initializer context");
+				if (Location.SourceFile.FileType == SourceFileType.ActionScript) {
+					type = new TypeExpression (rc.Module.PredefinedTypes.List.Resolve().MakeGenericType(
+						rc, new [] { rc.BuiltinTypes.Object }), Location);
+				} else {
+					throw new NotImplementedException ("Unexpected array initializer context");
+				}
 			}
 
-			return new ArrayCreation (type, this).Resolve (rc);
+			TypeSpec typeSpec = type.ResolveAsType(rc.MemberContext);
+			if (typeSpec.IsArray) {
+				ArrayCreation arrayCreate = (ArrayCreation)new ArrayCreation (type, this).Resolve (rc);
+				return arrayCreate;
+			} else {
+				var initElems = new List<Expression>();
+				foreach (var e in elements) {
+					initElems.Add (new CollectionElementInitializer(e));
+				}
+				return new NewInitialize (type, null, 
+					new CollectionOrObjectInitializers(initElems, Location), Location).Resolve (rc);
+			}
 		}
 
 		public override void Emit (EmitContext ec)

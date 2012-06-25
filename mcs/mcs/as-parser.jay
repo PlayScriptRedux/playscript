@@ -185,7 +185,6 @@ namespace Mono.ActionScript
 %token EVENT	
 %token EXPLICIT
 %token EXTENDS	
-%token EXTERN	
 %token FALSE	
 %token FINALLY	
 %token FIXED	
@@ -209,6 +208,7 @@ namespace Mono.ActionScript
 %token LOCK	
 %token LONG	
 %token NAMESPACE
+%token NATIVE	
 %token NEW	
 %token NULL	
 %token OBJECT	
@@ -268,7 +268,7 @@ namespace Mono.ActionScript
 %token DESCENDING
 %token INTO
 %token INTERR_NULLABLE
-%token EXTERN_ALIAS
+%token EXTERN
 %token REFVALUE
 %token REFTYPE
 %token MAKEREF
@@ -417,7 +417,7 @@ outer_declaration
 	  }
 	| error
 	  {
-		if (yyToken == Token.EXTERN_ALIAS)
+		if (yyToken == Token.EXTERN)
 			report.Error (439, lexer.Location, "An extern alias declaration must precede all other elements");
 		else
 			Error_SyntaxError (yyToken);
@@ -435,7 +435,7 @@ extern_alias_directives
 	;
 
 extern_alias_directive
-	: EXTERN_ALIAS IDENTIFIER IDENTIFIER SEMICOLON
+	: EXTERN IDENTIFIER IDENTIFIER SEMICOLON
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;
 		string s = lt.Value;
@@ -456,7 +456,7 @@ extern_alias_directive
 			lbag.AddLocation (na, GetLocation ($2), GetLocation ($4));
 		}
 	  }
-	| EXTERN_ALIAS error
+	| EXTERN error
 	  {
 		Error_SyntaxError (yyToken);
 	  }
@@ -1034,7 +1034,6 @@ constant_initializer
 	
 constant_initializer_expr
 	: constant_expression
-	| array_initializer
 	;
 
 field_declaration
@@ -1198,7 +1197,6 @@ fixed_field_size
 
 variable_initializer
 	: expression
-	| array_initializer
 	| error
 	  {
 		// It has to be here for the parent to safely restore artificial block
@@ -1359,15 +1357,23 @@ method_header
 	  }
 	| opt_attributes
 	  opt_modifiers
-	  FUNCTION_GET method_declaration_name OPEN_PARENS CLOSE_PARENS COLON member_type
+	  FUNCTION_GET method_declaration_name OPEN_PARENS  
 	  {
-		var type = (FullNamedExpression) $8;
+		valid_param_mod = ParameterModifierType.All;
+	  }
+	  opt_formal_parameter_list CLOSE_PARENS COLON member_type
+	  {
+		var type = (FullNamedExpression) $10;
 		var name = (MemberName) $4;
 		var modifiers = (Modifiers) $2;
+		var parameters = (ParametersCompiled) $7;		
 		
 		if (current_container.Kind == MemberKind.Class && 
 			(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
 				modifiers |= Modifiers.VIRTUAL;
+
+		if (parameters != null && parameters.Count > 0)
+			report.Error (7016, GetLocation ($10), "Property getter functions may not have parameters");
 		
 		MemberCore member;
 		if (current_type.DefinedNames.TryGetValue(name.Name, out member)) {
@@ -1383,7 +1389,7 @@ method_header
 		} else {
 			current_property.ModFlags |= modifiers & ~Modifiers.AccessibilityMask;
 			if (!type.Equals(current_property.TypeExpression)) {
-				report.Error (7002, GetLocation ($8), "Type of property getter and setter must match", current_property.GetSignatureForError ());
+				report.Error (7002, GetLocation ($10), "Type of property getter and setter must match", current_property.GetSignatureForError ());
 			}
 			if (current_property.Set != null && !ModifiersExtensions.IsRestrictedModifier (modifiers & Modifiers.AccessibilityMask, current_property.ModFlags & Modifiers.AccessibilityMask)) {
 				current_property.Set.ModFlags |= current_property.ModFlags & Modifiers.AccessibilityMask;
@@ -1393,7 +1399,7 @@ method_header
 		}
 		
 		if (type.Type != null && type.Type.Kind == MemberKind.Void)
-			report.Error (547, GetLocation ($8), "`{0}': property or indexer cannot have void type", current_property.GetSignatureForError ());					
+			report.Error (547, GetLocation ($10), "`{0}': property or indexer cannot have void type", current_property.GetSignatureForError ());					
 			
 		if (current_property.Get != null) {
 			report.Error (1007, GetLocation ($3), "Property accessor already defined");
@@ -1402,7 +1408,7 @@ method_header
 		current_property.Get = new Property.GetMethod (current_property,
 			modifiers & Modifiers.AccessibilityMask, (Attributes) $1, GetLocation ($3));
 	  
-		lbag.AddMember (current_property, mod_locations, GetLocation ($8));
+		lbag.AddMember (current_property, mod_locations, GetLocation ($10));
 		current_local_parameters = current_property.Get.ParameterInfo;
 		$$ = current_property.Get;
 	  }
@@ -1435,7 +1441,7 @@ method_header
 
 		FullNamedExpression type; 
 		
-		if (parameters.Count != 1 || parameters.FixedParameters.Length != parameters.Count) {
+		if (parameters == null || parameters.Count != 1 || parameters.FixedParameters.Length != parameters.Count) {
 			report.Error (7001, GetLocation ($7), "Property setter must have a single parameter", current_property.GetSignatureForError ());
 			type = new TypeExpression (compiler.BuiltinTypes.Int, GetLocation ($7));
 		} else {
@@ -3133,6 +3139,10 @@ type_expression
 				$$ = $1;
 		}
 	  }
+	| STAR
+	  {
+	  	$$ = new TypeExpression (compiler.BuiltinTypes.Dynamic, GetLocation ($1));
+	  }
 //	| namespace_or_type_expr pointer_stars
 //	  {
 //		$$ = new ComposedCast ((ATypeNameExpression) $1, (ComposedTypeSpecifier) $2);
@@ -3493,7 +3503,12 @@ argument_list
 argument
 	: expression
 	  {
-		$$ = new Argument ((Expression) $1);
+	    var exp = (Expression) $1;
+		var arg = new Argument (exp);
+		if (exp is ArrayInitializer) {
+			(exp as ArrayInitializer).Argument = arg;
+		}
+		$$ = arg;
 	  }
 	| non_simple_argument
 	;
@@ -3815,21 +3830,25 @@ dim_separators
 array_initializer
 	: OPEN_BRACKET_EXPR CLOSE_BRACKET
 	  {
-		var ci = CollectionOrObjectInitializers.Empty;
-//		ci.VariableDeclaration = current_variable;
-		lbag.AddLocation (ci, GetLocation ($2));
-		$$ = ci;
+		var ai = new ArrayInitializer (0, GetLocation ($1));
+		if (current_variable != null) {
+			ai.VariableDeclaration = current_variable;
+		}
+		lbag.AddLocation (ai, GetLocation ($2));
+		$$ = ai;
 	  }
 	| OPEN_BRACKET_EXPR variable_initializer_list opt_comma CLOSE_BRACKET
 	  {
-		var ci = new CollectionOrObjectInitializers ((List<Expression>) $2, GetLocation ($1));
-//		ci.VariableDeclaration = current_variable;
-		if ($3 != null) {
-			lbag.AddLocation (ci, GetLocation ($3), GetLocation ($4));
-		} else {
-			lbag.AddLocation (ci, GetLocation ($4));
+		var ai = new ArrayInitializer ((List<Expression>) $2, GetLocation ($1));
+		if (current_variable != null) {
+			ai.VariableDeclaration = current_variable;
 		}
-		$$ = ci;
+		if ($3 != null) {
+			lbag.AddLocation (ai, GetLocation ($3), GetLocation ($4));
+		} else {
+			lbag.AddLocation (ai, GetLocation ($4));
+		}
+		$$ = ai;
 	  }
 	;
 	
@@ -4248,9 +4267,18 @@ conditional_expression
 	;
 
 assignment_expression
-	: prefixed_unary_expression ASSIGN variable_initializer
+	: prefixed_unary_expression ASSIGN expression
 	  {
-		$$ = new SimpleAssign ((Expression) $1, (Expression) $3, GetLocation ($2));
+	  	Expression target = (Expression) $1;
+	  	Expression source = (Expression) $3;
+
+	  	var assign = new SimpleAssign (target, source, GetLocation ($2));
+	  	
+	  	if (source is ArrayInitializer) {
+	  		(source as ArrayInitializer).Assign = assign;
+	  	}
+	  	
+	  	$$ = assign;
 	  }
 	| prefixed_unary_expression OP_MULT_ASSIGN expression
 	  {
@@ -4442,6 +4470,7 @@ non_assignment_expression
 	: conditional_expression
 	| lambda_expression
 	| query_expression
+	| array_initializer
 	| ARGLIST
 	  {
 		$$ = new ArglistAccess (GetLocation ($1));
@@ -4626,7 +4655,7 @@ modifier
 		$$ = Modifiers.OVERRIDE;
 		StoreModifierLocation ($$, GetLocation ($1));
 	  }
-	| EXTERN
+	| NATIVE
 	  {
 		$$ = Modifiers.EXTERN;
 		StoreModifierLocation ($$, GetLocation ($1));
@@ -5702,10 +5731,12 @@ return_statement
 	;
 
 throw_statement
-	: THROW opt_expression SEMICOLON
+	: THROW new_expr_type open_parens_any opt_argument_list CLOSE_PARENS SEMICOLON
 	  {
-		$$ = new Throw ((Expression) $2, GetLocation ($1));
-		lbag.AddStatement ($$, GetLocation ($3));
+		var new_stmnt = new New ((FullNamedExpression) $2, (Arguments) $4, GetLocation ($1));
+		lbag.AddLocation (new_stmnt, GetLocation ($3), GetLocation ($5));
+		$$ = new Throw (new_stmnt, GetLocation ($1));
+		lbag.AddStatement ($$, GetLocation ($6));
 	  }
 	| THROW error
 	  {
@@ -5796,34 +5827,32 @@ catch_clauses
 	  }
 	;
 
-opt_identifier
-	: /* empty */
-	| identifier_inside_body
-	;
+//opt_identifier
+//	: /* empty */
+//	| identifier_inside_body
+//	;
 
 catch_clause 
 	: CATCH block
 	  {
 		$$ = new Catch ((Block) $2, GetLocation ($1));
 	  }
-	| CATCH open_parens_any type opt_identifier CLOSE_PARENS
+	| CATCH open_parens_any IDENTIFIER COLON type CLOSE_PARENS
 	  {
 		start_block (GetLocation ($2));
 		var c = new Catch (current_block, GetLocation ($1));
-		c.TypeExpression = (FullNamedExpression) $3;
+		c.TypeExpression = (FullNamedExpression) $5;
 
-		if ($4 != null) {
-			var lt = (Tokenizer.LocatedToken) $4;
-			c.Variable = new LocalVariable (current_block, lt.Value, lt.Location);
-			current_block.AddLocalName (c.Variable);
-		}
+		var lt = (Tokenizer.LocatedToken) $3;
+		c.Variable = new LocalVariable (current_block, lt.Value, lt.Location);
+		current_block.AddLocalName (c.Variable);
 		
-		lbag.AddLocation (c, GetLocation ($2), GetLocation ($5));
+		lbag.AddLocation (c, GetLocation ($2), GetLocation ($6));
 		$$ = c;
 	  }
 	  block_prepared
 	  {
-		$$ = $6;
+		$$ = $7;
 	  }
 	| CATCH open_parens_any error
 	  {
@@ -7044,6 +7073,8 @@ object ConvertAsType(SimpleName sn, object e)
 		return new TypeExpression (compiler.BuiltinTypes.String, GetLocation (e));
 	else if (sn.Name == "void")
 		return new TypeExpression (compiler.BuiltinTypes.Void, GetLocation (e));
+	else if (sn.Name == "Function")
+		return new TypeExpression (compiler.BuiltinTypes.Delegate, GetLocation (e));
 	else
 		return e;
 }
@@ -7255,7 +7286,6 @@ static string GetTokenName (int token)
 	case Token.EXTENDS:
 		return "extends";
 	case Token.EXTERN:
-	case Token.EXTERN_ALIAS:
 		return "extern";
 	case Token.FALSE:
 		return "false";
@@ -7295,6 +7325,8 @@ static string GetTokenName (int token)
 		return "lock";
 	case Token.NAMESPACE:
 		return "namespace";
+	case Token.NATIVE:
+		return "native";
 	case Token.NEW:
 		return "new";
 	case Token.NULL:
