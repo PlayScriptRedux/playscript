@@ -5925,17 +5925,22 @@ namespace Mono.CSharp
 	}
 
 	//
-	// Array initializer expression, the expression is allowed in
+	// CSharp: Array initializer expression, the expression is allowed in
 	// variable or field initialization only which makes it tricky as
 	// the type has to be infered based on the context either from field
 	// type or variable type (think of multiple declarators)
+	//
+	// ActionScript: Array initializer expression is a standard expression
+	// allowed anywhere an expression is valid.  The type is inferred from
+	// assignment type, parameter type, or field/variable initializer type.
+	// If no type is inferred, the type is Vector.<Object>.
 	//
 	public class ArrayInitializer : Expression
 	{
 		List<Expression> elements;
 		BlockVariableDeclaration variable;
-		Argument argument;
 		Assign assign;
+		TypeSpec inferredArrayType;
 
 		public ArrayInitializer (List<Expression> init, Location loc)
 		{
@@ -5977,15 +5982,6 @@ namespace Mono.CSharp
 			}
 			set {
 				variable = value;
-			}
-		}
-
-		public Argument Argument {
-			get {
-				return argument;
-			}
-			set {
-				argument = value;
 			}
 		}
 
@@ -6042,16 +6038,12 @@ namespace Mono.CSharp
 				} else {
 					type = new TypeExpression (variable.Variable.Type, variable.Variable.Location);
 				}
-			} else if (argument != null) {
-				if (argument.ParamType == null) {
-					type = new TypeExpression(ArrayContainer.MakeType(rc.Module, rc.BuiltinTypes.Object), Location);
-				} else {
-					type = new TypeExpression (argument.ParamType, Location);
-				}
 			} else if (assign != null) {
 				type = new TypeExpression (assign.Target.Type, assign.Target.Location);
+			} else if (inferredArrayType != null) {
+				type = new TypeExpression (inferredArrayType, Location);
 			} else {
-				if (Location.SourceFile.FileType == SourceFileType.ActionScript) {
+				if (rc.FileType == SourceFileType.ActionScript) {
 					type = new TypeExpression (rc.Module.PredefinedTypes.List.Resolve().MakeGenericType(
 						rc, new [] { rc.BuiltinTypes.Object }), Location);
 				} else {
@@ -6073,6 +6065,12 @@ namespace Mono.CSharp
 			}
 		}
 
+		public Expression InferredResolveWithArrayType(ResolveContext rc, TypeSpec arrayType) 
+		{
+			inferredArrayType = arrayType;
+			return Resolve (rc);
+		}
+
 		public override void Emit (EmitContext ec)
 		{
 			throw new InternalErrorException ("Missing Resolve call");
@@ -6083,6 +6081,141 @@ namespace Mono.CSharp
 			return visitor.Visit (this);
 		}
 	}
+
+	//
+	// ActionScript: Object initializers implement standard JSON style object
+	// initializer syntax in the form { ident : expr [ , ... ] } or { "literal" : expr [, ... ]}
+	// Like the array initializer, type is inferred from assignment type, parameter type, or
+	// field, var initializer type, or of no type can be inferred it is of type Dictionary<String,Object>.
+	//
+	public class ObjectInitializer : Expression
+	{
+		List<Expression> elements;
+		BlockVariableDeclaration variable;
+		Assign assign;
+		TypeSpec inferredObjType;
+
+		public ObjectInitializer (List<Expression> init, Location loc)
+		{
+			elements = init;
+			this.loc = loc;
+		}
+
+		public ObjectInitializer (int count, Location loc)
+			: this (new List<Expression> (count), loc)
+		{
+		}
+
+		public ObjectInitializer (Location loc)
+			: this (4, loc)
+		{
+		}
+
+		#region Properties
+
+		public int Count {
+			get { return elements.Count; }
+		}
+
+		public List<Expression> Elements {
+			get {
+				return elements;
+			}
+		}
+
+		public Expression this [int index] {
+			get {
+				return elements [index];
+			}
+		}
+
+		public BlockVariableDeclaration VariableDeclaration {
+			get {
+				return variable;
+			}
+			set {
+				variable = value;
+			}
+		}
+
+		public Assign Assign {
+			get {
+				return assign;
+			}
+			set {
+				assign = value;
+			}
+		}
+
+		#endregion
+
+		public void Add (Expression expr)
+		{
+			elements.Add (expr);
+		}
+
+		public override bool ContainsEmitWithAwait ()
+		{
+			throw new NotSupportedException ();
+		}
+
+		public override Expression CreateExpressionTree (ResolveContext ec)
+		{
+			throw new NotSupportedException ("ET");
+		}
+
+		protected override void CloneTo (CloneContext clonectx, Expression t)
+		{
+			var target = (ObjectInitializer) t;
+
+			target.elements = new List<Expression> (elements.Count);
+			foreach (var element in elements)
+				target.elements.Add (element.Clone (clonectx));
+		}
+
+		protected override Expression DoResolve (ResolveContext rc)
+		{
+			var current_field = rc.CurrentMemberDefinition as FieldBase;
+			TypeExpression type;
+			if (current_field != null && rc.CurrentAnonymousMethod == null) {
+				type = new TypeExpression (current_field.MemberType, current_field.Location);
+			} else if (variable != null) {
+				if (variable.TypeExpression is VarExpr) {
+					type = new TypeExpression (rc.Module.PredefinedTypes.Dictionary.Resolve().MakeGenericType(
+						rc, new [] { rc.BuiltinTypes.String, rc.BuiltinTypes.Object }), Location);
+				} else {
+					type = new TypeExpression (variable.Variable.Type, variable.Variable.Location);
+				}
+			} else if (assign != null) {
+				type = new TypeExpression (assign.Target.Type, assign.Target.Location);
+			} else if (inferredObjType != null) {
+				type = new TypeExpression (inferredObjType, Location);
+			} else {
+				type = new TypeExpression (rc.Module.PredefinedTypes.Dictionary.Resolve().MakeGenericType(
+					rc, new [] { rc.BuiltinTypes.String, rc.BuiltinTypes.Object }), Location);
+			}
+
+			return new NewInitialize (type, null, 
+				new CollectionOrObjectInitializers(elements, Location), Location).Resolve (rc);
+		}
+
+		public Expression InferredResolveWithObjectType(ResolveContext rc, TypeSpec objType) 
+		{
+			inferredObjType = objType;
+			return Resolve (rc);
+		}
+
+		public override void Emit (EmitContext ec)
+		{
+			throw new InternalErrorException ("Missing Resolve call");
+		}
+		
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}
+	}
+
 
 	/// <summary>
 	///   14.5.10.2: Represents an array creation expression.
@@ -9907,6 +10040,8 @@ namespace Mono.CSharp
 	{
 		IList<Expression> initializers;
 		bool is_collection_initialization;
+		protected Assign assign;
+		protected Argument argument;
 		
 		public static readonly CollectionOrObjectInitializers Empty = 
 			new CollectionOrObjectInitializers (Array.AsReadOnly (new Expression [0]), Location.Null);

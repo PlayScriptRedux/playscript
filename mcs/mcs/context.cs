@@ -320,6 +320,8 @@ namespace Mono.CSharp
 
 		protected Options flags;
 
+		public SourceFileType FileType;
+
 		//
 		// Whether we are inside an anonymous method.
 		//
@@ -356,6 +358,16 @@ namespace Mono.CSharp
 			// The constant check state is always set to true
 			//
 			flags |= Options.ConstantCheckState;
+
+			//
+			// File type set from member context module sourcefile.
+			//
+			if (mc.Module != null && mc.Module.Location.SourceFile != null) {
+				FileType = mc.Module.Location.SourceFile.FileType;
+			} else {
+				FileType = SourceFileType.CSharp;
+			}
+			
 		}
 
 		public ResolveContext (IMemberContext mc, Options options)

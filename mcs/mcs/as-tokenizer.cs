@@ -3061,7 +3061,7 @@ namespace Mono.ActionScript
 		
 		public int xtoken ()
 		{
-			int d, c;
+			int d, c, next;
 
 			// Whether we have seen comments on the current line
 			bool comments_seen = false;
@@ -3096,6 +3096,9 @@ namespace Mono.ActionScript
 
 				case '{':
 					val = LocatedToken.Create (ref_line, col);
+					next = peek_token ();
+					if (next == Token.LITERAL || next == Token.IDENTIFIER)
+						return Token.OPEN_BRACE_INIT;
 					return Token.OPEN_BRACE;
 				case '}':
 					val = LocatedToken.Create (ref_line, col);
@@ -3110,7 +3113,7 @@ namespace Mono.ActionScript
 					if (parsing_block == 0 || lambda_arguments_parsing)
 						return Token.OPEN_BRACKET;
 
-					int next = peek_char ();
+					next = peek_char ();
 					switch (next) {
 					case ']':
 					case ',':

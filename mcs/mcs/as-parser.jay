@@ -347,6 +347,7 @@ namespace Mono.ActionScript
 %token GENERIC_DIMENSION
 %token DEFAULT_COLON
 %token OPEN_BRACKET_EXPR
+%token OPEN_BRACE_INIT
 
 // Make the parser go into eval mode parsing (statements and compilation units).
 %token EVAL_STATEMENT_PARSER
@@ -3371,20 +3372,27 @@ opt_object_or_collection_initializer
 	;
 
 object_or_collection_initializer
-	: OPEN_BRACE opt_member_initializer_list close_brace_or_complete_completion
+	: OPEN_BRACE_INIT opt_member_initializer_list close_brace_or_complete_completion
 	  {
-	  	if ($2 == null) {
-	  		$$ = CollectionOrObjectInitializers.Empty;
-	  		// TODO: lbag
-	  	} else {
-	  		$$ = new CollectionOrObjectInitializers ((List<Expression>) $2, GetLocation ($1));
-	  		lbag.AddLocation ($$, GetLocation ($3));
-	  	}
+	    var expList = $2 as List<Expression>;
+	    if (expList == null) {
+	    	expList = new List<Expression>();
+	    }
+  		var oi = new ObjectInitializer (expList, GetLocation ($1));
+		if (current_variable != null) {
+			oi.VariableDeclaration = current_variable;
+		}
+		lbag.AddLocation ($$, GetLocation ($3));
+  		$$ = oi;
 	  }
-	| OPEN_BRACE member_initializer_list COMMA CLOSE_BRACE
+	| OPEN_BRACE_INIT member_initializer_list COMMA CLOSE_BRACE
 	  {
-	  	$$ = new CollectionOrObjectInitializers ((List<Expression>) $2, GetLocation ($1));
+	  	var oi = new ObjectInitializer ((List<Expression>) $2, GetLocation ($1));
+		if (current_variable != null) {
+			oi.VariableDeclaration = current_variable;
+		}
 	  	lbag.AddLocation ($$, GetLocation ($3), GetLocation ($4));
+	  	$$ = oi;
 	  }
 	;
 
@@ -3416,40 +3424,53 @@ member_initializer_list
 	;
 
 member_initializer
-	: IDENTIFIER ASSIGN initializer_value
+	: IDENTIFIER COLON initializer_value
 	  {
 	  	var lt = (Tokenizer.LocatedToken) $1;
 	  	$$ = new ElementInitializer (lt.Value, (Expression)$3, lt.Location);
 	  	lbag.AddLocation ($$, GetLocation ($2));
 	  }
+	| LITERAL COLON initializer_value
+	  {
+	  	StringLiteral lit = $1 as StringLiteral;
+		string nm;	  	
+	  	if (lit == null) {
+		  	report.Error (7019, GetLocation ($1), "Must be identifier or string literal");
+		  	nm = "err";
+		} else {
+			nm = lit.Value;
+		}
+	  
+	  	$$ = new ElementInitializer (nm, (Expression)$3, lit.Location);
+	  	lbag.AddLocation ($$, GetLocation ($2));
+	  } 
 	| GENERATE_COMPLETION 
 	  {
 		$$ = new CompletionElementInitializer (null, GetLocation ($1));
 	  }
-	| non_assignment_expression opt_COMPLETE_COMPLETION  {
+	/* | non_assignment_expression opt_COMPLETE_COMPLETION  {
 		CompletionSimpleName csn = $1 as CompletionSimpleName;
 		if (csn == null)
 			$$ = new CollectionElementInitializer ((Expression)$1);
 		else
 			$$ = new CompletionElementInitializer (csn.Prefix, csn.Location);
-	  }
+	  } 
 	| OPEN_BRACE expression_list CLOSE_BRACE
 	  {
 		if ($2 == null)
 			$$ = null;
 		else
 	  		$$ = new CollectionElementInitializer ((List<Expression>)$2, GetLocation ($1));
-	  }
+	  } 
 	| OPEN_BRACE CLOSE_BRACE
 	  {
 	  	report.Error (1920, GetLocation ($1), "An element initializer cannot be empty");
 		$$ = null;
-	  }	  
+	  } */  
 	;
 
 initializer_value
 	: expression
-	| object_or_collection_initializer
 	;
 
 opt_argument_list
@@ -3503,12 +3524,7 @@ argument_list
 argument
 	: expression
 	  {
-	    var exp = (Expression) $1;
-		var arg = new Argument (exp);
-		if (exp is ArrayInitializer) {
-			(exp as ArrayInitializer).Argument = arg;
-		}
-		$$ = arg;
+		$$ = new Argument ((Expression) $1);
 	  }
 	| non_simple_argument
 	;
@@ -4276,6 +4292,8 @@ assignment_expression
 	  	
 	  	if (source is ArrayInitializer) {
 	  		(source as ArrayInitializer).Assign = assign;
+	  	} else if (source is ObjectInitializer) {
+	  		(source as ObjectInitializer).Assign = assign;
 	  	}
 	  	
 	  	$$ = assign;
@@ -4471,6 +4489,7 @@ non_assignment_expression
 	| lambda_expression
 	| query_expression
 	| array_initializer
+	| object_or_collection_initializer
 	| ARGLIST
 	  {
 		$$ = new ArglistAccess (GetLocation ($1));
@@ -7435,13 +7454,13 @@ static string GetTokenName (int token)
 	case Token.SET:
 		return "set";
 	case Token.OPEN_BRACE:
+	case Token.OPEN_BRACE_INIT:
 		return "{";
 	case Token.CLOSE_BRACE:
 		return "}";
 	case Token.OPEN_BRACKET:
-		return "[norm";
 	case Token.OPEN_BRACKET_EXPR:
-		return "[expr";
+		return "[";
 	case Token.CLOSE_BRACKET:
 		return "]";
 	case Token.OPEN_PARENS_CAST:

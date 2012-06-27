@@ -38,7 +38,10 @@ namespace Mono.CSharp
 
 		public readonly AType ArgType;
 		public Expression Expr;
-		public TypeSpec ParamType;
+
+		// For ActionScript array/object initializer type inference.
+		public ArrayInitializer InferArrayInitializer;
+		public ObjectInitializer InferObjInitializer;
 
 		public Argument (Expression expr, AType type)
 		{
@@ -157,6 +160,17 @@ namespace Mono.CSharp
 		public void Resolve (ResolveContext ec)
 		{
 //			using (ec.With (ResolveContext.Options.DoFlowAnalysis, true)) {
+
+				// Keep track of the array initializer, we need it to do array type inference when searching for
+				// a matching method.
+				if (ec.FileType == SourceFileType.ActionScript) {
+					if (Expr is ArrayInitializer) {
+						InferArrayInitializer = (ArrayInitializer)Expr;
+					} else if (Expr is ObjectInitializer) {
+						InferObjInitializer = (ObjectInitializer)Expr;
+					}
+				}
+
 				// Verify that the argument is readable
 				if (ArgType != AType.Out)
 					Expr = Expr.Resolve (ec);

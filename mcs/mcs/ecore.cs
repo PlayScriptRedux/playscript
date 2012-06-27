@@ -384,7 +384,13 @@ namespace Mono.CSharp {
 		{
 			if (eclass != ExprClass.Unresolved)
 				return this;
-			
+
+			if (this.Location.SourceFile != null) {
+				ec.FileType = this.Location.SourceFile.FileType;
+			} else {
+				ec.FileType = SourceFileType.CSharp;
+			}
+
 			Expression e;
 			try {
 				e = DoResolve (ec);
@@ -4451,6 +4457,17 @@ namespace Mono.CSharp {
 					return -1;
 
 				//
+				// If we're an actionscript file and we have an untyped array initializer as a parameter just
+				// resolve the initializer 
+				if (ec.FileType == SourceFileType.ActionScript) {
+					if (argument.InferArrayInitializer != null) {
+						argument.Expr = argument.InferArrayInitializer.InferredResolveWithArrayType (ec, parameter);
+					} else if (argument.InferObjInitializer != null) {
+						argument.Expr = argument.InferObjInitializer.InferredResolveWithObjectType (ec, parameter);
+					}
+				}
+
+				//
 				// Use implicit conversion in all modes to return same candidates when the expression
 				// is used as argument or delegate conversion
 				//
@@ -4523,8 +4540,6 @@ namespace Mono.CSharp {
 			Arguments candidate_args = args;
 			bool error_mode = false;
 			MemberSpec invocable_member = null;
-
-			bool isAs = rc.Module.Location.SourceFile.FileType == SourceFileType.ActionScript;
 
 			while (true) {
 				best_candidate = null;
