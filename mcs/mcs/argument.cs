@@ -41,7 +41,7 @@ namespace Mono.CSharp
 
 		// For ActionScript array/object initializer type inference.
 		public ArrayInitializer InferArrayInitializer;
-		public ObjectInitializer InferObjInitializer;
+		public AsObjectInitializer InferObjInitializer;
 
 		public Argument (Expression expr, AType type)
 		{
@@ -166,8 +166,8 @@ namespace Mono.CSharp
 				if (ec.FileType == SourceFileType.ActionScript) {
 					if (Expr is ArrayInitializer) {
 						InferArrayInitializer = (ArrayInitializer)Expr;
-					} else if (Expr is ObjectInitializer) {
-						InferObjInitializer = (ObjectInitializer)Expr;
+					} else if (Expr is AsObjectInitializer) {
+						InferObjInitializer = (AsObjectInitializer)Expr;
 					}
 				}
 
@@ -351,7 +351,18 @@ namespace Mono.CSharp
 						new MemberAccess (new MemberAccess (binder, info_flags_enum, loc), "IsStaticType", loc), loc);
 				}
 
-				var arg_type = a.Expr.Type;
+				TypeSpec arg_type;
+
+				if (rc.FileType == SourceFileType.ActionScript &&
+				    a.Expr is ArrayInitializer || a.Expr is AsObjectInitializer) {
+					if (a.Expr is ArrayInitializer) {
+						arg_type = rc.Module.PredefinedTypes.AsArray.Resolve();
+					} else {
+						arg_type = rc.Module.PredefinedTypes.AsObject.Resolve();
+					}
+				} else {
+					arg_type = a.Expr.Type;
+				}
 
 				if (arg_type.BuiltinType != BuiltinTypeSpec.Type.Dynamic && arg_type != InternalType.NullLiteral) {
 					MethodGroupExpr mg = a.Expr as MethodGroupExpr;

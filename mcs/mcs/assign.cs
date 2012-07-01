@@ -324,6 +324,23 @@ namespace Mono.CSharp {
 		protected override Expression DoResolve (ResolveContext ec)
 		{
 			bool ok = true;
+			bool targetResolved = false;
+
+			// ActionScript: resolve LValue first if source is an initializer to be able to
+			// infer initializer type correctly.
+			if (ec.FileType == SourceFileType.ActionScript &&
+				(source is ArrayInitializer || source is AsObjectInitializer)) {
+
+				target = target.ResolveLValue (ec, source);
+
+				if (target == null) {
+					ok = false;
+					source = EmptyExpression.Null;
+				}
+
+				targetResolved = true;
+			}
+
 			source = source.Resolve (ec);
 						
 			if (source == null) {
@@ -331,7 +348,9 @@ namespace Mono.CSharp {
 				source = EmptyExpression.Null;
 			}
 
-			target = target.ResolveLValue (ec, source);
+			if (!targetResolved) {
+				target = target.ResolveLValue (ec, source);
+			}
 
 			if (target == null || !ok)
 				return null;

@@ -22,7 +22,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <Commandlineparameters>test.as</Commandlineparameters>
+    <Commandlineparameters>test.as -sdk:4 -lib:/Users/benjcooley/projects/mono/mcs/class/lib/net_4_0 -r:System.dll -r:System.Core.dll -r:Microsoft.CSharp.dll -r:Mono.CSharp.dll -r:ascorlib.dll</Commandlineparameters>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -55,6 +55,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Xml" />
+    <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\build\common\Consts.cs">

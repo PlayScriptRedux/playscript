@@ -233,6 +233,15 @@ namespace Mono.CSharp
 		public readonly PredefinedType INotifyCompletion;
 		public readonly PredefinedType ICriticalNotifyCompletion;
 
+		//
+		// Actionscript
+		//
+		public readonly PredefinedType AsObject;
+		public readonly PredefinedType AsVector;
+		public readonly PredefinedType AsArray;
+		public readonly PredefinedType AsError;
+		public readonly PredefinedType AsFunction;
+
 		public PredefinedTypes (ModuleContainer module)
 		{
 			TypedReference = new PredefinedType (module, MemberKind.Struct, "System", "TypedReference");
@@ -284,6 +293,12 @@ namespace Mono.CSharp
 			IAsyncStateMachine = new PredefinedType (module, MemberKind.Interface, "System.Runtime.CompilerServices", "IAsyncStateMachine");
 			INotifyCompletion = new PredefinedType (module, MemberKind.Interface, "System.Runtime.CompilerServices", "INotifyCompletion");
 			ICriticalNotifyCompletion = new PredefinedType (module, MemberKind.Interface, "System.Runtime.CompilerServices", "ICriticalNotifyCompletion");
+
+			AsObject = new PredefinedType (module, MemberKind.Class, "System.Dynamic", "ExpandoObject");
+			AsArray = new PredefinedType (module, MemberKind.Class, Consts.AsRootNamespace, "Array");
+			AsVector = new PredefinedType (module, MemberKind.Class, Consts.AsRootNamespace, "Vector", 1);
+			AsError = new PredefinedType (module, MemberKind.Class, Consts.AsRootNamespace, "Error");
+			AsFunction = new PredefinedType (module, MemberKind.Class, Consts.AsRootNamespace, "Function");
 
 			//
 			// Define types which are used for comparison. It does not matter

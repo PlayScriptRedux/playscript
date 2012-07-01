@@ -5654,6 +5654,17 @@ namespace Mono.CSharp
 		
 		protected override Expression DoResolve (ResolveContext ec)
 		{
+			bool isAsObject = false;
+
+			// ActionScript: Make sure a "new Object()" call in as uses an actual object type and not
+			// dynamic.
+			if (ec.FileType == SourceFileType.ActionScript && 
+			    RequestedType.Type == ec.BuiltinTypes.Dynamic) {
+				RequestedType = new TypeExpression(ec.Module.PredefinedTypes.AsObject.Resolve (), 
+				                                   RequestedType.Location);
+				isAsObject = true;
+			}
+
 			type = RequestedType.ResolveAsType (ec);
 			if (type == null)
 				return null;
@@ -5730,12 +5741,21 @@ namespace Mono.CSharp
 
 			method = ConstructorLookup (ec, type, ref arguments, loc);
 
+			Expression ret;
+
 			if (dynamic) {
 				arguments.Insert (0, new Argument (new TypeOf (type, loc).Resolve (ec), Argument.AType.DynamicTypeName));
-				return new DynamicConstructorBinder (type, arguments, loc).Resolve (ec);
+				ret = new DynamicConstructorBinder (type, arguments, loc).Resolve (ec);
+			} else {
+				ret = this;
 			}
 
-			return this;
+			// ActionScript: If this is a new AS object, return it cast as a dynamic.
+			if (isAsObject) {
+				ret = new Cast(new TypeExpression(ec.BuiltinTypes.Dynamic, this.Location), ret, this.Location).Resolve (ec);
+			}
+
+			return ret;
 		}
 
 		bool DoEmitTypeParameter (EmitContext ec)
@@ -6023,14 +6043,14 @@ namespace Mono.CSharp
 		protected override Expression DoResolve (ResolveContext rc)
 		{
 			var current_field = rc.CurrentMemberDefinition as FieldBase;
+			var isAS = rc.FileType == SourceFileType.ActionScript;
 			TypeExpression type;
 			if (current_field != null && rc.CurrentAnonymousMethod == null) {
 				type = new TypeExpression (current_field.MemberType, current_field.Location);
 			} else if (variable != null) {
 				if (variable.TypeExpression is VarExpr) {
-					if (Location.SourceFile.FileType == SourceFileType.ActionScript) {
-						type = new TypeExpression (rc.Module.PredefinedTypes.List.Resolve().MakeGenericType(
-							rc, new [] { rc.BuiltinTypes.Object }), Location);
+					if (isAS) {
+						type = new TypeExpression (rc.Module.PredefinedTypes.AsArray.Resolve(), Location);
 					} else {
 						rc.Report.Error (820, loc, "An implicitly typed local variable declarator cannot use an array initializer");
 						return EmptyExpression.Null;
@@ -6038,14 +6058,13 @@ namespace Mono.CSharp
 				} else {
 					type = new TypeExpression (variable.Variable.Type, variable.Variable.Location);
 				}
-			} else if (assign != null) {
+			} else if (isAS && assign != null) {
 				type = new TypeExpression (assign.Target.Type, assign.Target.Location);
-			} else if (inferredArrayType != null) {
+			} else if (isAS && inferredArrayType != null) {
 				type = new TypeExpression (inferredArrayType, Location);
 			} else {
-				if (rc.FileType == SourceFileType.ActionScript) {
-					type = new TypeExpression (rc.Module.PredefinedTypes.List.Resolve().MakeGenericType(
-						rc, new [] { rc.BuiltinTypes.Object }), Location);
+				if (isAS) {
+					type = new TypeExpression (rc.Module.PredefinedTypes.AsArray.Resolve(), Location);
 				} else {
 					throw new NotImplementedException ("Unexpected array initializer context");
 				}
@@ -6088,25 +6107,25 @@ namespace Mono.CSharp
 	// Like the array initializer, type is inferred from assignment type, parameter type, or
 	// field, var initializer type, or of no type can be inferred it is of type Dictionary<String,Object>.
 	//
-	public class ObjectInitializer : Expression
+	public class AsObjectInitializer : Expression
 	{
 		List<Expression> elements;
 		BlockVariableDeclaration variable;
 		Assign assign;
 		TypeSpec inferredObjType;
 
-		public ObjectInitializer (List<Expression> init, Location loc)
+		public AsObjectInitializer (List<Expression> init, Location loc)
 		{
 			elements = init;
 			this.loc = loc;
 		}
 
-		public ObjectInitializer (int count, Location loc)
+		public AsObjectInitializer (int count, Location loc)
 			: this (new List<Expression> (count), loc)
 		{
 		}
 
-		public ObjectInitializer (Location loc)
+		public AsObjectInitializer (Location loc)
 			: this (4, loc)
 		{
 		}
@@ -6166,7 +6185,7 @@ namespace Mono.CSharp
 
 		protected override void CloneTo (CloneContext clonectx, Expression t)
 		{
-			var target = (ObjectInitializer) t;
+			var target = (AsObjectInitializer) t;
 
 			target.elements = new List<Expression> (elements.Count);
 			foreach (var element in elements)
@@ -6181,8 +6200,7 @@ namespace Mono.CSharp
 				type = new TypeExpression (current_field.MemberType, current_field.Location);
 			} else if (variable != null) {
 				if (variable.TypeExpression is VarExpr) {
-					type = new TypeExpression (rc.Module.PredefinedTypes.Dictionary.Resolve().MakeGenericType(
-						rc, new [] { rc.BuiltinTypes.String, rc.BuiltinTypes.Object }), Location);
+					type = new TypeExpression (rc.BuiltinTypes.Dynamic, Location);
 				} else {
 					type = new TypeExpression (variable.Variable.Type, variable.Variable.Location);
 				}
@@ -6191,8 +6209,7 @@ namespace Mono.CSharp
 			} else if (inferredObjType != null) {
 				type = new TypeExpression (inferredObjType, Location);
 			} else {
-				type = new TypeExpression (rc.Module.PredefinedTypes.Dictionary.Resolve().MakeGenericType(
-					rc, new [] { rc.BuiltinTypes.String, rc.BuiltinTypes.Object }), Location);
+				type = new TypeExpression (rc.BuiltinTypes.Dynamic, Location);
 			}
 
 			return new NewInitialize (type, null, 
@@ -9945,6 +9962,18 @@ namespace Mono.CSharp
 				eclass = source.eclass;
 				type = source.Type;
 				return this;
+			} else if (source is ArrayInitializer) {
+				source = ((ArrayInitializer)source).InferredResolveWithArrayType(ec, target.Type);
+				if (source == null)
+					return null;
+				eclass = source.eclass;
+				type = source.Type;
+			} else if (source is AsObjectInitializer) {
+				source = ((AsObjectInitializer)source).InferredResolveWithObjectType(ec, target.Type);
+				if (source == null)
+					return null;
+				eclass = source.eclass;
+				type = source.Type;
 			}
 
 			return base.DoResolve (ec);
@@ -10202,9 +10231,9 @@ namespace Mono.CSharp
 		{
 			NewInitialize new_instance;
 
-			public InitializerTargetExpression (NewInitialize newInstance)
+			public InitializerTargetExpression (NewInitialize newInstance, TypeSpec castType = null)
 			{
-				this.type = newInstance.type;
+				this.type = castType ?? newInstance.type;
 				this.loc = newInstance.loc;
 				this.eclass = newInstance.eclass;
 				this.new_instance = newInstance;
@@ -10299,7 +10328,12 @@ namespace Mono.CSharp
 				return null;
 
 			Expression previous = ec.CurrentInitializerVariable;
-			ec.CurrentInitializerVariable = new InitializerTargetExpression (this);
+			// ActionScript: Handle "new Object()" cast to dynamic.
+			if (ec.FileType == SourceFileType.ActionScript && e != this) {
+				ec.CurrentInitializerVariable = new InitializerTargetExpression (this, e.Type);
+			} else {
+				ec.CurrentInitializerVariable = new InitializerTargetExpression (this);
+			}
 			initializers.Resolve (ec);
 			ec.CurrentInitializerVariable = previous;
 			return e;

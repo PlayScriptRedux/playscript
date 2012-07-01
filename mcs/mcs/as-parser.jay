@@ -47,7 +47,7 @@ namespace Mono.ActionScript
 		
 		static readonly object ModifierNone = 0;
 	
-		const string RootNs = "_root";
+		const string RootNs = Consts.AsRootNamespace;
 	
 		NamespaceContainer current_namespace;
 		TypeContainer current_container;
@@ -3378,7 +3378,7 @@ object_or_collection_initializer
 	    if (expList == null) {
 	    	expList = new List<Expression>();
 	    }
-  		var oi = new ObjectInitializer (expList, GetLocation ($1));
+  		var oi = new AsObjectInitializer (expList, GetLocation ($1));
 		if (current_variable != null) {
 			oi.VariableDeclaration = current_variable;
 		}
@@ -3387,7 +3387,7 @@ object_or_collection_initializer
 	  }
 	| OPEN_BRACE_INIT member_initializer_list COMMA CLOSE_BRACE
 	  {
-	  	var oi = new ObjectInitializer ((List<Expression>) $2, GetLocation ($1));
+	  	var oi = new AsObjectInitializer ((List<Expression>) $2, GetLocation ($1));
 		if (current_variable != null) {
 			oi.VariableDeclaration = current_variable;
 		}
@@ -4292,8 +4292,8 @@ assignment_expression
 	  	
 	  	if (source is ArrayInitializer) {
 	  		(source as ArrayInitializer).Assign = assign;
-	  	} else if (source is ObjectInitializer) {
-	  		(source as ObjectInitializer).Assign = assign;
+	  	} else if (source is AsObjectInitializer) {
+	  		(source as AsObjectInitializer).Assign = assign;
 	  	}
 	  	
 	  	$$ = assign;

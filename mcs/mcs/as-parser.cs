@@ -49,7 +49,7 @@ namespace Mono.ActionScript
 		
 		static readonly object ModifierNone = 0;
 	
-		const string RootNs = "_root";
+		const string RootNs = Consts.AsRootNamespace;
 	
 		NamespaceContainer current_namespace;
 		TypeContainer current_container;
@@ -6226,7 +6226,7 @@ void case_425()
 	    if (expList == null) {
 	    	expList = new List<Expression>();
 	    }
-  		var oi = new ObjectInitializer (expList, GetLocation (yyVals[-2+yyTop]));
+  		var oi = new AsObjectInitializer (expList, GetLocation (yyVals[-2+yyTop]));
 		if (current_variable != null) {
 			oi.VariableDeclaration = current_variable;
 		}
@@ -6237,7 +6237,7 @@ void case_425()
 void case_426()
 //#line 3389 "as-parser.jay"
 {
-	  	var oi = new ObjectInitializer ((List<Expression>) yyVals[-2+yyTop], GetLocation (yyVals[-3+yyTop]));
+	  	var oi = new AsObjectInitializer ((List<Expression>) yyVals[-2+yyTop], GetLocation (yyVals[-3+yyTop]));
 		if (current_variable != null) {
 			oi.VariableDeclaration = current_variable;
 		}
@@ -6929,8 +6929,8 @@ void case_568()
 	  	
 	  	if (source is ArrayInitializer) {
 	  		(source as ArrayInitializer).Assign = assign;
-	  	} else if (source is ObjectInitializer) {
-	  		(source as ObjectInitializer).Assign = assign;
+	  	} else if (source is AsObjectInitializer) {
+	  		(source as AsObjectInitializer).Assign = assign;
 	  	}
 	  	
 	  	yyVal = assign;

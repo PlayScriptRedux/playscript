@@ -3061,7 +3061,7 @@ namespace Mono.ActionScript
 		
 		public int xtoken ()
 		{
-			int d, c, next;
+			int d, c, next, nextCh;
 
 			// Whether we have seen comments on the current line
 			bool comments_seen = false;
@@ -3096,8 +3096,19 @@ namespace Mono.ActionScript
 
 				case '{':
 					val = LocatedToken.Create (ref_line, col);
-					next = peek_token ();
-					if (next == Token.LITERAL || next == Token.IDENTIFIER)
+					bool isInit = true;
+					PushPosition();
+					next = token ();
+					if (next != Token.IDENTIFIER && !(next == Token.LITERAL && (val is StringLiteral))) {
+						isInit = false;
+					} else {
+						next = token ();
+						if (next != Token.COLON) {
+							isInit = false;
+						}
+					}
+					PopPosition();
+					if (isInit) 
 						return Token.OPEN_BRACE_INIT;
 					return Token.OPEN_BRACE;
 				case '}':
