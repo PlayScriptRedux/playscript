@@ -411,6 +411,7 @@ struct _MonoInternalThread {
 	gpointer android_tid;
 	gpointer thread_pinning_ref;
 	gint32 managed_id;
+	gint32 ignore_next_signal;
 	/* 
 	 * These fields are used to avoid having to increment corlib versions
 	 * when a new field is added to the unmanaged MonoThread structure.
@@ -983,7 +984,7 @@ typedef struct {
 	MonoObject *type;
 	MonoArray *pinfo;
 	MonoArray *cattrs;
-	MonoReflectionMethod *override_method;
+	MonoArray *override_methods;
 	MonoString *dll;
 	MonoString *dllentry;
 	guint32 charset;
@@ -1349,6 +1350,7 @@ void          mono_image_module_basic_init (MonoReflectionModuleBuilder *module)
 void          mono_image_register_token (MonoDynamicImage *assembly, guint32 token, MonoObject *obj) MONO_INTERNAL;
 void          mono_dynamic_image_free (MonoDynamicImage *image) MONO_INTERNAL;
 void          mono_image_set_wrappers_type (MonoReflectionModuleBuilder *mb, MonoReflectionType *type) MONO_INTERNAL;
+void          mono_dynamic_image_release_gc_roots (MonoDynamicImage *image) MONO_INTERNAL;
 
 void        mono_reflection_setup_internal_class  (MonoReflectionTypeBuilder *tb) MONO_INTERNAL;
 

@@ -144,6 +144,23 @@ class MakeBundle {
 		ArrayList files = new ArrayList ();
 		foreach (Assembly a in assemblies)
 			QueueAssembly (files, a.CodeBase);
+			
+		// Special casing mscorlib.dll: any specified mscorlib.dll cannot be loaded
+		// by Assembly.ReflectionFromLoadFrom(). Instead the fx assembly which runs
+		// mkbundle.exe is loaded, which is not what we want.
+		// So, replace it with whatever actually specified.
+		foreach (string srcfile in sources) {
+			if (Path.GetFileName (srcfile) == "mscorlib.dll") {
+				foreach (string file in files) {
+					if (Path.GetFileName (new Uri (file).LocalPath) == "mscorlib.dll") {
+						files.Remove (file);
+						files.Add (new Uri (Path.GetFullPath (srcfile)).LocalPath);
+						break;
+					}
+				}
+				break;
+			}
+		}
 
 		GenerateBundles (files);
 		//GenerateJitWrapper ();
@@ -159,7 +176,7 @@ class MakeBundle {
 				".globl {0}\n" +
 				"\t.section .rodata\n" +
 				"\t.p2align 5\n" +
-				"\t.type {0}, @object\n" +
+				"\t.type {0}, \"object\"\n" +
 				"\t.size {0}, {1}\n" +
 				"{0}:\n",
 				name, size);
@@ -167,7 +184,6 @@ class MakeBundle {
 		case "osx":
 			sw.WriteLine (
 				"\t.section __TEXT,__text,regular,pure_instructions\n" + 
-				"\t.section __TEXT,__picsymbolstub1,symbol_stubs,pure_instructions,32\n" + 
 				"\t.globl _{0}\n" +
 				"\t.data\n" +
 				"\t.align 4\n" +

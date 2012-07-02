@@ -184,6 +184,7 @@ typedef struct MonoAotCompile {
 	MonoAotOptions aot_opts;
 	guint32 nmethods;
 	guint32 opts;
+	guint32 simd_opts;
 	MonoMemPool *mempool;
 	MonoAotStats stats;
 	int method_index;
@@ -3245,6 +3246,7 @@ static void
 add_generic_class_with_depth (MonoAotCompile *acfg, MonoClass *klass, int depth, const char *ref)
 {
 	MonoMethod *method;
+	MonoClassField *field;
 	gpointer iter;
 
 	if (!acfg->ginst_hash)
@@ -3290,6 +3292,12 @@ add_generic_class_with_depth (MonoAotCompile *acfg, MonoClass *klass, int depth,
 		 * for example Array.Resize<int> for List<int>.Add ().
 		 */
 		add_extra_method_with_depth (acfg, method, depth + 1);
+	}
+
+	iter = NULL;
+	while ((field = mono_class_get_fields (klass, &iter))) {
+		if (field->type->type == MONO_TYPE_GENERICINST)
+			add_generic_class_with_depth (acfg, mono_class_from_mono_type (field->type), depth + 1, "field");
 	}
 
 	if (klass->delegate) {
@@ -6998,6 +7006,7 @@ emit_file_info (MonoAotCompile *acfg)
 	emit_int32 (acfg, acfg->nmethods);
 	emit_int32 (acfg, acfg->flags);
 	emit_int32 (acfg, acfg->opts);
+	emit_int32 (acfg, acfg->simd_opts);
 	emit_int32 (acfg, gc_name_offset);
 
 	for (i = 0; i < MONO_AOT_TRAMP_NUM; ++i)
@@ -7366,6 +7375,8 @@ acfg_create (MonoAssembly *ass, guint32 opts)
 	acfg->globals = g_ptr_array_new ();
 	acfg->image = image;
 	acfg->opts = opts;
+	/* TODO: Write out set of SIMD instructions used, rather than just those available */
+	acfg->simd_opts = mono_arch_cpu_enumerate_simd_versions ();
 	acfg->mempool = mono_mempool_new ();
 	acfg->extra_methods = g_ptr_array_new ();
 	acfg->unwind_info_offsets = g_hash_table_new (NULL, NULL);

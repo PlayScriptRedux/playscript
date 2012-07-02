@@ -323,6 +323,12 @@ struct _MonoImage {
 	GHashTable *var_cache_slow;
 	GHashTable *mvar_cache_slow;
 
+	/* Maps malloc-ed char* pinvoke scope -> MonoDl* */
+	GHashTable *pinvoke_scopes;
+
+	/* Maps malloc-ed char* pinvoke scope -> malloced-ed char* filename */
+	GHashTable *pinvoke_scope_filenames;
+
 	/*
 	 * No other runtime locks must be taken while holding this lock.
 	 * It's meant to be used only to mutate and query structures part of this image.
@@ -655,6 +661,7 @@ void mono_assembly_addref       (MonoAssembly *assembly) MONO_INTERNAL;
 void mono_assembly_load_friends (MonoAssembly* ass) MONO_INTERNAL;
 gboolean mono_assembly_has_skip_verification (MonoAssembly* ass) MONO_INTERNAL;
 
+void mono_assembly_release_gc_roots (MonoAssembly *assembly) MONO_INTERNAL;
 gboolean mono_assembly_close_except_image_pools (MonoAssembly *assembly) MONO_INTERNAL;
 void mono_assembly_close_finish (MonoAssembly *assembly) MONO_INTERNAL;
 

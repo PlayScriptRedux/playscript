@@ -64,6 +64,11 @@ namespace System.Xml
 		private long maxCharactersFromEntities;
 		private long maxCharactersInDocument;
 
+#if NET_4_5
+		private bool isReadOnly;
+		private bool isAsync;
+#endif
+
 		public XmlReaderSettings ()
 		{
 			Reset ();
@@ -75,7 +80,11 @@ namespace System.Xml
 
 		public XmlReaderSettings Clone ()
 		{
-			return (XmlReaderSettings) MemberwiseClone ();
+			var clone = (XmlReaderSettings) MemberwiseClone ();
+#if NET_4_5
+			clone.isReadOnly = false;
+#endif
+			return clone;
 		}
 
 		public void Reset ()
@@ -99,6 +108,9 @@ namespace System.Xml
 				XsValidationFlags.AllowXmlAttributes;
 			validationType = ValidationType.None;
 			xmlResolver = new XmlUrlResolver ();
+#endif
+#if NET_4_5
+			isAsync = false;
 #endif
 		}
 
@@ -220,5 +232,30 @@ namespace System.Xml
 			internal get { return xmlResolver; }
 			set { xmlResolver = value; }
 		}
+
+#if NET_4_5
+		internal void SetReadOnly ()
+		{
+			isReadOnly = true;
+		}
+
+		/*
+		 * FIXME: The .NET 4.5 runtime throws an exception when attempting to
+		 *        modify any of the properties after the XmlReader has been constructed.
+		 */
+		void EnsureWritability ()
+		{
+			if (isReadOnly)
+				throw new InvalidOperationException ("XmlReaderSettings in read-only");
+		}
+
+		public bool Async {
+			get { return isAsync; }
+			set {
+				EnsureWritability ();
+				isAsync = value;
+			}
+		}
+#endif
 	}
 }

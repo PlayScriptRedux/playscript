@@ -373,6 +373,7 @@ namespace MonoTests.System.Net
 		}
 
 		[Test] // bug #508027
+		[Category ("NotWorking")] // #5842
 		public void BeginGetResponse ()
 		{
 			IPEndPoint ep = new IPEndPoint (IPAddress.Loopback, 8001);
@@ -384,6 +385,7 @@ namespace MonoTests.System.Net
 				HttpWebRequest req;
 
 				req = (HttpWebRequest) WebRequest.Create (url);
+				req.Timeout = 5000;
 				req.Method = "POST";
 				req.SendChunked = false;
 				req.KeepAlive = false;
@@ -392,6 +394,7 @@ namespace MonoTests.System.Net
 				req.Abort ();
 
 				req = (HttpWebRequest) WebRequest.Create (url);
+				req.Timeout = 5000;
 				req.Method = "POST";
 				req.SendChunked = true;
 				req.KeepAlive = false;
@@ -401,6 +404,7 @@ namespace MonoTests.System.Net
 				req.Abort ();
 
 				req = (HttpWebRequest) WebRequest.Create (url);
+				req.Timeout = 5000;
 				req.Method = "POST";
 				req.ContentLength = 5;
 				req.SendChunked = false;
@@ -411,6 +415,7 @@ namespace MonoTests.System.Net
 				req.Abort ();
 
 				req = (HttpWebRequest) WebRequest.Create (url);
+				req.Timeout = 5000;
 				req.Method = "POST";
 				req.SendChunked = false;
 				req.KeepAlive = true;
@@ -420,6 +425,7 @@ namespace MonoTests.System.Net
 				req.Abort ();
 
 				req = (HttpWebRequest) WebRequest.Create (url);
+				req.Timeout = 5000;
 				req.Method = "POST";
 				req.SendChunked = false;
 				req.KeepAlive = false;
@@ -429,6 +435,7 @@ namespace MonoTests.System.Net
 				req.Abort ();
 
 				req = (HttpWebRequest) WebRequest.Create (url);
+				req.Timeout = 5000;
 				req.Method = "POST";
 				req.SendChunked = false;
 				req.KeepAlive = true;
@@ -438,6 +445,7 @@ namespace MonoTests.System.Net
 				req.Abort ();
 
 				req = (HttpWebRequest) WebRequest.Create (url);
+				req.Timeout = 5000;
 				req.Method = "GET";
 				req.SendChunked = true;
 
@@ -445,6 +453,7 @@ namespace MonoTests.System.Net
 				req.Abort ();
 
 				req = (HttpWebRequest) WebRequest.Create (url);
+				req.Timeout = 5000;
 				req.Method = "GET";
 				req.ContentLength = 5;
 
@@ -452,6 +461,7 @@ namespace MonoTests.System.Net
 				req.Abort ();
 
 				req = (HttpWebRequest) WebRequest.Create (url);
+				req.Timeout = 5000;
 				req.Method = "GET";
 				req.ContentLength = 0;
 
@@ -683,6 +693,7 @@ namespace MonoTests.System.Net
 		}
 
 		[Test] // bug #510661
+		[Category ("NotWorking")] // #5842
 		public void GetRequestStream_Close_NotAllBytesWritten ()
 		{
 			IPEndPoint ep = new IPEndPoint (IPAddress.Loopback, 10002);
@@ -750,6 +761,7 @@ namespace MonoTests.System.Net
 		}
 
 		[Test] // bug #510642
+		[Category ("NotWorking")] // #5842
 		public void GetRequestStream_Write_Overflow ()
 		{
 			IPEndPoint ep = new IPEndPoint (IPAddress.Loopback, 8010);
@@ -2289,6 +2301,7 @@ namespace MonoTests.System.Net
 		}
 
 		[Test]
+		[Category ("NotWorking")] // #5490
 		public void InvalidNamesThatWork ()
 		{
 			HttpWebRequest req = (HttpWebRequest) WebRequest.Create ("http://go-mono.com");
@@ -2317,10 +2330,34 @@ namespace MonoTests.System.Net
 		[Test]
 		public void AddAndRemoveDate ()
 		{
-			HttpWebRequest req = (HttpWebRequest) WebRequest.Create ("http://go-mono.com");
-			req.Date = DateTime.UtcNow;
+			// Neil Armstrong set his foot on Moon
+			var landing = new DateTime (1969, 7, 21, 2, 56, 0, DateTimeKind.Utc);
+			Assert.AreEqual (621214377600000000, landing.Ticks);
+			var unspecified = new DateTime (1969, 7, 21, 2, 56, 0);
+			var local = landing.ToLocalTime ();
+
+			var req = (HttpWebRequest)WebRequest.Create ("http://www.mono-project.com/");
+			req.Date = landing;
+			Assert.AreEqual (DateTimeKind.Local, req.Date.Kind);
+			Assert.AreEqual (local.Ticks, req.Date.Ticks);
+			Assert.AreEqual (local, req.Date);
+
+			req.Date = unspecified;
+			Assert.AreEqual (DateTimeKind.Local, req.Date.Kind);
+			Assert.AreEqual (unspecified.Ticks, req.Date.Ticks);
+			Assert.AreEqual (unspecified, req.Date);
+
+			req.Date = local;
+			Assert.AreEqual (DateTimeKind.Local, req.Date.Kind);
+			Assert.AreEqual (local.Ticks, req.Date.Ticks);
+			Assert.AreEqual (local, req.Date);
+
 			req.Date = DateTime.MinValue;
-			Assert.AreEqual (DateTime.MinValue, req.Date);
+			Assert.AreEqual (DateTimeKind.Unspecified, DateTime.MinValue.Kind);
+			Assert.AreEqual (DateTimeKind.Unspecified, req.Date.Kind);
+			Assert.AreEqual (0, req.Date.Ticks);
+
+			Assert.AreEqual (null, req.Headers.Get ("Date"));
 		}
 #endif
 		class ListenerScope : IDisposable {

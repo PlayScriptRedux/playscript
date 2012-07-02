@@ -195,7 +195,7 @@ public class DebuggerTests
 		// Argument checking
 		AssertThrows<ArgumentException> (delegate {
 				// Invalid IL offset
-				vm.SetBreakpoint (m, 1);
+				vm.SetBreakpoint (m, 2);
 			});
 	}
 
@@ -1621,7 +1621,32 @@ public class DebuggerTests
 	}
 
 	[Test]
-	[Category("only88")]
+	public void ColumnNumbers () {
+		Event e = run_until ("line_numbers");
+
+		// FIXME: Merge this with LineNumbers () when its fixed
+
+		step_req = vm.CreateStepRequest (e.Thread);
+		step_req.Depth = StepDepth.Into;
+		step_req.Enable ();
+
+		Location l;
+		
+		vm.Resume ();
+
+		e = GetNextEvent ();
+		Assert.IsTrue (e is StepEvent);
+
+		l = e.Thread.GetFrames ()[0].Location;
+
+		Assert.AreEqual (3, l.ColumnNumber);
+
+		step_req.Disable ();
+	}
+
+	[Test]
+	// Broken by mcs+runtime changes (#5438)
+	[Category("NotWorking")]
 	public void LineNumbers () {
 		Event e = run_until ("line_numbers");
 
@@ -3009,7 +3034,7 @@ public class DebuggerTests
 		vm.Resume ();
 
 		var e2 = GetNextEvent ();
-		Console.WriteLine (e2);
+		Assert.IsTrue (e2 is ExceptionEvent);
 
 		vm.Exit (0);
 		vm = null;

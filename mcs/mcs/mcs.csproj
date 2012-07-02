@@ -25,7 +25,7 @@
     <Commandlineparameters>test.as -sdk:4 -lib:/Users/benjcooley/projects/mono/mcs/class/lib/net_4_0 -r:System.dll -r:System.Core.dll -r:Microsoft.CSharp.dll -r:Mono.CSharp.dll -r:ascorlib.dll</Commandlineparameters>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
+   <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <DefineConstants>TRACE;NET_4_0;STATIC;NO_SYMBOL_WRITER</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -199,6 +199,8 @@
     <Content Include="cs-parser.jay">
       <Gettext-ScanForTranslations>false</Gettext-ScanForTranslations>
     </Content>
-    <Content Include="as-parser.jay" />
+    <Content Include="as-parser.jay">
+      <Gettext-ScanForTranslations>false</Gettext-ScanForTranslations>
+    </Content>
   </ItemGroup>
 </Project>

@@ -146,9 +146,9 @@ namespace System.Xml.Linq
 			AddBeforeSelf ((object) content);
 		}
 
-		public static XNode ReadFrom (XmlReader r)
+		public static XNode ReadFrom (XmlReader reader)
 		{
-			return ReadFrom (r, LoadOptions.None);
+			return ReadFrom (reader, LoadOptions.None);
 		}
 
 		internal static XNode ReadFrom (XmlReader r, LoadOptions options)
@@ -214,7 +214,7 @@ namespace System.Xml.Linq
 			return ToString (SaveOptions.None);
 		}
 
-		public abstract void WriteTo (XmlWriter w);
+		public abstract void WriteTo (XmlWriter writer);
 
 		public IEnumerable<XElement> Ancestors ()
 		{
@@ -233,6 +233,17 @@ namespace System.Xml.Linq
 		{
 			return new XNodeReader (this);
 		}
+
+#if NET_4_0
+		public XmlReader CreateReader (ReaderOptions readerOptions)
+		{
+			var r = new XNodeReader (this);
+			if ((readerOptions & ReaderOptions.OmitDuplicateNamespaces) != 0)
+				r.OmitDuplicateNamespaces = true;
+			
+			return r;
+		}
+#endif
 
 		public IEnumerable<XElement> ElementsAfterSelf ()
 		{
@@ -262,14 +273,14 @@ namespace System.Xml.Linq
 					yield return el;
 		}
 
-		public bool IsAfter (XNode other)
+		public bool IsAfter (XNode node)
 		{
-			return XNode.DocumentOrderComparer.Compare (this, other) > 0;
+			return XNode.DocumentOrderComparer.Compare (this, node) > 0;
 		}
 
-		public bool IsBefore (XNode other)
+		public bool IsBefore (XNode node)
 		{
-			return XNode.DocumentOrderComparer.Compare (this, other) < 0;
+			return XNode.DocumentOrderComparer.Compare (this, node) < 0;
 		}
 
 		public IEnumerable<XNode> NodesAfterSelf ()
