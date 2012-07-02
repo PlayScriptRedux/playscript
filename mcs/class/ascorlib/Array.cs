@@ -50,11 +50,12 @@ namespace _root
 
 		// Executes a test function on each item in the array and constructs a new array for all items that return true for the specified function.
 		public Array filter(Delegate callback, object thisObject) {
-			return null;
+			throw new NotImplementedException();
 		}
  	 	
 		// Executes a function on each item in the array.
 		public void forEach(Delegate callback, object thisObject = null) {
+			throw new NotImplementedException();
 		}
  	 	
 		// Searches for an item in an array by using strict equality (===) and returns the index position of the item.
@@ -65,7 +66,7 @@ namespace _root
 		// Converts the elements in an array to strings, inserts the specified separator between the elements, concatenates them, and returns the resulting string.
 		public string join(object sep) 
 		{
-			return "";
+			throw new NotImplementedException();
 		}
  	 	
 		// Searches for an item in an array, working backward from the last item, and returns the index position of the matching item using strict equality (===).
@@ -80,12 +81,12 @@ namespace _root
  	 	
 		// Executes a function on each item in an array, and constructs a new array of items corresponding to the results of the function on each item in the original array.
 		public Array map(Delegate callback, object thisObject = null) {
-			return null;
+			throw new NotImplementedException();
 		}
  	 	
 		// Removes the last element from an array and returns the value of that element.
 		public dynamic pop() {
-			return null;
+			throw new NotImplementedException();
 		}
  	 	
 		// Adds one elements to the end of an array and returns the new length of the array.
@@ -103,42 +104,58 @@ namespace _root
  	 	
 		// Reverses the array in place.
 		public Array reverse() {
-
-			return null;
+			throw new NotImplementedException();
 		}
  	 	
 		// Removes the first element from an array and returns that element.
 		public object shift() {
-			return null;
+			throw new NotImplementedException();
 		}
  	 	
 		// Returns a new array that consists of a range of elements from the original array, without modifying the original array.
 		public Array slice(int startIndex = 0, int endIndex = 16777215) {
-			return null;
+			throw new NotImplementedException();
 		}
  	 	
 		// Executes a test function on each item in the array until an item is reached that returns true.
 		public bool some(Delegate callback, object thisObject = null) {
-			return false;
+			throw new NotImplementedException();
 		}
  	 	
 		// Sorts the elements in an array.
 		public Array sort(params object[] args) {
-			return null;
+			throw new NotImplementedException();
 		}
  	 	
 		// Sorts the elements in an array according to one or more fields in the array.
 		public Array sortOn(object fieldName, object options = null) {
-			return null;
+			throw new NotImplementedException();
 		}
  	 	
 		// Adds elements to and removes elements from an array.
-		public Array splice(int startIndex, int deleteCount, params object[] values) {
-			return null;
+		public void splice(int startIndex, int deleteCount) {
+			if (deleteCount == 1) {
+				this.RemoveAt(startIndex);
+			} else {
+				this.RemoveRange(startIndex, deleteCount);
+			}
 		}
- 	 	 	 	 	 	
-		public uint unshift(params object[] args) {
-			return 0;
+
+		public void splice(int startIndex, int deleteCount, params object[] values) {
+			if (deleteCount == 1) {
+				this.Remove (startIndex);
+			} else {
+				this.RemoveRange (startIndex, deleteCount);
+			}
+			this.InsertRange(startIndex, values);
+		}
+
+		public uint unshift(object o) {
+			throw new NotImplementedException();
+		}
+
+		public uint unshift(object arg1, params object[] args) {
+			throw new NotImplementedException();
 		}
 	}
 }

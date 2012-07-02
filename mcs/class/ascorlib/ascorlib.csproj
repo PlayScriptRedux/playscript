@@ -7,7 +7,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{EDBAC91B-2817-479E-8DDF-B24ADDA563A6}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>ascorlib</RootNamespace>
+    <RootNamespace>_root</RootNamespace>
     <AssemblyName>ascorlib</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -42,6 +42,14 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="TypeUtils.cs" />
     <Compile Include="Array.cs" />
+    <Compile Include="functions.cs" />
+    <Compile Include="flash\events\IEventDispatcher.cs" />
+    <Compile Include="flash\events\Event.cs" />
+    <Compile Include="flash\events\EventDispatcher.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Folder Include="flash\" />
+    <Folder Include="flash\events\" />
+  </ItemGroup>
 </Project>

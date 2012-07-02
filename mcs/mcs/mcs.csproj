@@ -22,10 +22,10 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <Commandlineparameters>test.as -sdk:4 -lib:/Users/benjcooley/projects/mono/mcs/class/lib/net_4_0 -r:System.dll -r:System.Core.dll -r:Microsoft.CSharp.dll -r:Mono.CSharp.dll -r:ascorlib.dll</Commandlineparameters>
+    <Commandlineparameters>test.as -sdk:4 -lib:/Library/Frameworks/Mono.framework/Versions/2.10.9/lib/mono/4.0/ -r:System.dll -r:System.Core.dll -r:Microsoft.CSharp.dll -r:Mono.CSharp.dll -r:ascorlib.dll</Commandlineparameters>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-   <DebugType>pdbonly</DebugType>
+    <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <DefineConstants>TRACE;NET_4_0;STATIC;NO_SYMBOL_WRITER</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -175,9 +175,6 @@
       <Visible>False</Visible>
     </Compile>
     <Compile Include="..\class\IKVM.Reflection\Writer\*.cs">
-      <Visible>False</Visible>
-    </Compile>
-    <Compile Include="..\class\IKVM.Reflection\Impl\CryptoHack.cs">
       <Visible>False</Visible>
     </Compile>
     <Compile Include="..\class\IKVM.Reflection\Impl\ITypeOwner.cs">

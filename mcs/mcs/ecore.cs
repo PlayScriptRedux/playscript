@@ -436,8 +436,7 @@ namespace Mono.CSharp {
 		{
 			int errors = ec.Report.Errors;
 			bool out_access = right_side == EmptyExpression.OutAccess;
-
-			Expression e = DoResolveLValue (ec, right_side);
+	Expression e = DoResolveLValue (ec, right_side);
 
 			if (e != null && out_access && !(e is IMemoryLocation)) {
 				// FIXME: There's no problem with correctness, the 'Expr = null' handles that.
@@ -2346,6 +2345,35 @@ namespace Mono.CSharp {
 			return mc.LookupNamespaceOrType (Name, Arity, LookupMode.Probing, loc) != null;
 		}
 
+		public Expression LookupPackageLevelFunction (ResolveContext rc)
+		{
+			bool errorMode = false;
+
+			FullNamedExpression fne = rc.LookupNamespaceOrType (Name + "_fn", 0, LookupMode.Normal, loc);
+			if (fne == null || fne is Namespace) {
+				return null;
+			}
+
+			TypeSpec member_type = fne.ResolveAsType (rc);
+			if (member_type == null) {
+				return null;
+			}
+
+			Expression e = MemberLookup (rc, errorMode, member_type, Name, Arity, MemberLookupRestrictions.InvocableOnly, loc);
+			if (e == null)
+				return null;
+
+			var me = e as MemberExpr;
+			me = me.ResolveMemberAccess (rc, null, null);
+
+			if (Arity > 0) {
+				targs.Resolve (rc);
+				me.SetTypeArguments (rc, targs);
+			}
+
+			return me;
+		}
+
 		public override Expression LookupNameExpression (ResolveContext rc, MemberLookupRestrictions restrictions)
 		{
 			int lookup_arity = Arity;
@@ -2465,6 +2493,16 @@ namespace Mono.CSharp {
 
 						return ResolveAsTypeOrNamespace (rc);
 					}
+				}
+
+				//
+				// Stage 4: If ActionScript, lookup package level functions.
+				//
+				if (rc.FileType == SourceFileType.ActionScript && 
+				    (restrictions & MemberLookupRestrictions.InvocableOnly) != 0 && !variable_found) {
+					Expression pkgFn = LookupPackageLevelFunction(rc);
+					if (pkgFn != null)
+						return pkgFn;
 				}
 
 				if (errorMode) {

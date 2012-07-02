@@ -227,6 +227,7 @@ namespace Mono.CSharp
 		public readonly PredefinedType AsyncTaskMethodBuilder;
 		public readonly PredefinedType AsyncTaskMethodBuilderGeneric;
 		public readonly PredefinedType Action;
+		public readonly PredefinedType Func;
 		public readonly PredefinedType Task;
 		public readonly PredefinedType TaskGeneric;
 		public readonly PredefinedType IAsyncStateMachine;
@@ -285,6 +286,7 @@ namespace Mono.CSharp
 			BinderFlags = new PredefinedType (module, MemberKind.Enum, "Microsoft.CSharp.RuntimeBinder", "CSharpBinderFlags");
 
 			Action = new PredefinedType (module, MemberKind.Delegate, "System", "Action");
+			Func = new PredefinedType (module, MemberKind.Delegate, "System", "Func");
 			AsyncVoidMethodBuilder = new PredefinedType (module, MemberKind.Struct, "System.Runtime.CompilerServices", "AsyncVoidMethodBuilder");
 			AsyncTaskMethodBuilder = new PredefinedType (module, MemberKind.Struct, "System.Runtime.CompilerServices", "AsyncTaskMethodBuilder");
 			AsyncTaskMethodBuilderGeneric = new PredefinedType (module, MemberKind.Struct, "System.Runtime.CompilerServices", "AsyncTaskMethodBuilder", 1);
@@ -329,6 +331,7 @@ namespace Mono.CSharp
 			if (TaskGeneric.Define ())
 				TaskGeneric.TypeSpec.IsGenericTask = true;
 		}
+
 	}
 
 	class PredefinedMembers

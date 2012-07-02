@@ -17,6 +17,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Diagnostics;
+using System.Collections;
 using Mono.CSharp;
 
 namespace Mono.ActionScript
@@ -69,32 +70,62 @@ namespace Mono.ActionScript
 		}
 
 		//
-		// This class has to be used in the parser only, it reuses token
-		// details after each parse
+		// This class has to be used by parser only, it reuses token
+		// details after each file parse completion
 		//
 		public class LocatedToken
 		{
-			int row, column;
-			string value;
+			public int row, column;
+			public string value;
+			public SourceFile file;
 
-			static LocatedToken[] buffer = new LocatedToken[0];
-			static int pos;
-
-			private LocatedToken ()
+			public LocatedToken ()
 			{
 			}
 
-			public static LocatedToken Create (int row, int column)
+			public LocatedToken (string value, Location loc)
 			{
-				return Create (null, row, column);
+				this.value = value;
+				file = loc.SourceFile;
+				row = loc.Row;
+				column = loc.Column;
 			}
 
-			public static LocatedToken Create (string value, Location loc)
+			public override string ToString ()
 			{
-				return Create (value, loc.Row, loc.Column);
+				return string.Format ("Token '{0}' at {1},{2}", Value, row, column);
 			}
 			
-			public static LocatedToken Create (string value, int row, int column)
+			public Location Location {
+				get { return new Location (file, row, column); }
+			}
+
+			public string Value {
+				get { return value; }
+			}
+		}
+
+		public class LocatedTokenBuffer
+		{
+			readonly LocatedToken[] buffer;
+			public int pos;
+
+			public LocatedTokenBuffer ()
+			{
+				buffer = new LocatedToken[0];
+			}
+
+			public LocatedTokenBuffer (LocatedToken[] buffer)
+			{
+				this.buffer = buffer ?? new LocatedToken[0];
+			}
+
+			public LocatedToken Create (SourceFile file, int row, int column)
+			{
+				return Create (null, file, row, column);
+			}
+			
+			public LocatedToken Create (string value, SourceFile file, int row, int column)
 			{
 				//
 				// TODO: I am not very happy about the logic but it's the best
@@ -117,6 +148,7 @@ namespace Mono.ActionScript
 					++pos;
 				}
 				entry.value = value;
+				entry.file = file;
 				entry.row = row;
 				entry.column = column;
 				return entry;
@@ -126,31 +158,9 @@ namespace Mono.ActionScript
 			// Used for token not required by expression evaluator
 			//
 			[Conditional ("FULL_AST")]
-			public static void CreateOptional (int row, int col, ref object token)
+			public void CreateOptional (SourceFile file, int row, int col, ref object token)
 			{
-				token = Create (row, col);
-			}
-			
-			public static void Initialize ()
-			{
-#if !FULL_AST
-				if (buffer.Length == 0)
-					buffer = new LocatedToken [15000];
-#endif
-				pos = 0;
-			}
-
-			public override string ToString ()
-			{
-				return string.Format ("Token '{0}' at {1},{2}", Value, row, column);
-			}
-			
-			public Location Location {
-				get { return new Location (row, column); }
-			}
-
-			public string Value {
-				get { return value; }
+				token = Create (file, row, col);
 			}
 		}
 
@@ -196,6 +206,7 @@ namespace Mono.ActionScript
 		List<Location> escaped_identifiers;
 		int parsing_generic_less_than;
 		readonly bool doc_processing;
+		readonly LocatedTokenBuffer ltb;
 		
 		//
 		// Used mainly for parser optimizations. Some expressions for instance
@@ -358,28 +369,15 @@ namespace Mono.ActionScript
 		//
 		Stack<int> ifstack;
 
-		const int max_id_size = 512;
-		const int max_number_size = 512;
+		public const int MaxIdentifierLength = 512;
+		public const int MaxNumberLength = 512;
 
-#if FULL_AST
-		readonly char [] id_builder = new char [max_id_size];
-
-		Dictionary<char[], string>[] identifiers = new Dictionary<char[], string>[max_id_size + 1];
-
-		char [] number_builder = new char [max_number_size];
+		readonly char[] id_builder;
+		readonly Dictionary<char[], string>[] identifiers;
+		readonly char[] number_builder;
 		int number_pos;
 
-		char[] value_builder = new char[256];
-#else
-		static readonly char [] id_builder = new char [max_id_size];
-
-		static Dictionary<char[], string>[] identifiers = new Dictionary<char[], string>[max_id_size + 1];
-
-		static char [] number_builder = new char [max_number_size];
-		static int number_pos;
-
-		static char[] value_builder = new char[256];
-#endif
+		char[] value_builder = new char[64];
 
 		public int Line {
 			get {
@@ -430,11 +428,15 @@ namespace Mono.ActionScript
 			}
 		}
 
-		public Tokenizer (SeekableStreamReader input, CompilationSourceFile file)
+		public Tokenizer (SeekableStreamReader input, CompilationSourceFile file, ParserSession session)
 		{
 			this.source_file = file;
 			this.context = file.Compiler;
 			this.current_source = file.SourceFile;
+			this.identifiers = session.Identifiers;
+			this.id_builder = session.IDBuilder;
+			this.number_builder = session.NumberBuilder;
+			this.ltb = new LocatedTokenBuffer (session.AsLocatedTokens);
 
 			reader = input;
 
@@ -444,8 +446,6 @@ namespace Mono.ActionScript
 			doc_processing = context.Settings.DocumentationFile != null;
 
 			tab_size = context.Settings.TabSize;
-
-			Mono.CSharp.Location.Push (current_source);
 		}
 		
 		public void PushPosition ()
@@ -539,6 +539,7 @@ namespace Mono.ActionScript
 			AddKeyword ("decimal", Token.DECIMAL);
 			AddKeyword ("default", Token.DEFAULT);
 			AddKeyword ("delegate", Token.DELEGATE);
+			AddKeyword ("delete", Token.DELETE);
 			AddKeyword ("do", Token.DO);
 			AddKeyword ("double", Token.DOUBLE);
 			AddKeyword ("each", Token.EACH);
@@ -926,7 +927,7 @@ namespace Mono.ActionScript
 
 		public Location Location {
 			get {
-				return new Location (ref_line, col);
+				return new Location (current_source, ref_line, col);
 			}
 		}
 
@@ -1354,7 +1355,7 @@ namespace Mono.ActionScript
 			bool seen_digits = false;
 			
 			if (c != -1){
-				if (number_pos == max_number_size)
+				if (number_pos == MaxNumberLength)
 					Error_NumericConstantTooLong ();
 				number_builder [number_pos++] = (char) c;
 			}
@@ -1365,7 +1366,7 @@ namespace Mono.ActionScript
 			//
 			while ((d = peek_char2 ()) != -1){
 				if (d >= '0' && d <= '9'){
-					if (number_pos == max_number_size)
+					if (number_pos == MaxNumberLength)
 						Error_NumericConstantTooLong ();
 					number_builder [number_pos++] = (char) d;
 					get_char ();
@@ -1630,23 +1631,23 @@ namespace Mono.ActionScript
 			
 			if (c == 'e' || c == 'E'){
 				is_real = true;
-				if (number_pos == max_number_size)
+				if (number_pos == MaxNumberLength)
 					Error_NumericConstantTooLong ();
 				number_builder [number_pos++] = (char) c;
 				c = get_char ();
 				
 				if (c == '+'){
-					if (number_pos == max_number_size)
+					if (number_pos == MaxNumberLength)
 						Error_NumericConstantTooLong ();
 					number_builder [number_pos++] = '+';
 					c = -1;
 				} else if (c == '-') {
-					if (number_pos == max_number_size)
+					if (number_pos == MaxNumberLength)
 						Error_NumericConstantTooLong ();
 					number_builder [number_pos++] = '-';
 					c = -1;
 				} else {
-					if (number_pos == max_number_size)
+					if (number_pos == MaxNumberLength)
 						Error_NumericConstantTooLong ();
 					number_builder [number_pos++] = '+';
 				}
@@ -1979,7 +1980,7 @@ namespace Mono.ActionScript
 			}
 
 			if (pos != 0) {
-				if (pos > max_id_size)
+				if (pos > MaxIdentifierLength)
 					arg = new string (value_builder, 0, pos);
 				else
 					arg = InternIdentifier (value_builder, pos);
@@ -2012,7 +2013,6 @@ namespace Mono.ActionScript
 				}
 
 				ref_line = line;
-				Location.Push (current_source);
 				return true;
 			}
 
@@ -2099,7 +2099,6 @@ namespace Mono.ActionScript
 			if (new_file_name != null) {
 				current_source = context.LookupFile (source_file, new_file_name);
 				source_file.AddIncludeFile (current_source);
-				Location.Push (current_source);
 			}
 
 			if (!hidden_block_start.IsNull) {
@@ -2197,6 +2196,8 @@ namespace Mono.ActionScript
 			//
 			// The syntax is ` "foo.txt" "{guid}" "hash"'
 			//
+			// guid is predefined hash algorithm guid {406ea660-64cf-4c82-b6f0-42d48172a799} for md5
+			//
 			int c = get_char ();
 
 			if (c != '"')
@@ -2259,6 +2260,7 @@ namespace Mono.ActionScript
 			// Any length of checksum
 			List<byte> checksum_bytes = new List<byte> (16);
 
+			var checksum_location = Location;
 			c = peek_char ();
 			while (c != '"' && c != -1) {
 				checksum_bytes.Add (read_hex (out error));
@@ -2274,14 +2276,23 @@ namespace Mono.ActionScript
 				return false;
 			}
 
-			file.SetChecksum (guid_bytes, checksum_bytes.ToArray ());
+			if (context.Settings.GenerateDebugInfo) {
+				var chsum = checksum_bytes.ToArray ();
+
+				if (file.HasChecksum) {
+					if (!ArrayComparer.IsEqual (file.Checksum, chsum)) {
+						// TODO: Report.SymbolRelatedToPreviousError
+						Report.Warning (1697, 1, checksum_location, "Different checksum values specified for file `{0}'", file.Name);
+					}
+				}
+
+				file.SetChecksum (guid_bytes, chsum);
 			current_source.AutoGenerated = true;
+			}
+
 			return true;
 		}
 
-#if !FULL_AST
-		static
-#endif
 		bool IsTokenIdentifierEqual (char[] identifier)
 		{
 			for (int i = 0; i < identifier.Length; ++i) {
@@ -3015,22 +3026,19 @@ namespace Mono.ActionScript
 			if (id_builder [0] >= '_' && !quoted) {
 				int keyword = GetKeyword (id_builder, pos);
 				if (keyword != -1) {
-					val = LocatedToken.Create (keyword == Token.AWAIT ? "await" : null, ref_line, column);
+					val = ltb.Create (keyword == Token.AWAIT ? "await" : null, current_source, ref_line, column);
 					return keyword;
 				}
 			}
 
 			string s = InternIdentifier (id_builder, pos);
-			val = LocatedToken.Create (s, ref_line, column);
+			val = ltb.Create (s, current_source, ref_line, column);
 			if (quoted && parsing_attribute_section)
 				AddEscapedIdentifier (((LocatedToken) val).Location);
 
 			return Token.IDENTIFIER;
 		}
 
-#if !FULL_AST
-		static
-#endif
 		string InternIdentifier (char[] charBuffer, int length)
 		{
 			//
@@ -3095,7 +3103,7 @@ namespace Mono.ActionScript
 					return consume_identifier (c);
 
 				case '{':
-					val = LocatedToken.Create (ref_line, col);
+					val = ltb.Create (current_source, ref_line, col);
 					bool isInit = true;
 					PushPosition();
 					next = token ();
@@ -3112,14 +3120,14 @@ namespace Mono.ActionScript
 						return Token.OPEN_BRACE_INIT;
 					return Token.OPEN_BRACE;
 				case '}':
-					val = LocatedToken.Create (ref_line, col);
+					val = ltb.Create (current_source, ref_line, col);
 					return Token.CLOSE_BRACE;
 				case '[':
 					// To block doccomment inside attribute declaration.
 					if (doc_state == XmlCommentState.Allowed)
 						doc_state = XmlCommentState.NotAllowed;
 
-					val = LocatedToken.Create (ref_line, col);
+					val = ltb.Create (current_source, ref_line, col);
 
 					if (parsing_block == 0 || lambda_arguments_parsing)
 						return Token.OPEN_BRACKET;
@@ -3145,10 +3153,10 @@ namespace Mono.ActionScript
 						return Token.OPEN_BRACKET_EXPR;
 					}
 				case ']':
-					LocatedToken.CreateOptional (ref_line, col, ref val);
+					ltb.CreateOptional (current_source, ref_line, col, ref val);
 					return Token.CLOSE_BRACKET;
 				case '(':
-					val = LocatedToken.Create (ref_line, col);
+					val = ltb.Create (current_source, ref_line, col);
 					//
 					// An expression versions of parens can appear in block context only
 					//
@@ -3193,29 +3201,29 @@ namespace Mono.ActionScript
 
 					return Token.OPEN_PARENS;
 				case ')':
-					LocatedToken.CreateOptional (ref_line, col, ref val);
+					ltb.CreateOptional (current_source, ref_line, col, ref val);
 					return Token.CLOSE_PARENS;
 				case ',':
-					LocatedToken.CreateOptional (ref_line, col, ref val);
+					ltb.CreateOptional (current_source, ref_line, col, ref val);
 					return Token.COMMA;
 				case ';':
-					LocatedToken.CreateOptional (ref_line, col, ref val);
+					ltb.CreateOptional (current_source, ref_line, col, ref val);
 					return Token.SEMICOLON;
 				case '~':
-					val = LocatedToken.Create (ref_line, col);
+					val = ltb.Create (current_source, ref_line, col);
 					return Token.TILDE;
 				case '?':
-					val = LocatedToken.Create (ref_line, col);
+					val = ltb.Create (current_source, ref_line, col);
 					return TokenizePossibleNullableType ();
 				case '<':
-					val = LocatedToken.Create (ref_line, col);
-//					if (parsing_generic_less_than++ > 0)
-//						return Token.OP_GENERICS_LT;
+					val = ltb.Create (current_source, ref_line, col);
+					if (parsing_generic_less_than++ > 0)
+						return Token.OP_GENERICS_LT;
 
 					return TokenizeLessThan ();
 
 				case '>':
-					val = LocatedToken.Create (ref_line, col);
+					val = ltb.Create (current_source, ref_line, col);
 					d = peek_char ();
 
 					if (d == '=') {
@@ -3242,7 +3250,7 @@ namespace Mono.ActionScript
 					return Token.OP_GT;
 
 				case '+':
-					val = LocatedToken.Create (ref_line, col);
+					val = ltb.Create (current_source, ref_line, col);
 					d = peek_char ();
 					if (d == '+') {
 						d = Token.OP_INC;
@@ -3255,7 +3263,7 @@ namespace Mono.ActionScript
 					return d;
 
 				case '-':
-					val = LocatedToken.Create (ref_line, col);
+					val = ltb.Create (current_source, ref_line, col);
 					d = peek_char ();
 					if (d == '-') {
 						d = Token.OP_DEC;
@@ -3270,7 +3278,7 @@ namespace Mono.ActionScript
 					return d;
 
 				case '!':
-					val = LocatedToken.Create (ref_line, col);
+					val = ltb.Create (current_source, ref_line, col);
 					if (peek_char () == '=') {
 						get_char ();
 						return Token.OP_NE;
@@ -3278,7 +3286,7 @@ namespace Mono.ActionScript
 					return Token.BANG;
 
 				case '=':
-					val = LocatedToken.Create (ref_line, col);
+					val = ltb.Create (current_source, ref_line, col);
 					d = peek_char ();
 					if (d == '=') {
 						get_char ();
@@ -3292,7 +3300,7 @@ namespace Mono.ActionScript
 					return Token.ASSIGN;
 
 				case '&':
-					val = LocatedToken.Create (ref_line, col);
+					val = ltb.Create (current_source, ref_line, col);
 					d = peek_char ();
 					if (d == '&') {
 						get_char ();
@@ -3305,7 +3313,7 @@ namespace Mono.ActionScript
 					return Token.BITWISE_AND;
 
 				case '|':
-					val = LocatedToken.Create (ref_line, col);
+					val = ltb.Create (current_source, ref_line, col);
 					d = peek_char ();
 					if (d == '|') {
 						get_char ();
@@ -3318,7 +3326,7 @@ namespace Mono.ActionScript
 					return Token.BITWISE_OR;
 
 				case '*':
-					val = LocatedToken.Create (ref_line, col);
+					val = ltb.Create (current_source, ref_line, col);
 					if (peek_char () == '=') {
 						get_char ();
 						return Token.OP_MULT_ASSIGN;
@@ -3328,7 +3336,7 @@ namespace Mono.ActionScript
 				case '/':
 					d = peek_char ();
 					if (d == '=') {
-						val = LocatedToken.Create (ref_line, col);
+						val = ltb.Create (current_source, ref_line, col);
 						get_char ();
 						return Token.OP_DIV_ASSIGN;
 					}
@@ -3352,8 +3360,7 @@ namespace Mono.ActionScript
 							}
 						}
 
-						while ((d = get_char ()) != -1 && d != '\n')
-							;
+						while ((d = get_char ()) != -1 && d != '\n');
 
 						any_token_seen |= tokens_seen;
 						tokens_seen = false;
@@ -3425,11 +3432,11 @@ namespace Mono.ActionScript
 							update_formatted_doc_comment (current_comment_start);
 						continue;
 					}
-					val = LocatedToken.Create (ref_line, col);
+					val = ltb.Create (current_source, ref_line, col);
 					return Token.DIV;
 
 				case '%':
-					val = LocatedToken.Create (ref_line, col);
+					val = ltb.Create (current_source, ref_line, col);
 					if (peek_char () == '=') {
 						get_char ();
 						return Token.OP_MOD_ASSIGN;
@@ -3437,7 +3444,7 @@ namespace Mono.ActionScript
 					return Token.PERCENT;
 
 				case '^':
-					val = LocatedToken.Create (ref_line, col);
+					val = ltb.Create (current_source, ref_line, col);
 					if (peek_char () == '=') {
 						get_char ();
 						return Token.OP_XOR_ASSIGN;
@@ -3445,23 +3452,15 @@ namespace Mono.ActionScript
 					return Token.CARRET;
 
 				case ':':
-					val = LocatedToken.Create (ref_line, col);
+					val = ltb.Create (current_source, ref_line, col);
 					if (peek_char () == ':') {
 						get_char ();
 						return Token.DOUBLE_COLON;
 					}
 					return Token.COLON;
 
-				case '0':
-				case '1':
-				case '2':
-				case '3':
-				case '4':
-				case '5':
-				case '6':
-				case '7':
-				case '8':
-				case '9':
+				case '0': case '1': case '2': case '3': case '4':
+				case '5': case '6': case '7': case '8': case '9':
 					tokens_seen = true;
 					return is_number (c);
 
@@ -3474,10 +3473,10 @@ namespace Mono.ActionScript
 				case '.':
 					tokens_seen = true;
 					d = peek_char ();
-					if (d >= '0' && d <= '9') {
+					if (d >= '0' && d <= '9') 
 						return is_number (c);
-					}
-					LocatedToken.CreateOptional (ref_line, col, ref val);
+
+					ltb.CreateOptional (current_source, ref_line, col, ref val);
 					if (d != '<') {
 						return Token.DOT;
 					}

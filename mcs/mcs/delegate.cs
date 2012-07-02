@@ -68,6 +68,30 @@ namespace Mono.CSharp {
 			spec = new TypeSpec (Kind, null, this, null, ModFlags | Modifiers.SEALED);
 		}
 
+		public static TypeSpec CreateDelegateTypeFromMethodSpec (ResolveContext rc, MethodSpec ms, Location loc)
+		{
+			Namespace type_ns = rc.Module.GlobalRootNamespace.GetNamespace ("System", true);
+			if (type_ns == null) {
+				return null;
+			}
+			if (ms.ReturnType == rc.BuiltinTypes.Void) {
+				var actArgs = ms.Parameters.Types;
+				var actionSpec = type_ns.LookupType (rc.Module, "Action", actArgs.Length, LookupMode.Normal, loc).ResolveAsType(rc);
+				if (actionSpec == null) {
+					return null;
+				}
+				return actionSpec.MakeGenericType(rc, actArgs);
+			} else {
+				TypeSpec[] funcArgs = new TypeSpec[ms.Parameters.Types.Length + 1];
+				ms.Parameters.Types.CopyTo(funcArgs, 0);
+				funcArgs[ms.Parameters.Types.Length] = ms.ReturnType;
+				var funcSpec = type_ns.LookupType (rc.Module, "Func", funcArgs.Length, LookupMode.Normal, loc).ResolveAsType(rc);
+				if (funcSpec == null)
+					return null;
+				return funcSpec.MakeGenericType(rc, funcArgs);
+			}
+		}
+
 		#region Properties
 		public TypeSpec MemberType {
 			get {

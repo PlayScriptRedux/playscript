@@ -6047,7 +6047,9 @@ namespace Mono.CSharp
 			var current_field = rc.CurrentMemberDefinition as FieldBase;
 			var isAS = rc.FileType == SourceFileType.ActionScript;
 			TypeExpression type;
-			if (current_field != null && rc.CurrentAnonymousMethod == null) {
+			if (isAS && inferredArrayType != null) {
+				type = new TypeExpression (inferredArrayType, Location);
+			} else if (current_field != null && rc.CurrentAnonymousMethod == null) {
 				type = new TypeExpression (current_field.MemberType, current_field.Location);
 			} else if (variable != null) {
 				if (variable.TypeExpression is VarExpr) {
@@ -6062,8 +6064,6 @@ namespace Mono.CSharp
 				}
 			} else if (isAS && assign != null) {
 				type = new TypeExpression (assign.Target.Type, assign.Target.Location);
-			} else if (isAS && inferredArrayType != null) {
-				type = new TypeExpression (inferredArrayType, Location);
 			} else {
 				if (isAS) {
 					type = new TypeExpression (rc.Module.PredefinedTypes.AsArray.Resolve(), Location);
@@ -6198,7 +6198,9 @@ namespace Mono.CSharp
 		{
 			var current_field = rc.CurrentMemberDefinition as FieldBase;
 			TypeExpression type;
-			if (current_field != null && rc.CurrentAnonymousMethod == null) {
+			if (inferredObjType != null) {
+				type = new TypeExpression (inferredObjType, Location);
+			} else if (current_field != null && rc.CurrentAnonymousMethod == null) {
 				type = new TypeExpression (current_field.MemberType, current_field.Location);
 			} else if (variable != null) {
 				if (variable.TypeExpression is VarExpr) {
@@ -6208,8 +6210,6 @@ namespace Mono.CSharp
 				}
 			} else if (assign != null) {
 				type = new TypeExpression (assign.Target.Type, assign.Target.Location);
-			} else if (inferredObjType != null) {
-				type = new TypeExpression (inferredObjType, Location);
 			} else {
 				type = new TypeExpression (rc.BuiltinTypes.Dynamic, Location);
 			}
@@ -9977,13 +9977,15 @@ namespace Mono.CSharp
 				type = source.Type;
 				return this;
 			} else if (source is ArrayInitializer) {
-				source = ((ArrayInitializer)source).InferredResolveWithArrayType(ec, target.Type);
+				var inferArrayType = target.Type ?? ec.Module.PredefinedTypes.AsArray.Resolve();
+				source = ((ArrayInitializer)source).InferredResolveWithArrayType(ec, inferArrayType);
 				if (source == null)
 					return null;
 				eclass = source.eclass;
 				type = source.Type;
 			} else if (source is AsObjectInitializer) {
-				source = ((AsObjectInitializer)source).InferredResolveWithObjectType(ec, target.Type);
+				var inferObjType = target.Type ?? ec.Module.PredefinedTypes.AsObject.Resolve(); 
+				source = ((AsObjectInitializer)source).InferredResolveWithObjectType(ec, inferObjType);
 				if (source == null)
 					return null;
 				eclass = source.eclass;
@@ -10168,14 +10170,16 @@ namespace Mono.CSharp
 						throw new InternalErrorException ("This line should never be reached");
 					} else {
 						var t = ec.CurrentInitializerVariable.Type;
-						// LAMESPEC: The collection must implement IEnumerable only, no dynamic support
-						if (!t.ImplementsInterface (ec.BuiltinTypes.IEnumerable, false) && t.BuiltinType != BuiltinTypeSpec.Type.Dynamic) {
-							ec.Report.Error (1922, loc, "A field or property `{0}' cannot be initialized with a collection " +
-								"object initializer because type `{1}' does not implement `{2}' interface",
-								ec.CurrentInitializerVariable.GetSignatureForError (),
-								TypeManager.CSharpName (ec.CurrentInitializerVariable.Type),
-								TypeManager.CSharpName (ec.BuiltinTypes.IEnumerable));
-							return null;
+						if (ec.FileType == SourceFileType.CSharp) {
+							// LAMESPEC: The collection must implement IEnumerable only, no dynamic support
+							if (!t.ImplementsInterface (ec.BuiltinTypes.IEnumerable, false) && t.BuiltinType != BuiltinTypeSpec.Type.Dynamic) {
+								ec.Report.Error (1922, loc, "A field or property `{0}' cannot be initialized with a collection " +
+									"object initializer because type `{1}' does not implement `{2}' interface",
+									ec.CurrentInitializerVariable.GetSignatureForError (),
+									TypeManager.CSharpName (ec.CurrentInitializerVariable.Type),
+									TypeManager.CSharpName (ec.BuiltinTypes.IEnumerable));
+								return null;
+							}
 						}
 						is_collection_initialization = true;
 					}

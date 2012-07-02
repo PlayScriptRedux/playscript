@@ -1282,6 +1282,18 @@ namespace Mono.CSharp {
 		{
 			if (expr.eclass == ExprClass.MethodGroup){
 				if (!target_type.IsDelegate){
+					if (ec.FileType == SourceFileType.ActionScript && target_type == ec.BuiltinTypes.Dynamic) {
+						MethodGroupExpr mg = expr as MethodGroupExpr;
+						if (mg != null) {
+							if (mg.Candidates.Count != 1) {
+								ec.Report.Error (7021, loc, "Ambiguous overloaded methods `{0}' when assigning to Function or Object type", mg.Name);
+								return null;
+							}
+							var ms = (MethodSpec)mg.Candidates[0];
+							var del_type = Delegate.CreateDelegateTypeFromMethodSpec(ec, ms, loc);
+							return ImplicitDelegateCreation.Create (ec, mg, del_type, loc);
+						}
+					}
 					return null;
 				}
 

@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mcs", "mcs.csproj", "{D4A01C5B-A1B5-48F5-BB5B-D2E1BD236E56}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ascorlib", "..\class\ascorlib\ascorlib.csproj", "{EDBAC91B-2817-479E-8DDF-B24ADDA563A6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "testas", "..\..\..\testas\testas.csproj", "{6C40DE3C-5407-48EE-ADB0-14777488C837}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mcs", "mcs.csproj", "{D4A01C5B-A1B5-48F5-BB5B-D2E1BD236E56}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
