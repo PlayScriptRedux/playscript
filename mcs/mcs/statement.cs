@@ -5847,6 +5847,24 @@ namespace Mono.CSharp {
 	}
 
 	/// <summary>
+	/// ActionScript ForEach type.
+	/// </summary>/
+	public enum AsForEachType {
+		/// <summary>
+		/// Generate a normal cs foreach statement.
+		/// </summary>
+		CSharpForEach,
+		/// <summary>
+		/// Generate an ActionScript for (var a in collection) statement.  Yields keys.
+		/// </summary>
+		ForEachKey,
+		/// <summary>
+		/// Generate an ActionScript for each (var a in collection) statement.  Yields values.
+		/// </summary>
+		ForEachValue
+	}
+
+	/// <summary>
 	///   Implementation of the foreach C# statement
 	/// </summary>
 	public class Foreach : Statement
@@ -5902,6 +5920,12 @@ namespace Mono.CSharp {
 
 			public override bool Resolve (BlockContext ec)
 			{
+				if (ec.FileType == SourceFileType.ActionScript &&
+				    for_each.AsForEachType == AsForEachType.ForEachKey) {
+					ec.Report.Error (7018, loc, "for(in) statement cannot be used with arrays.");
+					return false;
+				}
+
 				Block variables_block = for_each.variable.Block;
 				copy = TemporaryVariableReference.Create (for_each.expr.Type, variables_block, loc);
 				copy.Resolve (ec);
@@ -6197,6 +6221,32 @@ namespace Mono.CSharp {
 				return ps;
 			}
 
+			PropertySpec ResolveKVPairKey (ResolveContext rc, TypeSpec kvPairType)
+			{
+				var ps = MemberCache.FindMember (kvPairType,
+					MemberFilter.Property ("Key", null),
+					BindingRestriction.InstanceOnly) as PropertySpec;
+
+				if (ps == null || !ps.IsPublic) {
+					return null;
+				}
+
+				return ps;
+			}
+
+			PropertySpec ResolveKVPairValue (ResolveContext rc, TypeSpec kvPairType)
+			{
+				var ps = MemberCache.FindMember (kvPairType,
+					MemberFilter.Property ("Value", null),
+					BindingRestriction.InstanceOnly) as PropertySpec;
+
+				if (ps == null || !ps.IsPublic) {
+					return null;
+				}
+
+				return ps;
+			}
+
 			public override bool Resolve (BlockContext ec)
 			{
 				bool is_dynamic = expr.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic;
@@ -6233,6 +6283,35 @@ namespace Mono.CSharp {
 				var current_pe = new PropertyExpr (current_prop, loc) { InstanceExpression = enumerator_variable }.Resolve (ec);
 				if (current_pe == null)
 					return false;
+
+				// Handle ActionScript Key for (.. in .. ) and value for each (.. in ..) statements.
+				if (ec.FileType == SourceFileType.ActionScript) {
+					var infTypeSpec = current_pe.Type as InflatedTypeSpec;
+					if (infTypeSpec != null) {
+						var defTypeSpec = infTypeSpec.GetDefinition();
+						var keyValueTypeSpec = ec.Module.PredefinedTypes.KeyValuePair.Resolve ();
+					    if (defTypeSpec.Equals(keyValueTypeSpec)) {
+							if (for_each.AsForEachType == AsForEachType.ForEachKey) {
+								var key_prop = ResolveKVPairKey(ec, current_pe.Type);
+								if (key_prop == null) 
+									return false;
+								current_pe = new PropertyExpr(key_prop, loc) { InstanceExpression = current_pe }.Resolve (ec);
+							} else {
+								var value_prop = ResolveKVPairValue(ec, current_pe.Type);
+								if (value_prop == null)
+									return false;
+								current_pe = new PropertyExpr(value_prop, loc) { InstanceExpression = current_pe }.Resolve (ec);
+							}
+						}
+					} else {
+						if (for_each.AsForEachType == AsForEachType.ForEachKey) {
+							ec.Report.Error (7017, loc, "for(in) statement cannot operate on keys of non dictionary collections.");
+							return false;
+						}
+					}
+					if (current_pe == null)
+						return false;
+				}
 
 				VarExpr ve = for_each.type as VarExpr;
 
@@ -6350,6 +6429,7 @@ namespace Mono.CSharp {
 		Expression expr;
 		Statement statement;
 		Block body;
+		AsForEachType asForEachType = AsForEachType.CSharpForEach;
 
 		public Foreach (Expression type, LocalVariable var, Expression expr, Statement stmt, Block body, Location l)
 		{
@@ -6359,6 +6439,12 @@ namespace Mono.CSharp {
 			this.statement = stmt;
 			this.body = body;
 			loc = l;
+		}
+
+		public Foreach (Expression type, LocalVariable var, Expression expr, Statement stmt, Block body, AsForEachType asType, Location l) 
+			: this(type, var, expr, stmt, body, l)
+		{
+			asForEachType = asType;
 		}
 
 		public Expression Expr {
@@ -6375,6 +6461,10 @@ namespace Mono.CSharp {
 
 		public LocalVariable Variable {
 			get { return variable; }
+		}
+
+		public AsForEachType AsForEachType {
+			get { return asForEachType; }
 		}
 
 		public override bool Resolve (BlockContext ec)

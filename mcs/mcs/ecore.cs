@@ -664,7 +664,8 @@ namespace Mono.CSharp {
 			None = 0,
 			InvocableOnly = 1,
 			ExactArity = 1 << 2,
-			ReadAccess = 1 << 3
+			ReadAccess = 1 << 3,
+			AsTypeCast = 1 << 4
 		}
 
 		//
@@ -2500,9 +2501,21 @@ namespace Mono.CSharp {
 				//
 				if (rc.FileType == SourceFileType.ActionScript && 
 				    (restrictions & MemberLookupRestrictions.InvocableOnly) != 0 && !variable_found) {
+
+					// Is this a package level function?
 					Expression pkgFn = LookupPackageLevelFunction(rc);
 					if (pkgFn != null)
 						return pkgFn;
+
+					// Is this a function style ActionScript cast.
+					if ((restrictions & MemberLookupRestrictions.AsTypeCast) != 0 && IsPossibleTypeOrNamespace (rc)) {
+						if (variable != null) {
+							rc.Report.SymbolRelatedToPreviousError (variable.Location, Name);
+							rc.Report.Error (135, loc, "`{0}' conflicts with a declaration in a child block", Name);
+						}
+
+						return ResolveAsTypeOrNamespace (rc);
+					}
 				}
 
 				if (errorMode) {

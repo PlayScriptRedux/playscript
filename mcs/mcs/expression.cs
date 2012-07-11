@@ -5312,11 +5312,31 @@ namespace Mono.CSharp
 			Expression member_expr;
 			var atn = expr as ATypeNameExpression;
 			if (atn != null) {
-				member_expr = atn.LookupNameExpression (ec, MemberLookupRestrictions.InvocableOnly | MemberLookupRestrictions.ReadAccess);
-				if (member_expr != null)
+				MemberLookupRestrictions lookupRestr = MemberLookupRestrictions.InvocableOnly | MemberLookupRestrictions.ReadAccess;
+				// Allow lookup to return a type for ActionSctipt function style casts.
+				if (ec.FileType == SourceFileType.ActionScript && arguments != null && arguments.Count == 1)
+					lookupRestr |= MemberLookupRestrictions.AsTypeCast;
+				member_expr = atn.LookupNameExpression (ec, lookupRestr);
+				if (member_expr != null) {
+					// Handle "function call" style casts in actionscript.
+					if (ec.FileType == SourceFileType.ActionScript && member_expr is TypeExpr && 
+					    arguments != null && arguments.Count == 1) {
+						var castExpr = new Cast(member_expr, arguments[0].Expr, loc);
+						return castExpr.Resolve (ec);
+					}
 					member_expr = member_expr.Resolve (ec);
+				}
 			} else {
 				member_expr = expr.Resolve (ec, ResolveFlags.VariableOrValue | ResolveFlags.MethodGroup);
+			}
+
+			// Handle function style casts in ActionScript
+			if (ec.FileType == SourceFileType.ActionScript && member_expr == null && atn != null &&
+			    arguments != null && arguments.Count == 1) {
+				var type_expr = atn.LookupNameExpression(ec, MemberLookupRestrictions.ReadAccess) as TypeExpr;
+				if (type_expr != null) {
+					return new Cast(type_expr, Arguments[0].Expr, loc);
+				}
 			}
 
 			if (member_expr == null)

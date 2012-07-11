@@ -197,6 +197,7 @@ namespace Mono.CSharp
 		public readonly PredefinedType RuntimeMethodHandle;
 		public readonly PredefinedType SecurityAction;
 		public readonly PredefinedType Dictionary;
+		public readonly PredefinedType KeyValuePair;
 		public readonly PredefinedType Hashtable;
 		public readonly PredefinedType List;
 
@@ -268,6 +269,7 @@ namespace Mono.CSharp
 			RuntimeMethodHandle = new PredefinedType (module, MemberKind.Struct, "System", "RuntimeMethodHandle");
 			SecurityAction = new PredefinedType (module, MemberKind.Enum, "System.Security.Permissions", "SecurityAction");
 			Dictionary = new PredefinedType (module, MemberKind.Class, "System.Collections.Generic", "Dictionary", 2);
+			KeyValuePair = new PredefinedType (module, MemberKind.Struct, "System.Collections.Generic", "KeyValuePair", 2);
 			Hashtable = new PredefinedType (module, MemberKind.Class, "System.Collections", "Hashtable");
 			List = new PredefinedType (module, MemberKind.Class, "System.Collections.Generic", "List", 1);
 

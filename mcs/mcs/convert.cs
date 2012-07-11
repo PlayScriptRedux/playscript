@@ -691,6 +691,14 @@ namespace Mono.CSharp {
 			}
 			
 			if (expr.eclass == ExprClass.MethodGroup) {
+				// ActionScript can implicitly cast unique methods/lambdas to dynamic/delegate types.
+				if (!target_type.IsDelegate && ec.FileType == SourceFileType.ActionScript && 
+				    (target_type == ec.BuiltinTypes.Dynamic || target_type == ec.BuiltinTypes.Delegate)) {
+					MethodGroupExpr mg = expr as MethodGroupExpr;
+					if (mg != null && mg.Candidates.Count == 1) {
+						return true;
+					}
+				}
 				if (target_type.IsDelegate && ec.Module.Compiler.Settings.Version != LanguageVersion.ISO_1) {
 					MethodGroupExpr mg = expr as MethodGroupExpr;
 					if (mg != null)
@@ -1282,7 +1290,8 @@ namespace Mono.CSharp {
 		{
 			if (expr.eclass == ExprClass.MethodGroup){
 				if (!target_type.IsDelegate){
-					if (ec.FileType == SourceFileType.ActionScript && target_type == ec.BuiltinTypes.Dynamic) {
+					if (ec.FileType == SourceFileType.ActionScript && 
+					    (target_type == ec.BuiltinTypes.Dynamic || target_type == ec.BuiltinTypes.Delegate)) {
 						MethodGroupExpr mg = expr as MethodGroupExpr;
 						if (mg != null) {
 							if (mg.Candidates.Count != 1) {

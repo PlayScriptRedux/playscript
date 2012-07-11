@@ -4071,11 +4071,11 @@ unary_expression
 	  {
 		$$ = new Unary (Unary.Operator.OnesComplement, (Expression) $2, GetLocation ($1));
 	  }
-	| OPEN_PARENS_CAST type CLOSE_PARENS prefixed_unary_expression
-	  {
-		$$ = new Cast ((FullNamedExpression) $2, (Expression) $4, GetLocation ($1));
-		lbag.AddLocation ($$, GetLocation ($3));
-	  }
+//	| OPEN_PARENS_CAST type CLOSE_PARENS prefixed_unary_expression
+//	  {
+//		$$ = new Cast ((FullNamedExpression) $2, (Expression) $4, GetLocation ($1));
+//		lbag.AddLocation ($$, GetLocation ($3));
+//	  }
 	| AWAIT prefixed_unary_expression
 	  {
 		if (!async_block) {
@@ -5527,7 +5527,28 @@ do_statement
 	;
 
 for_statement
-	: FOR open_parens_any
+	: FOR open_parens_any VAR identifier_inside_body COLON type IN expression CLOSE_PARENS 
+	  {
+		start_block (GetLocation ($2));
+		current_block.IsCompilerGenerated = true;
+		
+		var lt = (Tokenizer.LocatedToken) $4;
+		var li = new LocalVariable (current_block, lt.Value, LocalVariable.Flags.ForeachVariable | LocalVariable.Flags.Used, lt.Location);
+		current_block.AddLocalName (li);
+		$$ = li;
+	  } 
+	  embedded_statement
+	  {
+		if ($11 is EmptyStatement && lexer.peek_token () == Token.OPEN_BRACE)
+			Warning_EmptyStatement (GetLocation ($11));
+		
+		Foreach f = new Foreach ((Expression) $6, (LocalVariable) $10, (Expression) $8, (Statement) $11, current_block, AsForEachType.ForEachKey, GetLocation ($1));
+		lbag.AddStatement (f, GetLocation ($2), GetLocation ($7), GetLocation ($9));
+		end_block (GetLocation ($9));
+		
+		$$ = f;
+	  }	
+	| FOR open_parens_any
 	  {
 		start_block (GetLocation ($2));
 		current_block.IsCompilerGenerated = true;
@@ -5670,7 +5691,7 @@ foreach_statement
 		start_block (GetLocation ($2));
 		current_block.IsCompilerGenerated = true;
 		
-		Foreach f = new Foreach ((Expression) $3, null, null, null, null, GetLocation ($1));
+		Foreach f = new Foreach ((Expression) $3, null, null, null, null, AsForEachType.ForEachValue, GetLocation ($1));
 		current_block.AddStatement (f);
 		
 		lbag.AddStatement (f, GetLocation ($2));
@@ -5691,7 +5712,7 @@ foreach_statement
 		if ($11 is EmptyStatement && lexer.peek_token () == Token.OPEN_BRACE)
 			Warning_EmptyStatement (GetLocation ($11));
 		
-		Foreach f = new Foreach ((Expression) $6, (LocalVariable) $10, (Expression) $8, (Statement) $11, current_block, GetLocation ($1));
+		Foreach f = new Foreach ((Expression) $6, (LocalVariable) $10, (Expression) $8, (Statement) $11, current_block, AsForEachType.ForEachValue, GetLocation ($1));
 		lbag.AddStatement (f, GetLocation ($2), GetLocation ($7), GetLocation ($9));
 		end_block (GetLocation ($9));
 		
@@ -7111,7 +7132,7 @@ object ConvertAsType(SimpleName sn, object e)
 	else if (sn.Name == "void")
 		return new TypeExpression (compiler.BuiltinTypes.Void, GetLocation (e));
 	else if (sn.Name == "Function")
-		return new TypeExpression (compiler.BuiltinTypes.Dynamic, GetLocation (e));
+		return new TypeExpression (compiler.BuiltinTypes.Delegate, GetLocation (e));
 	else
 		return e;
 }

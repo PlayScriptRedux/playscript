@@ -46,13 +46,24 @@ package
         	trace("one","two");
         	trace("one","two","three");
         	trace("one","two","three","four");
-        	trace("one",2,"three",true,"five",null,"seven",123.456,"nine");
+	       	trace("one",2,"three",true,"five",null,"seven",123.456,"nine");
+	       	var d:Dictionary.<String,int> = new Dictionary.<String,int>();
+	       	d['key1'] = 100;
+	       	d['key2'] = 200;
+	       	for each (var value:int in d) {
+	       		trace(value);
+	       	}
+	       	for (var key:String in d) {
+	       		trace(key);
+	       	}
 	       	var a:Array;
         	a = [100, 200, 300];
             var s:String = '"Swami"';
 			var o2:Object = {"a":100, b:"blah", c:[100, {"d":200, e:"spackle", f:["blah1", "blah2", "blah3"]}, 300]};
 			o2.a = true;
-			var f:Foo = {"a":100, b:200, c:[998, 999, 1000]};
+			var o3:Object = new Foo();
+			var f:Foo = { "a":100, b:200, c:[998, 999, 1000] };
+			var fn:Function = onActivated;
 			f.addEventListener(Event.ACTIVATE, onActivated);
 			f.dispatchEvent(new Event(Event.ACTIVATE));
 			printDblArray(f.c);
