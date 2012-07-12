@@ -202,6 +202,7 @@ namespace Mono.ActionScript
 		bool handle_remove_add = false;
 		bool handle_where = false;
 		bool handle_typeof = false;
+		bool handle_delete = false;
 		bool lambda_arguments_parsing;
 		List<Location> escaped_identifiers;
 		int parsing_generic_less_than;
@@ -320,6 +321,11 @@ namespace Mono.ActionScript
 		public bool TypeOfParsing {
 			get { return handle_typeof; }
 			set { handle_typeof = value; }
+		}
+
+		public bool DeleteParsing {
+			get { return handle_delete; }
+			set { handle_delete = value; }
 		}
 	
 		public XmlCommentState doc_state {
@@ -3157,6 +3163,9 @@ namespace Mono.ActionScript
 					return Token.CLOSE_BRACKET;
 				case '(':
 					val = ltb.Create (current_source, ref_line, col);
+					if (handle_delete) {
+						return Token.OPEN_PARENS_DELETE;
+					}
 					//
 					// An expression versions of parens can appear in block context only
 					//

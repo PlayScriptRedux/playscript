@@ -6526,4 +6526,5 @@ namespace Mono.CSharp {
 			return visitor.Visit (this);
 		}
 	}
+
 }

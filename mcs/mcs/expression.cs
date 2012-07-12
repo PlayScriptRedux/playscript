@@ -8758,6 +8758,103 @@ namespace Mono.CSharp
 	}
 
 	/// <summary>
+	///   Implements the ActionScript delete expression
+	/// </summary>
+	public class AsDelete : ExpressionStatement {
+
+		public Expression Expr;
+		private Invocation removeExpr;
+		
+		public AsDelete (Expression expr, Location l)
+		{
+			this.Expr = expr;
+			loc = l;
+		}
+
+		public override bool IsSideEffectFree {
+			get {
+				return removeExpr.IsSideEffectFree;
+			}
+		}
+
+		public override bool ContainsEmitWithAwait ()
+		{
+			return removeExpr.ContainsEmitWithAwait ();
+		}
+
+		protected override Expression DoResolve (ResolveContext ec)
+		{
+			if (Expr is ElementAccess) {
+
+				var elem_access = Expr as ElementAccess;
+
+				if (elem_access.Arguments.Count != 1) {
+					ec.Report.Error (7021, loc, "delete statement must have only one index argument.");
+					return null;
+				}
+
+				var expr = elem_access.Expr.Resolve (ec);
+				if (expr.Type == null) {
+					return null;
+				}
+
+				if (expr.Type.IsArray) {
+					ec.Report.Error (7021, loc, "delete statement not allowed on arrays.");
+					return null;
+				}
+
+				removeExpr = new Invocation (new MemberAccess (expr, "Remove", loc), elem_access.Arguments);
+				return removeExpr.Resolve (ec);
+
+			} else if (Expr is MemberAccess) {
+
+				var memb_access = Expr as MemberAccess;
+
+				var expr = memb_access.LeftExpression.Resolve (ec);
+				if (expr.Type == null) {
+					return null;
+				}
+
+				var args = new Arguments(1);
+				args.Add (new Argument(new StringLiteral(ec.BuiltinTypes, memb_access.Name, loc)));
+				removeExpr = new Invocation (new MemberAccess (expr, "Remove", loc), args);
+				return removeExpr.Resolve (ec);
+
+			} else {
+				// Error is reported elsewhere.
+				return null;
+			}
+		}
+
+		protected override void CloneTo (CloneContext clonectx, Expression t)
+		{
+			var target = (AsDelete) t;
+
+			target.Expr = Expr.Clone (clonectx);
+		}
+
+		public override void Emit (EmitContext ec)
+		{
+			throw new System.NotImplementedException ();
+		}
+
+		public override void EmitStatement (EmitContext ec)
+		{
+			throw new System.NotImplementedException ();
+		}
+
+		public override Expression CreateExpressionTree (ResolveContext ec)
+		{
+			return removeExpr.CreateExpressionTree(ec);
+		}
+
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}
+	}
+
+	/// <summary>
 	///   Implements array access 
 	/// </summary>
 	public class ArrayAccess : Expression, IDynamicAssign, IMemoryLocation {

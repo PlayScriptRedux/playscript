@@ -343,6 +343,7 @@ namespace Mono.ActionScript
 %token IDENTIFIER
 %token OPEN_PARENS_LAMBDA
 %token OPEN_PARENS_CAST
+%token OPEN_PARENS_DELETE
 %token GENERIC_DIMENSION
 %token DEFAULT_COLON
 %token OPEN_BRACKET_EXPR
@@ -559,7 +560,11 @@ package_declaration
 	  	lbag.AddLocation (current_container, GetLocation ($2), GetLocation ($5), GetLocation ($10));
 	  
 		current_container = current_namespace = current_namespace.Parent;
-	  }  
+	  }
+	  opt_extern_alias_directives opt_using_directives opt_package_type_declarations
+	  {
+//	  	lbag.AddLocation (current_container, GetLocation ($2), GetLocation ($5), GetLocation ($10));
+	  }
 	;
 
 opt_package_name
@@ -3253,7 +3258,8 @@ primary_expression
 	| unchecked_expression
 //	| pointer_member_access
 	| anonymous_method_expression
-	| undocumented_expressions
+//	| undocumented_expressions
+	| delete_expression
 	;
 
 primary_expression_or_type
@@ -4508,23 +4514,23 @@ non_assignment_expression
 	  }
 	;
 	
-undocumented_expressions
-	: REFVALUE OPEN_PARENS non_assignment_expression COMMA type CLOSE_PARENS
-	  {
-		$$ = new RefValueExpr ((Expression) $3, (FullNamedExpression) $5, GetLocation ($1));
-		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4), GetLocation ($6));
-	  }
-	| REFTYPE open_parens_any expression CLOSE_PARENS
-	  {
-		$$ = new RefTypeExpr ((Expression) $3, GetLocation ($1));
-		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
-	  }
-	| MAKEREF open_parens_any expression CLOSE_PARENS
-	  {
-		$$ = new MakeRefExpr ((Expression) $3, GetLocation ($1));
-		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));	  
-	  }
-	;
+//undocumented_expressions
+//	: REFVALUE OPEN_PARENS non_assignment_expression COMMA type CLOSE_PARENS
+//	  {
+//		$$ = new RefValueExpr ((Expression) $3, (FullNamedExpression) $5, GetLocation ($1));
+//		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4), GetLocation ($6));
+//	  }
+//	| REFTYPE open_parens_any expression CLOSE_PARENS
+//	  {
+//		$$ = new RefTypeExpr ((Expression) $3, GetLocation ($1));
+//		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
+//	  }
+//	| MAKEREF open_parens_any expression CLOSE_PARENS
+//	  {
+//		$$ = new MakeRefExpr ((Expression) $3, GetLocation ($1));
+//		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));	  
+//	  }
+//	;
 
 constant_expression
 	: expression
@@ -4535,7 +4541,25 @@ boolean_expression
 	  {
 		$$ = new BooleanExpression ((Expression) $1);
 	  }
-	;
+	;	
+
+delete_expression
+	: DELETE 
+      {
+	  	lexer.DeleteParsing = true;
+	  }
+	  OPEN_PARENS_DELETE expression CLOSE_PARENS
+	  {
+	    lexer.DeleteParsing = false;
+	  	var expr = $4 as Expression;
+	  	if (!(expr is ElementAccess || expr is MemberAccess)) {
+			report.Error (7022, GetLocation ($1),
+				"delete operator may only be used with element access or member access expressions");
+	  	}
+		$$ = new AsDelete ((Expression) $4, GetLocation ($1));
+		lbag.AddLocation ($$, GetLocation ($3), GetLocation ($5));	 
+	  } 
+	;	
 
 //
 // 10 classes
@@ -4983,12 +5007,13 @@ valid_declaration_statement
 	| using_statement
 	| unsafe_statement
 	| fixed_statement
+	| delete_statement
 	;
 
 interactive_valid_declaration_statement
 	: block
 	| empty_statement
-        | interactive_expression_statement
+    | interactive_expression_statement
 	| selection_statement
 	| iteration_statement
 	| jump_statement		  
@@ -4999,6 +5024,7 @@ interactive_valid_declaration_statement
 	| using_statement
 	| unsafe_statement
 	| fixed_statement
+	| delete_statement
 	;
 
 embedded_statement
@@ -6074,6 +6100,18 @@ using_or_fixed_variable_initializer
 	  }
 	;
 
+delete_statement
+	: DELETE element_access SEMICOLON
+	  {
+		$$ = new StatementExpression (new AsDelete ((Expression) $2, GetLocation ($1)));
+		lbag.AddStatement ($$, GetLocation ($2));
+	  }
+	| DELETE member_access SEMICOLON
+	  {
+		$$ = new StatementExpression (new AsDelete ((Expression) $2, GetLocation ($1)));	
+		lbag.AddStatement ($$, GetLocation ($2));
+	  }
+	;
 
 // LINQ
 
@@ -7506,6 +7544,7 @@ static string GetTokenName (int token)
 		return "]";
 	case Token.OPEN_PARENS_CAST:
 	case Token.OPEN_PARENS_LAMBDA:
+	case Token.OPEN_PARENS_DELETE:
 	case Token.OPEN_PARENS:
 		return "(";
 	case Token.CLOSE_PARENS:

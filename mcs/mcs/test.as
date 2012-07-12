@@ -40,7 +40,20 @@ package
 			trace("Event type " + ev.type + " was triggered!");
 		}
 
+		public static function dumpDict(d:Dictionary.<String,int>):void {
+			trace('Dump dict..');
+	       	for each (var value:int in d) {
+	       		trace(value);
+	       	}
+	       	for (var key:String in d) {
+	       		trace(key);
+	       	}
+	       	trace('----');
+		}
+
         public static function Main(args:String[]) : void {
+        	var o6:Object = { a:100, b: 200 };
+        	delete o6.a;
         	trace(String(32));
         	trace("Hello world!");
         	trace("one","two");
@@ -50,12 +63,11 @@ package
 	       	var d:Dictionary.<String,int> = new Dictionary.<String,int>();
 	       	d['key1'] = 100;
 	       	d['key2'] = 200;
-	       	for each (var value:int in d) {
-	       		trace(value);
-	       	}
-	       	for (var key:String in d) {
-	       		trace(key);
-	       	}
+	       	dumpDict(d);
+	       	delete d['key1'];
+	       	dumpDict(d);
+	       	delete d['key2'];
+	       	dumpDict(d);
 	       	var a:Array;
         	a = [100, 200, 300];
             var s:String = '"Swami"';
@@ -80,4 +92,9 @@ package
 		}
 	}
 }
-		
+
+import System.*;
+
+public class Blah2 {
+	private var i:int;
+}
