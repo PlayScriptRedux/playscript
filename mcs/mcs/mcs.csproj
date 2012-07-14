@@ -160,6 +160,7 @@
     <Compile Include="visit.cs" />
     <Compile Include="as-parser.cs" />
     <Compile Include="as-tokenizer.cs" />
+    <Compile Include="as-lang.cs" />
   </ItemGroup>
   <ItemGroup Label="IKVM.Reflection">
     <Compile Include="..\class\IKVM.Reflection\*.cs">

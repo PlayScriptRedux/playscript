@@ -45,7 +45,7 @@ namespace Mono.ActionScript
 		
 		static readonly object ModifierNone = 0;
 	
-		const string RootNs = Consts.AsRootNamespace;
+		const string RootNs = AsConsts.AsRootNamespace;
 	
 		NamespaceContainer current_namespace;
 		TypeContainer current_container;
@@ -3709,7 +3709,7 @@ array_creation_expression
 		$$ = new ArrayCreation ((FullNamedExpression) $2, (List<Expression>) $4,
 				new ComposedTypeSpecifier (((List<Expression>) $4).Count, GetLocation ($3)) {
 	  				Next = (ComposedTypeSpecifier) $6
-			  	}, (ArrayInitializer) null /*$7*/, GetLocation ($1));
+			  	}, (AsArrayInitializer) null /*$7*/, GetLocation ($1));
 		lbag.AddLocation ($$, GetLocation ($3), GetLocation ($5));
 	  }
 //	| NEW new_expr_type rank_specifiers opt_array_initializer
@@ -3717,14 +3717,14 @@ array_creation_expression
 //	  	if ($4 == null)
 //	  		report.Error (1586, GetLocation ($1), "Array creation must have array size or array initializer");
 //
-//		$$ = new ArrayCreation ((FullNamedExpression) $2, (ComposedTypeSpecifier) $3, (ArrayInitializer) $4, GetLocation ($1));
+//		$$ = new ArrayCreation ((FullNamedExpression) $2, (ComposedTypeSpecifier) $3, (AsArrayInitializer) $4, GetLocation ($1));
 //	  }
 //	| NEW rank_specifier array_initializer
 //	  {
 //		if (lang_version <= LanguageVersion.ISO_2)
 //			FeatureIsNotAvailable (GetLocation ($1), "implicitly typed arrays");
 //	  
-//		$$ = new ImplicitlyTypedArrayCreation ((ComposedTypeSpecifier) $2, (ArrayInitializer) $3, GetLocation ($1));
+//		$$ = new ImplicitlyTypedArrayCreation ((ComposedTypeSpecifier) $2, (AsArrayInitializer) $3, GetLocation ($1));
 //	  }
 	| NEW new_expr_type OPEN_BRACKET CLOSE_BRACKET OPEN_BRACKET_EXPR error CLOSE_BRACKET
 	  {
@@ -3866,7 +3866,7 @@ dim_separators
 array_initializer
 	: OPEN_BRACKET_EXPR CLOSE_BRACKET
 	  {
-		var ai = new ArrayInitializer (0, GetLocation ($1));
+		var ai = new AsArrayInitializer (0, GetLocation ($1));
 		if (current_variable != null) {
 			ai.VariableDeclaration = current_variable;
 		}
@@ -3875,7 +3875,7 @@ array_initializer
 	  }
 	| OPEN_BRACKET_EXPR variable_initializer_list opt_comma CLOSE_BRACKET
 	  {
-		var ai = new ArrayInitializer ((List<Expression>) $2, GetLocation ($1));
+		var ai = new AsArrayInitializer ((List<Expression>) $2, GetLocation ($1));
 		if (current_variable != null) {
 			ai.VariableDeclaration = current_variable;
 		}
@@ -4308,8 +4308,8 @@ assignment_expression
 		var assign = new SimpleAssign (target, source);
 		lbag.AddLocation (assign, GetLocation ($2));
 	  	
-	  	if (source is ArrayInitializer) {
-	  		(source as ArrayInitializer).Assign = assign;
+	  	if (source is AsArrayInitializer) {
+	  		(source as AsArrayInitializer).Assign = assign;
 	  	} else if (source is AsObjectInitializer) {
 	  		(source as AsObjectInitializer).Assign = assign;
 	  	}

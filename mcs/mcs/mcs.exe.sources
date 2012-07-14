@@ -1,6 +1,7 @@
 AssemblyInfo.cs
 anonymous.cs
 argument.cs
+as-lang.cs
 as-tokenizer.cs
 assign.cs
 assembly.cs

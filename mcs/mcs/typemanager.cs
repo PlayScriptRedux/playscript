@@ -299,10 +299,10 @@ namespace Mono.CSharp
 			ICriticalNotifyCompletion = new PredefinedType (module, MemberKind.Interface, "System.Runtime.CompilerServices", "ICriticalNotifyCompletion");
 
 			AsObject = new PredefinedType (module, MemberKind.Class, "System.Dynamic", "ExpandoObject");
-			AsArray = new PredefinedType (module, MemberKind.Class, Consts.AsRootNamespace, "Array");
-			AsVector = new PredefinedType (module, MemberKind.Class, Consts.AsRootNamespace, "Vector", 1);
-			AsError = new PredefinedType (module, MemberKind.Class, Consts.AsRootNamespace, "Error");
-			AsFunction = new PredefinedType (module, MemberKind.Class, Consts.AsRootNamespace, "Function");
+			AsArray = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "Array");
+			AsVector = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "Vector", 1);
+			AsError = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "Error");
+			AsFunction = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "Function");
 
 			//
 			// Define types which are used for comparison. It does not matter

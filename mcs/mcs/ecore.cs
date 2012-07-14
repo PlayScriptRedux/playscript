@@ -385,10 +385,12 @@ namespace Mono.CSharp {
 			if (eclass != ExprClass.Unresolved)
 				return this;
 
-			if (this.Location.SourceFile != null) {
-				ec.FileType = this.Location.SourceFile.FileType;
-			} else {
-				ec.FileType = SourceFileType.CSharp;
+			if (ec != null) {
+				if (this.Location.SourceFile != null) {
+					ec.FileType = this.Location.SourceFile.FileType;
+				} else {
+					ec.FileType = SourceFileType.CSharp;
+				}
 			}
 
 			Expression e;
@@ -436,7 +438,8 @@ namespace Mono.CSharp {
 		{
 			int errors = ec.Report.Errors;
 			bool out_access = right_side == EmptyExpression.OutAccess;
-	Expression e = DoResolveLValue (ec, right_side);
+
+			Expression e = DoResolveLValue (ec, right_side);
 
 			if (e != null && out_access && !(e is IMemoryLocation)) {
 				// FIXME: There's no problem with correctness, the 'Expr = null' handles that.

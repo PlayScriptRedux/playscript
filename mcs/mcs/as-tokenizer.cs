@@ -3075,7 +3075,7 @@ namespace Mono.ActionScript
 		
 		public int xtoken ()
 		{
-			int d, c, next, nextCh;
+			int d, c, next;
 
 			// Whether we have seen comments on the current line
 			bool comments_seen = false;

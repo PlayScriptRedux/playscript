@@ -40,7 +40,7 @@ namespace Mono.CSharp
 		public Expression Expr;
 
 		// For ActionScript array/object initializer type inference.
-		public ArrayInitializer InferArrayInitializer;
+		public AsArrayInitializer InferArrayInitializer;
 		public AsObjectInitializer InferObjInitializer;
 
 		public Argument (Expression expr, AType type)
@@ -164,8 +164,8 @@ namespace Mono.CSharp
 				// Keep track of the array initializer, we need it to do array type inference when searching for
 				// a matching method.
 				if (ec.FileType == SourceFileType.ActionScript) {
-					if (Expr is ArrayInitializer) {
-						InferArrayInitializer = (ArrayInitializer)Expr;
+					if (Expr is AsArrayInitializer) {
+						InferArrayInitializer = (AsArrayInitializer)Expr;
 					} else if (Expr is AsObjectInitializer) {
 						InferObjInitializer = (AsObjectInitializer)Expr;
 					}
