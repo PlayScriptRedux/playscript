@@ -40,16 +40,24 @@
     <Compile Include="Error.cs" />
     <Compile Include="Class.cs" />
     <Compile Include="Extensions.cs" />
-    <Compile Include="TypeUtils.cs" />
     <Compile Include="Array.cs" />
     <Compile Include="functions.cs" />
     <Compile Include="flash\events\IEventDispatcher.cs" />
     <Compile Include="flash\events\Event.cs" />
     <Compile Include="flash\events\EventDispatcher.cs" />
+    <Compile Include="Expando\CacheDict.cs" />
+    <Compile Include="Expando\ExceptionFactory.Generated.cs" />
+    <Compile Include="Expando\TypeExtensions.cs" />
+    <Compile Include="Expando\TypeUtils.cs" />
+    <Compile Include="Expando\ExpandoClass.cs" />
+    <Compile Include="Expando\ExpandoObject.cs" />
+    <Compile Include="Expando\ContractUtils.cs" />
+    <Compile Include="Expando\BindingRestrictionsEx.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Folder Include="flash\" />
     <Folder Include="flash\events\" />
+    <Folder Include="Expando\" />
   </ItemGroup>
 </Project>

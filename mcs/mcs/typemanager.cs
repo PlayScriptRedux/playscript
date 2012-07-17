@@ -298,7 +298,7 @@ namespace Mono.CSharp
 			INotifyCompletion = new PredefinedType (module, MemberKind.Interface, "System.Runtime.CompilerServices", "INotifyCompletion");
 			ICriticalNotifyCompletion = new PredefinedType (module, MemberKind.Interface, "System.Runtime.CompilerServices", "ICriticalNotifyCompletion");
 
-			AsObject = new PredefinedType (module, MemberKind.Class, "System.Dynamic", "ExpandoObject");
+			AsObject = new PredefinedType (module, MemberKind.Class, "ActionScript.Expando", "ExpandoObject");
 			AsArray = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "Array");
 			AsVector = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "Vector", 1);
 			AsError = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "Error");

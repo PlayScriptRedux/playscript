@@ -184,7 +184,8 @@ net_4_0_dirs := \
 	WebMatrix.Data \
 	System.Data.Services.Client	\
 	System.Data.Services	\
-	System.Json
+	System.Json \
+	ascorlib
 	
 net_4_0_only_dirs := \
 	System.ComponentModel.Composition
