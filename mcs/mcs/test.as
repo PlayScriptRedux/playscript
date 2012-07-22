@@ -7,16 +7,36 @@ package
 	import System.Collections.Generic.*;
 	
 	public class Foo extends EventDispatcher {
-		public property a:int { get; set; }
-		public property b:Number { get; set; }
-		public property c:Number[] { get; set; }
+	
+		public static const BLAH:int = 100;
+		public static const FOO:String = "asdf";
+			
+	
+		private var _a:int;
+		private var _b:Number;
+		private var _c:Vector.<Number> = new Vector.<Number>();
+		public function get a():int {
+		 	return _a; }
+		public function set a(value:int):void {
+			_a = value;
+		}
+		public function get b():Number {
+		 	return _b; }
+		public function set b(value:Number):void {
+			_b = value;
+		}
+		public function get c():Vector.<Number> {
+		 	return _c; }
+		public function set c(value:Vector.<Number>):void {
+			_c = value;
+		}
 	}
 	
 	public class MyClass 
 	{
 		private var _foo:int = 200;
 		private var _spiggles:String = "Blah";
-		private var _skig:int[,] = [[100,200], [200, 300]];
+//		private var _skig:int[,] = [[100,200], [200, 300]];
 
 		public static function printVec(v:Vector.<Number>) : void {
 			for each (var n:int in v) {
@@ -25,19 +45,19 @@ package
 		}
 
 		public static function printArray(a:Array) : void {
-			for each (var o:Object in a) {
-				Console.WriteLine("{0} number.", o);
+			for each (var object:Object in a) {
+				Console.WriteLine("{0} number.", object);
 			}
 		}
 		
-		public static function printDblArray(a:Number[]):void {
+		public static function printDblArray(a:Vector.<Number>):void {
 			for each (var n:Number in a) {
 				trace(n.toString() + " number.");
 			}
 		}
 		
-		public static function onActivated(ev:Event):void {
-			trace("Event type " + ev.type + " was triggered!");
+		public static function onActivated(event:Event):void {
+			trace("Event type " + event.type + " was triggered!");
 		}
 
 		public static function dumpDict(d:Dictionary.<String,int>):void {
@@ -51,7 +71,7 @@ package
 	       	trace('----');
 		}
 
-        public static function Main(args:String[]) : void {
+        public static function Main() : void {
         	var o6:Object = { a:100, b: 200 };
         	delete o6.a;
         	trace(String(32));

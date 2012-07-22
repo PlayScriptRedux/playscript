@@ -574,6 +574,15 @@ namespace Mono.CSharp
 
 			if (MemberType.IsStatic)
 				Error_StaticReturnType ();
+
+			// Check to make sure property method return types match (ActionScript).
+			if (this.Location.SourceFile.FileType == SourceFileType.ActionScript) {
+				if (this.Set.ParameterTypes == null)
+					this.Set.ParameterInfo.Resolve(this.Set);
+				if (this.Get != null && this.Set != null && this.Get.ReturnType != this.Set.ParameterTypes[0]) {
+					Report.Error (7002, Location, "Type of property getter and setter must match");
+				}
+			}
 		}
 
 		protected override void DoMemberTypeIndependentChecks ()

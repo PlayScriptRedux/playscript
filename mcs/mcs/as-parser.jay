@@ -164,7 +164,8 @@ namespace Mono.ActionScript
 %token AS
 %token ADD
 %token SUPER	
-%token BOOL	
+%token BOOL
+%token BOOLEAN	
 %token BREAK	
 %token BYTE	
 %token CASE	
@@ -246,7 +247,6 @@ namespace Mono.ActionScript
 %token TRANSIENT
 %token TRUE	
 %token TRY	
-%token TYPE
 %token TYPEOF	
 %token UINT	
 %token ULONG	
@@ -983,13 +983,10 @@ constant_declaration
 	  {
 		var lt = (Tokenizer.LocatedToken) $4;
 		var mod = (Modifiers) $2;
+		mod &= ~Modifiers.STATIC;
 		current_field = new Const (current_type, (FullNamedExpression) $6, mod, new MemberName (lt.Value, lt.Location), (Attributes) $1);
 		current_type.AddMember (current_field);
-		
-		if ((mod & Modifiers.STATIC) != 0) {
-			report.Error (504, current_field.Location, "The constant `{0}' cannot be marked static", current_field.GetSignatureForError ());
-		}
-		
+				
 		$$ = current_field;
 	  }
 	  constant_initializer opt_constant_declarators SEMICOLON
@@ -1402,13 +1399,14 @@ method_header
 			current_type.AddMember (current_property);
 			modifiers = (Modifiers) 0;
 		} else {
-			current_property.ModFlags |= modifiers & ~Modifiers.AccessibilityMask;
-			if (!type.Equals(current_property.TypeExpression)) {
-				report.Error (7002, GetLocation ($10), "Type of property getter and setter must match", current_property.GetSignatureForError ());
-			}
-			if (current_property.Set != null && !ModifiersExtensions.IsRestrictedModifier (modifiers & Modifiers.AccessibilityMask, current_property.ModFlags & Modifiers.AccessibilityMask)) {
+//			if (!type.Equals(current_property.TypeExpression)) {
+//				report.Error (7002, GetLocation ($10), "Type of property getter and setter must match", current_property.GetSignatureForError ());
+//			}
+			if (current_property.Set != null && ModifiersExtensions.IsRestrictedModifier (current_property.ModFlags & Modifiers.AccessibilityMask, modifiers & Modifiers.AccessibilityMask)) {
 				current_property.Set.ModFlags |= current_property.ModFlags & Modifiers.AccessibilityMask;
 				current_property.ModFlags = (current_property.ModFlags & ~Modifiers.AccessibilityMask) | (modifiers & Modifiers.AccessibilityMask);
+				modifiers = (Modifiers) 0;
+			} else if ((modifiers & Modifiers.AccessibilityMask) == (current_property.ModFlags & Modifiers.AccessibilityMask)) {
 				modifiers = (Modifiers) 0;
 			}
 		}
@@ -1468,13 +1466,14 @@ method_header
 			current_type.AddMember (current_property);
 			modifiers = (Modifiers) 0;			
 		} else {
-			current_property.ModFlags |= modifiers & ~Modifiers.AccessibilityMask;		
-			if (!type.Equals(current_property.TypeExpression)) {
-				report.Error (7002, GetLocation ($10), "Type of property getter and setter must match", current_property.GetSignatureForError ());
-			}
-			if (current_property.Get != null && !ModifiersExtensions.IsRestrictedModifier (modifiers & Modifiers.AccessibilityMask, current_property.ModFlags & Modifiers.AccessibilityMask)) {
+//			if (!type.Equals(current_property.TypeExpression)) {
+//				report.Error (7002, GetLocation ($10), "Type of property getter and setter must match", current_property.GetSignatureForError ());
+//			}
+			if (current_property.Get != null && ModifiersExtensions.IsRestrictedModifier (current_property.ModFlags & Modifiers.AccessibilityMask, modifiers & Modifiers.AccessibilityMask)) {
 				current_property.Get.ModFlags |= current_property.ModFlags & Modifiers.AccessibilityMask;
 				current_property.ModFlags = (current_property.ModFlags & ~Modifiers.AccessibilityMask) | (modifiers & Modifiers.AccessibilityMask);
+				modifiers = (Modifiers) 0;
+			} else if ((modifiers & Modifiers.AccessibilityMask) == (current_property.ModFlags & Modifiers.AccessibilityMask)) {
 				modifiers = (Modifiers) 0;
 			}
 		}
@@ -3160,6 +3159,7 @@ type_expression_or_array
 	: type_expression
 	| type_expression rank_specifiers
 	  {
+	  	CheckIsAsx("arrays", GetLocation($2));
 		$$ = new ComposedCast ((FullNamedExpression) $1, (ComposedTypeSpecifier) $2);
 	  }
 	;
@@ -3244,8 +3244,8 @@ integral_type
 	| BYTE		{ CheckIsAsx("byte", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Byte, GetLocation ($1)); }
 	| SHORT		{ CheckIsAsx("short", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Short, GetLocation ($1)); }
 	| USHORT	{ CheckIsAsx("ushort", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.UShort, GetLocation ($1)); }
-	| INT		{ CheckIsAsx("int", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Int, GetLocation ($1)); }
-	| UINT		{ CheckIsAsx("unit", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.UInt, GetLocation ($1)); }
+	| INT		{ $$ = new TypeExpression (compiler.BuiltinTypes.Int, GetLocation ($1)); }
+	| UINT		{ $$ = new TypeExpression (compiler.BuiltinTypes.UInt, GetLocation ($1)); }
 	| LONG		{ CheckIsAsx("long", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Long, GetLocation ($1)); }
 	| ULONG		{ CheckIsAsx("ulong", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.ULong, GetLocation ($1)); }
 	| CHAR		{ CheckIsAsx("char", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Char, GetLocation ($1)); }
@@ -3724,6 +3724,7 @@ array_creation_expression
 	  opt_rank_specifier
 	  /* opt_array_initializer */
 	  {
+	  	CheckIsAsx("arrays", GetLocation($1));
 		$$ = new ArrayCreation ((FullNamedExpression) $2, (List<Expression>) $4,
 				new ComposedTypeSpecifier (((List<Expression>) $4).Count, GetLocation ($3)) {
 	  				Next = (ComposedTypeSpecifier) $6
@@ -3746,6 +3747,7 @@ array_creation_expression
 //	  }
 	| NEW new_expr_type OPEN_BRACKET CLOSE_BRACKET OPEN_BRACKET_EXPR error CLOSE_BRACKET
 	  {
+	  	CheckIsAsx("arrays", GetLocation($1));
 		report.Error (178, GetLocation ($6), "Invalid rank specifier, expecting `,' or `]'");
 		$$ = new ArrayCreation ((FullNamedExpression) $2, null, GetLocation ($1));
 	  }
@@ -7262,10 +7264,12 @@ string GetSymbolName (int token)
 	case Token.LITERAL:
 		return ((Constant)lexer.Value).GetValue ().ToString ();
 	case Token.IDENTIFIER:
-		return ((Tokenizer.LocatedToken)lexer.Value).Value;
+		return ((Tokenizer.LocatedToken)lexer.Value).Value ?? "";
 
 	case Token.BOOL:
 		return "bool";
+	case Token.BOOLEAN:
+		return "boolean";
 	case Token.BYTE:
 		return "byte";
 	case Token.CHAR:
@@ -7522,8 +7526,6 @@ static string GetTokenName (int token)
 		return "true";
 	case Token.TRY:
 		return "try";
-	case Token.TYPE:
-		return "type";
 	case Token.TYPEOF:
 		return "typeof";
 	case Token.UNCHECKED:

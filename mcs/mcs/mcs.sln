@@ -7,8 +7,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mcs", "mcs.csproj", "{D4A01
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "testascor", "..\..\..\testascor\testascor.csproj", "{39AACA26-5F41-448A-BA28-8963E23025C2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "testas", "..\..\..\testas\testas.csproj", "{F2FB1610-1C94-4A20-8360-B43528EA546E}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug - AST|Any CPU = Debug - AST|Any CPU
@@ -36,16 +34,6 @@ Global
 		{EDBAC91B-2817-479E-8DDF-B24ADDA563A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EDBAC91B-2817-479E-8DDF-B24ADDA563A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EDBAC91B-2817-479E-8DDF-B24ADDA563A6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F2FB1610-1C94-4A20-8360-B43528EA546E}.Debug - AST|Any CPU.ActiveCfg = Debug|x86
-		{F2FB1610-1C94-4A20-8360-B43528EA546E}.Debug - AST|Any CPU.Build.0 = Debug|x86
-		{F2FB1610-1C94-4A20-8360-B43528EA546E}.Debug|Any CPU.ActiveCfg = Debug|x86
-		{F2FB1610-1C94-4A20-8360-B43528EA546E}.Debug|Any CPU.Build.0 = Debug|x86
-		{F2FB1610-1C94-4A20-8360-B43528EA546E}.Debug|x86.ActiveCfg = Debug|x86
-		{F2FB1610-1C94-4A20-8360-B43528EA546E}.Debug|x86.Build.0 = Debug|x86
-		{F2FB1610-1C94-4A20-8360-B43528EA546E}.Release|Any CPU.ActiveCfg = Release|x86
-		{F2FB1610-1C94-4A20-8360-B43528EA546E}.Release|Any CPU.Build.0 = Release|x86
-		{F2FB1610-1C94-4A20-8360-B43528EA546E}.Release|x86.ActiveCfg = Release|x86
-		{F2FB1610-1C94-4A20-8360-B43528EA546E}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = mcs.csproj

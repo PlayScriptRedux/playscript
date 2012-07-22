@@ -534,13 +534,14 @@ namespace Mono.ActionScript
 		{
 			keyword_strings = new HashSet<string> ();
 
-			// 11 is the length of the longest keyword for now
-			keywords = new KeywordEntry<int>[11][];
+			// 13 is the length of the longest keyword for now
+			keywords = new KeywordEntry<int>[13][];
 
 			AddKeyword ("abstract", Token.ABSTRACT);
 			AddKeyword ("as", Token.AS);
 			AddKeyword ("add", Token.ADD);
 			AddKeyword ("bool", Token.BOOL);
+			AddKeyword ("boolean", Token.BOOLEAN);
 			AddKeyword ("break", Token.BREAK);
 			AddKeyword ("byte", Token.BYTE);
 			AddKeyword ("case", Token.CASE);
@@ -623,7 +624,6 @@ namespace Mono.ActionScript
 			AddKeyword ("transient", Token.TRANSIENT);
 			AddKeyword ("true", Token.TRUE);
 			AddKeyword ("try", Token.TRY);
-			AddKeyword ("type", Token.TYPE);
 			AddKeyword ("typeof", Token.TYPEOF);
 			AddKeyword ("uint", Token.UINT);
 			AddKeyword ("ulong", Token.ULONG);
@@ -923,7 +923,7 @@ namespace Mono.ActionScript
 			case Token.ULONG:
 			case Token.USHORT:
 				if (!handle_asx)
-					res = 1;
+					res = -1;
 
 				break;
 
@@ -946,7 +946,7 @@ namespace Mono.ActionScript
 			case Token.UNCHECKED:
 			case Token.UNSAFE:
 				if (!handle_asx)
-					res = 1;
+					res = -1;
 
 				break;
 			}
