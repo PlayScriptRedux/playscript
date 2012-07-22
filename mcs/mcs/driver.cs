@@ -69,6 +69,7 @@ namespace Mono.CSharp
 					}
 				} else {
 					Mono.ActionScript.Tokenizer lexer = new Mono.ActionScript.Tokenizer (reader, file, session);
+					lexer.AsxParsing = sourceFile.AsExtended;
 					int token, tokens = 0, errors = 0;
 	
 					while ((token = lexer.token ()) != Mono.ActionScript.Token.EOF){
@@ -183,6 +184,7 @@ namespace Mono.CSharp
 				parser.parse ();
 			} else {
 				ActionScriptParser parser = new ActionScriptParser (reader, file, session);
+				parser.handle_asx = sourceFile.AsExtended;
 				parser.parse ();
 			}
 		}

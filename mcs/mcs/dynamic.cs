@@ -239,7 +239,7 @@ namespace Mono.CSharp
 			{
 				Child = new IntConstant (ec.BuiltinTypes, (int) (flags | statement.flags), statement.loc);
 
-				type = ec.Module.PredefinedTypes.BinderFlags.Resolve ();
+				type = ec.Module.PredefinedTypes.GetBinderFlags(ec).Resolve ();
 				eclass = Child.eclass;
 				return this;
 			}
@@ -295,7 +295,7 @@ namespace Mono.CSharp
 			int errors = rc.Report.Errors;
 			var pt = rc.Module.PredefinedTypes;
 
-			binder_type = pt.Binder.Resolve ();
+			binder_type = pt.GetBinder(rc).Resolve ();
 			pt.CallSite.Resolve ();
 			pt.CallSiteGeneric.Resolve ();
 
@@ -307,8 +307,13 @@ namespace Mono.CSharp
 			if (rc.Report.Errors == errors)
 				return true;
 
-			rc.Report.Error (1969, loc,
-				"Dynamic operation cannot be compiled without `Microsoft.CSharp.dll' assembly reference");
+			if (rc.FileType == SourceFileType.ActionScript) {
+				rc.Report.Error (7027, loc,
+					"ActionScript dynamic operation cannot be compiled without `ascorlib.dll' assembly reference");
+			} else {
+				rc.Report.Error (1969, loc,
+					"Dynamic operation cannot be compiled without `Microsoft.CSharp.dll' assembly reference");
+			}
 			return false;
 		}
 
@@ -531,10 +536,15 @@ namespace Mono.CSharp
 			}
 		}
 
-		public static MemberAccess GetBinderNamespace (Location loc)
+		public static MemberAccess GetBinderNamespace (ResolveContext rc, Location loc)
 		{
-			return new MemberAccess (new MemberAccess (
-				new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "Microsoft", loc), "CSharp", loc), "RuntimeBinder", loc);
+			if (rc.FileType == SourceFileType.ActionScript) {
+				return new MemberAccess (
+					new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "ActionScript", loc), "RuntimeBinder", loc);
+			} else {
+				return new MemberAccess (new MemberAccess (
+					new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "Microsoft", loc), "CSharp", loc), "RuntimeBinder", loc);
+			}
 		}
 
 		protected MemberAccess GetBinder (string name, Location loc)
@@ -778,7 +788,7 @@ namespace Mono.CSharp
 			if (args == null) {
 				// Cannot be null because .NET trips over
 				real_args = new ArrayCreation (
-					new MemberAccess (GetBinderNamespace (loc), "CSharpArgumentInfo", loc),
+					new MemberAccess (GetBinderNamespace (ec, loc), "CSharpArgumentInfo", loc),
 					new ArrayInitializer (0, loc), loc);
 			} else {
 				real_args = new ImplicitlyTypedArrayCreation (args.CreateDynamicBinderArguments (ec), loc);

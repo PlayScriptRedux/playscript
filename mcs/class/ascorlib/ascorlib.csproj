@@ -32,7 +32,7 @@
     <Reference Include="System" />
     <Reference Include="System.Dynamic" />
     <Reference Include="System.Core" />
-    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Mono.CSharp" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
@@ -53,11 +53,34 @@
     <Compile Include="Expando\ExpandoObject.cs" />
     <Compile Include="Expando\ContractUtils.cs" />
     <Compile Include="Expando\BindingRestrictionsEx.cs" />
+    <Compile Include="RuntimeBinder\Binder.cs" />
+    <Compile Include="RuntimeBinder\CSharpArgumentInfo.cs" />
+    <Compile Include="RuntimeBinder\CSharpArgumentInfoFlags.cs" />
+    <Compile Include="RuntimeBinder\CSharpBinaryOperationBinder.cs" />
+    <Compile Include="RuntimeBinder\CSharpBinder.cs" />
+    <Compile Include="RuntimeBinder\CSharpBinderFlags.cs" />
+    <Compile Include="RuntimeBinder\CSharpConvertBinder.cs" />
+    <Compile Include="RuntimeBinder\CSharpGetIndexBinder.cs" />
+    <Compile Include="RuntimeBinder\CSharpGetMemberBinder.cs" />
+    <Compile Include="RuntimeBinder\CSharpInvokeBinder.cs" />
+    <Compile Include="RuntimeBinder\CSharpInvokeConstructorBinder.cs" />
+    <Compile Include="RuntimeBinder\CSharpInvokeMemberBinder.cs" />
+    <Compile Include="RuntimeBinder\CSharpIsEventBinder.cs" />
+    <Compile Include="RuntimeBinder\CSharpSetIndexBinder.cs" />
+    <Compile Include="RuntimeBinder\CSharpSetMemberBinder.cs" />
+    <Compile Include="RuntimeBinder\CSharpUnaryOperationBinder.cs" />
+    <Compile Include="RuntimeBinder\DynamicContext.cs" />
+    <Compile Include="RuntimeBinder\ErrorPrinter.cs" />
+    <Compile Include="RuntimeBinder\Extensions.cs" />
+    <Compile Include="RuntimeBinder\RuntimeBinderContext.cs" />
+    <Compile Include="RuntimeBinder\RuntimeBinderException.cs" />
+    <Compile Include="RuntimeBinder\RuntimeBinderInternalCompilerException.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Folder Include="flash\" />
     <Folder Include="flash\events\" />
     <Folder Include="Expando\" />
+    <Folder Include="RuntimeBinder\" />
   </ItemGroup>
 </Project>

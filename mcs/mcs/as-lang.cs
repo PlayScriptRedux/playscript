@@ -348,5 +348,27 @@ namespace Mono.CSharp
 		}
 	}
 
+	public class RegexLiteral : StringConstant, ILiteralConstant
+	{
+		public RegexLiteral (BuiltinTypes types, string s, Location loc)
+			: base (types, s, loc)
+		{
+		}
+
+		public override bool IsLiteral {
+			get { return true; }
+		}
+
+#if FULL_AST
+		public char[] ParsedValue { get; set; }
+#endif
+
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}
+	}
+
+
 }
 

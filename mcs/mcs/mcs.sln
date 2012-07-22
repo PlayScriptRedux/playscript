@@ -48,7 +48,7 @@ Global
 		{F2FB1610-1C94-4A20-8360-B43528EA546E}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
-		StartupItem = ..\..\..\testas\testas.csproj
+		StartupItem = mcs.csproj
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

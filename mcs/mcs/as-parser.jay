@@ -43,6 +43,8 @@ namespace Mono.ActionScript
 			All = Ref | Out | This | Params | Arglist | DefaultValue
 		}
 		
+		public bool handle_asx = false;
+		
 		static readonly object ModifierNone = 0;
 	
 		const string RootNs = AsConsts.AsRootNamespace;
@@ -166,12 +168,14 @@ namespace Mono.ActionScript
 %token BREAK	
 %token BYTE	
 %token CASE	
-%token CATCH	
+%token CATCH
+%token CAST
 %token CHAR	
 %token CHECKED	
 %token CLASS	
 %token CONST	
 %token CONTINUE	
+%token DEBUGGER
 %token DECIMAL	
 %token DEFAULT	
 %token DELEGATE	
@@ -203,6 +207,7 @@ namespace Mono.ActionScript
 %token INT	
 %token INTERFACE
 %token INTERNAL	
+%token INTRINSIC
 %token IS	
 %token LOCK	
 %token LONG	
@@ -219,6 +224,7 @@ namespace Mono.ActionScript
 %token PRIVATE
 %token PROPERTY	
 %token PROTECTED
+%token PROTOTYPE
 %token PUBLIC	
 %token READONLY	
 %token REF	
@@ -233,14 +239,19 @@ namespace Mono.ActionScript
 %token STRING	
 %token STRUCT	
 %token SWITCH	
+%token SYNCHRONIZED
 %token THIS	
 %token THROW	
+%token THROWS
+%token TRANSIENT
 %token TRUE	
 %token TRY	
+%token TYPE
 %token TYPEOF	
 %token UINT	
 %token ULONG	
 %token UNCHECKED
+%token UNDEFINED
 %token UNSAFE	
 %token USHORT	
 %token USING	
@@ -250,7 +261,6 @@ namespace Mono.ActionScript
 %token VOLATILE
 %token WHERE
 %token WHILE	
-%token ARGLIST
 %token PARTIAL
 %token ARROW
 %token FROM
@@ -268,9 +278,6 @@ namespace Mono.ActionScript
 %token INTO
 %token INTERR_NULLABLE
 %token EXTERN
-%token REFVALUE
-%token REFTYPE
-%token MAKEREF
 %token ASYNC
 %token AWAIT
 
@@ -317,6 +324,7 @@ namespace Mono.ActionScript
 %token OP_LE
 %token OP_GE
 %token OP_EQ
+%token OP_REF_EQ
 %token OP_NE
 %token OP_AND
 %token OP_OR
@@ -871,10 +879,12 @@ opt_named_modifier
 	: /* empty */   { $$ = null; }
 	| REF
 	  { 
+	  	CheckIsAsx("ref parameters", GetLocation($1));
 		$$ = Argument.AType.Ref;
 	  }
 	| OUT
 	  { 
+	  	CheckIsAsx("out parameters", GetLocation($1));
 		$$ = Argument.AType.Out;
 	  }
 	;
@@ -1597,12 +1607,12 @@ formal_parameter_list
 
 		$$ = new ParametersCompiled (pars_list.ToArray ()); 
 	  }
-	| fixed_parameters COMMA arglist_modifier
-	  {
-		var pars_list = (List<Parameter>) $1;
-		pars_list.Add (new ArglistParameter (GetLocation ($3)));
-		$$ = new ParametersCompiled (pars_list.ToArray (), true);
-	  }
+//	| fixed_parameters COMMA arglist_modifier
+//	  {
+//		var pars_list = (List<Parameter>) $1;
+//		pars_list.Add (new ArglistParameter (GetLocation ($3)));
+//		$$ = new ParametersCompiled (pars_list.ToArray (), true);
+//	  }
 	| parameter_array COMMA error
 	  {
 		if ($1 != null)
@@ -1620,29 +1630,29 @@ formal_parameter_list
 
 		$$ = new ParametersCompiled (pars_list.ToArray (), true);
 	  }
-	| arglist_modifier COMMA error
-	  {
-		report.Error (257, GetLocation ($1), "An __arglist parameter must be the last parameter in a formal parameter list");
-
-		$$ = new ParametersCompiled (new Parameter [] { new ArglistParameter (GetLocation ($1)) }, true);
-	  }
-	| fixed_parameters COMMA ARGLIST COMMA error 
-	  {
-		report.Error (257, GetLocation ($3), "An __arglist parameter must be the last parameter in a formal parameter list");
-
-		var pars_list = (List<Parameter>) $1;
-		pars_list.Add (new ArglistParameter (GetLocation ($3)));
-
-		$$ = new ParametersCompiled (pars_list.ToArray (), true);
-	  }
+//	| arglist_modifier COMMA error
+//	  {
+//		report.Error (257, GetLocation ($1), "An __arglist parameter must be the last parameter in a formal parameter list");
+//
+//		$$ = new ParametersCompiled (new Parameter [] { new ArglistParameter (GetLocation ($1)) }, true);
+//	  }
+//	| fixed_parameters COMMA ARGLIST COMMA error 
+//	  {
+//		report.Error (257, GetLocation ($3), "An __arglist parameter must be the last parameter in a formal parameter list");
+//
+//		var pars_list = (List<Parameter>) $1;
+//		pars_list.Add (new ArglistParameter (GetLocation ($3)));
+//
+//		$$ = new ParametersCompiled (pars_list.ToArray (), true);
+//	  }
 	| parameter_array 
 	  {
 		$$ = new ParametersCompiled (new Parameter[] { (Parameter) $1 } );
 	  }
-	| arglist_modifier
-	  {
-		$$ = new ParametersCompiled (new Parameter [] { new ArglistParameter (GetLocation ($1)) }, true);
-	  }
+//	| arglist_modifier
+//	  {
+//		$$ = new ParametersCompiled (new Parameter [] { new ArglistParameter (GetLocation ($1)) }, true);
+//	  }
 	| error
 	  {
 		Error_SyntaxError (yyToken);
@@ -1856,13 +1866,13 @@ params_modifier
 	  }
 	;
 	
-arglist_modifier
-	: ARGLIST
-	  {
-	  	if ((valid_param_mod & ParameterModifierType.Arglist) == 0)
-	  		report.Error (1669, GetLocation ($1), "__arglist is not valid in this context");
-	  }
-	;
+//arglist_modifier
+//	: ARGLIST
+//	  {
+//	  	if ((valid_param_mod & ParameterModifierType.Arglist) == 0)
+//	  		report.Error (1669, GetLocation ($1), "__arglist is not valid in this context");
+//	  }
+//	;
 
 property_declaration
 	: opt_attributes
@@ -1895,6 +1905,8 @@ property_declaration
 	  }
 	  CLOSE_BRACE
 	  {
+  		CheckIsAsx("property", GetLocation($3)); 	
+  		  
 		lbag.AppendToMember (current_property, GetLocation ($12));
 		current_property = null;
 	  }
@@ -1937,6 +1949,8 @@ indexer_declaration
 	  }
 	  CLOSE_BRACE
 	  {
+  		CheckIsAsx("indexer", GetLocation($3)); 	
+	  
 		if (current_property.AccessorFirst != null && current_property.AccessorFirst.Block == null)
 			((Indexer) current_property).ParameterInfo.CheckParameters (current_property);
 	  
@@ -2219,6 +2233,8 @@ operator_declarator
 	  }
 	  opt_formal_parameter_list CLOSE_PARENS COLON operator_type 
 	  {
+		CheckIsAsx("operator", GetLocation($1)); 	  
+	  
 		valid_param_mod = 0;
 
 		Location loc = GetLocation ($1);
@@ -2751,6 +2767,8 @@ enum_declaration
 	  }
 	  CLOSE_BRACE opt_semicolon
 	  {
+	  	CheckIsAsx("enum", GetLocation($3));
+	  
 		if (doc_support)
 			current_container.DocComment = enumTypeComment;
 			
@@ -3212,25 +3230,25 @@ base_type_name
  * simple types, but we need this to reuse it easily in variable_type
  */
 builtin_types
-	: OBJECT	{ $$ = new TypeExpression (compiler.BuiltinTypes.Object, GetLocation ($1)); }
+	: /* OBJECT	{ $$ = new TypeExpression (compiler.BuiltinTypes.Object, GetLocation ($1)); }
 	| STRING	{ $$ = new TypeExpression (compiler.BuiltinTypes.String, GetLocation ($1)); }
 	| BOOL		{ $$ = new TypeExpression (compiler.BuiltinTypes.Bool, GetLocation ($1)); }
-	| DECIMAL	{ $$ = new TypeExpression (compiler.BuiltinTypes.Decimal, GetLocation ($1)); }
-	| FLOAT		{ $$ = new TypeExpression (compiler.BuiltinTypes.Float, GetLocation ($1)); }
-	| DOUBLE	{ $$ = new TypeExpression (compiler.BuiltinTypes.Double, GetLocation ($1)); }
+	| */ DECIMAL { CheckIsAsx("decimal", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Decimal, GetLocation ($1)); }
+	| FLOAT		{ CheckIsAsx("float", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Float, GetLocation ($1)); }
+	| DOUBLE	{ CheckIsAsx("double", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Double, GetLocation ($1)); }
 	| integral_type
 	;
 
 integral_type
-	: SBYTE		{ $$ = new TypeExpression (compiler.BuiltinTypes.SByte, GetLocation ($1)); }
-	| BYTE		{ $$ = new TypeExpression (compiler.BuiltinTypes.Byte, GetLocation ($1)); }
-	| SHORT		{ $$ = new TypeExpression (compiler.BuiltinTypes.Short, GetLocation ($1)); }
-	| USHORT	{ $$ = new TypeExpression (compiler.BuiltinTypes.UShort, GetLocation ($1)); }
-	| INT		{ $$ = new TypeExpression (compiler.BuiltinTypes.Int, GetLocation ($1)); }
-	| UINT		{ $$ = new TypeExpression (compiler.BuiltinTypes.UInt, GetLocation ($1)); }
-	| LONG		{ $$ = new TypeExpression (compiler.BuiltinTypes.Long, GetLocation ($1)); }
-	| ULONG		{ $$ = new TypeExpression (compiler.BuiltinTypes.ULong, GetLocation ($1)); }
-	| CHAR		{ $$ = new TypeExpression (compiler.BuiltinTypes.Char, GetLocation ($1)); }
+	: SBYTE		{ CheckIsAsx("sbyte", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.SByte, GetLocation ($1)); }
+	| BYTE		{ CheckIsAsx("byte", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Byte, GetLocation ($1)); }
+	| SHORT		{ CheckIsAsx("short", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Short, GetLocation ($1)); }
+	| USHORT	{ CheckIsAsx("ushort", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.UShort, GetLocation ($1)); }
+	| INT		{ CheckIsAsx("int", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Int, GetLocation ($1)); }
+	| UINT		{ CheckIsAsx("unit", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.UInt, GetLocation ($1)); }
+	| LONG		{ CheckIsAsx("long", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Long, GetLocation ($1)); }
+	| ULONG		{ CheckIsAsx("ulong", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.ULong, GetLocation ($1)); }
+	| CHAR		{ CheckIsAsx("char", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Char, GetLocation ($1)); }
 	;
 
 //
@@ -3565,16 +3583,16 @@ non_simple_argument
 		$$ = new Argument ((Expression) $2, Argument.AType.Out);
 		lbag.AddLocation ($$, GetLocation ($1));
 	  }
-	| ARGLIST OPEN_PARENS argument_list CLOSE_PARENS
-	  {
-		$$ = new Argument (new Arglist ((Arguments) $3, GetLocation ($1)));
-		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
-	  }
-	| ARGLIST OPEN_PARENS CLOSE_PARENS
-	  {
-		$$ = new Argument (new Arglist (GetLocation ($1)));
-		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($3));
-	  }	  
+//	| ARGLIST OPEN_PARENS argument_list CLOSE_PARENS
+//	  {
+//		$$ = new Argument (new Arglist ((Arguments) $3, GetLocation ($1)));
+//		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
+//	  }
+//	| ARGLIST OPEN_PARENS CLOSE_PARENS
+//	  {
+//		$$ = new Argument (new Arglist (GetLocation ($1)));
+//		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($3));
+//	  }	  
 	;
 
 variable_reference
@@ -3910,6 +3928,7 @@ typeof_expression
 	  }
 	  open_parens_any typeof_type_expression CLOSE_PARENS
 	  {
+		CheckIsAsx("typeof", GetLocation($1)); 	  
 	  	lexer.TypeOfParsing = false;
 		$$ = new TypeOf ((FullNamedExpression) $4, GetLocation ($1));
 		lbag.AddLocation ($$, GetLocation ($3), GetLocation ($5));
@@ -3988,6 +4007,7 @@ qualified_alias_member
 sizeof_expression
 	: SIZEOF open_parens_any type CLOSE_PARENS
 	  { 
+		CheckIsAsx("sizeof", GetLocation($1)); 	  
 		$$ = new SizeOf ((Expression) $3, GetLocation ($1));
 		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
 	  }
@@ -3996,6 +4016,7 @@ sizeof_expression
 checked_expression
 	: CHECKED open_parens_any expression CLOSE_PARENS
 	  {
+		CheckIsAsx("checked", GetLocation($1)); 	  
 		$$ = new CheckedExpr ((Expression) $3, GetLocation ($1));
 		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
 	  }
@@ -4004,6 +4025,7 @@ checked_expression
 unchecked_expression
 	: UNCHECKED open_parens_any expression CLOSE_PARENS
 	  {
+		CheckIsAsx("unchecked", GetLocation($1)); 	  
 		$$ = new UnCheckedExpr ((Expression) $3, GetLocation ($1));
 		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
 	  }
@@ -4453,6 +4475,7 @@ lambda_expression
 	  }
 	  lambda_expression_body
 	  {
+		CheckIsAsx("lambda", GetLocation($1)); 	  
 		$$ = end_anonymous ((ParametersBlock) $4);
 		lbag.AddLocation ($$, GetLocation ($2));
 	  }
@@ -4478,6 +4501,7 @@ lambda_expression
 	  }
 	  lambda_expression_body
 	  {
+		CheckIsAsx("lambda", GetLocation($1)); 	  
 		$$ = end_anonymous ((ParametersBlock) $7);
 		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($4), GetLocation ($5));
 	  }
@@ -4492,6 +4516,7 @@ lambda_expression
 	  }
 	  lambda_expression_body
 	  {
+		CheckIsAsx("lambda", GetLocation($1)); 	  
 		$$ = end_anonymous ((ParametersBlock) $8);
 		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($2), GetLocation ($5), GetLocation ($6));
 	  }
@@ -4508,10 +4533,10 @@ non_assignment_expression
 	| query_expression
 	| array_initializer
 	| object_or_collection_initializer
-	| ARGLIST
-	  {
-		$$ = new ArglistAccess (GetLocation ($1));
-	  }
+//	| ARGLIST
+//	  {
+//		$$ = new ArglistAccess (GetLocation ($1));
+//	  }
 	;
 	
 //undocumented_expressions
@@ -7157,6 +7182,14 @@ void Error_SyntaxError (int error_code, int token, string msg)
 		report.Error (error_code, loc, "{2} `{0}', expecting {1}", symbol, expecting, msg);	  
 }
 
+void CheckIsAsx(string elem, Location loc) 
+{
+	if (!handle_asx) {
+		report.Error (7035, loc, "`{0}' only supported with asx extended syntax", elem);
+	}
+
+}
+
 object ConvertAsType(SimpleName sn, object e)
 {
 	if (sn.Name == "Object") 
@@ -7301,6 +7334,8 @@ string GetSymbolName (int token)
 		return ">=";
 	case Token.OP_EQ:
 		return "==";
+	case Token.OP_REF_EQ:
+		return "===";
 	case Token.OP_NE:
 		return "!=";
 	case Token.OP_AND:
@@ -7353,6 +7388,8 @@ static string GetTokenName (int token)
 		return "break";
 	case Token.CASE:
 		return "case";
+	case Token.CAST:
+		return "cast";
 	case Token.CATCH:
 		return "catch";
 	case Token.CHECKED:
@@ -7363,6 +7400,8 @@ static string GetTokenName (int token)
 		return "const";
 	case Token.CONTINUE:
 		return "continue";
+	case Token.DEBUGGER:
+		return "debugger";
 	case Token.DEFAULT:
 		return "default";
 	case Token.DELEGATE:
@@ -7417,6 +7456,8 @@ static string GetTokenName (int token)
 		return "interface";
 	case Token.INTERNAL:
 		return "internal";
+	case Token.INTRINSIC:
+		return "intrinsic";
 	case Token.IS:
 		return "is";
 	case Token.LOCK:
@@ -7443,6 +7484,8 @@ static string GetTokenName (int token)
 		return "property";
 	case Token.PROTECTED:
 		return "protected";
+	case Token.PROTOTYPE:
+		return "prototype";
 	case Token.PUBLIC:
 		return "public";
 	case Token.READONLY:
@@ -7465,18 +7508,28 @@ static string GetTokenName (int token)
 		return "struct";
 	case Token.SWITCH:
 		return "switch";
+	case Token.SYNCHRONIZED:
+		return "synchronized";
 	case Token.THIS:
 		return "this";
 	case Token.THROW:
 		return "throw";
+	case Token.THROWS:
+		return "throws";
+	case Token.TRANSIENT:
+		return "transient";
 	case Token.TRUE:
 		return "true";
 	case Token.TRY:
 		return "try";
+	case Token.TYPE:
+		return "type";
 	case Token.TYPEOF:
 		return "typeof";
 	case Token.UNCHECKED:
 		return "unchecked";
+	case Token.UNDEFINED:
+		return "undefined";
 	case Token.UNSAFE:
 		return "unsafe";
 	case Token.USING:
@@ -7491,14 +7544,14 @@ static string GetTokenName (int token)
 		return "where";
 	case Token.WHILE:
 		return "while";
-	case Token.ARGLIST:
-		return "__arglist";
-	case Token.REFVALUE:
-		return "__refvalue";
-	case Token.REFTYPE:
-		return "__reftype";
-	case Token.MAKEREF:
-		return "__makeref";
+//	case Token.ARGLIST:
+//		return "__arglist";
+//	case Token.REFVALUE:
+//		return "__refvalue";
+//	case Token.REFTYPE:
+//		return "__reftype";
+//	case Token.MAKEREF:
+//		return "__makeref";
 	case Token.PARTIAL:
 		return "partial";
 	case Token.ARROW:

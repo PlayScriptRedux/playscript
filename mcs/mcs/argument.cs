@@ -324,7 +324,7 @@ namespace Mono.CSharp
 			Location loc = Location.Null;
 			var all = new ArrayInitializer (args.Count, loc);
 
-			MemberAccess binder = DynamicExpressionStatement.GetBinderNamespace (loc);
+			MemberAccess binder = DynamicExpressionStatement.GetBinderNamespace (rc, loc);
 
 			foreach (Argument a in args) {
 				Arguments dargs = new Arguments (2);

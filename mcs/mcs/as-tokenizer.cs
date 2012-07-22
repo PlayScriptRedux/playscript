@@ -197,12 +197,14 @@ namespace Mono.ActionScript
 		int previous_col;
 		int current_token;
 		readonly int tab_size;
+		bool handle_asx = false;
 		bool handle_get_set = false;
 		bool handle_each = false;
 		bool handle_remove_add = false;
 		bool handle_where = false;
 		bool handle_typeof = false;
 		bool handle_delete = false;
+		bool handle_regex = false;
 		bool lambda_arguments_parsing;
 		List<Location> escaped_identifiers;
 		int parsing_generic_less_than;
@@ -303,6 +305,11 @@ namespace Mono.ActionScript
 
 		static readonly char[] simple_whitespaces = new char[] { ' ', '\t' };
 
+		public bool AsxParsing {
+			get { return handle_asx; }
+			set { handle_asx = value; }
+		}
+
 		public bool PropertyParsing {
 			get { return handle_get_set; }
 			set { handle_get_set = value; }
@@ -328,6 +335,11 @@ namespace Mono.ActionScript
 			set { handle_delete = value; }
 		}
 	
+		public bool RegexParsing {
+			get { return handle_regex; }
+			set { handle_regex = value; }
+		}
+
 		public XmlCommentState doc_state {
 			get { return xml_doc_state; }
 			set {
@@ -525,10 +537,6 @@ namespace Mono.ActionScript
 			// 11 is the length of the longest keyword for now
 			keywords = new KeywordEntry<int>[11][];
 
-			AddKeyword ("__arglist", Token.ARGLIST);
-			AddKeyword ("__makeref", Token.MAKEREF);
-			AddKeyword ("__reftype", Token.REFTYPE);
-			AddKeyword ("__refvalue", Token.REFVALUE);
 			AddKeyword ("abstract", Token.ABSTRACT);
 			AddKeyword ("as", Token.AS);
 			AddKeyword ("add", Token.ADD);
@@ -536,12 +544,14 @@ namespace Mono.ActionScript
 			AddKeyword ("break", Token.BREAK);
 			AddKeyword ("byte", Token.BYTE);
 			AddKeyword ("case", Token.CASE);
+			AddKeyword ("cast", Token.CAST);
 			AddKeyword ("catch", Token.CATCH);
 			AddKeyword ("char", Token.CHAR);
 			AddKeyword ("checked", Token.CHECKED);
 			AddKeyword ("class", Token.CLASS);
 			AddKeyword ("const", Token.CONST);
 			AddKeyword ("continue", Token.CONTINUE);
+			AddKeyword ("debugger", Token.DEBUGGER);
 			AddKeyword ("decimal", Token.DECIMAL);
 			AddKeyword ("default", Token.DEFAULT);
 			AddKeyword ("delegate", Token.DELEGATE);
@@ -572,6 +582,7 @@ namespace Mono.ActionScript
 			AddKeyword ("int", Token.INT);
 			AddKeyword ("interface", Token.INTERFACE);
 			AddKeyword ("internal", Token.INTERNAL);
+			AddKeyword ("intrinsic", Token.INTRINSIC);
 			AddKeyword ("is", Token.IS);
 			AddKeyword ("lock", Token.LOCK);
 			AddKeyword ("long", Token.LONG);
@@ -588,6 +599,7 @@ namespace Mono.ActionScript
 			AddKeyword ("property", Token.PROPERTY);
 			AddKeyword ("private", Token.PRIVATE);
 			AddKeyword ("protected", Token.PROTECTED);
+			AddKeyword ("prototype", Token.PROTOTYPE);
 			AddKeyword ("public", Token.PUBLIC);
 			AddKeyword ("readonly", Token.READONLY);
 			AddKeyword ("ref", Token.REF);
@@ -604,14 +616,19 @@ namespace Mono.ActionScript
 			AddKeyword ("struct", Token.STRUCT);
 			AddKeyword ("super", Token.SUPER);
 			AddKeyword ("switch", Token.SWITCH);
+			AddKeyword ("synchronized", Token.SYNCHRONIZED);
 			AddKeyword ("this", Token.THIS);
 			AddKeyword ("throw", Token.THROW);
+			AddKeyword ("throws", Token.THROWS);
+			AddKeyword ("transient", Token.TRANSIENT);
 			AddKeyword ("true", Token.TRUE);
 			AddKeyword ("try", Token.TRY);
+			AddKeyword ("type", Token.TYPE);
 			AddKeyword ("typeof", Token.TYPEOF);
 			AddKeyword ("uint", Token.UINT);
 			AddKeyword ("ulong", Token.ULONG);
 			AddKeyword ("unchecked", Token.UNCHECKED);
+			AddKeyword ("undefined", Token.UNDEFINED);
 			AddKeyword ("unsafe", Token.UNSAFE);
 			AddKeyword ("ushort", Token.USHORT);
 			AddKeyword ("using", Token.USING);
@@ -726,11 +743,11 @@ namespace Mono.ActionScript
 				break;
 			case Token.REMOVE:
 			case Token.ADD:
-				if (!handle_remove_add)
+				if (!handle_remove_add || !handle_asx)
 					res = -1;
 				break;
 			case Token.EXTERN:
-				if (parsing_declaration != 0)
+				if (parsing_declaration != 0 || !handle_asx)
 					res = -1;
 				break;
 			case Token.DEFAULT:
@@ -740,7 +757,7 @@ namespace Mono.ActionScript
 				}
 				break;
 			case Token.WHERE:
-				if (!handle_where && !query_parsing)
+				if (!handle_where && !query_parsing || !handle_asx)
 					res = -1;
 				break;
 			case Token.FROM:
@@ -748,7 +765,9 @@ namespace Mono.ActionScript
 				// A query expression is any expression that starts with `from identifier'
 				// followed by any token except ; , =
 				// 
-				if (!query_parsing) {
+				if (!handle_asx) {
+					res = -1;
+				} else if (!query_parsing) {
 					if (lambda_arguments_parsing) {
 						res = -1;
 						break;
@@ -804,7 +823,7 @@ namespace Mono.ActionScript
 			case Token.ASCENDING:
 			case Token.DESCENDING:
 			case Token.INTO:
-				if (!query_parsing)
+				if (!query_parsing || !handle_asx)
 					res = -1;
 				break;
 				
@@ -815,7 +834,7 @@ namespace Mono.ActionScript
 				break;
 				
 			case Token.PARTIAL:
-				if (parsing_block > 0) {
+				if (parsing_block > 0 || !handle_asx) {
 					res = -1;
 					break;
 				}
@@ -851,7 +870,9 @@ namespace Mono.ActionScript
 				break;
 
 			case Token.ASYNC:
-				if (parsing_modifiers) {
+				if (!handle_asx) {
+					return -1;
+				} else if (parsing_modifiers) {
 					//
 					// Skip attributes section or constructor called async
 					//
@@ -889,12 +910,46 @@ namespace Mono.ActionScript
 				break;
 
 			case Token.AWAIT:
-				if (parsing_block == 0)
+				if (parsing_block == 0 || !handle_asx)
 					res = -1;
 
 				break;
-			}
 
+				// ASX Extension Type keywords
+			case Token.BOOL:
+			case Token.DECIMAL:
+			case Token.OBJECT:
+			case Token.STRING:
+			case Token.ULONG:
+			case Token.USHORT:
+				if (!handle_asx)
+					res = 1;
+
+				break;
+
+				// ASX Extension keywords
+			case Token.CHECKED:
+			case Token.DELEGATE:
+			case Token.EVENT:
+			case Token.EXPLICIT:
+			case Token.IMPLICIT:
+			case Token.INDEXER:
+			case Token.LOCK:
+			case Token.OPERATOR:
+			case Token.OUT:
+			case Token.PARAMS:
+			case Token.PROPERTY:
+			case Token.READONLY:
+			case Token.REF:
+			case Token.STRUCT:
+			case Token.TYPEOF:
+			case Token.UNCHECKED:
+			case Token.UNSAFE:
+				if (!handle_asx)
+					res = 1;
+
+				break;
+			}
 
 			return res;
 		}
@@ -2954,6 +3009,70 @@ namespace Mono.ActionScript
 			}
 		}
 
+		private int consume_regex ()
+		{
+			int c;
+			int pos = 0;
+			Location start_location = Location;
+
+#if FULL_AST
+			int reader_pos = reader.Position;
+#endif
+
+			while (true) {
+				c = get_char ();
+				if (c == '/') {
+
+					c = peek_char();
+					while (c == 'g' || c == 'i' || c == 'm' || c == 's' || c == 'x') {
+						if (pos == value_builder.Length)
+							Array.Resize (ref value_builder, pos * 2);
+						value_builder[pos++] = (char) get_char ();
+						c = peek_char ();
+					}
+
+					string s;
+					if (pos == 0)
+						s = string.Empty;
+					else
+						s = new string (value_builder, 0, pos);
+
+					ILiteralConstant res = new RegexLiteral (context.BuiltinTypes, s, start_location);
+					val = res;
+#if FULL_AST
+					res.ParsedValue = quoted ?
+						reader.ReadChars (reader_pos - 2, reader.Position - 1) :
+						reader.ReadChars (reader_pos - 1, reader.Position);
+#endif
+
+					return Token.LITERAL;
+				}
+
+				if (c == '\n') {
+					Report.Error (7027, Location, "Newline in regex constant");
+					val = new StringLiteral (context.BuiltinTypes, new string (value_builder, 0, pos), start_location);
+					return Token.LITERAL;
+				} else if (c == '\\') {
+					c = get_char();
+					if (c != -1) {
+						if (pos == value_builder.Length)
+							Array.Resize (ref value_builder, pos * 2);
+						value_builder[pos++] = (char) c;
+					}
+				} 
+
+				if (c == -1) {
+					Report.Error (7028, Location, "Unterminated regex literal");
+					return Token.EOF;
+				}
+
+				if (pos == value_builder.Length)
+					Array.Resize (ref value_builder, pos * 2);
+
+				value_builder[pos++] = (char) c;
+			}
+		}
+
 		private int consume_identifier (int s)
 		{
 			int res = consume_identifier (s, false);
@@ -3299,9 +3418,14 @@ namespace Mono.ActionScript
 					d = peek_char ();
 					if (d == '=') {
 						get_char ();
+						d = peek_char ();
+						if (d == '=') {
+							get_char ();
+							return Token.OP_REF_EQ;
+						}
 						return Token.OP_EQ;
 					}
-					if (d == '>') {
+					if (d == '>' && handle_asx) {
 						get_char ();
 						return Token.ARROW;
 					}

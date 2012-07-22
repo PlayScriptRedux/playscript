@@ -216,10 +216,10 @@ namespace Mono.CSharp
 		//
 		// C# 4.0
 		//
-		public readonly PredefinedType Binder;
+		private readonly PredefinedType Binder;
 		public readonly PredefinedType CallSite;
 		public readonly PredefinedType CallSiteGeneric;
-		public readonly PredefinedType BinderFlags;
+		private readonly PredefinedType BinderFlags;
 
 		//
 		// C# 5.0
@@ -243,6 +243,9 @@ namespace Mono.CSharp
 		public readonly PredefinedType AsArray;
 		public readonly PredefinedType AsError;
 		public readonly PredefinedType AsFunction;
+		private readonly PredefinedType AsBinder;
+		private readonly PredefinedType AsBinderFlags;
+
 
 		public PredefinedTypes (ModuleContainer module)
 		{
@@ -303,6 +306,8 @@ namespace Mono.CSharp
 			AsVector = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "Vector", 1);
 			AsError = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "Error");
 			AsFunction = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "Function");
+			AsBinder = new PredefinedType (module, MemberKind.Class, "ActionScript.RuntimeBinder", "Binder");
+			AsBinderFlags = new PredefinedType (module, MemberKind.Enum, "ActionScript.RuntimeBinder", "CSharpBinderFlags");
 
 			//
 			// Define types which are used for comparison. It does not matter
@@ -334,6 +339,21 @@ namespace Mono.CSharp
 				TaskGeneric.TypeSpec.IsGenericTask = true;
 		}
 
+		public PredefinedType GetBinder(ResolveContext ec) {
+			if (ec.FileType == SourceFileType.ActionScript) {
+				return AsBinder;
+			} else {
+				return Binder;
+			}
+		}
+
+		public PredefinedType GetBinderFlags(ResolveContext ec) {
+			if (ec.FileType == SourceFileType.ActionScript) {
+				return AsBinderFlags;
+			} else {
+				return BinderFlags;
+			}
+		}
 	}
 
 	class PredefinedMembers
