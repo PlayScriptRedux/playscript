@@ -196,6 +196,7 @@ namespace Mono.ActionScript
 		int col = 0;
 		int previous_col;
 		int current_token;
+		int parse_regex = 0;
 		readonly int tab_size;
 		bool handle_asx = false;
 		bool handle_get_set = false;
@@ -204,7 +205,6 @@ namespace Mono.ActionScript
 		bool handle_where = false;
 		bool handle_typeof = false;
 		bool handle_delete = false;
-		bool handle_regex = false;
 		bool lambda_arguments_parsing;
 		List<Location> escaped_identifiers;
 		int parsing_generic_less_than;
@@ -336,8 +336,7 @@ namespace Mono.ActionScript
 		}
 	
 		public bool RegexParsing {
-			get { return handle_regex; }
-			set { handle_regex = value; }
+			get { return parse_regex > 0; }
 		}
 
 		public XmlCommentState doc_state {
@@ -421,8 +420,9 @@ namespace Mono.ActionScript
 			public int previous_col;
 			public Stack<int> ifstack;
 			public int parsing_generic_less_than;
-			public int current_token;
+			public int parse_regex;
 			public object val;
+			public int current_token;
 
 			public Position (Tokenizer t)
 			{
@@ -441,6 +441,7 @@ namespace Mono.ActionScript
 					ifstack = new Stack<int> (clone);
 				}
 				parsing_generic_less_than = t.parsing_generic_less_than;
+				parse_regex = t.parse_regex;
 				current_token = t.current_token;
 				val = t.val;
 			}
@@ -484,6 +485,7 @@ namespace Mono.ActionScript
 			previous_col = p.previous_col;
 			ifstack = p.ifstack;
 			parsing_generic_less_than = p.parsing_generic_less_than;
+			parse_regex = p.parse_regex;
 			current_token = p.current_token;
 			val = p.val;
 		}
@@ -545,14 +547,12 @@ namespace Mono.ActionScript
 			AddKeyword ("break", Token.BREAK);
 			AddKeyword ("byte", Token.BYTE);
 			AddKeyword ("case", Token.CASE);
-			AddKeyword ("cast", Token.CAST);
 			AddKeyword ("catch", Token.CATCH);
 			AddKeyword ("char", Token.CHAR);
 			AddKeyword ("checked", Token.CHECKED);
 			AddKeyword ("class", Token.CLASS);
 			AddKeyword ("const", Token.CONST);
 			AddKeyword ("continue", Token.CONTINUE);
-			AddKeyword ("debugger", Token.DEBUGGER);
 			AddKeyword ("decimal", Token.DECIMAL);
 			AddKeyword ("default", Token.DEFAULT);
 			AddKeyword ("delegate", Token.DELEGATE);
@@ -583,7 +583,6 @@ namespace Mono.ActionScript
 			AddKeyword ("int", Token.INT);
 			AddKeyword ("interface", Token.INTERFACE);
 			AddKeyword ("internal", Token.INTERNAL);
-			AddKeyword ("intrinsic", Token.INTRINSIC);
 			AddKeyword ("is", Token.IS);
 			AddKeyword ("lock", Token.LOCK);
 			AddKeyword ("long", Token.LONG);
@@ -600,7 +599,6 @@ namespace Mono.ActionScript
 			AddKeyword ("property", Token.PROPERTY);
 			AddKeyword ("private", Token.PRIVATE);
 			AddKeyword ("protected", Token.PROTECTED);
-			AddKeyword ("prototype", Token.PROTOTYPE);
 			AddKeyword ("public", Token.PUBLIC);
 			AddKeyword ("readonly", Token.READONLY);
 			AddKeyword ("ref", Token.REF);
@@ -617,11 +615,8 @@ namespace Mono.ActionScript
 			AddKeyword ("struct", Token.STRUCT);
 			AddKeyword ("super", Token.SUPER);
 			AddKeyword ("switch", Token.SWITCH);
-			AddKeyword ("synchronized", Token.SYNCHRONIZED);
 			AddKeyword ("this", Token.THIS);
 			AddKeyword ("throw", Token.THROW);
-			AddKeyword ("throws", Token.THROWS);
-			AddKeyword ("transient", Token.TRANSIENT);
 			AddKeyword ("true", Token.TRUE);
 			AddKeyword ("try", Token.TRY);
 			AddKeyword ("typeof", Token.TYPEOF);
@@ -917,11 +912,17 @@ namespace Mono.ActionScript
 
 				// ASX Extension Type keywords
 			case Token.BOOL:
+			case Token.BYTE:
+			case Token.SBYTE:
 			case Token.DECIMAL:
 			case Token.OBJECT:
 			case Token.STRING:
+			case Token.LONG:
 			case Token.ULONG:
+			case Token.SHORT:
 			case Token.USHORT:
+			case Token.FLOAT:
+			case Token.DOUBLE:
 				if (!handle_asx)
 					res = -1;
 
@@ -1045,57 +1046,57 @@ namespace Mono.ActionScript
 					if (current_token == Token.ARROW)
 						return Token.OPEN_PARENS_LAMBDA;
 
-					//
-					// Expression inside parens is single type, (int[])
-					//
-					if (is_type)
-						return Token.OPEN_PARENS_CAST;
-
-					//
-					// Expression is possible cast, look at next token, (T)null
-					//
-					if (can_be_type) {
-						switch (current_token) {
-						case Token.OPEN_PARENS:
-						case Token.BANG:
-						case Token.TILDE:
-						case Token.IDENTIFIER:
-						case Token.LITERAL:
-						case Token.SUPER:
-						case Token.CHECKED:
-						case Token.DELEGATE:
-						case Token.FALSE:
-						case Token.FIXED:
-						case Token.NEW:
-						case Token.NULL:
-						case Token.SIZEOF:
-						case Token.THIS:
-						case Token.THROW:
-						case Token.TRUE:
-						case Token.TYPEOF:
-						case Token.UNCHECKED:
-						case Token.UNSAFE:
-						case Token.DEFAULT:
-						case Token.AWAIT:
-
-						//
-						// These can be part of a member access
-						//
-						case Token.INT:
-						case Token.UINT:
-						case Token.SHORT:
-						case Token.USHORT:
-						case Token.LONG:
-						case Token.ULONG:
-						case Token.DOUBLE:
-						case Token.FLOAT:
-						case Token.CHAR:
-						case Token.BYTE:
-						case Token.DECIMAL:
-						case Token.BOOL:
-							return Token.OPEN_PARENS_CAST;
-						}
-					}
+//					//
+//					// Expression inside parens is single type, (int[])
+//					//
+//					if (is_type)
+//						return Token.OPEN_PARENS_CAST;
+//
+//					//
+//					// Expression is possible cast, look at next token, (T)null
+//					//
+//					if (can_be_type) {
+//						switch (current_token) {
+//						case Token.OPEN_PARENS:
+//						case Token.BANG:
+//						case Token.TILDE:
+//						case Token.IDENTIFIER:
+//						case Token.LITERAL:
+//						case Token.SUPER:
+//						case Token.CHECKED:
+//						case Token.DELEGATE:
+//						case Token.FALSE:
+//						case Token.FIXED:
+//						case Token.NEW:
+//						case Token.NULL:
+//						case Token.SIZEOF:
+//						case Token.THIS:
+//						case Token.THROW:
+//						case Token.TRUE:
+//						case Token.TYPEOF:
+//						case Token.UNCHECKED:
+//						case Token.UNSAFE:
+//						case Token.DEFAULT:
+//						case Token.AWAIT:
+//
+//						//
+//						// These can be part of a member access
+//						//
+//						case Token.INT:
+//						case Token.UINT:
+//						case Token.SHORT:
+//						case Token.USHORT:
+//						case Token.LONG:
+//						case Token.ULONG:
+//						case Token.DOUBLE:
+//						case Token.FLOAT:
+//						case Token.CHAR:
+//						case Token.BYTE:
+//						case Token.DECIMAL:
+//						case Token.BOOL:
+//							return Token.OPEN_PARENS_CAST;
+//						}
+//					}
 					return Token.OPEN_PARENS;
 					
 				case Token.DOT:
@@ -3196,6 +3197,11 @@ namespace Mono.ActionScript
 		{
 			int d, c, next;
 
+			// Decrement parse regex counter (allows regex literals to follow 1 token after 
+			// symbols '=', ':', '(', '[', and ',')
+			if (parse_regex > 0)
+				parse_regex--;
+
 			// Whether we have seen comments on the current line
 			bool comments_seen = false;
 			while ((c = get_char ()) != -1) {
@@ -3254,6 +3260,8 @@ namespace Mono.ActionScript
 
 					val = ltb.Create (current_source, ref_line, col);
 
+					parse_regex = 2;  // regex literals may be included in array initializers.
+
 					if (parsing_block == 0 || lambda_arguments_parsing)
 						return Token.OPEN_BRACKET;
 
@@ -3284,7 +3292,8 @@ namespace Mono.ActionScript
 					val = ltb.Create (current_source, ref_line, col);
 					if (handle_delete) {
 						return Token.OPEN_PARENS_DELETE;
-					}
+					}					
+					parse_regex = 2; // regex literals may follow open parens (method param, expressions).
 					//
 					// An expression versions of parens can appear in block context only
 					//
@@ -3333,6 +3342,7 @@ namespace Mono.ActionScript
 					return Token.CLOSE_PARENS;
 				case ',':
 					ltb.CreateOptional (current_source, ref_line, col, ref val);
+					parse_regex = 2; // Regex literals may follow commas, (method param, initializer element)
 					return Token.COMMA;
 				case ';':
 					ltb.CreateOptional (current_source, ref_line, col, ref val);
@@ -3417,6 +3427,7 @@ namespace Mono.ActionScript
 					val = ltb.Create (current_source, ref_line, col);
 					d = peek_char ();
 					if (d == '=') {
+						parse_regex = 2; // Regex literals may follow equality test operators.
 						get_char ();
 						d = peek_char ();
 						if (d == '=') {
@@ -3430,6 +3441,7 @@ namespace Mono.ActionScript
 						return Token.ARROW;
 					}
 
+					parse_regex = 2; // Regex literals may follow assignment op '='
 					return Token.ASSIGN;
 
 				case '&':
@@ -3564,6 +3576,9 @@ namespace Mono.ActionScript
 						if (docAppend)
 							update_formatted_doc_comment (current_comment_start);
 						continue;
+					} else if (parse_regex > 0) {
+						// A regex literal may follow an '=', '==', '===' '(' ',' ':' or '['. 
+						return consume_regex();
 					}
 					val = ltb.Create (current_source, ref_line, col);
 					return Token.DIV;
@@ -3590,6 +3605,7 @@ namespace Mono.ActionScript
 						get_char ();
 						return Token.DOUBLE_COLON;
 					}
+					parse_regex = 2;  // Regex literals may follow colons in object initializers.
 					return Token.COLON;
 
 				case '0': case '1': case '2': case '3': case '4':

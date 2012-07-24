@@ -170,13 +170,11 @@ namespace Mono.ActionScript
 %token BYTE	
 %token CASE	
 %token CATCH
-%token CAST
 %token CHAR	
 %token CHECKED	
 %token CLASS	
 %token CONST	
 %token CONTINUE	
-%token DEBUGGER
 %token DECIMAL	
 %token DEFAULT	
 %token DELEGATE	
@@ -208,7 +206,6 @@ namespace Mono.ActionScript
 %token INT	
 %token INTERFACE
 %token INTERNAL	
-%token INTRINSIC
 %token IS	
 %token LOCK	
 %token LONG	
@@ -225,7 +222,6 @@ namespace Mono.ActionScript
 %token PRIVATE
 %token PROPERTY	
 %token PROTECTED
-%token PROTOTYPE
 %token PUBLIC	
 %token READONLY	
 %token REF	
@@ -240,11 +236,8 @@ namespace Mono.ActionScript
 %token STRING	
 %token STRUCT	
 %token SWITCH	
-%token SYNCHRONIZED
 %token THIS	
 %token THROW	
-%token THROWS
-%token TRANSIENT
 %token TRUE	
 %token TRY	
 %token TYPEOF	
@@ -996,8 +989,8 @@ constant_declaration
 			Lexer.doc_state = XmlCommentState.Allowed;
 		}
 		
-		current_field.Initializer = (ConstInitializer) $7;
-		lbag.AddMember (current_field, mod_locations, GetLocation ($3), GetLocation ($9));
+		current_field.Initializer = (ConstInitializer) $8;
+		lbag.AddMember (current_field, mod_locations, GetLocation ($3), GetLocation ($10));
 		current_field = null;
 	  }
 	;
@@ -5580,34 +5573,11 @@ do_statement
 	;
 
 for_statement
-	: FOR open_parens_any VAR identifier_inside_body COLON type IN expression CLOSE_PARENS 
+	: FOR open_parens_any
 	  {
 		start_block (GetLocation ($2));
 		current_block.IsCompilerGenerated = true;
-		
-		var lt = (Tokenizer.LocatedToken) $4;
-		var li = new LocalVariable (current_block, lt.Value, LocalVariable.Flags.ForeachVariable | LocalVariable.Flags.Used, lt.Location);
-		current_block.AddLocalName (li);
-		$$ = li;
-	  } 
-	  embedded_statement
-	  {
-		if ($11 is EmptyStatement && lexer.peek_token () == Token.OPEN_BRACE)
-			Warning_EmptyStatement (GetLocation ($11));
-		
-		Foreach f = new Foreach ((Expression) $6, (LocalVariable) $10, (Expression) $8, (Statement) $11, current_block, AsForEachType.ForEachKey, GetLocation ($1));
-		lbag.AddStatement (f, GetLocation ($2), GetLocation ($7), GetLocation ($9));
-		end_block (GetLocation ($9));
-		
-		$$ = f;
-	  }	
-	| FOR open_parens_any
-	  {
-		start_block (GetLocation ($2));
-		current_block.IsCompilerGenerated = true;
-		For f = new For (GetLocation ($1));
-		current_block.AddStatement (f);
-		$$ = f;
+		$$ = new Tuple<Location,Location>(GetLocation($0), GetLocation($1));
 	  }
 	  for_statement_cont
 	  {
@@ -5617,12 +5587,43 @@ for_statement
 	
 // Has to use be extra rule to recover started block
 for_statement_cont
-	: opt_for_initializer SEMICOLON
+	: for_initializer IN
 	  {
-		((For) $0).Initializer = (Statement) $1;
+		var blockVar = $1 as BlockVariableDeclaration;
+		if (blockVar == null || blockVar.Initializer != null || blockVar.Declarators != null) {
+			report.Error (1525, GetLocation ($2), "Unexpected symbol expected ';'");	
+		}
+	  } 
+	  expression CLOSE_PARENS embedded_statement
+	  {
+		if ($6 is EmptyStatement && lexer.peek_token () == Token.OPEN_BRACE)
+			Warning_EmptyStatement (GetLocation ($6));
+
+		var blockVar = $1 as BlockVariableDeclaration;
+		if (blockVar != null) {
+			var locations = (Tuple<Location,Location>) $0;
+			
+			Foreach f = new Foreach (blockVar.TypeExpression, blockVar.Variable, (Expression) $4, (Statement) $6, current_block, AsForEachType.ForEachKey, locations.Item1);
+			lbag.AddStatement (f, locations.Item2, GetLocation ($2), GetLocation ($5));
+			
+			$$ = end_block (GetLocation ($5));
+		} else {
+			$$ = end_block (current_block.StartLocation);
+		}
+	  }	
+	| opt_for_initializer SEMICOLON
+	  {
+		var locations = (Tuple<Location,Location>) $0;
+
+		For f = new For (locations.Item1);
+		current_block.AddStatement (f);
+		
+		f.Initializer = (Statement) $1;
 
 		// Pass the "For" object to the iterator_part4
-		oob_stack.Push ($0);
+		oob_stack.Push (f);
+		
+		$$ = f;
 	  }
 	  for_condition_and_iterator_part
 	  embedded_statement
@@ -5632,7 +5633,7 @@ for_statement_cont
 		if ($5 is EmptyStatement && lexer.peek_token () == Token.OPEN_BRACE)
 			Warning_EmptyStatement (GetLocation ($5));
 	  
-		For f = ((For) $0);
+		For f = ((For) $3);
 		f.Statement = (Statement) $5;
 		lbag.AddStatement (f, current_block.StartLocation, GetLocation ($2), GetLocation (locations.Item1), GetLocation (locations.Item2));
 
@@ -5690,12 +5691,12 @@ opt_for_initializer
 	;
 
 for_initializer
-	: variable_type identifier_inside_body
+	: VAR identifier_inside_body COLON variable_type
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;
 		var li = new LocalVariable (current_block, lt.Value, lt.Location);
 		current_block.AddLocalName (li);
-		current_variable = new BlockVariableDeclaration ((FullNamedExpression) $1, li);
+		current_variable = new BlockVariableDeclaration ((FullNamedExpression) $4, li);
 	  }
 	  opt_local_variable_initializer opt_variable_declarators
 	  {
@@ -5841,12 +5842,10 @@ return_statement
 	;
 
 throw_statement
-	: THROW new_expr_type open_parens_any opt_argument_list CLOSE_PARENS SEMICOLON
+	: THROW opt_expression SEMICOLON
 	  {
-		var new_stmnt = new New ((FullNamedExpression) $2, (Arguments) $4, GetLocation ($1));
-		lbag.AddLocation (new_stmnt, GetLocation ($3), GetLocation ($5));
-		$$ = new Throw (new_stmnt, GetLocation ($1));
-		lbag.AddStatement ($$, GetLocation ($6));
+		$$ = new Throw ((Expression) $2, GetLocation ($1));
+		lbag.AddStatement ($$, GetLocation ($3));
 	  }
 	| THROW error
 	  {
@@ -7392,8 +7391,6 @@ static string GetTokenName (int token)
 		return "break";
 	case Token.CASE:
 		return "case";
-	case Token.CAST:
-		return "cast";
 	case Token.CATCH:
 		return "catch";
 	case Token.CHECKED:
@@ -7404,8 +7401,6 @@ static string GetTokenName (int token)
 		return "const";
 	case Token.CONTINUE:
 		return "continue";
-	case Token.DEBUGGER:
-		return "debugger";
 	case Token.DEFAULT:
 		return "default";
 	case Token.DELEGATE:
@@ -7460,8 +7455,6 @@ static string GetTokenName (int token)
 		return "interface";
 	case Token.INTERNAL:
 		return "internal";
-	case Token.INTRINSIC:
-		return "intrinsic";
 	case Token.IS:
 		return "is";
 	case Token.LOCK:
@@ -7488,8 +7481,6 @@ static string GetTokenName (int token)
 		return "property";
 	case Token.PROTECTED:
 		return "protected";
-	case Token.PROTOTYPE:
-		return "prototype";
 	case Token.PUBLIC:
 		return "public";
 	case Token.READONLY:
@@ -7512,16 +7503,10 @@ static string GetTokenName (int token)
 		return "struct";
 	case Token.SWITCH:
 		return "switch";
-	case Token.SYNCHRONIZED:
-		return "synchronized";
 	case Token.THIS:
 		return "this";
 	case Token.THROW:
 		return "throw";
-	case Token.THROWS:
-		return "throws";
-	case Token.TRANSIENT:
-		return "transient";
 	case Token.TRUE:
 		return "true";
 	case Token.TRY:
