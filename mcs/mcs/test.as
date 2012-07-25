@@ -72,9 +72,15 @@ package
 		}
 
         public static function Main() : void {
-        	var len:int = 100;
-        	var i:int = int(100);
-        	for (i = 0; i < len; i++) {
+        	var len:int = int(100);
+        	var i:int;
+        	for (i = 0; i<len; i++) {
+        		for (i = 0; i<len; i++) {
+        			if (i<100||i>100) {
+        				trace(i);
+        			}
+        			trace(i);
+        		}
         		trace(i);
         	}
         	var re:Object = /blah/g;

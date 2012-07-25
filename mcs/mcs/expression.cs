@@ -5331,11 +5331,14 @@ namespace Mono.CSharp
 			}
 
 			// Handle function style casts in ActionScript
-			if (ec.FileType == SourceFileType.ActionScript && member_expr == null && atn != null &&
-			    arguments != null && arguments.Count == 1) {
-				var type_expr = atn.LookupNameExpression(ec, MemberLookupRestrictions.ReadAccess) as TypeExpr;
-				if (type_expr != null) {
-					return new Cast(type_expr, Arguments[0].Expr, loc);
+			if (ec.FileType == SourceFileType.ActionScript && arguments != null && arguments.Count == 1) {
+				if (member_expr is TypeExpression) {
+					return (new Cast((TypeExpression)member_expr, Arguments[0].Expr, loc)).Resolve (ec);
+				} else if (member_expr == null && atn != null) {
+					var type_expr = atn.LookupNameExpression(ec, MemberLookupRestrictions.ReadAccess) as TypeExpr;
+					if (type_expr != null) {
+						return (new Cast(type_expr, Arguments[0].Expr, loc)).Resolve (ec);
+					}
 				}
 			}
 
