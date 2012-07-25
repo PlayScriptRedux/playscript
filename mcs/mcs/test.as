@@ -73,10 +73,11 @@ package
 
         public static function Main() : void {
         	var len:int = 100;
-        	for (var i:int = 0; i < len; i++) {
+        	var i:int = int(100);
+        	for (i = 0; i < len; i++) {
         		trace(i);
         	}
-        	var re:Object = len/blah/g;
+        	var re:Object = /blah/g;
         	var o6:Object = { a:100, b: 200 };
         	delete o6.a;
         	trace(String(32));

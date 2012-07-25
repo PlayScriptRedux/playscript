@@ -3382,6 +3382,11 @@ invocation_expression
  		$$ = new ConstructorBaseInitializer ((Arguments) $3, GetLocation ($1));
 		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($2), GetLocation ($4));
 	  }
+	| builtin_types open_parens_any opt_argument_list close_parens
+	  {
+		$$ = new Invocation ((Expression) $1, (Arguments) $3);
+		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
+	  }  
 	| primary_expression open_parens_any opt_argument_list close_parens
 	  {
 		$$ = new Invocation ((Expression) $1, (Arguments) $3);

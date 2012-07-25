@@ -946,6 +946,7 @@ namespace Mono.ActionScript
 			case Token.TYPEOF:
 			case Token.UNCHECKED:
 			case Token.UNSAFE:
+			case Token.FIXED:
 				if (!handle_asx)
 					res = -1;
 
@@ -3355,8 +3356,6 @@ namespace Mono.ActionScript
 					return TokenizePossibleNullableType ();
 				case '<':
 					val = ltb.Create (current_source, ref_line, col);
-					if (parsing_generic_less_than++ > 0)
-						return Token.OP_GENERICS_LT;
 
 					return TokenizeLessThan ();
 
@@ -3804,20 +3803,6 @@ namespace Mono.ActionScript
 
 		int TokenizeLessThan ()
 		{
-			// Save current position and parse next token.
-//			PushPosition ();
-//			if (parse_less_than ()) {
-//				if (parsing_generic_declaration && (parsing_generic_declaration_doc || token () != Token.DOT)) {
-//					d = Token.OP_GENERICS_LT_DECL;
-//				} else {
-//					d = Token.OP_GENERICS_LT;
-//				}
-//				PopPosition ();
-//				return d;
-//			}
-//
-//			PopPosition ();
-//			parsing_generic_less_than = 0;
 
 			int d = peek_char ();
 			if (d == '<') {
