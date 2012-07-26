@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace _root
 {
-	public class Array : List<dynamic>
+	public class Array : List<object>
 	{
 		public Array() {
 		}
@@ -85,7 +85,7 @@ namespace _root
 		}
  	 	
 		// Removes the last element from an array and returns the value of that element.
-		public dynamic pop() {
+		public object pop() {
 			throw new NotImplementedException();
 		}
  	 	

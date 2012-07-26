@@ -173,6 +173,7 @@ namespace Mono.CSharp
 	{
 		Assign assign;
 		TypeSpec inferredArrayType;
+		FullNamedExpression vectorType;
 
 		public AsArrayInitializer (List<Expression> init, Location loc)
 			: base(init, loc)
@@ -200,13 +201,30 @@ namespace Mono.CSharp
 			}
 		}
 
+		public FullNamedExpression VectorType {
+			get {
+				return vectorType;
+			}
+			set {
+				vectorType = value;
+			}
+		}
+
 		#endregion
 
 		protected override Expression DoResolve (ResolveContext rc)
 		{
 			var current_field = rc.CurrentMemberDefinition as FieldBase;
 			TypeExpression type;
-			if (inferredArrayType != null) {
+			if (vectorType != null) {
+				var elemTypeSpec = vectorType.ResolveAsType(rc);
+				if (elemTypeSpec != null) {
+					type = new TypeExpression(
+						rc.Module.PredefinedTypes.AsVector.Resolve().MakeGenericType (rc, new [] { elemTypeSpec }), Location);
+				} else {
+					type = new TypeExpression (rc.Module.PredefinedTypes.AsArray.Resolve(), Location);
+				}
+			} else if (inferredArrayType != null) {
 				type = new TypeExpression (inferredArrayType, Location);
 			} else if (current_field != null && rc.CurrentAnonymousMethod == null) {
 				type = new TypeExpression (current_field.MemberType, current_field.Location);

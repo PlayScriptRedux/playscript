@@ -197,8 +197,10 @@ namespace Mono.ActionScript
 		int previous_col;
 		int current_token;
 		int parse_regex = 0;
+		int parse_colon = 0;
 		readonly int tab_size;
 		bool handle_asx = false;
+		bool handle_namespace = true;
 		bool handle_get_set = false;
 		bool handle_each = false;
 		bool handle_remove_add = false;
@@ -207,6 +209,7 @@ namespace Mono.ActionScript
 		bool handle_delete = false;
 		bool lambda_arguments_parsing;
 		List<Location> escaped_identifiers;
+		List<string> namespaces;
 		int parsing_generic_less_than;
 		readonly bool doc_processing;
 		readonly LocatedTokenBuffer ltb;
@@ -310,6 +313,11 @@ namespace Mono.ActionScript
 			set { handle_asx = value; }
 		}
 
+		public bool NamespaceParsing {
+			get { return handle_namespace; }
+			set { handle_namespace = value; }
+		}
+
 		public bool PropertyParsing {
 			get { return handle_get_set; }
 			set { handle_get_set = value; }
@@ -367,6 +375,14 @@ namespace Mono.ActionScript
 			return escaped_identifiers != null && escaped_identifiers.Contains (name.Location);
 		}
 
+		public void AddNamespace (string name) 
+		{
+			if (namespaces == null) {
+				namespaces = new List<string>();
+			}
+			namespaces.Add(name);
+		}
+
 		//
 		// Values for the associated token returned
 		//
@@ -421,6 +437,7 @@ namespace Mono.ActionScript
 			public Stack<int> ifstack;
 			public int parsing_generic_less_than;
 			public int parse_regex;
+			public int parse_colon;
 			public object val;
 			public int current_token;
 
@@ -442,6 +459,7 @@ namespace Mono.ActionScript
 				}
 				parsing_generic_less_than = t.parsing_generic_less_than;
 				parse_regex = t.parse_regex;
+				parse_colon = t.parse_colon;
 				current_token = t.current_token;
 				val = t.val;
 			}
@@ -486,6 +504,7 @@ namespace Mono.ActionScript
 			ifstack = p.ifstack;
 			parsing_generic_less_than = p.parsing_generic_less_than;
 			parse_regex = p.parse_regex;
+			parse_colon = p.parse_colon;
 			current_token = p.current_token;
 			val = p.val;
 		}
@@ -625,6 +644,7 @@ namespace Mono.ActionScript
 			AddKeyword ("unchecked", Token.UNCHECKED);
 			AddKeyword ("undefined", Token.UNDEFINED);
 			AddKeyword ("unsafe", Token.UNSAFE);
+			AddKeyword ("use", Token.USE);
 			AddKeyword ("ushort", Token.USHORT);
 			AddKeyword ("using", Token.USING);
 			AddKeyword ("var", Token.VAR);
@@ -821,11 +841,22 @@ namespace Mono.ActionScript
 				if (!query_parsing || !handle_asx)
 					res = -1;
 				break;
-				
+
+
+			case Token.USE:
+				if (!handle_namespace)
+					res = -1;
+				break;
 			case Token.USING:
-			case Token.NAMESPACE:
 				// TODO: some explanation needed
 				check_incorrect_doc_comment ();
+				break;
+			case Token.NAMESPACE:
+				// TODO: some explanation needed
+				if (!handle_namespace)
+					res = -1;
+				else 
+					check_incorrect_doc_comment ();
 				break;
 				
 			case Token.PARTIAL:
@@ -912,6 +943,7 @@ namespace Mono.ActionScript
 
 				// ASX Extension Type keywords
 			case Token.BOOL:
+			case Token.CHAR:
 			case Token.BYTE:
 			case Token.SBYTE:
 			case Token.DECIMAL:
@@ -3159,6 +3191,14 @@ namespace Mono.ActionScript
 			}
 
 			string s = InternIdentifier (id_builder, pos);
+
+			// Handle namespaces
+			if (parsing_modifiers && namespaces != null) {
+				if (namespaces.IndexOf(s) != -1) {
+					return Token.INTERNAL;
+				}
+			}
+
 			val = ltb.Create (s, current_source, ref_line, column);
 			if (quoted && parsing_attribute_section)
 				AddEscapedIdentifier (((LocatedToken) val).Location);
@@ -3202,6 +3242,10 @@ namespace Mono.ActionScript
 			// symbols '=', ':', '(', '[', and ',')
 			if (parse_regex > 0)
 				parse_regex--;
+
+			// Decrement parse colon counter (allows us to disambiguate ident:*=value from *= operator)
+			if (parse_colon > 0)
+				parse_colon--;
 
 			// Whether we have seen comments on the current line
 			bool comments_seen = false;
@@ -3354,10 +3398,28 @@ namespace Mono.ActionScript
 				case '?':
 					val = ltb.Create (current_source, ref_line, col);
 					return TokenizePossibleNullableType ();
+
 				case '<':
 					val = ltb.Create (current_source, ref_line, col);
+					d = peek_char ();
 
-					return TokenizeLessThan ();
+					if (d == '=') {
+						get_char ();
+						return Token.OP_LE;
+					}
+
+					if (d == '<') {
+						get_char ();
+						d = peek_char ();
+
+						if (d == '=') {
+							get_char ();
+							return Token.OP_SHIFT_LEFT_ASSIGN;
+						}
+						return Token.OP_SHIFT_LEFT;
+					}
+
+					return Token.OP_LT;
 
 				case '>':
 					val = ltb.Create (current_source, ref_line, col);
@@ -3471,7 +3533,7 @@ namespace Mono.ActionScript
 
 				case '*':
 					val = ltb.Create (current_source, ref_line, col);
-					if (peek_char () == '=') {
+					if (peek_char () == '=' && parse_colon == 0) {
 						get_char ();
 						return Token.OP_MULT_ASSIGN;
 					}
@@ -3605,6 +3667,7 @@ namespace Mono.ActionScript
 						return Token.DOUBLE_COLON;
 					}
 					parse_regex = 2;  // Regex literals may follow colons in object initializers.
+					parse_colon = 2;  // Don't parse *= after a colon 
 					return Token.COLON;
 
 				case '0': case '1': case '2': case '3': case '4':
@@ -3801,27 +3864,6 @@ namespace Mono.ActionScript
 //			return Token.LITERAL;
 //		}
 
-		int TokenizeLessThan ()
-		{
-
-			int d = peek_char ();
-			if (d == '<') {
-				get_char ();
-				d = peek_char ();
-
-				if (d == '=') {
-					get_char ();
-					return Token.OP_SHIFT_LEFT_ASSIGN;
-				}
-				return Token.OP_SHIFT_LEFT;
-			}
-
-			if (d == '=') {
-				get_char ();
-				return Token.OP_LE;
-			}
-			return Token.OP_LT;
-		}
 
 		//
 		// Handles one line xml comment

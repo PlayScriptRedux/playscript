@@ -2,18 +2,25 @@ package
 {
 	import flash.events.*;
 	import System.*;
+	use namespace internal_ns;
 	import System.Dynamic.*;
 	import Microsoft.CSharp.RuntimeBinder.*;
 	import System.Collections.Generic.*;
+	
+	public function blahBlah(v:int):void {
+		trace(v);
+	}
 	
 	public class Foo extends EventDispatcher {
 	
 		public static const BLAH:int = 100;
 		public static const FOO:String = "asdf";
 			
+		public static var _q2:Array = [];
 	
 		private var _a:int;
 		private var _b:Number;
+		private var _jj:*=100;
 		private var _c:Vector.<Number> = new Vector.<Number>();
 		public function get a():int {
 		 	return _a; }
@@ -34,7 +41,8 @@ package
 	
 	public class MyClass 
 	{
-		private var _foo:int = 200;
+		internal_ns var _foo:int = 200;
+		public static var _q:Vector.<Foo> = new <Foo>[];
 		private var _spiggles:String = "Blah";
 //		private var _skig:int[,] = [[100,200], [200, 300]];
 
@@ -75,12 +83,6 @@ package
         	var len:int = int(100);
         	var i:int;
         	for (i = 0; i<len; i++) {
-        		for (i = 0; i<len; i++) {
-        			if (i<100||i>100) {
-        				trace(i);
-        			}
-        			trace(i);
-        		}
         		trace(i);
         	}
         	var re:Object = /blah/g;
