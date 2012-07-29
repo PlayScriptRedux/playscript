@@ -580,13 +580,13 @@ package_declaration
 		if (doc_support)
 			Lexer.doc_state = XmlCommentState.Allowed;
 	  }
-	  opt_extern_alias_directives opt_import_or_use_namespace_directives opt_package_type_declarations CLOSE_BRACE
+	  opt_package_declarations CLOSE_BRACE
 	  {
-	  	lbag.AddLocation (current_container, GetLocation ($2), GetLocation ($5), GetLocation ($10));
+	  	lbag.AddLocation (current_container, GetLocation ($2), GetLocation ($5), GetLocation ($8));
 	  
 		current_container = current_namespace = current_namespace.Parent;
 	  }
-	  opt_extern_alias_directives opt_import_or_use_namespace_directives opt_package_type_declarations
+	  opt_package_declarations
 	  {
 //	  	lbag.AddLocation (current_container, GetLocation ($2), GetLocation ($5), GetLocation ($10));
 	  }
@@ -625,6 +625,11 @@ opt_comma
 	| COMMA
 	;
 
+opt_package_declarations
+	: opt_extern_alias_directives opt_import_or_use_namespace_directives opt_package_type_declarations
+	| OPEN_BRACE opt_package_declarations CLOSE_BRACE
+	;
+	
 opt_import_or_use_namespace_directives
 	: /* empty */
 	| import_or_use_namespace_directives
@@ -5253,7 +5258,7 @@ identifier_inside_body
 	;
 
 block_variable_declaration
-	: VAR identifier_inside_body COLON variable_type 
+	: VAR identifier_inside_body COLON type 
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;
 		var li = new LocalVariable (current_block, lt.Value, lt.Location);
@@ -5279,7 +5284,7 @@ block_variable_declaration
 		current_variable = null;
 		lbag.AddLocation ($$, GetLocation ($4));
 	  }
-	| CONST identifier_inside_body COLON variable_type 
+	| CONST identifier_inside_body COLON type 
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;
 		var li = new LocalVariable (current_block, lt.Value, LocalVariable.Flags.Constant, lt.Location);
@@ -5352,6 +5357,23 @@ variable_declarator
 		current_block.AddLocalName (li);
 	  	lbag.AddLocation (d, GetLocation ($1), GetLocation ($3));
 	  }
+	| COMMA identifier_inside_body COLON type
+	  {
+		var lt = (Tokenizer.LocatedToken) $2;
+		var li = new LocalVariable (current_block, lt.Value, lt.Location);
+		current_block.AddLocalName (li);
+		current_variable = new BlockVariableDeclaration ((FullNamedExpression) $4, li);
+		lbag.AddLocation (current_variable, GetLocation ($4));
+	  }
+	| COMMA identifier_inside_body COLON type ASSIGN block_variable_initializer
+	  {
+		var lt = (Tokenizer.LocatedToken) $2;
+		var li = new LocalVariable (current_block, lt.Value, lt.Location);
+		current_block.AddLocalName (li);
+		current_variable = new BlockVariableDeclaration ((FullNamedExpression) $4, li);
+		current_variable.Initializer = (Expression) $6;
+		lbag.AddLocation (current_variable, GetLocation ($6));
+	  }		  
 	;
 	
 const_variable_initializer
@@ -5749,7 +5771,7 @@ opt_for_initializer
 	;
 
 for_initializer
-	: VAR identifier_inside_body COLON variable_type
+	: VAR identifier_inside_body COLON type
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;
 		var li = new LocalVariable (current_block, lt.Value, lt.Location);
@@ -6095,7 +6117,7 @@ lock_statement
 	;
 
 fixed_statement
-	: FIXED open_parens_any variable_type identifier_inside_body
+	: FIXED open_parens_any type identifier_inside_body
 	  {
 	    start_block (GetLocation ($2));
 	    

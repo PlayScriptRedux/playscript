@@ -80,7 +80,7 @@ package
 		}
 
         public static function Main() : void {
-        	var len:int = int(100);
+        	var len:int = 100, qq:Number = 100.3, ss1:String = "blah";
         	var i:int;
         	for (i = 0; i<len; i++) {
         		trace(i);
@@ -117,7 +117,6 @@ package
 			printVec(l);
 			printVec([100, 200, 300, 400, 500, 600]);
 			printArray([101, 201, 301, 401, 501, 601]);
-			var sk:int[] = [123, 123, 444];
 			l.push(100);
 			l.push(200);
 			var o:Object = l;
@@ -127,8 +126,10 @@ package
 	}
 }
 
-import System.*;
+{
+	import System.*;
 
-public class Blah2 {
-	private var i:int;
+	public class Blah2 {
+		private var i:int;
+	}
 }
