@@ -80,13 +80,20 @@ package
 		}
 
         public static function Main() : void {
-        	var len:int = 100, qq:Number = 100.3, ss1:String = "blah";
+        	var len:int = 20; // , qq:Number = 100.3, ss1:String = "blah";
         	var i:int;
         	for (i = 0; i<len; i++) {
-        		trace(i);
+        		trace("count " +i);
         	}
+        	var un:*=undefined;
         	var re:Object = /blah/g;
         	var o6:Object = { a:100, b: 200 };
+        	if ("a" in o6) {
+        		trace("a is in o6");
+        	}
+        	if (!("q" in o6)) {
+        		trace("q is not in 06");
+        	}
         	delete o6.a;
         	trace(String(32));
         	trace("Hello world!");

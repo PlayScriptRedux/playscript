@@ -2159,20 +2159,22 @@ namespace Mono.CSharp
 
 			LeftShift	= 5 | ShiftMask,
 			RightShift	= 6 | ShiftMask,
+			AsURightShift = 7 | ShiftMask,  // ActionScript Unsigned Right Shift
 
-			LessThan	= 7 | ComparisonMask | RelationalMask,
-			GreaterThan	= 8 | ComparisonMask | RelationalMask,
-			LessThanOrEqual		= 9 | ComparisonMask | RelationalMask,
-			GreaterThanOrEqual	= 10 | ComparisonMask | RelationalMask,
-			Equality	= 11 | ComparisonMask | EqualityMask,
-			Inequality	= 12 | ComparisonMask | EqualityMask,
+			LessThan	= 8 | ComparisonMask | RelationalMask,
+			GreaterThan	= 9 | ComparisonMask | RelationalMask,
+			LessThanOrEqual		= 10 | ComparisonMask | RelationalMask,
+			GreaterThanOrEqual	= 11 | ComparisonMask | RelationalMask,
+			Equality	= 12 | ComparisonMask | EqualityMask,
+			Inequality	= 13 | ComparisonMask | EqualityMask,
+			AsRefEquality = 14 | ComparisonMask | EqualityMask,
 
-			BitwiseAnd	= 13 | BitwiseMask,
-			ExclusiveOr	= 14 | BitwiseMask,
-			BitwiseOr	= 15 | BitwiseMask,
+			BitwiseAnd	= 15 | BitwiseMask,
+			ExclusiveOr	= 16 | BitwiseMask,
+			BitwiseOr	= 17 | BitwiseMask,
 
-			LogicalAnd	= 16 | LogicalMask,
-			LogicalOr	= 17 | LogicalMask,
+			LogicalAnd	= 18 | LogicalMask,
+			LogicalOr	= 19 | LogicalMask,
 
 			//
 			// Operator masks
@@ -2273,6 +2275,9 @@ namespace Mono.CSharp
 			case Operator.RightShift:
 				s = ">>";
 				break;
+			case Operator.AsURightShift:
+				s = ">>>";
+				break;
 			case Operator.LessThan:
 				s = "<";
 				break;
@@ -2287,6 +2292,9 @@ namespace Mono.CSharp
 				break;
 			case Operator.Equality:
 				s = "==";
+				break;
+			case Operator.AsRefEquality:
+				s = "===";
 				break;
 			case Operator.Inequality:
 				s = "!=";
@@ -2358,6 +2366,8 @@ namespace Mono.CSharp
 				return IsCompound ? "ExclusiveOrAssign" : "ExclusiveOr";
 			case Operator.Equality:
 				return "Equal";
+			case Operator.AsRefEquality:
+				return "ReferenceEqual";
 			case Operator.GreaterThan:
 				return "GreaterThan";
 			case Operator.GreaterThanOrEqual:
@@ -2380,6 +2390,8 @@ namespace Mono.CSharp
 				return IsCompound ? "MultiplyAssign" : "Multiply";
 			case Operator.RightShift:
 				return IsCompound ? "RightShiftAssign" : "RightShift";
+			case Operator.AsURightShift:
+				return IsCompound ? "UnsignedRightShiftAssign" : "UnsignedRightShift";
 			case Operator.Subtraction:
 				return IsCompound ? "SubtractAssign" : "Subtract";
 			default:

@@ -2463,6 +2463,10 @@ namespace Mono.CSharp {
 			GreaterThanOrEqual,
 			LessThanOrEqual,
 
+			// ActionScript binary operators
+			AsIn, 			// ActionScript "in" operator
+			AsURightShift, 	// ActionScript unsigned shift right
+
 			// Implicit and Explicit
 			Implicit,
 			Explicit,
@@ -2502,6 +2506,8 @@ namespace Mono.CSharp {
 			names [(int) OpType.LessThan] = new string [] { "<", "op_LessThan" };
 			names [(int) OpType.GreaterThanOrEqual] = new string [] { ">=", "op_GreaterThanOrEqual" };
 			names [(int) OpType.LessThanOrEqual] = new string [] { "<=", "op_LessThanOrEqual" };
+			names [(int) OpType.AsIn] = new string [] { "in", "op_In" };
+			names [(int) OpType.AsURightShift] = new string [] { ">>>", "op_UnsignedRightShift" };
 			names [(int) OpType.Implicit] = new string [] { "implicit", "op_Implicit" };
 			names [(int) OpType.Explicit] = new string [] { "explicit", "op_Explicit" };
 		}
@@ -2619,7 +2625,7 @@ namespace Mono.CSharp {
 						return false;
 					}
 				}
-			} else if (OperatorType == OpType.LeftShift || OperatorType == OpType.RightShift) {
+			} else if (OperatorType == OpType.LeftShift || OperatorType == OpType.RightShift || OperatorType == OpType.AsURightShift) {
 				if (first_arg_type != declaring_type || parameters.Types[1].BuiltinType != BuiltinTypeSpec.Type.Int) {
 					Report.Error (564, Location, "Overloaded shift operator must have the type of the first operand be the containing type, and the type of the second operand must be int");
 					return false;
@@ -2746,6 +2752,8 @@ namespace Mono.CSharp {
 				return OpType.LessThanOrEqual;
 			case OpType.LessThanOrEqual:
 				return OpType.GreaterThanOrEqual;
+			case OpType.AsIn:  // ActionScript "in" operator
+				return OpType.AsIn;
 			default:
 				return OpType.TOP;
 			}

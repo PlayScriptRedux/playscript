@@ -188,6 +188,7 @@ namespace Mono.CSharp
 		public readonly PredefinedType IListGeneric;
 		public readonly PredefinedType ICollectionGeneric;
 		public readonly PredefinedType IEnumerableGeneric;
+		public readonly PredefinedType IDictionaryGeneric;
 		public readonly PredefinedType Nullable;
 		public readonly PredefinedType Activator;
 		public readonly PredefinedType Interlocked;
@@ -243,6 +244,7 @@ namespace Mono.CSharp
 		public readonly PredefinedType AsArray;
 		public readonly PredefinedType AsError;
 		public readonly PredefinedType AsFunction;
+		public readonly PredefinedType AsUndefined;
 		private readonly PredefinedType AsBinder;
 		private readonly PredefinedType AsBinderFlags;
 
@@ -263,6 +265,7 @@ namespace Mono.CSharp
 			IListGeneric = new PredefinedType (module, MemberKind.Interface, "System.Collections.Generic", "IList", 1);
 			ICollectionGeneric = new PredefinedType (module, MemberKind.Interface, "System.Collections.Generic", "ICollection", 1);
 			IEnumerableGeneric = new PredefinedType (module, MemberKind.Interface, "System.Collections.Generic", "IEnumerable", 1);
+			IDictionaryGeneric = new PredefinedType (module, MemberKind.Interface, "System.Collections.Generic", "IDictionary", 2);
 			Nullable = new PredefinedType (module, MemberKind.Struct, "System", "Nullable", 1);
 			Activator = new PredefinedType (module, MemberKind.Class, "System", "Activator");
 			Interlocked = new PredefinedType (module, MemberKind.Class, "System.Threading", "Interlocked");
@@ -306,6 +309,7 @@ namespace Mono.CSharp
 			AsVector = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "Vector", 1);
 			AsError = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "Error");
 			AsFunction = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "Function");
+			AsUndefined = new PredefinedType (module, MemberKind.Class, "ActionScript", "Undefined");
 			AsBinder = new PredefinedType (module, MemberKind.Class, "ActionScript.RuntimeBinder", "Binder");
 			AsBinderFlags = new PredefinedType (module, MemberKind.Enum, "ActionScript.RuntimeBinder", "CSharpBinderFlags");
 

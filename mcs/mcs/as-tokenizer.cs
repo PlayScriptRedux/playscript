@@ -207,6 +207,7 @@ namespace Mono.ActionScript
 		bool handle_where = false;
 		bool handle_typeof = false;
 		bool handle_delete = false;
+		bool handle_for_in = false;
 		bool lambda_arguments_parsing;
 		List<Location> escaped_identifiers;
 		List<string> namespaces;
@@ -343,6 +344,11 @@ namespace Mono.ActionScript
 			set { handle_delete = value; }
 		}
 	
+		public bool ForInParsing {
+			get { return handle_for_in; }
+			set { handle_for_in = value; }
+		}
+
 		public bool RegexParsing {
 			get { return parse_regex > 0; }
 		}
@@ -842,6 +848,10 @@ namespace Mono.ActionScript
 					res = -1;
 				break;
 
+			case Token.IN:
+				if (!handle_for_in)
+					res = Token.OP_IN;
+				break;
 
 			case Token.USE:
 				if (!handle_namespace)
@@ -3442,6 +3452,17 @@ namespace Mono.ActionScript
 						if (d == '=') {
 							get_char ();
 							return Token.OP_SHIFT_RIGHT_ASSIGN;
+						}
+
+						if (d == '>') {
+							get_char ();
+							d = peek_char ();
+
+							if (d == '=') {
+								return Token.OP_USHIFT_RIGHT_ASSIGN;
+							}
+
+							return Token.OP_USHIFT_RIGHT;
 						}
 						return Token.OP_SHIFT_RIGHT;
 					}

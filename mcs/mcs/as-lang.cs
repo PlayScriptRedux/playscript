@@ -387,6 +387,133 @@ namespace Mono.CSharp
 		}
 	}
 
+	/// <summary>
+	///   Implementation of the ActionScript `in' operator.
+	/// </summary>
+	public class AsIn : Expression
+	{
+		protected Expression expr;
+		protected Expression objExpr;
+
+		public AsIn (Expression expr, Expression obj_expr, Location l)
+		{
+			this.expr = expr;
+			this.objExpr = obj_expr;
+			loc = l;
+		}
+
+		public Expression Expr {
+			get {
+				return expr;
+			}
+		}
+
+		public Expression ObjectExpression {
+			get {
+				return objExpr;
+			}
+		}
+
+		public override bool ContainsEmitWithAwait ()
+		{
+			throw new NotSupportedException ();
+		}
+
+		public override Expression CreateExpressionTree (ResolveContext ec)
+		{
+			throw new NotSupportedException ("ET");
+		}
+
+		protected override Expression DoResolve (ResolveContext ec)
+		{
+			var objExpRes = objExpr.Resolve (ec);
+
+			var args = new Arguments (1);
+			args.Add (new Argument (expr));
+
+			if (objExpRes.Type == ec.BuiltinTypes.Dynamic) {
+				// If dynamic, cast to IDictionary<string,object> and call ContainsKey
+				var dictExpr = new TypeExpression(ec.Module.PredefinedTypes.IDictionaryGeneric.Resolve().MakeGenericType(ec, 
+				                      new [] { ec.BuiltinTypes.String, ec.BuiltinTypes.Object }), loc);
+				return new Invocation (new MemberAccess (new Cast(dictExpr, objExpr, loc), "ContainsKey", loc), args).Resolve (ec);
+			} else {
+				string containsMethodName = "Contains";
+	
+				var iDictType = ec.Module.PredefinedTypes.IDictionaryGeneric.Resolve ();
+				if (objExpRes.Type != null && objExpRes.Type.ImplementsInterface (iDictType, true)) {
+					containsMethodName = "ContainsKey";
+				}
+
+				return new Invocation (new MemberAccess (objExpr, containsMethodName, loc), args).Resolve (ec);
+			}
+		}
+
+		protected override void CloneTo (CloneContext clonectx, Expression t)
+		{
+			AsIn target = (AsIn) t;
+
+			target.expr = expr.Clone (clonectx);
+			target.objExpr = objExpr.Clone (clonectx);
+		}
+
+		public override void Emit (EmitContext ec)
+		{
+			throw new InternalErrorException ("Missing Resolve call");
+		}
+
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}
+
+	}
+
+	/// <summary>
+	///   Implementation of the ActionScript `undefined' object constant.
+	/// </summary>
+	public class AsUndefinedLiteral : Expression
+	{
+		public AsUndefinedLiteral (Location l)
+		{
+			loc = l;
+		}
+
+		public override string ToString ()
+		{
+			return this.GetType ().Name + " (undefined)";
+		}
+
+		public override bool ContainsEmitWithAwait ()
+		{
+			throw new NotSupportedException ();
+		}
+
+		public override Expression CreateExpressionTree (ResolveContext ec)
+		{
+			throw new NotSupportedException ("ET");
+		}
+
+		protected override Expression DoResolve (ResolveContext ec)
+		{
+			return new MemberAccess(new TypeExpression(ec.Module.PredefinedTypes.AsUndefined.Resolve(), loc), 
+			                        "_undefined", loc).Resolve (ec);
+		}
+
+		protected override void CloneTo (CloneContext clonectx, Expression t)
+		{
+		}
+
+		public override void Emit (EmitContext ec)
+		{
+			throw new InternalErrorException ("Missing Resolve call");
+		}
+
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}
+
+	}
 
 }
 

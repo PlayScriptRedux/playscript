@@ -317,6 +317,7 @@ namespace Mono.ActionScript
 %token OP_DEC
 %token OP_SHIFT_LEFT
 %token OP_SHIFT_RIGHT
+%token OP_USHIFT_RIGHT
 %token OP_LE
 %token OP_GE
 %token OP_EQ
@@ -331,11 +332,13 @@ namespace Mono.ActionScript
 %token OP_SUB_ASSIGN
 %token OP_SHIFT_LEFT_ASSIGN
 %token OP_SHIFT_RIGHT_ASSIGN
+%token OP_USHIFT_RIGHT_ASSIGN
 %token OP_AND_ASSIGN
 %token OP_XOR_ASSIGN
 %token OP_OR_ASSIGN
 %token OP_PTR
 %token OP_COALESCING
+%token OP_IN
 
 /* Generics <,> tokens */
 %token OP_GENERICS_LT
@@ -2338,12 +2341,14 @@ overloadable_operator
         | CARRET { $$ = Operator.OpType.ExclusiveOr; }
         | OP_SHIFT_LEFT { $$ = Operator.OpType.LeftShift; }
         | OP_SHIFT_RIGHT { $$ = Operator.OpType.RightShift; }
+        | OP_USHIFT_RIGHT { $$ = Operator.OpType.AsURightShift; }
         | OP_EQ { $$ = Operator.OpType.Equality; }
         | OP_NE { $$ = Operator.OpType.Inequality; }
         | OP_GT { $$ = Operator.OpType.GreaterThan; }
         | OP_LT { $$ = Operator.OpType.LessThan; }
         | OP_GE { $$ = Operator.OpType.GreaterThanOrEqual; }
         | OP_LE { $$ = Operator.OpType.LessThanOrEqual; }
+        | OP_IN { $$ = Operator.OpType.AsIn; }
 	;
 
 conversion_operator_declarator
@@ -3341,6 +3346,7 @@ primary_expression_or_type
 literal
 	: boolean_literal
 	| LITERAL
+	| UNDEFINED		{ $$ = new AsUndefinedLiteral (GetLocation ($1)); }
 	| NULL			{ $$ = new NullLiteral (GetLocation ($1)); }
 	;
 
@@ -3368,7 +3374,6 @@ close_parens
 	: CLOSE_PARENS
 	| COMPLETE_COMPLETION
 	;
-
 
 parenthesized_expression
 	: OPEN_PARENS expression CLOSE_PARENS
@@ -4246,6 +4251,10 @@ additive_expression
 		$$ = new Binary (Binary.Operator.Subtraction, (Expression) $1, (Expression) $3);
 		lbag.AddLocation ($$, GetLocation ($2));
   	  }
+	| additive_expression OP_IN multiplicative_expression
+	  {
+		$$ = new AsIn ((Expression) $1, (Expression) $3, GetLocation ($2));
+	  }	  
 	| additive_expression AS type
 	  {
 		$$ = new As ((Expression) $1, (Expression) $3, GetLocation ($2));
@@ -4266,6 +4275,11 @@ shift_expression
 	| shift_expression OP_SHIFT_RIGHT additive_expression
 	  {
 		$$ = new Binary (Binary.Operator.RightShift, (Expression) $1, (Expression) $3);
+		lbag.AddLocation ($$, GetLocation ($2));
+	  }
+	| shift_expression OP_USHIFT_RIGHT additive_expression
+	  {
+		$$ = new Binary (Binary.Operator.AsURightShift, (Expression) $1, (Expression) $3);
 		lbag.AddLocation ($$, GetLocation ($2));
 	  }
 	; 
@@ -4304,6 +4318,11 @@ equality_expression
 	| equality_expression OP_NE relational_expression
 	  {
 		$$ = new Binary (Binary.Operator.Inequality, (Expression) $1, (Expression) $3);
+		lbag.AddLocation ($$, GetLocation ($2));
+	  }
+	| equality_expression OP_REF_EQ relational_expression
+	  {
+		$$ = new Binary (Binary.Operator.AsRefEquality, (Expression) $1, (Expression) $3);
 		lbag.AddLocation ($$, GetLocation ($2));
 	  }
 	; 
@@ -4357,6 +4376,8 @@ null_coalescing_expression
 	: conditional_or_expression
 	| conditional_or_expression OP_COALESCING null_coalescing_expression
 	  {
+	  	CheckIsAsx("?? operator", GetLocation($2));
+	  
 		if (lang_version < LanguageVersion.ISO_2)
 			FeatureIsNotAvailable (GetLocation ($2), "null coalescing operator");
 			
@@ -4429,6 +4450,11 @@ assignment_expression
 	| prefixed_unary_expression OP_SHIFT_RIGHT_ASSIGN expression
 	  {
 		$$ = new CompoundAssign (Binary.Operator.RightShift, (Expression) $1, (Expression) $3);
+		lbag.AddLocation ($$, GetLocation ($2));
+	  }
+	| prefixed_unary_expression OP_USHIFT_RIGHT_ASSIGN expression
+	  {
+		$$ = new CompoundAssign (Binary.Operator.AsURightShift, (Expression) $1, (Expression) $3);
 		lbag.AddLocation ($$, GetLocation ($2));
 	  }
 	| prefixed_unary_expression OP_AND_ASSIGN expression
@@ -5657,10 +5683,12 @@ for_statement
 	  {
 		start_block (GetLocation ($2));
 		current_block.IsCompilerGenerated = true;
+		lexer.ForInParsing = true;
 		$$ = new Tuple<Location,Location>(GetLocation($0), GetLocation($1));
 	  }
 	  for_statement_cont
 	  {
+		lexer.ForInParsing = false;	  
 		$$ = $4;
 	  }
 	;
@@ -5669,6 +5697,7 @@ for_statement
 for_statement_cont
 	: for_initializer IN
 	  {
+	    lexer.ForInParsing = false;
 		var blockVar = $1 as BlockVariableDeclaration;
 		if (blockVar == null || blockVar.Initializer != null || blockVar.Declarators != null) {
 			report.Error (1525, GetLocation ($2), "Unexpected symbol expected ';'");	
@@ -5693,6 +5722,8 @@ for_statement_cont
 	  }	
 	| opt_for_initializer SEMICOLON
 	  {
+	    lexer.ForInParsing = false;
+	  
 		var locations = (Tuple<Location,Location>) $0;
 
 		For f = new For (locations.Item1);
@@ -5818,39 +5849,38 @@ statement_expression_list
 	;
 
 foreach_statement
-	: FOR_EACH open_parens_any type error
+	: FOR_EACH 
 	  {
-		report.Error (7006, GetLocation ($1), "A for each statement must begin with a 'var' keyword");
-
-		start_block (GetLocation ($2));
+		lexer.ForInParsing = true;
+	  } 
+	  open_parens_any for_initializer IN
+	  {
+	  	lexer.ForInParsing = false;
+	  } 
+	  expression CLOSE_PARENS 
+	  {
+		start_block (GetLocation ($3));
 		current_block.IsCompilerGenerated = true;
 		
-		Foreach f = new Foreach ((Expression) $3, null, null, null, null, AsForEachType.ForEachValue, GetLocation ($1));
-		current_block.AddStatement (f);
-		
-		lbag.AddStatement (f, GetLocation ($2));
-		$$ = end_block (GetLocation ($4));
-	  }
-	| FOR_EACH open_parens_any VAR identifier_inside_body COLON type IN expression CLOSE_PARENS 
-	  {
-		start_block (GetLocation ($2));
-		current_block.IsCompilerGenerated = true;
-		
-		var lt = (Tokenizer.LocatedToken) $4;
-		var li = new LocalVariable (current_block, lt.Value, LocalVariable.Flags.ForeachVariable | LocalVariable.Flags.Used, lt.Location);
-		current_block.AddLocalName (li);
-		$$ = li;
+		var blockVar = $4 as BlockVariableDeclaration;
+		if (blockVar == null || blockVar.Initializer != null || blockVar.Declarators != null) {
+			report.Error (7036, GetLocation ($4), "Invalid for each initializer");	
+		}
 	  } 
 	  embedded_statement
 	  {
-		if ($11 is EmptyStatement && lexer.peek_token () == Token.OPEN_BRACE)
-			Warning_EmptyStatement (GetLocation ($11));
-		
-		Foreach f = new Foreach ((Expression) $6, (LocalVariable) $10, (Expression) $8, (Statement) $11, current_block, AsForEachType.ForEachValue, GetLocation ($1));
-		lbag.AddStatement (f, GetLocation ($2), GetLocation ($7), GetLocation ($9));
-		end_block (GetLocation ($9));
-		
-		$$ = f;
+		if ($10 is EmptyStatement && lexer.peek_token () == Token.OPEN_BRACE)
+			Warning_EmptyStatement (GetLocation ($10));
+
+		var blockVar = $4 as BlockVariableDeclaration;
+		if (blockVar != null) {
+			Foreach f = new Foreach (blockVar.TypeExpression, blockVar.Variable, (Expression) $7, (Statement) $10, current_block, AsForEachType.ForEachValue, GetLocation ($1));
+			lbag.AddStatement (f, GetLocation ($3), GetLocation ($5), GetLocation ($8));
+			
+			$$ = end_block (GetLocation ($5));
+		} else {
+			$$ = end_block (current_block.StartLocation);
+		}
 	  }
 	;
 
@@ -7407,6 +7437,8 @@ string GetSymbolName (int token)
 		return "<<";
 	case Token.OP_SHIFT_RIGHT:
 		return ">>";
+	case Token.OP_USHIFT_RIGHT:
+		return ">>>";
 	case Token.OP_LT:
 		return "<";
 	case Token.OP_GT:
@@ -7427,6 +7459,8 @@ string GetSymbolName (int token)
 		return "||";
 	case Token.OP_PTR:
 		return "->";
+	case Token.OP_IN:
+		return "in";
 	case Token.OP_COALESCING:	
 		return "??";
 	case Token.OP_MULT_ASSIGN:
@@ -7443,6 +7477,8 @@ string GetSymbolName (int token)
 		return "<<=";
 	case Token.OP_SHIFT_RIGHT_ASSIGN:
 		return ">>=";
+	case Token.OP_USHIFT_RIGHT_ASSIGN:
+		return ">>>=";
 	case Token.OP_AND_ASSIGN:
 		return "&=";
 	case Token.OP_XOR_ASSIGN:
