@@ -5389,20 +5389,23 @@ variable_declarator
 	  }
 	| COMMA identifier_inside_body COLON type
 	  {
-		var lt = (Tokenizer.LocatedToken) $2;
-		var li = new LocalVariable (current_block, lt.Value, lt.Location);
+		var lt = (Tokenizer.LocatedToken) $2;	  
+		var li = new LocalVariable (current_variable.Variable, lt.Value, lt.Location);
+		var d = new BlockVariableDeclaration.Declarator (li, null, (FullNamedExpression) $4);
+		d.Location = GetLocation($2);
+		current_variable.AddDeclarator (d);
 		current_block.AddLocalName (li);
-		current_variable = new BlockVariableDeclaration ((FullNamedExpression) $4, li);
-		lbag.AddLocation (current_variable, GetLocation ($4));
+	  	lbag.AddLocation (d, GetLocation ($1));
 	  }
 	| COMMA identifier_inside_body COLON type ASSIGN block_variable_initializer
 	  {
-		var lt = (Tokenizer.LocatedToken) $2;
-		var li = new LocalVariable (current_block, lt.Value, lt.Location);
+		var lt = (Tokenizer.LocatedToken) $2;	  
+		var li = new LocalVariable (current_variable.Variable, lt.Value, lt.Location);
+		var d = new BlockVariableDeclaration.Declarator (li, (Expression) $6, (FullNamedExpression) $4);
+		d.Location = GetLocation($2);
+		current_variable.AddDeclarator (d);
 		current_block.AddLocalName (li);
-		current_variable = new BlockVariableDeclaration ((FullNamedExpression) $4, li);
-		current_variable.Initializer = (Expression) $6;
-		lbag.AddLocation (current_variable, GetLocation ($6));
+	  	lbag.AddLocation (d, GetLocation ($1), GetLocation ($5));
 	  }		  
 	;
 	

@@ -53,7 +53,7 @@ package
 		}
 
 		public static function printArray(a:Array) : void {
-			var object:Object;
+			var object:Object = null;
 			for each (object in a) {
 				Console.WriteLine("{0} number.", object);
 			}
@@ -81,10 +81,12 @@ package
 		}
 
         public static function Main() : void {
-//        	var len:int = 20; // , qq:Number = 100.3, ss1:String = "blah";
-        	var i:int;
+        	var len:int = 20, qq:Number = 100.3, ss1:String = "blah";
+        	trace(qq);
+        	trace(ss1);
+        	var i:int = 0;
         	var v:Vector.<int> = new <int> [ 1, 2, 3, 4, 5, 6, 7, 8 ];
-        	var len:int = v.length;
+        	len = v.length;
         	for (i in v) {
         		trace("# " + i);
         	}

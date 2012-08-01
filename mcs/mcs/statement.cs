@@ -1407,20 +1407,24 @@ namespace Mono.CSharp {
 		public class Declarator
 		{
 			LocalVariable li;
+			FullNamedExpression type_expr;
 			Expression initializer;
+			Location loc;
 
-			public Declarator (LocalVariable li, Expression initializer)
+			public Declarator (LocalVariable li, Expression initializer, FullNamedExpression type_expr = null)
 			{
 				if (li.Type != null)
 					throw new ArgumentException ("Expected null variable type");
 
 				this.li = li;
+				this.type_expr = type_expr;
 				this.initializer = initializer;
 			}
 
 			public Declarator (Declarator clone, Expression initializer)
 			{
 				this.li = clone.li;
+				this.type_expr = clone.type_expr;
 				this.initializer = initializer;
 			}
 
@@ -1438,6 +1442,24 @@ namespace Mono.CSharp {
 				}
 				set {
 					initializer = value;
+				}
+			}
+
+			public FullNamedExpression TypeExpression {
+				get { 
+					return type_expr; 
+				}
+				set {
+					type_expr = value;
+				}
+			}
+
+			public Location Location {
+				get {
+					return loc;
+				}
+				set {
+					loc = value;
 				}
 			}
 
@@ -1526,64 +1548,13 @@ namespace Mono.CSharp {
 		public bool Resolve (BlockContext bc, bool resolveDeclaratorInitializers)
 		{
 			if (type == null && !li.IsCompilerGenerated) {
-				var vexpr = type_expr as VarExpr;
-
-				//
-				// C# 3.0 introduced contextual keywords (var) which behaves like a type if type with
-				// same name exists or as a keyword when no type was found
-				//
-				if (vexpr != null && !vexpr.IsPossibleTypeOrNamespace (bc)) {
-					if (bc.Module.Compiler.Settings.Version < LanguageVersion.V_3)
-						bc.Report.FeatureIsNotAvailable (bc.Module.Compiler, loc, "implicitly typed local variable");
-
-					if (li.IsFixed) {
-						bc.Report.Error (821, loc, "A fixed statement cannot use an implicitly typed local variable");
-						return false;
-					}
-
-					if (li.IsConstant) {
-						bc.Report.Error (822, loc, "An implicitly typed local variable cannot be a constant");
-						return false;
-					}
-
-					if (Initializer == null) {
-						bc.Report.Error (818, loc, "An implicitly typed local variable declarator must include an initializer");
-						return false;
-					}
-
-					if (declarators != null) {
-						bc.Report.Error (819, loc, "An implicitly typed local variable declaration cannot include multiple declarators");
-						declarators = null;
-					}
-
-					Initializer = Initializer.Resolve (bc);
-					if (Initializer != null) {
-						((VarExpr) type_expr).InferType (bc, Initializer);
-						type = type_expr.Type;
-					} else {
-						// Set error type to indicate the var was placed correctly but could
-						// not be infered
-						//
-						// var a = missing ();
-						//
-						type = InternalType.ErrorType;
-					}
-				}
-
-				if (type == null) {
-					type = type_expr.ResolveAsType (bc);
-					if (type == null)
-						return false;
-
-					if (li.IsConstant && !type.IsConstantCompatible) {
-						Const.Error_InvalidConstantType (type, loc, bc.Report);
-					}
-				}
-
-				if (type.IsStatic)
-					FieldBase.Error_VariableOfStaticClass (loc, li.Name, type, bc.Report);
-
+				Expression resolvedInitializer = null;
+				type = ResolveVariableType(li, type_expr, initializer, out resolvedInitializer, declarators, loc, bc);
+				if (type == null)
+					return false;
 				li.Type = type;
+				if (resolvedInitializer != null)
+					initializer = resolvedInitializer;
 			}
 
 			bool eval_global = bc.Module.Compiler.Settings.StatementMode && bc.CurrentBlock is ToplevelBlock;
@@ -1599,8 +1570,20 @@ namespace Mono.CSharp {
 			}
 
 			if (declarators != null) {
+				var declType = li.Type;
 				foreach (var d in declarators) {
-					d.Variable.Type = li.Type;
+					if (d.TypeExpression == null) {
+						d.Variable.Type = declType;
+					} else {
+						// ActionScript - Declarators can specify their own types (not really declarators, but close enough).
+						Expression declResolvedInitializer = null;
+						declType = ResolveVariableType(d.Variable, d.TypeExpression, d.Initializer, out declResolvedInitializer, null, d.Location, bc);
+						if (declType == null)
+							return false;
+						d.Variable.Type = declType;
+						if (declResolvedInitializer != null)
+							d.Initializer = declResolvedInitializer;
+					}
 					if (eval_global) {
 						CreateEvaluatorVariable (bc, d.Variable);
 					} else {
@@ -1615,6 +1598,74 @@ namespace Mono.CSharp {
 			}
 
 			return true;
+		}
+
+		private static TypeSpec ResolveVariableType(LocalVariable li, Expression type_expr, 
+		                                     Expression initializer, out Expression resolvedInitializer, 
+		                                     List<Declarator> declarators, Location loc, BlockContext bc) 
+		{
+			TypeSpec type = null;
+
+			resolvedInitializer = null;
+
+			var vexpr = type_expr as VarExpr;
+
+			//
+			// C# 3.0 introduced contextual keywords (var) which behaves like a type if type with
+			// same name exists or as a keyword when no type was found
+			//
+			if (vexpr != null && !vexpr.IsPossibleTypeOrNamespace (bc)) {
+				if (bc.Module.Compiler.Settings.Version < LanguageVersion.V_3)
+					bc.Report.FeatureIsNotAvailable (bc.Module.Compiler, loc, "implicitly typed local variable");
+
+				if (li.IsFixed) {
+					bc.Report.Error (821, loc, "A fixed statement cannot use an implicitly typed local variable");
+					return null;
+				}
+
+				if (li.IsConstant) {
+					bc.Report.Error (822, loc, "An implicitly typed local variable cannot be a constant");
+					return null;
+				}
+
+				if (initializer == null) {
+					bc.Report.Error (818, loc, "An implicitly typed local variable declarator must include an initializer");
+					return null;
+				}
+
+				if (declarators != null) {
+					bc.Report.Error (819, loc, "An implicitly typed local variable declaration cannot include multiple declarators");
+					declarators = null;
+				}
+
+				resolvedInitializer = initializer.Resolve (bc);
+				if (resolvedInitializer != null) {
+					((VarExpr) type_expr).InferType (bc, resolvedInitializer);
+					type = type_expr.Type;
+				} else {
+					// Set error type to indicate the var was placed correctly but could
+					// not be infered
+					//
+					// var a = missing ();
+					//
+					type = InternalType.ErrorType;
+				}
+			}
+
+			if (type == null) {
+				type = type_expr.ResolveAsType (bc);
+				if (type == null)
+					return null;
+
+				if (li.IsConstant && !type.IsConstantCompatible) {
+					Const.Error_InvalidConstantType (type, loc, bc.Report);
+				}
+			}
+
+			if (type.IsStatic)
+				FieldBase.Error_VariableOfStaticClass (loc, li.Name, type, bc.Report);
+		
+			return type;
 		}
 
 		protected virtual Expression ResolveInitializer (BlockContext bc, LocalVariable li, Expression initializer)
