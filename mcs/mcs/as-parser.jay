@@ -4144,6 +4144,8 @@ anonymous_method_signature
 default_value_expression
 	: DEFAULT open_parens_any type CLOSE_PARENS
 	  {
+	  	CheckIsAsx("default values", GetLocation($1));
+	  
 		if (lang_version < LanguageVersion.ISO_2)
 			FeatureIsNotAvailable (GetLocation ($1), "default value expression");
 
@@ -4169,6 +4171,8 @@ unary_expression
 //	  }
 	| AWAIT prefixed_unary_expression
 	  {
+	  	CheckIsAsx("default values", GetLocation($1));
+	  	
 		if (!async_block) {
 			 if (current_anonymous_method is LambdaExpression) {
 				report.Error (4034, GetLocation ($1),
@@ -5476,13 +5480,7 @@ interactive_expression_statement
 statement_expression
 	: expression
 	  {
-		ExpressionStatement s = $1 as ExpressionStatement;
-		if (s == null) {
-			Expression.Error_InvalidExpressionStatement (report, GetLocation ($1));
-			$$ = new StatementErrorExpression ($1 as Expression);
-		} else {
-			$$ = new StatementExpression (s);
-		}
+		$$ = ConvertExpressionToStatement((Expression)$1);
 	  }
 	;
 
@@ -5698,10 +5696,6 @@ for_statement_cont
 	: for_initializer IN
 	  {
 	    lexer.ForInParsing = false;
-		var blockVar = $1 as BlockVariableDeclaration;
-		if (blockVar == null || blockVar.Initializer != null || blockVar.Declarators != null) {
-			report.Error (1525, GetLocation ($2), "Unexpected symbol expected ';'");	
-		}
 	  } 
 	  expression CLOSE_PARENS embedded_statement
 	  {
@@ -5710,14 +5704,33 @@ for_statement_cont
 
 		var blockVar = $1 as BlockVariableDeclaration;
 		if (blockVar != null) {
-			var locations = (Tuple<Location,Location>) $0;
-			
-			Foreach f = new Foreach (blockVar.TypeExpression, blockVar.Variable, (Expression) $4, (Statement) $6, current_block, AsForEachType.ForEachKey, locations.Item1);
-			lbag.AddStatement (f, locations.Item2, GetLocation ($2), GetLocation ($5));
-			
-			$$ = end_block (GetLocation ($5));
+			if (blockVar == null || blockVar.Initializer != null || blockVar.Declarators != null) {
+				report.Error (7036, GetLocation ($4), "Invalid for each initializer");	
+				$$ = end_block (current_block.StartLocation);
+			} else {
+				var locations = (Tuple<Location,Location>) $0;
+				
+				Foreach f = new Foreach (blockVar.TypeExpression, blockVar.Variable, (Expression) $4, (Statement) $6, current_block, AsForEachType.ForEachKey, locations.Item1);
+				lbag.AddStatement (f, locations.Item2, GetLocation ($2), GetLocation ($5));
+				
+				end_block (GetLocation ($5));
+				$$ = f;
+			}
 		} else {
-			$$ = end_block (current_block.StartLocation);
+			var expList = $1 as List<Expression>;
+			var varRef = ($1 as FullNamedExpression) ?? ((expList != null && expList.Count == 1) ? (expList[0] as FullNamedExpression) : null);
+			if (varRef == null) {
+				report.Error (7041, GetLocation ($1), "Invalid iterator initializer");		
+				$$ = end_block (current_block.StartLocation);
+			} else {
+				var locations = (Tuple<Location,Location>) $0;
+				
+				Foreach f = new Foreach (varRef, (Expression) $4, (Statement) $6, current_block, AsForEachType.ForEachKey, locations.Item1);
+				lbag.AddStatement (f, locations.Item2, GetLocation ($2), GetLocation ($5));
+				
+				end_block (GetLocation ($5));
+				$$ = f;
+			}
 		}
 	  }	
 	| opt_for_initializer SEMICOLON
@@ -5729,7 +5742,11 @@ for_statement_cont
 		For f = new For (locations.Item1);
 		current_block.AddStatement (f);
 		
-		f.Initializer = (Statement) $1;
+		var expList = $1 as List<Expression>;
+		if (expList != null) 
+			f.Initializer = ExpressionListToStatementList (expList);
+		else
+			f.Initializer = (Statement) $1;
 
 		// Pass the "For" object to the iterator_part4
 		oob_stack.Push (f);
@@ -5814,7 +5831,10 @@ for_initializer
 		$$ = current_variable;
 		current_variable = null;
 	  }
-	| statement_expression_list
+	| expression_list
+	  {
+		
+	  }
 	;
 
 opt_for_condition
@@ -5861,11 +5881,6 @@ foreach_statement
 	  {
 		start_block (GetLocation ($3));
 		current_block.IsCompilerGenerated = true;
-		
-		var blockVar = $4 as BlockVariableDeclaration;
-		if (blockVar == null || blockVar.Initializer != null || blockVar.Declarators != null) {
-			report.Error (7036, GetLocation ($4), "Invalid for each initializer");	
-		}
 	  } 
 	  embedded_statement
 	  {
@@ -5874,12 +5889,29 @@ foreach_statement
 
 		var blockVar = $4 as BlockVariableDeclaration;
 		if (blockVar != null) {
-			Foreach f = new Foreach (blockVar.TypeExpression, blockVar.Variable, (Expression) $7, (Statement) $10, current_block, AsForEachType.ForEachValue, GetLocation ($1));
-			lbag.AddStatement (f, GetLocation ($3), GetLocation ($5), GetLocation ($8));
-			
-			$$ = end_block (GetLocation ($5));
+			if (blockVar == null || blockVar.Initializer != null || blockVar.Declarators != null) {
+				report.Error (7036, GetLocation ($4), "Invalid for each initializer");	
+				$$ = end_block (current_block.StartLocation);
+			} else {
+				Foreach f = new Foreach (blockVar.TypeExpression, blockVar.Variable, (Expression) $7, (Statement) $10, current_block, AsForEachType.ForEachValue, GetLocation ($1));
+				lbag.AddStatement (f, GetLocation ($3), GetLocation ($5), GetLocation ($8));
+				
+				end_block (GetLocation ($5));
+				$$ = f;
+			}
 		} else {
-			$$ = end_block (current_block.StartLocation);
+			var expList = $4 as List<Expression>;
+			var varRef = ($4 as FullNamedExpression) ?? ((expList != null && expList.Count == 1) ? (expList[0] as FullNamedExpression) : null);
+			if (varRef == null) {
+				report.Error (7041, GetLocation ($4), "Invalid iterator initializer");		
+				$$ = end_block (current_block.StartLocation);
+			} else {
+				Foreach f = new Foreach (varRef, (Expression) $7, (Statement) $10, current_block, AsForEachType.ForEachValue, GetLocation ($1));
+				lbag.AddStatement (f, GetLocation ($3), GetLocation ($5), GetLocation ($8));
+				
+				end_block (GetLocation ($5));
+				$$ = f;
+			}
 		}
 	  }
 	;
@@ -7319,6 +7351,34 @@ object ConvertAsType(SimpleName sn, object e)
 		return e;
 }
 
+Statement ExpressionListToStatementList(List<Expression> list)
+{
+	if (list.Count == 1) {
+		return ConvertExpressionToStatement(list[0]);
+	} else if (list.Count > 1) {
+		var sl = new StatementList(ConvertExpressionToStatement(list[0]), ConvertExpressionToStatement(list[1]));
+		for (var i = 2; i < list.Count; i++) {
+			sl.Add(ConvertExpressionToStatement(list[i]));
+		}
+		return sl;
+	}
+	
+	return new StatementErrorExpression (EmptyExpression.MissingValue);
+}
+
+Statement ConvertExpressionToStatement(Expression ex)
+{
+	Statement ret;
+	ExpressionStatement s = ex as ExpressionStatement;
+	if (s == null) {
+		Expression.Error_InvalidExpressionStatement (report, GetLocation (ex));
+		ret = new StatementErrorExpression (ex);
+	} else {
+		ret = new StatementExpression (s);
+	}
+	return ret;
+}
+ 
 string GetExpecting ()
 {
 	int [] tokens = yyExpectingTokens (yyExpectingState);

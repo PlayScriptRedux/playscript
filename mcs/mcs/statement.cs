@@ -6092,10 +6092,10 @@ namespace Mono.CSharp {
 			TemporaryVariableReference enumerator_variable;
 			bool ambiguous_getenumerator_name;
 
-			public CollectionForeach (Foreach @foreach, LocalVariable var, Expression expr)
+			public CollectionForeach (Foreach @foreach, LocalVariable @var, Expression expr)
 				: base (@foreach)
 			{
-				this.variable = var;
+				this.variable = @var;
 				this.expr = expr;
 			}
 
@@ -6303,12 +6303,14 @@ namespace Mono.CSharp {
 								current_pe = new PropertyExpr(value_prop, loc) { InstanceExpression = current_pe }.Resolve (ec);
 							}
 						}
-					} else {
-						if (for_each.AsForEachType == AsForEachType.ForEachKey) {
-							ec.Report.Error (7017, loc, "for(in) statement cannot operate on keys of non dictionary collections.");
-							return false;
-						}
 					}
+					// Actually, for(in) statements iterate over array values too in ActionScript.
+//					else {  
+//						if (for_each.AsForEachType == AsForEachType.ForEachKey) {
+//							ec.Report.Error (7017, loc, "for(in) statement cannot operate on keys of non dictionary collections.");
+//							return false;
+//						}
+//					}
 					if (current_pe == null)
 						return false;
 				}
@@ -6424,6 +6426,7 @@ namespace Mono.CSharp {
 			#endregion
 		}
 
+		FullNamedExpression varRef;
 		Expression type;
 		LocalVariable variable;
 		Expression expr;
@@ -6447,12 +6450,26 @@ namespace Mono.CSharp {
 			asForEachType = asType;
 		}
 
+		public Foreach (FullNamedExpression varRef, Expression expr, Statement stmt, Block body, AsForEachType asType, Location l)
+		{
+			this.varRef = varRef;
+			this.expr = expr;
+			this.statement = stmt;
+			this.body = body;
+			asForEachType = asType;
+			loc = l;
+		}
+
 		public Expression Expr {
 			get { return expr; }
 		}
 
 		public Statement Statement {
 			get { return statement; }
+		}
+
+		public FullNamedExpression VariableRef {
+			get { return varRef; }
 		}
 
 		public Expression TypeExpression {
@@ -6469,6 +6486,17 @@ namespace Mono.CSharp {
 
 		public override bool Resolve (BlockContext ec)
 		{
+			// Actionscript can specify a block scope local variable instead of declaring a new local variable.
+			if (varRef != null) {
+				var locVarRef = varRef.Resolve (ec) as LocalVariableReference;
+				if (locVarRef == null) {
+					ec.Report.Error (7037, loc, "For each must reference an accessible local variable.");
+					return false;
+				}
+				variable = locVarRef.local_info;
+				type = new TypeExpression(variable.Type, loc);
+			}
+
 			expr = expr.Resolve (ec);
 			if (expr == null)
 				return false;
@@ -6499,7 +6527,9 @@ namespace Mono.CSharp {
 
 		protected override void DoEmit (EmitContext ec)
 		{
-			variable.CreateBuilder (ec);
+			// Only create variable if we aren't referencing a var (ActionScript only).
+			if (varRef == null)
+				variable.CreateBuilder (ec);
 
 			Label old_begin = ec.LoopBegin, old_end = ec.LoopEnd;
 			ec.LoopBegin = ec.DefineLabel ();

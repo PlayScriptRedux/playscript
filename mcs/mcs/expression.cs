@@ -4952,7 +4952,10 @@ namespace Mono.CSharp
 			if (variable_info.IsAssigned (rc))
 				return;
 
-			rc.Report.Error (165, loc, "Use of unassigned local variable `{0}'", Name);
+			// ActionScript does not consider this an error.
+			if (rc.FileType != SourceFileType.ActionScript)
+				rc.Report.Error (165, loc, "Use of unassigned local variable `{0}'", Name);
+
 			variable_info.SetAssigned (rc);
 		}
 
