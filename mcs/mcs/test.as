@@ -7,13 +7,19 @@ package
 	import Microsoft.CSharp.RuntimeBinder.*;
 	import System.Collections.Generic.*;
 	
+	public namespace fwubnutz_extreme = "http://www.blah.fwubnutz.com/blah";
+	
 	public function blahBlah(v:int):void {
 		trace(v);
 	}
 	
+	public class TestAttribute extends Attribute {
+	}
+	
+	[Test]
 	public class Foo extends EventDispatcher {
 	
-		public static const BLAH:int = 100;
+		fwubnutz_extreme static const BLAH:int = 100;
 		public static const FOO:String = "asdf";
 			
 		public static var _q2:Array = [];

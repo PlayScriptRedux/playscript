@@ -210,7 +210,6 @@ namespace Mono.ActionScript
 		bool handle_for_in = false;
 		bool lambda_arguments_parsing;
 		List<Location> escaped_identifiers;
-		List<string> namespaces;
 		int parsing_generic_less_than;
 		readonly bool doc_processing;
 		readonly LocatedTokenBuffer ltb;
@@ -379,14 +378,6 @@ namespace Mono.ActionScript
 		public bool IsEscapedIdentifier (ATypeNameExpression name)
 		{
 			return escaped_identifiers != null && escaped_identifiers.Contains (name.Location);
-		}
-
-		public void AddNamespace (string name) 
-		{
-			if (namespaces == null) {
-				namespaces = new List<string>();
-			}
-			namespaces.Add(name);
 		}
 
 		//
@@ -592,6 +583,7 @@ namespace Mono.ActionScript
 			AddKeyword ("extends", Token.EXTENDS);
 			AddKeyword ("extern", Token.EXTERN);
 			AddKeyword ("false", Token.FALSE);
+			AddKeyword ("final", Token.FINAL);
 			AddKeyword ("finally", Token.FINALLY);
 			AddKeyword ("fixed", Token.FIXED);
 			AddKeyword ("float", Token.FLOAT);
@@ -630,7 +622,6 @@ namespace Mono.ActionScript
 			AddKeyword ("remove", Token.REMOVE);
 			AddKeyword ("return", Token.RETURN);
 			AddKeyword ("sbyte", Token.SBYTE);
-			AddKeyword ("final", Token.SEALED);
 			AddKeyword ("set", Token.SET);
 			AddKeyword ("short", Token.SHORT);
 			AddKeyword ("sizeof", Token.SIZEOF);
@@ -3202,18 +3193,12 @@ namespace Mono.ActionScript
 
 			string s = InternIdentifier (id_builder, pos);
 
-			// Handle namespaces
-			if (parsing_modifiers && namespaces != null) {
-				if (namespaces.IndexOf(s) != -1) {
-					return Token.INTERNAL;
-				}
-			}
-
 			val = ltb.Create (s, current_source, ref_line, column);
 			if (quoted && parsing_attribute_section)
 				AddEscapedIdentifier (((LocatedToken) val).Location);
 
-			return Token.IDENTIFIER;
+			return (parsing_modifiers && !parsing_attribute_section) ? 
+				Token.IDENTIFIER_MODIFIER : Token.IDENTIFIER;
 		}
 
 		string InternIdentifier (char[] charBuffer, int length)

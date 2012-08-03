@@ -124,6 +124,9 @@ namespace Mono.ActionScript
 		/// resulting expression
 		public Class InteractiveResult;
 
+		// Current modifier namespace identifier
+		public string ns_modifier;
+
 		//
 		// Keeps track of global data changes to undo on parser error
 		//
@@ -189,7 +192,8 @@ namespace Mono.ActionScript
 %token EVENT	
 %token EXPLICIT
 %token EXTENDS	
-%token FALSE	
+%token FALSE
+%token FINAL	
 %token FINALLY	
 %token FIXED	
 %token FLOAT	
@@ -230,7 +234,6 @@ namespace Mono.ActionScript
 %token RETURN	
 %token REMOVE
 %token SBYTE	
-%token SEALED	
 %token SHORT	
 %token SIZEOF	
 %token STACKALLOC
@@ -348,6 +351,7 @@ namespace Mono.ActionScript
 %token LITERAL
 
 %token IDENTIFIER
+%token IDENTIFIER_MODIFIER
 %token OPEN_PARENS_LAMBDA
 %token OPEN_PARENS_CAST
 %token OPEN_PARENS_DELETE
@@ -408,8 +412,8 @@ compilation_unit
 	;
 	
 outer_declaration
-	: opt_extern_alias_directives opt_import_or_use_namespace_directives
-	| opt_extern_alias_directives opt_import_or_use_namespace_directives package_declaration opt_attributes
+	: opt_extern_alias_directives opt_package_directives
+	| opt_extern_alias_directives opt_package_directives package_declaration opt_attributes
 	  {
 		if ($4 != null) {
 			Attributes attrs = (Attributes) $4;
@@ -419,7 +423,7 @@ outer_declaration
 			current_namespace.UnattachedAttributes = attrs;
 		}
 	  }
-	| opt_extern_alias_directives opt_import_or_use_namespace_directives attribute_sections
+	| opt_extern_alias_directives opt_package_directives attribute_sections
 	  {
 		module.AddAttributes ((Attributes) $3, current_namespace);
 	  }
@@ -470,14 +474,14 @@ extern_alias_directive
 	  }
 	;
  
-import_or_use_namespace_directive
+package_directive
 	: import_directive
 	| use_namespace_directive
 	;
  
-import_or_use_namespace_directives
-    : import_or_use_namespace_directive
-    | import_or_use_namespace_directives import_or_use_namespace_directive
+package_directives
+    : package_directive
+    | package_directives package_directive
     ;
 
 use_namespace_directive
@@ -490,10 +494,6 @@ use_namespace_directive
 
 use_namespace
 	: USE NAMESPACE IDENTIFIER SEMICOLON
-	  {
-		var lt = (Tokenizer.LocatedToken) $3;	  
-	  	lexer.AddNamespace(lt.Value);
-	  }
 	;
  
 import_directive
@@ -588,6 +588,8 @@ package_declaration
 	  	lbag.AddLocation (current_container, GetLocation ($2), GetLocation ($5), GetLocation ($8));
 	  
 		current_container = current_namespace = current_namespace.Parent;
+		
+		lexer.parsing_modifiers = false;
 	  }
 	  opt_package_declarations
 	  {
@@ -629,13 +631,13 @@ opt_comma
 	;
 
 opt_package_declarations
-	: opt_extern_alias_directives opt_import_or_use_namespace_directives opt_package_type_declarations
+	: opt_extern_alias_directives opt_package_directives opt_package_type_declarations
 	| OPEN_BRACE opt_package_declarations CLOSE_BRACE
 	;
 	
-opt_import_or_use_namespace_directives
+opt_package_directives
 	: /* empty */
-	| import_or_use_namespace_directives
+	| package_directives
 	;
 
 opt_extern_alias_directives
@@ -685,11 +687,12 @@ package_type_declaration
 	;
 
 type_declaration
-	: class_declaration		
+	: class_declaration	
 	| struct_declaration
 	| interface_declaration
 	| enum_declaration		
 	| delegate_declaration
+	| namespace_declaration	
 	;
 //
 // Enable this when we have handled all errors, because this acts as a generic fallback
@@ -2964,6 +2967,33 @@ delegate_declaration
 		current_delegate = null;
 	  }
 	;
+	
+namespace_declaration
+	: opt_attributes 
+	  opt_modifiers 
+	  NAMESPACE 
+	  IDENTIFIER opt_namespace_url SEMICOLON
+	  {
+	  	if (doc_support) {
+			current_delegate.DocComment = Lexer.consume_doc_comment ();
+			Lexer.doc_state = XmlCommentState.Allowed;
+		}
+	  }
+	;
+	
+opt_namespace_url
+   	: /* empty */
+   	| namespace_url
+   	;
+   	
+namespace_url
+	: ASSIGN LITERAL
+	  {
+	  	if (!($2 is StringLiteral))
+	  		syntax_error (GetLocation($2), "string literal expected");
+	  	$$ = $2;
+	  }
+	;
 
 opt_nullable
 	: /* empty */
@@ -4798,7 +4828,7 @@ modifier
 		$$ = Modifiers.ABSTRACT;
 		StoreModifierLocation ($$, GetLocation ($1));
 	  }
-	| SEALED
+	| FINAL
 	  {
 		$$ = Modifiers.SEALED;
 		StoreModifierLocation ($$, GetLocation ($1));
@@ -4844,6 +4874,11 @@ modifier
 	  {
 		$$ = Modifiers.ASYNC;
 		StoreModifierLocation ($$, GetLocation ($1));
+	  }
+	| IDENTIFIER_MODIFIER
+	  {
+	    $$ = Modifiers.INTERNAL;
+	    StoreModifierLocation ($$, GetLocation ($1));
 	  }
 	;
 	
@@ -6226,6 +6261,8 @@ using_statement
 	  }
 	  embedded_statement
 	  {
+	  	CheckIsAsx("using", GetLocation($2));
+	  	
 		if ($9 is EmptyStatement && lexer.peek_token () == Token.OPEN_BRACE)
 			Warning_EmptyStatement (GetLocation ($9));
 	  
@@ -6235,6 +6272,8 @@ using_statement
 	  }
 	| USING open_parens_any expression CLOSE_PARENS embedded_statement
 	  {
+	  	CheckIsAsx("using", GetLocation($2));
+
 		if ($5 is EmptyStatement && lexer.peek_token () == Token.OPEN_BRACE)
 			Warning_EmptyStatement (GetLocation ($5));
 	  
@@ -6243,6 +6282,8 @@ using_statement
 	  }
 	| USING open_parens_any expression error
 	  {
+	  	CheckIsAsx("using", GetLocation($2));
+	  
 		Error_SyntaxError (yyToken);
 		
 		$$ = new Using ((Expression) $3, null, GetLocation ($1));
@@ -6797,7 +6838,7 @@ opt_query_continuation
 
 interactive_parsing
 	: EVAL_STATEMENT_PARSER EOF 
-	| EVAL_USING_DECLARATIONS_UNIT_PARSER import_or_use_namespace_directives opt_COMPLETE_COMPLETION
+	| EVAL_USING_DECLARATIONS_UNIT_PARSER package_directives opt_COMPLETE_COMPLETION
 	| EVAL_STATEMENT_PARSER
 	 { 
 		current_container = current_type = new Class (current_container, new MemberName ("<InteractiveExpressionClass>"), Modifiers.PUBLIC, null);
@@ -6840,8 +6881,8 @@ interactive_parsing
 	;
 
 interactive_compilation_unit
-	: opt_extern_alias_directives opt_import_or_use_namespace_directives
-	| opt_extern_alias_directives opt_import_or_use_namespace_directives package_declaration
+	: opt_extern_alias_directives opt_package_directives
+	| opt_extern_alias_directives opt_package_directives package_declaration
 	;
 
 opt_COMPLETE_COMPLETION
@@ -7436,8 +7477,8 @@ string GetSymbolName (int token)
 	case Token.LITERAL:
 		return ((Constant)lexer.Value).GetValue ().ToString ();
 	case Token.IDENTIFIER:
+	case Token.IDENTIFIER_MODIFIER:
 		return ((Tokenizer.LocatedToken)lexer.Value).Value ?? "";
-
 	case Token.BOOL:
 		return "bool";
 	case Token.BOOLEAN:
@@ -7604,6 +7645,8 @@ static string GetTokenName (int token)
 		return "extern";
 	case Token.FALSE:
 		return "false";
+	case Token.FINAL:
+		return "final";
 	case Token.FINALLY:
 		return "finally";
 	case Token.FIXED:
@@ -7670,8 +7713,6 @@ static string GetTokenName (int token)
 		return "return";
 	case Token.REMOVE:
 		return "remove";
-	case Token.SEALED:
-		return "sealed";
 	case Token.SIZEOF:
 		return "sizeof";
 	case Token.STACKALLOC:
