@@ -980,6 +980,7 @@ namespace Mono.ActionScript
 			case Token.UNCHECKED:
 			case Token.UNSAFE:
 			case Token.FIXED:
+			case Token.GOTO:
 				if (!handle_asx)
 					res = -1;
 
@@ -3275,20 +3276,30 @@ namespace Mono.ActionScript
 
 				case '{':
 					val = ltb.Create (current_source, ref_line, col);
-					bool isInit = true;
-					PushPosition();
-					next = token ();
-					if (next != Token.IDENTIFIER && !(next == Token.LITERAL && (val is StringLiteral))) {
-						isInit = false;
-					} else {
+					if (current_token == Token.OPEN_PARENS || 
+					  current_token == Token.ASSIGN ||
+					  current_token == Token.COMMA ||
+					  current_token == Token.COLON ||
+					  current_token == Token.OPEN_BRACKET ||
+					  current_token == Token.OPEN_BRACKET_EXPR ||
+					  current_token == Token.RETURN) {
+						bool isInit = true;
+						PushPosition();
 						next = token ();
-						if (next != Token.COLON) {
-							isInit = false;
+						if (next != Token.CLOSE_BRACE) {
+							if (next != Token.IDENTIFIER && !(next == Token.LITERAL && (val is StringLiteral))) {
+								isInit = false;
+							} else {
+								next = token ();
+								if (next != Token.COLON) {
+									isInit = false;
+								}
+							}
 						}
+						PopPosition();
+						if (isInit) 
+							return Token.OPEN_BRACE_INIT;
 					}
-					PopPosition();
-					if (isInit) 
-						return Token.OPEN_BRACE_INIT;
 					return Token.OPEN_BRACE;
 				case '}':
 					val = ltb.Create (current_source, ref_line, col);
@@ -3692,6 +3703,16 @@ namespace Mono.ActionScript
 					d = peek_char ();
 					if (d >= '0' && d <= '9') 
 						return is_number (c);
+
+					if (d == '.') {
+						get_char ();
+						d = peek_char ();
+						if (d == '.') {
+							get_char ();
+							return Token.DOTDOTDOT;
+						}
+						return Token.DOTDOT;
+					}
 
 					ltb.CreateOptional (current_source, ref_line, col, ref val);
 					if (d != '<') {

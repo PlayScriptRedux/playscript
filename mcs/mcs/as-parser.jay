@@ -295,6 +295,8 @@ namespace Mono.ActionScript
 %token CLOSE_PARENS
 
 %token DOT
+%token DOTDOT
+%token DOTDOTDOT
 %token COMMA
 %token COLON
 %token SEMICOLON
@@ -1022,7 +1024,7 @@ constant_declaration
 				
 		$$ = current_field;
 	  }
-	  constant_initializer opt_constant_declarators SEMICOLON
+	  opt_constant_initializer opt_constant_declarators SEMICOLON
 	  {
 		if (doc_support) {
 			current_field.DocComment = Lexer.consume_doc_comment ();
@@ -1052,13 +1054,18 @@ constant_declarators
 	;
 	
 constant_declarator
-	: COMMA IDENTIFIER constant_initializer
+	: COMMA IDENTIFIER opt_constant_initializer
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;
 	  	$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), (ConstInitializer) $3);
 	  	lbag.AddLocation ($$, GetLocation ($1));
 	  }
 	;		
+
+opt_constant_initializer
+	: /* empty */ { $$ = null; }
+	| constant_initializer
+	;
 
 constant_initializer
 	: ASSIGN
@@ -1435,12 +1442,12 @@ method_header
 
 		if (parameters != null && parameters.Count > 0)
 			report.Error (7016, GetLocation ($10), "Property getter functions may not have parameters");
-		
+
+		current_property = null;		
+						
 		MemberCore member;
 		if (current_type.DefinedNames.TryGetValue(name.Name, out member)) {
 			current_property = member as Property;
-		} else {
-			current_property = null;
 		}
 		
 		if (current_property == null) {
@@ -1493,12 +1500,12 @@ method_header
 		
 		if (void_type.Type != null && void_type.Type.Kind != MemberKind.Void)
 			report.Error (7003, GetLocation ($10), "Property setter function must not be of type void", current_property.GetSignatureForError ());					
-			
+
+		current_property = null;
+						
 		MemberCore member;
 		if (current_type.DefinedNames.TryGetValue(name.Name, out member)) {
 			current_property = member as Property;
-		} else {
-			current_property = null;
 		}
 
 		FullNamedExpression type; 
@@ -1874,43 +1881,28 @@ parameter_modifier
 	;
 
 parameter_array
-	: opt_attributes params_modifier type IDENTIFIER
+	: opt_attributes DOTDOTDOT IDENTIFIER
 	  {
-		var lt = (Tokenizer.LocatedToken) $4;
-		$$ = new ParamsParameter ((FullNamedExpression) $3, lt.Value, (Attributes) $1, lt.Location);
+		var lt = (Tokenizer.LocatedToken) $3;
+		var type = new ComposedCast (
+			new TypeExpression(compiler.BuiltinTypes.Object, GetLocation($3)),  
+			ComposedTypeSpecifier.CreateArrayDimension (1, GetLocation ($3)));
+		$$ = new ParamsParameter (type, lt.Value, (Attributes) $1, lt.Location);
 	  }
-	| opt_attributes params_modifier type IDENTIFIER ASSIGN constant_expression
+	| opt_attributes DOTDOTDOT IDENTIFIER ASSIGN constant_expression
 	  {
-		report.Error (1751, GetLocation ($2), "Cannot specify a default value for a parameter array");
+		report.Error (1751, GetLocation ($2), "Cannot specify a default value for a variable argument array");
 		
-		var lt = (Tokenizer.LocatedToken) $4;
-		$$ = new ParamsParameter ((FullNamedExpression) $3, lt.Value, (Attributes) $1, lt.Location);		
+		var lt = (Tokenizer.LocatedToken) $3;
+		var type = new ComposedCast (
+			new TypeExpression(compiler.BuiltinTypes.Object, GetLocation($3)),  
+			ComposedTypeSpecifier.CreateArrayDimension (1, GetLocation ($3)));
+		$$ = new ParamsParameter (type, lt.Value, (Attributes) $1, lt.Location);		
 	  }
-	| opt_attributes params_modifier type error
+	| opt_attributes DOTDOTDOT error
 	  {
 		Error_SyntaxError (yyToken);
 		$$ = null;
-	  }
-	;
-	
-params_modifier
-	: PARAMS
-	  {
-		if ((valid_param_mod & ParameterModifierType.Params) == 0)
-			report.Error (1670, (GetLocation ($1)), "The `params' modifier is not allowed in current context");
-	  }
-	| PARAMS parameter_modifier
-	  {
-		Parameter.Modifier mod = (Parameter.Modifier)$2;
-		if ((mod & Parameter.Modifier.This) != 0) {
-			report.Error (1104, GetLocation ($1), "The parameter modifiers `this' and `params' cannot be used altogether");
-		} else {
-			report.Error (1611, GetLocation ($1), "The params parameter cannot be declared as ref or out");
-		}	  
-	  }
-	| PARAMS params_modifier
-	  {
-		Error_DuplicateParameterModifier (GetLocation ($1), Parameter.Modifier.PARAMS);
 	  }
 	;
 	
@@ -3489,13 +3481,8 @@ invocation_expression
 	
 	;
 
-opt_object_or_collection_initializer
-	: /* empty */		{ $$ = null; }
-	| object_or_collection_initializer
-	;
-
 object_or_collection_initializer
-	: OPEN_BRACE_INIT opt_member_initializer_list close_brace_or_complete_completion
+    : OPEN_BRACE_INIT opt_member_initializer_list close_brace_or_complete_completion
 	  {
 	    var expList = $2 as List<Expression>;
 	    if (expList == null) {
@@ -3522,9 +3509,9 @@ object_or_collection_initializer
 opt_member_initializer_list
 	: /* empty */		{ $$ = null; }
 	| member_initializer_list
-	{
+	  {
 		$$ = $1;
-	}
+	  }
 	;
 
 member_initializer_list
@@ -3782,25 +3769,16 @@ post_decrement_expression
 	;
 	
 object_or_delegate_creation_expression
-	: NEW new_expr_type open_parens_any opt_argument_list CLOSE_PARENS opt_object_or_collection_initializer
+	: NEW new_expr_type open_parens_any opt_argument_list CLOSE_PARENS
 	  {
-		if ($6 != null) {
-			if (lang_version <= LanguageVersion.ISO_2)
-				FeatureIsNotAvailable (GetLocation ($1), "object initializers");
-				
-			$$ = new NewInitialize ((FullNamedExpression) $2, (Arguments) $4, (CollectionOrObjectInitializers) $6, GetLocation ($1));
-		} else {
-			$$ = new New ((FullNamedExpression) $2, (Arguments) $4, GetLocation ($1));
-		}
+	  	$$ = new New ((FullNamedExpression) $2, (Arguments) $4, GetLocation ($1));
 		
 		lbag.AddLocation ($$, GetLocation ($3), GetLocation ($5));
 	  }
-	| NEW new_expr_type object_or_collection_initializer
+	| NEW new_expr_type SEMICOLON
 	  {
-		if (lang_version <= LanguageVersion.ISO_2)
-			FeatureIsNotAvailable (GetLocation ($1), "collection initializers");
-	  
-		$$ = new NewInitialize ((FullNamedExpression) $2, null, (CollectionOrObjectInitializers) $3, GetLocation ($1));
+		$$ = new New ((FullNamedExpression) $2, null, GetLocation ($1));
+	  	lexer.putback (';');
 	  }
 	| NEW OP_LT type_expression OP_GT array_initializer
 	  {
@@ -3822,20 +3800,6 @@ array_creation_expression
 			  	}, (AsArrayInitializer) null /*$7*/, GetLocation ($1));
 		lbag.AddLocation ($$, GetLocation ($3), GetLocation ($5));
 	  }
-//	| NEW new_expr_type rank_specifiers opt_array_initializer
-//	  {
-//	  	if ($4 == null)
-//	  		report.Error (1586, GetLocation ($1), "Array creation must have array size or array initializer");
-//
-//		$$ = new ArrayCreation ((FullNamedExpression) $2, (ComposedTypeSpecifier) $3, (AsArrayInitializer) $4, GetLocation ($1));
-//	  }
-//	| NEW rank_specifier array_initializer
-//	  {
-//		if (lang_version <= LanguageVersion.ISO_2)
-//			FeatureIsNotAvailable (GetLocation ($1), "implicitly typed arrays");
-//	  
-//		$$ = new ImplicitlyTypedArrayCreation ((ComposedTypeSpecifier) $2, (AsArrayInitializer) $3, GetLocation ($1));
-//	  }
 	| NEW new_expr_type OPEN_BRACKET CLOSE_BRACKET OPEN_BRACKET_EXPR error CLOSE_BRACKET
 	  {
 	  	CheckIsAsx("arrays", GetLocation($1));
@@ -7813,6 +7777,10 @@ static string GetTokenName (int token)
 		return ")";
 	case Token.DOT:
 		return ".";
+	case Token.DOTDOT:
+		return "..";
+	case Token.DOTDOTDOT:
+		return "...";
 	case Token.COMMA:
 		return ",";
 	case Token.DEFAULT_COLON:

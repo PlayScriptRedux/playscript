@@ -13,9 +13,32 @@ package
 		trace(v);
 	}
 	
+	public function fooBaz(...flub):void {
+//		var l:int = flub.length;
+//		for (var i:int = 0; i < l; i++) {
+//			var p:Object = flub[i];
+//			trace("param " + p);
+//		}
+	}
+	
 	public class TestAttribute extends Attribute {
 	}
 	
+	public class Fooie1 {
+		public static function get q():Number {
+		 	return 0; }
+		public static function set q(value:Number):void {
+		}	
+	}
+
+	public class Fooie2 extends Fooie1 {
+		public static function get q():Number {
+		 	return 0; }
+		public static function set q(value:Number):void {
+		}	
+	}
+	
+			
 	[Test]
 	public class Foo extends EventDispatcher {
 	
@@ -43,6 +66,12 @@ package
 		public function set c(value:Vector.<Number>):void {
 			_c = value;
 		}
+		
+		public static function get q():Number {
+		 	return 0; }
+		public static function set q(value:Number):void {
+		}
+		
 	}
 	
 	public class MyClass 
@@ -85,6 +114,8 @@ package
 	       	}
 	       	trace('----');
 		}
+		
+		public static var obj:Object={};
 
         public static function Main() : void {
         	var len:int = 20, qq:Number = 100.3, ss1:String = "blah";
@@ -118,6 +149,7 @@ package
 	       	var d:Dictionary.<String,int> = new Dictionary.<String,int>();
 	       	d['key1'] = 100;
 	       	d['key2'] = 200;
+	       	var o7:Object={};
 	       	dumpDict(d);
 	       	delete d['key1'];
 	       	dumpDict(d);
@@ -128,7 +160,12 @@ package
             var s:String = '"Swami"';
 			var o2:Object = {"a":100, b:"blah", c:[100, {"d":200, e:"spackle", f:["blah1", "blah2", "blah3"]}, 300]};
 			o2.a = true;
-			var o3:Object = new Foo();
+			var o3:Object = new Foo;
+			{ o3 = new Foo; }
+			o3 = new Foo;
+			if (o3 == null) {
+				o3 = null;
+			}
 			var f:Foo = { "a":100, b:200, c:[998, 999, 1000] };
 			var fn:Function = onActivated;
 			f.addEventListener(Event.ACTIVATE, onActivated);
