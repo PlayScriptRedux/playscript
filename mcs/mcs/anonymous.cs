@@ -1095,9 +1095,19 @@ namespace Mono.CSharp {
 			if (d_params.Count != Parameters.Count)
 				return false;
 
+			var ptypes = Parameters.Types;
+			var dtypes = d_params.Types;
 			for (int i = 0; i < Parameters.Count; ++i) {
-				if (type_inference.ExactInference (Parameters.Types[i], d_params.Types[i]) == 0)
+				if (type_inference.ExactInference (ptypes[i], dtypes[i]) == 0) {
+					//
+					// Continue when 0 (quick path) does not mean inference failure. Checking for
+					// same type handles cases like int -> int
+					//
+					if (ptypes[i] == dtypes[i])
+						continue;
+
 					return false;
+				}
 			}
 
 			return true;
@@ -1497,6 +1507,10 @@ namespace Mono.CSharp {
 
 			aec.Set (flags);
 
+			var bc = ec as BlockContext;
+			if (bc != null)
+				aec.FlowOffset = bc.FlowOffset;
+
 			var errors = ec.Report.Errors;
 
 			bool res = Block.Resolve (ec.CurrentBranching, aec, null);
@@ -1634,9 +1648,9 @@ namespace Mono.CSharp {
 					var sm = src_block.ParametersBlock.TopBlock.StateMachine;
 
 					//
-					// Remove hoisted this demand when simple instance method is enough
+					// Remove hoisted this demand when simple instance method is enough (no hoisted variables only this)
 					//
-					if (src_block.HasCapturedThis) {
+					if (src_block.HasCapturedThis && src_block.ParametersBlock.StateMachine == null) {
 						src_block.ParametersBlock.TopBlock.RemoveThisReferenceFromChildrenBlock (src_block);
 
 						//

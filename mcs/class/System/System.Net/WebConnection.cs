@@ -494,7 +494,11 @@ namespace System.Net
 				stream.ReadBuffer = cnc.buffer;
 				stream.ReadBufferOffset = pos;
 				stream.ReadBufferSize = nread;
-				stream.CheckResponseInBuffer ();
+				try {
+					stream.CheckResponseInBuffer ();
+				} catch (Exception e) {
+					cnc.HandleError (WebExceptionStatus.ReceiveFailure, e, "ReadDone7");
+				}
 			} else if (cnc.chunkStream == null) {
 				try {
 					cnc.chunkStream = new ChunkStream (cnc.buffer, pos, nread, data.Headers);
@@ -560,7 +564,7 @@ namespace System.Net
 				if (readState == ReadState.None) {
 					lineok = ReadLine (buffer, ref pos, max, ref line);
 					if (!lineok)
-						return -1;
+						return 0;
 
 					if (line == null) {
 						emptyFirstLine = true;
@@ -621,7 +625,7 @@ namespace System.Net
 					}
 
 					if (!finished)
-						return -1;
+						return 0;
 
 					foreach (string s in headers)
 						Data.Headers.SetInternal (s);

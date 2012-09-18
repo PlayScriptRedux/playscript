@@ -47,6 +47,7 @@ ICALL(COMPROX_2, "FindProxy", ves_icall_Mono_Interop_ComInteropProxy_FindProxy)
 
 ICALL_TYPE(RUNTIME, "Mono.Runtime", RUNTIME_1)
 ICALL(RUNTIME_1, "GetDisplayName", ves_icall_Mono_Runtime_GetDisplayName)
+ICALL(RUNTIME_12, "GetNativeStackTrace", ves_icall_Mono_Runtime_GetNativeStackTrace)
 
 #ifndef PLATFORM_RO_FS
 ICALL_TYPE(KPAIR, "Mono.Security.Cryptography.KeyPairPersistence", KPAIR_1)
@@ -151,7 +152,7 @@ ICALL_TYPE(DECIMAL, "System.Decimal", DECIMAL_1)
 ICALL(DECIMAL_1, "decimal2Int64", mono_decimal2Int64)
 ICALL(DECIMAL_2, "decimal2UInt64", mono_decimal2UInt64)
 ICALL(DECIMAL_3, "decimal2double", mono_decimal2double)
-ICALL(DECIMAL_4, "decimal2string", mono_decimal2string)
+//ICALL(DECIMAL_4, "decimal2string", mono_decimal2string)
 ICALL(DECIMAL_5, "decimalCompare", mono_decimalCompare)
 ICALL(DECIMAL_6, "decimalDiv", mono_decimalDiv)
 ICALL(DECIMAL_7, "decimalFloorAndTrunc", mono_decimalFloorAndTrunc)

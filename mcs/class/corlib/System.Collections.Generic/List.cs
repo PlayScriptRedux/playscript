@@ -636,15 +636,15 @@ namespace System.Collections.Generic {
 		
 		public T this [int index] {
 			get {
-//				if ((uint) index >= (uint) _size)
-//					throw new ArgumentOutOfRangeException ("index");
+				if ((uint) index >= (uint) _size)
+					throw new ArgumentOutOfRangeException ("index");
 				return _items [index];
 			}
 			set {
-//				if ((uint) index >= (uint) _size)
-//					throw new ArgumentOutOfRangeException ("index");
+				if ((uint) index >= (uint) _size)
+					throw new ArgumentOutOfRangeException ("index");
 				_items [index] = value;
-//				_version++;
+				_version++;
 			}
 		}
 		

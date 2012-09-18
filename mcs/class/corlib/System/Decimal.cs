@@ -225,10 +225,10 @@ namespace System
 		{
 			if (bits == null) 
 			{
-				throw new ArgumentNullException (Locale.GetText ("Bits is a null reference"));
+				throw new ArgumentNullException (Locale.GetText ("bits is a null reference"));
 			}
 
-			if (bits.GetLength(0) != 4) 
+			if (bits.Length != 4) 
 			{
 				throw new ArgumentException (Locale.GetText ("bits does not contain four values"));
 			}
@@ -1366,10 +1366,6 @@ namespace System
 		private static extern int decimalIncr (ref Decimal d1, ref Decimal d2);
 
 		[MethodImplAttribute(MethodImplOptions.InternalCall)]
-		internal static extern int decimal2string (ref Decimal val, 
-		    int digits, int decimals, char[] bufDigits, int bufSize, out int decPos, out int sign);
-
-		[MethodImplAttribute(MethodImplOptions.InternalCall)]
 		internal static extern int string2decimal (out Decimal val, String sDigits, uint decPos, int sign);
 
 		[MethodImplAttribute(MethodImplOptions.InternalCall)]
@@ -1411,13 +1407,6 @@ namespace System
 		//![MethodImplAttribute(MethodImplOptions.InternalCall)]
 		[DllImport("libdec", EntryPoint="decimalIncr")]
 		private static extern int decimalIncr (ref Decimal d1, ref Decimal d2);
-
-		//![MethodImplAttribute(MethodImplOptions.InternalCall)]
-		[DllImport("libdec", EntryPoint="decimal2string")]
-		internal static extern int decimal2string (ref Decimal val, 
-		    int digits, int decimals,
-		    [MarshalAs(UnmanagedType.LPWStr)]StringBuilder bufDigits, 
-		    int bufSize, out int decPos, out int sign);
 
 		//![MethodImplAttribute(MethodImplOptions.InternalCall)]
 		[DllImport("libdec", EntryPoint="string2decimal")]

@@ -153,19 +153,20 @@ namespace System.ServiceModel.Channels
 			string pname = HttpRequestMessageProperty.Name;
 			if (message.Properties.ContainsKey (pname)) {
 				HttpRequestMessageProperty hp = (HttpRequestMessageProperty) message.Properties [pname];
-#if !NET_2_1 // FIXME: how can this be done?
 				foreach (var key in hp.Headers.AllKeys)
 					if (!WebHeaderCollection.IsRestricted (key))
 						web_request.Headers [key] = hp.Headers [key];
-#endif
 				web_request.Method = hp.Method;
 				// FIXME: do we have to handle hp.QueryString ?
 				if (hp.SuppressEntityBody)
 					suppressEntityBody = true;
 			}
 #if !NET_2_1
-			if (source.ClientCredentials.ClientCertificate.Certificate != null) 
-				((HttpWebRequest)web_request).ClientCertificates.Add (source.ClientCredentials.ClientCertificate.Certificate);
+			if (source.ClientCredentials != null) {
+				var cred = source.ClientCredentials;
+				if ((cred.ClientCertificate != null) && (cred.ClientCertificate.Certificate != null))
+					((HttpWebRequest)web_request).ClientCertificates.Add (cred.ClientCertificate.Certificate);
+			}
 #endif
 
 			if (!suppressEntityBody && String.Compare (web_request.Method, "GET", StringComparison.OrdinalIgnoreCase) != 0) {

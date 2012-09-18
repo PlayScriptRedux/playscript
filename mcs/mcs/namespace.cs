@@ -61,6 +61,26 @@ namespace Mono.CSharp {
 			return res;
 		}
 
+		//
+		// For better error reporting where compiler tries to guess missing using directive
+		//
+		public List<string> FindExtensionMethodNamespaces (IMemberContext ctx, TypeSpec extensionType, string name, int arity)
+		{
+			List<string> res = null;
+
+			foreach (var ns in all_namespaces) {
+				var methods = ns.Value.LookupExtensionMethod (ctx, extensionType, name, arity);
+				if (methods != null) {
+					if (res == null)
+						res = new List<string> ();
+
+					res.Add (ns.Key);
+				}
+			}
+
+			return res;
+		}
+
 		public void RegisterNamespace (Namespace child)
 		{
 			if (child != this)
@@ -882,13 +902,33 @@ namespace Mono.CSharp {
 				}
 			} else {
 				names_container.DefinedNames.Add (name, tc);
+
+				var tdef = tc.PartialContainer;
+				if (tdef != null) {
+					//
+					// Same name conflict in different namespace containers
+					//
+					var conflict = ns.GetAllTypes (name);
+					if (conflict != null) {
+						foreach (var e in conflict) {
+							if (e.Arity == mn.Arity) {
+								mc = (MemberCore) e.MemberDefinition;
+								break;
+							}
+						}
+					}
+
+					if (mc != null) {
+						Report.SymbolRelatedToPreviousError (mc);
+						Report.Error (101, tc.Location, "The namespace `{0}' already contains a definition for `{1}'",
+							GetSignatureForError (), mn.GetSignatureForError ());
+					} else {
+						ns.AddType (Module, tdef.Definition);
+					}
+				}
 			}
 
 			base.AddTypeContainer (tc);
-
-			var tdef = tc.PartialContainer;
-			if (tdef != null)
-				ns.AddType (Module, tdef.Definition);
 		}
 
 		public override void ApplyAttributeBuilder (Attribute a, MethodSpec ctor, byte[] cdata, PredefinedAttributes pa)
@@ -1286,8 +1326,9 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public void EnableUsingClausesRedefinition ()
+		public void EnableRedefinition ()
 		{
+			is_defined = false;
 			namespace_using_table = null;
 		}
 

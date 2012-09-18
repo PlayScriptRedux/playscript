@@ -1702,7 +1702,7 @@ namespace Mono.CSharp
 			
 			Constant c = expr as Constant;
 			if (c != null) {
-				c = c.TryReduce (ec, type);
+				c = c.Reduce (ec, type);
 				if (c != null)
 					return c;
 			}
@@ -2673,7 +2673,7 @@ namespace Mono.CSharp
 					return left;
 				
 				if (left.IsZeroInteger)
-					return left.TryReduce (ec, right.Type);
+					return left.Reduce (ec, right.Type);
 				
 				break;
 				
@@ -4642,11 +4642,32 @@ namespace Mono.CSharp
 					//
 					type = false_type;
 
-					if (false_type.BuiltinType != BuiltinTypeSpec.Type.Dynamic && Convert.ImplicitConversion (ec, false_expr, true_type, loc) != null) {
-						ec.Report.Error (172, true_expr.Location,
-							"Type of conditional expression cannot be determined as `{0}' and `{1}' convert implicitly to each other",
-								true_type.GetSignatureForError (), false_type.GetSignatureForError ());
-						return null;
+					if (false_type.BuiltinType != BuiltinTypeSpec.Type.Dynamic) {
+						var conv_false_expr = Convert.ImplicitConversion (ec, false_expr, true_type, loc);
+						//
+						// LAMESPEC: There seems to be hardcoded promotition to int type when
+						// both sides are numeric constants and one side is int constant and
+						// other side is numeric constant convertible to int.
+						//
+						// var res = condition ? (short)1 : 1;
+						//
+						// Type of res is int even if according to the spec the conversion is
+						// ambiguous because 1 literal can be converted to short.
+						//
+						if (conv_false_expr != null) {
+							if (conv_false_expr is IntConstant && conv is Constant) {
+								type = true_type;
+								conv_false_expr = null;
+							} else if (type.BuiltinType == BuiltinTypeSpec.Type.Int && conv_false_expr is Constant) {
+								conv_false_expr = null;
+							}
+						}
+
+						if (conv_false_expr != null) {
+							ec.Report.Error (172, true_expr.Location,
+								"Type of conditional expression cannot be determined as `{0}' and `{1}' convert implicitly to each other",
+									true_type.GetSignatureForError (), false_type.GetSignatureForError ());
+						}
 					}
 
 					true_expr = conv;
@@ -7100,7 +7121,7 @@ namespace Mono.CSharp
 					// Hoisted this is almost like hoisted variable but not exactly. When
 					// there is no variable hoisted we can simply emit an instance method
 					// without lifting this into a storey. Unfotunatelly this complicates
-					// this in other cases because we don't know where this will be hoisted
+					// things in other cases because we don't know where this will be hoisted
 					// until top-level block is fully resolved
 					//
 					top.AddThisReferenceFromChildrenBlock (block.Explicit);
@@ -8297,9 +8318,19 @@ namespace Mono.CSharp
 		{
 			if (ec.Module.Compiler.Settings.Version > LanguageVersion.ISO_2 && !ec.IsRuntimeBinder && MethodGroupExpr.IsExtensionMethodArgument (expr)) {
 				ec.Report.SymbolRelatedToPreviousError (type);
+
+				var cand = ec.Module.GlobalRootNamespace.FindExtensionMethodNamespaces (ec, type, name, Arity);
+				string missing;
+				// a using directive or an assembly reference
+				if (cand != null) {
+					missing = "`" + string.Join ("' or `", cand.ToArray ()) + "' using directive";
+				} else {
+					missing = "an assembly reference";
+				}
+
 				ec.Report.Error (1061, loc,
-					"Type `{0}' does not contain a definition for `{1}' and no extension method `{1}' of type `{0}' could be found (are you missing a using directive or an assembly reference?)",
-					type.GetSignatureForError (), name);
+					"Type `{0}' does not contain a definition for `{1}' and no extension method `{1}' of type `{0}' could be found. Are you missing {2}?",
+					type.GetSignatureForError (), name, missing);
 				return;
 			}
 
@@ -8566,11 +8597,6 @@ namespace Mono.CSharp
 			var res = CreateAccessExpression (ec);
 			if (res == null)
 				return null;
-
-			bool lvalue_instance = rhs != null && type.IsStruct && (Expr is Invocation || Expr is PropertyExpr);
-			if (lvalue_instance) {
-				Expr.Error_ValueAssignment (ec, EmptyExpression.LValueMemberAccess);
-			}
 
 			return res.ResolveLValue (ec, rhs);
 		}
@@ -9348,6 +9374,9 @@ namespace Mono.CSharp
 		
 		public UserCast (MethodSpec method, Expression source, Location l)
 		{
+			if (source == null)
+				throw new ArgumentNullException ("source");
+
 			this.method = method;
 			this.source = source;
 			type = method.ReturnType;

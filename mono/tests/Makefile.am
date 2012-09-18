@@ -229,6 +229,7 @@ BASE_TEST_CS_SRC=		\
 	bug-78656.cs		\
 	bug-77127.cs		\
 	bug-323114.cs		\
+	bug-Xamarin-5278.cs	\
 	interlocked.cs		\
 	cross-domain.cs		\
 	appdomain-exit.cs	\
@@ -383,7 +384,9 @@ BASE_TEST_CS_SRC=		\
 	mono-path.cs	\
 	bug-bxc-795.cs	\
 	bug-3903.cs	\
-	async-with-cb-throws.cs
+	async-with-cb-throws.cs	\
+	appdomain-unload-doesnot-raise-pending-events.cs	\
+	bug-6148.cs
 
 TEST_CS_SRC_DIST=	\
 	$(BASE_TEST_CS_SRC)	\

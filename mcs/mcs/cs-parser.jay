@@ -1585,7 +1585,8 @@ parameter_array
 	| opt_attributes params_modifier type error
 	  {
 		Error_SyntaxError (yyToken);
-		$$ = null;
+
+		$$ = new ParamsParameter ((FullNamedExpression) $3, null, (Attributes) $1, Location.Null);
 	  }
 	;
 	
@@ -1662,7 +1663,7 @@ indexer_declaration
 	  {
 	  	valid_param_mod = ParameterModifierType.Params | ParameterModifierType.DefaultValue;
 	  }
-	  opt_formal_parameter_list CLOSE_BRACKET OPEN_BRACE
+	  opt_formal_parameter_list CLOSE_BRACKET 
 	  {
 		valid_param_mod = 0;
 		var type = (FullNamedExpression) $3;
@@ -1671,7 +1672,7 @@ indexer_declaration
 		current_property = indexer;
 
   		current_type.AddIndexer (indexer);
-		lbag.AddMember (current_property, mod_locations, GetLocation ($5), GetLocation ($8), GetLocation ($9));
+		lbag.AddMember (current_property, mod_locations, GetLocation ($5), GetLocation ($8));
   		
 		if (type.Type != null && type.Type.Kind == MemberKind.Void)
 			report.Error (620, GetLocation ($3), "`{0}': indexer return type cannot be `void'", indexer.GetSignatureForError ());  		
@@ -1687,7 +1688,7 @@ indexer_declaration
 
 		lexer.PropertyParsing = true;
 	  }
-	  accessor_declarations 
+	  OPEN_BRACE accessor_declarations 
 	  {
 		lexer.PropertyParsing = false;
 	  }
@@ -1699,7 +1700,7 @@ indexer_declaration
 		if (doc_support)
 			current_property.DocComment = ConsumeStoredComment ();
 			
-		lbag.AppendToMember (current_property, GetLocation ($12));
+		lbag.AppendToMember (current_property, GetLocation ($10), GetLocation ($13));
 		current_property = null;		
 	  }
 	;
@@ -3235,7 +3236,8 @@ argument_list
 	  }
 	| argument_list COMMA error
 	  {
-	  	lexer.putback (')'); // TODO: Wrong but what can I do
+	  	if (lexer.putback_char == -1)
+	  		lexer.putback (')'); // TODO: Wrong but what can I do
 		Error_SyntaxError (yyToken);
 		$$ = $1;
 	  }
@@ -6753,6 +6755,10 @@ void Error_SyntaxError (int error_code, int token, string msg)
 
 	// An error message has been reported by tokenizer
 	if (token == Token.ERROR)
+		return;
+	
+	// Avoid duplicit error message after unterminated string literals
+	if (token == Token.LITERAL && lexer.Location.Column == 0)
 		return;
 
 	string symbol = GetSymbolName (token);

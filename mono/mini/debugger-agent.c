@@ -76,6 +76,7 @@ int WSAAPI getnameinfo(const struct sockaddr*,socklen_t,char*,DWORD,
 #include <mono/utils/mono-error-internals.h>
 #include <mono/utils/mono-stack-unwinding.h>
 #include <mono/utils/mono-time.h>
+#include <mono/utils/mono-threads.h>
 #include "debugger-agent.h"
 #include "mini.h"
 
@@ -85,10 +86,6 @@ int WSAAPI getnameinfo(const struct sockaddr*,socklen_t,char*,DWORD,
 
 #ifdef DISABLE_SOFT_DEBUG
 #define DISABLE_DEBUGGER_AGENT 1
-#endif
-
-#if defined(__MACH__)
-#include <mono/utils/mono-threads.h>
 #endif
 
 #ifndef DISABLE_DEBUGGER_AGENT
@@ -162,6 +159,7 @@ struct _InvokeData
 	MonoMethod *method;
 	gpointer *args;
 	guint32 suspend_count;
+	int nmethods;
 
 	InvokeData *last_invoke;
 };
@@ -276,7 +274,7 @@ typedef struct {
 #define HEADER_LENGTH 11
 
 #define MAJOR_VERSION 2
-#define MINOR_VERSION 19
+#define MINOR_VERSION 22
 
 typedef enum {
 	CMD_SET_VM = 1,
@@ -359,7 +357,8 @@ typedef enum {
 
 typedef enum {
 	STEP_FILTER_NONE = 0,
-	STEP_FILTER_STATIC_CTOR = 1
+	STEP_FILTER_STATIC_CTOR = 1,
+	STEP_FILTER_DEBUGGER_HIDDEN = 2
 } StepFilter;
 
 typedef enum {
@@ -401,7 +400,8 @@ typedef enum {
 	CMD_VM_ABORT_INVOKE = 9,
 	CMD_VM_SET_KEEPALIVE = 10,
 	CMD_VM_GET_TYPES_FOR_SOURCE_FILE = 11,
-	CMD_VM_GET_TYPES = 12
+	CMD_VM_GET_TYPES = 12,
+	CMD_VM_INVOKE_METHODS = 13
 } CmdVM;
 
 typedef enum {
@@ -455,6 +455,7 @@ typedef enum {
 	CMD_METHOD_GET_INFO = 6,
 	CMD_METHOD_GET_BODY = 7,
 	CMD_METHOD_RESOLVE_TOKEN = 8,
+	CMD_METHOD_GET_CATTRS = 9,
 } CmdMethod;
 
 typedef enum {
@@ -971,11 +972,6 @@ mono_debugger_agent_init (void)
 
 	if (!agent_config.onuncaught && !agent_config.onthrow)
 		finish_agent_init (TRUE);
-
-	/* FIXME: Is this still needed ? */
-#if defined(__MACH__)
-	mono_thread_info_disable_new_interrupt (TRUE);
-#endif
 }
 
 /*
@@ -1093,7 +1089,7 @@ set_keepalive (void)
 	struct timeval tv;
 	int result;
 
-	if (!agent_config.keepalive)
+	if (!agent_config.keepalive || !conn_fd)
 		return;
 
 	tv.tv_sec = agent_config.keepalive / 1000;
@@ -2456,8 +2452,10 @@ mono_debugger_agent_thread_interrupt (void *sigctx, MonoJitInfo *ji)
 		return FALSE;
 
 	tls = mono_native_tls_get_value (debugger_tls_id);
-	if (!tls)
-		return FALSE;
+	if (!tls) {
+		DEBUG (1, fprintf (log_file, "[%p] Received interrupt with no TLS, continuing.\n", (gpointer)GetCurrentThreadId ()));
+ 		return FALSE;
+	}
 
 	return thread_interrupt (tls, NULL, sigctx, ji);
 }
@@ -2546,11 +2544,13 @@ notify_thread (gpointer key, gpointer value, gpointer user_data)
 		mono_thread_info_resume (mono_thread_info_get_tid (info));
 	} else {
 		res = mono_thread_kill (thread, mono_thread_get_abort_signal ());
-		if (res)
+		if (res) {
+			DEBUG(1, fprintf (log_file, "[%p] mono_thread_kill () failed for %p: %d...\n", (gpointer)GetCurrentThreadId (), (gpointer)tid, res));
 			/* 
 			 * Attached thread which died without detaching.
 			 */
 			tls->terminated = TRUE;
+		}
 	}
 #endif
 }
@@ -3313,6 +3313,26 @@ create_event_list (EventKind event, GPtrArray *reqs, MonoJitInfo *ji, EventInfo 
 						(ji->method->flags & METHOD_ATTRIBUTE_SPECIAL_NAME) &&
 						!strcmp (ji->method->name, ".cctor"))
 						filtered = TRUE;
+					if ((mod->data.filter & STEP_FILTER_DEBUGGER_HIDDEN) && ji) {
+						MonoCustomAttrInfo *ainfo;
+						static MonoClass *klass;
+
+						if (!klass) {
+							klass = mono_class_from_name (mono_defaults.corlib, "System.Diagnostics", "DebuggerHiddenAttribute");
+							g_assert (klass);
+						}
+						if (!ji->dbg_hidden_inited) {
+							ainfo = mono_custom_attrs_from_method (ji->method);
+							if (ainfo) {
+								if (mono_custom_attrs_has_attr (ainfo, klass))
+									ji->dbg_hidden = TRUE;
+								mono_custom_attrs_free (ainfo);
+							}
+							ji->dbg_hidden_inited = TRUE;
+						}
+						if (ji->dbg_hidden)
+							filtered = TRUE;
+					}
 				}
 			}
 
@@ -5811,9 +5831,8 @@ add_thread (gpointer key, gpointer value, gpointer user_data)
 }
 
 static ErrorCode
-do_invoke_method (DebuggerTlsData *tls, Buffer *buf, InvokeData *invoke)
+do_invoke_method (DebuggerTlsData *tls, Buffer *buf, InvokeData *invoke, guint8 *p, guint8 **endp)
 {
-	guint8 *p = invoke->p;
 	guint8 *end = invoke->endp;
 	MonoMethod *m;
 	int i, err, nargs;
@@ -6012,6 +6031,7 @@ do_invoke_method (DebuggerTlsData *tls, Buffer *buf, InvokeData *invoke)
 		mono_set_lmf ((gpointer)(((gssize)ext.lmf.previous_lmf) & ~3));
 #endif
 
+	*endp = p;
 	// FIXME: byref arguments
 	// FIXME: varargs
 	return ERR_NONE;
@@ -6028,10 +6048,11 @@ invoke_method (void)
 	DebuggerTlsData *tls;
 	InvokeData *invoke;
 	int id;
-	int i, err;
+	int i, err, mindex;
 	Buffer buf;
 	static void (*restore_context) (void *);
 	MonoContext restore_ctx;
+	guint8 *p;
 
 	if (!restore_context)
 		restore_context = mono_get_restore_context ();
@@ -6059,19 +6080,29 @@ invoke_method (void)
 
 	id = invoke->id;
 
-	buffer_init (&buf, 128);
+	p = invoke->p;
+	err = 0;
+	for (mindex = 0; mindex < invoke->nmethods; ++mindex) {
+		buffer_init (&buf, 128);
 
-	err = do_invoke_method (tls, &buf, invoke);
+		if (err) {
+			/* Fail the other invokes as well */
+		} else {
+			err = do_invoke_method (tls, &buf, invoke, p, &p);
+		}
 
-	/* Start suspending before sending the reply */
-	if (!(invoke->flags & INVOKE_FLAG_SINGLE_THREADED)) {
-		for (i = 0; i < invoke->suspend_count; ++i)
-			suspend_vm ();
-	}
+		/* Start suspending before sending the reply */
+		if (mindex == invoke->nmethods - 1) {
+			if (!(invoke->flags & INVOKE_FLAG_SINGLE_THREADED)) {
+				for (i = 0; i < invoke->suspend_count; ++i)
+					suspend_vm ();
+			}
+		}
 
-	send_reply_packet (id, err, &buf);
+		send_reply_packet (id, err, &buf);
 	
-	buffer_free (&buf);
+		buffer_free (&buf);
+	}
 
 	memcpy (&restore_ctx, &invoke->ctx, sizeof (MonoContext));
 
@@ -6267,6 +6298,7 @@ vm_commands (int command, int id, guint8 *p, guint8 *end, Buffer *buf)
 			tls->pending_invoke = g_new0 (InvokeData, 1);
 			tls->pending_invoke->method = exit_method;
 			tls->pending_invoke->args = args;
+			tls->pending_invoke->nmethods = 1;
 
 			while (suspend_count > 0)
 				resume_vm ();
@@ -6294,17 +6326,23 @@ vm_commands (int command, int id, guint8 *p, guint8 *end, Buffer *buf)
 		}
 		break;
 	}		
-	case CMD_VM_INVOKE_METHOD: {
+	case CMD_VM_INVOKE_METHOD:
+	case CMD_VM_INVOKE_METHODS: {
 		int objid = decode_objid (p, &p, end);
 		MonoThread *thread;
 		DebuggerTlsData *tls;
-		int i, count, err, flags;
+		int i, count, err, flags, nmethods;
 
 		err = get_object (objid, (MonoObject**)&thread);
 		if (err)
 			return err;
 
 		flags = decode_int (p, &p, end);
+
+		if (command == CMD_VM_INVOKE_METHODS)
+			nmethods = decode_int (p, &p, end);
+		else
+			nmethods = 1;
 
 		// Wait for suspending if it already started
 		if (suspend_count)
@@ -6334,6 +6372,7 @@ vm_commands (int command, int id, guint8 *p, guint8 *end, Buffer *buf)
 		memcpy (tls->pending_invoke->p, p, end - p);
 		tls->pending_invoke->endp = tls->pending_invoke->p + (end - p);
 		tls->pending_invoke->suspend_count = suspend_count;
+		tls->pending_invoke->nmethods = nmethods;
 
 		if (flags & INVOKE_FLAG_SINGLE_THREADED) {
 			resume_thread (THREAD_TO_INTERNAL (thread));
@@ -7544,6 +7583,7 @@ static ErrorCode
 method_commands_internal (int command, MonoMethod *method, MonoDomain *domain, guint8 *p, guint8 *end, Buffer *buf)
 {
 	MonoMethodHeader *header;
+	int err;
 
 	switch (command) {
 	case CMD_METHOD_GET_NAME: {
@@ -7861,6 +7901,20 @@ method_commands_internal (int command, MonoMethod *method, MonoDomain *domain, g
 			break;
 		}
 		}
+		break;
+	}
+	case CMD_METHOD_GET_CATTRS: {
+		MonoClass *attr_klass;
+		MonoCustomAttrInfo *cinfo;
+
+		attr_klass = decode_typeid (p, &p, end, NULL, &err);
+		/* attr_klass can be NULL */
+		if (err)
+			return err;
+
+		cinfo = mono_custom_attrs_from_method (method);
+
+		buffer_add_cattrs (buf, domain, method->klass->image, attr_klass, cinfo);
 		break;
 	}
 	default:

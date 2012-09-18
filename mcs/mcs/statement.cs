@@ -49,12 +49,20 @@ namespace Mono.CSharp {
 			// in unreachable code, for instance.
 			//
 
-			if (warn)
+			bool unreachable = false;
+			if (warn && !ec.UnreachableReported) {
+				ec.UnreachableReported = true;
+				unreachable = true;
 				ec.Report.Warning (162, 2, loc, "Unreachable code detected");
+			}
 
 			ec.StartFlowBranching (FlowBranching.BranchingType.Block, loc);
 			bool ok = Resolve (ec);
 			ec.KillFlowBranching ();
+
+			if (unreachable) {
+				ec.UnreachableReported = false;
+			}
 
 			return ok;
 		}
@@ -1225,7 +1233,7 @@ namespace Mono.CSharp {
 				res = c;
 			} else {
 				TypeSpec type = ec.Switch.SwitchType;
-				res = c.TryReduce (ec, type);
+				res = c.Reduce (ec, type);
 				if (res == null) {
 					c.Error_ValueCannotBeConverted (ec, type, true);
 					return false;
@@ -2124,9 +2132,7 @@ namespace Mono.CSharp {
 #endif
 
 //		int assignable_slots;
-		bool unreachable_shown;
-		bool unreachable;
-		
+
 		public Block (Block parent, Location start, Location end)
 			: this (parent, 0, start, end)
 		{
@@ -2298,6 +2304,8 @@ namespace Mono.CSharp {
 
 			Block prev_block = ec.CurrentBlock;
 			bool ok = true;
+			bool unreachable = ec.IsUnreachable;
+			bool prev_unreachable = unreachable;
 
 			ec.CurrentBlock = this;
 			ec.StartFlowBranching (this);
@@ -2330,14 +2338,10 @@ namespace Mono.CSharp {
 					if (s is EmptyStatement)
 						continue;
 
-					if (!unreachable_shown && !(s is LabeledStatement)) {
+					if (!ec.UnreachableReported && !(s is LabeledStatement)) {
 						ec.Report.Warning (162, 2, s.loc, "Unreachable code detected");
-						unreachable_shown = true;
+						ec.UnreachableReported = true;
 					}
-
-					Block c_block = s as Block;
-					if (c_block != null)
-						c_block.unreachable = c_block.unreachable_shown = true;
 				}
 
 				//
@@ -2361,8 +2365,15 @@ namespace Mono.CSharp {
 					statements [ix] = new EmptyStatement (s.loc);
 
 				unreachable = ec.CurrentBranching.CurrentUsageVector.IsUnreachable;
-				if (unreachable && s is LabeledStatement)
-					throw new InternalErrorException ("should not happen");
+				if (unreachable) {
+					ec.IsUnreachable = true;
+				} else if (ec.IsUnreachable)
+					ec.IsUnreachable = false;
+			}
+
+			if (unreachable != prev_unreachable) {
+				ec.IsUnreachable = prev_unreachable;
+				ec.UnreachableReported = false;
 			}
 
 			while (ec.CurrentBranching is FlowBranchingLabeled)
@@ -2386,16 +2397,20 @@ namespace Mono.CSharp {
 
 		public override bool ResolveUnreachable (BlockContext ec, bool warn)
 		{
-			unreachable_shown = true;
-			unreachable = true;
-
-			if (warn)
+			bool unreachable = false;
+			if (warn && !ec.UnreachableReported) {
+				ec.UnreachableReported = true;
+				unreachable = true;
 				ec.Report.Warning (162, 2, loc, "Unreachable code detected");
+			}
 
 			var fb = ec.StartFlowBranching (FlowBranching.BranchingType.Block, loc);
 			fb.CurrentUsageVector.IsUnreachable = true;
 			bool ok = Resolve (ec);
 			ec.KillFlowBranching ();
+
+			if (unreachable)
+				ec.UnreachableReported = false;
 
 			return ok;
 		}
@@ -2585,10 +2600,17 @@ namespace Mono.CSharp {
 				// Only first storey in path will hold this reference. All children blocks will
 				// reference it indirectly using $ref field
 				//
-				for (Block b = Original.Explicit.Parent; b != null; b = b.Parent) {
-					var s = b.Explicit.AnonymousMethodStorey;
-					if (s != null) {
-						storey.HoistedThis = s.HoistedThis;
+				for (Block b = Original.Explicit; b != null; b = b.Parent) {
+					if (b.Parent != null) {
+						var s = b.Parent.Explicit.AnonymousMethodStorey;
+						if (s != null) {
+							storey.HoistedThis = s.HoistedThis;
+							break;
+						}
+					}
+
+					if (b.Explicit == b.Explicit.ParametersBlock && b.Explicit.ParametersBlock.StateMachine != null) {
+						storey.HoistedThis = b.Explicit.ParametersBlock.StateMachine.HoistedThis;
 						break;
 					}
 				}
@@ -2886,7 +2908,7 @@ namespace Mono.CSharp {
 			// Overwrite original for comparison purposes when linking cross references
 			// between anonymous methods
 			//
-			Original = source;
+			Original = source.Original;
 		}
 
 		#region Properties

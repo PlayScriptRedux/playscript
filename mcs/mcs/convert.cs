@@ -1098,12 +1098,13 @@ namespace Mono.CSharp {
 			Expression source_type_expr;
 
 			if (source_type.IsNullableType) {
-				// No implicit conversion S? -> T for non-reference types
-				if (implicitOnly && !TypeSpec.IsReferenceType (target_type) && !target_type.IsNullableType)
-					return null;
-
-				source_type_expr = Nullable.Unwrap.Create (source);
-				source_type = source_type_expr.Type;
+				// No unwrapping conversion S? -> T for non-reference types
+				if (implicitOnly && !TypeSpec.IsReferenceType (target_type) && !target_type.IsNullableType) {
+					source_type_expr = source;
+				} else {
+					source_type_expr = Nullable.Unwrap.Create (source);
+					source_type = source_type_expr.Type;
+				}
 			} else {
 				source_type_expr = source;
 			}
@@ -1203,8 +1204,12 @@ namespace Mono.CSharp {
 			if (s_x != source_type) {
 				var c = source as Constant;
 				if (c != null) {
-					source = c.TryReduce (ec, s_x);
-				} else {
+					source = c.Reduce (ec, s_x);
+					if (source == null)
+						c = null;
+				}
+
+				if (c == null) {
 					source = implicitOnly ?
 						ImplicitConversionStandard (ec, source_type_expr, s_x, loc) :
 						ExplicitConversionStandard (ec, source_type_expr, s_x, loc);
@@ -2006,21 +2011,28 @@ namespace Mono.CSharp {
 				if (expr_type == real_target)
 					return EmptyCast.Create (expr, target_type);
 
-				ne = ImplicitNumericConversion (expr, real_target);
-				if (ne != null)
-					return EmptyCast.Create (ne, target_type);
-
-				ne = ExplicitNumericConversion (ec, expr, real_target);
-				if (ne != null)
-					return EmptyCast.Create (ne, target_type);
-
-				//
-				// LAMESPEC: IntPtr and UIntPtr conversion to any Enum is allowed
-				//
-				if (expr_type.BuiltinType == BuiltinTypeSpec.Type.IntPtr || expr_type.BuiltinType == BuiltinTypeSpec.Type.UIntPtr) {
-					ne = ExplicitUserConversion (ec, expr, real_target, loc);
+				Constant c = expr as Constant;
+				if (c != null) {
+					c = c.TryReduce (ec, real_target);
+					if (c != null)
+						return c;
+				} else {
+					ne = ImplicitNumericConversion (expr, real_target);
 					if (ne != null)
-						return ExplicitConversionCore (ec, ne, target_type, loc);
+						return EmptyCast.Create (ne, target_type);
+
+					ne = ExplicitNumericConversion (ec, expr, real_target);
+					if (ne != null)
+						return EmptyCast.Create (ne, target_type);
+
+					//
+					// LAMESPEC: IntPtr and UIntPtr conversion to any Enum is allowed
+					//
+					if (expr_type.BuiltinType == BuiltinTypeSpec.Type.IntPtr || expr_type.BuiltinType == BuiltinTypeSpec.Type.UIntPtr) {
+						ne = ExplicitUserConversion (ec, expr, real_target, loc);
+						if (ne != null)
+							return ExplicitConversionCore (ec, ne, target_type, loc);
+					}
 				}
 			} else {
 				ne = ExplicitNumericConversion (ec, expr, target_type);

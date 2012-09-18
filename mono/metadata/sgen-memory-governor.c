@@ -77,6 +77,14 @@ static mword last_collection_los_memory_alloced;
 static mword sgen_memgov_available_free_space (void);
 
 
+static mword
+double_to_mword_with_saturation (double value)
+{
+	if (value >= (double)MWORD_MAX_VALUE)
+		return MWORD_MAX_VALUE;
+	return (mword)value;
+}
+
 /* GC trigger heuristics. */
 
 static void
@@ -122,7 +130,7 @@ sgen_memgov_try_calculate_minor_collection_allowance (gboolean overwrite)
 	 *
 	 * hence:
 	 */
-	allowance_target = (mword)((double)save_target * (double)(minor_collection_sections_alloced * major_collector.section_size + last_collection_los_memory_alloced) / (double)(num_major_sections_saved * major_collector.section_size + los_memory_saved));
+	allowance_target = double_to_mword_with_saturation ((double)save_target * (double)(minor_collection_sections_alloced * major_collector.section_size + last_collection_los_memory_alloced) / (double)(num_major_sections_saved * major_collector.section_size + los_memory_saved));
 
 	minor_collection_allowance = MAX (MIN (allowance_target, num_major_sections * major_collector.section_size + los_memory_usage), MIN_MINOR_COLLECTION_ALLOWANCE);
 
@@ -279,14 +287,24 @@ prot_flags_for_activate (int activate)
 	return prot_flags | MONO_MMAP_PRIVATE | MONO_MMAP_ANON;
 }
 
+void
+sgen_assert_memory_alloc (void *ptr, const char *assert_description)
+{
+	if (ptr || !assert_description)
+		return;
+	fprintf (stderr, "Error: Garbage collector could not allocate memory for %s.\n", assert_description);
+	exit (1);
+}
+
 /*
  * Allocate a big chunk of memory from the OS (usually 64KB to several megabytes).
  * This must not require any lock.
  */
 void*
-sgen_alloc_os_memory (size_t size, int activate)
+sgen_alloc_os_memory (size_t size, int activate, const char *assert_description)
 {
 	void *ptr = mono_valloc (0, size, prot_flags_for_activate (activate));
+	sgen_assert_memory_alloc (ptr, assert_description);
 	if (ptr)
 		SGEN_ATOMIC_ADD_P (total_alloc, size);
 	return ptr;
@@ -294,9 +312,10 @@ sgen_alloc_os_memory (size_t size, int activate)
 
 /* size must be a power of 2 */
 void*
-sgen_alloc_os_memory_aligned (size_t size, mword alignment, gboolean activate)
+sgen_alloc_os_memory_aligned (size_t size, mword alignment, gboolean activate, const char *assert_description)
 {
 	void *ptr = mono_valloc_aligned (size, alignment, prot_flags_for_activate (activate));
+	sgen_assert_memory_alloc (ptr, assert_description);
 	if (ptr)
 		SGEN_ATOMIC_ADD_P (total_alloc, size);
 	return ptr;

@@ -30,11 +30,15 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#if NET_2_0 || TARGET_JVM
-
 using System.Collections;
 using System.ComponentModel;
 using System.Data;
+using System.IO;
+
+#if NET_4_5
+using System.Threading;
+using System.Threading.Tasks;
+#endif
 
 namespace System.Data.Common {
 	public abstract class DbDataReader : MarshalByRefObject, IDataReader, IDataRecord, IDisposable, IEnumerable
@@ -183,9 +187,72 @@ namespace System.Data.Common {
 
 			return schemaTable;
 		}
+		
+#if NET_4_5
+		[MonoTODO]
+		public virtual T GetFieldValue<T> (int i)
+		{
+			throw new NotImplementedException ();
+		}
+
+		public Task<T> GetFieldValueAsync<T> (int ordinal)
+		{
+			return GetFieldValueAsync<T> (ordinal, CancellationToken.None);
+		}
+		
+		[MonoTODO]
+		public virtual Task<T> GetFieldValueAsync<T> (int ordinal, CancellationToken cancellationToken)
+		{
+			throw new NotImplementedException ();
+		}
+		
+		public Task<bool> NextResultAsync ()
+		{
+			return NextResultAsync (CancellationToken.None);
+		}
+		
+		public Task<bool> IsDBNullAsync (int ordinal)
+		{
+			return IsDBNullAsync (ordinal, CancellationToken.None);
+		}
+
+		[MonoTODO]
+		public virtual Stream GetStream (int i)
+		{
+			throw new NotImplementedException ();
+		}
+		
+		[MonoTODO]
+		public virtual TextReader GetTextReader (int i)
+		{
+			throw new NotImplementedException ();	
+		}
+
+		[MonoTODO]
+		public virtual Task<bool> IsDBNullAsync (int ordinal, CancellationToken cancellationToken)
+		{
+			throw new NotImplementedException ();
+		}
+		
+		[MonoTODO]
+		public virtual Task<bool> NextResultAsync (CancellationToken cancellationToken)
+		{
+			throw new NotImplementedException ();
+		}
+		
+		public Task<bool> ReadAsync ()
+		{
+			return ReadAsync (CancellationToken.None);
+		}
+		
+		[MonoTODO]
+		public virtual Task<bool> ReadAsync (CancellationToken cancellationToken)
+		{
+			throw new NotImplementedException ();
+		}
+#endif
 
 		#endregion // Methods
 	}
 }
 
-#endif
