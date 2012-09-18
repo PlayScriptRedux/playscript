@@ -5,23 +5,23 @@ namespace _root
 	public static class trace_fn
 	{
 		public static void trace(object o) {
-			System.Diagnostics.Debug.WriteLine(o);
+//			System.Diagnostics.Debug.WriteLine(o);
 			Console.WriteLine(o);
 		}
 
 		public static void trace(object o1, object o2) {
-			System.Diagnostics.Debug.WriteLine("{0}{1}", o1, o2);
+//			System.Diagnostics.Debug.WriteLine("{0}{1}", o1, o2);
 			Console.WriteLine("{0}{1}", o1, o2);
 		}
 
 		public static void trace(object o1, object o2, object o3) {
-			System.Diagnostics.Debug.WriteLine("{0}{1}{2}", o1, o2, o3);
+//			System.Diagnostics.Debug.WriteLine("{0}{1}{2}", o1, o2, o3);
 			Console.WriteLine("{0}{1}{2}", o1, o2, o3);
 		}
 
 		public static void trace(object o1, object o2, object o3, params object[] args) {
 			var argsStr = String.Concat(args);
-			System.Diagnostics.Debug.WriteLine("{0}{1}{2}{3}", o1, o2, o3, argsStr);
+//			System.Diagnostics.Debug.WriteLine("{0}{1}{2}{3}", o1, o2, o3, argsStr);
 			Console.WriteLine("{0}{1}{2}{3}", o1, o2, o3, argsStr);
 		}
 	}

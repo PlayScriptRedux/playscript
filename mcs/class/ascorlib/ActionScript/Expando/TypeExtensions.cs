@@ -13,6 +13,8 @@
  *
  * ***************************************************************************/
 
+#if DYNAMIC_SUPPORT
+
 using System;
 using System.Diagnostics;
 using System.Reflection;
@@ -112,3 +114,5 @@ namespace ActionScript.Expando {
         }
     }
 }
+
+#endif

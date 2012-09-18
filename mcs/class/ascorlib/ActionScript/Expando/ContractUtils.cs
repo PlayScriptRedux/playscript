@@ -13,6 +13,8 @@
  *
  * ***************************************************************************/
 
+#if DYNAMIC_SUPPORT
+
 using System;
 using System.Dynamic;
 using System.Linq.Expressions;
@@ -90,3 +92,5 @@ namespace ActionScript.Expando {
         }
     }
 }
+
+#endif

@@ -5,7 +5,7 @@ LIBRARY = ascorlib.dll
 LIBRARY_SNK = ../mono.snk
 LIBRARY_PACKAGE = none
 
-LIB_MCS_FLAGS = -keyfile:$(LIBRARY_SNK) -r:System.Core.dll -r:System.dll -r:System.Dynamic.dll -r:Mono.CSharp
+LIB_MCS_FLAGS = -keyfile:$(LIBRARY_SNK) -r:System.dll
 
 NO_TEST = yes
 

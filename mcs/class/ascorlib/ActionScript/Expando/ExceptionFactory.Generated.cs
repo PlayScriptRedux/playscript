@@ -13,6 +13,8 @@
  *
  * ***************************************************************************/
 
+#if DYNAMIC_SUPPORT
+
 using System;
 
 namespace ActionScript.Expando {
@@ -2723,3 +2725,5 @@ namespace ActionScript.Expando {
     #endregion
 
 }
+
+#endif

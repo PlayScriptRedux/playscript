@@ -26,6 +26,8 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
+#if DYNAMIC_SUPPORT
+
 using System;
 
 namespace ActionScript.RuntimeBinder
@@ -45,3 +47,5 @@ namespace ActionScript.RuntimeBinder
 		ResultDiscarded			= 1 << 8
 	}
 }
+
+#endif
