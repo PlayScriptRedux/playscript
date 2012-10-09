@@ -577,7 +577,7 @@ namespace Mono.CSharp
 
 			// Check to make sure property method return types match (ActionScript).
 			if (this.Location.SourceFile.FileType == SourceFileType.ActionScript) {
-				if (this.Set.ParameterTypes == null)
+				if (this.Set != null && this.Set.ParameterTypes == null)
 					this.Set.ParameterInfo.Resolve(this.Set);
 				if (this.Get != null && this.Set != null && this.Get.ReturnType != this.Set.ParameterTypes[0]) {
 					Report.Error (7002, Location, "Type of property getter and setter must match");

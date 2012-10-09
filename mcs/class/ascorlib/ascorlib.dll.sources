@@ -8,12 +8,14 @@ functions.cs
 ./ActionScript/Undefined.cs
 ./ActionScript/Expando/BindingRestrictionsEx.cs
 ./ActionScript/Expando/CacheDict.cs
+./ActionScript/Expando/CollectionDebuggerView.cs
 ./ActionScript/Expando/ContractUtils.cs
 ./ActionScript/Expando/ExceptionFactory.Generated.cs
 ./ActionScript/Expando/ExpandoClass.cs
 ./ActionScript/Expando/ExpandoObject.cs
+./ActionScript/Expando/Hashtable.cs
 ./ActionScript/Expando/TypeExtensions.cs
-./ActionScript/Expando/typeUtils.cs
+./ActionScript/Expando/TypeUtils.cs
 ./ActionScript/RuntimeBinder/Binder.cs
 ./ActionScript/RuntimeBinder/CSharpInvokeMemberBinder.cs
 ./ActionScript/RuntimeBinder/CSharpArgumentInfo.cs

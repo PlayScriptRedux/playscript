@@ -115,7 +115,7 @@ namespace ActionScript.RuntimeBinder
 
 		public static CallSiteBinder Convert (CSharpBinderFlags flags, Type type, Type context)
 		{
-			return null;
+			return new CSharpConvertBinder(type, context, flags);
 		}
 		
 		public static CallSiteBinder GetIndex (CSharpBinderFlags flags, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)

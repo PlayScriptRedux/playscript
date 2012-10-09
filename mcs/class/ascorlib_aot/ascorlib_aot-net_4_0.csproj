@@ -34,9 +34,6 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Mono.CSharp" />
     <Reference Include="System.Core" />
-    <Reference Include="test2">
-      <HintPath>..\..\mcs\test2.exe</HintPath>
-    </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

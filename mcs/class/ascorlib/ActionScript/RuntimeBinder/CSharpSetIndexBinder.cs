@@ -148,7 +148,7 @@ namespace ActionScript.RuntimeBinder
 						var propType = prop.PropertyType;
 						var setter = prop.GetSetMethod();
 						if (setter != null && setter.IsPublic && !setter.IsStatic && prop.Name == key) {
-							if (value.GetType () == propType) {
+							if (value is object || value.GetType () == propType) {
 								setter.Invoke (o, new object [] { value } );
 							} else {
 								setter.Invoke(o, new object [] { Convert.ChangeType(value, propType) } );

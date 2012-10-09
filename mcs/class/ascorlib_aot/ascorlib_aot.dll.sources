@@ -8,12 +8,14 @@
 ../ascorlib/ActionScript/Undefined.cs
 ../ascorlib/ActionScript/Expando/BindingRestrictionsEx.cs
 ../ascorlib/ActionScript/Expando/CacheDict.cs
+../ascorlib/ActionScript/Expando/CollectionDebuggerView.cs
 ../ascorlib/ActionScript/Expando/ContractUtils.cs
 ../ascorlib/ActionScript/Expando/ExceptionFactory.Generated.cs
 ../ascorlib/ActionScript/Expando/ExpandoClass.cs
 ../ascorlib/ActionScript/Expando/ExpandoObject.cs
+../ascorlib/ActionScript/Expando/Hashtable.cs
 ../ascorlib/ActionScript/Expando/TypeExtensions.cs
-../ascorlib/ActionScript/Expando/typeUtils.cs
+../ascorlib/ActionScript/Expando/TypeUtils.cs
 ../ascorlib/ActionScript/RuntimeBinder/Binder.cs
 ../ascorlib/ActionScript/RuntimeBinder/CSharpInvokeMemberBinder.cs
 ../ascorlib/ActionScript/RuntimeBinder/CSharpArgumentInfo.cs

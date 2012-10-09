@@ -69,4 +69,141 @@ namespace ActionScript.RuntimeBinder
 	}
 }
 
+#else
+
+using System;
+using System.Collections.Generic;
+using ActionScript;
+
+namespace ActionScript.RuntimeBinder
+{
+
+	class CSharpConvertBinder : CallSiteBinder
+	{
+		private static Dictionary<Type, object> delegates = new Dictionary<Type, object>();
+
+		readonly Type type;
+	//	readonly CSharpBinderFlags flags;
+	//	readonly Type context;
+		
+		public CSharpConvertBinder (Type type, Type context, CSharpBinderFlags flags)
+		{
+			this.type = type;
+	//		this.flags = flags;
+	//		this.context = context;
+		}
+
+		public static int ConvertToInt (CallSite site, object o)
+		{
+			var typeCode = Type.GetTypeCode (o.GetType ());
+			switch (typeCode) {
+			case TypeCode.Int32:
+				return (int)o;
+			case TypeCode.Double:
+				return (int)((double)o);
+			case TypeCode.Boolean:
+				return (bool)o ? 1 : 0;
+			case TypeCode.UInt32:
+				return (int)((uint)o);
+			case TypeCode.Single:
+				return (int)((float)o);
+			default:
+				throw new Exception ("Invalid cast to int");
+			}
+		}
+
+		public static uint ConvertToUInt (CallSite site, object o)
+		{
+			var typeCode = Type.GetTypeCode (o.GetType ());
+			switch (typeCode) {
+			case TypeCode.Int32:
+				return (uint)((int)o);
+			case TypeCode.Double:
+				return (uint)((double)o);
+			case TypeCode.Boolean:
+				return (bool)o ? (uint)1 : (uint)0;
+			case TypeCode.UInt32:
+				return (uint)o;
+			case TypeCode.Single:
+				return (uint)((float)o);
+			default:
+				throw new Exception ("Invalid cast to int");
+			}
+		}
+
+		public static double ConvertToDouble (CallSite site, object o)
+		{
+			var typeCode = Type.GetTypeCode (o.GetType ());
+			switch (typeCode) {
+			case TypeCode.Int32:
+				return (int)o;
+			case TypeCode.Double:
+				return (double)o;
+			case TypeCode.Boolean:
+				return (bool)o ? 1 : 0;
+			case TypeCode.UInt32:
+				return (uint)o;
+			case TypeCode.Single:
+				return (float)o;
+			default:
+				throw new Exception ("Invalid cast to int");
+			}
+		}
+
+		public static bool ConvertToBool (CallSite site, object o)
+		{
+			var typeCode = Type.GetTypeCode (o.GetType ());
+			switch (typeCode) {
+			case TypeCode.Int32:
+				return (int)o != 0;
+			case TypeCode.Double:
+				return (double)o != 0.0;
+			case TypeCode.Boolean:
+				return (bool)o;
+			case TypeCode.UInt32:
+				return (uint)o != 0;
+			case TypeCode.Single:
+				return (float)o != 0.0f;
+			default:
+				throw new Exception ("Invalid cast to int");
+			}
+		}
+
+		public static string ConvertToString (CallSite site, object o)
+		{
+			if (o is string) {
+				return (string)o;
+			} else {
+				return o.ToString ();
+			}
+		}
+
+		public static object ConvertToObj (CallSite site, object o)
+		{
+			return o;
+		}
+
+		static CSharpConvertBinder ()
+		{
+			delegates.Add (typeof(Func<CallSite, object, int>), (Func<CallSite, object, int>)ConvertToInt);
+			delegates.Add (typeof(Func<CallSite, object, uint>), (Func<CallSite, object, uint>)ConvertToUInt);
+			delegates.Add (typeof(Func<CallSite, object, double>), (Func<CallSite, object, double>)ConvertToDouble);
+			delegates.Add (typeof(Func<CallSite, object, bool>), (Func<CallSite, object, bool>)ConvertToBool);
+			delegates.Add (typeof(Func<CallSite, object, string>), (Func<CallSite, object, string>)ConvertToString);
+			delegates.Add (typeof(Func<CallSite, object, object>), (Func<CallSite, object, object>)ConvertToObj);
+		}
+		
+		public override object Bind (Type delegateType)
+		{
+			object target;
+			if (delegates.TryGetValue (delegateType, out target)) {
+				return target;
+			}
+			throw new Exception("Unable to bind convert for target " + delegateType.FullName);
+		}
+
+	}
+
+}
+
 #endif

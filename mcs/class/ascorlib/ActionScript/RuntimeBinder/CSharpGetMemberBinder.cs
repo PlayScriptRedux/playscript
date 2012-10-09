@@ -123,7 +123,7 @@ namespace ActionScript.RuntimeBinder
 				var propType = prop.PropertyType;
 				var getter = prop.GetGetMethod();
 				if (getter != null && getter.IsPublic && !getter.IsStatic && prop.Name == name) {
-					if (typeof(T) == propType) {
+					if (typeof(T) == typeof(object) || typeof(T) == propType) {
 						value = (T)getter.Invoke (o, null);
 					} else {
 						value = (T)Convert.ChangeType(getter.Invoke(o, null), typeof(T));
@@ -132,7 +132,7 @@ namespace ActionScript.RuntimeBinder
 				}
 			}
 
-			return default(T);
+			throw new Exception("Unable to find member " + name);
 		}
 
 		static CSharpGetMemberBinder ()
