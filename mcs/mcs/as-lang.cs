@@ -231,11 +231,17 @@ namespace Mono.CSharp
 			} else if (variable != null) {
 				if (variable.TypeExpression is VarExpr) {
 					type = new TypeExpression (rc.Module.PredefinedTypes.AsArray.Resolve(), Location);
+				} else if (variable.Variable.Type == rc.BuiltinTypes.Dynamic) {
+					type = new TypeExpression (rc.Module.PredefinedTypes.AsArray.Resolve(), Location);
 				} else {
 					type = new TypeExpression (variable.Variable.Type, variable.Variable.Location);
 				}
 			} else if (assign != null) {
-				type = new TypeExpression (assign.Target.Type, assign.Target.Location);
+				if (assign.Target.Type == rc.BuiltinTypes.Dynamic) {
+					type = new TypeExpression (rc.Module.PredefinedTypes.AsArray.Resolve(), Location);
+				} else {
+					type = new TypeExpression (assign.Target.Type, assign.Target.Location);
+				}
 			} else {
 				type = new TypeExpression (rc.Module.PredefinedTypes.AsArray.Resolve(), Location);
 			}

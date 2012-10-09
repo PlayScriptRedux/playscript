@@ -1,10 +1,8 @@
 //
-// CSharpArgumentInfoFlags.cs
+// CallSite.cs
 //
 // Authors:
-//	Marek Safar  <marek.safar@gmail.com>
-//
-// Copyright (C) 2009 Novell, Inc (http://www.novell.com)
+//	Ben Cooley <bcooley@zynga.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -26,19 +24,74 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-using System;
+#if !DYNAMIC_SUPPORT
 
-namespace ActionScript.RuntimeBinder
+using System;
+using System.Reflection;
+
+namespace ActionScript
 {
-	[Flags]
-	public enum CSharpArgumentInfoFlags
+	public class CallSite
 	{
-		None				= 0,
-		UseCompileTimeType	= 1,
-		Constant			= 2,
-		NamedArgument		= 4,
-		IsRef				= 8,
-		IsOut				= 16,
-		IsStaticType		= 32
+		protected Type _delegateType;
+		protected CallSiteBinder _binder;
+
+		public class InvokeInfo {
+			public WeakReference lastObj;
+			public Delegate del;
+			public MethodInfo method;
+			public int generation;
+		}
+
+		public InvokeInfo invokeInfo;
+
+		public CallSite ()
+		{
+		}
+
+		public Type DelegateType {
+			get { return _delegateType; }
+		}
+
+		public CallSiteBinder Binder {
+			get { return _binder; }
+		}
+	}
+
+	public class CallSite<T> : CallSite 
+	{
+		private T _target;
+
+		public CallSite ()
+		{
+		}
+
+		public static CallSite<T> Create(CallSiteBinder binder) 
+		{
+			var cs = new CallSite<T>();
+			cs._delegateType = typeof(T);
+			cs._binder = binder;
+			return cs;
+		}
+
+		public virtual T Update { 
+			get { 
+				_target = (T)_binder.Bind(_delegateType);
+				return _target; 
+			} 
+		}
+
+		public virtual T Target {
+			get {
+				if (_target == null) {
+					return Update;
+				} else {
+					return _target; 
+				}
+			}
+			set { _target = value; }
+		}
 	}
 }
+
+#endif

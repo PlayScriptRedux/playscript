@@ -189,7 +189,8 @@ net_4_0_dirs := \
 	System.Data.Services.Client	\
 	System.Data.Services	\
 	System.Json \
-	ascorlib
+	ascorlib \
+	ascorlib_aot
 	
 net_4_0_only_dirs := \
 	System.ComponentModel.Composition

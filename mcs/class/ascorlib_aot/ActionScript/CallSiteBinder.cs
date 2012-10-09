@@ -1,10 +1,8 @@
 //
-// CSharpArgumentInfoFlags.cs
+// CallSiteBinder.cs
 //
 // Authors:
-//	Marek Safar  <marek.safar@gmail.com>
-//
-// Copyright (C) 2009 Novell, Inc (http://www.novell.com)
+//	Ben Cooley <bcooley@zynga.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -26,19 +24,20 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
+#if !DYNAMIC_SUPPORT
+
 using System;
 
-namespace ActionScript.RuntimeBinder
+namespace ActionScript
 {
-	[Flags]
-	public enum CSharpArgumentInfoFlags
+	public abstract class CallSiteBinder
 	{
-		None				= 0,
-		UseCompileTimeType	= 1,
-		Constant			= 2,
-		NamedArgument		= 4,
-		IsRef				= 8,
-		IsOut				= 16,
-		IsStaticType		= 32
+		public CallSiteBinder ()
+		{
+		}
+
+		public abstract object Bind(Type delegateType);
 	}
 }
+
+#endif

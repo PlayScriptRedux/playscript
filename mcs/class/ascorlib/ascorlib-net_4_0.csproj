@@ -30,6 +30,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Dynamic" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Mono.CSharp" />
+    <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
@@ -73,6 +77,15 @@
     <Compile Include="ActionScript\RuntimeBinder\RuntimeBinderContext.cs" />
     <Compile Include="ActionScript\RuntimeBinder\RuntimeBinderException.cs" />
     <Compile Include="ActionScript\RuntimeBinder\RuntimeBinderInternalCompilerException.cs" />
+    <Compile Include="..\ascorlib_aot\ActionScript\ExpressionType.cs">
+      <Link>ActionScript\ExpressionType.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib_aot\ActionScript\CallSite.cs">
+      <Link>ActionScript\CallSite.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib_aot\ActionScript\CallSiteBinder.cs">
+      <Link>ActionScript\CallSiteBinder.cs</Link>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

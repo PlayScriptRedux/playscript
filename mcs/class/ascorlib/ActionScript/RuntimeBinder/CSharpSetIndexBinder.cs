@@ -87,4 +87,154 @@ namespace ActionScript.RuntimeBinder
 	}
 }
 
+#else
+
+using System;
+using System.Collections;
+using System.Collections.Generic;
+
+namespace ActionScript.RuntimeBinder
+{
+	class CSharpSetIndexBinder : CallSiteBinder
+	{
+		private static Dictionary<Type, object> delegates = new Dictionary<Type, object>();
+
+//		readonly CSharpBinderFlags flags;
+//		List<CSharpArgumentInfo> argumentInfo;
+//		Type callingContext;
+
+		private static void SetIndex<T> (CallSite site, object o, int index, T value)
+		{
+			var l = o as IList<T>;
+			if (l != null) {
+				l [index] = value;
+			} else {
+				var a = o as T[];
+				if (a != null) {
+					a[index] = value;
+				} else {
+					var l2 = o as IList;
+					if (l2 != null) {
+						l2 [index] = value;
+					} else {
+						var d = o as IDictionary<int,T>;
+						if (d != null) {
+							d[index] = value;
+						} else {
+							var d2 = o as IDictionary;
+							if (d2 != null) {
+								d2[index] = value;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		private static void SetKeyStr<T> (CallSite site, object o, string key, T value)
+		{
+			var d = o as IDictionary<string,T>;
+			if (d != null) {
+				d[key] = value;
+			} else {
+				var d2 = o as IDictionary;
+				if (d2 != null) {
+					d2[key] = value;
+				} else {
+					var props = o.GetType ().GetProperties();
+					var len = props.Length;
+					for (var pi = 0; pi < len; pi++) {
+						var prop = props[pi];
+						var propType = prop.PropertyType;
+						var setter = prop.GetSetMethod();
+						if (setter != null && setter.IsPublic && !setter.IsStatic && prop.Name == key) {
+							if (value.GetType () == propType) {
+								setter.Invoke (o, new object [] { value } );
+							} else {
+								setter.Invoke(o, new object [] { Convert.ChangeType(value, propType) } );
+							}
+						}
+					}
+				}
+			}
+		}
+
+		private static void SetKey<T1,T2> (CallSite site, object o, T1 key, T2 value)
+		{
+			var d = o as IDictionary<T1,T2>;
+			if (d != null) {
+				d[key] = value;
+			} else {
+				var d2 = o as IDictionary;
+				if (d2 != null) {
+					d2[key] = value;
+				} 
+			}
+		}
+
+		public CSharpSetIndexBinder (CSharpBinderFlags flags, Type callingContext, IEnumerable<CSharpArgumentInfo> argumentInfo)
+		{
+//			this.flags = flags;
+//			this.callingContext = callingContext;
+//			this.argumentInfo = argumentInfo.ToReadOnly ();
+		}
+
+		static CSharpSetIndexBinder ()
+		{
+			delegates.Add (typeof(Action<CallSite, object, int, int>),    (Action<CallSite, object, int, int>)SetIndex<int>);
+			delegates.Add (typeof(Action<CallSite, object, int, uint>),   (Action<CallSite, object, int, uint>)SetIndex<uint>);
+			delegates.Add (typeof(Action<CallSite, object, int, double>), (Action<CallSite, object, int, double>)SetIndex<double>);
+			delegates.Add (typeof(Action<CallSite, object, int, bool>),   (Action<CallSite, object, int, bool>)SetIndex<bool>);
+			delegates.Add (typeof(Action<CallSite, object, int, string>), (Action<CallSite, object, int, string>)SetIndex<string>);
+			delegates.Add (typeof(Action<CallSite, object, int, object>), (Action<CallSite, object, int, object>)SetIndex<object>);
+
+			delegates.Add (typeof(Action<CallSite, object, uint, int>),    (Action<CallSite, object, uint, int>)SetKey<uint,int>);
+			delegates.Add (typeof(Action<CallSite, object, uint, uint>),   (Action<CallSite, object, uint, uint>)SetKey<uint,uint>);
+			delegates.Add (typeof(Action<CallSite, object, uint, double>), (Action<CallSite, object, uint, double>)SetKey<uint,double>);
+			delegates.Add (typeof(Action<CallSite, object, uint, bool>),   (Action<CallSite, object, uint, bool>)SetKey<uint,bool>);
+			delegates.Add (typeof(Action<CallSite, object, uint, string>), (Action<CallSite, object, uint, string>)SetKey<uint,string>);
+			delegates.Add (typeof(Action<CallSite, object, uint, object>), (Action<CallSite, object, uint, object>)SetKey<uint,object>);
+
+			delegates.Add (typeof(Action<CallSite, object, double, int>),    (Action<CallSite, object, double, int>)SetKey<double,int>);
+			delegates.Add (typeof(Action<CallSite, object, double, uint>),   (Action<CallSite, object, double, uint>)SetKey<double,uint>);
+			delegates.Add (typeof(Action<CallSite, object, double, double>), (Action<CallSite, object, double, double>)SetKey<double,double>);
+			delegates.Add (typeof(Action<CallSite, object, double, bool>),   (Action<CallSite, object, double, bool>)SetKey<double,bool>);
+			delegates.Add (typeof(Action<CallSite, object, double, string>), (Action<CallSite, object, double, string>)SetKey<double,string>);
+			delegates.Add (typeof(Action<CallSite, object, double, object>), (Action<CallSite, object, double, object>)SetKey<double,object>);
+
+			delegates.Add (typeof(Action<CallSite, object, string, int>),    (Action<CallSite, object, string, int>)SetKeyStr<int>);
+			delegates.Add (typeof(Action<CallSite, object, string, uint>),   (Action<CallSite, object, string, uint>)SetKeyStr<uint>);
+			delegates.Add (typeof(Action<CallSite, object, string, double>), (Action<CallSite, object, string, double>)SetKeyStr<double>);
+			delegates.Add (typeof(Action<CallSite, object, string, bool>),   (Action<CallSite, object, string, bool>)SetKeyStr<bool>);
+			delegates.Add (typeof(Action<CallSite, object, string, string>), (Action<CallSite, object, string, string>)SetKeyStr<string>);
+			delegates.Add (typeof(Action<CallSite, object, string, object>), (Action<CallSite, object, string, object>)SetKeyStr<object>);
+
+			delegates.Add (typeof(Action<CallSite, bool, object, int>),    (Action<CallSite, object, bool, int>)SetKey<bool,int>);
+			delegates.Add (typeof(Action<CallSite, bool, object, uint>),   (Action<CallSite, object, bool, uint>)SetKey<bool,uint>);
+			delegates.Add (typeof(Action<CallSite, bool, object, double>), (Action<CallSite, object, bool, double>)SetKey<bool,double>);
+			delegates.Add (typeof(Action<CallSite, bool, object, bool>),   (Action<CallSite, object, bool, bool>)SetKey<bool,bool>);
+			delegates.Add (typeof(Action<CallSite, bool, object, string>), (Action<CallSite, object, bool, string>)SetKey<bool,string>);
+			delegates.Add (typeof(Action<CallSite, bool, object, object>), (Action<CallSite, object, bool, object>)SetKey<bool,object>);
+
+			delegates.Add (typeof(Action<CallSite, object, object, int>),    (Action<CallSite, object, object, int>)SetKey<object,int>);
+			delegates.Add (typeof(Action<CallSite, object, object, uint>),   (Action<CallSite, object, object, uint>)SetKey<object,uint>);
+			delegates.Add (typeof(Action<CallSite, object, object, double>), (Action<CallSite, object, object, double>)SetKey<object,double>);
+			delegates.Add (typeof(Action<CallSite, object, object, bool>),   (Action<CallSite, object, object, bool>)SetKey<object,bool>);
+			delegates.Add (typeof(Action<CallSite, object, object, string>), (Action<CallSite, object, object, string>)SetKey<object,string>);
+			delegates.Add (typeof(Action<CallSite, object, object, object>), (Action<CallSite, object, object, object>)SetKey<object,object>);
+
+		}
+		
+		public override object Bind (Type delegateType)
+		{
+			object target;
+			if (delegates.TryGetValue (delegateType, out target)) {
+				return target;
+			}
+			throw new Exception("Unable to bind set index for target " + delegateType.Name);
+		}
+
+	}
+}
+
 #endif

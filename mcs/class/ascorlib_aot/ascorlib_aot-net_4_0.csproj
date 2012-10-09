@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>10.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{EDBAC91B-2817-479E-8DDF-B24ADDA563A6}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>_root</RootNamespace>
+    <AssemblyName>ascorlib_aot</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>True</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>False</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>False</ConsolePause>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>none</DebugType>
+    <Optimize>True</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>False</ConsolePause>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Dynamic" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Mono.CSharp" />
+    <Reference Include="System.Core" />
+    <Reference Include="test2">
+      <HintPath>..\..\mcs\test2.exe</HintPath>
+    </Reference>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Compile Include="..\ascorlib\Array.cs">
+      <Link>Array.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\AssemblyInfo.cs">
+      <Link>AssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\Class.cs">
+      <Link>Class.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\Error.cs">
+      <Link>Error.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\Extensions.cs">
+      <Link>Extensions.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\functions.cs">
+      <Link>functions.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\Vector.cs">
+      <Link>Vector.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\Undefined.cs">
+      <Link>ActionScript\Undefined.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\Expando\BindingRestrictionsEx.cs">
+      <Link>ActionScript\Expando\BindingRestrictionsEx.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\Expando\CacheDict.cs">
+      <Link>ActionScript\Expando\CacheDict.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\Expando\ContractUtils.cs">
+      <Link>ActionScript\Expando\ContractUtils.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\Expando\ExceptionFactory.Generated.cs">
+      <Link>ActionScript\Expando\ExceptionFactory.Generated.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\Expando\ExpandoClass.cs">
+      <Link>ActionScript\Expando\ExpandoClass.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\Expando\ExpandoObject.cs">
+      <Link>ActionScript\Expando\ExpandoObject.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\Expando\TypeExtensions.cs">
+      <Link>ActionScript\Expando\TypeExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\Expando\TypeUtils.cs">
+      <Link>ActionScript\Expando\TypeUtils.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\Binder.cs">
+      <Link>ActionScript\RuntimeBinder\Binder.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpArgumentInfo.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpArgumentInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpArgumentInfoFlags.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpArgumentInfoFlags.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpBinaryOperationBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpBinaryOperationBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpBinderFlags.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpBinderFlags.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpConvertBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpConvertBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpGetIndexBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpGetIndexBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpGetMemberBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpGetMemberBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpInvokeBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpInvokeBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpInvokeConstructorBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpInvokeConstructorBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpInvokeMemberBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpInvokeMemberBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpIsEventBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpIsEventBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpSetIndexBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpSetIndexBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpSetMemberBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpSetMemberBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpUnaryOperationBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpUnaryOperationBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\DynamicContext.cs">
+      <Link>ActionScript\RuntimeBinder\DynamicContext.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\ErrorPrinter.cs">
+      <Link>ActionScript\RuntimeBinder\ErrorPrinter.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\Extensions.cs">
+      <Link>ActionScript\RuntimeBinder\Extensions.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\RuntimeBinderContext.cs">
+      <Link>ActionScript\RuntimeBinder\RuntimeBinderContext.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\RuntimeBinderException.cs">
+      <Link>ActionScript\RuntimeBinder\RuntimeBinderException.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\RuntimeBinderInternalCompilerException.cs">
+      <Link>ActionScript\RuntimeBinder\RuntimeBinderInternalCompilerException.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\Event.cs">
+      <Link>flash\events\Event.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\EventDispatcher.cs">
+      <Link>flash\events\EventDispatcher.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\IEventDispatcher.cs">
+      <Link>flash\events\IEventDispatcher.cs</Link>
+    </Compile>
+    <Compile Include="ActionScript\CallSite.cs" />
+    <Compile Include="ActionScript\CallSiteBinder.cs" />
+    <Compile Include="ActionScript\ExpressionType.cs" />
+    <Compile Include="..\ascorlib\ActionScript\Expando\CollectionDebuggerView.cs">
+      <Link>ActionScript\Expando\CollectionDebuggerView.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ActionScript\Expando\Hashtable.cs">
+      <Link>ActionScript\Expando\Hashtable.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="ActionScript\" />
+    <Folder Include="flash\" />
+  </ItemGroup>
+</Project>

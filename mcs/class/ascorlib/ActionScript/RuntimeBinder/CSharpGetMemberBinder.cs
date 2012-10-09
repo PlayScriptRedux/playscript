@@ -64,4 +64,97 @@ namespace ActionScript.RuntimeBinder
 	}
 }
 
+#else
+
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using ActionScript.Expando;
+
+namespace ActionScript.RuntimeBinder
+{
+	class CSharpGetMemberBinder : CallSiteBinder
+	{
+		private static Dictionary<Type, object> delegates = new Dictionary<Type, object>();
+
+		readonly string name;
+//		IList<CSharpArgumentInfo> argumentInfo;
+//		Type callingContext;
+		
+		public CSharpGetMemberBinder (string name, Type callingContext, IEnumerable<CSharpArgumentInfo> argumentInfo)
+		{
+			this.name = name;
+//			this.callingContext = callingContext;
+//			this.argumentInfo = argumentInfo != null ? new List<CSharpArgumentInfo>(argumentInfo) : null;
+		}
+
+		public static T GetMember<T> (CallSite site, object o)
+		{
+			var name = ((CSharpGetMemberBinder)site.Binder).name;
+			T value = default(T);
+
+			// Try Dictionary<T>
+			var d = o as IDictionary<string,T>;
+			if (d != null) {
+				if (d.TryGetValue (name, out value)) {
+					return value;
+				}
+			}
+
+			// Try IDictionary
+			var d2 = o as IDictionary;
+			if (d2 != null) {
+				object vo = d2[name];
+				if (vo != null) {
+					if (vo.GetType () == typeof(T)) {
+						value = (T)vo;
+					} else {
+						value = (T)Convert.ChangeType(vo, typeof(T));
+					}
+					return value;
+				}
+			}
+
+			// Try property
+			var props = o.GetType ().GetProperties();
+			var len = props.Length;
+			for (var pi = 0; pi < len; pi++) {
+				var prop = props[pi];
+				var propType = prop.PropertyType;
+				var getter = prop.GetGetMethod();
+				if (getter != null && getter.IsPublic && !getter.IsStatic && prop.Name == name) {
+					if (typeof(T) == propType) {
+						value = (T)getter.Invoke (o, null);
+					} else {
+						value = (T)Convert.ChangeType(getter.Invoke(o, null), typeof(T));
+					}
+					return value;
+				}
+			}
+
+			return default(T);
+		}
+
+		static CSharpGetMemberBinder ()
+		{
+			delegates.Add (typeof(Func<CallSite, object, int>), (Func<CallSite, object, int>)GetMember<int>);
+			delegates.Add (typeof(Func<CallSite, object, uint>), (Func<CallSite, object, uint>)GetMember<uint>);
+			delegates.Add (typeof(Func<CallSite, object, double>), (Func<CallSite, object, double>)GetMember<double>);
+			delegates.Add (typeof(Func<CallSite, object, bool>), (Func<CallSite, object, bool>)GetMember<bool>);
+			delegates.Add (typeof(Func<CallSite, object, string>), (Func<CallSite, object, string>)GetMember<string>);
+			delegates.Add (typeof(Func<CallSite, object, object>), (Func<CallSite, object, object>)GetMember<object>);
+		}
+		
+		public override object Bind (Type delegateType)
+		{
+			object target;
+			if (delegates.TryGetValue (delegateType, out target)) {
+				return target;
+			}
+			throw new Exception("Unable to bind get member for target " + delegateType.FullName);
+		}
+
+	}
+}
+
 #endif

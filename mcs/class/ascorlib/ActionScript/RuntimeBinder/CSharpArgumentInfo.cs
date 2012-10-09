@@ -26,13 +26,16 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
+using System;
+using System.Collections.Generic;
+
 #if DYNAMIC_SUPPORT
 
-using System;
 using System.Dynamic;
-using System.Collections.Generic;
 using System.Linq;
 using Compiler = Mono.CSharp;
+
+#endif
 
 namespace ActionScript.RuntimeBinder
 {
@@ -52,6 +55,8 @@ namespace ActionScript.RuntimeBinder
 			return new CSharpArgumentInfo (flags, name);
 		}
 
+#if DYNAMIC_SUPPORT
+
 		internal Compiler.Argument.AType ArgumentModifier {
 			get {
 				if ((flags & CSharpArgumentInfoFlags.IsRef) != 0)
@@ -69,6 +74,8 @@ namespace ActionScript.RuntimeBinder
 			var named = from arg in argumentInfo.Skip (skipCount) where arg.IsNamed select arg.name;
 			return new CallInfo (Math.Max (0, argumentInfo.Count () - skipCount), named);
 		}
+
+#endif
 		
 		internal CSharpArgumentInfoFlags Flags {
 			get { return flags; }
@@ -83,5 +90,3 @@ namespace ActionScript.RuntimeBinder
 		}
 	}
 }
-
-#endif

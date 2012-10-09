@@ -83,4 +83,60 @@ namespace ActionScript.RuntimeBinder
 	}
 }
 
+#else 
+
+using System;
+using System.Collections.Generic;
+using ActionScript.Expando;
+
+namespace ActionScript.RuntimeBinder
+{
+	class CSharpSetMemberBinder : CallSiteBinder
+	{
+		private static Dictionary<Type, object> delegates = new Dictionary<Type, object>();
+		
+		readonly string name;
+//		readonly CSharpBinderFlags flags;
+//		List<CSharpArgumentInfo> argumentInfo;
+//		Type callingContext;
+
+		public static void SetMember<T> (CallSite site, object o, T value)
+		{
+			var expando = o as ExpandoObject;
+			if (expando != null) {
+				var binder = (CSharpSetMemberBinder)site.Binder;
+				expando[binder.name] = value;
+			}
+		}
+
+		public CSharpSetMemberBinder (CSharpBinderFlags flags, string name, Type callingContext, IEnumerable<CSharpArgumentInfo> argumentInfo)
+		{
+			this.name = name;
+//			this.flags = flags;
+//			this.callingContext = callingContext;
+//			this.argumentInfo = new List<CSharpArgumentInfo>(argumentInfo);
+		}
+
+		static CSharpSetMemberBinder ()
+		{
+			delegates.Add (typeof(Action<CallSite, object, int>), (Action<CallSite, object, int>)SetMember<int>);
+			delegates.Add (typeof(Action<CallSite, object, uint>), (Action<CallSite, object, uint>)SetMember<uint>);
+			delegates.Add (typeof(Action<CallSite, object, double>), (Action<CallSite, object, double>)SetMember<double>);
+			delegates.Add (typeof(Action<CallSite, object, bool>), (Action<CallSite, object, bool>)SetMember<bool>);
+			delegates.Add (typeof(Action<CallSite, object, string>), (Action<CallSite, object, string>)SetMember<string>);
+			delegates.Add (typeof(Action<CallSite, object, object>), (Action<CallSite, object, object>)SetMember<object>);
+		}
+
+		public override object Bind (Type delegateType)
+		{
+			object target;
+			if (delegates.TryGetValue (delegateType, out target)) {
+				return target;
+			}
+			throw new Exception("Unable to bind set member for target " + delegateType.FullName);
+		}
+
+	}
+}
+
 #endif

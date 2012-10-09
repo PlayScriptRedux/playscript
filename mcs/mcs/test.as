@@ -118,6 +118,8 @@ package
 		public static var obj:Object={};
 
         public static function Main() : void {
+        	var o1:Object = 100;
+        	o1 = o1 + 2;
         	var len:int = 20, qq:Number = 100.3, ss1:String = "blah";
         	trace(qq);
         	trace(ss1);

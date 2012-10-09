@@ -102,4 +102,139 @@ namespace ActionScript.RuntimeBinder
 	}
 }
 
+#else
+
+using System;
+using System.Collections.Generic;
+using ActionScript;
+
+namespace ActionScript.RuntimeBinder
+{
+	class CSharpUnaryOperationBinder : CallSiteBinder
+	{
+		private static Dictionary<ExpressionType, object> delegates = new Dictionary<ExpressionType, object>();
+
+		ExpressionType operation;
+		List<CSharpArgumentInfo> argumentInfo;
+//		readonly CSharpBinderFlags flags;
+//		readonly Type context;
+		
+		private static void ThrowOnInvalidOp (object o, string op)
+		{
+			throw new Exception ("Invalid " + op + " operation with type " + o.GetType ().Name);
+		}
+		
+		public static object NegateObject (CallSite site, object a)
+		{
+			if (a is int) {
+				return -(int)a;
+			} else if (a is double) {
+				return -(double)a;
+			} else if (a is uint) {
+				return -(uint)a;
+			} else {
+				ThrowOnInvalidOp(a, "negate");
+				return null;
+			}
+		}
+
+		public static object IncrementObject (CallSite site, object a)
+		{
+			if (a is int) {
+				return (int)a + 1;
+			} else if (a is double) {
+				return (double)a + 1.0;
+			} else if (a is uint) {
+				return (uint)a + 1;
+			} else {
+				ThrowOnInvalidOp(a, "increment");
+				return null;
+
+			}
+		}
+
+		public static object DecrementObject (CallSite site, object a)
+		{
+			if (a is int) {
+				return (int)a - 1;
+			} else if (a is double) {
+				return (double)a - 1.0;
+			} else if (a is uint) {
+				return (uint)a - 1;
+			} else {
+				ThrowOnInvalidOp(a, "decrement");
+				return null;
+			}
+		}
+
+		public static object LogicalNotObject (CallSite site, object a)
+		{
+			if (a is bool) {
+				return !(bool)a;
+			} if (a is int) {
+				return (int)a == 0;
+			} else if (a is double) {
+				return (double)a == 0.0;
+			} else if (a is uint) {
+				return (uint)a == 0;
+			} else {
+				return a == null;
+			}
+		}
+
+		public static object BitwiseNotObject (CallSite site, object a)
+		{
+			if (a is bool) {
+				return (bool)a ? 0 : 1;
+			} if (a is int) {
+				return ~((int)a);
+			} else if (a is double) {
+				return (double)(~(int)a);
+			} else if (a is uint) {
+				return ~(uint)a;
+			} else {
+				ThrowOnInvalidOp(a, "decrement");
+				return null;
+			}
+		}
+
+		static CSharpUnaryOperationBinder ()
+		{
+			delegates.Add (ExpressionType.Negate, (Func<CallSite, object, object>)NegateObject);
+			delegates.Add (ExpressionType.NegateChecked, (Func<CallSite, object, object>)NegateObject);
+			
+			delegates.Add (ExpressionType.Increment, (Func<CallSite, object, object>)IncrementObject);
+
+			delegates.Add (ExpressionType.Decrement, (Func<CallSite, object, object>)DecrementObject);
+
+			delegates.Add (ExpressionType.Not, (Func<CallSite, object, object>)LogicalNotObject);
+
+			delegates.Add (ExpressionType.OnesComplement, (Func<CallSite, object, object>)BitwiseNotObject);
+
+		}
+
+		public CSharpUnaryOperationBinder (ExpressionType operation, CSharpBinderFlags flags, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
+		{
+			this.operation = operation;
+			this.argumentInfo = new List<CSharpArgumentInfo>(argumentInfo);
+			if (this.argumentInfo.Count != 1)
+				throw new ArgumentException ("Unary operation requires 1 argument");
+			
+//			this.flags = flags;
+//			this.context = context;
+		}
+
+		public override object Bind (Type delegateType)
+		{
+			object target;
+			if (delegates.TryGetValue (operation, out target)) {
+				return target;
+			}
+			throw new Exception("Unable to bind binary operation " + 
+			                    Enum.GetName (typeof(ExpressionType), operation) + 
+			                    " for target " + delegateType.FullName);
+		}
+	}
+}
+
 #endif

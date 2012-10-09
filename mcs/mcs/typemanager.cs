@@ -245,9 +245,11 @@ namespace Mono.CSharp
 		public readonly PredefinedType AsError;
 		public readonly PredefinedType AsFunction;
 		public readonly PredefinedType AsUndefined;
-		private readonly PredefinedType AsBinder;
-		private readonly PredefinedType AsBinderFlags;
-
+		public readonly PredefinedType AsCallSite;
+		public readonly PredefinedType AsCallSiteGeneric;
+		public readonly PredefinedType AsExpressionType;
+		public readonly PredefinedType AsBinder;
+		public readonly PredefinedType AsBinderFlags;
 
 		public PredefinedTypes (ModuleContainer module)
 		{
@@ -310,6 +312,9 @@ namespace Mono.CSharp
 			AsError = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "Error");
 			AsFunction = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "Function");
 			AsUndefined = new PredefinedType (module, MemberKind.Class, "ActionScript", "Undefined");
+			AsCallSite = new PredefinedType (module, MemberKind.Class, "ActionScript", "CallSite");
+			AsCallSiteGeneric = new PredefinedType (module, MemberKind.Class, "ActionScript", "CallSite", 1);
+			AsExpressionType = new PredefinedType (module, MemberKind.Enum, "ActionScript", "ExpressionType");
 			AsBinder = new PredefinedType (module, MemberKind.Class, "ActionScript.RuntimeBinder", "Binder");
 			AsBinderFlags = new PredefinedType (module, MemberKind.Enum, "ActionScript.RuntimeBinder", "CSharpBinderFlags");
 

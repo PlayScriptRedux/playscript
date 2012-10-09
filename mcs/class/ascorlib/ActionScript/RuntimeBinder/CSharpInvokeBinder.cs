@@ -71,4 +71,37 @@ namespace ActionScript.RuntimeBinder
 	}
 }
 
+#else
+
+using System;
+using ActionScript;
+using System.Collections.Generic;
+
+namespace ActionScript.RuntimeBinder
+{
+	class CSharpInvokeBinder : CallSiteBinder
+	{
+//		readonly CSharpBinderFlags flags;
+//		List<CSharpArgumentInfo> argumentInfo;
+//		Type callingContext;
+		
+		public CSharpInvokeBinder (CSharpBinderFlags flags, Type callingContext, IEnumerable<CSharpArgumentInfo> argumentInfo)
+		{
+//			this.flags = flags;
+//			this.callingContext = callingContext;
+//			this.argumentInfo = new List<CSharpArgumentInfo>(argumentInfo);
+		}
+
+		public static void Action(CallSite site, object o) {
+
+		}
+
+		public override object Bind (Type delegateType)
+		{
+			throw new System.NotImplementedException ();
+		}
+	}
+
+}
+
 #endif

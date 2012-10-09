@@ -3981,8 +3981,13 @@ namespace Mono.CSharp
 		{
 			Arguments binder_args = new Arguments (4);
 
-			MemberAccess sle = new MemberAccess (new MemberAccess (
-				new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "System", loc), "Linq", loc), "Expressions", loc);
+			MemberAccess ns;
+			if (ec.FileType == SourceFileType.ActionScript && ec.Module.PredefinedTypes.AsExpressionType.Define () ) {
+				ns = new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "ActionScript", loc);
+			} else {
+				ns = new MemberAccess (new MemberAccess (
+							new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "System", loc), "Linq", loc), "Expressions", loc);
+			}
 
 			CSharpBinderFlags flags = 0;
 			if (ec.HasSet (ResolveContext.Options.CheckedScope))
@@ -3992,7 +3997,7 @@ namespace Mono.CSharp
 				flags |= CSharpBinderFlags.BinaryOperationLogical;
 
 			binder_args.Add (new Argument (new EnumConstant (new IntLiteral (ec.BuiltinTypes, (int) flags, loc), ec.Module.PredefinedTypes.GetBinderFlags(ec).Resolve ())));
-			binder_args.Add (new Argument (new MemberAccess (new MemberAccess (sle, "ExpressionType", loc), GetOperatorExpressionTypeName (), loc)));
+			binder_args.Add (new Argument (new MemberAccess (new MemberAccess (ns, "ExpressionType", loc), GetOperatorExpressionTypeName (), loc)));
 			binder_args.Add (new Argument (new TypeOf (ec.CurrentType, loc)));									
 			binder_args.Add (new Argument (new ImplicitlyTypedArrayCreation (args.CreateDynamicBinderArguments (ec), loc)));
 

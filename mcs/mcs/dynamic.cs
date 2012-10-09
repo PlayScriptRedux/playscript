@@ -249,6 +249,9 @@ namespace Mono.CSharp
 		protected IDynamicBinder binder;
 		protected Expression binder_expr;
 
+		protected bool isActionScript;
+		protected bool isActionScriptAotMode;
+
 		// Used by BinderFlags
 		protected CSharpBinderFlags flags;
 
@@ -289,15 +292,27 @@ namespace Mono.CSharp
 
 		protected bool DoResolveCore (ResolveContext rc)
 		{
-			if (rc.CurrentTypeParameters != null && rc.CurrentTypeParameters[0].IsMethodTypeParameter)
+			if (rc.CurrentTypeParameters != null && rc.CurrentTypeParameters [0].IsMethodTypeParameter)
 				context_mvars = rc.CurrentTypeParameters;
 
 			int errors = rc.Report.Errors;
 			var pt = rc.Module.PredefinedTypes;
 
-			binder_type = pt.GetBinder(rc).Resolve ();
-			pt.CallSite.Resolve ();
-			pt.CallSiteGeneric.Resolve ();
+			binder_type = pt.GetBinder (rc).Resolve ();
+
+			if (rc.FileType == SourceFileType.ActionScript)
+				isActionScript = true;
+
+			if (isActionScript && pt.AsCallSite.Define ()) {
+				pt.AsCallSite.Resolve ();
+				pt.AsCallSiteGeneric.Resolve ();
+				isActionScriptAotMode = true;
+			} 
+
+			if (!isActionScriptAotMode) {
+				pt.CallSite.Resolve ();
+				pt.CallSiteGeneric.Resolve ();
+			}
 
 			eclass = ExprClass.Value;
 
@@ -307,7 +322,7 @@ namespace Mono.CSharp
 			if (rc.Report.Errors == errors)
 				return true;
 
-			if (rc.FileType == SourceFileType.ActionScript) {
+			if (isActionScript) {
 				rc.Report.Error (7027, loc,
 					"ActionScript dynamic operation cannot be compiled without `ascorlib.dll' assembly reference");
 			} else {
@@ -344,9 +359,20 @@ namespace Mono.CSharp
 			int default_args = isStatement ? 1 : 2;
 			var module = ec.Module;
 
+			TypeSpec callSite;
+			TypeSpec callSiteGeneric;
+			
+			if (isActionScriptAotMode) {
+				callSite = module.PredefinedTypes.AsCallSite.TypeSpec;
+				callSiteGeneric = module.PredefinedTypes.AsCallSiteGeneric.TypeSpec;
+			} else {
+				callSite = module.PredefinedTypes.CallSite.TypeSpec;
+				callSiteGeneric = module.PredefinedTypes.CallSiteGeneric.TypeSpec;
+			}
+
 			bool has_ref_out_argument = false;
 			var targs = new TypeExpression[dyn_args_count + default_args];
-			targs[0] = new TypeExpression (module.PredefinedTypes.CallSite.TypeSpec, loc);
+			targs[0] = new TypeExpression (callSite, loc);
 
 			TypeExpression[] targs_for_instance = null;
 			TypeParameterMutator mutator;
@@ -381,6 +407,19 @@ namespace Mono.CSharp
 				// Convert any internal type like dynamic or null to object
 				if (t.Kind == MemberKind.InternalCompilerType)
 					t = ec.BuiltinTypes.Object;
+
+				// ActionScript AOT mode - Convert all types to object if they are not basic AS types or this is an invocation.
+				if (isActionScriptAotMode && 
+				    (!(t.BuiltinType == BuiltinTypeSpec.Type.Object ||
+					   t.BuiltinType == BuiltinTypeSpec.Type.Int || 	// Specialize only on basic ActionScript types in AOT mode.
+				       t.BuiltinType == BuiltinTypeSpec.Type.UInt || 	// (NOTE: We can still handle other types, but we box to Object).
+				       t.BuiltinType == BuiltinTypeSpec.Type.Bool || 
+				       t.BuiltinType == BuiltinTypeSpec.Type.Double || 
+				       t.BuiltinType == BuiltinTypeSpec.Type.String) ||
+				   	   ((MemberAccess)((Invocation)binder).Exp).Name.StartsWith("Invoke"))) {				// Always box to Object for invoke argument lists
+					t = ec.BuiltinTypes.Object;
+					arguments[i] = new Argument(new BoxedCast(a.Expr, ec.BuiltinTypes.Object));
+				}
 
 				if (targs_for_instance != null)
 					targs_for_instance[i + 1] = new TypeExpression (t, loc);
@@ -464,7 +503,7 @@ namespace Mono.CSharp
 				d = null;
 			}
 
-			var site_type_decl = new GenericTypeExpr (module.PredefinedTypes.CallSiteGeneric.TypeSpec, new TypeArguments (del_type), loc);
+			var site_type_decl = new GenericTypeExpr (callSiteGeneric, new TypeArguments (del_type), loc);
 			var field = site_container.CreateCallSiteField (site_type_decl, loc);
 			if (field == null)
 				return;
@@ -474,8 +513,7 @@ namespace Mono.CSharp
 				del_type_instance_access = new TypeExpression (MemberCache.GetMember (dt, d.CurrentType), loc);
 			}
 
-			var instanceAccessExprType = new GenericTypeExpr (module.PredefinedTypes.CallSiteGeneric.TypeSpec,
-				new TypeArguments (del_type_instance_access), loc);
+			var instanceAccessExprType = new GenericTypeExpr (callSiteGeneric, new TypeArguments (del_type_instance_access), loc);
 
 			if (instanceAccessExprType.ResolveAsType (ec.MemberContext) == null)
 				return;
@@ -942,13 +980,18 @@ namespace Mono.CSharp
 		{
 			Arguments binder_args = new Arguments (4);
 
-			MemberAccess sle = new MemberAccess (new MemberAccess (
-				new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "System", loc), "Linq", loc), "Expressions", loc);
+			MemberAccess ns;
+			if (ec.FileType == SourceFileType.ActionScript && ec.Module.PredefinedTypes.AsExpressionType.Define () ) {
+				ns = new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "ActionScript", loc);
+			} else {
+				ns = new MemberAccess (new MemberAccess (
+					new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "System", loc), "Linq", loc), "Expressions", loc);
+			}
 
 			var flags = ec.HasSet (ResolveContext.Options.CheckedScope) ? CSharpBinderFlags.CheckedContext : 0;
 
 			binder_args.Add (new Argument (new BinderFlags (flags, this)));
-			binder_args.Add (new Argument (new MemberAccess (new MemberAccess (sle, "ExpressionType", loc), name, loc)));
+			binder_args.Add (new Argument (new MemberAccess (new MemberAccess (ns, "ExpressionType", loc), name, loc)));
 			binder_args.Add (new Argument (new TypeOf (ec.CurrentType, loc)));
 			binder_args.Add (new Argument (new ImplicitlyTypedArrayCreation (args.CreateDynamicBinderArguments (ec), loc)));
 
