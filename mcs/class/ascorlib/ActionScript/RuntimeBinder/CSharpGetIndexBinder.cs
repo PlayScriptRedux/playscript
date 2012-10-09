@@ -72,4 +72,190 @@ namespace ActionScript.RuntimeBinder
 	}
 }
 
+#else
+
+using System;
+using System.Collections;
+using System.Collections.Generic;
+
+namespace ActionScript.RuntimeBinder
+{
+	class CSharpGetIndexBinder : CallSiteBinder
+	{
+		private static Dictionary<Type, object> delegates = new Dictionary<Type, object>();
+
+//		IList<CSharpArgumentInfo> argumentInfo;
+//		Type callingContext;
+
+		private static void ThrowCantIndexError (object o)
+		{
+			throw new Exception("Unable to get indexer on type " + o.GetType ().FullName);
+		}
+
+		private static T GetIndex<T> (CallSite site, object o, int index)
+		{
+			var l = o as IList<T>;
+			if (l != null) {
+				return l [index];
+			}
+
+			var a = o as T[];
+			if (a != null) {
+				return a [index];
+			}
+
+			var l2 = o as IList;
+			if (l2 != null) {
+				var ro = l2 [index];
+				if (ro is T) {
+					return (T)ro;
+				} else {
+					return (T)Convert.ChangeType(ro, typeof(T));
+				}
+			}
+
+			var d = o as IDictionary<int,T>;
+			if (d != null) {
+				var ro = d[index];
+				if (ro is T) {
+					return (T)ro;
+				} else {
+					return (T)Convert.ChangeType(ro, typeof(T));
+				}
+			}
+
+			var d2 = o as IDictionary;
+			if (d2 != null) {
+				var ro = d2[index];
+				if (ro is T) {
+					return (T)ro;
+				} else {
+					return (T)Convert.ChangeType(ro, typeof(T));
+				}
+			}
+
+			ThrowCantIndexError (o);
+			return default(T);
+		}
+		
+		private static T GetKeyStr<T> (CallSite site, object o, string key)
+		{
+			var d = o as IDictionary<string,T>;
+			if (d != null) {
+				return d[key];
+			}
+			var d2 = o as IDictionary;
+			if (d2 != null) {
+				var ro = d2[key];
+				if (ro is T) {
+					return (T)ro;
+				} else {
+					return (T)Convert.ChangeType(ro, typeof(T));
+				}
+			}
+
+			var props = o.GetType ().GetProperties();
+			var len = props.Length;
+			for (var pi = 0; pi < len; pi++) {
+				var prop = props[pi];
+				var propType = prop.PropertyType;
+				var getter = prop.GetGetMethod();
+				if (getter != null && getter.IsPublic && !getter.IsStatic && prop.Name == key) {
+					if (typeof(T) == typeof(object) || typeof(T) == propType) {
+						return (T)getter.Invoke (o, null);
+					} else {
+						return (T)Convert.ChangeType (getter.Invoke(o, null), typeof(T));
+					}
+				}
+			}
+
+			ThrowCantIndexError (o);
+			return default(T);
+		}
+		
+		private static T2 GetKey<T1,T2> (CallSite site, object o, T1 key)
+		{
+			var d = o as IDictionary<T1,T2>;
+			if (d != null) {
+				return d[key];
+			}
+
+			var d2 = o as IDictionary;
+			if (d2 != null) {
+				var ro = d2[key];
+				if (ro is T2) {
+					return (T2)ro;
+				} else {
+					return (T2)Convert.ChangeType(ro, typeof(T2));
+				}
+			}
+
+			ThrowCantIndexError (o);
+			return default(T2);
+		}
+
+		public CSharpGetIndexBinder (Type callingContext, IEnumerable<CSharpArgumentInfo> argumentInfo)
+		{
+//			this.callingContext = callingContext;
+//			this.argumentInfo = argumentInfo.ToReadOnly ();
+		}
+
+		static CSharpGetIndexBinder ()
+		{
+			delegates.Add (typeof(Func<CallSite, object, int, int>),    (Func<CallSite, object, int, int>)GetIndex<int>);
+			delegates.Add (typeof(Func<CallSite, object, int, uint>),   (Func<CallSite, object, int, uint>)GetIndex<uint>);
+			delegates.Add (typeof(Func<CallSite, object, int, double>), (Func<CallSite, object, int, double>)GetIndex<double>);
+			delegates.Add (typeof(Func<CallSite, object, int, bool>),   (Func<CallSite, object, int, bool>)GetIndex<bool>);
+			delegates.Add (typeof(Func<CallSite, object, int, string>), (Func<CallSite, object, int, string>)GetIndex<string>);
+			delegates.Add (typeof(Func<CallSite, object, int, object>), (Func<CallSite, object, int, object>)GetIndex<object>);
+			
+			delegates.Add (typeof(Func<CallSite, object, uint, int>),    (Func<CallSite, object, uint, int>)GetKey<uint,int>);
+			delegates.Add (typeof(Func<CallSite, object, uint, uint>),   (Func<CallSite, object, uint, uint>)GetKey<uint,uint>);
+			delegates.Add (typeof(Func<CallSite, object, uint, double>), (Func<CallSite, object, uint, double>)GetKey<uint,double>);
+			delegates.Add (typeof(Func<CallSite, object, uint, bool>),   (Func<CallSite, object, uint, bool>)GetKey<uint,bool>);
+			delegates.Add (typeof(Func<CallSite, object, uint, string>), (Func<CallSite, object, uint, string>)GetKey<uint,string>);
+			delegates.Add (typeof(Func<CallSite, object, uint, object>), (Func<CallSite, object, uint, object>)GetKey<uint,object>);
+			
+			delegates.Add (typeof(Func<CallSite, object, double, int>),    (Func<CallSite, object, double, int>)GetKey<double,int>);
+			delegates.Add (typeof(Func<CallSite, object, double, uint>),   (Func<CallSite, object, double, uint>)GetKey<double,uint>);
+			delegates.Add (typeof(Func<CallSite, object, double, double>), (Func<CallSite, object, double, double>)GetKey<double,double>);
+			delegates.Add (typeof(Func<CallSite, object, double, bool>),   (Func<CallSite, object, double, bool>)GetKey<double,bool>);
+			delegates.Add (typeof(Func<CallSite, object, double, string>), (Func<CallSite, object, double, string>)GetKey<double,string>);
+			delegates.Add (typeof(Func<CallSite, object, double, object>), (Func<CallSite, object, double, object>)GetKey<double,object>);
+			
+			delegates.Add (typeof(Func<CallSite, object, string, int>),    (Func<CallSite, object, string, int>)GetKeyStr<int>);
+			delegates.Add (typeof(Func<CallSite, object, string, uint>),   (Func<CallSite, object, string, uint>)GetKeyStr<uint>);
+			delegates.Add (typeof(Func<CallSite, object, string, double>), (Func<CallSite, object, string, double>)GetKeyStr<double>);
+			delegates.Add (typeof(Func<CallSite, object, string, bool>),   (Func<CallSite, object, string, bool>)GetKeyStr<bool>);
+			delegates.Add (typeof(Func<CallSite, object, string, string>), (Func<CallSite, object, string, string>)GetKeyStr<string>);
+			delegates.Add (typeof(Func<CallSite, object, string, object>), (Func<CallSite, object, string, object>)GetKeyStr<object>);
+			
+			delegates.Add (typeof(Func<CallSite, bool, object, int>),    (Func<CallSite, object, bool, int>)GetKey<bool,int>);
+			delegates.Add (typeof(Func<CallSite, bool, object, uint>),   (Func<CallSite, object, bool, uint>)GetKey<bool,uint>);
+			delegates.Add (typeof(Func<CallSite, bool, object, double>), (Func<CallSite, object, bool, double>)GetKey<bool,double>);
+			delegates.Add (typeof(Func<CallSite, bool, object, bool>),   (Func<CallSite, object, bool, bool>)GetKey<bool,bool>);
+			delegates.Add (typeof(Func<CallSite, bool, object, string>), (Func<CallSite, object, bool, string>)GetKey<bool,string>);
+			delegates.Add (typeof(Func<CallSite, bool, object, object>), (Func<CallSite, object, bool, object>)GetKey<bool,object>);
+			
+			delegates.Add (typeof(Func<CallSite, object, object, int>),    (Func<CallSite, object, object, int>)GetKey<object,int>);
+			delegates.Add (typeof(Func<CallSite, object, object, uint>),   (Func<CallSite, object, object, uint>)GetKey<object,uint>);
+			delegates.Add (typeof(Func<CallSite, object, object, double>), (Func<CallSite, object, object, double>)GetKey<object,double>);
+			delegates.Add (typeof(Func<CallSite, object, object, bool>),   (Func<CallSite, object, object, bool>)GetKey<object,bool>);
+			delegates.Add (typeof(Func<CallSite, object, object, string>), (Func<CallSite, object, object, string>)GetKey<object,string>);
+			delegates.Add (typeof(Func<CallSite, object, object, object>), (Func<CallSite, object, object, object>)GetKey<object,object>);
+			
+		}
+		
+		public override object Bind (Type delegateType)
+		{
+			object target;
+			if (delegates.TryGetValue (delegateType, out target)) {
+				return target;
+			}
+			throw new Exception("Unable to bind get index for target " + delegateType.Name);
+		}
+
+	}
+}
+
 #endif

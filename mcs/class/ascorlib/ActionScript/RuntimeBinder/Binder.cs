@@ -120,7 +120,7 @@ namespace ActionScript.RuntimeBinder
 		
 		public static CallSiteBinder GetIndex (CSharpBinderFlags flags, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
-			return null;
+			return new CSharpGetIndexBinder(context, argumentInfo);
 		}
 		
 		public static CallSiteBinder GetMember (CSharpBinderFlags flags, string name, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
