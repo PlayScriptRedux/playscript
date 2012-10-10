@@ -465,6 +465,7 @@ namespace Mono.ActionScript
 		public Tokenizer (SeekableStreamReader input, CompilationSourceFile file, ParserSession session)
 		{
 			this.source_file = file;
+			this.handle_asx = file.SourceFile.AsExtended;
 			this.context = file.Compiler;
 			this.current_source = file.SourceFile;
 			this.identifiers = session.Identifiers;

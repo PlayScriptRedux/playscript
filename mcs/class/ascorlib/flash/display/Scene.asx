@@ -1,0 +1,17 @@
+package flash.display {
+
+	public class Scene {
+	
+		//
+		// Properties
+		//
+		
+		public property labels : Array { get { return null; } }
+
+ 	 	public property name : String { get { return null; } }
+
+ 	 	public property numFrames : int { get { return 0; } }
+	
+	}
+
+}

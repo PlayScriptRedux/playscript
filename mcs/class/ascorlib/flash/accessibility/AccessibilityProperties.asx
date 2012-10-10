@@ -1,0 +1,30 @@
+package flash.accessibility {
+
+	public class AccessibilityProperties {
+	
+		//
+		// Properties
+		//
+	
+		public property description : String { get; set; }
+
+ 	 	public property forceSimple : Boolean { get; set; }
+
+ 	 	public property name : String { get; set; }
+
+ 	 	public property noAutoLabeling : Boolean { get; set; }
+
+ 	 	public property shortcut : String { get; set; }
+
+ 	 	public property silent : Boolean { get; set; }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+ 	 	 	 	 	 	
+		public function AccessibilityProperties() {
+		}
+	
+	}
+
+}

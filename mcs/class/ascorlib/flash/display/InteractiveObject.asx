@@ -1,0 +1,43 @@
+package flash.display {
+
+	import flash.accessibility.AccessibilityImplementation;
+	import flash.geom.Rectangle;
+
+	public abstract class InteractiveObject extends DisplayObject {
+	
+		//
+		// Properties
+		//
+
+		public property accessibilityImplementation : AccessibilityImplementation { get; set; }
+
+ 	 	public property contextMenu : NativeMenu { get; set; }
+
+ 	 	public property doubleClickEnabled : Boolean { get; set; }
+
+ 	 	public property focusRect : Object { get; set; }
+
+ 	 	public property mouseEnabled : Boolean { get; set; }
+
+ 	 	public property needsSoftKeyboard : Boolean { get; set; }
+
+ 	 	public property softKeyboardInputAreaOfInterest : Rectangle { get; set; }
+
+ 	 	public property tabEnabled : Boolean { get; set; }
+
+ 	 	public property tabIndex : int { get; set; }
+
+		//
+		// Methods
+		//
+
+ 	 	public function InteractiveObject() {
+ 	 	}
+ 	 	
+		public function requestSoftKeyboard():Boolean {
+			return false;
+		}
+	
+	}
+
+}

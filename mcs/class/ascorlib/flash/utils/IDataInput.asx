@@ -1,0 +1,49 @@
+package flash.utils {
+
+	public interface IDataInput {
+	
+		//
+		// Properties
+		//
+		
+		property bytesAvailable : uint { get; }
+
+ 	 	property endian : String { get; set; }
+
+ 	 	property objectEncoding : uint { get; set; }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+ 	 	 	 	 	 	
+		function readBoolean():Boolean;
+ 	 	
+		function readByte():int;
+ 	 	
+		function readBytes(bytes:ByteArray, offset:uint = 0, length:uint = 0):void;
+ 	 	
+		function readDouble():Number;
+ 	 	
+		function readFloat():Number;
+ 	 	
+		function readInt():int;
+ 	 	
+		function readMultiByte(length:uint, charSet:String):String;
+ 	 	
+		function readObject():*;
+ 	 	
+		function readShort():int;
+ 	 	
+		function readUnsignedByte():uint;
+ 	 	
+		function readUnsignedInt():uint;
+ 	 	
+		function readUnsignedShort():uint;
+ 	 	
+		function readUTF():String;
+ 	 	
+		function readUTFBytes(length:uint):String;
+		
+	}
+
+}

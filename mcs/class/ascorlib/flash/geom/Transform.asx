@@ -1,0 +1,35 @@
+package flash.geom {
+
+	import flash.display.DisplayObject;
+
+	public class Transform {
+	
+		//
+		// Properties
+		//
+	
+		public property colorTransform : ColorTransform { get; set; }
+
+ 	 	public property concatenatedColorTransform : ColorTransform { get { return null; } }
+
+ 	 	public property concatenatedMatrix : Matrix { get { return null; } }
+
+ 	 	public property matrix : Matrix { get; set; }
+
+ 	 	public property matrix3D : Matrix3D { get; set; }
+
+ 	 	public property perspectiveProjection : PerspectiveProjection { get; set; }
+
+ 	 	public property pixelBounds : Rectangle { get { return null; } }
+
+		//
+		// Methods
+		//
+ 	 	
+		public function getRelativeMatrix3D(relativeTo:DisplayObject):Matrix3D {
+			return null;
+		}
+	
+	}
+
+}

@@ -1,0 +1,38 @@
+package flash.system {
+
+	import flash.display.DisplayObjectContainer;
+
+	public class LoaderContext {
+	
+		//
+		// Properties
+		//
+		
+		public property allowCodeImport : Boolean { get; set; }
+
+ 	 	public property allowLoadBytesCodeExecution : Boolean { get; set; }
+
+ 	 	public property applicationDomain : ApplicationDomain { get; set; }
+
+ 	 	public property checkPolicyFile : Boolean { get; set; }
+
+ 	 	public property imageDecodingPolicy : String { get; set; }
+
+ 	 	public property parameters : Object { get; set; }
+
+ 	 	public property requestedContentParent : DisplayObjectContainer { get; set; }
+
+ 	 	public property securityDomain : SecurityDomain { get; set; }
+
+		//
+		// Methods
+		//
+		
+		public function LoaderContext(checkPolicyFile:Boolean = false, applicationDomain:ApplicationDomain = null, 
+			securityDomain:SecurityDomain = null) {
+			
+		}
+ 	 	
+	}
+
+}

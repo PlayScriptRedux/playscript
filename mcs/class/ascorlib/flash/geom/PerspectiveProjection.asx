@@ -1,0 +1,28 @@
+package flash.geom {
+
+	public class PerspectiveProjection {
+	
+		//
+		// Properties
+		//
+	
+		public property fieldOfView : Number { get; set; }
+
+ 	 	public property focalLength : Number { get; set; }
+
+ 	 	public property projectionCenter : Point { get; set; }
+
+		//
+		// Methods
+		//
+ 	 	
+		public function PerspectiveProjection() {
+		}
+ 	 	
+		public function toMatrix3D():Matrix3D {
+			return null;
+		}
+	
+	}
+
+}

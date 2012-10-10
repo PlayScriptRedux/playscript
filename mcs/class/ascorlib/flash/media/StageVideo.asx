@@ -1,0 +1,11 @@
+package flash.media {
+
+	import flash.events.EventDispatcher;
+
+	public class StageVideo {
+	
+		// Not Implemented
+	
+	}
+
+}

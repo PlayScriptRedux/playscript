@@ -1925,7 +1925,14 @@ property_declaration
 	  OPEN_BRACE
 	  {
 		var type = (FullNamedExpression) $6;
-		current_property = new Property (current_type, type, (Modifiers) $2,
+	
+		var modifiers = (Modifiers) $2;
+				
+		if (current_container.Kind == MemberKind.Class && 
+			(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
+				modifiers |= Modifiers.VIRTUAL;
+		
+		current_property = new Property (current_type, type, modifiers,
 			(MemberName) $4, (Attributes) $1);
 			
 		if (type.Type != null && type.Type.Kind == MemberKind.Void)
@@ -1962,7 +1969,14 @@ indexer_declaration
 	  {
 		valid_param_mod = 0;
 		var type = (FullNamedExpression) $6;
-		Indexer indexer = new Indexer (current_type, type, (MemberName) $4, (Modifiers) $2, (ParametersCompiled) $9, (Attributes) $1);
+
+		var modifiers = (Modifiers) $2;
+
+		if (current_container.Kind == MemberKind.Class && 
+			(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
+				modifiers |= Modifiers.VIRTUAL;
+		
+		Indexer indexer = new Indexer (current_type, type, (MemberName) $4, modifiers, (ParametersCompiled) $9, (Attributes) $1);
 			
 		current_property = indexer;
 

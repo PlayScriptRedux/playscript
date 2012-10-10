@@ -1,0 +1,22 @@
+package flash.display3D {
+
+	import flash.utils.ByteArray;
+
+	public class VertexBuffer3D {
+
+ 		//
+ 		// Methods
+ 		//
+
+ 		public function dispose():void {
+ 		}
+ 		
+ 		public function uploadFromByteArray(data:ByteArray, byteArrayOffset:int, startVertex:int, numVertices:int):void {
+ 		}
+
+		public function uploadFromVector(data:Vector.<Number>, startVertex:int, numVertices:int):void {
+		}
+	
+	}
+
+}

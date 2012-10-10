@@ -1,0 +1,22 @@
+package flash.geom {
+
+	public static class Utils3D {
+	
+		//
+		// Methods
+		//
+	
+		public static function pointTowards(percent:Number, mat:Matrix3D, pos:Vector3D, at:Vector3D = null, up:Vector3D = null):Matrix3D {
+			return null;
+		}
+		
+		public static function projectVector(m:Matrix3D, v:Vector3D):Vector3D {
+			return null;		
+		}
+ 	 	
+		public static function projectVectors(m:Matrix3D, verts:Vector.<Number>, projectedVerts:Vector.<Number>, uvts:Vector.<Number>):void {
+		}
+	
+	}
+
+}

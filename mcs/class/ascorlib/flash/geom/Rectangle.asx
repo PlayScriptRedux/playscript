@@ -1,0 +1,101 @@
+package flash.geom {
+
+	public class Rectangle {
+
+		//
+		// Properties
+		//
+			
+		public property bottom : Number { get; set; }
+
+ 	 	public property bottomRight : Point { get; set; }
+ 	 	
+ 	 	public property height : Number { get; set; }
+
+ 	 	public property left : Number { get; set; }
+
+ 	 	public property right : Number { get; set; }
+
+ 	 	public property size : Point { get; set; }
+
+ 	 	public property top : Number { get; set; }
+
+ 	 	public property topLeft : Point { get; set; }
+
+ 	 	public property width : Number { get; set; }
+
+ 	 	public property x : Number  { get; set; }
+ 	 	
+ 	 	public property y : Number { get; set; }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+
+		public function Rectangle(x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0) {
+		}
+ 	 	
+		public function clone():Rectangle {
+			return null;
+		}
+	
+		public function contains(x:Number, y:Number):Boolean {
+			return false;
+		}
+		
+		public function containsPoint(point:Point):Boolean {
+			return false;
+		}
+	
+		public function containsRect(rect:Rectangle):Boolean {
+			return false;
+		}
+ 	 	
+		public function copyFrom(sourceRect:Rectangle):void {
+		}
+ 	 	
+		public function equals(toCompare:Rectangle):Boolean {
+			return false;
+		}
+
+		public function inflate(dx:Number, dy:Number):void {
+		}
+ 	 	
+		public function inflatePoint(point:Point):void {
+		}
+ 	 	
+		public function intersection(toIntersect:Rectangle):Rectangle {
+			return null;
+		}
+ 	 	
+		public function intersects(toIntersect:Rectangle):Boolean {
+			return false;
+		}
+ 	 	
+		public function isEmpty():Boolean {
+			return false;
+		}
+ 	 	
+		public function offset(dx:Number, dy:Number):void {
+		}
+ 	 	
+		public function offsetPoint(point:Point):void {
+		}
+ 	 	
+		public function setEmpty():void {
+		}
+ 	 	
+		public function setTo(xa:Number, ya:Number, widtha:Number, heighta:Number):void {
+		}
+ 	 	
+		public function toString():String {
+			return null;
+		}
+
+		public function union(toUnion:Rectangle):Rectangle {
+			return null;
+		}
+		
+	}
+
+}

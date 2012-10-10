@@ -1,0 +1,35 @@
+package flash.events {
+
+	public class ErrorEvent extends Event {
+	
+		//
+		// Constants
+		//
+		
+		public static const ERROR : String = "error";
+	
+		//
+		// Properties
+		//
+	
+		public property errorID : int { get { return 0; } }
+	
+		//
+		// Methods
+		//
+		
+	 	public function ErrorEvent(type:String, bubbles:Boolean = false, cancelable:Boolean = false, text:String = "", id:int = 0) {
+	 		super(type, bubbles, cancelable);
+	 	}
+	
+		public override function clone():Event {
+			return null;
+		}
+
+ 	 	public override function toString():String {
+ 	 		return null;
+ 	 	}
+	
+	}
+
+}

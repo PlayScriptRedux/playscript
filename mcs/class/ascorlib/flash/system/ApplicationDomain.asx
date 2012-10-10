@@ -1,0 +1,36 @@
+package flash.system {
+
+	import flash.utils.ByteArray;
+
+	public class ApplicationDomain {
+	
+		//
+		// Properties
+		//
+	
+ 		public static property currentDomain : ApplicationDomain { get { return null; } }
+
+ 	 	public property domainMemory : ByteArray { get; set; }
+
+ 	 	public static property MIN_DOMAIN_MEMORY_LENGTH : uint { get { return 0; } }
+		
+		public property parentDomain : ApplicationDomain { get { return null; } }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+ 	 	 	 	
+		public function ApplicationDomain(parentDomain:ApplicationDomain = null) {
+		}
+ 	 	
+		public function getDefinition(name:String):Object {
+			return null;
+		}
+ 	 	
+		public function hasDefinition(name:String):Boolean {
+			return false;
+		}
+	
+	}
+
+}

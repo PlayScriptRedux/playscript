@@ -1,0 +1,24 @@
+package flash.display {
+
+	public class Bitmap extends DisplayObject {
+	
+		//
+		// Properties
+		//
+		
+		public property bitmapData : BitmapData { get; set; }
+
+ 	 	public property pixelSnapping : String { get; set; }
+
+ 	 	public property smoothing : Boolean { get; set; }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+ 	 	 	 	
+		public function Bitmap(bitmapData:BitmapData = null, pixelSnapping:String = "auto", smoothing:Boolean = false) {
+		}
+	
+	}
+
+}

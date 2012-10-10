@@ -124,22 +124,31 @@ namespace flash.events
 		}
 
 		// [read-only] Indicates whether an event is a bubbling event.
-		public bool bubbles { get { return _bubbles; } }
+		public virtual bool bubbles { get { return _bubbles; } }
 
 		// [read-only] Indicates whether the behavior associated with the event can be prevented.
-		public bool cancelable  { get { return _cancelable; } }
+		public virtual bool cancelable  { get { return _cancelable; } }
 
 		// [read-only] The object that is actively processing the Event object with an event listener.
- 	 	public object currentTarget  { get { return _currentTarget; } }
+		public virtual object currentTarget  { get { return _currentTarget; } }
 
 		//[read-only] The current phase in the event flow.
-		public uint eventPhase { get { return _eventPhase; } } 
+		public virtual uint eventPhase { get { return _eventPhase; } } 
 
 		// [read-only] The event target.
- 	 	public object target { get { return _target; } } 
+		public virtual object target { get { return _target; } } 
 
 		// [read-only] The type of event.
- 	 	public string type { get { return _type; } }
+		public virtual string type { get { return _type; } }
+
+		public virtual Event clone() {
+			return null;
+		}
+
+		public virtual string toString() {
+			return null;
+		}
+
 	}
 }
 

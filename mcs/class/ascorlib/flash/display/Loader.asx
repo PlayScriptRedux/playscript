@@ -1,0 +1,48 @@
+package flash.display {
+
+	import flash.utils.ByteArray;
+	import flash.net.URLRequest;
+	import flash.system.LoaderContext;
+	import flash.events.UncaughtErrorEvents;
+	import flash.desktop.IFilePromise;
+
+	public class Loader extends DisplayObjectContainer {
+	
+		//
+		// Properties
+		//
+	
+		public property content : DisplayObject { get { return null; } }
+
+ 	 	public property contentLoaderInfo : LoaderInfo { get { return null; } }
+
+ 	 	public property uncaughtErrorEvents : UncaughtErrorEvents { get { return null; } }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+ 	 	
+		public function Loader() {
+		}
+ 	 	
+		public function close():void {
+		}
+ 	 	
+		public function load(request:URLRequest, context:LoaderContext = null):void {
+		}
+ 	 	
+		public function loadBytes(bytes:ByteArray, context:LoaderContext = null):void {
+		}
+ 	 	
+		public function loadFilePromise(promise:IFilePromise, context:LoaderContext = null):void {
+		}
+ 	 	
+		public function unload():void {
+		}
+ 	 	
+		public function unloadAndStop(gc:Boolean = true):void {
+		}
+	
+	}
+
+}

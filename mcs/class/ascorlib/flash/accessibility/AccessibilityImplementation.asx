@@ -1,0 +1,78 @@
+package flash.accessibility {
+
+	import flash.geom.Rectangle;
+
+	public class AccessibilityImplementation {
+	
+		//
+		// Properties
+		//
+	
+ 		public property errno : uint { get; set; }
+
+ 	 	public property stub : Boolean { get; set; }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+ 	 	
+ 	 	public function AccessibilityImplementation() {
+ 	 	}
+ 	 	
+		public function accDoDefaultAction(childID:uint):void {
+		}
+ 	 	
+		public function accLocation(childID:uint):* {
+			return null;
+		}
+ 	 	
+		public function accSelect(operation:uint, childID:uint):void {
+		}
+ 	 	
+		public function get_accDefaultAction(childID:uint):String {
+			return null;
+		}
+ 	 	
+		public function get_accFocus():uint {
+			return 0;
+		}
+ 	 	
+		public function get_accName(childID:uint):String {
+			return null;
+		}
+ 	 	
+		public function get_accRole(childID:uint):uint {
+			return 0;
+		}
+ 	 	
+		public function get_accSelection():Array {
+			return null;
+		}
+ 	 	
+		public function get_accState(childID:uint):uint {
+			return 0;
+		}
+ 	 	
+		public function get_accValue(childID:uint):String {
+			return null;
+		}
+ 	 	
+		public function get_selectionActiveIndex():* {
+			return null;
+		}
+ 	 	
+		public function get_selectionAnchorIndex():* {
+			return null;
+		}
+ 	 	
+		public function getChildIDArray():Array {
+			return null;
+		}
+
+ 	 	public function isLabeledBy(labelBounds:Rectangle):Boolean {
+ 	 		return false;
+ 	 	}
+	
+	}
+
+}

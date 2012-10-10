@@ -1,0 +1,158 @@
+package flash.display {
+
+	import flash.utils.ByteArray;
+	import flash.geom.ColorTransform;
+	import flash.geom.Rectangle;
+	import flash.geom.Point;
+	import flash.geom.Matrix;
+	import flash.filters.BitmapFilter;
+
+	public class BitmapData implements IBitmapDrawable {
+	
+		//
+		// Properties
+		//
+		
+		public property height : int { get { return 0; } }
+
+ 	 	public property rect : Rectangle { get { return null; } }
+
+ 	 	public property transparent : Boolean { get { return false; } }
+
+ 	 	public property width : int { get { return 0; } }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+ 	 	 	 	
+		public function BitmapData(width:int, height:int, transparent:Boolean = true, fillColor:uint = 0xFFFFFFFF) {
+		}
+
+		public function applyFilter(sourceBitmapData:BitmapData, sourceRect:Rectangle, destPoint:Point, filter:BitmapFilter):void {
+		}
+ 	 	
+		public function clone():BitmapData {
+			return null;
+		}
+		
+		public function colorTransform(rect:Rectangle, colorTransform:ColorTransform):void {
+		}
+ 	 	
+		public function compare(otherBitmapData:BitmapData):Object {
+			return null;
+		}
+
+		public function copyChannel(sourceBitmapData:BitmapData, sourceRect:Rectangle, destPoint:Point, 
+			sourceChannel:uint, destChannel:uint):void {
+		}
+
+		public function copyPixels(sourceBitmapData:BitmapData, sourceRect:Rectangle, destPoint:Point, 
+			alphaBitmapData:BitmapData = null, alphaPoint:Point = null, mergeAlpha:Boolean = false):void {
+		}
+
+		public function copyPixelsToByteArray(rect:Rectangle, data:ByteArray):void {
+		}
+
+		public function dispose():void {
+		}
+
+ 	 	public function draw(source:IBitmapDrawable, matrix:Matrix = null, colorTransform:ColorTransform = null, blendMode:String = null, 
+	 	 	clipRect:Rectangle = null, smoothing:Boolean = false):void {
+ 	 	}
+ 	 	
+		public function drawWithQuality(source:IBitmapDrawable, matrix:Matrix = null, colorTransform:ColorTransform = null, blendMode:String = null, 
+			clipRect:Rectangle = null, smoothing:Boolean = false, quality:String = null):void {
+		}
+ 	 	
+		public function encode(rect:Rectangle, compressor:Object, byteArray:ByteArray = null):ByteArray {
+			return null;
+		}
+ 	 	
+		public function fillRect(rect:Rectangle, color:uint):void {
+		}
+ 	 	
+		public function floodFill(x:int, y:int, color:uint):void {
+		}
+ 	 	
+		public function generateFilterRect(sourceRect:Rectangle, filter:BitmapFilter):Rectangle {
+			return null;
+		}
+ 	 	
+		public function getColorBoundsRect(mask:uint, color:uint, findColor:Boolean = true):Rectangle {
+			return null;
+		}
+ 	 	
+		public function getPixel(x:int, y:int):uint {
+			return 0;
+		}
+		
+		public function getPixel32(x:int, y:int):uint {
+			return 0;
+		}
+
+		public function getPixels(rect:Rectangle):ByteArray {
+			return null;
+		}
+ 	 	
+		public function getVector(rect:Rectangle):Vector.<uint> {
+			return null;
+		}
+
+		public function histogram(hRect:Rectangle = null):Vector.<Vector.<Number>> {
+			return null;
+		}
+
+		public function hitTest(firstPoint:Point, firstAlphaThreshold:uint, secondObject:Object, 
+			secondBitmapDataPoint:Point = null, secondAlphaThreshold:uint = 1):Boolean {
+			return false;	
+		}
+
+		public function @lock():void {
+		}
+
+		public function merge(sourceBitmapData:BitmapData, sourceRect:Rectangle, destPoint:Point, 
+			redMultiplier:uint, greenMultiplier:uint, blueMultiplier:uint, alphaMultiplier:uint):void {
+		}
+
+		public function noise(randomSeed:int, low:uint = 0, high:uint = 255, channelOptions:uint = 7, grayScale:Boolean = false):void {
+		}
+ 	 	
+		public function paletteMap(sourceBitmapData:BitmapData, sourceRect:Rectangle, destPoint:Point, 
+			redArray:Array = null, greenArray:Array = null, blueArray:Array = null, alphaArray:Array = null):void {
+		}
+
+		public function perlinNoise(baseX:Number, baseY:Number, numOctaves:uint, randomSeed:int, 
+			stitch:Boolean, fractalNoise:Boolean, channelOptions:uint = 7, grayScale:Boolean = false, offsets:Array = null):void {
+		}
+ 	 	
+		public function pixelDissolve(sourceBitmapData:BitmapData, sourceRect:Rectangle, destPoint:Point, 
+			randomSeed:int = 0, numPixels:int = 0, fillColor:uint = 0):int {
+			return 0;
+		}
+ 	 	
+		public function scroll(x:int, y:int):void {
+		}
+ 	 	
+		public function setPixel(x:int, y:int, color:uint):void {
+		}
+
+		public function setPixel32(x:int, y:int, color:uint):void {
+		}
+ 	 	
+		public function setPixels(rect:Rectangle, inputByteArray:ByteArray):void {
+		}
+
+		public function setVector(rect:Rectangle, inputVector:Vector.<uint>):void {
+		}
+ 	 	
+		public function threshold(sourceBitmapData:BitmapData, sourceRect:Rectangle, destPoint:Point, operation:String, 
+			threshold:uint, color:uint = 0, mask:uint = 0xFFFFFFFF, copySource:Boolean = false):uint {
+			return 0;
+		}
+ 	 	
+		public function unlock(changeRect:Rectangle = null):void {
+		}
+		
+	}
+
+}

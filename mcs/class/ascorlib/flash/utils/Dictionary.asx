@@ -1,0 +1,16 @@
+package flash.utils {
+
+	import System.Collections.Generic.*;
+
+	public class Dictionary extends Dictionary.<Object, Object> {
+	
+		public function Dictionary(weakKeys:Boolean = false) {
+		}
+ 	 	
+		public function toJSON(k:String):* {
+			return null;
+		}
+	
+	}
+
+}

@@ -1,0 +1,70 @@
+package flash.geom {
+
+	public class Point {
+
+		//
+		// Properties
+		//
+		
+		public property length : Number { get { return 0.0; } }
+
+ 	 	public property x : Number { get; set; }
+
+ 	 	public property y : Number { get; set; }
+
+		// 
+		// Methods 
+		//
+		
+
+		public function Point(x:Number = 0, y:Number = 0) {
+		
+		}
+ 	 	
+		public function add(v:Point):Point {
+			return null;
+		}
+ 	 	
+		public function clone():Point {
+			return null;
+		}
+ 	 	
+		public function copyFrom(sourcePoint:Point):void {
+		}
+ 	 	
+		public function distance(pt1:Point, pt2:Point):Number {
+			return 0.0;
+		}
+ 	 	
+		public function equals(toCompare:Point):Boolean {
+			return false;
+		}
+ 	 	
+		public function interpolate(pt1:Point, pt2:Point, f:Number):Point {
+			return null;
+		}
+ 	 	
+		public function normalize(thickness:Number):void {
+		}
+
+		public function offset(dx:Number, dy:Number):void {
+		}
+ 	 	
+ 	 	public function polar(len:Number, angle:Number):Point {
+ 	 		return null;
+ 	 	}
+ 	 	
+		public function setTo(xa:Number, ya:Number):void {
+		}
+ 	 	
+		public function subtract(v:Point):Point {
+			return null;		
+		}
+ 	 	
+		public function toString():String {
+			return null;
+		}
+		
+	}
+
+}

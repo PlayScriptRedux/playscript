@@ -1,0 +1,120 @@
+package flash.display {
+
+	import flash.accessibility.AccessibilityProperties;
+	import flash.events.EventDispatcher;
+	import flash.geom.Rectangle;
+	import flash.geom.Point;
+	import flash.geom.Vector3D;
+	import flash.geom.Transform;
+	import flash.geom.ColorTransform;
+	import flash.geom.Matrix;
+
+	public abstract class DisplayObject extends EventDispatcher {
+	
+		//
+		// Properties
+		//
+	
+		public property accessibilityProperties : AccessibilityProperties { get; set; }
+
+ 		public property alpha : Number { get; set; }
+
+ 	 	public property blendMode : String { get; set; }
+
+ 	 	public property blendShader : Shader { set { } }
+
+ 	 	public property cacheAsBitmap : Boolean { get; set; }
+ 	 	
+ 	 	public property cacheAsBitmapMatrix : Matrix { get; set; }
+
+ 	 	public property filters : Array { get; set; }
+
+ 	 	public property	height : Number { get; set; }
+
+ 	 	public property loaderInfo : LoaderInfo { get { return null; } }
+ 	 	
+ 	 	public property mask : DisplayObject  { get; set; }
+
+ 	 	public property mouseX : Number { get { return 0.0; } }
+ 	 	
+ 	 	public property mouseY : Number { get { return 0.0; } }
+
+ 	 	public property name : String { get; set; }
+
+ 	 	public property opaqueBackground : Object { get; set; }
+
+ 	 	public property parent : DisplayObjectContainer { get { return null; }  }
+
+ 	 	public property root : DisplayObject { get { return null; } }
+
+ 	 	public property rotation : Number { get; set; }
+
+ 	 	public property rotationX : Number { get; set; }
+
+ 	 	public property rotationY : Number { get; set; }
+
+ 	 	public property rotationZ : Number { get; set; }
+
+ 	 	public property scale9Grid : Rectangle { get; set; }
+
+ 	 	public property scaleX : Number { get; set; }
+
+ 	 	public property scaleY : Number { get; set; }
+
+ 	 	public property scaleZ : Number { get; set; }
+
+ 	 	public property scrollRect : Rectangle { get; set; }
+
+ 	 	public property stage : Stage { get { return null; } }
+
+ 	 	public property transform : Transform { get; set; }
+
+ 	 	public property visible : Boolean { get; set; }
+
+ 	 	public property width : Number { get; set; }
+
+ 	 	public property x : Number { get; set; }
+
+ 	 	public property y : Number { get; set; }
+ 	 	
+ 	 	public property z : Number { get; set; }
+
+		// 
+		// Public Methods
+		// 
+		
+		public function getBounds(targetCoordinateSpace:DisplayObject):Rectangle {
+			return null;
+		}
+		
+		public function getRect(targetCoordinateSpace:DisplayObject):Rectangle {
+			return null;
+		}
+
+ 	 	public function globalToLocal(point:Point):Point {
+ 	 		return null;
+ 	 	}
+ 	 	
+		public function globalToLocal3D(point:Point):Vector3D {
+			return null;
+		}
+ 	 	
+		public function hitTestObject(obj:DisplayObject):Boolean {
+			return false;
+		}
+ 	 	
+		public function hitTestPoint(x:Number, y:Number, shapeFlag:Boolean = false):Boolean {
+			return false;
+		}
+ 	 	
+		public function local3DToGlobal(point3d:Vector3D):Point {
+			return null;		
+		}
+ 	 	
+		public function localToGlobal(point:Point):Point {
+			return null;
+		}
+	
+	}
+
+}

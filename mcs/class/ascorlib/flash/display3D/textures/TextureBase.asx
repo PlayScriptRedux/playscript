@@ -1,0 +1,16 @@
+package flash.display3D.textures {
+
+	import flash.events.EventDispatcher;
+
+	public abstract class TextureBase extends EventDispatcher {
+	
+		//
+		// Methods
+		//
+	
+		public function dispose():void {
+		}
+	
+	}
+
+}

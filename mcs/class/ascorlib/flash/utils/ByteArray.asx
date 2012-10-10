@@ -1,0 +1,144 @@
+package flash.utils {
+
+	public class ByteArray implements IDataInput, IDataOutput {
+	
+		//
+		// Properties
+		//
+		
+		public property bytesAvailable : uint { get { return 0; } }
+		
+		public static property defaultObjectEncoding : uint { get; set; }
+
+ 	 	public property endian : String { get; set; }
+
+ 	 	public property length : uint { get; set; }
+
+ 	 	public property objectEncoding : uint { get; set; }
+
+ 	 	public property position : uint { get; set; }
+
+		//
+		// Methods
+		//
+
+		public function ByteArray() {
+		}
+ 	 	
+		public function clear():void {
+		}
+ 	 	
+		public function compress(algorithm:String):void {
+		}
+ 	 	
+		public function deflate():void {
+		}
+ 	 	
+		public function inflate():void {
+		}
+ 	 	
+		public function readBoolean():Boolean {
+			return false;
+		}
+ 	 	
+		public function readByte():int {
+			return 0;
+		}
+ 	 	
+		public function readBytes(bytes:ByteArray, offset:uint = 0, length:uint = 0):void {
+		}
+ 	 	
+		public function readDouble():Number {
+			return 0.0;
+		}
+ 	 	
+		public function readFloat():Number {
+			return 0.0;
+		}
+ 	 	
+		public function readInt():int {
+			return 0;
+		}
+ 	 	
+		public function readMultiByte(length:uint, charSet:String):String {
+			return null;
+		}
+ 	 	
+		public function readObject():* {
+			return null;
+		}
+ 	 	
+		public function readShort():int {
+			return 0;
+		}
+ 	 	
+		public function readUnsignedByte():uint {
+			return 0;
+		}
+ 	 	
+		public function readUnsignedInt():uint {
+			return 0;
+		}
+ 	 	
+		public function readUnsignedShort():uint {
+			return 0;
+		}
+ 	 	
+		public function readUTF():String {
+			return null;
+		}
+ 	 	
+		public function readUTFBytes(length:uint):String {
+			return null;
+		}
+ 	 	
+		public function toJSON(k:String):* {
+			return null;
+		}
+ 	 	
+		public function toString():String {
+			return null;
+		}
+ 	 	
+		public function uncompress(algorithm:String):void {
+		}
+ 	 	
+		public function writeBoolean(value:Boolean):void {
+		}
+ 	 	
+		public function writeByte(value:int):void {
+		}
+ 	 	
+		public function writeBytes(bytes:ByteArray, offset:uint = 0, length:uint = 0):void {
+		}
+ 	 	
+		public function writeDouble(value:Number):void {
+		}
+ 	 	
+		public function writeFloat(value:Number):void {
+		}
+ 	 	
+		public function writeInt(value:int):void {
+		}
+ 	 	
+		public function writeMultiByte(value:String, charSet:String):void {
+		}
+ 	 	
+		public function writeObject(obj:*):void {
+		}
+ 	 	
+		public function writeShort(value:int):void {
+		}
+ 	 	
+		public function writeUnsignedInt(value:uint):void {
+		}
+ 	 	
+		public function writeUTF(value:String):void {
+		}
+ 	 	
+		public function writeUTFBytes(value:String):void {
+		}
+
+	}
+
+}

@@ -1,0 +1,64 @@
+package flash.display {
+
+	public class MovieClip extends Sprite {
+	
+		//
+		// Properties
+		//
+		
+		public property currentFrame : int { get { return 0; } }
+
+ 	 	public property currentFrameLabel : String { get { return null; } }
+
+ 	 	public property currentLabel : String { get { return null; } }
+
+ 	 	public property currentLabels : Array { get { return null; } }
+
+ 	 	public property currentScene : Scene { get { return null; } }
+
+ 	 	public property enabled : Boolean { get; set; }
+
+ 	 	public property framesLoaded : int { get { return 0; } }
+
+ 	 	public property isPlaying : Boolean { get { return false; } }
+
+ 	 	public property scenes : Array { get { return null; } }
+
+ 	 	public property totalFrames : int { get { return 0; } }
+
+ 	 	public property trackAsMenu : Boolean { get; set; }
+
+		//
+		// Methods
+		//
+ 	 	 	 	
+		public function MovieClip() {
+		}
+		
+		public function gotoAndPlay(frame:Object, scene:String = null):void {
+		}
+ 	 	
+		public function gotoAndStop(frame:Object, scene:String = null):void {
+		}
+ 	 	
+		public function nextFrame():void {
+		}
+ 	 	
+		public function nextScene():void {
+		}
+ 	 	
+		public function play():void {
+		}
+ 	 	
+		public function prevFrame():void {
+		}
+ 	 	
+		public function prevScene():void {
+		}
+ 	 	
+		public function stop():void {
+		}
+
+	}
+
+}

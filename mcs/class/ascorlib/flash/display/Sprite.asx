@@ -1,0 +1,45 @@
+package flash.display {
+
+	import flash.geom.Rectangle;
+	import flash.media.SoundTransform;
+
+	public class Sprite extends DisplayObjectContainer {
+	
+		//
+		// Properties
+		//
+	
+		public property buttonMode : Boolean { get; set; }
+
+ 	 	public property dropTarget : DisplayObject { get { return null; } }
+
+ 	 	public property graphics : Graphics { get { return null; } }
+
+ 	 	public property hitArea : Sprite { get; set; }
+
+ 	 	public property soundTransform : SoundTransform { get; set; }
+
+ 	 	public property useHandCursor : Boolean { get; set; }
+
+		//
+		// Methods
+		//
+ 	 	 	 	
+		public function Sprite() {
+		}
+ 	 	
+		public function startDrag(lockCenter:Boolean = false, bounds:Rectangle = null):void {
+		}
+ 	 	
+		public function startTouchDrag(touchPointID:int, lockCenter:Boolean = false, bounds:Rectangle = null):void {
+		}
+ 	 	
+		public function stopDrag():void {
+		}
+ 	 	
+		public function stopTouchDrag(touchPointID:int):void {
+		}
+	
+	}
+
+}

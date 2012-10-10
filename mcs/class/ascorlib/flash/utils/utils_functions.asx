@@ -1,0 +1,45 @@
+package flash.utils {
+
+	public function clearInterval(id:uint):void {
+	}
+
+	public function clearTimeout(id:uint):void {
+	}
+	
+//	public function describeType(value:*):XML {
+//		return null;
+//	}
+	
+	public function escapeMultiByte(value:String):String {
+		return null;
+	}
+	
+	public function getDefinitionByName(name:String):Object {
+		return null;
+	}
+	
+	public function getQualifiedClassName(value:*):String {
+		return null;
+	}
+	
+	public function getQualifiedSuperclassName(value:*):String {
+		return null;
+	}
+	
+	public function getTimer():int {
+		return 0;
+	}
+	
+	public function setInterval(closure:Function, delay:Number, ... arguments):uint {
+		return 0;
+	}
+	
+	public function setTimeout(closure:Function, delay:Number, ... arguments):uint {
+		return 0;
+	}
+	
+	public function unescapeMultiByte(value:String):String {
+		return null;
+	}
+
+}

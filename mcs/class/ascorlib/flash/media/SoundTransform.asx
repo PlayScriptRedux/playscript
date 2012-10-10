@@ -1,0 +1,30 @@
+package flash.media {
+
+	public class SoundTransform {
+	
+		//
+		// Properties
+		//
+	
+	 	public property leftToLeft : Number { get; set; }
+
+ 	 	public property leftToRight : Number { get; set; }
+
+ 	 	public property pan : Number { get; set; }
+
+ 	 	public property rightToLeft : Number { get; set; }
+
+ 	 	public property rightToRight : Number { get; set; }
+
+ 	 	public property volume : Number { get; set; }
+
+		//
+		// Methods
+		//
+
+		public function SoundTransform(vol:Number = 1, panning:Number = 0) {
+		}
+		
+	}
+
+}

@@ -1,0 +1,13 @@
+package flash.system {
+
+	public class SecurityDomain {
+
+		//
+		// Properties
+		//
+			
+		public static property currentDomain : SecurityDomain { get { return null; } }
+		
+	}
+
+}

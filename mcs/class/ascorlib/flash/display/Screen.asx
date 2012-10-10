@@ -1,0 +1,33 @@
+package flash.display {
+
+	import flash.events.EventDispatcher;
+	import flash.geom.Rectangle;
+
+	public class Screen extends EventDispatcher {
+	
+		//
+		// Properties
+		//
+	
+		public property bounds : Rectangle { get { return null; } }
+
+ 	 	public property colorDepth : int { get { return 0; } }
+
+		public static property mainScreen : Screen { get { return null; } }
+
+ 	 	public static property screens : Array { get { return null; } }
+
+ 	 	public property visibleBounds : Rectangle { get { return null; } }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+ 	 	
+ 	 	public static function getScreensForRectangle(rect:Rectangle):Array {
+ 	 		return null;
+ 	 	}
+	
+	}
+  	
+
+}

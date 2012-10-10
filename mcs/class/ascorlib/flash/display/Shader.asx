@@ -1,0 +1,26 @@
+package flash.display {
+
+	import flash.utils.ByteArray;
+
+	public class Shader {
+	
+		//
+		// Properties
+		//
+
+		public property byteCode : ByteArray { set { } }
+
+ 	 	public property data : ShaderData { get; set; }
+
+ 	 	public property precisionHint : String { get; set; }
+
+		//
+		// Methods
+		//
+		
+		public function Shader(code:ByteArray = null) {
+		}
+	
+	}
+
+}

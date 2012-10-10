@@ -1,0 +1,66 @@
+package flash.display {
+
+	import flash.events.EventDispatcher;
+	import flash.system.ApplicationDomain;
+	import flash.utils.ByteArray;
+	import flash.events.UncaughtErrorEvents;
+
+	public class LoaderInfo extends EventDispatcher {
+	
+		public property actionScriptVersion : uint { get { return 0; } }
+		
+		public property applicationDomain : ApplicationDomain { get { return null; } }
+
+ 	 	public property bytes : ByteArray { get { return null; } }
+ 	 	
+ 	 	public property bytesLoaded : uint { get { return 0; } }
+ 	 	
+ 	 	public property bytesTotal : uint { get { return 0; } }
+ 	 	
+ 	 	public property childAllowsParent : Boolean { get { return false; } }
+ 	 	
+ 		public property childSandboxBridge : Object { get { return null; } }
+ 		
+ 	 	public property content : DisplayObject { get { return null; } }
+ 	 	
+ 	 	public property contentType : String { get { return null; } }
+ 	 	
+ 	 	public property frameRate : Number { get { return 0; } }
+ 	 	
+ 	 	public property height : int { get { return 0; } }
+
+ 	 	public property isURLInaccessible : Boolean { get { return false; } }
+ 	 	
+ 	 	public property loader : Loader { get { return null; } }
+ 	 	
+ 	 	public property loaderURL : String { get { return null; } }
+ 	 	
+ 	 	public property parameters : Object { get { return null; } }
+ 	 	
+ 	 	public property parentAllowsChild : Boolean { get { return false; } }
+
+ 	 	public property parentSandboxBridge : Object { get { return null; } }
+
+ 	 	public property sameDomain : Boolean { get { return false; } }
+
+ 	 	public property sharedEvents : EventDispatcher { get { return null; } }
+
+ 	 	public property swfVersion : uint { get { return 0; } }
+
+ 	 	public property uncaughtErrorEvents : UncaughtErrorEvents { get { return null; } }
+
+ 	 	public property url : String { get { return null; } }
+
+ 	 	public property width : int { get { return 0; } }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+ 	 		 	
+		public static function getLoaderInfoByDefinition(obj:Object):LoaderInfo {
+			return null;		
+		}
+	
+	}
+
+}

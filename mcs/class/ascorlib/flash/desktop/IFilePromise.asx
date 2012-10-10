@@ -1,0 +1,28 @@
+package flash.desktop {
+
+	import flash.events.ErrorEvent;
+	import flash.utils.IDataInput;
+
+	public interface IFilePromise {
+	
+		//
+		// Properties
+		//
+	
+		property isAsync : Boolean { get; }
+
+		property relativePath : String { get; }
+
+		//
+		// Methods
+		//
+
+    	function close():void;
+ 	 	
+		function open():IDataInput;
+ 	 	
+		function reportError(e:ErrorEvent):void;
+	
+	}
+
+}

@@ -1,0 +1,45 @@
+package flash.system {
+
+	public static class Security {
+	
+		// 
+		// Constants
+		//
+
+		public static const APPLICATION : String = "application";
+
+ 	 	public static const LOCAL_TRUSTED : String = "localTrusted";
+
+ 	 	public static const LOCAL_WITH_FILE : String = "localWithFile";
+
+ 	 	public static const LOCAL_WITH_NETWORK : String = "localWithNetwork";
+
+ 	 	public static const REMOTE : String = "remote";
+	
+		//
+		// Properties
+		//
+	
+		public static property exactSettings : Boolean { get; set; }
+
+ 	 	public static property sandboxType : String { get { return null; } }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+ 	 	
+		public static function allowDomain(... domains):void {
+		}
+ 	 	
+		public static function allowInsecureDomain(... domains):void {
+		}
+ 	 	
+		public static function loadPolicyFile(url:String):void {
+		}
+ 	 	
+		public static function showSettings(panel:String = "default"):void {
+		}
+	
+	}
+
+}

@@ -1,0 +1,47 @@
+package flash.geom {
+
+	public class ColorTransform {
+	
+		//
+		// Properties
+		//
+	
+		public property alphaMultiplier : Number { get; set; }
+
+ 	 	public property alphaOffset : Number { get; set; }
+
+ 	 	public property blueMultiplier : Number { get; set; }
+
+ 	 	public property blueOffset : Number { get; set; }
+
+ 	 	public property color : uint { get; set; }
+
+ 	 	public property greenMultiplier : Number { get; set; }
+
+ 	 	public property greenOffset : Number { get; set; }
+
+ 	 	public property redMultiplier : Number { get; set; }
+
+ 	 	public property redOffset : Number { get; set; }
+
+		//
+		// Methods
+		//
+
+		public function ColorTransform(redMultiplier:Number = 1.0, greenMultiplier:Number = 1.0, 
+			blueMultiplier:Number = 1.0, alphaMultiplier:Number = 1.0, redOffset:Number = 0, 
+			greenOffset:Number = 0, blueOffset:Number = 0, alphaOffset:Number = 0) {
+		
+		}
+		
+		public function concat(second:ColorTransform):void {
+		}
+		
+		public function toString():String {
+			return null;
+		}
+	
+	}
+
+
+}

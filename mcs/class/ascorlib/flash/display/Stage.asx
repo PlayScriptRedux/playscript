@@ -1,0 +1,138 @@
+package flash.display {
+
+	import flash.events.EventDispatcher;
+	import flash.geom.Rectangle;
+	import flash.text.TextSnapshot;
+	import flash.events.Event;
+	import flash.media.StageVideo;
+
+	public class Stage extends DisplayObjectContainer {
+	
+		//
+		// Properties
+		//
+	
+ 		public property align : String { get; set; }
+
+ 	 	public property allowsFullScreen : Boolean { get { return false; } }
+
+ 	 	public property allowsFullScreenInteractive : Boolean { get { return false; } }
+
+ 	 	public property autoOrients : Boolean { get; set; }
+
+ 	 	public property color : uint { get; set; }
+
+ 	 	public property colorCorrection : String { get; set; }
+
+ 	 	public property colorCorrectionSupport : String { get { return null; } }
+
+ 	 	public property deviceOrientation : String { get { return null; } }
+ 	 	
+ 	 	public property displayState : String { get; set; }
+
+ 	 	public property focus : InteractiveObject { get; set; }
+
+ 	 	public property frameRate : Number { get; set; }
+
+ 	 	public property fullScreenHeight : uint { get { return 0; } }
+
+ 	 	public property fullScreenSourceRect : Rectangle { get; set; }
+		
+		public property fullScreenWidth : uint { get { return 0; } }
+
+ 	 	public override property height : Number { get { return 0; } set { } }
+
+ 	 	public override property mouseChildren : Boolean { get { return false; } set { } }
+
+ 	 	public property nativeWindow : NativeWindow { get { return null; } }
+
+ 	 	public override property numChildren : int { get { return 0; } }
+
+ 	 	public property orientation : String { get { return null; } }
+
+ 	 	public property quality : String { get; set; }
+
+ 	 	public property scaleMode : String { get; set; }
+
+ 	 	public property showDefaultContextMenu : Boolean { get; set; }
+
+ 	 	public property softKeyboardRect : Rectangle { get { return null; } }
+
+		public property stage3Ds : Vector.<Stage3D> { get { return null; } }
+
+ 	 	public property stageFocusRect : Boolean { get; set; }
+
+ 	 	public property stageHeight : int { get; set; }
+
+ 	 	public property stageVideos : Vector.<StageVideo> { get { return null; } }
+
+ 	 	public property stageWidth : int { get; set; }
+
+ 	 	public property supportedOrientations : Vector.<String> { get { return null; } }
+
+ 	 	public static property supportsOrientationChange : Boolean { get { return false; } }
+
+ 	 	public override property tabChildren : Boolean { get; set; }
+
+ 	 	public override property textSnapshot : TextSnapshot { get { return null; } }
+
+ 	 	public override property width : Number { get { return 0.0; } set { } }
+
+ 	 	public property wmodeGPU : Boolean { get { return false; } }
+
+		//
+		// Methods
+		// 
+
+		public override function addChild(child:DisplayObject):DisplayObject {
+			return null;
+		}
+ 	 	
+		public override function addChildAt(child:DisplayObject, index:int):DisplayObject {
+			return null;
+		}
+ 	 	
+		public override function addEventListener(type:String, listener:Function, useCapture:Boolean = false, priority:int = 0, useWeakReference:Boolean = false):void {
+		}
+ 	 	
+		public function assignFocus(objectToFocus:InteractiveObject, direction:String):void {
+		}
+ 	 	
+		public override function dispatchEvent(ev:Event):Boolean {
+			return false;	
+		}
+ 	 	
+		public override function hasEventListener(type:String):Boolean {
+			return false;
+		}
+ 	 	
+		public function invalidate():void {
+		}
+ 	 	
+		public function isFocusInaccessible():Boolean {
+			return false;
+		}
+ 	 	
+		public override function removeChildAt(index:int):DisplayObject {
+			return null;
+		}
+ 	 	
+		public function setAspectRatio(newAspectRatio:String):void {
+		}
+ 	 	
+		public override function setChildIndex(child:DisplayObject, index:int):void {
+		}
+ 	 	
+		public function setOrientation(newOrientation:String):void {
+		}
+ 	 	
+		public override function swapChildrenAt(index1:int, index2:int):void {
+		}
+ 	 	
+		public override function willTrigger(type:String):Boolean {
+			return false;
+		}
+	
+	}
+
+}

@@ -1,0 +1,9 @@
+package flash.display {
+
+	public class NativeWindow {
+	
+		// Not implemented
+	
+	}
+
+}

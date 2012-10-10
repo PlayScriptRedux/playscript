@@ -1,0 +1,13 @@
+package flash.display3D {
+
+	public static class Context3DClearMask {
+
+ 		//
+ 		// Constants
+ 		//
+
+	
+	}
+
+}
+

@@ -1,0 +1,37 @@
+package flash.utils {
+
+	import flash.events.EventDispatcher;
+
+	public class Timer extends EventDispatcher {
+	
+		//
+		// Properties
+		//
+	
+		public property currentCount : int { get { return 0; } }
+
+ 	 	public property delay : Number { get; set; }
+
+ 	 	public property repeatCount : int { get; set; }
+
+ 	 	public property running : Boolean { get { return false; } }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+ 	 	 	 	 	 	
+		public function Timer(delay:Number, repeatCount:int = 0) {
+		}
+ 
+ 		public function reset():void {
+ 		}
+ 	 	
+		public function start():void {
+		}
+ 	 	
+		public function stop():void {
+		}
+	
+	}
+
+}
