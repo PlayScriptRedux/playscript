@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>10.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{393133F9-FF76-45B9-A23A-70D459F6683E}</ProjectGuid>
+    <ProjectTypeGuids>{6BC8ED88-2882-458C-8E55-DFD12B67127B};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <RootNamespace>_root</RootNamespace>
+    <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
+    <AssemblyName>ascorlib</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>True</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>False</Optimize>
+    <OutputPath>bin\ascorlib-mtouch\Debug</OutputPath>
+    <DefineConstants>DEBUG;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>False</ConsolePause>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>none</DebugType>
+    <Optimize>True</Optimize>
+    <OutputPath>bin\ascorlib-mtouch\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>False</ConsolePause>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="monotouch" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <None Include="Makefile" />
+    <None Include="ascorlib.dll.sources" />
+    <None Include="..\ascorlib_aot\ascorlib_aot.dll.sources">
+      <Link>ascorlib_aot.dll.sources</Link>
+    </None>
+    <None Include="flash\display\MorphShape.asx" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Array.cs" />
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="Class.cs" />
+    <Compile Include="Extensions.cs" />
+    <Compile Include="functions.cs" />
+    <Compile Include="Vector.cs" />
+    <Compile Include="ActionScript\Undefined.cs" />
+    <Compile Include="ActionScript\Expando\BindingRestrictionsEx.cs" />
+    <Compile Include="ActionScript\Expando\CacheDict.cs" />
+    <Compile Include="ActionScript\Expando\CollectionDebuggerView.cs" />
+    <Compile Include="ActionScript\Expando\ContractUtils.cs" />
+    <Compile Include="ActionScript\Expando\ExceptionFactory.Generated.cs" />
+    <Compile Include="ActionScript\Expando\ExpandoClass.cs" />
+    <Compile Include="ActionScript\Expando\ExpandoObject.cs" />
+    <Compile Include="ActionScript\Expando\Hashtable.cs" />
+    <Compile Include="ActionScript\Expando\TypeExtensions.cs" />
+    <Compile Include="ActionScript\Expando\TypeUtils.cs" />
+    <Compile Include="ActionScript\RuntimeBinder\Binder.cs" />
+    <Compile Include="ActionScript\RuntimeBinder\CSharpArgumentInfo.cs" />
+    <Compile Include="ActionScript\RuntimeBinder\CSharpArgumentInfoFlags.cs" />
+    <Compile Include="ActionScript\RuntimeBinder\CSharpBinaryOperationBinder.cs" />
+    <Compile Include="ActionScript\RuntimeBinder\CSharpBinder.cs" />
+    <Compile Include="ActionScript\RuntimeBinder\CSharpBinderFlags.cs" />
+    <Compile Include="ActionScript\RuntimeBinder\CSharpConvertBinder.cs" />
+    <Compile Include="ActionScript\RuntimeBinder\CSharpGetIndexBinder.cs" />
+    <Compile Include="ActionScript\RuntimeBinder\CSharpGetMemberBinder.cs" />
+    <Compile Include="ActionScript\RuntimeBinder\CSharpInvokeBinder.cs" />
+    <Compile Include="ActionScript\RuntimeBinder\CSharpInvokeConstructorBinder.cs" />
+    <Compile Include="ActionScript\RuntimeBinder\CSharpInvokeMemberBinder.cs" />
+    <Compile Include="ActionScript\RuntimeBinder\CSharpIsEventBinder.cs" />
+    <Compile Include="ActionScript\RuntimeBinder\CSharpSetIndexBinder.cs" />
+    <Compile Include="ActionScript\RuntimeBinder\CSharpSetMemberBinder.cs" />
+    <Compile Include="ActionScript\RuntimeBinder\CSharpUnaryOperationBinder.cs" />
+    <Compile Include="ActionScript\RuntimeBinder\DynamicContext.cs" />
+    <Compile Include="ActionScript\RuntimeBinder\ErrorPrinter.cs" />
+    <Compile Include="ActionScript\RuntimeBinder\Extensions.cs" />
+    <Compile Include="ActionScript\RuntimeBinder\RuntimeBinderContext.cs" />
+    <Compile Include="ActionScript\RuntimeBinder\RuntimeBinderException.cs" />
+    <Compile Include="ActionScript\RuntimeBinder\RuntimeBinderInternalCompilerException.cs" />
+    <Compile Include="flash\events\Event.cs" />
+    <Compile Include="flash\events\EventDispatcher.cs" />
+    <Compile Include="flash\events\IEventDispatcher.cs" />
+    <Compile Include="..\ascorlib_aot\ActionScript\CallSite.cs">
+      <Link>ActionScript\CallSite.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib_aot\ActionScript\CallSiteBinder.cs">
+      <Link>ActionScript\CallSiteBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib_aot\ActionScript\ExpressionType.cs">
+      <Link>ActionScript\ExpressionType.cs</Link>
+    </Compile>
+    <Compile Include="flash\geom\Point.asx" />
+    <Compile Include="flash\geom\Rectangle.asx" />
+    <Compile Include="flash\geom\Matrix.asx" />
+    <Compile Include="flash\geom\Vector3D.asx" />
+    <Compile Include="flash\geom\ColorTransform.asx" />
+    <Compile Include="flash\geom\Transform.asx" />
+    <Compile Include="flash\geom\Matrix3D.asx" />
+    <Compile Include="flash\geom\PerspectiveProjection.asx" />
+    <Compile Include="flash\geom\Orientation3D.asx" />
+    <Compile Include="flash\geom\Utils3D.asx" />
+    <Compile Include="flash\display\ShaderData.asx" />
+    <Compile Include="flash\display\Shader.asx" />
+    <Compile Include="flash\utils\ByteArray.asx" />
+    <Compile Include="flash\utils\Endian.asx" />
+    <Compile Include="flash\utils\Timer.asx" />
+    <Compile Include="flash\display\DisplayObject.asx" />
+    <Compile Include="flash\utils\Dictionary.asx" />
+    <Compile Include="flash\display\DisplayObjectContainer.asx" />
+    <Compile Include="flash\display\InteractiveObject.asx" />
+    <Compile Include="flash\display\LoaderInfo.asx" />
+    <Compile Include="flash\system\ApplicationDomain.asx" />
+    <Compile Include="flash\display\Stage.asx" />
+    <Compile Include="flash\accessibility\AccessibilityProperties.asx" />
+    <Compile Include="flash\accessibility\AccessibilityImplementation.asx" />
+    <Compile Include="flash\display\IBitmapDrawable.asx" />
+    <Compile Include="flash\display\Loader.asx" />
+    <Compile Include="flash\display\IGraphicsData.asx" />
+    <Compile Include="flash\net\URLRequest.asx" />
+    <Compile Include="flash\system\LoaderContext.asx" />
+    <Compile Include="flash\system\Security.asx" />
+    <Compile Include="flash\system\SecurityDomain.asx" />
+    <Compile Include="flash\events\UncaughtErrorEvents.asx" />
+    <Compile Include="flash\text\TextSnapshot.asx" />
+    <Compile Include="flash\desktop\IFilePromise.asx" />
+    <Compile Include="flash\events\ErrorEvent.asx" />
+    <Compile Include="flash\utils\IDataInput.asx" />
+    <Compile Include="flash\display3D\Context3D.asx" />
+    <Compile Include="flash\utils\IDataOutput.asx" />
+    <Compile Include="flash\utils\utils_functions.asx" />
+    <Compile Include="flash\display\NativeMenu.asx" />
+    <Compile Include="flash\display\NativeWindow.asx" />
+    <Compile Include="flash\display\Stage3D.asx" />
+    <Compile Include="flash\display\SWFVersion.asx" />
+    <Compile Include="flash\display\Sprite.asx" />
+    <Compile Include="flash\display\MovieClip.asx" />
+    <Compile Include="flash\display\Scene.asx" />
+    <Compile Include="flash\display\Graphics.asx" />
+    <Compile Include="flash\display\BitmapData.asx" />
+    <Compile Include="flash\display\Bitmap.asx" />
+    <Compile Include="flash\display\ActionScriptVersion.asx" />
+    <Compile Include="flash\display\Screen.asx" />
+    <Compile Include="flash\filters\BitmapFilter.asx" />
+    <Compile Include="flash\media\StageVideo.asx" />
+    <Compile Include="flash\display3D\Program3D.asx" />
+    <Compile Include="flash\display3D\textures\Texture.asx" />
+    <Compile Include="flash\display3D\textures\TextureBase.asx" />
+    <Compile Include="flash\display3D\textures\CubeTexture.asx" />
+    <Compile Include="flash\display3D\textures\RectangleTexture.asx" />
+    <Compile Include="flash\display3D\Context3DBlendFactor.asx" />
+    <Compile Include="flash\display3D\Context3DClearMask.asx" />
+    <Compile Include="flash\display3D\Context3DCompareMode.asx" />
+    <Compile Include="flash\display3D\Context3DProfile.asx" />
+    <Compile Include="flash\display3D\Context3DProgramType.asx" />
+    <Compile Include="flash\display3D\Context3DRenderMode.asx" />
+    <Compile Include="flash\display3D\Context3DStencilAction.asx" />
+    <Compile Include="flash\display3D\Context3DTextureFormat.asx" />
+    <Compile Include="flash\display3D\Context3DTriangleFace.asx" />
+    <Compile Include="flash\display3D\Context3DVertexBufferFormat.asx" />
+    <Compile Include="flash\display3D\IndexBuffer3D.asx" />
+    <Compile Include="flash\display3D\VertexBuffer3D.asx" />
+    <Compile Include="flash\media\SoundTransform.asx" />
+    <Compile Include="Error.asx" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="ActionScript\" />
+    <Folder Include="flash\" />
+    <Folder Include="flash\utils\" />
+    <Folder Include="flash\system\" />
+    <Folder Include="flash\accessibility\" />
+    <Folder Include="flash\net\" />
+    <Folder Include="flash\text\" />
+    <Folder Include="flash\desktop\" />
+    <Folder Include="flash\display3D\" />
+    <Folder Include="flash\filters\" />
+    <Folder Include="flash\media\" />
+    <Folder Include="flash\display3D\textures\" />
+    <Folder Include="flash\error\" />
+  </ItemGroup>
+</Project>
