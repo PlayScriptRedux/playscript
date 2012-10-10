@@ -2394,6 +2394,13 @@ namespace Mono.CSharp {
 
 			while (true) {
 				//
+				// Stage 0: handle actionscript global constant NaN
+				//
+				if (rc.FileType == SourceFileType.ActionScript && Name == "NaN") {
+					return new DoubleLiteral (rc.BuiltinTypes, double.NaN, loc);
+				}
+
+				//
 				// Stage 1: binding to local variables or parameters
 				//
 				// LAMESPEC: It should take invocableOnly into account but that would break csc compatibility

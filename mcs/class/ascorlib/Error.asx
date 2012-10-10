@@ -1,0 +1,39 @@
+package {
+
+	public class Error extends System.Exception
+	{
+		//
+		// Internal
+		//
+
+		private var _errorID : int;
+
+		//
+		// Properties
+		//
+
+		public property errorID : int { get { return _errorID; } } 
+
+		public property message : String { get { return this.Message; } }
+
+		public property name : String { get { return GetType().Name; } }
+
+		//
+		// Methods
+		//
+
+		public function Error(message:String = "", id:int = 0) {
+			super(message);
+			_errorID = id;
+		}
+
+		public function getStackTrace():String {
+			return null;
+		}
+
+		public function toString():String {
+			return this.ToString();
+		}
+	}
+}
+
