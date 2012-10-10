@@ -3472,7 +3472,10 @@ invocation_expression
 	  {
 		if (current_constructor == null)
  			report.Error (7014, GetLocation ($1), "Base constructor initializer may only be called in constructor");
- 		$$ = new ConstructorBaseInitializer ((Arguments) $3, GetLocation ($1));
+ 		var initializer = new ConstructorBaseInitializer ((Arguments) $3, GetLocation ($1));
+ 		initializer.IsAsExplicitSuperCall = true;
+ 		current_constructor.Initializer = initializer;
+ 		$$ = initializer;
 		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($2), GetLocation ($4));
 	  }
 	| builtin_types open_parens_any opt_argument_list close_parens

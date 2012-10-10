@@ -1,7 +1,7 @@
 ../ascorlib/Array.cs
 ../ascorlib/AssemblyInfo.cs
 ../ascorlib/Class.cs
-../ascorlib/Error.cs
+../ascorlib/Error.asx
 ../ascorlib/Extensions.cs
 ../ascorlib/Vector.cs
 ../ascorlib/functions.cs
@@ -44,3 +44,4 @@
 ./ActionScript/ExpressionType.cs
 ./ActionScript/CallSite.cs
 ./ActionScript/CallSiteBinder.cs
+./System/Runtime/CompilerServices/DynamicAttribute.cs

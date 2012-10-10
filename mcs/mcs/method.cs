@@ -1373,6 +1373,9 @@ namespace Mono.CSharp {
 		Arguments argument_list;
 		MethodSpec base_ctor;
 
+		// ActionScript: Initializer is explicitly called via super() call in constructor method.
+		public bool IsAsExplicitSuperCall;
+
 		public ConstructorInitializer (Arguments argument_list, Location loc)
 		{
 			this.argument_list = argument_list;
@@ -1693,7 +1696,8 @@ namespace Mono.CSharp {
 						}
 					}
 
-					if (Initializer != null) {
+					if (Initializer != null && 
+					    !(bc.FileType == SourceFileType.ActionScript && Initializer.IsAsExplicitSuperCall)) {
 						//
 						// mdb format does not support reqions. Try to workaround this by emitting the
 						// sequence point at initializer. Any breakpoint at constructor header should
