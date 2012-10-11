@@ -1,0 +1,11 @@
+package flash.text {
+
+	public static class AntiAliasType {
+	
+		public static const ADVANCED : String = "advanced";
+
+ 	 	public static const NORMAL : String = "normal";
+	
+	}
+
+}

@@ -1,0 +1,13 @@
+package flash.text {
+
+	public static class FontType {
+	
+		public static const DEVICE : String = "device";
+
+ 	 	public static const EMBEDDED : String = "embedded";
+
+ 	 	public static const EMBEDDED_CFF : String = "embeddedCFF";
+	
+	}
+
+}

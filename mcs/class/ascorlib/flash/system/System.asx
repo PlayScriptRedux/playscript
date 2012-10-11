@@ -1,0 +1,54 @@
+package flash.system {
+
+	public static class System {
+	
+		//
+		// Properties
+		//
+	
+		public static property freeMemory : Number { get { return 0.0; } }
+
+ 	 	public static property ime : IME { get { return null; } }
+ 	 	
+ 	 	public static property privateMemory : Number { get { return 0.0; } }
+
+ 	 	public static property totalMemory : uint { get { return 0; } }
+
+ 	 	public static totalMemoryNumber : Number { get { return 0.0; } }
+
+ 	 	public static useCodePage : Boolean { get; set; }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+ 	 	 	 	
+disposeXML(node:XML):void
+[static] Makes the specified XML object immediately available for garbage collection.
+	System
+ 	 	
+exit(code:uint):void
+[static] Closes Flash Player.
+	System
+ 	 	
+gc():void
+[static] Forces the garbage collection process.
+	System
+ 	 	
+pause():void
+[static] Pauses Flash Player or the AIR Debug Launcher (ADL).
+	System
+ 	 	
+pauseForGCIfCollectionImminent(imminence:Number = 0.75):void
+[static] Advise the garbage collector that if the collector's imminence exceeds the function's imminence parameter then the collector should finish the incremental collection cycle.
+	System
+ 	 	
+resume():void
+[static] Resumes the application after calling System.pause().
+	System
+ 	 	
+setClipboard(string:String):void
+[static] Replaces the contents of the Clipboard with a specified text string.	
+	
+	}
+
+}

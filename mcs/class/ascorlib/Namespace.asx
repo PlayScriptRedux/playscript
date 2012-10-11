@@ -1,0 +1,33 @@
+package {
+
+	public class Namespace {
+	
+		//
+		// Properties
+		//
+		
+		public property prefix : String { get; set; }
+
+		public property uri : String { get; set; }
+
+		// 
+		// Methods
+		//
+		
+		public function Namespace(prefixValue:*, uriValue:*) {
+		}
+		
+		public function Namespace(uriValue:*) {
+		}
+
+		public function toString():String {
+			return null;
+		}
+
+		public function valueOf():String {
+			return null;		
+		}
+	
+	}
+
+}

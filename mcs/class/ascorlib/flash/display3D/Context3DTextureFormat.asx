@@ -6,6 +6,11 @@ package flash.display3D {
  		// Constants
  		//
 
+		public static const BGRA : String = "bgra";
+
+ 	 	public static const COMPRESSED : String = "compressed";
+
+ 	 	public static const COMPRESSED_ALPHA : String = "compressedAlpha";
 	
 	}
 

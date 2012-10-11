@@ -1,0 +1,23 @@
+package flash.text {
+
+	public static class TextRenderer {
+	
+		//
+		// Properties
+		//
+		
+		public static property displayMode : String { get; set; }
+
+ 	 	public static property maxLevel : int { get; set; }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+ 	 	 	 	 	 	
+		public static function setAdvancedAntiAliasingTable(fontName:String, fontStyle:String, 
+			colorType:String, advancedAntiAliasingTable:Array):void {
+		}
+	
+	}
+
+}

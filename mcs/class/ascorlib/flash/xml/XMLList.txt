@@ -1,0 +1,8 @@
+package flash.xml {
+
+	public class XMLList {
+	
+	
+	}
+
+}

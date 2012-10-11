@@ -43,14 +43,15 @@
       <Link>ascorlib_aot.dll.sources</Link>
     </None>
     <None Include="flash\display\MorphShape.asx" />
+    <None Include="flash\system\System.asx" />
+    <None Include="flash\xml\XMLList.txt" />
+    <None Include="JSON.asx" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Array.cs" />
     <Compile Include="AssemblyInfo.cs" />
-    <Compile Include="Class.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="functions.cs" />
-    <Compile Include="Vector.cs" />
     <Compile Include="ActionScript\Undefined.cs" />
     <Compile Include="ActionScript\Expando\BindingRestrictionsEx.cs" />
     <Compile Include="ActionScript\Expando\CacheDict.cs" />
@@ -168,6 +169,34 @@
     <Compile Include="flash\display3D\VertexBuffer3D.asx" />
     <Compile Include="flash\media\SoundTransform.asx" />
     <Compile Include="Error.asx" />
+    <Compile Include="..\ascorlib_aot\System\Runtime\CompilerServices\DynamicAttribute.cs">
+      <Link>System\Runtime\CompilerServices\DynamicAttribute.cs</Link>
+    </Compile>
+    <Compile Include="flash\text\TextField.asx" />
+    <Compile Include="flash\text\TextFormat.asx" />
+    <Compile Include="flash\text\Font.asx" />
+    <Compile Include="flash\text\FontStyle.asx" />
+    <Compile Include="flash\text\StaticText.asx" />
+    <Compile Include="flash\text\FontType.asx" />
+    <Compile Include="flash\text\StyleSheet.asx" />
+    <Compile Include="flash\text\TextLineMetrics.asx" />
+    <Compile Include="flash\text\TextDisplayMode.asx" />
+    <Compile Include="flash\text\GridFitType.asx" />
+    <Compile Include="flash\text\TextColorType.asx" />
+    <Compile Include="flash\text\TextFieldAutoSize.asx" />
+    <Compile Include="flash\text\TextFormatAlign.asx" />
+    <Compile Include="flash\text\TextRenderer.asx" />
+    <Compile Include="flash\text\TextInteractionMode.asx" />
+    <Compile Include="flash\text\AntiAliasType.asx" />
+    <Compile Include="flash\text\CSMSettings.asx" />
+    <Compile Include="XML.asx" />
+    <Compile Include="XMLList.asx" />
+    <Compile Include="Namespace.asx" />
+    <Compile Include="Class.asx" />
+    <Compile Include="Math.asx" />
+    <Compile Include="Vector.asx" />
+    <Compile Include="RegExp.asx" />
+    <Compile Include="functions.asx" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="ActionScript\" />
@@ -183,5 +212,7 @@
     <Folder Include="flash\media\" />
     <Folder Include="flash\display3D\textures\" />
     <Folder Include="flash\error\" />
+    <Folder Include="System\" />
+    <Folder Include="flash\xml\" />
   </ItemGroup>
 </Project>

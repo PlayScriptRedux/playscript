@@ -1,0 +1,15 @@
+package flash.text {
+
+	import flash.display.DisplayObject;
+
+	public class StaticText extends DisplayObject {
+	
+		//
+		// Properties
+		//
+		
+		public property text : String { get { return null; } }
+	
+	}
+
+}

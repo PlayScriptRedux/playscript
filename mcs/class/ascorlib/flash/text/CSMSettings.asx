@@ -1,0 +1,24 @@
+package flash.text {
+
+	public class CSMSettings {
+	
+		//
+		// Properties
+		//
+		
+		public property fontSize : Number { get; set; }
+
+ 	 	public property insideCutoff : Number { get; set; }
+
+ 	 	public property outsideCutoff : Number { get; set; }
+
+ 	 	// 
+ 	 	// Methods
+ 	 	//
+ 	 	 	 	 	 	
+		public function CSMSettings(fontSize:Number, insideCutoff:Number, outsideCutoff:Number) {
+		}
+	
+	}
+
+}

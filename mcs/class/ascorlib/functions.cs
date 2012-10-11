@@ -2,12 +2,22 @@ using System;
 
 namespace _root
 {
-	public static class trace_fn
+	public static partial class trace_fn
 	{
+
+		//
+		// Trace (overloaded versions) - overloading package methods not supported in ASX.
+		//
+
 		public static void trace(object o) {
 //			System.Diagnostics.Debug.WriteLine(o);
 			Console.WriteLine(o);
 		}
+
+	}
+
+	public static partial class trace_fn 
+	{
 
 		public static void trace(object o1, object o2) {
 //			System.Diagnostics.Debug.WriteLine("{0}{1}", o1, o2);
@@ -26,6 +36,10 @@ namespace _root
 		}
 	}
 
+	//
+	// Conversions (must be in C# to avoid conflicts).
+	//
+
 	public static class String_fn
 	{
 		public static string String (object o)
@@ -36,11 +50,14 @@ namespace _root
 
 	public static class Number_fn
 	{
+		// Inlineable method
 		public static double Number (object o)
 		{
-			if (o == null) {
-				return 0;
-			}
+			return o is double ? (double)o : internalNumber(o);
+		}
+
+		private static double internalNumber(object o)
+		{
 			var type = o.GetType ();
 			var typeCode = Type.GetTypeCode (type);
 			switch (typeCode) {

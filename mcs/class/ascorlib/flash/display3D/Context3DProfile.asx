@@ -6,6 +6,9 @@ package flash.display3D {
  		// Constants
  		//
 
+		public static const BASELINE : String = "baseline";
+
+ 	 	public static const BASELINE_CONSTRAINED : String = "baselineConstrained";
 	
 	}
 

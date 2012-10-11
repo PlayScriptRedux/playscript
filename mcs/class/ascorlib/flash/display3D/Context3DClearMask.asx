@@ -6,6 +6,13 @@ package flash.display3D {
  		// Constants
  		//
 
+		public static const COLOR : int = 1;
+
+ 	 	public static const DEPTH : int = 2;
+
+ 	 	public static const STENCIL : int = 4;
+
+		pubic static const ALL : int = 7;
 	
 	}
 

@@ -1,0 +1,101 @@
+package {
+
+	import System.Collections.Generic.*;
+
+	public class Vector.<T> extends List.<T>
+	{
+		//
+		// Properties
+		//
+	
+		public property @fixed : Boolean { get { return false; } set { throw new System.NotImplementedException(); } }
+
+ 	 	public property length : uint { get { return uint(this.Count); } set { throw new System.NotImplementedException(); } }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+ 	 	 	 	
+		public function Vector(length:uint = 0, @fixed:Boolean = false) {
+			super(int(length));
+		}
+ 	 	
+		public function concat(... args):Vector.<T> {
+			throw new System.NotImplementedException();
+		}
+
+		public function every(callback:Function, thisObject:Object = null):Boolean {
+			throw new System.NotImplementedException();
+		}
+
+ 	 	public function filter(callback:Function, thisObject:Object = null):Vector.<T> {
+			throw new System.NotImplementedException();
+ 	 	}
+
+		public function forEach(callback:Function, thisObject:Object = null):void {
+			throw new System.NotImplementedException();
+		}
+
+		public function indexOf(searchElement:T, fromIndex:int = 0):int {
+			throw new System.NotImplementedException();
+		}
+ 	 	
+		public function join(sep:String = ","):String {
+			throw new System.NotImplementedException();
+		}
+
+		public function lastIndexOf(searchElement:T, fromIndex:int = 0x7fffffff):int {
+			throw new System.NotImplementedException();
+		}
+
+		public function map(callback:Function, thisObject:Object = null):Vector.<T> {
+			throw new System.NotImplementedException();
+		}
+ 	 	
+		public function pop():T {
+			throw new System.NotImplementedException();
+		}
+ 
+		public function push(... args):uint {
+			throw new System.NotImplementedException();
+		}
+	 	 	
+		public function reverse():Vector.<T> {
+			throw new System.NotImplementedException();
+		}
+ 	 	
+		public function shift():T {
+			throw new System.NotImplementedException();
+		}
+ 	 	
+		public function slice(startIndex:int = 0, endIndex:int = 16777215):Vector.<T> {
+			throw new System.NotImplementedException();
+		}
+ 	 	
+		public function some(callback:Function, thisObject:Object = null):Boolean {
+			throw new System.NotImplementedException();
+		}
+ 	 	
+		public function sort(sortBehavior:*):Vector.<T> {
+			throw new System.NotImplementedException();
+		}
+ 	 	
+		public function splice(startIndex:int, deleteCount:uint = 4294967295, ... items):Vector.<T> {
+			throw new System.NotImplementedException();
+		}
+ 	 	
+		public function toLocaleString():String {
+			throw new System.NotImplementedException();
+		}
+
+		public function toString():String {
+			throw new System.NotImplementedException();
+		}
+ 	 	
+		public function unshift(... args):uint {
+			throw new System.NotImplementedException();
+		}
+
+	}
+}
+

@@ -1,0 +1,98 @@
+package {
+
+	public class XMLList {
+	
+		//
+		// Methods
+		//
+		
+		public function XMLList(value:Object) {
+		}
+		
+		public function attribute(attributeName:*):XMLList {
+			return null;
+		}
+		
+		public function attributes():XMLList {
+			return null;
+		}
+		
+		public function child(propertyName:Object):XMLList {
+			return null;
+		}
+		
+		public function children():XMLList {
+			return null;
+		}
+		
+		public function comments():XMLList {
+			return null;
+		}
+		
+		public function contains(value:XML):Boolean {
+			return false;
+		}
+		
+		public function copy():XMLList {
+			return null;
+		}
+		
+		public function descendants(name:Object /*="*"*/):XMLList {
+			return null;
+		}
+		
+		public function elements(name:Object /*="*"*/):XMLList {
+			return null;
+		}
+		
+		public function hasComplexContent():Boolean {
+			return false;
+		}
+		
+		public function hasOwnProperty(p:String):Boolean {
+			return false;
+		}
+		
+		public function hasSimpleContent():Boolean {
+			return false;
+		}
+		
+		public function length():int {
+			return 0;
+		}
+		
+		public function normalize():XMLList {
+			return null;
+		}
+		
+		public function parent():Object {
+			return null;
+		}
+		
+		public function processingInstructions(name:String = "*"):XMLList {
+			return null;
+		}
+		
+		public function propertyIsEnumerable(p:String):Boolean {
+			return false;
+		}
+		
+		public function text():XMLList {
+			return null;
+		}
+		
+		public function toString():String {
+			return null;
+		}
+		
+		public function toXMLString():String {
+			return null;
+		}
+		
+		public function valueOf():XMLList {
+			return null;
+		}
+		
+	}
+
+}

@@ -1,0 +1,47 @@
+package {
+
+	public function decodeURI(uri:String):String {
+		throw new System.NotImplementedException();	
+	}
+ 	 	
+	public function decodeURIComponent(uri:String):String {
+		throw new System.NotImplementedException();	
+	}
+ 	 	
+	public function encodeURI(uri:String):String {
+		throw new System.NotImplementedException();	
+	}
+ 	 	
+	public function encodeURIComponent(uri:String):String {
+		throw new System.NotImplementedException();	
+	}
+ 	 	
+	public function escape(str:String):String {
+		throw new System.NotImplementedException();	
+	}
+ 	 	
+	public function isFinite(num:Number):Boolean {
+		throw new System.NotImplementedException();	
+	}
+ 	 	
+	public function isNaN(num:Number):Boolean {
+		throw new System.NotImplementedException();	
+	}
+	 	 	
+	public function isXMLName(str:String):Boolean {
+		throw new System.NotImplementedException();	
+	}
+ 	 	
+	public function parseFloat(str:String):Number {
+		throw new System.NotImplementedException();	
+	}
+ 	 	
+	public function parseInt(str:String, radix:uint = 0):Number {
+		throw new System.NotImplementedException();	
+	}
+ 	 	
+	public function unescape(str:String):String {
+		throw new System.NotImplementedException();
+	}
+	
+}

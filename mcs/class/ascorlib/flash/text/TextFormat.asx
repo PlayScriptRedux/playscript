@@ -1,0 +1,43 @@
+package flash.text {
+
+	public class TextFormat {
+	
+ 		public property align : String { get; set; }
+
+ 	 	public property blockIndent : Object { get; set; }
+
+ 	 	public property bold : Object { get; set; }
+
+ 	 	public property bullet : Object { get; set; }
+
+ 	 	public property color : Object { get; set; }
+
+ 	 	public property font : String { get; set; }
+
+ 	 	public property indent : Object { get; set; }
+
+ 	 	public property italic : Object { get; set; }
+
+ 	 	public property kerning : Object { get; set; }
+
+ 	 	public property leading : Object { get; set; }
+
+ 	 	public property leftMargin : Object { get; set; }
+
+ 	 	public property letterSpacing : Object { get; set; }
+
+ 	 	public property rightMargin : Object { get; set; }
+
+ 	 	public property size : Object { get; set; }
+
+ 	 	public property tabStops : Array { get; set; }
+
+ 	 	public property target : String { get; set; }
+
+ 	 	public property underline : Object { get; set; }
+
+ 	 	public property url : String { get; set; }
+		
+	}
+
+}

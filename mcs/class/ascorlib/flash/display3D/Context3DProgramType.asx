@@ -6,6 +6,9 @@ package flash.display3D {
  		// Constants
  		//
 
+		public static const FRAGMENT : String = "fragment";
+
+ 	 	public static const VERTEX : String = "vertex";
 	
 	}
 

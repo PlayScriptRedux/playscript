@@ -1,0 +1,196 @@
+package {
+
+	public class XML {
+	
+		//
+		// Properties
+		//
+		
+		public static property ignoreComments : Boolean { get; set; }
+
+ 	 	public static property ignoreProcessingInstructions : Boolean { get; set; }
+
+ 	 	public static property ignoreWhitespace : Boolean { get; set; }
+
+ 	 	public static property prettyIndent : int { get; set; }
+
+ 	 	public static property prettyPrinting : Boolean { get; set; }
+
+ 	 	//
+ 	 	// Methods
+ 	 	// 
+ 	 	
+ 	 	public function XML(value:Object) {
+ 	 	}
+ 	 	
+		public function addNamespace(ns:Object):XML {
+			return null;
+		}
+ 	 	
+		public function appendChild(child:Object):XML {
+			return null;
+		}
+ 	 	
+		public function attribute(attributeName:*):XMLList {
+			return null;
+		}
+ 	 	
+		public function attributes():XMLList {
+			return null;
+		}
+ 	 	
+		public function child(propertyName:Object):XMLList {
+			return null;
+		}
+ 	 	
+		public function childIndex():int {
+			return 0;
+		}
+ 	 	
+		public function children():XMLList {
+			return null;
+		}
+ 	 	
+		public function comments():XMLList {
+			return null;
+		}
+ 	 	
+		public function contains(value:XML):Boolean {
+			return false;
+		}
+ 	 	
+		public function copy():XML {
+			return null;
+		}
+ 	 	
+		public static function defaultSettings():Object {
+			return null;
+		}
+		
+		public function descendants(name:Object /*="*"*/):XMLList {
+			return null;
+		}
+		
+		public function elements(name:Object /*="*"*/):XMLList {
+			return null;
+		}
+		
+		public function hasComplexContent():Boolean {
+			return false;
+		}
+		
+		public function hasOwnProperty(p:String):Boolean {
+			return false;
+		}
+		
+		public function hasSimpleContent():Boolean {
+			return false;
+		}
+		
+		public function inScopeNamespaces():Array {
+			return null;
+		}
+		
+		public function insertChildAfter(child1:Object, child2:Object):* {
+			return null;
+		}
+		
+		public function insertChildBefore(child1:Object, child2:Object):* {
+			return null;
+		}
+		
+		public function length():int {
+			return 0;
+		}
+		
+		public function localName():Object {
+			return null;
+		}
+		
+		public function name():Object {
+			return null;
+		}
+		
+		public function @namespace(prefix:String = null):* {
+			return null;
+		}
+		
+		public function namespaceDeclarations():Array {
+			return null;
+		}
+		
+		public function nodeKind():String {
+			return null;
+		}
+		
+		public function normalize():XML {
+			return null;
+		}
+		
+		public function parent():* {
+			return null;
+		}
+		
+		public function prependChild(value:Object):XML {
+			return null;
+		}
+		
+		public function processingInstructions(name:String = "*"):XMLList {
+			return null;
+		}
+		
+		public function propertyIsEnumerable(p:String):Boolean {
+			return false;
+		}
+		
+		public function removeNamespace(ns:Namespace):XML {
+			return null;
+		}
+		
+		public function replace(propertyName:Object, value:XML):XML {
+			return null;
+		}
+		
+		public function setChildren(value:Object):XML {
+			return null;
+		}
+		
+		public function setLocalName(name:String):void {
+		}
+		
+		public function setName(name:String):void {
+		}
+		
+		public function setNamespace(ns:Namespace):void {
+		}
+		
+		public function setSettings(... rest):void {
+		}
+		
+		public function settings():Object {
+			return null;
+		}
+		
+		public function text():XMLList {
+			return null;
+		}
+		
+		public function toJSON(k:String):* {
+			return null;
+		}
+		
+		public function toString():String {
+			return null;
+		}
+		
+		public function toXMLString():String {
+			return null;
+		}
+		
+		public function valueOf():XML {
+			return null;
+		}
+	
+	}
+
+}

@@ -1,0 +1,40 @@
+package {
+
+	public class RegExp {
+	
+		//
+		// Properties
+		//
+		
+		public property dotall : Boolean { get { return false; } }
+
+ 	 	public property extended : Boolean { get { return false; } }
+ 	 	
+ 	 	public property global : Boolean { get { return false; } }
+ 	 	
+ 	 	public property ignoreCase : Boolean { get { return false; } }
+
+ 	 	public property lastIndex : Number { get; set; }
+
+ 	 	public property multiline : Boolean { get { return false; } }
+
+ 	 	public property source : String { get { return null; } }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+ 	 	 	 	
+		public function RegExp(re:String, flags:String) {
+		}
+
+		public function exec(str:String):Object {
+			return null;
+		}
+ 	 	
+		public function test(str:String):Boolean {
+			return false;		
+		}
+	
+	}
+
+}

@@ -1,0 +1,36 @@
+package flash.text {
+
+	public class StyleSheet {
+	
+		//
+		// Properties
+		//
+		
+		public property styleNames : Array { get { return null; } }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+ 	 	
+		public function StyleSheet() {
+		}
+
+		public function clear():void {
+		}
+
+		public function getStyle(styleName:String):Object {
+			return null;
+		}
+ 	 	
+		public function parseCSS(CSSText:String):void {
+		}
+
+		public function setStyle(styleName:String, styleObject:Object):void {
+		}
+
+		public function transform(formatObject:Object):TextFormat {
+			return null;
+		}
+	
+	}
+}

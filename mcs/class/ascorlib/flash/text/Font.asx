@@ -1,0 +1,32 @@
+package flash.text {
+
+	public class Font {
+	
+		//
+		// Properties
+		//
+	
+		public property fontName : String { get { return null; } }
+
+ 	 	public property fontStyle : String { get { return null; } }
+
+ 	 	public property fontType : String { get { return null; } }
+
+ 	 	//
+ 	 	// Methods
+ 	 	// 	
+ 	 	
+ 	 	public static function enumerateFonts(enumerateDeviceFonts:Boolean = false):Array {
+ 	 		return null;
+ 	 	}
+
+ 	 	public function hasGlyphs(str:String):Boolean {
+			return false; 	 	
+ 	 	}
+
+ 	 	public static function registerFont(font:Class):void {
+ 	 	}
+	
+	}
+
+}

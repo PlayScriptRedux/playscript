@@ -1,0 +1,167 @@
+package flash.text {
+
+	import flash.display.InteractiveObject;
+	import flash.geom.Rectangle;
+	import flash.display.DisplayObject;
+
+	public class TextField extends InteractiveObject {
+	
+		//
+		// Properties
+		//
+	
+		public property alwaysShowSelection : Boolean { get; set; }
+
+ 	 	public property antiAliasType : String { get; set; }
+
+ 	 	public property autoSize : String { get; set; }
+
+ 	 	public property background : Boolean { get; set; }
+
+ 	 	public property backgroundColor : uint { get; set; }
+
+ 	 	public property border : Boolean { get; set; }
+
+ 	 	public property borderColor : uint { get; set; }
+
+ 	 	public property bottomScrollV : int { get { return 0; } }
+
+ 	 	public property caretIndex : int { get { return 0; } }
+
+ 	 	public property condenseWhite : Boolean { get; set; }
+
+ 	 	public property defaultTextFormat : TextFormat { get; set; }
+
+ 	 	public property displayAsPassword : Boolean { get; set; }
+
+ 	 	public property embedFonts : Boolean { get; set; }
+
+ 	 	public property gridFitType : String { get; set; }
+
+ 	 	public property htmlText : String { get; set; }
+
+ 	 	public property length : int { get { return 0; } }
+
+ 	 	public property maxChars : int { get; set; }
+
+ 	 	public property maxScrollH : int { get { return 0; } }
+
+ 	 	public property maxScrollV : int { get { return 0; } }
+
+ 	 	public property mouseWheelEnabled : Boolean { get; set; }
+
+ 	 	public property multiline : Boolean { get; set; }
+
+ 	 	public property numLines : int { get { return 0; } }
+
+ 	 	public property restrict : String { get; set; }
+
+ 	 	public property scrollH : int { get; set; }
+
+ 	 	public property scrollV : int { get; set; }
+
+ 	 	public property selectable : Boolean { get; set; }
+
+ 	 	public property selectionBeginIndex : int { get { return 0; } }
+
+ 	 	public property selectionEndIndex : int { get { return 0; } }
+
+ 	 	public property sharpness : Number { get; set; }
+
+ 	 	public property styleSheet : StyleSheet { get; set; }
+
+ 	 	public property text : String { get; set; }
+
+ 	 	public property textColor : uint { get; set; }
+
+ 	 	public property textHeight : Number { get { return 0.0; } }
+
+ 	 	public property textInteractionMode : String { get { return null; } }
+
+ 	 	public property textWidth : Number { get { return 0.0; } }
+
+ 	 	public property thickness : Number { get; set; }
+
+ 	 	public property type : String { get; set; }
+
+ 	 	public property useRichTextClipboard : Boolean { get; set; }
+
+ 	 	public property wordWrap : Boolean { get; set; }
+
+		//
+		// Methods
+		//
+		
+		public function TextField() {
+		}
+ 	 	
+		public function appendText(newText:String):void {
+		}
+
+		public function getCharBoundaries(charIndex:int):Rectangle {
+			return null;
+		}
+
+		public function getCharIndexAtPoint(x:Number, y:Number):int {
+			return 0;
+		}		
+
+		public function getFirstCharInParagraph(charIndex:int):int {
+			return 0;
+		}
+
+ 	 	public function getImageReference(id:String):DisplayObject {
+ 	 		return null;
+ 	 	}
+
+		public function getLineIndexAtPoint(x:Number, y:Number):int {
+			return 0;
+		}
+
+		public function getLineIndexOfChar(charIndex:int):int {
+			return 0;
+		}
+
+		public function getLineLength(lineIndex:int):int {
+			return 0;
+		}
+
+		public function getLineMetrics(lineIndex:int):TextLineMetrics {
+			return null;
+		}
+
+		public function getLineOffset(lineIndex:int):int {
+			return 0;
+		}
+
+		public function getLineText(lineIndex:int):String {
+			return null;
+		}
+
+		public function getParagraphLength(charIndex:int):int {
+			return 0;
+		}
+
+		public function getTextFormat(beginIndex:int = -1, endIndex:int = -1):TextFormat {
+			return null;
+		}
+
+		public static function isFontCompatible(fontName:String, fontStyle:String):Boolean {
+			return false;
+		}
+
+		public function replaceSelectedText(value:String):void {
+		}
+
+		public function replaceText(beginIndex:int, endIndex:int, newText:String):void {
+		}
+
+		public function setSelection(beginIndex:int, endIndex:int):void {
+		}
+
+		public function setTextFormat(format:TextFormat, beginIndex:int = -1, endIndex:int = -1):void {
+		}
+	
+	}
+
+}

@@ -1,0 +1,30 @@
+package flash.text {
+
+	public class TextLineMetrics {
+	
+		//
+		// Properties
+		//
+		
+		public property ascent : Number { get; set; }
+		
+		public property descent : Number { get; set; }
+		
+		public property height : Number { get; set; }
+
+		public property leading : Number { get; set; }
+
+		public property width : Number { get; set; }
+
+		public property x : Number { get; set; }
+
+ 	 	// 
+ 	 	// Methods
+ 	 	//
+ 	 	
+ 	 	public function TextLineMetrics(x:Number, width:Number, height:Number, ascent:Number, descent:Number, leading:Number) {
+ 	 	}
+	
+	}
+
+}
