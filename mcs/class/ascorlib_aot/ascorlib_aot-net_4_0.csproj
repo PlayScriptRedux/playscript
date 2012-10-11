@@ -43,17 +43,11 @@
     <Compile Include="..\ascorlib\AssemblyInfo.cs">
       <Link>AssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="..\ascorlib\Class.cs">
-      <Link>Class.cs</Link>
-    </Compile>
     <Compile Include="..\ascorlib\Extensions.cs">
       <Link>Extensions.cs</Link>
     </Compile>
     <Compile Include="..\ascorlib\functions.cs">
       <Link>functions.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\Vector.cs">
-      <Link>Vector.cs</Link>
     </Compile>
     <Compile Include="..\ascorlib\ActionScript\Undefined.cs">
       <Link>ActionScript\Undefined.cs</Link>
@@ -175,225 +169,307 @@
     <Folder Include="ActionScript\" />
     <Folder Include="System\" />
     <Folder Include="flash\" />
+    <Folder Include="flash\xml\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ascorlib_aot.dll.sources" />
     <None Include="Makefile" />
-    <None Include="..\ascorlib\flash\display\Bitmap.asx">
-      <Link>flash\display\Bitmap.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display\BitmapData.asx">
-      <Link>flash\display\BitmapData.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display\DisplayObject.asx">
-      <Link>flash\display\DisplayObject.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display\DisplayObjectContainer.asx">
-      <Link>flash\display\DisplayObjectContainer.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display\Graphics.asx">
-      <Link>flash\display\Graphics.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display\IBitmapDrawable.asx">
-      <Link>flash\display\IBitmapDrawable.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display\IGraphicsData.asx">
-      <Link>flash\display\IGraphicsData.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display\InteractiveObject.asx">
-      <Link>flash\display\InteractiveObject.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display\Loader.asx">
-      <Link>flash\display\Loader.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display\LoaderInfo.asx">
-      <Link>flash\display\LoaderInfo.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display\MorphShape.asx">
-      <Link>flash\display\MorphShape.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display\MovieClip.asx">
-      <Link>flash\display\MovieClip.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display\NativeMenu.asx">
-      <Link>flash\display\NativeMenu.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display\NativeWindow.asx">
-      <Link>flash\display\NativeWindow.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display\SWFVersion.asx">
-      <Link>flash\display\SWFVersion.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display\Scene.asx">
-      <Link>flash\display\Scene.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display\Screen.asx">
-      <Link>flash\display\Screen.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display\Shader.asx">
-      <Link>flash\display\Shader.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display\ShaderData.asx">
-      <Link>flash\display\ShaderData.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display\Sprite.asx">
-      <Link>flash\display\Sprite.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display\Stage.asx">
-      <Link>flash\display\Stage.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display\Stage3D.asx">
-      <Link>flash\display\Stage3D.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display3D\Context3D.asx">
-      <Link>flash\display3D\Context3D.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display3D\Context3DBlendFactor.asx">
-      <Link>flash\display3D\Context3DBlendFactor.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display3D\Context3DClearMask.asx">
-      <Link>flash\display3D\Context3DClearMask.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display3D\Context3DCompareMode.asx">
-      <Link>flash\display3D\Context3DCompareMode.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display3D\Context3DProfile.asx">
-      <Link>flash\display3D\Context3DProfile.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display3D\Context3DProgramType.asx">
-      <Link>flash\display3D\Context3DProgramType.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display3D\Context3DRenderMode.asx">
-      <Link>flash\display3D\Context3DRenderMode.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display3D\Context3DStencilAction.asx">
-      <Link>flash\display3D\Context3DStencilAction.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display3D\Context3DTextureFormat.asx">
-      <Link>flash\display3D\Context3DTextureFormat.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display3D\Context3DTriangleFace.asx">
-      <Link>flash\display3D\Context3DTriangleFace.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display3D\Context3DVertexBufferFormat.asx">
-      <Link>flash\display3D\Context3DVertexBufferFormat.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display3D\IndexBuffer3D.asx">
-      <Link>flash\display3D\IndexBuffer3D.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display3D\Program3D.asx">
-      <Link>flash\display3D\Program3D.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display3D\VertexBuffer3D.asx">
-      <Link>flash\display3D\VertexBuffer3D.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display3D\textures\CubeTexture.asx">
-      <Link>flash\display3D\textures\CubeTexture.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display3D\textures\RectangleTexture.asx">
-      <Link>flash\display3D\textures\RectangleTexture.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display3D\textures\Texture.asx">
-      <Link>flash\display3D\textures\Texture.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display3D\textures\TextureBase.asx">
-      <Link>flash\display3D\textures\TextureBase.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\events\ErrorEvent.asx">
-      <Link>flash\events\ErrorEvent.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\events\UncaughtErrorEvents.asx">
-      <Link>flash\events\UncaughtErrorEvents.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\filters\BitmapFilter.asx">
-      <Link>flash\filters\BitmapFilter.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\geom\ColorTransform.asx">
-      <Link>flash\geom\ColorTransform.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\geom\Matrix.asx">
-      <Link>flash\geom\Matrix.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\geom\Matrix3D.asx">
-      <Link>flash\geom\Matrix3D.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\geom\Orientation3D.asx">
-      <Link>flash\geom\Orientation3D.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\geom\PerspectiveProjection.asx">
-      <Link>flash\geom\PerspectiveProjection.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\geom\Point.asx">
-      <Link>flash\geom\Point.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\geom\Rectangle.asx">
-      <Link>flash\geom\Rectangle.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\geom\Transform.asx">
-      <Link>flash\geom\Transform.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\geom\Utils3D.asx">
-      <Link>flash\geom\Utils3D.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\geom\Vector3D.asx">
-      <Link>flash\geom\Vector3D.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\media\SoundTransform.asx">
-      <Link>flash\media\SoundTransform.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\media\StageVideo.asx">
-      <Link>flash\media\StageVideo.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\net\URLRequest.asx">
-      <Link>flash\net\URLRequest.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\system\ApplicationDomain.asx">
-      <Link>flash\system\ApplicationDomain.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\system\LoaderContext.asx">
-      <Link>flash\system\LoaderContext.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\system\Security.asx">
-      <Link>flash\system\Security.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\system\SecurityDomain.asx">
-      <Link>flash\system\SecurityDomain.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\text\TextSnapshot.asx">
-      <Link>flash\text\TextSnapshot.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\utils\ByteArray.asx">
-      <Link>flash\utils\ByteArray.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\utils\Dictionary.asx">
-      <Link>flash\utils\Dictionary.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\utils\Endian.asx">
-      <Link>flash\utils\Endian.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\utils\IDataInput.asx">
-      <Link>flash\utils\IDataInput.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\utils\IDataOutput.asx">
-      <Link>flash\utils\IDataOutput.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\utils\Timer.asx">
-      <Link>flash\utils\Timer.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\utils\utils_functions.asx">
-      <Link>flash\utils\utils_functions.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\display\ActionScriptVersion.asx">
-      <Link>flash\display\ActionScriptVersion.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\desktop\IFilePromise.asx">
-      <Link>flash\desktop\IFilePromise.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\accessibility\AccessibilityProperties.asx">
-      <Link>flash\accessibility\AccessibilityProperties.asx</Link>
-    </None>
-    <None Include="..\ascorlib\flash\accessibility\AccessibilityImplementation.asx">
+    <Compile Include="..\ascorlib\Class.asx">
+      <Link>Class.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\functions.asx">
+      <Link>functions.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\JSON.asx">
+      <Link>JSON.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\Math.asx">
+      <Link>Math.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\Namespace.asx">
+      <Link>Namespace.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\RegExp.asx">
+      <Link>RegExp.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\Vector.asx">
+      <Link>Vector.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\XML.asx">
+      <Link>XML.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\XMLList.asx">
+      <Link>XMLList.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\accessibility\AccessibilityImplementation.asx">
       <Link>flash\accessibility\AccessibilityImplementation.asx</Link>
-    </None>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\accessibility\AccessibilityProperties.asx">
+      <Link>flash\accessibility\AccessibilityProperties.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\desktop\IFilePromise.asx">
+      <Link>flash\desktop\IFilePromise.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\ActionScriptVersion.asx">
+      <Link>flash\display\ActionScriptVersion.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\Bitmap.asx">
+      <Link>flash\display\Bitmap.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\BitmapData.asx">
+      <Link>flash\display\BitmapData.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\DisplayObject.asx">
+      <Link>flash\display\DisplayObject.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\DisplayObjectContainer.asx">
+      <Link>flash\display\DisplayObjectContainer.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\Graphics.asx">
+      <Link>flash\display\Graphics.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\IBitmapDrawable.asx">
+      <Link>flash\display\IBitmapDrawable.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\IGraphicsData.asx">
+      <Link>flash\display\IGraphicsData.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\InteractiveObject.asx">
+      <Link>flash\display\InteractiveObject.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\Loader.asx">
+      <Link>flash\display\Loader.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\LoaderInfo.asx">
+      <Link>flash\display\LoaderInfo.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\MorphShape.asx">
+      <Link>flash\display\MorphShape.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\MovieClip.asx">
+      <Link>flash\display\MovieClip.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\NativeMenu.asx">
+      <Link>flash\display\NativeMenu.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\NativeWindow.asx">
+      <Link>flash\display\NativeWindow.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\SWFVersion.asx">
+      <Link>flash\display\SWFVersion.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\Scene.asx">
+      <Link>flash\display\Scene.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\Screen.asx">
+      <Link>flash\display\Screen.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\Shader.asx">
+      <Link>flash\display\Shader.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\ShaderData.asx">
+      <Link>flash\display\ShaderData.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\Sprite.asx">
+      <Link>flash\display\Sprite.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\Stage.asx">
+      <Link>flash\display\Stage.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\Stage3D.asx">
+      <Link>flash\display\Stage3D.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\Context3D.asx">
+      <Link>flash\display3D\Context3D.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\Context3DBlendFactor.asx">
+      <Link>flash\display3D\Context3DBlendFactor.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\Context3DClearMask.asx">
+      <Link>flash\display3D\Context3DClearMask.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\Context3DCompareMode.asx">
+      <Link>flash\display3D\Context3DCompareMode.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\Context3DProfile.asx">
+      <Link>flash\display3D\Context3DProfile.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\Context3DProgramType.asx">
+      <Link>flash\display3D\Context3DProgramType.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\Context3DRenderMode.asx">
+      <Link>flash\display3D\Context3DRenderMode.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\Context3DStencilAction.asx">
+      <Link>flash\display3D\Context3DStencilAction.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\Context3DTextureFormat.asx">
+      <Link>flash\display3D\Context3DTextureFormat.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\Context3DTriangleFace.asx">
+      <Link>flash\display3D\Context3DTriangleFace.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\Context3DVertexBufferFormat.asx">
+      <Link>flash\display3D\Context3DVertexBufferFormat.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\IndexBuffer3D.asx">
+      <Link>flash\display3D\IndexBuffer3D.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\Program3D.asx">
+      <Link>flash\display3D\Program3D.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\VertexBuffer3D.asx">
+      <Link>flash\display3D\VertexBuffer3D.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\textures\CubeTexture.asx">
+      <Link>flash\display3D\textures\CubeTexture.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\textures\RectangleTexture.asx">
+      <Link>flash\display3D\textures\RectangleTexture.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\textures\Texture.asx">
+      <Link>flash\display3D\textures\Texture.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\textures\TextureBase.asx">
+      <Link>flash\display3D\textures\TextureBase.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\ErrorEvent.asx">
+      <Link>flash\events\ErrorEvent.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\UncaughtErrorEvents.asx">
+      <Link>flash\events\UncaughtErrorEvents.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\filters\BitmapFilter.asx">
+      <Link>flash\filters\BitmapFilter.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\geom\ColorTransform.asx">
+      <Link>flash\geom\ColorTransform.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\geom\Matrix.asx">
+      <Link>flash\geom\Matrix.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\geom\Matrix3D.asx">
+      <Link>flash\geom\Matrix3D.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\geom\Orientation3D.asx">
+      <Link>flash\geom\Orientation3D.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\geom\PerspectiveProjection.asx">
+      <Link>flash\geom\PerspectiveProjection.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\geom\Point.asx">
+      <Link>flash\geom\Point.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\geom\Rectangle.asx">
+      <Link>flash\geom\Rectangle.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\geom\Transform.asx">
+      <Link>flash\geom\Transform.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\geom\Utils3D.asx">
+      <Link>flash\geom\Utils3D.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\geom\Vector3D.asx">
+      <Link>flash\geom\Vector3D.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\media\SoundTransform.asx">
+      <Link>flash\media\SoundTransform.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\media\StageVideo.asx">
+      <Link>flash\media\StageVideo.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\net\URLRequest.asx">
+      <Link>flash\net\URLRequest.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\system\ApplicationDomain.asx">
+      <Link>flash\system\ApplicationDomain.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\system\LoaderContext.asx">
+      <Link>flash\system\LoaderContext.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\system\Security.asx">
+      <Link>flash\system\Security.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\system\SecurityDomain.asx">
+      <Link>flash\system\SecurityDomain.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\system\System.asx">
+      <Link>flash\system\System.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\text\AntiAliasType.asx">
+      <Link>flash\text\AntiAliasType.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\text\CSMSettings.asx">
+      <Link>flash\text\CSMSettings.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\text\Font.asx">
+      <Link>flash\text\Font.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\text\FontStyle.asx">
+      <Link>flash\text\FontStyle.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\text\FontType.asx">
+      <Link>flash\text\FontType.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\text\GridFitType.asx">
+      <Link>flash\text\GridFitType.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\text\StaticText.asx">
+      <Link>flash\text\StaticText.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\text\StyleSheet.asx">
+      <Link>flash\text\StyleSheet.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\text\TextColorType.asx">
+      <Link>flash\text\TextColorType.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\text\TextDisplayMode.asx">
+      <Link>flash\text\TextDisplayMode.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\text\TextField.asx">
+      <Link>flash\text\TextField.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\text\TextFieldAutoSize.asx">
+      <Link>flash\text\TextFieldAutoSize.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\text\TextFormat.asx">
+      <Link>flash\text\TextFormat.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\text\TextFormatAlign.asx">
+      <Link>flash\text\TextFormatAlign.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\text\TextInteractionMode.asx">
+      <Link>flash\text\TextInteractionMode.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\text\TextLineMetrics.asx">
+      <Link>flash\text\TextLineMetrics.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\text\TextRenderer.asx">
+      <Link>flash\text\TextRenderer.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\text\TextSnapshot.asx">
+      <Link>flash\text\TextSnapshot.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\utils\ByteArray.asx">
+      <Link>flash\utils\ByteArray.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\utils\Dictionary.asx">
+      <Link>flash\utils\Dictionary.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\utils\Endian.asx">
+      <Link>flash\utils\Endian.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\utils\IDataInput.asx">
+      <Link>flash\utils\IDataInput.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\utils\IDataOutput.asx">
+      <Link>flash\utils\IDataOutput.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\utils\Timer.asx">
+      <Link>flash\utils\Timer.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\utils\utils_functions.asx">
+      <Link>flash\utils\utils_functions.asx</Link>
+    </Compile>
   </ItemGroup>
 </Project>

@@ -35,6 +35,27 @@ package {
 	public function parseFloat(str:String):Number {
 		throw new System.NotImplementedException();	
 	}
+
+	public static function trace(o:Object):void {
+//		System.Diagnostics.Debug.WriteLine(o);
+		System.Console.WriteLine(o);
+	}
+		
+	public static function trace(o1:Object, o2:Object):void {
+//		System.Diagnostics.Debug.WriteLine("{0}{1}", o1, o2);
+		System.Console.WriteLine("{0}{1}", o1, o2);
+	}
+
+	public static function trace(o1:Object, o2:Object, o3:Object):void {
+//		System.Diagnostics.Debug.WriteLine("{0}{1}{2}", o1, o2, o3);
+		System.Console.WriteLine("{0}{1}{2}", o1, o2, o3);
+	}
+
+	public static function trace(o1:Object, o2:Object, o3:Object, ...args):void {
+		var argsStr = System.String.Concat(args);
+//		System.Diagnostics.Debug.WriteLine("{0}{1}{2}{3}", o1, o2, o3, argsStr);
+		System.Console.WriteLine("{0}{1}{2}{3}", o1, o2, o3, argsStr);
+	}
  	 	
 	public function parseInt(str:String, radix:uint = 0):Number {
 		throw new System.NotImplementedException();	

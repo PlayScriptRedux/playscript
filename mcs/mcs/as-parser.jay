@@ -1354,7 +1354,8 @@ method_header
 		if (current_container is NamespaceContainer) {
 			MemberName methodName = (MemberName) $4;
 			MemberName className = new MemberName(methodName.Name + "_fn", GetLocation($4));
-			push_current_container(new Class (current_container, className, (Modifiers) $2, (Attributes) $1), GetLocation($3));
+			var fnClassModifiers = (Modifiers) $2 | Modifiers.PARTIAL; // Allows overloads..
+			push_current_container(new Class (current_container, className, fnClassModifiers, (Attributes) $1), GetLocation($3));
 			is_package_function = true;
 		}
 		
