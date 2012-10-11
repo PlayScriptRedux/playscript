@@ -1400,7 +1400,7 @@ method_header
 		} else {
 
 			if (current_container.Kind == MemberKind.Class && 
-				(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
+				(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
 					modifiers |= Modifiers.VIRTUAL;
 
 			var return_type = $9 as FullNamedExpression;
@@ -1438,7 +1438,7 @@ method_header
 		var parameters = (ParametersCompiled) $7;		
 		
 		if (current_container.Kind == MemberKind.Class && 
-			(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
+			(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
 				modifiers |= Modifiers.VIRTUAL;
 
 		if (parameters != null && parameters.Count > 0)
@@ -1496,7 +1496,7 @@ method_header
 		var parameters = (ParametersCompiled) $7;
 		
 		if (current_container.Kind == MemberKind.Class && 
-			(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
+			(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
 				modifiers |= Modifiers.VIRTUAL;
 		
 		if (void_type.Type != null && void_type.Type.Kind != MemberKind.Void)
@@ -1574,7 +1574,7 @@ method_header
 		var modifiers = (Modifiers) $2;
 		modifiers |= Modifiers.PARTIAL;
 
-		if ((modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
+		if ((modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
 			modifiers |= Modifiers.VIRTUAL;
 			
 		var method = Method.Create (current_type, new TypeExpression (compiler.BuiltinTypes.Void, GetLocation ($12)),
@@ -1930,7 +1930,7 @@ property_declaration
 		var modifiers = (Modifiers) $2;
 				
 		if (current_container.Kind == MemberKind.Class && 
-			(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
+			(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
 				modifiers |= Modifiers.VIRTUAL;
 		
 		current_property = new Property (current_type, type, modifiers,
@@ -1974,7 +1974,7 @@ indexer_declaration
 		var modifiers = (Modifiers) $2;
 
 		if (current_container.Kind == MemberKind.Class && 
-			(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
+			(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
 				modifiers |= Modifiers.VIRTUAL;
 		
 		Indexer indexer = new Indexer (current_type, type, (MemberName) $4, modifiers, (ParametersCompiled) $9, (Attributes) $1);
@@ -2241,7 +2241,7 @@ operator_declaration
 			var modifiers = (Modifiers) $2;
 			
 			if (current_container.Kind == MemberKind.Class && 
-				(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
+				(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
 					modifiers |= Modifiers.VIRTUAL;			
 		
 			Operator op = new Operator (

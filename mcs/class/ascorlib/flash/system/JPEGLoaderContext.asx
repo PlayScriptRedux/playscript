@@ -1,0 +1,21 @@
+package flash.system {
+
+	public class JPEGLoaderContext extends LoaderContext {
+	
+		//
+		// Properties
+		//
+		
+		public property deblockingFilter : Number { get; set; }
+		
+		//
+		// Methods
+		//
+		
+		 	
+		public function JPEGLoaderContext(deblockingFilter:Number = 0.0, checkPolicyFile:Boolean = false, applicationDomain:ApplicationDomain = null, securityDomain:SecurityDomain = null) {
+		}
+	
+	}
+
+}

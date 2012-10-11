@@ -198,6 +198,10 @@
     <Compile Include="Vector.asx" />
     <Compile Include="RegExp.asx" />
     <Compile Include="functions.asx" />
+    <Compile Include="flash\system\IME.asx" />
+    <Compile Include="flash\system\IMEConversionMode.asx" />
+    <Compile Include="flash\system\Capabilities.asx" />
+    <Compile Include="flash\system\JPEGLoaderContext.asx" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="ActionScript\" />

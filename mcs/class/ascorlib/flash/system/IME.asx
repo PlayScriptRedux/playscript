@@ -1,0 +1,33 @@
+package flash.system {
+
+	public class IME {
+	
+		//
+		// Properties
+		//
+		
+		public static property conversionMode : String { get; set; }
+
+ 	 	public static property enabled : Boolean { get; set; }
+
+ 	 	public static property isSupported : Boolean { get { return false; } }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+ 	 	
+ 	 	public static function compositionAbandoned():void {
+ 	 	}
+
+		public static function compositionSelectionChanged(start:int, end:int):void {
+		}
+
+ 	 	public static function doConversion():void {
+ 	 	}
+ 	 	
+		public static function setCompositionString(composition:String):void {
+		}
+	
+	}
+
+}

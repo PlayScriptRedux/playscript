@@ -3,9 +3,11 @@ package {
 	public static class JSON {
 	
 		public static function parse(text:String, reviver:Function = null):Object {
+			throw new System.NotImplementedException();
 		}
 
 		public static function stringify(value:Object, replacer:* = null, space:* = null):String {
+			throw new System.NotImplementedException();
 		}
 	
 	}

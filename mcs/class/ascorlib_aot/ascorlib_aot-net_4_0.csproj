@@ -164,6 +164,15 @@
     <Compile Include="..\ascorlib\flash\events\IEventDispatcher.cs">
       <Link>flash\events\IEventDispatcher.cs</Link>
     </Compile>
+    <Compile Include="..\ascorlib\flash\system\IME.asx">
+      <Link>flash\system\IME.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\system\IMEConversionMode.asx">
+      <Link>flash\system\IMEConversionMode.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\system\JPEGLoaderContext.asx">
+      <Link>flash\system\JPEGLoaderContext.asx</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="ActionScript\" />
@@ -471,5 +480,8 @@
     <Compile Include="..\ascorlib\flash\utils\utils_functions.asx">
       <Link>flash\utils\utils_functions.asx</Link>
     </Compile>
+    <None Include="..\ascorlib\flash\system\Capabilities.asx">
+      <Link>flash\system\Capabilities.asx</Link>
+    </None>
   </ItemGroup>
 </Project>

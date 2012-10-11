@@ -1,0 +1,87 @@
+package flash.system {
+
+	public static class Capabilities {
+	
+		//
+		// Properties
+		//
+	
+		public static property avHardwareDisable : Boolean { get { return false; } }
+		
+		public static property cpuArchitecture : String { get { return null; } }
+		
+		public static property hasAccessibility : Boolean { get { return false; } }
+		
+		public static property hasAudio : Boolean { get { return false; } }
+		
+		public static property hasAudioEncoder : Boolean { get { return false; } }
+		
+		public static property hasEmbeddedVideo : Boolean { get { return false; } }
+		
+		public static property hasIME : Boolean { get { return false; } }
+		
+		public static property hasMP3 : Boolean { get { return false; } }
+		
+		public static property hasPrinting : Boolean { get { return false; } }
+		
+		public static property hasScreenBroadcast : Boolean { get { return false; } }
+		
+		public static property hasScreenPlayback : Boolean { get { return false; } }
+		
+		public static property hasStreamingAudio : Boolean { get { return false; } }
+		
+		public static property hasStreamingVideo : Boolean { get { return false; } }
+		
+		public static property hasTLS : Boolean { get { return false; } }
+		
+		public static property hasVideoEncoder : Boolean { get { return false; } }
+		
+		public static property isDebugger : Boolean { get { return false; } }
+		
+		public static property isEmbeddedInAcrobat : Boolean { get { return false; } }
+		
+		public static property language : String { get { return null; } }
+		
+		public static property languages : Array { get { return null; } }
+		
+		public static property localFileReadDisable : Boolean { get { return false; } }
+		
+		public static property manufacturer : String { get { return null; } }
+		
+		public static property maxLevelIDC : String { get { return null; } }
+		
+		public static property os : String { get { return null; } }
+		
+		public static property pixelAspectRatio : Number { get { return 0.0; } }
+		
+		public static property playerType : String { get { return null; } }
+		
+		public static property screenColor : String { get { return null; } }
+		
+		public static property screenDPI : Number { get { return 0.0; } }
+		
+		public static property screenResolutionX : Number { get { return 0.0; } }
+		
+		public static property screenResolutionY : Number { get { return 0.0; } }
+		
+		public static property serverString : String { get { return null; } }
+		
+		public static property supports32BitProcesses : Boolean { get { return false; } }
+		
+		public static property supports64BitProcesses : Boolean { get { return false; } }
+		
+		public static property touchscreenType : String { get { return null; } }
+		
+		public static property version : String { get { return null; } }
+
+		//
+		// Methods
+		//
+						
+		public static function hasMultiChannelAudio(type:String):Boolean {
+			throw new System.NotImplementedException();
+		}
+	
+	}
+
+}
