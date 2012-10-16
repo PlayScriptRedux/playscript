@@ -132,20 +132,20 @@ namespace Mono.CSharp
 		{
 		}
 
-		public override Constant ConvertImplicitly (TypeSpec type)
+		public override Constant ConvertImplicitly (TypeSpec type, ResolveContext opt_ec)
 		{
 			//
 			// The 0 literal can be converted to an enum value
 			//
 			if (Value == 0 && type.IsEnum) {
-				Constant c = ConvertImplicitly (EnumSpec.GetUnderlyingType (type));
+				Constant c = ConvertImplicitly (EnumSpec.GetUnderlyingType (type), opt_ec);
 				if (c == null)
 					return null;
 
 				return new EnumConstant (c, type);
 			}
 
-			return base.ConvertImplicitly (type);
+			return base.ConvertImplicitly (type, opt_ec);
 		}
 
 		public override bool IsLiteral {

@@ -1135,9 +1135,9 @@ namespace Mono.CSharp
 					}
 
 					if (v == Variance.Covariant) {
-						if (!Convert.ImplicitReferenceConversionExists (t1_targs[i], t2_targs[i]))
+						if (!Convert.ImplicitReferenceConversionExists (t1_targs[i], t2_targs[i], null))
 							return false;
-					} else if (!Convert.ImplicitReferenceConversionExists (t2_targs[i], t1_targs[i])) {
+					} else if (!Convert.ImplicitReferenceConversionExists (t2_targs[i], t1_targs[i], null)) {
 						return false;
 					}
 				}

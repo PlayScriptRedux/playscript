@@ -79,7 +79,7 @@ package flash.system {
 		//
 						
 		public static function hasMultiChannelAudio(type:String):Boolean {
-			throw new System.NotImplementedException();
+			return false;
 		}
 	
 	}

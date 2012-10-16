@@ -205,7 +205,7 @@ namespace Mono.CSharp
 
 		public virtual Constant ConvertInitializer (ResolveContext rc, Constant expr)
 		{
-			return expr.ConvertImplicitly (MemberType);
+			return expr.ConvertImplicitly (MemberType, rc);
 		}
 
 		protected override void DoMemberTypeDependentChecks ()

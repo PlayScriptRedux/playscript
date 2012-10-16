@@ -34,6 +34,9 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Mono.CSharp" />
     <Reference Include="System.Core" />
+    <Reference Include="test2">
+      <HintPath>..\..\mcs\test2.exe</HintPath>
+    </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -155,6 +158,15 @@
       <Link>Error.asx</Link>
     </Compile>
     <Compile Include="System\Runtime\CompilerServices\DynamicAttribute.cs" />
+    <Compile Include="ArgumentError.asx" />
+    <Compile Include="DefinitionError.asx" />
+    <Compile Include="RangeError.asx" />
+    <Compile Include="ReferenceError.asx" />
+    <Compile Include="SecurityError.asx" />
+    <Compile Include="SyntaxError.asx" />
+    <Compile Include="TypeError.asx" />
+    <Compile Include="URIError.asx" />
+    <Compile Include="VerifyError.asx" />
     <Compile Include="..\ascorlib\flash\events\Event.cs">
       <Link>flash\events\Event.cs</Link>
     </Compile>
@@ -164,21 +176,12 @@
     <Compile Include="..\ascorlib\flash\events\IEventDispatcher.cs">
       <Link>flash\events\IEventDispatcher.cs</Link>
     </Compile>
-    <Compile Include="..\ascorlib\flash\system\IME.asx">
-      <Link>flash\system\IME.asx</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\flash\system\IMEConversionMode.asx">
-      <Link>flash\system\IMEConversionMode.asx</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\flash\system\JPEGLoaderContext.asx">
-      <Link>flash\system\JPEGLoaderContext.asx</Link>
-    </Compile>
+    <Compile Include="StringExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="ActionScript\" />
     <Folder Include="System\" />
     <Folder Include="flash\" />
-    <Folder Include="flash\xml\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ascorlib_aot.dll.sources" />
@@ -342,8 +345,35 @@
     <Compile Include="..\ascorlib\flash\display3D\textures\TextureBase.asx">
       <Link>flash\display3D\textures\TextureBase.asx</Link>
     </Compile>
+    <Compile Include="..\ascorlib\flash\errors\EOFError.asx">
+      <Link>flash\errors\EOFError.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\errors\IOError.asx">
+      <Link>flash\errors\IOError.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\errors\IllegalOperationError.asx">
+      <Link>flash\errors\IllegalOperationError.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\errors\InvalidSWFError.asx">
+      <Link>flash\errors\InvalidSWFError.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\errors\MemoryError.asx">
+      <Link>flash\errors\MemoryError.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\errors\StackOverflowError.asx">
+      <Link>flash\errors\StackOverflowError.asx</Link>
+    </Compile>
     <Compile Include="..\ascorlib\flash\events\ErrorEvent.asx">
       <Link>flash\events\ErrorEvent.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\KeyboardEvent.asx">
+      <Link>flash\events\KeyboardEvent.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\MouseEvent.asx">
+      <Link>flash\events\MouseEvent.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\TouchEvent.asx">
+      <Link>flash\events\TouchEvent.asx</Link>
     </Compile>
     <Compile Include="..\ascorlib\flash\events\UncaughtErrorEvents.asx">
       <Link>flash\events\UncaughtErrorEvents.asx</Link>
@@ -381,6 +411,18 @@
     <Compile Include="..\ascorlib\flash\geom\Vector3D.asx">
       <Link>flash\geom\Vector3D.asx</Link>
     </Compile>
+    <Compile Include="..\ascorlib\flash\media\ID3Info.asx">
+      <Link>flash\media\ID3Info.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\media\SouncChannel.asx">
+      <Link>flash\media\SouncChannel.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\media\Sound.asx">
+      <Link>flash\media\Sound.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\media\SoundLoaderContext.asx">
+      <Link>flash\media\SoundLoaderContext.asx</Link>
+    </Compile>
     <Compile Include="..\ascorlib\flash\media\SoundTransform.asx">
       <Link>flash\media\SoundTransform.asx</Link>
     </Compile>
@@ -392,6 +434,18 @@
     </Compile>
     <Compile Include="..\ascorlib\flash\system\ApplicationDomain.asx">
       <Link>flash\system\ApplicationDomain.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\system\Capabilities.asx">
+      <Link>flash\system\Capabilities.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\system\IME.asx">
+      <Link>flash\system\IME.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\system\IMEConversionMode.asx">
+      <Link>flash\system\IMEConversionMode.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\system\JPEGLoaderContext.asx">
+      <Link>flash\system\JPEGLoaderContext.asx</Link>
     </Compile>
     <Compile Include="..\ascorlib\flash\system\LoaderContext.asx">
       <Link>flash\system\LoaderContext.asx</Link>
@@ -459,6 +513,30 @@
     <Compile Include="..\ascorlib\flash\text\TextSnapshot.asx">
       <Link>flash\text\TextSnapshot.asx</Link>
     </Compile>
+    <Compile Include="..\ascorlib\flash\ui\KeyLocation.asx">
+      <Link>flash\ui\KeyLocation.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\ui\Keyboard.asx">
+      <Link>flash\ui\Keyboard.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\ui\KeyboardType.asx">
+      <Link>flash\ui\KeyboardType.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\ui\Mouse.asx">
+      <Link>flash\ui\Mouse.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\ui\MouseCursor.asx">
+      <Link>flash\ui\MouseCursor.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\ui\MouseCursorData.asx">
+      <Link>flash\ui\MouseCursorData.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\ui\Multitouch.asx">
+      <Link>flash\ui\Multitouch.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\ui\MultitouchInputMode.asx">
+      <Link>flash\ui\MultitouchInputMode.asx</Link>
+    </Compile>
     <Compile Include="..\ascorlib\flash\utils\ByteArray.asx">
       <Link>flash\utils\ByteArray.asx</Link>
     </Compile>
@@ -480,8 +558,5 @@
     <Compile Include="..\ascorlib\flash\utils\utils_functions.asx">
       <Link>flash\utils\utils_functions.asx</Link>
     </Compile>
-    <None Include="..\ascorlib\flash\system\Capabilities.asx">
-      <Link>flash\system\Capabilities.asx</Link>
-    </None>
   </ItemGroup>
 </Project>

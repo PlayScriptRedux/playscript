@@ -1,0 +1,13 @@
+package {
+
+	public class VerifyError extends Error {
+	
+		public function VerifyError(message:String = "") {
+			super(message);
+		}
+		
+	}
+
+}
+
+

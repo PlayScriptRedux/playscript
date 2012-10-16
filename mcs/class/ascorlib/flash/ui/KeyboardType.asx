@@ -1,0 +1,17 @@
+package flash.ui {
+
+	public static class KeyboardType {
+	
+		//
+		// Constants
+		//
+	
+		public static const ALPHANUMERIC : String = "alphanumeric";
+
+ 	 	public static const KEYPAD : String = "keypad";
+
+ 	 	public static const NONE : String = "none";
+	
+	}
+
+}

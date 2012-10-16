@@ -1,0 +1,23 @@
+package flash.ui {
+
+	public static class Multitouch {
+	
+		//
+		// Properties
+		//
+		
+ 		public static property inputMode : String { get; set; }
+
+ 	 	public static property mapTouchToMouse : Boolean { get; set; }
+
+ 	 	public static property maxTouchPoints : int { get { return 0; } }
+
+ 	 	public static property supportedGestures : Vector.<String> { get { return null; } }
+
+ 	 	public static property supportsGestureEvents : Boolean { get { return false; } }
+
+ 	 	public static property supportsTouchEvents : Boolean { get { return false; } }
+	
+	}
+
+}

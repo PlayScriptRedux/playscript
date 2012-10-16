@@ -1,0 +1,28 @@
+package flash.media {
+
+	import flash.events.EventDispatcher;
+
+	public class SoundChannel extends EventDispatcher {
+	
+		//
+		// Properties
+		//
+	
+		public property leftPeak : Number { get { return 0.0; } }
+
+ 	 	public property position : Number { get { return 0.0; } }
+
+ 	 	public property rightPeak : Number { get { return 0.0; } }
+
+ 	 	public property soundTransform : SoundTransform { get; set; }
+
+ 	 	//
+ 	 	// Methods
+ 	 	// 
+ 	 	
+ 	 	public function stop():void {
+ 	 	}
+	
+	}
+
+}

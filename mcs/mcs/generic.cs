@@ -935,16 +935,17 @@ namespace Mono.CSharp {
 				Array.Resize (ref types, types.Length + 1);
 
 				for (int i = 0; i < types.Length - 1; ++i) {
-					types[i] = types[i].BaseType;
+					types [i] = types [i].BaseType;
 				}
 
-				types[types.Length - 1] = BaseType;
+				types [types.Length - 1] = BaseType;
 			} else {
 				types = types.Select (l => l.BaseType).ToArray ();
 			}
 
-			if (types != null)
-				return Convert.FindMostEncompassedType (types);
+			if (types != null) {
+				return Convert.FindMostEncompassedType (types, null);
+			}
 
 			return BaseType;
 		}
@@ -2444,7 +2445,8 @@ namespace Mono.CSharp {
 						return true;
 				}
 			} else {
-				if (Convert.ImplicitReferenceConversionExists (atype, ttype) || Convert.ImplicitBoxingConversion (null, atype, ttype) != null)
+				ResolveContext opt_ec = mc as ResolveContext;
+				if (Convert.ImplicitReferenceConversionExists (atype, ttype, false, opt_ec) || Convert.ImplicitBoxingConversion (null, atype, ttype) != null)
 					return true;
 			}
 

@@ -57,6 +57,8 @@ namespace Mono.CSharp
 		ExtensionMethodCandidates LookupExtensionMethod (TypeSpec extensionType, string name, int arity);
 		FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, Location loc);
 		FullNamedExpression LookupNamespaceAlias (string name);
+
+		SourceFileType FileType { get; }
 	}
 
 	public interface IModuleContext
@@ -343,7 +345,7 @@ namespace Mono.CSharp
 
 		protected Options flags;
 
-		public SourceFileType FileType;
+		protected SourceFileType fileType;
 
 		//
 		// Whether we are inside an anonymous method.
@@ -386,9 +388,9 @@ namespace Mono.CSharp
 			// File type set from member context module sourcefile.
 			//
 			if (mc.Module != null && mc.Module.Location.SourceFile != null) {
-				FileType = mc.Module.Location.SourceFile.FileType;
+				fileType = mc.Module.Location.SourceFile.FileType;
 			} else {
-				FileType = SourceFileType.CSharp;
+				fileType = SourceFileType.CSharp;
 			}
 			
 		}
@@ -495,6 +497,11 @@ namespace Mono.CSharp
 			get {
 				return Module.Compiler.Report;
 			}
+		}
+
+		public SourceFileType FileType {
+			get { return fileType; }
+			set { fileType = value; }
 		}
 
 		#endregion

@@ -1,0 +1,28 @@
+package flash.ui {
+
+	import flash.display.BitmapData;
+	import flash.geom.Point;
+
+	public class MouseCursorData {
+	
+		//
+		// Properties
+		//
+	
+		public property data : Vector.<BitmapData> { get; set; }
+
+ 	 	public property frameRate : Number { get; set; }
+
+ 	 	public property hotSpot : Point { get; set; }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+ 	 	
+ 	 	public function MouseCursorData() {
+ 	 	}
+	
+	
+	}
+	
+}

@@ -5,12 +5,12 @@ namespace _root
 {
 	public static class Extensions
 	{
-		public static String toString(this object o) 
+		public static string toString(this object o) 
 		{
 			return o.ToString ();
 		}
 
-		public static String toLocaleString(this object o) 
+		public static string toLocaleString(this object o) 
 		{
 			return o.ToString ();
 		}

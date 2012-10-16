@@ -11,7 +11,7 @@ namespace _root
 	{
 		public static string String (object o)
 		{
-			return (o as String) ?? o.ToString ();
+			return (o as string) ?? o.ToString ();
 		}
 	}
 
@@ -32,7 +32,7 @@ namespace _root
 				return (bool)o ? 1 : 0;
 			case TypeCode.String:
 				var s = o as string;
-				if (s == String.Empty)
+				if (s == string.Empty)
 					return 0;
 				double r = 0;
 				if (!double.TryParse (s, out r))

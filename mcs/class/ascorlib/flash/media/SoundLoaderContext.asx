@@ -1,0 +1,22 @@
+package flash.media {
+
+	public class SoundLoaderContext {
+
+		//
+		// Properties
+		//
+		
+ 		public property bufferTime : Number { get; set; }
+
+ 	 	public property checkPolicyFile : Boolean { get; set; }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+ 	 	
+ 		public function SoundLoaderContext(bufferTime:Number = 1000, checkPolicyFile:Boolean = false) {
+ 		}
+
+	}
+}
+

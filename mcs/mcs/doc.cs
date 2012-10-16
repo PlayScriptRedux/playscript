@@ -716,6 +716,12 @@ namespace Mono.CSharp
 		{
 			throw new NotImplementedException ();
 		}
+
+		public SourceFileType FileType {
+			get {
+				return host.Location.SourceFile != null ? host.Location.SourceFile.FileType : SourceFileType.CSharp;
+			}
+		}
 	}
 
 	class DocumentationParameter

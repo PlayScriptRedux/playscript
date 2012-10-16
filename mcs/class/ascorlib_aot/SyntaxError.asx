@@ -1,0 +1,12 @@
+package {
+
+	public class SyntaxError extends Error {
+	
+		public function SyntaxError(message:String = "") {
+			super(message);
+		}
+		
+	}
+
+}
+

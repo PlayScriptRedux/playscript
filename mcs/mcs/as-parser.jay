@@ -1354,7 +1354,7 @@ method_header
 		if (current_container is NamespaceContainer) {
 			MemberName methodName = (MemberName) $4;
 			MemberName className = new MemberName(methodName.Name + "_fn", GetLocation($4));
-			var fnClassModifiers = (Modifiers) $2 | Modifiers.PARTIAL; // Allows overloads..
+			var fnClassModifiers = (Modifiers) $2 | Modifiers.PARTIAL | Modifiers.STATIC; // Allows overloads..
 			push_current_container(new Class (current_container, className, fnClassModifiers, (Attributes) $1), GetLocation($3));
 			is_package_function = true;
 		}
@@ -1372,6 +1372,9 @@ method_header
 		current_local_parameters = (ParametersCompiled) $7;
 
 		var modifiers = (Modifiers) $2;
+		if (is_package_function) {
+			modifiers |= Modifiers.STATIC;
+		}
 		
 		if (current_type != null && name.Name == current_type.MemberName.Name) {
 
@@ -2981,6 +2984,11 @@ namespace_declaration
 	  NAMESPACE 
 	  IDENTIFIER opt_namespace_url SEMICOLON
 	  {
+		var lt = (Tokenizer.LocatedToken) $4;	  
+		MemberName className = new MemberName(lt.Value + "_ns", GetLocation($4));
+		push_current_container(new Class (current_container, className, (Modifiers) $2, (Attributes) $1), GetLocation($3));	  
+		pop_current_class();
+			  
 	  	if (doc_support) {
 			current_delegate.DocComment = Lexer.consume_doc_comment ();
 			Lexer.doc_state = XmlCommentState.Allowed;
@@ -7372,7 +7380,7 @@ object ConvertAsType(SimpleName sn, object e)
 	else if (sn.Name == "void")
 		return new TypeExpression (compiler.BuiltinTypes.Void, GetLocation (e));
 	else if (sn.Name == "Function")
-		return new TypeExpression (compiler.BuiltinTypes.Delegate, GetLocation (e));
+		return new TypeExpression (compiler.BuiltinTypes.Dynamic, GetLocation (e));
 	else
 		return e;
 }

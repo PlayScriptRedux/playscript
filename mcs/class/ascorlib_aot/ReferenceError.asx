@@ -1,0 +1,11 @@
+package {
+
+	public class ReferenceError extends Error {
+	
+		public function ReferenceError(message:String = "") {
+			super(message);
+		}
+		
+	}
+
+}

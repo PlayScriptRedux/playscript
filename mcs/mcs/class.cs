@@ -470,6 +470,13 @@ namespace Mono.CSharp
 				return tc.Parent.LookupNamespaceOrType (name, arity, mode, loc);
 			}
 
+			public SourceFileType FileType 
+			{ 
+				get {
+					return tc.Location.SourceFile != null ? tc.Location.SourceFile.FileType : SourceFileType.CSharp;
+				}
+			}
+
 			#endregion
 		}
 

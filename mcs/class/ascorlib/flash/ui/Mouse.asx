@@ -1,0 +1,34 @@
+package flash.ui {
+
+	public static class Mouse {
+	
+		//
+		// Properties
+		//
+		
+ 		public static property cursor : String { get; set; }
+
+ 	 	public static property supportsCursor : Boolean { get { return false; } }
+
+ 	 	public static property supportsNativeCursor : Boolean { get { return false; } }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+ 	 	 	 	
+		public static function hide():void {
+		}
+
+		public static function registerCursor(name:String, cursor:MouseCursorData):void {
+		}
+
+		public static function show():void {
+		}
+
+		public static function unregisterCursor(name:String):void {
+		
+		}
+	
+	}
+
+}

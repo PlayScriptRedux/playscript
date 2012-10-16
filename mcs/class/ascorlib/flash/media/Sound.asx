@@ -1,0 +1,57 @@
+package flash.media {
+
+	import flash.events.EventDispatcher;
+	import flash.net.URLRequest;
+	import flash.utils.ByteArray;
+
+	public class Sound extends EventDispatcher {
+		
+		//
+		// Properties
+		//
+		
+		public property bytesLoaded : uint { get { return 0; } }
+
+ 	 	public property bytesTotal : int { get { return 0; } }
+
+ 	 	public property id3 : ID3Info { get { return null; } }
+
+ 	 	public property isBuffering : Boolean { get { return false; } }
+
+ 	 	public property isURLInaccessible : Boolean { get { return false; } }
+
+ 	 	public property length : Number { get { return 0.0; } }
+
+ 	 	public property url : String { get { return null; } }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+ 	 	 	 	 	 	
+		public function Sound(stream:URLRequest = null, context:SoundLoaderContext = null) {
+		}
+
+ 	 	public function close():void {
+ 	 	}
+ 	 	
+		public function extract(target:ByteArray, length:Number, startPosition:Number = -1):Number {
+			return 0.0;
+		}
+ 	 	
+		public function load(stream:URLRequest, context:SoundLoaderContext = null):void {
+		}
+ 	 	
+		public function loadCompressedDataFromByteArray(bytes:ByteArray, bytesLength:uint):void {
+		}
+ 	 	
+		public function loadPCMFromByteArray(bytes:ByteArray, samples:uint, format:String = "float", stereo:Boolean = true, sampleRate:Number = 44100.0):void {
+		}
+ 	 	
+		public function play(startTime:Number = 0, loops:int = 0, sndTransform:SoundTransform = null):SoundChannel {
+			return null;
+		}
+	
+	}
+
+}
+

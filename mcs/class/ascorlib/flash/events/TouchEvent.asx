@@ -1,0 +1,118 @@
+package flash.events {
+
+	import flash.display.InteractiveObject;
+	import flash.utils.ByteArray;
+
+	public class TouchEvent extends Event {
+	
+ 	 	//
+ 	 	// Constants
+ 	 	//
+ 	 	
+ 	 	public static const PROXIMITY_BEGIN : String = "proximityBegin";
+ 	 	
+ 	 	public static const PROXIMITY_END : String = "proximityEnd";
+ 	 	
+ 	 	public static const PROXIMITY_MOVE : String = "proximityMove";
+ 	 	
+ 	 	public static const PROXIMITY_OUT : String = "proximityOut";
+ 	 	
+ 	 	public static const PROXIMITY_OVER : String = "proximityOver";
+ 	 	
+ 	 	public static const PROXIMITY_ROLL_OUT : String = "proximityRollOut";
+ 	 	
+ 	 	public static const PROXIMITY_ROLL_OVER : String = "proximityRollOver";
+ 	 	
+ 	 	public static const TOUCH_BEGIN : String = "touchBegin";
+ 	 	
+ 	 	public static const TOUCH_END : String = "touchEnd";
+ 	 	
+ 	 	public static const TOUCH_MOVE : String = "touchMove";
+ 	 	
+ 	 	public static const TOUCH_OUT : String = "touchOut";
+ 	 	
+ 	 	public static const TOUCH_OVER : String = "touchOver";
+ 	 	
+ 	 	public static const TOUCH_ROLL_OUT : String = "touchRollOut";
+ 	 	
+ 	 	public static const TOUCH_ROLL_OVER : String = "touchRollOver";
+ 	 	
+ 	 	public static const TOUCH_TAP : String = "touchTap";
+	
+		//
+		// Properties
+		//
+	
+		public property altKey : Boolean { get; set; }
+
+		public property commandKey : Boolean { get; set; }
+
+		public property controlKey : Boolean { get; set; }
+
+		public property ctrlKey : Boolean { get; set; }
+
+		public property isPrimaryTouchPoint : Boolean { get; set; }
+
+		public property isRelatedObjectInaccessible : Boolean { get; set; }
+
+		public property isTouchPointCanceled : Boolean { get; set; }
+
+		public property localX : Number { get; set; }
+
+		public property localY : Number { get; set; }
+
+		public property pressure : Number { get; set; }
+
+		public property relatedObject : InteractiveObject { get; set; }
+
+		public property shiftKey : Boolean { get; set; }
+
+		public property sizeX : Number { get; set; }
+
+		public property sizeY : Number { get; set; }
+
+		public property stageX : Number { get { return 0.0; } }
+
+		public property stageY : Number { get { return 0.0; } }
+
+		public property timestamp : Number { get; set; }
+
+		public property touchIntent : String { get; set; }
+
+		public property touchPointID : int { get; set; }
+
+		//
+		// Methods
+		//
+ 	 	
+		public function TouchEvent(type:String, bubbles:Boolean = true, cancelable:Boolean = false, touchPointID:int = 0, 
+			isPrimaryTouchPoint:Boolean = false, localX:Number = NaN, localY:Number = NaN, sizeX:Number = NaN, 
+			sizeY:Number = NaN, pressure:Number = NaN, relatedObject:InteractiveObject = null, ctrlKey:Boolean = false, 
+			altKey:Boolean = false, shiftKey:Boolean = false, commandKey:Boolean = false, controlKey:Boolean = false, 
+			timestamp:Number = NaN, touchIntent:String = null, samples:ByteArray = null, isTouchPointCanceled:Boolean = false) {
+			super(type);
+		}
+ 	 	
+		public override function clone():Event {
+			return null;
+		}
+
+    	public function getSamples(buffer:ByteArray, append:Boolean = false):uint {
+    		return 0;
+    	}
+ 	 	
+		public function isToolButtonDown(index:int):Boolean {
+			return false;
+		}
+ 	 	
+		public override function toString():String {
+			return null;
+		}
+ 	 	
+		public function updateAfterEvent():void {
+		}
+
+		
+	}
+
+}

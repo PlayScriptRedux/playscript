@@ -1239,7 +1239,7 @@ namespace Mono.CSharp {
 					return false;
 				}
 
-				if (!Convert.ImplicitStandardConversionExists (c, type))
+				if (!Convert.ImplicitStandardConversionExists (c, type, ec))
 					ec.Report.Warning (469, 2, loc,
 						"The `goto case' value is not implicitly convertible to type `{0}'",
 						TypeManager.CSharpName (type));
@@ -1747,7 +1747,7 @@ namespace Mono.CSharp {
 				return null;
 			}
 
-			c = c.ConvertImplicitly (li.Type);
+			c = c.ConvertImplicitly (li.Type, bc);
 			if (c == null) {
 				if (TypeSpec.IsReferenceType (li.Type))
 					initializer.Error_ConstantCanBeInitializedWithNullOnly (bc, li.Type, initializer.Location, li.Name);

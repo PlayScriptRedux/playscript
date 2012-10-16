@@ -1,0 +1,12 @@
+package {
+
+	public class TypeError extends Error {
+	
+		public function TypeError(message:String = "") {
+			super(message);
+		}
+		
+	}
+
+}
+

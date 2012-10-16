@@ -1,0 +1,56 @@
+package flash.events {
+
+	public class KeyboardEvent extends Event {
+	
+		//
+		// Constants
+		//
+ 	 	
+ 	 	public static const KEY_DOWN : String = "keyDown";
+
+ 	 	public static const KEY_UP : String = "keyUp";
+	
+		//
+		// Properties
+		//
+	
+		public property altKey : Boolean { get; set; }
+
+ 	 	public property charCode : uint { get; set; }
+
+ 	 	public property commandKey : Boolean { get; set; }
+
+ 	 	public property controlKey : Boolean { get; set; }
+
+ 	 	public property ctrlKey : Boolean { get; set; }
+
+ 	 	public property keyCode : uint { get; set; }
+
+ 	 	public property keyLocation : uint { get; set; }
+
+ 	 	public property shiftKey : Boolean { get; set; }
+
+ 	 	//
+ 	 	// Methods
+ 	 	// 
+ 	 		
+ 	 	public function KeyboardEvent(type:String, bubbles:Boolean = true, cancelable:Boolean = false, 
+ 	 	 	charCodeValue:uint = 0, keyCodeValue:uint = 0, keyLocationValue:uint = 0, ctrlKeyValue:Boolean = false, altKeyValue:Boolean = false, 
+ 	 		shiftKeyValue:Boolean = false, controlKeyValue:Boolean = false, commandKeyValue:Boolean = false) {
+ 	 		super(type);
+ 	 	}
+
+ 	 	public override function clone():Event {
+ 	 		return null;
+ 	 	}
+
+		public override function toString():String {
+			return null;
+		}
+
+		public function updateAfterEvent():void {
+		}
+	
+	}
+
+}

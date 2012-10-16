@@ -67,12 +67,14 @@ namespace Mono.CSharp
 
 		// Predefined operators tables
 		public readonly Binary.PredefinedOperator[] OperatorsBinaryStandard;
+		public readonly Binary.PredefinedOperator[] AsOperatorsBinaryStandard; // ActionScript - Include BOOL conversions for logical ops
 		public readonly Binary.PredefinedOperator[] OperatorsBinaryEquality;
 		public readonly Binary.PredefinedOperator[] OperatorsBinaryUnsafe;
 		public readonly TypeSpec[][] OperatorsUnary;
 		public readonly TypeSpec[] OperatorsUnaryMutator;
 
 		public readonly TypeSpec[] BinaryPromotionsTypes;
+		public readonly TypeSpec[] AsBinaryPromotionsTypes;  // ActionScript binary promotion types - includes BOOL.
 		public readonly TypeSpec[] SwitchUserTypes;
 
 		readonly BuiltinTypeSpec[] types;
@@ -119,12 +121,15 @@ namespace Mono.CSharp
 			Dynamic = new BuiltinTypeSpec ("dynamic", BuiltinTypeSpec.Type.Dynamic);
 
 			OperatorsBinaryStandard = Binary.CreateStandardOperatorsTable (this);
+			AsOperatorsBinaryStandard = Binary.CreateAsStandardOperatorsTable (this);
 			OperatorsBinaryEquality = Binary.CreateEqualityOperatorsTable (this);
 			OperatorsBinaryUnsafe = Binary.CreatePointerOperatorsTable (this);
 			OperatorsUnary = Unary.CreatePredefinedOperatorsTable (this);
 			OperatorsUnaryMutator = UnaryMutator.CreatePredefinedOperatorsTable (this);
 
 			BinaryPromotionsTypes = ConstantFold.CreateBinaryPromotionsTypes (this);
+			// ActionScript binary promotion types (includes bool).
+			AsBinaryPromotionsTypes = ConstantFold.CreateAsBinaryPromotionsTypes (this);
 			SwitchUserTypes = Switch.CreateSwitchUserTypes (this);
 
 			types = new BuiltinTypeSpec[] {

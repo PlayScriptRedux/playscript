@@ -141,7 +141,16 @@
     <Compile Include="flash\display3D\textures\RectangleTexture.asx" />
     <Compile Include="flash\display3D\textures\Texture.asx" />
     <Compile Include="flash\display3D\textures\TextureBase.asx" />
+    <Compile Include="flash\errors\EOFError.asx" />
+    <Compile Include="flash\errors\IOError.asx" />
+    <Compile Include="flash\errors\IllegalOperationError.asx" />
+    <Compile Include="flash\errors\InvalidSWFError.asx" />
+    <Compile Include="flash\errors\MemoryError.asx" />
+    <Compile Include="flash\errors\StackOverflowError.asx" />
     <Compile Include="flash\events\ErrorEvent.asx" />
+    <Compile Include="flash\events\KeyboardEvent.asx" />
+    <Compile Include="flash\events\MouseEvent.asx" />
+    <Compile Include="flash\events\TouchEvent.asx" />
     <Compile Include="flash\events\UncaughtErrorEvents.asx" />
     <Compile Include="flash\filters\BitmapFilter.asx" />
     <Compile Include="flash\geom\ColorTransform.asx" />
@@ -154,10 +163,18 @@
     <Compile Include="flash\geom\Transform.asx" />
     <Compile Include="flash\geom\Utils3D.asx" />
     <Compile Include="flash\geom\Vector3D.asx" />
+    <Compile Include="flash\media\ID3Info.asx" />
+    <Compile Include="flash\media\SouncChannel.asx" />
+    <Compile Include="flash\media\Sound.asx" />
+    <Compile Include="flash\media\SoundLoaderContext.asx" />
     <Compile Include="flash\media\SoundTransform.asx" />
     <Compile Include="flash\media\StageVideo.asx" />
     <Compile Include="flash\net\URLRequest.asx" />
     <Compile Include="flash\system\ApplicationDomain.asx" />
+    <Compile Include="flash\system\Capabilities.asx" />
+    <Compile Include="flash\system\IME.asx" />
+    <Compile Include="flash\system\IMEConversionMode.asx" />
+    <Compile Include="flash\system\JPEGLoaderContext.asx" />
     <Compile Include="flash\system\LoaderContext.asx" />
     <Compile Include="flash\system\Security.asx" />
     <Compile Include="flash\system\SecurityDomain.asx" />
@@ -180,6 +197,14 @@
     <Compile Include="flash\text\TextLineMetrics.asx" />
     <Compile Include="flash\text\TextRenderer.asx" />
     <Compile Include="flash\text\TextSnapshot.asx" />
+    <Compile Include="flash\ui\KeyLocation.asx" />
+    <Compile Include="flash\ui\Keyboard.asx" />
+    <Compile Include="flash\ui\KeyboardType.asx" />
+    <Compile Include="flash\ui\Mouse.asx" />
+    <Compile Include="flash\ui\MouseCursor.asx" />
+    <Compile Include="flash\ui\MouseCursorData.asx" />
+    <Compile Include="flash\ui\Multitouch.asx" />
+    <Compile Include="flash\ui\MultitouchInputMode.asx" />
     <Compile Include="flash\utils\ByteArray.asx" />
     <Compile Include="flash\utils\Dictionary.asx" />
     <Compile Include="flash\utils\Endian.asx" />
@@ -187,6 +212,5 @@
     <Compile Include="flash\utils\IDataOutput.asx" />
     <Compile Include="flash\utils\Timer.asx" />
     <Compile Include="flash\utils\utils_functions.asx" />
-    <Compile Include="flash\xml\XMLList.txt" />
   </ItemGroup>
 </Project>

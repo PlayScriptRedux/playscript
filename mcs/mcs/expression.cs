@@ -446,12 +446,16 @@ namespace Mono.CSharp
 				case BuiltinTypeSpec.Type.Short:
 				case BuiltinTypeSpec.Type.UShort:
 				case BuiltinTypeSpec.Type.Char:
-					return Convert.ImplicitNumericConversion (expr, rc.BuiltinTypes.Int);
+					return Convert.ImplicitNumericConversion (expr, rc.BuiltinTypes.Int, rc);
 				}
 			}
 
 			if (op == Operator.UnaryNegation && expr_type.BuiltinType == BuiltinTypeSpec.Type.UInt)
-				return Convert.ImplicitNumericConversion (expr, rc.BuiltinTypes.Long);
+				return Convert.ImplicitNumericConversion (expr, rc.BuiltinTypes.Long, rc);
+
+			// ActionScript - implicit conversion of numeric types to bool
+			if (rc.FileType == SourceFileType.ActionScript && op == Operator.LogicalNot)
+				return Convert.ImplicitNumericConversion (expr, rc.BuiltinTypes.Bool, rc);
 
 			return expr;
 		}
@@ -1491,7 +1495,7 @@ namespace Mono.CSharp
 				//
 				// An unboxing conversion exists
 				//
-				if (Convert.ExplicitReferenceConversionExists (d, t))
+				if (Convert.ExplicitReferenceConversionExists (d, t, ec))
 					return this;
 			} else {
 				if (TypeManager.IsGenericParameter (t))
@@ -1516,7 +1520,7 @@ namespace Mono.CSharp
 						return CreateConstantResult (ec, true);
 					}
 				} else {
-					if (Convert.ImplicitReferenceConversionExists (d, t)) {
+					if (Convert.ImplicitReferenceConversionExists (d, t, ec)) {
 						//
 						// Do not optimize for imported type
 						//
@@ -1531,7 +1535,7 @@ namespace Mono.CSharp
 							this).Resolve (ec);
 					}
 
-					if (Convert.ExplicitReferenceConversionExists (d, t)) {
+					if (Convert.ExplicitReferenceConversionExists (d, t, ec)) {
 						return this;
 					}
 				}
@@ -1638,7 +1642,7 @@ namespace Mono.CSharp
 				return ReducedExpression.Create (e, this).Resolve (ec);
 			}
 
-			if (Convert.ExplicitReferenceConversionExists (etype, type)){
+			if (Convert.ExplicitReferenceConversionExists (etype, type, ec)){
 				if (TypeManager.IsGenericParameter (etype))
 					expr = new BoxedCast (expr, etype);
 
@@ -1804,7 +1808,7 @@ namespace Mono.CSharp
 			}
 
 			if (type.IsPointer)
-				return new NullLiteral (Location).ConvertImplicitly (type);
+				return new NullLiteral (Location).ConvertImplicitly (type, ec);
 
 			if (TypeSpec.IsReferenceType (type))
 				return new NullConstant (type, loc);
@@ -1858,23 +1862,34 @@ namespace Mono.CSharp
 			protected readonly TypeSpec right;
 			public readonly Operator OperatorsMask;
 			public TypeSpec ReturnType;
+			public bool ImplicitConv;
 
 			public PredefinedOperator (TypeSpec ltype, TypeSpec rtype, Operator op_mask)
-				: this (ltype, rtype, op_mask, ltype)
+				: this (ltype, rtype, op_mask, ltype, false)
 			{
 			}
 
 			public PredefinedOperator (TypeSpec type, Operator op_mask, TypeSpec return_type)
-				: this (type, type, op_mask, return_type)
+				: this (type, type, op_mask, return_type, false)
+			{
+			}
+
+			public PredefinedOperator (TypeSpec type, Operator op_mask, TypeSpec return_type, bool implicit_conv)
+				: this (type, type, op_mask, return_type, implicit_conv)
 			{
 			}
 
 			public PredefinedOperator (TypeSpec type, Operator op_mask)
-				: this (type, type, op_mask, type)
+				: this (type, type, op_mask, type, false)
 			{
 			}
 
 			public PredefinedOperator (TypeSpec ltype, TypeSpec rtype, Operator op_mask, TypeSpec return_type)
+				: this (ltype, rtype, op_mask, return_type, false)
+			{
+			}
+
+			public PredefinedOperator (TypeSpec ltype, TypeSpec rtype, Operator op_mask, TypeSpec return_type, bool implicit_conv)
 			{
 				if ((op_mask & Operator.ValuesOnlyMask) != 0)
 					throw new InternalErrorException ("Only masked values can be used");
@@ -1883,14 +1898,20 @@ namespace Mono.CSharp
 				this.right = rtype;
 				this.OperatorsMask = op_mask;
 				this.ReturnType = return_type;
+				this.ImplicitConv = implicit_conv;
 			}
 
 			public virtual Expression ConvertResult (ResolveContext ec, Binary b)
 			{
 				b.type = ReturnType;
 
-				b.left = Convert.ImplicitConversion (ec, b.left, left, b.left.Location);
-				b.right = Convert.ImplicitConversion (ec, b.right, right, b.right.Location);
+				if (ImplicitConv) {
+					b.left = Convert.ImplicitConversion (ec, b.left, ReturnType, b.left.Location);
+					b.right = Convert.ImplicitConversion (ec, b.right, ReturnType, b.right.Location);
+				} else {
+					b.left = Convert.ImplicitConversion (ec, b.left, left, b.left.Location);
+					b.right = Convert.ImplicitConversion (ec, b.right, right, b.right.Location);
+				}
 
 				//
 				// A user operators does not support multiple user conversions, but decimal type
@@ -2609,8 +2630,9 @@ namespace Mono.CSharp
 			//
 			if (BuiltinTypeSpec.IsPrimitiveType (l) && BuiltinTypeSpec.IsPrimitiveType (r)) {
 				if ((oper & Operator.ShiftMask) == 0) {
-					if (l.BuiltinType != BuiltinTypeSpec.Type.Bool && !DoBinaryOperatorPromotion (ec))
-						return null;
+					if ((ec.FileType == SourceFileType.ActionScript || l.BuiltinType != BuiltinTypeSpec.Type.Bool) && 
+					    !DoBinaryOperatorPromotion (ec))
+							return null;
 
 					primitives_only = true;
 				}
@@ -2652,7 +2674,10 @@ namespace Mono.CSharp
 				}
 			}
 
-			return ResolveOperatorPredefined (ec, ec.BuiltinTypes.OperatorsBinaryStandard, primitives_only, null);
+			PredefinedOperator [] operatorsBinaryStandard = (ec.FileType == SourceFileType.ActionScript ? 
+				ec.BuiltinTypes.AsOperatorsBinaryStandard : ec.BuiltinTypes.OperatorsBinaryStandard);
+
+			return ResolveOperatorPredefined (ec, operatorsBinaryStandard, primitives_only, null);
 		}
 
 		// at least one of 'left' or 'right' is an enumeration constant (EnumConstant or SideEffectConstant or ...)
@@ -2788,6 +2813,49 @@ namespace Mono.CSharp
 			};
 		}
 
+		// ActionScript - We allow implicit conversion of numeric types to bools.
+		public static PredefinedOperator[] CreateAsStandardOperatorsTable (BuiltinTypes types)
+		{
+			TypeSpec bool_type = types.Bool;
+			return new PredefinedOperator[] {
+				new PredefinedOperator (types.Int, Operator.ArithmeticMask | Operator.BitwiseMask),
+				new PredefinedOperator (types.UInt, Operator.ArithmeticMask | Operator.BitwiseMask),
+				new PredefinedOperator (types.Long, Operator.ArithmeticMask | Operator.BitwiseMask),
+				new PredefinedOperator (types.ULong, Operator.ArithmeticMask | Operator.BitwiseMask),
+				new PredefinedOperator (types.Float, Operator.ArithmeticMask),
+				new PredefinedOperator (types.Double, Operator.ArithmeticMask),
+				new PredefinedOperator (types.Decimal, Operator.ArithmeticMask),
+				
+				new PredefinedOperator (types.Int, Operator.ComparisonMask, bool_type),
+				new PredefinedOperator (types.UInt, Operator.ComparisonMask, bool_type),
+				new PredefinedOperator (types.Long, Operator.ComparisonMask, bool_type),
+				new PredefinedOperator (types.ULong, Operator.ComparisonMask, bool_type),
+				new PredefinedOperator (types.Float, Operator.ComparisonMask, bool_type),
+				new PredefinedOperator (types.Double, Operator.ComparisonMask, bool_type),
+				new PredefinedOperator (types.Decimal, Operator.ComparisonMask, bool_type),
+
+				new PredefinedOperator (types.Int, Operator.LogicalMask, bool_type, true),
+				new PredefinedOperator (types.UInt, Operator.LogicalMask, bool_type, true),
+				new PredefinedOperator (types.Long, Operator.LogicalMask, bool_type, true),
+				new PredefinedOperator (types.ULong, Operator.LogicalMask, bool_type, true),
+				new PredefinedOperator (types.Float, Operator.LogicalMask, bool_type, true),
+				new PredefinedOperator (types.Double, Operator.LogicalMask, bool_type, true),
+				new PredefinedOperator (types.Decimal, Operator.LogicalMask, bool_type, true),
+
+
+				new PredefinedStringOperator (types.String, Operator.AdditionMask, types.String),
+				new PredefinedStringOperator (types.String, types.Object, Operator.AdditionMask, types.String),
+				new PredefinedStringOperator (types.Object, types.String, Operator.AdditionMask, types.String),
+				
+				new PredefinedOperator (bool_type, Operator.BitwiseMask | Operator.LogicalMask | Operator.EqualityMask, bool_type),
+				
+				new PredefinedShiftOperator (types.Int, types.Int, Operator.ShiftMask),
+				new PredefinedShiftOperator (types.UInt, types.Int, Operator.ShiftMask),
+				new PredefinedShiftOperator (types.Long, types.Int, Operator.ShiftMask),
+				new PredefinedShiftOperator (types.ULong, types.Int, Operator.ShiftMask)
+			};
+		}
+
 		public static PredefinedOperator[] CreateEqualityOperatorsTable (BuiltinTypes types)
 		{
 			TypeSpec bool_type = types.Bool;
@@ -2808,7 +2876,7 @@ namespace Mono.CSharp
 
 			Constant c = prim_expr as Constant;
 			if (c != null) {
-				temp = c.ConvertImplicitly (type);
+				temp = c.ConvertImplicitly (type, rc);
 				if (temp != null) {
 					prim_expr = temp;
 					return true;
@@ -2826,9 +2894,9 @@ namespace Mono.CSharp
 					if (type != second_expr.Type) {
 						c = second_expr as Constant;
 						if (c != null)
-							temp = c.ConvertImplicitly (type);
+							temp = c.ConvertImplicitly (type, rc);
 						else
-							temp = Convert.ImplicitNumericConversion (second_expr, type);
+							temp = Convert.ImplicitNumericConversion (second_expr, type, rc);
 						if (temp == null)
 							return false;
 						second_expr = temp;
@@ -2848,7 +2916,7 @@ namespace Mono.CSharp
 				}
 			}
 
-			temp = Convert.ImplicitNumericConversion (prim_expr, type);
+			temp = Convert.ImplicitNumericConversion (prim_expr, type, rc);
 			if (temp == null)
 				return false;
 
@@ -2865,7 +2933,11 @@ namespace Mono.CSharp
 			TypeSpec rtype = right.Type;
 			Expression temp;
 
-			foreach (TypeSpec t in ec.BuiltinTypes.BinaryPromotionsTypes) {
+			// ActionScript - AS has bool as an additional binary promotion type.
+			TypeSpec[] binaryPromotionsTypes = (ec.FileType == SourceFileType.ActionScript ? 
+			                                    ec.BuiltinTypes.AsBinaryPromotionsTypes : ec.BuiltinTypes.BinaryPromotionsTypes);
+
+			foreach (TypeSpec t in binaryPromotionsTypes) {
 				if (t == ltype)
 					return t == rtype || DoNumericPromotion (ec, ref right, ref left, t);
 
@@ -2877,9 +2949,9 @@ namespace Mono.CSharp
 			if (ltype != int32) {
 				Constant c = left as Constant;
 				if (c != null)
-					temp = c.ConvertImplicitly (int32);
+					temp = c.ConvertImplicitly (int32, ec);
 				else
-					temp = Convert.ImplicitNumericConversion (left, int32);
+					temp = Convert.ImplicitNumericConversion (left, int32, ec);
 
 				if (temp == null)
 					return false;
@@ -2889,9 +2961,9 @@ namespace Mono.CSharp
 			if (rtype != int32) {
 				Constant c = right as Constant;
 				if (c != null)
-					temp = c.ConvertImplicitly (int32);
+					temp = c.ConvertImplicitly (int32, ec);
 				else
-					temp = Convert.ImplicitNumericConversion (right, int32);
+					temp = Convert.ImplicitNumericConversion (right, int32, ec);
 
 				if (temp == null)
 					return false;
@@ -3294,14 +3366,14 @@ namespace Mono.CSharp
 			// with constants and expressions
 			if (left.Type != underlying_type) {
 				if (left is Constant)
-					left = ((Constant) left).ConvertExplicitly (false, underlying_type);
+					left = ((Constant) left).ConvertExplicitly (false, underlying_type, ec);
 				else
 					left = EmptyCast.Create (left, underlying_type);
 			}
 
 			if (right.Type != underlying_type) {
 				if (right is Constant)
-					right = ((Constant) right).ConvertExplicitly (false, underlying_type);
+					right = ((Constant) right).ConvertExplicitly (false, underlying_type, ec);
 				else
 					right = EmptyCast.Create (right, underlying_type);
 			}
@@ -3468,8 +3540,8 @@ namespace Mono.CSharp
 				return l.Kind == MemberKind.InternalCompilerType || l.Kind == MemberKind.Struct ? null : this;
 			}
 
-			if (!Convert.ExplicitReferenceConversionExists (l, r) &&
-				!Convert.ExplicitReferenceConversionExists (r, l))
+			if (!Convert.ExplicitReferenceConversionExists (l, r, ec) &&
+				!Convert.ExplicitReferenceConversionExists (r, l, ec))
 				return null;
 
 			// Reject allowed explicit conversions like int->object
@@ -3709,7 +3781,7 @@ namespace Mono.CSharp
 		{
 			if (c is IntegralConstant || c is CharConstant) {
 				try {
-					c.ConvertExplicitly (true, type);
+					c.ConvertExplicitly (true, type, ec);
 				} catch (OverflowException) {
 					ec.Report.Warning (652, 2, loc,
 						"A comparison between a constant and a variable is useless. The constant is out of the range of the variable type `{0}'",
@@ -8224,6 +8296,14 @@ namespace Mono.CSharp
 			Namespace ns = expr_resolved as Namespace;
 			if (ns != null) {
 				FullNamedExpression retval = ns.LookupTypeOrNamespace (rc, Name, Arity, LookupMode.Normal, loc);
+
+				// Lookup ClassName_fn function classes (if ActionScript)
+				if (retval == null && rc.FileType == SourceFileType.ActionScript) {
+					retval = ns.LookupTypeOrNamespace (rc, Name + "_fn", Arity, LookupMode.Normal, loc);
+					if (retval == null) {
+						retval = ns.LookupTypeOrNamespace (rc, Name + "_ns", Arity, LookupMode.Normal, loc);
+					}
+				}
 
 				if (retval == null) {
 					ns.Error_NamespaceDoesNotExist (rc, Name, Arity, loc);

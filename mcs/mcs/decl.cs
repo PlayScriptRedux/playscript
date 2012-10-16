@@ -274,6 +274,12 @@ namespace Mono.CSharp {
 		/// </summary>
 		public abstract string DocCommentHeader { get; }
 
+		public virtual SourceFileType FileType { 
+			get {
+				return member_name.Location.SourceFile != null ? member_name.Location.SourceFile.FileType : SourceFileType.CSharp;
+			}
+		}
+
 		[Flags]
 		public enum Flags {
 			Obsolete_Undetected = 1,		// Obsolete attribute has not been detected yet

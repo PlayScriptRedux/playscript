@@ -1,0 +1,12 @@
+package {
+
+	public class DefinitionError extends Error {
+	
+		public function DefinitionError(message:String = "") {
+			super(message);
+		}
+		
+	}
+
+}
+

@@ -1,0 +1,12 @@
+package {
+
+	public class SecurityError extends Error {
+	
+		public function SecurityError(message:String = "") {
+			super(message);
+		}
+		
+	}
+
+}
+

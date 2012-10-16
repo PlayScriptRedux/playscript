@@ -22,6 +22,14 @@ namespace Mono.CSharp {
 			};
 		}
 
+		public static TypeSpec[] CreateAsBinaryPromotionsTypes (BuiltinTypes types)
+		{
+			return new TypeSpec[] { 
+				types.Bool, types.Decimal, types.Double, types.Float,
+				types.ULong, types.Long, types.UInt 
+			};
+		}
+
 		//
 		// Performs the numeric promotions on the left and right expresions
 		// and deposits the results on `lc' and `rc'.
@@ -37,7 +45,11 @@ namespace Mono.CSharp {
 			TypeSpec ltype = left.Type;
 			TypeSpec rtype = right.Type;
 
-			foreach (TypeSpec t in rc.BuiltinTypes.BinaryPromotionsTypes) {
+			// ActionScript - AS has bool as an additional binary promotion type.
+			TypeSpec[] binaryPromotionsTypes = (rc.FileType == SourceFileType.ActionScript ? 
+			                                    rc.BuiltinTypes.AsBinaryPromotionsTypes : rc.BuiltinTypes.BinaryPromotionsTypes);
+
+			foreach (TypeSpec t in binaryPromotionsTypes) {
 				if (t == ltype)
 					return t == rtype || ConvertPromotion (rc, ref right, ref left, t);
 
@@ -45,14 +57,14 @@ namespace Mono.CSharp {
 					return t == ltype || ConvertPromotion (rc, ref left, ref right, t);
 			}
 
-			left = left.ConvertImplicitly (rc.BuiltinTypes.Int);
-			right = right.ConvertImplicitly (rc.BuiltinTypes.Int);
+			left = left.ConvertImplicitly (rc.BuiltinTypes.Int, rc);
+			right = right.ConvertImplicitly (rc.BuiltinTypes.Int, rc);
 			return left != null && right != null;
 		}
 
 		static bool ConvertPromotion (ResolveContext rc, ref Constant prim, ref Constant second, TypeSpec type)
 		{
-			Constant c = prim.ConvertImplicitly (type);
+			Constant c = prim.ConvertImplicitly (type, rc);
 			if (c != null) {
 				prim = c;
 				return true;
@@ -60,8 +72,8 @@ namespace Mono.CSharp {
 
 			if (type.BuiltinType == BuiltinTypeSpec.Type.UInt) {
 				type = rc.BuiltinTypes.Long;
-				prim = prim.ConvertImplicitly (type);
-				second = second.ConvertImplicitly (type);
+				prim = prim.ConvertImplicitly (type, rc);
+				second = second.ConvertImplicitly (type, rc);
 				return prim != null && second != null;
 			}
 
@@ -332,7 +344,7 @@ namespace Mono.CSharp {
 					}
 
 					// U has to be implicitly convetible to E.base
-					right = right.ConvertImplicitly (lc.Child.Type);
+					right = right.ConvertImplicitly (lc.Child.Type, ec);
 					if (right == null)
 						return null;
 
@@ -451,7 +463,7 @@ namespace Mono.CSharp {
 					}
 
 					// U has to be implicitly convetible to E.base
-					right = right.ConvertImplicitly (lc.Child.Type);
+					right = right.ConvertImplicitly (lc.Child.Type, ec);
 					if (right == null)
 						return null;
 
@@ -855,7 +867,7 @@ namespace Mono.CSharp {
 					return (Constant) new Nullable.LiftedBinaryOperator (oper, lifted_int, right).Resolve (ec);
 				}
 
-				IntConstant ic = right.ConvertImplicitly (ec.BuiltinTypes.Int) as IntConstant;
+				IntConstant ic = right.ConvertImplicitly (ec.BuiltinTypes.Int, ec) as IntConstant;
 				if (ic == null){
 					Binary.Error_OperatorCannotBeApplied (ec, left, right, oper, loc);
 					return null;
@@ -875,7 +887,7 @@ namespace Mono.CSharp {
 				if (left is NullLiteral)
 					return (Constant) new Nullable.LiftedBinaryOperator (oper, left, right).Resolve (ec);
 
-				left = left.ConvertImplicitly (ec.BuiltinTypes.Int);
+				left = left.ConvertImplicitly (ec.BuiltinTypes.Int, ec);
 				if (left.Type.BuiltinType == BuiltinTypeSpec.Type.Int)
 					return new IntConstant (ec.BuiltinTypes, ((IntConstant) left).Value << lshift_val, left.Location);
 
@@ -892,7 +904,7 @@ namespace Mono.CSharp {
 					return (Constant) new Nullable.LiftedBinaryOperator (oper, lifted_int, right).Resolve (ec);
 				}
 
-				IntConstant sic = right.ConvertImplicitly (ec.BuiltinTypes.Int) as IntConstant;
+				IntConstant sic = right.ConvertImplicitly (ec.BuiltinTypes.Int, ec) as IntConstant;
 				if (sic == null){
 					Binary.Error_OperatorCannotBeApplied (ec, left, right, oper, loc); ;
 					return null;
@@ -911,7 +923,7 @@ namespace Mono.CSharp {
 				if (left is NullLiteral)
 					return (Constant) new Nullable.LiftedBinaryOperator (oper, left, right).Resolve (ec);
 
-				left = left.ConvertImplicitly (ec.BuiltinTypes.Int);
+				left = left.ConvertImplicitly (ec.BuiltinTypes.Int, ec);
 				if (left.Type.BuiltinType == BuiltinTypeSpec.Type.Int)
 					return new IntConstant (ec.BuiltinTypes, ((IntConstant) left).Value >> rshift_val, left.Location);
 

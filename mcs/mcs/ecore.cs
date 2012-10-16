@@ -1233,13 +1233,13 @@ namespace Mono.CSharp {
 			this.type = type;
 		}
 
-		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type)
+		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type, ResolveContext opt_ec)
 		{
 			if (child.Type == target_type)
 				return child;
 
 			// FIXME: check that 'type' can be converted to 'target_type' first
-			return child.ConvertExplicitly (in_checked_context, target_type);
+			return child.ConvertExplicitly (in_checked_context, target_type, opt_ec);
 		}
 
 		public override Expression CreateExpressionTree (ResolveContext ec)
@@ -1314,16 +1314,16 @@ namespace Mono.CSharp {
 			return child.GetValueAsLong ();
 		}
 
-		public override Constant ConvertImplicitly (TypeSpec target_type)
+		public override Constant ConvertImplicitly (TypeSpec target_type, ResolveContext opt_ec)
 		{
 			if (type == target_type)
 				return this;
 
 			// FIXME: Do we need to check user conversions?
-			if (!Convert.ImplicitStandardConversionExists (this, target_type))
+			if (!Convert.ImplicitStandardConversionExists (this, target_type, opt_ec))
 				return null;
 
-			return child.ConvertImplicitly (target_type);
+			return child.ConvertImplicitly (target_type, opt_ec);
 		}
 	}
 
@@ -1429,25 +1429,25 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public override Constant ConvertExplicitly(bool in_checked_context, TypeSpec target_type)
+		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type, ResolveContext opt_ec)
 		{
 			if (Child.Type == target_type)
 				return Child;
 
-			return Child.ConvertExplicitly (in_checked_context, target_type);
+			return Child.ConvertExplicitly (in_checked_context, target_type, opt_ec);
 		}
 
-		public override Constant ConvertImplicitly (TypeSpec type)
+		public override Constant ConvertImplicitly (TypeSpec type, ResolveContext opt_ec)
 		{
 			if (this.type == type) {
 				return this;
 			}
 
-			if (!Convert.ImplicitStandardConversionExists (this, type)){
+			if (!Convert.ImplicitStandardConversionExists (this, type, opt_ec)){
 				return null;
 			}
 
-			return Child.ConvertImplicitly (type);
+			return Child.ConvertImplicitly (type, opt_ec);
 		}
 	}
 
@@ -1852,9 +1852,9 @@ namespace Mono.CSharp {
 				this.orig_expr = orig_expr;
 			}
 
-			public override Constant ConvertImplicitly (TypeSpec target_type)
+			public override Constant ConvertImplicitly (TypeSpec target_type, ResolveContext opt_ec)
 			{
-				Constant c = base.ConvertImplicitly (target_type);
+				Constant c = base.ConvertImplicitly (target_type, opt_ec);
 				if (c != null)
 					c = new ReducedConstantExpression (c, orig_expr);
 
@@ -1866,9 +1866,9 @@ namespace Mono.CSharp {
 				return orig_expr.CreateExpressionTree (ec);
 			}
 
-			public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type)
+			public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type, ResolveContext opt_ec)
 			{
-				Constant c = base.ConvertExplicitly (in_checked_context, target_type);
+				Constant c = base.ConvertExplicitly (in_checked_context, target_type, opt_ec);
 				if (c != null)
 					c = new ReducedConstantExpression (c, orig_expr);
 				return c;
@@ -4521,7 +4521,7 @@ namespace Mono.CSharp {
 						//
 						var at = a.Type;
 						if (at == pt || TypeSpecComparer.IsEqual (at, pt) ||
-							Convert.ImplicitReferenceConversionExists (at, pt, false) ||
+							Convert.ImplicitReferenceConversionExists (at, pt, false, ec) ||
 							Convert.ImplicitBoxingConversion (null, at, pt) != null) {
 							score = 0;
 							continue;
@@ -5201,7 +5201,7 @@ namespace Mono.CSharp {
 					if (a.Expr.Type == pt || TypeSpecComparer.IsEqual (a.Expr.Type, pt)) {
 						conv = a.Expr;
 					} else {
-						conv = Convert.ImplicitReferenceConversion (a.Expr, pt, false);
+						conv = Convert.ImplicitReferenceConversion (a.Expr, pt, false, ec);
 						if (conv == null)
 							conv = Convert.ImplicitBoxingConversion (a.Expr, a.Expr.Type, pt);
 					}

@@ -434,7 +434,7 @@ namespace Mono.CSharp {
 			if (a.IsGenericParameter && b.IsGenericParameter)
 				return a == b;
 
-			return Convert.ImplicitReferenceConversionExists (a, b);
+			return Convert.ImplicitReferenceConversionExists (a, b, null);
 		}
 
 		public static string FullDelegateDesc (MethodSpec invoke_method)

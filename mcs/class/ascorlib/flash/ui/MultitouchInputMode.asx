@@ -1,0 +1,17 @@
+package flash.ui {
+
+	public static class MultitouchInputMode {
+	
+		//
+		// Constants
+		//
+
+		public static const GESTURE : String = "gesture";
+
+ 	 	public static const NONE : String = "none";
+
+ 	 	public static const TOUCH_POINT : String = "touchPoint";
+	
+	}
+
+}

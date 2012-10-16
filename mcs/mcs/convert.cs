@@ -48,9 +48,9 @@ namespace Mono.CSharp {
 				return false;
 
 			if (isExplicit)
-				return ExplicitReferenceConversionExists (array.Element, arg_type);
+				return ExplicitReferenceConversionExists (array.Element, arg_type, null);
 
-			return ImplicitReferenceConversionExists (array.Element, arg_type);
+			return ImplicitReferenceConversionExists (array.Element, arg_type, null);
 		}
 		
 		static bool IList_To_Array(TypeSpec list, ArrayContainer array)
@@ -62,7 +62,7 @@ namespace Mono.CSharp {
 			if (array.Element == arg_type)
 				return true;
 			
-			return ImplicitReferenceConversionExists (array.Element, arg_type) || ExplicitReferenceConversionExists (array.Element, arg_type);
+			return ImplicitReferenceConversionExists (array.Element, arg_type, null) || ExplicitReferenceConversionExists (array.Element, arg_type, null);
 		}
 
 		public static Expression ImplicitTypeParameterConversion (Expression expr, TypeParameterSpec expr_type, TypeSpec target_type)
@@ -163,22 +163,28 @@ namespace Mono.CSharp {
 			return null;
 		}
 
-		public static Expression ImplicitReferenceConversion (Expression expr, TypeSpec target_type, bool explicit_cast)
+		public static Expression ImplicitReferenceConversion (Expression expr, TypeSpec target_type, bool explicit_cast, ResolveContext opt_ec)
 		{
 			TypeSpec expr_type = expr.Type;
 
 			if (expr_type.Kind == MemberKind.TypeParameter)
 				return ImplicitTypeParameterConversion (expr, (TypeParameterSpec) expr.Type, target_type);
 
+			SourceFileType ft = (opt_ec == null ? SourceFileType.CSharp : opt_ec.FileType);
+
+			if (ft == SourceFileType.ActionScript && target_type.BuiltinType == BuiltinTypeSpec.Type.Bool) {
+				return new Binary(Binary.Operator.Equality, expr, new NullLiteral(expr.Location)).Resolve(opt_ec);
+			}
+
 			//
 			// from the null type to any reference-type.
 			//
 			NullLiteral nl = expr as NullLiteral;
 			if (nl != null) {
-				return nl.ConvertImplicitly (target_type);
+				return nl.ConvertImplicitly (target_type, null);
 			}
 
-			if (ImplicitReferenceConversionExists (expr_type, target_type)) {
+			if (ImplicitReferenceConversionExists (expr_type, target_type, opt_ec)) {
 				// 
 				// Avoid wrapping implicitly convertible reference type
 				//
@@ -194,12 +200,12 @@ namespace Mono.CSharp {
 		//
 		// Implicit reference conversions
 		//
-		public static bool ImplicitReferenceConversionExists (TypeSpec expr_type, TypeSpec target_type)
+		public static bool ImplicitReferenceConversionExists (TypeSpec expr_type, TypeSpec target_type, ResolveContext opt_ec)
 		{
-			return ImplicitReferenceConversionExists (expr_type, target_type, true);
+			return ImplicitReferenceConversionExists (expr_type, target_type, true, opt_ec);
 		}
 
-		public static bool ImplicitReferenceConversionExists (TypeSpec expr_type, TypeSpec target_type, bool refOnlyTypeParameter)
+		public static bool ImplicitReferenceConversionExists (TypeSpec expr_type, TypeSpec target_type, bool refOnlyTypeParameter, ResolveContext opt_ec)
 		{
 			// It's here only to speed things up
 			if (target_type.IsStruct)
@@ -274,7 +280,7 @@ namespace Mono.CSharp {
 					//
 					// An implicit reference conversion exists from SE to TE
 					//
-					return ImplicitReferenceConversionExists (expr_element_type, target_type_array.Element);
+					return ImplicitReferenceConversionExists (expr_element_type, target_type_array.Element, opt_ec);
 				}
 
 				//
@@ -456,9 +462,9 @@ namespace Mono.CSharp {
 					return EmptyExpression.Null;
 
 				if (expr is Constant)
-					return ((Constant) expr).ConvertImplicitly (t_el);
+					return ((Constant) expr).ConvertImplicitly (t_el, ec);
 
-				return ImplicitNumericConversion (null, expr_type, t_el);
+				return ImplicitNumericConversion (null, expr_type, t_el, ec);
 			}
 
 			Expression unwrap;
@@ -470,9 +476,9 @@ namespace Mono.CSharp {
 			Expression conv = unwrap;
 			if (!TypeSpecComparer.IsEqual (expr_type, t_el)) {
 				if (conv is Constant)
-					conv = ((Constant)conv).ConvertImplicitly (t_el);
+					conv = ((Constant)conv).ConvertImplicitly (t_el, ec);
 				else
-					conv = ImplicitNumericConversion (conv, expr_type, t_el);
+					conv = ImplicitNumericConversion (conv, expr_type, t_el, ec);
 
 				if (conv == null)
 					return null;
@@ -490,18 +496,19 @@ namespace Mono.CSharp {
 		///   expr is the expression to convert, returns a new expression of type
 		///   target_type or null if an implicit conversion is not possible.
 		/// </summary>
-		public static Expression ImplicitNumericConversion (Expression expr, TypeSpec target_type)
+		public static Expression ImplicitNumericConversion (Expression expr, TypeSpec target_type, ResolveContext opt_ec)
 		{
-			return ImplicitNumericConversion (expr, expr.Type, target_type);
+			return ImplicitNumericConversion (expr, expr.Type, target_type, opt_ec);
 		}
 
-		public static bool ImplicitNumericConversionExists (TypeSpec expr_type, TypeSpec target_type)
+		public static bool ImplicitNumericConversionExists (TypeSpec expr_type, TypeSpec target_type, ResolveContext opt_ec)
 		{
-			return ImplicitNumericConversion (null, expr_type, target_type) != null;
+			return ImplicitNumericConversion (null, expr_type, target_type, opt_ec) != null;
 		}
 
-		static Expression ImplicitNumericConversion (Expression expr, TypeSpec expr_type, TypeSpec target_type)
+		static Expression ImplicitNumericConversion (Expression expr, TypeSpec expr_type, TypeSpec target_type, ResolveContext opt_ec)
 		{
+			SourceFileType ft = opt_ec == null ? SourceFileType.CSharp : opt_ec.FileType;
 			switch (expr_type.BuiltinType) {
 			case BuiltinTypeSpec.Type.SByte:
 				//
@@ -520,9 +527,11 @@ namespace Mono.CSharp {
 					return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_I2);
 				case BuiltinTypeSpec.Type.Decimal:
 					return expr == null ? EmptyExpression.Null : new OperatorCast (expr, target_type);
-
+				case BuiltinTypeSpec.Type.Bool:
+					if (ft == SourceFileType.ActionScript)
+						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new  IntLiteral(opt_ec.BuiltinTypes, 0, expr.Location)).Resolve(opt_ec);
+					break;
 				}
-
 				break;
 			case BuiltinTypeSpec.Type.Byte:
 				//
@@ -544,6 +553,10 @@ namespace Mono.CSharp {
 					return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_R8);
 				case BuiltinTypeSpec.Type.Decimal:
 					return expr == null ? EmptyExpression.Null : new OperatorCast (expr, target_type);
+				case BuiltinTypeSpec.Type.Bool:
+					if (ft == SourceFileType.ActionScript)
+						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new UIntLiteral(opt_ec.BuiltinTypes, 0, expr.Location)).Resolve(opt_ec);
+					break;
 				}
 				break;
 			case BuiltinTypeSpec.Type.Short:
@@ -561,6 +574,10 @@ namespace Mono.CSharp {
 					return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_R4);
 				case BuiltinTypeSpec.Type.Decimal:
 					return expr == null ? EmptyExpression.Null : new OperatorCast (expr, target_type);
+				case BuiltinTypeSpec.Type.Bool:
+					if (ft == SourceFileType.ActionScript)
+						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new IntLiteral(opt_ec.BuiltinTypes, 0, expr.Location)).Resolve(opt_ec);
+					break;
 				}
 				break;
 			case BuiltinTypeSpec.Type.UShort:
@@ -581,6 +598,10 @@ namespace Mono.CSharp {
 					return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_R4);
 				case BuiltinTypeSpec.Type.Decimal:
 					return expr == null ? EmptyExpression.Null : new OperatorCast (expr, target_type);
+				case BuiltinTypeSpec.Type.Bool:
+					if (ft == SourceFileType.ActionScript)
+						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new UIntLiteral(opt_ec.BuiltinTypes, 0, expr.Location)).Resolve(opt_ec);
+					break;
 				}
 				break;
 			case BuiltinTypeSpec.Type.Int:
@@ -596,6 +617,14 @@ namespace Mono.CSharp {
 					return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_R4);
 				case BuiltinTypeSpec.Type.Decimal:
 					return expr == null ? EmptyExpression.Null : new OperatorCast (expr, target_type);
+				case BuiltinTypeSpec.Type.UInt:
+					if (ft == SourceFileType.ActionScript)
+						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U4);
+					break;
+				case BuiltinTypeSpec.Type.Bool:
+					if (ft == SourceFileType.ActionScript)
+						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new IntLiteral(opt_ec.BuiltinTypes, 0, expr.Location)).Resolve(opt_ec);
+					break;
 				}
 				break;
 			case BuiltinTypeSpec.Type.UInt:
@@ -613,6 +642,14 @@ namespace Mono.CSharp {
 					return expr == null ? EmptyExpression.Null : new OpcodeCastDuplex (expr, target_type, OpCodes.Conv_R_Un, OpCodes.Conv_R4);
 				case BuiltinTypeSpec.Type.Decimal:
 					return expr == null ? EmptyExpression.Null : new OperatorCast (expr, target_type);
+				case BuiltinTypeSpec.Type.Int:
+					if (ft == SourceFileType.ActionScript)
+						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_I4);
+					break;
+				case BuiltinTypeSpec.Type.Bool:
+					if (ft == SourceFileType.ActionScript)
+						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new UIntLiteral(opt_ec.BuiltinTypes, 0, expr.Location)).Resolve(opt_ec);
+					break;
 				}
 				break;
 			case BuiltinTypeSpec.Type.Long:
@@ -626,6 +663,10 @@ namespace Mono.CSharp {
 					return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_R4);
 				case BuiltinTypeSpec.Type.Decimal:
 					return expr == null ? EmptyExpression.Null : new OperatorCast (expr, target_type);
+				case BuiltinTypeSpec.Type.Bool:
+					if (ft == SourceFileType.ActionScript)
+						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new LongLiteral(opt_ec.BuiltinTypes, 0L, expr.Location)).Resolve (opt_ec);
+					break;
 				}
 				break;
 			case BuiltinTypeSpec.Type.ULong:
@@ -639,6 +680,10 @@ namespace Mono.CSharp {
 					return expr == null ? EmptyExpression.Null : new OpcodeCastDuplex (expr, target_type, OpCodes.Conv_R_Un, OpCodes.Conv_R4);
 				case BuiltinTypeSpec.Type.Decimal:
 					return expr == null ? EmptyExpression.Null : new OperatorCast (expr, target_type);
+				case BuiltinTypeSpec.Type.Bool:
+					if (ft == SourceFileType.ActionScript)
+						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new ULongLiteral(opt_ec.BuiltinTypes, 0L, expr.Location)).Resolve(opt_ec);
+					break;
 				}
 				break;
 			case BuiltinTypeSpec.Type.Char:
@@ -668,6 +713,27 @@ namespace Mono.CSharp {
 				//
 				if (target_type.BuiltinType == BuiltinTypeSpec.Type.Double)
 					return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_R8);
+				else if (ft == SourceFileType.ActionScript && target_type.BuiltinType == BuiltinTypeSpec.Type.Bool)
+					return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new FloatLiteral(opt_ec.BuiltinTypes, 0.0f, expr.Location)).Resolve(opt_ec);
+				break;
+			case BuiltinTypeSpec.Type.Double:
+				//
+				// float to double
+				//
+				switch (target_type.BuiltinType) {
+				case BuiltinTypeSpec.Type.Int:
+					if (ft == SourceFileType.ActionScript)
+						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_I4);
+					break;
+				case BuiltinTypeSpec.Type.UInt:
+					if (ft == SourceFileType.ActionScript)
+						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U4);
+					break;
+				case BuiltinTypeSpec.Type.Bool:
+					if (ft == SourceFileType.ActionScript)
+						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new DoubleLiteral(opt_ec.BuiltinTypes, 0.0, expr.Location)).Resolve(opt_ec);
+					break;
+				}
 				break;
 			}
 
@@ -679,7 +745,7 @@ namespace Mono.CSharp {
 		//
 		public static bool ImplicitConversionExists (ResolveContext ec, Expression expr, TypeSpec target_type)
 		{
-			if (ImplicitStandardConversionExists (expr, target_type))
+			if (ImplicitStandardConversionExists (expr, target_type, ec))
 				return true;
 
 			if (expr.Type == InternalType.AnonymousMethod) {
@@ -718,7 +784,7 @@ namespace Mono.CSharp {
 		//
 		// Implicit standard conversion (only core conversions are used here)
 		//
-		public static bool ImplicitStandardConversionExists (Expression expr, TypeSpec target_type)
+		public static bool ImplicitStandardConversionExists (Expression expr, TypeSpec target_type, ResolveContext opt_ec)
 		{
 			//
 			// Identity conversions
@@ -738,10 +804,10 @@ namespace Mono.CSharp {
 			if (target_type.IsNullableType)
 				return ImplicitNulableConversion (null, expr, target_type) != null;
 
-			if (ImplicitNumericConversion (null, expr_type, target_type) != null)
+			if (ImplicitNumericConversion (null, expr_type, target_type, opt_ec) != null)
 				return true;
 
-			if (ImplicitReferenceConversionExists (expr_type, target_type, false))
+			if (ImplicitReferenceConversionExists (expr_type, target_type, false, opt_ec))
 				return true;
 
 			if (ImplicitBoxingConversion (null, expr_type, target_type) != null)
@@ -848,7 +914,7 @@ namespace Mono.CSharp {
 		///  Finds "most encompassed type" according to the spec (13.4.2)
 		///  amongst the methods in the MethodGroupExpr
 		/// </summary>
-		public static TypeSpec FindMostEncompassedType (IList<TypeSpec> types)
+		public static TypeSpec FindMostEncompassedType (IList<TypeSpec> types, ResolveContext opt_ec)
 		{
 			TypeSpec best = null;
 			EmptyExpression expr;
@@ -860,7 +926,7 @@ namespace Mono.CSharp {
 				}
 
 				expr = new EmptyExpression (t);
-				if (ImplicitStandardConversionExists (expr, best))
+				if (ImplicitStandardConversionExists (expr, best, opt_ec))
 					best = t;
 			}
 
@@ -868,7 +934,7 @@ namespace Mono.CSharp {
 			foreach (TypeSpec t in types) {
 				if (best == t)
 					continue;
-				if (!ImplicitStandardConversionExists (expr, t)) {
+				if (!ImplicitStandardConversionExists (expr, t, opt_ec)) {
 					best = null;
 					break;
 				}
@@ -881,7 +947,7 @@ namespace Mono.CSharp {
 		// Finds the most encompassing type (type into which all other
 		// types can convert to) amongst the types in the given set
 		//
-		static TypeSpec FindMostEncompassingType (IList<TypeSpec> types)
+		static TypeSpec FindMostEncompassingType (IList<TypeSpec> types, ResolveContext opt_ec)
 		{
 			if (types.Count == 0)
 				return null;
@@ -897,7 +963,7 @@ namespace Mono.CSharp {
 						continue;
 
 					var expr = new EmptyExpression (types[ii]);
-					if (!ImplicitStandardConversionExists (expr, types [i])) {
+					if (!ImplicitStandardConversionExists (expr, types [i], opt_ec)) {
 						ii = 0;
 						break;
 					}
@@ -923,7 +989,7 @@ namespace Mono.CSharp {
 		// by making use of FindMostEncomp* methods. Applies the correct rules separately
 		// for explicit and implicit conversion operators.
 		//
-		static TypeSpec FindMostSpecificSource (List<MethodSpec> list, TypeSpec sourceType, Expression source, bool apply_explicit_conv_rules)
+		static TypeSpec FindMostSpecificSource (List<MethodSpec> list, TypeSpec sourceType, Expression source, bool apply_explicit_conv_rules, ResolveContext opt_ec)
 		{
 			var src_types_set = new TypeSpec [list.Count];
 
@@ -946,28 +1012,28 @@ namespace Mono.CSharp {
 				var candidate_set = new List<TypeSpec> ();
 
 				foreach (TypeSpec param_type in src_types_set){
-					if (ImplicitStandardConversionExists (source, param_type))
+					if (ImplicitStandardConversionExists (source, param_type, opt_ec))
 						candidate_set.Add (param_type);
 				}
 
 				if (candidate_set.Count != 0)
-					return FindMostEncompassedType (candidate_set);
+					return FindMostEncompassedType (candidate_set, opt_ec);
 			}
 
 			//
 			// Final case
 			//
 			if (apply_explicit_conv_rules)
-				return FindMostEncompassingType (src_types_set);
+				return FindMostEncompassingType (src_types_set, opt_ec);
 			else
-				return FindMostEncompassedType (src_types_set);
+				return FindMostEncompassedType (src_types_set, opt_ec);
 		}
 
 		/// <summary>
 		///  Finds the most specific target Tx according to section 13.4.4
 		/// </summary>
 		static public TypeSpec FindMostSpecificTarget (IList<MethodSpec> list,
-							   TypeSpec target, bool apply_explicit_conv_rules)
+							   TypeSpec target, bool apply_explicit_conv_rules, ResolveContext opt_ec)
 		{
 			var tgt_types_set = new List<TypeSpec> ();
 
@@ -991,21 +1057,21 @@ namespace Mono.CSharp {
 				foreach (TypeSpec ret_type in tgt_types_set) {
 					var expr = new EmptyExpression (ret_type);
 
-					if (ImplicitStandardConversionExists (expr, target))
+					if (ImplicitStandardConversionExists (expr, target, opt_ec))
 						candidate_set.Add (ret_type);
 				}
 
 				if (candidate_set.Count != 0)
-					return FindMostEncompassingType (candidate_set);
+					return FindMostEncompassingType (candidate_set, opt_ec);
 			}
 
 			//
 			// Okay, final case !
 			//
 			if (apply_explicit_conv_rules)
-				return FindMostEncompassedType (tgt_types_set);
+				return FindMostEncompassedType (tgt_types_set, opt_ec);
 			else
-				return FindMostEncompassingType (tgt_types_set);
+				return FindMostEncompassingType (tgt_types_set, opt_ec);
 		}
 
 		/// <summary>
@@ -1024,7 +1090,7 @@ namespace Mono.CSharp {
 			return UserDefinedConversion (ec, source, target, false, loc);
 		}
 
-		static void FindApplicableUserDefinedConversionOperators (IList<MemberSpec> operators, Expression source, TypeSpec target, bool implicitOnly, ref List<MethodSpec> candidates)
+		static void FindApplicableUserDefinedConversionOperators (ResolveContext ec, IList<MemberSpec> operators, Expression source, TypeSpec target, bool implicitOnly, ref List<MethodSpec> candidates)
 		{
 			if (source.Type.IsInterface) {
 				// Neither A nor B are interface-types
@@ -1046,11 +1112,11 @@ namespace Mono.CSharp {
 					continue;
 
 				var t = op.Parameters.Types[0];
-				if (source.Type != t && !ImplicitStandardConversionExists (source, t)) {
+				if (source.Type != t && !ImplicitStandardConversionExists (source, t, ec)) {
 					if (implicitOnly)
 						continue;
 
-					if (!ImplicitStandardConversionExists (new EmptyExpression (t), source.Type))
+					if (!ImplicitStandardConversionExists (new EmptyExpression (t), source.Type, ec))
 						continue;
 				}
 
@@ -1063,14 +1129,14 @@ namespace Mono.CSharp {
 					if (t.IsNullableType)
 						t = Nullable.NullableInfo.GetUnderlyingType (t);
 
-					if (!ImplicitStandardConversionExists (new EmptyExpression (t), target)) {
+					if (!ImplicitStandardConversionExists (new EmptyExpression (t), target, ec)) {
 						if (implicitOnly)
 							continue;
 
 						if (texpr == null)
 							texpr = new EmptyExpression (target);
 
-						if (!ImplicitStandardConversionExists (texpr, t))
+						if (!ImplicitStandardConversionExists (texpr, t, ec))
 							continue;
 					}
 				}
@@ -1120,13 +1186,13 @@ namespace Mono.CSharp {
 
 				var operators = MemberCache.GetUserOperator (source_type, Operator.OpType.Implicit, declared_only);
 				if (operators != null) {
-					FindApplicableUserDefinedConversionOperators (operators, source_type_expr, target_type, implicitOnly, ref candidates);
+					FindApplicableUserDefinedConversionOperators (ec, operators, source_type_expr, target_type, implicitOnly, ref candidates);
 				}
 
 				if (!implicitOnly) {
 					operators = MemberCache.GetUserOperator (source_type, Operator.OpType.Explicit, declared_only);
 					if (operators != null) {
-						FindApplicableUserDefinedConversionOperators (operators, source_type_expr, target_type, false, ref candidates);
+						FindApplicableUserDefinedConversionOperators (ec, operators, source_type_expr, target_type, false, ref candidates);
 					}
 				}
 			}
@@ -1136,13 +1202,13 @@ namespace Mono.CSharp {
 
 				var operators = MemberCache.GetUserOperator (target_type, Operator.OpType.Implicit, declared_only);
 				if (operators != null) {
-					FindApplicableUserDefinedConversionOperators (operators, source_type_expr, target_type, implicitOnly, ref candidates);
+					FindApplicableUserDefinedConversionOperators (ec, operators, source_type_expr, target_type, implicitOnly, ref candidates);
 				}
 
 				if (!implicitOnly) {
 					operators = MemberCache.GetUserOperator (target_type, Operator.OpType.Explicit, declared_only);
 					if (operators != null) {
-						FindApplicableUserDefinedConversionOperators (operators, source_type_expr, target_type, false, ref candidates);
+						FindApplicableUserDefinedConversionOperators (ec, operators, source_type_expr, target_type, false, ref candidates);
 					}
 				}
 			}
@@ -1164,11 +1230,11 @@ namespace Mono.CSharp {
 				// Pass original source type to find the best match against input type and
 				// not the unwrapped expression
 				//
-				s_x = FindMostSpecificSource (candidates, source.Type, source_type_expr, !implicitOnly);
+				s_x = FindMostSpecificSource (candidates, source.Type, source_type_expr, !implicitOnly, ec);
 				if (s_x == null)
 					return null;
 
-				t_x = FindMostSpecificTarget (candidates, target, !implicitOnly);
+				t_x = FindMostSpecificTarget (candidates, target, !implicitOnly, ec);
 				if (t_x == null)
 					return null;
 
@@ -1332,6 +1398,12 @@ namespace Mono.CSharp {
 			}
 
 			if (expr_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
+
+				// Implicitly cast references to bools in ActionScript
+				if (!explicit_cast && ec.FileType == SourceFileType.ActionScript && target_type.BuiltinType == BuiltinTypeSpec.Type.Bool) {
+					return new Binary(Binary.Operator.Equality, expr, new NullLiteral(expr.Location)).Resolve (ec);
+				}
+
 				switch (target_type.Kind) {
 				case MemberKind.ArrayType:
 				case MemberKind.Class:
@@ -1361,7 +1433,7 @@ namespace Mono.CSharp {
 			Constant c = expr as Constant;
 			if (c != null) {
 				try {
-					c = c.ConvertImplicitly (target_type);
+					c = c.ConvertImplicitly (target_type, ec);
 				} catch {
 					throw new InternalErrorException ("Conversion error", loc);
 				}
@@ -1369,11 +1441,11 @@ namespace Mono.CSharp {
 					return c;
 			}
 
-			e = ImplicitNumericConversion (expr, expr_type, target_type);
+			e = ImplicitNumericConversion (expr, expr_type, target_type, ec);
 			if (e != null)
 				return e;
 
-			e = ImplicitReferenceConversion (expr, target_type, explicit_cast);
+			e = ImplicitReferenceConversion (expr, target_type, explicit_cast, ec);
 			if (e != null)
 				return e;
 
@@ -1778,9 +1850,9 @@ namespace Mono.CSharp {
 		///  Returns whether an explicit reference conversion can be performed
 		///  from source_type to target_type
 		/// </summary>
-		public static bool ExplicitReferenceConversionExists (TypeSpec source_type, TypeSpec target_type)
+		public static bool ExplicitReferenceConversionExists (TypeSpec source_type, TypeSpec target_type, ResolveContext opt_ec)
 		{
-			Expression e = ExplicitReferenceConversion (null, source_type, target_type);
+			Expression e = ExplicitReferenceConversion (null, source_type, target_type, opt_ec);
 			if (e == null)
 				return false;
 
@@ -1793,7 +1865,7 @@ namespace Mono.CSharp {
 		/// <summary>
 		///   Implements Explicit Reference conversions
 		/// </summary>
-		static Expression ExplicitReferenceConversion (Expression source, TypeSpec source_type, TypeSpec target_type)
+		static Expression ExplicitReferenceConversion (Expression source, TypeSpec source_type, TypeSpec target_type, ResolveContext opt_ec)
 		{
 			//
 			// From object to a generic parameter
@@ -1890,7 +1962,7 @@ namespace Mono.CSharp {
 						if (!TypeSpec.IsReferenceType (target_element))
 							return null;
 
-						if (ExplicitReferenceConversionExists (source_type, target_element))
+						if (ExplicitReferenceConversionExists (source_type, target_element, opt_ec))
 							return source == null ? EmptyExpression.Null : new ClassCast (source, target_type);
 							
 						return null;
@@ -1940,10 +2012,10 @@ namespace Mono.CSharp {
 						//
 						//If TP is covariant, an implicit or explicit identity or reference conversion is required
 						//
-						if (ImplicitReferenceConversionExists (targs_src[i], targs_dst[i]))
+						if (ImplicitReferenceConversionExists (targs_src[i], targs_dst[i], opt_ec))
 							continue;
 
-						if (ExplicitReferenceConversionExists (targs_src[i], targs_dst[i]))
+						if (ExplicitReferenceConversionExists (targs_src[i], targs_dst[i], opt_ec))
 							continue;
 
 					} else if (tparams[i].Variance == Variance.Contravariant) {
@@ -1985,7 +2057,7 @@ namespace Mono.CSharp {
 					ne = underlying;
 
 				if (ne == null)
-					ne = ImplicitNumericConversion (underlying, real_target);
+					ne = ImplicitNumericConversion (underlying, real_target, ec);
 
 				if (ne == null)
 					ne = ExplicitNumericConversion (ec, underlying, real_target);
@@ -2017,7 +2089,7 @@ namespace Mono.CSharp {
 					if (c != null)
 						return c;
 				} else {
-					ne = ImplicitNumericConversion (expr, real_target);
+					ne = ImplicitNumericConversion (expr, real_target, ec);
 					if (ne != null)
 						return EmptyCast.Create (ne, target_type);
 
@@ -2046,7 +2118,7 @@ namespace Mono.CSharp {
 			// null literal explicitly
 			//
 			if (expr_type != InternalType.NullLiteral) {
-				ne = ExplicitReferenceConversion (expr, expr_type, target_type);
+				ne = ExplicitReferenceConversion (expr, expr_type, target_type, ec);
 				if (ne != null)
 					return ne;
 			}
@@ -2128,7 +2200,7 @@ namespace Mono.CSharp {
 			if (ne != null)
 				return ne;
 
-			ne = ExplicitReferenceConversion (expr, expr.Type, target_type);
+			ne = ExplicitReferenceConversion (expr, expr.Type, target_type, ec);
 			if (ne != null)
 				return ne;
 

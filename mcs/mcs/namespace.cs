@@ -778,6 +778,8 @@ namespace Mono.CSharp {
 		Tuple<TypeExpr,TypeSpec>[] type_using_table; /* AS SUPPORT */
 		Dictionary<string, UsingAliasNamespace> aliases;
 
+		CompilationSourceFile compSourceFile;
+
 		public NamespaceContainer (MemberName name, NamespaceContainer parent)
 			: base (parent, name, null, MemberKind.Namespace)
 		{
@@ -785,6 +787,12 @@ namespace Mono.CSharp {
 			this.ns = parent.NS.AddNamespace (name);
 
 			containers = new List<TypeContainer> ();
+
+			var topParent = this;
+			while (topParent.Parent != null) {
+				topParent = topParent.Parent;
+			}
+			compSourceFile = topParent as CompilationSourceFile;
 		}
 
 		protected NamespaceContainer (ModuleContainer parent)
@@ -795,6 +803,12 @@ namespace Mono.CSharp {
 		}
 
 		#region Properties
+
+		public CompilationSourceFile CompilationSourceFile {
+			get {
+				return compSourceFile;
+			}
+		}
 
 		public override AttributeTargets AttributeTargets {
 			get {
@@ -823,6 +837,12 @@ namespace Mono.CSharp {
 		public override string[] ValidAttributeTargets {
 			get {
 				throw new NotSupportedException ();
+			}
+		}
+
+		public override SourceFileType FileType {
+			get {
+				return compSourceFile != null ? compSourceFile.SourceFile.FileType : SourceFileType.CSharp;
 			}
 		}
 
@@ -1564,6 +1584,10 @@ namespace Mono.CSharp {
 			public FullNamedExpression LookupNamespaceAlias (string name)
 			{
 				return ns.LookupNamespaceAlias (name);
+			}
+
+			public SourceFileType FileType {
+				get { return ns.FileType; }
 			}
 		}
 

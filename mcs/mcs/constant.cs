@@ -72,7 +72,7 @@ namespace Mono.CSharp {
 
 		public Constant ImplicitConversionRequired (ResolveContext ec, TypeSpec type, Location loc)
 		{
-			Constant c = ConvertImplicitly (type);
+			Constant c = ConvertImplicitly (type, ec);
 			if (c == null)
 				Error_ValueCannotBeConverted (ec, type, false);
 
@@ -84,12 +84,12 @@ namespace Mono.CSharp {
 			return false;
 		}
 
-		public virtual Constant ConvertImplicitly (TypeSpec type)
+		public virtual Constant ConvertImplicitly (TypeSpec type, ResolveContext opt_ec)
 		{
 			if (this.type == type)
 				return this;
 
-			if (Convert.ImplicitNumericConversion (this, type) == null) 
+			if (Convert.ImplicitNumericConversion (this, type, opt_ec) == null) 
 				return null;
 
 			bool fail;			
@@ -181,7 +181,7 @@ namespace Mono.CSharp {
 		/// It throws OverflowException 
 		/// </summary>
 		// DON'T CALL THIS METHOD DIRECTLY AS IT DOES NOT HANDLE ENUMS
-		public abstract Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type);
+		public abstract Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type, ResolveContext opt_ec);
 
 		// This is a custom version of Convert.ChangeType() which works
 		// with the TypeBuilder defined types when compiling corlib.
@@ -303,7 +303,7 @@ namespace Mono.CSharp {
 				return new EnumConstant (c, target_type);
 			}
 
-			return ConvertExplicitly (ec.ConstantCheckState, target_type);
+			return ConvertExplicitly (ec.ConstantCheckState, target_type, ec);
 		}
 
 		/// <summary>
@@ -395,7 +395,7 @@ namespace Mono.CSharp {
 		public override void Error_ValueCannotBeConverted (ResolveContext ec, TypeSpec target, bool expl)
 		{
 			try {
-				ConvertExplicitly (true, target);
+				ConvertExplicitly (true, target, ec);
 				base.Error_ValueCannotBeConverted (ec, target, expl);
 			}
 			catch
@@ -474,7 +474,7 @@ namespace Mono.CSharp {
 			get { return Value == false; }
 		}
 
-		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type)
+		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type, ResolveContext opt_ec)
 		{
 			return null;
 		}
@@ -543,7 +543,7 @@ namespace Mono.CSharp {
 			get { return Value == 0; }
 		}
 
-		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type)
+		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type, ResolveContext opt_ec)
 		{
 			switch (target_type.BuiltinType) {
 			case BuiltinTypeSpec.Type.SByte:
@@ -666,7 +666,7 @@ namespace Mono.CSharp {
 			get { return Value == '\0'; }
 		}
 
-		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type)
+		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type, ResolveContext opt_ec)
 		{
 			switch (target_type.BuiltinType) {
 			case BuiltinTypeSpec.Type.Byte:
@@ -771,7 +771,7 @@ namespace Mono.CSharp {
 			get { return Value == 0; }
 		}
 
-		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type)
+		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type, ResolveContext opt_ec)
 		{
 			switch (target_type.BuiltinType) {
 			case BuiltinTypeSpec.Type.Byte:
@@ -874,7 +874,7 @@ namespace Mono.CSharp {
 			}
 		}		
 
-		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type)
+		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type, ResolveContext opt_ec)
 		{
 			switch (target_type.BuiltinType) {
 			case BuiltinTypeSpec.Type.Byte:
@@ -987,7 +987,7 @@ namespace Mono.CSharp {
 			get { return Value == 0; }
 		}
 
-		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type)
+		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type, ResolveContext opt_ec)
 		{
 			switch (target_type.BuiltinType) {
 			case BuiltinTypeSpec.Type.Byte:
@@ -1096,7 +1096,7 @@ namespace Mono.CSharp {
 			get { return Value == 0; }
 		}
 
-		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type)
+		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type, ResolveContext opt_ec)
 		{
 			switch (target_type.BuiltinType) {
 			case BuiltinTypeSpec.Type.Byte:
@@ -1152,7 +1152,7 @@ namespace Mono.CSharp {
 			return null;
 		}
 
-		public override Constant ConvertImplicitly (TypeSpec type)
+		public override Constant ConvertImplicitly (TypeSpec type, ResolveContext opt_ec)
 		{
 			if (this.type == type)
 				return this;
@@ -1161,7 +1161,7 @@ namespace Mono.CSharp {
 			if (c != null)
 				return c; //.Resolve (rc);
 
-			return base.ConvertImplicitly (type);
+			return base.ConvertImplicitly (type, opt_ec);
 		}
 
 		/// <summary>
@@ -1272,7 +1272,7 @@ namespace Mono.CSharp {
 			get { return Value == 0; }
 		}
 
-		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type)
+		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type, ResolveContext opt_ec)
 		{
 			switch (target_type.BuiltinType) {
 			case BuiltinTypeSpec.Type.Byte:
@@ -1389,7 +1389,7 @@ namespace Mono.CSharp {
 			get { return Value == 0; }
 		}
 
-		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type)
+		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type, ResolveContext opt_ec)
 		{
 			switch (target_type.BuiltinType) {
 			case BuiltinTypeSpec.Type.Byte:
@@ -1449,13 +1449,13 @@ namespace Mono.CSharp {
 			return null;
 		}
 
-		public override Constant ConvertImplicitly (TypeSpec type)
+		public override Constant ConvertImplicitly (TypeSpec type, ResolveContext opt_ec)
 		{
 			if (Value >= 0 && type.BuiltinType == BuiltinTypeSpec.Type.ULong) {
 				return new ULongConstant (type, (ulong) Value, loc);
 			}
 
-			return base.ConvertImplicitly (type);
+			return base.ConvertImplicitly (type, opt_ec);
 		}
 	}
 
@@ -1520,7 +1520,7 @@ namespace Mono.CSharp {
 			get { return Value == 0; }
 		}
 
-		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type)
+		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type, ResolveContext opt_ec)
 		{
 			switch (target_type.BuiltinType) {
 			case BuiltinTypeSpec.Type.Byte:
@@ -1622,7 +1622,7 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type)
+		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type, ResolveContext opt_ec)
 		{
 			switch (target_type.BuiltinType) {
 			case BuiltinTypeSpec.Type.Byte:
@@ -1745,7 +1745,7 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type)
+		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type, ResolveContext opt_ec)
 		{
 			switch (target_type.BuiltinType) {
 			case BuiltinTypeSpec.Type.Byte:
@@ -1889,7 +1889,7 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type)
+		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type, ResolveContext opt_ec)
 		{
 			switch (target_type.BuiltinType) {
 			case BuiltinTypeSpec.Type.SByte:
@@ -2020,7 +2020,7 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type)
+		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type, ResolveContext opt_ec)
 		{
 			return null;
 		}
@@ -2089,7 +2089,7 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public override Constant ConvertExplicitly (bool inCheckedContext, TypeSpec targetType)
+		public override Constant ConvertExplicitly (bool inCheckedContext, TypeSpec targetType, ResolveContext opt_ec)
 		{
 			if (targetType.IsPointer) {
 				if (IsLiteral || this is NullPointer)
@@ -2102,7 +2102,7 @@ namespace Mono.CSharp {
 			if (targetType.Kind == MemberKind.InternalCompilerType && targetType.BuiltinType != BuiltinTypeSpec.Type.Dynamic)
 				return null;
 
-			if (!IsLiteral && !Convert.ImplicitStandardConversionExists (this, targetType))
+			if (!IsLiteral && !Convert.ImplicitStandardConversionExists (this, targetType, opt_ec))
 				return null;
 
 			if (TypeSpec.IsReferenceType (targetType))
@@ -2114,9 +2114,9 @@ namespace Mono.CSharp {
 			return null;
 		}
 
-		public override Constant ConvertImplicitly (TypeSpec targetType)
+		public override Constant ConvertImplicitly (TypeSpec targetType, ResolveContext opt_ec)
 		{
-			return ConvertExplicitly (false, targetType);
+			return ConvertExplicitly (false, targetType, opt_ec);
 		}
 
 		public override string GetSignatureForError ()
@@ -2250,9 +2250,9 @@ namespace Mono.CSharp {
 			get { return value.IsZeroInteger; }
 		}
 
-		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type)
+		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type, ResolveContext opt_ec)
 		{
-			Constant new_value = value.ConvertExplicitly (in_checked_context, target_type);
+			Constant new_value = value.ConvertExplicitly (in_checked_context, target_type, opt_ec);
 			if (new_value == null)
 				return null;
 
