@@ -385,12 +385,15 @@ namespace Mono.CSharp
 			//
 			// File type set from member context module sourcefile.
 			//
-			if (mc.Module != null && mc.Module.Location.SourceFile != null) {
+			var memberCore = mc as MemberCore;
+			if (memberCore != null && memberCore.Location.SourceFile != null) {
+				fileType = memberCore.Location.SourceFile.FileType;
+			} else if (mc.Module != null && mc.Module.Location.SourceFile != null) {
 				fileType = mc.Module.Location.SourceFile.FileType;
 			} else {
 				fileType = SourceFileType.CSharp;
 			}
-			
+
 		}
 
 		public ResolveContext (IMemberContext mc, Options options)

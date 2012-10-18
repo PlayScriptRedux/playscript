@@ -260,7 +260,7 @@ namespace Mono.CSharp {
 		///   Location where this declaration happens
 		/// </summary>
 		public Location Location {
-			get { return member_name.Location; }
+			get { return member_name != null ? member_name.Location : new Location(); }
 		}
 
 		/// <summary>

@@ -124,12 +124,9 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext rc)
 		{
-			var current_field = rc.CurrentMemberDefinition as FieldBase;
 			TypeExpression type;
 			if (inferredObjType != null) {
 				type = new TypeExpression (inferredObjType, Location);
-			} else if (current_field != null && rc.CurrentAnonymousMethod == null) {
-				type = new TypeExpression (current_field.MemberType, current_field.Location);
 			} else if (variable != null) {
 				if (variable.TypeExpression is VarExpr) {
 					type = new TypeExpression (rc.BuiltinTypes.Dynamic, Location);
@@ -214,7 +211,6 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext rc)
 		{
-			var current_field = rc.CurrentMemberDefinition as FieldBase;
 			TypeExpression type;
 			if (vectorType != null) {
 				var elemTypeSpec = vectorType.ResolveAsType(rc);
@@ -226,8 +222,6 @@ namespace Mono.CSharp
 				}
 			} else if (inferredArrayType != null) {
 				type = new TypeExpression (inferredArrayType, Location);
-			} else if (current_field != null && rc.CurrentAnonymousMethod == null) {
-				type = new TypeExpression (current_field.MemberType, current_field.Location);
 			} else if (variable != null) {
 				if (variable.TypeExpression is VarExpr) {
 					type = new TypeExpression (rc.Module.PredefinedTypes.AsArray.Resolve(), Location);

@@ -167,14 +167,13 @@ namespace Mono.CSharp {
 		{
 			TypeSpec expr_type = expr.Type;
 
-			if (expr_type.Kind == MemberKind.TypeParameter)
-				return ImplicitTypeParameterConversion (expr, (TypeParameterSpec) expr.Type, target_type);
-
-			SourceFileType ft = (opt_ec == null ? SourceFileType.CSharp : opt_ec.FileType);
-
-			if (ft == SourceFileType.ActionScript && target_type.BuiltinType == BuiltinTypeSpec.Type.Bool) {
+			// ActionScript references can always be implicitly cast to bool
+			if (target_type.BuiltinType == BuiltinTypeSpec.Type.Bool && opt_ec != null && opt_ec.FileType == SourceFileType.ActionScript) {
 				return new Binary(Binary.Operator.Equality, expr, new NullLiteral(expr.Location)).Resolve(opt_ec);
 			}
+			
+			if (expr_type.Kind == MemberKind.TypeParameter)
+				return ImplicitTypeParameterConversion (expr, (TypeParameterSpec) expr.Type, target_type);
 
 			//
 			// from the null type to any reference-type.
@@ -207,9 +206,15 @@ namespace Mono.CSharp {
 
 		public static bool ImplicitReferenceConversionExists (TypeSpec expr_type, TypeSpec target_type, bool refOnlyTypeParameter, ResolveContext opt_ec)
 		{
+			// ActionScript references can always be implicitly cast to bool
+			if (target_type.BuiltinType == BuiltinTypeSpec.Type.Bool && opt_ec != null && opt_ec.FileType == SourceFileType.ActionScript) {
+				return true;
+			}
+
 			// It's here only to speed things up
-			if (target_type.IsStruct)
+			if (target_type.IsStruct) {
 				return false;
+			}
 
 			switch (expr_type.Kind) {
 			case MemberKind.TypeParameter:
