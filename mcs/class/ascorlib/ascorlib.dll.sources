@@ -1,10 +1,11 @@
 Array.cs
 AssemblyInfo.cs
-Class.cs
+Class.asx
 Error.asx
 Extensions.cs
-Vector.cs
+Vector.asx
 functions.cs
+functions.asx
 ./ActionScript/Undefined.cs
 ./ActionScript/Expando/BindingRestrictionsEx.cs
 ./ActionScript/Expando/CacheDict.cs

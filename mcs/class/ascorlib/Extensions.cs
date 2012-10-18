@@ -24,21 +24,6 @@ namespace _root
 		//
 		// IList extensions (for arrays, etc).
 		//
-
-		public static int length(this IList l) 
-		{
-			return l.Count;
-		}
-
-		public static int indexOf(this IList l, object o)
-		{
-			return l.indexOf(o);
-		}
-
-		public static void push(this IList l, object o)
-		{
-			l.Add(o);
-		}
 	}
 }
 

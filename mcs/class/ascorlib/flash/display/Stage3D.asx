@@ -1,8 +1,9 @@
 package flash.display {
 
 	import flash.display3D.*;
+	import flash.events.EventDispatcher;
 
-	public class Stage3D {
+	public class Stage3D extends EventDispatcher {
 	
 		//
 		// Properties

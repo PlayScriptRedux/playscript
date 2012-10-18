@@ -1,10 +1,11 @@
 ../ascorlib/Array.cs
 ../ascorlib/AssemblyInfo.cs
-../ascorlib/Class.cs
+../ascorlib/Class.asx
 ../ascorlib/Error.asx
 ../ascorlib/Extensions.cs
-../ascorlib/Vector.cs
+../ascorlib/Vector.asx
 ../ascorlib/functions.cs
+../ascorlib/functions.asx
 ../ascorlib/ActionScript/Undefined.cs
 ../ascorlib/ActionScript/Expando/BindingRestrictionsEx.cs
 ../ascorlib/ActionScript/Expando/CacheDict.cs

@@ -138,6 +138,11 @@ package flash.utils {
  	 	
 		public function writeUTFBytes(value:String):void {
 		}
+		
+		public indexer this(index:int):int {
+			get { return 0; }
+			set { }
+		}
 
 	}
 

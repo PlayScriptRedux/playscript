@@ -57,8 +57,6 @@ namespace Mono.CSharp
 		ExtensionMethodCandidates LookupExtensionMethod (TypeSpec extensionType, string name, int arity);
 		FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, Location loc);
 		FullNamedExpression LookupNamespaceAlias (string name);
-
-		SourceFileType FileType { get; }
 	}
 
 	public interface IModuleContext

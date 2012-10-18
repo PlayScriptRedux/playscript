@@ -177,6 +177,8 @@
       <Link>flash\events\IEventDispatcher.cs</Link>
     </Compile>
     <Compile Include="StringExtensions.cs" />
+    <Compile Include="Number.cs" />
+    <Compile Include="EmbedAttribute.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="ActionScript\" />

@@ -9,7 +9,7 @@ package flash.display {
 	import flash.geom.ColorTransform;
 	import flash.geom.Matrix;
 
-	public abstract class DisplayObject extends EventDispatcher {
+	public abstract class DisplayObject extends EventDispatcher implements IBitmapDrawable {
 	
 		//
 		// Properties

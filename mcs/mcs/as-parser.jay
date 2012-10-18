@@ -1965,14 +1965,14 @@ property_declaration
 
 indexer_declaration
 	: opt_attributes opt_modifiers
-	  INDEXER indexer_declaration_name COLON member_type OPEN_BRACKET
+	  INDEXER indexer_declaration_name OPEN_PARENS
 	  {
 	  	valid_param_mod = ParameterModifierType.Params | ParameterModifierType.DefaultValue;
 	  }
-	  opt_formal_parameter_list CLOSE_BRACKET OPEN_BRACE
+	  opt_formal_parameter_list CLOSE_PARENS COLON member_type OPEN_BRACE
 	  {
 		valid_param_mod = 0;
-		var type = (FullNamedExpression) $6;
+		var type = (FullNamedExpression) $10;
 
 		var modifiers = (Modifiers) $2;
 
@@ -1980,12 +1980,12 @@ indexer_declaration
 			(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
 				modifiers |= Modifiers.VIRTUAL;
 		
-		Indexer indexer = new Indexer (current_type, type, (MemberName) $4, modifiers, (ParametersCompiled) $9, (Attributes) $1);
+		Indexer indexer = new Indexer (current_type, type, (MemberName) $4, modifiers, (ParametersCompiled) $7, (Attributes) $1);
 			
 		current_property = indexer;
 
   		current_type.AddIndexer (indexer);
-		lbag.AddMember (current_property, mod_locations, GetLocation ($5), GetLocation ($8), GetLocation ($9));
+		lbag.AddMember (current_property, mod_locations, GetLocation ($5), GetLocation ($8));
   		
 		if (type.Type != null && type.Type.Kind == MemberKind.Void)
 			report.Error (620, GetLocation ($3), "`{0}': indexer return type cannot be `void'", indexer.GetSignatureForError ());  		

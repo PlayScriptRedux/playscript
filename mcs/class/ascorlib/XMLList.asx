@@ -1,6 +1,9 @@
 package {
 
-	public class XMLList {
+	import System.Collections.*;
+	import System.Collections.Generic.*;
+
+	public class XMLList /*implements IEnumerable.<XML>*/ {
 	
 		//
 		// Methods
@@ -92,6 +95,18 @@ package {
 		public function valueOf():XMLList {
 			return null;
 		}
+		
+		public indexer this(index:int):XML {
+			get { return null; }
+		}
+		
+//		public function GetEnumerator() : IEnumerator.<XML> {
+//			return null;
+//		}
+//		
+//		private function IEnumerable.GetEnumerator() : IEnumerator { 
+//			return null;
+//		}
 		
 	}
 

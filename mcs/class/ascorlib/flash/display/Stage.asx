@@ -92,8 +92,8 @@ package flash.display {
 			return null;
 		}
  	 	
-		public override function addEventListener(type:String, listener:Function, useCapture:Boolean = false, priority:int = 0, useWeakReference:Boolean = false):void {
-		}
+//		public override function addEventListener(type:String, listener:Function, useCapture:Boolean = false, priority:int = 0, useWeakReference:Boolean = false):void {
+//		}
  	 	
 		public function assignFocus(objectToFocus:InteractiveObject, direction:String):void {
 		}

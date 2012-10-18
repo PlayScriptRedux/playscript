@@ -454,7 +454,7 @@ namespace Mono.CSharp
 				return Convert.ImplicitNumericConversion (expr, rc.BuiltinTypes.Long, rc);
 
 			// ActionScript - implicit conversion of numeric types to bool
-			if (rc.FileType == SourceFileType.ActionScript && op == Operator.LogicalNot)
+			if (rc.FileType == SourceFileType.ActionScript && op == Operator.LogicalNot && expr.Type != rc.BuiltinTypes.Bool)
 				return Convert.ImplicitNumericConversion (expr, rc.BuiltinTypes.Bool, rc);
 
 			return expr;
@@ -8298,7 +8298,10 @@ namespace Mono.CSharp
 				FullNamedExpression retval = ns.LookupTypeOrNamespace (rc, Name, Arity, LookupMode.Normal, loc);
 
 				// Lookup ClassName_fn function classes (if ActionScript)
-				if (retval == null && rc.FileType == SourceFileType.ActionScript) {
+				SourceFileType ft = (rc is ResolveContext ? ((ResolveContext)rc).FileType : 
+				                    (rc is MemberCore ? ((MemberCore)rc).FileType : 
+				 					       SourceFileType.CSharp));
+				if (retval == null && ft == SourceFileType.ActionScript) {
 					retval = ns.LookupTypeOrNamespace (rc, Name + "_fn", Arity, LookupMode.Normal, loc);
 					if (retval == null) {
 						retval = ns.LookupTypeOrNamespace (rc, Name + "_ns", Arity, LookupMode.Normal, loc);

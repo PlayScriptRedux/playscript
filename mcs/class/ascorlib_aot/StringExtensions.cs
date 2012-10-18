@@ -21,7 +21,7 @@ namespace _root
 			return null;
 		}
 
-		public static int indexOf(this string s, string val, double startIndex) {
+		public static int indexOf(this string s, string val, double startIndex = 0) {
 			return -1;
 		}
 						
@@ -45,11 +45,11 @@ namespace _root
 			return -1;
 		}
 								
-		public static string slice(this string s, double startIndex = 0, double endIndex = 0x7fffffff) {
+		public static string slice(this string s, int startIndex = 0, int endIndex = 0x7fffffff) {
 			return null;			
 		}
 
-		public static Array split(this string s, object delimiter, double limit = 0x7fffffff) {
+		public static Array split(this string s, object delimiter, int limit = 0x7fffffff) {
 			return null;
 		}
 
