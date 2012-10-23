@@ -8260,6 +8260,23 @@ namespace Mono.CSharp
 
 				if (errorMode) {
 					if (member_lookup == null) {
+
+						// Check AS builtin types
+						if (rc.FileType == SourceFileType.ActionScript && this is MemberAccess && expr is TypeExpression) {
+							switch (expr_type.BuiltinType) {
+							case BuiltinTypeSpec.Type.String:
+								return new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "String", Location), Name, Location).Resolve (rc);
+							case BuiltinTypeSpec.Type.Double:
+								return new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "Number", Location), Name, Location).Resolve (rc);
+							case BuiltinTypeSpec.Type.Int:
+								return new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "int", Location), Name, Location).Resolve (rc);
+							case BuiltinTypeSpec.Type.UInt:
+								return new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "uint", Location), Name, Location).Resolve (rc);
+							case BuiltinTypeSpec.Type.Bool:
+								return new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "Boolean", Location), Name, Location).Resolve (rc);
+							}
+						}
+
 						var dep = expr_type.GetMissingDependencies ();
 						if (dep != null) {
 							ImportedTypeDefinition.Error_MissingDependency (rc, dep, loc);
