@@ -439,7 +439,7 @@ namespace Mono.CSharp
 			} else {
 				string containsMethodName = "Contains";
 	
-				if (objExpRes.Type != null && objExpRes.Type.ImplementsInterface (ec.BuiltinTypes.IDictionary, true)) {
+				if (objExpRes.Type != null && objExpRes.Type.ImplementsInterface (ec.Module.PredefinedTypes.IDictionary.Resolve(), true)) {
 					containsMethodName = "ContainsKey";
 				}
 

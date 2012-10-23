@@ -53,8 +53,6 @@ namespace Mono.CSharp
 		public readonly BuiltinTypeSpec IEnumerator;
 		public readonly BuiltinTypeSpec IEnumerable;
 		public readonly BuiltinTypeSpec IDisposable;
-		public readonly BuiltinTypeSpec IList;
-		public readonly BuiltinTypeSpec IDictionary;
 		public readonly BuiltinTypeSpec IntPtr;
 		public readonly BuiltinTypeSpec UIntPtr;
 		public readonly BuiltinTypeSpec RuntimeFieldHandle;
@@ -99,8 +97,6 @@ namespace Mono.CSharp
 			IEnumerator = new BuiltinTypeSpec (MemberKind.Interface, "System.Collections", "IEnumerator", BuiltinTypeSpec.Type.IEnumerator);
 			IEnumerable = new BuiltinTypeSpec (MemberKind.Interface, "System.Collections", "IEnumerable", BuiltinTypeSpec.Type.IEnumerable);
 			IDisposable = new BuiltinTypeSpec (MemberKind.Interface, "System", "IDisposable", BuiltinTypeSpec.Type.IDisposable);
-			IList = new BuiltinTypeSpec (MemberKind.Interface, "System.Collections", "IList", BuiltinTypeSpec.Type.IList);
-			IDictionary = new BuiltinTypeSpec (MemberKind.Interface, "System.Collections", "IDictionary", BuiltinTypeSpec.Type.IDictionary);
 
 			Char = new BuiltinTypeSpec (MemberKind.Struct, "System", "Char", BuiltinTypeSpec.Type.Char);
 			String = new BuiltinTypeSpec (MemberKind.Class, "System", "String", BuiltinTypeSpec.Type.String);
@@ -139,7 +135,7 @@ namespace Mono.CSharp
 			types = new BuiltinTypeSpec[] {
 				Object, ValueType, Attribute,
 				Int, UInt, Long, ULong, Float, Double, Char, Short, Decimal, Bool, SByte, Byte, UShort, String,
-				Enum, Delegate, MulticastDelegate, Void, Array, Type, IEnumerator, IEnumerable, IDisposable, IList, IDictionary,
+				Enum, Delegate, MulticastDelegate, Void, Array, Type, IEnumerator, IEnumerable, IDisposable,
 				IntPtr, UIntPtr, RuntimeFieldHandle, RuntimeTypeHandle, Exception };
 		}
 
@@ -198,6 +194,9 @@ namespace Mono.CSharp
 		public readonly PredefinedType ICollectionGeneric;
 		public readonly PredefinedType IEnumerableGeneric;
 		public readonly PredefinedType IDictionaryGeneric;
+		public readonly PredefinedType IList;
+		public readonly PredefinedType ICollection;
+		public readonly PredefinedType IDictionary;
 		public readonly PredefinedType Nullable;
 		public readonly PredefinedType Activator;
 		public readonly PredefinedType Interlocked;
@@ -277,6 +276,9 @@ namespace Mono.CSharp
 			ICollectionGeneric = new PredefinedType (module, MemberKind.Interface, "System.Collections.Generic", "ICollection", 1);
 			IEnumerableGeneric = new PredefinedType (module, MemberKind.Interface, "System.Collections.Generic", "IEnumerable", 1);
 			IDictionaryGeneric = new PredefinedType (module, MemberKind.Interface, "System.Collections.Generic", "IDictionary", 2);
+			IList = new PredefinedType (module, MemberKind.Interface, "System.Collections", "IList");
+			ICollection = new PredefinedType (module, MemberKind.Interface, "System.Collections", "ICollection");
+			IDictionary = new PredefinedType (module, MemberKind.Interface, "System.Collections", "IDictionary");
 			Nullable = new PredefinedType (module, MemberKind.Struct, "System", "Nullable", 1);
 			Activator = new PredefinedType (module, MemberKind.Class, "System", "Activator");
 			Interlocked = new PredefinedType (module, MemberKind.Class, "System.Threading", "Interlocked");
