@@ -2393,11 +2393,20 @@ namespace Mono.CSharp {
 			bool variable_found = false;
 
 			while (true) {
+
 				//
-				// Stage 0: handle actionscript global constant NaN
+				// Stage 0: handle actionscript builtin uppercase names (Not keywords).
 				//
-				if (rc.FileType == SourceFileType.ActionScript && Name == "NaN") {
-					return new DoubleLiteral (rc.BuiltinTypes, double.NaN, loc);
+				if (rc.FileType == SourceFileType.ActionScript) {
+					if (Name == "NaN") {
+						return new DoubleLiteral (rc.BuiltinTypes, double.NaN, loc);
+					} else if (Name == "String") {
+						return new TypeExpression(rc.BuiltinTypes.String, loc);
+					} else if (Name == "Boolean") {
+						return new TypeExpression(rc.BuiltinTypes.Bool, loc);
+					} else if (Name == "Number") {
+						return new TypeExpression(rc.BuiltinTypes.Double, loc);
+					}
 				}
 
 				//
@@ -3276,6 +3285,18 @@ namespace Mono.CSharp {
 
 			InstanceExpression = null;
 			return this;
+		}
+
+		public override Expression DoResolveLValue (ResolveContext rc, Expression right_side)
+		{
+			// Handle extension setters for ActionScript
+			if (rc.FileType == SourceFileType.ActionScript) {
+				var args = new Arguments(1);
+				args.Add(new Argument(right_side));
+				return new Invocation(new MemberAccess(ExtensionExpression, Name, type_arguments, Location), args).Resolve (rc);
+			} else {
+				return base.DoResolveLValue (rc, right_side);
+			}
 		}
 
 		#region IErrorHandler Members

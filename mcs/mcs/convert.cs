@@ -1562,7 +1562,44 @@ namespace Mono.CSharp {
 			// UIntPtr -> long uses ulong
 			//
 
+			SourceFileType ft = rc.FileType;
+
 			switch (expr.Type.BuiltinType) {
+			case BuiltinTypeSpec.Type.Bool:
+				//
+				// From bool to sbyte, byte, short,
+				// ushort, int, uint, long, ulong,
+				// char, float or decimal
+				//
+				if (ft == SourceFileType.ActionScript) {
+					switch (target_type.BuiltinType) {
+					case BuiltinTypeSpec.Type.SByte:
+						return new ConvCast(new Conditional(expr, new IntLiteral(rc.BuiltinTypes, 1, expr.Location), new IntLiteral(rc.BuiltinTypes, 0, expr.Location), expr.Location).Resolve (rc), target_type, ConvCast.Mode.I4_I1);
+					case BuiltinTypeSpec.Type.Byte:
+						return new ConvCast(new Conditional(expr, new UIntLiteral(rc.BuiltinTypes, 1, expr.Location), new UIntLiteral(rc.BuiltinTypes, 0, expr.Location), expr.Location).Resolve (rc), target_type, ConvCast.Mode.U4_U1);
+					case BuiltinTypeSpec.Type.Short:
+						return new ConvCast(new Conditional(expr, new IntLiteral(rc.BuiltinTypes, 1, expr.Location), new IntLiteral(rc.BuiltinTypes, 0, expr.Location), expr.Location).Resolve (rc), target_type, ConvCast.Mode.I4_I2);
+					case BuiltinTypeSpec.Type.UShort:
+						return new ConvCast(new Conditional(expr, new UIntLiteral(rc.BuiltinTypes, 1, expr.Location), new UIntLiteral(rc.BuiltinTypes, 0, expr.Location), expr.Location).Resolve (rc), target_type, ConvCast.Mode.U4_U2);
+					case BuiltinTypeSpec.Type.Int:
+						return new Conditional(expr, new IntLiteral(rc.BuiltinTypes, 1, expr.Location), new IntLiteral(rc.BuiltinTypes, 0, expr.Location), expr.Location).Resolve (rc);
+					case BuiltinTypeSpec.Type.UInt:
+						return new Conditional(expr, new UIntLiteral(rc.BuiltinTypes, 1, expr.Location), new UIntLiteral(rc.BuiltinTypes, 0, expr.Location), expr.Location).Resolve (rc);
+					case BuiltinTypeSpec.Type.Long:
+						return new Conditional(expr, new LongLiteral(rc.BuiltinTypes, 1, expr.Location), new LongLiteral(rc.BuiltinTypes, 0, expr.Location), expr.Location).Resolve (rc);
+					case BuiltinTypeSpec.Type.ULong:
+						return new Conditional(expr, new ULongLiteral(rc.BuiltinTypes, 1, expr.Location), new ULongLiteral(rc.BuiltinTypes, 0, expr.Location), expr.Location).Resolve (rc);
+					case BuiltinTypeSpec.Type.Char:
+						return new Conditional(expr, new CharLiteral(rc.BuiltinTypes, '1', expr.Location), new CharLiteral(rc.BuiltinTypes, '0', expr.Location), expr.Location).Resolve (rc);
+					case BuiltinTypeSpec.Type.Float:
+						return new Conditional(expr, new FloatLiteral(rc.BuiltinTypes, 1f, expr.Location), new FloatLiteral(rc.BuiltinTypes, 0f, expr.Location), expr.Location).Resolve (rc);
+					case BuiltinTypeSpec.Type.Double:
+						return new Conditional(expr, new DoubleLiteral(rc.BuiltinTypes, 1, expr.Location), new DoubleLiteral(rc.BuiltinTypes, 0, expr.Location), expr.Location).Resolve (rc);
+					case BuiltinTypeSpec.Type.Decimal:
+						return new Conditional(expr, new DecimalLiteral(rc.BuiltinTypes, 1, expr.Location), new DecimalLiteral(rc.BuiltinTypes, 0, expr.Location), expr.Location).Resolve (rc);
+					}
+				}
+				break;
 			case BuiltinTypeSpec.Type.SByte:
 				//
 				// From sbyte to byte, ushort, uint, ulong, char, uintptr
@@ -1582,6 +1619,12 @@ namespace Mono.CSharp {
 				// One of the built-in conversions that belonged in the class library
 				case BuiltinTypeSpec.Type.UIntPtr:
 					return new OperatorCast (new ConvCast (expr, rc.BuiltinTypes.ULong, ConvCast.Mode.I1_U8), target_type, target_type, true);
+
+				// ActionScript explicit casts..
+				case BuiltinTypeSpec.Type.Bool:
+					if (ft == SourceFileType.ActionScript)
+						return new Binary(Binary.Operator.Inequality, expr, new IntLiteral(rc.BuiltinTypes, 0, expr.Location)).Resolve (rc);
+					break;
 				}
 				break;
 			case BuiltinTypeSpec.Type.Byte:
@@ -1593,6 +1636,12 @@ namespace Mono.CSharp {
 					return new ConvCast (expr, target_type, ConvCast.Mode.U1_I1);
 				case BuiltinTypeSpec.Type.Char:
 					return new ConvCast (expr, target_type, ConvCast.Mode.U1_CH);
+
+				// ActionScript explicit casts..
+				case BuiltinTypeSpec.Type.Bool:
+					if (ft == SourceFileType.ActionScript)
+						return new Binary(Binary.Operator.Inequality, expr, new UIntLiteral(rc.BuiltinTypes, 0, expr.Location)).Resolve (rc);
+					break;
 				}
 				break;
 			case BuiltinTypeSpec.Type.Short:
@@ -1616,6 +1665,12 @@ namespace Mono.CSharp {
 				// One of the built-in conversions that belonged in the class library
 				case BuiltinTypeSpec.Type.UIntPtr:
 					return new OperatorCast (new ConvCast (expr, rc.BuiltinTypes.ULong, ConvCast.Mode.I2_U8), target_type, target_type, true);
+
+				// ActionScript explicit casts..
+				case BuiltinTypeSpec.Type.Bool:
+					if (ft == SourceFileType.ActionScript)
+						return new Binary(Binary.Operator.Inequality, expr, new IntLiteral(rc.BuiltinTypes, 0, expr.Location)).Resolve (rc);
+					break;
 				}
 				break;
 			case BuiltinTypeSpec.Type.UShort:
@@ -1631,6 +1686,12 @@ namespace Mono.CSharp {
 					return new ConvCast (expr, target_type, ConvCast.Mode.U2_I2);
 				case BuiltinTypeSpec.Type.Char:
 					return new ConvCast (expr, target_type, ConvCast.Mode.U2_CH);
+
+				// ActionScript explicit casts..
+				case BuiltinTypeSpec.Type.Bool:
+					if (ft == SourceFileType.ActionScript)
+						return new Binary(Binary.Operator.Inequality, expr, new UIntLiteral(rc.BuiltinTypes, 0, expr.Location)).Resolve (rc);
+					break;
 				}
 				break;
 			case BuiltinTypeSpec.Type.Int:
@@ -1656,6 +1717,12 @@ namespace Mono.CSharp {
 				// One of the built-in conversions that belonged in the class library
 				case BuiltinTypeSpec.Type.UIntPtr:
 					return new OperatorCast (new ConvCast (expr, rc.BuiltinTypes.ULong, ConvCast.Mode.I2_U8), target_type, target_type, true);
+
+				// ActionScript explicit casts..
+				case BuiltinTypeSpec.Type.Bool:
+					if (ft == SourceFileType.ActionScript)
+						return new Binary(Binary.Operator.Inequality, expr, new IntLiteral(rc.BuiltinTypes, 0, expr.Location)).Resolve (rc);
+					break;
 				}
 				break;
 			case BuiltinTypeSpec.Type.UInt:
@@ -1675,6 +1742,12 @@ namespace Mono.CSharp {
 					return new ConvCast (expr, target_type, ConvCast.Mode.U4_I4);
 				case BuiltinTypeSpec.Type.Char:
 					return new ConvCast (expr, target_type, ConvCast.Mode.U4_CH);
+
+				// ActionScript explicit casts..
+				case BuiltinTypeSpec.Type.Bool:
+					if (ft == SourceFileType.ActionScript)
+						return new Binary(Binary.Operator.Inequality, expr, new UIntLiteral(rc.BuiltinTypes, 0, expr.Location)).Resolve (rc);
+					break;
 				}
 				break;
 			case BuiltinTypeSpec.Type.Long:
@@ -1698,6 +1771,12 @@ namespace Mono.CSharp {
 					return new ConvCast (expr, target_type, ConvCast.Mode.I8_U8);
 				case BuiltinTypeSpec.Type.Char:
 					return new ConvCast (expr, target_type, ConvCast.Mode.I8_CH);
+
+				// ActionScript explicit casts..
+				case BuiltinTypeSpec.Type.Bool:
+					if (ft == SourceFileType.ActionScript)
+						return new Binary(Binary.Operator.Inequality, expr, new LongLiteral(rc.BuiltinTypes, 0, expr.Location)).Resolve (rc);
+					break;
 				}
 				break;
 			case BuiltinTypeSpec.Type.ULong:
@@ -1725,6 +1804,12 @@ namespace Mono.CSharp {
 				// One of the built-in conversions that belonged in the class library
 				case BuiltinTypeSpec.Type.IntPtr:
 					return new OperatorCast (EmptyCast.Create (expr, rc.BuiltinTypes.Long), target_type, true);
+
+				// ActionScript explicit casts..
+				case BuiltinTypeSpec.Type.Bool:
+					if (ft == SourceFileType.ActionScript)
+						return new Binary(Binary.Operator.Inequality, expr, new ULongLiteral(rc.BuiltinTypes, 0, expr.Location)).Resolve (rc);
+					break;
 				}
 				break;
 			case BuiltinTypeSpec.Type.Char:
@@ -1738,6 +1823,12 @@ namespace Mono.CSharp {
 					return new ConvCast (expr, target_type, ConvCast.Mode.CH_U1);
 				case BuiltinTypeSpec.Type.Short:
 					return new ConvCast (expr, target_type, ConvCast.Mode.CH_I2);
+
+				// ActionScript explicit casts..
+				case BuiltinTypeSpec.Type.Bool:
+					if (ft == SourceFileType.ActionScript)
+						return new Binary(Binary.Operator.Inequality, expr, new CharLiteral(rc.BuiltinTypes, '\x0', expr.Location)).Resolve (rc);
+					break;
 				}
 				break;
 			case BuiltinTypeSpec.Type.Float:
@@ -1767,6 +1858,12 @@ namespace Mono.CSharp {
 					return new ConvCast (expr, target_type, ConvCast.Mode.R4_CH);
 				case BuiltinTypeSpec.Type.Decimal:
 					return new OperatorCast (expr, target_type, true);
+
+				// ActionScript explicit casts..
+				case BuiltinTypeSpec.Type.Bool:
+					if (ft == SourceFileType.ActionScript)
+						return new Binary(Binary.Operator.Inequality, expr, new FloatLiteral(rc.BuiltinTypes, 0f, expr.Location)).Resolve (rc);
+					break;
 				}
 				break;
 			case BuiltinTypeSpec.Type.Double:
@@ -1798,6 +1895,12 @@ namespace Mono.CSharp {
 					return new ConvCast (expr, target_type, ConvCast.Mode.R8_R4);
 				case BuiltinTypeSpec.Type.Decimal:
 					return new OperatorCast (expr, target_type, true);
+
+				// ActionScript explicit casts..
+				case BuiltinTypeSpec.Type.Bool:
+					if (ft == SourceFileType.ActionScript)
+						return new Binary(Binary.Operator.Inequality, expr, new DoubleLiteral(rc.BuiltinTypes, 0, expr.Location)).Resolve (rc);
+					break;
 				}
 				break;
 			case BuiltinTypeSpec.Type.UIntPtr:
@@ -1843,6 +1946,12 @@ namespace Mono.CSharp {
 				case BuiltinTypeSpec.Type.Float:
 				case BuiltinTypeSpec.Type.Double:
 					return new OperatorCast (expr, expr.Type, target_type, true);
+
+				// ActionScript explicit casts..
+				case BuiltinTypeSpec.Type.Bool:
+					if (ft == SourceFileType.ActionScript)
+						return new Binary(Binary.Operator.Inequality, expr, new DecimalLiteral(rc.BuiltinTypes, 0, expr.Location)).Resolve (rc);
+					break;
 				}
 
 				break;

@@ -158,15 +158,6 @@
       <Link>Error.asx</Link>
     </Compile>
     <Compile Include="System\Runtime\CompilerServices\DynamicAttribute.cs" />
-    <Compile Include="ArgumentError.asx" />
-    <Compile Include="DefinitionError.asx" />
-    <Compile Include="RangeError.asx" />
-    <Compile Include="ReferenceError.asx" />
-    <Compile Include="SecurityError.asx" />
-    <Compile Include="SyntaxError.asx" />
-    <Compile Include="TypeError.asx" />
-    <Compile Include="URIError.asx" />
-    <Compile Include="VerifyError.asx" />
     <Compile Include="..\ascorlib\flash\events\Event.cs">
       <Link>flash\events\Event.cs</Link>
     </Compile>
@@ -176,9 +167,36 @@
     <Compile Include="..\ascorlib\flash\events\IEventDispatcher.cs">
       <Link>flash\events\IEventDispatcher.cs</Link>
     </Compile>
-    <Compile Include="StringExtensions.cs" />
-    <Compile Include="Number.cs" />
-    <Compile Include="EmbedAttribute.cs" />
+    <Compile Include="..\ascorlib\EmbedAttribute.cs">
+      <Link>EmbedAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\Number.cs">
+      <Link>Number.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\String.cs">
+      <Link>String.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\VerifyError.asx">
+      <Link>VerifyError.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\URIError.asx">
+      <Link>URIError.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\TypeError.asx">
+      <Link>TypeError.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\SyntaxError.asx">
+      <Link>SyntaxError.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\int.cs">
+      <Link>int.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ArgumentError.asx">
+      <Link>ArgumentError.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\RangeError.asx">
+      <Link>RangeError.asx</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="ActionScript\" />
@@ -560,5 +578,14 @@
     <Compile Include="..\ascorlib\flash\utils\utils_functions.asx">
       <Link>flash\utils\utils_functions.asx</Link>
     </Compile>
+    <None Include="..\ascorlib\DefinitionError.asx">
+      <Link>DefinitionError.asx</Link>
+    </None>
+    <None Include="..\ascorlib\ReferenceError.asx">
+      <Link>ReferenceError.asx</Link>
+    </None>
+    <None Include="..\ascorlib\SecurityError.asx">
+      <Link>SecurityError.asx</Link>
+    </None>
   </ItemGroup>
 </Project>

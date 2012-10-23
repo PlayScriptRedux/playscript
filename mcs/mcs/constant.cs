@@ -269,7 +269,7 @@ namespace Mono.CSharp {
 					Error_ValueCannotBeConverted (ec, target_type, false);
 				}
 
-				return New.Constantify (target_type, loc);
+				return New.Constantify (target_type, loc, ec.FileType);
 			}
 		}
 

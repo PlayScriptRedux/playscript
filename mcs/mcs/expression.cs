@@ -1614,7 +1614,17 @@ namespace Mono.CSharp
 			eclass = ExprClass.Value;
 			TypeSpec etype = expr.Type;
 
-			if (!TypeSpec.IsReferenceType (type) && !type.IsNullableType) {
+			bool isActionScript = ec.FileType == SourceFileType.ActionScript;
+			bool isRefType = TypeSpec.IsReferenceType (type) || type.IsNullableType;
+
+			// Always "Object" for dynamic type when evaluating ActionScript AS operator (not dynamic CONV call).
+			if (isActionScript && etype.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
+				expr = new Cast(new TypeExpression(ec.BuiltinTypes.Object, expr.Location), expr, expr.Location).Resolve(ec);
+				etype = ec.BuiltinTypes.Object;
+			}
+
+			// Fail if conv type is not ref type or nullable (but allow if ActionScript)
+			if (!isActionScript && !isRefType) {
 				if (TypeManager.IsGenericParameter (type)) {
 					ec.Report.Error (413, loc,
 						"The `as' operator cannot be used with a non-reference type parameter `{0}'. Consider adding `class' or a reference type constraint",
@@ -1631,27 +1641,53 @@ namespace Mono.CSharp
 				return Nullable.LiftedNull.CreateFromExpression (ec, this);
 			}
 
-			// If the compile-time type of E is dynamic, unlike the cast operator the as operator is not dynamically bound
-			if (etype.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
-				return this;
-			}
-			
-			Expression e = Convert.ImplicitConversionStandard (ec, expr, type, loc);
-			if (e != null) {
-				e = EmptyCast.Create (e, type);
-				return ReducedExpression.Create (e, this).Resolve (ec);
-			}
+			// Do ref type AS conversion (always true for CSharp)
+			if (isRefType) {
 
-			if (Convert.ExplicitReferenceConversionExists (etype, type, ec)){
-				if (TypeManager.IsGenericParameter (etype))
+				// If the compile-time type of E is dynamic, unlike the cast operator the as operator is not dynamically bound
+				if (etype.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
+					return this;
+				}
+				
+				Expression e = Convert.ImplicitConversionStandard (ec, expr, type, loc);
+				if (e != null) {
+					e = EmptyCast.Create (e, type);
+					return ReducedExpression.Create (e, this).Resolve (ec);
+				}
+
+				if (isRefType && Convert.ExplicitReferenceConversionExists (etype, type, ec)) {
+					if (TypeManager.IsGenericParameter (etype))
+						expr = new BoxedCast (expr, etype);
+
+					return this;
+				}
+
+				if (InflatedTypeSpec.ContainsTypeParameter (etype) || InflatedTypeSpec.ContainsTypeParameter (type)) {
 					expr = new BoxedCast (expr, etype);
+					return this;
+				}
 
-				return this;
-			}
+			} else {
 
-			if (InflatedTypeSpec.ContainsTypeParameter (etype) || InflatedTypeSpec.ContainsTypeParameter (type)) {
-				expr = new BoxedCast (expr, etype);
-				return this;
+				// Do ActionScript AS cast..
+
+				bool eIsRefType = TypeSpec.IsReferenceType (etype) || etype.IsNullableType;
+
+				if (eIsRefType) {
+
+					// Copy ref expression to a temporary.. do conditional.
+					var local = TemporaryVariableReference.Create (etype, ec.CurrentBlock, expr.Location);
+					var comp_exp = new Binary(Binary.Operator.Equality, new CompilerAssign(local, expr, expr.Location), new NullLiteral(expr.Location));
+					var def_const = New.Constantify(type, expr.Location, ec.FileType);
+					var cast_exp = new Cast(new TypeExpression(type, expr.Location), local, expr.Location);
+
+					return new Conditional(comp_exp, def_const, cast_exp, expr.Location).Resolve(ec);
+
+				} else {
+
+					// Just do normal cast if not a ref type.
+					return new Cast(new TypeExpression(type, expr.Location), expr, expr.Location).Resolve (ec);
+				}
 			}
 
 			ec.Report.Error (39, loc, "Cannot convert type `{0}' to `{1}' via a built-in conversion",
@@ -1813,7 +1849,7 @@ namespace Mono.CSharp
 			if (TypeSpec.IsReferenceType (type))
 				return new NullConstant (type, loc);
 
-			Constant c = New.Constantify (type, expr.Location);
+			Constant c = New.Constantify (type, expr.Location, ec.FileType);
 			if (c != null)
 				return c;
 
@@ -5708,7 +5744,7 @@ namespace Mono.CSharp
 		/// <summary>
 		/// Converts complex core type syntax like 'new int ()' to simple constant
 		/// </summary>
-		public static Constant Constantify (TypeSpec t, Location loc)
+		public static Constant Constantify (TypeSpec t, Location loc, SourceFileType ft = SourceFileType.CSharp)
 		{
 			switch (t.BuiltinType) {
 			case BuiltinTypeSpec.Type.Int:
@@ -5720,9 +5756,9 @@ namespace Mono.CSharp
 			case BuiltinTypeSpec.Type.ULong:
 				return new ULongConstant (t, 0, loc);
 			case BuiltinTypeSpec.Type.Float:
-				return new FloatConstant (t, 0, loc);
+				return (ft != SourceFileType.ActionScript ? new FloatConstant (t, 0, loc) : new FloatConstant (t, float.NaN, loc));
 			case BuiltinTypeSpec.Type.Double:
-				return new DoubleConstant (t, 0, loc);
+				return (ft != SourceFileType.ActionScript ? new DoubleConstant (t, 0, loc) : new DoubleConstant (t, double.NaN, loc));
 			case BuiltinTypeSpec.Type.Short:
 				return new ShortConstant (t, 0, loc);
 			case BuiltinTypeSpec.Type.UShort:
@@ -5740,7 +5776,7 @@ namespace Mono.CSharp
 			}
 
 			if (t.IsEnum)
-				return new EnumConstant (Constantify (EnumSpec.GetUnderlyingType (t), loc), t);
+				return new EnumConstant (Constantify (EnumSpec.GetUnderlyingType (t), loc, ft), t);
 
 			if (t.IsNullableType)
 				return Nullable.LiftedNull.Create (t, loc);
@@ -5816,7 +5852,7 @@ namespace Mono.CSharp
 			}
 
 			if (arguments == null) {
-				Constant c = Constantify (type, RequestedType.Location);
+				Constant c = Constantify (type, RequestedType.Location, ec.FileType);
 				if (c != null)
 					return ReducedExpression.Create (c, this);
 			}
@@ -8171,7 +8207,24 @@ namespace Mono.CSharp
 					// Try to look for extension method when member lookup failed
 					//
 					if (MethodGroupExpr.IsExtensionMethodArgument (expr)) {
-						var methods = rc.LookupExtensionMethod (expr_type, Name, lookup_arity);
+
+						// Handle extension properties for ActionScript (these have a get_ or set_ prefix).
+						string extMethodName;
+						bool isAsExtGetter = false;
+						bool isAsExtSetter = false;
+						if (rc.FileType == SourceFileType.ActionScript && (restrictions & MemberLookupRestrictions.InvocableOnly) == 0) {
+							if ((restrictions & MemberLookupRestrictions.ReadAccess) != 0) {
+								isAsExtGetter = true;
+								extMethodName = "get_" + Name;
+							} else {
+								isAsExtSetter = true;
+								extMethodName = "set_" + Name;
+							}
+						} else {
+							extMethodName = Name;
+						}
+
+						var methods = rc.LookupExtensionMethod (expr_type, extMethodName, lookup_arity);
 						if (methods != null) {
 							var emg = new ExtensionMethodGroupExpr (methods, expr, loc);
 							if (HasTypeArguments) {
@@ -8189,6 +8242,14 @@ namespace Mono.CSharp
 								var vr = expr as VariableReference;
 								if (vr != null)
 									vr.VerifyAssigned (rc);
+							}
+
+							// Handle any ActionScript extension getter right here (setters are handled in the Assign expression above)
+							if (isAsExtGetter) {
+								var args = new Arguments(0);
+								return new Invocation(new MemberAccess(expr, extMethodName, targs, expr.Location), args).Resolve (rc);
+							} else if (isAsExtSetter) {
+								return emg;
 							}
 
 							// TODO: it should really skip the checks bellow

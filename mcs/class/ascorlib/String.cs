@@ -4,6 +4,9 @@ namespace _root
 {
 	public static class String
 	{
+		public static int get_length(this string s) {
+			return 0;
+		}
 
 		public static string charAt(this string s, double index = 0) {
 			return null;
@@ -44,8 +47,16 @@ namespace _root
 		public static int search(this string s, object pattern) {
 			return -1;
 		}
-								
-		public static string slice(this string s, int startIndex = 0, int endIndex = 0x7fffffff) {
+
+		public static string slice(this string s) {
+			return null;			
+		}
+
+		public static string slice(this string s, int startIndex) {
+			return null;			
+		}
+
+		public static string slice(this string s, int startIndex, int endIndex) {
 			return null;			
 		}
 

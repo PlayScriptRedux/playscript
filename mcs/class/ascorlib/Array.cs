@@ -64,6 +64,12 @@ namespace _root
 		}
 
 		// Converts the elements in an array to strings, inserts the specified separator between the elements, concatenates them, and returns the resulting string.
+		public string join() 
+		{
+			throw new NotImplementedException();
+		}
+
+		// Converts the elements in an array to strings, inserts the specified separator between the elements, concatenates them, and returns the resulting string.
 		public string join(object sep) 
 		{
 			throw new NotImplementedException();

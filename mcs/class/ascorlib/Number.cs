@@ -18,7 +18,11 @@ namespace _root {
 			return null;
 		}
  	 	
-		public static string toString(this double d, double radix = 10) {
+		public static string toString(this double d) {
+			return null;
+		}
+
+		public static string toString(this double d, double radix) {
 			return null;
 		}
  	 	

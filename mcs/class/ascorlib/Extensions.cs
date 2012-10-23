@@ -24,6 +24,12 @@ namespace _root
 		//
 		// IList extensions (for arrays, etc).
 		//
+
+//		public static int get_length(this IList list) 
+//		{
+//			return list.Count;
+//		}
+
 	}
 }
 

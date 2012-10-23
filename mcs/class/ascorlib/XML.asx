@@ -191,6 +191,9 @@ package {
 			return null;
 		}
 	
+		public static implicit operator String (xml:XML) {
+			return "";
+		}	
 	}
 
 }

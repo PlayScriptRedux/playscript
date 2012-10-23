@@ -3,7 +3,7 @@ package {
 	import System.Collections.*;
 	import System.Collections.Generic.*;
 
-	public class XMLList /*implements IEnumerable.<XML>*/ {
+	public class XMLList implements IEnumerable.<XML> {
 	
 		//
 		// Methods
@@ -100,13 +100,17 @@ package {
 			get { return null; }
 		}
 		
-//		public function GetEnumerator() : IEnumerator.<XML> {
-//			return null;
-//		}
-//		
-//		private function IEnumerable.GetEnumerator() : IEnumerator { 
-//			return null;
-//		}
+		public static implicit operator String (list:XMLList) {
+			return "";
+		}
+		
+		function IEnumerable.<XML>.GetEnumerator() : IEnumerator.<XML> {
+			yield break;
+		}
+		
+		function IEnumerable.GetEnumerator() : IEnumerator { 
+			yield break;
+		}
 		
 	}
 

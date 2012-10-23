@@ -74,7 +74,7 @@ namespace Mono.CSharp {
 			}
 
 			if (expr == null)
-				expr = New.Constantify (underlying, Location);
+				expr = New.Constantify (underlying, Location, rc.FileType);
 
 			return new EnumConstant (expr, MemberType);
 		}
@@ -132,7 +132,7 @@ namespace Mono.CSharp {
 			{
 				// We are the first member
 				if (prev == null) {
-					return New.Constantify (current.Parent.Definition, Location);
+					return New.Constantify (current.Parent.Definition, Location, rc.FileType);
 				}
 
 				var c = ((ConstSpec) prev.Spec).GetConstant (rc) as EnumConstant;
@@ -143,7 +143,7 @@ namespace Mono.CSharp {
 						"The enumerator value `{0}' is outside the range of enumerator underlying type `{1}'",
 						current.GetSignatureForError (), ((Enum) current.Parent).UnderlyingType.GetSignatureForError ());
 
-					return New.Constantify (current.Parent.Definition, current.Location);
+					return New.Constantify (current.Parent.Definition, current.Location, rc.FileType);
 				}
 			}
 

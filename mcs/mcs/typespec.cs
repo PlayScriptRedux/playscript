@@ -812,6 +812,8 @@ namespace Mono.CSharp
 			IEnumerator,
 			IEnumerable,
 			IDisposable,
+			IList,
+			IDictionary,
 			Exception,
 			Attribute,
 			Other,
@@ -1121,7 +1123,7 @@ namespace Mono.CSharp
 				var t2_targs = type2.TypeArguments;
 				var targs_definition = target_type_def.TypeParameters;
 
-				if (!type1.IsInterface && !type1.IsDelegate) {
+				if (!type1.IsInterface && !type1.IsDelegate || t1_targs.Length != t2_targs.Length) {  // !!!: Need to confirm interfaces have same number of targs
 					return false;
 				}
 

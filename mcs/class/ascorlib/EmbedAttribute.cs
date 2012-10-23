@@ -7,6 +7,8 @@ namespace _root
 	{
 		public string source { get; set; }
 
+		public string mimeType { get; set; }
+
 		public EmbedAttribute ()
 		{
 		}

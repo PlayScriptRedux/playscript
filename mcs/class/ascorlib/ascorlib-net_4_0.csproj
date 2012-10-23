@@ -38,10 +38,6 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AssemblyInfo.cs" />
-    <Compile Include="Extensions.cs" />
-    <Compile Include="Array.cs" />
-    <Compile Include="functions.cs" />
     <Compile Include="ActionScript\Undefined.cs" />
     <Compile Include="ActionScript\Expando\BindingRestrictionsEx.cs" />
     <Compile Include="ActionScript\Expando\CacheDict.cs" />
@@ -73,10 +69,36 @@
     <Compile Include="ActionScript\RuntimeBinder\RuntimeBinderContext.cs" />
     <Compile Include="ActionScript\RuntimeBinder\RuntimeBinderException.cs" />
     <Compile Include="ActionScript\RuntimeBinder\RuntimeBinderInternalCompilerException.cs" />
-    <Compile Include="Error.asx" />
     <Compile Include="flash\events\Event.cs" />
     <Compile Include="flash\events\EventDispatcher.cs" />
     <Compile Include="flash\events\IEventDispatcher.cs" />
+    <Compile Include="Array.cs" />
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="EmbedAttribute.cs" />
+    <Compile Include="Extensions.cs" />
+    <Compile Include="functions.cs" />
+    <Compile Include="int.cs" />
+    <Compile Include="Number.cs" />
+    <Compile Include="String.cs" />
+    <Compile Include="ArgumentError.asx" />
+    <Compile Include="Class.asx" />
+    <Compile Include="DefinitionError.asx" />
+    <Compile Include="Error.asx" />
+    <Compile Include="functions.asx" />
+    <Compile Include="JSON.asx" />
+    <Compile Include="Math.asx" />
+    <Compile Include="Namespace.asx" />
+    <Compile Include="RangeError.asx" />
+    <Compile Include="ReferenceError.asx" />
+    <Compile Include="RegExp.asx" />
+    <Compile Include="SecurityError.asx" />
+    <Compile Include="SyntaxError.asx" />
+    <Compile Include="TypeError.asx" />
+    <Compile Include="URIError.asx" />
+    <Compile Include="Vector.asx" />
+    <Compile Include="VerifyError.asx" />
+    <Compile Include="XML.asx" />
+    <Compile Include="XMLList.asx" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -86,17 +108,6 @@
     <Folder Include="flash\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="ascorlib.dll.sources" />
-    <None Include="Makefile" />
-    <Compile Include="Class.asx" />
-    <Compile Include="functions.asx" />
-    <Compile Include="JSON.asx" />
-    <Compile Include="Math.asx" />
-    <Compile Include="Namespace.asx" />
-    <Compile Include="RegExp.asx" />
-    <Compile Include="Vector.asx" />
-    <Compile Include="XML.asx" />
-    <Compile Include="XMLList.asx" />
     <Compile Include="flash\accessibility\AccessibilityImplementation.asx" />
     <Compile Include="flash\accessibility\AccessibilityProperties.asx" />
     <Compile Include="flash\desktop\IFilePromise.asx" />
@@ -212,5 +223,9 @@
     <Compile Include="flash\utils\IDataOutput.asx" />
     <Compile Include="flash\utils\Timer.asx" />
     <Compile Include="flash\utils\utils_functions.asx" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ascorlib.dll.sources" />
+    <None Include="Makefile" />
   </ItemGroup>
 </Project>

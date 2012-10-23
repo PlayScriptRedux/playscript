@@ -1402,7 +1402,7 @@ method_header
 		
 		} else {
 
-			if (current_container.Kind == MemberKind.Class && 
+			if (current_container.Kind == MemberKind.Class && name.ExplicitInterface == null &&
 				(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
 					modifiers |= Modifiers.VIRTUAL;
 
@@ -1440,7 +1440,7 @@ method_header
 		var modifiers = (Modifiers) $2;
 		var parameters = (ParametersCompiled) $7;		
 		
-		if (current_container.Kind == MemberKind.Class && 
+		if (current_container.Kind == MemberKind.Class && name.ExplicitInterface == null &&
 			(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
 				modifiers |= Modifiers.VIRTUAL;
 
@@ -1498,7 +1498,7 @@ method_header
 		var modifiers = (Modifiers) $2;
 		var parameters = (ParametersCompiled) $7;
 		
-		if (current_container.Kind == MemberKind.Class && 
+		if (current_container.Kind == MemberKind.Class && name.ExplicitInterface == null &&
 			(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
 				modifiers |= Modifiers.VIRTUAL;
 		
@@ -1577,7 +1577,7 @@ method_header
 		var modifiers = (Modifiers) $2;
 		modifiers |= Modifiers.PARTIAL;
 
-		if ((modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
+		if (name.ExplicitInterface == null && (modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
 			modifiers |= Modifiers.VIRTUAL;
 			
 		var method = Method.Create (current_type, new TypeExpression (compiler.BuiltinTypes.Void, GetLocation ($12)),
@@ -1931,13 +1931,15 @@ property_declaration
 		var type = (FullNamedExpression) $6;
 	
 		var modifiers = (Modifiers) $2;
-				
-		if (current_container.Kind == MemberKind.Class && 
+	
+		var name = (MemberName) $4;
+		
+		if (current_container.Kind == MemberKind.Class && name.ExplicitInterface == null && 
 			(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
 				modifiers |= Modifiers.VIRTUAL;
 		
 		current_property = new Property (current_type, type, modifiers,
-			(MemberName) $4, (Attributes) $1);
+			name, (Attributes) $1);
 			
 		if (type.Type != null && type.Type.Kind == MemberKind.Void)
 			report.Error (547, GetLocation ($3), "`{0}': property or indexer cannot have void type", current_property.GetSignatureForError ());					
@@ -1975,12 +1977,14 @@ indexer_declaration
 		var type = (FullNamedExpression) $10;
 
 		var modifiers = (Modifiers) $2;
+		
+		var name = (MemberName) $4;
 
-		if (current_container.Kind == MemberKind.Class && 
+		if (current_container.Kind == MemberKind.Class && name.ExplicitInterface == null && 
 			(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
 				modifiers |= Modifiers.VIRTUAL;
 		
-		Indexer indexer = new Indexer (current_type, type, (MemberName) $4, modifiers, (ParametersCompiled) $7, (Attributes) $1);
+		Indexer indexer = new Indexer (current_type, type, name, modifiers, (ParametersCompiled) $7, (Attributes) $1);
 			
 		current_property = indexer;
 
@@ -2243,27 +2247,34 @@ operator_declaration
 		if (decl != null) {
 			var modifiers = (Modifiers) $2;
 			
-			if (current_container.Kind == MemberKind.Class && 
-				(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
-					modifiers |= Modifiers.VIRTUAL;			
+//			if (current_container.Kind == MemberKind.Class && 
+//				(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
+//					modifiers |= Modifiers.VIRTUAL;			
 		
-			Operator op = new Operator (
-				current_type, decl.optype, decl.ret_type, modifiers, 
-				current_local_parameters,
-				(ToplevelBlock) $5, (Attributes) $1, decl.location);
+			if (current_local_parameters.Count < 1) {
+			
+				report.Error (7037, GetLocation ($1), "Invalid number of parameters for operator.");			
+			
+			} else {
+			
+				Operator op = new Operator (
+					current_type, decl.optype, decl.ret_type, modifiers, 
+					current_local_parameters,
+					(ToplevelBlock) $5, (Attributes) $1, decl.location);
 				
-			if (op.Block == null)
-				op.ParameterInfo.CheckParameters (op);
+				if (op.Block == null)
+					op.ParameterInfo.CheckParameters (op);
 
-			if (doc_support) {
-				op.DocComment = tmpComment;
-				Lexer.doc_state = XmlCommentState.Allowed;
+				if (doc_support) {
+					op.DocComment = tmpComment;
+					Lexer.doc_state = XmlCommentState.Allowed;
+				}
+
+				// Note again, checking is done in semantic analysis
+				current_type.AddOperator (op);
+
+				lbag.AddMember (op, mod_locations, lbag.GetLocations (decl));
 			}
-
-			// Note again, checking is done in semantic analysis
-			current_type.AddOperator (op);
-
-			lbag.AddMember (op, mod_locations, lbag.GetLocations (decl));
 		}
 		
 		current_local_parameters = null;
@@ -2365,43 +2376,43 @@ overloadable_operator
 	;
 
 conversion_operator_declarator
-	: IMPLICIT OPERATOR OPEN_PARENS
+	: IMPLICIT OPERATOR type OPEN_PARENS
 	  {
 		valid_param_mod = ParameterModifierType.DefaultValue;
 	  }
-	  opt_formal_parameter_list CLOSE_PARENS COLON type
+	  opt_formal_parameter_list CLOSE_PARENS
 	  {
 		valid_param_mod = 0;
 
 		Location loc = GetLocation ($2);
-		current_local_parameters = (ParametersCompiled)$5;  
+		current_local_parameters = (ParametersCompiled)$6;  
 		  
 		if (doc_support) {
 			tmpComment = Lexer.consume_doc_comment ();
 			Lexer.doc_state = XmlCommentState.NotAllowed;
 		}
 
-		$$ = new OperatorDeclaration (Operator.OpType.Implicit, (FullNamedExpression) $8, loc);
-		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($2), GetLocation ($3), GetLocation ($6));
+		$$ = new OperatorDeclaration (Operator.OpType.Implicit, (FullNamedExpression) $3, loc);
+		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($2), GetLocation ($4), GetLocation ($7));
 	  }
-	| EXPLICIT OPERATOR OPEN_PARENS
+	| EXPLICIT OPERATOR type OPEN_PARENS
 	  {
 		valid_param_mod = ParameterModifierType.DefaultValue;
 	  }
-	  opt_formal_parameter_list CLOSE_PARENS COLON type
+	  opt_formal_parameter_list CLOSE_PARENS
 	  {
 		valid_param_mod = 0;
 		
 		Location loc = GetLocation ($2);
-		current_local_parameters = (ParametersCompiled)$5;  
+		current_local_parameters = (ParametersCompiled)$6;  
 		  
 		if (doc_support) {
 			tmpComment = Lexer.consume_doc_comment ();
 			Lexer.doc_state = XmlCommentState.NotAllowed;
 		}
 
-		$$ = new OperatorDeclaration (Operator.OpType.Explicit, (FullNamedExpression) $8, loc);
-		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($2), GetLocation ($3), GetLocation ($6));
+		$$ = new OperatorDeclaration (Operator.OpType.Explicit, (FullNamedExpression) $3, loc);
+		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($2), GetLocation ($4), GetLocation ($7));
 	  }
 	| IMPLICIT error 
 	  {

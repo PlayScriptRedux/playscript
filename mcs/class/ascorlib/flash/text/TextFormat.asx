@@ -2,6 +2,10 @@ package flash.text {
 
 	public class TextFormat {
 	
+		//
+		// Properties
+		//
+	
  		public property align : String { get; set; }
 
  	 	public property blockIndent : Object { get; set; }
@@ -37,6 +41,16 @@ package flash.text {
  	 	public property underline : Object { get; set; }
 
  	 	public property url : String { get; set; }
+		
+		//
+		// Methods
+		//
+		
+		public function TextFormat(font:String = null, size:Object = null, color:Object = null, bold:Object = null, 
+			italic:Object = null, underline:Object = null, url:String = null, target:String = null, 
+			align:String = null, leftMargin:Object = null, rightMargin:Object = null, indent:Object = null, 
+			leading:Object = null) {
+		}
 		
 	}
 
