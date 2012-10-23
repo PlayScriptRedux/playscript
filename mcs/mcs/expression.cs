@@ -5833,100 +5833,125 @@ namespace Mono.CSharp
 			// ActionScript: Make sure a "new Object()" call in as uses an actual object type and not
 			// dynamic.
 			if (ec.FileType == SourceFileType.ActionScript && 
-			    RequestedType.Type == ec.BuiltinTypes.Dynamic) {
-				RequestedType = new TypeExpression(ec.Module.PredefinedTypes.AsObject.Resolve (), 
+				RequestedType.Type == ec.BuiltinTypes.Dynamic) {
+				RequestedType = new TypeExpression (ec.Module.PredefinedTypes.AsObject.Resolve (), 
 				                                   RequestedType.Location);
 				isAsObject = true;
 			}
 
-			type = RequestedType.ResolveAsType (ec);
-			if (type == null)
-				return null;
+			Expression ret = null;
+			
+			// ActionScript can use a type variable in a new expression.
+			if (ec.FileType == SourceFileType.ActionScript && RequestedType is ATypeNameExpression) {
 
-			eclass = ExprClass.Value;
+				var atn = RequestedType as ATypeNameExpression;
+				Expression typeExpr = atn.LookupNameExpression (ec, MemberLookupRestrictions.ReadAccess);
 
-			if (type.IsPointer) {
-				ec.Report.Error (1919, loc, "Unsafe type `{0}' cannot be used in an object creation expression",
-					TypeManager.CSharpName (type));
-				return null;
-			}
+				if (!(typeExpr is TypeExpression)) {
+					bool dynamic;
+					if (arguments != null) {
+						arguments.Resolve (ec, out dynamic);
+					}
 
-			if (arguments == null) {
-				Constant c = Constantify (type, RequestedType.Location, ec.FileType);
-				if (c != null)
-					return ReducedExpression.Create (c, this);
-			}
+					if (arguments == null) {
+						arguments = new Arguments(1);
+					}
+					
+					arguments.Insert (0, new Argument (typeExpr.Resolve (ec), Argument.AType.DynamicTypeName));
+					ret = new DynamicConstructorBinder (typeExpr, arguments, loc).Resolve (ec);
+				}
+			} 
 
-			if (type.IsDelegate) {
-				return (new NewDelegate (type, arguments, loc)).Resolve (ec);
-			}
+			// Do CSharp style new..
+			if (ret == null) {
 
-			var tparam = type as TypeParameterSpec;
-			if (tparam != null) {
-				//
-				// Check whether the type of type parameter can be constructed. BaseType can be a struct for method overrides
-				// where type parameter constraint is inflated to struct
-				//
-				if ((tparam.SpecialConstraint & (SpecialConstraint.Struct | SpecialConstraint.Constructor)) == 0 && !TypeSpec.IsValueType (tparam)) {
-					ec.Report.Error (304, loc,
-						"Cannot create an instance of the variable type `{0}' because it does not have the new() constraint",
+				type = RequestedType.ResolveAsType (ec);
+				if (type == null)
+					return null;
+
+				eclass = ExprClass.Value;
+
+				if (type.IsPointer) {
+					ec.Report.Error (1919, loc, "Unsafe type `{0}' cannot be used in an object creation expression",
 						TypeManager.CSharpName (type));
+					return null;
 				}
 
-				if ((arguments != null) && (arguments.Count != 0)) {
-					ec.Report.Error (417, loc,
-						"`{0}': cannot provide arguments when creating an instance of a variable type",
-						TypeManager.CSharpName (type));
+				if (arguments == null) {
+					Constant c = Constantify (type, RequestedType.Location, ec.FileType);
+					if (c != null)
+						return ReducedExpression.Create (c, this);
 				}
 
-				return this;
-			}
-
-			if (type.IsStatic) {
-				ec.Report.SymbolRelatedToPreviousError (type);
-				ec.Report.Error (712, loc, "Cannot create an instance of the static class `{0}'", TypeManager.CSharpName (type));
-				return null;
-			}
-
-			if (type.IsInterface || type.IsAbstract){
-				if (!TypeManager.IsGenericType (type)) {
-					RequestedType = CheckComImport (ec);
-					if (RequestedType != null)
-						return RequestedType;
+				if (type.IsDelegate) {
+					return (new NewDelegate (type, arguments, loc)).Resolve (ec);
 				}
-				
-				ec.Report.SymbolRelatedToPreviousError (type);
-				ec.Report.Error (144, loc, "Cannot create an instance of the abstract class or interface `{0}'", TypeManager.CSharpName (type));
-				return null;
-			}
 
-			//
-			// Any struct always defines parameterless constructor
-			//
-			if (type.IsStruct && arguments == null)
-				return this;
+				var tparam = type as TypeParameterSpec;
+				if (tparam != null) {
+					//
+					// Check whether the type of type parameter can be constructed. BaseType can be a struct for method overrides
+					// where type parameter constraint is inflated to struct
+					//
+					if ((tparam.SpecialConstraint & (SpecialConstraint.Struct | SpecialConstraint.Constructor)) == 0 && !TypeSpec.IsValueType (tparam)) {
+						ec.Report.Error (304, loc,
+							"Cannot create an instance of the variable type `{0}' because it does not have the new() constraint",
+							TypeManager.CSharpName (type));
+					}
 
-			bool dynamic;
-			if (arguments != null) {
-				arguments.Resolve (ec, out dynamic);
-			} else {
-				dynamic = false;
-			}
+					if ((arguments != null) && (arguments.Count != 0)) {
+						ec.Report.Error (417, loc,
+							"`{0}': cannot provide arguments when creating an instance of a variable type",
+							TypeManager.CSharpName (type));
+					}
 
-			method = ConstructorLookup (ec, type, ref arguments, loc);
+					return this;
+				}
 
-			Expression ret;
+				if (type.IsStatic) {
+					ec.Report.SymbolRelatedToPreviousError (type);
+					ec.Report.Error (712, loc, "Cannot create an instance of the static class `{0}'", TypeManager.CSharpName (type));
+					return null;
+				}
 
-			if (dynamic) {
-				arguments.Insert (0, new Argument (new TypeOf (type, loc).Resolve (ec), Argument.AType.DynamicTypeName));
-				ret = new DynamicConstructorBinder (type, arguments, loc).Resolve (ec);
-			} else {
-				ret = this;
-			}
+				if (type.IsInterface || type.IsAbstract) {
+					if (!TypeManager.IsGenericType (type)) {
+						RequestedType = CheckComImport (ec);
+						if (RequestedType != null)
+							return RequestedType;
+					}
+					
+					ec.Report.SymbolRelatedToPreviousError (type);
+					ec.Report.Error (144, loc, "Cannot create an instance of the abstract class or interface `{0}'", TypeManager.CSharpName (type));
+					return null;
+				}
 
-			// ActionScript: If this is a new AS object, return it cast as a dynamic.
-			if (isAsObject) {
-				ret = new Cast(new TypeExpression(ec.BuiltinTypes.Dynamic, this.Location), ret, this.Location).Resolve (ec);
+				//
+				// Any struct always defines parameterless constructor
+				//
+				if (type.IsStruct && arguments == null)
+					return this;
+
+				bool dynamic;
+				if (arguments != null) {
+					arguments.Resolve (ec, out dynamic);
+				} else {
+					dynamic = false;
+				}
+
+				method = ConstructorLookup (ec, type, ref arguments, loc);
+
+				if (dynamic) {
+					arguments.Insert (0, new Argument (new TypeOf (type, loc).Resolve (ec), Argument.AType.DynamicTypeName));
+					ret = new DynamicConstructorBinder (type, arguments, loc).Resolve (ec);
+				} else {
+					ret = this;
+				}
+
+				// ActionScript: If this is a new AS object, return it cast as a dynamic.
+				if (isAsObject) {
+					ret = new Cast (new TypeExpression (ec.BuiltinTypes.Dynamic, this.Location), ret, this.Location).Resolve (ec);
+				}
 			}
 
 			return ret;
@@ -8274,6 +8299,10 @@ namespace Mono.CSharp
 								return new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "uint", Location), Name, Location).Resolve (rc);
 							case BuiltinTypeSpec.Type.Bool:
 								return new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "Boolean", Location), Name, Location).Resolve (rc);
+							case BuiltinTypeSpec.Type.Type:
+								return new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "Class", Location), Name, Location).Resolve (rc);
+							case BuiltinTypeSpec.Type.Delegate:
+								return new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "Function", Location), Name, Location).Resolve (rc);
 							}
 						}
 

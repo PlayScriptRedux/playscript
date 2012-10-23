@@ -7391,7 +7391,9 @@ object ConvertAsType(SimpleName sn, object e)
 	else if (sn.Name == "void")
 		return new TypeExpression (compiler.BuiltinTypes.Void, GetLocation (e));
 	else if (sn.Name == "Function")
-		return new TypeExpression (compiler.BuiltinTypes.Dynamic, GetLocation (e));
+		return new TypeExpression (compiler.BuiltinTypes.Delegate, GetLocation (e));
+	else if (sn.Name == "Class")
+		return new TypeExpression (compiler.BuiltinTypes.Type, GetLocation (e));
 	else
 		return e;
 }

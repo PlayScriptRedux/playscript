@@ -37,6 +37,9 @@
     <Reference Include="test2">
       <HintPath>..\..\mcs\test2.exe</HintPath>
     </Reference>
+    <Reference Include="mscorlib">
+      <HintPath>..\..\..\..\mono-as3-inst\lib\mono\4.0\mscorlib.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -197,6 +200,15 @@
     <Compile Include="..\ascorlib\RangeError.asx">
       <Link>RangeError.asx</Link>
     </Compile>
+    <Compile Include="..\ascorlib\Class.cs">
+      <Link>Class.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\Boolean.cs">
+      <Link>Boolean.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\Function.cs">
+      <Link>Function.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="ActionScript\" />
@@ -206,9 +218,6 @@
   <ItemGroup>
     <None Include="ascorlib_aot.dll.sources" />
     <None Include="Makefile" />
-    <Compile Include="..\ascorlib\Class.asx">
-      <Link>Class.asx</Link>
-    </Compile>
     <Compile Include="..\ascorlib\functions.asx">
       <Link>functions.asx</Link>
     </Compile>

@@ -686,10 +686,21 @@ namespace Mono.CSharp
 
 	class DynamicConstructorBinder : DynamicExpressionStatement, IDynamicBinder
 	{
+		private Expression typeExpr;
+
 		public DynamicConstructorBinder (TypeSpec type, Arguments args, Location loc)
 			: base (null, args, loc)
 		{
 			this.type = type;
+			this.typeExpr = null;
+			base.binder = this;
+		}
+
+		public DynamicConstructorBinder (Expression typeExpr, Arguments args, Location loc)
+			: base (null, args, loc)
+		{
+			this.type = null;
+			this.typeExpr = typeExpr;
 			base.binder = this;
 		}
 
@@ -698,7 +709,11 @@ namespace Mono.CSharp
 			Arguments binder_args = new Arguments (3);
 
 			binder_args.Add (new Argument (new BinderFlags (0, this)));
-			binder_args.Add (new Argument (new TypeOf (ec.CurrentType, loc)));
+			if (typeExpr != null) {
+				binder_args.Add (new Argument (typeExpr));
+			} else {
+				binder_args.Add (new Argument (new TypeOf (ec.CurrentType, loc)));
+			}
 			binder_args.Add (new Argument (new ImplicitlyTypedArrayCreation (args.CreateDynamicBinderArguments (ec), loc)));
 
 			return new Invocation (GetBinder ("InvokeConstructor", loc), binder_args);

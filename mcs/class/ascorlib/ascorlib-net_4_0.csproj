@@ -81,7 +81,6 @@
     <Compile Include="Number.cs" />
     <Compile Include="String.cs" />
     <Compile Include="ArgumentError.asx" />
-    <Compile Include="Class.asx" />
     <Compile Include="DefinitionError.asx" />
     <Compile Include="Error.asx" />
     <Compile Include="functions.asx" />
@@ -99,6 +98,9 @@
     <Compile Include="VerifyError.asx" />
     <Compile Include="XML.asx" />
     <Compile Include="XMLList.asx" />
+    <Compile Include="Class.cs" />
+    <Compile Include="Boolean.cs" />
+    <Compile Include="Function.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
