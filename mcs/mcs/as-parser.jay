@@ -185,7 +185,8 @@ namespace Mono.ActionScript
 %token DELEGATE	
 %token DELETE
 %token DO	
-%token DOUBLE	
+%token DOUBLE
+%token DYNAMIC
 %token EACH	
 %token ELSE	
 %token ENUM	
@@ -4876,6 +4877,11 @@ modifier
 		$$ = Modifiers.ASYNC;
 		StoreModifierLocation ($$, GetLocation ($1));
 	  }
+	| DYNAMIC
+	  {
+	    $$ = Modifiers.AS_DYNAMIC;
+	    StoreModifierLocation ($$, GetLocation ($1));
+	  }
 	| IDENTIFIER_MODIFIER
 	  {
 	    $$ = Modifiers.INTERNAL;
@@ -7496,6 +7502,8 @@ string GetSymbolName (int token)
 		return "decimal";
 	case Token.DOUBLE:
 		return "double";
+	case Token.DYNAMIC:
+		return "dynamic";
 	case Token.FLOAT:
 		return "float";
 	case Token.INT:

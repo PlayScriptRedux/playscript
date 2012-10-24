@@ -2522,7 +2522,15 @@ namespace Mono.CSharp
 			: base (parent, name, attrs, MemberKind.Class)
 		{
 			var accmods = IsTopLevel ? Modifiers.INTERNAL : Modifiers.PRIVATE;
-			this.ModFlags = ModifiersExtensions.Check (AllowedModifiers, mod, accmods, Location, Report);
+			var allowedMods = AllowedModifiers;
+			// Modify allowed modifiers for classes in ActionScript
+			if (this.Location.SourceFile != null && this.Location.SourceFile.FileType == SourceFileType.ActionScript) {
+				allowedMods = allowedMods | Modifiers.AS_DYNAMIC & ~Modifiers.UNSAFE; // Dynamic classes yes, but no unsafe code in AS
+				if (!this.Location.SourceFile.AsExtended) { // Normal AS does not support STATIC or ABSTRACT classes either
+					allowedMods &= ~(Modifiers.STATIC | Modifiers.ABSTRACT | Modifiers.NEW);
+				}
+			}
+			this.ModFlags = ModifiersExtensions.Check (allowedMods, mod, accmods, Location, Report);
 			spec = new TypeSpec (Kind, null, this, null, ModFlags);
 		}
 

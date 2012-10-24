@@ -576,6 +576,7 @@ namespace Mono.ActionScript
 			AddKeyword ("delete", Token.DELETE);
 			AddKeyword ("do", Token.DO);
 			AddKeyword ("double", Token.DOUBLE);
+			AddKeyword ("dynamic", Token.DYNAMIC);
 			AddKeyword ("each", Token.EACH);
 			AddKeyword ("else", Token.ELSE);
 			AddKeyword ("enum", Token.ENUM);

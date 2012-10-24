@@ -38,19 +38,20 @@ namespace Mono.CSharp
 		VOLATILE  = 0x1000,
 		UNSAFE    = 0x2000,
 		ASYNC     = 0x4000,
-		TOP       = 0x8000,
+		AS_DYNAMIC = 0x8000,
+		TOP       = 0x10000,
 
 		//
 		// Compiler specific flags
 		//
-		PROPERTY_CUSTOM 		= 0x10000,
+		PROPERTY_CUSTOM 		= 0x100000,
 
-		PARTIAL					= 0x20000,
-		DEFAULT_ACCESS_MODIFER	= 0x40000,
-		METHOD_EXTENSION		= 0x80000,
-		COMPILER_GENERATED		= 0x100000,
-		BACKING_FIELD			= 0x200000,
-		DEBUGGER_HIDDEN			= 0x400000,
+		PARTIAL					= 0x200000,
+		DEFAULT_ACCESS_MODIFER	= 0x400000,
+		METHOD_EXTENSION		= 0x800000,
+		COMPILER_GENERATED		= 0x1000000,
+		BACKING_FIELD			= 0x2000000,
+		DEBUGGER_HIDDEN			= 0x4000000,
 
 		AccessibilityMask = PUBLIC | PROTECTED | INTERNAL | PRIVATE,
 		AllowedExplicitImplFlags = UNSAFE | EXTERN,
@@ -111,6 +112,8 @@ namespace Mono.CSharp
 				s = "unsafe"; break;
 			case Modifiers.ASYNC:
 				s = "async"; break;
+			case Modifiers.AS_DYNAMIC:
+				s = "dynamic"; break;
 			}
 
 			return s;
