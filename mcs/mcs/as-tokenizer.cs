@@ -983,6 +983,7 @@ namespace Mono.ActionScript
 			case Token.UNSAFE:
 			case Token.FIXED:
 			case Token.GOTO:
+			case Token.ENUM:
 				if (!handle_asx)
 					res = -1;
 
@@ -3144,6 +3145,8 @@ namespace Mono.ActionScript
 
 			id_builder [pos++] = (char) c;
 
+			bool is_config_ident = false;
+
 			try {
 				while (true) {
 					c = reader.Read ();
@@ -3151,6 +3154,25 @@ namespace Mono.ActionScript
 					if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || (c >= '0' && c <= '9')) {
 						id_builder [pos++] = (char) c;
 						continue;
+					}
+
+					if (c == ':' && !is_config_ident) {
+						var colonPos = reader.Position;
+						c = reader.Read ();
+						if (c == ':') { 
+							c = reader.Read ();
+							if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_') {
+								is_config_ident = true;
+								id_builder [pos++] = ':';
+								id_builder [pos++] = ':';
+								id_builder [pos++] = (char) c;
+								continue;
+							} 
+						}
+						if (!is_config_ident) {
+							reader.Position = colonPos;
+							c = ':';
+						}
 					}
 
 					if (c < 0x80) {
@@ -3186,7 +3208,7 @@ namespace Mono.ActionScript
 			// Optimization: avoids doing the keyword lookup
 			// on uppercase letters
 			//
-			if (id_builder [0] >= '_' && !quoted) {
+			if (!quoted && !is_config_ident && id_builder [0] >= '_') {
 				int keyword = GetKeyword (id_builder, pos);
 				if (keyword != -1) {
 					val = ltb.Create (keyword == Token.AWAIT ? "await" : null, current_source, ref_line, column);
@@ -3200,8 +3222,8 @@ namespace Mono.ActionScript
 			if (quoted && parsing_attribute_section)
 				AddEscapedIdentifier (((LocatedToken) val).Location);
 
-			return (parsing_modifiers && !parsing_attribute_section) ? 
-				Token.IDENTIFIER_MODIFIER : Token.IDENTIFIER;
+			return is_config_ident ? Token.IDENTIFIER_CONFIG : 
+				((parsing_modifiers && !parsing_attribute_section) ? Token.IDENTIFIER_MODIFIER : Token.IDENTIFIER);
 		}
 
 		string InternIdentifier (char[] charBuffer, int length)
