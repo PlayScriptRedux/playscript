@@ -749,7 +749,7 @@ attribute_or_config
 	| IDENTIFIER_CONFIG
 	  {
 		var lt = (Tokenizer.LocatedToken) $1;
-	    is_config_enabled = file.IsConditionalDefined (lt.Value.Replace(':','_'));
+	    is_config_enabled = file.IsConditionalDefined (lt.Value.Replace("CONFIG::",""));
 	    $$ = null;
 	  }
 	;
@@ -5127,7 +5127,46 @@ block
 	  } 
 	  opt_statement_list block_end
 	  {
-		$$ = $4;
+  		$$ = $4;
+	  }
+	;
+	
+//
+// An optional config block is "contained" on the following places:
+//	method_body
+//      
+config_block
+	: opt_block_config OPEN_BRACE  
+	  {
+		++lexer.parsing_block;
+		start_block (GetLocation ($2));
+	  } 
+	  opt_statement_list block_end
+	  {
+	    var is_config_enabled = true;
+	    
+	    // If we have a config prefix, check to see if it's defined..
+	    if ($1 != null) {
+		  var lt = (Tokenizer.LocatedToken) $1;
+	      is_config_enabled = file.IsConditionalDefined (lt.Value.Replace("CONFIG::",""));
+	    }
+	    
+	    if (is_config_enabled) {
+	      // This block should be included
+  		  $$ = $5;
+  		} else {
+  		  // This block should not be included.. create an empty block
+  		  start_block (GetLocation ($2));
+  		  $$ = end_block (GetLocation ($5));
+  		}
+	  }
+	;	
+	
+opt_block_config
+	: /* empty */
+	| IDENTIFIER_CONFIG
+	  {
+	 	$$ = $1; 
 	  }
 	;
 
@@ -5209,7 +5248,7 @@ interactive_statement
 	;
 
 valid_declaration_statement
-	: block
+	: config_block
 	| empty_statement
 	| expression_statement
 	| selection_statement
@@ -5226,7 +5265,7 @@ valid_declaration_statement
 	;
 
 interactive_valid_declaration_statement
-	: block
+	: config_block
 	| empty_statement
     | interactive_expression_statement
 	| selection_statement

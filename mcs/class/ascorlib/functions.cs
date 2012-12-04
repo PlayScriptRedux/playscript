@@ -16,7 +16,7 @@ namespace _root
 	}
 
 	public static class Number_fn
-	{
+	{  
 		// Inlineable method
 		public static double Number (object o)
 		{
