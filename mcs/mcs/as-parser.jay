@@ -4892,7 +4892,7 @@ modifier
 	  }
 	| FINAL
 	  {
-		$$ = Modifiers.SEALED;
+		$$ = (Modifiers)0; // Modifiers.SEALED;  // The semantics for SEALED and FINAL don't quite match.  Ignore FINAL for right now. (BEN)
 		StoreModifierLocation ($$, GetLocation ($1));
 	  }
 	| STATIC
