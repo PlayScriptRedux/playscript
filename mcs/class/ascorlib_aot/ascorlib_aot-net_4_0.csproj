@@ -37,9 +37,6 @@
     <Reference Include="mscorlib">
       <HintPath>..\..\..\..\mono-as3-inst\lib\mono\4.0\mscorlib.dll</HintPath>
     </Reference>
-    <Reference Include="test2">
-      <HintPath>..\..\mcs\test2.exe</HintPath>
-    </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
