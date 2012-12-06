@@ -434,6 +434,23 @@ namespace Mono.CSharp {
 			return texpr;
 		}
 
+		public ATypeNameExpression MakeTypeNameExpression(Location loc) 
+		{
+			string[] names = Name.Split(new [] {'.'});
+
+			ATypeNameExpression exp = null;
+			for (var i = 0; i < names.Length; i++) {
+				var name = names[i];
+				if (exp == null) {
+					exp = new SimpleName (name, loc);
+				} else {
+					exp = new MemberAccess(exp, name, loc);
+				}
+			}
+
+			return exp;
+		}
+
 		//
 		// Completes types with the given `prefix'
 		//
@@ -848,9 +865,9 @@ namespace Mono.CSharp {
 
 		#endregion
 
-		public void AddUsing (UsingNamespace un)
+		public void AddUsing (UsingNamespace un, bool forceAppend = false)
 		{
-			if (DeclarationFound){
+			if (DeclarationFound && !forceAppend){
 				Compiler.Report.Error (1529, un.Location, "A using clause must precede all other namespace elements except extern alias declarations");
 			}
 

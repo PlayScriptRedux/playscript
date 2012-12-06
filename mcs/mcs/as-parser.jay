@@ -50,6 +50,8 @@ namespace Mono.ActionScript
 		const string RootNs = AsConsts.AsRootNamespace;
 	
 		NamespaceContainer current_namespace;
+		NamespaceContainer prev_namespace;
+		NamespaceContainer private_namespace;
 		TypeContainer current_container;
 		TypeDefinition current_type;
 		PropertyBase current_property;
@@ -579,11 +581,23 @@ package_declaration
 	
 		module.AddAttributes (attrs, current_namespace);
 		
+	    // Close the private package namespace (if it's active)
+	  	if (current_namespace == private_namespace) {
+	  		if (private_namespace.Containers.Count > 0) {
+		  		prev_namespace.AddTypeContainer(private_namespace);
+				var priv_un = new UsingNamespace (
+					private_namespace.NS.MakeTypeNameExpression(GetLocation($1)), GetLocation ($1));
+				prev_namespace.AddUsing(priv_un, true);
+			}
+			current_container = current_namespace = prev_namespace.Parent;
+			prev_namespace = private_namespace = null; 
+	  	}
+		
 		var ns = new NamespaceContainer (name, current_namespace);
 		current_namespace.AddTypeContainer (ns);
 		current_container = current_namespace = ns;
 		var un = new UsingNamespace (new SimpleName (RootNs, GetLocation ($1)), GetLocation ($1));
-		current_namespace.AddUsing(un);
+		current_namespace.AddUsing(un, true);
 	  }
 	  OPEN_BRACE
 	  {
@@ -594,12 +608,30 @@ package_declaration
 	  {
 	  	lbag.AddLocation (current_container, GetLocation ($2), GetLocation ($5), GetLocation ($8));
 	  
-		current_container = current_namespace = current_namespace.Parent;
+	  	if (current_namespace.Parent != null && current_namespace.Parent.Parent == null) { // Is this the top level package?
+			var ns = new NamespaceContainer (new MemberName("__" + file.FileName.Replace(".","_")), current_namespace);
+			prev_namespace = current_namespace;
+			current_container = private_namespace = current_namespace = ns;
+	    } else {
+			current_container = current_namespace = current_namespace.Parent;
+		}
 		
 		lexer.parsing_modifiers = false;
 	  }
 	  opt_package_declarations
 	  {
+	    // Close the private package namespace (if it's active)
+	  	if (current_namespace == private_namespace) {
+	  		if (private_namespace.Containers.Count > 0) {
+		  		prev_namespace.AddTypeContainer(private_namespace);
+				var priv_un = new UsingNamespace (
+					private_namespace.NS.MakeTypeNameExpression(GetLocation($1)), GetLocation ($1));
+				prev_namespace.AddUsing(priv_un, true);
+			}
+			current_container = current_namespace = prev_namespace.Parent;
+			prev_namespace = private_namespace = null; 
+	  	}
+	  
 //	  	lbag.AddLocation (current_container, GetLocation ($2), GetLocation ($5), GetLocation ($10));
 	  }
 	;
