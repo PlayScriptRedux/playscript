@@ -668,6 +668,14 @@ namespace Mono.CSharp {
 					return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_R4);
 				case BuiltinTypeSpec.Type.Decimal:
 					return expr == null ? EmptyExpression.Null : new OperatorCast (expr, target_type);
+				case BuiltinTypeSpec.Type.Int:
+					if (ft == SourceFileType.ActionScript)
+						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_I4);
+					break;
+				case BuiltinTypeSpec.Type.UInt:
+					if (ft == SourceFileType.ActionScript)
+						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U4);
+					break;
 				case BuiltinTypeSpec.Type.Bool:
 					if (ft == SourceFileType.ActionScript)
 						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new LongLiteral(opt_ec.BuiltinTypes, 0L, expr.Location)).Resolve (opt_ec);

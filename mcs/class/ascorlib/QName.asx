@@ -1,0 +1,30 @@
+package {
+
+	public class QName {
+	
+		//
+		// Properties
+		//
+		
+		public property localName : String { get { return null; } }
+
+ 	 	public property uri : String { get { return null; } }
+
+		//
+		// Methods 
+		//
+		
+		public function QName(qname:*, localName:QName = null) {
+		}
+ 	 	
+		public function toString():String {
+			return null;
+		}
+ 	 	
+		public function valueOf():QName {
+			return null;
+		}
+	
+	}
+
+}

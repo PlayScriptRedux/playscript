@@ -1,0 +1,37 @@
+package flash.net {
+
+	import flash.events.EventDispatcher;
+
+	public class URLLoader extends EventDispatcher {
+
+		//
+		// Properties
+		//
+			
+		public property bytesLoaded : uint { get; set; }
+
+	 	public property bytesTotal : uint { get; set; }
+
+ 	 	public property data : * { get; set; }
+
+ 	 	public property dataFormat : String { get; set; }
+ 	 	
+		//
+		// Methods
+		//
+
+		public function URLLoader(request:URLRequest = null) {
+		}
+
+		public override function addEventListener(type:String, listener:Function, useCapture:Boolean = false, priority:int = 0, useWeakReference:Boolean = false):void {
+		}
+ 	 	
+		public function close():void {
+		}
+ 	 	
+		public function load(request:URLRequest):void {
+		}
+	
+	}
+
+}

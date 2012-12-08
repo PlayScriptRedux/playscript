@@ -1,16 +1,21 @@
-package flash.display {
+package flash.net {
 
-	import flash.utils.ByteArray;
-
-	public class ShaderData implements IDynamicClass {
+	public class URLVariables implements IDynamicClass {
 	
 		//
 		// Methods
 		//
 		
-		public function ShaderData(byteCode:ByteArray) {
+		public function URLVariables(source:String = null) {
 		}
-		
+ 	 	
+		public function decode(source:String):void {
+		}
+ 	 	
+		public function toString():String {
+			return null;
+		}
+	
 		//
 		// IDynamicClass Implementation
 		//
@@ -29,7 +34,7 @@ package flash.display {
 		public function getDynamicNames():Array {
 			return null;
 		}
-		
+	
 	}
 
 }

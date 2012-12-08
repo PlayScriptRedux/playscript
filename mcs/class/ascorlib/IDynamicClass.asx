@@ -1,0 +1,19 @@
+package {
+
+	public interface IDynamicClass {
+	
+		//
+		// Methods
+		//
+	
+		function getDynamicValue(name:String):*;
+		
+		function setDynamicValue(name:String, value:*):void;
+	
+		function hasDynamicValue(name:String):Boolean;
+		
+		function getDynamicNames():Array;
+	
+	}
+
+}

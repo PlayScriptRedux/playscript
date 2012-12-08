@@ -1,0 +1,15 @@
+package flash.sampler {
+
+	public class Sample {
+	
+		//
+		// Properties
+		//
+	
+		public static property stack : Array { get { return null; } }
+
+ 	 	public static property time : Number { get { return 0; } }
+	
+	}
+
+}

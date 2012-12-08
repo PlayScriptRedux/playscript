@@ -1,0 +1,88 @@
+package flash.net {
+
+	import flash.events.EventDispatcher;
+	import flash.utils.IDataInput;
+	import flash.utils.ByteArray;
+
+	public class URLStream extends EventDispatcher implements IDataInput {
+	
+		//
+		// Properties
+		//
+		
+		public property bytesAvailable : uint { get { return 0; } }
+
+ 	 	public property connected : Boolean { get { return false; } }
+
+ 	 	public property endian : String { get; set; }
+
+ 	 	public property objectEncoding : uint { get; set; }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+ 	 	 	 	 	 	
+		public function close():void {
+		}
+ 	 	
+		public function load(request:URLRequest):void {
+		}
+ 	 	
+		public function readBoolean():Boolean {
+			return false;
+		}
+ 	 	
+		public function readByte():int {
+			return 0;
+		}
+ 	 	
+		public function readBytes(bytes:ByteArray, offset:uint = 0, length:uint = 0):void {
+		}
+ 	 	
+		public function readDouble():Number {
+			return 0.0;
+		}
+ 	 	
+		public function readFloat():Number {
+			return 0.0;
+		}
+ 	 	
+		public function readInt():int {
+			return 0;
+		}
+ 	 	
+		public function readMultiByte(length:uint, charSet:String):String {
+			return null;
+		}
+ 	 	
+		public function readObject():* {
+			return null;
+		}
+ 	 	
+		public function readShort():int {
+			return 0;
+		}
+ 	 	
+		public function readUnsignedByte():uint {
+			return 0;
+		}
+ 	 	
+		public function readUnsignedInt():uint {
+			return 0;
+		}
+ 	 	
+		public function readUnsignedShort():uint {
+			return 0;
+		}
+ 	 	
+		public function readUTF():String {
+			return null;
+		}
+ 	 	
+		public function readUTFBytes(length:uint):String {
+			return null;
+		}
+	
+	}
+
+}

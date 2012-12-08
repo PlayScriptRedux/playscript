@@ -334,6 +334,13 @@ namespace Mono.CSharp
 			if (Oper == Operator.OnesComplement && expr_type.IsEnum)
 				return ResolveEnumOperator (ec, expr, predefined);
 
+			//
+			// Handle !object expressions in ActionScript
+			//
+			if (ec.FileType == SourceFileType.ActionScript && Oper == Operator.LogicalNot && !expr.Type.IsStruct) {
+				return new Binary(Binary.Operator.Equality, expr, new NullLiteral(expr.Location)).Resolve(ec);
+			}
+
 			return ResolveUserType (ec, expr, predefined);
 		}
 

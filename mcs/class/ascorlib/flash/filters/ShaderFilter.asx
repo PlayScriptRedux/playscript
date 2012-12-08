@@ -1,0 +1,31 @@
+package flash.filters {
+
+	import flash.display.Shader;
+
+	public class ShaderFilter extends BitmapFilter {
+	
+		//
+		// Properties
+		//
+	
+ 	 	public property bottomExtension : int { get; set; }
+
+ 	 	public property leftExtension : int { get; set; }
+
+ 	 	public property rightExtension : int { get; set; }
+
+ 	 	public property shader : Shader { get; set; }
+
+ 	 	public property topExtension : int { get; set; }
+
+ 	 	//
+ 	 	// Methods
+ 	 	// 
+ 	 		 	
+		public function ShaderFilter(shader:Shader = null) {
+		}
+	
+	}
+
+}
+

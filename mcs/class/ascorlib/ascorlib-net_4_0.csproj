@@ -36,6 +36,9 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Mono.CSharp" />
     <Reference Include="System.Core" />
+    <Reference Include="test2">
+      <HintPath>..\..\mcs\test2.exe</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActionScript\Undefined.cs" />
@@ -101,6 +104,25 @@
     <Compile Include="Class.cs" />
     <Compile Include="Boolean.cs" />
     <Compile Include="Function.cs" />
+    <Compile Include="flash\display\Shape.asx" />
+    <Compile Include="flash\display\ShaderJob.asx" />
+    <Compile Include="flash\display\BlendMode.asx" />
+    <Compile Include="flash\net\URLLoader.asx" />
+    <Compile Include="flash\net\URLStream.asx" />
+    <Compile Include="flash\net\URLRequestDefaults.asx" />
+    <Compile Include="flash\net\URLVariables.asx" />
+    <Compile Include="flash\events\IOErrorEvent.asx" />
+    <Compile Include="flash\events\ProgressEvent.asx" />
+    <Compile Include="flash\events\ShaderEvent.asx" />
+    <Compile Include="flash\sampler\functions.asx" />
+    <Compile Include="QName.asx" />
+    <Compile Include="flash\sampler\DeleteObjectSample.asx" />
+    <Compile Include="flash\sampler\NewObjectSample.asx" />
+    <Compile Include="flash\sampler\Sample.asx" />
+    <Compile Include="flash\filters\ShaderFilter.asx" />
+    <Compile Include="EventAttribute.cs" />
+    <Compile Include="Dynamic.asx" />
+    <Compile Include="IDynamicClass.asx" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -108,6 +130,9 @@
     <Folder Include="ActionScript\Expando\" />
     <Folder Include="ActionScript\RuntimeBinder\" />
     <Folder Include="flash\" />
+    <Folder Include="flash\debugger\" />
+    <Folder Include="flash\ext\" />
+    <Folder Include="flash\sampler\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="flash\accessibility\AccessibilityImplementation.asx" />

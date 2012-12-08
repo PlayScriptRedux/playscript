@@ -1,0 +1,36 @@
+package flash.display {
+
+	import flash.events.EventDispatcher;
+
+	public class ShaderJob extends EventDispatcher {
+	
+		//
+		// Properties
+		//
+	
+ 	 	public property width:int { get; set; }
+
+		public property height:int { get; set; }
+
+ 	 	public property progress:Number { get { return 0; } }
+
+ 	 	public property shader:Shader { get; set; }
+
+ 	 	public property target:Object { get; set; }
+
+		//
+		// Methods
+		//
+
+		public function ShaderJob(shader:Shader = null, target:Object = null, width:int = 0, height:int = 0) {
+		}
+
+		public function cancel():void {
+		}
+ 	 	
+		public function start(waitForCompletion:Boolean = false):void {
+		}
+		
+	}
+
+}

@@ -1,0 +1,16 @@
+package flash.sampler {
+
+	public class DeleteObjectSample extends Sample {
+	
+		//
+		// Properties
+		//
+		
+		public static property id : Number { get { return 0; } }
+		
+		public property size : Number { get { return 0; } }
+	
+	}
+
+
+}

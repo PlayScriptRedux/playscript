@@ -12,7 +12,7 @@ package flash.display3D {
 
  	 	public static const STENCIL : int = 4;
 
-		pubic static const ALL : int = 7;
+		public static const ALL : int = 7;
 	
 	}
 

@@ -1,0 +1,47 @@
+package flash.events {
+
+	import flash.display.InteractiveObject;
+
+	public class ProgressEvent extends Event {
+	
+	 	//
+ 	 	// Constants
+ 	 	//
+
+		public static const PROGRESS : String = "progress";
+
+ 	 	public static const SOCKET_DATA : String = "socketData";
+
+ 	 	public static const STANDARD_ERROR_DATA : String = "standardErrorData";
+
+ 	 	public static const STANDARD_INPUT_PROGRESS : String = "standardInputProgress";
+ 	 	
+ 	 	public static const STANDARD_OUTPUT_DATA : String = "standardOutputData";
+ 	 	
+ 	 	//
+ 	 	// Properties
+ 	 	//
+ 	 	
+		public property bytesLoaded : Number { get; set; }
+
+ 	 	public property bytesTotal : Number { get; set; }
+
+		//
+		// Methods
+		//
+
+		public function ProgressEvent(type:String, bubbles:Boolean = false, cancelable:Boolean = false, bytesLoaded:Number = 0, bytesTotal:Number = 0) {
+			super(type, bubbles, cancelable);
+		}
+ 	 	
+		public override function clone():Event {
+			return null;
+		}
+ 	 	
+		public override function toString():String {
+			return null;
+		}
+
+	}
+
+}

@@ -1,0 +1,18 @@
+package flash.sampler {
+
+	public class NewObjectSample extends Sample {
+	
+		//
+		// Properties
+		//
+		
+		public property @object : * { get; set; }
+		
+		public property size : Number { get; set; }
+	
+		public static property type : Class { get { return null; } }
+	
+	}
+
+
+}

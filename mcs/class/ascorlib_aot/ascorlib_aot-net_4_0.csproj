@@ -593,5 +593,11 @@
     <None Include="..\ascorlib\SecurityError.asx">
       <Link>SecurityError.asx</Link>
     </None>
+    <None Include="..\ascorlib\Dynamic.asx">
+      <Link>Dynamic.asx</Link>
+    </None>
+    <None Include="..\ascorlib\IDynamicClass.asx">
+      <Link>IDynamicClass.asx</Link>
+    </None>
   </ItemGroup>
 </Project>

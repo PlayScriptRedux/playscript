@@ -1,0 +1,65 @@
+package flash.sampler {
+	
+	public function clearSamples():void {
+	}
+ 	 	
+	public function getGetterInvocationCount(obj:Object, qname:QName):Number {
+		return 0;
+	}
+ 	 	
+	public function getInvocationCount(obj:Object, qname:QName):Number {
+		return 0;
+	}
+ 	 	
+	public function getLexicalScopes(obj:Function):Array {
+		return new Array();
+	}
+ 	 	
+	public function getMasterString(str:String):String {
+		return "";
+	}
+ 	 	
+	public function getMemberNames(o:Object, instanceNames:Boolean = false):Object {
+		return new Object();
+	}
+ 	 	
+	public function getSampleCount():Number {
+		return 0;
+	}
+ 	 	
+	public function getSamples():Object {
+		return new Object();
+	}
+ 	 	
+	public function getSavedThis(obj:Function):Object {
+		return new Object();
+	}
+ 	 	
+	public function getSetterInvocationCount(obj:Object, qname:QName):Number {
+		return 0;
+	}
+ 	 	
+	public function getSize(o:*):Number {
+		return 0;
+	}
+ 	 	
+	public function isGetterSetter(obj:Object, qname:QName):Boolean {
+		return false;
+	}
+ 	 	
+	public function pauseSampling():void {
+	}
+ 	 	
+	public function sampleInternalAllocs(b:Boolean):void {
+	}
+ 	 	
+	public function setSamplerCallback(f:Function):void {
+	}
+ 	 	
+	public function startSampling():void {
+	}
+ 	 	
+	public function stopSampling():void {
+	}
+
+}

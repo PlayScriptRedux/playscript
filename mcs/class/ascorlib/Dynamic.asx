@@ -1,0 +1,29 @@
+package {
+
+	// Helper class to enable support for flash dynamic classes.
+	public static class Dynamic {
+	
+		//
+		// Methods
+		//
+	
+		public static function getValue(obj:IDynamicClass, name:String):* {
+			return obj.getDynamicValue(name);
+		}
+		
+		public static function setValue(obj:IDynamicClass, name:String, value:*):void {
+			obj.setDynamicValue(name, value);
+		}
+	
+		public static function hasValue(obj:IDynamicClass, name:String):Boolean {
+			return obj.hasDynamicValue(name);
+		}
+		
+		public static function getNames(obj:IDynamicClass):Array {
+			return obj.getDynamicNames();
+		}	
+	
+	}
+
+
+}

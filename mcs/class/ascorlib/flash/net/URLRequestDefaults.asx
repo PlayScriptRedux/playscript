@@ -1,0 +1,33 @@
+package flash.net {
+
+	public static class URLRequestDefaults {
+	
+		//
+		// Properties
+		//
+		
+		public static property authenticate : Boolean { get; set; }
+
+ 	 	public static property cacheResponse : Boolean { get; set; }
+
+ 	 	public static property followRedirects : Boolean { get; set; }
+
+ 	 	public static property idleTimeout : Number { get; set; }
+
+ 	 	public static property manageCookies : Boolean { get; set; }
+
+ 	 	public static property useCache : Boolean { get; set; }
+
+ 	 	public static property userAgent : String { get; set; }
+
+ 	 	//
+ 	 	// Methods
+ 	 	//
+ 	 	 	 	 	 	
+		public static function setLoginCredentialsForHost(hostname:String, user:String, password:String):* {
+			return null;		
+		}
+	
+	}
+
+}

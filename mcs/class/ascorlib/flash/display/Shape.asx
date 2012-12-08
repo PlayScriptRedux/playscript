@@ -1,0 +1,13 @@
+package flash.display {
+
+	public class Shape extends DisplayObject {
+	
+		//
+		// Properties
+		//
+	
+		public property graphics : Graphics { get { return null; } }
+	
+	}
+
+}
