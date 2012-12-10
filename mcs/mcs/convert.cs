@@ -511,7 +511,7 @@ namespace Mono.CSharp {
 			return ImplicitNumericConversion (null, expr_type, target_type, opt_ec) != null;
 		}
 
-		static Expression ImplicitNumericConversion (Expression expr, TypeSpec expr_type, TypeSpec target_type, ResolveContext opt_ec)
+		static Expression ImplicitNumericConversion (Expression expr, TypeSpec expr_type, TypeSpec target_type, ResolveContext opt_ec, bool upconvert_only = false)
 		{
 			SourceFileType ft = opt_ec == null ? SourceFileType.CSharp : opt_ec.FileType;
 			switch (expr_type.BuiltinType) {
@@ -623,8 +623,12 @@ namespace Mono.CSharp {
 				case BuiltinTypeSpec.Type.Decimal:
 					return expr == null ? EmptyExpression.Null : new OperatorCast (expr, target_type);
 				case BuiltinTypeSpec.Type.UInt:
-					if (ft == SourceFileType.ActionScript)
+					if (ft == SourceFileType.ActionScript && !upconvert_only)
 						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U4);
+					break;
+				case BuiltinTypeSpec.Type.ULong:
+					if (ft == SourceFileType.ActionScript && !upconvert_only)
+						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U8);
 					break;
 				case BuiltinTypeSpec.Type.Bool:
 					if (ft == SourceFileType.ActionScript)
@@ -648,7 +652,7 @@ namespace Mono.CSharp {
 				case BuiltinTypeSpec.Type.Decimal:
 					return expr == null ? EmptyExpression.Null : new OperatorCast (expr, target_type);
 				case BuiltinTypeSpec.Type.Int:
-					if (ft == SourceFileType.ActionScript)
+					if (ft == SourceFileType.ActionScript && !upconvert_only)
 						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_I4);
 					break;
 				case BuiltinTypeSpec.Type.Bool:
@@ -669,12 +673,16 @@ namespace Mono.CSharp {
 				case BuiltinTypeSpec.Type.Decimal:
 					return expr == null ? EmptyExpression.Null : new OperatorCast (expr, target_type);
 				case BuiltinTypeSpec.Type.Int:
-					if (ft == SourceFileType.ActionScript)
+					if (ft == SourceFileType.ActionScript && !upconvert_only)
 						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_I4);
 					break;
 				case BuiltinTypeSpec.Type.UInt:
-					if (ft == SourceFileType.ActionScript)
+					if (ft == SourceFileType.ActionScript && !upconvert_only)
 						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U4);
+					break;
+				case BuiltinTypeSpec.Type.ULong:
+					if (ft == SourceFileType.ActionScript && !upconvert_only)
+						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U8);
 					break;
 				case BuiltinTypeSpec.Type.Bool:
 					if (ft == SourceFileType.ActionScript)
@@ -693,6 +701,18 @@ namespace Mono.CSharp {
 					return expr == null ? EmptyExpression.Null : new OpcodeCastDuplex (expr, target_type, OpCodes.Conv_R_Un, OpCodes.Conv_R4);
 				case BuiltinTypeSpec.Type.Decimal:
 					return expr == null ? EmptyExpression.Null : new OperatorCast (expr, target_type);
+				case BuiltinTypeSpec.Type.Int:
+					if (ft == SourceFileType.ActionScript && !upconvert_only)
+						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_I4);
+					break;
+				case BuiltinTypeSpec.Type.UInt:
+					if (ft == SourceFileType.ActionScript && !upconvert_only)
+						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U4);
+					break;
+				case BuiltinTypeSpec.Type.Long:
+					if (ft == SourceFileType.ActionScript && !upconvert_only)
+						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_I8);
+					break;
 				case BuiltinTypeSpec.Type.Bool:
 					if (ft == SourceFileType.ActionScript)
 						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new ULongLiteral(opt_ec.BuiltinTypes, 0L, expr.Location)).Resolve(opt_ec);
@@ -735,15 +755,15 @@ namespace Mono.CSharp {
 				//
 				switch (target_type.BuiltinType) {
 				case BuiltinTypeSpec.Type.Int:
-					if (ft == SourceFileType.ActionScript)
+					if (ft == SourceFileType.ActionScript && !upconvert_only)
 						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_I4);
 					break;
 				case BuiltinTypeSpec.Type.UInt:
-					if (ft == SourceFileType.ActionScript)
+					if (ft == SourceFileType.ActionScript && !upconvert_only)
 						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U4);
 					break;
 				case BuiltinTypeSpec.Type.Bool:
-					if (ft == SourceFileType.ActionScript)
+					if (ft == SourceFileType.ActionScript && !upconvert_only)
 						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new DoubleLiteral(opt_ec.BuiltinTypes, 0.0, expr.Location)).Resolve(opt_ec);
 					break;
 				}
@@ -756,9 +776,9 @@ namespace Mono.CSharp {
 		//
 		// Full version of implicit conversion
 		//
-		public static bool ImplicitConversionExists (ResolveContext ec, Expression expr, TypeSpec target_type)
+		public static bool ImplicitConversionExists (ResolveContext ec, Expression expr, TypeSpec target_type, bool upconvert_only = false)
 		{
-			if (ImplicitStandardConversionExists (expr, target_type, ec))
+			if (ImplicitStandardConversionExists (expr, target_type, ec, upconvert_only))
 				return true;
 
 			if (expr.Type == InternalType.AnonymousMethod) {
@@ -797,7 +817,7 @@ namespace Mono.CSharp {
 		//
 		// Implicit standard conversion (only core conversions are used here)
 		//
-		public static bool ImplicitStandardConversionExists (Expression expr, TypeSpec target_type, ResolveContext opt_ec)
+		public static bool ImplicitStandardConversionExists (Expression expr, TypeSpec target_type, ResolveContext opt_ec, bool upconvert_only = false)
 		{
 			//
 			// Identity conversions
@@ -817,7 +837,7 @@ namespace Mono.CSharp {
 			if (target_type.IsNullableType)
 				return ImplicitNulableConversion (null, expr, target_type) != null;
 
-			if (ImplicitNumericConversion (null, expr_type, target_type, opt_ec) != null)
+			if (ImplicitNumericConversion (null, expr_type, target_type, opt_ec, upconvert_only) != null)
 				return true;
 
 			if (ImplicitReferenceConversionExists (expr_type, target_type, false, opt_ec))
@@ -1335,14 +1355,14 @@ namespace Mono.CSharp {
 		///   in a context that expects a `target_type'.
 		/// </summary>
 		static public Expression ImplicitConversion (ResolveContext ec, Expression expr,
-							     TypeSpec target_type, Location loc)
+							     TypeSpec target_type, Location loc, bool upconvert_only = false)
 		{
 			Expression e;
 
 			if (target_type == null)
 				throw new Exception ("Target type is null");
 
-			e = ImplicitConversionStandard (ec, expr, target_type, loc);
+			e = DoImplicitConversionStandard (ec, expr, target_type, loc, false, upconvert_only);
 			if (e != null)
 				return e;
 
@@ -1367,10 +1387,10 @@ namespace Mono.CSharp {
 		static public Expression ImplicitConversionStandard (ResolveContext ec, Expression expr,
 								     TypeSpec target_type, Location loc)
 		{
-			return ImplicitConversionStandard (ec, expr, target_type, loc, false);
+			return DoImplicitConversionStandard (ec, expr, target_type, loc, false, false);
 		}
 
-		static Expression ImplicitConversionStandard (ResolveContext ec, Expression expr, TypeSpec target_type, Location loc, bool explicit_cast)
+		static Expression DoImplicitConversionStandard (ResolveContext ec, Expression expr, TypeSpec target_type, Location loc, bool explicit_cast, bool upconvert_only)
 		{
 			if (expr.eclass == ExprClass.MethodGroup){
 				if (!target_type.IsDelegate){
@@ -1454,7 +1474,7 @@ namespace Mono.CSharp {
 					return c;
 			}
 
-			e = ImplicitNumericConversion (expr, expr_type, target_type, ec);
+			e = ImplicitNumericConversion (expr, expr_type, target_type, ec, upconvert_only);
 			if (e != null)
 				return e;
 
@@ -2168,7 +2188,7 @@ namespace Mono.CSharp {
 			TypeSpec expr_type = expr.Type;
 
 			// Explicit conversion includes implicit conversion and it used for enum underlying types too
-			Expression ne = ImplicitConversionStandard (ec, expr, target_type, loc, true);
+			Expression ne = DoImplicitConversionStandard (ec, expr, target_type, loc, true, false);
 			if (ne != null)
 				return ne;
 

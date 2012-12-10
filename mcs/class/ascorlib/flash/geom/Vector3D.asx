@@ -58,7 +58,7 @@ package flash.geom {
 		public function decrementBy(a:Vector3D):void {
 		}
 
- 	 	public function distance(pt1:Vector3D, pt2:Vector3D):Number {
+ 	 	public static function distance(pt1:Vector3D, pt2:Vector3D):Number {
  	 		return 0.0;
  	 	}
  	 	

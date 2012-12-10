@@ -735,16 +735,23 @@ namespace Mono.ActionScript
 				this.handle_each = false;
 				break;
 			case Token.FUNCTION:
-				this.handle_get_set = true;
-				next_token = peek_token ();
-				if (next_token == Token.GET) {
-					token ();
-					res = Token.FUNCTION_GET;
-				} else if (next_token == Token.SET) {
-					token ();
-					res = Token.FUNCTION_SET;
+				parsing_modifiers = false;
+				bool is_get_set = false;
+				PushPosition();
+				var fn_token = token ();
+				if (fn_token == Token.IDENTIFIER)
+				{
+					var get_set = (string)((LocatedToken)val).Value;
+					if (get_set == "get" || get_set == "set") {
+						fn_token = token ();
+						if (fn_token == Token.IDENTIFIER) {
+							res = (get_set == "get") ? Token.FUNCTION_GET : Token.FUNCTION_SET;
+						}
+					}
 				}
-				this.handle_get_set = false;
+				PopPosition ();
+				if (res != Token.FUNCTION) 
+					token ();
 				break;
 			case Token.GET:
 			case Token.SET:
@@ -965,30 +972,51 @@ namespace Mono.ActionScript
 
 				// ASX Extension keywords
 			case Token.CHECKED:
-			case Token.DELEGATE:
-			case Token.EVENT:
 			case Token.EXPLICIT:
 			case Token.IMPLICIT:
-			case Token.INDEXER:
 			case Token.LOCK:
-			case Token.OPERATOR:
 			case Token.OUT:
 			case Token.PARAMS:
-			case Token.PROPERTY:
 			case Token.READONLY:
 			case Token.REF:
-			case Token.STRUCT:
 			case Token.TYPEOF:
 			case Token.UNCHECKED:
 			case Token.UNSAFE:
 			case Token.FIXED:
 			case Token.GOTO:
-			case Token.ENUM:
 				if (!handle_asx)
 					res = -1;
 
 				break;
+
+			case Token.EVENT:
+			case Token.INDEXER:
+			case Token.OPERATOR:
+			case Token.PROPERTY:
+				if (!handle_asx)
+					res = -1;
+				else
+					parsing_modifiers = false;
+				
+				break;
+
+			case Token.STRUCT:
+			case Token.DELEGATE:
+			case Token.ENUM:
+				if (!handle_asx)
+					res = -1;
+				else
+					parsing_modifiers = handle_namespace = false;
+				
+				break;
+
+			case Token.CLASS:
+			case Token.INTERFACE:
+				parsing_modifiers = handle_namespace = false;
+				break;
+
 			}
+
 
 			return res;
 		}

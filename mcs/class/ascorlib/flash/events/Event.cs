@@ -136,7 +136,7 @@ namespace flash.events
 		public virtual uint eventPhase { get { return _eventPhase; } } 
 
 		// [read-only] The event target.
-		public virtual object target { get { return _target; } } 
+		public virtual dynamic target { get { return _target; } } 
 
 		// [read-only] The type of event.
 		public virtual string type { get { return _type; } }
@@ -147,6 +147,9 @@ namespace flash.events
 
 		public virtual string toString() {
 			return null;
+		}
+
+		public virtual void stopImmediatePropagation() {
 		}
 
 	}

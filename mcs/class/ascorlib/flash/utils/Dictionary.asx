@@ -10,7 +10,18 @@ package flash.utils {
 		public function toJSON(k:String):* {
 			return null;
 		}
-	
+		
+		public function get length():int {
+			return Count;
+		}
+
+		public function set length(value:int):void {
+			if (value == 0)
+				this.Clear();
+			else
+				throw new System.NotImplementedException();
+		}
+		
 	}
 
 }

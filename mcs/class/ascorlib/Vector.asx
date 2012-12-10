@@ -40,9 +40,9 @@ package {
 			throw new System.NotImplementedException();
 		}
 
-//		public function indexOf(searchElement:T, fromIndex:int):int {
-//			throw new System.NotImplementedException();
-//		}
+		public function indexOf(searchElement:T, fromIndex:int):int {
+			throw new System.NotImplementedException();
+		}
  	 	
 		public function join(sep:String = ","):String {
 			throw new System.NotImplementedException();

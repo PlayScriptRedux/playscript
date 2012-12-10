@@ -1999,8 +1999,10 @@ namespace Mono.CSharp
 				if (left == lexpr.Type && right == rexpr.Type)
 					return true;
 
-				return Convert.ImplicitConversionExists (ec, lexpr, left) &&
-					Convert.ImplicitConversionExists (ec, rexpr, right);
+				bool right_upconvert_only = !(this is PredefinedShiftOperator);
+
+				return Convert.ImplicitConversionExists (ec, lexpr, left, true) &&
+					Convert.ImplicitConversionExists (ec, rexpr, right, right_upconvert_only);
 			}
 
 			public PredefinedOperator ResolveBetterOperator (ResolveContext ec, PredefinedOperator best_operator)
@@ -2013,8 +2015,10 @@ namespace Mono.CSharp
 				//
 				// When second argument is same as the first one, the result is same
 				//
-				if (right != null && (left != right || best_operator.left != best_operator.right)) {
-					result |= OverloadResolver.BetterTypeConversion (ec, best_operator.right, right);
+				if (ec.FileType != SourceFileType.ActionScript || !(best_operator is PredefinedShiftOperator)) {
+					if (right != null && (left != right || best_operator.left != best_operator.right)) {
+						result |= OverloadResolver.BetterTypeConversion (ec, best_operator.right, right);
+					}
 				}
 
 				if (result == 0 || result > 2)
@@ -2572,7 +2576,11 @@ namespace Mono.CSharp
 				else
 					opcode = OpCodes.Shr;
 				break;
-				
+
+			case Operator.AsURightShift:
+				opcode = OpCodes.Shr_Un;
+				break;
+
 			case Operator.LeftShift:
 				opcode = OpCodes.Shl;
 				break;
@@ -2852,7 +2860,7 @@ namespace Mono.CSharp
 				new PredefinedShiftOperator (types.Int, types.Int, Operator.ShiftMask),
 				new PredefinedShiftOperator (types.UInt, types.Int, Operator.ShiftMask),
 				new PredefinedShiftOperator (types.Long, types.Int, Operator.ShiftMask),
-				new PredefinedShiftOperator (types.ULong, types.Int, Operator.ShiftMask)
+				new PredefinedShiftOperator (types.ULong, types.Int, Operator.ShiftMask),
 			};
 		}
 
@@ -2885,17 +2893,16 @@ namespace Mono.CSharp
 				new PredefinedOperator (types.Double, Operator.LogicalMask, bool_type, true),
 				new PredefinedOperator (types.Decimal, Operator.LogicalMask, bool_type, true),
 
-
 				new PredefinedStringOperator (types.String, Operator.AdditionMask, types.String),
 				new PredefinedStringOperator (types.String, types.Object, Operator.AdditionMask, types.String),
 				new PredefinedStringOperator (types.Object, types.String, Operator.AdditionMask, types.String),
 				
 				new PredefinedOperator (bool_type, Operator.BitwiseMask | Operator.LogicalMask | Operator.EqualityMask, bool_type),
-				
+
 				new PredefinedShiftOperator (types.Int, types.Int, Operator.ShiftMask),
 				new PredefinedShiftOperator (types.UInt, types.Int, Operator.ShiftMask),
 				new PredefinedShiftOperator (types.Long, types.Int, Operator.ShiftMask),
-				new PredefinedShiftOperator (types.ULong, types.Int, Operator.ShiftMask)
+				new PredefinedShiftOperator (types.ULong, types.Int, Operator.ShiftMask),
 			};
 		}
 
@@ -3036,6 +3043,12 @@ namespace Mono.CSharp
 
 			if (left == null)
 				return null;
+
+			// Handle || operator applied to reference types in ActionScript..
+			if (ec.FileType == SourceFileType.ActionScript && oper == Operator.LogicalOr &&
+			    (left.Type.IsClass || left.Type.IsInterface)) {
+				return new Nullable.NullCoalescingOperator (left, right).Resolve (ec);
+			}
 
 			Constant lc = left as Constant;
 
@@ -4755,7 +4768,7 @@ namespace Mono.CSharp
 			// to false_expr, then the result type is of type false_expr.Type
 			//
 			if (!TypeSpecComparer.IsEqual (true_type, false_type)) {
-				Expression conv = Convert.ImplicitConversion (ec, true_expr, false_type, loc);
+				Expression conv = Convert.ImplicitConversion (ec, true_expr, false_type, loc, true);
 				if (conv != null && true_type.BuiltinType != BuiltinTypeSpec.Type.Dynamic) {
 					//
 					// Check if both can convert implicitly to each other's type
@@ -4763,7 +4776,7 @@ namespace Mono.CSharp
 					type = false_type;
 
 					if (false_type.BuiltinType != BuiltinTypeSpec.Type.Dynamic) {
-						var conv_false_expr = Convert.ImplicitConversion (ec, false_expr, true_type, loc);
+						var conv_false_expr = Convert.ImplicitConversion (ec, false_expr, true_type, loc, true);
 						//
 						// LAMESPEC: There seems to be hardcoded promotition to int type when
 						// both sides are numeric constants and one side is int constant and
@@ -5466,20 +5479,83 @@ namespace Mono.CSharp
 		protected override Expression DoResolve (ResolveContext ec)
 		{
 			Expression member_expr;
+			bool isActionScript = ec.FileType == SourceFileType.ActionScript;
+			bool args_resolved = false;
+			bool dynamic_arg = false;
+
 			var atn = expr as ATypeNameExpression;
+
+			// Handle special casts for dynamic types..
+			if (isActionScript && arguments != null && arguments.Count == 1) {
+
+				BuiltinTypeSpec.Type castType = BuiltinTypeSpec.Type.None;
+
+				if (expr is TypeExpression) {
+					castType = ((TypeExpression)expr).Type.BuiltinType;
+				} else if (atn != null) {  // These invoke values can be names.. 
+					if (atn.Name == "String") {
+						expr = new TypeExpression(ec.BuiltinTypes.String, Location);
+						atn = null;
+						castType = BuiltinTypeSpec.Type.String;
+					} else if (atn.Name == "Number") {
+						expr = new TypeExpression(ec.BuiltinTypes.Double, Location);
+						atn = null;
+						castType = BuiltinTypeSpec.Type.Double;
+					} else if (atn.Name == "Boolean") {
+						expr = new TypeExpression(ec.BuiltinTypes.Bool, Location);
+						atn = null;
+						castType = BuiltinTypeSpec.Type.Bool;
+					}
+				}
+
+				if (castType == BuiltinTypeSpec.Type.Int || castType == BuiltinTypeSpec.Type.UInt || castType == BuiltinTypeSpec.Type.Double ||
+				    castType == BuiltinTypeSpec.Type.Bool || castType == BuiltinTypeSpec.Type.String) {
+
+					if (arguments != null)
+						arguments.Resolve (ec, out dynamic_arg);
+					args_resolved = true;
+					
+					switch (castType) {
+						case BuiltinTypeSpec.Type.Int:
+							if (arguments[0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
+								atn = new SimpleName("int", Location);
+							break;
+						case BuiltinTypeSpec.Type.UInt:
+							if (arguments[0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
+								atn = new SimpleName("uint", Location);
+							break;
+						case BuiltinTypeSpec.Type.Double:
+							if (arguments[0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
+								atn = new SimpleName("Number", Location);
+							break;
+						case BuiltinTypeSpec.Type.Bool:
+							if (arguments[0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
+								atn = new SimpleName("Boolean", Location);
+							break;
+						case BuiltinTypeSpec.Type.String:
+							if (arguments[0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.Int ||
+						    	arguments[0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.UInt ||
+						    	arguments[0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.Double ||
+						    	arguments[0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.Bool)
+								atn = new SimpleName("String", Location);
+							break;
+					}
+				}
+			}
+
 			if (atn != null) {
 				MemberLookupRestrictions lookupRestr = MemberLookupRestrictions.InvocableOnly | MemberLookupRestrictions.ReadAccess;
 				// Allow lookup to return a type for ActionSctipt function style casts.
-				if (ec.FileType == SourceFileType.ActionScript && arguments != null && arguments.Count == 1)
+				if (isActionScript && arguments != null && arguments.Count == 1)
 					lookupRestr |= MemberLookupRestrictions.AsTypeCast;
 				member_expr = atn.LookupNameExpression (ec, lookupRestr);
 				if (member_expr != null) {
 					// Handle "function call" style casts in actionscript.
-					if (ec.FileType == SourceFileType.ActionScript && member_expr is TypeExpr && 
-					    arguments != null && arguments.Count == 1) {
-						var castExpr = new Cast(member_expr, arguments[0].Expr, loc);
-						return castExpr.Resolve (ec);
-					}
+//					if (isActionScript && member_expr is TypeExpr && 
+//					    arguments != null && arguments.Count == 1) {
+//						var castExpr = new Cast(member_expr, arguments[0].Expr, loc);
+//						return castExpr.Resolve (ec);
+//					}
 					member_expr = member_expr.Resolve (ec);
 				}
 			} else {
@@ -5487,7 +5563,7 @@ namespace Mono.CSharp
 			}
 
 			// Handle function style casts in ActionScript
-			if (ec.FileType == SourceFileType.ActionScript && arguments != null && arguments.Count == 1) {
+			if (isActionScript && arguments != null && arguments.Count == 1) {
 				if (member_expr is TypeExpression) {
 					return (new Cast((TypeExpression)member_expr, Arguments[0].Expr, loc)).Resolve (ec);
 				} else if (member_expr == null && atn != null) {
@@ -5501,16 +5577,14 @@ namespace Mono.CSharp
 			if (member_expr == null)
 				return null;
 
-			//
-			// Next, evaluate all the expressions in the argument list
-			//
-			bool dynamic_arg = false;
-			if (arguments != null)
+			if (arguments != null && !args_resolved)
 				arguments.Resolve (ec, out dynamic_arg);
 
 			TypeSpec expr_type = member_expr.Type;
-			if (expr_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic)
+			if (expr_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic || 
+			    (isActionScript && expr_type.BuiltinType == BuiltinTypeSpec.Type.Delegate)) { // Calls through delegate in ActionScript are dynamic
 				return DoResolveDynamic (ec, member_expr);
+			}
 
 			mg = member_expr as MethodGroupExpr;
 			Expression invoke = null;
@@ -5635,7 +5709,7 @@ namespace Mono.CSharp
 		// If a member is a method or event, or if it is a constant, field or property of either a delegate type
 		// or the type dynamic, then the member is invocable
 		//
-		public static bool IsMemberInvocable (MemberSpec member)
+		public static bool IsMemberInvocable (MemberSpec member, ResolveContext ec = null)
 		{
 			switch (member.Kind) {
 			case MemberKind.Event:
@@ -5643,7 +5717,8 @@ namespace Mono.CSharp
 			case MemberKind.Field:
 			case MemberKind.Property:
 				var m = member as IInterfaceMemberSpec;
-				return m.MemberType.IsDelegate || m.MemberType.BuiltinType == BuiltinTypeSpec.Type.Dynamic;
+				return m.MemberType.IsDelegate || m.MemberType.BuiltinType == BuiltinTypeSpec.Type.Dynamic || 
+					(ec != null && ec.FileType == SourceFileType.ActionScript && m.MemberType.BuiltinType == BuiltinTypeSpec.Type.Delegate);
 			default:
 				return false;
 			}
@@ -5847,14 +5922,14 @@ namespace Mono.CSharp
 			}
 
 			Expression ret = null;
-			
+
 			// ActionScript can use a type variable in a new expression.
-			if (ec.FileType == SourceFileType.ActionScript && RequestedType is ATypeNameExpression) {
+			if (ec.FileType == SourceFileType.ActionScript && (RequestedType is ATypeNameExpression)) {
 
-				var atn = RequestedType as ATypeNameExpression;
-				Expression typeExpr = atn.LookupNameExpression (ec, MemberLookupRestrictions.ReadAccess);
-
-				if (!(typeExpr is TypeExpression)) {
+				var reqExpr = ((ATypeNameExpression)RequestedType).LookupNameExpression(ec, MemberLookupRestrictions.None);
+				if (reqExpr is TypeExpr) {
+					type = RequestedType.ResolveAsType (ec);
+				} else {
 					bool dynamic;
 					if (arguments != null) {
 						arguments.Resolve (ec, out dynamic);
@@ -5864,15 +5939,16 @@ namespace Mono.CSharp
 						arguments = new Arguments(1);
 					}
 					
-					arguments.Insert (0, new Argument (typeExpr.Resolve (ec), Argument.AType.DynamicTypeName));
-					ret = new DynamicConstructorBinder (typeExpr, arguments, loc).Resolve (ec);
+					arguments.Insert (0, new Argument (reqExpr.Resolve (ec), Argument.AType.DynamicTypeName));
+					ret = new DynamicConstructorBinder (reqExpr, arguments, loc).Resolve (ec);
 				}
-			} 
+			} else {
+				type = RequestedType.ResolveAsType (ec);
+			}
 
 			// Do CSharp style new..
 			if (ret == null) {
 
-				type = RequestedType.ResolveAsType (ec);
 				if (type == null)
 					return null;
 

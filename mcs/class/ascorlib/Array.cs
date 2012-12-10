@@ -5,6 +5,21 @@ namespace _root
 {
 	public class Array : List<dynamic>
 	{
+
+		//
+		// Constants
+		//
+
+		public const uint CASEINSENSITIVE = 1;
+
+		public const uint DESCENDING = 2;
+
+		public const uint NUMERIC = 16;
+
+		public const uint RETURNINDEXEDARRAY = 8;
+
+		public const uint UNIQUESORT = 4;
+
 		public Array() {
 		}
 
@@ -139,7 +154,7 @@ namespace _root
 		}
  	 	
 		// Adds elements to and removes elements from an array.
-		public void splice(int startIndex, int deleteCount) {
+		public void splice(int startIndex, int deleteCount = 0) {
 			if (deleteCount == 1) {
 				this.RemoveAt(startIndex);
 			} else {

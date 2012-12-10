@@ -394,6 +394,11 @@ namespace Mono.CSharp {
 					return null;
 
 				if ((flags & e.ExprClassToResolveFlags) == 0) {
+					// We automatically do a typeof(type) in ActionScript for type values..
+					if (ec.FileType == SourceFileType.ActionScript && 
+					  (e is TypeExpr) && (flags & ResolveFlags.VariableOrValue) != 0) {
+						return (new TypeOf(e.Type, e.Location)).Resolve (ec);
+					}
 					e.Error_UnexpectedKind (ec, flags, loc);
 					return null;
 				}
@@ -716,7 +721,7 @@ namespace Mono.CSharp {
 						if (member is MethodSpec)
 							return new MethodGroupExpr (members, queried_type, loc);
 
-						if (!Invocation.IsMemberInvocable (member))
+						if (!Invocation.IsMemberInvocable (member, rc as ResolveContext))
 							continue;
 					}
 
@@ -2391,21 +2396,16 @@ namespace Mono.CSharp {
 			Block current_block = rc.CurrentBlock;
 			INamedBlockVariable variable = null;
 			bool variable_found = false;
+			var name = Name;
 
 			while (true) {
 
 				//
-				// Stage 0: handle actionscript builtin uppercase names (Not keywords).
+				// ActionScript: Perform member renaming
 				//
 				if (rc.FileType == SourceFileType.ActionScript) {
-					if (Name == "NaN") {
-						return new DoubleLiteral (rc.BuiltinTypes, double.NaN, loc);
-					} else if (Name == "String") {
-						return new TypeExpression(rc.BuiltinTypes.String, loc);
-					} else if (Name == "Boolean") {
-						return new TypeExpression(rc.BuiltinTypes.Bool, loc);
-					} else if (Name == "Number") {
-						return new TypeExpression(rc.BuiltinTypes.Double, loc);
+					if (name == "toString") {
+						name = "ToString";
 					}
 				}
 
@@ -2415,7 +2415,7 @@ namespace Mono.CSharp {
 				// LAMESPEC: It should take invocableOnly into account but that would break csc compatibility
 				//
 				if (current_block != null && lookup_arity == 0) {
-					if (current_block.ParametersBlock.TopBlock.GetLocalName (Name, current_block.Original, ref variable)) {
+					if (current_block.ParametersBlock.TopBlock.GetLocalName (name, current_block.Original, ref variable)) {
 						if (!variable.IsDeclared) {
 							// We found local name in accessible block but it's not
 							// initialized yet, maybe the user wanted to bind to something else
@@ -2425,7 +2425,7 @@ namespace Mono.CSharp {
 							e = variable.CreateReferenceExpression (rc, loc);
 							if (e != null) {
 								if (Arity > 0)
-									Error_TypeArgumentsCannotBeUsed (rc, "variable", Name, loc);
+									Error_TypeArgumentsCannotBeUsed (rc, "variable", name, loc);
 
 								return e;
 							}
@@ -2438,7 +2438,7 @@ namespace Mono.CSharp {
 				//
 				TypeSpec member_type = rc.CurrentType;
 				for (; member_type != null; member_type = member_type.DeclaringType) {
-					e = MemberLookup (rc, errorMode, member_type, Name, lookup_arity, restrictions, loc);
+					e = MemberLookup (rc, errorMode, member_type, name, lookup_arity, restrictions, loc);
 					if (e == null)
 						continue;
 
@@ -2456,7 +2456,7 @@ namespace Mono.CSharp {
 							if (me is FieldExpr || me is ConstantExpr || me is EventExpr || me is PropertyExpr) {
 								rc.Report.Error (844, loc,
 									"A local variable `{0}' cannot be used before it is declared. Consider renaming the local variable when it hides the member `{1}'",
-									Name, me.GetSignatureForError ());
+									name, me.GetSignatureForError ());
 							} else {
 								break;
 							}
@@ -2469,8 +2469,8 @@ namespace Mono.CSharp {
 					} else {
 						// LAMESPEC: again, ignores InvocableOnly
 						if (variable != null) {
-							rc.Report.SymbolRelatedToPreviousError (variable.Location, Name);
-							rc.Report.Error (135, loc, "`{0}' conflicts with a declaration in a child block", Name);
+							rc.Report.SymbolRelatedToPreviousError (variable.Location, name);
+							rc.Report.Error (135, loc, "`{0}' conflicts with a declaration in a child block", name);
 						}
 
 						//
@@ -2507,13 +2507,22 @@ namespace Mono.CSharp {
 				}
 
 				//
+				// Check for "Object" type if ActionScript
+				//
+				if (rc.FileType == SourceFileType.ActionScript && !variable_found) {
+					if (name == "Object") {
+						return new TypeExpression(rc.BuiltinTypes.Dynamic, loc);
+					}
+				}
+
+				//
 				// Stage 3: Lookup nested types, namespaces and type parameters in the context
 				//
 				if ((restrictions & MemberLookupRestrictions.InvocableOnly) == 0 && !variable_found) {
 					if (IsPossibleTypeOrNamespace (rc)) {
 						if (variable != null) {
-							rc.Report.SymbolRelatedToPreviousError (variable.Location, Name);
-							rc.Report.Error (135, loc, "`{0}' conflicts with a declaration in a child block", Name);
+							rc.Report.SymbolRelatedToPreviousError (variable.Location, name);
+							rc.Report.Error (135, loc, "`{0}' conflicts with a declaration in a child block", name);
 						}
 
 						return ResolveAsTypeOrNamespace (rc);
@@ -2534,23 +2543,42 @@ namespace Mono.CSharp {
 					// Is this a function style ActionScript cast.
 					if ((restrictions & MemberLookupRestrictions.AsTypeCast) != 0 && IsPossibleTypeOrNamespace (rc)) {
 						if (variable != null) {
-							rc.Report.SymbolRelatedToPreviousError (variable.Location, Name);
-							rc.Report.Error (135, loc, "`{0}' conflicts with a declaration in a child block", Name);
+							rc.Report.SymbolRelatedToPreviousError (variable.Location, name);
+							rc.Report.Error (135, loc, "`{0}' conflicts with a declaration in a child block", name);
 						}
 
 						return ResolveAsTypeOrNamespace (rc);
 					}
 				}
 
+				//
+				// Stage 5: handle actionscript builtin uppercase names (Not keywords).
+				//
+				if (rc.FileType == SourceFileType.ActionScript && !variable_found) {
+					if (name == "NaN") {
+						return new DoubleLiteral (rc.BuiltinTypes, double.NaN, loc);
+					} else if (name == "String") {
+						return new TypeExpression(rc.BuiltinTypes.String, loc);
+					} else if (name == "Boolean") {
+						return new TypeExpression(rc.BuiltinTypes.Bool, loc);
+					} else if (name == "Number") {
+						return new TypeExpression(rc.BuiltinTypes.Double, loc);
+					} else if (name == "Function") {
+						return new TypeExpression(rc.BuiltinTypes.Delegate, loc);
+					} else if (name == "Class") {
+						return new TypeExpression(rc.BuiltinTypes.Type, loc);
+					}
+				}
+
 				if (errorMode) {
 					if (variable_found) {
-						rc.Report.Error (841, loc, "A local variable `{0}' cannot be used before it is declared", Name);
+						rc.Report.Error (841, loc, "A local variable `{0}' cannot be used before it is declared", name);
 					} else {
 						if (Arity > 0) {
 							var tparams = rc.CurrentTypeParameters;
 							if (tparams != null) {
-								if (tparams.Find (Name) != null) {
-									Error_TypeArgumentsCannotBeUsed (rc, "type parameter", Name, loc);
+								if (tparams.Find (name) != null) {
+									Error_TypeArgumentsCannotBeUsed (rc, "type parameter", name, loc);
 									return null;
 								}
 							}
@@ -2559,8 +2587,8 @@ namespace Mono.CSharp {
 							do {
 								if (ct.MemberDefinition.TypeParametersCount > 0) {
 									foreach (var ctp in ct.MemberDefinition.TypeParameters) {
-										if (ctp.Name == Name) {
-											Error_TypeArgumentsCannotBeUsed (rc, "type parameter", Name, loc);
+										if (ctp.Name == name) {
+											Error_TypeArgumentsCannotBeUsed (rc, "type parameter", name, loc);
 											return null;
 										}
 									}
@@ -2571,21 +2599,21 @@ namespace Mono.CSharp {
 						}
 
 						if ((restrictions & MemberLookupRestrictions.InvocableOnly) == 0) {
-							e = rc.LookupNamespaceOrType (Name, Arity, LookupMode.IgnoreAccessibility, loc);
+							e = rc.LookupNamespaceOrType (name, Arity, LookupMode.IgnoreAccessibility, loc);
 							if (e != null) {
 								rc.Report.SymbolRelatedToPreviousError (e.Type);
 								ErrorIsInaccesible (rc, e.GetSignatureForError (), loc);
 								return e;
 							}
 						} else {
-							var me = MemberLookup (rc, false, rc.CurrentType, Name, Arity, restrictions & ~MemberLookupRestrictions.InvocableOnly, loc) as MemberExpr;
+							var me = MemberLookup (rc, false, rc.CurrentType, name, Arity, restrictions & ~MemberLookupRestrictions.InvocableOnly, loc) as MemberExpr;
 							if (me != null) {
 								me.Error_UnexpectedKind (rc, me, "method group", me.KindName, loc);
 								return ErrorExpression.Instance;
 							}
 						}
 
-						e = rc.LookupNamespaceOrType (Name, -System.Math.Max (1, Arity), LookupMode.Probing, loc);
+						e = rc.LookupNamespaceOrType (name, -System.Math.Max (1, Arity), LookupMode.Probing, loc);
 						if (e != null) {
 							if (e.Type.Arity != Arity) {
 								Error_TypeArgumentsCannotBeUsed (rc, e.Type, Arity, loc);
@@ -2598,14 +2626,14 @@ namespace Mono.CSharp {
 							}
 						}
 
-						rc.Report.Error (103, loc, "The name `{0}' does not exist in the current context", Name);
+						rc.Report.Error (103, loc, "The name `{0}' does not exist in the current context", name);
 					}
 
 					return ErrorExpression.Instance;
 				}
 
 				if (rc.Module.Evaluator != null) {
-					var fi = rc.Module.Evaluator.LookupField (Name);
+					var fi = rc.Module.Evaluator.LookupField (name);
 					if (fi != null)
 						return new FieldExpr (fi.Item1, loc);
 				}
@@ -4009,8 +4037,8 @@ namespace Mono.CSharp {
 			Expression p_tmp = new EmptyExpression (p);
 			Expression q_tmp = new EmptyExpression (q);
 
-			bool p_to_q = Convert.ImplicitConversionExists (ec, p_tmp, q);
-			bool q_to_p = Convert.ImplicitConversionExists (ec, q_tmp, p);
+			bool p_to_q = Convert.ImplicitConversionExists (ec, p_tmp, q, true);
+			bool q_to_p = Convert.ImplicitConversionExists (ec, q_tmp, p, true);
 
 			if (p_to_q && !q_to_p)
 				return 1;
@@ -4758,7 +4786,7 @@ namespace Mono.CSharp {
 							//
 							// Will use it later to report ambiguity between best method and invocable member
 							//
-							if (Invocation.IsMemberInvocable (member))
+							if (Invocation.IsMemberInvocable (member, rc))
 								invocable_member = member;
 
 							continue;

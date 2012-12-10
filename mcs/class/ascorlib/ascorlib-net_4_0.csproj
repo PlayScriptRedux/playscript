@@ -101,9 +101,7 @@
     <Compile Include="VerifyError.asx" />
     <Compile Include="XML.asx" />
     <Compile Include="XMLList.asx" />
-    <Compile Include="Class.cs" />
     <Compile Include="Boolean.cs" />
-    <Compile Include="Function.cs" />
     <Compile Include="flash\display\Shape.asx" />
     <Compile Include="flash\display\ShaderJob.asx" />
     <Compile Include="flash\display\BlendMode.asx" />
@@ -123,6 +121,8 @@
     <Compile Include="EventAttribute.cs" />
     <Compile Include="Dynamic.asx" />
     <Compile Include="IDynamicClass.asx" />
+    <Compile Include="flash\events\EventPhase.asx" />
+    <Compile Include="FunctionExtensions.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
