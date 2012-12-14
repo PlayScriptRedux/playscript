@@ -28,7 +28,7 @@ package flash.utils {
 		public function clear():void {
 		}
  	 	
-		public function compress(algorithm:String):void {
+		public function compress(algorithm:String = null):void {
 		}
  	 	
 		public function deflate():void {
@@ -100,7 +100,7 @@ package flash.utils {
 			return null;
 		}
  	 	
-		public function uncompress(algorithm:String):void {
+		public function uncompress(algorithm:String = null):void {
 		}
  	 	
 		public function writeBoolean(value:Boolean):void {

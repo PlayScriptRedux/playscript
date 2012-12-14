@@ -1,5 +1,9 @@
 package {
 
+	public function isA(obj:*, cl:Class):Boolean {
+		throw new System.NotImplementedException();	
+	}
+
 	public function decodeURI(uri:String):String {
 		throw new System.NotImplementedException();	
 	}

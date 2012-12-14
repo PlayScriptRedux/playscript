@@ -123,6 +123,12 @@
     <Compile Include="IDynamicClass.asx" />
     <Compile Include="flash\events\EventPhase.asx" />
     <Compile Include="FunctionExtensions.cs" />
+    <Compile Include="flash\display\GradientType.asx" />
+    <Compile Include="flash\display\SpreadMethod.asx" />
+    <Compile Include="flash\display\InterpolationMethod.asx" />
+    <Compile Include="flash\system\ImageDecodingPolicy.asx" />
+    <Compile Include="flash\net\URLLoaderDataFormat.asx" />
+    <Compile Include="flash\utils\CompressionAlgorithm.asx" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

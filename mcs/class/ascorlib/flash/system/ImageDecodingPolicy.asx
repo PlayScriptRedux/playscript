@@ -1,0 +1,16 @@
+package flash.system {
+
+	public static class ImageDecodingPolicy {
+	
+		//
+		// Constants
+		//
+		
+		public static const ON_DEMAND : String = "onDemand";
+
+ 	 	public static const ON_LOAD : String = "onLoad";
+	
+	}
+
+}
+

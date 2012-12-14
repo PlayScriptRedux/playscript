@@ -1,0 +1,18 @@
+package flash.display {
+
+	public static class SpreadMethod {
+	
+		//
+		// Constants
+		//
+		
+	 	public static const PAD : String = "pad";
+
+ 	 	public static const REFLECT : String = "reflect";
+
+ 	 	public static const REPEAT : String = "repeat";
+	
+	}
+
+}
+
