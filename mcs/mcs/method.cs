@@ -2337,6 +2337,10 @@ namespace Mono.CSharp {
 
 		protected virtual void ApplyToExtraTarget (Attribute a, MethodSpec ctor, byte[] cdata, PredefinedAttributes pa)
 		{
+			// We ignore this error in AS as attributes are always applied to getters/setters (seems like a missing feature in C#).
+			if (a.Location.SourceFile != null && a.Location.SourceFile.FileType == SourceFileType.ActionScript)
+				return;
+
 			throw new NotSupportedException ("You forgot to define special attribute target handling");
 		}
 
