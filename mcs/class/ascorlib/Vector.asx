@@ -16,6 +16,9 @@ package {
  	 	// Methods
  	 	//
  	 	 	 	
+ 	 	public function Vector(v:Vector.<T>):void {
+ 	 	}
+ 	 	
 		public function Vector(length:uint = 0, @fixed:Boolean = false) {
 			super(int(length));
 		}

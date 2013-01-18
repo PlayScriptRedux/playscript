@@ -4672,9 +4672,16 @@ namespace Mono.CSharp {
 				// resolve the initializer 
 				if (ec.FileType == SourceFileType.ActionScript) {
 					if (argument.InferArrayInitializer != null) {
-						argument.Expr = argument.InferArrayInitializer.InferredResolveWithArrayType (ec, parameter);
+						if (parameter.ImplementsInterface(ec.BuiltinTypes.IEnumerable, false)) {
+							argument.Expr = argument.InferArrayInitializer.InferredResolveWithArrayType (ec, parameter);
+						}
 					} else if (argument.InferObjInitializer != null) {
-						argument.Expr = argument.InferObjInitializer.InferredResolveWithObjectType (ec, parameter);
+						if (parameter == ec.BuiltinTypes.Object || parameter == ec.BuiltinTypes.Dynamic ||
+						  (!BuiltinTypeSpec.IsPrimitiveTypeOrDecimal(parameter) && 
+						    parameter.BuiltinType != BuiltinTypeSpec.Type.String && 
+						    parameter.BuiltinType != BuiltinTypeSpec.Type.Enum)) {
+							argument.Expr = argument.InferObjInitializer.InferredResolveWithObjectType (ec, parameter);
+						}
 					}
 				}
 
