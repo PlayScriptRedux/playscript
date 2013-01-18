@@ -2527,7 +2527,9 @@ namespace Mono.CSharp
 			if (this.Location.SourceFile != null && this.Location.SourceFile.FileType == SourceFileType.ActionScript) {
 				allowedMods = allowedMods | Modifiers.AS_DYNAMIC & ~Modifiers.UNSAFE; // Dynamic classes yes, but no unsafe code in AS
 				if (!this.Location.SourceFile.AsExtended) { // Normal AS does not support STATIC or ABSTRACT classes either
-					allowedMods &= ~(Modifiers.STATIC | Modifiers.ABSTRACT | Modifiers.NEW);
+					allowedMods &= ~(Modifiers.ABSTRACT | Modifiers.NEW);
+					if (!name.Basename.EndsWith("_fn"))
+						allowedMods &= ~Modifiers.STATIC;  // Only function classes can be static in standard AS
 				}
 			}
 			this.ModFlags = ModifiersExtensions.Check (allowedMods, mod, accmods, Location, Report);
