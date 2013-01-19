@@ -169,7 +169,7 @@ namespace Mono.CSharp {
 
 			// ActionScript references can always be implicitly cast to bool
 			if (target_type.BuiltinType == BuiltinTypeSpec.Type.Bool && opt_ec != null && opt_ec.FileType == SourceFileType.ActionScript) {
-				return new Binary(Binary.Operator.Equality, expr, new NullLiteral(expr.Location)).Resolve(opt_ec);
+				return new Binary(Binary.Operator.Inequality, expr, new NullLiteral(expr.Location)).Resolve(opt_ec);
 			}
 			
 			if (expr_type.Kind == MemberKind.TypeParameter)
