@@ -68,28 +68,33 @@ namespace Mono.CSharp {
 			spec = new TypeSpec (Kind, null, this, null, ModFlags | Modifiers.SEALED);
 		}
 
-		public static TypeSpec CreateDelegateTypeFromMethodSpec (ResolveContext rc, MethodSpec ms, Location loc)
+		public static TypeSpec CreateDelegateType (ResolveContext rc, AParametersCollection parameters, TypeSpec returnType, Location loc)
 		{
 			Namespace type_ns = rc.Module.GlobalRootNamespace.GetNamespace ("System", true);
 			if (type_ns == null) {
 				return null;
 			}
-			if (ms.ReturnType == rc.BuiltinTypes.Void) {
-				var actArgs = ms.Parameters.Types;
+			if (returnType == rc.BuiltinTypes.Void) {
+				var actArgs = parameters.Types;
 				var actionSpec = type_ns.LookupType (rc.Module, "Action", actArgs.Length, LookupMode.Normal, loc).ResolveAsType(rc);
 				if (actionSpec == null) {
 					return null;
 				}
 				return actionSpec.MakeGenericType(rc, actArgs);
 			} else {
-				TypeSpec[] funcArgs = new TypeSpec[ms.Parameters.Types.Length + 1];
-				ms.Parameters.Types.CopyTo(funcArgs, 0);
-				funcArgs[ms.Parameters.Types.Length] = ms.ReturnType;
+				TypeSpec[] funcArgs = new TypeSpec[parameters.Types.Length + 1];
+				parameters.Types.CopyTo(funcArgs, 0);
+				funcArgs[parameters.Types.Length] = returnType;
 				var funcSpec = type_ns.LookupType (rc.Module, "Func", funcArgs.Length, LookupMode.Normal, loc).ResolveAsType(rc);
 				if (funcSpec == null)
 					return null;
 				return funcSpec.MakeGenericType(rc, funcArgs);
 			}
+		}
+
+		public static TypeSpec CreateDelegateTypeFromMethodSpec (ResolveContext rc, MethodSpec ms, Location loc)
+		{
+			return CreateDelegateType (rc, ms.Parameters, ms.ReturnType, loc);
 		}
 
 		#region Properties

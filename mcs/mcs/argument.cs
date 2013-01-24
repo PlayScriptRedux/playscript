@@ -168,6 +168,8 @@ namespace Mono.CSharp
 						InferArrayInitializer = (AsArrayInitializer)Expr;
 					} else if (Expr is AsObjectInitializer) {
 						InferObjInitializer = (AsObjectInitializer)Expr;
+					} else if (Expr is AnonymousMethodExpression) {
+						Expr = new Cast(new TypeExpression(ec.BuiltinTypes.Delegate, Expr.Location), Expr, Expr.Location);
 					}
 				}
 

@@ -1,0 +1,25 @@
+package
+{
+	import flash.events.*;
+	import System.*;
+
+	public delegate zzz(n:Number):void;
+
+	public class Test {
+
+		public static function foo(f:Function):void {
+			f(100.6);
+		}
+
+        public static function Main() : void {
+        
+        	var a:Array = [function(n:Number):void { 
+        		trace("Value is " + n);
+        	}];
+        
+        	foo(a[0]);
+        
+		}
+
+	}
+}

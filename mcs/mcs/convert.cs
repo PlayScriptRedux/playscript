@@ -1524,6 +1524,11 @@ namespace Mono.CSharp {
 
 			if (expr_type == InternalType.AnonymousMethod){
 				AnonymousMethodExpression ame = (AnonymousMethodExpression) expr;
+				if (ec.FileType == SourceFileType.ActionScript && 
+				    (target_type == ec.BuiltinTypes.Dynamic || target_type == ec.BuiltinTypes.Delegate)) {
+					var del_type = Delegate.CreateDelegateType (ec, ame.asParameters, ame.asReturnType.ResolveAsType(ec), loc);
+					return new Cast(new TypeExpression(del_type, loc), expr, loc).Resolve(ec);
+				}
 				Expression am = ame.Compatible (ec, target_type);
 				if (am != null)
 					return am.Resolve (ec);

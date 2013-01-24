@@ -5494,51 +5494,51 @@ namespace Mono.CSharp
 					castType = ((TypeExpression)expr).Type.BuiltinType;
 				} else if (atn != null) {  // These invoke values can be names.. 
 					if (atn.Name == "String") {
-						expr = new TypeExpression(ec.BuiltinTypes.String, Location);
+						expr = new TypeExpression (ec.BuiltinTypes.String, Location);
 						atn = null;
 						castType = BuiltinTypeSpec.Type.String;
 					} else if (atn.Name == "Number") {
-						expr = new TypeExpression(ec.BuiltinTypes.Double, Location);
+						expr = new TypeExpression (ec.BuiltinTypes.Double, Location);
 						atn = null;
 						castType = BuiltinTypeSpec.Type.Double;
 					} else if (atn.Name == "Boolean") {
-						expr = new TypeExpression(ec.BuiltinTypes.Bool, Location);
+						expr = new TypeExpression (ec.BuiltinTypes.Bool, Location);
 						atn = null;
 						castType = BuiltinTypeSpec.Type.Bool;
 					}
 				}
 
 				if (castType == BuiltinTypeSpec.Type.Int || castType == BuiltinTypeSpec.Type.UInt || castType == BuiltinTypeSpec.Type.Double ||
-				    castType == BuiltinTypeSpec.Type.Bool || castType == BuiltinTypeSpec.Type.String) {
+					castType == BuiltinTypeSpec.Type.Bool || castType == BuiltinTypeSpec.Type.String) {
 
 					if (arguments != null)
 						arguments.Resolve (ec, out dynamic_arg);
 					args_resolved = true;
 					
 					switch (castType) {
-						case BuiltinTypeSpec.Type.Int:
-							if (arguments[0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
-								atn = new SimpleName("int", Location);
-							break;
-						case BuiltinTypeSpec.Type.UInt:
-							if (arguments[0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
-								atn = new SimpleName("uint", Location);
-							break;
-						case BuiltinTypeSpec.Type.Double:
-							if (arguments[0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
-								atn = new SimpleName("Number", Location);
-							break;
-						case BuiltinTypeSpec.Type.Bool:
-							if (arguments[0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
-								atn = new SimpleName("Boolean", Location);
-							break;
-						case BuiltinTypeSpec.Type.String:
-							if (arguments[0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.Int ||
-						    	arguments[0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.UInt ||
-						    	arguments[0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.Double ||
-						    	arguments[0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.Bool)
-								atn = new SimpleName("String", Location);
-							break;
+					case BuiltinTypeSpec.Type.Int:
+						if (arguments [0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
+							atn = new SimpleName ("int", Location);
+						break;
+					case BuiltinTypeSpec.Type.UInt:
+						if (arguments [0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
+							atn = new SimpleName ("uint", Location);
+						break;
+					case BuiltinTypeSpec.Type.Double:
+						if (arguments [0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
+							atn = new SimpleName ("Number", Location);
+						break;
+					case BuiltinTypeSpec.Type.Bool:
+						if (arguments [0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
+							atn = new SimpleName ("Boolean", Location);
+						break;
+					case BuiltinTypeSpec.Type.String:
+						if (arguments [0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.Int ||
+							arguments [0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.UInt ||
+							arguments [0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.Double ||
+							arguments [0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.Bool)
+							atn = new SimpleName ("String", Location);
+						break;
 					}
 				}
 			}
@@ -5565,11 +5565,11 @@ namespace Mono.CSharp
 			// Handle function style casts in ActionScript
 			if (isActionScript && arguments != null && arguments.Count == 1) {
 				if (member_expr is TypeExpression) {
-					return (new Cast((TypeExpression)member_expr, Arguments[0].Expr, loc)).Resolve (ec);
+					return (new Cast ((TypeExpression)member_expr, Arguments [0].Expr, loc)).Resolve (ec);
 				} else if (member_expr == null && atn != null) {
-					var type_expr = atn.LookupNameExpression(ec, MemberLookupRestrictions.ReadAccess) as TypeExpr;
+					var type_expr = atn.LookupNameExpression (ec, MemberLookupRestrictions.ReadAccess) as TypeExpr;
 					if (type_expr != null) {
-						return (new Cast(type_expr, Arguments[0].Expr, loc)).Resolve (ec);
+						return (new Cast (type_expr, Arguments [0].Expr, loc)).Resolve (ec);
 					}
 				}
 			}
@@ -5581,9 +5581,10 @@ namespace Mono.CSharp
 				arguments.Resolve (ec, out dynamic_arg);
 
 			TypeSpec expr_type = member_expr.Type;
-			if (expr_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic || 
-			    (isActionScript && expr_type.BuiltinType == BuiltinTypeSpec.Type.Delegate)) { // Calls through delegate in ActionScript are dynamic
+			if (expr_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
 				return DoResolveDynamic (ec, member_expr);
+			} else if (isActionScript && expr_type.BuiltinType == BuiltinTypeSpec.Type.Delegate) { // Calls through delegate in ActionScript are dynamic
+				return DoResolveDynamic (ec, new Cast(new TypeExpression(ec.BuiltinTypes.Dynamic, Location), member_expr, Location).Resolve (ec));
 			}
 
 			mg = member_expr as MethodGroupExpr;

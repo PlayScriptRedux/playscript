@@ -934,10 +934,17 @@ namespace Mono.CSharp {
 
 		public ParametersBlock Block;
 
-		public AnonymousMethodExpression (Location loc)
+		public ParametersCompiled asParameters;
+		public TypeExpr asReturnType;
+
+		public AnonymousMethodExpression (Location loc, ParametersCompiled asParameters = null, TypeExpr asReturnType = null)
 		{
 			this.loc = loc;
 			this.compatibles = new Dictionary<TypeSpec, Expression> ();
+
+			// Actionscript anon function declarations include concrete parameter types and return types.
+			this.asParameters = asParameters;
+			this.asReturnType = asReturnType;
 		}
 
 		#region Properties
@@ -1317,6 +1324,12 @@ namespace Mono.CSharp {
 			if (bc != null && bc.CurrentBranching != null && bc.CurrentBranching.CurrentUsageVector.IsUnreachable)
 				bc.NeedReturnLabel ();
 #endif
+
+			// Cast to Delgate for ActionScript (forces implicit conversion to Func<> or Action<> delegate types).
+			if (ec.FileType == SourceFileType.ActionScript) {
+				return new Cast(new TypeExpression(ec.BuiltinTypes.Delegate, this.Location), this, this.Location).Resolve (ec);
+			}
+
 			return this;
 		}
 
