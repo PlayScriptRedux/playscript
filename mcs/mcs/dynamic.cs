@@ -303,7 +303,8 @@ namespace Mono.CSharp
 			if (rc.FileType == SourceFileType.ActionScript)
 				isActionScript = true;
 
-			if (isActionScript && pt.AsCallSite.Define ()) {
+			// NOTE: Change -- we always use ActionScriptAot mode if AsCallSite is included - even in C#.
+			if (/*isActionScript &&*/ pt.AsCallSite.Define ()) { 
 				pt.AsCallSite.Resolve ();
 				pt.AsCallSiteGeneric.Resolve ();
 				isActionScriptAotMode = true;
@@ -322,7 +323,7 @@ namespace Mono.CSharp
 			if (rc.Report.Errors == errors)
 				return true;
 
-			if (isActionScript) {
+			if (isActionScriptAotMode) {
 				rc.Report.Error (7027, loc,
 					"ActionScript dynamic operation cannot be compiled without `ascorlib.dll' assembly reference");
 			} else {
