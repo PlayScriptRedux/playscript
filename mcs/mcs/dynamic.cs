@@ -929,8 +929,10 @@ namespace Mono.CSharp
 				return null;
 			}
 
-			if (DoResolveCore (rc)) {
-				setter_args = CreateSetterArguments (rc, right_side);
+			var res_right_side = right_side.Resolve (rc);
+
+			if (DoResolveCore (rc) && res_right_side != null) {
+				setter_args = CreateSetterArguments (rc, res_right_side);
 				setter = CreateCallSiteBinder (rc, setter_args, true);
 			}
 
