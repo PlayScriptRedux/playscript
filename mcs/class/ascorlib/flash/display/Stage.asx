@@ -58,7 +58,7 @@ package flash.display {
 
  	 	public property softKeyboardRect : Rectangle { get { return null; } }
 
-		public property stage3Ds : Vector.<Stage3D> { get { return null; } }
+		public property stage3Ds : Vector.<Stage3D> { get { return mStage3Ds; } }
 
  	 	public property stageFocusRect : Boolean { get; set; }
 
@@ -83,56 +83,71 @@ package flash.display {
 		//
 		// Methods
 		// 
+		
+		public function Stage() {
+			var stage3D = new Stage3D(); 
+			mStage3Ds.push( stage3D );
+		}
+		
+		public function onEnterFrame():void {
+			// dispatch event
+			dispatchEvent (new flash.events.Event (flash.events.Event.ENTER_FRAME));
+		}
 
 		public override function addChild(child:DisplayObject):DisplayObject {
-			return null;
+			return super.addChild(child);
 		}
  	 	
 		public override function addChildAt(child:DisplayObject, index:int):DisplayObject {
-			return null;
+			return super.addChildAt(child, index);
 		}
  	 	
-//		public override function addEventListener(type:String, listener:Function, useCapture:Boolean = false, priority:int = 0, useWeakReference:Boolean = false):void {
-//		}
- 	 	
 		public function assignFocus(objectToFocus:InteractiveObject, direction:String):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public override function dispatchEvent(ev:Event):Boolean {
-			return false;	
+			return super.dispatchEvent(ev);	
 		}
  	 	
 		public override function hasEventListener(type:String):Boolean {
-			return false;
+			return super.hasEventListener(type);
 		}
  	 	
 		public function invalidate():void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function isFocusInaccessible():Boolean {
-			return false;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public override function removeChildAt(index:int):DisplayObject {
-			return null;
+			return super.removeChildAt(index);
 		}
  	 	
 		public function setAspectRatio(newAspectRatio:String):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public override function setChildIndex(child:DisplayObject, index:int):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function setOrientation(newOrientation:String):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public override function swapChildrenAt(index1:int, index2:int):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public override function willTrigger(type:String):Boolean {
-			return false;
+			throw new System.NotImplementedException();
+		//	return false;
 		}
-	
+		
+		private var mStage3Ds:Vector.<Stage3D> = [];
 	}
 
 }

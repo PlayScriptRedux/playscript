@@ -2,90 +2,114 @@ package flash.geom {
 
 	public class Rectangle {
 
+
+		private var mX:Number;
+		private var mY:Number;
+		private var mWidth:Number;
+		private var mHeight:Number;
+		
+		
 		//
 		// Properties
 		//
 			
-		public property bottom : Number { get; set; }
+		public property bottom : Number { get {return mY + mHeight;} set {mHeight = value - mY;} }
+ 	 	public property height : Number { get {return mHeight;} set {mHeight = value;} }
+ 	 	public property left : Number { get {return mX;} set {mX = value;} }
+ 	 	public property right : Number { get {return mX + mWidth;} set {mWidth = value - mX;} }
+ 	 	public property top : Number { get {return mY;} set {mY = value;} }
+ 	 	public property width : Number { get {return mWidth;} set {mWidth = value;} }
+ 	 	public property x : Number  { get {return mX;} set {mX = value;} }
+ 	 	public property y : Number { get {return mY;} set {mY = value;} }
 
- 	 	public property bottomRight : Point { get; set; }
- 	 	
- 	 	public property height : Number { get; set; }
-
- 	 	public property left : Number { get; set; }
-
- 	 	public property right : Number { get; set; }
-
- 	 	public property size : Point { get; set; }
-
- 	 	public property top : Number { get; set; }
-
- 	 	public property topLeft : Point { get; set; }
-
- 	 	public property width : Number { get; set; }
-
- 	 	public property x : Number  { get; set; }
- 	 	
- 	 	public property y : Number { get; set; }
+ 	 	// public property bottomRight : Point { get; set; }
+ 	 	// public property size : Point { get; set; }
+	 	// public property topLeft : Point { get; set; }
 
  	 	//
  	 	// Methods
  	 	//
 
 		public function Rectangle(x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0) {
+			mX = x;
+			mY = y;
+			mWidth = width;
+			mHeight = height; 
 		}
  	 	
 		public function clone():Rectangle {
-			return null;
+			return new Rectangle(x,y,width,height);
 		}
 	
 		public function contains(x:Number, y:Number):Boolean {
-			return false;
+			return (x >= this.left) && (x <= this.right) && 
+			       (y >= this.top) && (x <= this.bottom); 
 		}
 		
 		public function containsPoint(point:Point):Boolean {
-			return false;
+			return this.contains(point.x, point.y);
 		}
 	
 		public function containsRect(rect:Rectangle):Boolean {
-			return false;
+			throw new System.NotImplementedException();
+//			return false;
 		}
  	 	
 		public function copyFrom(sourceRect:Rectangle):void {
+			this.x = sourceRect.x;
+			this.y = sourceRect.y;
+			this.width = sourceRect.width;
+			this.height = sourceRect.height;
 		}
  	 	
 		public function equals(toCompare:Rectangle):Boolean {
-			return false;
+			return this.x == toCompare.x && this.y == toCompare.y && this.width == toCompare.width && this.height == toCompare.height;
 		}
 
 		public function inflate(dx:Number, dy:Number):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function inflatePoint(point:Point):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function intersection(toIntersect:Rectangle):Rectangle {
-			return null;
+			if (this.equals(toIntersect)) {
+				return this.clone();
+			} else {
+				// $$TODO
+				throw new System.NotImplementedException();
+			}
 		}
  	 	
 		public function intersects(toIntersect:Rectangle):Boolean {
-			return false;
+			throw new System.NotImplementedException();
+//			return false;
 		}
  	 	
 		public function isEmpty():Boolean {
-			return false;
+			throw new System.NotImplementedException();
+//			return false;
 		}
  	 	
 		public function offset(dx:Number, dy:Number):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function offsetPoint(point:Point):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function setEmpty():void {
+			throw new System.NotImplementedException();
 		}
  	 	
-		public function setTo(xa:Number, ya:Number, widtha:Number, heighta:Number):void {
+		public function setTo(x:Number, y:Number, width:Number, height:Number):void {
+			this.x = x;
+			this.y = y;
+			this.width = width;
+			this.height = height;
 		}
  	 	
 		public function toString():String {
@@ -93,7 +117,8 @@ package flash.geom {
 		}
 
 		public function union(toUnion:Rectangle):Rectangle {
-			return null;
+			throw new System.NotImplementedException();
+			//return null;
 		}
 		
 	}

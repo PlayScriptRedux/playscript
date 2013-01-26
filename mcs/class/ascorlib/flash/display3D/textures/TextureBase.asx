@@ -10,7 +10,13 @@ package flash.display3D.textures {
 	
 		public function dispose():void {
 		}
+		
+		public function get textureId():int {
+			return mTextureId;
+		}
 	
+		protected var mTextureId:int;
+
 	}
 
 }

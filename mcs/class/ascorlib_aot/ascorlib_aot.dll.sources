@@ -1,6 +1,5 @@
 ../ascorlib/Array.cs
 ../ascorlib/AssemblyInfo.cs
-../ascorlib/Class.cs
 ../ascorlib/Error.asx
 ../ascorlib/Extensions.cs
 ../ascorlib/Vector.asx

@@ -40,7 +40,9 @@ namespace _root
 		public int length 
 		{
 			get { return Count; }
-			set { }
+			set { 
+				throw new NotImplementedException();
+			}
 		}
 
 		// Concatenates the elements specified in the parameters with the elements in an array and creates a new array.
@@ -81,13 +83,13 @@ namespace _root
 		// Converts the elements in an array to strings, inserts the specified separator between the elements, concatenates them, and returns the resulting string.
 		public string join() 
 		{
-			throw new NotImplementedException();
+			return System.String.Join ("", (IEnumerable<object>)this);
 		}
 
 		// Converts the elements in an array to strings, inserts the specified separator between the elements, concatenates them, and returns the resulting string.
 		public string join(object sep) 
 		{
-			throw new NotImplementedException();
+			return System.String.Join((System.String)sep, (IEnumerable<object>)this);
 		}
  	 	
 		// Searches for an item in an array, working backward from the last item, and returns the index position of the matching item using strict equality (===).
@@ -107,7 +109,9 @@ namespace _root
  	 	
 		// Removes the last element from an array and returns the value of that element.
 		public dynamic pop() {
-			throw new NotImplementedException();
+			dynamic v = this[Count - 1];
+			this.RemoveAt (Count - 1);
+			return v;
 		}
  	 	
 		// Adds one elements to the end of an array and returns the new length of the array.
@@ -129,7 +133,7 @@ namespace _root
 		}
  	 	
 		// Removes the first element from an array and returns that element.
-		public object shift() {
+		public dynamic shift() {
 			throw new NotImplementedException();
 		}
  	 	
@@ -178,6 +182,7 @@ namespace _root
 		public uint unshift(object arg1, params object[] args) {
 			throw new NotImplementedException();
 		}
-	}
+
+}
 }
 

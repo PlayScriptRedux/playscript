@@ -39,3 +39,4 @@
 *~
 *.suo
 *.csproj.user
+.DS_Store

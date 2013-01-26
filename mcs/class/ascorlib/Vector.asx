@@ -8,9 +8,24 @@ package {
 		// Properties
 		//
 	
-		public property @fixed : Boolean { get { return false; } set { throw new System.NotImplementedException(); } }
+		public property @fixed : Boolean 
+		{ 
+			get { return mFixed; } 
+			set { mFixed = value;} 
+		}
 
- 	 	public property length : uint { get { return uint(this.Count); } set { throw new System.NotImplementedException(); } }
+ 	 	public property length : uint 
+ 	 	{ 
+ 	 		get { return uint(this.Count); } 
+ 	 		set 
+ 	 		{ 
+ 	 			if (value == 0) {
+ 	 				this.Clear();
+ 	 			} else {
+ 	 				throw new System.NotImplementedException(); 
+ 	 			}
+ 	 		} 
+ 	 	}
 
  	 	//
  	 	// Methods
@@ -21,8 +36,22 @@ package {
  	 	
 		public function Vector(length:uint = 0, @fixed:Boolean = false) {
 			super(int(length));
+			mFixed = @fixed;
 		}
- 	 	
+		
+		// optionally expands the vector to accomodate the new size
+		// if the vector is big enough then nothing is done
+		public function expand(newSize:int):void {
+			if (this.Count < newSize)
+			{
+				this.Capacity = newSize;
+				while (this.Count < newSize)
+				{
+					this.Add(default(T));
+				}
+			}
+		}
+		
 		public function concat(... args):Vector.<T> {
 			throw new System.NotImplementedException();
 		}
@@ -40,7 +69,7 @@ package {
 		}
 
 		public function indexOf(searchElement:T):int {
-			throw new System.NotImplementedException();
+			return this.IndexOf(searchElement);
 		}
 
 		public function indexOf(searchElement:T, fromIndex:int):int {
@@ -60,7 +89,9 @@ package {
 		}
  	 	
 		public function pop():T {
-			throw new System.NotImplementedException();
+			var v = this[ this.Count - 1];
+			this.RemoveAt(this.Count - 1);
+			return v;
 		}
 
 		public function push(value:T):uint {
@@ -69,7 +100,11 @@ package {
 		}
   
 		public function push(value:T, ... args):uint {
-			throw new System.NotImplementedException();
+			push(value);
+			for each (var e:T in args) {
+				push(e);
+			}
+			return length;
 		}
 	 	 	
 		public function reverse():Vector.<T> {
@@ -107,7 +142,8 @@ package {
 		public function unshift(... args):uint {
 			throw new System.NotImplementedException();
 		}
-
+		
+		private var mFixed:Boolean = false;
 	}
 }
 
