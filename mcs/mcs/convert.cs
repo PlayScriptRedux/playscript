@@ -1449,9 +1449,14 @@ namespace Mono.CSharp {
 				case MemberKind.Enum:
 				case MemberKind.Interface:
 				case MemberKind.TypeParameter:
-					Arguments args = new Arguments (1);
-					args.Add (new Argument (expr));
-					return new DynamicConversion (target_type, explicit_cast ? CSharpBinderFlags.ConvertExplicit : 0, args, loc).Resolve (ec);
+					if (ec.FileType == SourceFileType.ActionScript) {
+						// ActionScript - We always cast from dynamic as if it was an object.
+						return ExplicitConversionStandard(ec, EmptyCast.Create (expr, ec.BuiltinTypes.Object), target_type, loc);
+					} else {
+						Arguments args = new Arguments (1);
+						args.Add (new Argument (expr));
+						return new DynamicConversion (target_type, explicit_cast ? CSharpBinderFlags.ConvertExplicit : 0, args, loc).Resolve (ec);
+					}
 				}
 
 				return null;

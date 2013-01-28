@@ -12,6 +12,7 @@
 
 using System;
 using System.Globalization;
+using Mono.CSharp.JavaScript;
 
 #if STATIC
 using IKVM.Reflection.Emit;
@@ -411,6 +412,11 @@ namespace Mono.CSharp {
 		}
 		
 		public abstract Constant Increment ();
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			jec.Buf.Write (GetValue ().ToString());
+		}
 	}
 	
 	public class BoolConstant : Constant {
@@ -1811,6 +1817,16 @@ namespace Mono.CSharp {
 			return null;
 		}
 
+		public override void EmitJs (JsEmitContext jec)
+		{
+			double d = Value;
+			if (d == System.Math.Floor (d)) {
+				jec.Buf.Write (GetValue ().ToString () + ".0");
+			} else {
+				jec.Buf.Write (GetValue ().ToString ());
+			}
+		}
+
 	}
 
 	public class DecimalConstant : Constant {
@@ -1993,6 +2009,12 @@ namespace Mono.CSharp {
 			ec.Emit (OpCodes.Ldstr, Value);
 		}
 
+		public override void EmitJs (JsEmitContext jec)
+		{
+			var s = Value.Replace("\"", "\\\"");
+			jec.Buf.Write("\"" + s + "\"");
+		}
+
 		public override void EncodeAttributeValue (IMemberContext rc, AttributeEncoder enc, TypeSpec targetType)
 		{
 			// cast to object
@@ -2081,6 +2103,11 @@ namespace Mono.CSharp {
 			// Only to make verifier happy
 			if (type.IsGenericParameter)
 				ec.Emit (OpCodes.Unbox_Any, type);
+		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			jec.Buf.Write (GetValueAsLiteral());
 		}
 
 		public override string ExprClassName {

@@ -29,6 +29,7 @@
 ../../mcs/generic.cs
 ../../mcs/import.cs
 ../../mcs/iterators.cs
+../../mcs/js-target.cs
 ../../mcs/lambda.cs
 ../../mcs/linq.cs
 ../../mcs/literal.cs

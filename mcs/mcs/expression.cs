@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using SLE = System.Linq.Expressions;
+using Mono.CSharp.JavaScript;
 
 #if STATIC
 using MetaType = IKVM.Reflection.Type;
@@ -1271,6 +1272,35 @@ namespace Mono.CSharp
 		public override void EmitStatement (EmitContext ec)
 		{
 			EmitCode (ec, false);
+		}
+
+		private void EmitOpJs (JsEmitContext jec)
+		{
+			if (mode == Mode.PreIncrement)
+				jec.Buf.Write ("++");
+			else if (mode == Mode.PreDecrement)
+				jec.Buf.Write ("--");
+
+			// NOTE: TODO - Add parentheses if child op precedence is lower.
+
+			Expr.EmitJs (jec);
+
+			if (mode == Mode.PostIncrement)
+				jec.Buf.Write ("++");
+			else if (mode == Mode.PostDecrement)
+				jec.Buf.Write ("--");
+		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			EmitOpJs (jec);
+		}
+
+		public override void EmitStatementJs (JsEmitContext jec)
+		{
+			jec.Buf.Write ("\t");
+			EmitOpJs (jec);
+			jec.Buf.Write (";\n");
 		}
 
 		//
@@ -4097,6 +4127,28 @@ namespace Mono.CSharp
 			return base.EmitToField (ec);
 		}
 
+		public override void EmitJs (JsEmitContext jec)
+		{
+//			Operator leftOper = null;
+//			if (Left is Binary) {
+//				leftOper = ((Binary)Left).Oper;
+//			} else if (left is Unary) {
+//				leftOper = ((Unary)Left).Oper;
+//			}
+//
+//			Operator rightOper = null;
+//			if (Right is Binary) {
+//				rightOper = ((Binary)Right).Oper;
+//			} else if (right is Unary) {
+//				rightOper = ((Unary)Right).Oper;
+//			}
+
+//			if (leftOper != null && leftOper.)
+			Left.EmitJs (jec);
+			jec.Buf.Write (" " + this.OperName (oper) + " ");
+			Right.EmitJs (jec);
+		}
+
 		protected override void CloneTo (CloneContext clonectx, Expression t)
 		{
 			Binary target = (Binary) t;
@@ -4356,6 +4408,18 @@ namespace Mono.CSharp
 			if (method != null) {
 				var call = new CallEmitter ();
 				call.EmitPredefined (ec, method, arguments);
+			}
+		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			bool first = true;
+			foreach (var a in arguments) {
+				if (!first) {
+					jec.Buf.Write (" + ");
+				}
+				a.Expr.EmitJs (jec);
+				first = false;
 			}
 		}
 
@@ -5025,6 +5089,11 @@ namespace Mono.CSharp
 			return base.EmitToField (ec);
 		}
 
+		public override void EmitJs (JsEmitContext jec)
+		{
+			jec.Buf.Write (Name);
+		}
+
 		public HoistedVariable GetHoistedVariable (ResolveContext rc)
 		{
 			return GetHoistedVariable (rc.CurrentAnonymousMethod);
@@ -5615,6 +5684,13 @@ namespace Mono.CSharp
 				}
 			}
 
+			// If actionscript, try to resolve dynamic args to avoid a dynamic invoke if possible.
+			if (dynamic_arg && isActionScript && mg.Candidates.Count > 0) {
+				if (arguments.AsTryResolveDynamicArgs(ec, mg.Candidates)) {
+					dynamic_arg = false;
+				}
+			}
+
 			if (invoke == null) {
 				mg = DoResolveOverload (ec);
 				if (mg == null)
@@ -5754,6 +5830,20 @@ namespace Mono.CSharp
 			//
 			if (type.Kind != MemberKind.Void)
 				ec.Emit (OpCodes.Pop);
+		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			mg.EmitCallJs (jec, arguments);
+		}
+		
+		public override void EmitStatementJs (JsEmitContext jec)
+		{
+			jec.Buf.Write ("\t");
+
+			EmitJs (jec);
+
+			jec.Buf.Write (";\n");
 		}
 
 		public override SLE.Expression MakeExpression (BuilderContext ctx)

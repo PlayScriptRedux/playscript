@@ -5,13 +5,31 @@ package
 
 	public delegate zzz(n:Number):void;
 
+	public class Foo {
+	
+		public function Foo(a:String, b:Object) {
+			trace(a + " - " + b);
+		}
+	
+	}
+	
+	public class Bar extends Foo {
+	
+		public function Bar(a:Object, b:Object) {
+			super(a, b);
+		}
+	
+	}
+
 	public class Test {
 
         public static function Main() : void {
 
-        	var a:Object = {};
-        	a["blah"] = [ true, false, true ];        
-        
+			var o:* = 100;
+			var i:int = o;
+        	trace(o);
+        	var f:Foo = new Foo("aaa", "bbb");
+        	var b:Bar = new Bar("ccc", "ddd");
 		}
 
 	}

@@ -19,6 +19,7 @@ using System.Security;
 using System.Security.Permissions;
 using System.Text;
 using System.IO;
+using Mono.CSharp.JavaScript;
 
 #if STATIC
 using SecurityType = System.Collections.Generic.List<IKVM.Reflection.Emit.CustomAttributeBuilder>;
@@ -1274,6 +1275,10 @@ namespace Mono.CSharp {
 				a.Report.Error (579, a.Location, "The attribute `{0}' cannot be applied multiple times",
 					a.GetSignatureForError ());
 			}
+		}
+
+		public void EmitJs (JsEmitContext jec)
+		{
 		}
 
 		public bool Contains (PredefinedAttribute t)

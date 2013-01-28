@@ -13,6 +13,7 @@
 //
 using System;
 using System.Text;
+using Mono.CSharp.JavaScript;
 
 #if STATIC
 using MetaType = IKVM.Reflection.Type;
@@ -1283,6 +1284,18 @@ namespace Mono.CSharp {
 
 			return p;
 		}
+
+		public void EmitJs (JsEmitContext jec)
+		{
+			bool first = true;
+			foreach (var param in this.FixedParameters) {
+				if (!first) {
+					jec.Buf.Write (", ");
+				}
+				jec.Buf.Write (param.Name);
+				first = false;
+			}
+		}
 	}
 
 	//
@@ -1358,5 +1371,6 @@ namespace Mono.CSharp {
 		{
 			return visitor.Visit (this);
 		}
+
 	}
 }

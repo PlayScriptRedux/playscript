@@ -20,6 +20,7 @@ using System.Security.Cryptography;
 using System.Security.Permissions;
 using Mono.Security.Cryptography;
 using Mono.CompilerServices.SymbolWriter;
+using Mono.CSharp.JavaScript;
 
 #if STATIC
 using IKVM.Reflection;
@@ -74,6 +75,8 @@ namespace Mono.CSharp
 		SecurityType declarative_security;
 		Dictionary<ITypeDefinition, Attribute> emitted_forwarders;
 		AssemblyAttributesPlaceholder module_target_attrs;
+
+		private JsEmitContext jec;
 
 		protected AssemblyDefinition (ModuleContainer module, string name)
 		{
@@ -491,6 +494,15 @@ namespace Mono.CSharp
 			SetEntryPoint ();
 		}
 
+		public virtual void EmitJs ()
+		{
+			jec = new JsEmitContext (module);
+
+			jec.Buf.Write ("// Module: " + this.Name + ".js\n");
+
+			module.EmitContainerJs (jec);
+		}
+
 		public byte[] GetPublicKeyToken ()
 		{
 			if (public_key == null || public_key_token != null)
@@ -865,6 +877,13 @@ namespace Mono.CSharp
 		protected virtual void SaveModule (PortableExecutableKinds pekind, ImageFileMachine machine)
 		{
 			Report.RuntimeMissingSupport (Location.Null, "-target:module");
+		}
+
+		public void SaveJs ()
+		{
+			var s = jec.Buf.Stream.ToString ();
+			System.Console.WriteLine (s);
+			System.IO.File.WriteAllText (file_name, s);
 		}
 
 		void SetCustomAttribute (MethodSpec ctor, byte[] data)

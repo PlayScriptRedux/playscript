@@ -397,28 +397,39 @@ namespace Mono.CSharp
 			if (Report.Errors > 0)
 				return false;
 
-
 			tr.Start (TimeReporter.TimerType.EmitTotal);
-			assembly.Emit ();
+			if (settings.Target == Target.JavaScript) {
+				assembly.EmitJs ();
+			} else {
+				assembly.Emit ();
+			}
 			tr.Stop (TimeReporter.TimerType.EmitTotal);
 
-			if (Report.Errors > 0){
+			if (Report.Errors > 0) {
 				return false;
 			}
 
-			tr.Start (TimeReporter.TimerType.CloseTypes);
-			module.CloseContainer ();
-			tr.Stop (TimeReporter.TimerType.CloseTypes);
+			if (settings.Target != Target.JavaScript) {
 
-			tr.Start (TimeReporter.TimerType.Resouces);
-			if (!settings.WriteMetadataOnly)
-				assembly.EmbedResources ();
-			tr.Stop (TimeReporter.TimerType.Resouces);
+				tr.Start (TimeReporter.TimerType.CloseTypes);
+				module.CloseContainer ();
+				tr.Stop (TimeReporter.TimerType.CloseTypes);
+
+				tr.Start (TimeReporter.TimerType.Resouces);
+				if (!settings.WriteMetadataOnly)
+					assembly.EmbedResources ();
+				tr.Stop (TimeReporter.TimerType.Resouces);
+			
+			}
 
 			if (Report.Errors > 0)
 				return false;
 
-			assembly.Save ();
+			if (settings.Target == Target.JavaScript) {
+				assembly.SaveJs ();
+			} else {
+				assembly.Save ();
+			}
 
 #if STATIC
 			references_loader.Dispose ();

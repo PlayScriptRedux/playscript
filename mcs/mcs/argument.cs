@@ -12,6 +12,7 @@
 
 using System;
 using System.Collections.Generic;
+using Mono.CSharp.JavaScript;
 
 #if STATIC
 using IKVM.Reflection.Emit;
@@ -507,6 +508,17 @@ namespace Mono.CSharp
 			return null;
 		}
 
+		public virtual void EmitJs (JsEmitContext jec)
+		{
+			bool first = true;
+			foreach (Argument a in args) {
+				if (!first)
+					jec.Buf.Write(", ");
+				a.Expr.EmitJs (jec);
+				first = false;
+			}
+		}
+
 		public List<Argument>.Enumerator GetEnumerator ()
 		{
 			return args.GetEnumerator ();
@@ -622,6 +634,39 @@ namespace Mono.CSharp
 		public Argument this [int index] {
 			get { return args [index]; }
 			set { args [index] = value; }
+		}
+
+		// Resolve any dynamic params to the type of the target parameters list (for ActionScript only).
+		public bool AsTryResolveDynamicArgs (ResolveContext ec, System.Collections.IEnumerable candidates)
+		{
+			MethodSpec ms = null;
+			foreach (MethodSpec possibleMs in candidates) {
+				if (possibleMs.Parameters.FixedParameters.Length <= args.Count && 
+					possibleMs.Parameters.Count >= args.Count) {
+					if (ms != null) {
+						ms = null;	// Can't be more than one - or we give up and do a dynamic call..
+						break;
+					}
+					ms = possibleMs;
+				}
+			}
+			if (ms != null) {
+				var parameters = ms.Parameters;
+				for (var i = 0; i < args.Count; i++) {
+					var arg = args [i];
+					var paramType = parameters.Types [i];
+					if (arg.Expr.Type == ec.BuiltinTypes.Dynamic) {
+						var parCastType = paramType.BuiltinType == BuiltinTypeSpec.Type.Dynamic ? ec.BuiltinTypes.Object : paramType;
+						var new_arg = new Argument (new Cast (
+							new TypeExpression (parCastType, arg.Expr.Location), 
+							arg.Expr, arg.Expr.Location), arg.ArgType);
+						new_arg.Resolve (ec);
+						args [i] = new_arg;
+					}
+				}
+				return true;
+			}
+			return false;
 		}
 	}
 }

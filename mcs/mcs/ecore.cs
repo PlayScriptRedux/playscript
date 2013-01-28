@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Text;
 using SLE = System.Linq.Expressions;
 using System.Linq;
+using Mono.CSharp.JavaScript;
 
 #if STATIC
 using IKVM.Reflection;
@@ -606,6 +607,11 @@ namespace Mono.CSharp {
 			}
 		}
 
+		public virtual void EmitJs (JsEmitContext jec)
+		{
+			jec.Report.Error (7074, this.loc, "JavaScript code generation for " + this.GetType ().Name + " expression not supported.");
+		}
+
 		/// <summary>
 		///   Protected constructor.  Only derivate types should
 		///   be able to be created
@@ -1054,6 +1060,11 @@ namespace Mono.CSharp {
 		///   Emit that will always leave a value on the stack).
 		/// </summary>
 		public abstract void EmitStatement (EmitContext ec);
+
+		public virtual void EmitStatementJs (JsEmitContext jec)
+		{
+			jec.Report.Error(7072, Location, "JavaScript code generation for " + this.GetType ().Name + " statement not supported.");
+		}
 
 		public override void EmitSideEffect (EmitContext ec)
 		{
@@ -1775,6 +1786,12 @@ namespace Mono.CSharp {
 		{
 			base.Emit (ec);
 			ec.Emit (op);
+		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			// We do nothing here for JavaScript.. implicit casts or fail.
+			Child.EmitJs (jec);
 		}
 
 		public TypeSpec UnderlyingType {
@@ -3511,6 +3528,13 @@ namespace Mono.CSharp {
 			var call = new CallEmitter ();
 			call.InstanceExpression = InstanceExpression;
 			call.Emit (ec, best_candidate, arguments, loc);			
+		}
+
+		public void EmitCallJs (JsEmitContext jec, Arguments arguments)
+		{
+			jec.Buf.Write(this.Name + "(");
+			arguments.EmitJs (jec);
+			jec.Buf.Write(")");
 		}
 
 		public override void Error_ValueCannotBeConverted (ResolveContext ec, TypeSpec target, bool expl)

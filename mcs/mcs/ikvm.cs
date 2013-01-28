@@ -176,6 +176,8 @@ namespace Mono.CSharp
 			base.Emit ();
 		}
 
+
+
 		public Module IncludeModule (RawModule moduleFile)
 		{
 			return Builder.__AddModule (moduleFile);

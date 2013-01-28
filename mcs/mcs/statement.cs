@@ -13,6 +13,7 @@
 
 using System;
 using System.Collections.Generic;
+using Mono.CSharp.JavaScript;
 
 #if STATIC
 using IKVM.Reflection.Emit;
@@ -80,6 +81,16 @@ namespace Mono.CSharp {
 			if (ec.StatementEpilogue != null) {
 				ec.EmitEpilogue ();
 			}
+		}
+
+		protected virtual void DoEmitJs (JsEmitContext jec) 
+		{
+			jec.Report.Error (7072, this.loc, "JavaScript code generation for " + this.GetType ().Name + " statement not supported.");
+		}
+
+		public virtual void EmitJs (JsEmitContext jec)
+		{
+			DoEmitJs (jec);
 		}
 
 		//
@@ -267,6 +278,38 @@ namespace Mono.CSharp {
 			} else {
 				ec.MarkLabel (false_target);
 			}
+		}
+
+		protected override void DoEmitJs (JsEmitContext jec)
+		{
+			//
+			// If we're a boolean constant, Resolve() already
+			// eliminated dead code for us.
+			//
+			Constant c = expr as Constant;
+			if (c != null) {
+
+				if (!c.IsDefaultValue)
+					TrueStatement.EmitJs (jec);
+				else if (FalseStatement != null)
+					FalseStatement.EmitJs (jec);
+				
+				return;
+			}
+
+			jec.Buf.Write ("\tif (");
+			expr.EmitJs (jec);
+			jec.Buf.Write (") ");
+
+			((Block)TrueStatement).EmitBlockJs (jec, false);
+
+			if (FalseStatement != null) {
+				jec.Buf.Write (" else ");
+
+				((Block)FalseStatement).EmitBlockJs (jec, false);
+			}
+
+			jec.Buf.Write ("\n");
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Statement t)
@@ -484,6 +527,29 @@ namespace Mono.CSharp {
 			ec.LoopEnd = old_end;
 		}
 
+		protected override void DoEmitJs (JsEmitContext jec)
+		{
+			if (empty) {
+				return;
+			}
+			
+			//
+			// Inform whether we are infinite or not
+			//
+			if (expr is Constant) {
+				// expr is 'true', since the 'empty' case above handles the 'false' case
+				jec.Buf.Write ("\twhile (true) ");
+			} else {
+				jec.Buf.Write ("\twhile (");
+				expr.EmitJs (jec);
+				jec.Buf.Write (") ");
+			}	
+			
+			((Block)Statement).EmitBlockJs (jec, false);
+			
+			jec.Buf.Write ("\n");
+		}
+
 		protected override void CloneTo (CloneContext clonectx, Statement t)
 		{
 			While target = (While) t;
@@ -635,6 +701,27 @@ namespace Mono.CSharp {
 			ec.LoopEnd = old_end;
 		}
 
+		protected override void DoEmitJs (JsEmitContext jec)
+		{
+			// NOTE: WE don't optimize for emty loop right now..
+
+			jec.Buf.Write ("/tfor (");
+			if (Initializer != null)
+				Initializer.EmitJs (jec);
+			jec.Buf.Write ("; ");
+			if (Condition != null)
+				Condition.EmitJs (jec);
+			jec.Buf.Write ("; ");
+			if (Iterator != null)
+				Iterator.EmitJs (jec);
+			jec.Buf.Write (") ");
+
+			((Block)Statement).EmitBlockJs (jec, false);
+
+			jec.Buf.Write ("\n");
+
+		}
+
 		protected override void CloneTo (CloneContext clonectx, Statement t)
 		{
 			For target = (For) t;
@@ -685,6 +772,11 @@ namespace Mono.CSharp {
 		protected override void DoEmit (EmitContext ec)
 		{
 			expr.EmitStatement (ec);
+		}
+
+		protected override void DoEmitJs (JsEmitContext jec)
+		{
+			expr.EmitStatementJs (jec);
 		}
 
 		public override bool Resolve (BlockContext ec)
@@ -1700,6 +1792,29 @@ namespace Mono.CSharp {
 			}
 		}
 
+		protected override void DoEmitJs (JsEmitContext jec)
+		{
+			if (Initializer != null) {
+				jec.Buf.Write ("\tvar ");
+				((ExpressionStatement)Initializer).EmitJs (jec);
+			} else {
+				jec.Buf.Write ("\tvar " + Variable.Name);
+			}
+
+			if (declarators != null) {
+				foreach (var d in declarators) {
+					jec.Buf.Write (", ");
+					if (d.Initializer != null) {
+						((ExpressionStatement) d.Initializer).EmitJs (jec);
+					} else {
+						jec.Buf.Write (d.Variable.Name);
+					}
+				}
+			}
+
+			jec.Buf.Write (";\n");
+		}
+
 		protected override void CloneTo (CloneContext clonectx, Statement target)
 		{
 			BlockVariableDeclaration t = (BlockVariableDeclaration) target;
@@ -2430,10 +2545,51 @@ namespace Mono.CSharp {
 			DoEmit (ec);
 		}
 
+		public void EmitBlockJs (JsEmitContext jec, bool as_statement = true)
+		{
+			if (as_statement && statements.Count == 0)
+				return;
+
+			if (as_statement) {
+				jec.Buf.Write ("\t{\n");
+			} else {
+				jec.Buf.Write ("{\n");
+			}
+			jec.Buf.Indent ();
+			
+			for (int ix = 0; ix < statements.Count; ix++){
+				statements [ix].EmitJs (jec);
+			}
+			
+			jec.Buf.Unindent();
+			if (as_statement) {
+				jec.Buf.Write ("\t}\n");
+			} else {
+				jec.Buf.Write ("\t}");
+			}
+		}
+
+		protected override void DoEmitJs (JsEmitContext jec)
+		{
+			EmitBlockJs (jec);
+
+		}
+		
+		public override void EmitJs (JsEmitContext jec)
+		{
+			DoEmitJs (jec);
+		}
+
 		protected void EmitScopeInitializers (EmitContext ec)
 		{
 			foreach (Statement s in scope_initializers)
 				s.Emit (ec);
+		}
+
+		protected void EmitScopeInitializersJs (JsEmitContext jec)
+		{
+			foreach (Statement s in scope_initializers)
+				s.EmitJs (jec);
 		}
 
 #if DEBUG
@@ -3595,6 +3751,28 @@ namespace Mono.CSharp {
 				Console.WriteLine ("Exception caught by the compiler while emitting:");
 				Console.WriteLine ("   Block that caused the problem begin at: " + block.loc);
 					
+				Console.WriteLine (e.GetType ().FullName + ": " + e.Message);
+				throw;
+			}
+#endif
+		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			if (Report.Errors > 0)
+				return;
+			
+#if PRODUCTION
+			try {
+#endif
+
+				base.EmitJs (jec);
+
+#if PRODUCTION
+			} catch (Exception e){
+				Console.WriteLine ("Exception caught by the compiler while emitting:");
+				Console.WriteLine ("   Block that caused the problem begin at: " + block.loc);
+				
 				Console.WriteLine (e.GetType ().FullName + ": " + e.Message);
 				throw;
 			}

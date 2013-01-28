@@ -21,6 +21,7 @@ using System.Linq;
 using System.Text;
 using System.Diagnostics;
 using Mono.CompilerServices.SymbolWriter;
+using Mono.CSharp.JavaScript;
 
 #if NET_2_1
 using XmlElement = System.Object;
@@ -320,6 +321,14 @@ namespace Mono.CSharp
 			if (containers != null) {
 				for (int i = 0; i < containers.Count; ++i)
 					containers[i].EmitContainer ();
+			}
+		}
+
+		public virtual void EmitContainerJs (JsEmitContext jec)
+		{
+			if (containers != null) {
+				for (int i = 0; i < containers.Count; ++i)
+					containers[i].EmitContainerJs (jec);
 			}
 		}
 
@@ -1975,11 +1984,8 @@ namespace Mono.CSharp
 			base.VerifyMembers ();
 		}
 
-		public override void Emit ()
+		private void ValidateEmit ()
 		{
-			if (OptAttributes != null)
-				OptAttributes.Emit ();
-
 			if (!IsCompilerGenerated) {
 				if (!IsTopLevel) {
 					MemberSpec candidate;
@@ -1988,33 +1994,41 @@ namespace Mono.CSharp
 					if (conflict_symbol == null && candidate == null) {
 						if ((ModFlags & Modifiers.NEW) != 0)
 							Report.Warning (109, 4, Location, "The member `{0}' does not hide an inherited member. The new keyword is not required",
-								GetSignatureForError ());
+							                GetSignatureForError ());
 					} else {
 						if ((ModFlags & Modifiers.NEW) == 0) {
 							if (candidate == null)
 								candidate = conflict_symbol;
-
+							
 							Report.SymbolRelatedToPreviousError (candidate);
 							Report.Warning (108, 2, Location, "`{0}' hides inherited member `{1}'. Use the new keyword if hiding was intended",
-								GetSignatureForError (), candidate.GetSignatureForError ());
+							                GetSignatureForError (), candidate.GetSignatureForError ());
 						}
 					}
 				}
-
+				
 				// Run constraints check on all possible generic types
 				if (base_type != null && base_type_expr != null) {
 					ConstraintChecker.Check (this, base_type, base_type_expr.Location);
 				}
-
+				
 				if (iface_exprs != null) {
 					foreach (var iface_type in iface_exprs) {
 						if (iface_type == null)
 							continue;
-
+						
 						ConstraintChecker.Check (this, iface_type, Location);	// TODO: Location is wrong
 					}
 				}
 			}
+		}
+
+		public override void Emit ()
+		{
+			if (OptAttributes != null)
+				OptAttributes.Emit ();
+
+			ValidateEmit ();
 
 			if (all_tp_builders != null) {
 				int current_starts_index = CurrentTypeParametersStartIndex;
@@ -2049,6 +2063,49 @@ namespace Mono.CSharp
 				pending.VerifyPendingMethods ();
 		}
 
+		public override void EmitJs (JsEmitContext jec)
+		{
+			ValidateEmit ();
+
+			base.EmitJs (jec);
+
+			int i;
+			MemberCore m;
+			HashSet<MemberCore> emitted = new HashSet<MemberCore> ();
+
+			for (i = 0; i < members.Count; i++) {
+				m = members [i];
+				if (m is Constructor) {
+					m.EmitJs (jec);
+					emitted.Add (m);
+				}
+			}
+
+			for (i = 0; i < members.Count; i++) {
+				m = members [i];
+				if (m is Property) {
+					m.EmitJs (jec);
+					emitted.Add (m);
+				}
+			}
+
+			for (i = 0; i < members.Count; i++) {
+				m = members [i];
+				if (m is Method) {
+					m.EmitJs (jec);
+					emitted.Add (m);
+				}
+			}
+
+			for (i = 0; i < members.Count; i++) {
+				m = members [i];
+				if (!emitted.Contains(m)) {
+					m.EmitJs (jec);
+				}
+			}
+
+		}
+
 
 		void CheckAttributeClsCompliance ()
 		{
@@ -2073,6 +2130,14 @@ namespace Mono.CSharp
 				return;
 
 			Emit ();
+		}
+
+		public sealed override void EmitContainerJs (JsEmitContext jec)
+		{
+			if ((caching_flags & Flags.CloseTypeCreated) != 0)
+				return;
+			
+			EmitJs (jec);
 		}
 
 		public override void CloseContainer ()
@@ -2502,6 +2567,56 @@ namespace Mono.CSharp
 				}
 			}
 		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			if (!jec.CheckCanEmit (Location))
+				return;
+
+			if (!has_static_constructor && HasStaticFieldInitializer) {
+				var c = DefineDefaultConstructor (true);
+				c.Define ();
+			}
+
+			if (!(this.Parent is NamespaceContainer)) {
+				jec.Report.Error (7075, Location, "JavaScript code generation for nested types not supported.");
+				return;
+			}
+
+
+			Constructor constructor = null;
+
+			foreach (var member in Members) {
+				var c = member as Constructor;
+				if (c != null) {
+					if ((c.ModFlags & Modifiers.STATIC) != 0) {
+						jec.Report.Error (7076, c.Location, "JavaScript generation not supported for static constructors");
+						return;
+					} 
+					if (constructor != null) {
+						jec.Report.Error (7077, c.Location, "JavaScript generation not supported for overloaded constructors");
+						return;
+					}
+					constructor = c;
+				}
+			}
+
+			var nsc = (NamespaceContainer)this.Parent;
+			
+			jec.Buf.Write ("\tvar " + this.MemberName.Name + " = (function () {\n");
+			jec.Buf.Indent ();
+
+			base.EmitJs (jec);
+
+			jec.Buf.Write ("\treturn " + this.MemberName.Name + ";\n");
+
+			jec.Buf.Unindent();
+			jec.Buf.Write ("\t})();\n");
+
+			var nsname = jec.MakeJsNamespaceName(nsc.NS.Name);
+
+			jec.Buf.Write ("\t" + nsname + "." + this.MemberName.Name + " = " + this.MemberName.Name + ";\n");
+		}
 	}
 
 
@@ -2641,6 +2756,11 @@ namespace Mono.CSharp
 			if (base_type != null && base_type.HasDynamicElement) {
 				Module.PredefinedAttributes.Dynamic.EmitAttribute (TypeBuilder, base_type, Location);
 			}
+		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			base.EmitJs (jec);
 		}
 
 		protected override TypeSpec[] ResolveBaseTypes (out FullNamedExpression base_class)
@@ -2842,6 +2962,14 @@ namespace Mono.CSharp
 
 			base.Emit ();
 		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			CheckStructCycles ();
+			
+			base.EmitJs (jec);
+		}
+
 
 		public override bool IsUnmanagedType ()
 		{
@@ -3345,22 +3473,34 @@ namespace Mono.CSharp
 			TypeManager.CheckTypeVariance (MemberType, ExpectedMemberTypeVariance, this);
 		}
 
-		public override void Emit()
+		private void CheckExternImpl ()
 		{
 			// for extern static method must be specified either DllImport attribute or MethodImplAttribute.
 			// We are more strict than csc and report this as an error because SRE does not allow emit that
 			if ((ModFlags & Modifiers.EXTERN) != 0 && !is_external_implementation && (OptAttributes == null || !OptAttributes.HasResolveError ())) {
 				if (this is Constructor) {
 					Report.Warning (824, 1, Location,
-						"Constructor `{0}' is marked `external' but has no external implementation specified", GetSignatureForError ());
+					                "Constructor `{0}' is marked `external' but has no external implementation specified", GetSignatureForError ());
 				} else {
 					Report.Warning (626, 1, Location,
-						"`{0}' is marked as an external but has no DllImport attribute. Consider adding a DllImport attribute to specify the external implementation",
-						GetSignatureForError ());
+					                "`{0}' is marked as an external but has no DllImport attribute. Consider adding a DllImport attribute to specify the external implementation",
+					                GetSignatureForError ());
 				}
 			}
+		}
+
+		public override void Emit()
+		{
+			CheckExternImpl ();
 
 			base.Emit ();
+		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			CheckExternImpl ();
+			
+			base.EmitJs (jec);
 		}
 
 		public override bool EnableOverloadChecks (MemberCore overload)

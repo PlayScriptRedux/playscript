@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Mono.CompilerServices.SymbolWriter;
 using System.Linq;
+using Mono.CSharp.JavaScript;
 
 #if STATIC
 using IKVM.Reflection;
@@ -441,6 +442,27 @@ namespace Mono.CSharp
 				foreach (var atypes in anonymous_types)
 					foreach (var at in atypes.Value)
 						at.EmitContainer ();
+			}
+		}
+
+		public override void EmitContainerJs (JsEmitContext jec)
+		{
+			if (OptAttributes != null)
+				OptAttributes.EmitJs (jec);
+
+			foreach (var tc in containers) {
+				tc.PrepareEmit ();
+			}
+			
+			base.EmitContainerJs (jec);
+
+			if (Compiler.Report.Errors == 0 && !Compiler.Settings.WriteMetadataOnly)
+				VerifyMembers ();
+			
+			if (anonymous_types != null) {
+				foreach (var atypes in anonymous_types)
+					foreach (var at in atypes.Value)
+						at.EmitContainerJs (jec);
 			}
 		}
 
