@@ -34,9 +34,8 @@
     <Reference Include="System" />
     <Reference Include="System.Dynamic" />
     <Reference Include="System.Core" />
-    <Reference Include="test2">
-      <HintPath>..\..\mcs\test2.exe</HintPath>
-    </Reference>
+    <Reference Include="MonoMac" />
+    <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActionScript\Undefined.cs" />
@@ -127,6 +126,15 @@
     <Compile Include="flash\system\ImageDecodingPolicy.asx" />
     <Compile Include="flash\net\URLLoaderDataFormat.asx" />
     <Compile Include="flash\utils\CompressionAlgorithm.asx" />
+    <Compile Include="flash\display3D\Context3D.cs" />
+    <Compile Include="flash\display3D\IndexBuffer3D.cs" />
+    <Compile Include="flash\display3D\VertexBuffer3D.cs" />
+    <Compile Include="flash\display\StageAlign.asx" />
+    <Compile Include="flash\display\StageScaleMode.asx" />
+    <Compile Include="flash\utils\Dictionary.cs" />
+    <Compile Include="flash\net\FileReference.asx" />
+    <Compile Include="flash\display3D\textures\Texture.cs" />
+    <Compile Include="flash\display3D\Program3D.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -165,7 +173,6 @@
     <Compile Include="flash\display\Sprite.asx" />
     <Compile Include="flash\display\Stage.asx" />
     <Compile Include="flash\display\Stage3D.asx" />
-    <Compile Include="flash\display3D\Context3D.asx" />
     <Compile Include="flash\display3D\Context3DBlendFactor.asx" />
     <Compile Include="flash\display3D\Context3DClearMask.asx" />
     <Compile Include="flash\display3D\Context3DCompareMode.asx" />
@@ -176,12 +183,8 @@
     <Compile Include="flash\display3D\Context3DTextureFormat.asx" />
     <Compile Include="flash\display3D\Context3DTriangleFace.asx" />
     <Compile Include="flash\display3D\Context3DVertexBufferFormat.asx" />
-    <Compile Include="flash\display3D\IndexBuffer3D.asx" />
-    <Compile Include="flash\display3D\Program3D.asx" />
-    <Compile Include="flash\display3D\VertexBuffer3D.asx" />
     <Compile Include="flash\display3D\textures\CubeTexture.asx" />
     <Compile Include="flash\display3D\textures\RectangleTexture.asx" />
-    <Compile Include="flash\display3D\textures\Texture.asx" />
     <Compile Include="flash\display3D\textures\TextureBase.asx" />
     <Compile Include="flash\errors\EOFError.asx" />
     <Compile Include="flash\errors\IOError.asx" />
@@ -248,7 +251,6 @@
     <Compile Include="flash\ui\Multitouch.asx" />
     <Compile Include="flash\ui\MultitouchInputMode.asx" />
     <Compile Include="flash\utils\ByteArray.asx" />
-    <Compile Include="flash\utils\Dictionary.asx" />
     <Compile Include="flash\utils\Endian.asx" />
     <Compile Include="flash\utils\IDataInput.asx" />
     <Compile Include="flash\utils\IDataOutput.asx" />

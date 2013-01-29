@@ -21,6 +21,11 @@ namespace _root
 			return t.GetProperty(name) != null || t.GetField(name) != null;
 		}
 
+		public static string toString(this uint o, int digits) 
+		{
+			return o.ToString ();
+		}
+
 		//
 		// IList extensions (for arrays, etc).
 		//

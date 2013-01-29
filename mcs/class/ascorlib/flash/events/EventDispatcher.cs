@@ -5,8 +5,18 @@ namespace flash.events
 {
 	public class EventDispatcher : IEventDispatcher
 	{
+		private class EventListener
+		{
+			public string        type;
+			public dynamic       callback;
+			public bool    		 useCapture;
+			public int           priority;
+			public bool          useWeakReference;
+		};
+
+
 		private IEventDispatcher _evTarget;
-		private Dictionary<string, List<Action<Event>>> _events;
+		private Dictionary<string, List<EventListener>> _events;
 
 		public EventDispatcher() {
 		}
@@ -19,23 +29,39 @@ namespace flash.events
 		#region IEventDispatcher implementation
 		public virtual void addEventListener (string type, Delegate listener, bool useCapture = false, int priority = 0, bool useWeakReference = false)
 		{
-			var listAct = (Action<Event>)listener;
-
 			if (_evTarget != null) {
 				_evTarget.addEventListener (type, listener, useCapture, priority, useWeakReference);
 			} else {
 
 				if (_events == null) {
-					_events = new Dictionary<string, List<Action<Event>>> ();
+					_events = new Dictionary<string, List<EventListener>> ();
 				}
 
-				List<Action<Event>> evList = null;
+				List<EventListener> evList = null;
 				if (!_events.TryGetValue (type, out evList)) {
-					evList = new List<Action<Event>> ();
+					evList = new List<EventListener> ();
 					_events [type] = evList;
 				}
 
-				evList.Add (listAct);
+				// create event listener
+				var el = new EventListener();
+				el.type     = type;
+				el.callback = listener;
+				el.useCapture = useCapture;
+				el.priority   = priority;
+				el.useWeakReference =useWeakReference;
+
+				// insert listener in priority order
+				int  i;
+				for (i=0; i < evList.Count; i++) {
+					if (priority > evList[i].priority) {
+						break;
+					}
+				}
+
+				evList.Insert(i, el);
+
+				// evList.Add (el);
 			}
 		}
 
@@ -46,12 +72,12 @@ namespace flash.events
 			} else {
 				bool dispatched = false;
 				if (_events != null) {
-					List<Action<Event>> evList = null;
+					List<EventListener> evList = null;
 					if (_events.TryGetValue (ev.type, out evList)) {
 						var l = evList.Count;
 						for (var i = 0; i < l; i++) {
 							var f = evList [i];
-							f (ev);
+							f.callback(ev);
 							dispatched = true;
 						}
 					}
@@ -81,12 +107,15 @@ namespace flash.events
 					return;
 				}
 
-				List<Action<Event>> evList = null;
+				List<EventListener> evList = null;
 				if (_events.TryGetValue (type, out evList)) {
-					var listAct = (Action<Event>)listener;
-					int idx = evList.IndexOf(listAct);
-					if (idx >= 0) {
-						evList.RemoveAt (idx);
+					dynamic listAct = listener;
+
+					for (int i=0; i < evList.Count; i++) {
+						if (evList[i].callback == listAct) {
+							evList.RemoveAt (i);
+							break;
+						}
 					}
 				}
 			}

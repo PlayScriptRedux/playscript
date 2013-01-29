@@ -1,7 +1,10 @@
 package flash.display {
 
 	import flash.display3D.*;
-	import flash.events.EventDispatcher;
+	import flash.geom.Rectangle;
+	import flash.events.*;
+	
+	import System.IntPtr;
 
 	public class Stage3D extends EventDispatcher {
 	
@@ -9,13 +12,15 @@ package flash.display {
 		// Properties
 		//
 		
-		public property context3D : Context3D { get { return null; } }
+		public property context3D : Context3D { get { return mContext3D; } }
 
  	 	public property visible : Boolean { get; set; }
  
 	 	public property x : Number { get; set; }
 
  	 	public property y : Number { get; set; }
+ 	 	
+ 	 	public property viewPort : Rectangle {get; set;}
 
 		//
 		// Methods
@@ -23,10 +28,30 @@ package flash.display {
 
 		public function Stage3D() {
 		}
- 	 	
+		
 		public function requestContext3D(context3DRenderMode:String = "auto", profile:String = "baseline"):void {
+			if (mContext3D==null) {
+				// create context 
+				mContext3D = new Context3D(this);
+			}
+			
+			// this may need to be deferred an additional frame
+			var e:Event = new Context3DCreateEvent(this);
+			this.dispatchEvent(e);
 		}
-	
+		
+		
+		private var mContext3D:Context3D;
 	}
 
+	class Context3DCreateEvent extends Event
+	{
+		public function Context3DCreateEvent(t:Stage3D)
+		{
+			super(Event.CONTEXT3D_CREATE);
+			_target = t;
+		}
+	};
+ 	 	
 }
+

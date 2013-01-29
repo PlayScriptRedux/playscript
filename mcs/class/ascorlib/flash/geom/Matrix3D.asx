@@ -17,6 +17,7 @@ package flash.geom {
 		//
 		
 		public function Matrix3D(v:Vector.<Number> = null) {
+			mData = []; //new Vector.<Number>(16, true);
 		}
  	 	
 		public function append(lhs:Matrix3D):void {
@@ -45,6 +46,7 @@ package flash.geom {
 		}
  	 	
 		public function copyRawDataFrom(vector:Vector.<Number>, index:uint = 0, transpose:Boolean = false):void {
+			mData = vector;
 		}
  	 	
 		public function copyRawDataTo(vector:Vector.<Number>, index:uint = 0, transpose:Boolean = false):void {
@@ -109,6 +111,8 @@ package flash.geom {
  	 	
 		public function transpose():void {
 		}
+		
+		public var mData:Vector.<Number>;
 	
 	}
 

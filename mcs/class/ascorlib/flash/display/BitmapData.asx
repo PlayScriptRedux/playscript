@@ -6,6 +6,12 @@ package flash.display {
 	import flash.geom.Point;
 	import flash.geom.Matrix;
 	import flash.filters.BitmapFilter;
+	
+	//import System.Drawing.*;
+	import MonoMac.CoreGraphics.*;
+	import MonoMac.Foundation.*;
+	import MonoMac.AppKit.*;
+
 
 	public class BitmapData implements IBitmapDrawable {
 	
@@ -13,146 +19,228 @@ package flash.display {
 		// Properties
 		//
 		
-		public property height : int { get { return 0; } }
+		public property height : int { get { return mHeight; } }
 
- 	 	public property rect : Rectangle { get { return null; } }
+ 	 	public property rect : Rectangle { get { return new Rectangle(0,0,width,height); } }
 
- 	 	public property transparent : Boolean { get { return false; } }
+ 	 	public property transparent : Boolean { get { return mTransparent; } }
 
- 	 	public property width : int { get { return 0; } }
+ 	 	public property width : int { get { return mWidth; } }
 
  	 	//
  	 	// Methods
  	 	//
  	 	 	 	
 		public function BitmapData(width:int, height:int, transparent:Boolean = true, fillColor:uint = 0xFFFFFFFF) {
+			mWidth = width;
+			mHeight = height;
+			mTransparent = transparent;
+			
+			// allocate memory
+			mData = new System.UInt32[width * height];
+
+			// fill bitmap
+			for (var i:int=0; i < mData.Length; i++) {
+				mData[i] = fillColor;
+			}
 		}
 
 		public function applyFilter(sourceBitmapData:BitmapData, sourceRect:Rectangle, destPoint:Point, filter:BitmapFilter):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function clone():BitmapData {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function colorTransform(rect:Rectangle, colorTransform:ColorTransform):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function compare(otherBitmapData:BitmapData):Object {
-			return null;
+			throw new System.NotImplementedException();
 		}
 
 		public function copyChannel(sourceBitmapData:BitmapData, sourceRect:Rectangle, destPoint:Point, 
 			sourceChannel:uint, destChannel:uint):void {
+			throw new System.NotImplementedException();
 		}
 
 		public function copyPixels(sourceBitmapData:BitmapData, sourceRect:Rectangle, destPoint:Point, 
 			alphaBitmapData:BitmapData = null, alphaPoint:Point = null, mergeAlpha:Boolean = false):void {
+			//throw new System.NotImplementedException();
 		}
 
 		public function copyPixelsToByteArray(rect:Rectangle, data:ByteArray):void {
+			throw new System.NotImplementedException();
 		}
 
 		public function dispose():void {
+			mData = null;
 		}
 
  	 	public function draw(source:IBitmapDrawable, matrix:Matrix = null, colorTransform:ColorTransform = null, blendMode:String = null, 
 	 	 	clipRect:Rectangle = null, smoothing:Boolean = false):void {
+			throw new System.NotImplementedException();
  	 	}
  	 	
 		public function drawWithQuality(source:IBitmapDrawable, matrix:Matrix = null, colorTransform:ColorTransform = null, blendMode:String = null, 
 			clipRect:Rectangle = null, smoothing:Boolean = false, quality:String = null):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function encode(rect:Rectangle, compressor:Object, byteArray:ByteArray = null):ByteArray {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function fillRect(rect:Rectangle, color:uint):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function floodFill(x:int, y:int, color:uint):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function generateFilterRect(sourceRect:Rectangle, filter:BitmapFilter):Rectangle {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function getColorBoundsRect(mask:uint, color:uint, findColor:Boolean = true):Rectangle {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function getPixel(x:int, y:int):uint {
-			return 0;
+			throw new System.NotImplementedException();
 		}
 		
 		public function getPixel32(x:int, y:int):uint {
-			return 0;
+			throw new System.NotImplementedException();
 		}
 
 		public function getPixels(rect:Rectangle):ByteArray {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function getVector(rect:Rectangle):Vector.<uint> {
-			return null;
+			throw new System.NotImplementedException();
 		}
 
 		public function histogram(hRect:Rectangle = null):Vector.<Vector.<Number>> {
-			return null;
+			throw new System.NotImplementedException();
 		}
 
 		public function hitTest(firstPoint:Point, firstAlphaThreshold:uint, secondObject:Object, 
 			secondBitmapDataPoint:Point = null, secondAlphaThreshold:uint = 1):Boolean {
-			return false;	
+			throw new System.NotImplementedException();
 		}
 
 		public function @lock():void {
+			throw new System.NotImplementedException();
 		}
 
 		public function merge(sourceBitmapData:BitmapData, sourceRect:Rectangle, destPoint:Point, 
 			redMultiplier:uint, greenMultiplier:uint, blueMultiplier:uint, alphaMultiplier:uint):void {
+			throw new System.NotImplementedException();
 		}
 
 		public function noise(randomSeed:int, low:uint = 0, high:uint = 255, channelOptions:uint = 7, grayScale:Boolean = false):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function paletteMap(sourceBitmapData:BitmapData, sourceRect:Rectangle, destPoint:Point, 
 			redArray:Array = null, greenArray:Array = null, blueArray:Array = null, alphaArray:Array = null):void {
+			throw new System.NotImplementedException();
 		}
 
 		public function perlinNoise(baseX:Number, baseY:Number, numOctaves:uint, randomSeed:int, 
 			stitch:Boolean, fractalNoise:Boolean, channelOptions:uint = 7, grayScale:Boolean = false, offsets:Array = null):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function pixelDissolve(sourceBitmapData:BitmapData, sourceRect:Rectangle, destPoint:Point, 
 			randomSeed:int = 0, numPixels:int = 0, fillColor:uint = 0):int {
-			return 0;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function scroll(x:int, y:int):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function setPixel(x:int, y:int, color:uint):void {
+			if (x < 0 || y < 0 || x >= width || y >= height) {			
+				throw new System.ArgumentOutOfRangeException("XY position out of range");
+			}
+			
+			// store color
+			mData[y * mWidth + x] = color;
 		}
 
 		public function setPixel32(x:int, y:int, color:uint):void {
+			if (x < 0 || y < 0 || x >= width || y >= height) {
+				throw new System.ArgumentOutOfRangeException("XY position out of range");
+			}
+			
+			// store color
+			mData[y * mWidth + x] = color;
 		}
  	 	
 		public function setPixels(rect:Rectangle, inputByteArray:ByteArray):void {
+			throw new System.NotImplementedException();
 		}
 
 		public function setVector(rect:Rectangle, inputVector:Vector.<uint>):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function threshold(sourceBitmapData:BitmapData, sourceRect:Rectangle, destPoint:Point, operation:String, 
 			threshold:uint, color:uint = 0, mask:uint = 0xFFFFFFFF, copySource:Boolean = false):uint {
-			return 0;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function unlock(changeRect:Rectangle = null):void {
+			throw new System.NotImplementedException();
 		}
 		
+		public function getRawData():System.UInt32[] {
+			return mData;
+		}
+		
+		
+		public static function loadFromPath(path:String):BitmapData
+		{
+			var src:NSImage = new NSImage (path);
+			
+			var rect:System.Drawing.RectangleF = System.Drawing.RectangleF.Empty;
+			var image:CGImage = src.AsCGImage (rect, null, null);
+			var width:int = image.Width;
+			var height:int = image.Height;
+
+			var data = new byte[width * height * 4];
+			using (CGContext context = new CGBitmapContext (data, width, height, 8, 4 * width, image.ColorSpace, CGImageAlphaInfo.PremultipliedLast)) {
+				
+				// Core Graphics referential is upside-down compared to OpenGL referential
+				// Flip the Core Graphics context here
+				// An alternative is to use flipped OpenGL texture coordinates when drawing textures
+				//context.TranslateCTM (0, height);
+				//context.ScaleCTM (1, -1);
+				
+				// Set the blend mode to copy before drawing since the previous contents of memory aren't used. 
+				// This avoids unnecessary blending.
+				context.SetBlendMode (CGBlendMode.Copy);
+				
+				context.DrawImage (new System.Drawing.RectangleF (0, 0, width, height), image);
+			}
+
+			// allocate new bitmap data and copy into it
+			var bd = new flash.display.BitmapData(width, height, true);
+			System.Buffer.BlockCopy(data, 0, bd.getRawData(), 0, width * height * 4);
+			return bd;
+		}
+		
+		private var mWidth:int;
+		private var mHeight:int;
+		private var mTransparent:Boolean;
+		private var mData:System.UInt32[];
 	}
 
 }

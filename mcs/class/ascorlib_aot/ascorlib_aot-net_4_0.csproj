@@ -37,6 +37,7 @@
     <Reference Include="mscorlib">
       <HintPath>..\..\..\..\mono-as3-inst\lib\mono\4.0\mscorlib.dll</HintPath>
     </Reference>
+    <Reference Include="MonoMac" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -197,14 +198,17 @@
     <Compile Include="..\ascorlib\RangeError.asx">
       <Link>RangeError.asx</Link>
     </Compile>
-    <Compile Include="..\ascorlib\Class.cs">
-      <Link>Class.cs</Link>
-    </Compile>
     <Compile Include="..\ascorlib\Boolean.cs">
       <Link>Boolean.cs</Link>
     </Compile>
-    <Compile Include="..\ascorlib\Function.cs">
-      <Link>Function.cs</Link>
+    <Compile Include="..\ascorlib\flash\display3D\Context3D.cs">
+      <Link>flash\display3D\Context3D.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\IndexBuffer3D.cs">
+      <Link>flash\display3D\IndexBuffer3D.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\VertexBuffer3D.cs">
+      <Link>flash\display3D\VertexBuffer3D.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>
@@ -317,9 +321,6 @@
     <Compile Include="..\ascorlib\flash\display\Stage3D.asx">
       <Link>flash\display\Stage3D.asx</Link>
     </Compile>
-    <Compile Include="..\ascorlib\flash\display3D\Context3D.asx">
-      <Link>flash\display3D\Context3D.asx</Link>
-    </Compile>
     <Compile Include="..\ascorlib\flash\display3D\Context3DBlendFactor.asx">
       <Link>flash\display3D\Context3DBlendFactor.asx</Link>
     </Compile>
@@ -350,14 +351,8 @@
     <Compile Include="..\ascorlib\flash\display3D\Context3DVertexBufferFormat.asx">
       <Link>flash\display3D\Context3DVertexBufferFormat.asx</Link>
     </Compile>
-    <Compile Include="..\ascorlib\flash\display3D\IndexBuffer3D.asx">
-      <Link>flash\display3D\IndexBuffer3D.asx</Link>
-    </Compile>
     <Compile Include="..\ascorlib\flash\display3D\Program3D.asx">
       <Link>flash\display3D\Program3D.asx</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\flash\display3D\VertexBuffer3D.asx">
-      <Link>flash\display3D\VertexBuffer3D.asx</Link>
     </Compile>
     <Compile Include="..\ascorlib\flash\display3D\textures\CubeTexture.asx">
       <Link>flash\display3D\textures\CubeTexture.asx</Link>

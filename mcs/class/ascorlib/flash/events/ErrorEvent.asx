@@ -29,6 +29,10 @@ package flash.events {
  	 	public override function toString():String {
  	 		return null;
  	 	}
+ 	 	
+ 	 	public function get text():String {
+ 	 		return toString();
+ 	 	}
 	
 	}
 

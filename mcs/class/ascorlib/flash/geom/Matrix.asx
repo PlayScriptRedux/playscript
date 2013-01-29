@@ -2,6 +2,8 @@ package flash.geom {
 
 	public class Matrix {
 	
+		private static var sTemp:Matrix = new Matrix();
+
 		//
 		// Properties
 		//
@@ -23,64 +25,131 @@ package flash.geom {
  	 	//
  	 	 
  	 	public function Matrix(a:Number = 1, b:Number = 0, c:Number = 0, d:Number = 1, tx:Number = 0, ty:Number = 0) {
+ 	 		this.a = a;
+ 	 		this.b = b;
+ 	 		this.c = c;
+ 	 		this.d = d;
+ 	 		this.tx = tx;
+ 	 		this.ty = ty;
  	 	}
  	 	
 		public function clone():Matrix {
-			return null;
+			return new Matrix(a,b,c,d,tx,ty);
 		}
  	 	
 		public function concat(m:Matrix):void {
+		
+			var a:Number = this.a * m.a + this.b * m.c;
+			var b:Number = this.a * m.b + this.b * m.d;
+			var c:Number = this.c * m.a + this.d * m.c;
+			var d:Number = this.c * m.b + this.d * m.d;
+			var tx:Number = this.tx * m.a + this.ty * m.c + m.tx;
+			var ty:Number = this.tx * m.b + this.ty * m.d + m.ty;
+			
+			
+			this.a = a;
+			this.b = b;
+			this.c = c;
+			this.d = d;
+			this.tx = tx;
+			this.ty = ty;
 		}
 
  	 	public function copyColumnFrom(column:uint, vector3D:Vector3D):void {
+			throw new System.NotImplementedException();
  	 	}
  	 	
 		public function copyColumnTo(column:uint, vector3D:Vector3D):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function copyFrom(sourceMatrix:Matrix):void {
+			this.a = sourceMatrix.a;
+			this.b = sourceMatrix.b;
+			this.c = sourceMatrix.c;
+			this.d = sourceMatrix.d;
+			this.tx = sourceMatrix.tx;
+			this.ty = sourceMatrix.ty;
 		}
  	 	
 		public function copyRowFrom(row:uint, vector3D:Vector3D):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function copyRowTo(row:uint, vector3D:Vector3D):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function createBox(scaleX:Number, scaleY:Number, rotation:Number = 0, tx:Number = 0, ty:Number = 0):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function createGradientBox(width:Number, height:Number, rotation:Number = 0, tx:Number = 0, ty:Number = 0):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function deltaTransformPoint(point:Point):Point {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function identity():void {
+			this.a = 1;
+ 	 		this.b = 0;
+ 	 		this.c = 0;
+ 	 		this.d = 1;
+ 	 		this.tx = 0;
+ 	 		this.ty = 0;
 		}
  	 	
 		public function invert():void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function rotate(angle:Number):void {
+			
+			var sin:Number = System.Math.Sin(angle);
+			var cos:Number = System.Math.Cos(angle);
+			 
+			sTemp.a =  cos;
+			sTemp.b = -sin;
+			sTemp.c =  sin;
+			sTemp.d =  cos;
+			sTemp.tx = 0;
+			sTemp.ty = 0;
+			concat(sTemp);
 		}
  	 	
 		public function scale(sx:Number, sy:Number):void {
+			sTemp.a =  sx;
+			sTemp.b =  0;
+			sTemp.c =  0;
+			sTemp.d =  sy;
+			sTemp.tx = 0;
+			sTemp.ty = 0;
+			concat(sTemp);
 		}
  	 	
-		public function setTo(aa:Number, ba:Number, ca:Number, da:Number, txa:Number, tya:Number):void {
+		public function setTo(a:Number, b:Number, c:Number, d:Number, tx:Number, ty:Number):void {
+			this.a = a;
+			this.b = b;
+			this.c = c;
+			this.d = d;
+			this.tx = tx;
+			this.ty = ty;
 		}
  	 	
 		public function toString():String {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	 
 		public function transformPoint(point:Point):Point {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function translate(dx:Number, dy:Number):void {
+			// unsure if dx,dy need to be transformed by abcd ? 
+			this.tx += dx;
+			this.ty += dy;
 		}
 	
 	}
