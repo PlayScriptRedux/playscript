@@ -366,15 +366,78 @@ namespace Mono.CSharp
 		}
 	}
 
-	public class RegexLiteral : StringConstant, ILiteralConstant
+	public class RegexLiteral : Constant, ILiteralConstant
 	{
-		public RegexLiteral (BuiltinTypes types, string s, Location loc)
-			: base (types, s, loc)
+		readonly public string Regex;
+		readonly public string Options;
+
+		public RegexLiteral (BuiltinTypes types, string regex, string options, Location loc)
+			: base (loc)
 		{
+			Regex = regex;
+			Options = options ?? "";
 		}
 
 		public override bool IsLiteral {
 			get { return true; }
+		}
+
+		public override object GetValue ()
+		{
+			return "/" + Regex + "/" + Options;
+		}
+		
+		public override string GetValueAsLiteral ()
+		{
+			return GetValue () as String;
+		}
+		
+		public override long GetValueAsLong ()
+		{
+			throw new NotSupportedException ();
+		}
+
+		public override void EncodeAttributeValue (IMemberContext rc, AttributeEncoder enc, TypeSpec targetType)
+		{
+			throw new NotSupportedException ();
+		}
+		
+		public override bool IsDefaultValue {
+			get {
+				return Regex == null && Options == "";
+			}
+		}
+		
+		public override bool IsNegative {
+			get {
+				return false;
+			}
+		}
+		
+		public override bool IsNull {
+			get {
+				return IsDefaultValue;
+			}
+		}
+		
+		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type, ResolveContext opt_ec)
+		{
+			return null;
+		}
+
+		protected override Expression DoResolve (ResolveContext rc)
+		{
+			var args = new Arguments(2);
+			args.Add (new Argument(new StringLiteral(rc.BuiltinTypes, Regex, this.Location)));
+			args.Add (new Argument(new StringLiteral(rc.BuiltinTypes, Options, this.Location)));
+
+			return new New(new TypeExpression(rc.Module.PredefinedTypes.AsRegExp.Resolve(), this.Location), 
+			               args, this.Location).Resolve (rc);
+		}
+
+		public override void Emit (EmitContext ec)
+		{
+			throw new NotSupportedException ();
 		}
 
 #if FULL_AST

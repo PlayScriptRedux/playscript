@@ -705,7 +705,7 @@ namespace Mono.CSharp {
 		{
 			// NOTE: WE don't optimize for emty loop right now..
 
-			jec.Buf.Write ("/tfor (");
+			jec.Buf.Write ("\tfor (");
 			if (Initializer != null)
 				Initializer.EmitJs (jec);
 			jec.Buf.Write ("; ");
