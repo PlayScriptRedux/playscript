@@ -258,6 +258,7 @@ namespace Mono.CSharp
 		public readonly PredefinedType AsExpressionType;
 		public readonly PredefinedType AsBinder;
 		public readonly PredefinedType AsBinderFlags;
+		public readonly PredefinedType AsRegExp;
 
 		public PredefinedTypes (ModuleContainer module)
 		{
@@ -328,6 +329,7 @@ namespace Mono.CSharp
 			AsExpressionType = new PredefinedType (module, MemberKind.Enum, "ActionScript", "ExpressionType");
 			AsBinder = new PredefinedType (module, MemberKind.Class, "ActionScript.RuntimeBinder", "Binder");
 			AsBinderFlags = new PredefinedType (module, MemberKind.Enum, "ActionScript.RuntimeBinder", "CSharpBinderFlags");
+			AsRegExp = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "RegExp");
 
 			//
 			// Define types which are used for comparison. It does not matter

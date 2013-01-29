@@ -3086,15 +3086,17 @@ namespace Mono.ActionScript
 			int reader_pos = reader.Position;
 #endif
 
+			StringBuilder opt_builder = null;
+
 			while (true) {
 				c = get_char ();
 				if (c == '/') {
 
 					c = peek_char();
 					while (c == 'g' || c == 'i' || c == 'm' || c == 's' || c == 'x') {
-						if (pos == value_builder.Length)
-							Array.Resize (ref value_builder, pos * 2);
-						value_builder[pos++] = (char) get_char ();
+						if (opt_builder == null)
+							opt_builder = new StringBuilder();
+						opt_builder.Append((char) get_char ());
 						c = peek_char ();
 					}
 
@@ -3104,7 +3106,9 @@ namespace Mono.ActionScript
 					else
 						s = new string (value_builder, 0, pos);
 
-					ILiteralConstant res = new RegexLiteral (context.BuiltinTypes, s, start_location);
+					ILiteralConstant res = new RegexLiteral (context.BuiltinTypes, s, 
+					                                         opt_builder != null ? opt_builder.ToString() : null, 
+					                                         start_location);
 					val = res;
 #if FULL_AST
 					res.ParsedValue = quoted ?
@@ -3119,14 +3123,14 @@ namespace Mono.ActionScript
 					Report.Error (7027, Location, "Newline in regex constant");
 					val = new StringLiteral (context.BuiltinTypes, new string (value_builder, 0, pos), start_location);
 					return Token.LITERAL;
-				} else if (c == '\\') {
+				} /* else if (c == '\\') {
 					c = get_char();
 					if (c != -1) {
 						if (pos == value_builder.Length)
 							Array.Resize (ref value_builder, pos * 2);
 						value_builder[pos++] = (char) c;
 					}
-				} 
+				} */
 
 				if (c == -1) {
 					Report.Error (7028, Location, "Unterminated regex literal");
