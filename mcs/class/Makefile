@@ -189,7 +189,9 @@ net_4_0_dirs := \
 	System.Data.Services.Client	\
 	System.Data.Services	\
 	System.Json \
-	ascorlib 
+	ActionScript.Dynamic \
+	ActionScript.Dynamic_aot \
+	ascorlib \
 	ascorlib_aot
 	
 net_4_0_only_dirs := \

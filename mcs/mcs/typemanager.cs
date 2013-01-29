@@ -260,6 +260,11 @@ namespace Mono.CSharp
 		public readonly PredefinedType AsBinderFlags;
 		public readonly PredefinedType AsRegExp;
 
+		// ActionScript dynamic binder AOT mode support..
+		private bool checkedAsDynamicMode = false;
+		private bool isAsDynamicMode = false;
+		private bool isAsAotMode = false;
+
 		public PredefinedTypes (ModuleContainer module)
 		{
 			TypedReference = new PredefinedType (module, MemberKind.Struct, "System", "TypedReference");
@@ -361,8 +366,33 @@ namespace Mono.CSharp
 				TaskGeneric.TypeSpec.IsGenericTask = true;
 		}
 
+		private void CheckActionScriptDynamicMode()
+		{
+			if (!checkedAsDynamicMode) {
+				isAsDynamicMode = AsBinder.Define ();  	// Using ActionScript dynamic support.
+				isAsAotMode = AsCallSite.Define ();		// Using ActionScript dynamic support, in AOT mode.
+				checkedAsDynamicMode = true;
+			}
+		}
+
+		public bool IsActionScriptDynamicMode {
+			get {
+				if (!checkedAsDynamicMode)
+					CheckActionScriptDynamicMode();
+				return isAsDynamicMode;
+			}
+		}
+
+		public bool IsActionScriptAotMode {
+			get {
+				if (!checkedAsDynamicMode)
+					CheckActionScriptDynamicMode();
+				return isAsAotMode;
+			}
+		}
+
 		public PredefinedType GetBinder(ResolveContext ec) {
-			if (ec.FileType == SourceFileType.ActionScript) {
+			if (IsActionScriptDynamicMode) {
 				return AsBinder;
 			} else {
 				return Binder;
@@ -370,7 +400,7 @@ namespace Mono.CSharp
 		}
 
 		public PredefinedType GetBinderFlags(ResolveContext ec) {
-			if (ec.FileType == SourceFileType.ActionScript) {
+			if (IsActionScriptDynamicMode) {
 				return AsBinderFlags;
 			} else {
 				return BinderFlags;

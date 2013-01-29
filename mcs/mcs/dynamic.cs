@@ -249,8 +249,8 @@ namespace Mono.CSharp
 		protected IDynamicBinder binder;
 		protected Expression binder_expr;
 
-		protected bool isActionScript;
-		protected bool isActionScriptAotMode;
+		private bool isActionScriptDynamicMode;
+		private bool isActionScriptAotMode;
 
 		// Used by BinderFlags
 		protected CSharpBinderFlags flags;
@@ -300,17 +300,14 @@ namespace Mono.CSharp
 
 			binder_type = pt.GetBinder (rc).Resolve ();
 
-			if (rc.FileType == SourceFileType.ActionScript)
-				isActionScript = true;
+			isActionScriptDynamicMode = pt.IsActionScriptDynamicMode;
+			isActionScriptAotMode = pt.IsActionScriptAotMode;
 
-			// NOTE: Change -- we always use ActionScriptAot mode if AsCallSite is included - even in C#.
-			if (/*isActionScript &&*/ pt.AsCallSite.Define ()) { 
+			// NOTE: Use AsCallSite if in ActionScript AOT mode only.
+			if (isActionScriptAotMode) { 
 				pt.AsCallSite.Resolve ();
 				pt.AsCallSiteGeneric.Resolve ();
-				isActionScriptAotMode = true;
-			} 
-
-			if (!isActionScriptAotMode) {
+			} else {
 				pt.CallSite.Resolve ();
 				pt.CallSiteGeneric.Resolve ();
 			}
@@ -323,7 +320,7 @@ namespace Mono.CSharp
 			if (rc.Report.Errors == errors)
 				return true;
 
-			if (isActionScriptAotMode) {
+			if (isActionScriptDynamicMode) {
 				rc.Report.Error (7027, loc,
 					"ActionScript dynamic operation cannot be compiled without `ascorlib.dll' assembly reference");
 			} else {
@@ -577,7 +574,7 @@ namespace Mono.CSharp
 
 		public static MemberAccess GetBinderNamespace (ResolveContext rc, Location loc)
 		{
-			if (rc.FileType == SourceFileType.ActionScript) {
+			if (rc.Module.PredefinedTypes.IsActionScriptDynamicMode) {
 				return new MemberAccess (
 					new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "ActionScript", loc), "RuntimeBinder", loc);
 			} else {
@@ -999,7 +996,7 @@ namespace Mono.CSharp
 			Arguments binder_args = new Arguments (4);
 
 			MemberAccess ns;
-			if (ec.FileType == SourceFileType.ActionScript && ec.Module.PredefinedTypes.AsExpressionType.Define () ) {
+			if (ec.Module.PredefinedTypes.IsActionScriptAotMode) {
 				ns = new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "ActionScript", loc);
 			} else {
 				ns = new MemberAccess (new MemberAccess (

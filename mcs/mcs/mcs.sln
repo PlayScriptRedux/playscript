@@ -3,11 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mcs", "mcs.csproj", "{D4A01C5B-A1B5-48F5-BB5B-D2E1BD236E56}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ascorlib-net_4_0", "..\class\ascorlib\ascorlib-net_4_0.csproj", "{EDBACFCB-2817-4A2E-8DDF-B24AEFA56352}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mono.CSharp-net_4_0", "..\class\Mono.CSharp\Mono.CSharp-net_4_0.csproj", "{155AEF28-C81F-405D-9072-9D52780E3E70}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test", "test.csproj", "{B5782FD5-CBC6-4194-BF51-A20D55CEBE78}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActionScript.Dynamic-net_4_0", "..\class\ActionScript.Dynamic\ActionScript.Dynamic-net_4_0.csproj", "{5F7F9AF6-CE83-4F13-A25F-355DB2861D43}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ascorlib-net_4_0_monomac", "..\class\ascorlib\ascorlib-net_4_0_monomac.csproj", "{EDBACFCB-2817-4A2E-8DDF-B24AEFA56352}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -28,6 +30,16 @@ Global
 		{155AEF28-C81F-405D-9072-9D52780E3E70}.Release|Any CPU.Build.0 = Release|Any CPU
 		{155AEF28-C81F-405D-9072-9D52780E3E70}.Release|x86.ActiveCfg = Release|Any CPU
 		{155AEF28-C81F-405D-9072-9D52780E3E70}.Release|x86.Build.0 = Release|Any CPU
+		{5F7F9AF6-CE83-4F13-A25F-355DB2861D43}.Debug - AST|Any CPU.ActiveCfg = Debug|Any CPU
+		{5F7F9AF6-CE83-4F13-A25F-355DB2861D43}.Debug - AST|Any CPU.Build.0 = Debug|Any CPU
+		{5F7F9AF6-CE83-4F13-A25F-355DB2861D43}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5F7F9AF6-CE83-4F13-A25F-355DB2861D43}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5F7F9AF6-CE83-4F13-A25F-355DB2861D43}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5F7F9AF6-CE83-4F13-A25F-355DB2861D43}.Debug|x86.Build.0 = Debug|Any CPU
+		{5F7F9AF6-CE83-4F13-A25F-355DB2861D43}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5F7F9AF6-CE83-4F13-A25F-355DB2861D43}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5F7F9AF6-CE83-4F13-A25F-355DB2861D43}.Release|x86.ActiveCfg = Release|Any CPU
+		{5F7F9AF6-CE83-4F13-A25F-355DB2861D43}.Release|x86.Build.0 = Release|Any CPU
 		{B5782FD5-CBC6-4194-BF51-A20D55CEBE78}.Debug - AST|Any CPU.ActiveCfg = Debug|Any CPU
 		{B5782FD5-CBC6-4194-BF51-A20D55CEBE78}.Debug - AST|Any CPU.Build.0 = Debug|Any CPU
 		{B5782FD5-CBC6-4194-BF51-A20D55CEBE78}.Debug|Any CPU.ActiveCfg = Debug|Any CPU

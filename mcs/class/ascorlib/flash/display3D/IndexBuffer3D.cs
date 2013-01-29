@@ -1,16 +1,21 @@
-namespace flash.display3D {
-	using MonoMac.OpenGL;
+using System;
+using flash.utils;
+using _root;
 
-	using System;
-	using flash.utils;
-	using _root;
+#if PLATFORM_MONOMAC
+using MonoMac.OpenGL;
+#endif
+
+namespace flash.display3D {
 
 	public class IndexBuffer3D {
 
 		//
 		// Methods
 		//
-		
+
+#if OPENGL
+
 		public IndexBuffer3D(Context3D context3D, int numIndices)
 		{
 			mNumIndices = numIndices;
@@ -39,6 +44,27 @@ namespace flash.display3D {
 		
 		private readonly int mNumIndices;
 		private uint 	mId;
+
+#else
+
+		public IndexBuffer3D(Context3D context3D, int numIndices)
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void dispose() {
+			throw new NotImplementedException();
+		}
+		
+		public void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startOffset, int count) {
+			throw new NotImplementedException();
+		}
+		
+		public void uploadFromVector(Vector<uint> data, int startOffset, int count) {
+			throw new NotImplementedException();
+		}
+
+#endif
 
 	}
 }

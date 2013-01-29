@@ -1,12 +1,22 @@
+using System;
+using flash.utils;
+using _root;
+
+#if PLATFORM_MONOMAC
+using MonoMac.OpenGL;
+#endif
+
 namespace flash.display3D 
 {
-	using MonoMac.OpenGL;
-	using System;
-	using flash.utils;
-	using _root;
 
 	public class VertexBuffer3D 
 	{
+		//
+		// Methods
+		//
+
+#if OPENGL
+
 		public VertexBuffer3D(Context3D context3D, int numVertices, int dataPerVertex)
 		{
 			mNumVertices = numVertices;
@@ -60,6 +70,41 @@ namespace flash.display3D
 		private readonly int		mVertexSize; 		// size in floats
 		private readonly float[]	mData;
 		private uint		 		mId;
+
+#else
+
+		public VertexBuffer3D(Context3D context3D, int numVertices, int dataPerVertex)
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void dispose() {
+			throw new NotImplementedException();
+		}
+		
+		public void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startVertex, int numVertices) {
+			throw new NotImplementedException();
+		}
+		
+		public void uploadFromVector(Vector<double> data, int startVertex, int numVertices) 
+		{
+			throw new NotImplementedException();
+		}
+		
+		public int stride { 
+			get {
+				throw new NotImplementedException();
+			}
+		}
+		
+		public uint id {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+#endif
+
 	}
 	
 }

@@ -4162,7 +4162,7 @@ namespace Mono.CSharp
 			Arguments binder_args = new Arguments (4);
 
 			MemberAccess ns;
-			if (ec.FileType == SourceFileType.ActionScript && ec.Module.PredefinedTypes.AsExpressionType.Define () ) {
+			if (ec.Module.PredefinedTypes.IsActionScriptAotMode) {
 				ns = new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "ActionScript", loc);
 			} else {
 				ns = new MemberAccess (new MemberAccess (

@@ -1,9 +1,13 @@
 using flash.utils;
 
-using MonoMac.OpenGL;
 using System;
 using System.IO;
 using System.Text;
+
+#if PLATFORM_MONOMAC
+using MonoMac.OpenGL;
+#endif
+
 
 namespace flash.display3D {
 
@@ -12,7 +16,9 @@ namespace flash.display3D {
 		//
 		// Methods
 		//
-		
+
+#if OPENGL
+
 		public Program3D(Context3D context3D)
 		{
 			mContext3D = context3D;
@@ -100,6 +106,54 @@ namespace flash.display3D {
 		
 		private readonly Context3D mContext3D;
 		private int 			   mProgramId = 0;
+
+#else
+
+		public Program3D(Context3D context3D)
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void dispose() {
+			throw new NotImplementedException();
+		}
+		
+		public void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startOffset, int count) {
+			throw new NotImplementedException();
+		}
+		
+		public void upload(ByteArray vertexProgram, ByteArray fragmentProgram) {
+			throw new NotImplementedException();
+		}
+		
+		public int programId {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+		
+		private void printProgramInfo (string name, int id)
+		{
+			throw new NotImplementedException();
+		}
+		
+		private string loadShaderSource (string name)
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void uploadFromGLSLFiles (string vertexShaderName, string fragmentShaderName)
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void uploadFromGLSL(string vertexShaderSource, string fragmentShaderSource)
+		{
+			throw new NotImplementedException();
+		}
+
+#endif
+
 	}
 	
 }

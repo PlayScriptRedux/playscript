@@ -2,8 +2,10 @@
 
 namespace flash.display3D {
 
+#if PLATFORM_MONOMAC
 	using MonoMac.OpenGL;
 	using MonoMac.AppKit;
+#endif
 
 	using System;
 	using System.IO;
@@ -30,6 +32,7 @@ namespace flash.display3D {
 		//
 
 
+#if OPENGL
 		
 		public Context3D(Stage3D stage3D)
 		{
@@ -46,11 +49,9 @@ namespace flash.display3D {
 			mTexturedProgram = createProgram();
 			mTexturedProgram.uploadFromGLSLFiles("textured.vert", "textured.frag");
 		}
-		
-		
+
 		public void clear(double red = 0.0, double green = 0.0, double blue = 0.0, double alpha = 1.0, 
 		                  double depth = 1.0, uint stencil = 0, uint mask = 0xffffffff) {
-			
 			GL.ClearColor (NSColor.FromDeviceRgba((float)red,(float)green,(float)blue,(float)alpha));
 			GL.ClearDepth(depth);
 			GL.ClearStencil((int)stencil);
@@ -99,7 +100,6 @@ namespace flash.display3D {
 		public void present() {
 			GL.Flush();
 		}
-
  	 	
 		public void setBlendFactors(string sourceFactor, string destinationFactor) {
 		}
@@ -132,7 +132,6 @@ namespace flash.display3D {
  	 	
 		public void setProgramConstantsFromMatrix(string programType, int firstRegister, Matrix3D matrix, 
 			bool transposedMatrix = false) {
-			
 			// $$ hack
 			// treat any matrix submitted as the projection matrix
 
@@ -224,13 +223,163 @@ namespace flash.display3D {
 			default:
 				throw new NotImplementedException();
 			}
-
 		}
 
 		private readonly Stage3D mStage3D;
 	
 		private Program3D mUntexturedProgram;
 		private Program3D mTexturedProgram;
+
+#else
+
+		public Context3D(Stage3D stage3D)
+		{
+			throw new NotImplementedException();
+		}
+		
+		private void setupShaders ()
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void clear(double red = 0.0, double green = 0.0, double blue = 0.0, double alpha = 1.0, 
+		                  double depth = 1.0, uint stencil = 0, uint mask = 0xffffffff) 
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void configureBackBuffer(int width, int height, int antiAlias, 
+		                                bool enableDepthAndStencil = true, bool wantsBestResolution = false) 
+		{
+			throw new NotImplementedException();
+		}
+		
+		public CubeTexture createCubeTexture(int size, string format, bool optimizeForRenderToTexture, int streamingLevels = 0) 
+		{
+			throw new NotImplementedException();
+		}
+		
+		public IndexBuffer3D createIndexBuffer(int numIndices) 
+		{
+			throw new NotImplementedException();
+		}
+		
+		public Program3D createProgram() 
+		{
+			throw new NotImplementedException();
+		}
+		
+		public Texture createTexture(int width, int height, string format, 
+		                             bool optimizeForRenderToTexture, int streamingLevels = 0) 
+		{
+			throw new NotImplementedException();
+		}
+		
+		public VertexBuffer3D createVertexBuffer(int numVertices, int data32PerVertex) 
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void dispose() 
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void drawToBitmapData(BitmapData destination) 
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void drawTriangles(IndexBuffer3D indexBuffer, int firstIndex = 0, int numTriangles = -1) 
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void present() 
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void setBlendFactors(string sourceFactor, string destinationFactor) 
+		{
+		}
+		
+		public void setColorMask(bool red, bool green, bool blue, bool alpha) 
+		{
+		}
+		
+		public void setCulling (string triangleFaceToCull)
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void setDepthTest(bool depthMask, string passCompareMode) 
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void setProgram(Program3D program) 
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void setProgramConstantsFromByteArray(string programType, int firstRegister, 
+		                                             int numRegisters, ByteArray data, uint byteArrayOffset) 
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void setProgramConstantsFromMatrix(string programType, int firstRegister, Matrix3D matrix, 
+		                                          bool transposedMatrix = false) 
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void setProgramConstantsFromVector(string programType, int firstRegister, Vector<double> data, int numRegisters = -1) 
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void setRenderToBackBuffer() 
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void setRenderToTexture(TextureBase texture, bool enableDepthAndStencil = false, int antiAlias = 0, 
+		                               int surfaceSelector = 0) 
+		{
+			throw new NotImplementedException();
+		}
+		
+		
+		public void setScissorRectangle(Rectangle rectangle) 
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void setStencilActions(string triangleFace = "frontAndBack", string compareMode = "always", string actionOnBothPass = "keep", 
+		                              string actionOnDepthFail = "keep", string actionOnDepthPassStencilFail = "keep") 
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void setStencilReferenceValue(uint referenceValue, uint readMask = 255, uint writeMask = 255) 
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void setTextureAt (int sampler, TextureBase texture)
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void setVertexBufferAt (int index, VertexBuffer3D buffer, int bufferOffset = 0, string format = "float4")
+		{
+			throw new NotImplementedException();
+		}
+
+#endif
+
 	}
 
 }

@@ -1,19 +1,22 @@
-
-using System;
-using flash.utils;
-using flash.display;
-using flash.display3D;
-using MonoMac.OpenGL;
-
 namespace flash.display3D.textures {
 	
+	using System;
+	using flash.utils;
+	using flash.display;
+	using flash.display3D;
+	
+#if PLATFORM_MONOMAC
+	using MonoMac.OpenGL;
+#endif
 
 	public class Texture : TextureBase {
 		
 		//
 		// Methods
 		//
-		
+
+#if OPENGL
+
 		public Texture(Context3D context, int width, int height, string format, 
 		                        bool optimizeForRenderToTexture, int streamingLevels)
 		{
@@ -73,7 +76,30 @@ namespace flash.display3D.textures {
 		private readonly int    	mStreamingLevels;
 
 		// private int             	mBufferId;
+
+#else
+
+		public Texture(Context3D context, int width, int height, string format, 
+		               bool optimizeForRenderToTexture, int streamingLevels)
+		{
+			throw new NotImplementedException();
+		}
 		
+		public void uploadCompressedTextureFromByteArray(ByteArray data, uint byteArrayOffset, bool async = false) {
+			throw new NotImplementedException();
+		}
+		
+		public void uploadFromBitmapData (BitmapData source, uint miplevel = 0)
+		{
+			throw new NotImplementedException();
+		}
+		
+		public void uploadFromByteArray(ByteArray data, uint byteArrayOffset, uint miplevel = 0) {
+			throw new NotImplementedException();
+		}
+
+#endif
+
 	}
 	
 }

@@ -36,9 +36,9 @@
     <Compile Include="test2.asx" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\class\ascorlib\ascorlib-net_4_0.csproj">
+    <ProjectReference Include="..\class\ascorlib\ascorlib-net_4_0_monomac.csproj">
       <Project>{EDBACFCB-2817-4A2E-8DDF-B24AEFA56352}</Project>
-      <Name>ascorlib-net_4_0</Name>
+      <Name>ascorlib-net_4_0_monomac</Name>
     </ProjectReference>
   </ItemGroup>
 </Project>
