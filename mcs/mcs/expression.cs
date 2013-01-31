@@ -520,6 +520,18 @@ namespace Mono.CSharp
 			EmitOperator (ec, type);
 		}
 
+		public override void EmitJs (JsEmitContext jec)
+		{
+			bool needsParen = jec.NeedParens (this, Expr);
+
+			jec.Buf.Write (OperName (Oper));
+			if (needsParen)
+				jec.Buf.Write ("(");
+			Expr.EmitJs (jec);
+			if (needsParen)
+				jec.Buf.Write (")");
+		}
+
 		protected void EmitOperator (EmitContext ec, TypeSpec type)
 		{
 			switch (Oper) {
@@ -4129,24 +4141,20 @@ namespace Mono.CSharp
 
 		public override void EmitJs (JsEmitContext jec)
 		{
-//			Operator leftOper = null;
-//			if (Left is Binary) {
-//				leftOper = ((Binary)Left).Oper;
-//			} else if (left is Unary) {
-//				leftOper = ((Unary)Left).Oper;
-//			}
-//
-//			Operator rightOper = null;
-//			if (Right is Binary) {
-//				rightOper = ((Binary)Right).Oper;
-//			} else if (right is Unary) {
-//				rightOper = ((Unary)Right).Oper;
-//			}
+			var leftParens = jec.NeedParens(this, Left);
+			var rightParens = jec.NeedParens(this, Right);
 
-//			if (leftOper != null && leftOper.)
+			if (leftParens)
+				jec.Buf.Write ("(");
 			Left.EmitJs (jec);
+			if (leftParens)
+				jec.Buf.Write (")");
 			jec.Buf.Write (" " + this.OperName (oper) + " ");
+			if (rightParens)
+				jec.Buf.Write ("(");
 			Right.EmitJs (jec);
+			if (rightParens)
+				jec.Buf.Write (")");
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Expression t)
@@ -5834,6 +5842,8 @@ namespace Mono.CSharp
 
 		public override void EmitJs (JsEmitContext jec)
 		{
+			if (expr != null)
+				expr.EmitJs (jec);
 			mg.EmitCallJs (jec, arguments);
 		}
 		
@@ -8717,6 +8727,13 @@ namespace Mono.CSharp
 
 			target.expr = expr.Clone (clonectx);
 		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			expr.EmitJs (jec);
+			jec.Buf.Write (".");
+			jec.Buf.Write (Name);
+		}
 		
 		public override object Accept (StructuralVisitor visitor)
 		{
@@ -10188,6 +10205,16 @@ namespace Mono.CSharp
 		{
 			if (source == null)
 				return EmptyExpressionStatement.Instance;
+
+			// If we're used in a collection initializer, CurrentInitializerVariable will be null.  Just resolve and exit.
+			if (ec.CurrentInitializerVariable == null) {
+				source = source.Resolve (ec);
+				if (target != null)
+					target = target.Resolve (ec);
+				eclass = ExprClass.Value;
+				type = source.Type;
+				return this;
+			}
 
 			var t = ec.CurrentInitializerVariable.Type;
 			if (t.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {

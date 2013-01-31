@@ -409,6 +409,17 @@ namespace Mono.CSharp {
 			ec.LoopEnd = old_end;
 		}
 
+		protected override void DoEmitJs (JsEmitContext jec)
+		{
+			jec.Buf.Write ("\tdo ");
+
+			((Block)EmbeddedStatement).EmitBlockJs (jec, false);
+
+			jec.Buf.Write (" while (");
+			expr.EmitJs (jec);
+			jec.Buf.Write (");\n");
+		}
+
 		protected override void CloneTo (CloneContext clonectx, Statement t)
 		{
 			Do target = (Do) t;
@@ -706,6 +717,7 @@ namespace Mono.CSharp {
 			// NOTE: WE don't optimize for emty loop right now..
 
 			jec.Buf.Write ("\tfor (");
+			jec.PushForceExpr(true);
 			if (Initializer != null)
 				Initializer.EmitJs (jec);
 			jec.Buf.Write ("; ");
@@ -715,6 +727,7 @@ namespace Mono.CSharp {
 			if (Iterator != null)
 				Iterator.EmitJs (jec);
 			jec.Buf.Write (") ");
+			jec.PopForceExpr();
 
 			((Block)Statement).EmitBlockJs (jec, false);
 
@@ -1084,6 +1097,13 @@ namespace Mono.CSharp {
 			}
 		}
 
+		protected override void DoEmitJs (JsEmitContext jec)
+		{
+			jec.Buf.Write ("\treturn ");
+			expr.EmitJs (jec);
+			jec.Buf.Write (";\n");
+		}
+
 		void Error_ReturnFromIterator (ResolveContext rc)
 		{
 			rc.Report.Error (1622, loc,
@@ -1443,6 +1463,11 @@ namespace Mono.CSharp {
 			ec.Emit (unwind_protect ? OpCodes.Leave : OpCodes.Br, ec.LoopEnd);
 		}
 
+		protected override void DoEmitJs (JsEmitContext jec)
+		{
+			jec.Buf.Write ( "\tbreak;\n");
+		}
+
 		protected override void CloneTo (CloneContext clonectx, Statement t)
 		{
 			// nothing needed
@@ -1473,6 +1498,11 @@ namespace Mono.CSharp {
 		protected override void DoEmit (EmitContext ec)
 		{
 			ec.Emit (unwind_protect ? OpCodes.Leave : OpCodes.Br, ec.LoopBegin);
+		}
+
+		protected override void DoEmitJs (JsEmitContext jec)
+		{
+			jec.Buf.Write ("\tcontinue;\n");
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Statement t)
@@ -2545,27 +2575,35 @@ namespace Mono.CSharp {
 			DoEmit (ec);
 		}
 
-		public void EmitBlockJs (JsEmitContext jec, bool as_statement = true)
+		public void EmitBlockJs (JsEmitContext jec, bool as_statement = true, bool no_braces = false)
 		{
-			if (as_statement && statements.Count == 0)
+			if (as_statement && statements.Count == 0 && 
+			    (scope_initializers == null || scope_initializers.Count == 0))
 				return;
 
-			if (as_statement) {
-				jec.Buf.Write ("\t{\n");
-			} else {
-				jec.Buf.Write ("{\n");
+			if (!no_braces) {
+				if (as_statement) {
+					jec.Buf.Write ("\t{\n");
+				} else {
+					jec.Buf.Write ("{\n");
+				}
+				jec.Buf.Indent ();
 			}
-			jec.Buf.Indent ();
-			
-			for (int ix = 0; ix < statements.Count; ix++){
+
+			if (scope_initializers != null)
+				EmitScopeInitializersJs (jec);
+
+			for (int ix = 0; ix < statements.Count; ix++) {
 				statements [ix].EmitJs (jec);
 			}
 			
-			jec.Buf.Unindent();
-			if (as_statement) {
-				jec.Buf.Write ("\t}\n");
-			} else {
-				jec.Buf.Write ("\t}");
+			if (!no_braces) {
+				jec.Buf.Unindent ();
+				if (as_statement) {
+					jec.Buf.Write ("\t}\n");
+				} else {
+					jec.Buf.Write ("\t}");
+				}
 			}
 		}
 
@@ -4697,6 +4735,32 @@ namespace Mono.CSharp {
 			//
 			ec.LoopEnd = old_end;
 			ec.Switch = old_switch;
+		}
+
+		protected override void DoEmitJs (JsEmitContext jec)
+		{
+			jec.Buf.Write ("\tswitch (");
+			Expr.EmitJs (jec);
+			jec.Buf.Write (") {\n");
+			jec.Buf.Indent ();
+
+			foreach (var section in Sections) {
+				foreach (var label in section.Labels) {
+					if (label.IsDefault) {
+						jec.Buf.Write ("\tdefault:\n");
+					} else {
+						jec.Buf.Write ("\tcase ");
+						label.Label.EmitJs (jec);
+						jec.Buf.Write (":\n");
+					}
+				}
+				jec.Buf.Indent ();
+				section.Block.EmitBlockJs (jec, true, true);
+				jec.Buf.Unindent ();
+			}
+
+			jec.Buf.Unindent ();
+			jec.Buf.Write ("\t}\n");
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Statement t)

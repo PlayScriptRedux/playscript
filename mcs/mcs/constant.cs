@@ -382,6 +382,11 @@ namespace Mono.CSharp {
 			// It exists only as hint not to call Resolve on constants
 			return true;
 		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			jec.Buf.Write (this.GetValueAsLiteral());
+		}
 	}
 
 	public abstract class IntegralConstant : Constant
@@ -413,10 +418,6 @@ namespace Mono.CSharp {
 		
 		public abstract Constant Increment ();
 
-		public override void EmitJs (JsEmitContext jec)
-		{
-			jec.Buf.Write (GetValue ().ToString());
-		}
 	}
 	
 	public class BoolConstant : Constant {

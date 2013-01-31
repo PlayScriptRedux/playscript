@@ -9,6 +9,9 @@ namespace Mono.CSharp.JavaScript
 		public ModuleContainer Module;
 		public JsEmitBuffer Buf;
 
+		bool _forceExpression;
+		List<bool> _forceExprStack = new List<bool>(128);
+
 		private List<JsEmitBuffer> _stack = new List<JsEmitBuffer>();
 		private Dictionary<string, JsEmitBuffer> _stash = new Dictionary<string, JsEmitBuffer>();
 
@@ -18,6 +21,7 @@ namespace Mono.CSharp.JavaScript
 		{
 			Module = module;
 			Buf = new JsEmitBuffer();
+			Buf.EmitContext = this;
 		}
 
 		public CompilerContext Compiler {
@@ -37,11 +41,31 @@ namespace Mono.CSharp.JavaScript
 			return true;
 		}
 
+		// Forces statements to be emitted as expressions (no preceeding indent, no following ;\n)
+		public bool ForceExpr {
+			get { return _forceExpression; }
+		}
+
+		public void PushForceExpr (bool force) 
+		{
+			_forceExprStack.Add (_forceExpression);
+			_forceExpression = force;
+		}
+
+		public void PopForceExpr ()
+		{
+			if (_forceExprStack.Count > 0) {
+				_forceExpression = _forceExprStack [_forceExprStack.Count - 1];
+				_forceExprStack.RemoveAt (_forceExprStack.Count - 1);
+			}
+		}
+
 		public void Push()
 		{
 			var oldBuf = Buf;
 			_stack.Add (Buf);
 			Buf = new JsEmitBuffer();
+			Buf.EmitContext = this;
 			Buf.IndentLevel = oldBuf.IndentLevel; 
 		}
 
@@ -56,6 +80,7 @@ namespace Mono.CSharp.JavaScript
 			var oldBuf = Buf;
 			_stash[id] = Buf;
 			Buf = new JsEmitBuffer();
+			Buf.EmitContext = this;
 			Buf.IndentLevel = oldBuf.IndentLevel; 
 		}
 
@@ -74,10 +99,76 @@ namespace Mono.CSharp.JavaScript
 			_definedNamespaces.Add(ns);
 		}
 		
-		public string
-			MakeJsNamespaceName(string ns)
+		public string MakeJsNamespaceName(string ns)
 		{
 			return ns.Replace ('.', '$');
+		}
+
+		public int GetOperPrecendence(Expression e)
+		{
+			if (e is As || e is AsIn || e is Is) {
+				return 6;
+			}
+
+			if (e is TypeOf || e is AsDelete) {
+				return 2;
+			}
+
+			if (e is UnaryMutator) {
+				var um = e as UnaryMutator;
+				if (um.UnaryMutatorMode == UnaryMutator.Mode.PreIncrement ||
+				    um.UnaryMutatorMode == UnaryMutator.Mode.PreDecrement)
+					return 2;
+				else
+					return 1;
+			}
+
+			if (e is Binary) {
+				var op = (e as Binary).Oper;
+				switch (op) {
+				// Standard C# binary operators
+				case Binary.Operator.Addition:		return 4;
+				case Binary.Operator.Subtraction:	return 4;
+				case Binary.Operator.Multiply:		return 3;
+				case Binary.Operator.Division:		return 3;
+				case Binary.Operator.Modulus:		return 3;
+				case Binary.Operator.BitwiseAnd:	return 8;
+				case Binary.Operator.BitwiseOr:		return 10;
+				case Binary.Operator.ExclusiveOr:	return 9;
+				case Binary.Operator.LogicalAnd:	return 11;
+				case Binary.Operator.LogicalOr:		return 12;
+				case Binary.Operator.LeftShift:		return 5;
+				case Binary.Operator.RightShift:	return 5;
+				case Binary.Operator.Equality:		return 7;
+				case Binary.Operator.Inequality:	return 7;
+				case Binary.Operator.GreaterThan:	return 6;
+				case Binary.Operator.LessThan:		return 6;
+				case Binary.Operator.GreaterThanOrEqual: return 6;
+				case Binary.Operator.LessThanOrEqual: return 6;
+
+				// ActionScript binary operators
+				case Binary.Operator.AsURightShift: return 5;
+				case Binary.Operator.AsRefEquality: return 7;
+				}
+			}
+
+			if (e is Unary) {
+				var op = (e as Unary).Oper;
+				switch (op) {
+					// Unary operators
+				case Unary.Operator.LogicalNot:		return 2;		
+				case Unary.Operator.OnesComplement:	return 2;
+				case Unary.Operator.UnaryPlus:		return 2;
+				case Unary.Operator.UnaryNegation:	return 2;
+				case Unary.Operator.AddressOf:		return 2;
+				}
+			}
+
+			return 0;
+		}
+
+		public bool NeedParens(Expression parent, Expression child) {
+			return GetOperPrecendence(child) > GetOperPrecendence(parent);
 		}
 
 	}
@@ -86,6 +177,7 @@ namespace Mono.CSharp.JavaScript
 
 		public TextWriter Stream;
 		public string CurIndent;
+		public JsEmitContext EmitContext;
 
 		private int _indentLevel;
 
@@ -125,9 +217,14 @@ namespace Mono.CSharp.JavaScript
 				IndentLevel--;
 		}
 
-		public void Write(string s)
+		public void Write (string s)
 		{
-			Stream.Write (s.Replace ("\t", CurIndent));
+			if (EmitContext.ForceExpr) {
+				Stream.Write (s.Replace ("\t", "").
+				                Replace (";\n", ""));
+			} else {
+				Stream.Write (s.Replace ("\t", CurIndent));
+			}
 		}
 
 

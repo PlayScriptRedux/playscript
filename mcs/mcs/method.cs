@@ -730,16 +730,14 @@ namespace Mono.CSharp {
 				jec.Buf.Write ("\t" + this.Parent.MemberName.Name + ".prototype." + this.MemberName.Name + " = function(");
 			}
 			parameters.EmitJs (jec);
-			jec.Buf.Write (") {\n");
-			jec.Buf.Indent ();
+			jec.Buf.Write (") ");
 
 			if (MethodData != null)
 				MethodData.EmitJs (Parent, jec);
 
 			Block = null;
 
-			jec.Buf.Unindent ();
-			jec.Buf.Write ("\t};\n");
+			jec.Buf.Write (";\n");
 		}
 
 		protected void Error_ConditionalAttributeIsNotValid ()
@@ -1813,18 +1811,23 @@ namespace Mono.CSharp {
 			block = null;
 		}
 
-		public override void EmitJs (JsEmitContext jec) {
-
+		public override void EmitJs (JsEmitContext jec)
+		{
 			base.EmitJs (jec);
 
-			jec.Buf.Write ("\tfunction " + this.Parent.MemberName.Name + "(");
-			parameters.EmitJs (jec);
-			jec.Buf.Write (") {\n");
-			jec.Buf.Indent ();
+			bool is_static = (this.ModFlags & Modifiers.STATIC) != 0;
+
+			if (!is_static) {
+				jec.Buf.Write ("\tfunction " + this.Parent.MemberName.Name + "(");
+				parameters.EmitJs (jec);
+				jec.Buf.Write (") ");
+			}
 
 			BlockContext bc = new BlockContext (this, block, Compiler.BuiltinTypes.Void);
 			bc.Set (ResolveContext.Options.ConstructorScope);
-			
+
+			bool emitted_block = false;
+
 			if (block != null) {
 				//
 				// If we use a "this (...)" constructor initializer, then
@@ -1847,7 +1850,7 @@ namespace Mono.CSharp {
 					}
 					
 					if (Initializer != null && 
-					    !(bc.FileType == SourceFileType.ActionScript && Initializer.IsAsExplicitSuperCall)) {
+						!(bc.FileType == SourceFileType.ActionScript && Initializer.IsAsExplicitSuperCall)) {
 						//
 						// mdb format does not support reqions. Try to workaround this by emitting the
 						// sequence point at initializer. Any breakpoint at constructor header should
@@ -1858,12 +1861,16 @@ namespace Mono.CSharp {
 				}
 				
 				if (block.Resolve (null, bc, this)) {
-					block.EmitJs (jec);
+					block.EmitBlockJs (jec, false, is_static);
+					emitted_block = true;
 				}
 			}
 
-			jec.Buf.Unindent ();
-			jec.Buf.Write ("\t}\n");
+			if (!is_static) {
+				if (!emitted_block)
+					jec.Buf.Write ("{\n\t}");
+				jec.Buf.Write ("\n");
+			} 
 
 			block = null;
 		}
@@ -2265,7 +2272,7 @@ namespace Mono.CSharp {
 			if (block != null) {
 				BlockContext bc = new BlockContext (mc, block, method.ReturnType);
 				if (block.Resolve (null, bc, method)) {
-					block.EmitJs (jec);
+					block.EmitBlockJs (jec, false, false);
 				}
 			}
 		}
