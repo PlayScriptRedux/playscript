@@ -1,4 +1,6 @@
 package flash.utils {
+	import System.*;
+	import System.IO.*;
 
 	public class ByteArray implements IDataInput, IDataOutput {
 	
@@ -6,143 +8,192 @@ package flash.utils {
 		// Properties
 		//
 		
-		public property bytesAvailable : uint { get { return 0; } }
+		public property bytesAvailable : uint { 
+			get { throw new NotImplementedException(); } 
+		}
 		
-		public static property defaultObjectEncoding : uint { get; set; }
+		public static property defaultObjectEncoding : uint {
+			get { throw new NotImplementedException(); } 
+			set { throw new NotImplementedException(); } 
+		}
 
  	 	public property endian : String { get; set; }
 
- 	 	public property length : uint { get; set; }
+ 	 	public property length : uint { 
+ 	 		get {return mStream.Length;}
+ 	 		set {mStream.SetLength(value);} 
+ 	 	}
 
- 	 	public property objectEncoding : uint { get; set; }
+ 	 	public property objectEncoding : uint { 
+			get { throw new NotImplementedException(); } 
+			set { throw new NotImplementedException(); } 
+ 	 	}
 
- 	 	public property position : uint { get; set; }
+ 	 	public property position : uint 
+ 	 	{ 
+ 	 		get {return mStream.Position;} 
+ 	 		set {mStream.Position = value;} 
+ 	 	}
 
 		//
 		// Methods
 		//
 
 		public function ByteArray() {
+			mStream = new MemoryStream();
+			mReader = new BinaryReader(mStream);
+			mWriter = new BinaryWriter(mStream);
 		}
  	 	
 		public function clear():void {
+			mStream.SetLength(0);
 		}
  	 	
 		public function compress(algorithm:String = null):void {
+			throw new NotImplementedException();
 		}
  	 	
 		public function deflate():void {
+			throw new NotImplementedException();
 		}
  	 	
 		public function inflate():void {
+			throw new NotImplementedException();
 		}
  	 	
 		public function readBoolean():Boolean {
-			return false;
+			throw new NotImplementedException();
+		//	return false;
 		}
  	 	
 		public function readByte():int {
-			return 0;
+			return mReader.ReadByte();
 		}
  	 	
 		public function readBytes(bytes:ByteArray, offset:uint = 0, length:uint = 0):void {
+			throw new NotImplementedException();
 		}
  	 	
 		public function readDouble():Number {
-			return 0.0;
+			return mReader.ReadDouble();
 		}
  	 	
 		public function readFloat():Number {
-			return 0.0;
+			return mReader.ReadSingle();
 		}
  	 	
 		public function readInt():int {
-			return 0;
+			return mReader.ReadInt32();
 		}
  	 	
 		public function readMultiByte(length:uint, charSet:String):String {
-			return null;
+			throw new NotImplementedException();
 		}
  	 	
 		public function readObject():* {
-			return null;
+			throw new NotImplementedException();
 		}
  	 	
 		public function readShort():int {
-			return 0;
+			return mReader.ReadInt16();
 		}
  	 	
 		public function readUnsignedByte():uint {
-			return 0;
+			return mReader.ReadByte();
 		}
  	 	
 		public function readUnsignedInt():uint {
-			return 0;
+			return mReader.ReadUInt32();
 		}
  	 	
 		public function readUnsignedShort():uint {
-			return 0;
+			return mReader.ReadUInt16();
 		}
  	 	
 		public function readUTF():String {
-			return null;
+			throw new NotImplementedException();
 		}
  	 	
 		public function readUTFBytes(length:uint):String {
-			return null;
+			throw new NotImplementedException();
 		}
  	 	
 		public function toJSON(k:String):* {
-			return null;
+			throw new NotImplementedException();
 		}
- 	 	
+
 		public function toString():String {
-			return null;
+			throw new NotImplementedException();
 		}
  	 	
 		public function uncompress(algorithm:String = null):void {
+			throw new NotImplementedException();
 		}
- 	 	
+ 	
 		public function writeBoolean(value:Boolean):void {
+			throw new NotImplementedException();
 		}
  	 	
 		public function writeByte(value:int):void {
+			mWriter.Write(byte(value));
 		}
  	 	
 		public function writeBytes(bytes:ByteArray, offset:uint = 0, length:uint = 0):void {
+			throw new NotImplementedException();
 		}
  	 	
 		public function writeDouble(value:Number):void {
+			mWriter.Write(double(value));
 		}
  	 	
 		public function writeFloat(value:Number):void {
+			mWriter.Write(float(value));
 		}
  	 	
 		public function writeInt(value:int):void {
+			mWriter.Write(Int32(value));
 		}
  	 	
 		public function writeMultiByte(value:String, charSet:String):void {
+			throw new NotImplementedException();
 		}
  	 	
 		public function writeObject(obj:*):void {
+			throw new NotImplementedException();
 		}
  	 	
 		public function writeShort(value:int):void {
+			mWriter.Write(Int16(value));
 		}
  	 	
 		public function writeUnsignedInt(value:uint):void {
+			mWriter.Write(UInt32(value));
 		}
  	 	
 		public function writeUTF(value:String):void {
+			throw new NotImplementedException();
 		}
  	 	
 		public function writeUTFBytes(value:String):void {
+			throw new NotImplementedException();
 		}
 		
 		public indexer this(index:int):int {
-			get { return 0; }
-			set { }
+			get 
+			{
+				throw new NotImplementedException();
+				 //return 0; 
+			}
+			set { 
+				throw new NotImplementedException();
+			}
 		}
+		
+		
+		var mStream:MemoryStream;
+		var mReader:BinaryReader;
+		var mWriter:BinaryWriter;
+		
 
 	}
 

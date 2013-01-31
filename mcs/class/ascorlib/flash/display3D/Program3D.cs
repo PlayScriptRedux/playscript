@@ -21,16 +21,41 @@ namespace flash.display3D {
 
 		public Program3D(Context3D context3D)
 		{
-			mContext3D = context3D;
 		}
 		
 		public void dispose() {
+			deleteShaders();
+		}
+
+		private void deleteShaders ()
+		{
+			if (mProgramId!=0) {
+				// this causes an exception EntryPointNotFound ..
+				// GL.DeleteProgram (1, ref mProgramId  );
+				mProgramId = 0;
+			}
+
+			if (mVertexShaderId!=0) {
+				GL.DeleteShader (mVertexShaderId);
+				mVertexShaderId = 0;
+			}
+
+			if (mFragmentShaderId!=0) {
+				GL.DeleteShader (mFragmentShaderId);
+				mFragmentShaderId = 0;
+			}
 		}
 		
 		public void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startOffset, int count) {
+			throw new NotImplementedException();
 		}
 		
 		public void upload(ByteArray vertexProgram, ByteArray fragmentProgram) {
+			// convert shaders from AGAL to GLSL
+			var glslVertex = AGALConverter.ConvertToGLSL(vertexProgram);
+			var glslFragment = AGALConverter.ConvertToGLSL(fragmentProgram);
+			// upload as GLSL
+			uploadFromGLSL(glslVertex, glslFragment);
 		}
 
 		public int programId {
@@ -38,27 +63,14 @@ namespace flash.display3D {
 				return mProgramId;
 			}
 		}
-
-		private void printProgramInfo (string name, int id)
-		{
-			int infoLogLen = 0;
-			GL.GetProgram (id, ProgramParameter.InfoLogLength, out infoLogLen); 
-			
-			if (infoLogLen > 0) {
-				var infoLog = GL.GetProgramInfoLog (id);
-				Console.Write("{0} {1}", name, infoLog);
-			}
-		}
 		
-		private string loadShaderSource (string name)
+		private string loadShaderSource (string filePath)
 		{
 			//var path = NSBundle.MainBundle.ResourcePath + Path.DirectorySeparatorChar + "GLSL";
 			//var filePath = path + Path.DirectorySeparatorChar + name;
-			var filePath = "/Users/iaddis/Desktop/" + name;
-			StreamReader streamReader = new StreamReader (filePath);
-			string text = streamReader.ReadToEnd ();
-			streamReader.Close ();
-			return text;
+			using (StreamReader streamReader = new StreamReader (filePath)) {
+				return streamReader.ReadToEnd ();
+			}
 		}
 
 		public void uploadFromGLSLFiles (string vertexShaderName, string fragmentShaderName)
@@ -68,45 +80,78 @@ namespace flash.display3D {
 			uploadFromGLSL(vertexShaderSource, fragmentShaderSource);
 		}
 
-		public void uploadFromGLSL(string vertexShaderSource, string fragmentShaderSource)
+		public void uploadFromGLSL (string vertexShaderSource, string fragmentShaderSource)
 		{
-			// load vertex shader
-			int vertexShader = GL.CreateShader(ShaderType.VertexShader);
-			GL.ShaderSource(vertexShader, vertexShaderSource);
-			GL.CompileShader(vertexShader);
+			// delete existing shaders
+			deleteShaders ();
+
+			// Console.WriteLine (vertexShaderSource);
+			// Console.WriteLine (fragmentShaderSource);
+
+			mVertexSource = vertexShaderSource;
+			mFragmentSource = fragmentShaderSource;
 			
-			// load fragment shader
-			int fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
-			GL.ShaderSource(fragmentShader, fragmentShaderSource);
-			GL.CompileShader(fragmentShader);
+			// compiler vertex shader
+			mVertexShaderId = GL.CreateShader (ShaderType.VertexShader);
+			GL.ShaderSource (mVertexShaderId, vertexShaderSource);
+			GL.CompileShader (mVertexShaderId);
+			var vertexInfoLog = GL.GetShaderInfoLog (mVertexShaderId);
+			if (!string.IsNullOrEmpty (vertexInfoLog)) {
+				Console.Write ("ERROR vertex: {0}", vertexInfoLog);
+			}
+
+			// compile fragment shader
+			mFragmentShaderId = GL.CreateShader (ShaderType.FragmentShader);
+			GL.ShaderSource (mFragmentShaderId, fragmentShaderSource);
+			GL.CompileShader (mFragmentShaderId);
+			var fragmentInfoLog = GL.GetShaderInfoLog (mFragmentShaderId);
+			if (!string.IsNullOrEmpty (fragmentInfoLog)) {
+				Console.Write ("ERROR fragment: {0}", fragmentInfoLog);
+			}
 			
 			// create program
-			int shaderProgram = GL.CreateProgram();
-			GL.AttachShader(shaderProgram, vertexShader);
-			GL.AttachShader(shaderProgram, fragmentShader);
-			
-			// bind shader attribute inputs
-			// $$TODO these are hardcoded
-			GL.BindAttribLocation(shaderProgram, 1, "inColor");
-			GL.BindAttribLocation(shaderProgram, 2, "inTexCoord");
-			// GL.BindBindAttribLocation(shaderProgram, 0, "texture0");
+			mProgramId = GL.CreateProgram ();
+			GL.AttachShader (mProgramId, mVertexShaderId);
+			GL.AttachShader (mProgramId, mFragmentShaderId);
+
+			GL.BindAttribLocation (mProgramId, 0, "va0");
+			GL.BindAttribLocation (mProgramId, 1, "va1");
+			GL.BindAttribLocation (mProgramId, 2, "va2");
 
 			// Link the program
-			GL.LinkProgram(shaderProgram);
-			
-			// Output our shader object errors if there were problems 
-			printProgramInfo("vertex:", vertexShader);
-			printProgramInfo("fragment:", fragmentShader);
-			printProgramInfo("shader:", shaderProgram);
+			GL.LinkProgram (mProgramId);
 
-			// store program
-			mProgramId = shaderProgram;
+			var infoLog = GL.GetProgramInfoLog (mProgramId);
+			if (!string.IsNullOrEmpty (infoLog)) {
+				Console.Write ("ERROR program: {0}", infoLog);
+			}
+
+			// $$TEMP hack
+			mVc0 = GL.GetUniformLocation (mProgramId, "vc0");
+			mVc1 = GL.GetUniformLocation (mProgramId, "vc1");
+			// Console.WriteLine ("vc {0} {1}", mVc0, mVc1);
+		}
+
+		public int getLocation(int register)
+		{
+			// $$TEMP hack
+			if (register == 0) return mVc0;
+			if (register == 1) return mVc1;
+			return -1;
 		}
 
 		
-		private readonly Context3D mContext3D;
+		private int 			   mVertexShaderId = 0;
+		private int 			   mFragmentShaderId = 0;
 		private int 			   mProgramId = 0;
 
+		private string 			   mVertexSource;
+		private string 			   mFragmentSource;
+
+		// $$TEMP hack
+		private int mVc0 = -1;
+		private int mVc1 = -1;
+		
 #else
 
 		public Program3D(Context3D context3D)

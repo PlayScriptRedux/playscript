@@ -1,4 +1,6 @@
 package {
+	import System.*;
+	import System.Text.RegularExpressions.*;
 
 	public class RegExp {
 	
@@ -6,34 +8,97 @@ package {
 		// Properties
 		//
 		
-		public property dotall : Boolean { get { return false; } }
-
- 	 	public property extended : Boolean { get { return false; } }
+		public property dotall : Boolean { 
+ 	 		get { return mDoTail;} 
+ 	 	}
+ 	 	public property extended : Boolean { 
+ 	 		get { return mExtended;} 
+ 	 	}
+ 	 	public property global : Boolean { 
+ 	 		get { return mGlobal;} 
+ 	 	}
+ 	 	public property ignoreCase : Boolean { 
+ 	 		get { return (mRegex.Options & RegexOptions.IgnoreCase) != 0;} 
+ 	 	}
+ 	 	public property lastIndex : Number { 
+ 	 		get { throw new NotImplementedException();} 
+ 	 	}
+ 	 	public property multiline : Boolean { 
+ 	 		get { return (mRegex.Options & RegexOptions.Multiline) != 0;} 
+ 	 	}
  	 	
- 	 	public property global : Boolean { get { return false; } }
- 	 	
- 	 	public property ignoreCase : Boolean { get { return false; } }
-
- 	 	public property lastIndex : Number { get; set; }
-
- 	 	public property multiline : Boolean { get { return false; } }
-
- 	 	public property source : String { get { return null; } }
+ 	 	public property source : String { 
+ 	 		get { return mSource;} 
+ 	 	}
 
  	 	//
  	 	// Methods
  	 	//
  	 	 	 	
 		public function RegExp(re:String, flags:String) {
+			var options:RegexOptions = RegexOptions.None;
+			for (var i:int=0; i < flags.length; i++) {
+				switch (flags.charAt(i)) {
+				case "m":
+					options |= RegexOptions.Multiline;
+					break;
+				case "i":
+					options |= RegexOptions.IgnoreCase;
+					break;
+				case "g":
+					mGlobal = true;
+					break;
+				case "x":
+					mExtended = true;
+					break;
+				case "s":
+					mDoTail = true;
+					break;
+				default:
+					throw new NotImplementedException();
+				}
+			}
+
+			mSource = re;
+			mRegex = new Regex(re, options);
 		}
 
 		public function exec(str:String):Object {
-			return null;
+			throw new NotImplementedException();
 		}
  	 	
 		public function test(str:String):Boolean {
-			return false;		
+			throw new NotImplementedException();
 		}
+		
+		public function replace(str:String, replaceWith:String):String {
+			return mRegex.Replace(str, replaceWith);
+		}
+		
+		public function search(str:String):int {
+			var m = mRegex.Match(str);
+			if (!m.Success) {
+				return -1;
+			}
+			return m.Index;
+		}
+		
+		public function match(str:String):Array {
+			var a:Array = null;
+			var m = mRegex.Match(str);
+			while (m.Success) {
+				if (a == null) a = new Array();
+				a.push( m.Value );
+				m = m.NextMatch();
+			}
+			return a;
+		}
+		
+		var mRegex:Regex;
+		var mSource:String;
+		var mGlobal:Boolean;
+		var mExtended:Boolean;
+		var mDoTail:Boolean;
 	
 	}
 

@@ -21,9 +21,9 @@ namespace _root
 			return t.GetProperty(name) != null || t.GetField(name) != null;
 		}
 
-		public static string toString(this uint o, int digits) 
+		public static string toString(this uint o, int radix = 10) 
 		{
-			return o.ToString ();
+			return Convert.ToString (o, radix);
 		}
 
 		//

@@ -61,8 +61,11 @@ package {
 		System.Console.WriteLine("{0}{1}{2}{3}", o1, o2, o3, argsStr);
 	}
  	 	
-	public function parseInt(str:String, radix:uint = 0):Number {
-		throw new System.NotImplementedException();	
+	public function parseInt(str:String, radix:uint = 0):int {
+		if (radix != 0 && radix != 10) 
+			throw new System.NotImplementedException();
+			
+		return System.Int32.Parse(str);	
 	}
  	 	
 	public function unescape(str:String):String {
