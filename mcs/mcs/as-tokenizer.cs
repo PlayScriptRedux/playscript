@@ -3553,6 +3553,10 @@ namespace Mono.ActionScript
 					val = ltb.Create (current_source, ref_line, col);
 					if (peek_char () == '=') {
 						get_char ();
+						if (peek_char () == '=') {
+							get_char ();
+							return Token.OP_REF_NE;
+						}
 						return Token.OP_NE;
 					}
 					return Token.BANG;
@@ -3760,12 +3764,30 @@ namespace Mono.ActionScript
 					if (d >= '0' && d <= '9') 
 						return is_number (c);
 
+					if (d == '@') {
+						get_char ();
+						return Token.DOT_AT;
+					}
+
+					if (d == '*') {
+						get_char ();
+						return Token.DOT_STAR;
+					}
+
 					if (d == '.') {
 						get_char ();
 						d = peek_char ();
 						if (d == '.') {
 							get_char ();
 							return Token.DOTDOTDOT;
+						}
+						if (d == '@') {
+							get_char ();
+							return Token.DOTDOT_AT;
+						}
+						if (d == '*') {
+							get_char ();
+							return Token.DOTDOT_STAR;
 						}
 						return Token.DOTDOT;
 					}
@@ -3834,6 +3856,9 @@ namespace Mono.ActionScript
 //					return TokenizeBackslash ();
 				
 				case '@':
+					if (!handle_asx)
+						return Token.OP_AT;
+
 					c = get_char ();
 					if (c == '"') {
 						tokens_seen = true;

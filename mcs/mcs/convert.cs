@@ -1433,7 +1433,10 @@ namespace Mono.CSharp {
 			if (expr_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
 
 				// Implicitly cast references to bools in ActionScript
-				if (ec.FileType == SourceFileType.ActionScript && target_type.BuiltinType == BuiltinTypeSpec.Type.Bool) {
+				if (ec.FileType == SourceFileType.ActionScript && 
+				    target_type.BuiltinType == BuiltinTypeSpec.Type.Bool &&
+				    ec.Target != Target.JavaScript) {
+
 					var cast_args = new Arguments(1);
 					cast_args.Add (new Argument(EmptyCast.Create(expr, ec.BuiltinTypes.Object)));
 

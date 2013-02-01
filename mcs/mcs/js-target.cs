@@ -34,11 +34,11 @@ namespace Mono.CSharp.JavaScript
 		}
 
 		public bool CheckCanEmit(Location loc) {
-			if (loc.SourceFile != null && 
-			    (loc.SourceFile.FileType != SourceFileType.ActionScript || loc.SourceFile.AsExtended == true)) {
-				this.Report.Error (7071, loc,  "JavaScript code generation for C# or ASX types not supported.");
-				return false;
-			}
+//			if (loc.SourceFile != null && 
+//			    (loc.SourceFile.FileType != SourceFileType.ActionScript || loc.SourceFile.AsExtended == true)) {
+//				this.Report.Error (7071, loc,  "JavaScript code generation for C# or ASX types not supported.");
+//				return false;
+//			}
 			return true;
 		}
 

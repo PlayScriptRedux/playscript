@@ -4,12 +4,39 @@ package
 
         public static function Main() : void {
         
-			var list2:Array = [true, false];
-			for each (var test2:Boolean in list2)
-			{
-				trace(test2);
+        	var i:int = -1;
+        	
+//        	i = i >>> 3;
+        
+        	var x:XML;
+        	
+        	trace(x.@attrib);
+        	trace(x..blah);
+        	trace(x.*.blah);
+        	trace(x..*.blah);
+        
+			var o1:Object = {};
+			var o2:Object = {};
+			if (o1 === o2) {
+				trace("blah!");
+			} else if (o1 !== o2) {
+				trace("blah2!");
 			}
 			
+			var s1:String = "aa";
+			var s2:String = "zz";
+			if (s1 < s2) {
+				trace("asdf");
+			}
+			if (s1 > s2) {
+				trace("asdf");
+			}
+			if (s1 <= s2) {
+				trace("asdf");
+			}
+			if (s1 >= s2) {
+				trace("asdf");
+			}
 		}
 
 	}

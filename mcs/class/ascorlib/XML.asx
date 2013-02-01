@@ -6,193 +6,221 @@ package {
 		// Properties
 		//
 		
-		public static property ignoreComments : Boolean { get; set; }
+		public static property ignoreComments : Boolean {
+			get { throw new System.NotImplementedException(); }
+			set { throw new System.NotImplementedException(); }
+		}
 
- 	 	public static property ignoreProcessingInstructions : Boolean { get; set; }
+ 	 	public static property ignoreProcessingInstructions : Boolean {
+ 	 		get { throw new System.NotImplementedException(); } 
+ 	 		set { throw new System.NotImplementedException(); } 
+ 	 	}
 
- 	 	public static property ignoreWhitespace : Boolean { get; set; }
+ 	 	public static property ignoreWhitespace : Boolean { 
+ 	 		get { throw new System.NotImplementedException(); } 
+ 	 		set { throw new System.NotImplementedException(); } 
+ 	 	}
 
- 	 	public static property prettyIndent : int { get; set; }
+ 	 	public static property prettyIndent : int { 
+ 	 		get { throw new System.NotImplementedException(); } 
+ 	 		set { throw new System.NotImplementedException(); } 
+ 	 	}
 
- 	 	public static property prettyPrinting : Boolean { get; set; }
+ 	 	public static property prettyPrinting : Boolean { 
+ 	 		get { throw new System.NotImplementedException(); } 
+ 	 		set { throw new System.NotImplementedException(); } 
+ 		}
 
  	 	//
  	 	// Methods
  	 	// 
  	 	
  	 	public function XML(value:Object) {
+			throw new System.NotImplementedException(); 	 	
  	 	}
  	 	
 		public function addNamespace(ns:Object):XML {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function appendChild(child:Object):XML {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function attribute(attributeName:*):XMLList {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function attributes():XMLList {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function child(propertyName:Object):XMLList {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function childIndex():int {
-			return 0;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function children():XMLList {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function comments():XMLList {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function contains(value:XML):Boolean {
-			return false;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function copy():XML {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public static function defaultSettings():Object {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
-		public function descendants(name:Object /*="*"*/):XMLList {
-			return null;
+		public function descendants():XMLList {
+			throw new System.NotImplementedException();
+		}		
+		
+		public function descendants(name:Object):XMLList {
+			throw new System.NotImplementedException();
 		}
 		
-		public function elements(name:Object /*="*"*/):XMLList {
-			return null;
+		public function elements():XMLList {
+			throw new System.NotImplementedException();
+		}		
+		
+		public function elements(name:Object):XMLList {
+			throw new System.NotImplementedException();
 		}
 		
 		public function hasComplexContent():Boolean {
-			return false;
+			throw new System.NotImplementedException();
 		}
 		
 		public function hasOwnProperty(p:String):Boolean {
-			return false;
+			throw new System.NotImplementedException();
 		}
 		
 		public function hasSimpleContent():Boolean {
-			return false;
+			throw new System.NotImplementedException();
 		}
 		
 		public function inScopeNamespaces():Array {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function insertChildAfter(child1:Object, child2:Object):* {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function insertChildBefore(child1:Object, child2:Object):* {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function length():int {
-			return 0;
+			throw new System.NotImplementedException();
 		}
 		
 		public function localName():Object {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function name():Object {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function @namespace(prefix:String = null):* {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function namespaceDeclarations():Array {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function nodeKind():String {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function normalize():XML {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function parent():* {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function prependChild(value:Object):XML {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
-		public function processingInstructions(name:String = "*"):XMLList {
-			return null;
+		public function processingInstructions(name:String):XMLList {
+			throw new System.NotImplementedException();
 		}
 		
 		public function propertyIsEnumerable(p:String):Boolean {
-			return false;
+			throw new System.NotImplementedException();
 		}
 		
 		public function removeNamespace(ns:Namespace):XML {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function replace(propertyName:Object, value:XML):XML {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function setChildren(value:Object):XML {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function setLocalName(name:String):void {
+			throw new System.NotImplementedException();		
 		}
 		
 		public function setName(name:String):void {
+			throw new System.NotImplementedException();
 		}
 		
 		public function setNamespace(ns:Namespace):void {
+			throw new System.NotImplementedException();
 		}
 		
 		public function setSettings(... rest):void {
+			throw new System.NotImplementedException();
 		}
 		
 		public function settings():Object {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function text():XMLList {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function toJSON(k:String):* {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function toString():String {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function toXMLString():String {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function valueOf():XML {
-			return null;
+			throw new System.NotImplementedException();
 		}
 	
 		public static implicit operator String (xml:XML) {
-			return "";
+			throw new System.NotImplementedException();
 		}	
 	}
 
