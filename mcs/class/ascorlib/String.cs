@@ -5,91 +5,118 @@ namespace _root
 	public static class String
 	{
 		public static int get_length(this string s) {
-			return 0;
+			return s.Length;
 		}
 
 		public static string charAt(this string s, double index = 0) {
-			return null;
+			return s[ (int)index ].ToString();
 		}				
 
 		public static int charCodeAt(this string s, double index) {
-			return 0;
+			throw new NotImplementedException();
 		}
 
 		public static string concat(this string s, params object[] args) {
-			return null;
+			throw new NotImplementedException();
 		}
 
 		public static string fromCharCode(params object[] charCodes) {
-			return null;
+			throw new NotImplementedException();
 		}
 
 		public static int indexOf(this string s, string val, double startIndex = 0) {
-			return -1;
+			throw new NotImplementedException();
 		}
 						
 		public static int lastIndexOf(this string s, string val, double startIndex = 0x7FFFFFFF) {
-			return -1;
+			throw new NotImplementedException();
 		}
 						
 		public static int localeCompare(this string s, string other, params object[] values) {
-			return -1;
+			throw new NotImplementedException();
 		}
 
 		public static Array match(this string s, object pattern) {
-			return null;
+			if (pattern is RegExp) {
+				// pattern is a regexp
+				var re = pattern as RegExp;
+				return re.match(s);
+			} else {
+				// pattern is a string or other object
+				throw new NotImplementedException();
+			}
 		}
 
-		public static string replace(this string s, object pattern, object repl) {
-			return null;			
+		public static string replace (this string s, object pattern, object repl)
+		{
+			if (pattern is RegExp) {
+				// pattern is a regexp
+				var re = pattern as RegExp;
+				return re.replace(s, repl.ToString());
+			} else {
+				// pattern is a string or other object
+				return s.Replace(pattern.ToString (), repl.ToString());
+			}
 		}
 
 		public static int search(this string s, object pattern) {
-			return -1;
+			if (pattern is RegExp) {
+				// pattern is a regexp
+				var re = pattern as RegExp;
+				return re.search(s);
+			} else {
+				// pattern is a string or other object
+				return s.IndexOf(pattern.ToString ());
+			}
 		}
 
 		public static string slice(this string s) {
-			return null;			
+			throw new NotImplementedException();
 		}
 
 		public static string slice(this string s, int startIndex) {
-			return null;			
+			return s.Substring(startIndex);
 		}
 
 		public static string slice(this string s, int startIndex, int endIndex) {
-			return null;			
+			return s.Substring(startIndex, endIndex - startIndex);
 		}
 
-		public static Array split(this string s, object delimiter, int limit = 0x7fffffff) {
-			return null;
+		public static Array split (this string s, object delimiter, int limit = 0x7fffffff)
+		{
+			if (limit != 0x7fffffff) {
+				throw new NotImplementedException ();
+			}
+
+			return new Array( s.Split( delimiter.ToString()[0] ) );
 		}
 
 		public static string substr(this string s, double startIndex = 0, double len = 0x7fffffff) {
-			return null;
+			throw new NotImplementedException();
 		}
 
 		public static string substring(this string s, double startIndex = 0, double endIndex = 0x7fffffff) {
-			return null;
+			throw new NotImplementedException();
 		}
 
 		public static string toLocaleLowerCase(this string s) {
-			return null;
+			throw new NotImplementedException();
 		}
 
 		public static string toLocaleUpperCase(this string s) {
-			return null;
+			throw new NotImplementedException();
 		}
 
 		public static string toLowerCase(this string s) {
-			return null;
+			throw new NotImplementedException();
 		}
 
 		public static string toUpperCase(this string s) {
-			return null;
+			throw new NotImplementedException();
 		}
 
 		public static string valueOf(this string s) {
-			return null;
+			throw new NotImplementedException();
 		}
 
 	}

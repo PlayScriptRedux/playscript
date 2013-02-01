@@ -108,6 +108,7 @@
     <Compile Include="flash\net\FileReference.asx" />
     <Compile Include="flash\display3D\textures\Texture.cs" />
     <Compile Include="flash\display3D\Program3D.cs" />
+    <Compile Include="flash\display3D\AGALConverter.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

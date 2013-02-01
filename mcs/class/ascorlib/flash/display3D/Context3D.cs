@@ -37,19 +37,8 @@ namespace flash.display3D {
 		public Context3D(Stage3D stage3D)
 		{
 			mStage3D = stage3D;
-			setupShaders();
 		}
 		
-		private void setupShaders ()
-		{
-			// we have hardcoded a few common shaders here
-			mUntexturedProgram = createProgram();
-			mUntexturedProgram.uploadFromGLSLFiles("untextured.vert", "untextured.frag");
-			
-			mTexturedProgram = createProgram();
-			mTexturedProgram.uploadFromGLSLFiles("textured.vert", "textured.frag");
-		}
-
 		public void clear(double red = 0.0, double green = 0.0, double blue = 0.0, double alpha = 1.0, 
 		                  double depth = 1.0, uint stencil = 0, uint mask = 0xffffffff) {
 			GL.ClearColor (NSColor.FromDeviceRgba((float)red,(float)green,(float)blue,(float)alpha));
@@ -122,37 +111,63 @@ namespace flash.display3D {
 		public void setDepthTest(bool depthMask, string passCompareMode) {
 		}
  	 	
-		public void setProgram(Program3D program) {
-			// $$TODO
+		public void setProgram (Program3D program)
+		{
+			if (program != null) {
+				GL.UseProgram (program.programId);
+			} else {
+				// ?? 
+				throw new NotImplementedException();
+				
+			}
+
+			// store current program
+			mProgram = program;
 		}
  	 	
 		public void setProgramConstantsFromByteArray(string programType, int firstRegister, 
 			int numRegisters, ByteArray data, uint byteArrayOffset) {
 		}
- 	 	
-		public void setProgramConstantsFromMatrix(string programType, int firstRegister, Matrix3D matrix, 
-			bool transposedMatrix = false) {
-			// $$ hack
-			// treat any matrix submitted as the projection matrix
 
-			GL.MatrixMode (MatrixMode.Projection);
-			// GL.LoadMatrix( matrix.);
-			
-			var array = new float[16];
-			for (int i=0; i < 16; i++)
-			{
-				array[i] = (float) matrix.mData[i];
+		// temporary floating point array for constant conversion
+		private float[] mTemp = new float[4 * 1024];
+
+		private static void convertDoubleToFloat (float[] dest, Vector<double> source, int count)
+		{
+			// $$TODO optimize this
+			for (int i=0; i < count; i++) {
+				dest[i] = (float)source[i];
 			}
-			
-			GL.LoadMatrix(array);
-			
-			
-			GL.MatrixMode (MatrixMode.Modelview);
-			GL.LoadIdentity();
 		}
+
+		public void setProgramConstantsFromMatrix (string programType, int firstRegister, Matrix3D matrix, 
+			bool transposedMatrix = false)
+		{
+			// convert double->float
+			convertDoubleToFloat(mTemp, matrix.mData, 16);
+
+			if (programType == "vertex") {
+				// set uniform registers
+				int location = mProgram.getLocation(firstRegister);
+				GL.UniformMatrix4(location, 1, transposedMatrix, mTemp);
+			} else {
+				throw new NotImplementedException ();
+			}
+		}
+
  	 	
-		public void setProgramConstantsFromVector(string programType, int firstRegister, Vector<double> data, int numRegisters = -1) {
-			//throw new NotImplementedException();
+		public void setProgramConstantsFromVector (string programType, int firstRegister, Vector<double> data, int numRegisters = -1)
+		{
+			// convert double->float
+			convertDoubleToFloat(mTemp, data, numRegisters * 4);
+
+			if (programType == "vertex") {
+				// set uniform registers
+				int location = mProgram.getLocation(firstRegister);
+				GL.Uniform4(location, numRegisters, mTemp);
+			} else {
+				throw new NotImplementedException();
+			}
 		}
  	 	
  	 	public void setRenderToBackBuffer() {
@@ -183,12 +198,9 @@ namespace flash.display3D {
 			if (texture != null) {
 				GL.ActiveTexture(TextureUnit.Texture0 + sampler);
 				GL.BindTexture (TextureTarget.Texture2D, texture.textureId);
-				GL.UseProgram(mTexturedProgram.programId);
-
 			} else {
 				GL.ActiveTexture(TextureUnit.Texture0 + sampler);
 				GL.BindTexture (TextureTarget.Texture2D, 0);
-				GL.UseProgram(mUntexturedProgram.programId);
 			}
 		}
 
@@ -227,8 +239,8 @@ namespace flash.display3D {
 
 		private readonly Stage3D mStage3D;
 	
-		private Program3D mUntexturedProgram;
-		private Program3D mTexturedProgram;
+		// current program
+		private Program3D mProgram;
 
 #else
 

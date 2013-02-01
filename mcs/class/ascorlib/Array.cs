@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections;
 
 namespace _root
 {
@@ -36,6 +37,14 @@ namespace _root
 				}
 			}
 		}
+
+		public Array (IEnumerable list)
+		{
+			foreach (var i in list) {
+				this.Add (i);
+			}
+		}
+
 
 		public int length 
 		{
@@ -83,7 +92,7 @@ namespace _root
 		// Converts the elements in an array to strings, inserts the specified separator between the elements, concatenates them, and returns the resulting string.
 		public string join() 
 		{
-			return System.String.Join ("", (IEnumerable<object>)this);
+			return System.String.Join (",", (IEnumerable<object>)this);
 		}
 
 		// Converts the elements in an array to strings, inserts the specified separator between the elements, concatenates them, and returns the resulting string.
