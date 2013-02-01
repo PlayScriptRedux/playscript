@@ -2,6 +2,7 @@ package com.zynga.zengine.classes
 {
 	public class Test 
 	{
+		public static const cnst:int = 12345;
 		public static var _field1:int = 100;
 		public static var _field2:String = "Zaaa";
 	
@@ -12,16 +13,21 @@ package com.zynga.zengine.classes
 		public function f():void {
 			f();
 		}
+		
+		public static function get aaa():int {
+			return _field1;
+		}
 	
         public static function Main() : int {
-        	var t:Test;
+        	var t:Test = new Test();
         	t.f();
+        	System.Console.WriteLine("Hello World!");
         	var s:String = "Hello World!", j:int = 100, k:Number = 200.0, l:uint = 300;
         	for (var q:int = 0; q < 122; q++) {
         		trace("Goo!");
         		continue;
         	}
-        	var a = [100, 200, 300];
+        	var a = [cnst, 200, 300];
         	a.push(400);
         	var o = {blah:100, joo:false, blee:null};
         	trace(o.blah);

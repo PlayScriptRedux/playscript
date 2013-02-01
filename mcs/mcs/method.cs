@@ -725,9 +725,9 @@ namespace Mono.CSharp {
 			base.EmitJs (jec);
 
 			if ((this.ModFlags & Modifiers.STATIC) != 0) {
-				jec.Buf.Write ("\t" + this.Parent.MemberName.Name + "." + this.MemberName.Name + " = function(");
+				jec.Buf.Write ("\t" + this.Parent.MemberName.Name + "." + this.MemberName.Name + " = function(", Location);
 			} else {
-				jec.Buf.Write ("\t" + this.Parent.MemberName.Name + ".prototype." + this.MemberName.Name + " = function(");
+				jec.Buf.Write ("\t" + this.Parent.MemberName.Name + ".prototype." + this.MemberName.Name + " = function(", Location);
 			}
 			parameters.EmitJs (jec);
 			jec.Buf.Write (") ");
@@ -1530,7 +1530,7 @@ namespace Mono.CSharp {
 			if (base_ctor.DeclaringType == jec.Compiler.BuiltinTypes.Object)
 				throw new Exception("Object constructor doesn't exist.");
 
-			jec.Buf.Write ("_super.call(this, ");
+			jec.Buf.Write ("_super.call(this, ", Location);
 			argument_list.EmitJs (jec);
 			jec.Buf.Write (")");
 
@@ -1545,7 +1545,7 @@ namespace Mono.CSharp {
 			if (base_ctor == null || base_ctor.DeclaringType == jec.Compiler.BuiltinTypes.Object)
 				return;
 
-			jec.Buf.Write ("\t");
+			jec.Buf.Write ("\t", Location);
 
 			EmitJs (jec);
 
@@ -1818,7 +1818,7 @@ namespace Mono.CSharp {
 			bool is_static = (this.ModFlags & Modifiers.STATIC) != 0;
 
 			if (!is_static) {
-				jec.Buf.Write ("\tfunction " + this.Parent.MemberName.Name + "(");
+				jec.Buf.Write ("\tfunction " + this.Parent.MemberName.Name + "(", Location);
 				parameters.EmitJs (jec);
 				jec.Buf.Write (") ");
 			}
@@ -1868,7 +1868,7 @@ namespace Mono.CSharp {
 
 			if (!is_static) {
 				if (!emitted_block)
-					jec.Buf.Write ("{\n\t}");
+					jec.Buf.Write ("{\n\t}", Location);
 				jec.Buf.Write ("\n");
 			} 
 

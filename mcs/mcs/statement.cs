@@ -297,7 +297,7 @@ namespace Mono.CSharp {
 				return;
 			}
 
-			jec.Buf.Write ("\tif (");
+			jec.Buf.Write ("\tif (", loc);
 			expr.EmitJs (jec);
 			jec.Buf.Write (") ");
 
@@ -411,11 +411,11 @@ namespace Mono.CSharp {
 
 		protected override void DoEmitJs (JsEmitContext jec)
 		{
-			jec.Buf.Write ("\tdo ");
+			jec.Buf.Write ("\tdo ", loc);
 
 			((Block)EmbeddedStatement).EmitBlockJs (jec, false);
 
-			jec.Buf.Write (" while (");
+			jec.Buf.Write (" while (", expr.Location);
 			expr.EmitJs (jec);
 			jec.Buf.Write (");\n");
 		}
@@ -549,13 +549,13 @@ namespace Mono.CSharp {
 			//
 			if (expr is Constant) {
 				// expr is 'true', since the 'empty' case above handles the 'false' case
-				jec.Buf.Write ("\twhile (true) ");
+				jec.Buf.Write ("\twhile (true) ", loc);
 			} else {
-				jec.Buf.Write ("\twhile (");
+				jec.Buf.Write ("\twhile (", loc);
 				expr.EmitJs (jec);
 				jec.Buf.Write (") ");
 			}	
-			
+
 			((Block)Statement).EmitBlockJs (jec, false);
 			
 			jec.Buf.Write ("\n");
@@ -716,7 +716,7 @@ namespace Mono.CSharp {
 		{
 			// NOTE: WE don't optimize for emty loop right now..
 
-			jec.Buf.Write ("\tfor (");
+			jec.Buf.Write ("\tfor (", loc);
 			jec.PushForceExpr(true);
 			if (Initializer != null)
 				Initializer.EmitJs (jec);
@@ -1099,7 +1099,7 @@ namespace Mono.CSharp {
 
 		protected override void DoEmitJs (JsEmitContext jec)
 		{
-			jec.Buf.Write ("\treturn ");
+			jec.Buf.Write ("\treturn ", loc);
 			expr.EmitJs (jec);
 			jec.Buf.Write (";\n");
 		}
@@ -1465,7 +1465,7 @@ namespace Mono.CSharp {
 
 		protected override void DoEmitJs (JsEmitContext jec)
 		{
-			jec.Buf.Write ( "\tbreak;\n");
+			jec.Buf.Write ( "\tbreak;\n", loc);
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Statement t)
@@ -1502,7 +1502,7 @@ namespace Mono.CSharp {
 
 		protected override void DoEmitJs (JsEmitContext jec)
 		{
-			jec.Buf.Write ("\tcontinue;\n");
+			jec.Buf.Write ("\tcontinue;\n", loc);
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Statement t)
@@ -1825,10 +1825,10 @@ namespace Mono.CSharp {
 		protected override void DoEmitJs (JsEmitContext jec)
 		{
 			if (Initializer != null) {
-				jec.Buf.Write ("\tvar ");
+				jec.Buf.Write ("\tvar ", loc);
 				((ExpressionStatement)Initializer).EmitJs (jec);
 			} else {
-				jec.Buf.Write ("\tvar " + Variable.Name);
+				jec.Buf.Write ("\tvar ", Variable.Name, loc);
 			}
 
 			if (declarators != null) {
@@ -4739,7 +4739,7 @@ namespace Mono.CSharp {
 
 		protected override void DoEmitJs (JsEmitContext jec)
 		{
-			jec.Buf.Write ("\tswitch (");
+			jec.Buf.Write ("\tswitch (", loc);
 			Expr.EmitJs (jec);
 			jec.Buf.Write (") {\n");
 			jec.Buf.Indent ();
@@ -4747,9 +4747,9 @@ namespace Mono.CSharp {
 			foreach (var section in Sections) {
 				foreach (var label in section.Labels) {
 					if (label.IsDefault) {
-						jec.Buf.Write ("\tdefault:\n");
+						jec.Buf.Write ("\tdefault:\n", label.Location);
 					} else {
-						jec.Buf.Write ("\tcase ");
+						jec.Buf.Write ("\tcase ", label.Location);
 						label.Label.EmitJs (jec);
 						jec.Buf.Write (":\n");
 					}

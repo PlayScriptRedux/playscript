@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace Mono.CSharp.JavaScript
 {
@@ -104,6 +105,11 @@ namespace Mono.CSharp.JavaScript
 			return ns.Replace ('.', '$');
 		}
 
+		public string MakeJsTypeNme(string typ)
+		{
+			return typ.Replace ("<", "$").Replace (">", "$");
+		}
+
 		public int GetOperPrecendence(Expression e)
 		{
 			if (e is As || e is AsIn || e is Is) {
@@ -175,14 +181,39 @@ namespace Mono.CSharp.JavaScript
 
 	public class JsEmitBuffer {
 
+		private const int MAX_INDENT = 40;
+
 		public TextWriter Stream;
 		public string CurIndent;
 		public JsEmitContext EmitContext;
+		public int Line;
+		public int Col;
 
 		private int _indentLevel;
+		private Location _curLoc;
 
-		private static string[] _indents = 
-		  { "", "  ", "    ", "      ", "        ", "          ", "            ", "              ", "                " };
+		private static string _indentStr = 
+			"                                                                                                                                 ";
+
+		private struct MapSeg {
+
+			public int Line;
+			public int Col;
+			public int SrcFile;
+			public int SrcLine;
+			public int SrcCol;
+
+			public MapSeg(int line, int col, int srcFile, int srcLine, int srcCol)
+			{
+				Line = line;
+				Col = col;
+				SrcFile = srcFile;
+				SrcLine = srcLine;
+				SrcCol = srcCol;
+			}
+		}
+
+		private List<MapSeg> _srcMap = new List<MapSeg>();
 
 		public JsEmitBuffer() 
 		{
@@ -193,13 +224,7 @@ namespace Mono.CSharp.JavaScript
 
 		public int IndentLevel {
 			set {
-				if (_indentLevel != value) {
-					if (value < _indents.Length - 1)
-						CurIndent = _indents [value];
-					else
-						CurIndent = "                                                                                             ".Substring (0, _indentLevel * 2);
-					_indentLevel = value;
-				}
+				_indentLevel = value;
 			}
 			get {
 				return _indentLevel;
@@ -208,25 +233,202 @@ namespace Mono.CSharp.JavaScript
 
 		public void Indent()
 		{
-			IndentLevel++;
+			_indentLevel++;
 		}
 
 		public void Unindent()
 		{
-			if (IndentLevel > 0)
-				IndentLevel--;
+			if (_indentLevel > 0)
+				_indentLevel--;
 		}
 
-		public void Write (string s)
+		private static char[] buf = new char[4096];
+
+		private void AddMapSeg(Location loc)
 		{
-			if (EmitContext.ForceExpr) {
-				Stream.Write (s.Replace ("\t", "").
-				                Replace (";\n", ""));
-			} else {
-				Stream.Write (s.Replace ("\t", CurIndent));
+			_srcMap.Add (new MapSeg(Line, Col, loc.File, loc.Row, loc.Column));
+		}
+
+		private void SetLoc(Location loc) 
+		{
+			if (_curLoc.File != loc.File || _curLoc.Row != loc.Row || _curLoc.Column != loc.Column) {
+				AddMapSeg (loc);
+				_curLoc = loc;
 			}
 		}
 
+		private static string[] _strs = new string[4];
+
+		private string ProcessString(string s1, string s2, string s3, string s4)
+		{
+			_strs[0] = s1;
+			_strs[1] = s2;
+			_strs[2] = s3;
+			_strs[3] = s4;
+
+			bool force_expr = EmitContext.ForceExpr;
+			bool modified = false;
+
+			int si = 0;
+			string str = _strs[0];
+			var len = str.Length;
+			int s = 0;
+			int d = 0;
+
+			while (str != null) {
+
+				if (s < len) {
+
+					var ch = str[s];
+
+					if (force_expr) {
+						if (ch == '\t') {
+							s++;
+							modified = true;
+							continue;
+						} else if (ch == ';' && s < len - 1 && str[s + 1] == '\n') {
+							s += 2;
+							modified = true;
+							continue;
+						}
+					} else {
+						if (ch == '\t') {
+							s++;
+							var ilen = (_indentLevel < MAX_INDENT) ? (_indentLevel << 2) : (MAX_INDENT << 1);
+							var i = 0;
+							while (i < ilen) {
+								buf[d++] = _indentStr[i++];
+							}
+							modified = true;
+							continue;
+						}
+					}
+
+					if (ch == '\n') {
+						Line++;
+						Col = 0;
+					} else {
+						Col++;
+					}
+
+					buf[d++] = str[s++];
+
+				} else {
+
+					si++;
+					str = si < 4 ? _strs[si] : null;
+					if (str == null) {
+						break;
+					}
+					s = 0;
+					len = str.Length;
+					modified = true;
+
+				}
+			}
+
+			if (modified) {
+				return new string(buf, 0, d);
+			} else {
+				return s1;
+			}
+		}
+
+		public void Write (string s1)
+		{
+			Stream.Write (ProcessString (s1, null, null, null));
+		}
+		
+		public void Write (string s1, string s2)
+		{
+			Stream.Write (ProcessString (s1, s2, null, null));
+		}
+		
+		public void Write (string s1, string s2, string s3)
+		{
+			Stream.Write (ProcessString (s1, s2, s3, null));
+		}
+		
+		public void Write (string s1, string s2, string s3, string s4)
+		{
+			Stream.Write (ProcessString (s1, s2, s3, s4));
+		}
+		
+		public void Write (string s1, string s2, string s3, string s4, string s5)
+		{
+			Stream.Write (ProcessString (s1, s2, s3, s4));
+			Stream.Write (ProcessString (s5, null, null, null));
+		}
+		
+		public void Write (string s1, string s2, string s3, string s4, string s5, string s6)
+		{
+			Stream.Write (ProcessString (s1, s2, s3, s4));
+			Stream.Write (ProcessString (s5, s6, null, null));
+		}
+		
+		public void Write (string s1, string s2, string s3, string s4, string s5, string s6, string s7)
+		{
+			Stream.Write (ProcessString (s1, s2, s3, s4));
+			Stream.Write (ProcessString (s5, s6, s7, null));
+		}
+		
+		public void Write (string s1, string s2, string s3, string s4, string s5, string s6, string s7, string s8)
+		{
+			Stream.Write (ProcessString (s1, s2, s3, s4)); 
+			Stream.Write ( ProcessString (s5, s6, s7, s8));
+		}
+
+		public void Write (string s1, Location loc)
+		{
+			SetLoc (loc);
+			Stream.Write (ProcessString (s1, null, null, null));
+		}
+
+		public void Write (string s1, string s2, Location loc)
+		{
+			SetLoc (loc);
+			Stream.Write (ProcessString (s1, s2, null, null));
+		}
+
+		public void Write (string s1, string s2, string s3, Location loc)
+		{
+			SetLoc (loc);
+			Stream.Write (ProcessString (s1, s2, s3, null));
+		}
+
+		public void Write (string s1, string s2, string s3, string s4, Location loc)
+		{
+			SetLoc (loc);
+			Stream.Write (ProcessString (s1, s2, s3, s4));
+		}
+
+		public void Write (string s1, string s2, string s3, string s4, string s5, Location loc)
+		{
+			SetLoc (loc);
+			Stream.Write (ProcessString (s1, s2, s3, s4)); 
+			Stream.Write (ProcessString (s5, null, null, null));
+		}
+
+		public void Write (string s1, string s2, string s3, string s4, string s5, string s6, Location loc)
+		{
+			SetLoc (loc);
+			Stream.Write (ProcessString (s1, s2, s3, s4)); 
+			Stream.Write (ProcessString (s5, s6, null, null));
+		}
+
+		public void Write (string s1, string s2, string s3, string s4, string s5, string s6, string s7, Location loc)
+		{
+			SetLoc (loc);
+			Stream.Write (ProcessString (s1, s2, s3, s4));
+			Stream.Write (ProcessString (s5, s6, s7, null));
+		}
+
+		public void Write (string s1, string s2, string s3, string s4, string s5, string s6, string s7, string s8, Location loc)
+		{
+			SetLoc (loc);
+			Stream.Write (ProcessString (s1, s2, s3, s4)); 
+			Stream.Write (ProcessString (s5, s6, s7, s8));
+		}
 
 	}
 

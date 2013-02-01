@@ -449,7 +449,7 @@ namespace Mono.CSharp {
 
 		public override void EmitStatementJs (JsEmitContext jec)
 		{
-			jec.Buf.Write ("\t");
+			jec.Buf.Write ("\t", Location);
 			Target.EmitJs (jec);
 			jec.Buf.Write (" = ");
 			Source.EmitJs (jec);

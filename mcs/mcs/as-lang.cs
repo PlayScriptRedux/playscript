@@ -165,15 +165,13 @@ namespace Mono.CSharp
 
 		public override void EmitJs (JsEmitContext jec)
 		{
-			jec.Buf.Write ("{");
+			jec.Buf.Write ("{", Location);
 
 			bool first = true;
 			foreach (ElementInitializer elem in Elements) {
 				if (!first)
 					jec.Buf.Write (", ");
-				jec.Buf.Write ("\"");
-				jec.Buf.Write (elem.Name);
-				jec.Buf.Write ("\":");
+				jec.Buf.Write ("\"", elem.Name, "\":");
 				elem.Source.EmitJs (jec);
 				first = false;
 			}
@@ -297,7 +295,7 @@ namespace Mono.CSharp
 
 		public override void EmitJs (JsEmitContext jec)
 		{
-			jec.Buf.Write ("[");
+			jec.Buf.Write ("[", Location);
 			
 			bool first = true;
 			foreach (var elem in Elements) {
@@ -417,13 +415,13 @@ namespace Mono.CSharp
 
 		public override void EmitJs (JsEmitContext jec)
 		{
-			jec.Buf.Write ("delete ");
+			jec.Buf.Write ("delete ", Location);
 			Expr.EmitJs (jec);
 		}
 
 		public override void EmitStatementJs (JsEmitContext jec)
 		{
-			jec.Buf.Write ("\t");
+			jec.Buf.Write ("\t", Location);
 			EmitJs (jec);
 			jec.Buf.Write (";\n");
 		}
@@ -520,7 +518,7 @@ namespace Mono.CSharp
 
 		public override void EmitJs (JsEmitContext jec)
 		{
-			jec.Buf.Write (GetValue () as String);
+			jec.Buf.Write (GetValue () as String, Location);
 		}
 
 #if FULL_AST
@@ -672,7 +670,7 @@ namespace Mono.CSharp
 
 		public override void EmitJs (JsEmitContext jec)
 		{
-			jec.Buf.Write ("undefined");
+			jec.Buf.Write ("undefined", Location);
 		}
 
 		public override object Accept (StructuralVisitor visitor)

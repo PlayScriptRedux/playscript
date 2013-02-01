@@ -890,8 +890,7 @@ namespace Mono.CSharp
 		public override void EmitJs (JsEmitContext jec)
 		{
 			Arguments[0].Expr.EmitJs (jec);
-			jec.Buf.Write (".");
-			jec.Buf.Write (name);
+			jec.Buf.Write (".", name, Location);
 		}
 	}
 

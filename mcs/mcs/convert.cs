@@ -1433,8 +1433,13 @@ namespace Mono.CSharp {
 			if (expr_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
 
 				// Implicitly cast references to bools in ActionScript
-				if (!explicit_cast && ec.FileType == SourceFileType.ActionScript && target_type.BuiltinType == BuiltinTypeSpec.Type.Bool) {
-					return new Binary(Binary.Operator.Equality, expr, new NullLiteral(expr.Location)).Resolve (ec);
+				if (ec.FileType == SourceFileType.ActionScript && target_type.BuiltinType == BuiltinTypeSpec.Type.Bool) {
+					var cast_args = new Arguments(1);
+					cast_args.Add (new Argument(EmptyCast.Create(expr, ec.BuiltinTypes.Object)));
+
+					return new Invocation(new MemberAccess(new MemberAccess(new SimpleName(
+						AsConsts.AsRootNamespace, expr.Location), "Boolean_fn", expr.Location), "Boolean", expr.Location), 
+					                      cast_args).Resolve (ec);
 				}
 
 				switch (target_type.Kind) {

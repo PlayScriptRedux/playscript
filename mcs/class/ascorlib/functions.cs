@@ -81,6 +81,46 @@ namespace _root
 	public static class Boolean_fn
 	{  
 
+		// Not inlinable.. but required to get correct results in flash.
+		public static bool Boolean (object d)
+		{
+			TypeCode tc = Type.GetTypeCode(d.GetType());
+			switch (tc) {
+			case TypeCode.Boolean:
+				return (bool)d;
+			case TypeCode.SByte:
+				return (sbyte)d != 0;
+			case TypeCode.Byte:
+				return (byte)d != 0;
+			case TypeCode.Int16:
+				return (short)d != 0;
+			case TypeCode.UInt16:
+				return (ushort)d != 0;
+			case TypeCode.Int32:
+				return (int)d != 0;
+			case TypeCode.UInt32:
+				return (uint)d != 0;
+			case TypeCode.Int64:
+				return (long)d != 0;
+			case TypeCode.UInt64:
+				return (ulong)d != 0;
+			case TypeCode.Single:
+				return (float)d != 0.0f;
+			case TypeCode.Double:
+				return (double)d != 0.0;
+			case TypeCode.Decimal:
+				return (decimal)d != 0;
+			case TypeCode.String:
+				var s = (string)d;
+				return !string.IsNullOrEmpty(s) && s != "0" && s != "false";
+			case TypeCode.Empty:
+				return false;
+			case TypeCode.Object:
+				return d != null;
+			}
+			return false;
+		}
+
 		// Inlineable method
 		public static bool Boolean (string s)
 		{

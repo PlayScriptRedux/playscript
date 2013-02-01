@@ -22,7 +22,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <Commandlineparameters>test4.as -t:javascript -sdk:4 -d:DEBUG2 -lib:/Library/Frameworks/Mono.framework/Versions/2.10.9/lib/mono/4.0/ -r:System.dll -r:System.Core.dll -r:/Users/bcooley/projects/mono-as3/mcs/class/ascorlib/bin/Debug/ActionScript.Dynamic.dll -r:/Users/bcooley/projects/mono-as3/mcs/class/ascorlib/bin/Debug/ascorlib.dll
+    <Commandlineparameters>test2.asx -sdk:4 -d:DEBUG2 -lib:/Library/Frameworks/Mono.framework/Versions/2.10.9/lib/mono/4.0/ -r:System.dll -r:System.Core.dll -r:/Users/bcooley/projects/mono-as3/mcs/class/ascorlib/bin/Debug/ActionScript.Dynamic.dll -r:/Users/bcooley/projects/mono-as3/mcs/class/ascorlib/bin/Debug/ascorlib_monomac.dll
 </Commandlineparameters>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">

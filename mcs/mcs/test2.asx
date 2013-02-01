@@ -3,7 +3,13 @@ package
 	public class Test {
 
         public static function Main() : void {
-			var re:RegExp = /([\w\.\-\+]+)/gi;
+        
+			var list2:Array = [true, false];
+			for each (var test2:Boolean in list2)
+			{
+				trace(test2);
+			}
+			
 		}
 
 	}

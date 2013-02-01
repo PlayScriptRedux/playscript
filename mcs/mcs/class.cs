@@ -2617,19 +2617,19 @@ namespace Mono.CSharp
 
 			var nsc = (NamespaceContainer)this.Parent;
 			
-			jec.Buf.Write ("\tvar " + this.MemberName.Name + " = (function () {\n");
+			jec.Buf.Write ("\tvar ", this.MemberName.Name, " = (function () {\n", Location);
 			jec.Buf.Indent ();
 
 			base.EmitJs (jec);
 
-			jec.Buf.Write ("\treturn " + this.MemberName.Name + ";\n");
+			jec.Buf.Write ("\treturn ", this.MemberName.Name, ";\n");
 
 			jec.Buf.Unindent();
 			jec.Buf.Write ("\t})();\n");
 
 			var nsname = jec.MakeJsNamespaceName(nsc.NS.Name);
 
-			jec.Buf.Write ("\t" + nsname + "." + this.MemberName.Name + " = " + this.MemberName.Name + ";\n");
+			jec.Buf.Write ("\t", nsname, ".", this.MemberName.Name, " = ", this.MemberName.Name, ";\n");
 		}
 	}
 

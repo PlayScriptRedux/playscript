@@ -524,7 +524,7 @@ namespace Mono.CSharp
 		{
 			bool needsParen = jec.NeedParens (this, Expr);
 
-			jec.Buf.Write (OperName (Oper));
+			jec.Buf.Write (OperName (Oper), Location);
 			if (needsParen)
 				jec.Buf.Write ("(");
 			Expr.EmitJs (jec);
@@ -1289,9 +1289,9 @@ namespace Mono.CSharp
 		private void EmitOpJs (JsEmitContext jec)
 		{
 			if (mode == Mode.PreIncrement)
-				jec.Buf.Write ("++");
+				jec.Buf.Write ("++", Location);
 			else if (mode == Mode.PreDecrement)
-				jec.Buf.Write ("--");
+				jec.Buf.Write ("--", Location);
 
 			// NOTE: TODO - Add parentheses if child op precedence is lower.
 
@@ -1310,7 +1310,7 @@ namespace Mono.CSharp
 
 		public override void EmitStatementJs (JsEmitContext jec)
 		{
-			jec.Buf.Write ("\t");
+			jec.Buf.Write ("\t", Location);
 			EmitOpJs (jec);
 			jec.Buf.Write (";\n");
 		}
@@ -4145,13 +4145,13 @@ namespace Mono.CSharp
 			var rightParens = jec.NeedParens(this, Right);
 
 			if (leftParens)
-				jec.Buf.Write ("(");
+				jec.Buf.Write ("(", Location);
 			Left.EmitJs (jec);
 			if (leftParens)
 				jec.Buf.Write (")");
 			jec.Buf.Write (" " + this.OperName (oper) + " ");
 			if (rightParens)
-				jec.Buf.Write ("(");
+				jec.Buf.Write ("(", Location);
 			Right.EmitJs (jec);
 			if (rightParens)
 				jec.Buf.Write (")");
@@ -5099,7 +5099,7 @@ namespace Mono.CSharp
 
 		public override void EmitJs (JsEmitContext jec)
 		{
-			jec.Buf.Write (Name);
+			jec.Buf.Write (Name, Location);
 		}
 
 		public HoistedVariable GetHoistedVariable (ResolveContext rc)
@@ -5591,22 +5591,27 @@ namespace Mono.CSharp
 					if (arguments != null)
 						arguments.Resolve (ec, out dynamic_arg);
 					args_resolved = true;
-					
+
+					var ct = arguments [0].Expr.Type;
+					var cbt = ct.BuiltinType;
 					switch (castType) {
 					case BuiltinTypeSpec.Type.Int:
-						if (arguments [0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
+						if (cbt == BuiltinTypeSpec.Type.String)
 							atn = new SimpleName ("int", Location);
 						break;
 					case BuiltinTypeSpec.Type.UInt:
-						if (arguments [0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
+						if (cbt == BuiltinTypeSpec.Type.String)
 							atn = new SimpleName ("uint", Location);
 						break;
 					case BuiltinTypeSpec.Type.Double:
-						if (arguments [0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
+						if (cbt == BuiltinTypeSpec.Type.String)
 							atn = new SimpleName ("Number", Location);
 						break;
 					case BuiltinTypeSpec.Type.Bool:
-						if (arguments [0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
+						if (cbt == BuiltinTypeSpec.Type.String ||
+						    cbt == BuiltinTypeSpec.Type.Dynamic ||
+						    cbt == BuiltinTypeSpec.Type.Object ||
+						    ct.IsClass)
 							atn = new SimpleName ("Boolean", Location);
 						break;
 					case BuiltinTypeSpec.Type.String:
@@ -5849,7 +5854,7 @@ namespace Mono.CSharp
 		
 		public override void EmitStatementJs (JsEmitContext jec)
 		{
-			jec.Buf.Write ("\t");
+			jec.Buf.Write ("\t", Location);
 
 			EmitJs (jec);
 
@@ -6269,6 +6274,24 @@ namespace Mono.CSharp
 
 			if (Emit (ec, v))
 				ec.Emit (OpCodes.Pop);
+		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			var ns = jec.MakeJsNamespaceName(Type.MemberDefinition.Namespace);
+			var typeName = jec.MakeJsTypeNme(Type.Name);
+
+			jec.Buf.Write("new ",ns,".",typeName,"(", Location);
+			if (arguments != null)
+				arguments.EmitJs (jec);
+			jec.Buf.Write(")");
+		}
+		
+		public override void EmitStatementJs (JsEmitContext jec)
+		{
+			jec.Buf.Write ("\t", Location);
+			EmitJs (jec);
+			jec.Buf.Write (";\n");
 		}
 
 		public void AddressOf (EmitContext ec, AddressOp mode)

@@ -2694,7 +2694,7 @@ namespace Mono.CSharp {
 
 		public override void EmitJs (JsEmitContext jec)
 		{
-			jec.Buf.Write (Name);
+			jec.Buf.Write (Name, Location);
 		}
 		
 		public override object Accept (StructuralVisitor visitor)
@@ -2772,12 +2772,18 @@ namespace Mono.CSharp {
 			return type;
 		}
 
-
 		public override void Emit (EmitContext ec)
 		{
 			throw new InternalErrorException ("FullNamedExpression `{0}' found in resolved tree",
 				GetSignatureForError ());
 		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			jec.Buf.Write (jec.MakeJsNamespaceName(type.MemberDefinition.Namespace), ".", 
+			               jec.MakeJsTypeNme(type.Name), Location);
+		}
+
 	}
 	
 	/// <summary>
@@ -3548,7 +3554,7 @@ namespace Mono.CSharp {
 
 		public void EmitCallJs (JsEmitContext jec, Arguments arguments)
 		{
-			jec.Buf.Write("(");
+			jec.Buf.Write("(", Location);
 			if (arguments != null)
 				arguments.EmitJs (jec);
 			jec.Buf.Write(")");
@@ -5904,8 +5910,7 @@ namespace Mono.CSharp {
 				InstanceExpression.EmitJs (jec);
 				jec.Buf.Write (".");
 			} else {
-				jec.Buf.Write (DeclaringType.Name);
-				jec.Buf.Write (".");
+				jec.Buf.Write (DeclaringType.Name, ".", Location);
 			}
 			jec.Buf.Write (Name);
 		}
