@@ -3,6 +3,7 @@ using flash.utils;
 using System;
 using System.IO;
 using System.Text;
+using System.Collections.Generic;
 
 #if PLATFORM_MONOMAC
 using MonoMac.OpenGL;
@@ -85,8 +86,8 @@ namespace flash.display3D {
 			// delete existing shaders
 			deleteShaders ();
 
-			// Console.WriteLine (vertexShaderSource);
-			// Console.WriteLine (fragmentShaderSource);
+			Console.WriteLine (vertexShaderSource);
+			Console.WriteLine (fragmentShaderSource);
 
 			mVertexSource = vertexShaderSource;
 			mFragmentSource = fragmentShaderSource;
@@ -97,7 +98,7 @@ namespace flash.display3D {
 			GL.CompileShader (mVertexShaderId);
 			var vertexInfoLog = GL.GetShaderInfoLog (mVertexShaderId);
 			if (!string.IsNullOrEmpty (vertexInfoLog)) {
-				Console.Write ("ERROR vertex: {0}", vertexInfoLog);
+				Console.Write ("vertex: {0}", vertexInfoLog);
 			}
 
 			// compile fragment shader
@@ -106,7 +107,7 @@ namespace flash.display3D {
 			GL.CompileShader (mFragmentShaderId);
 			var fragmentInfoLog = GL.GetShaderInfoLog (mFragmentShaderId);
 			if (!string.IsNullOrEmpty (fragmentInfoLog)) {
-				Console.Write ("ERROR fragment: {0}", fragmentInfoLog);
+				Console.Write ("fragment: {0}", fragmentInfoLog);
 			}
 			
 			// create program
@@ -114,30 +115,38 @@ namespace flash.display3D {
 			GL.AttachShader (mProgramId, mVertexShaderId);
 			GL.AttachShader (mProgramId, mFragmentShaderId);
 
-			GL.BindAttribLocation (mProgramId, 0, "va0");
-			GL.BindAttribLocation (mProgramId, 1, "va1");
-			GL.BindAttribLocation (mProgramId, 2, "va2");
+			// bind all attribute locations
+			for (int i=0; i < 16; i++) {
+				var name = "va" + i;
+				if (vertexShaderSource.Contains(" " + name)) {
+					GL.BindAttribLocation (mProgramId, i, name);
+				}
+			}
 
 			// Link the program
 			GL.LinkProgram (mProgramId);
 
 			var infoLog = GL.GetProgramInfoLog (mProgramId);
 			if (!string.IsNullOrEmpty (infoLog)) {
-				Console.Write ("ERROR program: {0}", infoLog);
+				Console.Write ("program: {0}", infoLog);
 			}
 
-			// $$TEMP hack
-			mVc0 = GL.GetUniformLocation (mProgramId, "vc0");
-			mVc1 = GL.GetUniformLocation (mProgramId, "vc1");
-			// Console.WriteLine ("vc {0} {1}", mVc0, mVc1);
+			// clear register map
+			mRegisterToLocation.Clear();
 		}
 
-		public int getLocation(int register)
+		public int getLocation (int register)
 		{
-			// $$TEMP hack
-			if (register == 0) return mVc0;
-			if (register == 1) return mVc1;
-			return -1;
+			// maintain a map of register number to GLSL location
+			// $$TODO this map could be eliminated by using a single GLSL array for all registers
+			int location = -1;
+			if (!mRegisterToLocation.TryGetValue (register, out location)) {
+
+				var name = "vc" + register;
+				location = GL.GetUniformLocation (mProgramId, name);
+				mRegisterToLocation.Add(register, location);
+			}
+			return location;
 		}
 
 		
@@ -148,10 +157,8 @@ namespace flash.display3D {
 		private string 			   mVertexSource;
 		private string 			   mFragmentSource;
 
-		// $$TEMP hack
-		private int mVc0 = -1;
-		private int mVc1 = -1;
-		
+		private readonly Dictionary<int, int> mRegisterToLocation = new Dictionary<int, int>();
+
 #else
 
 		public Program3D(Context3D context3D)
