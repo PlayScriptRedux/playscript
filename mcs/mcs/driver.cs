@@ -405,7 +405,7 @@ namespace Mono.CSharp
 			}
 			tr.Stop (TimeReporter.TimerType.EmitTotal);
 
-			if (Report.Errors > 0) {
+			if (Report.Errors > 0 && settings.Target != Target.JavaScript) {
 				return false;
 			}
 
@@ -422,7 +422,7 @@ namespace Mono.CSharp
 			
 			}
 
-			if (Report.Errors > 0)
+			if (Report.Errors > 0 && settings.Target != Target.JavaScript)
 				return false;
 
 			if (settings.Target == Target.JavaScript) {

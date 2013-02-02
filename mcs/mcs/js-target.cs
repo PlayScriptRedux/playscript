@@ -430,6 +430,19 @@ namespace Mono.CSharp.JavaScript
 			Stream.Write (ProcessString (s5, s6, s7, s8));
 		}
 
+		public void WriteBlockStatement (Statement s)
+		{
+			if (s is Block) {
+				((Block)s).EmitBlockJs (EmitContext, false);
+			} else {
+				Write ("{\n");
+				Indent ();
+				s.EmitJs (EmitContext);
+				Unindent ();
+				Write ("\t}\n");
+			}
+		}
+
 	}
 
 

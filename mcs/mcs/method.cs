@@ -1528,10 +1528,12 @@ namespace Mono.CSharp {
 				return;
 
 			if (base_ctor.DeclaringType == jec.Compiler.BuiltinTypes.Object)
-				throw new Exception("Object constructor doesn't exist.");
+				throw new Exception ("Object constructor doesn't exist.");
 
 			jec.Buf.Write ("_super.call(this, ", Location);
-			argument_list.EmitJs (jec);
+			if (argument_list != null) {
+				argument_list.EmitJs (jec);
+			}
 			jec.Buf.Write (")");
 
 //			var call = new CallEmitter ();

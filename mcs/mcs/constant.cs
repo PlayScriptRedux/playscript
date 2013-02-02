@@ -2012,8 +2012,12 @@ namespace Mono.CSharp {
 
 		public override void EmitJs (JsEmitContext jec)
 		{
-			var s = Value.Replace("\"", "\\\"");
-			jec.Buf.Write("\"", s, "\"", Location);
+			if (Value != null) {
+				var s = Value.Replace ("\"", "\\\"");
+				jec.Buf.Write ("\"", s, "\"", Location);
+			} else {
+				jec.Buf.Write ("\"\"", Location);
+			}
 		}
 
 		public override void EncodeAttributeValue (IMemberContext rc, AttributeEncoder enc, TypeSpec targetType)

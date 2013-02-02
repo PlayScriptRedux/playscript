@@ -86,6 +86,7 @@ namespace Mono.CSharp {
 		protected virtual void DoEmitJs (JsEmitContext jec) 
 		{
 			jec.Report.Error (7072, this.loc, "JavaScript code generation for " + this.GetType ().Name + " statement not supported.");
+			jec.Buf.Write ("<<" + this.GetType ().Name + " stmnt>>");
 		}
 
 		public virtual void EmitJs (JsEmitContext jec)
@@ -301,12 +302,12 @@ namespace Mono.CSharp {
 			expr.EmitJs (jec);
 			jec.Buf.Write (") ");
 
-			((Block)TrueStatement).EmitBlockJs (jec, false);
+			jec.Buf.WriteBlockStatement (TrueStatement);
 
 			if (FalseStatement != null) {
 				jec.Buf.Write (" else ");
 
-				((Block)FalseStatement).EmitBlockJs (jec, false);
+				jec.Buf.WriteBlockStatement (FalseStatement);
 			}
 
 			jec.Buf.Write ("\n");
@@ -413,7 +414,7 @@ namespace Mono.CSharp {
 		{
 			jec.Buf.Write ("\tdo ", loc);
 
-			((Block)EmbeddedStatement).EmitBlockJs (jec, false);
+			jec.Buf.WriteBlockStatement (EmbeddedStatement);
 
 			jec.Buf.Write (" while (", expr.Location);
 			expr.EmitJs (jec);
@@ -556,8 +557,8 @@ namespace Mono.CSharp {
 				jec.Buf.Write (") ");
 			}	
 
-			((Block)Statement).EmitBlockJs (jec, false);
-			
+			jec.Buf.WriteBlockStatement (Statement);
+
 			jec.Buf.Write ("\n");
 		}
 
@@ -729,7 +730,7 @@ namespace Mono.CSharp {
 			jec.Buf.Write (") ");
 			jec.PopForceExpr();
 
-			((Block)Statement).EmitBlockJs (jec, false);
+			jec.Buf.WriteBlockStatement (Statement);
 
 			jec.Buf.Write ("\n");
 
@@ -1099,9 +1100,11 @@ namespace Mono.CSharp {
 
 		protected override void DoEmitJs (JsEmitContext jec)
 		{
-			jec.Buf.Write ("\treturn ", loc);
-			expr.EmitJs (jec);
-			jec.Buf.Write (";\n");
+			if (expr != null) {
+				jec.Buf.Write ("\treturn ", loc);
+				expr.EmitJs (jec);
+				jec.Buf.Write (";\n");
+			}
 		}
 
 		void Error_ReturnFromIterator (ResolveContext rc)
@@ -1826,7 +1829,7 @@ namespace Mono.CSharp {
 		{
 			if (Initializer != null) {
 				jec.Buf.Write ("\tvar ", loc);
-				((ExpressionStatement)Initializer).EmitJs (jec);
+				Initializer.EmitJs (jec);
 			} else {
 				jec.Buf.Write ("\tvar ", Variable.Name, loc);
 			}
@@ -1835,7 +1838,7 @@ namespace Mono.CSharp {
 				foreach (var d in declarators) {
 					jec.Buf.Write (", ");
 					if (d.Initializer != null) {
-						((ExpressionStatement) d.Initializer).EmitJs (jec);
+						d.Initializer.EmitJs (jec);
 					} else {
 						jec.Buf.Write (d.Variable.Name);
 					}

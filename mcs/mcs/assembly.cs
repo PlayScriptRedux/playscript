@@ -882,7 +882,7 @@ namespace Mono.CSharp
 		public void SaveJs ()
 		{
 			var s = jec.Buf.Stream.ToString ();
-			System.Console.WriteLine (s);
+//			System.Console.WriteLine (s);
 			System.IO.File.WriteAllText (file_name, s);
 		}
 

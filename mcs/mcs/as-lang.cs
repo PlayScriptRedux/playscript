@@ -142,7 +142,7 @@ namespace Mono.CSharp
 				} else {
 					type = new TypeExpression (variable.Variable.Type, variable.Variable.Location);
 				}
-			} else if (assign != null) {
+			} else if (assign != null && assign.Target.Type != null) {
 				type = new TypeExpression (assign.Target.Type, assign.Target.Location);
 			} else {
 				type = new TypeExpression (rc.BuiltinTypes.Dynamic, Location);
@@ -263,7 +263,7 @@ namespace Mono.CSharp
 				} else {
 					type = new TypeExpression (variable.Variable.Type, variable.Variable.Location);
 				}
-			} else if (assign != null) {
+			} else if (assign != null && assign.Target.Type != null) {
 				if (assign.Target.Type == rc.BuiltinTypes.Dynamic) {
 					type = new TypeExpression (rc.Module.PredefinedTypes.AsArray.Resolve(), Location);
 				} else {
@@ -344,6 +344,12 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext ec)
 		{
+			if (ec.Target == Target.JavaScript) {
+				type = ec.BuiltinTypes.Dynamic;
+				eclass = ExprClass.Value;
+				return this;
+			}
+
 			if (Expr is ElementAccess) {
 
 				var elem_access = Expr as ElementAccess;
@@ -500,6 +506,7 @@ namespace Mono.CSharp
 		{
 			if (rc.Target == Target.JavaScript) {
 				type = rc.Module.PredefinedTypes.AsRegExp.Resolve();
+				eclass = ExprClass.Value;
 				return this;
 			}
 
@@ -573,6 +580,8 @@ namespace Mono.CSharp
 			if (ec.Target == Target.JavaScript) {
 				expr = Expr.Resolve (ec);
 				objExpr = objExpr.Resolve (ec);
+				type = ec.BuiltinTypes.Bool;
+				eclass = ExprClass.Value;
 				return this;
 			}
 
@@ -652,6 +661,8 @@ namespace Mono.CSharp
 		protected override Expression DoResolve (ResolveContext ec)
 		{
 			if (ec.Target == Target.JavaScript) {
+				type = ec.BuiltinTypes.Dynamic;
+				eclass = ExprClass.Value;
 				return this;
 			}
 

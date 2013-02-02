@@ -610,6 +610,7 @@ namespace Mono.CSharp {
 		public virtual void EmitJs (JsEmitContext jec)
 		{
 			jec.Report.Error (7074, this.loc, "JavaScript code generation for " + this.GetType ().Name + " expression not supported.");
+			jec.Buf.Write ("<<" + this.GetType ().Name + " expr>>");
 		}
 
 		/// <summary>
@@ -1064,6 +1065,7 @@ namespace Mono.CSharp {
 		public virtual void EmitStatementJs (JsEmitContext jec)
 		{
 			jec.Report.Error(7072, Location, "JavaScript code generation for " + this.GetType ().Name + " statement not supported.");
+			jec.Buf.Write ("<<" + this.GetType ().Name + " stmtexpr>>");
 		}
 
 		public override void EmitSideEffect (EmitContext ec)
