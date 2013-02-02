@@ -320,6 +320,8 @@ namespace Mono.ActionScript
 %token OP_GT
 %token BITWISE_AND
 %token BITWISE_OR
+%token LOGICAL_AND_ASSIGN
+%token LOGICAL_OR_ASSIGN
 %token STAR
 %token PERCENT
 %token DIV
@@ -4646,9 +4648,19 @@ assignment_expression
 		$$ = new CompoundAssign (Binary.Operator.BitwiseAnd, (Expression) $1, (Expression) $3);
 		lbag.AddLocation ($$, GetLocation ($2));
 	  }
+	| prefixed_unary_expression LOGICAL_AND_ASSIGN expression
+	  {
+		$$ = new CompoundAssign (Binary.Operator.LogicalAnd, (Expression) $1, (Expression) $3);
+		lbag.AddLocation ($$, GetLocation ($2));
+	  }
 	| prefixed_unary_expression OP_OR_ASSIGN expression
 	  {
 		$$ = new CompoundAssign (Binary.Operator.BitwiseOr, (Expression) $1, (Expression) $3);
+		lbag.AddLocation ($$, GetLocation ($2));
+	  }
+	| prefixed_unary_expression LOGICAL_OR_ASSIGN expression
+	  {
+		$$ = new CompoundAssign (Binary.Operator.LogicalOr, (Expression) $1, (Expression) $3);
 		lbag.AddLocation ($$, GetLocation ($2));
 	  }
 	| prefixed_unary_expression OP_XOR_ASSIGN expression
@@ -7731,6 +7743,10 @@ string GetSymbolName (int token)
 		return "&";
 	case Token.BITWISE_OR:
 		return "|";
+	case Token.LOGICAL_AND_ASSIGN:
+		return "&&=";
+	case Token.LOGICAL_OR_ASSIGN:
+		return "||=";
 	case Token.STAR:
 		return "*";
 	case Token.PERCENT:

@@ -3487,14 +3487,14 @@ namespace Mono.ActionScript
 					val = ltb.Create (current_source, ref_line, col);
 					d = peek_char ();
 
-					if (d == '=') {
-						get_char ();
-						return Token.OP_GE;
-					}
-
 					if (parsing_generic_less_than > 1 || (parsing_generic_less_than == 1 && d != '>')) {
 						parsing_generic_less_than--;
 						return Token.OP_GENERICS_GT;
+					}
+
+					if (d == '=') {
+						get_char ();
+						return Token.OP_GE;
 					}
 
 					if (d == '>') {
@@ -3511,6 +3511,7 @@ namespace Mono.ActionScript
 							d = peek_char ();
 
 							if (d == '=') {
+								get_char ();
 								return Token.OP_USHIFT_RIGHT_ASSIGN;
 							}
 
@@ -3587,6 +3588,11 @@ namespace Mono.ActionScript
 					d = peek_char ();
 					if (d == '&') {
 						get_char ();
+						d = peek_char ();
+						if (d == '=') {
+							get_char ();
+							return Token.LOGICAL_AND_ASSIGN;
+						}
 						return Token.OP_AND;
 					}
 					if (d == '=') {
@@ -3600,6 +3606,11 @@ namespace Mono.ActionScript
 					d = peek_char ();
 					if (d == '|') {
 						get_char ();
+						d = peek_char ();
+						if (d == '=') {
+							get_char ();
+							return Token.LOGICAL_OR_ASSIGN;
+						}
 						return Token.OP_OR;
 					}
 					if (d == '=') {

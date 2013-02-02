@@ -3151,12 +3151,20 @@ namespace Mono.CSharp
 					} else if (oper == Operator.AsRefInequality) {
 						return new Unary(Unary.Operator.LogicalNot, MakeReferenceEqualsInvocation (ec), loc).Resolve (ec);
 					} else if (oper == Operator.AsURightShift) {
-						ec.Report.Error (7801, ">>> operator is not correclty implemented yet.");
-						return null;
-//						return new Binary(Operator.RightShift, new Conditional(
-//							new Binary(Operator.LessThan, left.Clone (new CloneContext()), new IntLiteral(ec.BuiltinTypes, 0, loc)), 
-//						    new Unary(Unary.Operator.UnaryNegation, left.Clone (new CloneContext()), loc), left, loc), 
-//						    right).Resolve (ec);
+						var bi_type = left.Type.BuiltinType;
+						if (bi_type == BuiltinTypeSpec.Type.SByte) {
+							return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.Byte), right).Resolve (ec);
+						} else if (bi_type == BuiltinTypeSpec.Type.Short) {
+							return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.UShort), right).Resolve (ec);
+						} else if (bi_type == BuiltinTypeSpec.Type.Int) {
+							return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.UInt), right).Resolve (ec);
+						} else if (bi_type == BuiltinTypeSpec.Type.Long) {
+							return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.ULong), right).Resolve (ec);
+						} else if (bi_type == BuiltinTypeSpec.Type.Float) {
+							return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.UInt), right).Resolve (ec);
+						} else if (bi_type == BuiltinTypeSpec.Type.Double) {
+							return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.UInt), right).Resolve (ec);
+						}
 					} else if (left.Type.BuiltinType == BuiltinTypeSpec.Type.String) {
 						if (oper == Operator.LessThan || oper == Operator.GreaterThan || oper == Operator.LessThanOrEqual || oper == Operator.GreaterThanOrEqual) {
 							return new Binary(oper, MakeStringComparison (ec).Resolve (ec), new IntLiteral(ec.BuiltinTypes, 0, loc)).Resolve (ec);

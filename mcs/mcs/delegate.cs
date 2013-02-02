@@ -80,7 +80,10 @@ namespace Mono.CSharp {
 				if (actionSpec == null) {
 					return null;
 				}
-				return actionSpec.MakeGenericType(rc, actArgs);
+				if (actArgs.Length == 0)
+					return actionSpec;
+				else
+					return actionSpec.MakeGenericType(rc, actArgs);
 			} else {
 				TypeSpec[] funcArgs = new TypeSpec[parameters.Types.Length + 1];
 				parameters.Types.CopyTo(funcArgs, 0);
