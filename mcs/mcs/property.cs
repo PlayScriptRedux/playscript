@@ -16,6 +16,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Mono.CompilerServices.SymbolWriter;
+using Mono.CSharp.JavaScript;
 
 #if NET_2_1
 using XmlElement = System.Object;
@@ -230,6 +231,15 @@ namespace Mono.CSharp
 					return attribute_targets;
 				}
 			}
+
+			public override void EmitJs (JsEmitContext jec)
+			{
+				jec.Buf.Write ("\tget: function() ", Location);
+				method_data.EmitJs (Parent as TypeDefinition, jec);
+				jec.Buf.Write (",\n");
+
+				block = null;
+			}
 		}
 
 		public class SetMethod : PropertyMethod {
@@ -290,6 +300,16 @@ namespace Mono.CSharp
 				get {
 					return attribute_targets;
 				}
+			}
+
+			public override void EmitJs (JsEmitContext jec)
+			{
+				var parms = this.ParameterInfo;
+				jec.Buf.Write ("\tset: function(", parms[0].Name, ") ", Location);
+				method_data.EmitJs (Parent as TypeDefinition, jec);
+				jec.Buf.Write (",\n");
+
+				block = null;
 			}
 		}
 
@@ -834,6 +854,31 @@ namespace Mono.CSharp
 			}
 
 			base.Emit ();
+		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			var typeName = jec.MakeJsTypeNme(this.Parent.MemberName.Name);
+
+			var proto = "";
+			if ((ModFlags & Modifiers.STATIC) == 0) {
+				proto = ".prototype";
+			}
+
+			jec.Buf.Write ("\tObject.defineProperty(", typeName, proto, ", \"", MemberName.Name, "\", {\n", Location);
+			jec.Buf.Indent ();
+
+			if (this.Get != null) {
+				this.Get.EmitJs (jec);
+			}
+
+			if (this.Set != null) {
+				this.Set.EmitJs (jec);
+			}
+
+			jec.Buf.Write ("\tenumerable: true,\n\tconfigurable: true\n");
+			jec.Buf.Unindent ();
+			jec.Buf.Write ("\t});\n");
 		}
 	}
 

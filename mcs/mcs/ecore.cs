@@ -1143,6 +1143,12 @@ namespace Mono.CSharp {
 #endif
 		}
 
+		public override void EmitJs (JsEmitContext jec)
+		{
+			// JS doesn't cast anything.
+			Child.EmitJs (jec);
+		}
+
 		protected override void CloneTo (CloneContext clonectx, Expression t)
 		{
 			// Nothing to clone
@@ -1180,6 +1186,11 @@ namespace Mono.CSharp {
 		public override void EmitSideEffect (EmitContext ec)
 		{
 			child.EmitSideEffect (ec);
+		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			Child.EmitJs (jec);
 		}
 	}
 
@@ -2680,6 +2691,11 @@ namespace Mono.CSharp {
 
 			return e;
 		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			jec.Buf.Write (Name, Location);
+		}
 		
 		public override object Accept (StructuralVisitor visitor)
 		{
@@ -2756,12 +2772,18 @@ namespace Mono.CSharp {
 			return type;
 		}
 
-
 		public override void Emit (EmitContext ec)
 		{
 			throw new InternalErrorException ("FullNamedExpression `{0}' found in resolved tree",
 				GetSignatureForError ());
 		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			jec.Buf.Write (jec.MakeJsNamespaceName(type.MemberDefinition.Namespace), ".", 
+			               jec.MakeJsTypeNme(type.Name), Location);
+		}
+
 	}
 	
 	/// <summary>
@@ -3532,8 +3554,9 @@ namespace Mono.CSharp {
 
 		public void EmitCallJs (JsEmitContext jec, Arguments arguments)
 		{
-			jec.Buf.Write(this.Name + "(");
-			arguments.EmitJs (jec);
+			jec.Buf.Write("(", Location);
+			if (arguments != null)
+				arguments.EmitJs (jec);
 			jec.Buf.Write(")");
 		}
 
@@ -5879,6 +5902,17 @@ namespace Mono.CSharp {
 
 			if (is_volatile) // || is_marshal_by_ref ())
 				base.EmitSideEffect (ec);
+		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			if (InstanceExpression != null) {
+				InstanceExpression.EmitJs (jec);
+				jec.Buf.Write (".");
+			} else {
+				jec.Buf.Write (DeclaringType.Name, ".", Location);
+			}
+			jec.Buf.Write (Name);
 		}
 
 		public virtual void AddressOf (EmitContext ec, AddressOp mode)

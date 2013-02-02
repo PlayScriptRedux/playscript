@@ -10,106 +10,115 @@ package {
 		//
 		
 		public function XMLList(value:Object) {
+			throw new System.NotImplementedException();		
 		}
 		
 		public function attribute(attributeName:*):XMLList {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function attributes():XMLList {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function child(propertyName:Object):XMLList {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function children():XMLList {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function comments():XMLList {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function contains(value:XML):Boolean {
-			return false;
+			throw new System.NotImplementedException();
 		}
 		
 		public function copy():XMLList {
-			return null;
+			throw new System.NotImplementedException();
+		}
+
+		public function descendants():XMLList {
+			throw new System.NotImplementedException();
+		}
+						
+		public function descendants(name:Object /*="*"*/):XMLList {
+			throw new System.NotImplementedException();
 		}
 		
-		public function descendants(name:Object /*="*"*/):XMLList {
-			return null;
+		public function elements():XMLList {
+			throw new System.NotImplementedException();
 		}
 		
 		public function elements(name:Object /*="*"*/):XMLList {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function hasComplexContent():Boolean {
-			return false;
+			throw new System.NotImplementedException();
 		}
 		
 		public function hasOwnProperty(p:String):Boolean {
-			return false;
+			throw new System.NotImplementedException();
 		}
 		
 		public function hasSimpleContent():Boolean {
-			return false;
+			throw new System.NotImplementedException();
 		}
 		
 		public function length():int {
-			return 0;
+			throw new System.NotImplementedException();
 		}
 		
 		public function normalize():XMLList {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function parent():Object {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function processingInstructions(name:String = "*"):XMLList {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function propertyIsEnumerable(p:String):Boolean {
-			return false;
+			throw new System.NotImplementedException();
 		}
 		
 		public function text():XMLList {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function toString():String {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function toXMLString():String {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function valueOf():XMLList {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public indexer this(index:int):XML {
-			get { return null; }
+			get { throw new System.NotImplementedException(); }
 		}
 		
 		public static implicit operator String (list:XMLList) {
-			return "";
+			throw new System.NotImplementedException();
 		}
 		
 		function IEnumerable.<XML>.GetEnumerator() : IEnumerator.<XML> {
-			yield break;
+			throw new System.NotImplementedException();
 		}
 		
 		function IEnumerable.GetEnumerator() : IEnumerator { 
-			yield break;
+			throw new System.NotImplementedException();
 		}
 		
 	}

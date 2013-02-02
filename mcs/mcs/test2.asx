@@ -2,8 +2,57 @@ package
 {
 	public class Test {
 
+		protected static var REGEXP_OUTER_SPACES:RegExp = new RegExp(@"^\s+|\s+$", "g");
+
+		var gg:Vector.<String>=new <String> [];
+
         public static function Main() : void {
-			var re:RegExp = /([\w\.\-\+]+)/gi;
+        	var b:byte = 3;
+        	var sb:sbyte = 4;
+        	var s:short = 5;
+        	var us:ushort = 6;
+        	var i:int = 7;
+        	var ui:uint = 8;
+        	var l:long = 9;
+        	var ul:ulong = 10;
+        	var f:float = 11;
+        	var d:double = 12;
+        	
+        	var sss:String = "aasdfadf";
+        	
+        	var _b:Boolean;
+        	_b ||= sss;
+        	_b &&= !b;
+        	
+			i = b >>> 3;
+			i = sb >>> 3;
+			i = us >>> 3;
+			i = s >>> 3;
+			i = ui >>> 3;
+			i = i >>> 3;
+			l = ul >>> 3;
+			l = l >>> 3;
+			l = f >>> 3;
+			l = d >>> 3;
+			
+			b >>>= 3;
+			sb >>>= 3;
+			us >>>= 3;
+			s >>>= 3;
+			ui >>>= 3;
+			i >>>= 3;
+			ul >>>= 3;
+			l >>>= 3;
+			f >>>= 3;
+			d >>>= 3;
+                                
+		}
+
+		public function foo():void {
+		}
+		
+		public function bar(v:Vector.<int>=null):void {
+			var f:Function = foo;
 		}
 
 	}

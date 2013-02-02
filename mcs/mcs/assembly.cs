@@ -498,7 +498,7 @@ namespace Mono.CSharp
 		{
 			jec = new JsEmitContext (module);
 
-			jec.Buf.Write ("// Module: " + this.Name + ".js\n");
+			jec.Buf.Write ("// Module: ", this.Name, ".js\n");
 
 			module.EmitContainerJs (jec);
 		}

@@ -3487,14 +3487,14 @@ namespace Mono.ActionScript
 					val = ltb.Create (current_source, ref_line, col);
 					d = peek_char ();
 
-					if (d == '=') {
-						get_char ();
-						return Token.OP_GE;
-					}
-
 					if (parsing_generic_less_than > 1 || (parsing_generic_less_than == 1 && d != '>')) {
 						parsing_generic_less_than--;
 						return Token.OP_GENERICS_GT;
+					}
+
+					if (d == '=') {
+						get_char ();
+						return Token.OP_GE;
 					}
 
 					if (d == '>') {
@@ -3511,6 +3511,7 @@ namespace Mono.ActionScript
 							d = peek_char ();
 
 							if (d == '=') {
+								get_char ();
 								return Token.OP_USHIFT_RIGHT_ASSIGN;
 							}
 
@@ -3553,6 +3554,10 @@ namespace Mono.ActionScript
 					val = ltb.Create (current_source, ref_line, col);
 					if (peek_char () == '=') {
 						get_char ();
+						if (peek_char () == '=') {
+							get_char ();
+							return Token.OP_REF_NE;
+						}
 						return Token.OP_NE;
 					}
 					return Token.BANG;
@@ -3583,6 +3588,11 @@ namespace Mono.ActionScript
 					d = peek_char ();
 					if (d == '&') {
 						get_char ();
+						d = peek_char ();
+						if (d == '=') {
+							get_char ();
+							return Token.LOGICAL_AND_ASSIGN;
+						}
 						return Token.OP_AND;
 					}
 					if (d == '=') {
@@ -3596,6 +3606,11 @@ namespace Mono.ActionScript
 					d = peek_char ();
 					if (d == '|') {
 						get_char ();
+						d = peek_char ();
+						if (d == '=') {
+							get_char ();
+							return Token.LOGICAL_OR_ASSIGN;
+						}
 						return Token.OP_OR;
 					}
 					if (d == '=') {
@@ -3760,12 +3775,30 @@ namespace Mono.ActionScript
 					if (d >= '0' && d <= '9') 
 						return is_number (c);
 
+					if (d == '@') {
+						get_char ();
+						return Token.DOT_AT;
+					}
+
+					if (d == '*') {
+						get_char ();
+						return Token.DOT_STAR;
+					}
+
 					if (d == '.') {
 						get_char ();
 						d = peek_char ();
 						if (d == '.') {
 							get_char ();
 							return Token.DOTDOTDOT;
+						}
+						if (d == '@') {
+							get_char ();
+							return Token.DOTDOT_AT;
+						}
+						if (d == '*') {
+							get_char ();
+							return Token.DOTDOT_STAR;
 						}
 						return Token.DOTDOT;
 					}
@@ -3834,6 +3867,9 @@ namespace Mono.ActionScript
 //					return TokenizeBackslash ();
 				
 				case '@':
+					if (!handle_asx)
+						return Token.OP_AT;
+
 					c = get_char ();
 					if (c == '"') {
 						tokens_seen = true;

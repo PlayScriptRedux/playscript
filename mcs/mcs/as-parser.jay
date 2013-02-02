@@ -301,7 +301,11 @@ namespace Mono.ActionScript
 %token CLOSE_PARENS
 
 %token DOT
+%token DOT_AT
+%token DOT_STAR
 %token DOTDOT
+%token DOTDOT_AT
+%token DOTDOT_STAR
 %token DOTDOTDOT
 %token COMMA
 %token COLON
@@ -316,6 +320,8 @@ namespace Mono.ActionScript
 %token OP_GT
 %token BITWISE_AND
 %token BITWISE_OR
+%token LOGICAL_AND_ASSIGN
+%token LOGICAL_OR_ASSIGN
 %token STAR
 %token PERCENT
 %token DIV
@@ -334,6 +340,7 @@ namespace Mono.ActionScript
 %token OP_EQ
 %token OP_REF_EQ
 %token OP_NE
+%token OP_REF_NE
 %token OP_AND
 %token OP_OR
 %token OP_MULT_ASSIGN
@@ -350,6 +357,7 @@ namespace Mono.ActionScript
 %token OP_PTR
 %token OP_COALESCING
 %token OP_IN
+%token OP_AT
 
 /* Generics <,> tokens */
 %token OP_GENERICS_LT
@@ -514,7 +522,7 @@ import_directive
 	;
 
 import_package
-	: IMPORT namespace_or_type_expr DOT STAR SEMICOLON 
+	: IMPORT namespace_or_type_expr DOT_STAR SEMICOLON 
 	  {
 		var un = new UsingNamespace ((ATypeNameExpression) $2, GetLocation ($1));
 		current_namespace.AddUsing (un);
@@ -3543,6 +3551,45 @@ member_access
 		$$ = new MemberAccess ((Expression) $1, lt.Value, (TypeArguments) $4, lt.Location);
 		lbag.AddLocation ($$, GetLocation ($2));
 	  }
+
+	| primary_expression DOT_AT IDENTIFIER
+	  {
+		var lt = (Tokenizer.LocatedToken) $3;
+		var ma = new MemberAccess ((Expression) $1, lt.Value, null, lt.Location);
+		ma.AccessorType = MemberAccess.Accessor.AsE4xChildAttribute;
+		lbag.AddLocation ($$, GetLocation ($2));
+		$$ = ma;
+	  }
+	| primary_expression DOT_STAR
+	  {
+		var ma = new MemberAccess ((Expression) $1, "any", null, GetLocation($2));
+		ma.AccessorType = MemberAccess.Accessor.AsE4xChildAll;
+		lbag.AddLocation ($$, GetLocation ($2));
+		$$ = ma;
+	  }
+	| primary_expression DOTDOT IDENTIFIER
+	  {
+		var lt = (Tokenizer.LocatedToken) $3;
+		var ma = new MemberAccess ((Expression) $1, lt.Value, null, lt.Location);
+		ma.AccessorType = MemberAccess.Accessor.AsE4xDescendant;
+		lbag.AddLocation ($$, GetLocation ($2));
+		$$ = ma;
+	  }
+	| primary_expression DOTDOT_STAR
+	  {
+		var ma = new MemberAccess ((Expression) $1, "any", null, GetLocation($2));
+		ma.AccessorType = MemberAccess.Accessor.AsE4xDescendantAll;
+		lbag.AddLocation ($$, GetLocation ($2));
+		$$ = ma;
+	  }
+//	| primary_expression DOTDOT_AT IDENTIFIER
+//	  {
+//		var lt = (Tokenizer.LocatedToken) $3;
+//		var ma = new MemberAccess ((Expression) $1, lt.Value, null, lt.Location);
+//		ma.AccessorType = MemberAccess.Accessor.AsE4xDescendantAttribute;
+//		lbag.AddLocation ($$, GetLocation ($2));
+//		$$ = ma;
+//	  }	  
 	| builtin_types DOT IDENTIFIER opt_type_argument_list
 	  {
 		var lt = (Tokenizer.LocatedToken) $3;
@@ -4297,7 +4344,7 @@ unary_expression
 //	  }
 	| AWAIT prefixed_unary_expression
 	  {
-	  	CheckIsAsx("default values", GetLocation($1));
+	  	CheckIsAsx("await", GetLocation($1));
 	  	
 		if (!async_block) {
 			 if (current_anonymous_method is LambdaExpression) {
@@ -4315,6 +4362,10 @@ unary_expression
 		}
 		
 		$$ = new Await ((Expression) $2, GetLocation ($1));
+	  }
+	| OP_AT prefixed_unary_expression
+	  {
+		$$ = new Unary (Unary.Operator.AsE4xAttribute, (Expression) $2, GetLocation ($1));
 	  }
 	;
 
@@ -4455,6 +4506,11 @@ equality_expression
 		$$ = new Binary (Binary.Operator.AsRefEquality, (Expression) $1, (Expression) $3);
 		lbag.AddLocation ($$, GetLocation ($2));
 	  }
+	| equality_expression OP_REF_NE relational_expression
+	  {
+		$$ = new Binary (Binary.Operator.AsRefInequality, (Expression) $1, (Expression) $3);
+		lbag.AddLocation ($$, GetLocation ($2));
+	  }
 	; 
 
 and_expression
@@ -4592,9 +4648,19 @@ assignment_expression
 		$$ = new CompoundAssign (Binary.Operator.BitwiseAnd, (Expression) $1, (Expression) $3);
 		lbag.AddLocation ($$, GetLocation ($2));
 	  }
+	| prefixed_unary_expression LOGICAL_AND_ASSIGN expression
+	  {
+		$$ = new CompoundAssign (Binary.Operator.LogicalAnd, (Expression) $1, (Expression) $3);
+		lbag.AddLocation ($$, GetLocation ($2));
+	  }
 	| prefixed_unary_expression OP_OR_ASSIGN expression
 	  {
 		$$ = new CompoundAssign (Binary.Operator.BitwiseOr, (Expression) $1, (Expression) $3);
+		lbag.AddLocation ($$, GetLocation ($2));
+	  }
+	| prefixed_unary_expression LOGICAL_OR_ASSIGN expression
+	  {
+		$$ = new CompoundAssign (Binary.Operator.LogicalOr, (Expression) $1, (Expression) $3);
 		lbag.AddLocation ($$, GetLocation ($2));
 	  }
 	| prefixed_unary_expression OP_XOR_ASSIGN expression
@@ -7677,6 +7743,10 @@ string GetSymbolName (int token)
 		return "&";
 	case Token.BITWISE_OR:
 		return "|";
+	case Token.LOGICAL_AND_ASSIGN:
+		return "&&=";
+	case Token.LOGICAL_OR_ASSIGN:
+		return "||=";
 	case Token.STAR:
 		return "*";
 	case Token.PERCENT:
@@ -7965,8 +8035,16 @@ static string GetTokenName (int token)
 		return ")";
 	case Token.DOT:
 		return ".";
+	case Token.DOT_AT:
+		return ".@";
+	case Token.DOT_STAR:
+		return ".*";
 	case Token.DOTDOT:
 		return "..";
+	case Token.DOTDOT_AT:
+		return "..@";
+	case Token.DOTDOT_STAR:
+		return "..*";
 	case Token.DOTDOTDOT:
 		return "...";
 	case Token.COMMA:
@@ -8014,6 +8092,7 @@ static string GetTokenName (int token)
 	case Token.OP_AND_ASSIGN:
 	case Token.OP_XOR_ASSIGN:
 	case Token.OP_OR_ASSIGN:
+	case Token.OP_AT:
 		return "<operator>";
 
 	case Token.BOOL:

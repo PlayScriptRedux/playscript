@@ -744,7 +744,7 @@ namespace Mono.CSharp {
 
 		public override void EmitContainerJs (JsEmitContext jec)
 		{
-			jec.Buf.Write ("// File: " + this.FileName + "\n");
+			jec.Buf.Write ("// File: ", this.FileName, "\n");
 
 			base.EmitContainerJs (jec);
 		}
@@ -996,8 +996,8 @@ namespace Mono.CSharp {
 			bool is_global_ns = String.IsNullOrEmpty (name);
 
 			if (!is_global_ns) {
-				jec.Buf.Write ("\tvar " + name + ";\n");
-				jec.Buf.Write ("\t(function (" + name + ") {\n");
+				jec.Buf.Write ("\tvar ", name, ";\n",
+				               "\t(function (", name, ") {\n", Location);
 				jec.Buf.Indent ();
 
 				jec.MarkNamespaceDefined (NS.Name);
@@ -1007,7 +1007,7 @@ namespace Mono.CSharp {
 
 			if (!is_global_ns) {
 				jec.Buf.Unindent ();
-				jec.Buf.Write ("\t})(" + name + " || (" + name + " = {});\n");
+				jec.Buf.Write ("\t})(", name, " || (", name, " = {});\n");
 			}
 		}
 

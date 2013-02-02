@@ -2073,14 +2073,27 @@ namespace Mono.CSharp
 			MemberCore m;
 			HashSet<MemberCore> emitted = new HashSet<MemberCore> ();
 
+			// Constructors
 			for (i = 0; i < members.Count; i++) {
 				m = members [i];
-				if (m is Constructor) {
-					m.EmitJs (jec);
-					emitted.Add (m);
+				var c = m as Constructor;
+				if (c != null && (c.ModFlags & Modifiers.STATIC) == 0) {
+					c.EmitJs (jec);
+					emitted.Add (c);
 				}
 			}
 
+			// Static constructors
+			for (i = 0; i < members.Count; i++) {
+				m = members [i];
+				var c = m as Constructor;
+				if (c != null && (c.ModFlags & Modifiers.STATIC) != 0) {
+					c.EmitJs (jec);
+					emitted.Add (c);
+				}
+			}
+
+			// Properties
 			for (i = 0; i < members.Count; i++) {
 				m = members [i];
 				if (m is Property) {
@@ -2089,6 +2102,7 @@ namespace Mono.CSharp
 				}
 			}
 
+			// Methods
 			for (i = 0; i < members.Count; i++) {
 				m = members [i];
 				if (m is Method) {
@@ -2097,6 +2111,7 @@ namespace Mono.CSharp
 				}
 			}
 
+			// Whatever else
 			for (i = 0; i < members.Count; i++) {
 				m = members [i];
 				if (!emitted.Contains(m)) {
@@ -2590,8 +2605,7 @@ namespace Mono.CSharp
 				var c = member as Constructor;
 				if (c != null) {
 					if ((c.ModFlags & Modifiers.STATIC) != 0) {
-						jec.Report.Error (7076, c.Location, "JavaScript generation not supported for static constructors");
-						return;
+						continue;
 					} 
 					if (constructor != null) {
 						jec.Report.Error (7077, c.Location, "JavaScript generation not supported for overloaded constructors");
@@ -2603,19 +2617,19 @@ namespace Mono.CSharp
 
 			var nsc = (NamespaceContainer)this.Parent;
 			
-			jec.Buf.Write ("\tvar " + this.MemberName.Name + " = (function () {\n");
+			jec.Buf.Write ("\tvar ", this.MemberName.Name, " = (function () {\n", Location);
 			jec.Buf.Indent ();
 
 			base.EmitJs (jec);
 
-			jec.Buf.Write ("\treturn " + this.MemberName.Name + ";\n");
+			jec.Buf.Write ("\treturn ", this.MemberName.Name, ";\n");
 
 			jec.Buf.Unindent();
 			jec.Buf.Write ("\t})();\n");
 
 			var nsname = jec.MakeJsNamespaceName(nsc.NS.Name);
 
-			jec.Buf.Write ("\t" + nsname + "." + this.MemberName.Name + " = " + this.MemberName.Name + ";\n");
+			jec.Buf.Write ("\t", nsname, ".", this.MemberName.Name, " = ", this.MemberName.Name, ";\n");
 		}
 	}
 

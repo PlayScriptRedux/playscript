@@ -130,7 +130,7 @@ namespace Mono.CSharp
 	{
 		public enum Operator : byte {
 			UnaryPlus, UnaryNegation, LogicalNot, OnesComplement,
-			AddressOf,  TOP
+			AddressOf, AsE4xAttribute, TOP
 		}
 
 		public readonly Operator Oper;
@@ -518,6 +518,18 @@ namespace Mono.CSharp
 		public override void Emit (EmitContext ec)
 		{
 			EmitOperator (ec, type);
+		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			bool needsParen = jec.NeedParens (this, Expr);
+
+			jec.Buf.Write (OperName (Oper), Location);
+			if (needsParen)
+				jec.Buf.Write ("(");
+			Expr.EmitJs (jec);
+			if (needsParen)
+				jec.Buf.Write (")");
 		}
 
 		protected void EmitOperator (EmitContext ec, TypeSpec type)
@@ -1277,9 +1289,9 @@ namespace Mono.CSharp
 		private void EmitOpJs (JsEmitContext jec)
 		{
 			if (mode == Mode.PreIncrement)
-				jec.Buf.Write ("++");
+				jec.Buf.Write ("++", Location);
 			else if (mode == Mode.PreDecrement)
-				jec.Buf.Write ("--");
+				jec.Buf.Write ("--", Location);
 
 			// NOTE: TODO - Add parentheses if child op precedence is lower.
 
@@ -1298,7 +1310,7 @@ namespace Mono.CSharp
 
 		public override void EmitStatementJs (JsEmitContext jec)
 		{
-			jec.Buf.Write ("\t");
+			jec.Buf.Write ("\t", Location);
 			EmitOpJs (jec);
 			jec.Buf.Write (";\n");
 		}
@@ -2266,27 +2278,34 @@ namespace Mono.CSharp
 			Equality	= 12 | ComparisonMask | EqualityMask,
 			Inequality	= 13 | ComparisonMask | EqualityMask,
 			AsRefEquality = 14 | ComparisonMask | EqualityMask,
+			AsRefInequality = 15 | ComparisonMask | EqualityMask,
 
-			BitwiseAnd	= 15 | BitwiseMask,
-			ExclusiveOr	= 16 | BitwiseMask,
-			BitwiseOr	= 17 | BitwiseMask,
+			BitwiseAnd	= 16 | BitwiseMask,
+			ExclusiveOr	= 17 | BitwiseMask,
+			BitwiseOr	= 18 | BitwiseMask,
 
-			LogicalAnd	= 18 | LogicalMask,
-			LogicalOr	= 19 | LogicalMask,
+			LogicalAnd	= 19 | LogicalMask,
+			LogicalOr	= 20 | LogicalMask,
+
+			AsE4xChild				= 21 | AsE4xMask,
+			AsE4xDescendant			= 22 | AsE4xMask,
+			AsE4xChildAttribute		= 23 | AsE4xMask,
+			AsE4xDescendantAttribute = 24 | AsE4xMask,
 
 			//
 			// Operator masks
 			//
 			ValuesOnlyMask	= ArithmeticMask - 1,
-			ArithmeticMask	= 1 << 5,
-			ShiftMask		= 1 << 6,
-			ComparisonMask	= 1 << 7,
-			EqualityMask	= 1 << 8,
-			BitwiseMask		= 1 << 9,
-			LogicalMask		= 1 << 10,
-			AdditionMask	= 1 << 11,
-			SubtractionMask	= 1 << 12,
-			RelationalMask	= 1 << 13
+			ArithmeticMask	= 1 << 6,
+			ShiftMask		= 1 << 7,
+			ComparisonMask	= 1 << 8,
+			EqualityMask	= 1 << 9,
+			BitwiseMask		= 1 << 10,
+			LogicalMask		= 1 << 11,
+			AdditionMask	= 1 << 12,
+			SubtractionMask	= 1 << 13,
+			RelationalMask	= 1 << 14,
+			AsE4xMask		= 1 << 15
 		}
 
 		protected enum State
@@ -2397,6 +2416,9 @@ namespace Mono.CSharp
 			case Operator.Inequality:
 				s = "!=";
 				break;
+			case Operator.AsRefInequality:
+				s = "!==";
+				break;
 			case Operator.BitwiseAnd:
 				s = "&";
 				break;
@@ -2472,6 +2494,8 @@ namespace Mono.CSharp
 				return "GreaterThanOrEqual";
 			case Operator.Inequality:
 				return "NotEqual";
+			case Operator.AsRefInequality:
+				return "ReferenceNotEqual";
 			case Operator.LeftShift:
 				return IsCompound ? "LeftShiftAssign" : "LeftShift";
 			case Operator.LessThan:
@@ -3053,6 +3077,28 @@ namespace Mono.CSharp
 			return true;
 		}
 
+		private Expression MakeReferenceEqualsInvocation (ResolveContext rc) 
+		{
+			var lf = left;
+			if (lf.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic)
+				lf = EmptyCast.Create (lf, rc.BuiltinTypes.Object).Resolve (rc);
+			var rt = right;
+			if (rt.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic)
+				rt = EmptyCast.Create (rt, rc.BuiltinTypes.Object).Resolve (rc);
+			var args = new Arguments(2);
+			args.Add (new Argument(lf));
+			args.Add (new Argument(rt));
+			return new Invocation(
+				new MemberAccess(new MemberAccess(new SimpleName("System", loc), "Object", loc), 
+			  	"ReferenceEquals", loc), args);
+		}
+
+		private Expression MakeStringComparison (ResolveContext rc) {
+			var args = new Arguments(1);
+			args.Add (new Argument(right));
+			return new Invocation(new MemberAccess(left, "CompareTo", loc), args);
+		}
+
 		protected override Expression DoResolve (ResolveContext ec)
 		{
 			if (left == null)
@@ -3096,6 +3142,36 @@ namespace Mono.CSharp
 			right = right.Resolve (ec);
 			if (right == null)
 				return null;
+
+			// Handle ActionScript binary operators that need to be converted to methods.
+			if (ec.FileType == SourceFileType.ActionScript) {
+				if (ec.Target != Target.JavaScript) {
+					if (oper == Operator.AsRefEquality) {
+						return MakeReferenceEqualsInvocation (ec).Resolve (ec);
+					} else if (oper == Operator.AsRefInequality) {
+						return new Unary(Unary.Operator.LogicalNot, MakeReferenceEqualsInvocation (ec), loc).Resolve (ec);
+					} else if (oper == Operator.AsURightShift) {
+						var bi_type = left.Type.BuiltinType;
+						if (bi_type == BuiltinTypeSpec.Type.SByte) {
+							return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.Byte), right).Resolve (ec);
+						} else if (bi_type == BuiltinTypeSpec.Type.Short) {
+							return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.UShort), right).Resolve (ec);
+						} else if (bi_type == BuiltinTypeSpec.Type.Int) {
+							return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.UInt), right).Resolve (ec);
+						} else if (bi_type == BuiltinTypeSpec.Type.Long) {
+							return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.ULong), right).Resolve (ec);
+						} else if (bi_type == BuiltinTypeSpec.Type.Float) {
+							return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.UInt), right).Resolve (ec);
+						} else if (bi_type == BuiltinTypeSpec.Type.Double) {
+							return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.UInt), right).Resolve (ec);
+						}
+					} else if (left.Type.BuiltinType == BuiltinTypeSpec.Type.String) {
+						if (oper == Operator.LessThan || oper == Operator.GreaterThan || oper == Operator.LessThanOrEqual || oper == Operator.GreaterThanOrEqual) {
+							return new Binary(oper, MakeStringComparison (ec).Resolve (ec), new IntLiteral(ec.BuiltinTypes, 0, loc)).Resolve (ec);
+						}
+					}
+				}
+			}
 
 			eclass = ExprClass.Value;
 			Constant rc = right as Constant;
@@ -4129,24 +4205,20 @@ namespace Mono.CSharp
 
 		public override void EmitJs (JsEmitContext jec)
 		{
-//			Operator leftOper = null;
-//			if (Left is Binary) {
-//				leftOper = ((Binary)Left).Oper;
-//			} else if (left is Unary) {
-//				leftOper = ((Unary)Left).Oper;
-//			}
-//
-//			Operator rightOper = null;
-//			if (Right is Binary) {
-//				rightOper = ((Binary)Right).Oper;
-//			} else if (right is Unary) {
-//				rightOper = ((Unary)Right).Oper;
-//			}
+			var leftParens = jec.NeedParens(this, Left);
+			var rightParens = jec.NeedParens(this, Right);
 
-//			if (leftOper != null && leftOper.)
+			if (leftParens)
+				jec.Buf.Write ("(", Location);
 			Left.EmitJs (jec);
+			if (leftParens)
+				jec.Buf.Write (")");
 			jec.Buf.Write (" " + this.OperName (oper) + " ");
+			if (rightParens)
+				jec.Buf.Write ("(", Location);
 			Right.EmitJs (jec);
+			if (rightParens)
+				jec.Buf.Write (")");
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Expression t)
@@ -5091,7 +5163,7 @@ namespace Mono.CSharp
 
 		public override void EmitJs (JsEmitContext jec)
 		{
-			jec.Buf.Write (Name);
+			jec.Buf.Write (Name, Location);
 		}
 
 		public HoistedVariable GetHoistedVariable (ResolveContext rc)
@@ -5583,22 +5655,27 @@ namespace Mono.CSharp
 					if (arguments != null)
 						arguments.Resolve (ec, out dynamic_arg);
 					args_resolved = true;
-					
+
+					var ct = arguments [0].Expr.Type;
+					var cbt = ct.BuiltinType;
 					switch (castType) {
 					case BuiltinTypeSpec.Type.Int:
-						if (arguments [0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
+						if (cbt == BuiltinTypeSpec.Type.String)
 							atn = new SimpleName ("int", Location);
 						break;
 					case BuiltinTypeSpec.Type.UInt:
-						if (arguments [0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
+						if (cbt == BuiltinTypeSpec.Type.String)
 							atn = new SimpleName ("uint", Location);
 						break;
 					case BuiltinTypeSpec.Type.Double:
-						if (arguments [0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
+						if (cbt == BuiltinTypeSpec.Type.String)
 							atn = new SimpleName ("Number", Location);
 						break;
 					case BuiltinTypeSpec.Type.Bool:
-						if (arguments [0].Expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
+						if (cbt == BuiltinTypeSpec.Type.String ||
+						    cbt == BuiltinTypeSpec.Type.Dynamic ||
+						    cbt == BuiltinTypeSpec.Type.Object ||
+						    ct.IsClass)
 							atn = new SimpleName ("Boolean", Location);
 						break;
 					case BuiltinTypeSpec.Type.String:
@@ -5834,12 +5911,14 @@ namespace Mono.CSharp
 
 		public override void EmitJs (JsEmitContext jec)
 		{
+			if (expr != null)
+				expr.EmitJs (jec);
 			mg.EmitCallJs (jec, arguments);
 		}
 		
 		public override void EmitStatementJs (JsEmitContext jec)
 		{
-			jec.Buf.Write ("\t");
+			jec.Buf.Write ("\t", Location);
 
 			EmitJs (jec);
 
@@ -6259,6 +6338,24 @@ namespace Mono.CSharp
 
 			if (Emit (ec, v))
 				ec.Emit (OpCodes.Pop);
+		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			var ns = jec.MakeJsNamespaceName(Type.MemberDefinition.Namespace);
+			var typeName = jec.MakeJsTypeNme(Type.Name);
+
+			jec.Buf.Write("new ",ns,".",typeName,"(", Location);
+			if (arguments != null)
+				arguments.EmitJs (jec);
+			jec.Buf.Write(")");
+		}
+		
+		public override void EmitStatementJs (JsEmitContext jec)
+		{
+			jec.Buf.Write ("\t", Location);
+			EmitJs (jec);
+			jec.Buf.Write (";\n");
 		}
 
 		public void AddressOf (EmitContext ec, AddressOp mode)
@@ -8209,6 +8306,17 @@ namespace Mono.CSharp
 	/// </summary>
 	public class MemberAccess : ATypeNameExpression
 	{
+		public enum Accessor {
+			Member,
+			AsE4xDescendant,				// The ActionScript E4X .. operator.
+			AsE4xChildAll,					// The ActionScript E4X .* operator.
+			AsE4xChildAttribute,			// The ActionScript E4X .@ operator.
+			AsE4xDescendantAll				// The ActionScript E4X ..* operator.
+//			AsE4xDescendantAttribute		// The ActionScript E4X ..@ operator (Actually, don't think this is valid)
+		}
+
+		public Accessor AccessorType = Accessor.Member;
+
 		protected Expression expr;
 
 		public MemberAccess (Expression expr, string id)
@@ -8241,8 +8349,33 @@ namespace Mono.CSharp
 			}
 		}
 
+		private Expression MakeE4xInvocation (ResolveContext rc, string method, string arg = null)
+		{
+			Arguments args = null;
+			if (arg != null) {
+				args = new Arguments (1);
+				args.Add (new Argument (new StringLiteral (rc.BuiltinTypes, arg, loc)));
+			}
+			return new Invocation(new MemberAccess(expr, method, loc), args); 
+		}
+
 		protected override Expression DoResolve (ResolveContext rc)
 		{
+			// ActionScript E4X: Handle E4x accesors.
+			if (rc.FileType == SourceFileType.ActionScript && AccessorType != Accessor.Member) {
+				if (AccessorType == Accessor.AsE4xChildAll) {
+					return MakeE4xInvocation(rc, "children").Resolve (rc);
+				} else if (AccessorType == Accessor.AsE4xDescendantAll) {
+					return MakeE4xInvocation(rc, "descendants").Resolve (rc);
+				} else if (AccessorType == Accessor.AsE4xChildAttribute) {
+					return MakeE4xInvocation (rc, "attribute", Name).Resolve (rc);
+				} else if (AccessorType == Accessor.AsE4xDescendant) {
+					return MakeE4xInvocation (rc, "descendants", Name).Resolve (rc);
+				}
+//				else if (AccessorType == Accessor.AsE4xDescendantAttribute) {
+//				}
+			}
+
 			var e = DoResolveName (rc, null);
 
 			if (!rc.OmitStructFlowAnalysis) {
@@ -8461,22 +8594,34 @@ namespace Mono.CSharp
 					if (member_lookup == null) {
 
 						// Check AS builtin types
-						if (rc.FileType == SourceFileType.ActionScript && this is MemberAccess && expr is TypeExpression) {
-							switch (expr_type.BuiltinType) {
-							case BuiltinTypeSpec.Type.String:
-								return new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "String", Location), Name, Location).Resolve (rc);
-							case BuiltinTypeSpec.Type.Double:
-								return new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "Number", Location), Name, Location).Resolve (rc);
-							case BuiltinTypeSpec.Type.Int:
-								return new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "int", Location), Name, Location).Resolve (rc);
-							case BuiltinTypeSpec.Type.UInt:
-								return new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "uint", Location), Name, Location).Resolve (rc);
-							case BuiltinTypeSpec.Type.Bool:
-								return new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "Boolean", Location), Name, Location).Resolve (rc);
-							case BuiltinTypeSpec.Type.Type:
-								return new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "Class", Location), Name, Location).Resolve (rc);
-							case BuiltinTypeSpec.Type.Delegate:
-								return new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "Function", Location), Name, Location).Resolve (rc);
+						if (rc.FileType == SourceFileType.ActionScript) {
+
+							// ActionScript E4X: Handle XML child elements.
+							if (AccessorType == Accessor.Member &&
+							    expr.Type.MemberDefinition.Namespace == AsConsts.AsRootNamespace &&
+							    (expr.Type.Name == "XML" || expr.Type.Name == "XMLList")) {
+
+								return MakeE4xInvocation(rc, "elements", Name).Resolve (rc);
+
+							} else if (expr is TypeExpression) {
+
+								switch (expr_type.BuiltinType) {
+								case BuiltinTypeSpec.Type.String:
+									return new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "String", Location), Name, Location).Resolve (rc);
+								case BuiltinTypeSpec.Type.Double:
+									return new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "Number", Location), Name, Location).Resolve (rc);
+								case BuiltinTypeSpec.Type.Int:
+									return new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "int", Location), Name, Location).Resolve (rc);
+								case BuiltinTypeSpec.Type.UInt:
+									return new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "uint", Location), Name, Location).Resolve (rc);
+								case BuiltinTypeSpec.Type.Bool:
+									return new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "Boolean", Location), Name, Location).Resolve (rc);
+								case BuiltinTypeSpec.Type.Type:
+									return new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "Class", Location), Name, Location).Resolve (rc);
+								case BuiltinTypeSpec.Type.Delegate:
+									return new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "Function", Location), Name, Location).Resolve (rc);
+								}
+
 							}
 						}
 
@@ -8716,6 +8861,13 @@ namespace Mono.CSharp
 			MemberAccess target = (MemberAccess) t;
 
 			target.expr = expr.Clone (clonectx);
+		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			expr.EmitJs (jec);
+			jec.Buf.Write (".");
+			jec.Buf.Write (Name);
 		}
 		
 		public override object Accept (StructuralVisitor visitor)
@@ -10188,6 +10340,16 @@ namespace Mono.CSharp
 		{
 			if (source == null)
 				return EmptyExpressionStatement.Instance;
+
+			// If we're used in a collection initializer, CurrentInitializerVariable will be null.  Just resolve and exit.
+			if (ec.CurrentInitializerVariable == null) {
+				source = source.Resolve (ec);
+				if (target != null)
+					target = target.Resolve (ec);
+				eclass = ExprClass.Value;
+				type = source.Type;
+				return this;
+			}
 
 			var t = ec.CurrentInitializerVariable.Type;
 			if (t.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {

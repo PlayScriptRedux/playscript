@@ -382,6 +382,11 @@ namespace Mono.CSharp {
 			// It exists only as hint not to call Resolve on constants
 			return true;
 		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			jec.Buf.Write (this.GetValueAsLiteral(), Location);
+		}
 	}
 
 	public abstract class IntegralConstant : Constant
@@ -413,10 +418,6 @@ namespace Mono.CSharp {
 		
 		public abstract Constant Increment ();
 
-		public override void EmitJs (JsEmitContext jec)
-		{
-			jec.Buf.Write (GetValue ().ToString());
-		}
 	}
 	
 	public class BoolConstant : Constant {
@@ -1821,9 +1822,9 @@ namespace Mono.CSharp {
 		{
 			double d = Value;
 			if (d == System.Math.Floor (d)) {
-				jec.Buf.Write (GetValue ().ToString () + ".0");
+				jec.Buf.Write (GetValue ().ToString (), ".0", Location);
 			} else {
-				jec.Buf.Write (GetValue ().ToString ());
+				jec.Buf.Write (GetValue ().ToString (), Location);
 			}
 		}
 
@@ -2012,7 +2013,7 @@ namespace Mono.CSharp {
 		public override void EmitJs (JsEmitContext jec)
 		{
 			var s = Value.Replace("\"", "\\\"");
-			jec.Buf.Write("\"" + s + "\"");
+			jec.Buf.Write("\"", s, "\"", Location);
 		}
 
 		public override void EncodeAttributeValue (IMemberContext rc, AttributeEncoder enc, TypeSpec targetType)
@@ -2107,7 +2108,7 @@ namespace Mono.CSharp {
 
 		public override void EmitJs (JsEmitContext jec)
 		{
-			jec.Buf.Write (GetValueAsLiteral());
+			jec.Buf.Write (GetValueAsLiteral(), Location);
 		}
 
 		public override string ExprClassName {

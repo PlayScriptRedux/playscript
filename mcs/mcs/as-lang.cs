@@ -12,6 +12,7 @@
 
 using System;
 using System.Collections.Generic;
+using Mono.CSharp.JavaScript;
 
 namespace Mono.CSharp
 {
@@ -124,6 +125,14 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext rc)
 		{
+			if (rc.Target == Target.JavaScript) {
+				this.type = rc.BuiltinTypes.Dynamic;
+				this.eclass = ExprClass.Value;
+				foreach (ElementInitializer elem in Elements)
+					elem.Resolve (rc);
+				return this;
+			}
+
 			TypeExpression type;
 			if (inferredObjType != null) {
 				type = new TypeExpression (inferredObjType, Location);
@@ -153,7 +162,23 @@ namespace Mono.CSharp
 		{
 			throw new InternalErrorException ("Missing Resolve call");
 		}
-		
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			jec.Buf.Write ("{", Location);
+
+			bool first = true;
+			foreach (ElementInitializer elem in Elements) {
+				if (!first)
+					jec.Buf.Write (", ");
+				jec.Buf.Write ("\"", elem.Name, "\":");
+				elem.Source.EmitJs (jec);
+				first = false;
+			}
+
+			jec.Buf.Write ("}");
+		}
+
 		public override object Accept (StructuralVisitor visitor)
 		{
 			return visitor.Visit (this);
@@ -211,6 +236,14 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext rc)
 		{
+			if (rc.Target == Target.JavaScript) {
+				this.type = rc.Module.PredefinedTypes.AsArray.Resolve();
+				this.eclass = ExprClass.Value;
+				foreach (var elem in Elements)
+					elem.Resolve (rc);
+				return this;
+			}
+
 			TypeExpression type;
 			if (vectorType != null) {
 				var elemTypeSpec = vectorType.ResolveAsType(rc);
@@ -258,6 +291,21 @@ namespace Mono.CSharp
 		{
 			inferredArrayType = arrayType;
 			return Resolve (rc);
+		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			jec.Buf.Write ("[", Location);
+			
+			bool first = true;
+			foreach (var elem in Elements) {
+				if (!first)
+					jec.Buf.Write (", ");
+				elem.EmitJs (jec);
+				first = false;
+			}
+			
+			jec.Buf.Write ("]");
 		}
 
 		public override object Accept (StructuralVisitor visitor)
@@ -315,10 +363,20 @@ namespace Mono.CSharp
 					return null;
 				}
 
+				if (ec.Target == Target.JavaScript) {
+					Expr = Expr.Resolve(ec);
+					return this;
+				}
+
 				removeExpr = new Invocation (new MemberAccess (expr, "Remove", loc), elem_access.Arguments);
 				return removeExpr.Resolve (ec);
 
 			} else if (Expr is MemberAccess) {
+
+				if (ec.Target == Target.JavaScript) {
+					Expr = Expr.Resolve(ec);
+					return this;
+				}
 
 				var memb_access = Expr as MemberAccess;
 
@@ -353,6 +411,19 @@ namespace Mono.CSharp
 		public override void EmitStatement (EmitContext ec)
 		{
 			throw new System.NotImplementedException ();
+		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			jec.Buf.Write ("delete ", Location);
+			Expr.EmitJs (jec);
+		}
+
+		public override void EmitStatementJs (JsEmitContext jec)
+		{
+			jec.Buf.Write ("\t", Location);
+			EmitJs (jec);
+			jec.Buf.Write (";\n");
 		}
 
 		public override Expression CreateExpressionTree (ResolveContext ec)
@@ -427,6 +498,11 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext rc)
 		{
+			if (rc.Target == Target.JavaScript) {
+				type = rc.Module.PredefinedTypes.AsRegExp.Resolve();
+				return this;
+			}
+
 			var args = new Arguments(2);
 			args.Add (new Argument(new StringLiteral(rc.BuiltinTypes, Regex, this.Location)));
 			args.Add (new Argument(new StringLiteral(rc.BuiltinTypes, Options, this.Location)));
@@ -438,6 +514,11 @@ namespace Mono.CSharp
 		public override void Emit (EmitContext ec)
 		{
 			throw new NotSupportedException ();
+		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			jec.Buf.Write (GetValue () as String, Location);
 		}
 
 #if FULL_AST
@@ -489,6 +570,12 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext ec)
 		{
+			if (ec.Target == Target.JavaScript) {
+				expr = Expr.Resolve (ec);
+				objExpr = objExpr.Resolve (ec);
+				return this;
+			}
+
 			var objExpRes = objExpr.Resolve (ec);
 
 			var args = new Arguments (1);
@@ -521,6 +608,13 @@ namespace Mono.CSharp
 		public override void Emit (EmitContext ec)
 		{
 			throw new InternalErrorException ("Missing Resolve call");
+		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			Expr.EmitJs (jec);
+			jec.Buf.Write (" in ");
+			ObjectExpression.EmitJs (jec);
 		}
 
 		public override object Accept (StructuralVisitor visitor)
@@ -557,6 +651,10 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext ec)
 		{
+			if (ec.Target == Target.JavaScript) {
+				return this;
+			}
+
 			return new MemberAccess(new TypeExpression(ec.Module.PredefinedTypes.AsUndefined.Resolve(), loc), 
 			                        "_undefined", loc).Resolve (ec);
 		}
@@ -568,6 +666,11 @@ namespace Mono.CSharp
 		public override void Emit (EmitContext ec)
 		{
 			throw new InternalErrorException ("Missing Resolve call");
+		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			jec.Buf.Write ("undefined", Location);
 		}
 
 		public override object Accept (StructuralVisitor visitor)

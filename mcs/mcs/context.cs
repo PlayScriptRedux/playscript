@@ -505,6 +505,10 @@ namespace Mono.CSharp
 			set { fileType = value; }
 		}
 
+		public Target Target {
+			get { return Module.Compiler.Settings.Target; }
+		}
+
 		#endregion
 
 		public bool MustCaptureVariable (INamedBlockVariable local)
