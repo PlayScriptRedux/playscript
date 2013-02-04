@@ -1,45 +1,47 @@
 package flash.utils {
 
 	public function clearInterval(id:uint):void {
+		Timer.clearInterval(id);
 	}
 
 	public function clearTimeout(id:uint):void {
+		Timer.clearTimeout(id);
 	}
 	
-//	public function describeType(value:*):XML {
-//		return null;
-//	}
+	public function describeType(value:*):XML {
+		throw new System.NotImplementedException();
+	}
 	
 	public function escapeMultiByte(value:String):String {
-		return null;
+		throw new System.NotImplementedException();
 	}
 	
 	public function getDefinitionByName(name:String):Object {
-		return null;
+		throw new System.NotImplementedException();
 	}
 	
 	public function getQualifiedClassName(value:*):String {
-		return null;
+		return value.GetType().FullName;
 	}
 	
 	public function getQualifiedSuperclassName(value:*):String {
-		return null;
+		throw new System.NotImplementedException();
 	}
 	
 	public function getTimer():int {
-		return 0;
+		return Timer.getTimer();
 	}
 	
 	public function setInterval(closure:Function, delay:Number, ... arguments):uint {
-		return 0;
+		return Timer.setInterval(closure, delay, arguments);
 	}
 	
 	public function setTimeout(closure:Function, delay:Number, ... arguments):uint {
-		return 0;
+		return Timer.setTimeout(closure, delay, arguments);
 	}
 	
 	public function unescapeMultiByte(value:String):String {
-		return null;
+		throw new System.NotImplementedException();
 	}
 
 }

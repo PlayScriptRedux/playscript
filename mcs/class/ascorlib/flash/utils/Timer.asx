@@ -1,6 +1,14 @@
 package flash.utils {
 
-	import flash.events.EventDispatcher;
+	import flash.events.*;
+	import System.Diagnostics.Stopwatch;
+	import System.Collections.Generic.*;
+	
+	public class TimerEvent
+	{
+		public static const TIMER:String = "TIMER";
+		public static const TIMER_COMPLETE:String = "TIMER_COMPLETE";
+	};
 
 	public class Timer extends EventDispatcher {
 	
@@ -8,30 +16,128 @@ package flash.utils {
 		// Properties
 		//
 	
-		public property currentCount : int { get { return 0; } }
+		public property currentCount : int 
+		{ 
+			get { return mCurrentCount; } 
+		}
 
  	 	public property delay : Number { get; set; }
-
  	 	public property repeatCount : int { get; set; }
-
- 	 	public property running : Boolean { get { return false; } }
+ 	 	public property running : Boolean { get { return mRunning; } }
 
  	 	//
  	 	// Methods
  	 	//
  	 	 	 	 	 	
 		public function Timer(delay:Number, repeatCount:int = 0) {
+			this.delay = delay;
+			this.repeatCount = repeatCount;
+			mRunning = false;
+			mCurrentCount = 0;
+			mCurrentTime = 0;
 		}
  
  		public function reset():void {
+ 			mRunning = false;
+ 			mCurrentCount = 0;
+			mCurrentTime = 0;
  		}
  	 	
 		public function start():void {
+			if (!mRunning)
+			{
+				mRunning = true;
+				sActiveTimerList.Add(this);
+			}
 		}
  	 	
 		public function stop():void {
+			mRunning = false;
+		}
+		
+		private function advanceTime(time:Number):void
+		{
+			if (!mRunning) return;
+			
+			// advance accumulated time for this timer
+			mCurrentTime += time;
+			
+			// process accumulated time
+			while (mRunning && (mCurrentTime >= delay))
+			{
+				// subtract delay from accumulated time
+				mCurrentTime -= delay;
+			
+				// see if we are done
+				if (++mCurrentCount >= repeatCount)
+				{
+					// stop running
+					mRunning = false;
+				}
+
+				// dispatch timer event
+				var e:Event = new Event(TimerEvent.TIMER);
+				this.dispatchEvent(e);
+				
+				if (!mRunning)
+				{
+					// dispatch timer complete event
+					var ec:Event = new Event(TimerEvent.TIMER_COMPLETE);
+					this.dispatchEvent(ec);
+				}
+			}
+		}
+		
+		public static function advanceAllTimers(time:Number):void 
+		{
+			// iterate through all timers and advance their time
+			for each (var timer:Timer in sActiveTimerList)
+			{
+				// advance time
+				timer.advanceTime(time);
+				if (!timer.running)
+				{
+					// remove this timer from the active list 
+					sToRemoveList.Add(timer);
+				}
+			}
+			
+			// remove all timers that are inactive
+			for each (timer in sToRemoveList)
+			{
+				sActiveTimerList.Remove(timer);
+			}
+			sToRemoveList.Clear();
+		}
+		
+		
+		internal static function setInterval(closure:Function, delay:Number, arguments:Object[]):uint {
+			throw new System.NotImplementedException();
 		}
 	
+		internal static function setTimeout(closure:Function, delay:Number, arguments:Object[]):uint {
+			throw new System.NotImplementedException();
+		}
+		
+		internal static function clearInterval(id:uint):void {
+			throw new System.NotImplementedException();
+		}
+		
+		internal static function clearTimeout(id:uint):void {
+			throw new System.NotImplementedException();
+		}
+		
+		internal static function getTimer():int {
+			return sStopwatch.ElapsedMilliseconds;
+		}
+		
+		private var mRunning:Boolean;
+		private var mCurrentCount:int;
+		private var mCurrentTime:Number;
+				
+		private static var sStopwatch : Stopwatch = Stopwatch.StartNew();
+		private static var sActiveTimerList:List.<Timer> = new List.<Timer>();
+		private static var sToRemoveList:List.<Timer> = new List.<Timer>();
 	}
 
 }

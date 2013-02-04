@@ -9,23 +9,23 @@ namespace _root
 		//
 
 		public static string toExponential(this int i, uint fractionDigits) {
-			return null;
+			throw new NotImplementedException();
 		}
 			
 		public static string toFixed(this int i, uint fractionDigits) {
-			return null;
+			throw new NotImplementedException();
 		}
 			
 		public static string toPrecision(this int i, uint precision) {
-			return null;
+			throw new NotImplementedException();
 		}
 			
 		public static string toString(this int i) {
-			return null;
+			throw new NotImplementedException();
 		}
 	
 		public static string toString(this int i, uint radix) {
-			return null;
+			throw new NotImplementedException();
 		}
 			
 		public static int valueOf(this int i) {
@@ -40,6 +40,12 @@ namespace _root
 
 		public const int MIN_VALUE = -2147483648;
 
+	}
+
+	public static class @uint
+	{
+		public const uint MAX_VALUE = System.UInt32.MaxValue;
+		public const uint MIN_VALUE = System.UInt32.MinValue;
 	}
 }
 

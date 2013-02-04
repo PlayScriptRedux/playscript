@@ -25,7 +25,7 @@ namespace _root
 		}
 
 		public static int indexOf(this string s, string val, double startIndex = 0) {
-			throw new NotImplementedException();
+			return s.IndexOf(val, (int)startIndex);
 		}
 						
 		public static int lastIndexOf(this string s, string val, double startIndex = 0x7FFFFFFF) {

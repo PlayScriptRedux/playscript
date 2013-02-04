@@ -106,6 +106,9 @@
     <Compile Include="flash\display3D\textures\Texture.cs" />
     <Compile Include="flash\display3D\Program3D.cs" />
     <Compile Include="flash\display3D\AGALConverter.cs" />
+    <Compile Include="flash\filesystem\File.asx" />
+    <Compile Include="flash\desktop\NativeApplication.asx" />
+    <Compile Include="SWFAttribute.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -114,6 +117,7 @@
     <Folder Include="flash\debugger\" />
     <Folder Include="flash\ext\" />
     <Folder Include="flash\sampler\" />
+    <Folder Include="flash\filesystem\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="flash\accessibility\AccessibilityImplementation.asx" />

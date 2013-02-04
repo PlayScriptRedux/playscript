@@ -9,6 +9,10 @@ namespace _root
 
 		public string mimeType { get; set; }
 
+		public string embedAsCFF { get; set; }
+
+		public string fontFamily { get; set; }
+
 		public EmbedAttribute ()
 		{
 		}

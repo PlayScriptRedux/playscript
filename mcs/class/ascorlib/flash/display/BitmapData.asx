@@ -83,7 +83,7 @@ package flash.display {
 
  	 	public function draw(source:IBitmapDrawable, matrix:Matrix = null, colorTransform:ColorTransform = null, blendMode:String = null, 
 	 	 	clipRect:Rectangle = null, smoothing:Boolean = false):void {
-			throw new System.NotImplementedException();
+			// throw new System.NotImplementedException();
  	 	}
  	 	
 		public function drawWithQuality(source:IBitmapDrawable, matrix:Matrix = null, colorTransform:ColorTransform = null, blendMode:String = null, 
@@ -214,7 +214,8 @@ package flash.display {
 			if (!File.Exists(path))
 			{
 				// make path be relative to assembly
-				path = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), path); 
+				// path = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), path); 
+				path = Path.Combine(NSBundle.MainBundle.ResourcePath, path);
 			}
 
 			var src:NSImage = new NSImage (path);

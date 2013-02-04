@@ -1,0 +1,47 @@
+package flash.filesystem {
+	import System.*;
+	import System.IO.*;
+	import System.Reflection.*;
+
+#if PLATFORM_MONOMAC
+	import MonoMac.CoreGraphics.*;
+	import MonoMac.Foundation.*;
+	import MonoMac.AppKit.*;
+#endif
+
+	public class File {
+	
+		private static var sApplicationDirectory:File;
+	
+ 	 	public static property applicationDirectory : File 
+ 	 	{ 
+ 	 		get 
+ 	 		{
+ 	 			if (sApplicationDirectory == null) {
+					// get location of application
+					//var appPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+					var appPath = NSBundle.MainBundle.ResourcePath;
+					
+					// create new file 
+ 	 				sApplicationDirectory = new File(appPath);
+ 	 			}
+ 	 			return sApplicationDirectory;
+ 	 		} 
+ 	 	}
+ 	 	
+ 	 	public function File(path:String)
+ 	 	{
+ 	 		mPath = path;
+ 	 	}
+ 	 	
+ 	 	public function resolvePath(path:String):String {
+ 	 		return Path.Combine(mPath, path);
+ 	 	}
+ 	 	
+ 	 	public property nativePath : String {
+ 	 		get {return mPath;}
+ 	 	}
+ 	 	
+ 	 	private var mPath:String;
+	}
+}

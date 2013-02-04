@@ -3,6 +3,8 @@ package flash.display {
 	import flash.display3D.*;
 	import flash.geom.Rectangle;
 	import flash.events.*;
+	import flash.utils.Timer;
+	import flash.utils.TimerEvent;
 	
 	import System.IntPtr;
 
@@ -30,6 +32,15 @@ package flash.display {
 		}
 		
 		public function requestContext3D(context3DRenderMode:String = "auto", profile:String = "baseline"):void {
+			// create context with a delay
+			var timer:Timer = new Timer(1, 1);
+			timer.addEventListener(TimerEvent.TIMER, doCreateContext);
+			timer.start();
+		}
+		
+		
+		private function doCreateContext(te:Event):void
+		{
 			if (mContext3D==null) {
 				// create context 
 				mContext3D = new Context3D(this);

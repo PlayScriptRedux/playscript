@@ -1,5 +1,5 @@
 package flash.display {
-
+	import System.NotImplementedException;
 	import flash.accessibility.AccessibilityProperties;
 	import flash.events.EventDispatcher;
 	import flash.geom.Rectangle;
@@ -82,7 +82,9 @@ package flash.display {
 		// 
 		// Public Methods
 		// 
-		
+
+		// this global stage sets the stage that this displayobject is attached to at construction time
+		// this is necessary because some root display objects must have their stage set before their constructor is invoked 		
 		public static var globalStage:Stage;
 		
 		private var mStage:Stage;
@@ -92,35 +94,35 @@ package flash.display {
 		}
 		
 		public function getBounds(targetCoordinateSpace:DisplayObject):Rectangle {
-			return null;
+			throw new NotImplementedException();
 		}
 		
 		public function getRect(targetCoordinateSpace:DisplayObject):Rectangle {
-			return null;
+			throw new NotImplementedException();
 		}
 
  	 	public function globalToLocal(point:Point):Point {
- 	 		return null;
+			throw new NotImplementedException();
  	 	}
  	 	
 		public function globalToLocal3D(point:Point):Vector3D {
-			return null;
+			throw new NotImplementedException();
 		}
  	 	
 		public function hitTestObject(obj:DisplayObject):Boolean {
-			return false;
+			throw new NotImplementedException();
 		}
  	 	
 		public function hitTestPoint(x:Number, y:Number, shapeFlag:Boolean = false):Boolean {
-			return false;
+			throw new NotImplementedException();
 		}
  	 	
 		public function local3DToGlobal(point3d:Vector3D):Point {
-			return null;		
+			throw new NotImplementedException();
 		}
  	 	
 		public function localToGlobal(point:Point):Point {
-			return null;
+			throw new NotImplementedException();
 		}
 	
 	}

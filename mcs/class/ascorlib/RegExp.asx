@@ -64,7 +64,18 @@ package {
 		}
 
 		public function exec(str:String):Object {
-			throw new NotImplementedException();
+			var m = mRegex.Match(str);
+			if (m.Success) {
+				var a:Array = [];
+				// a.push(m.Value);
+				for each (var g:Group in m.Groups) {
+					a.push(g.Value);
+				}
+				return a;
+			} else
+			{
+				return null;
+			}
 		}
  	 	
 		public function test(str:String):Boolean {

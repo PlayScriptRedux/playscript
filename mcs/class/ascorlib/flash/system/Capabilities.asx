@@ -36,7 +36,7 @@ package flash.system {
 		
 		public static property hasVideoEncoder : Boolean { get { return false; } }
 		
-		public static property isDebugger : Boolean { get { return false; } }
+		public static property isDebugger : Boolean { get { return true; } }
 		
 		public static property isEmbeddedInAcrobat : Boolean { get { return false; } }
 		
@@ -46,7 +46,7 @@ package flash.system {
 		
 		public static property localFileReadDisable : Boolean { get { return false; } }
 		
-		public static property manufacturer : String { get { return null; } }
+		public static property manufacturer : String { get { return "iOS"; } }
 		
 		public static property maxLevelIDC : String { get { return null; } }
 		
