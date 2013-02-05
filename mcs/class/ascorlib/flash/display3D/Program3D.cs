@@ -132,24 +132,38 @@ namespace flash.display3D {
 			}
 
 			// clear register map
-			mRegisterToLocation.Clear();
+			mVertexRegisterToLocation.Clear();
+			mFragmentRegisterToLocation.Clear();
 		}
 
-		public int getLocation (int register)
+		public int getVertexLocation (int register)
 		{
 			// maintain a map of register number to GLSL location
 			// $$TODO this map could be eliminated by using a single GLSL array for all registers
 			int location = -1;
-			if (!mRegisterToLocation.TryGetValue (register, out location)) {
+			if (!mVertexRegisterToLocation.TryGetValue (register, out location)) {
 
 				var name = "vc" + register;
 				location = GL.GetUniformLocation (mProgramId, name);
-				mRegisterToLocation.Add(register, location);
+				mVertexRegisterToLocation.Add(register, location);
 			}
 			return location;
 		}
 
-		
+		public int getFragmentLocation (int register)
+		{
+			// maintain a map of register number to GLSL location
+			// $$TODO this map could be eliminated by using a single GLSL array for all registers
+			int location = -1;
+			if (!mFragmentRegisterToLocation.TryGetValue (register, out location)) {
+				
+				var name = "fc" + register;
+				location = GL.GetUniformLocation (mProgramId, name);
+				mFragmentRegisterToLocation.Add(register, location);
+			}
+			return location;
+		}
+
 		private int 			   mVertexShaderId = 0;
 		private int 			   mFragmentShaderId = 0;
 		private int 			   mProgramId = 0;
@@ -157,7 +171,8 @@ namespace flash.display3D {
 		private string 			   mVertexSource;
 		private string 			   mFragmentSource;
 
-		private readonly Dictionary<int, int> mRegisterToLocation = new Dictionary<int, int>();
+		private readonly Dictionary<int, int> mVertexRegisterToLocation = new Dictionary<int, int>();
+		private readonly Dictionary<int, int> mFragmentRegisterToLocation = new Dictionary<int, int>();
 
 #else
 

@@ -144,10 +144,12 @@ namespace flash.display3D {
 
 			if (programType == "vertex") {
 				// set uniform registers
-				int location = mProgram.getLocation(firstRegister);
+				int location = mProgram.getVertexLocation(firstRegister);
 				GL.UniformMatrix4(location, 1, transposedMatrix, mTemp);
 			} else {
-				throw new NotImplementedException ();
+				// set uniform registers
+				int location = mProgram.getFragmentLocation(firstRegister);
+				GL.UniformMatrix4(location, 1, transposedMatrix, mTemp);
 			}
 		}
 
@@ -159,10 +161,12 @@ namespace flash.display3D {
 
 			if (programType == "vertex") {
 				// set uniform registers
-				int location = mProgram.getLocation(firstRegister);
+				int location = mProgram.getVertexLocation(firstRegister);
 				GL.Uniform4(location, numRegisters, mTemp);
 			} else {
-				throw new NotImplementedException();
+				// set uniform registers
+				int location = mProgram.getFragmentLocation(firstRegister);
+				GL.Uniform4(location, numRegisters, mTemp);
 			}
 		}
  	 	
