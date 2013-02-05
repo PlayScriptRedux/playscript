@@ -136,13 +136,13 @@ namespace flash.events
 		public virtual uint eventPhase { get { return _eventPhase; } } 
 
 		// [read-only] The event target.
-		public virtual dynamic target { get { return _target; } } 
+		public virtual dynamic target { get { return _target; } set { _target = value; }} 
 
 		// [read-only] The type of event.
 		public virtual string type { get { return _type; } }
 
 		public virtual Event clone() {
-			return null;
+			throw new System.NotImplementedException();
 		}
 
 		public virtual string toString() {
@@ -150,6 +150,7 @@ namespace flash.events
 		}
 
 		public virtual void stopImmediatePropagation() {
+			throw new System.NotImplementedException();
 		}
 
 	}

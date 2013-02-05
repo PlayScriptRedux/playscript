@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 
 namespace _root
 {
@@ -20,8 +21,13 @@ namespace _root
 			throw new NotImplementedException();
 		}
 
-		public static string fromCharCode(params object[] charCodes) {
-			throw new NotImplementedException();
+		public static string fromCharCode (params object[] charCodes)
+		{
+			var sb = new StringBuilder ();
+			foreach (int obj in charCodes) {
+				sb.Append( (char) obj);
+			}
+			return sb.ToString();
 		}
 
 		public static int indexOf(this string s, string val, double startIndex = 0) {
@@ -108,11 +114,11 @@ namespace _root
 		}
 
 		public static string toLowerCase(this string s) {
-			throw new NotImplementedException();
+			return s.ToLowerInvariant();
 		}
 
 		public static string toUpperCase(this string s) {
-			throw new NotImplementedException();
+			return s.ToUpperInvariant();
 		}
 
 		public static string valueOf(this string s) {

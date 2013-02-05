@@ -112,7 +112,7 @@ namespace flash.events
 					dynamic listAct = listener;
 
 					for (int i=0; i < evList.Count; i++) {
-						if (evList[i].callback == listAct) {
+						if ((object)evList[i].callback == (object)listAct) {
 							evList.RemoveAt (i);
 							break;
 						}

@@ -4,6 +4,7 @@ namespace flash.display3D.textures {
 	using flash.utils;
 	using flash.display;
 	using flash.display3D;
+	using flash.events;
 	
 #if PLATFORM_MONOMAC
 	using MonoMac.OpenGL;
@@ -31,9 +32,24 @@ namespace flash.display3D.textures {
 			GL.GenTextures (1, out mTextureId);
 			// GL.GenBuffers (1, out mBufferId);
 		}
-		
-		public void uploadCompressedTextureFromByteArray(ByteArray data, uint byteArrayOffset, bool async = false) {
-			throw new NotImplementedException();
+
+		public void uploadCompressedTextureFromByteArray (ByteArray data, uint byteArrayOffset, bool async = false)
+		{
+			// $$TODO 
+			// this is empty for now
+
+			if (async) {
+				// load with a delay
+				var timer = new flash.utils.Timer(1, 1);
+				timer.addEventListener(TimerEvent.TIMER, (System.Action<Event>)this.OnTextureReady );
+				timer.start();
+			}
+
+		}
+
+		private void OnTextureReady (Event e)
+		{
+			this.dispatchEvent(new Event(Event.TEXTURE_READY)  );
 		}
 		
 		public void uploadFromBitmapData (BitmapData source, uint miplevel = 0)

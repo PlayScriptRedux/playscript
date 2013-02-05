@@ -1,6 +1,8 @@
 package flash.net {
 
-	import flash.events.EventDispatcher;
+	import System.IO.*;
+	import flash.events.*;
+	import flash.utils.*;
 
 	public class URLLoader extends EventDispatcher {
 
@@ -8,11 +10,11 @@ package flash.net {
 		// Properties
 		//
 			
-		public property bytesLoaded : uint { get; set; }
+		public property bytesLoaded : uint { get; private set; }
 
-	 	public property bytesTotal : uint { get; set; }
+	 	public property bytesTotal : uint { get; private set; }
 
- 	 	public property data : * { get; set; }
+ 	 	public property data : * { get; private set; }
 
  	 	public property dataFormat : String { get; set; }
  	 	
@@ -21,17 +23,77 @@ package flash.net {
 		//
 
 		public function URLLoader(request:URLRequest = null) {
+			mRequest = request;
 		}
 
+
 		public override function addEventListener(type:String, listener:Function, useCapture:Boolean = false, priority:int = 0, useWeakReference:Boolean = false):void {
+			super.addEventListener(type, listener, useCapture, priority, useWeakReference);
 		}
  	 	
 		public function close():void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function load(request:URLRequest):void {
+			if (request) {
+				mRequest = request;
+			}
+
+			if (dataFormat != URLLoaderDataFormat.BINARY)
+			{
+				throw new System.NotImplementedException();
+			}
+		
+			// load with a delay
+			var timer:Timer = new Timer(1, 1);
+			timer.addEventListener(TimerEvent.TIMER, doLoad);
+			timer.start();
 		}
-	
+		
+		private function doLoad(e:Event):void
+		{
+			trace("URLLoader: ", mRequest.url);
+
+			var de:Event;
+			var uri = new System.Uri(mRequest.url);
+			if (uri.IsFile)
+			{
+				// handle file loading
+				var path = uri.AbsolutePath;
+				if (File.Exists(path))
+				{
+					// file exists. read it
+					var fileData:byte[] = File.ReadAllBytes(path);
+					this.bytesLoaded = fileData.Length;
+					this.bytesTotal  = fileData.Length;
+					
+					var ba:ByteArray = new ByteArray();
+					ba.writeBytes(fileData);
+					ba.position = 0;
+					this.data = ba;
+					
+					// io error, file not found
+					de = new Event(Event.COMPLETE);
+					de.target = this;
+					this.dispatchEvent(de);
+				}
+				else
+				{
+					// io error, file not found
+					de = new Event(IOErrorEvent.IO_ERROR);
+					de.target = this;
+					this.dispatchEvent(de);
+				}
+			}
+			else
+			{
+				// unsupported scheme
+				throw new System.NotImplementedException();
+			}
+		}
+		
+		private var mRequest:URLRequest;
 	}
 
 }

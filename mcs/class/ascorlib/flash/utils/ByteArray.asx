@@ -9,7 +9,7 @@ package flash.utils {
 		//
 		
 		public property bytesAvailable : uint { 
-			get { throw new NotImplementedException(); } 
+			get { return length - position; } 
 		}
 		
 		public static property defaultObjectEncoding : uint {
@@ -178,14 +178,26 @@ package flash.utils {
 			throw new NotImplementedException();
 		}
 		
+		public function writeBytes(a:byte[]):void {
+			mWriter.Write(a);
+		}
+		
 		public indexer this(index:int):int {
 			get 
 			{
-				throw new NotImplementedException();
-				 //return 0; 
+				// this isnt the fastest thing but it works, may need our own stream implementation to do this better
+				var oldPos:int = mStream.Position;
+				mStream.Position = index;
+				var value:int = mStream.ReadByte();
+				mStream.Position = oldPos;
+				return value;
 			}
-			set { 
-				throw new NotImplementedException();
+			set {
+				// this isnt the fastest thing but it works, may need our own stream implementation to do this better
+				var oldPos:int = mStream.Position;
+				mStream.Position = index;
+				mStream.WriteByte(byte(value));
+				mStream.Position = oldPos;
 			}
 		}
 		
