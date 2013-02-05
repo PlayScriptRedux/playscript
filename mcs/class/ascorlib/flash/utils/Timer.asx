@@ -3,6 +3,7 @@ package flash.utils {
 	import flash.events.*;
 	import System.Diagnostics.Stopwatch;
 	import System.Collections.Generic.*;
+	import System.Linq.*;
 	
 	public class TimerEvent
 	{
@@ -68,8 +69,11 @@ package flash.utils {
 				// subtract delay from accumulated time
 				mCurrentTime -= delay;
 			
+				// increment count
+				mCurrentCount++;
+			
 				// see if we are done
-				if (++mCurrentCount >= repeatCount)
+				if ((repeatCount > 0) && (mCurrentCount >= repeatCount))
 				{
 					// stop running
 					mRunning = false;
@@ -91,40 +95,58 @@ package flash.utils {
 		public static function advanceAllTimers(time:Number):void 
 		{
 			// iterate through all timers and advance their time
-			for each (var timer:Timer in sActiveTimerList)
+			// note that we clone the array here to deal with timers that add timers or timers that must be removed
+			for each (var timer:Timer in sActiveTimerList.ToArray() )
 			{
 				// advance time
 				timer.advanceTime(time);
 				if (!timer.running)
 				{
 					// remove this timer from the active list 
-					sToRemoveList.Add(timer);
+					sActiveTimerList.Remove(timer);
 				}
 			}
-			
-			// remove all timers that are inactive
-			for each (timer in sToRemoveList)
-			{
-				sActiveTimerList.Remove(timer);
-			}
-			sToRemoveList.Clear();
 		}
 		
 		
+		private static function createTimer(closure:Function, delay:Number, arguments:Object[], repeat:int):uint {
+			if (arguments.Length > 0) throw new System.NotImplementedException();
+			
+			// allocate timer id
+			var id:int = sNextTimerId++;
+			
+			// create timer object
+			var timer:Timer = new Timer(delay, repeat);
+			timer.addEventListener(TimerEvent.TIMER, function(e:Event):void {closure();} );
+			timer.start();
+			
+			// add to dictionary
+			sTimerDictionary[id] = timer;
+			return id;
+		}
+		
+		private static function deleteTimer(id:uint):void {
+			var timer:Timer;
+			if (sTimerDictionary.TryGetValue(id, out timer)) {
+				timer.stop();
+				sTimerDictionary.Remove(id);
+			}
+		}
+		
 		internal static function setInterval(closure:Function, delay:Number, arguments:Object[]):uint {
-			throw new System.NotImplementedException();
+			return createTimer(closure, delay, arguments, 0);
 		}
 	
 		internal static function setTimeout(closure:Function, delay:Number, arguments:Object[]):uint {
-			throw new System.NotImplementedException();
+			return createTimer(closure, delay, arguments, 1);
 		}
 		
 		internal static function clearInterval(id:uint):void {
-			throw new System.NotImplementedException();
+			deleteTimer(id);
 		}
 		
 		internal static function clearTimeout(id:uint):void {
-			throw new System.NotImplementedException();
+			deleteTimer(id);
 		}
 		
 		internal static function getTimer():int {
@@ -135,9 +157,15 @@ package flash.utils {
 		private var mCurrentCount:int;
 		private var mCurrentTime:Number;
 				
+		// stopwatch for user by flash.utils.getTimer()
 		private static var sStopwatch : Stopwatch = Stopwatch.StartNew();
+		
+		// list of all active timers that need per-frame processing
 		private static var sActiveTimerList:List.<Timer> = new List.<Timer>();
-		private static var sToRemoveList:List.<Timer> = new List.<Timer>();
+		
+		// this is a dictionary of timers by id for use by setInterval/setTimeout
+		private static var sTimerDictionary:Dictionary.<int,Timer> = new Dictionary.<int,Timer>();
+		private static var sNextTimerId:int = 1;
 	}
 
 }

@@ -70,7 +70,32 @@ package flash.display {
 
 		public function copyPixels(sourceBitmapData:BitmapData, sourceRect:Rectangle, destPoint:Point, 
 			alphaBitmapData:BitmapData = null, alphaPoint:Point = null, mergeAlpha:Boolean = false):void {
-			//throw new System.NotImplementedException();
+
+			if (mergeAlpha || (alphaBitmapData != null)) {
+				throw new System.NotImplementedException();
+			}
+									
+			var sourceData:System.UInt32[] = sourceBitmapData.getRawData();
+			var destData:System.UInt32[] = this.getRawData();
+
+			// compute source offset and pitch 
+			var sourcePitch:int = (sourceBitmapData.width * 4);
+			var sourceOffset:int = (sourcePitch * sourceRect.y) + (sourceRect.x * 4);
+			
+			// compute dest offset and pitch
+			var destPitch:int = (this.width * 4);
+			var destOffset:int = (destPitch * destPoint.y) + (destPoint.x * 4);
+
+			var height:int = sourceRect.height;
+			for (var y:int = 0; y < height; y++)
+			{
+				// copy row of pixels
+				System.Buffer.BlockCopy(sourceData, sourceOffset, destData, destOffset, sourceRect.width * 4);
+			
+				// next row
+				sourceOffset += sourcePitch;
+				destOffset += destPitch;
+			}
 		}
 
 		public function copyPixelsToByteArray(rect:Rectangle, data:ByteArray):void {

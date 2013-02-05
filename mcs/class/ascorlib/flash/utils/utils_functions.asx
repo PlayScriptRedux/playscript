@@ -21,7 +21,16 @@ package flash.utils {
 	}
 	
 	public function getQualifiedClassName(value:*):String {
-		return value.GetType().FullName;
+		var name:String = value.GetType().FullName;
+		
+		// replace last dot with :: to conform to flash conventions
+		var lastDot:int = name.LastIndexOf('.');
+		if (lastDot >= 0)
+		{
+			name = name.Substring(0, lastDot) + "::" + name.Substring(lastDot+1);
+		}
+		
+		return name;
 	}
 	
 	public function getQualifiedSuperclassName(value:*):String {
