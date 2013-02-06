@@ -341,6 +341,17 @@ namespace Mono.CSharp
 			EmitCall (ec, binder_expr, arguments, true);
 		}
 
+		private bool IsValidActionScriptAotType(TypeSpec t, bool is_invoke)
+		{
+			return (t.BuiltinType == BuiltinTypeSpec.Type.Object ||
+					  t.BuiltinType == BuiltinTypeSpec.Type.Int || 	// Specialize only on basic ActionScript types in AOT mode.
+					  t.BuiltinType == BuiltinTypeSpec.Type.UInt || 	// (NOTE: We can still handle other types, but we box to Object).
+					  t.BuiltinType == BuiltinTypeSpec.Type.Bool || 
+					  t.BuiltinType == BuiltinTypeSpec.Type.Double || 
+					  t.BuiltinType == BuiltinTypeSpec.Type.String) &&
+					  !is_invoke;
+		}
+
 		protected void EmitCall (EmitContext ec, Expression binder, Arguments arguments, bool isStatement)
 		{
 			//
@@ -357,6 +368,8 @@ namespace Mono.CSharp
 			int dyn_args_count = arguments == null ? 0 : arguments.Count;
 			int default_args = isStatement ? 1 : 2;
 			var module = ec.Module;
+
+			bool is_invoke = ((MemberAccess)((Invocation)binder).Exp).Name.StartsWith ("Invoke");
 
 			TypeSpec callSite;
 			TypeSpec callSiteGeneric;
@@ -408,14 +421,7 @@ namespace Mono.CSharp
 					t = ec.BuiltinTypes.Object;
 
 				// ActionScript AOT mode - Convert all types to object if they are not basic AS types or this is an invocation.
-				if (isActionScriptAotMode && 
-				    (!(t.BuiltinType == BuiltinTypeSpec.Type.Object ||
-					   t.BuiltinType == BuiltinTypeSpec.Type.Int || 	// Specialize only on basic ActionScript types in AOT mode.
-				       t.BuiltinType == BuiltinTypeSpec.Type.UInt || 	// (NOTE: We can still handle other types, but we box to Object).
-				       t.BuiltinType == BuiltinTypeSpec.Type.Bool || 
-				       t.BuiltinType == BuiltinTypeSpec.Type.Double || 
-				       t.BuiltinType == BuiltinTypeSpec.Type.String) ||
-				   	   ((MemberAccess)((Invocation)binder).Exp).Name.StartsWith("Invoke"))) {				// Always box to Object for invoke argument lists
+				if (isActionScriptAotMode && !IsValidActionScriptAotType (t, is_invoke)) {	// Always box to Object for invoke argument lists
 					t = ec.BuiltinTypes.Object;
 					arguments[i] = new Argument(new BoxedCast(a.Expr, ec.BuiltinTypes.Object));
 				}
@@ -427,6 +433,12 @@ namespace Mono.CSharp
 					t = t.Mutate (mutator);
 
 				targs[i + 1] = new TypeExpression (t, loc);
+			}
+
+			// Always use "object" as return type in AOT mode.
+			var ret_type = type;
+			if (isActionScriptAotMode && !isStatement && !IsValidActionScriptAotType (ret_type, is_invoke)) {
+				ret_type = ec.BuiltinTypes.Object;
 			}
 
 			TypeExpr del_type = null;
@@ -442,7 +454,7 @@ namespace Mono.CSharp
 
 				if (te != null) {
 					if (!isStatement) {
-						var t = type;
+						var t = ret_type;
 						if (t.Kind == MemberKind.InternalCompilerType)
 							t = ec.BuiltinTypes.Object;
 
@@ -468,7 +480,7 @@ namespace Mono.CSharp
 			//
 			Delegate d;
 			if (del_type == null) {
-				TypeSpec rt = isStatement ? ec.BuiltinTypes.Void : type;
+				TypeSpec rt = isStatement ? ec.BuiltinTypes.Void : ret_type;
 				Parameter[] p = new Parameter[dyn_args_count + 1];
 				p[0] = new Parameter (targs[0], "p0", Parameter.Modifier.NONE, null, loc);
 
@@ -567,7 +579,13 @@ namespace Mono.CSharp
 					}
 				}
 
-				Expression target = new DelegateInvocation (new MemberAccess (site_field_expr, "Target", loc).Resolve (bc), args, loc).Resolve (bc);
+				Expression target;
+				if (isActionScriptAotMode && !isStatement && type != ret_type) {
+					// ActionScript: If doing an invoke, we have to cast the return type to the type expected by the expression..
+					target = new Cast(new TypeExpression(type, loc), new DelegateInvocation (new MemberAccess (site_field_expr, "Target", loc).Resolve (bc), args, loc), loc).Resolve (bc);
+				} else {
+					target = new DelegateInvocation (new MemberAccess (site_field_expr, "Target", loc).Resolve (bc), args, loc).Resolve (bc);
+				}
 				if (target != null)
 					target.Emit (ec);
 			}

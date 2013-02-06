@@ -105,9 +105,14 @@ namespace Mono.CSharp.JavaScript
 			return ns.Replace ('.', '$');
 		}
 
-		public string MakeJsTypeNme(string typ)
+		public string MakeJsTypeName(string t)
 		{
-			return typ.Replace ("<", "$").Replace (">", "$");
+			return t.Replace ("<", "$").Replace (">", "$");
+		}
+
+		public string MakeJsFullTypeName(TypeSpec t)
+		{
+			return t.MemberDefinition.Namespace + "." + MakeJsTypeName(t.Name);
 		}
 
 		public int GetOperPrecendence(Expression e)
@@ -118,6 +123,14 @@ namespace Mono.CSharp.JavaScript
 
 			if (e is TypeOf || e is AsDelete) {
 				return 2;
+			}
+
+			if (e is Conditional) {
+				return 13;
+			}
+
+			if (e is Assign) {
+				return 14;
 			}
 
 			if (e is UnaryMutator) {
@@ -195,6 +208,8 @@ namespace Mono.CSharp.JavaScript
 		private static string _indentStr = 
 			"                                                                                                                                 ";
 
+		private static char[] buf = new char[4096];
+
 		private struct MapSeg {
 
 			public int Line;
@@ -241,8 +256,6 @@ namespace Mono.CSharp.JavaScript
 			if (_indentLevel > 0)
 				_indentLevel--;
 		}
-
-		private static char[] buf = new char[4096];
 
 		private void AddMapSeg(Location loc)
 		{
@@ -331,6 +344,49 @@ namespace Mono.CSharp.JavaScript
 				return new string(buf, 0, d);
 			} else {
 				return s1;
+			}
+		}
+
+		public string EscapeString (string s) {
+			int len = s.Length;
+			bool modified = false;
+			int d = 0;
+			for (var i = 0; i < len; i++) {
+				var ch = s[i];
+				if (ch < ' ' || ch > '~' || ch == '\\' || ch == '\'' || ch == '\"') {
+					buf[d++] = '\\';
+					modified = true;
+					if (ch == '\r')
+						buf[d++] = 'r';
+					else if (ch == '\n')
+						buf[d++] = 'n';
+					else if (ch == 't')
+						buf[d++] = 't';
+					else if (ch == '\\')
+						buf[d++] = '\\';
+					else if (ch == '\'')
+						buf[d++] = '\'';
+					else if (ch == '\"')
+						buf[d++] = '\"';
+					else {
+						buf[d++] = 'x';
+						if ((ch & 0xff) > 0x9f)
+							buf[d++] = (char)('a' + ((ch & 0xff) >> 4) - 0xa);
+						else
+							buf[d++] = (char)('0' + ((ch & 0xff) >> 4));
+						if ((ch & 0xf) > 0x9)
+							buf[d++] = (char)('a' + (ch & 0xf) - 0xa);
+						else
+							buf[d++] = (char)('0' + (ch & 0xf));
+					}
+				} else {
+					buf[d++] = ch;
+				}
+			}
+			if (modified) {
+				return new String(buf, 0, d);
+			} else {
+				return s;
 			}
 		}
 
@@ -439,7 +495,7 @@ namespace Mono.CSharp.JavaScript
 				Indent ();
 				s.EmitJs (EmitContext);
 				Unindent ();
-				Write ("\t}\n");
+				Write ("\t}");
 			}
 		}
 

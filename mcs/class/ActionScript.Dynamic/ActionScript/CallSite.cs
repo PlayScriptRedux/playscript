@@ -23,6 +23,7 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
+using ActionScript.Expando;
 
 #if !DYNAMIC_SUPPORT
 
@@ -38,9 +39,102 @@ namespace ActionScript
 
 		public class InvokeInfo {
 			public WeakReference lastObj;
+			public Type[] lastArgTypes;
 			public Delegate del;
 			public MethodInfo method;
+			public object[] args;
 			public int generation;
+
+			public bool InvokeMatches(object obj) {
+				if (obj is ExpandoObject && ((ExpandoObject)obj).Generation != generation)
+					return false;
+				return lastObj != null && lastObj.Target == obj;
+			}
+
+			public bool InvokeMatches(object obj, object a1) {
+				if (obj is ExpandoObject && ((ExpandoObject)obj).Generation != generation)
+					return false;
+				return lastObj != null && lastObj.Target == obj &&
+					((a1 == null && lastArgTypes[0] == null) || (a1.GetType () == lastArgTypes[0]));
+			}
+
+			public bool InvokeMatches(object obj, object a1, object a2) {
+				if (obj is ExpandoObject && ((ExpandoObject)obj).Generation != generation)
+					return false;
+				return lastObj != null && lastObj.Target == obj &&
+					((a1 == null && lastArgTypes[0] == null) || (a1.GetType () == lastArgTypes[0])) &&
+					((a2 == null && lastArgTypes[1] == null) || (a2.GetType () == lastArgTypes[1]));
+			}
+
+			public bool InvokeMatches(object obj, object a1, object a2, object a3) {
+				if (obj is ExpandoObject && ((ExpandoObject)obj).Generation != generation)
+					return false;
+				return lastObj != null && lastObj.Target == obj &&
+					((a1 == null && lastArgTypes[0] == null) || (a1.GetType () == lastArgTypes[0])) &&
+					((a2 == null && lastArgTypes[1] == null) || (a2.GetType () == lastArgTypes[1])) &&
+					((a3 == null && lastArgTypes[2] == null) || (a3.GetType () == lastArgTypes[2]));
+			}
+
+			public bool InvokeMatches(object obj, object a1, object a2, object a3, object a4) {
+				if (obj is ExpandoObject && ((ExpandoObject)obj).Generation != generation)
+					return false;
+				return lastObj != null && lastObj.Target == obj &&
+					((a1 == null && lastArgTypes[0] == null) || (a1.GetType () == lastArgTypes[0])) &&
+					((a2 == null && lastArgTypes[1] == null) || (a2.GetType () == lastArgTypes[1])) &&
+					((a3 == null && lastArgTypes[2] == null) || (a3.GetType () == lastArgTypes[2])) &&
+					((a4 == null && lastArgTypes[3] == null) || (a4.GetType () == lastArgTypes[3]));
+			}
+
+			public bool InvokeMatches(object obj, object a1, object a2, object a3, object a4, object a5) {
+				if (obj is ExpandoObject && ((ExpandoObject)obj).Generation != generation)
+					return false;
+				return lastObj != null && lastObj.Target == obj &&
+					((a1 == null && lastArgTypes[0] == null) || (a1.GetType () == lastArgTypes[0])) &&
+					((a2 == null && lastArgTypes[1] == null) || (a2.GetType () == lastArgTypes[1])) &&
+					((a3 == null && lastArgTypes[2] == null) || (a3.GetType () == lastArgTypes[2])) &&
+					((a4 == null && lastArgTypes[3] == null) || (a4.GetType () == lastArgTypes[3])) &&
+					((a5 == null && lastArgTypes[4] == null) || (a5.GetType () == lastArgTypes[4]));
+			}
+
+			public bool InvokeMatches(object obj, object a1, object a2, object a3, object a4, object a5, object a6) {
+				if (obj is ExpandoObject && ((ExpandoObject)obj).Generation != generation)
+					return false;
+				return lastObj != null && lastObj.Target == obj &&
+					((a1 == null && lastArgTypes[0] == null) || (a1.GetType () == lastArgTypes[0])) &&
+					((a2 == null && lastArgTypes[1] == null) || (a2.GetType () == lastArgTypes[1])) &&
+					((a3 == null && lastArgTypes[2] == null) || (a3.GetType () == lastArgTypes[2])) &&
+					((a4 == null && lastArgTypes[3] == null) || (a4.GetType () == lastArgTypes[3])) &&
+					((a5 == null && lastArgTypes[4] == null) || (a5.GetType () == lastArgTypes[4])) &&
+					((a6 == null && lastArgTypes[5] == null) || (a6.GetType () == lastArgTypes[5]));
+			}
+
+			public bool InvokeMatches(object obj, object a1, object a2, object a3, object a4, object a5, object a6, object a7) {
+				if (obj is ExpandoObject && ((ExpandoObject)obj).Generation != generation)
+					return false;
+				return lastObj != null && lastObj.Target == obj &&
+					((a1 == null && lastArgTypes[0] == null) || (a1.GetType () == lastArgTypes[0])) &&
+					((a2 == null && lastArgTypes[1] == null) || (a2.GetType () == lastArgTypes[1])) &&
+					((a3 == null && lastArgTypes[2] == null) || (a3.GetType () == lastArgTypes[2])) &&
+					((a4 == null && lastArgTypes[3] == null) || (a4.GetType () == lastArgTypes[3])) &&
+					((a5 == null && lastArgTypes[4] == null) || (a5.GetType () == lastArgTypes[4])) &&
+					((a6 == null && lastArgTypes[5] == null) || (a6.GetType () == lastArgTypes[5])) &&
+					((a7 == null && lastArgTypes[6] == null) || (a7.GetType () == lastArgTypes[6]));
+			}
+
+			public bool InvokeMatches(object obj, object a1, object a2, object a3, object a4, object a5, object a6, object a7, object a8) {
+				if (obj is ExpandoObject && ((ExpandoObject)obj).Generation != generation)
+					return false;
+				return lastObj != null && lastObj.Target == obj &&
+					((a1 == null && lastArgTypes[0] == null) || (a1.GetType () == lastArgTypes[0])) &&
+					((a2 == null && lastArgTypes[1] == null) || (a2.GetType () == lastArgTypes[1])) &&
+					((a3 == null && lastArgTypes[2] == null) || (a3.GetType () == lastArgTypes[2])) &&
+					((a4 == null && lastArgTypes[3] == null) || (a4.GetType () == lastArgTypes[3])) &&
+					((a5 == null && lastArgTypes[4] == null) || (a5.GetType () == lastArgTypes[4])) &&
+					((a6 == null && lastArgTypes[5] == null) || (a6.GetType () == lastArgTypes[5])) &&
+					((a7 == null && lastArgTypes[6] == null) || (a7.GetType () == lastArgTypes[6])) &&
+					((a8 == null && lastArgTypes[7] == null) || (a8.GetType () == lastArgTypes[7]));
+			}
+
 		}
 
 		public InvokeInfo invokeInfo;

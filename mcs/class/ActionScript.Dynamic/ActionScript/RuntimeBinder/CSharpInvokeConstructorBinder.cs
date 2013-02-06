@@ -25,6 +25,7 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
+using System.Reflection;
 
 #if DYNAMIC_SUPPORT
 
@@ -70,6 +71,154 @@ namespace ActionScript.RuntimeBinder
 			get {
 				return target_return_type;
 			}
+		}
+	}
+}
+
+#else
+
+using System;
+using System.Collections.Generic;
+
+namespace ActionScript.RuntimeBinder
+{
+	class CSharpInvokeConstructorBinder : CallSiteBinder
+	{
+		private static Dictionary<Type, object> delegates = new Dictionary<Type, object>();
+
+		// IList<CSharpArgumentInfo> argumentInfo;
+		// Type callingContext;
+		// Type target_return_type;
+
+		private static object InvokeConstructor(Type objType, object[] args)
+		{
+			var constructors = objType.GetConstructors();
+			
+			var arg_len = args.Length;
+			foreach (var c in constructors) {
+				bool matches = true;
+				bool has_defaults = false;
+				var parameters = c.GetParameters();
+				var par_len = parameters.Length;
+				if (par_len >= arg_len) {
+					for (var i = 0; i < par_len; i++) {
+						var p = parameters[i];
+						if (i >= args.Length) {
+							if (p.DefaultValue != null) {
+								has_defaults = true;
+								continue;
+							} else {
+								matches = false;
+								break;
+							}
+						} else {
+							var ptype = p.ParameterType;
+							if (args[i] != null) {
+								if (!ptype.IsAssignableFrom(args[i].GetType ())) {
+									matches = false;
+									break;
+								}
+							} else if (!ptype.IsClass || ptype == typeof(string)) {
+								matches = false;
+								break;
+							}
+						}
+					}
+				}
+				if (matches) {
+					if (has_defaults) {
+						var new_args = new object[par_len];
+						for (var j = 0; j < par_len; j++) {
+							if (j < args.Length)
+								new_args[j] = args[j];
+							else
+								new_args[j] = parameters[j].DefaultValue;
+						}
+						args = new_args;
+					}
+					return c.Invoke(args);
+				}
+			}
+			throw new InvalidOperationException("Unable to find matching constructor.");
+		}
+
+		public static object Func1 (CallSite site, object o1)
+		{
+			return InvokeConstructor((Type)o1, new object[] {});
+		}
+		
+		public static object Func2 (CallSite site, object o1, object o2)
+		{
+			return InvokeConstructor((Type)o1, new [] { o2 });
+		}
+		
+		public static object Func3 (CallSite site, object o1, object o2, object o3)
+		{
+			return InvokeConstructor((Type)o1, new [] { o2, o3 });
+		}
+		
+		public static object Func4 (CallSite site, object o1, object o2, object o3, object o4)
+		{
+			return InvokeConstructor((Type)o1, new [] { o2, o3, o4 });
+		}
+		
+		public static object Func5 (CallSite site, object o1, object o2, object o3, object o4, object o5)
+		{
+			return InvokeConstructor((Type)o1, new [] { o2, o3, o4, o5 });
+		}
+		
+		public static object Func6 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6)
+		{
+			return InvokeConstructor((Type)o1, new [] { o2, o3, o4, o5, o6 });
+		}
+		
+		public static object Func7 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7)
+		{
+			return InvokeConstructor((Type)o1, new [] { o2, o3, o4, o5, o6, o7 });
+		}
+		
+		public static object Func8 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8)
+		{
+			return InvokeConstructor((Type)o1, new [] { o2, o3, o4, o5, o6, o7, o8});
+		}
+		
+		public static object Func9 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8, object o9)
+		{
+			return InvokeConstructor((Type)o1, new [] { o2, o3, o4, o5, o6, o7, o8, o9 });
+		}
+		
+		public static object Func10 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8, object o9, object o10)
+		{
+			return InvokeConstructor((Type)o1, new [] { o2, o3, o4, o5, o6, o7, o8, o9, o10 });
+		}
+
+		public CSharpInvokeConstructorBinder (Type callingContext, IEnumerable<CSharpArgumentInfo> argumentInfo)
+		{
+//			this.callingContext = callingContext;
+//			this.argumentInfo = argumentInfo.ToReadOnly ();
+		}
+
+		static CSharpInvokeConstructorBinder ()
+		{
+			delegates.Add (typeof(Func<CallSite, object, object>), (Func<CallSite, object, object>)Func1);
+			delegates.Add (typeof(Func<CallSite, object, object, object>), (Func<CallSite, object, object, object>)Func2);
+			delegates.Add (typeof(Func<CallSite, object, object, object, object>),   (Func<CallSite, object, object, object, object>)Func3);
+			delegates.Add (typeof(Func<CallSite, object, object, object, object, object>), (Func<CallSite, object, object, object, object, object>)Func4);
+			delegates.Add (typeof(Func<CallSite, object, object, object, object, object, object>), (Func<CallSite, object, object, object, object, object, object>)Func5);
+			delegates.Add (typeof(Func<CallSite, object, object, object, object, object, object, object>), (Func<CallSite, object, object, object, object, object, object, object>)Func6);
+			delegates.Add (typeof(Func<CallSite, object, object, object, object, object, object, object, object>), (Func<CallSite, object, object, object, object, object, object, object, object>)Func7);
+			delegates.Add (typeof(Func<CallSite, object, object, object, object, object, object, object, object, object>), (Func<CallSite, object, object, object, object, object, object, object, object, object>)Func8);
+			delegates.Add (typeof(Func<CallSite, object, object, object, object, object, object, object, object, object, object>), (Func<CallSite, object, object, object, object, object, object, object, object, object, object>)Func9);
+			delegates.Add (typeof(Func<CallSite, object, object, object, object, object, object, object, object, object, object, object>), (Func<CallSite, object, object, object, object, object, object, object, object, object, object, object>)Func10);
+		}
+
+		public override object Bind (Type delegateType)
+		{
+			object target;
+			if (delegates.TryGetValue (delegateType, out target)) {
+				return target;
+			}
+			throw new Exception("Unable to bind set index for target " + delegateType.Name);
 		}
 	}
 }

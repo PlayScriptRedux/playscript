@@ -4,6 +4,8 @@ using _root;
 
 #if PLATFORM_MONOMAC
 using MonoMac.OpenGL;
+#elif PLATFORM_MONOTOUCH
+using OpenTK.Graphics.ES20;
 #endif
 
 namespace flash.display3D {
@@ -33,10 +35,17 @@ namespace flash.display3D {
 
 		public void uploadFromVector(Vector<uint> data, int startOffset, int count) {
 			GL.BindBuffer(BufferTarget.ElementArrayBuffer, mId);
+#if PLATFORM_MONOMAC
 		    GL.BufferData<uint>(BufferTarget.ElementArrayBuffer, 
 		        (IntPtr)(count * sizeof(uint)), 
 		        data.ToArray(), 
-		        BufferUsageHint.StaticDraw);			
+		        BufferUsageHint.StaticDraw);
+#elif PLATFORM_MONOTOUCH
+			GL.BufferData<uint>(BufferTarget.ElementArrayBuffer, 
+                (IntPtr)(count * sizeof(uint)), 
+                data.ToArray(), 
+                BufferUsage.StaticDraw);
+#endif
 		}
 		
 		public uint id {get {return mId;}}

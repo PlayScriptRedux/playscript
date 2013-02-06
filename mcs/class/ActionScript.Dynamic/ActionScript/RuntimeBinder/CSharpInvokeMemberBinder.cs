@@ -223,7 +223,7 @@ namespace ActionScript.RuntimeBinder
 //			this.typeArguments = new List<Type>(typeArguments);
 		}
 
-		public void FindMethod (CallSite site, object o)
+		public void FindMethod (CallSite site, object o, object[] args)
 		{
 			if (o == null) {
 				throw new NullReferenceException ();
@@ -233,13 +233,15 @@ namespace ActionScript.RuntimeBinder
 			if (info == null) {
 				info = new CallSite.InvokeInfo();
 				info.lastObj = new WeakReference (o);
+				info.lastArgTypes = new Type[args.Length];
 				site.invokeInfo = info;
 			} else {
 				site.invokeInfo.lastObj.Target = o;
-				object lastObj = site.invokeInfo.lastObj.Target;
-				if (!(lastObj is ExpandoObject) && lastObj.GetType () == o.GetType ()) {
-					return;
-				}
+			}
+
+			var arg_len = args.Length;
+			for (var i = 0; i < arg_len; i++) {
+				info.lastArgTypes[i] = args != null ? args[i].GetType () : null;
 			}
 
 			if (o is ExpandoObject) {
@@ -255,19 +257,61 @@ namespace ActionScript.RuntimeBinder
 				info.generation = expando.Generation;
 			} else {
 				MethodInfo method = null;
-				var methods = o.GetType().GetMethods();
+				var methods = o.GetType().GetMethods ();
 				var len = methods.Length;
 				for (var mi = 0; mi < len; mi++) {
-					var testMeth = methods[mi];
-					if (testMeth.IsPublic && !testMeth.IsStatic && testMeth.Name == name) {
-						method = testMeth;
-						break;
+					var m = methods[mi];
+					if (m.IsPublic && !m.IsStatic && m.Name == name) {
+						bool matches = true;
+						bool has_defaults = false;
+						var parameters = m.GetParameters();
+						var par_len = parameters.Length;
+						if (par_len >= arg_len) {
+							for (var i = 0; i < par_len; i++) {
+								var p = parameters[i];
+								if (i >= args.Length) {
+									if (p.DefaultValue != null) {
+										has_defaults = true;
+										continue;
+									} else {
+										matches = false;
+										break;
+									}
+								} else {
+									var ptype = p.ParameterType;
+									if (args[i] != null) {
+										if (!ptype.IsAssignableFrom(args[i].GetType ())) {
+											matches = false;
+											break;
+										}
+									} else if (!ptype.IsClass || ptype == typeof(string)) {
+										matches = false;
+										break;
+									}
+								}
+							}
+						}
+						if (matches) {
+							if (has_defaults) {
+								var new_args = new object[par_len];
+								for (var j = 0; j < par_len; j++) {
+									if (j < args.Length)
+										new_args[j] = args[j];
+									else
+										new_args[j] = parameters[j].DefaultValue;
+								}
+								args = new_args;
+							}
+							method = m;
+							break;
+						}
 					}
 				}
 				if (method == null) {
-					throw new Exception("No method found with the name '" + name + "'"); 
+					throw new Exception("No matching method found with the name '" + name + "'"); 
 				}
 				info.method = method;
+				info.args = args;
 				info.del = null;
 				info.generation = 0;
 			}
@@ -277,11 +321,12 @@ namespace ActionScript.RuntimeBinder
 		private static void InvokeAction (CallSite site, object o)
 		{
 			var info = site.invokeInfo;
-			if (info == null || info.lastObj.Target != o || 
-			    (o is ExpandoObject && ((ExpandoObject)o).Generation != info.generation)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o);
+			object[] args;
+			if (info == null || !info.InvokeMatches(o)) {
+				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new object [] {});
 				info = site.invokeInfo;
 			}
+			args = info.args;
 			if (info.method != null) 
 				info.method.Invoke (o, null);
 			else 
@@ -291,247 +336,346 @@ namespace ActionScript.RuntimeBinder
 		private static void InvokeAction1 (CallSite site, object o, object a1)
 		{
 			var info = site.invokeInfo;
-			if (info == null || info.lastObj.Target != o || 
-			    (o is ExpandoObject && ((ExpandoObject)o).Generation != info.generation)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o);
+			object[] args;
+			if (info == null || !info.InvokeMatches (o, a1)) {
+				var new_args = new [] { a1 };
+				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1 });
 				info = site.invokeInfo;
+				args = info.args;
+			} else {
+				args = info.args;
+				args[0] = a1;
 			}
 			if (info.method != null) 
-				info.method.Invoke (o, new [] { a1 });
+				info.method.Invoke (o, args);
 			else 
-				info.del.DynamicInvoke(new [] { a1 });
+				info.del.DynamicInvoke(args);
+			args[0] = null;
 		}
 
 		private static void InvokeAction2 (CallSite site, object o, object a1, object a2)
 		{
 			var info = site.invokeInfo;
-			if (info == null || info.lastObj.Target != o || 
-			    (o is ExpandoObject && ((ExpandoObject)o).Generation != info.generation)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o);
+			object[] args;
+			if (info == null || !info.InvokeMatches(o, a1, a2)) {
+				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2 });
 				info = site.invokeInfo;
+				args = info.args;
+			} else {
+				args = info.args;
+				args[0] = a1; args[1] = a2;
 			}
 			if (info.method != null) 
-				info.method.Invoke (o, new [] { a1, a2 });
+				info.method.Invoke (o, args);
 			else 
-				info.del.DynamicInvoke(null, new [] { a1, a2 });
+				info.del.DynamicInvoke(null, args);
+			args[0] = args[1] = null;
 		}
 
 		private static void InvokeAction3 (CallSite site, object o, object a1, object a2, object a3)
 		{
 			var info = site.invokeInfo;
-			if (info == null || info.lastObj.Target != o || 
-			    (o is ExpandoObject && ((ExpandoObject)o).Generation != info.generation)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o);
+			object[] args;
+			if (info == null || !info.InvokeMatches(o, a1, a2, a3)) {
+				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3 });
 				info = site.invokeInfo;
+				args = info.args;
+			} else {
+				args = info.args;
+				args[0] = a1; args[1] = a2; args[2] = a3;
 			}
 			if (info.method != null) 
-				info.method.Invoke (o, new [] { a1, a2, a3 });
+				info.method.Invoke (o, args);
 			else 
-				info.del.DynamicInvoke(null, new [] { a1, a2, a3 });
+				info.del.DynamicInvoke(null, args);
+			args[0] = args[1] = args[2] = null;
 		}
 
 		private static void InvokeAction4 (CallSite site, object o, object a1, object a2, object a3, object a4)
 		{
 			var info = site.invokeInfo;
-			if (info == null || info.lastObj.Target != o || 
-			    (o is ExpandoObject && ((ExpandoObject)o).Generation != info.generation)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o);
+			object[] args;
+			if (info == null || !info.InvokeMatches(o, a1, a2, a3, a4)) {
+				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3, a4 });
 				info = site.invokeInfo;
+				args = info.args;
+			} else {
+				args = info.args;
+				args[0] = a1; args[1] = a2; args[2] = a3; args[3] = a4;
 			}
 			if (info.method != null) 
-				info.method.Invoke (o, new [] { a1, a2, a3, a4 });
+				info.method.Invoke (o, args);
 			else 
-				info.del.DynamicInvoke(null, new [] { a1, a2, a3, a4 });
+				info.del.DynamicInvoke(null, args);
+			args[0] = args[1] = args[2] = args[3] = null;
 		}
 
 		private static void InvokeAction5 (CallSite site, object o, object a1, object a2, object a3, object a4,
 		                            object a5)
 		{
 			var info = site.invokeInfo;
-			if (info == null || info.lastObj.Target != o || 
-			    (o is ExpandoObject && ((ExpandoObject)o).Generation != info.generation)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o);
+			object[] args;
+			if (info == null || !info.InvokeMatches(o, a1, a2, a3, a4, a5)) {
+				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3, a4, a5 });
 				info = site.invokeInfo;
+				args = info.args;
+			} else {
+				args = info.args;
+				args[0] = a1; args[1] = a2; args[2] = a3; args[3] = a4; args[4] = a5;
 			}
 			if (info.method != null) 
-				info.method.Invoke (o, new [] { a1, a2, a3, a4, a5 });
+				info.method.Invoke (o, args);
 			else 
-				info.del.DynamicInvoke(null, new [] { a1, a2, a3, a4, a5 });
+				info.del.DynamicInvoke(null, args);
+			args[0] = args[1] = args[2] = args[3] = args[4] = null;
 		}
 		
 		private static void InvokeAction6 (CallSite site, object o, object a1, object a2, object a3, object a4,
 		                            object a5, object a6)
 		{
 			var info = site.invokeInfo;
-			if (info == null || info.lastObj.Target != o || 
-			    (o is ExpandoObject && ((ExpandoObject)o).Generation != info.generation)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o);
+			object[] args;
+			if (info == null || !info.InvokeMatches(o, a1, a2, a3, a4, a5, a6)) {
+				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3, a4, a5, a6 });
 				info = site.invokeInfo;
+				args = info.args;
+			} else {
+				args = info.args;
+				args[0] = a1; args[1] = a2; args[2] = a3; args[3] = a4; args[4] = a5; args[5] = a6;
 			}
 			if (info.method != null) 
-				info.method.Invoke (o, new [] { a1, a2, a3, a4, a5, a6 });
+				info.method.Invoke (o, args);
 			else 
-				info.del.DynamicInvoke(null, new [] { a1, a2, a3, a4, a5, a6 });
+				info.del.DynamicInvoke(null, args);
+			args[0] = args[1] = args[2] = args[3] = args[4] = args[5] = null;
 		}
 		
 		private static void InvokeAction7 (CallSite site, object o, object a1, object a2, object a3, object a4,
 		                            object a5, object a6, object a7)
 		{
 			var info = site.invokeInfo;
-			if (info == null || info.lastObj.Target != o || 
-			    (o is ExpandoObject && ((ExpandoObject)o).Generation != info.generation)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o);
+			object[] args;
+			if (info == null || !info.InvokeMatches(o, a1, a2, a3, a4, a5, a6, a7)) {
+				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3, a4, a5, a6, a7 });
 				info = site.invokeInfo;
+				args = info.args;
+			} else {
+				args = info.args;
+				args[0] = a1; args[1] = a2; args[2] = a3; args[3] = a4; args[4] = a5; args[5] = a6; args[6] = a7;
 			}
 			if (info.method != null) 
-				info.method.Invoke (o, new [] { a1, a2, a3, a4, a5, a6, a7 });
+				info.method.Invoke (o, args);
 			else 
-				info.del.DynamicInvoke(null, new [] { a1, a2, a3, a4, a5, a6, a7 });
+				info.del.DynamicInvoke(null, args);
+			args[0] = args[1] = args[2] = args[3] = args[4] = args[5] = args[6] = null;
 		}
 		
 		private static void InvokeAction8 (CallSite site, object o, object a1, object a2, object a3, object a4,
 		                            object a5, object a6, object a7, object a8)
 		{
 			var info = site.invokeInfo;
-			if (info == null || info.lastObj.Target != o || 
-			    (o is ExpandoObject && ((ExpandoObject)o).Generation != info.generation)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o);
+			object[] args;
+			if (info == null || !info.InvokeMatches(o, a1, a2, a3, a4, a5, a6, a7, a8)) {
+				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3, a4, a5, a6, a7, a8 });
 				info = site.invokeInfo;
+				args = info.args;
+			} else {
+				args = info.args;
+				args[0] = a1; args[1] = a2; args[2] = a3; args[3] = a4; args[4] = a5; args[5] = a6; args[6] = a7; args[7] = a8;
 			}
 			if (info.method != null) 
-				info.method.Invoke (o, new [] { a1, a2, a3, a4, a5, a6, a7, a8 });
+				info.method.Invoke (o, args);
 			else 
-				info.del.DynamicInvoke(null, new [] { a1, a2, a3, a4, a5, a6, a7, a8 });
+				info.del.DynamicInvoke(null, args);
+			args[0] = args[1] = args[2] = args[3] = args[4] = args[5] = args[6] = args[7] = null;
 		}
 
 		private static object InvokeFunc (CallSite site, object o)
 		{
 			var info = site.invokeInfo;
-			if (info == null || info.lastObj.Target != o || 
-			    (o is ExpandoObject && ((ExpandoObject)o).Generation != info.generation)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o);
+			object[] args;
+			if (info == null || !info.InvokeMatches (o)) {
+				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new object[] {});
 				info = site.invokeInfo;
 			}
+			args = info.args;
 			if (info.method != null) 
 				return info.method.Invoke (o, null);
 			else 
 				return info.del.DynamicInvoke(null);
 		}
-		
+
 		private static object InvokeFunc1 (CallSite site, object o, object a1)
 		{
 			var info = site.invokeInfo;
-			if (info == null || info.lastObj.Target != o || 
-			    (o is ExpandoObject && ((ExpandoObject)o).Generation != info.generation)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o);
+			object[] args;
+			if (info == null || !info.InvokeMatches (o, a1)) {
+				var new_args = new [] { a1 };
+				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1 });
 				info = site.invokeInfo;
+				args = info.args;
+			} else {
+				args = info.args;
+				args[0] = a1;
 			}
+			object ret;
 			if (info.method != null) 
-				return info.method.Invoke (o, new [] { a1 });
+				ret = info.method.Invoke (o, args);
 			else 
-				return info.del.DynamicInvoke(new [] { a1 });
+				ret = info.del.DynamicInvoke(args);
+			args[0] = null;
+			return ret;
 		}
 		
 		private static object InvokeFunc2 (CallSite site, object o, object a1, object a2)
 		{
 			var info = site.invokeInfo;
-			if (info == null || info.lastObj.Target != o || 
-			    (o is ExpandoObject && ((ExpandoObject)o).Generation != info.generation)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o);
+			object[] args;
+			if (info == null || !info.InvokeMatches(o, a1, a2)) {
+				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2 });
 				info = site.invokeInfo;
+				args = info.args;
+			} else {
+				args = info.args;
+				args[0] = a1; args[1] = a2;
 			}
+			object ret;
 			if (info.method != null) 
-				return info.method.Invoke (o, new [] { a1, a2 });
+				ret = info.method.Invoke (o, args);
 			else 
-				return info.del.DynamicInvoke(null, new [] { a1, a2 });
+				ret = info.del.DynamicInvoke(null, args);
+			args[0] = args[1] = null;
+			return ret;
 		}
 		
 		private static object InvokeFunc3 (CallSite site, object o, object a1, object a2, object a3)
 		{
 			var info = site.invokeInfo;
-			if (info == null || info.lastObj.Target != o || 
-			    (o is ExpandoObject && ((ExpandoObject)o).Generation != info.generation)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o);
+			object[] args;
+			if (info == null || !info.InvokeMatches(o, a1, a2, a3)) {
+				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3 });
 				info = site.invokeInfo;
+				args = info.args;
+			} else {
+				args = info.args;
+				args[0] = a1; args[1] = a2; args[2] = a3;
 			}
+			object ret;
 			if (info.method != null) 
-				return info.method.Invoke (o, new [] { a1, a2, a3 });
+				ret = info.method.Invoke (o, args);
 			else 
-				return info.del.DynamicInvoke(null, new [] { a1, a2, a3 });
+				ret = info.del.DynamicInvoke(null, args);
+			args[0] = args[1] = args[2] = null;
+			return ret;
 		}
 		
 		private static object InvokeFunc4 (CallSite site, object o, object a1, object a2, object a3, object a4)
 		{
 			var info = site.invokeInfo;
-			if (info == null || info.lastObj.Target != o || 
-			    (o is ExpandoObject && ((ExpandoObject)o).Generation != info.generation)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o);
+			object[] args;
+			if (info == null || !info.InvokeMatches(o, a1, a2, a3, a4)) {
+				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3, a4 });
 				info = site.invokeInfo;
+				args = info.args;
+			} else {
+				args = info.args;
+				args[0] = a1; args[1] = a2; args[2] = a3; args[3] = a4;
 			}
+			object ret;
 			if (info.method != null) 
-				return info.method.Invoke (o, new [] { a1, a2, a3, a4 });
+				ret = info.method.Invoke (o, args);
 			else 
-				return info.del.DynamicInvoke(null, new [] { a1, a2, a3, a4 });
+				ret = info.del.DynamicInvoke(null, args);
+			args[0] = args[1] = args[2] = args[3] = null;
+			return ret;
 		}
 		
 		private static object InvokeFunc5 (CallSite site, object o, object a1, object a2, object a3, object a4,
-		                     object a5)
+		                                   object a5)
 		{
 			var info = site.invokeInfo;
-			if (info == null || info.lastObj.Target != o || 
-			    (o is ExpandoObject && ((ExpandoObject)o).Generation != info.generation)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o);
+			object[] args;
+			if (info == null || !info.InvokeMatches(o, a1, a2, a3, a4, a5)) {
+				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3, a4, a5 });
 				info = site.invokeInfo;
+				args = info.args;
+			} else {
+				args = info.args;
+				args[0] = a1; args[1] = a2; args[2] = a3; args[3] = a4; args[4] = a5;
 			}
+			object ret;
 			if (info.method != null) 
-				return info.method.Invoke (o, new [] { a1, a2, a3, a4, a5 });
+				ret = info.method.Invoke (o, args);
 			else 
-				return info.del.DynamicInvoke(null, new [] { a1, a2, a3, a4, a5 });
+				ret = info.del.DynamicInvoke(null, args);
+			args[0] = args[1] = args[2] = args[3] = args[4] = null;
+			return ret;
 		}
 		
 		private static object InvokeFunc6 (CallSite site, object o, object a1, object a2, object a3, object a4,
-		                     object a5, object a6)
+		                                   object a5, object a6)
 		{
 			var info = site.invokeInfo;
-			if (info == null || info.lastObj.Target != o || 
-			    (o is ExpandoObject && ((ExpandoObject)o).Generation != info.generation)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o);
+			object[] args;
+			if (info == null || !info.InvokeMatches(o, a1, a2, a3, a4, a5, a6)) {
+				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3, a4, a5, a6 });
 				info = site.invokeInfo;
+				args = info.args;
+			} else {
+				args = info.args;
+				args[0] = a1; args[1] = a2; args[2] = a3; args[3] = a4; args[4] = a5; args[5] = a6;
 			}
+			object ret;
 			if (info.method != null) 
-				return info.method.Invoke (o, new [] { a1, a2, a3, a4, a5, a6 });
+				ret = info.method.Invoke (o, args);
 			else 
-				return info.del.DynamicInvoke(null, new [] { a1, a2, a3, a4, a5, a6 });
+				ret = info.del.DynamicInvoke(null, args);
+			args[0] = args[1] = args[2] = args[3] = args[4] = args[5] = null;
+			return ret;
 		}
 		
 		private static object InvokeFunc7 (CallSite site, object o, object a1, object a2, object a3, object a4,
-		                     object a5, object a6, object a7)
+		                                   object a5, object a6, object a7)
 		{
 			var info = site.invokeInfo;
-			if (info == null || info.lastObj.Target != o || 
-			    (o is ExpandoObject && ((ExpandoObject)o).Generation != info.generation)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o);
+			object[] args;
+			if (info == null || !info.InvokeMatches(o, a1, a2, a3, a4, a5, a6, a7)) {
+				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3, a4, a5, a6, a7 });
 				info = site.invokeInfo;
+				args = info.args;
+			} else {
+				args = info.args;
+				args[0] = a1; args[1] = a2; args[2] = a3; args[3] = a4; args[4] = a5; args[5] = a6; args[6] = a7;
 			}
+			object ret;
 			if (info.method != null) 
-				return info.method.Invoke (o, new [] { a1, a2, a3, a4, a5, a6, a7 });
+				ret = info.method.Invoke (o, args);
 			else 
-				return info.del.DynamicInvoke(null, new [] { a1, a2, a3, a4, a5, a6, a7 });
+				ret = info.del.DynamicInvoke(null, args);
+			args[0] = args[1] = args[2] = args[3] = args[4] = args[5] = args[6] = null;
+			return ret;
 		}
 		
 		private static object InvokeFunc8 (CallSite site, object o, object a1, object a2, object a3, object a4,
-		                     object a5, object a6, object a7, object a8)
+		                                   object a5, object a6, object a7, object a8)
 		{
 			var info = site.invokeInfo;
-			if (info == null || info.lastObj.Target != o || 
-			    (o is ExpandoObject && ((ExpandoObject)o).Generation != info.generation)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o);
+			object[] args;
+			if (info == null || !info.InvokeMatches(o, a1, a2, a3, a4, a5, a6, a7, a8)) {
+				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3, a4, a5, a6, a7, a8 });
 				info = site.invokeInfo;
-			}
+				args = info.args;
+			} else {
+				args = info.args;
+				args[0] = a1; args[1] = a2; args[2] = a3; args[3] = a4; args[4] = a5; args[5] = a6; args[6] = a7; args[7] = a8;
+			}			
+			object ret;
 			if (info.method != null) 
-				return info.method.Invoke (o, new [] { a1, a2, a3, a4, a5, a6, a7, a8 });
+				ret = info.method.Invoke (o, args);
 			else 
-				return info.del.DynamicInvoke(null, new [] { a1, a2, a3, a4, a5, a6, a7, a8 });
+				ret = info.del.DynamicInvoke(null, args);
+			args[0] = args[1] = args[2] = args[3] = args[4] = args[5] = args[6] = args[7] = null;
+			return ret;
 		}
 
 		static CSharpInvokeMemberBinder ()

@@ -6,6 +6,8 @@ using System.Text;
 
 #if PLATFORM_MONOMAC
 using MonoMac.OpenGL;
+#elif PLATFORM_MONOTOUCH
+using OpenTK.Graphics.ES20;
 #endif
 
 

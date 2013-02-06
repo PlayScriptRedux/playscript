@@ -4,7 +4,10 @@ using _root;
 
 #if PLATFORM_MONOMAC
 using MonoMac.OpenGL;
+#elif PLATFORM_MONOTOUCH
+using OpenTK.Graphics.ES20;
 #endif
+
 
 namespace flash.display3D 
 {
@@ -52,10 +55,17 @@ namespace flash.display3D
 			
 			// upload whole array
 			int byteCount = mNumVertices * mVertexSize * sizeof(float);
+#if PLATFORM_MONOMAC
 		    GL.BufferData<float>(BufferTarget.ArrayBuffer, 
 		        new IntPtr(byteCount), 
 		        mData, 
-		        BufferUsageHint.StaticDraw);			
+		        BufferUsageHint.StaticDraw);
+#elif PLATFORM_MONOTOUCH
+			GL.BufferData<float>(BufferTarget.ArrayBuffer, 
+			                     new IntPtr(byteCount), 
+			                     mData, 
+			                     BufferUsage.StaticDraw);
+#endif
 		}
 		
 		public int stride { 

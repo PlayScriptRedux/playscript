@@ -4983,6 +4983,39 @@ namespace Mono.CSharp
 			ec.MarkLabel (end_target);
 		}
 
+		public override void EmitJs (JsEmitContext jec)
+		{
+			bool test_parens = jec.NeedParens (this, expr);
+			bool true_parens = jec.NeedParens (this, true_expr);
+			bool false_parens = jec.NeedParens (this, false_expr);
+
+			if (test_parens) {
+				jec.Buf.Write ("(");
+				expr.EmitJs (jec);
+				jec.Buf.Write (") ? ");
+			} else {
+				expr.EmitJs (jec);
+				jec.Buf.Write (" ? ");
+			}
+
+			if (true_parens) {
+				jec.Buf.Write ("(");
+				true_expr.EmitJs (jec);
+				jec.Buf.Write (") : ");
+			} else {
+				true_expr.EmitJs (jec);
+				jec.Buf.Write (" : ");
+			}
+
+			if (false_parens) {
+				jec.Buf.Write ("(");
+				false_expr.EmitJs (jec);
+				jec.Buf.Write (")");
+			} else {
+				false_expr.EmitJs (jec);
+			}
+		}
+
 		protected override void CloneTo (CloneContext clonectx, Expression t)
 		{
 			Conditional target = (Conditional) t;
@@ -6343,7 +6376,7 @@ namespace Mono.CSharp
 		public override void EmitJs (JsEmitContext jec)
 		{
 			var ns = jec.MakeJsNamespaceName(Type.MemberDefinition.Namespace);
-			var typeName = jec.MakeJsTypeNme(Type.Name);
+			var typeName = jec.MakeJsTypeName(Type.Name);
 
 			jec.Buf.Write("new ",ns,".",typeName,"(", Location);
 			if (arguments != null)
@@ -9529,6 +9562,20 @@ namespace Mono.CSharp
 			if (await_source_arg != null) {
 				await_source_arg.Release (ec);
 			}
+		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			InstanceExpression.EmitJs (jec);
+			jec.Buf.Write ("[");
+			bool first = true;
+			foreach (var arg in arguments) {
+				if (!first)
+					jec.Buf.Write (", ");
+				arg.Expr.EmitJs (jec);
+				first = false;
+			}
+			jec.Buf.Write ("]");
 		}
 
 		public override string GetSignatureForError ()

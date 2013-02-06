@@ -81,10 +81,112 @@ namespace ActionScript.RuntimeBinder
 {
 	class CSharpInvokeBinder : CallSiteBinder
 	{
+		private static Dictionary<Type, object> delegates = new Dictionary<Type, object>();
+
 //		readonly CSharpBinderFlags flags;
 //		List<CSharpArgumentInfo> argumentInfo;
 //		Type callingContext;
+
+		public static void Action1 (CallSite site, object o1)
+		{
+			((Delegate)o1).DynamicInvoke(null);
+		}
 		
+		public static void Action2 (CallSite site, object o1, object o2)
+		{
+			((Delegate)o1).DynamicInvoke(new [] { o2 });
+		}
+		
+		public static void Action3 (CallSite site, object o1, object o2, object o3)
+		{
+			((Delegate)o1).DynamicInvoke(new [] { o2, o3 });
+		}
+		
+		public static void Action4 (CallSite site, object o1, object o2, object o3, object o4)
+		{
+			((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4 });
+		}
+		
+		public static void Action5 (CallSite site, object o1, object o2, object o3, object o4, object o5)
+		{
+			((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5 });
+		}
+		
+		public static void Action6 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6)
+		{
+			((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5, o6 });
+		}
+		
+		public static void Action7 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7)
+		{
+			((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5, o6, o7 });
+		}
+		
+		public static void Action8 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8)
+		{
+			((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5, o6, o7, o8 });
+		}
+		
+		public static void Action9 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8, object o9)
+		{
+			((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5, o6, o7, o8, o9 });
+		}
+		
+		public static void Action10 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8, object o9, object o10)
+		{
+			((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5, o6, o7, o8, o10 });
+		}
+
+		public static object Func1 (CallSite site, object o1)
+		{
+			return ((Delegate)o1).DynamicInvoke(null);
+		}
+
+		public static object Func2 (CallSite site, object o1, object o2)
+		{
+			return ((Delegate)o1).DynamicInvoke(new [] { o2 });
+		}
+		
+		public static object Func3 (CallSite site, object o1, object o2, object o3)
+		{
+			return ((Delegate)o1).DynamicInvoke(new [] { o2, o3 });
+		}
+		
+		public static object Func4 (CallSite site, object o1, object o2, object o3, object o4)
+		{
+			return ((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4 });
+		}
+		
+		public static object Func5 (CallSite site, object o1, object o2, object o3, object o4, object o5)
+		{
+			return ((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5 });
+		}
+		
+		public static object Func6 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6)
+		{
+			return ((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5, o6 });
+		}
+		
+		public static object Func7 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7)
+		{
+			return ((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5, o6, o7 });
+		}
+		
+		public static object Func8 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8)
+		{
+			return ((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5, o6, o7, o8});
+		}
+		
+		public static object Func9 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8, object o9)
+		{
+			return ((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5, o6, o7, o8, o9 });
+		}
+		
+		public static object Func10 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8, object o9, object o10)
+		{
+			return ((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5, o6, o7, o8, o9, o10 });
+		}
+
 		public CSharpInvokeBinder (CSharpBinderFlags flags, Type callingContext, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
 //			this.flags = flags;
@@ -92,13 +194,38 @@ namespace ActionScript.RuntimeBinder
 //			this.argumentInfo = new List<CSharpArgumentInfo>(argumentInfo);
 		}
 
-		public static void Action(CallSite site, object o) {
+		static CSharpInvokeBinder ()
+		{
+			delegates.Add (typeof(Action<CallSite, object>), (Action<CallSite, object>)Action1);
+			delegates.Add (typeof(Action<CallSite, object, object>), (Action<CallSite, object, object>)Action2);
+			delegates.Add (typeof(Action<CallSite, object, object, object>), (Action<CallSite, object, object, object>)Action3);
+			delegates.Add (typeof(Action<CallSite, object, object, object, object>),   (Action<CallSite, object, object, object, object>)Action4);
+			delegates.Add (typeof(Action<CallSite, object, object, object, object, object>), (Action<CallSite, object, object, object, object, object>)Action5);
+			delegates.Add (typeof(Action<CallSite, object, object, object, object, object, object>), (Action<CallSite, object, object, object, object, object, object>)Action6);
+			delegates.Add (typeof(Action<CallSite, object, object, object, object, object, object, object>), (Action<CallSite, object, object, object, object, object, object, object>)Action7);
+			delegates.Add (typeof(Action<CallSite, object, object, object, object, object, object, object, object>), (Action<CallSite, object, object, object, object, object, object, object, object>)Action8);
+			delegates.Add (typeof(Action<CallSite, object, object, object, object, object, object, object, object, object>), (Action<CallSite, object, object, object, object, object, object, object, object, object>)Action9);
+			delegates.Add (typeof(Action<CallSite, object, object, object, object, object, object, object, object, object, object>), (Action<CallSite, object, object, object, object, object, object, object, object, object, object>)Action10);
 
+			delegates.Add (typeof(Func<CallSite, object, object>), (Func<CallSite, object, object>)Func1);
+			delegates.Add (typeof(Func<CallSite, object, object, object>), (Func<CallSite, object, object, object>)Func2);
+			delegates.Add (typeof(Func<CallSite, object, object, object, object>),   (Func<CallSite, object, object, object, object>)Func3);
+			delegates.Add (typeof(Func<CallSite, object, object, object, object, object>), (Func<CallSite, object, object, object, object, object>)Func4);
+			delegates.Add (typeof(Func<CallSite, object, object, object, object, object, object>), (Func<CallSite, object, object, object, object, object, object>)Func5);
+			delegates.Add (typeof(Func<CallSite, object, object, object, object, object, object, object>), (Func<CallSite, object, object, object, object, object, object, object>)Func6);
+			delegates.Add (typeof(Func<CallSite, object, object, object, object, object, object, object, object>), (Func<CallSite, object, object, object, object, object, object, object, object>)Func7);
+			delegates.Add (typeof(Func<CallSite, object, object, object, object, object, object, object, object, object>), (Func<CallSite, object, object, object, object, object, object, object, object, object>)Func8);
+			delegates.Add (typeof(Func<CallSite, object, object, object, object, object, object, object, object, object, object>), (Func<CallSite, object, object, object, object, object, object, object, object, object, object>)Func9);
+			delegates.Add (typeof(Func<CallSite, object, object, object, object, object, object, object, object, object, object, object>), (Func<CallSite, object, object, object, object, object, object, object, object, object, object, object>)Func10);
 		}
 
 		public override object Bind (Type delegateType)
 		{
-			throw new System.NotImplementedException ();
+			object target;
+			if (delegates.TryGetValue (delegateType, out target)) {
+				return target;
+			}
+			throw new Exception("Unable to bind set index for target " + delegateType.Name);
 		}
 	}
 

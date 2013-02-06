@@ -130,12 +130,12 @@ namespace ActionScript.RuntimeBinder
 		
 		public static CallSiteBinder Invoke (CSharpBinderFlags flags, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
-			return null;
+			return new CSharpInvokeBinder(flags, context, argumentInfo);
 		}
 		
 		public static CallSiteBinder InvokeConstructor (CSharpBinderFlags flags, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
-			return null;
+			return new CSharpInvokeConstructorBinder(context, argumentInfo);
 		}
 
 		public static CallSiteBinder InvokeMember (CSharpBinderFlags flags, string name, IEnumerable<Type> typeArguments, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
@@ -145,7 +145,7 @@ namespace ActionScript.RuntimeBinder
 
 		public static CallSiteBinder IsEvent (CSharpBinderFlags flags, string name, Type context)
 		{
-			return null;
+			throw new NotImplementedException("Dynamic IsEvent");
 		}
 		
 		public static CallSiteBinder SetIndex (CSharpBinderFlags flags, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)

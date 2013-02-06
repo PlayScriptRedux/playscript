@@ -7,6 +7,8 @@ namespace flash.display3D.textures {
 	
 #if PLATFORM_MONOMAC
 	using MonoMac.OpenGL;
+#elif PLATFORM_MONOTOUCH
+	using OpenTK.Graphics.ES20;
 #endif
 
 	public class Texture : TextureBase {
@@ -51,7 +53,11 @@ namespace flash.display3D.textures {
 			//GL.TexImage2D (TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, mWidth, mHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
 			//GL.BindBuffer (BufferTarget.PixelUnpackBuffer, 0);
 
+#if PLATFORM_MONOMAC
 			GL.PixelStore (PixelStoreParameter.UnpackRowLength, 0);
+#elif PLATFORM_MONOTOUCH
+			GL.PixelStore (PixelStoreParameter.UnpackAlignment, 0);
+#endif
 			GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, mWidth, mHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte,source.getRawData());
 
 			// Setup texture parameters

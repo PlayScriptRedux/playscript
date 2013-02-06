@@ -858,7 +858,7 @@ namespace Mono.CSharp
 
 		public override void EmitJs (JsEmitContext jec)
 		{
-			var typeName = jec.MakeJsTypeNme(this.Parent.MemberName.Name);
+			var typeName = jec.MakeJsTypeName(this.Parent.MemberName.Name);
 
 			var proto = "";
 			if ((ModFlags & Modifiers.STATIC) == 0) {

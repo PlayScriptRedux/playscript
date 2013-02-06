@@ -285,7 +285,7 @@ namespace flash.display3D
 			case RegType.Varying:   return "v";
 			case RegType.Sampler:   return "sampler";
 			default:
-				throw new InvalidDataException();
+				throw new InvalidOperationException("Invalid data!");
 			}
 		}
 
@@ -303,17 +303,17 @@ namespace flash.display3D
 
 			int magic = agal.readByte ();
 			if (magic != 0xA0) {
-				throw new InvalidDataException ("Magic value must be 0xA0, may not be AGAL");
+				throw new InvalidOperationException ("Magic value must be 0xA0, may not be AGAL");
 			}
 
 			int version = agal.readInt ();
 			if (version != 1) {
-				throw new InvalidDataException ("Version must be 1");
+				throw new InvalidOperationException ("Version must be 1");
 			}
 
 			int shaderTypeId = agal.readByte ();
 			if (shaderTypeId != 0xA1) {
-				throw new InvalidDataException ("Shader type id must be 0xA1");
+				throw new InvalidOperationException ("Shader type id must be 0xA1");
 			}
 
 			ProgramType programType = (agal.readByte () == 0) ? ProgramType.Vertex : ProgramType.Fragment;
@@ -374,12 +374,20 @@ namespace flash.display3D
 				sb.AppendLine();
 			}
 
+#if PLATFORM_MONOMAC
 			var glslVersion = 120;
+#elif PLATFORM_MONOTOUCH
+			var glslVersion = 100; // Actually this is glsl 1.20 but in gles it's 1.0
+#endif
 
 			// combine parts into final progam
 			var glsl = new StringBuilder();
 			glsl.AppendFormat("// AGAL {0} shader\n", (programType == ProgramType.Vertex) ? "vertex" : "fragment");
 			glsl.AppendFormat("#version {0}\n", glslVersion);
+#if PLATFORM_MONOTOUCH
+			// Required to set the default precision of vectors
+			glsl.Append("precision mediump float;\n");
+#endif
 			glsl.Append (map.ToGLSL(false));
 			glsl.AppendLine("void main() {");
 			glsl.Append (map.ToGLSL(true));

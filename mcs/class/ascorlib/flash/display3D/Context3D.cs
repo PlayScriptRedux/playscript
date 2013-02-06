@@ -5,6 +5,11 @@ namespace flash.display3D {
 #if PLATFORM_MONOMAC
 	using MonoMac.OpenGL;
 	using MonoMac.AppKit;
+#elif PLATFORM_MONOTOUCH
+	using MonoTouch.OpenGLES;
+	using MonoTouch.UIKit;
+	using OpenTK.Graphics;
+	using OpenTK.Graphics.ES20;
 #endif
 
 	using System;
@@ -41,8 +46,13 @@ namespace flash.display3D {
 		
 		public void clear(double red = 0.0, double green = 0.0, double blue = 0.0, double alpha = 1.0, 
 		                  double depth = 1.0, uint stencil = 0, uint mask = 0xffffffff) {
+#if PLATFORM_MONOMAC
 			GL.ClearColor (NSColor.FromDeviceRgba((float)red,(float)green,(float)blue,(float)alpha));
 			GL.ClearDepth(depth);
+#elif PLATFORM_MONOTOUCH
+			GL.ClearColor ((float)red, (float)green, (float)blue, (float)alpha);
+			GL.ClearDepth((float)depth);
+#endif
 			GL.ClearStencil((int)stencil);
 			GL.Clear (ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
 		}

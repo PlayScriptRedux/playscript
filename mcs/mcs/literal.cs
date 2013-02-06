@@ -329,5 +329,10 @@ namespace Mono.CSharp
 		{
 			return visitor.Visit (this);
 		}
+
+		public override void EmitJs (Mono.CSharp.JavaScript.JsEmitContext jec)
+		{
+			jec.Buf.Write ("\"", jec.Buf.EscapeString(Value), "\"", loc);
+		}
 	}
 }

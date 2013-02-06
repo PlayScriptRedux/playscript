@@ -2783,7 +2783,7 @@ namespace Mono.CSharp {
 		public override void EmitJs (JsEmitContext jec)
 		{
 			jec.Buf.Write (jec.MakeJsNamespaceName(type.MemberDefinition.Namespace), ".", 
-			               jec.MakeJsTypeNme(type.Name), Location);
+			               jec.MakeJsTypeName(type.Name), Location);
 		}
 
 	}
@@ -6192,6 +6192,16 @@ namespace Mono.CSharp {
 			}
 		}
 
+		public override void EmitJs (JsEmitContext jec)
+		{
+			if (IsStatic) { 
+				jec.Buf.Write (jec.MakeJsFullTypeName (best_candidate.DeclaringType));
+			} else {
+				InstanceExpression.EmitJs (jec);
+			}
+			jec.Buf.Write (".", best_candidate.Name);
+		}
+
 		protected override Expression OverloadResolve (ResolveContext rc, Expression right_side)
 		{
 			eclass = ExprClass.PropertyAccess;
@@ -6675,6 +6685,12 @@ namespace Mono.CSharp {
 			li.CreateBuilder (ec);
 
 			EmitAssign (ec, source, false, false);
+		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+			jec.Report.Error (7074, this.loc, "JavaScript code generation for " + this.GetType ().Name + " expression not supported.");
+			jec.Buf.Write ("<<" + this.GetType ().Name + " expr>>");
 		}
 
 		public override HoistedVariable GetHoistedVariable (AnonymousExpression ae)
