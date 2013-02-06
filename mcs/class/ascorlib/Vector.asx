@@ -128,7 +128,38 @@ package {
 		}
  	 	
 		public function splice(startIndex:int, deleteCount:uint = 4294967295, ... items):Vector.<T> {
-			throw new System.NotImplementedException();
+			var removed:Vector.<T>;
+			
+			// determine number of items to delete
+			var toDelete:uint = this.length - startIndex;
+			if (toDelete > deleteCount) toDelete = deleteCount;
+
+			if (toDelete > 0)
+			{
+				removed = new Vector.<T>();
+				
+				// build list of items we removed
+				for (var i:int=0; i < toDelete; i++)
+				{
+					removed.push( this[startIndex + i] );
+				}
+			
+				// remove items
+				this.RemoveRange(startIndex, toDelete);
+			}
+			
+			if (items.Length > 0)
+			{
+				// insert range doesnt work when converting an object[] to dynamic[]
+				// this.InsertRange(startIndex, items);
+
+				for (var i:int=0; i < items.Length; i++)
+				{
+					this.Insert(startIndex + i, Object(items[i]) );
+				}
+			}
+			
+			return removed;
 		}
  	 	
 		public function toLocaleString():String {

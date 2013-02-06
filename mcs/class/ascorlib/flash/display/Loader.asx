@@ -37,6 +37,9 @@ package flash.display {
 
 			// $$TODO do the real loading here!
 			mContent = new Bitmap(new BitmapData(64,64, true, 0xFF00FF));
+			
+			// store content in content loader info (also)
+			this.contentLoaderInfo.content = mContent;
 		
 			// dispatch complete event
 			var e:Event = new Event(Event.COMPLETE);

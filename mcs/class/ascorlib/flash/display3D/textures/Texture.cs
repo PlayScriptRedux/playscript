@@ -39,6 +39,7 @@ namespace flash.display3D.textures {
 		{
 			// $$TODO 
 			// this is empty for now
+			Console.WriteLine ("uploadCompressedTextureFromByteArray not implemented");
 
 			if (async) {
 				// load with a delay

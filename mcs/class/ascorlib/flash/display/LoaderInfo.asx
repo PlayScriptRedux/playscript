@@ -21,7 +21,7 @@ package flash.display {
  	 	
  		public property childSandboxBridge : Object { get { return null; } }
  		
- 	 	public property content : DisplayObject { get { return null; } }
+ 	 	public property content : DisplayObject { get; set; }
  	 	
  	 	public property contentType : String { get { return null; } }
  	 	

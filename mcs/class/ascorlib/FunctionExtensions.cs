@@ -6,13 +6,11 @@ namespace _root {
 	public static class FunctionExtensions {
 
 		public static dynamic apply(this Delegate d, dynamic thisArg, Array argArray) {
-			var m = d.Method;
-			return m.Invoke(d.Target, argArray.ToArray() );
+			return d.DynamicInvoke(argArray.ToArray());
 		}
 
 		public static dynamic call(this Delegate d, dynamic thisArg, params object[] args) {
-			var m = d.Method;
-			return m.Invoke(d.Target, args );
+			return d.DynamicInvoke(args);
 		}
 
 		// this returns the number of arguments to the delegate method
