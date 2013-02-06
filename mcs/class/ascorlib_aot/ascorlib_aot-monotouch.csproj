@@ -41,6 +41,7 @@
     <Folder Include="Resources\" />
     <Folder Include="ActionScript\" />
     <Folder Include="flash\" />
+    <Folder Include="flash\filesystem\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -574,6 +575,9 @@
     </Compile>
     <Compile Include="..\ascorlib\flash\utils\utils_functions.asx">
       <Link>flash\utils\utils_functions.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\filesystem\File.asx">
+      <Link>flash\filesystem\File.asx</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>
