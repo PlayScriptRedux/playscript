@@ -20,8 +20,11 @@ package flash.filesystem {
  	 			if (sApplicationDirectory == null) {
 					// get location of application
 					//var appPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+#if PLATFORM_MONOMAC
 					var appPath = NSBundle.MainBundle.ResourcePath + "/demo/assets";
-					
+#else
+					var appPath = "/";
+#endif
 					// create new file 
  	 				sApplicationDirectory = new File(appPath);
  	 			}
