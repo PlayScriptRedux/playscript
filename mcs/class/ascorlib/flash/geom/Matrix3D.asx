@@ -17,32 +17,39 @@ package flash.geom {
 		//
 		
 		public function Matrix3D(v:Vector.<Number> = null) {
-			mData = []; //new Vector.<Number>(16, true);
+			mData = new Vector.<Number>(16, true);
 		}
  	 	
 		public function append(lhs:Matrix3D):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function appendRotation(degrees:Number, axis:Vector3D, pivotPoint:Vector3D = null):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function appendScale(xScale:Number, yScale:Number, zScale:Number):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function appendTranslation(x:Number, y:Number, z:Number):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function clone():Matrix3D {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function copyColumnFrom(column:uint, vector3D:Vector3D):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function copyColumnTo(column:uint, vector3D:Vector3D):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function copyFrom(sourceMatrix3D:Matrix3D):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function copyRawDataFrom(vector:Vector.<Number>, index:uint = 0, transpose:Boolean = false):void {
@@ -50,70 +57,100 @@ package flash.geom {
 		}
  	 	
 		public function copyRawDataTo(vector:Vector.<Number>, index:uint = 0, transpose:Boolean = false):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function copyRowFrom(row:uint, vector3D:Vector3D):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function copyRowTo(row:uint, vector3D:Vector3D):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function copyToMatrix3D(dest:Matrix3D):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function decompose(orientationStyle:String = "eulerAngles"):Vector.<Vector3D> {
-			return null;		
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function deltaTransformVector(v:Vector3D):Vector3D {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function identity():void {
+			mData[0] = 1.0;
+			mData[1] = 0.0;
+			mData[2] = 0.0;
+			mData[3] = 0.0;
+
+			mData[4] = 0.0;
+			mData[5] = 1.0;
+			mData[6] = 0.0;
+			mData[7] = 0.0;
+
+			mData[8] = 0.0;
+			mData[9] = 0.0;
+			mData[10]= 1.0;
+			mData[11]= 0.0;
+
+			mData[12]= 0.0;
+			mData[13]= 0.0;
+			mData[14]= 0.0;
+			mData[15]= 1.0;
 		}
  	 	
 		public static function interpolate(thisMat:Matrix3D, toMat:Matrix3D, percent:Number):Matrix3D {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function interpolateTo(toMat:Matrix3D, percent:Number):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function invert():Boolean {
-			return false;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function pointAt(pos:Vector3D, at:Vector3D = null, up:Vector3D = null):void {
+			throw new System.NotImplementedException();
 		}
 
 		public function prepend(rhs:Matrix3D):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function prependRotation(degrees:Number, axis:Vector3D, pivotPoint:Vector3D = null):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function prependScale(xScale:Number, yScale:Number, zScale:Number):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function prependTranslation(x:Number, y:Number, z:Number):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function recompose(components:Vector.<Vector3D>, orientationStyle:String = "eulerAngles"):Boolean {
-			return false;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function transformVector(v:Vector3D):Vector3D {
-			return null;		
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function transformVectors(vin:Vector.<Number>, vout:Vector.<Number>):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function transpose():void {
+			throw new System.NotImplementedException();
 		}
 		
 		public var mData:Vector.<Number>;
-	
 	}
 
 }

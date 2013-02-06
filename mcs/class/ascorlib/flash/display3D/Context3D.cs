@@ -46,13 +46,8 @@ namespace flash.display3D {
 		
 		public void clear(double red = 0.0, double green = 0.0, double blue = 0.0, double alpha = 1.0, 
 		                  double depth = 1.0, uint stencil = 0, uint mask = 0xffffffff) {
-#if PLATFORM_MONOMAC
-			GL.ClearColor (NSColor.FromDeviceRgba((float)red,(float)green,(float)blue,(float)alpha));
-			GL.ClearDepth(depth);
-#elif PLATFORM_MONOTOUCH
 			GL.ClearColor ((float)red, (float)green, (float)blue, (float)alpha);
 			GL.ClearDepth((float)depth);
-#endif
 			GL.ClearStencil((int)stencil);
 			GL.Clear (ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
 		}
@@ -149,25 +144,59 @@ namespace flash.display3D {
 		public void setProgramConstantsFromMatrix (string programType, int firstRegister, Matrix3D matrix, 
 			bool transposedMatrix = false)
 		{
-			// convert double->float
-			convertDoubleToFloat(mTemp, matrix.mData, 16);
+			// GLES does not support transposed uniform setting so do it manually 
+			if (transposedMatrix) {
+				//    0  1  2  3
+				//    4  5  6  7
+				//    8  9 10 11
+				//   12 13 14 15
+				Vector<double> source = matrix.mData;
+				mTemp[0] = (float)source[0];
+				mTemp[1] = (float)source[4];
+				mTemp[2] = (float)source[8];
+				mTemp[3] = (float)source[12];
+				
+				mTemp[4] = (float)source[1];
+				mTemp[5] = (float)source[5];
+				mTemp[6] = (float)source[9];
+				mTemp[7] = (float)source[13];
+
+				mTemp[8] = (float)source[2];
+				mTemp[9] = (float)source[6];
+				mTemp[10]= (float)source[10];
+				mTemp[11]= (float)source[14];
+
+				mTemp[12]= (float)source[3];
+				mTemp[13]= (float)source[7];
+				mTemp[14]= (float)source[11];
+				mTemp[15]= (float)source[15];
+			} else {
+				// convert double->float
+				convertDoubleToFloat (mTemp, matrix.mData, 16);
+			}
+
 
 			if (programType == "vertex") {
 				// set uniform registers
 				int location = mProgram.getVertexLocation(firstRegister);
-				GL.UniformMatrix4(location, 1, transposedMatrix, mTemp);
+				GL.UniformMatrix4(location, 1, false, mTemp);
+
 			} else {
 				// set uniform registers
 				int location = mProgram.getFragmentLocation(firstRegister);
-				GL.UniformMatrix4(location, 1, transposedMatrix, mTemp);
+				GL.UniformMatrix4(location, 1, false, mTemp);
 			}
 		}
 
  	 	
 		public void setProgramConstantsFromVector (string programType, int firstRegister, Vector<double> data, int numRegisters = -1)
 		{
+			if (numRegisters == -1) {
+				numRegisters = (int)(data.length / 4);
+			}
+
 			// convert double->float
-			convertDoubleToFloat(mTemp, data, numRegisters * 4);
+			convertDoubleToFloat (mTemp, data, numRegisters * 4);
 
 			if (programType == "vertex") {
 				// set uniform registers

@@ -37,6 +37,7 @@ package {
 		public function Vector(length:uint = 0, @fixed:Boolean = false) {
 			super(int(length));
 			mFixed = @fixed;
+			expand(length);
 		}
 		
 		// optionally expands the vector to accomodate the new size
