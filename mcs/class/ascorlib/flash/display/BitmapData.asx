@@ -13,6 +13,10 @@ package flash.display {
 	import MonoMac.CoreGraphics.*;
 	import MonoMac.Foundation.*;
 	import MonoMac.AppKit.*;
+#elif PLATFORM_MONOTOUCH
+	import MonoTouch.Foundation.*;
+	import MonoTouch.CoreGraphics.*;
+	import MonoTouch.UIKit.*;
 #endif
 
 	public class BitmapData implements IBitmapDrawable {
@@ -265,13 +269,38 @@ package flash.display {
 				
 				context.DrawImage (new System.Drawing.RectangleF (0, 0, width, height), image);
 			}
+			image.Dispose();
 
 			// allocate new bitmap data and copy into it
 			var bd = new flash.display.BitmapData(width, height, true);
 			System.Buffer.BlockCopy(data, 0, bd.getRawData(), 0, width * height * 4);
 			return bd;
 #else
-			throw new System.NotImplementedException();
+			if (!File.Exists(path))
+			{	
+//			var fullPath:String = NSBundle.MainBundle.PathForResource(path, "");
+				path = Path.Combine(NSBundle.MainBundle.ResourcePath, path);
+			}
+
+			var image:CGImage = new UIImage(path).CGImage;
+			var width:int = image.Width;
+			var height:int = image.Height;
+			
+			var data = new byte[width * height * 4];
+			using (CGContext context = new CGBitmapContext (data, width, height, 8, 4 * width, image.ColorSpace, CGImageAlphaInfo.PremultipliedLast)) {
+				// Set the blend mode to copy before drawing since the previous contents of memory aren't used. 
+				// This avoids unnecessary blending.
+				context.SetBlendMode (CGBlendMode.Copy);
+				
+				context.DrawImage (new System.Drawing.RectangleF (0, 0, width, height), image);
+			}
+
+			image.Dispose();
+			
+			// allocate new bitmap data and copy into it
+			var bd = new flash.display.BitmapData(width, height, true);
+			System.Buffer.BlockCopy(data, 0, bd.getRawData(), 0, width * height * 4);
+			return bd;
 #endif
 		}
 		
