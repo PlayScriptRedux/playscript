@@ -17,6 +17,7 @@ using System.Text;
 using SLE = System.Linq.Expressions;
 using System.Linq;
 using Mono.CSharp.JavaScript;
+using Mono.CSharp.Cpp;
 
 #if STATIC
 using IKVM.Reflection;
@@ -613,6 +614,12 @@ namespace Mono.CSharp {
 			jec.Buf.Write ("<<" + this.GetType ().Name + " expr>>");
 		}
 
+		public virtual void EmitCpp (CppEmitContext cec)
+		{
+			cec.Report.Error (7174, this.loc, "C++ code generation for " + this.GetType ().Name + " expression not supported.");
+			cec.Buf.Write ("<<" + this.GetType ().Name + " expr>>");
+		}
+
 		/// <summary>
 		///   Protected constructor.  Only derivate types should
 		///   be able to be created
@@ -1062,15 +1069,21 @@ namespace Mono.CSharp {
 		/// </summary>
 		public abstract void EmitStatement (EmitContext ec);
 
+		public override void EmitSideEffect (EmitContext ec)
+		{
+			EmitStatement (ec);
+		}
+
 		public virtual void EmitStatementJs (JsEmitContext jec)
 		{
 			jec.Report.Error(7072, Location, "JavaScript code generation for " + this.GetType ().Name + " statement not supported.");
 			jec.Buf.Write ("<<" + this.GetType ().Name + " stmtexpr>>");
 		}
-
-		public override void EmitSideEffect (EmitContext ec)
+		
+		public virtual void EmitStatementCpp (CppEmitContext cec)
 		{
-			EmitStatement (ec);
+			cec.Report.Error(7172, Location, "C++ code generation for " + this.GetType ().Name + " statement not supported.");
+			cec.Buf.Write ("<<" + this.GetType ().Name + " stmtexpr>>");
 		}
 	}
 
@@ -1151,6 +1164,13 @@ namespace Mono.CSharp {
 			Child.EmitJs (jec);
 		}
 
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			cec.Buf.Write ("(", cec.MakeCppFullTypeName(Type), ")(", loc);
+			Child.EmitCpp (cec);
+			cec.Buf.Write (")");
+		}
+
 		protected override void CloneTo (CloneContext clonectx, Expression t)
 		{
 			// Nothing to clone
@@ -1193,6 +1213,13 @@ namespace Mono.CSharp {
 		public override void EmitJs (JsEmitContext jec)
 		{
 			Child.EmitJs (jec);
+		}
+
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			cec.Buf.Write ("(", cec.MakeCppFullTypeName(Type), ")(", loc);
+			Child.EmitCpp (cec);
+			cec.Buf.Write (")");
 		}
 	}
 
@@ -1805,6 +1832,13 @@ namespace Mono.CSharp {
 		{
 			// We do nothing here for JavaScript.. implicit casts or fail.
 			Child.EmitJs (jec);
+		}
+
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			cec.Buf.Write ("(", cec.MakeCppFullTypeName(Type), ")(", loc);
+			Child.EmitCpp (cec);
+			cec.Buf.Write (")");
 		}
 
 		public TypeSpec UnderlyingType {
@@ -2698,6 +2732,11 @@ namespace Mono.CSharp {
 		{
 			jec.Buf.Write (Name, Location);
 		}
+
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			cec.Buf.Write (Name, Location);
+		}
 		
 		public override object Accept (StructuralVisitor visitor)
 		{
@@ -2786,6 +2825,10 @@ namespace Mono.CSharp {
 			               jec.MakeJsTypeName(type.Name), Location);
 		}
 
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			cec.Buf.Write (cec.MakeCppFullTypeName(type), Location);
+		}
 	}
 	
 	/// <summary>
@@ -3560,6 +3603,14 @@ namespace Mono.CSharp {
 			if (arguments != null)
 				arguments.EmitJs (jec);
 			jec.Buf.Write(")");
+		}
+
+		public void EmitCallCpp (CppEmitContext cec, Arguments arguments)
+		{
+			cec.Buf.Write("(", Location);
+			if (arguments != null)
+				arguments.EmitCpp (cec);
+			cec.Buf.Write(")");
 		}
 
 		public override void Error_ValueCannotBeConverted (ResolveContext ec, TypeSpec target, bool expl)
@@ -5917,6 +5968,17 @@ namespace Mono.CSharp {
 			jec.Buf.Write (Name);
 		}
 
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			if (InstanceExpression != null) {
+				InstanceExpression.EmitCpp (cec);
+				cec.Buf.Write ("->");
+			} else {
+				cec.Buf.Write (DeclaringType.Name, "->", Location);
+			}
+			cec.Buf.Write (Name);
+		}
+
 		public virtual void AddressOf (EmitContext ec, AddressOp mode)
 		{
 			if ((mode & AddressOp.Store) != 0)
@@ -6202,6 +6264,28 @@ namespace Mono.CSharp {
 			jec.Buf.Write (".", best_candidate.Name);
 		}
 
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			if (IsStatic) { 
+				cec.Buf.Write (cec.MakeCppFullTypeName (best_candidate.DeclaringType, false), loc);
+			} else {
+				InstanceExpression.EmitCpp (cec);
+			}
+			cec.Buf.Write ("->", "get_", best_candidate.Name,  "()", loc);
+		}
+
+		public override void EmitAssignCpp (CppEmitContext cec, Expression source, bool leave_copy, bool isCompound)
+		{
+			if (IsStatic) { 
+				cec.Buf.Write (cec.MakeCppFullTypeName (best_candidate.DeclaringType, false), loc);
+			} else {
+				InstanceExpression.EmitCpp (cec);
+			}
+			cec.Buf.Write ("->", "set_", best_candidate.Name,  "(");
+			source.EmitCpp (cec);
+			cec.Buf.Write (")", loc);
+		}
+
 		protected override Expression OverloadResolve (ResolveContext rc, Expression right_side)
 		{
 			eclass = ExprClass.PropertyAccess;
@@ -6347,6 +6431,11 @@ namespace Mono.CSharp {
 		public override void Emit (EmitContext ec)
 		{
 			Emit (ec, false);
+		}
+
+		public virtual void EmitAssignCpp (CppEmitContext cec, Expression source, bool leave_copy, bool isCompound)
+		{
+			EmitCpp (cec);
 		}
 
 		protected override FieldExpr EmitToFieldSource (EmitContext ec)
@@ -6691,6 +6780,12 @@ namespace Mono.CSharp {
 		{
 			jec.Report.Error (7074, this.loc, "JavaScript code generation for " + this.GetType ().Name + " expression not supported.");
 			jec.Buf.Write ("<<" + this.GetType ().Name + " expr>>");
+		}
+
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			cec.Report.Error (7174, this.loc, "C++ code generation for " + this.GetType ().Name + " expression not supported.");
+			cec.Buf.Write ("<<" + this.GetType ().Name + " expr>>");
 		}
 
 		public override HoistedVariable GetHoistedVariable (AnonymousExpression ae)

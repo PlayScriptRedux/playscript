@@ -21,6 +21,7 @@ using System.Security.Permissions;
 using Mono.Security.Cryptography;
 using Mono.CompilerServices.SymbolWriter;
 using Mono.CSharp.JavaScript;
+using Mono.CSharp.Cpp;
 
 #if STATIC
 using IKVM.Reflection;
@@ -77,6 +78,7 @@ namespace Mono.CSharp
 		AssemblyAttributesPlaceholder module_target_attrs;
 
 		private JsEmitContext jec;
+		private CppEmitContext cec;
 
 		protected AssemblyDefinition (ModuleContainer module, string name)
 		{
@@ -503,6 +505,15 @@ namespace Mono.CSharp
 			module.EmitContainerJs (jec);
 		}
 
+		public virtual void EmitCpp ()
+		{
+			cec = new CppEmitContext (module);
+			
+			cec.Buf.Write ("// Module: ", this.Name, ".cpp\n");
+			
+			module.EmitContainerCpp (cec);
+		}
+
 		public byte[] GetPublicKeyToken ()
 		{
 			if (public_key == null || public_key_token != null)
@@ -882,6 +893,13 @@ namespace Mono.CSharp
 		public void SaveJs ()
 		{
 			var s = jec.Buf.Stream.ToString ();
+//			System.Console.WriteLine (s);
+			System.IO.File.WriteAllText (file_name, s);
+		}
+
+		public void SaveCpp ()
+		{
+			var s = cec.Buf.Stream.ToString ();
 //			System.Console.WriteLine (s);
 			System.IO.File.WriteAllText (file_name, s);
 		}

@@ -278,7 +278,7 @@ package flash.display {
 		private var mWidth:int;
 		private var mHeight:int;
 		private var mTransparent:Boolean;
-		private var mData:System.UInt32[];
+		private var mData:uint[];
 	}
 
 }

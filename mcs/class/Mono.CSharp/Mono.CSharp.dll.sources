@@ -15,6 +15,7 @@
 ../../mcs/constant.cs
 ../../mcs/convert.cs
 ../../mcs/context.cs
+../../mcs/cxx-target.cs
 ../../mcs/decl.cs
 ../../mcs/delegate.cs
 ../../mcs/doc.cs

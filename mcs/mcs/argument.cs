@@ -13,6 +13,7 @@
 using System;
 using System.Collections.Generic;
 using Mono.CSharp.JavaScript;
+using Mono.CSharp.Cpp;
 
 #if STATIC
 using IKVM.Reflection.Emit;
@@ -515,6 +516,17 @@ namespace Mono.CSharp
 				if (!first)
 					jec.Buf.Write(", ");
 				a.Expr.EmitJs (jec);
+				first = false;
+			}
+		}
+
+		public virtual void EmitCpp (CppEmitContext cec)
+		{
+			bool first = true;
+			foreach (Argument a in args) {
+				if (!first)
+					cec.Buf.Write(", ");
+				a.Expr.EmitCpp (cec);
 				first = false;
 			}
 		}

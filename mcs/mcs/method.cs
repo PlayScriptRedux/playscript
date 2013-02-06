@@ -21,6 +21,7 @@ using System.Linq;
 using Mono.CompilerServices.SymbolWriter;
 using System.Runtime.CompilerServices;
 using Mono.CSharp.JavaScript;
+using Mono.CSharp.Cpp;
 
 #if NET_2_1
 using XmlElement = System.Object;
@@ -740,6 +741,28 @@ namespace Mono.CSharp {
 			jec.Buf.Write (";\n");
 		}
 
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			base.EmitCpp (cec);
+			
+			if ((this.ModFlags & Modifiers.STATIC) != 0) {
+				cec.Buf.Write ("\tstatic ", Location);
+			} else {
+				cec.Buf.Write ("\t", Location);
+			}
+
+			cec.Buf.Write (cec.MakeCppFullTypeName (this.ReturnType), " ", this.MethodName.Name, "(");
+			parameters.EmitCpp (cec);
+			cec.Buf.Write (") ");
+			
+			if (MethodData != null)
+				MethodData.EmitCpp (Parent, cec);
+			
+			Block = null;
+			
+			cec.Buf.Write ("\n");
+		}
+
 		protected void Error_ConditionalAttributeIsNotValid ()
 		{
 			Report.Error (577, Location,
@@ -1357,6 +1380,17 @@ namespace Mono.CSharp {
 		{
 			try {
 				base.EmitJs (jec);
+			} catch {
+				Console.WriteLine ("Internal compiler error at {0}: exception caught while emitting {1}",
+				                   Location, MethodBuilder);
+				throw;
+			}
+		}
+
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			try {
+				base.EmitCpp (cec);
 			} catch {
 				Console.WriteLine ("Internal compiler error at {0}: exception caught while emitting {1}",
 				                   Location, MethodBuilder);
@@ -2275,6 +2309,21 @@ namespace Mono.CSharp {
 				BlockContext bc = new BlockContext (mc, block, method.ReturnType);
 				if (block.Resolve (null, bc, method)) {
 					block.EmitBlockJs (jec, false, false);
+				}
+			}
+		}
+
+		public void EmitCpp (TypeDefinition parent, CppEmitContext cec)
+		{
+			var mc = (IMemberContext) method;
+			
+			method.ParameterInfo.ApplyAttributes (mc, MethodBuilder);
+			
+			ToplevelBlock block = method.Block;
+			if (block != null) {
+				BlockContext bc = new BlockContext (mc, block, method.ReturnType);
+				if (block.Resolve (null, bc, method)) {
+					block.EmitBlockCpp (cec, false, false);
 				}
 			}
 		}

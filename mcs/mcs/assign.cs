@@ -14,6 +14,7 @@
 //
 using System;
 using Mono.CSharp.JavaScript;
+using Mono.CSharp.Cpp;
 
 #if STATIC
 using IKVM.Reflection.Emit;
@@ -456,6 +457,26 @@ namespace Mono.CSharp {
 			jec.Buf.Write (";\n");
 		}
 
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			if (Target is PropertyExpr) {
+				((PropertyExpr)Target).EmitAssignCpp (cec, Source, false, false);
+			} else {
+				Target.EmitCpp (cec);
+				cec.Buf.Write (" = ");
+				Source.EmitCpp (cec);
+			}
+		}
+		
+		public override void EmitStatementCpp (CppEmitContext cec)
+		{
+			cec.Buf.Write ("\t", Location);
+			Target.EmitCpp (cec);
+			cec.Buf.Write (" = ");
+			Source.EmitCpp (cec);
+			cec.Buf.Write (";\n");
+		}
+
 		protected override void CloneTo (CloneContext clonectx, Expression t)
 		{
 			Assign _target = (Assign) t;
@@ -681,6 +702,16 @@ namespace Mono.CSharp {
 			public override void Emit (EmitContext ec)
 			{
 				child.Emit (ec);
+			}
+
+			public override void EmitJs (JsEmitContext jec)
+			{
+				child.EmitJs (jec);
+			}
+
+			public override void EmitCpp (CppEmitContext cec)
+			{
+				child.EmitCpp (cec);
 			}
 
 			public override Expression EmitToField (EmitContext ec)

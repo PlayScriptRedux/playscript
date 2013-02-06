@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Mono.CompilerServices.SymbolWriter;
 using Mono.CSharp.JavaScript;
+using Mono.CSharp.Cpp;
 
 namespace Mono.CSharp {
 
@@ -1008,6 +1009,32 @@ namespace Mono.CSharp {
 			if (!is_global_ns) {
 				jec.Buf.Unindent ();
 				jec.Buf.Write ("\t})(", name, " || (", name, " = {});\n");
+			}
+		}
+
+		public override void EmitContainerCpp (CppEmitContext cec)
+		{
+			VerifyClsCompliance ();
+			
+			var name = cec.MakeCppNamespaceName (this.NS.Name);
+			var ns_names = this.NS.Name.Split (new char[] { '.'});
+			bool is_global_ns = String.IsNullOrEmpty (name);
+			
+			if (!is_global_ns) {
+				foreach (var n in ns_names) {
+					cec.Buf.Write ("\tnamespace ", n, " {\n");
+					cec.Buf.Indent();
+				}
+				cec.MarkNamespaceDefined (NS.Name);
+			}
+			
+			base.EmitContainerCpp (cec);
+			
+			if (!is_global_ns) {
+				foreach (var n in ns_names) {
+					cec.Buf.Unindent ();
+					cec.Buf.Write ("\t}\n");
+				}
 			}
 		}
 

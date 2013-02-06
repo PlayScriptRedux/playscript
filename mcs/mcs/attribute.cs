@@ -20,6 +20,7 @@ using System.Security.Permissions;
 using System.Text;
 using System.IO;
 using Mono.CSharp.JavaScript;
+using Mono.CSharp.Cpp;
 
 #if STATIC
 using SecurityType = System.Collections.Generic.List<IKVM.Reflection.Emit.CustomAttributeBuilder>;
@@ -1278,6 +1279,10 @@ namespace Mono.CSharp {
 		}
 
 		public void EmitJs (JsEmitContext jec)
+		{
+		}
+
+		public void EmitCpp (CppEmitContext cec)
 		{
 		}
 

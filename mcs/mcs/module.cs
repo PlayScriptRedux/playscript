@@ -17,6 +17,7 @@ using System.Runtime.InteropServices;
 using Mono.CompilerServices.SymbolWriter;
 using System.Linq;
 using Mono.CSharp.JavaScript;
+using Mono.CSharp.Cpp;
 
 #if STATIC
 using IKVM.Reflection;
@@ -465,6 +466,28 @@ namespace Mono.CSharp
 						at.EmitContainerJs (jec);
 			}
 		}
+
+		public override void EmitContainerCpp (CppEmitContext cec)
+		{
+			if (OptAttributes != null)
+				OptAttributes.EmitCpp (cec);
+			
+			foreach (var tc in containers) {
+				tc.PrepareEmit ();
+			}
+			
+			base.EmitContainerCpp (cec);
+			
+			if (Compiler.Report.Errors == 0 && !Compiler.Settings.WriteMetadataOnly)
+				VerifyMembers ();
+			
+			if (anonymous_types != null) {
+				foreach (var atypes in anonymous_types)
+					foreach (var at in atypes.Value)
+						at.EmitContainerCpp (cec);
+			}
+		}
+
 
 		internal override void GenerateDocComment (DocumentationBuilder builder)
 		{

@@ -22,6 +22,7 @@ using System.Text;
 using System.Diagnostics;
 using Mono.CompilerServices.SymbolWriter;
 using Mono.CSharp.JavaScript;
+using Mono.CSharp.Cpp;
 
 #if NET_2_1
 using XmlElement = System.Object;
@@ -329,6 +330,14 @@ namespace Mono.CSharp
 			if (containers != null) {
 				for (int i = 0; i < containers.Count; ++i)
 					containers[i].EmitContainerJs (jec);
+			}
+		}
+
+		public virtual void EmitContainerCpp (CppEmitContext cec)
+		{
+			if (containers != null) {
+				for (int i = 0; i < containers.Count; ++i)
+					containers[i].EmitContainerCpp (cec);
 			}
 		}
 
@@ -2121,6 +2130,63 @@ namespace Mono.CSharp
 
 		}
 
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			ValidateEmit ();
+			
+			base.EmitCpp (cec);
+			
+			int i;
+			MemberCore m;
+			HashSet<MemberCore> emitted = new HashSet<MemberCore> ();
+			
+			// Constructors
+			for (i = 0; i < members.Count; i++) {
+				m = members [i];
+				var c = m as Constructor;
+				if (c != null && (c.ModFlags & Modifiers.STATIC) == 0) {
+					c.EmitCpp (cec);
+					emitted.Add (c);
+				}
+			}
+			
+			// Static constructors
+			for (i = 0; i < members.Count; i++) {
+				m = members [i];
+				var c = m as Constructor;
+				if (c != null && (c.ModFlags & Modifiers.STATIC) != 0) {
+					c.EmitCpp (cec);
+					emitted.Add (c);
+				}
+			}
+			
+			// Properties
+			for (i = 0; i < members.Count; i++) {
+				m = members [i];
+				if (m is Property) {
+					m.EmitCpp (cec);
+					emitted.Add (m);
+				}
+			}
+			
+			// Methods
+			for (i = 0; i < members.Count; i++) {
+				m = members [i];
+				if (m is Method) {
+					m.EmitCpp (cec);
+					emitted.Add (m);
+				}
+			}
+			
+			// Whatever else
+			for (i = 0; i < members.Count; i++) {
+				m = members [i];
+				if (!emitted.Contains(m)) {
+					m.EmitCpp (cec);
+				}
+			}
+			
+		}
 
 		void CheckAttributeClsCompliance ()
 		{
@@ -2153,6 +2219,14 @@ namespace Mono.CSharp
 				return;
 			
 			EmitJs (jec);
+		}
+
+		public sealed override void EmitContainerCpp (CppEmitContext cec)
+		{
+			if ((caching_flags & Flags.CloseTypeCreated) != 0)
+				return;
+			
+			EmitCpp (cec);
 		}
 
 		public override void CloseContainer ()
@@ -2631,8 +2705,54 @@ namespace Mono.CSharp
 
 			jec.Buf.Write ("\t", nsname, ".", this.MemberName.Name, " = ", this.MemberName.Name, ";\n");
 		}
-	}
 
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			if (!cec.CheckCanEmit (Location))
+				return;
+			
+			if (!has_static_constructor && HasStaticFieldInitializer) {
+				var c = DefineDefaultConstructor (true);
+				c.Define ();
+			}
+			
+			if (!(this.Parent is NamespaceContainer)) {
+				cec.Report.Error (7175, Location, "C++ code generation for nested types not supported.");
+				return;
+			}
+			
+			
+			Constructor constructor = null;
+			
+			foreach (var member in Members) {
+				var c = member as Constructor;
+				if (c != null) {
+					if ((c.ModFlags & Modifiers.STATIC) != 0) {
+						continue;
+					} 
+					if (constructor != null) {
+						cec.Report.Error (7177, c.Location, "C++ generation not supported for overloaded constructors");
+						return;
+					}
+					constructor = c;
+				}
+			}
+			
+			var nsc = (NamespaceContainer)this.Parent;
+
+			cec.Buf.Write ("\n");
+			cec.Buf.Write ("\tpublic class", MemberName.Name, " {\n", Location);
+			cec.Buf.Indent ();
+			cec.Buf.Write ("\tpublic:\n");
+			
+			base.EmitCpp (cec);
+
+			cec.Buf.Unindent();
+			cec.Buf.Write ("\t}\n");
+			
+		}
+
+	}
 
 	public sealed class Class : ClassOrStruct
 	{
@@ -2775,6 +2895,11 @@ namespace Mono.CSharp
 		public override void EmitJs (JsEmitContext jec)
 		{
 			base.EmitJs (jec);
+		}
+
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			base.EmitCpp (cec);
 		}
 
 		protected override TypeSpec[] ResolveBaseTypes (out FullNamedExpression base_class)
@@ -2984,6 +3109,12 @@ namespace Mono.CSharp
 			base.EmitJs (jec);
 		}
 
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			CheckStructCycles ();
+			
+			base.EmitCpp (cec);
+		}
 
 		public override bool IsUnmanagedType ()
 		{
@@ -3515,6 +3646,13 @@ namespace Mono.CSharp
 			CheckExternImpl ();
 			
 			base.EmitJs (jec);
+		}
+
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			CheckExternImpl ();
+			
+			base.EmitCpp (cec);
 		}
 
 		public override bool EnableOverloadChecks (MemberCore overload)

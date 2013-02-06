@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.Linq;
 using SLE = System.Linq.Expressions;
 using Mono.CSharp.JavaScript;
+using Mono.CSharp.Cpp;
 
 #if STATIC
 using MetaType = IKVM.Reflection.Type;
@@ -530,6 +531,18 @@ namespace Mono.CSharp
 			Expr.EmitJs (jec);
 			if (needsParen)
 				jec.Buf.Write (")");
+		}
+
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			bool needsParen = cec.NeedParens (this, Expr);
+			
+			cec.Buf.Write (OperName (Oper), Location);
+			if (needsParen)
+				cec.Buf.Write ("(");
+			Expr.EmitCpp (cec);
+			if (needsParen)
+				cec.Buf.Write (")");
 		}
 
 		protected void EmitOperator (EmitContext ec, TypeSpec type)
@@ -1314,6 +1327,36 @@ namespace Mono.CSharp
 			EmitOpJs (jec);
 			jec.Buf.Write (";\n");
 		}
+
+		private void EmitOpCpp (CppEmitContext cec)
+		{
+			if (mode == Mode.PreIncrement)
+				cec.Buf.Write ("++", Location);
+			else if (mode == Mode.PreDecrement)
+				cec.Buf.Write ("--", Location);
+			
+			// NOTE: TODO - Add parentheses if child op precedence is lower.
+			
+			Expr.EmitCpp (cec);
+			
+			if (mode == Mode.PostIncrement)
+				cec.Buf.Write ("++");
+			else if (mode == Mode.PostDecrement)
+				cec.Buf.Write ("--");
+		}
+
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			EmitOpCpp (cec);
+		}
+		
+		public override void EmitStatementCpp (CppEmitContext cec)
+		{
+			cec.Buf.Write ("\t", Location);
+			EmitOpCpp (cec);
+			cec.Buf.Write (";\n");
+		}
+
 
 		//
 		// Converts operator to System.Linq.Expressions.ExpressionType enum name
@@ -4221,6 +4264,24 @@ namespace Mono.CSharp
 				jec.Buf.Write (")");
 		}
 
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			var leftParens = cec.NeedParens(this, Left);
+			var rightParens = cec.NeedParens(this, Right);
+			
+			if (leftParens)
+				cec.Buf.Write ("(", Location);
+			Left.EmitCpp (cec);
+			if (leftParens)
+				cec.Buf.Write (")");
+			cec.Buf.Write (" " + this.OperName (oper) + " ");
+			if (rightParens)
+				cec.Buf.Write ("(", Location);
+			Right.EmitCpp (cec);
+			if (rightParens)
+				cec.Buf.Write (")");
+		}
+
 		protected override void CloneTo (CloneContext clonectx, Expression t)
 		{
 			Binary target = (Binary) t;
@@ -4493,6 +4554,20 @@ namespace Mono.CSharp
 				a.Expr.EmitJs (jec);
 				first = false;
 			}
+		}
+
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			cec.Buf.Write ("_root::String.concat(", loc);
+			bool first = true;
+			foreach (var a in arguments) {
+				if (!first) {
+					cec.Buf.Write (", ");
+				}
+				a.Expr.EmitCpp (cec);
+				first = false;
+			}
+			cec.Buf.Write (")", loc);
 		}
 
 		public override SLE.Expression MakeExpression (BuilderContext ctx)
@@ -5016,6 +5091,39 @@ namespace Mono.CSharp
 			}
 		}
 
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			bool test_parens = cec.NeedParens (this, expr);
+			bool true_parens = cec.NeedParens (this, true_expr);
+			bool false_parens = cec.NeedParens (this, false_expr);
+			
+			if (test_parens) {
+				cec.Buf.Write ("(");
+				expr.EmitCpp (cec);
+				cec.Buf.Write (") ? ");
+			} else {
+				expr.EmitCpp (cec);
+				cec.Buf.Write (" ? ");
+			}
+			
+			if (true_parens) {
+				cec.Buf.Write ("(");
+				true_expr.EmitCpp (cec);
+				cec.Buf.Write (") : ");
+			} else {
+				true_expr.EmitCpp (cec);
+				cec.Buf.Write (" : ");
+			}
+			
+			if (false_parens) {
+				cec.Buf.Write ("(");
+				false_expr.EmitCpp (cec);
+				cec.Buf.Write (")");
+			} else {
+				false_expr.EmitCpp (cec);
+			}
+		}
+
 		protected override void CloneTo (CloneContext clonectx, Expression t)
 		{
 			Conditional target = (Conditional) t;
@@ -5197,6 +5305,11 @@ namespace Mono.CSharp
 		public override void EmitJs (JsEmitContext jec)
 		{
 			jec.Buf.Write (Name, Location);
+		}
+
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			cec.Buf.Write (Name, Location);
 		}
 
 		public HoistedVariable GetHoistedVariable (ResolveContext rc)
@@ -5944,8 +6057,19 @@ namespace Mono.CSharp
 
 		public override void EmitJs (JsEmitContext jec)
 		{
-			if (expr != null)
-				expr.EmitJs (jec);
+			if (expr != null) {
+				if (mg.IsStatic) {
+					if (expr is TypeExpr) {
+						jec.Buf.Write (jec.MakeJsFullTypeName(((TypeExpr)expr).Type), ".", Location);
+					} else if (expr is SimpleName) {
+						jec.Buf.Write (((SimpleName)expr).Name, ".");
+					} else {
+						jec.Buf.Write ("<<type>>.");
+					}
+				} else {
+					expr.EmitJs (jec);
+				}
+			}
 			mg.EmitCallJs (jec, arguments);
 		}
 		
@@ -5956,6 +6080,37 @@ namespace Mono.CSharp
 			EmitJs (jec);
 
 			jec.Buf.Write (";\n");
+		}
+
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			if (expr != null) {
+				if (mg.IsStatic) {
+					var t_expr = expr;
+					if (expr is TypeExpr) {
+						cec.Buf.Write (cec.MakeCppFullTypeName(((TypeExpr)expr).Type, false), "::", Location);
+					} else if (expr is MemberAccess || expr is SimpleName) {
+						expr.EmitCpp (cec);
+						cec.Buf.Write ("::");
+					} else if (expr is SimpleName) {
+						cec.Buf.Write (((SimpleName)expr).Name, "::");
+					} else {
+						cec.Buf.Write ("<<type>>::");
+					}
+				} else {
+					expr.EmitCpp (cec);
+				}
+			}
+			mg.EmitCallCpp (cec, arguments);
+		}
+		
+		public override void EmitStatementCpp (CppEmitContext cec)
+		{
+			cec.Buf.Write ("\t", Location);
+			
+			EmitCpp (cec);
+			
+			cec.Buf.Write (";\n");
 		}
 
 		public override SLE.Expression MakeExpression (BuilderContext ctx)
@@ -6389,6 +6544,21 @@ namespace Mono.CSharp
 			jec.Buf.Write ("\t", Location);
 			EmitJs (jec);
 			jec.Buf.Write (";\n");
+		}
+
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			cec.Buf.Write("new ", cec.MakeCppFullTypeName(Type, false) ,"(", Location);
+			if (arguments != null)
+				arguments.EmitCpp (cec);
+			cec.Buf.Write(")");
+		}
+		
+		public override void EmitStatementCpp (CppEmitContext cec)
+		{
+			cec.Buf.Write ("\t", Location);
+			EmitCpp (cec);
+			cec.Buf.Write (";\n");
 		}
 
 		public void AddressOf (EmitContext ec, AddressOp mode)
@@ -8902,6 +9072,13 @@ namespace Mono.CSharp
 			jec.Buf.Write (".");
 			jec.Buf.Write (Name);
 		}
+
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			expr.EmitCpp (cec);
+			cec.Buf.Write ("->");
+			cec.Buf.Write (Name);
+		}
 		
 		public override object Accept (StructuralVisitor visitor)
 		{
@@ -9576,6 +9753,20 @@ namespace Mono.CSharp
 				first = false;
 			}
 			jec.Buf.Write ("]");
+		}
+
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			InstanceExpression.EmitCpp (cec);
+			cec.Buf.Write ("[");
+			bool first = true;
+			foreach (var arg in arguments) {
+				if (!first)
+					cec.Buf.Write (", ");
+				arg.Expr.EmitCpp (cec);
+				first = false;
+			}
+			cec.Buf.Write ("]");
 		}
 
 		public override string GetSignatureForError ()

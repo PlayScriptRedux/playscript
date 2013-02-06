@@ -19,6 +19,8 @@
 // types yet) while constants are created only after types have been loaded
 // and are fully resolved when born.
 //
+using Mono.CSharp.JavaScript;
+using Mono.CSharp.Cpp;
 
 #if STATIC
 using IKVM.Reflection.Emit;
@@ -330,9 +332,14 @@ namespace Mono.CSharp
 			return visitor.Visit (this);
 		}
 
-		public override void EmitJs (Mono.CSharp.JavaScript.JsEmitContext jec)
+		public override void EmitJs (JsEmitContext jec)
 		{
 			jec.Buf.Write ("\"", jec.Buf.EscapeString(Value), "\"", loc);
+		}
+
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			cec.Buf.Write ("\"", cec.Buf.EscapeString(Value), "\"", loc);
 		}
 	}
 }

@@ -14,6 +14,7 @@
 using System;
 using System.Collections.Generic;
 using Mono.CSharp.JavaScript;
+using Mono.CSharp.Cpp;
 
 #if STATIC
 using IKVM.Reflection.Emit;
@@ -94,6 +95,17 @@ namespace Mono.CSharp {
 			DoEmitJs (jec);
 		}
 
+		protected virtual void DoEmitCpp (CppEmitContext cec) 
+		{
+			cec.Report.Error (7172, this.loc, "C++ code generation for " + this.GetType ().Name + " statement not supported.");
+			cec.Buf.Write ("<<" + this.GetType ().Name + " stmnt>>");
+		}
+
+		public virtual void EmitCpp (CppEmitContext cec)
+		{
+			DoEmitCpp (cec);
+		}
+
 		//
 		// This routine must be overrided in derived classes and make copies
 		// of all the data that might be modified if resolved
@@ -137,6 +149,14 @@ namespace Mono.CSharp {
 		}
 
 		public override void Emit (EmitContext ec)
+		{
+		}
+
+		public override void EmitJs (JsEmitContext jec)
+		{
+		}
+
+		public override void EmitCpp (CppEmitContext cec)
 		{
 		}
 
@@ -313,6 +333,38 @@ namespace Mono.CSharp {
 			jec.Buf.Write ("\n");
 		}
 
+		protected override void DoEmitCpp (CppEmitContext cec)
+		{
+			//
+			// If we're a boolean constant, Resolve() already
+			// eliminated dead code for us.
+			//
+			Constant c = expr as Constant;
+			if (c != null) {
+				
+				if (!c.IsDefaultValue)
+					TrueStatement.EmitCpp (cec);
+				else if (FalseStatement != null)
+					FalseStatement.EmitCpp (cec);
+				
+				return;
+			}
+			
+			cec.Buf.Write ("\tif (", loc);
+			expr.EmitCpp (cec);
+			cec.Buf.Write (") ");
+			
+			cec.Buf.WriteBlockStatement (TrueStatement);
+			
+			if (FalseStatement != null) {
+				cec.Buf.Write (" else ");
+				
+				cec.Buf.WriteBlockStatement (FalseStatement);
+			}
+			
+			cec.Buf.Write ("\n");
+		}
+
 		protected override void CloneTo (CloneContext clonectx, Statement t)
 		{
 			If target = (If) t;
@@ -419,6 +471,17 @@ namespace Mono.CSharp {
 			jec.Buf.Write (" while (", expr.Location);
 			expr.EmitJs (jec);
 			jec.Buf.Write (");\n");
+		}
+
+		protected override void DoEmitCpp (CppEmitContext cec)
+		{
+			cec.Buf.Write ("\tdo ", loc);
+			
+			cec.Buf.WriteBlockStatement (EmbeddedStatement);
+			
+			cec.Buf.Write (" while (", expr.Location);
+			expr.EmitCpp (cec);
+			cec.Buf.Write (");\n");
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Statement t)
@@ -560,6 +623,29 @@ namespace Mono.CSharp {
 			jec.Buf.WriteBlockStatement (Statement);
 
 			jec.Buf.Write ("\n");
+		}
+
+		protected override void DoEmitCpp (CppEmitContext cec)
+		{
+			if (empty) {
+				return;
+			}
+			
+			//
+			// Inform whether we are infinite or not
+			//
+			if (expr is Constant) {
+				// expr is 'true', since the 'empty' case above handles the 'false' case
+				cec.Buf.Write ("\twhile (true) ", loc);
+			} else {
+				cec.Buf.Write ("\twhile (", loc);
+				expr.EmitCpp (cec);
+				cec.Buf.Write (") ");
+			}	
+			
+			cec.Buf.WriteBlockStatement (Statement);
+			
+			cec.Buf.Write ("\n");
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Statement t)
@@ -736,6 +822,28 @@ namespace Mono.CSharp {
 
 		}
 
+		protected override void DoEmitCpp (CppEmitContext cec)
+		{
+			// NOTE: WE don't optimize for emty loop right now..
+			
+			cec.Buf.Write ("\tfor (", loc);
+			cec.PushForceExpr(true);
+			if (Initializer != null)
+				Initializer.EmitCpp (cec);
+			cec.Buf.Write ("; ");
+			if (Condition != null)
+				Condition.EmitCpp (cec);
+			cec.Buf.Write ("; ");
+			if (Iterator != null)
+				Iterator.EmitCpp (cec);
+			cec.Buf.Write (") ");
+			cec.PopForceExpr();
+			
+			cec.Buf.WriteBlockStatement (Statement);
+			
+			cec.Buf.Write ("\n");
+		}
+
 		protected override void CloneTo (CloneContext clonectx, Statement t)
 		{
 			For target = (For) t;
@@ -791,6 +899,11 @@ namespace Mono.CSharp {
 		protected override void DoEmitJs (JsEmitContext jec)
 		{
 			expr.EmitStatementJs (jec);
+		}
+
+		protected override void DoEmitCpp (CppEmitContext cec)
+		{
+			expr.EmitStatementCpp (cec);
 		}
 
 		public override bool Resolve (BlockContext ec)
@@ -1104,6 +1217,15 @@ namespace Mono.CSharp {
 				jec.Buf.Write ("\treturn ", loc);
 				expr.EmitJs (jec);
 				jec.Buf.Write (";\n");
+			}
+		}
+
+		protected override void DoEmitCpp (CppEmitContext cec)
+		{
+			if (expr != null) {
+				cec.Buf.Write ("\treturn ", loc);
+				expr.EmitCpp (cec);
+				cec.Buf.Write (";\n");
 			}
 		}
 
@@ -1431,6 +1553,20 @@ namespace Mono.CSharp {
 			}
 		}
 
+		protected override void DoEmitJs (JsEmitContext jec)
+		{
+			jec.Buf.Write ("\tthrow ");
+			expr.EmitJs (jec);
+			jec.Buf.Write (";\n");
+		}
+
+		protected override void DoEmitCpp (CppEmitContext cec)
+		{
+			cec.Buf.Write ("\tthrow ");
+			expr.EmitCpp (cec);
+			cec.Buf.Write (";\n");
+		}
+
 		protected override void CloneTo (CloneContext clonectx, Statement t)
 		{
 			Throw target = (Throw) t;
@@ -1471,6 +1607,11 @@ namespace Mono.CSharp {
 			jec.Buf.Write ( "\tbreak;\n", loc);
 		}
 
+		protected override void DoEmitCpp (CppEmitContext cec)
+		{
+			cec.Buf.Write ( "\tbreak;\n", loc);
+		}
+
 		protected override void CloneTo (CloneContext clonectx, Statement t)
 		{
 			// nothing needed
@@ -1506,6 +1647,11 @@ namespace Mono.CSharp {
 		protected override void DoEmitJs (JsEmitContext jec)
 		{
 			jec.Buf.Write ("\tcontinue;\n", loc);
+		}
+
+		protected override void DoEmitCpp (CppEmitContext cec)
+		{
+			cec.Buf.Write ("\tcontinue;\n", loc);
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Statement t)
@@ -1846,6 +1992,29 @@ namespace Mono.CSharp {
 			}
 
 			jec.Buf.Write (";\n");
+		}
+
+		protected override void DoEmitCpp (CppEmitContext cec)
+		{
+			if (Initializer != null) {
+				cec.Buf.Write ("\t", loc);
+				Initializer.EmitCpp (cec);
+			} else {
+				cec.Buf.Write ("\t", cec.MakeCppFullTypeName(this.type), " ", Variable.Name, loc);
+			}
+			
+			if (declarators != null) {
+				foreach (var d in declarators) {
+					cec.Buf.Write (", ");
+					if (d.Initializer != null) {
+						d.Initializer.EmitCpp (cec);
+					} else {
+						cec.Buf.Write (d.Variable.Name);
+					}
+				}
+			}
+			
+			cec.Buf.Write (";\n");
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Statement target)
@@ -2621,6 +2790,49 @@ namespace Mono.CSharp {
 			DoEmitJs (jec);
 		}
 
+		public void EmitBlockCpp (CppEmitContext cec, bool as_statement = true, bool no_braces = false)
+		{
+			if (as_statement && statements.Count == 0 && 
+			    (scope_initializers == null || scope_initializers.Count == 0))
+				return;
+			
+			if (!no_braces) {
+				if (as_statement) {
+					cec.Buf.Write ("\t{\n");
+				} else {
+					cec.Buf.Write ("{\n");
+				}
+				cec.Buf.Indent ();
+			}
+			
+			if (scope_initializers != null)
+				EmitScopeInitializersCpp (cec);
+			
+			for (int ix = 0; ix < statements.Count; ix++) {
+				statements [ix].EmitCpp (cec);
+			}
+			
+			if (!no_braces) {
+				cec.Buf.Unindent ();
+				if (as_statement) {
+					cec.Buf.Write ("\t}\n");
+				} else {
+					cec.Buf.Write ("\t}");
+				}
+			}
+		}
+		
+		protected override void DoEmitCpp (CppEmitContext cec)
+		{
+			EmitBlockCpp (cec);
+			
+		}
+		
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			DoEmitCpp (cec);
+		}
+
 		protected void EmitScopeInitializers (EmitContext ec)
 		{
 			foreach (Statement s in scope_initializers)
@@ -2631,6 +2843,12 @@ namespace Mono.CSharp {
 		{
 			foreach (Statement s in scope_initializers)
 				s.EmitJs (jec);
+		}
+
+		protected void EmitScopeInitializersCpp (CppEmitContext cec)
+		{
+			foreach (Statement s in scope_initializers)
+				s.EmitCpp (cec);
 		}
 
 #if DEBUG
@@ -4764,6 +4982,32 @@ namespace Mono.CSharp {
 
 			jec.Buf.Unindent ();
 			jec.Buf.Write ("\t}\n");
+		}
+
+		protected override void DoEmitCpp (CppEmitContext cec)
+		{
+			cec.Buf.Write ("\tswitch (", loc);
+			Expr.EmitCpp (cec);
+			cec.Buf.Write (") {\n");
+			cec.Buf.Indent ();
+			
+			foreach (var section in Sections) {
+				foreach (var label in section.Labels) {
+					if (label.IsDefault) {
+						cec.Buf.Write ("\tdefault:\n", label.Location);
+					} else {
+						cec.Buf.Write ("\tcase ", label.Location);
+						label.Label.EmitCpp (cec);
+						cec.Buf.Write (":\n");
+					}
+				}
+				cec.Buf.Indent ();
+				section.Block.EmitBlockCpp (cec, true, true);
+				cec.Buf.Unindent ();
+			}
+			
+			cec.Buf.Unindent ();
+			cec.Buf.Write ("\t}\n");
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Statement t)

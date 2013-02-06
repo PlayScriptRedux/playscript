@@ -13,6 +13,7 @@
 using System;
 using System.Globalization;
 using Mono.CSharp.JavaScript;
+using Mono.CSharp.Cpp;
 
 #if STATIC
 using IKVM.Reflection.Emit;
@@ -386,6 +387,11 @@ namespace Mono.CSharp {
 		public override void EmitJs (JsEmitContext jec)
 		{
 			jec.Buf.Write (this.GetValueAsLiteral(), Location);
+		}
+
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			cec.Buf.Write (this.GetValueAsLiteral(), Location);
 		}
 	}
 
@@ -1828,6 +1834,16 @@ namespace Mono.CSharp {
 			}
 		}
 
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			double d = Value;
+			if (d == System.Math.Floor (d)) {
+				cec.Buf.Write (GetValue ().ToString (), ".0", Location);
+			} else {
+				cec.Buf.Write (GetValue ().ToString (), Location);
+			}
+		}
+
 	}
 
 	public class DecimalConstant : Constant {
@@ -2013,10 +2029,18 @@ namespace Mono.CSharp {
 		public override void EmitJs (JsEmitContext jec)
 		{
 			if (Value != null) {
-				var s = Value.Replace ("\"", "\\\"");
-				jec.Buf.Write ("\"", s, "\"", Location);
+				jec.Buf.Write ("\"", jec.Buf.EscapeString(Value), "\"", Location);
 			} else {
 				jec.Buf.Write ("\"\"", Location);
+			}
+		}
+
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			if (Value != null) {
+				cec.Buf.Write ("\"", cec.Buf.EscapeString(Value), "\"", Location);
+			} else {
+				cec.Buf.Write ("\"\"", Location);
 			}
 		}
 
@@ -2113,6 +2137,11 @@ namespace Mono.CSharp {
 		public override void EmitJs (JsEmitContext jec)
 		{
 			jec.Buf.Write (GetValueAsLiteral(), Location);
+		}
+
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			cec.Buf.Write (GetValueAsLiteral(), Location);
 		}
 
 		public override string ExprClassName {

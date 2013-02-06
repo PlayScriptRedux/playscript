@@ -42,7 +42,8 @@ namespace Mono.CSharp {
 
 	public enum Target
 	{
-		Library, Exe, Module, WinExe, JavaScript
+		Library = 1, Exe = 2, Module = 4, WinExe = 8, JavaScript = 16, Cpp = 32, 
+		IsTextTarget = 48
 	}
 
 	public enum Platform
@@ -729,8 +730,13 @@ namespace Mono.CSharp {
 					settings.TargetExt = ".js";
 					break;
 
+				case "cpp":
+					settings.Target = Target.Cpp;
+					settings.TargetExt = ".cpp";
+					break;
+
 				default:
-					report.Error (2019, "Invalid target type for -target. Valid options are `exe', `winexe', `library', `module' or `javascript'");
+					report.Error (2019, "Invalid target type for -target. Valid options are `exe', `winexe', `library', `module', `javascript' or `cpp'");
 					return ParseResult.Error;
 				}
 				return ParseResult.Success;

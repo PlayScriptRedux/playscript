@@ -109,6 +109,9 @@
     <Compile Include="..\..\mcs\js-target.cs">
       <Link>js-target.cs</Link>
     </Compile>
+    <Compile Include="..\..\mcs\cxx-target.cs">
+      <Link>cxx-target.cs</Link>
+    </Compile>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

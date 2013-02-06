@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using System.Text;
 using Mono.CompilerServices.SymbolWriter;
 using Mono.CSharp.JavaScript;
+using Mono.CSharp.Cpp;
 
 #if NET_2_1
 using XmlElement = System.Object;
@@ -240,6 +241,16 @@ namespace Mono.CSharp
 
 				block = null;
 			}
+
+			public override void EmitCpp (CppEmitContext cec)
+			{
+				cec.Buf.Write ("\t", cec.MakeCppFullTypeName(this.Property.MemberType), " get_", Property.MemberName.Name, "() ", Location);
+				method_data.EmitCpp (Parent as TypeDefinition, cec);
+				cec.Buf.Write ("\n");
+				
+				block = null;
+			}
+
 		}
 
 		public class SetMethod : PropertyMethod {
@@ -311,6 +322,19 @@ namespace Mono.CSharp
 
 				block = null;
 			}
+
+			public override void EmitCpp (CppEmitContext cec)
+			{
+				var parms = this.ParameterInfo;
+				cec.Buf.Write ("\tvoid set_", Property.MemberName.Name, "(");
+				cec.Buf.Write (cec.MakeCppFullTypeName(((Parameter)parms[0]).Type), " ", parms[0].Name);
+				cec.Buf.Write (") ", Location);
+				method_data.EmitCpp (Parent as TypeDefinition, cec);
+				cec.Buf.Write ("\n");
+				
+				block = null;
+			}
+
 		}
 
 		static readonly string[] attribute_targets = new string[] { "property" };
@@ -880,6 +904,19 @@ namespace Mono.CSharp
 			jec.Buf.Unindent ();
 			jec.Buf.Write ("\t});\n");
 		}
+
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			if (this.Get != null) {
+				this.Get.EmitCpp (cec);
+			}
+			
+			if (this.Set != null) {
+				this.Set.EmitCpp (cec);
+			}
+			
+		}
+
 	}
 
 	/// <summary>

@@ -400,12 +400,14 @@ namespace Mono.CSharp
 			tr.Start (TimeReporter.TimerType.EmitTotal);
 			if (settings.Target == Target.JavaScript) {
 				assembly.EmitJs ();
+			} else if (settings.Target == Target.Cpp) {
+				assembly.EmitCpp ();
 			} else {
 				assembly.Emit ();
 			}
 			tr.Stop (TimeReporter.TimerType.EmitTotal);
 
-			if (Report.Errors > 0 && settings.Target != Target.JavaScript) {
+			if (Report.Errors > 0 && (settings.Target & Target.IsTextTarget) == 0) {
 				return false;
 			}
 
@@ -422,11 +424,13 @@ namespace Mono.CSharp
 			
 			}
 
-			if (Report.Errors > 0 && settings.Target != Target.JavaScript)
+			if (Report.Errors > 0 && (settings.Target & Target.IsTextTarget) == 0)
 				return false;
 
 			if (settings.Target == Target.JavaScript) {
 				assembly.SaveJs ();
+			} else if (settings.Target == Target.Cpp) {
+				assembly.SaveCpp ();
 			} else {
 				assembly.Save ();
 			}

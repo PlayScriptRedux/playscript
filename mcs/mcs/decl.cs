@@ -18,6 +18,7 @@ using System.Diagnostics;
 using System.Text;
 using Mono.CompilerServices.SymbolWriter;
 using Mono.CSharp.JavaScript;
+using Mono.CSharp.Cpp;
 
 #if NET_2_1
 using XmlElement = System.Object;
@@ -431,6 +432,17 @@ namespace Mono.CSharp {
 		/// Base JS emit method.  This is also entry point for CLS-Compliant verification.
 		/// </summary>
 		public virtual void EmitJs (JsEmitContext jec)
+		{
+			if (!Compiler.Settings.VerifyClsCompliance)
+				return;
+			
+			VerifyClsCompliance ();
+		}
+
+		/// <summary>
+		/// Base C++ emit method.  This is also entry point for CLS-Compliant verification.
+		/// </summary>
+		public virtual void EmitCpp (CppEmitContext cec)
 		{
 			if (!Compiler.Settings.VerifyClsCompliance)
 				return;
