@@ -6,7 +6,18 @@ package flash.display {
 		// Properties
 		//
 	
-		public property graphics : Graphics { get { return null; } }
+		public property graphics : Graphics 
+		{ 
+			get {
+				if (!mGraphics) {
+					mGraphics = new Graphics();
+				} 
+				return mGraphics; 
+			} 
+		}
+		
+		
+		private var mGraphics:Graphics = null;
 	
 	}
 

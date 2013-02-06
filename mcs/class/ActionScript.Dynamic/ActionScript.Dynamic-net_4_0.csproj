@@ -33,6 +33,9 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Dynamic" />
+    <Reference Include="Mono.CSharp">
+      <HintPath>..\..\..\..\..\mono-as3-install\lib\mono\4.0\Mono.CSharp.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
@@ -77,11 +80,5 @@
   <ItemGroup>
     <Folder Include="ActionScript\" />
     <Folder Include="System\" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Mono.CSharp\Mono.CSharp-net_4_0.csproj">
-      <Project>{155AEF28-C81F-405D-9072-9D52780E3E70}</Project>
-      <Name>Mono.CSharp-net_4_0</Name>
-    </ProjectReference>
   </ItemGroup>
 </Project>

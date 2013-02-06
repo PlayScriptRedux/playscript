@@ -3,7 +3,7 @@ package flash.display {
 	import flash.utils.ByteArray;
 	import flash.net.URLRequest;
 	import flash.system.LoaderContext;
-	import flash.events.UncaughtErrorEvents;
+	import flash.events.*;
 	import flash.desktop.IFilePromise;
 
 	public class Loader extends DisplayObjectContainer {
@@ -12,9 +12,9 @@ package flash.display {
 		// Properties
 		//
 	
-		public property content : DisplayObject { get { return null; } }
+		public property content : DisplayObject { get { return mContent; } }
 
- 	 	public property contentLoaderInfo : LoaderInfo { get { return null; } }
+ 	 	public property contentLoaderInfo : LoaderInfo { get { return mLoaderInfo; } }
 
  	 	public property uncaughtErrorEvents : UncaughtErrorEvents { get { return null; } }
 
@@ -26,22 +26,46 @@ package flash.display {
 		}
  	 	
 		public function close():void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function load(request:URLRequest, context:LoaderContext = null):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function loadBytes(bytes:ByteArray, context:LoaderContext = null):void {
+
+			// $$TODO do the real loading here!
+			mContent = new Bitmap(new BitmapData(64,64, true, 0xFF00FF));
+		
+			// dispatch complete event
+			var e:Event = new Event(Event.COMPLETE);
+			e.target = this.contentLoaderInfo;
+			this.contentLoaderInfo.dispatchEvent(e);
+		
+//			var timer = new flash.utils.Timer(1, 1);
+//			timer.addEventListener(TimerEvent.TIMER, this.doLoad );
+//			timer.start();
 		}
  	 	
 		public function loadFilePromise(promise:IFilePromise, context:LoaderContext = null):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function unload():void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function unloadAndStop(gc:Boolean = true):void {
+			throw new System.NotImplementedException();
 		}
+		
+		
+		private function doLoad():void {
+		}
+		
+		var mContent:DisplayObject = null;
+		var mLoaderInfo:LoaderInfo = new LoaderInfo();
 	
 	}
 

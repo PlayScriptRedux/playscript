@@ -34,13 +34,13 @@ package flash.display {
 
  	 	public property frameRate : Number { get; set; }
 
- 	 	public property fullScreenHeight : uint { get { return 0; } }
+ 	 	public property fullScreenHeight : uint { get; set; }
 
  	 	public property fullScreenSourceRect : Rectangle { get; set; }
 		
-		public property fullScreenWidth : uint { get { return 0; } }
+		public property fullScreenWidth : uint { get; set; }
 
- 	 	public override property height : Number { get { return 0; } set { } }
+ 	 //	public override property height : Number { get { return 0; } set { } }
 
  	 	public override property mouseChildren : Boolean { get { return false; } set { } }
 
@@ -62,7 +62,7 @@ package flash.display {
 
  	 	public property stageFocusRect : Boolean { get; set; }
 
- 	 	public property stageHeight : int { get; set; }
+ 	 	public property stageHeight : int { get; set;}
 
  	 	public property stageVideos : Vector.<StageVideo> { get { return null; } }
 
@@ -76,7 +76,7 @@ package flash.display {
 
  	 	public override property textSnapshot : TextSnapshot { get { return null; } }
 
- 	 	public override property width : Number { get { return 0.0; } set { } }
+ 	 //	public override property width : Number { get { return 0.0; } set { } }
 
  	 	public property wmodeGPU : Boolean { get { return false; } }
 
@@ -84,7 +84,12 @@ package flash.display {
 		// Methods
 		// 
 		
-		public function Stage() {
+		public function Stage(width:int, height:int) {
+			this.stageWidth = width;
+			this.stageHeight = height;
+			this.fullScreenWidth = uint(width); 
+			this.fullScreenHeight = uint(height);
+	
 			var stage3D = new Stage3D(); 
 			mStage3Ds.push( stage3D );
 		}

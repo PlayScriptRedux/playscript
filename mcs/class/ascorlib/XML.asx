@@ -36,7 +36,7 @@ package {
  	 	// 
  	 	
  	 	public function XML(value:Object) {
-			throw new System.NotImplementedException(); 	 	
+ 	 		mValue = value;
  	 	}
  	 	
 		public function addNamespace(ns:Object):XML {
@@ -222,6 +222,9 @@ package {
 		public static implicit operator String (xml:XML) {
 			throw new System.NotImplementedException();
 		}	
+		
+		
+		var mValue:Object;
 	}
 
 }

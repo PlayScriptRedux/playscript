@@ -1,0 +1,106 @@
+package flash.filesystem {
+	import System.*;
+	import System.IO.*;
+	import System.Reflection.*;
+
+#if PLATFORM_MONOMAC
+	import MonoMac.CoreGraphics.*;
+	import MonoMac.Foundation.*;
+	import MonoMac.AppKit.*;
+#endif
+
+	public class File {
+	
+		private static var sApplicationDirectory:File;
+	
+ 	 	public static property applicationDirectory : File 
+ 	 	{ 
+ 	 		get 
+ 	 		{
+ 	 			if (sApplicationDirectory == null) {
+					// get location of application
+					//var appPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+					var appPath = NSBundle.MainBundle.ResourcePath + "/demo/assets";
+					
+					// create new file 
+ 	 				sApplicationDirectory = new File(appPath);
+ 	 			}
+ 	 			return sApplicationDirectory;
+ 	 		} 
+ 	 	}
+ 	 	
+ 	 	public property exists : Boolean {
+ 	 		get {
+ 	 			return System.IO.File.Exists(mPath) || System.IO.Directory.Exists(mPath);
+ 	 		}
+ 	 	}
+ 	 	
+ 	 	public property isHidden : Boolean {
+ 	 		get {return false;}
+ 	 	}
+
+ 	 	public property isFile : Boolean {
+ 	 		get {return System.IO.File.Exists(mPath);}
+ 	 	}
+
+ 	 	public property isDirectory : Boolean {
+ 	 		get {return System.IO.Directory.Exists(mPath);}
+ 	 	}
+ 	 	
+ 	 	public function File(path:String)
+ 	 	{
+ 	 		mPath = path;
+ 	 	}
+ 	 	
+ 	 	public function resolvePath(path:String):File {
+ 	 		return new File(Path.Combine(mPath, path));
+ 	 	}
+ 	 	
+ 	 	public property nativePath : String {
+ 	 		get {return mPath;}
+ 	 	}
+ 
+ 	 	public property url : String {
+ 	 		get {return "file://" + mPath;}
+ 	 	}
+ 	 	
+ 	 	public property extension : String {
+ 	 		get 
+ 	 		{
+ 	 			var ext:String = System.IO.Path.GetExtension(mPath);
+ 	 			if (ext.StartsWith(".")) {
+ 	 				return ext.Substring(1);
+ 	 			} else {
+ 	 				return ext;
+ 	 			}
+ 	 		}
+ 	 	}
+
+ 	 	public property name : String {
+ 	 		get {return System.IO.Path.GetFileName(mPath);}
+ 	 	}
+ 	 	
+ 	 	public function getDirectoryListing():_root.Array
+ 	 	{
+ 	 		var a:_root.Array = [];
+ 	 		for each (var name:String in System.IO.Directory.GetDirectories(mPath))
+ 	 		{
+ 	 			a.push(new File(name));
+ 	 		}
+ 	 		
+ 	 		for each (name in System.IO.Directory.GetFiles(mPath))
+ 	 		{
+ 	 			a.push(new File(name));
+ 	 		}
+ 	 		
+ 	 		return a;
+ 	 	}
+ 	 	
+ 	 	public override function ToString():String
+ 	 	{
+ 	 		return mPath;
+ 	 	}
+
+ 	 	private var mPath:String;
+	}
+}

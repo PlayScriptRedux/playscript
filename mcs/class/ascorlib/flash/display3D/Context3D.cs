@@ -128,7 +128,6 @@ namespace flash.display3D {
 			} else {
 				// ?? 
 				throw new NotImplementedException();
-				
 			}
 
 			// store current program
@@ -138,9 +137,6 @@ namespace flash.display3D {
 		public void setProgramConstantsFromByteArray(string programType, int firstRegister, 
 			int numRegisters, ByteArray data, uint byteArrayOffset) {
 		}
-
-		// temporary floating point array for constant conversion
-		private float[] mTemp = new float[4 * 1024];
 
 		private static void convertDoubleToFloat (float[] dest, Vector<double> source, int count)
 		{
@@ -158,10 +154,12 @@ namespace flash.display3D {
 
 			if (programType == "vertex") {
 				// set uniform registers
-				int location = mProgram.getLocation(firstRegister);
+				int location = mProgram.getVertexLocation(firstRegister);
 				GL.UniformMatrix4(location, 1, transposedMatrix, mTemp);
 			} else {
-				throw new NotImplementedException ();
+				// set uniform registers
+				int location = mProgram.getFragmentLocation(firstRegister);
+				GL.UniformMatrix4(location, 1, transposedMatrix, mTemp);
 			}
 		}
 
@@ -173,10 +171,12 @@ namespace flash.display3D {
 
 			if (programType == "vertex") {
 				// set uniform registers
-				int location = mProgram.getLocation(firstRegister);
+				int location = mProgram.getVertexLocation(firstRegister);
 				GL.Uniform4(location, numRegisters, mTemp);
 			} else {
-				throw new NotImplementedException();
+				// set uniform registers
+				int location = mProgram.getFragmentLocation(firstRegister);
+				GL.Uniform4(location, numRegisters, mTemp);
 			}
 		}
  	 	
@@ -248,6 +248,9 @@ namespace flash.display3D {
 		}
 
 		private readonly Stage3D mStage3D;
+
+		// temporary floating point array for constant conversion
+		private readonly float[] mTemp = new float[4 * 1024];
 	
 		// current program
 		private Program3D mProgram;

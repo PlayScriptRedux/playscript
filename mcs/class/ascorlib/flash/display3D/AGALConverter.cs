@@ -48,7 +48,7 @@ namespace flash.display3D
 					return programType == ProgramType.Vertex ? "gl_Position" : "gl_FragColor";
 				}
 
-				var str = PrefixFromType (type);
+				var str = PrefixFromType (type, programType);
 				str += n.ToString ();
 				return str;
 			}
@@ -93,7 +93,7 @@ namespace flash.display3D
 					throw new NotImplementedException();
 				}
 
-				var str = PrefixFromType (type);
+				var str = PrefixFromType (type, programType);
 				str += n.ToString ();
 				// str += "." + s.ToString();
 				return str;
@@ -129,7 +129,7 @@ namespace flash.display3D
 			
 			public string ToGLSL ()
 			{
-				var str = PrefixFromType (type);
+				var str = PrefixFromType (type, programType);
 				str += n.ToString ();
 				return str;
 			}
@@ -275,11 +275,11 @@ namespace flash.display3D
 			private List<Entry> mEntries = new List<Entry>();
 		};
 
-		private static string PrefixFromType (RegType t)
+		private static string PrefixFromType (RegType t, ProgramType pt)
 		{
 			switch (t) {
 			case RegType.Attribute: return "va";
-			case RegType.Constant:  return "vc";
+			case RegType.Constant:  return (pt == ProgramType.Vertex) ? "vc" : "fc";
 			case RegType.Temporary: return "vt";
 			case RegType.Output:    return "output_";
 			case RegType.Varying:   return "v";

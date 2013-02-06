@@ -75,12 +75,13 @@ package flash.geom {
 		}
  	 	
 		public function intersection(toIntersect:Rectangle):Rectangle {
-			if (this.equals(toIntersect)) {
-				return this.clone();
-			} else {
-				// $$TODO
-				throw new System.NotImplementedException();
-			}
+			// i believe this behavior is correct, but not sure, needs testing
+			var r:Rectangle = this.clone();
+			if (r.left   < toIntersect.left)   r.left = toIntersect.left;
+			if (r.right  > toIntersect.right)  r.right = toIntersect.right;
+			if (r.top    < toIntersect.top)    r.top = toIntersect.top;
+			if (r.bottom > toIntersect.bottom) r.bottom = toIntersect.bottom;
+			return r;
 		}
  	 	
 		public function intersects(toIntersect:Rectangle):Boolean {

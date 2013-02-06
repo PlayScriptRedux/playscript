@@ -1,0 +1,17 @@
+package flash.desktop {
+
+	import flash.events.*;
+
+	public class NativeApplication extends EventDispatcher {
+	
+ 	 	public static property nativeApplication : NativeApplication 
+ 	 	{ 
+ 	 		get {
+ 	 			return sNativeApplication;
+ 	 		} 
+ 	 	}
+ 	 	
+ 	 	private static var sNativeApplication:NativeApplication = new NativeApplication();
+	}
+
+}

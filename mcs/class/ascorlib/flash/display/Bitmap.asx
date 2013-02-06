@@ -17,6 +17,9 @@ package flash.display {
  	 	//
  	 	 	 	
 		public function Bitmap(bitmapData:BitmapData = null, pixelSnapping:String = "auto", smoothing:Boolean = false) {
+			this.bitmapData = bitmapData;
+			this.pixelSnapping = pixelSnapping;
+			this.smoothing = smoothing;
 		}
 	
 	}
