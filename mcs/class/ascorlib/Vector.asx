@@ -172,7 +172,11 @@ package {
 		}
  	 	
 		public function unshift(... args):uint {
-			throw new System.NotImplementedException();
+			for (var i:int=0; i < args.Length; i++)
+			{
+				this.Insert(i, T(args[i]) );
+			}
+			return this.length;
 		}
 		
 		private var mFixed:Boolean = false;
