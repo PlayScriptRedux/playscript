@@ -1,5 +1,6 @@
 package flash.text {
 
+	import System.*;
 	import flash.display.InteractiveObject;
 	import flash.geom.Rectangle;
 	import flash.display.DisplayObject;
@@ -96,70 +97,75 @@ package flash.text {
 		}
  	 	
 		public function appendText(newText:String):void {
+			throw new NotImplementedException();
 		}
 
 		public function getCharBoundaries(charIndex:int):Rectangle {
-			return null;
+			throw new NotImplementedException();
 		}
 
 		public function getCharIndexAtPoint(x:Number, y:Number):int {
-			return 0;
+			throw new NotImplementedException();
 		}		
 
 		public function getFirstCharInParagraph(charIndex:int):int {
-			return 0;
+			throw new NotImplementedException();
 		}
 
  	 	public function getImageReference(id:String):DisplayObject {
- 	 		return null;
- 	 	}
+			throw new NotImplementedException();
+		}
 
 		public function getLineIndexAtPoint(x:Number, y:Number):int {
-			return 0;
+			throw new NotImplementedException();
 		}
 
 		public function getLineIndexOfChar(charIndex:int):int {
-			return 0;
+			throw new NotImplementedException();
 		}
 
 		public function getLineLength(lineIndex:int):int {
-			return 0;
+			throw new NotImplementedException();
 		}
 
 		public function getLineMetrics(lineIndex:int):TextLineMetrics {
-			return null;
+			throw new NotImplementedException();
 		}
 
 		public function getLineOffset(lineIndex:int):int {
-			return 0;
+			throw new NotImplementedException();
 		}
 
 		public function getLineText(lineIndex:int):String {
-			return null;
+			throw new NotImplementedException();
 		}
 
 		public function getParagraphLength(charIndex:int):int {
-			return 0;
+			throw new NotImplementedException();
 		}
 
 		public function getTextFormat(beginIndex:int = -1, endIndex:int = -1):TextFormat {
-			return null;
+			throw new NotImplementedException();
 		}
 
 		public static function isFontCompatible(fontName:String, fontStyle:String):Boolean {
-			return false;
+			throw new NotImplementedException();
 		}
 
 		public function replaceSelectedText(value:String):void {
+			throw new NotImplementedException();
 		}
 
 		public function replaceText(beginIndex:int, endIndex:int, newText:String):void {
+			throw new NotImplementedException();
 		}
 
 		public function setSelection(beginIndex:int, endIndex:int):void {
+			throw new NotImplementedException();
 		}
 
 		public function setTextFormat(format:TextFormat, beginIndex:int = -1, endIndex:int = -1):void {
+			throw new NotImplementedException();
 		}
 	
 	}
