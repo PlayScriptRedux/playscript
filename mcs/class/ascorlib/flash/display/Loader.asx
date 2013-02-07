@@ -34,9 +34,11 @@ package flash.display {
 		}
  	 	
 		public function loadBytes(bytes:ByteArray, context:LoaderContext = null):void {
+			// note that this code assumes that bytes is a bitmap, but it may not be
+			var bd:BitmapData = BitmapData.loadFromByteArray(bytes);
 
-			// $$TODO do the real loading here!
-			mContent = new Bitmap(new BitmapData(64,64, true, 0xFF00FF));
+			// set content as bitmap
+			mContent = new Bitmap(bd);
 			
 			// store content in content loader info (also)
 			this.contentLoaderInfo.content = mContent;
@@ -45,10 +47,6 @@ package flash.display {
 			var e:Event = new Event(Event.COMPLETE);
 			e.target = this.contentLoaderInfo;
 			this.contentLoaderInfo.dispatchEvent(e);
-		
-//			var timer = new flash.utils.Timer(1, 1);
-//			timer.addEventListener(TimerEvent.TIMER, this.doLoad );
-//			timer.start();
 		}
  	 	
 		public function loadFilePromise(promise:IFilePromise, context:LoaderContext = null):void {

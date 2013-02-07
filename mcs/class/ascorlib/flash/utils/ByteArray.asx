@@ -205,7 +205,11 @@ package flash.utils {
 				mStream.Position = oldPos;
 			}
 		}
-		
+
+
+		public function getRawStream():MemoryStream {
+			return mStream;
+		}
 		
 		var mStream:MemoryStream;
 		var mReader:BinaryReader;
