@@ -95,7 +95,19 @@ namespace flash.display3D {
 			GL.Flush();
 		}
  	 	
-		public void setBlendFactors(string sourceFactor, string destinationFactor) {
+		public void setBlendFactors (string sourceFactor, string destinationFactor)
+		{
+
+			if (sourceFactor == "one" && destinationFactor == "oneMinusSourceAlpha") {
+			
+				GL.Enable(EnableCap.Blend);
+				GL.BlendFunc(BlendingFactorSrc.One, BlendingFactorDest.OneMinusSrcAlpha);
+
+			} else {
+
+
+				throw new NotImplementedException ();
+			}
 		}
  	 	
 		public void setColorMask(bool red, bool green, bool blue, bool alpha) {
@@ -131,6 +143,8 @@ namespace flash.display3D {
  	 	
 		public void setProgramConstantsFromByteArray(string programType, int firstRegister, 
 			int numRegisters, ByteArray data, uint byteArrayOffset) {
+			throw new NotImplementedException();
+			
 		}
 
 		private static void convertDoubleToFloat (float[] dest, Vector<double> source, int count)

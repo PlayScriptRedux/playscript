@@ -39,6 +39,7 @@
     <Reference Include="test2">
       <HintPath>..\..\mcs\test2.exe</HintPath>
     </Reference>
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActionScript\Undefined.cs" />

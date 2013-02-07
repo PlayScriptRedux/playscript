@@ -117,6 +117,11 @@ package flash.utils {
 		public function readUTFBytes(length:uint):String {
 			throw new NotImplementedException();
 		}
+
+		public function readAllUTF():String {
+			var sr:StreamReader = new StreamReader(mStream);
+			return sr.ReadToEnd();
+		}
  	 	
 		public function toJSON(k:String):* {
 			throw new NotImplementedException();
@@ -200,7 +205,11 @@ package flash.utils {
 				mStream.Position = oldPos;
 			}
 		}
-		
+
+
+		public function getRawStream():MemoryStream {
+			return mStream;
+		}
 		
 		var mStream:MemoryStream;
 		var mReader:BinaryReader;

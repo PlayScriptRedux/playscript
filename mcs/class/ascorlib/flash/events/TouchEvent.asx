@@ -71,9 +71,9 @@ package flash.events {
 
 		public property sizeY : Number { get; set; }
 
-		public property stageX : Number { get { return 0.0; } }
+		public property stageX : Number { get; set;}
 
-		public property stageY : Number { get { return 0.0; } }
+		public property stageY : Number { get; set;}
 
 		public property timestamp : Number { get; set; }
 
@@ -90,26 +90,37 @@ package flash.events {
 			sizeY:Number = NaN, pressure:Number = NaN, relatedObject:InteractiveObject = null, ctrlKey:Boolean = false, 
 			altKey:Boolean = false, shiftKey:Boolean = false, commandKey:Boolean = false, controlKey:Boolean = false, 
 			timestamp:Number = NaN, touchIntent:String = null, samples:ByteArray = null, isTouchPointCanceled:Boolean = false) {
+
 			super(type);
+
+			this.touchPointID = touchPointID;
+			this.localX = localX;
+			this.localY = localY;
+			this.stageX = localX;
+			this.stageY = localY;
+			this.sizeX  = 1.0;
+			this.sizeY  = 1.0;
+			this.pressure = pressure;
 		}
  	 	
 		public override function clone():Event {
-			return null;
+			throw new System.NotImplementedException();
 		}
 
     	public function getSamples(buffer:ByteArray, append:Boolean = false):uint {
-    		return 0;
+			throw new System.NotImplementedException();
     	}
  	 	
 		public function isToolButtonDown(index:int):Boolean {
-			return false;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public override function toString():String {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function updateAfterEvent():void {
+			throw new System.NotImplementedException();
 		}
 
 		

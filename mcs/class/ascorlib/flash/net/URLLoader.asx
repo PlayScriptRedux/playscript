@@ -60,7 +60,7 @@ package flash.net {
 			if (uri.IsFile)
 			{
 				// handle file loading
-				var path = uri.AbsolutePath;
+				var path = uri.LocalPath;
 				if (File.Exists(path))
 				{
 					// file exists. read it

@@ -235,71 +235,69 @@ package flash.display {
 		public function getRawData():System.UInt32[] {
 			return mData;
 		}
-		
-		
-		public static function loadFromPath(path:String):BitmapData
-		{
-#if PLATFORM_MONOMAC		
-			if (!File.Exists(path))
-			{
-				// make path be relative to assembly
-				// path = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), path); 
-				path = Path.Combine(NSBundle.MainBundle.ResourcePath, path);
-			}
 
-			var src:NSImage = new NSImage (path);
-			
-			var rect:System.Drawing.RectangleF = System.Drawing.RectangleF.Empty;
-			var image:CGImage = src.AsCGImage (rect, null, null);
+
+		public static function loadFromCGImage(image:CGImage):BitmapData
+		{
 			var width:int = image.Width;
 			var height:int = image.Height;
-
 			var data = new byte[width * height * 4];
 			using (CGContext context = new CGBitmapContext (data, width, height, 8, 4 * width, image.ColorSpace, CGImageAlphaInfo.PremultipliedLast)) {
-				
-				// Core Graphics referential is upside-down compared to OpenGL referential
-				// Flip the Core Graphics context here
-				// An alternative is to use flipped OpenGL texture coordinates when drawing textures
-				//context.TranslateCTM (0, height);
-				//context.ScaleCTM (1, -1);
-				
 				// Set the blend mode to copy before drawing since the previous contents of memory aren't used. 
 				// This avoids unnecessary blending.
 				context.SetBlendMode (CGBlendMode.Copy);
-				
 				context.DrawImage (new System.Drawing.RectangleF (0, 0, width, height), image);
 			}
-			image.Dispose();
-
+			
 			// allocate new bitmap data and copy into it
-			var bd = new flash.display.BitmapData(width, height, true);
+			var bd:BitmapData = new flash.display.BitmapData(width, height, true);
 			System.Buffer.BlockCopy(data, 0, bd.getRawData(), 0, width * height * 4);
 			return bd;
+		}
+		
+		public static function loadFromByteArray(byteArray:ByteArray):BitmapData
+		{
+			// get NSData from byte array
+			var nsData:NSData = NSData.FromStream(byteArray.getRawStream());
+
+#if PLATFORM_MONOMAC		
+			// create NSImage from NSData
+			var src:NSImage = new NSImage(nsData);
+			var rect:System.Drawing.RectangleF = System.Drawing.RectangleF.Empty;
+			var image:CGImage = src.AsCGImage (rect, null, null);
+			var bd:BitmapData = BitmapData.loadFromCGImage(image);
+			image.Dispose();
+			return bd;
 #else
+			// create CGImage from NSData
+			var image:CGImage = new UIImage(nsData).CGImage;
+			var bd:BitmapData = BitmapData.loadFromCGImage(image);
+			image.Dispose();
+			return bd;
+#endif
+
+		}
+
+		public static function loadFromPath(path:String):BitmapData
+		{
 			if (!File.Exists(path))
 			{	
-//			var fullPath:String = NSBundle.MainBundle.PathForResource(path, "");
 				path = Path.Combine(NSBundle.MainBundle.ResourcePath, path);
 			}
 
-			var image:CGImage = new UIImage(path).CGImage;
-			var width:int = image.Width;
-			var height:int = image.Height;
-			
-			var data = new byte[width * height * 4];
-			using (CGContext context = new CGBitmapContext (data, width, height, 8, 4 * width, image.ColorSpace, CGImageAlphaInfo.PremultipliedLast)) {
-				// Set the blend mode to copy before drawing since the previous contents of memory aren't used. 
-				// This avoids unnecessary blending.
-				context.SetBlendMode (CGBlendMode.Copy);
-				
-				context.DrawImage (new System.Drawing.RectangleF (0, 0, width, height), image);
-			}
-
+#if PLATFORM_MONOMAC		
+			// create NSImage from path
+			var src:NSImage = new NSImage (path);
+			var rect:System.Drawing.RectangleF = System.Drawing.RectangleF.Empty;
+			var image:CGImage = src.AsCGImage (rect, null, null);
+			var bd:BitmapData = BitmapData.loadFromCGImage(image);
 			image.Dispose();
-			
-			// allocate new bitmap data and copy into it
-			var bd = new flash.display.BitmapData(width, height, true);
-			System.Buffer.BlockCopy(data, 0, bd.getRawData(), 0, width * height * 4);
+			return bd;
+#else
+			// create CGImage from path
+			var image:CGImage = new UIImage(path).CGImage;
+			var bd:BitmapData = BitmapData.loadFromCGImage(image);
+			image.Dispose();
 			return bd;
 #endif
 		}

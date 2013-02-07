@@ -36,6 +36,7 @@
     <Reference Include="monotouch" />
     <Reference Include="System.Core" />
     <Reference Include="OpenTK-1.0" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />
@@ -578,6 +579,12 @@
     </Compile>
     <Compile Include="..\ascorlib\flash\filesystem\File.asx">
       <Link>flash\filesystem\File.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\desktop\NativeApplication.asx">
+      <Link>flash\desktop\NativeApplication.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\SWFAttribute.cs">
+      <Link>SWFAttribute.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

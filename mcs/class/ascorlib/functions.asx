@@ -37,7 +37,12 @@ package {
 	}
  	 	
 	public function parseFloat(str:String):Number {
-		throw new System.NotImplementedException();	
+		if (!System.String.IsNullOrEmpty(str))
+		{
+			return System.Double.Parse(str);
+		} else {
+			return System.Double.NaN;
+		}
 	}
 
 	public static function trace(o:System.Object):void {

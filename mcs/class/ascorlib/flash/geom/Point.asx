@@ -6,7 +6,9 @@ package flash.geom {
 		// Properties
 		//
 		
-		public property length : Number { get { return 0.0; } }
+		public property length : Number { get { 
+				throw new System.NotImplementedException();
+				} }
 
  	 	public property x : Number { get; set; }
 
@@ -18,51 +20,56 @@ package flash.geom {
 		
 
 		public function Point(x:Number = 0, y:Number = 0) {
-		
+			this.x = x;
+			this.y = y;
 		}
  	 	
 		public function add(v:Point):Point {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function clone():Point {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function copyFrom(sourcePoint:Point):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function distance(pt1:Point, pt2:Point):Number {
-			return 0.0;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function equals(toCompare:Point):Boolean {
-			return false;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function interpolate(pt1:Point, pt2:Point, f:Number):Point {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function normalize(thickness:Number):void {
+			throw new System.NotImplementedException();
 		}
 
 		public function offset(dx:Number, dy:Number):void {
+			throw new System.NotImplementedException();
 		}
  	 	
  	 	public function polar(len:Number, angle:Number):Point {
- 	 		return null;
- 	 	}
+			throw new System.NotImplementedException();
+		}
  	 	
 		public function setTo(xa:Number, ya:Number):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function subtract(v:Point):Point {
-			return null;		
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function toString():String {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 	}
