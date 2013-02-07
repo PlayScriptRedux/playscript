@@ -580,6 +580,12 @@
     <Compile Include="..\ascorlib\flash\filesystem\File.asx">
       <Link>flash\filesystem\File.asx</Link>
     </Compile>
+    <Compile Include="..\ascorlib\flash\desktop\NativeApplication.asx">
+      <Link>flash\desktop\NativeApplication.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\SWFAttribute.cs">
+      <Link>SWFAttribute.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ActionScript.Dynamic_aot\ActionScript.Dynamic_aot-monotouch.csproj">
