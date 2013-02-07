@@ -36,6 +36,7 @@
     <Reference Include="monotouch" />
     <Reference Include="System.Core" />
     <Reference Include="OpenTK-1.0" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />

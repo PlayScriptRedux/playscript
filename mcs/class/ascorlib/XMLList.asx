@@ -1,7 +1,9 @@
 package {
 
+	import System.Xml.*;
 	import System.Collections.*;
 	import System.Collections.Generic.*;
+	import System.Linq.*;
 
 	public class XMLList implements IEnumerable.<XML> {
 	
@@ -10,11 +12,24 @@ package {
 		//
 		
 		public function XMLList(value:Object) {
-			throw new System.NotImplementedException();		
+			if (value is XmlNodeList) {
+				// create list of XML from node list
+				for each ( var node:XmlNode in value) {
+					if (node is XmlElement) {
+						mList.Add(new XML(node));
+					}
+				}
+			}
+			else {
+				throw new System.NotImplementedException();
+			}
 		}
 		
-		public function attribute(attributeName:*):XMLList {
-			throw new System.NotImplementedException();
+		public function attribute(attributeName:String):String {
+			if (mList.Count != 1)
+				throw new System.NotImplementedException();
+			
+			return mList[0].attribute(attributeName);
 		}
 		
 		public function attributes():XMLList {
@@ -53,8 +68,11 @@ package {
 			throw new System.NotImplementedException();
 		}
 		
-		public function elements(name:Object /*="*"*/):XMLList {
-			throw new System.NotImplementedException();
+		public function elements(name:String /*="*"*/):XMLList {
+			if (mList.Count != 1)
+				throw new System.NotImplementedException();
+
+			return mList[0].elements(name);
 		}
 		
 		public function hasComplexContent():Boolean {
@@ -114,13 +132,15 @@ package {
 		}
 		
 		function IEnumerable.<XML>.GetEnumerator() : IEnumerator.<XML> {
-			throw new System.NotImplementedException();
+			return mList.GetEnumerator();
 		}
 		
 		function IEnumerable.GetEnumerator() : IEnumerator { 
-			throw new System.NotImplementedException();
+			return mList.GetEnumerator();
 		}
-		
+
+
+		var mList:List.<XML> = new List.<XML>();
 	}
 
 }

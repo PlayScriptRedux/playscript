@@ -1,4 +1,6 @@
 package {
+	import System.*;
+	import System.Xml.*;
 
 	public class XML {
 	
@@ -36,7 +38,32 @@ package {
  	 	// 
  	 	
  	 	public function XML(value:Object) {
- 	 		mValue = value;
+			if (value is XmlElement) 
+			{
+				mElement = value as XmlElement;
+			} else if (value is flash.utils.ByteArray) 
+			{
+				var ba:flash.utils.ByteArray = value as flash.utils.ByteArray;
+
+				// read string from byte array
+				ba.position = 0;
+				var xmlString:String = ba.readAllUTF();
+
+				// parse xml document from string
+				var doc:XmlDocument = new XmlDocument();
+				doc.LoadXml(xmlString);
+				mElement = doc.DocumentElement;
+			} else if (value is String)
+			{
+				// parse xml document from string
+				var doc:XmlDocument = new XmlDocument();
+				doc.LoadXml(value as String);
+				mElement = doc.DocumentElement;
+			}
+			else
+			{
+				throw new System.NotImplementedException();
+			}
  	 	}
  	 	
 		public function addNamespace(ns:Object):XML {
@@ -47,10 +74,15 @@ package {
 			throw new System.NotImplementedException();
 		}
  	 	
-		public function attribute(attributeName:*):XMLList {
+		/*
+		public function attribute(attributeName:String):XMLList {
 			throw new System.NotImplementedException();
+		}*/
+
+		public function attribute(attributeName:String):String {
+			return mElement.HasAttribute(attributeName) ? mElement.GetAttribute(attributeName) : null;
 		}
- 	 	
+
 		public function attributes():XMLList {
 			throw new System.NotImplementedException();
 		}
@@ -92,11 +124,11 @@ package {
 		}
 		
 		public function elements():XMLList {
-			throw new System.NotImplementedException();
+			return new XMLList(mElement.GetElementsByTagName("*"));
 		}		
 		
-		public function elements(name:Object):XMLList {
-			throw new System.NotImplementedException();
+		public function elements(name:String):XMLList {
+			return new XMLList(mElement.GetElementsByTagName(name));
 		}
 		
 		public function hasComplexContent():Boolean {
@@ -127,12 +159,12 @@ package {
 			throw new System.NotImplementedException();
 		}
 		
-		public function localName():Object {
-			throw new System.NotImplementedException();
+		public function localName():String {
+			return mElement.LocalName;
 		}
 		
-		public function name():Object {
-			throw new System.NotImplementedException();
+		public function name():String {
+			return mElement.Name;
 		}
 		
 		public function @namespace(prefix:String = null):* {
@@ -223,7 +255,8 @@ package {
 			throw new System.NotImplementedException();
 		}	
 		
-		
+		var mElement:XmlElement;
+
 		var mValue:Object;
 	}
 
