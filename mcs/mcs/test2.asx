@@ -6,48 +6,37 @@ package
 
 	//  /noconfig "/r:/Users/bcooley/projects/mono-as3-inst/lib/mono/4.0/mscorlib.dll" -nostdlib "/out:/Users/bcooley/projects/mono-as3/mcs/mcs/test2.exe" "/r:/Users/bcooley/projects/mono-as3-inst/lib/mono/4.0/System.dll" "/r:/Users/bcooley/projects/mono-as3/mcs/class/ascorlib/bin/Debug/ascorlib_monomac.dll" "/r:/Users/bcooley/projects/mono-as3/mcs/class/ActionScript.Dynamic/bin/Debug/ActionScript.Dynamic.dll" "/r:/Users/bcooley/projects/mono-as3-inst/lib/mono/4.0/System.Core.dll" /nologo /warn:4 /debug:full /optimize- /codepage:utf8 "/define:DEBUG"  /t:exe "/Users/bcooley/projects/mono-as3/mcs/mcs/test2.asx" 
 
-	public class Foo {
-
-		public var _i:int;
-
-		public function Foo(i:int, s:String = "") {
-			_i = i;
-		}
-
-		public function bar(s:String, i:int):void {
-			trace("bar1 " + s + " " + i);
-		}
-
-		public function bar(i:int, s:String, d:Number = 123.44, s2:String = ""):void {
-			trace("bar2 " + i + " " + s);
-		}
-	}
-
 	public class Test {
 
-		var parms:Object = {};
-
         public static function Main() : void {
-			var cl:Class = Foo;
-			var f:Object = new cl(123);
-			for (var i:int = 0; i < 10; i++) {
-				var o1:Object;
-				var o2:Object;
-				if (i < 5) {
-					o1 = 123;
-					o2 = "xxx";
-				} else {
-					o1 = "qqq";
-					o2 = 444;
-				}
-				f.bar(o1, o2);
-				f.bar(o2, o1);
-			}
 
-			var o:Object = {};
-			o["blah"] = {};
-			o["blah"]["blah"] = 100;
-			trace(o["blah"]["blah"]);
+			var o:Object;
+
+			if (o) {
+				trace("Not null!");
+			}
+			
+			var i1:int = 100;
+			var i2:int = 50;
+			var i3:int = i1 / i2;
+			
+//			if (!o) {
+//				trace("null!");
+//			}
+//
+//			if (o != null) {
+//				trace("Not null!");
+//			}
+//
+//			if (o == null) {
+//				trace("Null!");
+//			}
+//						
+//			trace("The string is " + o);
+//			
+//			trace(o + "The string is");
+			
 		}
+
 	}
 }

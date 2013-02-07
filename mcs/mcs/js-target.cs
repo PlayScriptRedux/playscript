@@ -70,10 +70,12 @@ namespace Mono.CSharp.JavaScript
 			Buf.IndentLevel = oldBuf.IndentLevel; 
 		}
 
-		public void Pop()
+		public JsEmitBuffer Pop()
 		{
+			var ret = Buf;
 			Buf = _stack[_stack.Count - 1];
 			_stack.RemoveAt(_stack.Count - 1);
+			return ret;
 		}
 
 		public void Stash(string id)

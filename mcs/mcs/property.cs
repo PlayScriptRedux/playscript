@@ -244,11 +244,15 @@ namespace Mono.CSharp
 
 			public override void EmitCpp (CppEmitContext cec)
 			{
-				cec.Buf.Write ("\t", cec.MakeCppFullTypeName(this.Property.MemberType), " get_", Property.MemberName.Name, "() ", Location);
-				method_data.EmitCpp (Parent as TypeDefinition, cec);
-				cec.Buf.Write ("\n");
-				
-				block = null;
+				if (cec.Pass == CppPasses.CLASSDEF) {
+					cec.Buf.Write ("\t", cec.MakeCppFullTypeName (this.Property.MemberType), " get_", Property.MemberName.Name, "();\n");
+				} else {
+					cec.Buf.Write ("\t", cec.MakeCppFullTypeName (this.Property.MemberType), cec.MakeCppTypeName (Parent.CurrentType, false), "::", " get_", Property.MemberName.Name, "() ", Location);
+					method_data.EmitCpp (Parent as TypeDefinition, cec);
+					cec.Buf.Write ("\n");
+					
+					block = null;
+				}
 			}
 
 		}
@@ -325,14 +329,21 @@ namespace Mono.CSharp
 
 			public override void EmitCpp (CppEmitContext cec)
 			{
-				var parms = this.ParameterInfo;
-				cec.Buf.Write ("\tvoid set_", Property.MemberName.Name, "(");
-				cec.Buf.Write (cec.MakeCppFullTypeName(((Parameter)parms[0]).Type), " ", parms[0].Name);
-				cec.Buf.Write (") ", Location);
-				method_data.EmitCpp (Parent as TypeDefinition, cec);
-				cec.Buf.Write ("\n");
-				
-				block = null;
+				if (cec.Pass == CppPasses.CLASSDEF) {
+					var parms = this.ParameterInfo;
+					cec.Buf.Write ("\tvoid set_", Property.MemberName.Name, "(");
+					cec.Buf.Write (cec.MakeCppFullTypeName (((Parameter)parms [0]).Type), " ", parms [0].Name);
+					cec.Buf.Write (");\n");
+				} else {
+					var parms = this.ParameterInfo;
+					cec.Buf.Write ("\tvoid set_", cec.MakeCppTypeName (Parent.CurrentType, false), "::", Property.MemberName.Name, "(");
+					cec.Buf.Write (cec.MakeCppFullTypeName (((Parameter)parms [0]).Type), " ", parms [0].Name);
+					cec.Buf.Write (") ", Location);
+					method_data.EmitCpp (Parent as TypeDefinition, cec);
+					cec.Buf.Write ("\n");
+					
+					block = null;
+				}
 			}
 
 		}
@@ -914,7 +925,6 @@ namespace Mono.CSharp
 			if (this.Set != null) {
 				this.Set.EmitCpp (cec);
 			}
-			
 		}
 
 	}

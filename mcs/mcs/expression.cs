@@ -480,9 +480,16 @@ namespace Mono.CSharp
 				return null;
 
 			if (Expr.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
-				Arguments args = new Arguments (1);
-				args.Add (new Argument (Expr));
-				return new DynamicUnaryConversion (GetOperatorExpressionTypeName (), args, loc).Resolve (ec);
+				if (ec.FileType == SourceFileType.ActionScript && Oper == Operator.LogicalNot) {
+					// ActionScript: Call the "Boolean()" static method to convert a dynamic to a bool.  EXPENSIVE, but hey..
+					Arguments args = new Arguments (1);
+					args.Add (new Argument(EmptyCast.Create(Expr, ec.BuiltinTypes.Object)));
+					Expr = new Invocation(new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, loc), "Boolean_fn", loc), "Boolean", loc), args).Resolve (ec);
+				} else {
+					Arguments args = new Arguments (1);
+					args.Add (new Argument (Expr));
+					return new DynamicUnaryConversion (GetOperatorExpressionTypeName (), args, loc).Resolve (ec);
+				}
 			}
 
 			if (Expr.Type.IsNullableType)
@@ -3210,9 +3217,19 @@ namespace Mono.CSharp
 						}
 					} else if (left.Type.BuiltinType == BuiltinTypeSpec.Type.String) {
 						if (oper == Operator.LessThan || oper == Operator.GreaterThan || oper == Operator.LessThanOrEqual || oper == Operator.GreaterThanOrEqual) {
+							// Implement string comparisons
 							return new Binary(oper, MakeStringComparison (ec).Resolve (ec), new IntLiteral(ec.BuiltinTypes, 0, loc)).Resolve (ec);
 						}
+					} else if (Oper == Operator.Division && right.Type != ec.BuiltinTypes.Double) {
+						// In ActionScript division always results in a double.
+						right = EmptyCast.Create(right, ec.BuiltinTypes.Double).Resolve (ec);
 					}
+				}
+				// If we're doing null checks, or doing any string operations prefer "object" vs. "dynamic"
+				if (left.Type == ec.BuiltinTypes.Dynamic && (right is NullLiteral || right.Type == ec.BuiltinTypes.String)) {
+					left = EmptyCast.Create(left, ec.BuiltinTypes.Object);
+				} else if (right.Type == ec.BuiltinTypes.Dynamic && (left is NullLiteral || left.Type == ec.BuiltinTypes.String)) {
+					right = EmptyCast.Create(right, ec.BuiltinTypes.Object);
 				}
 			}
 
@@ -4845,9 +4862,16 @@ namespace Mono.CSharp
 				return expr;
 
 			if (expr.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
-				Arguments args = new Arguments (1);
-				args.Add (new Argument (expr));
-				return DynamicUnaryConversion.CreateIsTrue (ec, args, loc).Resolve (ec);
+				if (ec.FileType == SourceFileType.ActionScript) {
+					// ActionScript: Call the "Boolean()" static method to convert a dynamic to a bool.  EXPENSIVE, but hey..
+					Arguments args = new Arguments (1);
+					args.Add (new Argument(EmptyCast.Create(expr, ec.BuiltinTypes.Object)));
+					expr = new Invocation(new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, loc), "Boolean_fn", loc), "Boolean", loc), args).Resolve (ec);
+				} else {
+					Arguments args = new Arguments (1);
+					args.Add (new Argument (expr));
+					return DynamicUnaryConversion.CreateIsTrue (ec, args, loc).Resolve (ec);
+				}
 			}
 
 			type = ec.BuiltinTypes.Bool;
@@ -5772,6 +5796,16 @@ namespace Mono.CSharp
 
 			var atn = expr as ATypeNameExpression;
 
+			// Handle inline javascript/cpp code.
+			if (ec.Target == Target.JavaScript && expr is SimpleName && ((SimpleName)expr).Name == "__js__" && 
+			    arguments.Count == 1 && arguments[0].Expr is StringLiteral) {
+				return this;
+			}
+			if (ec.Target == Target.Cpp && expr is SimpleName && ((SimpleName)expr).Name == "__cpp__" && 
+			    arguments.Count == 1 && arguments[0].Expr is StringLiteral) {
+				return this;
+			}
+
 			// Handle special casts for dynamic types..
 			if (isActionScript && arguments != null && arguments.Count == 1) {
 
@@ -6057,15 +6091,16 @@ namespace Mono.CSharp
 
 		public override void EmitJs (JsEmitContext jec)
 		{
+			// Write JS literal code for __js__() invocation.
+			if (expr is SimpleName && ((SimpleName)expr).Name == "__js__" && 
+			    arguments.Count == 1 && arguments[0].Expr is StringLiteral) {
+				jec.Buf.Write (((StringLiteral)arguments[0].Expr).Value);
+				return;
+			}
+
 			if (expr != null) {
-				if (mg.IsStatic) {
-					if (expr is TypeExpr) {
-						jec.Buf.Write (jec.MakeJsFullTypeName(((TypeExpr)expr).Type), ".", Location);
-					} else if (expr is SimpleName) {
-						jec.Buf.Write (((SimpleName)expr).Name, ".");
-					} else {
-						jec.Buf.Write ("<<type>>.");
-					}
+				if (mg.IsStatic && expr is TypeExpr) {
+					jec.Buf.Write (jec.MakeJsFullTypeName(((TypeExpr)expr).Type), ".", Location);
 				} else {
 					expr.EmitJs (jec);
 				}
@@ -6084,19 +6119,16 @@ namespace Mono.CSharp
 
 		public override void EmitCpp (CppEmitContext cec)
 		{
+			// Write CPP literal code for __cpp__() invocation.
+			if (expr is SimpleName && ((SimpleName)expr).Name == "__cpp__" && 
+			    arguments.Count == 1 && arguments[0].Expr is StringLiteral) {
+				cec.Buf.Write (((StringLiteral)arguments[0].Expr).Value);
+				return;
+			}
+
 			if (expr != null) {
-				if (mg.IsStatic) {
-					var t_expr = expr;
-					if (expr is TypeExpr) {
-						cec.Buf.Write (cec.MakeCppFullTypeName(((TypeExpr)expr).Type, false), "::", Location);
-					} else if (expr is MemberAccess || expr is SimpleName) {
-						expr.EmitCpp (cec);
-						cec.Buf.Write ("::");
-					} else if (expr is SimpleName) {
-						cec.Buf.Write (((SimpleName)expr).Name, "::");
-					} else {
-						cec.Buf.Write ("<<type>>::");
-					}
+				if (mg.IsStatic && expr is TypeExpr) {
+					cec.Buf.Write (cec.MakeCppFullTypeName(((TypeExpr)expr).Type, false), "::", Location);
 				} else {
 					expr.EmitCpp (cec);
 				}

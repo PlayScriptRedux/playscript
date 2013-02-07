@@ -1016,26 +1016,27 @@ namespace Mono.CSharp {
 		{
 			VerifyClsCompliance ();
 			
-			var name = cec.MakeCppNamespaceName (this.NS.Name);
-			var ns_names = this.NS.Name.Split (new char[] { '.'});
-			bool is_global_ns = String.IsNullOrEmpty (name);
+			var ns = cec.MakeCppNamespaceName (this.NS.Name);
+			var ns_names = this.NS.Name.Split (new char[] { '.' });
+			bool is_global_ns = String.IsNullOrEmpty (ns);
 			
-			if (!is_global_ns) {
+			if (!is_global_ns && ns != cec.PrevNamespace) {
+				if (cec.PrevNamespaceNames != null) {
+					foreach (var n in cec.PrevNamespaceNames) {
+						cec.Buf.Unindent ();
+						cec.Buf.Write ("\t}\n");
+					}
+				}
 				foreach (var n in ns_names) {
 					cec.Buf.Write ("\tnamespace ", n, " {\n");
 					cec.Buf.Indent();
 				}
 				cec.MarkNamespaceDefined (NS.Name);
+				cec.PrevNamespace = ns;
+				cec.PrevNamespaceNames = ns_names;
 			}
 			
 			base.EmitContainerCpp (cec);
-			
-			if (!is_global_ns) {
-				foreach (var n in ns_names) {
-					cec.Buf.Unindent ();
-					cec.Buf.Write ("\t}\n");
-				}
-			}
 		}
 
 		public ExtensionMethodCandidates LookupExtensionMethod (IMemberContext invocationContext, TypeSpec extensionType, string name, int arity, int position)

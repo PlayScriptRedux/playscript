@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Mono.CSharp.Cpp;
 
 #if STATIC
 using MetaType = IKVM.Reflection.Type;
@@ -253,6 +254,20 @@ namespace Mono.CSharp
 			ConstraintChecker.Check (this, member_type, type_expr.Location);
 
 			base.Emit ();
+		}
+
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			cec.Buf.Write ("\t", cec.MakeCppFullTypeName(MemberType), " ", Name, Location);
+			if (initializer != null) {
+				ResolveContext rc = new ResolveContext (this);
+				var expr = initializer.Resolve (rc);
+				if (expr != null) {
+					cec.Buf.Write (" = ");
+					expr.EmitCpp (cec);
+				}
+			}
+			cec.Buf.Write (";\n");
 		}
 
 		public static void Error_VariableOfStaticClass (Location loc, string variable_name, TypeSpec static_class, Report Report)

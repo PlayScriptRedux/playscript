@@ -510,7 +510,14 @@ namespace Mono.CSharp
 			cec = new CppEmitContext (module);
 			
 			cec.Buf.Write ("// Module: ", this.Name, ".cpp\n");
-			
+
+			cec.Pass = CppPasses.PREDEF;
+			module.EmitContainerCpp (cec);
+
+			cec.Pass = CppPasses.CLASSDEF;
+			module.EmitContainerCpp (cec);
+
+			cec.Pass = CppPasses.METHODS;
 			module.EmitContainerCpp (cec);
 		}
 

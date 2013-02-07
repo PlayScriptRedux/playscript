@@ -751,16 +751,22 @@ namespace Mono.CSharp {
 				cec.Buf.Write ("\t", Location);
 			}
 
-			cec.Buf.Write (cec.MakeCppFullTypeName (this.ReturnType), " ", this.MethodName.Name, "(");
-			parameters.EmitCpp (cec);
-			cec.Buf.Write (") ");
-			
-			if (MethodData != null)
-				MethodData.EmitCpp (Parent, cec);
-			
-			Block = null;
-			
-			cec.Buf.Write ("\n");
+			if (cec.Pass == CppPasses.CLASSDEF) {
+				cec.Buf.Write (cec.MakeCppFullTypeName (this.ReturnType), " ", this.MethodName.Name, "(");
+				parameters.EmitCpp (cec);
+				cec.Buf.Write (");\n");
+			} else {
+				cec.Buf.Write (cec.MakeCppFullTypeName (this.ReturnType), " ", cec.MakeCppTypeName (Parent.CurrentType, false), "::", this.MethodName.Name, "(");
+				parameters.EmitCpp (cec);
+				cec.Buf.Write (") ");
+
+				if (MethodData != null)
+					MethodData.EmitCpp (Parent, cec);
+
+				Block = null;
+				
+				cec.Buf.Write ("\n");
+			}
 		}
 
 		protected void Error_ConditionalAttributeIsNotValid ()

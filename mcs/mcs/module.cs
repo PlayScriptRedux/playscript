@@ -471,23 +471,40 @@ namespace Mono.CSharp
 		{
 			if (OptAttributes != null)
 				OptAttributes.EmitCpp (cec);
-			
-			foreach (var tc in containers) {
-				tc.PrepareEmit ();
+
+			if (cec.Pass == CppPasses.PREDEF) {
+				foreach (var tc in containers) {
+					tc.PrepareEmit ();
+				}
 			}
-			
+
+			cec.PrevNamespace = null;
+			cec.PrevNamespaceNames = null;
+
 			base.EmitContainerCpp (cec);
-			
-			if (Compiler.Report.Errors == 0 && !Compiler.Settings.WriteMetadataOnly)
-				VerifyMembers ();
-			
+
+			// Close last unclosed namespace..
+			if (cec.PrevNamespaceNames != null) {
+				foreach (var n in cec.PrevNamespaceNames) {
+					cec.Buf.Unindent ();
+					cec.Buf.Write ("\t}\n");
+				}
+			}
+
+			cec.PrevNamespace = null;
+			cec.PrevNamespaceNames = null;
+
+			if (cec.Pass == CppPasses.METHODS) {
+				if (Compiler.Report.Errors == 0 && !Compiler.Settings.WriteMetadataOnly)
+					VerifyMembers ();
+			}
+				
 			if (anonymous_types != null) {
 				foreach (var atypes in anonymous_types)
 					foreach (var at in atypes.Value)
 						at.EmitContainerCpp (cec);
 			}
 		}
-
 
 		internal override void GenerateDocComment (DocumentationBuilder builder)
 		{

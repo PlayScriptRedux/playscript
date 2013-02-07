@@ -706,6 +706,7 @@ namespace Mono.CSharp {
 
 			case "/t":
 			case "/target":
+				bool is_dotnet = true;
 				switch (value) {
 				case "exe":
 					settings.Target = Target.Exe;
@@ -728,16 +729,23 @@ namespace Mono.CSharp {
 				case "javascript":
 					settings.Target = Target.JavaScript;
 					settings.TargetExt = ".js";
+					settings.AddConditionalSymbol ("TARGET_JS");
+					is_dotnet = false;
 					break;
 
 				case "cpp":
 					settings.Target = Target.Cpp;
 					settings.TargetExt = ".cpp";
+					settings.AddConditionalSymbol ("TARGET_CPP");
+					is_dotnet = false;
 					break;
 
 				default:
 					report.Error (2019, "Invalid target type for -target. Valid options are `exe', `winexe', `library', `module', `javascript' or `cpp'");
 					return ParseResult.Error;
+				}
+				if (is_dotnet) {
+					settings.AddConditionalSymbol ("TARGET_IL");
 				}
 				return ParseResult.Success;
 

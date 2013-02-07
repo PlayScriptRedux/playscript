@@ -5,10 +5,19 @@ using System.Text;
 
 namespace Mono.CSharp.Cpp
 {
+	public enum CppPasses {
+		PREDEF,
+		CLASSDEF,
+		METHODS
+	}
+
 	public class CppEmitContext {
 		
 		public ModuleContainer Module;
 		public CppEmitBuffer Buf;
+		public CppPasses Pass;
+		public string PrevNamespace;
+		public string[] PrevNamespaceNames;
 		
 		bool _forceExpression;
 		List<bool> _forceExprStack = new List<bool>(128);
@@ -70,10 +79,12 @@ namespace Mono.CSharp.Cpp
 			Buf.IndentLevel = oldBuf.IndentLevel; 
 		}
 		
-		public void Pop()
+		public CppEmitBuffer Pop()
 		{
+			var ret = Buf;
 			Buf = _stack[_stack.Count - 1];
 			_stack.RemoveAt(_stack.Count - 1);
+			return ret;
 		}
 		
 		public void Stash(string id)
@@ -102,7 +113,7 @@ namespace Mono.CSharp.Cpp
 		
 		public string MakeCppNamespaceName(string ns)
 		{
-			return ns.Replace ('.', '$');
+			return ns.Replace (".", "::");
 		}
 
 		private string InternalMakeCppTypeName(TypeSpec t, bool ref_as_ptr, bool with_ns)

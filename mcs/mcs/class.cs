@@ -2132,57 +2132,78 @@ namespace Mono.CSharp
 
 		public override void EmitCpp (CppEmitContext cec)
 		{
-			ValidateEmit ();
+			if (cec.Pass == CppPasses.PREDEF) {
+				ValidateEmit ();
+			}
 			
 			base.EmitCpp (cec);
-			
+
+			if (cec.Pass == CppPasses.PREDEF) {
+				return;
+			}
+
 			int i;
 			MemberCore m;
 			HashSet<MemberCore> emitted = new HashSet<MemberCore> ();
-			
-			// Constructors
-			for (i = 0; i < members.Count; i++) {
-				m = members [i];
-				var c = m as Constructor;
-				if (c != null && (c.ModFlags & Modifiers.STATIC) == 0) {
-					c.EmitCpp (cec);
-					emitted.Add (c);
+
+			// Fields
+			if (cec.Pass == CppPasses.CLASSDEF) {
+				for (i = 0; i < members.Count; i++) {
+					m = members [i];
+					var f = m as Field;
+					if (f != null) {
+						f.EmitCpp (cec);
+						emitted.Add (f);
+					}
 				}
 			}
-			
-			// Static constructors
-			for (i = 0; i < members.Count; i++) {
-				m = members [i];
-				var c = m as Constructor;
-				if (c != null && (c.ModFlags & Modifiers.STATIC) != 0) {
-					c.EmitCpp (cec);
-					emitted.Add (c);
+
+			if (cec.Pass == CppPasses.CLASSDEF || cec.Pass == CppPasses.METHODS) {
+
+				// Constructors
+				for (i = 0; i < members.Count; i++) {
+					m = members [i];
+					var c = m as Constructor;
+					if (c != null && (c.ModFlags & Modifiers.STATIC) == 0) {
+						c.EmitCpp (cec);
+						emitted.Add (c);
+					}
 				}
-			}
-			
-			// Properties
-			for (i = 0; i < members.Count; i++) {
-				m = members [i];
-				if (m is Property) {
-					m.EmitCpp (cec);
-					emitted.Add (m);
+				
+				// Static constructors
+				for (i = 0; i < members.Count; i++) {
+					m = members [i];
+					var c = m as Constructor;
+					if (c != null && (c.ModFlags & Modifiers.STATIC) != 0) {
+						c.EmitCpp (cec);
+						emitted.Add (c);
+					}
 				}
-			}
-			
-			// Methods
-			for (i = 0; i < members.Count; i++) {
-				m = members [i];
-				if (m is Method) {
-					m.EmitCpp (cec);
-					emitted.Add (m);
+				
+				// Properties
+				for (i = 0; i < members.Count; i++) {
+					m = members [i];
+					if (m is Property) {
+						m.EmitCpp (cec);
+						emitted.Add (m);
+					}
 				}
-			}
-			
-			// Whatever else
-			for (i = 0; i < members.Count; i++) {
-				m = members [i];
-				if (!emitted.Contains(m)) {
-					m.EmitCpp (cec);
+				
+				// Methods
+				for (i = 0; i < members.Count; i++) {
+					m = members [i];
+					if (m is Method) {
+						m.EmitCpp (cec);
+						emitted.Add (m);
+					}
+				}
+				
+				// Whatever else
+				for (i = 0; i < members.Count; i++) {
+					m = members [i];
+					if (!emitted.Contains (m)) {
+						m.EmitCpp (cec);
+					}
 				}
 			}
 			
@@ -2708,48 +2729,54 @@ namespace Mono.CSharp
 
 		public override void EmitCpp (CppEmitContext cec)
 		{
-			if (!cec.CheckCanEmit (Location))
-				return;
-			
-			if (!has_static_constructor && HasStaticFieldInitializer) {
-				var c = DefineDefaultConstructor (true);
-				c.Define ();
-			}
-			
-			if (!(this.Parent is NamespaceContainer)) {
-				cec.Report.Error (7175, Location, "C++ code generation for nested types not supported.");
-				return;
-			}
-			
-			
-			Constructor constructor = null;
-			
-			foreach (var member in Members) {
-				var c = member as Constructor;
-				if (c != null) {
-					if ((c.ModFlags & Modifiers.STATIC) != 0) {
-						continue;
-					} 
-					if (constructor != null) {
-						cec.Report.Error (7177, c.Location, "C++ generation not supported for overloaded constructors");
-						return;
-					}
-					constructor = c;
-				}
-			}
-			
-			var nsc = (NamespaceContainer)this.Parent;
+			if (cec.Pass == CppPasses.PREDEF) {
 
-			cec.Buf.Write ("\n");
-			cec.Buf.Write ("\tpublic class", MemberName.Name, " {\n", Location);
-			cec.Buf.Indent ();
-			cec.Buf.Write ("\tpublic:\n");
+				if (!cec.CheckCanEmit (Location))
+					return;
+				
+				if (!has_static_constructor && HasStaticFieldInitializer) {
+					var c = DefineDefaultConstructor (true);
+					c.Define ();
+				}
+				
+				if (!(this.Parent is NamespaceContainer)) {
+					cec.Report.Error (7175, Location, "C++ code generation for nested types not supported.");
+					return;
+				}
+
+				Constructor constructor = null;
+				
+				foreach (var member in Members) {
+					var c = member as Constructor;
+					if (c != null) {
+						if ((c.ModFlags & Modifiers.STATIC) != 0) {
+							continue;
+						} 
+						if (constructor != null) {
+							cec.Report.Error (7177, c.Location, "C++ generation not supported for overloaded constructors");
+							return;
+						}
+						constructor = c;
+					}
+				}
+
+			}
+
+			if (cec.Pass == CppPasses.PREDEF) {
+				cec.Buf.Write ("\tclass ", MemberName.Name, ";\n");
+			} else if (cec.Pass == CppPasses.CLASSDEF) {
+				cec.Buf.Write ("\tclass ", MemberName.Name, " {\n", Location);
+				cec.Buf.Indent ();
+				cec.Buf.Write ("\tpublic:\n");
+			}
 			
 			base.EmitCpp (cec);
 
-			cec.Buf.Unindent();
-			cec.Buf.Write ("\t}\n");
-			
+			if (cec.Pass == CppPasses.CLASSDEF) {
+				cec.Buf.Unindent();
+				cec.Buf.Write ("\t};\n");
+			}
+
 		}
 
 	}

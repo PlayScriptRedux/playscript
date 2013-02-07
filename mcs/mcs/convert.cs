@@ -169,7 +169,11 @@ namespace Mono.CSharp {
 
 			// ActionScript references can always be implicitly cast to bool
 			if (target_type.BuiltinType == BuiltinTypeSpec.Type.Bool && opt_ec != null && opt_ec.FileType == SourceFileType.ActionScript) {
-				return new Binary(Binary.Operator.Inequality, expr, new NullLiteral(expr.Location)).Resolve(opt_ec);
+				// ActionScript: Call the "Boolean()" static method to convert a dynamic to a bool.  EXPENSIVE, but hey..
+				Arguments args = new Arguments (1);
+				args.Add (new Argument(EmptyCast.Create(expr, opt_ec.BuiltinTypes.Object)));
+				return new Invocation(new MemberAccess(new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, 
+				            expr.Location), "Boolean_fn", expr.Location), "Boolean", expr.Location), args).Resolve (opt_ec);
 			}
 			
 			if (expr_type.Kind == MemberKind.TypeParameter)
