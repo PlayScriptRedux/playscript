@@ -34,6 +34,7 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Compile Include="test2.asx" />
+    <Compile Include="raytrace.asx" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\class\ascorlib\ascorlib-net_4_0_monomac.csproj">
