@@ -17,12 +17,18 @@ package flash.utils {
 	}
 	
 	public function getDefinitionByName(name:String):Object {
-		throw new System.NotImplementedException();
+		name = name.Replace("::", ".");
+		var t = System.Type.GetType(name);
+		return t;
 	}
 	
 	public function getQualifiedClassName(value:*):String {
-		var name:String = value.GetType().FullName;
-		
+		var name:String;
+		if (value is System.Type) {
+			name = value.FullName;
+		} else {
+			name = value.GetType().FullName;
+		}
 		// replace last dot with :: to conform to flash conventions
 		var lastDot:int = name.LastIndexOf('.');
 		if (lastDot >= 0)

@@ -14,7 +14,7 @@ namespace _root
 		}				
 
 		public static int charCodeAt(this string s, double index) {
-			throw new NotImplementedException();
+			return s[(int)index];
 		}
 
 		public static string concat(this string s, params object[] args) {

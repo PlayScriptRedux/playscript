@@ -61,7 +61,8 @@ package flash.geom {
 		}
  	 	
 		public function setTo(xa:Number, ya:Number):void {
-			throw new System.NotImplementedException();
+			this.x = xa;
+			this.y = ya;
 		}
  	 	
 		public function subtract(v:Point):Point {
