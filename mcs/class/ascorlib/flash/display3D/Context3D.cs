@@ -97,17 +97,32 @@ namespace flash.display3D {
  	 	
 		public void setBlendFactors (string sourceFactor, string destinationFactor)
 		{
+			BlendingFactorSrc src;
+			BlendingFactorDest dest;
 
-			if (sourceFactor == "one" && destinationFactor == "oneMinusSourceAlpha") {
-			
-				GL.Enable(EnableCap.Blend);
-				GL.BlendFunc(BlendingFactorSrc.One, BlendingFactorDest.OneMinusSrcAlpha);
-
-			} else {
-
-
-				throw new NotImplementedException ();
+			// translate strings into enums
+			switch (sourceFactor) {
+			case "one": 				src = BlendingFactorSrc.One; break;
+			case "zero": 				src = BlendingFactorSrc.Zero; break;
+			case "sourceAlpha": 		src = BlendingFactorSrc.SrcAlpha; break;
+			case "destinationColor": 	src = BlendingFactorSrc.DstColor; break;
+			default:
+				throw new NotImplementedException();
 			}
+
+			// translate strings into enums
+			switch (destinationFactor) {
+			case "one": 				dest = BlendingFactorDest.One; break;
+			case "zero": 				dest = BlendingFactorDest.Zero; break;
+			case "sourceAlpha": 		dest = BlendingFactorDest.SrcAlpha; break;
+			case "oneMinusSourceAlpha": dest = BlendingFactorDest.OneMinusSrcAlpha; break;
+			case "oneMinusSourceColor": dest = BlendingFactorDest.OneMinusSrcColor; break;
+			default:
+				throw new NotImplementedException();
+			}
+
+			GL.Enable(EnableCap.Blend);
+			GL.BlendFunc(src, dest);
 		}
  	 	
 		public void setColorMask(bool red, bool green, bool blue, bool alpha) {
