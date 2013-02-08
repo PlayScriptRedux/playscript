@@ -43,7 +43,7 @@ package flash.geom {
 	
 		public function contains(x:Number, y:Number):Boolean {
 			return (x >= this.left) && (x <= this.right) && 
-			       (y >= this.top) && (x <= this.bottom); 
+			       (y >= this.top) && (y <= this.bottom); 
 		}
 		
 		public function containsPoint(point:Point):Boolean {
