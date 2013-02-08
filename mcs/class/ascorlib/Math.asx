@@ -85,9 +85,11 @@ package {
 		public static function pow(base:Number, pow:Number):Number {
 			return System.Math.Pow(base, pow);
 		}
-		
+
+		private static var sRandom:System.Random = new System.Random();
+
 		public static function random():Number {
-			throw new System.NotImplementedException();
+			return sRandom.NextDouble();
 		}
 		
 		public static function round(val:Number):Number {

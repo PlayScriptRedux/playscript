@@ -22,7 +22,21 @@ package {
  	 			if (value == 0) {
  	 				this.Clear();
  	 			} else {
- 	 				throw new System.NotImplementedException(); 
+					if (Count < value)
+					{
+						// grow array
+						while (Count < value)
+						{
+							this.Add(default(T));
+						}
+					} else if (Count > value)
+					{
+						// shrink array
+						this.RemoveRange(value, Count - value);
+					}
+
+					if (Count != value)
+						throw new System.InvalidOperationException("there is a bug here");
  	 			}
  	 		} 
  	 	}
