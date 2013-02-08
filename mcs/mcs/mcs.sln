@@ -68,7 +68,7 @@ Global
 		{EDBACFCB-2817-4A2E-8DDF-B24AEFA56352}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
-		StartupItem = mcs.csproj
+		StartupItem = test.csproj
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

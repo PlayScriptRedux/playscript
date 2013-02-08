@@ -3221,8 +3221,10 @@ namespace Mono.CSharp
 							return new Binary(oper, MakeStringComparison (ec).Resolve (ec), new IntLiteral(ec.BuiltinTypes, 0, loc)).Resolve (ec);
 						}
 					} else if (Oper == Operator.Division && right.Type != ec.BuiltinTypes.Double) {
+
 						// In ActionScript division always results in a double.
-						right = EmptyCast.Create(right, ec.BuiltinTypes.Double).Resolve (ec);
+						left = new Cast(new TypeExpression(ec.BuiltinTypes.Double, loc), left, loc).Resolve (ec);
+						right = new Cast(new TypeExpression(ec.BuiltinTypes.Double, loc), right, loc).Resolve (ec);
 					}
 				}
 				// If we're doing null checks, or doing any string operations prefer "object" vs. "dynamic"

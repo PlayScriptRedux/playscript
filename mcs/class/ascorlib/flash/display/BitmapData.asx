@@ -236,6 +236,7 @@ package flash.display {
 			return mData;
 		}
 
+#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
 
 		public static function loadFromCGImage(image:CGImage):BitmapData
 		{
@@ -254,9 +255,13 @@ package flash.display {
 			System.Buffer.BlockCopy(data, 0, bd.getRawData(), 0, width * height * 4);
 			return bd;
 		}
+
+#endif		
 		
 		public static function loadFromByteArray(byteArray:ByteArray):BitmapData
 		{
+#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH 
+
 			// get NSData from byte array
 			var nsData:NSData = NSData.FromStream(byteArray.getRawStream());
 
@@ -276,10 +281,16 @@ package flash.display {
 			return bd;
 #endif
 
+#else
+			throw new System.NotImplementedException();
+#endif
+
 		}
 
 		public static function loadFromPath(path:String):BitmapData
 		{
+#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH 
+		
 			if (!File.Exists(path))
 			{	
 				path = Path.Combine(NSBundle.MainBundle.ResourcePath, path);
@@ -299,6 +310,10 @@ package flash.display {
 			var bd:BitmapData = BitmapData.loadFromCGImage(image);
 			image.Dispose();
 			return bd;
+#endif
+
+#else
+			throw new System.NotImplementedException();
 #endif
 		}
 		

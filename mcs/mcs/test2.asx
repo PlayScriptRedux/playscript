@@ -10,9 +10,12 @@ package
 
         public static function Main() : void {
 
-			var o:Object;
+			trace ("Booyah!");
 
-			if (o) {
+			var o:Object = "blah";
+			var o2:Object = "blah2";
+
+			if (o == o2) {
 				trace("Not null!");
 			}
 			
