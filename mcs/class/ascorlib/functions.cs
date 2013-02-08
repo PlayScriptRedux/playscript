@@ -84,6 +84,8 @@ namespace _root
 		// Not inlinable.. but required to get correct results in flash.
 		public static bool Boolean (object d)
 		{
+			if (d == null) return false;
+
 			TypeCode tc = Type.GetTypeCode(d.GetType());
 			switch (tc) {
 			case TypeCode.Boolean:
