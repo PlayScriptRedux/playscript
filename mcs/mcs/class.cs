@@ -762,6 +762,15 @@ namespace Mono.CSharp
 			members.Add (symbol);
 		}
 
+		public void ReplaceMember (MemberCore oldsymbol, MemberCore newsymbol)
+		{
+			var i = members.IndexOf (oldsymbol);
+			if (i == -1)
+				throw new InvalidOperationException("No member to replace");
+			members[i] = newsymbol;
+			ReplaceNameInContainer (newsymbol, newsymbol.MemberName.Basename);
+		}
+
 		public override void AddTypeContainer (TypeContainer tc)
 		{
 			AddNameToContainer (tc, tc.Basename);
@@ -822,6 +831,20 @@ namespace Mono.CSharp
 			return;
 		}
 	
+		//
+		// Replaces the member in the defined_names table.
+		//
+		public virtual void ReplaceNameInContainer (MemberCore newsymbol, string name)
+		{
+			if (((ModFlags | newsymbol.ModFlags) & Modifiers.COMPILER_GENERATED) != 0)
+				return;
+			
+			MemberCore mc;
+			if (PartialContainer.defined_names.TryGetValue (name, out mc)) {
+				PartialContainer.defined_names[name] = newsymbol;
+			}
+		}
+
 		public void AddConstructor (Constructor c)
 		{
 			AddConstructor (c, false);
@@ -1815,6 +1838,34 @@ namespace Mono.CSharp
 			}
 
 			var count = members.Count;		
+
+			// ActionScript: Switch non null "const" fields to vars.
+			if (this.Location.SourceFile != null && this.Location.SourceFile.FileType == SourceFileType.ActionScript) {
+				for (int i = 0; i < count; ++i) {
+					var c = members[i] as Const;
+					if (c == null)
+						continue;
+
+					var t = c.TypeExpression.ResolveAsType (this);
+					if (t.IsStruct || t.BuiltinType == BuiltinTypeSpec.Type.String)
+						continue;
+
+					if (c.Initializer == null || (c.Initializer is NullConstant) || (c.Initializer is NullLiteral))
+						continue;
+
+					var f = new Field(this, c.TypeExpression, c.ModFlags | Modifiers.READONLY, c.MemberName, c.OptAttributes);
+					if (c.Initializer != null) {
+						if (c.Initializer is ConstInitializer) {
+							f.Initializer = ((ConstInitializer)c.Initializer).Expr;
+						} else {
+							f.Initializer = c.Initializer;
+						}
+					}
+
+					ReplaceMember (c, f);
+				}
+			}
+
 			for (int i = 0; i < count; ++i) {
 				var mc = members[i] as InterfaceMemberBase;
 				if (mc == null || !mc.IsExplicitImpl)
