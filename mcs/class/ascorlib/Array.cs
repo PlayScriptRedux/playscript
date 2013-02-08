@@ -143,7 +143,9 @@ namespace _root
  	 	
 		// Removes the first element from an array and returns that element.
 		public dynamic shift() {
-			throw new NotImplementedException();
+			dynamic first = this[0];
+			this.RemoveAt (0);
+			return first;
 		}
  	 	
 		// Returns a new array that consists of a range of elements from the original array, without modifying the original array.
