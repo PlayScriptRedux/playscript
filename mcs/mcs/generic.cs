@@ -2446,7 +2446,7 @@ namespace Mono.CSharp {
 				}
 			} else {
 				ResolveContext opt_ec = mc as ResolveContext;
-				if (Convert.ImplicitReferenceConversionExists (atype, ttype, false, opt_ec) || Convert.ImplicitBoxingConversion (null, atype, ttype) != null)
+				if (Convert.ImplicitReferenceConversionExists (atype, ttype, false, opt_ec, false) || Convert.ImplicitBoxingConversion (null, atype, ttype) != null)
 					return true;
 			}
 

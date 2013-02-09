@@ -4670,7 +4670,7 @@ namespace Mono.CSharp {
 						//
 						var at = a.Type;
 						if (at == pt || TypeSpecComparer.IsEqual (at, pt) ||
-							Convert.ImplicitReferenceConversionExists (at, pt, false, ec) ||
+							Convert.ImplicitReferenceConversionExists (at, pt, false, ec, false) ||
 							Convert.ImplicitBoxingConversion (null, at, pt) != null) {
 							score = 0;
 							continue;
@@ -5357,7 +5357,7 @@ namespace Mono.CSharp {
 					if (a.Expr.Type == pt || TypeSpecComparer.IsEqual (a.Expr.Type, pt)) {
 						conv = a.Expr;
 					} else {
-						conv = Convert.ImplicitReferenceConversion (a.Expr, pt, false, ec);
+						conv = Convert.ImplicitReferenceConversion (a.Expr, pt, false, ec, false);
 						if (conv == null)
 							conv = Convert.ImplicitBoxingConversion (a.Expr, a.Expr.Type, pt);
 					}

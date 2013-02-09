@@ -6,63 +6,11 @@ package
 
 	public static class Test {
 	
-		public static var qq:String = "blah";		
-	
-		public static var gg:Error = new Error("blah");
-		
-		public static const jj:Error = new Error("asdfadf");
-	
-		public static const ADD : String = "add";	
-	
-		public const z:Object = "Blah";
-		
-		public const s:String = "Blah";
-		
-		public const q:String = null;
-		
-		public const v:int = 100;
-		
-		public const r:Number = 100.0;
-
-        public static function Main() : void {
-
-			trace (jj);
-			trace (qq);
-			trace (z);
-			trace (s);
-			trace (q);
-			trace (v);
-			trace (r);
-
-			trace ("Booyah!");
-
-			var o:Object = "blah";
-			var o2:Object = "blah2";
-
-			if (o == o2) {
-				trace("Not null!");
-			}
+		public static function test() : void {
 			
-			var i1:int = 100;
-			var i2:int = 50;
-			var i3:int = i1 / i2;
-			
-//			if (!o) {
-//				trace("null!");
-//			}
-//
-//			if (o != null) {
-//				trace("Not null!");
-//			}
-//
-//			if (o == null) {
-//				trace("Null!");
-//			}
-//						
-//			trace("The string is " + o);
-//			
-//			trace(o + "The string is");
-			
+		}
+	
+		public static function Main() : void {
 		}
 
 	}

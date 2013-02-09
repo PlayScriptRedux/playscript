@@ -426,7 +426,7 @@ namespace Mono.CSharp {
 
 				if (atype == pa.CallerMemberNameAttribute) {
 					caller_type = rc.BuiltinTypes.String;
-					if (caller_type != parameter_type && !Convert.ImplicitReferenceConversionExists (caller_type, parameter_type, rc)) {
+					if (caller_type != parameter_type && !Convert.ImplicitReferenceConversionExists (caller_type, parameter_type, rc, false)) {
 						rc.Report.Error (4019, attr.Location,
 							"The CallerMemberName attribute cannot be applied because there is no standard conversion from `{0}' to `{1}'",
 							caller_type.GetSignatureForError (), parameter_type.GetSignatureForError ());
@@ -450,7 +450,7 @@ namespace Mono.CSharp {
 
 				if (atype == pa.CallerFilePathAttribute) {
 					caller_type = rc.BuiltinTypes.String;
-					if (caller_type != parameter_type && !Convert.ImplicitReferenceConversionExists (caller_type, parameter_type, rc)) {
+					if (caller_type != parameter_type && !Convert.ImplicitReferenceConversionExists (caller_type, parameter_type, rc, false)) {
 						rc.Report.Error (4018, attr.Location,
 							"The CallerFilePath attribute cannot be applied because there is no standard conversion from `{0}' to `{1}'",
 							caller_type.GetSignatureForError (), parameter_type.GetSignatureForError ());

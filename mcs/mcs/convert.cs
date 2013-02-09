@@ -50,7 +50,7 @@ namespace Mono.CSharp {
 			if (isExplicit)
 				return ExplicitReferenceConversionExists (array.Element, arg_type, null);
 
-			return ImplicitReferenceConversionExists (array.Element, arg_type, null);
+			return ImplicitReferenceConversionExists (array.Element, arg_type, null, false);
 		}
 		
 		static bool IList_To_Array(TypeSpec list, ArrayContainer array)
@@ -62,7 +62,7 @@ namespace Mono.CSharp {
 			if (array.Element == arg_type)
 				return true;
 			
-			return ImplicitReferenceConversionExists (array.Element, arg_type, null) || ExplicitReferenceConversionExists (array.Element, arg_type, null);
+			return ImplicitReferenceConversionExists (array.Element, arg_type, null, false) || ExplicitReferenceConversionExists (array.Element, arg_type, null);
 		}
 
 		public static Expression ImplicitTypeParameterConversion (Expression expr, TypeParameterSpec expr_type, TypeSpec target_type)
@@ -163,12 +163,12 @@ namespace Mono.CSharp {
 			return null;
 		}
 
-		public static Expression ImplicitReferenceConversion (Expression expr, TypeSpec target_type, bool explicit_cast, ResolveContext opt_ec)
+		public static Expression ImplicitReferenceConversion (Expression expr, TypeSpec target_type, bool explicit_cast, ResolveContext opt_ec, bool upconvert_only)
 		{
 			TypeSpec expr_type = expr.Type;
 
 			// ActionScript references can always be implicitly cast to bool
-			if (target_type.BuiltinType == BuiltinTypeSpec.Type.Bool && opt_ec != null && opt_ec.FileType == SourceFileType.ActionScript) {
+			if (target_type.BuiltinType == BuiltinTypeSpec.Type.Bool && opt_ec != null && opt_ec.FileType == SourceFileType.ActionScript && !upconvert_only) {
 				// ActionScript: Call the "Boolean()" static method to convert a dynamic to a bool.  EXPENSIVE, but hey..
 				Arguments args = new Arguments (1);
 				args.Add (new Argument(EmptyCast.Create(expr, opt_ec.BuiltinTypes.Object)));
@@ -187,7 +187,7 @@ namespace Mono.CSharp {
 				return nl.ConvertImplicitly (target_type, null);
 			}
 
-			if (ImplicitReferenceConversionExists (expr_type, target_type, opt_ec)) {
+			if (ImplicitReferenceConversionExists (expr_type, target_type, opt_ec, upconvert_only)) {
 				// 
 				// Avoid wrapping implicitly convertible reference type
 				//
@@ -203,15 +203,15 @@ namespace Mono.CSharp {
 		//
 		// Implicit reference conversions
 		//
-		public static bool ImplicitReferenceConversionExists (TypeSpec expr_type, TypeSpec target_type, ResolveContext opt_ec)
+		public static bool ImplicitReferenceConversionExists (TypeSpec expr_type, TypeSpec target_type, ResolveContext opt_ec, bool upconvert_only)
 		{
-			return ImplicitReferenceConversionExists (expr_type, target_type, true, opt_ec);
+			return ImplicitReferenceConversionExists (expr_type, target_type, true, opt_ec, upconvert_only);
 		}
 
-		public static bool ImplicitReferenceConversionExists (TypeSpec expr_type, TypeSpec target_type, bool refOnlyTypeParameter, ResolveContext opt_ec)
+		public static bool ImplicitReferenceConversionExists (TypeSpec expr_type, TypeSpec target_type, bool refOnlyTypeParameter, ResolveContext opt_ec, bool upconvert_only)
 		{
 			// ActionScript references can always be implicitly cast to bool
-			if (target_type.BuiltinType == BuiltinTypeSpec.Type.Bool && opt_ec != null && opt_ec.FileType == SourceFileType.ActionScript) {
+			if (target_type.BuiltinType == BuiltinTypeSpec.Type.Bool && opt_ec != null && opt_ec.FileType == SourceFileType.ActionScript && !upconvert_only) {
 				return true;
 			}
 
@@ -289,7 +289,7 @@ namespace Mono.CSharp {
 					//
 					// An implicit reference conversion exists from SE to TE
 					//
-					return ImplicitReferenceConversionExists (expr_element_type, target_type_array.Element, opt_ec);
+					return ImplicitReferenceConversionExists (expr_element_type, target_type_array.Element, opt_ec, upconvert_only);
 				}
 
 				//
@@ -844,7 +844,7 @@ namespace Mono.CSharp {
 			if (ImplicitNumericConversion (null, expr_type, target_type, opt_ec, upconvert_only) != null)
 				return true;
 
-			if (ImplicitReferenceConversionExists (expr_type, target_type, false, opt_ec))
+			if (ImplicitReferenceConversionExists (expr_type, target_type, false, opt_ec, upconvert_only))
 				return true;
 
 			if (ImplicitBoxingConversion (null, expr_type, target_type) != null)
@@ -1495,7 +1495,7 @@ namespace Mono.CSharp {
 			if (e != null)
 				return e;
 
-			e = ImplicitReferenceConversion (expr, target_type, explicit_cast, ec);
+			e = ImplicitReferenceConversion (expr, target_type, explicit_cast, ec, upconvert_only);
 			if (e != null)
 				return e;
 
@@ -2176,7 +2176,7 @@ namespace Mono.CSharp {
 						//
 						//If TP is covariant, an implicit or explicit identity or reference conversion is required
 						//
-						if (ImplicitReferenceConversionExists (targs_src[i], targs_dst[i], opt_ec))
+						if (ImplicitReferenceConversionExists (targs_src[i], targs_dst[i], opt_ec, false))
 							continue;
 
 						if (ExplicitReferenceConversionExists (targs_src[i], targs_dst[i], opt_ec))

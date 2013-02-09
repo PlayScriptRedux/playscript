@@ -1619,7 +1619,7 @@ namespace Mono.CSharp
 						return CreateConstantResult (ec, true);
 					}
 				} else {
-					if (Convert.ImplicitReferenceConversionExists (d, t, ec)) {
+					if (Convert.ImplicitReferenceConversionExists (d, t, ec, false)) {
 						//
 						// Do not optimize for imported type
 						//
