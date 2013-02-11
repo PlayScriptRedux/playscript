@@ -51,6 +51,7 @@ namespace flash.display3D
 				var str = PrefixFromType (type, programType);
 				str += n.ToString ();
 
+#if false
 				if (useMask && mask != 0xF) {
 					str += ".";
 					if ((mask & 1)!=0) str += "x";
@@ -58,6 +59,7 @@ namespace flash.display3D
 					if ((mask & 4)!=0) str += "z";
 					if ((mask & 8)!=0) str += "w";
 				}
+#endif
 				return str;
 			}
 		};
@@ -386,6 +388,13 @@ namespace flash.display3D
 			
 				case 0x01: // add
 					sb.AppendFormat("{0} = {1} + {2}; // add", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL() ); 
+					map.Add(dr, RegisterUsage.Vector4);
+					map.Add(sr1, RegisterUsage.Vector4);
+					map.Add(sr2, RegisterUsage.Vector4);
+					break;
+
+				case 0x02: // sub
+					sb.AppendFormat("{0} = {1} - {2}; // sub", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL() ); 
 					map.Add(dr, RegisterUsage.Vector4);
 					map.Add(sr1, RegisterUsage.Vector4);
 					map.Add(sr2, RegisterUsage.Vector4);

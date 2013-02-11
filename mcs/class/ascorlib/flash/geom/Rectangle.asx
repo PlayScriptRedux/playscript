@@ -90,8 +90,7 @@ package flash.geom {
 		}
  	 	
 		public function isEmpty():Boolean {
-			throw new System.NotImplementedException();
-//			return false;
+			return (width<=0) || (height<=0);
 		}
  	 	
 		public function offset(dx:Number, dy:Number):void {
