@@ -29,7 +29,7 @@ package {
 	}
  	 	
 	public function isNaN(num:Number):Boolean {
-		throw new System.NotImplementedException();	
+		return System.Double.IsNaN(num);
 	}
 	 	 	
 	public function isXMLName(str:String):Boolean {
