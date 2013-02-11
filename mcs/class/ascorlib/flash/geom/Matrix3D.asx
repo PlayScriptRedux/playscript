@@ -53,7 +53,12 @@ package flash.geom {
 		}
  	 	
 		public function copyRawDataFrom(vector:Vector.<Number>, index:uint = 0, transpose:Boolean = false):void {
-			mData = vector;
+			if (index != 0 || transpose)
+				throw new System.NotImplementedException();
+				
+			for (var i:int=0; i < 16; i++) {
+				mData[i] = vector[i];
+			}
 		}
  	 	
 		public function copyRawDataTo(vector:Vector.<Number>, index:uint = 0, transpose:Boolean = false):void {
