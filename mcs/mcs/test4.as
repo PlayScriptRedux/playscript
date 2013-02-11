@@ -13,9 +13,14 @@ package com.zynga.zengine.classes
         public static function Main() : void {
         	var f:Foo = new Foo();
         	var b:Bar = new Bar();
+        	var t:Boolean = true;
         	
         	if (f == b) {
         		trace ("foo");
+        	}
+        	
+        	if (f && t) {
+        		trace("Is it fixed?");
         	}
         	
         	var o1:Object = "foo";

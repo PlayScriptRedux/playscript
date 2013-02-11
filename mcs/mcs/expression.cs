@@ -2091,9 +2091,10 @@ namespace Mono.CSharp
 				if (left == lexpr.Type && right == rexpr.Type)
 					return true;
 
-				bool right_upconvert_only = !(this is PredefinedShiftOperator);
+				bool upconvert_only = (OperatorsMask & Binary.Operator.LogicalMask) == 0;
+				bool right_upconvert_only = upconvert_only && !(this is PredefinedShiftOperator);
 
-				return Convert.ImplicitConversionExists (ec, lexpr, left, true) &&
+				return Convert.ImplicitConversionExists (ec, lexpr, left, upconvert_only) &&
 					Convert.ImplicitConversionExists (ec, rexpr, right, right_upconvert_only);
 			}
 
