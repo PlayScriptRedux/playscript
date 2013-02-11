@@ -68,7 +68,26 @@ package {
 		}
 		
 		public function concat(... args):Vector.<T> {
-			throw new System.NotImplementedException();
+
+			var v:Vector.<T> = new Vector.<T>();
+			// add this vector
+			v.AddRange(this);
+
+			// concat all supplied vecots
+			for each (var o:Object in args)
+			{
+				if (o is IEnumerable.<T>)
+				{
+					v.AddRange(o as IEnumerable.<T>);
+				} 
+				else
+				{
+					throw new System.NotImplementedException();
+				}
+
+			}
+
+			return v;
 		}
 
 		public function every(callback:Function, thisObject:Object = null):Boolean {
@@ -137,9 +156,65 @@ package {
 		public function some(callback:Function, thisObject:Object = null):Boolean {
 			throw new System.NotImplementedException();
 		}
- 	 	
+
+		class FunctionSorter extends System.Collections.Generic.IComparer.<T>
+		{
+			public function FunctionSorter(func:Function):void
+			{
+				mFunc = func;
+			}
+
+			public function Compare(x:T, y:T):int
+			{
+				return int(mFunc(x,y));
+			}
+			
+			private var mFunc:Function;
+		};
+
+		class OptionsSorter extends System.Collections.Generic.IComparer.<T>
+		{
+			public function OptionsSorter(options:uint):void
+			{
+				mOptions = options;
+			}
+			
+			public function Compare(x:T, y:T):int
+			{
+				//$$TODO examine options
+				var xc:System.IComparable.<T> = x as System.IComparable.<T>;
+				if (xc != null)
+				{
+					return xc.CompareTo(y);
+				}
+				else
+				{
+					throw new System.NotImplementedException();
+				}
+			}
+			
+			private var mOptions:uint;
+		};
+
+
 		public function sort(sortBehavior:*):Vector.<T> {
-			throw new System.NotImplementedException();
+
+			if (sortBehavior is Function)
+			{
+				var fs:FunctionSorter = new FunctionSorter(sortBehavior);
+				this.Sort(fs);
+				return this;
+			}
+			else if (sortBehavior is uint)
+			{
+				var os:OptionsSorter = new OptionsSorter(uint(sortBehavior));
+				this.Sort(os);
+				return this;
+			}
+			else 
+			{
+				throw new System.NotImplementedException();
+			}
 		}
  	 	
 		public function splice(startIndex:int, deleteCount:uint = 4294967295, ... items):Vector.<T> {
@@ -195,5 +270,7 @@ package {
 		
 		private var mFixed:Boolean = false;
 	}
+
+
 }
 
