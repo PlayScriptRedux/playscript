@@ -12,7 +12,10 @@ package {
 		//
 		
 		public function XMLList(value:Object) {
-			if (value is XmlNodeList) {
+			if (value == null) {
+				// empty
+			}
+			else if (value is XmlNodeList) {
 				// create list of XML from node list
 				for each ( var node:XmlNode in value) {
 					if (node is XmlElement) {
@@ -69,6 +72,9 @@ package {
 		}
 		
 		public function elements(name:String /*="*"*/):XMLList {
+			if (mList.Count == 0)
+				return new XMLList(null);
+
 			if (mList.Count != 1)
 				throw new System.NotImplementedException();
 

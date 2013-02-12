@@ -64,14 +64,7 @@ namespace _root
 	
 		// Executes a test function on each item in the array until an item is reached that returns false for the specified function.
 		public bool every(Delegate callback, object thisObject = null) {
-//			Func<object,bool> comp = (Func<object,bool>)(object)Delegate.CreateDelegate(typeof(Func<object,bool>), callback.Target, callback.Method, true);
-			var l = this.Count;
-			for (var i = 0; i < l; i++) {
-//				if (!comp(this[i])) {
-//					return false;
-//				}
-			}
-			return true;
+			throw new NotImplementedException();
 		}
 
 		// Executes a test function on each item in the array and constructs a new array for all items that return true for the specified function.

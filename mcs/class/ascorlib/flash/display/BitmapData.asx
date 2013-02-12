@@ -216,7 +216,19 @@ package flash.display {
 		}
  	 	
 		public function setPixels(rect:Rectangle, inputByteArray:ByteArray):void {
-			throw new System.NotImplementedException();
+			// we only support setpixels for the full bitmap for now
+			if (rect.x == 0 && rect.y == 0 && rect.width == this.width && rect.height == this.height)
+			{
+				var count:int = width * height;
+				for (var i:int=0; i < count; i++)
+				{
+					mData[i] = inputByteArray.readUnsignedInt(); 
+				}
+			}
+			else
+			{
+				throw new System.NotImplementedException();
+			}
 		}
 
 		public function setVector(rect:Rectangle, inputVector:Vector.<uint>):void {

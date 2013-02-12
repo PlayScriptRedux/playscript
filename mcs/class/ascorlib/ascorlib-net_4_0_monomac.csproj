@@ -40,6 +40,9 @@
     <Reference Include="test2">
       <HintPath>..\..\mcs\test2.exe</HintPath>
     </Reference>
+    <Reference Include="zlib.net">
+      <HintPath>..\zlib.NET_104\bin\zlib.net.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActionScript\Undefined.cs" />
