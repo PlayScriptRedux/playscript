@@ -42,7 +42,7 @@ namespace flash.display3D
 				return dr;
 			}
 
-			public string ToGLSL()
+			public string ToGLSL (bool useMask = true)
 			{
 				if (type == RegType.Output) {
 					return programType == ProgramType.Vertex ? "gl_Position" : "gl_FragColor";
@@ -50,6 +50,16 @@ namespace flash.display3D
 
 				var str = PrefixFromType (type, programType);
 				str += n.ToString ();
+
+#if false
+				if (useMask && mask != 0xF) {
+					str += ".";
+					if ((mask & 1)!=0) str += "x";
+					if ((mask & 2)!=0) str += "y";
+					if ((mask & 4)!=0) str += "z";
+					if ((mask & 8)!=0) str += "w";
+				}
+#endif
 				return str;
 			}
 		};
@@ -79,7 +89,7 @@ namespace flash.display3D
 				return sr;
 			}
 
-			public string ToGLSL ()
+			public string ToGLSL (bool useMask = true)
 			{
 				if (type == RegType.Output) {
 					return programType == ProgramType.Vertex ? "gl_Position" : "gl_FragColor";
@@ -89,13 +99,32 @@ namespace flash.display3D
 					throw new NotImplementedException ();
 				}
 
+				var swizzle = "";
 				if (type != RegType.Sampler && s != 228) {
-					throw new NotImplementedException();
+					for (var i=0; i < 4; i++) {
+						switch ((s >> (i * 2)) & 3) {
+						case 0:
+							swizzle += "x";
+							break;
+						case 1:
+							swizzle += "y";
+							break;
+						case 2:
+							swizzle += "z";
+							break;
+						case 3:
+							swizzle += "w";
+							break;
+							
+						}
+					}
 				}
 
 				var str = PrefixFromType (type, programType);
 				str += n.ToString ();
-				// str += "." + s.ToString();
+				if (useMask && swizzle != "") {
+					str += "." + swizzle;
+				}
 				return str;
 			}
 		};
@@ -161,7 +190,7 @@ namespace flash.display3D
 
 			public void Add(SourceReg sr, RegisterUsage usage)
 			{
-				Add (sr.type, sr.ToGLSL(), sr.n, usage);
+				Add (sr.type, sr.ToGLSL(false), sr.n, usage);
 			}
 
 			public void Add(SamplerReg sr, RegisterUsage usage)
@@ -171,7 +200,7 @@ namespace flash.display3D
 
 			public void Add(DestReg dr, RegisterUsage usage)
 			{
-				Add (dr.type, dr.ToGLSL(), dr.n, usage);
+				Add (dr.type, dr.ToGLSL(false), dr.n, usage);
 			}
 
 			public void Add (RegType type, string name, int number, RegisterUsage usage)
@@ -335,6 +364,11 @@ namespace flash.display3D
 				var dr  = DestReg.Parse(dest,programType);
 				var sr1 = SourceReg.Parse(source1,programType);
 				var sr2 = SourceReg.Parse(source2,programType);
+
+
+				//var dname = dr.ToGLSL();
+				//var sr1name = dr.ToGLSL();
+				
 				
 				// switch on opcode and emit GLSL 
 				sb.Append("\t");
@@ -351,9 +385,37 @@ namespace flash.display3D
 					map.Add(dr, RegisterUsage.Vector4);
 					map.Add(sr1, RegisterUsage.Vector4);
 					break;
+			
+				case 0x01: // add
+					sb.AppendFormat("{0} = {1} + {2}; // add", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL() ); 
+					map.Add(dr, RegisterUsage.Vector4);
+					map.Add(sr1, RegisterUsage.Vector4);
+					map.Add(sr2, RegisterUsage.Vector4);
+					break;
+
+				case 0x02: // sub
+					sb.AppendFormat("{0} = {1} - {2}; // sub", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL() ); 
+					map.Add(dr, RegisterUsage.Vector4);
+					map.Add(sr1, RegisterUsage.Vector4);
+					map.Add(sr2, RegisterUsage.Vector4);
+					break;
 
 				case 0x03: // mul
 					sb.AppendFormat("{0} = {1} * {2}; // mul", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL() ); 
+					map.Add(dr, RegisterUsage.Vector4);
+					map.Add(sr1, RegisterUsage.Vector4);
+					map.Add(sr2, RegisterUsage.Vector4);
+					break;
+
+				case 0x04: // div
+					sb.AppendFormat("{0} = {1} / {2}; // div", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL() ); 
+					map.Add(dr, RegisterUsage.Vector4);
+					map.Add(sr1, RegisterUsage.Vector4);
+					map.Add(sr2, RegisterUsage.Vector4);
+					break;
+
+				case 0x07: // max
+					sb.AppendFormat("{0} = max({1}, {2}); // max", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL() ); 
 					map.Add(dr, RegisterUsage.Vector4);
 					map.Add(sr1, RegisterUsage.Vector4);
 					map.Add(sr2, RegisterUsage.Vector4);

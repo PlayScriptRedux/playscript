@@ -88,8 +88,8 @@ namespace flash.display3D {
 			// delete existing shaders
 			deleteShaders ();
 
-			// Console.WriteLine (vertexShaderSource);
-			// Console.WriteLine (fragmentShaderSource);
+			//Console.WriteLine (vertexShaderSource);
+			//Console.WriteLine (fragmentShaderSource);
 
 			mVertexSource = vertexShaderSource;
 			mFragmentSource = fragmentShaderSource;
