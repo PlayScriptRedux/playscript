@@ -538,6 +538,92 @@ namespace Mono.CSharp
 		}
 	}
 
+	public class XmlLiteral : Constant, ILiteralConstant
+	{
+		readonly public string Xml;
+
+		public XmlLiteral (BuiltinTypes types, string xml, Location loc)
+			: base (loc)
+		{
+			Xml = xml;
+		}
+		
+		public override bool IsLiteral {
+			get { return true; }
+		}
+		
+		public override object GetValue ()
+		{
+			return Xml;
+		}
+		
+		public override string GetValueAsLiteral ()
+		{
+			return GetValue () as String;
+		}
+		
+		public override long GetValueAsLong ()
+		{
+			throw new NotSupportedException ();
+		}
+		
+		public override void EncodeAttributeValue (IMemberContext rc, AttributeEncoder enc, TypeSpec targetType)
+		{
+			throw new NotSupportedException ();
+		}
+		
+		public override bool IsDefaultValue {
+			get {
+				return Xml == null;
+			}
+		}
+		
+		public override bool IsNegative {
+			get {
+				return false;
+			}
+		}
+		
+		public override bool IsNull {
+			get {
+				return IsDefaultValue;
+			}
+		}
+		
+		public override Constant ConvertExplicitly (bool in_checked_context, TypeSpec target_type, ResolveContext opt_ec)
+		{
+			return null;
+		}
+		
+		protected override Expression DoResolve (ResolveContext rc)
+		{
+			var args = new Arguments(1);
+			args.Add (new Argument(new StringLiteral(rc.BuiltinTypes, Xml, this.Location)));
+
+			return new New(new TypeExpression(rc.Module.PredefinedTypes.AsXml.Resolve(), this.Location), 
+			               args, this.Location).Resolve (rc);
+		}
+		
+		public override void Emit (EmitContext ec)
+		{
+			throw new NotSupportedException ();
+		}
+		
+		public override void EmitJs (JsEmitContext jec)
+		{
+			jec.Buf.Write (GetValue () as String, Location);
+		}
+		
+#if FULL_AST
+		public char[] ParsedValue { get; set; }
+#endif
+		
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}
+	}
+
 	/// <summary>
 	///   Implementation of the ActionScript `in' operator.
 	/// </summary>

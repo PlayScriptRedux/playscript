@@ -259,6 +259,7 @@ namespace Mono.CSharp
 		public readonly PredefinedType AsBinder;
 		public readonly PredefinedType AsBinderFlags;
 		public readonly PredefinedType AsRegExp;
+		public readonly PredefinedType AsXml;
 
 		// ActionScript dynamic binder AOT mode support..
 		private bool checkedAsDynamicMode = false;
@@ -335,6 +336,7 @@ namespace Mono.CSharp
 			AsBinder = new PredefinedType (module, MemberKind.Class, "ActionScript.RuntimeBinder", "Binder");
 			AsBinderFlags = new PredefinedType (module, MemberKind.Enum, "ActionScript.RuntimeBinder", "CSharpBinderFlags");
 			AsRegExp = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "RegExp");
+			AsXml = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "XML");
 
 			//
 			// Define types which are used for comparison. It does not matter

@@ -196,7 +196,7 @@ namespace Mono.ActionScript
 		int col = 0;
 		int previous_col;
 		int current_token;
-		int parse_regex = 0;
+		int parse_regex_xml = 0;
 		int parse_colon = 0;
 		readonly int tab_size;
 		bool handle_asx = false;
@@ -348,8 +348,8 @@ namespace Mono.ActionScript
 			set { handle_for_in = value; }
 		}
 
-		public bool RegexParsing {
-			get { return parse_regex > 0; }
+		public bool RegexXmlParsing {
+			get { return parse_regex_xml > 0; }
 		}
 
 		public XmlCommentState doc_state {
@@ -433,7 +433,7 @@ namespace Mono.ActionScript
 			public int previous_col;
 			public Stack<int> ifstack;
 			public int parsing_generic_less_than;
-			public int parse_regex;
+			public int parse_regex_xml;
 			public int parse_colon;
 			public object val;
 			public int current_token;
@@ -455,7 +455,7 @@ namespace Mono.ActionScript
 					ifstack = new Stack<int> (clone);
 				}
 				parsing_generic_less_than = t.parsing_generic_less_than;
-				parse_regex = t.parse_regex;
+				parse_regex_xml = t.parse_regex_xml;
 				parse_colon = t.parse_colon;
 				current_token = t.current_token;
 				val = t.val;
@@ -501,7 +501,7 @@ namespace Mono.ActionScript
 			previous_col = p.previous_col;
 			ifstack = p.ifstack;
 			parsing_generic_less_than = p.parsing_generic_less_than;
-			parse_regex = p.parse_regex;
+			parse_regex_xml = p.parse_regex_xml;
 			parse_colon = p.parse_colon;
 			current_token = p.current_token;
 			val = p.val;
@@ -3144,6 +3144,70 @@ namespace Mono.ActionScript
 			}
 		}
 
+		private int consume_xml ()
+		{
+			int c;
+			int pos = 0;
+			Location start_location = Location;
+			
+#if FULL_AST
+			int reader_pos = reader.Position;
+#endif
+			
+			if (pos == value_builder.Length)
+				Array.Resize (ref value_builder, pos * 2);
+			value_builder[pos++] = (char) '<';
+
+			while (true) {
+
+				c = get_char ();
+				if (c == '>') {
+
+					if (pos == value_builder.Length)
+						Array.Resize (ref value_builder, pos * 2);
+					value_builder[pos++] = (char) c;
+
+					c = peek_char();
+					while (c == ' ' || c == '\t') {
+						c = get_char ();
+						if (pos == value_builder.Length)
+							Array.Resize (ref value_builder, pos * 2);
+						value_builder[pos++] = (char) c;
+					}
+
+					// TODO: This is a pretty ghetto way to identify the end of the xml literal.  Probably will
+					// work most of the time, but is not a general solution.  FIXME
+					if (c == ';' || c == '.' || c == ',' || c == ')' || c == '}' || c == ']') {
+
+						string s;
+						if (pos == 0)
+							s = string.Empty;
+						else
+							s = new string (value_builder, 0, pos);
+						
+						ILiteralConstant res = new XmlLiteral (context.BuiltinTypes, s, start_location);
+						val = res;
+#if FULL_AST
+						res.ParsedValue = quoted ?
+							reader.ReadChars (reader_pos - 2, reader.Position - 1) :
+								reader.ReadChars (reader_pos - 1, reader.Position);
+#endif
+						
+						return Token.LITERAL;
+					}
+				}
+				
+				if (c == -1) {
+					Report.Error (7029, Location, "Unterminated xml literal");
+					return Token.EOF;
+				}
+				
+				if (pos == value_builder.Length)
+					Array.Resize (ref value_builder, pos * 2);
+				value_builder[pos++] = (char) c;
+			}
+		}
+
 		private int consume_identifier (int s)
 		{
 			int res = consume_identifier (s, false);
@@ -3292,8 +3356,8 @@ namespace Mono.ActionScript
 
 			// Decrement parse regex counter (allows regex literals to follow 1 token after 
 			// symbols '=', ':', '(', '[', and ',')
-			if (parse_regex > 0)
-				parse_regex--;
+			if (parse_regex_xml > 0)
+				parse_regex_xml--;
 
 			// Decrement parse colon counter (allows us to disambiguate ident:*=value from *= operator)
 			if (parse_colon > 0)
@@ -3367,7 +3431,7 @@ namespace Mono.ActionScript
 
 					val = ltb.Create (current_source, ref_line, col);
 
-					parse_regex = 2;  // regex literals may be included in array initializers.
+					parse_regex_xml = 2;  // regex literals may be included in array initializers.
 
 					if (parsing_block == 0 || lambda_arguments_parsing)
 						return Token.OPEN_BRACKET;
@@ -3400,7 +3464,7 @@ namespace Mono.ActionScript
 					if (handle_delete) {
 						return Token.OPEN_PARENS_DELETE;
 					}					
-					parse_regex = 2; // regex literals may follow open parens (method param, expressions).
+					parse_regex_xml = 2; // regex literals may follow open parens (method param, expressions).
 					//
 					// An expression versions of parens can appear in block context only
 					//
@@ -3449,7 +3513,7 @@ namespace Mono.ActionScript
 					return Token.CLOSE_PARENS;
 				case ',':
 					ltb.CreateOptional (current_source, ref_line, col, ref val);
-					parse_regex = 2; // Regex literals may follow commas, (method param, initializer element)
+					parse_regex_xml = 2; // Regex literals may follow commas, (method param, initializer element)
 					return Token.COMMA;
 				case ';':
 					ltb.CreateOptional (current_source, ref_line, col, ref val);
@@ -3479,6 +3543,10 @@ namespace Mono.ActionScript
 							return Token.OP_SHIFT_LEFT_ASSIGN;
 						}
 						return Token.OP_SHIFT_LEFT;
+					}
+
+					if (parse_regex_xml > 0 && char.IsLetter ((char)d)) {
+						return consume_xml();
 					}
 
 					return Token.OP_LT;
@@ -3566,7 +3634,7 @@ namespace Mono.ActionScript
 					val = ltb.Create (current_source, ref_line, col);
 					d = peek_char ();
 					if (d == '=') {
-						parse_regex = 2; // Regex literals may follow equality test operators.
+						parse_regex_xml = 2; // Regex literals may follow equality test operators.
 						get_char ();
 						d = peek_char ();
 						if (d == '=') {
@@ -3580,7 +3648,7 @@ namespace Mono.ActionScript
 						return Token.ARROW;
 					}
 
-					parse_regex = 2; // Regex literals may follow assignment op '='
+					parse_regex_xml = 2; // Regex literals may follow assignment op '='
 					return Token.ASSIGN;
 
 				case '&':
@@ -3725,7 +3793,7 @@ namespace Mono.ActionScript
 						if (docAppend)
 							update_formatted_doc_comment (current_comment_start);
 						continue;
-					} else if (parse_regex > 0) {
+					} else if (parse_regex_xml > 0) {
 						// A regex literal may follow an '=', '==', '===' '(' ',' ':' or '['. 
 						return consume_regex();
 					}
@@ -3754,7 +3822,7 @@ namespace Mono.ActionScript
 						get_char ();
 						return Token.DOUBLE_COLON;
 					}
-					parse_regex = 2;  // Regex literals may follow colons in object initializers.
+					parse_regex_xml = 2;  // Regex literals may follow colons in object initializers.
 					parse_colon = 2;  // Don't parse *= after a colon 
 					return Token.COLON;
 

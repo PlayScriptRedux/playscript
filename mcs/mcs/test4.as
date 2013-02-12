@@ -11,6 +11,9 @@ package com.zynga.zengine.classes
 	public class Test 
 	{
         public static function Main() : void {
+        
+        	var x:XML = <spoof/>;
+        
         	var f:Foo = new Foo();
         	var b:Bar = new Bar();
         	var t:Boolean = true;
