@@ -67,11 +67,14 @@ package flash.geom {
 		}
 
 		public function inflate(dx:Number, dy:Number):void {
-			throw new System.NotImplementedException();
+			mX -= dx;
+			mY -= dy;
+			mWidth += dx * 2;
+			mHeight += dy * 2;
 		}
  	 	
 		public function inflatePoint(point:Point):void {
-			throw new System.NotImplementedException();
+			inflate(point.x, point.y);
 		}
  	 	
 		public function intersection(toIntersect:Rectangle):Rectangle {
@@ -85,8 +88,10 @@ package flash.geom {
 		}
  	 	
 		public function intersects(toIntersect:Rectangle):Boolean {
-			throw new System.NotImplementedException();
-//			return false;
+			return !(mX > toIntersect.mX + toIntersect.mWidth || 
+			         mY > toIntersect.mY + toIntersect.mHeight || 
+			         mX + mWidth < toIntersect.mX || 
+			         mY + mHeight < toIntersect.mY);
 		}
  	 	
 		public function isEmpty():Boolean {
@@ -94,31 +99,37 @@ package flash.geom {
 		}
  	 	
 		public function offset(dx:Number, dy:Number):void {
-			throw new System.NotImplementedException();
+			mX += dx;
+			mY += dy;
 		}
  	 	
 		public function offsetPoint(point:Point):void {
-			throw new System.NotImplementedException();
+			offset(point.x, point.y);
 		}
  	 	
 		public function setEmpty():void {
-			throw new System.NotImplementedException();
+			mX = mY = mWidth = mHeight = 0;
 		}
  	 	
 		public function setTo(x:Number, y:Number, width:Number, height:Number):void {
-			this.x = x;
-			this.y = y;
-			this.width = width;
-			this.height = height;
+			mX = x;
+			mY = y;
+			mWidth = width;
+			mHeight = height;
 		}
  	 	
 		public function toString():String {
-			return null;
+			return "(" + mX + "," + mY + "," + mWidth + "," + mHeight + ")";
 		}
 
 		public function union(toUnion:Rectangle):Rectangle {
-			throw new System.NotImplementedException();
-			//return null;
+			// i believe this behavior is correct, but not sure, needs testing
+			var r:Rectangle = this.clone();
+			if (r.left   > toUnion.left)   r.left = toUnion.left;
+			if (r.right  < toUnion.right)  r.right = toUnion.right;
+			if (r.top    > toUnion.top)    r.top = toUnion.top;
+			if (r.bottom < toUnion.bottom) r.bottom = toUnion.bottom;
+			return r;
 		}
 		
 	}

@@ -11,11 +11,11 @@ package flash.display {
 	
 		public property mouseChildren : Boolean { get; set; }
 		
-		public property numChildren : int { get { return 0; } }
+		public property numChildren : int { get { return mChildren.length; } }
 
  	 	public property tabChildren : Boolean { get; set; }
 
- 	 	public property textSnapshot : TextSnapshot { get { return null; } }
+ 	 	public property textSnapshot : TextSnapshot { get { throw new System.NotImplementedException(); } }
 
  	 	//
  	 	// Methods 
@@ -24,56 +24,101 @@ package flash.display {
  	 	public function DisplayObjectContainer() {
  	 	}
  	 	
+ 	 	private function setStageRecursive(s:Stage):void {
+			mStage = s; 	 	
+ 	 		var len:int = mChildren.length;
+ 	 		for (var i:int = 0; i < len; i++) {
+ 	 			var child:DisplayObject = mChildren[i];
+ 	 			child.mStage = s;
+ 	 			if (child is DisplayObjectContainer) {
+ 	 				DisplayObjectContainer(child).setStageRecursive(s);
+ 	 			}
+ 	 		}
+ 	 	}
+ 	 	
 		public function addChild(child:DisplayObject):DisplayObject {
-			return null;
+			child.mStage = mStage;
+			if (child is DisplayObjectContainer) {
+				DisplayObjectContainer(child).setStageRecursive(mStage);
+			}
+			mChildren.push(child);
+			return child;
 		}
  	 	
 		public function addChildAt(child:DisplayObject, index:int):DisplayObject {
-			return null;
+			mChildren.splice(index, 0, child);
+			return child;
 		}
  	 	
 		public function areInaccessibleObjectsUnderPoint(point:Point):Boolean {
-			return false;
+			throw new System.NotImplementedException();
+//			return false;
 		}
  	 	
 		public function contains(child:DisplayObject):Boolean {
-			return false;
+			return mChildren.indexOf(child) != -1;
 		}
  	 	
 		public function getChildAt(index:int):DisplayObject {
-			return null;
+			return mChildren[index];
 		}
  	 	
 		public function getChildByName(name:String):DisplayObject {
+			var len:int = mChildren.length;
+			for (var i:int = 0; i < len; i++) {
+				var child:DisplayObject = mChildren[i];
+				if (child.name == name)
+					return child;
+			}
 			return null;
 		}
  	 	
 		public function getChildIndex(child:DisplayObject):int {
-			return 0;
+			return mChildren.indexOf(child);
 		}
  	 	
 		public function getObjectsUnderPoint(point:Point):Array {
-			return null;
+			throw new System.NotImplementedException();
+//			return null;
 		}
  	 	
 		public function removeChild(child:DisplayObject):DisplayObject {
-			return null;
+			var index:int = mChildren.indexOf(child);
+			if (index >= 0) {
+				removeChildAt(index);
+			} else {
+				throw new Error("Unable to find child.");
+			}
+			return child;
 		}
  	 	
 		public function removeChildAt(index:int):DisplayObject {
-			return null;		
+			var child:DisplayObject = mChildren[index];
+			child.mStage = null;
+			if (child is DisplayObjectContainer) {
+				DisplayObjectContainer(child).setStageRecursive(null);
+			}
+			mChildren.splice(index, 1);
+			return child;
 		}
  	 	
 		public function setChildIndex(child:DisplayObject, index:int):void {
+			var oldIndex:int = mChildren.indexOf(child);
+			if (oldIndex >= 0) {
+				removeChildAt(oldIndex);
+				addChildAt(child, index);	
+			}
 		}
  	 	
 		public function swapChildren(child1:DisplayObject, child2:DisplayObject):void {
-		
+			throw new System.NotImplementedException();		
 		}
  	 	
 		public function swapChildrenAt(index1:int, index2:int):void {
-		
+			throw new System.NotImplementedException();		
 		}
+		
+		private var mChildren:Vector.<DisplayObject> = new Vector.<DisplayObject>();
 
 	}
 

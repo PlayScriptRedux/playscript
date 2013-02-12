@@ -87,7 +87,7 @@ package flash.display {
 		// this is necessary because some root display objects must have their stage set before their constructor is invoked 		
 		public static var globalStage:Stage;
 		
-		private var mStage:Stage;
+		internal var mStage:Stage;
 		
 		public function DisplayObject() {
 			mStage = globalStage;

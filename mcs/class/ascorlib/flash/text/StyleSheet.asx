@@ -6,7 +6,7 @@ package flash.text {
 		// Properties
 		//
 		
-		public property styleNames : Array { get { return null; } }
+		public property styleNames : Array { get { throw new System.NotImplementedException(); } }
 
  	 	//
  	 	// Methods

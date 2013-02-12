@@ -29,15 +29,19 @@ package flash.display {
 		}
  	 	
 		public function startDrag(lockCenter:Boolean = false, bounds:Rectangle = null):void {
+			throw new System.NotImplementedException();		
 		}
  	 	
 		public function startTouchDrag(touchPointID:int, lockCenter:Boolean = false, bounds:Rectangle = null):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function stopDrag():void {
+			throw new System.NotImplementedException();		
 		}
  	 	
 		public function stopTouchDrag(touchPointID:int):void {
+			throw new System.NotImplementedException();		
 		}
 	
 	}

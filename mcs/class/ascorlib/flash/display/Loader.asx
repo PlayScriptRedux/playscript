@@ -63,6 +63,7 @@ package flash.display {
 		
 		
 		private function doLoad():void {
+			throw new System.NotImplementedException();		
 		}
 		
 		var mContent:DisplayObject = null;

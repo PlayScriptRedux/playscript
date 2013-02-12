@@ -16,18 +16,22 @@ package flash.display {
 		//
 	
 		public function getDynamicValue(name:String):* {
-			return null;
+			throw new System.NotImplementedException();
+//			return null;
 		}
 		
 		public function setDynamicValue(name:String, value:*):void {
+			throw new System.NotImplementedException();
 		}
 	
 		public function hasDynamicValue(name:String):Boolean {
-			return false;
+			throw new System.NotImplementedException();
+//			return false;
 		}
 		
 		public function getDynamicNames():Array {
-			return null;
+			throw new System.NotImplementedException();
+//			return null;
 		}
 		
 	}

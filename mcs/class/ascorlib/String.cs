@@ -122,7 +122,7 @@ namespace _root
 		}
 
 		public static string valueOf(this string s) {
-			throw new NotImplementedException();
+			return s;
 		}
 
 	}

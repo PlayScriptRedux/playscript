@@ -6,9 +6,9 @@ package flash.geom {
 		// Properties
 		//
 		
-		public property length : Number { get { 
-				throw new System.NotImplementedException();
-				} }
+		public property length : Number { 
+			get { return System.Math.Sqrt(x * x + y * y); }
+		}
 
  	 	public property x : Number { get; set; }
 
@@ -25,35 +25,41 @@ package flash.geom {
 		}
  	 	
 		public function add(v:Point):Point {
-			throw new System.NotImplementedException();
+			return new Point(this.x + v.x, this.y + v.y);
 		}
  	 	
 		public function clone():Point {
-			throw new System.NotImplementedException();
+			return new Point(this.x, this.y);
 		}
  	 	
 		public function copyFrom(sourcePoint:Point):void {
-			throw new System.NotImplementedException();
+			this.x = sourcePoint.x;
+			this.y = sourcePoint.y;
 		}
  	 	
 		public function distance(pt1:Point, pt2:Point):Number {
-			throw new System.NotImplementedException();
+			var dx:Number = pt1.x - pt2.x;
+			var dy:Number = pt1.y - pt2.y;
+			return System.Math.Sqrt(dx * dx + dy * dy);
 		}
  	 	
 		public function equals(toCompare:Point):Boolean {
-			throw new System.NotImplementedException();
+			return this.x == toCompare.x && this.y == toCompare.y;
 		}
  	 	
 		public function interpolate(pt1:Point, pt2:Point, f:Number):Point {
-			throw new System.NotImplementedException();
+			return new Point(pt1.x + (pt2.x - pt1.x) * f, pt1.y + (pt2.y - pt1.y) * f);
 		}
  	 	
 		public function normalize(thickness:Number):void {
-			throw new System.NotImplementedException();
+			var l:Number = System.Math.Sqrt(x * x + y * y);
+			this.x = x / l;
+			this.y = y / l;
 		}
 
 		public function offset(dx:Number, dy:Number):void {
-			throw new System.NotImplementedException();
+			this.x += dx;
+			this.y += dy;
 		}
  	 	
  	 	public function polar(len:Number, angle:Number):Point {
@@ -66,11 +72,11 @@ package flash.geom {
 		}
  	 	
 		public function subtract(v:Point):Point {
-			throw new System.NotImplementedException();
+			return new Point(this.x - v.x, this.y - v.y);
 		}
  	 	
 		public function toString():String {
-			throw new System.NotImplementedException();
+			return "(" + this.x + "," + this.y + ")";
 		}
 		
 	}

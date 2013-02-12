@@ -36,27 +36,35 @@ package flash.display {
 		}
 		
 		public function gotoAndPlay(frame:Object, scene:String = null):void {
+			throw new System.NotImplementedException();		
 		}
  	 	
 		public function gotoAndStop(frame:Object, scene:String = null):void {
+			throw new System.NotImplementedException();		
 		}
  	 	
 		public function nextFrame():void {
+			throw new System.NotImplementedException();		
 		}
  	 	
 		public function nextScene():void {
+			throw new System.NotImplementedException();		
 		}
  	 	
 		public function play():void {
+			throw new System.NotImplementedException();		
 		}
  	 	
 		public function prevFrame():void {
+			throw new System.NotImplementedException();		
 		}
  	 	
 		public function prevScene():void {
+			throw new System.NotImplementedException();		
 		}
  	 	
 		public function stop():void {
+			throw new System.NotImplementedException();		
 		}
 
 	}

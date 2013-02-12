@@ -58,7 +58,8 @@ package flash.display {
  	 	//
  	 		 	
 		public static function getLoaderInfoByDefinition(obj:Object):LoaderInfo {
-			return null;		
+			throw new System.NotImplementedException();		
+//			return null;		
 		}
 	
 	}

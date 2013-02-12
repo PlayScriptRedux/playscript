@@ -6,25 +6,28 @@ package flash.text {
 		// Properties
 		//
 	
-		public property fontName : String { get { return null; } }
+		public property fontName : String { get { throw new System.NotImplementedException(); } }
 
- 	 	public property fontStyle : String { get { return null; } }
+ 	 	public property fontStyle : String { get { throw new System.NotImplementedException(); } }
 
- 	 	public property fontType : String { get { return null; } }
+ 	 	public property fontType : String { get { throw new System.NotImplementedException(); } }
 
  	 	//
  	 	// Methods
  	 	// 	
  	 	
  	 	public static function enumerateFonts(enumerateDeviceFonts:Boolean = false):Array {
- 	 		return null;
+			throw new System.NotImplementedException(); 	 	
+// 	 		return null;
  	 	}
 
  	 	public function hasGlyphs(str:String):Boolean {
-			return false; 	 	
+			throw new System.NotImplementedException(); 	 	
+//			return false; 	 	
  	 	}
 
  	 	public static function registerFont(font:Class):void {
+			throw new System.NotImplementedException(); 	 	
  	 	}
 	
 	}

@@ -17,6 +17,9 @@ package flash.text {
  	 	//
  	 	 	 	 	 	
 		public function CSMSettings(fontSize:Number, insideCutoff:Number, outsideCutoff:Number) {
+			this.fontSize = fontSize;
+			this.insideCutoff = insideCutoff;
+			this.outsideCutoff = outsideCutoff;
 		}
 	
 	}

@@ -35,7 +35,8 @@ package flash.display {
  	 	}
  	 	
 		public function requestSoftKeyboard():Boolean {
-			return false;
+			throw new System.NotImplementedException();
+//			return false;
 		}
 	
 	}

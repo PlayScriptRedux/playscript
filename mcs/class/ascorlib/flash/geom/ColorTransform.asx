@@ -31,14 +31,16 @@ package flash.geom {
 		public function ColorTransform(redMultiplier:Number = 1.0, greenMultiplier:Number = 1.0, 
 			blueMultiplier:Number = 1.0, alphaMultiplier:Number = 1.0, redOffset:Number = 0, 
 			greenOffset:Number = 0, blueOffset:Number = 0, alphaOffset:Number = 0) {
-		
+			throw new System.NotImplementedException();
 		}
 		
 		public function concat(second:ColorTransform):void {
+			throw new System.NotImplementedException();
 		}
 		
 		public function toString():String {
-			return null;
+			throw new System.NotImplementedException();
+//			return null;
 		}
 	
 	}

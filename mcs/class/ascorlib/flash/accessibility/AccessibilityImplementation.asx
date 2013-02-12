@@ -17,60 +17,75 @@ package flash.accessibility {
  	 	//
  	 	
  	 	public function AccessibilityImplementation() {
+			throw new System.NotImplementedException();
  	 	}
  	 	
 		public function accDoDefaultAction(childID:uint):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function accLocation(childID:uint):* {
-			return null;
+			throw new System.NotImplementedException();
+//			return null;
 		}
  	 	
 		public function accSelect(operation:uint, childID:uint):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function get_accDefaultAction(childID:uint):String {
-			return null;
+			throw new System.NotImplementedException();
+//			return null;
 		}
  	 	
 		public function get_accFocus():uint {
-			return 0;
+			throw new System.NotImplementedException();
+//			return 0;
 		}
  	 	
 		public function get_accName(childID:uint):String {
-			return null;
+			throw new System.NotImplementedException();
+//			return null;
 		}
  	 	
 		public function get_accRole(childID:uint):uint {
-			return 0;
+			throw new System.NotImplementedException();
+//			return 0;
 		}
  	 	
 		public function get_accSelection():Array {
-			return null;
+			throw new System.NotImplementedException();
+//			return null;
 		}
  	 	
 		public function get_accState(childID:uint):uint {
-			return 0;
+			throw new System.NotImplementedException();
+//			return 0;
 		}
  	 	
 		public function get_accValue(childID:uint):String {
-			return null;
+			throw new System.NotImplementedException();
+//			return null;
 		}
  	 	
 		public function get_selectionActiveIndex():* {
-			return null;
+			throw new System.NotImplementedException();
+//			return null;
 		}
  	 	
 		public function get_selectionAnchorIndex():* {
-			return null;
+			throw new System.NotImplementedException();
+//			return null;
 		}
  	 	
 		public function getChildIDArray():Array {
-			return null;
+			throw new System.NotImplementedException();
+//			return null;
 		}
 
  	 	public function isLabeledBy(labelBounds:Rectangle):Boolean {
- 	 		return false;
+			throw new System.NotImplementedException();
+// 	 		return false;
  	 	}
 	
 	}
