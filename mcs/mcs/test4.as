@@ -10,6 +10,8 @@ package com.zynga.zengine.classes
 
 	public class Test 
 	{
+		public var v:Vector.<String> = new <String> [ "aaa", "bbb", "ccc" ];
+
         public static function Main() : void {
         
         	var x:XML = <spoof/>;

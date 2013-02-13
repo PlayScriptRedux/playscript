@@ -125,13 +125,14 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext rc)
 		{
-			if (rc.Target == Target.JavaScript) {
-				this.type = rc.BuiltinTypes.Dynamic;
-				this.eclass = ExprClass.Value;
-				foreach (ElementInitializer elem in Elements)
-					elem.Resolve (rc);
-				return this;
-			}
+//			BEN: This won't work because the returned type won't pass Mono's type checkers.
+//			if (rc.Target == Target.JavaScript) {
+//				this.type = rc.BuiltinTypes.Dynamic;
+//				this.eclass = ExprClass.Value;
+//				foreach (ElementInitializer elem in Elements)
+//					elem.Resolve (rc);
+//				return this;
+//			}
 
 			TypeExpression type;
 			if (inferredObjType != null) {
@@ -236,13 +237,14 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext rc)
 		{
-			if (rc.Target == Target.JavaScript) {
-				this.type = rc.Module.PredefinedTypes.AsArray.Resolve();
-				this.eclass = ExprClass.Value;
-				foreach (var elem in Elements)
-					elem.Resolve (rc);
-				return this;
-			}
+//			BEN: This won't work because the returned type won't pass Mono's type checkers.
+//			if (rc.Target == Target.JavaScript) {
+//				this.type = rc.Module.PredefinedTypes.AsArray.Resolve();
+//				this.eclass = ExprClass.Value;
+//				foreach (var elem in Elements)
+//					elem.Resolve (rc);
+//				return this;
+//			}
 
 			TypeExpression type;
 			if (vectorType != null) {

@@ -1061,7 +1061,7 @@ namespace Mono.ActionScript
 
 		static bool is_identifier_start_character (int c)
 		{
-			return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || Char.IsLetter ((char)c);
+			return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || c == '$' || Char.IsLetter ((char)c);
 		}
 
 		static bool is_identifier_part_character (char c)
@@ -1072,7 +1072,7 @@ namespace Mono.ActionScript
 			if (c >= 'A' && c <= 'Z')
 				return true;
 
-			if (c == '_' || (c >= '0' && c <= '9'))
+			if (c == '_' || c == '$' || (c >= '0' && c <= '9'))
 				return true;
 
 			if (c < 0x80)
@@ -3247,7 +3247,7 @@ namespace Mono.ActionScript
 				while (true) {
 					c = reader.Read ();
 
-					if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || (c >= '0' && c <= '9')) {
+					if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || (c >= '0' && c <= '9') || c == '$') {
 						id_builder [pos++] = (char) c;
 						continue;
 					}
@@ -3257,7 +3257,7 @@ namespace Mono.ActionScript
 						c = reader.Read ();
 						if (c == ':') { 
 							c = reader.Read ();
-							if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_') {
+							if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_' || c == '$') {
 								is_config_ident = true;
 								id_builder [pos++] = ':';
 								id_builder [pos++] = ':';
