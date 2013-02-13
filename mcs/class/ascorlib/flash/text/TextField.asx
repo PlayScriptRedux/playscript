@@ -25,9 +25,9 @@ package flash.text {
 
  	 	public property borderColor : uint { get; set; }
 
- 	 	public property bottomScrollV : int { get { return 0; } }
+ 	 	public property bottomScrollV : int { get { throw new System.NotImplementedException(); } }
 
- 	 	public property caretIndex : int { get { return 0; } }
+		public property caretIndex : int { get { throw new System.NotImplementedException(); } }
 
  	 	public property condenseWhite : Boolean { get; set; }
 
@@ -41,19 +41,19 @@ package flash.text {
 
  	 	public property htmlText : String { get; set; }
 
- 	 	public property length : int { get { return 0; } }
+		public property length : int { get { return this.text.Length; } }
 
  	 	public property maxChars : int { get; set; }
 
- 	 	public property maxScrollH : int { get { return 0; } }
+		public property maxScrollH : int { get { throw new System.NotImplementedException(); } }
 
- 	 	public property maxScrollV : int { get { return 0; } }
+		public property maxScrollV : int { get { throw new System.NotImplementedException(); } }
 
  	 	public property mouseWheelEnabled : Boolean { get; set; }
 
  	 	public property multiline : Boolean { get; set; }
 
- 	 	public property numLines : int { get { return 0; } }
+		public property numLines : int { get { throw new System.NotImplementedException(); } }
 
  	 	public property restrict : String { get; set; }
 
@@ -63,9 +63,9 @@ package flash.text {
 
  	 	public property selectable : Boolean { get; set; }
 
- 	 	public property selectionBeginIndex : int { get { return 0; } }
+		public property selectionBeginIndex : int { get { throw new System.NotImplementedException(); } }
 
- 	 	public property selectionEndIndex : int { get { return 0; } }
+		public property selectionEndIndex : int { get { throw new System.NotImplementedException(); } }
 
  	 	public property sharpness : Number { get; set; }
 
@@ -75,11 +75,20 @@ package flash.text {
 
  	 	public property textColor : uint { get; set; }
 
- 	 	public property textHeight : Number { get { return 0.0; } }
+		public property textHeight : Number { get { 
+				// $$TODO
+				return 12.0;
+			} }
 
- 	 	public property textInteractionMode : String { get { return null; } }
+		public property textInteractionMode : String { get { throw new System.NotImplementedException(); } }
 
- 	 	public property textWidth : Number { get { return 0.0; } }
+		public property textWidth : Number 
+		{ 
+			get 
+			{ 
+				return text.Length * 8; // $$TODO
+			} 
+		}
 
  	 	public property thickness : Number { get; set; }
 
@@ -94,6 +103,7 @@ package flash.text {
 		//
 		
 		public function TextField() {
+			this.text = "";
 		}
  	 	
 		public function appendText(newText:String):void {
