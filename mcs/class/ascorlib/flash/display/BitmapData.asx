@@ -112,7 +112,7 @@ package flash.display {
 
  	 	public function draw(source:IBitmapDrawable, matrix:Matrix = null, colorTransform:ColorTransform = null, blendMode:String = null, 
 	 	 	clipRect:Rectangle = null, smoothing:Boolean = false):void {
-			// throw new System.NotImplementedException();
+			System.Console.WriteLine("NotImplementedWarning: BitmapData.draw()");
  	 	}
  	 	
 		public function drawWithQuality(source:IBitmapDrawable, matrix:Matrix = null, colorTransform:ColorTransform = null, blendMode:String = null, 
