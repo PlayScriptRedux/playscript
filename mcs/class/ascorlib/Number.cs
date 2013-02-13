@@ -7,23 +7,23 @@ namespace _root {
 		//
 	
  		public static string toExponential(this double d, uint fractionDigits) {
-			return null; 		
+			throw new System.NotImplementedException();
  		}
  	 	
 		public static string toFixed(this double d, uint fractionDigits) {
-			return null;		
+			return d.ToString ( "F" + fractionDigits.ToString() );
 		}
  	 	
 		public static string toPrecision(this double d, uint precision) {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public static string toString(this double d) {
-			return null;
+			return d.ToString();
 		}
 
 		public static string toString(this double d, double radix) {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public static double valueOf(this double d) {
@@ -34,15 +34,15 @@ namespace _root {
  	 	// Constants
  	 	//
  	 	
- 	 	public const double MAX_VALUE = 0.0;
+ 	 	public const double MAX_VALUE = System.Double.MaxValue;
  	 		
- 	 	public const double MIN_VALUE = 0.0;
+		public const double MIN_VALUE = System.Double.MinValue;
 
- 	 	public const double @NaN = 0.0;
+ 	 	public const double @NaN = System.Double.NaN;
 
- 	 	public const double NEGATIVE_INFINITY = 0.0;
+ 	 	public const double NEGATIVE_INFINITY = System.Double.NegativeInfinity;
 
- 	 	public const double POSITIVE_INFINITY = 0.0;
+ 	 	public const double POSITIVE_INFINITY = System.Double.PositiveInfinity;
 	
 	}
 

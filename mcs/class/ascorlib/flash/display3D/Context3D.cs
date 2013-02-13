@@ -244,12 +244,12 @@ namespace flash.display3D {
  	 	
 		public void setRenderToTexture(TextureBase texture, bool enableDepthAndStencil = false, int antiAlias = 0, 
 		                               int surfaceSelector = 0) {
-			throw new NotImplementedException();
+			System.Console.WriteLine("NotImplementedWarning: Context3D.setRenderToTexture()");
 		}
 
 
 		public void setScissorRectangle(Rectangle rectangle) {
-			throw new NotImplementedException();
+			System.Console.WriteLine("NotImplementedWarning: Context3D.setScissorRectangle()");
 		}
 
 		public void setStencilActions(string triangleFace = "frontAndBack", string compareMode = "always", string actionOnBothPass = "keep", 

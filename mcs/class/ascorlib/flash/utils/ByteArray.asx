@@ -1,8 +1,16 @@
 package flash.utils {
 	import System.*;
 	import System.IO.*;
+	import System.IO.Compression.*;
+	import zlib.*;
 
 	public class ByteArray implements IDataInput, IDataOutput {
+
+		enum ByteEndian
+		{
+			Big,
+			Little
+		};
 	
 		//
 		// Properties
@@ -17,7 +25,35 @@ package flash.utils {
 			set { throw new NotImplementedException(); } 
 		}
 
- 	 	public property endian : String { get; set; }
+ 	 	public property endian : String {
+			get 
+			{
+				// convert enum to string
+				switch (mEndian)
+				{
+				case ByteEndian.Big: return Endian.BIG_ENDIAN;
+				case ByteEndian.Little: return Endian.LITTLE_ENDIAN;
+				default:
+					throw new NotImplementedException(); 
+				}
+			} 
+
+			set 
+			{
+				// convert string to enum
+				switch (value)
+				{
+				case Endian.LITTLE_ENDIAN:
+					mEndian = ByteEndian.Little;
+					break;
+				case Endian.BIG_ENDIAN:
+					mEndian = ByteEndian.Big;
+					break;
+				default:
+					throw new NotImplementedException(); 
+				}
+			} 
+		}
 
  	 	public property length : uint { 
  	 		get {return mStream.Length;}
@@ -75,14 +111,17 @@ package flash.utils {
 		}
  	 	
 		public function readDouble():Number {
+			if (mEndian != ByteEndian.Little) throw new NotImplementedException();
 			return mReader.ReadDouble();
 		}
  	 	
 		public function readFloat():Number {
+			if (mEndian != ByteEndian.Little) throw new NotImplementedException();
 			return mReader.ReadSingle();
 		}
  	 	
 		public function readInt():int {
+			if (mEndian != ByteEndian.Little) throw new NotImplementedException();
 			return mReader.ReadInt32();
 		}
  	 	
@@ -95,6 +134,8 @@ package flash.utils {
 		}
  	 	
 		public function readShort():int {
+			if (mEndian != ByteEndian.Little) throw new NotImplementedException();
+			
 			return mReader.ReadInt16();
 		}
  	 	
@@ -103,10 +144,23 @@ package flash.utils {
 		}
  	 	
 		public function readUnsignedInt():uint {
-			return mReader.ReadUInt32();
+			if (mEndian == ByteEndian.Little)
+			{
+				return mReader.ReadUInt32();
+			} 
+			else 
+			{
+				var d:uint;
+				d = uint(mReader.ReadByte()) << 24;
+				d|= uint(mReader.ReadByte()) << 16;
+				d|= uint(mReader.ReadByte()) << 8;
+				d|= uint(mReader.ReadByte()) << 0;
+				return d;
+			}
 		}
  	 	
 		public function readUnsignedShort():uint {
+			if (mEndian != ByteEndian.Little) throw new NotImplementedException();
 			return mReader.ReadUInt16();
 		}
  	 	
@@ -132,7 +186,47 @@ package flash.utils {
 		}
  	 	
 		public function uncompress(algorithm:String = null):void {
-			throw new NotImplementedException();
+
+			var outStream:MemoryStream = new MemoryStream();
+
+			mStream.Position = 0;
+			
+			switch (algorithm)
+			{
+			case null:
+			case CompressionAlgorithm.ZLIB:
+			{
+				var dc:zlib.ZInputStream = new ZInputStream(mStream);
+
+				var data:int;
+				while ( (data=dc.Read()) >= 0)
+				{
+					outStream.WriteByte( byte(data) );
+				}
+			}
+			break;
+
+			case CompressionAlgorithm.LZMA:
+			case CompressionAlgorithm.DEFLATE:
+			{
+				throw new NotImplementedException();
+				/*
+				var outStream:MemoryStream = new MemoryStream();
+				mStream.Position = 0;
+				using (DeflateStream decompressionStream = new DeflateStream(mStream, CompressionMode.Decompress))
+				{
+					decompressionStream.CopyTo(outStream);
+				}
+				*/
+			}
+			}
+
+			// copy stream to our byte array
+			mStream.Position = 0;
+			mStream.SetLength(0);
+			outStream.Position = 0;
+			outStream.CopyTo(mStream);
+			mStream.Position = 0;
 		}
  	
 		public function writeBoolean(value:Boolean):void {
@@ -148,15 +242,27 @@ package flash.utils {
 		}
  	 	
 		public function writeDouble(value:Number):void {
+			if (mEndian != ByteEndian.Little) throw new NotImplementedException();
 			mWriter.Write(double(value));
 		}
  	 	
 		public function writeFloat(value:Number):void {
+			if (mEndian != ByteEndian.Little) throw new NotImplementedException();
 			mWriter.Write(float(value));
 		}
  	 	
 		public function writeInt(value:int):void {
-			mWriter.Write(Int32(value));
+			if (mEndian == ByteEndian.Little)
+			{
+				mWriter.Write(Int32(value));
+			} 
+			else
+			{
+				mWriter.Write( byte(value >> 24) );
+				mWriter.Write( byte(value >> 16) );
+				mWriter.Write( byte(value >> 8) );
+				mWriter.Write( byte(value >> 0) );
+			}
 		}
  	 	
 		public function writeMultiByte(value:String, charSet:String):void {
@@ -168,11 +274,29 @@ package flash.utils {
 		}
  	 	
 		public function writeShort(value:int):void {
-			mWriter.Write(Int16(value));
+			if (mEndian == ByteEndian.Little)
+			{
+				mWriter.Write(Int16(value));
+			}
+			else
+			{
+				mWriter.Write( byte(value >> 8) );
+				mWriter.Write( byte(value >> 0) );
+			}
 		}
  	 	
 		public function writeUnsignedInt(value:uint):void {
-			mWriter.Write(UInt32(value));
+			if (mEndian == ByteEndian.Little)
+			{
+				mWriter.Write(UInt32(value));
+			} 
+			else
+			{
+				mWriter.Write( byte(value >> 24) );
+				mWriter.Write( byte(value >> 16) );
+				mWriter.Write( byte(value >> 8) );
+				mWriter.Write( byte(value >> 0) );
+			}
 		}
  	 	
 		public function writeUTF(value:String):void {
@@ -210,7 +334,8 @@ package flash.utils {
 		public function getRawStream():MemoryStream {
 			return mStream;
 		}
-		
+
+		var mEndian:ByteEndian = ByteEndian.Big; // bytearrays are big endian by default
 		var mStream:MemoryStream;
 		var mReader:BinaryReader;
 		var mWriter:BinaryWriter;

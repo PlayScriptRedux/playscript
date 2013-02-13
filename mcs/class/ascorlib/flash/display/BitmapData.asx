@@ -112,7 +112,34 @@ package flash.display {
 
  	 	public function draw(source:IBitmapDrawable, matrix:Matrix = null, colorTransform:ColorTransform = null, blendMode:String = null, 
 	 	 	clipRect:Rectangle = null, smoothing:Boolean = false):void {
-			// throw new System.NotImplementedException();
+
+#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
+			if (source is flash.text.TextField)
+			{
+				var tf:flash.text.TextField = source as flash.text.TextField;
+				var format:flash.text.TextFormat = tf.defaultTextFormat;
+
+				// $$TODO figure out how to get rid of this extra data copy
+				var data = new byte[width * height * 4];
+				System.Buffer.BlockCopy(mData, 0, data, 0, data.Length);
+				
+				using (CGBitmapContext ctx = new CGBitmapContext(data, width, height, 8, 4 * width, 
+				                                                 CGColorSpace.CreateDeviceRGB(), 
+				                                                 CGImageAlphaInfo.PremultipliedLast))
+				{
+					var black:CGColor = new CGColor(0f, 0f, 0f, 1f);
+					ctx.SetFillColor(black);
+					ctx.SetStrokeColor(black);
+					ctx.SelectFont(format.font, float(Number(format.size)), CGTextEncoding.MacRoman);
+					ctx.ShowTextAtPoint(float(matrix.tx), float(matrix.ty), tf.text );
+				}
+				System.Buffer.BlockCopy(data, 0, mData, 0, data.Length);
+			}
+			else
+#endif
+			{
+				System.Console.WriteLine("NotImplementedWarning: BitmapData.draw()");
+			}
  	 	}
  	 	
 		public function drawWithQuality(source:IBitmapDrawable, matrix:Matrix = null, colorTransform:ColorTransform = null, blendMode:String = null, 
@@ -216,7 +243,19 @@ package flash.display {
 		}
  	 	
 		public function setPixels(rect:Rectangle, inputByteArray:ByteArray):void {
-			throw new System.NotImplementedException();
+			// we only support setpixels for the full bitmap for now
+			if (rect.x == 0 && rect.y == 0 && rect.width == this.width && rect.height == this.height)
+			{
+				var count:int = width * height;
+				for (var i:int=0; i < count; i++)
+				{
+					mData[i] = inputByteArray.readUnsignedInt(); 
+				}
+			}
+			else
+			{
+				throw new System.NotImplementedException();
+			}
 		}
 
 		public function setVector(rect:Rectangle, inputVector:Vector.<uint>):void {

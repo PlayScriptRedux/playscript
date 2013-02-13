@@ -37,6 +37,9 @@
     <Reference Include="System.Core" />
     <Reference Include="OpenTK-1.0" />
     <Reference Include="System.Xml" />
+    <Reference Include="zlib.net">
+      <HintPath>..\zlib.NET_104\bin\zlib.net.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />

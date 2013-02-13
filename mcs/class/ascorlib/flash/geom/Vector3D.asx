@@ -17,9 +17,13 @@ package flash.geom {
 		// Properties
 		//
 	
-	 	public property length : Number { get { return 0.0; } }
+	 	public property length : Number { get { 
+				throw new System.NotImplementedException();
+			} }
 
- 	 	public property lengthSquared : Number { get { return 0.0; } }
+		public property lengthSquared : Number { get { 			
+				throw new System.NotImplementedException();
+			} }
 
  	 	public property w : Number { get; set; }
 
@@ -34,72 +38,84 @@ package flash.geom {
  	 	//
  	 	
 		public function Vector3D(x:Number = 0.0, y:Number = 0.0, z:Number = 0.0, w:Number = 0.0) {
+			this.x = x;
+			this.y = y;
+			this.z = z;
+			this.w = w;
 		}
 
 		public function add(a:Vector3D):Vector3D {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public static function angleBetween(a:Vector3D, b:Vector3D):Number {
-			return 0.0;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function clone():Vector3D {
-			return null;
+			throw new System.NotImplementedException();
 		}
 
 		public function copyFrom(sourceVector3D:Vector3D):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function crossProduct(a:Vector3D):Vector3D {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function decrementBy(a:Vector3D):void {
+			throw new System.NotImplementedException();
 		}
 
  	 	public static function distance(pt1:Vector3D, pt2:Vector3D):Number {
- 	 		return 0.0;
- 	 	}
+			throw new System.NotImplementedException();
+		}
  	 	
 		public function dotProduct(a:Vector3D):Number {
-			return 0.0;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function equals(toCompare:Vector3D, allFour:Boolean = false):Boolean {
-			return false;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function incrementBy(a:Vector3D):void {
-		
+			throw new System.NotImplementedException();
+
 		}
  	 	
 		public function nearEquals(toCompare:Vector3D, tolerance:Number, allFour:Boolean = false):Boolean {
-			return false;
+			throw new System.NotImplementedException();
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function negate():void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function normalize():Number {
-			return 0.0;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function project():void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function scaleBy(s:Number):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function setTo(xa:Number, ya:Number, za:Number):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function subtract(a:Vector3D):Vector3D {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function toString():String {
-			return null;
+			throw new System.NotImplementedException();
 		}
 
 	}
