@@ -202,6 +202,7 @@ namespace Mono.ActionScript
 		bool handle_asx = false;
 		bool handle_namespace = true;
 		bool handle_get_set = false;
+		bool handle_dynamic = true;
 		bool handle_each = false;
 		bool handle_remove_add = false;
 		bool handle_where = false;
@@ -346,6 +347,11 @@ namespace Mono.ActionScript
 		public bool ForInParsing {
 			get { return handle_for_in; }
 			set { handle_for_in = value; }
+		}
+
+		public bool DynamicParsing {
+			get { return handle_dynamic; }
+			set { handle_dynamic = value; }
 		}
 
 		public bool RegexXmlParsing {
@@ -756,6 +762,10 @@ namespace Mono.ActionScript
 			case Token.GET:
 			case Token.SET:
 				if (!handle_get_set)
+					res = -1;
+				break;
+			case Token.DYNAMIC:
+				if (!handle_dynamic)
 					res = -1;
 				break;
 			case Token.EACH:

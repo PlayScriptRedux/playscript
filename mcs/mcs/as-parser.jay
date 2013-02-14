@@ -494,8 +494,36 @@ extern_alias_directive
 package_directive
 	: import_directive
 	| use_namespace_directive
+	| config_package_directive
+	| package_config_block
 	;
- 
+
+config_package_directive
+	: IDENTIFIER_CONFIG 
+	  {
+		var lt = (Tokenizer.LocatedToken) $1;
+	    is_config_enabled = file.IsConditionalDefined (lt.Value.Replace("::","_"));	  
+	  } 
+	  package_directive
+	  {
+	  	is_config_enabled = true;
+	  	$$ = $3;
+	  }
+	; 
+
+package_config_block
+	: IDENTIFIER_CONFIG 
+	  {
+		var lt = (Tokenizer.LocatedToken) $1;
+	    is_config_enabled = file.IsConditionalDefined (lt.Value.Replace("::","_"));	  
+	  } 
+	  OPEN_BRACE opt_package_directives CLOSE_BRACE
+	  {
+	  	is_config_enabled = true;
+	  	$$ = $4;
+	  }
+	; 
+   
 package_directives
     : package_directive
     | package_directives package_directive
@@ -524,36 +552,42 @@ import_directive
 import_package
 	: IMPORT namespace_or_type_expr DOT_STAR SEMICOLON 
 	  {
-		var un = new UsingNamespace ((ATypeNameExpression) $2, GetLocation ($1));
-		current_namespace.AddUsing (un);
+	    if (is_config_enabled) {
+			var un = new UsingNamespace ((ATypeNameExpression) $2, GetLocation ($1));
+		  	current_namespace.AddUsing (un);
 		
-		lbag.AddLocation (un, GetLocation ($3));
+			lbag.AddLocation (un, GetLocation ($3));
+		}
 	  }	
 	| IMPORT typeof_type_expression SEMICOLON 
 	  {
-		var ut = new UsingType ((ATypeNameExpression) $2, GetLocation ($1));
-		current_namespace.AddUsing (ut);
+	    if (is_config_enabled) {
+			var ut = new UsingType ((ATypeNameExpression) $2, GetLocation ($1));
+			current_namespace.AddUsing (ut);
 		
-		lbag.AddLocation (ut, GetLocation ($3));
+			lbag.AddLocation (ut, GetLocation ($3));
+		}
 	  }
 	| IMPORT IDENTIFIER ASSIGN namespace_or_type_expr SEMICOLON
 	  {
-		var lt = (Tokenizer.LocatedToken) $2;
-		if (lang_version != LanguageVersion.ISO_1 && lt.Value == "global") {
-			report.Warning (440, 2, lt.Location,
-			 "An alias named `global' will not be used when resolving `global::'. The global namespace will be used instead");
-		}
+	    if (is_config_enabled) {
+			var lt = (Tokenizer.LocatedToken) $2;
+			if (lang_version != LanguageVersion.ISO_1 && lt.Value == "global") {
+				report.Warning (440, 2, lt.Location,
+				 "An alias named `global' will not be used when resolving `global::'. The global namespace will be used instead");
+			}
 
-		var un = new UsingAliasNamespace (new SimpleMemberName (lt.Value, lt.Location), (ATypeNameExpression) $4, GetLocation ($1));
-		current_namespace.AddUsing (un);
+			var un = new UsingAliasNamespace (new SimpleMemberName (lt.Value, lt.Location), (ATypeNameExpression) $4, GetLocation ($1));
+			current_namespace.AddUsing (un);
 		
-		lbag.AddLocation (un, GetLocation ($3), GetLocation ($5));
+			lbag.AddLocation (un, GetLocation ($3), GetLocation ($5));
+		}
 	  }
 	| IMPORT error
-	 {
+	  {
 		Error_SyntaxError (yyToken);
 		$$ = null;
-	 }
+	  }
 	;
 
 //
@@ -703,36 +737,56 @@ package_type_declarations
 	;
 
 package_type_declaration
-	: type_declaration
-	  {
-		if ($1 != null) {
-			TypeContainer ds = (TypeContainer)$1;
-
-			if ((ds.ModFlags & (Modifiers.PRIVATE | Modifiers.PROTECTED)) != 0){
-				report.Error (1527, ds.Location, 
-				"Namespace elements cannot be explicitly declared as private, protected or protected internal");
-			}
-
-			// Here is a trick, for explicit attributes we don't know where they belong to until
-			// we parse succeeding declaration hence we parse them as normal and re-attach them
-			// when we know whether they are global (assembly:, module:) or local (type:).
-			if (ds.OptAttributes != null) {
-				ds.OptAttributes.ConvertGlobalAttributes (ds, current_namespace, !current_namespace.DeclarationFound && current_namespace == file);
-			}
-		}
-		current_namespace.DeclarationFound = true;
-		is_config_enabled = true;
-	  }
-	| method_declaration
-	  {
-		current_namespace.DeclarationFound = true;
-		is_config_enabled = true;
-	  }
+	: package_type_or_method_declaration
 	| attribute_sections CLOSE_BRACE {
 		current_namespace.UnattachedAttributes = (Attributes) $1;
 		report.Error (1518, lexer.Location, "Attributes must be attached to class, delegate, enum, interface or struct");
 		lexer.putback ('}');
 		is_config_enabled = true;		
+	  }
+	;
+
+package_type_or_method_declaration
+	: type_declaration
+	  {
+	    if (is_config_enabled) {
+			if ($1 != null) {
+				TypeContainer ds = (TypeContainer)$1;
+
+				if ((ds.ModFlags & (Modifiers.PRIVATE | Modifiers.PROTECTED)) != 0){
+					report.Error (1527, ds.Location, 
+					"Namespace elements cannot be explicitly declared as private, protected or protected internal");
+				}
+
+				// Here is a trick, for explicit attributes we don't know where they belong to until
+				// we parse succeeding declaration hence we parse them as normal and re-attach them
+				// when we know whether they are global (assembly:, module:) or local (type:).
+				if (ds.OptAttributes != null) {
+					ds.OptAttributes.ConvertGlobalAttributes (ds, current_namespace, !current_namespace.DeclarationFound && current_namespace == file);
+				}
+			}
+			current_namespace.DeclarationFound = true;
+		}
+	  }
+	| method_declaration
+	  {
+	  	if (is_config_enabled) {
+			current_namespace.DeclarationFound = true;
+		}
+	  }
+	| config_package_type_or_method_declaration	  
+	;
+
+config_package_type_or_method_declaration
+	: IDENTIFIER_CONFIG 
+	  {
+		var lt = (Tokenizer.LocatedToken) $1;
+	    is_config_enabled = file.IsConditionalDefined (lt.Value.Replace("::","_"));	 	  
+	  }
+	  package_type_or_method_declaration
+	  {
+	    is_config_enabled = true;
+	    $$ = $3;
 	  }
 	;
 
@@ -744,6 +798,7 @@ type_declaration
 	| delegate_declaration
 	| namespace_declaration	
 	;
+		
 //
 // Enable this when we have handled all errors, because this acts as a generic fallback
 //
@@ -763,14 +818,14 @@ opt_attributes
     ;
  
 attribute_sections
-	: attribute_or_config
+	: attribute_section
 	  {
 		var sect = $1 as List<Attribute>;
 		if (sect != null) {
 			$$ = new Attributes (sect);
 		}
 	  }
-	| attribute_sections attribute_or_config
+	| attribute_sections attribute_section
 	  {
 		Attributes attrs = $1 as Attributes;
 		var sect = $2 as List<Attribute>;
@@ -781,16 +836,6 @@ attribute_sections
 				attrs.AddAttributes (sect);
 		}
 		$$ = attrs;
-	  }
-	;
-	
-attribute_or_config
-	: attribute_section
-	| IDENTIFIER_CONFIG
-	  {
-		var lt = (Tokenizer.LocatedToken) $1;
-	    is_config_enabled = file.IsConditionalDefined (lt.Value.Replace("CONFIG::",""));
-	    $$ = null;
 	  }
 	;
 	
@@ -1013,6 +1058,8 @@ class_member_declaration
 //	| constructor_declaration
 	| destructor_declaration
 	| type_declaration
+	| member_config_block
+	| config_member_declaration	
 	| attributes_without_members
 	| error
 	  {
@@ -1022,6 +1069,33 @@ class_member_declaration
 		lexer.parsing_generic_declaration = false;
 	  }
 	;
+
+config_member_declaration
+	: IDENTIFIER_CONFIG
+	  {
+		var lt = (Tokenizer.LocatedToken) $1;
+	    is_config_enabled = file.IsConditionalDefined (lt.Value.Replace("::","_"));	  
+	  }
+	  class_member_declaration
+	  {
+	    is_config_enabled = true;
+	    $$ = $3;
+	  }
+	;
+	  
+
+member_config_block
+	: IDENTIFIER_CONFIG 
+	  {
+		var lt = (Tokenizer.LocatedToken) $1;
+	    is_config_enabled = file.IsConditionalDefined (lt.Value.Replace("::","_"));	  
+	  } 
+	  OPEN_BRACE opt_class_member_declarations CLOSE_BRACE
+	  {
+	  	is_config_enabled = true;
+	  	$$ = $4;
+	  }
+	;	  
 
 struct_declaration
 	: opt_attributes
@@ -1055,9 +1129,11 @@ struct_declaration
 	  {
 		if (doc_support)
 			Lexer.doc_state = XmlCommentState.Allowed;
+		lexer.DynamicParsing = false;
 	  }
 	  opt_class_member_declarations CLOSE_BRACE
 	  {
+		lexer.DynamicParsing = true;
 		--lexer.parsing_declaration;
 		if (doc_support)
 			Lexer.doc_state = XmlCommentState.Allowed;
@@ -1352,9 +1428,16 @@ method_declaration
 			is_config_enabled = true;
 			current_constructor = c;
 		}
+		
+		if (is_package_function)
+			lexer.DynamicParsing = false;
+			
 	  }
 	  method_body
 	  {
+		if (is_package_function)
+			lexer.DynamicParsing = true;
+	  
 	 	async_block = false;
 
 		if ($1 is Method) {
@@ -4902,9 +4985,11 @@ class_declaration
 		}
 		
 		lexer.parsing_modifiers = true;
+		lexer.DynamicParsing = false;		
 	  }
 	  OPEN_BRACE opt_class_member_declarations CLOSE_BRACE
 	  {
+		lexer.DynamicParsing = true;	  
 		--lexer.parsing_declaration;
 		if (doc_support)
 			Lexer.doc_state = XmlCommentState.Allowed;
@@ -5248,7 +5333,7 @@ config_block
 	    // If we have a config prefix, check to see if it's defined..
 	    if ($1 != null) {
 		  var lt = (Tokenizer.LocatedToken) $1;
-	      is_config_enabled = file.IsConditionalDefined (lt.Value.Replace("CONFIG::",""));
+	      is_config_enabled = file.IsConditionalDefined (lt.Value.Replace("::","_"));
 	    }
 	    
 	    if (is_config_enabled) {

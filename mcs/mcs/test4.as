@@ -1,15 +1,26 @@
 package com.zynga.zengine.classes
 {
+	PLATFORM::IOS {
+		import blah.blah.blah;
+	}
+
+	PLATFORM::IOS
+	public function blah():void {
+		var dynamic:int = 400;
+	}
+
 	public class Foo {
 		public var i:int = 100;
 	}
-	
+
 	public class Bar extends Foo {
 		public var j:int = 200;
 	}
 
 	public class Test 
 	{
+		public var dynamic:String = "asdadf";
+
 		public var v:Vector.<String> = new <String> [ "aaa", "bbb", "ccc" ];
 
         public static function Main() : void {
