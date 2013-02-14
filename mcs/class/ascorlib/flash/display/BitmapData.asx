@@ -6,6 +6,7 @@ package flash.display {
 	import flash.geom.Point;
 	import flash.geom.Matrix;
 	import flash.filters.BitmapFilter;
+	import flash.text.TextFormatAlign;
 	import System.IO.*;
 	import System.Reflection.*;
 	
@@ -110,28 +111,6 @@ package flash.display {
 			mData = null;
 		}
 
-#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
-		private function ShowCenteredTextAtPoint(context:CGContext, centerX:float, y:float, text:String):void
-		{
-			context.SetTextDrawingMode(CGTextDrawingMode.Invisible);
-			context.ShowTextAtPoint(centerX, y, text, text.Length);
-			context.SetTextDrawingMode(CGTextDrawingMode.Fill);
-			context.ShowTextAtPoint (
-				float(centerX - (context.TextPosition.X - centerX)/2),
-				y, text, text.Length);
-		}
-		
-		private function ShowRightJustifiedTextAtPoint(context:CGContext, rightX:float, y:float, text:String):void
-		{
-			context.SetTextDrawingMode(CGTextDrawingMode.Invisible);
-			context.ShowTextAtPoint(0, y, text, text.Length);
-			context.SetTextDrawingMode(CGTextDrawingMode.Fill);
-			context.ShowTextAtPoint (
-				float(rightX - context.TextPosition.X),
-				y, text, text.Length);
-		}
-#endif
-
  	 	public function draw(source:IBitmapDrawable, matrix:Matrix = null, colorTransform:ColorTransform = null, blendMode:String = null, 
 	 	 	clipRect:Rectangle = null, smoothing:Boolean = false):void {
 
@@ -144,7 +123,7 @@ package flash.display {
 				// $$TODO figure out how to get rid of this extra data copy
 				var data = new byte[width * height * 4];
 				System.Buffer.BlockCopy(mData, 0, data, 0, data.Length);
-				
+
 				using (CGBitmapContext context = new CGBitmapContext(data, width, height, 8, 4 * width, 
 				                                                 CGColorSpace.CreateDeviceRGB(), 
 				                                                 CGImageAlphaInfo.PremultipliedLast))
@@ -153,23 +132,38 @@ package flash.display {
 					context.SetFillColor(black);
 					context.SetStrokeColor(black);
 					context.SelectFont(format.font, float(Number(format.size)), CGTextEncoding.MacRoman);
-					context.SetAllowsAntialiasing(true);
+					context.SetAllowsAntialiasing( (tf.antiAliasType == flash.text.AntiAliasType.ADVANCED) );
 
+					var x:Number = matrix.tx;
+					var y:Number = matrix.ty;
+
+					// invert y because the CG origin is bottom,left
+					y = height - tf.textHeight - y;
+
+					// align text
 					switch (format.align)
 					{
-					case "left":
-						context.ShowTextAtPoint(float(matrix.tx), float(matrix.ty), tf.text );
+					case TextFormatAlign.LEFT:
+						// no adjustment required
 						break;
-					case "center":
-						ShowCenteredTextAtPoint(context, float(matrix.tx + (width / 2)), float(matrix.ty), tf.text );
+					case TextFormatAlign.CENTER:
+						// center x
+						x += width / 2;
+						x -= tf.textWidth / 2;
 						break;
-					case "right":
-						ShowRightJustifiedTextAtPoint(context, float(matrix.tx + width), float(matrix.ty), tf.text );
+					case TextFormatAlign.RIGHT:
+						// right justify x
+						x += width;
+						x -= tf.textWidth;
 						break;
 					default:
 						throw new System.NotImplementedException();
 					}
+
+					// draw text
+					context.ShowTextAtPoint(float(x), float(y), tf.text );
 				}
+
 				System.Buffer.BlockCopy(data, 0, mData, 0, data.Length);
 			}
 			else
