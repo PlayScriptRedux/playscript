@@ -110,6 +110,28 @@ package flash.display {
 			mData = null;
 		}
 
+		private function ShowCenteredTextAtPoint(context:CGContext, centerX:float, y:float, text:String):void
+		{
+			context.SetTextDrawingMode(CGTextDrawingMode.Invisible);
+			context.ShowTextAtPoint(centerX, y, text, text.Length);
+			context.SetTextDrawingMode(CGTextDrawingMode.Fill);
+			context.ShowTextAtPoint (
+				float(centerX - (context.TextPosition.X - centerX)/2),
+				y, text, text.Length);
+		}
+
+
+		
+		private function ShowRightJustifiedTextAtPoint(context:CGContext, rightX:float, y:float, text:String):void
+		{
+			context.SetTextDrawingMode(CGTextDrawingMode.Invisible);
+			context.ShowTextAtPoint(0, y, text, text.Length);
+			context.SetTextDrawingMode(CGTextDrawingMode.Fill);
+			context.ShowTextAtPoint (
+				float(rightX - context.TextPosition.X),
+				y, text, text.Length);
+		}
+
  	 	public function draw(source:IBitmapDrawable, matrix:Matrix = null, colorTransform:ColorTransform = null, blendMode:String = null, 
 	 	 	clipRect:Rectangle = null, smoothing:Boolean = false):void {
 
@@ -123,15 +145,30 @@ package flash.display {
 				var data = new byte[width * height * 4];
 				System.Buffer.BlockCopy(mData, 0, data, 0, data.Length);
 				
-				using (CGBitmapContext ctx = new CGBitmapContext(data, width, height, 8, 4 * width, 
+				using (CGBitmapContext context = new CGBitmapContext(data, width, height, 8, 4 * width, 
 				                                                 CGColorSpace.CreateDeviceRGB(), 
 				                                                 CGImageAlphaInfo.PremultipliedLast))
 				{
 					var black:CGColor = new CGColor(0f, 0f, 0f, 1f);
-					ctx.SetFillColor(black);
-					ctx.SetStrokeColor(black);
-					ctx.SelectFont(format.font, float(Number(format.size)), CGTextEncoding.MacRoman);
-					ctx.ShowTextAtPoint(float(matrix.tx), float(matrix.ty), tf.text );
+					context.SetFillColor(black);
+					context.SetStrokeColor(black);
+					context.SelectFont(format.font, float(Number(format.size)), CGTextEncoding.MacRoman);
+					context.SetAllowsAntialiasing(true);
+
+					switch (format.align)
+					{
+					case "left":
+						context.ShowTextAtPoint(float(matrix.tx), float(matrix.ty), tf.text );
+						break;
+					case "center":
+						ShowCenteredTextAtPoint(context, float(matrix.tx + (width / 2)), float(matrix.ty), tf.text );
+						break;
+					case "right":
+						ShowRightJustifiedTextAtPoint(context, float(matrix.tx + width), float(matrix.ty), tf.text );
+						break;
+					default:
+						throw new System.NotImplementedException();
+					}
 				}
 				System.Buffer.BlockCopy(data, 0, mData, 0, data.Length);
 			}
