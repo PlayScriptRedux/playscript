@@ -214,9 +214,17 @@ package flash.text {
 #if PLATFORM_MONOTOUCH
 				var format:flash.text.TextFormat = defaultTextFormat;
 				var font:UIFont = UIFont.FromName(format.font, float(Number(format.size)) );
-				var size:System.Drawing.SizeF = new NSString(text).StringSize(font); 
-				mTextWidth  = size.Width;
-				mTextHeight = size.Height;
+				if (font != null)
+				{
+					var size:System.Drawing.SizeF = new NSString(text).StringSize(font); 
+					mTextWidth  = size.Width;
+					mTextHeight = size.Height;
+				}
+				else
+				{
+					// 
+					mTextWidth = mTextHeight = 0.0;
+				}
 #else
 				// $$TODO
 				mTextWidth  = text.Length * 8.0;
