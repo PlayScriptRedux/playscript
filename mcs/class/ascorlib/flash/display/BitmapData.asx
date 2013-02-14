@@ -110,6 +110,7 @@ package flash.display {
 			mData = null;
 		}
 
+#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
 		private function ShowCenteredTextAtPoint(context:CGContext, centerX:float, y:float, text:String):void
 		{
 			context.SetTextDrawingMode(CGTextDrawingMode.Invisible);
@@ -119,8 +120,6 @@ package flash.display {
 				float(centerX - (context.TextPosition.X - centerX)/2),
 				y, text, text.Length);
 		}
-
-
 		
 		private function ShowRightJustifiedTextAtPoint(context:CGContext, rightX:float, y:float, text:String):void
 		{
@@ -131,6 +130,7 @@ package flash.display {
 				float(rightX - context.TextPosition.X),
 				y, text, text.Length);
 		}
+#endif
 
  	 	public function draw(source:IBitmapDrawable, matrix:Matrix = null, colorTransform:ColorTransform = null, blendMode:String = null, 
 	 	 	clipRect:Rectangle = null, smoothing:Boolean = false):void {
@@ -175,7 +175,7 @@ package flash.display {
 			else
 #endif
 			{
-				System.Console.WriteLine("NotImplementedWarning: BitmapData.draw()");
+				trace("NotImplementedWarning: BitmapData.draw()");
 			}
  	 	}
  	 	
