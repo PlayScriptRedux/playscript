@@ -87,7 +87,6 @@ package flash.geom {
  	 	
 		public function nearEquals(toCompare:Vector3D, tolerance:Number, allFour:Boolean = false):Boolean {
 			throw new System.NotImplementedException();
-			throw new System.NotImplementedException();
 		}
  	 	
 		public function negate():void {
