@@ -589,6 +589,9 @@
     <Compile Include="..\ascorlib\SWFAttribute.cs">
       <Link>SWFAttribute.cs</Link>
     </Compile>
+    <Compile Include="..\ascorlib\flash\display\StageQuality.asx">
+      <Link>flash\display\StageQuality.asx</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ActionScript.Dynamic_aot\ActionScript.Dynamic_aot-monotouch.csproj">

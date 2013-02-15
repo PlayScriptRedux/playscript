@@ -1,0 +1,15 @@
+package flash.display {
+	
+	public static class StageQuality {
+		
+		//
+		// Constants
+		//
+		
+		public static const BEST : String = "BEST";
+		public static const HIGH : String = "HIGH";
+		public static const LOW : String = "LOW";
+		public static const MEDIUM : String = "MEDIUM";
+	}
+	
+}

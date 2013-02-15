@@ -116,6 +116,7 @@
     <Compile Include="flash\filesystem\File.asx" />
     <Compile Include="flash\desktop\NativeApplication.asx" />
     <Compile Include="SWFAttribute.cs" />
+    <Compile Include="flash\display\StageQuality.asx" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
