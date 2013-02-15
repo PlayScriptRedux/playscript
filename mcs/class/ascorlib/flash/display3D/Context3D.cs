@@ -340,8 +340,10 @@ namespace flash.display3D {
 			GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, texture.textureId, 0);
 #endif
 			// setup viewport for render to texture
+			// $$TODO figure out a way to invert the viewport vertically to account for GL's texture origin
 			GL.Viewport(0,0, texture2D.width, texture2D.height);
 
+			// validate framebuffer status
 			var code = GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
 			if (code != FramebufferErrorCode.FramebufferComplete)
 			{
