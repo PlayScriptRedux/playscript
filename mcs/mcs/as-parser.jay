@@ -4384,6 +4384,55 @@ anonymous_method_expression
 		$$ = end_anonymous ((ParametersBlock) $10);
 	  }
 	;
+	
+local_function_statement
+	: FUNCTION IDENTIFIER OPEN_PARENS
+	  {
+	  	valid_param_mod = ParameterModifierType.Ref | ParameterModifierType.Out;
+	  }
+	  opt_formal_parameter_list CLOSE_PARENS COLON member_type
+	  {
+		valid_param_mod = 0;
+		start_anonymous (false, (ParametersCompiled) $5, (TypeExpr) $8, false, GetLocation ($1));
+	  }
+	  block
+	  {
+		var lt = (Tokenizer.LocatedToken) $2;
+		var anonMethod = end_anonymous ((ParametersBlock) $10);
+		var topBlock = current_block;
+		while (topBlock.Parent != null)
+			topBlock = topBlock.Parent;
+		var li = new LocalVariable (topBlock, lt.Value, lt.Location);
+		var decl = new BlockVariableDeclaration(new VarExpr(GetLocation($1)), li);
+		decl.Initializer = anonMethod;
+		topBlock.AddLocalName (li);
+		topBlock.AddScopeStatement (decl);	
+		$$ = new AsLocalFunction(GetLocation($1), lt.Value, anonMethod, decl);
+	  }
+	| ASYNC FUNCTION IDENTIFIER OPEN_PARENS
+	  {
+	  	valid_param_mod = ParameterModifierType.Ref | ParameterModifierType.Out;
+	  }
+	  opt_formal_parameter_list CLOSE_PARENS COLON member_type
+	  {
+		valid_param_mod = 0;
+		start_anonymous (false, (ParametersCompiled) $6, (TypeExpr) $9, true, GetLocation ($1));
+	  }
+	  block
+	  {
+	    var lt = (Tokenizer.LocatedToken) $3;
+		var anonMethod = end_anonymous ((ParametersBlock) $11);
+		var topBlock = current_block;
+		while (topBlock.Parent != null)
+			topBlock = topBlock.Parent;
+		var li = new LocalVariable (topBlock, lt.Value, lt.Location);
+		var decl = new BlockVariableDeclaration(new VarExpr(GetLocation($1)), li);
+		decl.Initializer = anonMethod;
+		topBlock.AddLocalName (li);
+		topBlock.AddScopeStatement (decl);	
+		$$ = new AsLocalFunction(GetLocation($1), lt.Value, anonMethod, decl);
+	  }
+	;	
 
 anonymous_method_signature
 	: OPEN_PARENS
@@ -5447,6 +5496,7 @@ valid_declaration_statement
 	| unsafe_statement
 	| fixed_statement
 	| delete_statement
+	| local_function_statement
 	;
 
 interactive_valid_declaration_statement
@@ -5464,6 +5514,7 @@ interactive_valid_declaration_statement
 	| unsafe_statement
 	| fixed_statement
 	| delete_statement
+	| local_function_statement
 	;
 
 embedded_statement

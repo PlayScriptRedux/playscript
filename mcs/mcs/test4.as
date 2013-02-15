@@ -4,7 +4,6 @@ package com.zynga.zengine.classes
 		import blah.blah.blah;
 	}
 
-	PLATFORM::IOS
 	public function blah():void {
 		var dynamic:int = 400;
 	}
@@ -25,6 +24,8 @@ package com.zynga.zengine.classes
 
         public static function Main() : void {
         
+			myFunc(100, "Blah");
+
         	var x:XML = <spoof/>;
         
         	var f:Foo = new Foo();
@@ -44,6 +45,10 @@ package com.zynga.zengine.classes
         	if (o1 != null && o2 == null) {
         		trace("Yeah!");
         	}
+
+			function myFunc(i:int, s:String):void {
+				trace("Foo " + i + s);
+			}
 		}
 	}
 }

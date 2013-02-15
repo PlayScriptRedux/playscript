@@ -779,4 +779,67 @@ namespace Mono.CSharp
 
 	}
 
+	//
+	// ActionScript: Implements the ActionScript delete expression.
+	// This expression is used to implement the delete expression as
+	// well as the delete statement.  Handles both the element access
+	// form or the member access form.
+	//
+	public class AsLocalFunction : Statement {
+		
+		public string Name;
+		public AnonymousMethodExpression MethodExpr;
+		public BlockVariableDeclaration VarDecl;
+
+		public AsLocalFunction (Location loc, string name, AnonymousMethodExpression methodExpr, BlockVariableDeclaration varDecl)
+		{
+			this.loc = loc;
+			this.Name = name;
+			this.MethodExpr = methodExpr;
+			this.VarDecl = varDecl;
+		}
+
+		public override bool Resolve (BlockContext bc)
+		{
+			return true;
+		}
+
+		protected override void CloneTo (CloneContext clonectx, Statement t)
+		{
+			var target = (AsLocalFunction) t;
+
+			target.Name = Name;
+			target.MethodExpr = MethodExpr.Clone (clonectx) as AnonymousMethodExpression;
+			target.VarDecl = VarDecl.Clone (clonectx) as BlockVariableDeclaration;
+		}
+
+		protected override void DoEmit (EmitContext ec)
+		{
+		}
+
+//		public override void EmitJs (JsEmitContext jec)
+//		{
+//			jec.Buf.Write ("delete ", Location);
+//			Expr.EmitJs (jec);
+//		}
+//		
+//		public override void EmitStatementJs (JsEmitContext jec)
+//		{
+//			jec.Buf.Write ("\t", Location);
+//			EmitJs (jec);
+//			jec.Buf.Write (";\n");
+//		}
+		
+		public override Expression CreateExpressionTree (ResolveContext ec)
+		{
+			throw new System.NotSupportedException ();
+		}
+		
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}
+	}
+
+
 }
