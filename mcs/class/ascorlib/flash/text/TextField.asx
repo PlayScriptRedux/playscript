@@ -216,7 +216,11 @@ package flash.text {
 				var font:UIFont = UIFont.FromName(format.font, float(Number(format.size)) );
 				if (font != null)
 				{
-					var size:System.Drawing.SizeF = new NSString(text).StringSize(font); 
+					// $$TODO handle wordwrap and single line
+					if (!wordWrap || !multiline) 
+						throw new System.NotImplementedException();
+
+					var size:System.Drawing.SizeF = new NSString(text).StringSize(font, float(width), UILineBreakMode.WordWrap); 
 					mTextWidth  = size.Width;
 					mTextHeight = size.Height;
 				}
