@@ -550,19 +550,13 @@ import_directive
 	;
 
 import_package
-	: IMPORT namespace_or_type_expr
-	  {
-	    Lexer.AllowAutoSemiAfterToken(Token.DOT_STAR, true);
-	  }
-	  DOT_STAR SEMICOLON 
+	: IMPORT namespace_or_type_expr DOT_STAR SEMICOLON 
 	  {
 	    if (is_config_enabled) {
 			var un = new UsingNamespace ((ATypeNameExpression) $2, GetLocation ($1));
 		  	current_namespace.AddUsing (un);
 		
-			lbag.AddLocation (un, GetLocation ($5));
-			
-		    Lexer.AllowAutoSemiAfterToken(Token.DOT_STAR, false);
+			lbag.AddLocation (un, GetLocation ($3));
 		}
 	  }	
 	| IMPORT typeof_type_expression SEMICOLON 
@@ -602,14 +596,10 @@ import_package
 // detach them
 // 
 package_declaration
-	: opt_attributes PACKAGE 
-	  {
-	  	Lexer.AutoSemiInsertion = false;
-	  }
-	  opt_package_name
+	: opt_attributes PACKAGE opt_package_name
 	  {
 		Attributes attrs = (Attributes) $1;
-		var name = $4 as MemberName;
+		var name = $3 as MemberName;
 		if (name == null) {
 			name = new MemberName(RootNs);
 		}
@@ -655,12 +645,10 @@ package_declaration
 	  {
 		if (doc_support)
 			Lexer.doc_state = XmlCommentState.Allowed;
-			
-		Lexer.AutoSemiInsertion = true;
 	  }
 	  opt_package_declarations CLOSE_BRACE
 	  {
-	  	lbag.AddLocation (current_container, GetLocation ($2), GetLocation ($6), GetLocation ($9));
+	  	lbag.AddLocation (current_container, GetLocation ($2), GetLocation ($5), GetLocation ($8));
 	  
 	  	if (current_namespace.Parent != null && current_namespace.Parent.Parent == null) { // Is this the top level package?
 			var ns = new NamespaceContainer (new MemberName("__" + file.FileName.Replace(".","_")), current_namespace);
@@ -686,7 +674,7 @@ package_declaration
 			prev_namespace = private_namespace = null; 
 	  	}
 	  
-//	  	lbag.AddLocation (current_container, GetLocation ($2), GetLocation ($6), GetLocation ($11));
+//	  	lbag.AddLocation (current_container, GetLocation ($2), GetLocation ($5), GetLocation ($10));
 	  }
 	;
 
@@ -881,11 +869,9 @@ attribute_section_cont
 	  
 		current_attr_target = null;
 		lexer.parsing_attribute_section = false;
-		lexer.AutoSemiInsertionAfter = 1;
  	  }
 	| attribute_list opt_comma CLOSE_BRACKET
 	  {
-		lexer.AutoSemiInsertionAfter = 1;
 		$$ = $1;
 	  }
 	;	
@@ -950,7 +936,7 @@ opt_attribute_arguments
 	: /* empty */   { $$ = null; }
 	| OPEN_PARENS attribute_arguments CLOSE_PARENS
 	  {
-	    lexer.AutoSemiInsertionAfter = 1;
+	    lexer.AllowAutoSemiInsertionAfter(1);
 		$$ = $2;
 	  }
 	;
@@ -1537,7 +1523,11 @@ method_header
 		}
 		
 	  }
-	  opt_formal_parameter_list CLOSE_PARENS opt_method_type
+	  opt_formal_parameter_list CLOSE_PARENS
+	  {
+	  	lexer.AllowAutoSemiInsertionAfter(1);
+	  }
+	  opt_method_type
 	  {
 		lexer.ConstraintsParsing = true;
 	  }
@@ -1557,7 +1547,7 @@ method_header
 
 			var c = new Constructor (current_type, name.Name, modifiers, (Attributes) $1, current_local_parameters, name.Location);
 
-			if ($11 != null) {
+			if ($12 != null) {
 					report.Error (7011, c.Location,
 						"`{0}': constructor can not have type constraints.",
 						c.GetSignatureForError ());
@@ -1583,7 +1573,7 @@ method_header
 				(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
 					modifiers |= Modifiers.VIRTUAL;
 
-			var return_type = $9 as FullNamedExpression;
+			var return_type = $10 as FullNamedExpression;
 			
 			if (return_type == null) {
 				report.Error (7012, GetLocation($8), "Method must specify a return type.");
@@ -1591,10 +1581,10 @@ method_header
 			}
 
 			var method = Method.Create (current_type, return_type, modifiers,
-					     name, current_local_parameters, (Attributes) $1, $11 != null);
+					     name, current_local_parameters, (Attributes) $1, $12 != null);
 
-			if ($11 != null)
-				method.SetConstraints ((List<Constraints>) $11);
+			if ($12 != null)
+				method.SetConstraints ((List<Constraints>) $12);
 					     
 			if (doc_support)
 				method.DocComment = Lexer.consume_doc_comment ();
@@ -1610,9 +1600,13 @@ method_header
 	  {
 		valid_param_mod = ParameterModifierType.All;
 	  }
-	  opt_formal_parameter_list CLOSE_PARENS COLON member_type
+	  opt_formal_parameter_list CLOSE_PARENS
 	  {
-		var type = (FullNamedExpression) $10;
+	    lexer.AllowAutoSemiInsertionAfter(1);
+	  }
+	  COLON member_type
+	  {
+		var type = (FullNamedExpression) $11;
 		var name = (MemberName) $4;
 		var modifiers = (Modifiers) $2;
 		var parameters = (ParametersCompiled) $7;		
@@ -1622,7 +1616,7 @@ method_header
 				modifiers |= Modifiers.VIRTUAL;
 
 		if (parameters != null && parameters.Count > 0)
-			report.Error (7016, GetLocation ($10), "Property getter functions may not have parameters");
+			report.Error (7016, GetLocation ($11), "Property getter functions may not have parameters");
 
 		current_property = null;		
 						
@@ -1640,7 +1634,7 @@ method_header
 			modifiers = (Modifiers) 0;
 		} else {
 //			if (!type.Equals(current_property.TypeExpression)) {
-//				report.Error (7002, GetLocation ($10), "Type of property getter and setter must match", current_property.GetSignatureForError ());
+//				report.Error (7002, GetLocation ($11), "Type of property getter and setter must match", current_property.GetSignatureForError ());
 //			}
 			if (current_property.Set != null && ModifiersExtensions.IsRestrictedModifier (current_property.ModFlags & Modifiers.AccessibilityMask, modifiers & Modifiers.AccessibilityMask)) {
 				current_property.Set.ModFlags |= current_property.ModFlags & Modifiers.AccessibilityMask;
@@ -1652,7 +1646,7 @@ method_header
 		}
 		
 		if (type.Type != null && type.Type.Kind == MemberKind.Void)
-			report.Error (547, GetLocation ($10), "`{0}': property or indexer cannot have void type", current_property.GetSignatureForError ());					
+			report.Error (547, GetLocation ($11), "`{0}': property or indexer cannot have void type", current_property.GetSignatureForError ());					
 			
 		if (current_property.Get != null) {
 			report.Error (1007, GetLocation ($3), "Property accessor already defined");
@@ -1661,7 +1655,7 @@ method_header
 		current_property.Get = new Property.GetMethod (current_property,
 			modifiers & Modifiers.AccessibilityMask, (Attributes) $1, GetLocation ($3));
 	  
-		lbag.AddMember (current_property, mod_locations, GetLocation ($10));
+		lbag.AddMember (current_property, mod_locations, GetLocation ($11));
 		current_local_parameters = current_property.Get.ParameterInfo;
 		$$ = current_property.Get;
 	  }
@@ -1671,9 +1665,13 @@ method_header
 	  {
 		valid_param_mod = ParameterModifierType.All;
 	  }
-	  opt_formal_parameter_list CLOSE_PARENS COLON member_type
+	  opt_formal_parameter_list CLOSE_PARENS
 	  {
-		var void_type = (FullNamedExpression) $10;
+	    lexer.AllowAutoSemiInsertionAfter(1);
+	  }
+	  COLON member_type
+	  {
+		var void_type = (FullNamedExpression) $11;
 		var name = (MemberName) $4;
 		var modifiers = (Modifiers) $2;
 		var parameters = (ParametersCompiled) $7;
@@ -1683,7 +1681,7 @@ method_header
 				modifiers |= Modifiers.VIRTUAL;
 		
 		if (void_type.Type != null && void_type.Type.Kind != MemberKind.Void)
-			report.Error (7003, GetLocation ($10), "Property setter function must not be of type void", current_property.GetSignatureForError ());					
+			report.Error (7003, GetLocation ($11), "Property setter function must not be of type void", current_property.GetSignatureForError ());					
 
 		current_property = null;
 						
@@ -1710,7 +1708,7 @@ method_header
 			modifiers = (Modifiers) 0;			
 		} else {
 //			if (!type.Equals(current_property.TypeExpression)) {
-//				report.Error (7002, GetLocation ($10), "Type of property getter and setter must match", current_property.GetSignatureForError ());
+//				report.Error (7002, GetLocation ($11), "Type of property getter and setter must match", current_property.GetSignatureForError ());
 //			}
 			if (current_property.Get != null && ModifiersExtensions.IsRestrictedModifier (current_property.ModFlags & Modifiers.AccessibilityMask, modifiers & Modifiers.AccessibilityMask)) {
 				current_property.Get.ModFlags |= current_property.ModFlags & Modifiers.AccessibilityMask;
@@ -1728,7 +1726,7 @@ method_header
 		current_property.Set = new Property.SetMethod (current_property, 
 			modifiers & Modifiers.AccessibilityMask, (ParametersCompiled) $7, (Attributes) $1, GetLocation ($3));
 	  
-		lbag.AddMember (current_property, mod_locations, GetLocation ($10));
+		lbag.AddMember (current_property, mod_locations, GetLocation ($11));
 		current_local_parameters = parameters;
 		$$ = current_property.Set;
 	  }
@@ -1745,7 +1743,11 @@ method_header
 		lexer.parsing_generic_declaration = false;
 	  	valid_param_mod = ParameterModifierType.All;
 	  }
-	  opt_formal_parameter_list CLOSE_PARENS COLON VOID
+	  opt_formal_parameter_list CLOSE_PARENS 
+	  {
+	    lexer.AllowAutoSemiInsertionAfter(1);
+	  }
+	  COLON VOID
 	  {
 		lexer.ConstraintsParsing = true;
 	  }
@@ -1763,11 +1765,11 @@ method_header
 		if (name.ExplicitInterface == null && (modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
 			modifiers |= Modifiers.VIRTUAL;
 			
-		var method = Method.Create (current_type, new TypeExpression (compiler.BuiltinTypes.Void, GetLocation ($12)),
-				     modifiers, name, current_local_parameters, (Attributes) $1, $14 != null);
+		var method = Method.Create (current_type, new TypeExpression (compiler.BuiltinTypes.Void, GetLocation ($13)),
+				     modifiers, name, current_local_parameters, (Attributes) $1, $15 != null);
 
-		if ($14 != null)
-			method.SetConstraints ((List<Constraints>) $14);
+		if ($15 != null)
+			method.SetConstraints ((List<Constraints>) $15);
 
 		if (doc_support)
 			method.DocComment = Lexer.consume_doc_comment ();
@@ -1779,13 +1781,17 @@ method_header
 	| opt_attributes
 	  opt_modifiers
 	  FUNCTION
-	  modifiers method_declaration_name OPEN_PARENS opt_formal_parameter_list CLOSE_PARENS COLON member_type
+	  modifiers method_declaration_name OPEN_PARENS opt_formal_parameter_list CLOSE_PARENS
+	  {
+	    lexer.AllowAutoSemiInsertionAfter(1);
+	  }
+	  COLON member_type
 	  {
 		MemberName name = (MemberName) $5;
 		report.Error (1585, name.Location, 
 			"Member modifier `{0}' must precede the member type and name", ModifiersExtensions.Name ((Modifiers) $4));
 
-		var method = Method.Create (current_type, (FullNamedExpression) $1,
+		var method = Method.Create (current_type, (FullNamedExpression) $11,
 					    0, name, (ParametersCompiled) $7, (Attributes) $1, false);
 
 		current_local_parameters = (ParametersCompiled) $7;
@@ -2344,7 +2350,7 @@ interface_declaration
 	  INTERFACE
 	  {
 		lexer.ConstraintsParsing = true;
-	    Lexer.AutoSemiInsertion = false;
+		lexer.AutoSemiInsertion = false;		
 	  }
 	  type_declaration_name
 	  {
@@ -2366,12 +2372,9 @@ interface_declaration
 		}
 		
 		lexer.parsing_modifiers = true;
+		lexer.AutoSemiInsertion = true;
 	  }
-	  OPEN_BRACE
-	  {
-	    Lexer.AutoSemiInsertion = true;
-	  }
-	  opt_interface_member_declarations CLOSE_BRACE
+	  OPEN_BRACE opt_interface_member_declarations CLOSE_BRACE
 	  {
 		--lexer.parsing_declaration;	  
 		if (doc_support)
@@ -2379,7 +2382,7 @@ interface_declaration
 	  }
 	  opt_semicolon 
 	  {
-	    lbag.AppendToMember (current_container, GetLocation ($12), GetLocation ($15));
+	    lbag.AppendToMember (current_container, GetLocation ($12), GetLocation ($14));
 		$$ = pop_current_class ();
 	  }
 	| opt_attributes opt_modifiers opt_partial INTERFACE error
@@ -2588,6 +2591,8 @@ conversion_operator_declarator
 			tmpComment = Lexer.consume_doc_comment ();
 			Lexer.doc_state = XmlCommentState.NotAllowed;
 		}
+		
+		lexer.AllowAutoSemiInsertionAfter(1);
 
 		$$ = new OperatorDeclaration (Operator.OpType.Implicit, (FullNamedExpression) $3, loc);
 		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($2), GetLocation ($4), GetLocation ($7));
@@ -3763,10 +3768,8 @@ invocation_expression
 	
 	;
 
-
-
 object_or_collection_initializer
-    : init_open_brace opt_member_initializer_list init_close_brace_or_complete_completion
+    : OPEN_BRACE_INIT opt_member_initializer_list close_brace_or_complete_completion
 	  {
 	    var expList = $2 as List<Expression>;
 	    if (expList == null) {
@@ -3779,7 +3782,7 @@ object_or_collection_initializer
 		lbag.AddLocation ($$, GetLocation ($3));
   		$$ = oi;
 	  }
-	| init_open_brace member_initializer_list COMMA init_close_brace
+	| OPEN_BRACE_INIT member_initializer_list COMMA CLOSE_BRACE
 	  {
 	  	var oi = new AsObjectInitializer ((List<Expression>) $2, GetLocation ($1));
 		if (current_variable != null) {
@@ -3789,33 +3792,6 @@ object_or_collection_initializer
 	  	$$ = oi;
 	  }
 	;
-
-init_open_brace
-	: OPEN_BRACE_INIT
-	  {
-      	oob_stack.Push (Lexer.AutoSemiInsertion);
-        Lexer.AutoSemiInsertion = false;
-	  }
-	;
-
-init_close_brace
- 	: CLOSE_BRACE
- 	  {
-      	Lexer.AutoSemiInsertion = (bool) oob_stack.Pop ();
-      	if (Lexer.AutoSemiInsertion)
-	 	  	Lexer.AllowAutoSemiAfterToken(Token.CLOSE_BRACE, true);
- 	  }
- 	;
- 	
-init_close_brace_or_complete_completion
-	: CLOSE_BRACE
- 	  {
-      	Lexer.AutoSemiInsertion = (bool) oob_stack.Pop ();
-      	if (Lexer.AutoSemiInsertion)
-	 	  	Lexer.AllowAutoSemiAfterToken(Token.CLOSE_BRACE, true);
- 	  }
-	| COMPLETE_COMPLETION
-	; 	
 
 opt_member_initializer_list
 	: /* empty */		{ $$ = null; }
@@ -4250,7 +4226,7 @@ dim_separators
 //	;
 
 array_initializer
-	: init_open_bracket init_close_bracket
+	: OPEN_BRACKET CLOSE_BRACKET
 	  {
 		var ai = new AsArrayInitializer (0, GetLocation ($1));
 		if (current_variable != null) {
@@ -4259,7 +4235,7 @@ array_initializer
 		lbag.AddLocation (ai, GetLocation ($2));
 		$$ = ai;
 	  }
-	| init_open_bracket_expr variable_initializer_list opt_comma init_close_bracket
+	| OPEN_BRACKET_EXPR variable_initializer_list opt_comma CLOSE_BRACKET
 	  {
 		var ai = new AsArrayInitializer ((List<Expression>) $2, GetLocation ($1));
 		if (current_variable != null) {
@@ -4273,29 +4249,6 @@ array_initializer
 		$$ = ai;
 	  }
 	;
-	
-init_open_bracket
-	: OPEN_BRACKET
-	  {
-      	oob_stack.Push (Lexer.AutoSemiInsertion);
-        Lexer.AutoSemiInsertion = false;
-	  }
-	;
-
-init_open_bracket_expr
-	: OPEN_BRACKET_EXPR
-	  {
-      	oob_stack.Push (Lexer.AutoSemiInsertion);
-        Lexer.AutoSemiInsertion = false;
-	  }
-	;
-
-init_close_bracket
- 	: CLOSE_BRACKET
- 	  {
-      	Lexer.AutoSemiInsertion = (bool) oob_stack.Pop ();
- 	  }
- 	;	
 	
 variable_initializer_list
 	: variable_initializer
@@ -5110,12 +5063,9 @@ class_declaration
 		
 		lexer.parsing_modifiers = true;
 		lexer.DynamicParsing = false;
+		lexer.AutoSemiInsertion = true;
 	  }
-	  OPEN_BRACE
-	  {
-		lexer.AutoSemiInsertion = true;		
-	  }
-	  opt_class_member_declarations CLOSE_BRACE
+	  OPEN_BRACE opt_class_member_declarations CLOSE_BRACE
 	  {
 		lexer.DynamicParsing = true;	  
 		--lexer.parsing_declaration;
@@ -5124,7 +5074,7 @@ class_declaration
 	  }
 	  opt_semicolon 
 	  {
-		lbag.AppendToMember (current_container, GetLocation ($12), GetLocation ($15), GetLocation ($17));
+		lbag.AppendToMember (current_container, GetLocation ($12), GetLocation ($14), GetLocation ($16));
 		$$ = pop_current_class ();
 	  }
 	;	
@@ -5436,7 +5386,6 @@ block
 	: OPEN_BRACE  
 	  {
 		++lexer.parsing_block;
-		lexer.AutoSemiInsertion = true;
 		start_block (GetLocation ($1));
 	  } 
 	  opt_statement_list block_end
@@ -5487,13 +5436,11 @@ opt_block_config
 block_end 
 	: CLOSE_BRACE 
 	  {
-	  	Lexer.AutoSemiInsertion = true;
 	 	--lexer.parsing_block;
 		$$ = end_block (GetLocation ($1));
 	  }
 	| COMPLETE_COMPLETION
 	  {
-	  	Lexer.AutoSemiInsertion = true;
 	 	--lexer.parsing_block;
 		$$ = end_block (lexer.Location);
 	  }
@@ -5508,7 +5455,6 @@ block_prepared
 	  }
 	  opt_statement_list CLOSE_BRACE 
 	  {
-	  	Lexer.AutoSemiInsertion = true;
 		--lexer.parsing_block;
 		$$ = end_block (GetLocation ($4));
 	  }
@@ -5622,7 +5568,6 @@ embedded_statement
 empty_statement
 	: SEMICOLON
 	  {
-	    Lexer.AutoSemiInsertion = true;
 		// Uses lexer.Location because semicolon location is not kept in quick mode
 		$$ = new EmptyStatement (lexer.Location);
 	  }
@@ -5748,13 +5693,6 @@ identifier_inside_body
 	  }
 	;
 
-stmnt_end_semicolon
-	: SEMICOLON
-	  {
-	  	Lexer.AutoSemiInsertion = true;
-	  }
-	;
-
 block_variable_declaration
 	: VAR identifier_inside_body COLON type 
 	  {
@@ -5763,7 +5701,7 @@ block_variable_declaration
 		current_block.AddLocalName (li);
 		current_variable = new BlockVariableDeclaration ((FullNamedExpression) $4, li);
 	  }
-	  opt_local_variable_initializer opt_variable_declarators stmnt_end_semicolon
+	  opt_local_variable_initializer opt_variable_declarators SEMICOLON
 	  {
 		$$ = current_variable;
 		current_variable = null;
@@ -5776,7 +5714,7 @@ block_variable_declaration
 		current_block.AddLocalName (li);
 		current_variable = new BlockVariableDeclaration (new VarExpr (GetLocation($1)), li);
 	  }
-	  opt_local_variable_initializer opt_variable_declarators stmnt_end_semicolon
+	  opt_local_variable_initializer opt_variable_declarators SEMICOLON
 	  {
 		$$ = current_variable;
 		current_variable = null;
@@ -5789,7 +5727,7 @@ block_variable_declaration
 		current_block.AddLocalName (li);
 		current_variable = new BlockConstantDeclaration ((FullNamedExpression) $4, li);
 	  }
-	  const_variable_initializer opt_const_declarators stmnt_end_semicolon
+	  const_variable_initializer opt_const_declarators SEMICOLON
 	  {
 		$$ = current_variable;
 		current_variable = null;
@@ -5925,7 +5863,7 @@ block_variable_initializer
 	;
 
 expression_statement
-	: statement_expression stmnt_end_semicolon
+	: statement_expression SEMICOLON
 	  {
 		$$ = $1;
 		lbag.AddStatement ($$, GetLocation ($2));
@@ -5976,33 +5914,32 @@ selection_statement
 	| switch_statement
 	; 
 
-stmnt_close_parens
-	: CLOSE_PARENS
-	  {
-	  	Lexer.AutoSemiInsertionAfter = 1;
-	  }
-	;
-
 if_statement
-	: IF open_parens_any boolean_expression stmnt_close_parens 
+	: IF open_parens_any boolean_expression CLOSE_PARENS 
+	  {
+	  	lexer.AllowAutoSemiInsertionAfter(1);
+	  }
 	  embedded_statement
 	  { 
-		if ($5 is EmptyStatement)
-			Warning_EmptyStatement (GetLocation ($5));
+		if ($6 is EmptyStatement)
+			Warning_EmptyStatement (GetLocation ($6));
 		
-		$$ = new If ((BooleanExpression) $3, (Statement) $5, GetLocation ($1));
+		$$ = new If ((BooleanExpression) $3, (Statement) $6, GetLocation ($1));
 		lbag.AddStatement ($$, GetLocation ($2), GetLocation ($4));
 	  }
-	| IF open_parens_any boolean_expression stmnt_close_parens
+	| IF open_parens_any boolean_expression CLOSE_PARENS
+	  {
+	  	lexer.AllowAutoSemiInsertionAfter(1);
+	  }
 	  embedded_statement ELSE embedded_statement
 	  {
-		$$ = new If ((BooleanExpression) $3, (Statement) $5, (Statement) $7, GetLocation ($1));
-		lbag.AddStatement ($$, GetLocation ($2), GetLocation ($4), GetLocation ($6));
+		$$ = new If ((BooleanExpression) $3, (Statement) $6, (Statement) $8, GetLocation ($1));
+		lbag.AddStatement ($$, GetLocation ($2), GetLocation ($4), GetLocation ($7));
 		
-		if ($5 is EmptyStatement)
-			Warning_EmptyStatement (GetLocation ($5));
-		if ($7 is EmptyStatement)
-			Warning_EmptyStatement (GetLocation ($7));
+		if ($6 is EmptyStatement)
+			Warning_EmptyStatement (GetLocation ($6));
+		if ($8 is EmptyStatement)
+			Warning_EmptyStatement (GetLocation ($8));
 	  }
 	| IF open_parens_any boolean_expression error
 	  {
@@ -6014,15 +5951,18 @@ if_statement
 	;
 
 switch_statement
-	: SWITCH open_parens_any expression CLOSE_PARENS OPEN_BRACE
+	: SWITCH open_parens_any expression CLOSE_PARENS 
 	  {
-	    Lexer.AutoSemiInsertion = true;
-		start_block (GetLocation ($5));
+	  	lexer.AllowAutoSemiInsertionAfter(1);
+	  } 
+	  OPEN_BRACE
+	  {
+		start_block (GetLocation ($6));
 	  }
 	  opt_switch_sections CLOSE_BRACE
 	  {
-		$$ = new Switch ((Expression) $3, (ExplicitBlock) current_block.Explicit, (List<SwitchSection>) $7, GetLocation ($1));	
-		end_block (GetLocation ($8));
+		$$ = new Switch ((Expression) $3, (ExplicitBlock) current_block.Explicit, (List<SwitchSection>) $8, GetLocation ($1));	
+		end_block (GetLocation ($9));
 		lbag.AddStatement ($$, GetLocation ($2), GetLocation ($4));
 	  }
 	| SWITCH open_parens_any expression error
@@ -6118,12 +6058,16 @@ iteration_statement
 	;
 
 while_statement
-	: WHILE open_parens_any boolean_expression stmnt_close_parens embedded_statement
+	: WHILE open_parens_any boolean_expression CLOSE_PARENS 
 	  {
-		if ($5 is EmptyStatement && lexer.peek_token () == Token.OPEN_BRACE)
-			Warning_EmptyStatement (GetLocation ($5));
+	    lexer.AllowAutoSemiInsertionAfter(1);
+	  }
+	  embedded_statement
+	  {
+		if ($6 is EmptyStatement && lexer.peek_token () == Token.OPEN_BRACE)
+			Warning_EmptyStatement (GetLocation ($6));
 	  
-		$$ = new While ((BooleanExpression) $3, (Statement) $5, GetLocation ($1));
+		$$ = new While ((BooleanExpression) $3, (Statement) $6, GetLocation ($1));
 		lbag.AddStatement ($$, GetLocation ($2), GetLocation ($4));
 	  }
 	| WHILE open_parens_any boolean_expression error
@@ -6135,32 +6079,19 @@ while_statement
 	  }
 	;
 
-stmnt_do
-	: DO
-	  {
-	    Lexer.AutoSemiInsertionAfter = 1;
-	  }
-	;
-
 do_statement
-	: stmnt_do embedded_statement WHILE open_parens_any boolean_expression CLOSE_PARENS stmnt_end_semicolon
+	: DO embedded_statement WHILE open_parens_any boolean_expression CLOSE_PARENS SEMICOLON
 	  {
-	    Lexer.AutoSemiInsertion = true;
-	    
 		$$ = new Do ((Statement) $2, (BooleanExpression) $5, GetLocation ($1), GetLocation ($3));
 		lbag.AddStatement ($$, GetLocation ($3), GetLocation ($4), GetLocation ($6), GetLocation ($7));
 	  }
-	| stmnt_do embedded_statement error
+	| DO embedded_statement error
 	  {
-	    Lexer.AutoSemiInsertion = true;
-	    
 		Error_SyntaxError (yyToken);
 		$$ = new Do ((Statement) $2, null, GetLocation ($1), Location.Null);
 	  }
-	| stmnt_do embedded_statement WHILE open_parens_any boolean_expression error
+	| DO embedded_statement WHILE open_parens_any boolean_expression error
 	  {
-	    Lexer.AutoSemiInsertion = true;
-
 		Error_SyntaxError (yyToken);
 	  
 		$$ = new Do ((Statement) $2, (BooleanExpression) $5, GetLocation ($1), GetLocation ($3));
@@ -6189,10 +6120,14 @@ for_statement_cont
 	  {
 	    lexer.ForInParsing = false;
 	  } 
-	  expression stmnt_close_parens embedded_statement
+	  expression CLOSE_PARENS
 	  {
-		if ($6 is EmptyStatement && lexer.peek_token () == Token.OPEN_BRACE)
-			Warning_EmptyStatement (GetLocation ($6));
+	  	lexer.AllowAutoSemiInsertionAfter(1);
+	  }
+	  embedded_statement
+	  {
+		if ($7 is EmptyStatement && lexer.peek_token () == Token.OPEN_BRACE)
+			Warning_EmptyStatement (GetLocation ($7));
 
 		var blockVar = $1 as BlockVariableDeclaration;
 		if (blockVar != null) {
@@ -6202,7 +6137,7 @@ for_statement_cont
 			} else {
 				var locations = (Tuple<Location,Location>) $0;
 				
-				Foreach f = new Foreach (blockVar.TypeExpression, blockVar.Variable, (Expression) $4, (Statement) $6, current_block, AsForEachType.ForEachKey, locations.Item1);
+				Foreach f = new Foreach (blockVar.TypeExpression, blockVar.Variable, (Expression) $4, (Statement) $7, current_block, AsForEachType.ForEachKey, locations.Item1);
 				lbag.AddStatement (f, locations.Item2, GetLocation ($2), GetLocation ($5));
 				
 				end_block (GetLocation ($5));
@@ -6217,7 +6152,7 @@ for_statement_cont
 			} else {
 				var locations = (Tuple<Location,Location>) $0;
 				
-				Foreach f = new Foreach (varRef, (Expression) $4, (Statement) $6, current_block, AsForEachType.ForEachKey, locations.Item1);
+				Foreach f = new Foreach (varRef, (Expression) $4, (Statement) $7, current_block, AsForEachType.ForEachKey, locations.Item1);
 				lbag.AddStatement (f, locations.Item2, GetLocation ($2), GetLocation ($5));
 				
 				end_block (GetLocation ($5));
@@ -6261,7 +6196,6 @@ for_statement_cont
 	  }
 	| error
 	  {
-		Lexer.AutoSemiInsertion = true;
 		Error_SyntaxError (yyToken);
 		$$ = end_block (current_block.StartLocation);
 	  }
@@ -6280,7 +6214,6 @@ for_condition_and_iterator_part
 	// Handle errors in the case of opt_for_condition being followed by
 	// a close parenthesis
 	| opt_for_condition close_parens_close_brace {
-		Lexer.AutoSemiInsertion = true;
 		report.Error (1525, GetLocation ($2), "Unexpected symbol `}'");
 		For f = (For) oob_stack.Peek ();
 		f.Condition = (BooleanExpression) $1;
@@ -6289,13 +6222,13 @@ for_condition_and_iterator_part
 	;
 
 for_iterator_part
-	: opt_for_iterator stmnt_close_parens {
+	: opt_for_iterator CLOSE_PARENS {
 	  	For f = (For) oob_stack.Peek ();
 		f.Iterator = (Statement) $1;
+		lexer.AllowAutoSemiInsertionAfter(1);
 		$$ = GetLocation ($2);
 	  }
 	| opt_for_iterator CLOSE_BRACE {
-		Lexer.AutoSemiInsertion = true;
 		report.Error (1525, GetLocation ($2), "Unexpected symbol expected ')'");
 		For f = (For) oob_stack.Peek ();
 		f.Iterator = (Statement) $1;
@@ -6421,7 +6354,7 @@ jump_statement
 	;
 
 break_statement
-	: BREAK stmnt_end_semicolon
+	: BREAK SEMICOLON
 	  {
 		$$ = new Break (GetLocation ($1));
 		lbag.AddStatement ($$, GetLocation ($2));
@@ -6429,7 +6362,7 @@ break_statement
 	;
 
 continue_statement
-	: CONTINUE stmnt_end_semicolon
+	: CONTINUE SEMICOLON
 	  {
 		$$ = new Continue (GetLocation ($1));
 		lbag.AddStatement ($$, GetLocation ($2));
@@ -6442,18 +6375,18 @@ continue_statement
 	;
 
 goto_statement
-	: GOTO identifier_inside_body stmnt_end_semicolon 
+	: GOTO identifier_inside_body SEMICOLON 
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;
 		$$ = new Goto (lt.Value, GetLocation ($1));
 		lbag.AddStatement ($$, GetLocation ($2), GetLocation ($3));
 	  }
-	| GOTO CASE constant_expression stmnt_end_semicolon
+	| GOTO CASE constant_expression SEMICOLON
 	  {
 		$$ = new GotoCase ((Expression) $3, GetLocation ($1));
 		lbag.AddStatement ($$, GetLocation ($2), GetLocation ($4));
 	  }
-	| GOTO DEFAULT stmnt_end_semicolon 
+	| GOTO DEFAULT SEMICOLON 
 	  {
 		$$ = new GotoDefault (GetLocation ($1));
 		lbag.AddStatement ($$, GetLocation ($2), GetLocation ($3));
@@ -6461,41 +6394,38 @@ goto_statement
 	; 
 
 return_statement
-	: RETURN opt_expression stmnt_end_semicolon
+	: RETURN opt_expression SEMICOLON
 	  {
 		$$ = new Return ((Expression) $2, GetLocation ($1));
 		lbag.AddStatement ($$, GetLocation ($3));
 	  }
 	| RETURN expression error
 	  {
-	    Lexer.AutoSemiInsertion = true;
 		Error_SyntaxError (yyToken);
 		$$ = new Return ((Expression) $2, GetLocation ($1));
 	  }
 	| RETURN error
 	  {
-	    Lexer.AutoSemiInsertion = true;
 		Error_SyntaxError (yyToken);
 		$$ = new Return (null, GetLocation ($1));
 	  }
 	;
 
 throw_statement
-	: THROW opt_expression stmnt_end_semicolon
+	: THROW opt_expression SEMICOLON
 	  {
 		$$ = new Throw ((Expression) $2, GetLocation ($1));
 		lbag.AddStatement ($$, GetLocation ($3));
 	  }
 	| THROW error
 	  {
-	    Lexer.AutoSemiInsertion = true;
 		Error_SyntaxError (yyToken);
 		$$ = new Throw (null, GetLocation ($1));
 	  }
 	;
 
 yield_statement 
-	: identifier_inside_body RETURN opt_expression stmnt_end_semicolon
+	: identifier_inside_body RETURN opt_expression SEMICOLON
 	  {
 		var lt = (Tokenizer.LocatedToken) $1;
 		string s = lt.Value;
@@ -6513,8 +6443,6 @@ yield_statement
 	  }
 	| identifier_inside_body RETURN expression error
 	  {
-	    Lexer.AutoSemiInsertion = true;
-	  
 		Error_SyntaxError (yyToken);
 
 		var lt = (Tokenizer.LocatedToken) $1;
@@ -6531,7 +6459,7 @@ yield_statement
 		$$ = new Yield ((Expression) $3, lt.Location);
 		lbag.AddStatement ($$, GetLocation ($2));
 	  }
-	| identifier_inside_body BREAK stmnt_end_semicolon
+	| identifier_inside_body BREAK SEMICOLON
 	  {
 		var lt = (Tokenizer.LocatedToken) $1;
 		string s = lt.Value;
@@ -7355,10 +7283,10 @@ opt_COMPLETE_COMPLETION
 	| COMPLETE_COMPLETION
 	;
 
-//close_brace_or_complete_completion
-//	: CLOSE_BRACE
-//	| COMPLETE_COMPLETION
-//	;
+close_brace_or_complete_completion
+	: CLOSE_BRACE
+	| COMPLETE_COMPLETION
+	;
 	
 //
 // XML documentation code references micro parser
@@ -7753,7 +7681,6 @@ void start_anonymous (bool isLambda, ParametersCompiled parameters, TypeExpr ret
 	oob_stack.Push (current_local_parameters);
 	oob_stack.Push (current_variable);
 	oob_stack.Push (async_block);
-	oob_stack.Push (Lexer.AutoSemiInsertion);
 
 	current_local_parameters = parameters;
 	if (isLambda) {
@@ -7787,7 +7714,6 @@ AnonymousMethodExpression end_anonymous (ParametersBlock anon_block)
 	current_anonymous_method.Block = anon_block;
 	retval = current_anonymous_method;
 
-	Lexer.AutoSemiInsertion = (bool) oob_stack.Pop ();
 	async_block = (bool) oob_stack.Pop ();
 	current_variable = (BlockVariableDeclaration) oob_stack.Pop ();
 	current_local_parameters = (ParametersCompiled) oob_stack.Pop ();

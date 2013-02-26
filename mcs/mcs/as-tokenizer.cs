@@ -195,9 +195,16 @@ namespace Mono.ActionScript
 		int line = 1;
 		int col = 0;
 		int previous_col;
+		int prev_token;
+		int prev_token_line;
 		int current_token;
+		int current_token_line;
 		int parse_regex_xml = 0;
 		int parse_colon = 0;
+		bool allow_auto_semi = true;
+		int allow_auto_semi_after = 0;
+		bool has_temp_auto_semi_after_tokens = false;
+		List<int> temp_auto_semi_after_tokens = new List<int>();
 		readonly int tab_size;
 		bool handle_asx = false;
 		bool handle_namespace = true;
@@ -214,7 +221,9 @@ namespace Mono.ActionScript
 		int parsing_generic_less_than;
 		readonly bool doc_processing;
 		readonly LocatedTokenBuffer ltb;
-		
+
+		private static BitArray auto_semi_tokens = new BitArray(750, false);  
+
 		//
 		// Used mainly for parser optimizations. Some expressions for instance
 		// can appear only in block (including initializer, base initializer)
@@ -354,6 +363,32 @@ namespace Mono.ActionScript
 			set { handle_dynamic = value; }
 		}
 
+		public bool AutoSemiInsertion {
+			get { return allow_auto_semi; }
+			set { 
+				allow_auto_semi = value; 
+				allow_auto_semi_after = 0; 
+			}
+		}
+
+		public int AutoSemiInsertionAfter 
+		{
+			get { return allow_auto_semi_after; }
+			set { 
+				allow_auto_semi = true;
+				allow_auto_semi_after = value + 1;
+			}
+		}
+
+		public void AllowAutoSemiAfterToken (int token, bool allow)
+		{
+			auto_semi_tokens.Set (token, allow);
+			if (true) {
+				has_temp_auto_semi_after_tokens = true;
+				temp_auto_semi_after_tokens.Add (token);
+			}
+		}
+
 		public bool RegexXmlParsing {
 			get { return parse_regex_xml > 0; }
 		}
@@ -441,8 +476,13 @@ namespace Mono.ActionScript
 			public int parsing_generic_less_than;
 			public int parse_regex_xml;
 			public int parse_colon;
+			public bool allow_auto_semi;
+			public int allow_auto_semi_after;
 			public object val;
+			public int prev_token;
+			public int prev_token_line;
 			public int current_token;
+			public int current_token_line;
 
 			public Position (Tokenizer t)
 			{
@@ -463,7 +503,12 @@ namespace Mono.ActionScript
 				parsing_generic_less_than = t.parsing_generic_less_than;
 				parse_regex_xml = t.parse_regex_xml;
 				parse_colon = t.parse_colon;
+				allow_auto_semi = t.allow_auto_semi;
+				allow_auto_semi_after = t.allow_auto_semi_after;
+				prev_token = t.prev_token;
+				prev_token_line = t.prev_token_line;
 				current_token = t.current_token;
+				current_token_line = t.current_token_line;
 				val = t.val;
 			}
 		}
@@ -509,7 +554,12 @@ namespace Mono.ActionScript
 			parsing_generic_less_than = p.parsing_generic_less_than;
 			parse_regex_xml = p.parse_regex_xml;
 			parse_colon = p.parse_colon;
+			prev_token = p.prev_token;
+			prev_token_line = p.prev_token_line;
+			allow_auto_semi = p.allow_auto_semi;
+			allow_auto_semi_after = p.allow_auto_semi_after;
 			current_token = p.current_token;
+			current_token_line = p.current_token_line;
 			val = p.val;
 		}
 
@@ -550,6 +600,13 @@ namespace Mono.ActionScript
 			}
 
 			kwe.Next = new KeywordEntry<T> (kw, token);
+		}
+
+		static void AddAllowedAutoSemiTokens(int[] tokens) {
+			var len = tokens.Length;
+			for (var i = 0; i < len; i++) {
+				auto_semi_tokens.Set (tokens[i], true);
+			}
 		}
 
 		//
@@ -693,6 +750,37 @@ namespace Mono.ActionScript
 			AddPreprocessorKeyword ("pragma", PreprocessorDirective.Pragma);
 			AddPreprocessorKeyword ("line", PreprocessorDirective.Line);
 
+			// Semicolons will be auto-inserted after these tokens by default (unless manually disabled by the parser).
+			AddAllowedAutoSemiTokens(new int [] {
+				Token.CLOSE_BRACKET,
+				Token.CLOSE_PARENS,
+				Token.IDENTIFIER,
+				Token.LITERAL,
+				Token.OP_INC,
+				Token.OP_DEC,
+				Token.TRUE,
+				Token.FALSE,
+				Token.UNDEFINED,
+				Token.NULL,
+				Token.CHAR,
+				Token.INT,
+				Token.UINT,
+				Token.OBJECT,
+				Token.DECIMAL,
+				Token.BYTE,
+				Token.SBYTE,
+				Token.LONG,
+				Token.ULONG,
+				Token.VOID,
+				Token.DOUBLE,
+				Token.FLOAT,
+				Token.STRING,
+				Token.BOOL,
+				Token.BOOLEAN,
+				Token.SHORT,
+				Token.USHORT
+			});
+
 			csharp_format_info = NumberFormatInfo.InvariantInfo;
 			styles = NumberStyles.Float;
 		}
@@ -742,6 +830,8 @@ namespace Mono.ActionScript
 				break;
 			case Token.FUNCTION:
 				parsing_modifiers = false;
+				allow_auto_semi = false;
+				allow_auto_semi_after = 0;
 				bool is_get_set = false;
 				PushPosition();
 				var fn_token = token ();
@@ -763,6 +853,15 @@ namespace Mono.ActionScript
 			case Token.SET:
 				if (!handle_get_set)
 					res = -1;
+				break;
+			case Token.IF:
+			case Token.WHILE:
+			case Token.DO:
+			case Token.TRY:
+			case Token.CATCH:
+			case Token.ELSE:
+				allow_auto_semi = false;
+				allow_auto_semi_after = 0;
 				break;
 			case Token.DYNAMIC:
 				if (!handle_dynamic)
@@ -1103,6 +1202,7 @@ namespace Mono.ActionScript
 		{
 			int ptoken;
 			current_token = -1;
+			current_token_line = 0;
 
 			int bracket_level = 0;
 			bool is_type = false;
@@ -2023,7 +2123,10 @@ namespace Mono.ActionScript
 
 		public int token ()
 		{
+			prev_token = current_token;
+			prev_token_line = current_token_line;
 			current_token = xtoken ();
+			current_token_line = line;
 			return current_token;
 		}
 
@@ -3373,6 +3476,10 @@ namespace Mono.ActionScript
 			if (parse_colon > 0)
 				parse_colon--;
 
+			// Decrement allow auto semi counter (allows us to allow semicolon insertion only after next x symbols)
+			if (allow_auto_semi_after > 0)
+				allow_auto_semi_after--;
+
 			// Whether we have seen comments on the current line
 			bool comments_seen = false;
 			while ((c = get_char ()) != -1) {
@@ -3432,6 +3539,14 @@ namespace Mono.ActionScript
 					}
 					return Token.OPEN_BRACE;
 				case '}':
+					if (prev_token_line == line && prev_token != Token.SEMICOLON && !handle_asx && allow_auto_semi && 
+					  allow_auto_semi_after == 0 && auto_semi_tokens[prev_token]) {
+						putback (c);
+						warn_semi_inserted (Location);
+						return Token.SEMICOLON;
+					}
+					if (has_temp_auto_semi_after_tokens)
+						clear_temp_auto_semi_tokens ();
 					val = ltb.Create (current_source, ref_line, col);
 					return Token.CLOSE_BRACE;
 				case '[':
@@ -3842,6 +3957,14 @@ namespace Mono.ActionScript
 					return is_number (c);
 
 				case '\n': // white space
+					if (prev_token_line == line - 1 && prev_token != Token.SEMICOLON && !handle_asx && 
+					  allow_auto_semi && allow_auto_semi_after == 0 && auto_semi_tokens[prev_token]) {
+						putback (c);
+						warn_semi_inserted (Location);
+						return Token.SEMICOLON;
+					}
+					if (has_temp_auto_semi_after_tokens)
+						clear_temp_auto_semi_tokens ();
 					any_token_seen |= tokens_seen;
 					tokens_seen = false;
 					comments_seen = false;
@@ -4139,6 +4262,21 @@ namespace Mono.ActionScript
 		void reset_doc_comment ()
 		{
 			xml_comment_buffer.Length = 0;
+		}
+
+		void warn_semi_inserted(Location loc) 
+		{
+			Report.Warning (7093, 1, loc, "Semicolon automatically inserted on unterminated line.");
+		}
+
+		void clear_temp_auto_semi_tokens ()
+		{
+			var len = temp_auto_semi_after_tokens.Count;
+			for (var i = 0; i < len; i++) {
+				int token = temp_auto_semi_after_tokens[i];
+				auto_semi_tokens.Set (token, false);
+			}
+			has_temp_auto_semi_after_tokens = false;
 		}
 
 		public void cleanup ()

@@ -155,6 +155,8 @@ namespace Mono.CSharp
 
 		public Expression InferredResolveWithObjectType(ResolveContext rc, TypeSpec objType) 
 		{
+			if (objType.Name == "ExpandoObject")
+				objType = rc.BuiltinTypes.Dynamic;
 			inferredObjType = objType;
 			return Resolve (rc);
 		}
