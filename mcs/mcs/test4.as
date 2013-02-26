@@ -48,12 +48,15 @@ package com.zynga.zengine.classes
 			q++
 			++q
 
+			q = q
+				- 100
+
         	var x:XML = <spoof/>;
         
         	var f:Foo = new Foo()
         	var b:Bar = new Bar()
-        	var t:Boolean = 
-					true
+        	var t:Boolean 
+					= true
         	
         	if (f == b) 
         		trace ("foo")

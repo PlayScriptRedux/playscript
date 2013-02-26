@@ -27,21 +27,18 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
-    <DefineConstants>PLATFORM_MONOMAC;OPENGL</DefineConstants>
+    <DefineConstants>DYNAMIC_SUPPORT;PLATFORM_MONOMAC;OPENGL</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
-    <Reference Include="MonoMac, Version=0.0.0.0, Culture=neutral">
-      <Private>False</Private>
-    </Reference>
     <Reference Include="System.Xml" />
     <Reference Include="zlib.net">
       <HintPath>..\zlib.NET_104\bin\zlib.net.dll</HintPath>
     </Reference>
-    <Reference Include="test2">
-      <HintPath>..\..\mcs\test2.exe</HintPath>
+    <Reference Include="MonoMac, Version=0.0.0.0, Culture=neutral">
+      <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>

@@ -6633,7 +6633,7 @@ foreach_statement
 	  {
 	  	lexer.ForInParsing = false;
 	  } 
-	  expression CLOSE_PARENS 
+	  expression stmnt_close_parens 
 	  {
 		start_block (GetLocation ($3));
 		current_block.IsCompilerGenerated = true;

@@ -222,7 +222,8 @@ namespace Mono.ActionScript
 		readonly bool doc_processing;
 		readonly LocatedTokenBuffer ltb;
 
-		private static BitArray auto_semi_tokens = new BitArray(750, false);  
+		private static BitArray allowed_auto_semi_tokens = new BitArray(750, false);  
+		private static BitArray disallowed_next_auto_semi_tokens = new BitArray(750, false);  
 
 		//
 		// Used mainly for parser optimizations. Some expressions for instance
@@ -382,7 +383,7 @@ namespace Mono.ActionScript
 
 		public void AllowAutoSemiAfterToken (int token, bool allow)
 		{
-			auto_semi_tokens.Set (token, allow);
+			allowed_auto_semi_tokens.Set (token, allow);
 			if (true) {
 				has_temp_auto_semi_after_tokens = true;
 				temp_auto_semi_after_tokens.Add (token);
@@ -605,7 +606,14 @@ namespace Mono.ActionScript
 		static void AddAllowedAutoSemiTokens(int[] tokens) {
 			var len = tokens.Length;
 			for (var i = 0; i < len; i++) {
-				auto_semi_tokens.Set (tokens[i], true);
+				allowed_auto_semi_tokens.Set (tokens[i], true);
+			}
+		}
+
+		static void AddDisallowedNextAutoSemiTokens(int[] tokens) {
+			var len = tokens.Length;
+			for (var i = 0; i < len; i++) {
+				disallowed_next_auto_semi_tokens.Set (tokens[i], true);
 			}
 		}
 
@@ -781,6 +789,63 @@ namespace Mono.ActionScript
 				Token.USHORT
 			});
 
+			AddDisallowedNextAutoSemiTokens(new int [] {
+				Token.ADD,
+				Token.MINUS,
+				Token.DIV,
+				Token.PERCENT,
+				Token.STAR,
+				Token.DOT,
+				Token.DOT_AT,
+				Token.DOT_STAR,
+				Token.DOTDOT,
+				Token.DOTDOT_AT,
+				Token.DOTDOT_STAR,
+				Token.OP_SHIFT_LEFT,
+				Token.OP_SHIFT_RIGHT,
+				Token.OP_USHIFT_RIGHT,
+				Token.LOGICAL_AND_ASSIGN,
+				Token.LOGICAL_OR_ASSIGN,
+				Token.CLOSE_BRACKET,
+				Token.CLOSE_PARENS,
+				Token.OP_ADD_ASSIGN,
+				Token.OP_AT,
+				Token.OP_IN,
+				Token.AS,
+				Token.IN,
+				Token.ARROW,
+				Token.ASSIGN,
+				Token.COLON,
+				Token.COMMA,
+				Token.OP_ADD_ASSIGN,
+				Token.OP_SUB_ASSIGN,
+				Token.OP_MOD_ASSIGN,
+				Token.OP_MULT_ASSIGN,
+				Token.OP_DIV_ASSIGN,
+				Token.OP_COALESCING,
+				Token.OP_AND_ASSIGN,
+				Token.OP_OR_ASSIGN,
+				Token.OP_XOR_ASSIGN,
+				Token.OP_SHIFT_LEFT_ASSIGN,
+				Token.OP_SHIFT_RIGHT_ASSIGN,
+				Token.OP_USHIFT_RIGHT_ASSIGN,
+				Token.OP_EQ,
+				Token.OP_NE,
+				Token.OP_REF_EQ,
+				Token.OP_REF_NE,
+				Token.OP_LT,
+				Token.OP_GT,
+				Token.OP_GE,
+				Token.OP_LE,
+				Token.OP_AND,
+				Token.OP_OR,
+				Token.BITWISE_AND,
+				Token.BITWISE_OR,
+				Token.CARRET,
+				Token.INTERR,
+
+			});
+
 			csharp_format_info = NumberFormatInfo.InvariantInfo;
 			styles = NumberStyles.Float;
 		}
@@ -860,6 +925,7 @@ namespace Mono.ActionScript
 			case Token.TRY:
 			case Token.CATCH:
 			case Token.ELSE:
+			case Token.SWITCH:
 				allow_auto_semi = false;
 				allow_auto_semi_after = 0;
 				break;
@@ -1501,7 +1567,7 @@ namespace Mono.ActionScript
 			}
 
 			PushPosition ();
-			current_token = Token.NONE;
+//			current_token = Token.NONE;  // Doesn't work with auto semi-insertion - needs prev token history always
 			int next_token;
 			switch (xtoken ()) {
 			case Token.LITERAL:
@@ -2125,8 +2191,10 @@ namespace Mono.ActionScript
 		{
 			prev_token = current_token;
 			prev_token_line = current_token_line;
-			current_token = xtoken ();
+
+			current_token = xtoken (true);
 			current_token_line = line;
+
 			return current_token;
 		}
 
@@ -3463,7 +3531,7 @@ namespace Mono.ActionScript
 			return s;
 		}
 		
-		public int xtoken ()
+		public int xtoken (bool parse_token = false)
 		{
 			int d, c, next;
 
@@ -3539,13 +3607,18 @@ namespace Mono.ActionScript
 					}
 					return Token.OPEN_BRACE;
 				case '}':
-					if (prev_token_line == line && prev_token != Token.SEMICOLON && !handle_asx && allow_auto_semi && 
-					  allow_auto_semi_after == 0 && auto_semi_tokens[prev_token]) {
-						putback (c);
-						warn_semi_inserted (Location);
-						return Token.SEMICOLON;
+					if (parse_token && prev_token_line == line && prev_token != Token.SEMICOLON && !handle_asx && allow_auto_semi && 
+					  allow_auto_semi_after == 0 && allowed_auto_semi_tokens[prev_token]) {
+						PushPosition ();
+						next = xtoken ();
+						PopPosition ();
+						if (!disallowed_next_auto_semi_tokens[next]) {
+							putback (c);
+							warn_semi_inserted (Location);
+							return Token.SEMICOLON;
+						}
 					}
-					if (has_temp_auto_semi_after_tokens)
+					if (parse_token && has_temp_auto_semi_after_tokens)
 						clear_temp_auto_semi_tokens ();
 					val = ltb.Create (current_source, ref_line, col);
 					return Token.CLOSE_BRACE;
@@ -3957,13 +4030,18 @@ namespace Mono.ActionScript
 					return is_number (c);
 
 				case '\n': // white space
-					if (prev_token_line == line - 1 && prev_token != Token.SEMICOLON && !handle_asx && 
-					  allow_auto_semi && allow_auto_semi_after == 0 && auto_semi_tokens[prev_token]) {
-						putback (c);
-						warn_semi_inserted (Location);
-						return Token.SEMICOLON;
+					if (parse_token && prev_token_line == line - 1 && prev_token != Token.SEMICOLON && !handle_asx && 
+					  allow_auto_semi && allow_auto_semi_after == 0 && allowed_auto_semi_tokens[prev_token]) {
+						PushPosition ();
+						next = xtoken ();
+						PopPosition ();
+						if (!disallowed_next_auto_semi_tokens[next]) {
+							putback (c);
+							warn_semi_inserted (Location);
+							return Token.SEMICOLON;
+						}
 					}
-					if (has_temp_auto_semi_after_tokens)
+					if (parse_token && has_temp_auto_semi_after_tokens)
 						clear_temp_auto_semi_tokens ();
 					any_token_seen |= tokens_seen;
 					tokens_seen = false;
@@ -4274,7 +4352,7 @@ namespace Mono.ActionScript
 			var len = temp_auto_semi_after_tokens.Count;
 			for (var i = 0; i < len; i++) {
 				int token = temp_auto_semi_after_tokens[i];
-				auto_semi_tokens.Set (token, false);
+				allowed_auto_semi_tokens.Set (token, false);
 			}
 			has_temp_auto_semi_after_tokens = false;
 		}
