@@ -27,7 +27,6 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-#if !MOONLIGHT
 using System.Diagnostics;
 using System.Globalization;
 using System.Reflection;
@@ -66,7 +65,7 @@ namespace System.IO.IsolatedStorage {
 #endif
 			}
 
-#if NET_4_0 || MOBILE
+#if NET_4_0
 			if (isf.IsDisposed)
 				throw new ObjectDisposedException ("IsolatedStorageFile");
 			if (isf.IsClosed)
@@ -214,7 +213,7 @@ namespace System.IO.IsolatedStorage {
 			base.Flush ();
 		}
 
-#if NET_4_0 || MOBILE
+#if NET_4_0
 		public override void Flush (bool flushToDisk)
 		{
 			base.Flush (flushToDisk);
@@ -257,4 +256,3 @@ namespace System.IO.IsolatedStorage {
 		}
 	}
 }
-#endif

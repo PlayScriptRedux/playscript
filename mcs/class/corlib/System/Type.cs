@@ -33,7 +33,9 @@
 
 using System.Diagnostics;
 using System.Reflection;
+#if !FULL_AOT_RUNTIME
 using System.Reflection.Emit;
+#endif
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -708,8 +710,10 @@ namespace System {
 			Type type = this;
 			if (type is MonoType)
 				return GetTypeCodeInternal (type);
+#if !FULL_AOT_RUNTIME
 			if (type is TypeBuilder)
 				return ((TypeBuilder)type).GetTypeCodeInternal ();
+#endif
 
 			type = type.UnderlyingSystemType;
 
@@ -876,8 +880,10 @@ namespace System {
 			if (Equals (c))
 				return true;
 
+#if !FULL_AOT_RUNTIME
 			if (c is TypeBuilder)
 				return ((TypeBuilder)c).IsAssignableTo (this);
+#endif
 
 			/* Handle user defined type classes */
 			if (!IsSystemType) {
@@ -1225,10 +1231,10 @@ namespace System {
 		{
 			object [] att = GetCustomAttributes (typeof (DefaultMemberAttribute), true);
 			if (att.Length == 0)
-				return new MemberInfo [0];
+				return EmptyArray<MemberInfo>.Value;
 
 			MemberInfo [] member = GetMember (((DefaultMemberAttribute) att [0]).MemberName);
-			return (member != null) ? member : new MemberInfo [0];
+			return (member != null) ? member : EmptyArray<MemberInfo>.Value;
 		}
 
 		public virtual MemberInfo[] FindMembers (MemberTypes memberType, BindingFlags bindingAttr,
@@ -1437,7 +1443,11 @@ namespace System {
 			}
 
 			if (hasUserType) {
+#if FULL_AOT_RUNTIME
+				throw new NotSupportedException ("User types are not supported under full aot");
+#else
 				return new MonoGenericClass (this, typeArguments);
+#endif
 			}
 
 			Type res = MakeGenericType (this, systemTypes);

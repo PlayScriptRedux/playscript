@@ -300,6 +300,15 @@ namespace Mono.CSharp
 			return true;
 		}
 
+		public virtual void ExpandBaseInterfaces ()
+		{
+			if (containers != null) {
+				foreach (TypeContainer tc in containers) {
+					tc.ExpandBaseInterfaces ();
+				}
+			}
+		}
+
 		protected virtual void DefineNamespace ()
 		{
 			if (containers != null) {
@@ -367,16 +376,13 @@ namespace Mono.CSharp
 		public string GetSignatureForMetadata ()
 		{
 #if STATIC
-			var name = TypeNameParser.Escape (MemberName.Basename);
-
 			if (Parent is TypeDefinition) {
-				return Parent.GetSignatureForMetadata () + "+" + name;
+				return Parent.GetSignatureForMetadata () + "+" + TypeNameParser.Escape (MemberName.Basename);
 			}
 
-			if (Parent != null && Parent.MemberName != null)
-				return Parent.GetSignatureForMetadata () + "." + name;
-
-			return name;
+			var sb = new StringBuilder ();
+			CreateMetadataName (sb);
+			return sb.ToString ();
 #else
 			throw new NotImplementedException ();
 #endif
@@ -695,6 +701,12 @@ namespace Mono.CSharp
 		public bool IsPartial {
 			get {
 				return (ModFlags & Modifiers.PARTIAL) != 0;
+			}
+		}
+
+		bool ITypeDefinition.IsTypeForwarder {
+			get {
+				return false;
 			}
 		}
 
@@ -1056,6 +1068,9 @@ namespace Mono.CSharp
 
 		internal override void GenerateDocComment (DocumentationBuilder builder)
 		{
+			if (IsPartialPart)
+				return;
+
 			base.GenerateDocComment (builder);
 
 			foreach (var member in members)
@@ -1274,7 +1289,7 @@ namespace Mono.CSharp
 			//
 			// Sets .size to 1 for structs with no instance fields
 			//
-			int type_size = Kind == MemberKind.Struct && first_nonstatic_field == null ? 1 : 0;
+			int type_size = Kind == MemberKind.Struct && first_nonstatic_field == null && !(this is StateMachine) ? 1 : 0;
 
 			var parent_def = Parent as TypeDefinition;
 			if (parent_def == null) {
@@ -1387,22 +1402,12 @@ namespace Mono.CSharp
 
 			if (proxy_method == null) {
 				string name = CompilerGeneratedContainer.MakeName (method.Name, null, "BaseCallProxy", hoisted_base_call_proxies.Count);
-				var base_parameters = new Parameter[method.Parameters.Count];
-				for (int i = 0; i < base_parameters.Length; ++i) {
-					var base_param = method.Parameters.FixedParameters[i];
-					base_parameters[i] = new Parameter (new TypeExpression (method.Parameters.Types[i], Location),
-						base_param.Name, base_param.ModFlags, null, Location);
-					base_parameters[i].Resolve (this, i);
-				}
-
-				var cloned_params = ParametersCompiled.CreateFullyResolved (base_parameters, method.Parameters.Types);
-				if (method.Parameters.HasArglist) {
-					cloned_params.FixedParameters[0] = new Parameter (null, "__arglist", Parameter.Modifier.NONE, null, Location);
-					cloned_params.Types[0] = Module.PredefinedTypes.RuntimeArgumentHandle.Resolve ();
-				}
 
 				MemberName member_name;
 				TypeArguments targs = null;
+				TypeSpec return_type = method.ReturnType;
+				var local_param_types = method.Parameters.Types;
+
 				if (method.IsGeneric) {
 					//
 					// Copy all base generic method type parameters info
@@ -1414,19 +1419,42 @@ namespace Mono.CSharp
 					targs.Arguments = new TypeSpec[hoisted_tparams.Length];
 					for (int i = 0; i < hoisted_tparams.Length; ++i) {
 						var tp = hoisted_tparams[i];
-						tparams.Add (new TypeParameter (tp, null, new MemberName (tp.Name, Location), null));
+						var local_tp = new TypeParameter (tp, null, new MemberName (tp.Name, Location), null);
+						tparams.Add (local_tp);
 
 						targs.Add (new SimpleName (tp.Name, Location));
-						targs.Arguments[i] = tp;
+						targs.Arguments[i] = local_tp.Type;
 					}
 
 					member_name = new MemberName (name, tparams, Location);
+
+					//
+					// Mutate any method type parameters from original
+					// to newly created hoisted version
+					//
+					var mutator = new TypeParameterMutator (hoisted_tparams, tparams);
+					return_type = mutator.Mutate (return_type);
+					local_param_types = mutator.Mutate (local_param_types);
 				} else {
 					member_name = new MemberName (name);
 				}
 
+				var base_parameters = new Parameter[method.Parameters.Count];
+				for (int i = 0; i < base_parameters.Length; ++i) {
+					var base_param = method.Parameters.FixedParameters[i];
+					base_parameters[i] = new Parameter (new TypeExpression (local_param_types [i], Location),
+						base_param.Name, base_param.ModFlags, null, Location);
+					base_parameters[i].Resolve (this, i);
+				}
+
+				var cloned_params = ParametersCompiled.CreateFullyResolved (base_parameters, method.Parameters.Types);
+				if (method.Parameters.HasArglist) {
+					cloned_params.FixedParameters[0] = new Parameter (null, "__arglist", Parameter.Modifier.NONE, null, Location);
+					cloned_params.Types[0] = Module.PredefinedTypes.RuntimeArgumentHandle.Resolve ();
+				}
+
 				// Compiler generated proxy
-				proxy_method = new Method (this, new TypeExpression (method.ReturnType, Location),
+				proxy_method = new Method (this, new TypeExpression (return_type, Location),
 					Modifiers.PRIVATE | Modifiers.COMPILER_GENERATED | Modifiers.DEBUGGER_HIDDEN,
 					member_name, cloned_params, null);
 
@@ -1519,12 +1547,14 @@ namespace Mono.CSharp
 					    GetSignatureForError (), cycle.GetSignatureForError ());
 
 					iface_exprs = null;
+					PartialContainer.iface_exprs = null;
 				} else {
 					Report.Error (146, Location,
 						"Circular base class dependency involving `{0}' and `{1}'",
 						GetSignatureForError (), cycle.GetSignatureForError ());
 
 					base_type = null;
+					PartialContainer.base_type = null;
 				}
 			}
 
@@ -1538,26 +1568,6 @@ namespace Mono.CSharp
 						continue;
 
 					TypeBuilder.AddInterfaceImplementation (iface_type.GetMetaInfo ());
-
-					// Ensure the base is always setup
-					var compiled_iface = iface_type.MemberDefinition as Interface;
-					if (compiled_iface != null) {
-						// TODO: Need DefineBaseType only
-						compiled_iface.DefineContainer ();
-					}
-
-					if (iface_type.Interfaces != null) {
-						var base_ifaces = new List<TypeSpec> (iface_type.Interfaces);
-						for (int i = 0; i < base_ifaces.Count; ++i) {
-							var ii_iface_type = base_ifaces[i];
-							if (spec.AddInterfaceDefined (ii_iface_type)) {
-								TypeBuilder.AddInterfaceImplementation (ii_iface_type.GetMetaInfo ());
-
-								if (ii_iface_type.Interfaces != null)
-									base_ifaces.AddRange (ii_iface_type.Interfaces);
-							}
-						}
-					}
 				}
 			}
 
@@ -1578,6 +1588,70 @@ namespace Mono.CSharp
 			}
 
 			return true;
+		}
+
+		public override void ExpandBaseInterfaces ()
+		{
+			if (!IsPartialPart)
+				DoExpandBaseInterfaces ();
+
+			base.ExpandBaseInterfaces ();
+		}
+
+		public void DoExpandBaseInterfaces ()
+		{
+			if ((caching_flags & Flags.InterfacesExpanded) != 0)
+				return;
+
+			caching_flags |= Flags.InterfacesExpanded;
+
+			//
+			// Expand base interfaces. It cannot be done earlier because all partial
+			// interface parts need to be defined before the type they are used from
+			//
+			if (iface_exprs != null) {
+				foreach (var iface in iface_exprs) {
+					if (iface == null)
+						continue;
+
+					var td = iface.MemberDefinition as TypeDefinition;
+					if (td != null)
+						td.DoExpandBaseInterfaces ();
+
+					if (iface.Interfaces == null)
+						continue;
+
+					foreach (var biface in iface.Interfaces) {
+						if (spec.AddInterfaceDefined (biface)) {
+							TypeBuilder.AddInterfaceImplementation (biface.GetMetaInfo ());
+						}
+					}
+				}
+			}
+
+			//
+			// Include all base type interfaces too, see ImportTypeBase for details
+			//
+			if (base_type != null) {
+				var td = base_type.MemberDefinition as TypeDefinition;
+				if (td != null)
+					td.DoExpandBaseInterfaces ();
+
+				//
+				// Simply use base interfaces only, they are all expanded which makes
+				// it easy to handle generic type argument propagation with single
+				// inflator only.
+				//
+				// interface IA<T> : IB<T>
+				// interface IB<U> : IC<U>
+				// interface IC<V>
+				//
+				if (base_type.Interfaces != null) {
+					foreach (var iface in base_type.Interfaces) {
+						spec.AddInterfaceDefined (iface);
+					}
+				}
+			}
 		}
 
 		public override void PrepareEmit ()
@@ -1763,9 +1837,6 @@ namespace Mono.CSharp
 					if (compiled_iface != null)
 						compiled_iface.Define ();
 
-					if (Kind == MemberKind.Interface)
-						MemberCache.AddInterface (iface_type);
-
 					ObsoleteAttribute oa = iface_type.GetAttributeObsolete ();
 					if (oa != null && !IsObsolete)
 						AttributeTester.Report_ObsoleteMessage (oa, iface_type.GetSignatureForError (), Location, Report);
@@ -1783,19 +1854,23 @@ namespace Mono.CSharp
 					}
 
 					if (iface_type.IsGenericOrParentIsGeneric) {
-						if (spec.Interfaces != null) {
-							foreach (var prev_iface in iface_exprs) {
-								if (prev_iface == iface_type)
-									break;
+						foreach (var prev_iface in iface_exprs) {
+							if (prev_iface == iface_type || prev_iface == null)
+								break;
 
-								if (!TypeSpecComparer.Unify.IsEqual (iface_type, prev_iface))
-									continue;
+							if (!TypeSpecComparer.Unify.IsEqual (iface_type, prev_iface))
+								continue;
 
-								Report.Error (695, Location,
-									"`{0}' cannot implement both `{1}' and `{2}' because they may unify for some type parameter substitutions",
-									GetSignatureForError (), prev_iface.GetSignatureForError (), iface_type.GetSignatureForError ());
-							}
+							Report.Error (695, Location,
+								"`{0}' cannot implement both `{1}' and `{2}' because they may unify for some type parameter substitutions",
+								GetSignatureForError (), prev_iface.GetSignatureForError (), iface_type.GetSignatureForError ());
 						}
+					}
+				}
+
+				if (Kind == MemberKind.Interface) {
+					foreach (var iface in spec.Interfaces) {
+						MemberCache.AddInterface (iface);
 					}
 				}
 			}
@@ -1814,11 +1889,6 @@ namespace Mono.CSharp
 							"A generic type cannot derive from `{0}' because it is an attribute class",
 							base_type.GetSignatureForError ());
 					}
-				}
-
-				if (base_type.Interfaces != null) {
-					foreach (var iface in base_type.Interfaces)
-						spec.AddInterface (iface);
 				}
 
 				var baseContainer = base_type.MemberDefinition as ClassOrStruct;
@@ -3827,6 +3897,16 @@ namespace Mono.CSharp
 			get { return IsExplicitImpl || base.IsUsed; }
 		}
 
+		public override void SetConstraints (List<Constraints> constraints_list)
+		{
+			if (((ModFlags & Modifiers.OVERRIDE) != 0 || IsExplicitImpl)) {
+				Report.Error (460, Location,
+					"`{0}': Cannot specify constraints for overrides and explicit interface implementation methods",
+					GetSignatureForError ());
+			}
+
+			base.SetConstraints (constraints_list);
+		}
 	}
 
 	public abstract class MemberBase : MemberCore

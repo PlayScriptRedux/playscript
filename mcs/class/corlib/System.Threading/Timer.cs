@@ -35,13 +35,9 @@ namespace System.Threading
 {
 	[ComVisible (true)]
 	public sealed class Timer
-#if MOONLIGHT
-		: IDisposable
-#else
 		: MarshalByRefObject, IDisposable
-#endif
 	{
-		static Scheduler scheduler = Scheduler.Instance;
+		static readonly Scheduler scheduler = Scheduler.Instance;
 #region Timer instance fields
 		TimerCallback callback;
 		object state;
@@ -343,11 +339,7 @@ namespace System.Threading
 							list.RemoveAt (i);
 							count--;
 							i--;
-#if MOONLIGHT
-							ThreadPool.QueueUserWorkItem (TimerCaller, timer);
-#else
 							ThreadPool.UnsafeQueueUserWorkItem (TimerCaller, timer);
-#endif
 							long period = timer.period_ms;
 							long due_time = timer.due_time_ms;
 							bool no_more = (period == -1 || ((period == 0 || period == Timeout.Infinite) && due_time != Timeout.Infinite));
@@ -381,10 +373,14 @@ namespace System.Threading
 						//PrintList ();
 						ms_wait = -1;
 						if (min_next_run != Int64.MaxValue) {
-							long diff = min_next_run - DateTime.GetTimeMonotonic (); 
-							ms_wait = (int)(diff / TimeSpan.TicksPerMillisecond);
-							if (ms_wait < 0)
-								ms_wait = 0;
+							long diff = (min_next_run - DateTime.GetTimeMonotonic ())  / TimeSpan.TicksPerMillisecond;
+							if (diff > Int32.MaxValue)
+								ms_wait = Int32.MaxValue - 1;
+							else {
+								ms_wait = (int)(diff);
+								if (ms_wait < 0)
+									ms_wait = 0;
+							}
 						}
 					}
 					// Wait until due time or a timer is changed and moves from/to the first place in the list.

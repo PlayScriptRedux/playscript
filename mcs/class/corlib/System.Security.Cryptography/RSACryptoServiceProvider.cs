@@ -29,8 +29,6 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#if !MOONLIGHT
-
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -118,7 +116,7 @@ namespace System.Security.Cryptography {
 			}
 		}
 
-		private static bool useMachineKeyStore = false;
+		private static bool useMachineKeyStore;
 
 		public static bool UseMachineKeyStore {
 			get { return useMachineKeyStore; }
@@ -408,6 +406,3 @@ namespace System.Security.Cryptography {
 		}
 	}
 }
-
-#endif
-

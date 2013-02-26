@@ -247,9 +247,11 @@ static void *thread_start_routine (gpointer args)
 {
 	struct _WapiHandle_thread *thread = (struct _WapiHandle_thread *)args;
 	int thr_ret;
-	
-	thr_ret = mono_gc_pthread_detach (pthread_self ());
-	g_assert (thr_ret == 0);
+
+	if (!(thread->create_flags & CREATE_NO_DETACH)) {
+		thr_ret = mono_gc_pthread_detach (pthread_self ());
+		g_assert (thr_ret == 0);
+	}
 
 	thr_ret = pthread_setspecific (thread_hash_key,
 				       (void *)thread->handle);
@@ -927,7 +929,7 @@ guint32 QueueUserAPC (WapiApcProc apc_callback, gpointer handle,
 		return (0);
 	}
 
-	g_assert (thread_handle->id == GetCurrentThreadId ());
+	g_assert (thread_handle->id == (pthread_t)GetCurrentThreadId ());
 	/* No locking/memory barriers are needed here */
 	thread_handle->has_apc = TRUE;
 	return(1);

@@ -43,12 +43,8 @@ using System.Text;
 
 namespace System.Net 
 {
-#if MOONLIGHT
-	internal class HttpWebResponse : WebResponse, ISerializable, IDisposable {
-#else
 	[Serializable]
 	public class HttpWebResponse : WebResponse, ISerializable, IDisposable {
-#endif
 		Uri uri;
 		WebHeaderCollection webHeaders;
 		CookieCollection cookieCollection;
@@ -352,10 +348,11 @@ namespace System.Net
 			foreach (var cookie in parser.Parse ()) {
 				if (cookie.Domain == "") {
 					cookie.Domain = uri.Host;
-					cookie.ExactDomain = true;
+					cookie.HasDomain = false;
 				}
 
-				if (!CookieContainer.CheckSameOrigin (uri, cookie.Domain))
+				if (cookie.HasDomain &&
+				    !CookieContainer.CheckSameOrigin (uri, cookie.Domain))
 					continue;
 
 				cookieCollection.Add (cookie);

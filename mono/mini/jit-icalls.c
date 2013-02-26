@@ -765,6 +765,37 @@ mono_array_new_3 (MonoMethod *cm, guint32 length1, guint32 length2, guint32 leng
 	return mono_array_new_full (domain, cm->klass, lengths, lower_bounds);
 }
 
+MonoArray *
+mono_array_new_4 (MonoMethod *cm, guint32 length1, guint32 length2, guint32 length3, guint32 length4)
+{
+	MonoDomain *domain = mono_domain_get ();
+	uintptr_t lengths [4];
+	intptr_t *lower_bounds;
+	int pcount;
+	int rank;
+
+	MONO_ARCH_SAVE_REGS;
+
+	pcount = mono_method_signature (cm)->param_count;
+	rank = cm->klass->rank;
+
+	lengths [0] = length1;
+	lengths [1] = length2;
+	lengths [2] = length3;
+	lengths [3] = length4;
+
+	g_assert (rank == pcount);
+
+	if (cm->klass->byval_arg.type == MONO_TYPE_ARRAY) {
+		lower_bounds = alloca (sizeof (intptr_t) * rank);
+		memset (lower_bounds, 0, sizeof (intptr_t) * rank);
+	} else {
+		lower_bounds = NULL;
+	}
+
+	return mono_array_new_full (domain, cm->klass, lengths, lower_bounds);
+}
+
 gpointer
 mono_class_static_field_address (MonoDomain *domain, MonoClassField *field)
 {
@@ -1122,3 +1153,47 @@ mono_get_native_calli_wrapper (MonoImage *image, MonoMethodSignature *sig, gpoin
 
 	return mono_compile_method (m);
 }
+
+MonoObject*
+mono_object_tostring_gsharedvt (gpointer mp, MonoMethod *cmethod, MonoClass *klass)
+{
+	MonoMethod *m;
+	int vt_slot;
+	gpointer this_arg;
+
+	/* Lookup the virtual method */
+	mono_class_setup_vtable (klass);
+	g_assert (klass->vtable);
+	vt_slot = mono_method_get_vtable_slot (cmethod);
+	m = klass->vtable [vt_slot];
+	if (klass->valuetype)
+		this_arg = mp;
+	else
+		this_arg = *(gpointer*)mp;
+	return mono_runtime_invoke (m, this_arg, NULL, NULL);
+}
+
+int
+mono_object_gethashcode_gsharedvt (gpointer mp, MonoMethod *cmethod, MonoClass *klass)
+{
+	MonoMethod *m;
+	int vt_slot;
+	gpointer this_arg;
+	MonoObject *res;
+	gpointer p;
+
+	/* Lookup the virtual method */
+	mono_class_setup_vtable (klass);
+	g_assert (klass->vtable);
+	vt_slot = mono_method_get_vtable_slot (cmethod);
+	m = klass->vtable [vt_slot];
+	if (klass->valuetype)
+		this_arg = mp;
+	else
+		this_arg = *(gpointer*)mp;
+	// FIXME: This boxes the result
+	res = mono_runtime_invoke (m, this_arg, NULL, NULL);
+	p = mono_object_unbox (res);
+	return *(int*)p;
+}
+

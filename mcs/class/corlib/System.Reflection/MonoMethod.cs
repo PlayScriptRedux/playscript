@@ -1,12 +1,13 @@
 //
-// System.Reflection/MonoMethod.cs
-// The class used to represent methods from the mono runtime.
+// MonoMethod.cs: The class used to represent methods from the mono runtime.
 //
-// Author:
+// Authors:
 //   Paolo Molaro (lupus@ximian.com)
+//   Marek Safar (marek.safar@gmail.com)
 //
 // (C) 2001 Ximian, Inc.  http://www.ximian.com
 // Copyright (C) 2004-2005 Novell, Inc (http://www.novell.com)
+// Copyright (C) 2012 Xamarin Inc (http://www.xamarin.com)
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -33,7 +34,9 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
+#if !FULL_AOT_RUNTIME
 using System.Reflection.Emit;
+#endif
 using System.Security;
 using System.Threading;
 using System.Text;
@@ -98,7 +101,7 @@ namespace System.Reflection {
 		}
 
 		[MethodImplAttribute(MethodImplOptions.InternalCall)]
-		static extern UnmanagedMarshal get_retval_marshal (IntPtr handle);
+		static extern MarshalAsAttribute get_retval_marshal (IntPtr handle);
 
 		static internal ParameterInfo GetReturnParameterInfo (MonoMethod method)
 		{
@@ -167,16 +170,24 @@ namespace System.Reflection {
 
 		public override ParameterInfo[] GetParameters ()
 		{
-			ParameterInfo[] src = MonoMethodInfo.GetParametersInfo (mhandle, this);
-			ParameterInfo[] res = new ParameterInfo [src.Length];
-			src.CopyTo (res, 0);
-			return res;
+			var src = MonoMethodInfo.GetParametersInfo (mhandle, this);
+			if (src.Length == 0)
+				return src;
+
+			// Have to clone because GetParametersInfo icall returns cached value
+			var dest = new ParameterInfo [src.Length];
+			Array.FastCopy (src, 0, dest, 0, src.Length);
+			return dest;
+		}
+
+		internal override ParameterInfo[] GetParametersInternal ()
+		{
+			return MonoMethodInfo.GetParametersInfo (mhandle, this);
 		}
 		
-		internal override int GetParameterCount ()
+		internal override int GetParametersCount ()
 		{
-			var pi = MonoMethodInfo.GetParametersInfo (mhandle, this);
-			return pi == null ? 0 : pi.Length;
+			return MonoMethodInfo.GetParametersInfo (mhandle, this).Length;
 		}
 
 		/*
@@ -192,20 +203,11 @@ namespace System.Reflection {
 		{
 			if (binder == null)
 				binder = Binder.DefaultBinder;
-			/*Avoid allocating an array every time*/
-			ParameterInfo[] pinfo = MonoMethodInfo.GetParametersInfo (mhandle, this);
 
-			if ((parameters == null && pinfo.Length != 0) || (parameters != null && parameters.Length != pinfo.Length))
-				throw new TargetParameterCountException ("parameters do not match signature");
-			
-			if ((invokeAttr & BindingFlags.ExactBinding) == 0) {
-				if (!Binder.ConvertArgs (binder, parameters, pinfo, culture))
-					throw new ArgumentException ("failed to convert parameters");
-			} else {
-				for (int i = 0; i < pinfo.Length; i++)
-					if (parameters[i].GetType() != pinfo[i].ParameterType)
-						throw new ArgumentException ("parameters do not match signature");
-			}
+			/*Avoid allocating an array every time*/
+			ParameterInfo[] pinfo = GetParametersInternal ();
+			if (!binder.ConvertArgs (parameters, pinfo, culture, (invokeAttr & BindingFlags.ExactBinding) != 0))
+				throw new ArgumentException ("failed to convert parameters");
 
 #if !NET_2_1
 			if (SecurityManager.SecurityEnabled) {
@@ -346,7 +348,7 @@ namespace System.Reflection {
 				sb.Append ("]");
 			}
 			sb.Append ("(");
-			ParameterInfo[] p = GetParameters ();
+			ParameterInfo[] p = GetParametersInternal ();
 			for (int i = 0; i < p.Length; ++i) {
 				if (i > 0)
 					sb.Append (", ");
@@ -401,7 +403,11 @@ namespace System.Reflection {
 			}
 
 			if (hasUserType)
+#if FULL_AOT_RUNTIME
+				throw new NotSupportedException ("User types are not supported under full aot");
+#else
 				return new MethodOnTypeBuilderInst (this, methodInstantiation);
+#endif
 
 			MethodInfo ret = MakeGenericMethod_impl (methodInstantiation);
 			if (ret == null)
@@ -478,7 +484,12 @@ namespace System.Reflection {
 			return MonoMethodInfo.GetParametersInfo (mhandle, this);
 		}
 
-		internal override int GetParameterCount ()
+		internal override ParameterInfo[] GetParametersInternal ()
+		{
+			return MonoMethodInfo.GetParametersInfo (mhandle, this);
+		}		
+
+		internal override int GetParametersCount ()
 		{
 			var pi = MonoMethodInfo.GetParametersInfo (mhandle, this);
 			return pi == null ? 0 : pi.Length;
@@ -498,19 +509,10 @@ namespace System.Reflection {
 			if (binder == null)
 				binder = Binder.DefaultBinder;
 
-			ParameterInfo[] pinfo = GetParameters ();
+			ParameterInfo[] pinfo = MonoMethodInfo.GetParametersInfo (mhandle, this);
 
-			if ((parameters == null && pinfo.Length != 0) || (parameters != null && parameters.Length != pinfo.Length))
-				throw new TargetParameterCountException ("parameters do not match signature");
-			
-			if ((invokeAttr & BindingFlags.ExactBinding) == 0) {
-				if (!Binder.ConvertArgs (binder, parameters, pinfo, culture))
-					throw new ArgumentException ("failed to convert parameters");
-			} else {
-				for (int i = 0; i < pinfo.Length; i++)
-					if (parameters[i].GetType() != pinfo[i].ParameterType)
-						throw new ArgumentException ("parameters do not match signature");
-			}
+			if (!binder.ConvertArgs (parameters, pinfo, culture, (invokeAttr & BindingFlags.ExactBinding) != 0))
+				throw new ArgumentException ("failed to convert parameters");
 
 #if !NET_2_1
 			if (SecurityManager.SecurityEnabled) {

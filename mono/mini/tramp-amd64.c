@@ -158,7 +158,9 @@ mono_arch_patch_callsite (guint8 *method_start, guint8 *orig_code, guint8 *addr)
 				VALGRIND_DISCARD_TRANSLATIONS (orig_code - 11, sizeof (gpointer));
 			}
 		} else {
-			if ((((guint64)(addr)) >> 32) != 0) {
+			gboolean disp_32bit = ((((gint64)addr - (gint64)orig_code)) < (1 << 30)) && ((((gint64)addr - (gint64)orig_code)) > -(1 << 30));
+
+			if ((((guint64)(addr)) >> 32) != 0 && !disp_32bit) {
 #ifdef MONO_ARCH_NOMAP32BIT
 				/* Print some diagnostics */
 				MonoJitInfo *ji = mono_jit_info_table_find (mono_domain_get (), (char*)orig_code);
@@ -183,7 +185,6 @@ mono_arch_patch_callsite (guint8 *method_start, guint8 *orig_code, guint8 *addr)
 				mono_arch_flush_icache (thunk_start, thunk_code - thunk_start);
 #endif
 			}
-			g_assert ((((guint64)(orig_code)) >> 32) == 0);
 			if (can_write) {
 				InterlockedExchange ((gint32*)(orig_code - 4), ((gint64)addr - (gint64)orig_code));
 				VALGRIND_DISCARD_TRANSLATIONS (orig_code - 5, 4);
@@ -230,6 +231,25 @@ mono_arch_patch_callsite (guint8 *method_start, guint8 *orig_code, guint8 *addr)
 
 	return;
 #endif
+}
+
+guint8*
+mono_arch_create_llvm_native_thunk (MonoDomain *domain, guint8 *addr)
+{
+	/*
+	 * The caller is LLVM code and the call displacement might exceed 32 bits. We can't determine the caller address, so
+	 * we add a thunk every time.
+	 * Since the caller is also allocated using the domain code manager, hopefully the displacement will fit into 32 bits.
+	 * FIXME: Avoid this if possible if !MONO_ARCH_NOMAP32BIT and ADDR is 32 bits.
+	 */
+	guint8 *thunk_start, *thunk_code;
+
+	thunk_start = thunk_code = mono_domain_code_reserve (mono_domain_get (), 32);
+	amd64_jump_membase (thunk_code, AMD64_RIP, 0);
+	*(guint64*)thunk_code = (guint64)addr;
+	addr = thunk_start;
+	mono_arch_flush_icache (thunk_start, thunk_code - thunk_start);
+	return addr;
 }
 
 void

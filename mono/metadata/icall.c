@@ -82,6 +82,7 @@
 #include <mono/utils/mono-error-internals.h>
 #include <mono/utils/mono-mmap.h>
 #include <mono/utils/mono-io-portability.h>
+#include <mono/utils/mono-digest.h>
 
 #if defined (HOST_WIN32)
 #include <windows.h>
@@ -1641,8 +1642,8 @@ ves_icall_get_attributes (MonoReflectionType *type)
 	return klass->flags;
 }
 
-ICALL_EXPORT MonoReflectionMarshal*
-ves_icall_System_Reflection_FieldInfo_GetUnmanagedMarshal (MonoReflectionField *field)
+ICALL_EXPORT MonoReflectionMarshalAsAttribute*
+ves_icall_System_Reflection_FieldInfo_get_marshal_info (MonoReflectionField *field)
 {
 	MonoClass *klass = field->field->parent;
 	MonoMarshalType *info;
@@ -1659,7 +1660,7 @@ ves_icall_System_Reflection_FieldInfo_GetUnmanagedMarshal (MonoReflectionField *
 			if (!info->fields [i].mspec)
 				return NULL;
 			else
-				return mono_reflection_marshal_from_marshal_spec (field->object.vtable->domain, klass, info->fields [i].mspec);
+				return mono_reflection_marshal_as_attribute_from_marshal_spec (field->object.vtable->domain, klass, info->fields [i].mspec);
 		}
 	}
 
@@ -1749,11 +1750,11 @@ ves_icall_get_parameter_info (MonoMethod *method, MonoReflectionMethod *member)
 	return mono_param_get_objects_internal (domain, method, member->reftype ? mono_class_from_mono_type (member->reftype->type) : NULL);
 }
 
-ICALL_EXPORT MonoReflectionMarshal*
+ICALL_EXPORT MonoReflectionMarshalAsAttribute*
 ves_icall_System_MonoMethodInfo_get_retval_marshal (MonoMethod *method)
 {
 	MonoDomain *domain = mono_domain_get (); 
-	MonoReflectionMarshal* res = NULL;
+	MonoReflectionMarshalAsAttribute* res = NULL;
 	MonoMarshalSpec **mspecs;
 	int i;
 
@@ -1761,7 +1762,7 @@ ves_icall_System_MonoMethodInfo_get_retval_marshal (MonoMethod *method)
 	mono_method_get_marshal_info (method, mspecs);
 
 	if (mspecs [0])
-		res = mono_reflection_marshal_from_marshal_spec (domain, method->klass, mspecs [0]);
+		res = mono_reflection_marshal_as_attribute_from_marshal_spec (domain, method->klass, mspecs [0]);
 		
 	for (i = mono_method_signature (method)->param_count; i >= 0; i--)
 		if (mspecs [i])
@@ -6254,6 +6255,10 @@ ves_icall_System_Buffer_BlockCopyInternal (MonoArray *src, gint32 src_offset, Mo
 
 	MONO_ARCH_SAVE_REGS;
 
+	/* This is called directly from the class libraries without going through the managed wrapper */
+	MONO_CHECK_ARG_NULL (src);
+	MONO_CHECK_ARG_NULL (dest);
+
 	/* watch out for integer overflow */
 	if ((src_offset > mono_array_get_byte_length (src) - count) || (dest_offset > mono_array_get_byte_length (dest) - count))
 		return FALSE;
@@ -8382,6 +8387,25 @@ mono_get_jit_icall_info (void)
 	return jit_icall_hash_name;
 }
 
+/*
+ * mono_lookup_jit_icall_symbol:
+ *
+ *   Given the jit icall NAME, returns its C symbol if possible, or NULL.
+ */
+const char*
+mono_lookup_jit_icall_symbol (const char *name)
+{
+	MonoJitICallInfo *info;
+	const char *res = NULL;
+
+	mono_loader_lock ();
+	info = g_hash_table_lookup (jit_icall_hash_name, name);
+	if (info)
+		res = info->c_symbol;
+	mono_loader_unlock ();
+	return res;
+}
+
 void
 mono_register_jit_icall_wrapper (MonoJitICallInfo *info, gconstpointer wrapper)
 {
@@ -8391,7 +8415,7 @@ mono_register_jit_icall_wrapper (MonoJitICallInfo *info, gconstpointer wrapper)
 }
 
 MonoJitICallInfo *
-mono_register_jit_icall (gconstpointer func, const char *name, MonoMethodSignature *sig, gboolean is_save)
+mono_register_jit_icall_full (gconstpointer func, const char *name, MonoMethodSignature *sig, gboolean is_save, const char *c_symbol)
 {
 	MonoJitICallInfo *info;
 	
@@ -8415,6 +8439,7 @@ mono_register_jit_icall (gconstpointer func, const char *name, MonoMethodSignatu
 	info->name = name;
 	info->func = func;
 	info->sig = sig;
+	info->c_symbol = c_symbol;
 
 	if (is_save) {
 		info->wrapper = func;
@@ -8428,3 +8453,10 @@ mono_register_jit_icall (gconstpointer func, const char *name, MonoMethodSignatu
 	mono_loader_unlock ();
 	return info;
 }
+
+MonoJitICallInfo *
+mono_register_jit_icall (gconstpointer func, const char *name, MonoMethodSignature *sig, gboolean is_save)
+{
+	return mono_register_jit_icall_full (func, name, sig, is_save, NULL);
+}
+

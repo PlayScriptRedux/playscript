@@ -31,6 +31,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
+#if !FULL_AOT_RUNTIME
 
 using System;
 using System.Reflection;
@@ -244,9 +245,15 @@ namespace System.Reflection.Emit {
 			return MethodImplAttributes.IL | MethodImplAttributes.Managed;
 		}
 
-		public override ParameterInfo[] GetParameters () {
+		public override ParameterInfo[] GetParameters ()
+		{
+			return GetParametersInternal ();
+		}
+
+		internal override ParameterInfo[] GetParametersInternal ()
+		{
 			if (parameters == null)
-				return new ParameterInfo [0];
+				return EmptyArray<ParameterInfo>.Value;
 
 			ParameterInfo[] retval = new ParameterInfo [parameters.Length];
 			for (int i = 0; i < parameters.Length; i++) {
@@ -255,7 +262,7 @@ namespace System.Reflection.Emit {
 			return retval;
 		}
 		
-		internal override int GetParameterCount ()
+		internal override int GetParametersCount ()
 		{
 			return parameters == null ? 0 : parameters.Length;
 		}		
@@ -296,7 +303,7 @@ namespace System.Reflection.Emit {
 
 		public override string ToString () {
 			string parms = String.Empty;
-			ParameterInfo[] p = GetParameters ();
+			ParameterInfo[] p = GetParametersInternal ();
 			for (int i = 0; i < p.Length; ++i) {
 				if (i > 0)
 					parms = parms + ", ";
@@ -450,3 +457,4 @@ namespace System.Reflection.Emit {
 	}
 }
 
+#endif

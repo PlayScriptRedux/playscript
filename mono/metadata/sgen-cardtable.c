@@ -4,30 +4,23 @@
  * Author:
  * 	Rodrigo Kumpera (rkumpera@novell.com)
  *
- * SGen is licensed under the terms of the MIT X11 license
- *
  * Copyright 2001-2003 Ximian, Inc
  * Copyright 2003-2010 Novell, Inc.
  * Copyright 2011 Xamarin Inc (http://www.xamarin.com)
- * 
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- * 
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * Copyright (C) 2012 Xamarin Inc
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public
+ * License 2.0 as published by the Free Software Foundation;
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU Library General Public
+ * License 2.0 along with this library; if not, write to the Free
+ * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
 #include "config.h"
@@ -36,6 +29,7 @@
 #include "metadata/sgen-gc.h"
 #include "metadata/sgen-cardtable.h"
 #include "metadata/sgen-memory-governor.h"
+#include "metadata/sgen-protocol.h"
 #include "utils/mono-counters.h"
 #include "utils/mono-time.h"
 #include "utils/mono-memory-model.h"
@@ -44,7 +38,9 @@
 
 //#define CARDTABLE_STATS
 
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif
@@ -367,7 +363,7 @@ sgen_card_table_finish_scan_remsets (void *start_nursery, void *end_nursery, Sge
 	SGEN_TV_GETTIME (btv);
 	last_major_scan_time = SGEN_TV_ELAPSED (atv, btv); 
 	major_card_scan_time += last_major_scan_time;
-	sgen_los_scan_card_table (queue);
+	sgen_los_scan_card_table (FALSE, queue);
 	SGEN_TV_GETTIME (atv);
 	last_los_scan_time = SGEN_TV_ELAPSED (btv, atv);
 	los_card_scan_time += last_los_scan_time;
@@ -387,6 +383,12 @@ mono_gc_get_card_table (int *shift_bits, gpointer *mask)
 #endif
 
 	return sgen_cardtable;
+}
+
+gboolean
+mono_gc_card_table_nursery_check (void)
+{
+	return !major_collector.is_concurrent;
 }
 
 #if 0
@@ -439,7 +441,7 @@ find_card_offset (mword card)
 	return (__builtin_ffsll (GUINT64_TO_LE(card)) - 1) / 8;
 #else
 	int i;
-	guint8 *ptr = (guint *) &card;
+	guint8 *ptr = (guint8 *) &card;
 	for (i = 0; i < sizeof (mword); ++i) {
 		if (ptr[i])
 			return i;
@@ -483,7 +485,7 @@ find_next_card (guint8 *card_data, guint8 *end)
 }
 
 void
-sgen_cardtable_scan_object (char *obj, mword block_obj_size, guint8 *cards, SgenGrayQueue *queue)
+sgen_cardtable_scan_object (char *obj, mword block_obj_size, guint8 *cards, gboolean mod_union, SgenGrayQueue *queue)
 {
 	MonoVTable *vt = (MonoVTable*)SGEN_LOAD_VTABLE (obj);
 	MonoClass *klass = vt->klass;
@@ -536,7 +538,7 @@ LOOP_HEAD:
 			int idx = (card_data - card_base) + extra_idx;
 			char *start = (char*)(obj_start + idx * CARD_SIZE_IN_BYTES);
 			char *card_end = start + CARD_SIZE_IN_BYTES;
-			char *elem;
+			char *first_elem, *elem;
 
 			HEAVY_STAT (++los_marked_cards);
 
@@ -550,7 +552,7 @@ LOOP_HEAD:
 			else
 				index = ARRAY_OBJ_INDEX (start, obj, elem_size);
 
-			elem = (char*)mono_array_addr_with_size ((MonoArray*)obj, elem_size, index);
+			elem = first_elem = (char*)mono_array_addr_with_size ((MonoArray*)obj, elem_size, index);
 			if (klass->element_class->valuetype) {
 				ScanVTypeFunc scan_vtype_func = sgen_get_current_object_ops ()->scan_vtype;
 
@@ -562,15 +564,17 @@ LOOP_HEAD:
 				HEAVY_STAT (++los_array_cards);
 				for (; elem < card_end; elem += SIZEOF_VOID_P) {
 					gpointer new, old = *(gpointer*)elem;
-					if (G_UNLIKELY (sgen_ptr_in_nursery (old))) {
+					if ((mod_union && old) || G_UNLIKELY (sgen_ptr_in_nursery (old))) {
 						HEAVY_STAT (++los_array_remsets);
 						copy_func ((void**)elem, queue);
 						new = *(gpointer*)elem;
 						if (G_UNLIKELY (sgen_ptr_in_nursery (new)))
-							sgen_add_to_global_remset (elem);
+							sgen_add_to_global_remset (elem, new);
 					}
 				}
 			}
+
+			binary_protocol_card_scan (first_elem, elem - first_elem);
 		}
 
 #ifdef SGEN_HAVE_OVERLAPPING_CARDS
@@ -591,13 +595,15 @@ LOOP_HEAD:
 		} else if (sgen_card_table_region_begin_scanning ((mword)obj, block_obj_size)) {
 			sgen_get_current_object_ops ()->scan_object (obj, queue);
 		}
+
+		binary_protocol_card_scan (obj, sgen_safe_object_get_size ((MonoObject*)obj));
 	}
 }
 
 #ifdef CARDTABLE_STATS
 
 typedef struct {
-	int total, marked, remarked;	
+	int total, marked, remarked, gc_marked;	
 } card_stats;
 
 static card_stats major_stats, los_stats;
@@ -608,9 +614,12 @@ count_marked_cards (mword start, mword size)
 {
 	mword end = start + size;
 	while (start <= end) {
+		guint8 card = *sgen_card_table_get_card_address (start);
 		++cur_stats->total;
-		if (sgen_card_table_address_is_marked (start))
+		if (card)
 			++cur_stats->marked;
+		if (card == 2)
+			++cur_stats->gc_marked;
 		start += CARD_SIZE_IN_BYTES;
 	}
 }
@@ -620,8 +629,10 @@ count_remarked_cards (mword start, mword size)
 {
 	mword end = start + size;
 	while (start <= end) {
-		if (sgen_card_table_address_is_marked (start))
+		if (sgen_card_table_address_is_marked (start)) {
 			++cur_stats->remarked;
+			*sgen_card_table_get_card_address (start) = 2;
+		}
 		start += CARD_SIZE_IN_BYTES;
 	}
 }
@@ -641,12 +652,12 @@ sgen_card_tables_collect_stats (gboolean begin)
 		sgen_los_iterate_live_block_ranges (count_marked_cards);
 	} else {
 		cur_stats = &major_stats;
-		sgen_major_collector_iterate_live_block_ranges (count_marked_cards);
+		sgen_major_collector_iterate_live_block_ranges (count_remarked_cards);
 		cur_stats = &los_stats;
 		sgen_los_iterate_live_block_ranges (count_remarked_cards);
-		printf ("cards major (t %d m %d r %d)  los (t %d m %d r %d) major_scan %.2fms los_scan %.2fms\n", 
-			major_stats.total, major_stats.marked, major_stats.remarked,
-			los_stats.total, los_stats.marked, los_stats.remarked,
+		printf ("cards major (t %d m %d g %d r %d)  los (t %d m %d g %d r %d) major_scan %.2fms los_scan %.2fms\n", 
+			major_stats.total, major_stats.marked, major_stats.gc_marked, major_stats.remarked,
+			los_stats.total, los_stats.marked, los_stats.gc_marked, los_stats.remarked,
 			last_major_scan_time / 1000.0, last_los_scan_time / 1000.0);
 	}
 #endif
@@ -655,10 +666,10 @@ sgen_card_tables_collect_stats (gboolean begin)
 void
 sgen_card_table_init (SgenRemeberedSet *remset)
 {
-	sgen_cardtable = sgen_alloc_os_memory (CARD_COUNT_IN_BYTES, TRUE, "card table");
+	sgen_cardtable = sgen_alloc_os_memory (CARD_COUNT_IN_BYTES, SGEN_ALLOC_INTERNAL | SGEN_ALLOC_ACTIVATE, "card table");
 
 #ifdef SGEN_HAVE_OVERLAPPING_CARDS
-	sgen_shadow_cardtable = sgen_alloc_os_memory (CARD_COUNT_IN_BYTES, TRUE, "shadow card table");
+	sgen_shadow_cardtable = sgen_alloc_os_memory (CARD_COUNT_IN_BYTES, SGEN_ALLOC_INTERNAL | SGEN_ALLOC_ACTIVATE, "shadow card table");
 #endif
 
 #ifdef HEAVY_STATISTICS

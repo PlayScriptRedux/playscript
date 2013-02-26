@@ -22,8 +22,8 @@ using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
-#if !TARGET_JVM
 using Mono.Security.Authenticode;
+#if !MOBILE
 using Mono.Security.Protocol.Tls;
 #endif
 
@@ -149,7 +149,7 @@ namespace MonoTests.System.Net
 			}
 		}
 
-#if !TARGET_JVM //NotWorking
+#if !TARGET_JVM && !MOBILE
 		[Test]
 		[Ignore ("Fails on MS.NET")]
 		public void SslClientBlock ()
@@ -1954,9 +1954,9 @@ namespace MonoTests.System.Net
 			},
 			(c) =>
 			{
-				c.Request.InputStream.ReadAll (received, 0, received.Length);
-				c.Response.StatusCode = 204;
-				c.Response.Close();
+				//c.Request.InputStream.ReadAll (received, 0, received.Length);
+				//c.Response.StatusCode = 204;
+				//c.Response.Close();
 			});
 		}
 
@@ -1982,8 +1982,8 @@ namespace MonoTests.System.Net
 			(c) =>
 			{
 				c.Request.InputStream.ReadAll (received, 0, received.Length);
-				c.Response.StatusCode = 204;
-				c.Response.Close ();
+//				c.Response.StatusCode = 204;
+//				c.Response.Close ();
 			});
 		}
 
@@ -2108,7 +2108,7 @@ namespace MonoTests.System.Net
 				c.Response.ContentLength64 = data64KB.Length;
 				c.Response.OutputStream.Write (data64KB, 0, data64KB.Length / 2);
 				Thread.Sleep (1000);
-				c.Response.OutputStream.Write (data64KB, data64KB.Length / 2, data64KB.Length / 2);
+//				c.Response.OutputStream.Write (data64KB, data64KB.Length / 2, data64KB.Length / 2);
 				c.Response.OutputStream.Close ();
 				c.Response.Close ();
 			});
@@ -2189,11 +2189,13 @@ namespace MonoTests.System.Net
 			(c) =>
 			{
 				aborted.Set ();
-				Thread.Sleep (100);
-				c.Response.StatusCode = 200;
-				c.Response.ContentLength64 = 0;
-				c.Response.Close ();
+//				Thread.Sleep (100);
+//				c.Response.StatusCode = 200;
+//				c.Response.ContentLength64 = 0;
+//				c.Response.Close ();
 			});
+
+			return;
 		}
 
 		void DoRequest (Action<HttpWebRequest, EventWaitHandle> request)
@@ -2409,7 +2411,7 @@ namespace MonoTests.System.Net
 			}
 		}
 
-#if !TARGET_JVM
+#if !TARGET_JVM && !MOBILE
 		class SslHttpServer : HttpServer {
 			X509Certificate _certificate;
 
@@ -3158,6 +3160,21 @@ namespace MonoTests.System.Net
 				}
 			}
 		}
+
+#if NET_4_0
+		[Test]
+		// Bug6737
+		// This test is supposed to fail prior to .NET 4.0
+		public void Post_EmptyRequestStream ()
+		{
+			var wr = HttpWebRequest.Create ("http://google.com");
+			wr.Method = "POST";
+			wr.GetRequestStream ();
+			
+			var gr = wr.BeginGetResponse (delegate { }, null);
+			Assert.AreEqual (true, gr.AsyncWaitHandle.WaitOne (5000), "#1");
+		}
+#endif
 	}
 
 	static class StreamExtensions {

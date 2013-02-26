@@ -4,12 +4,11 @@
 // 	Sean MacIsaac (macisaac@ximian.com)
 // 	Paolo Molaro (lupus@ximian.com)
 //	Gonzalo Paniagua Javier (gonzalo@ximian.com)
+//	Marek Safar (marek.safar@gmail.com)
 //
 // (C) Ximian, Inc. 2001 - 2003
 // (c) Copyright 2004 Novell, Inc. (http://www.novell.com)
-
-//
-// Copyright (C) 2004 Novell, Inc (http://www.novell.com)
+// Copyright (C) 2012 Xamarin Inc (http://www.xamarin.com)
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -50,7 +49,7 @@ namespace System.Reflection
 		public abstract MethodBase SelectMethod (BindingFlags bindingAttr, MethodBase[] match, Type[] types, ParameterModifier[] modifiers);
 		public abstract PropertyInfo SelectProperty( BindingFlags bindingAttr, PropertyInfo[] match, Type returnType, Type[] indexes, ParameterModifier[] modifiers);
 
-		static Binder default_binder = new Default ();
+		static readonly Binder default_binder = new Default ();
 
 		internal static Binder DefaultBinder {
 			get {
@@ -58,21 +57,39 @@ namespace System.Reflection
 			}
 		}
 		
-		internal static bool ConvertArgs (Binder binder, object[] args, ParameterInfo[] pinfo, CultureInfo culture) {
+		internal bool ConvertArgs (object[] args, ParameterInfo[] pinfo, CultureInfo culture, bool exactMatch)
+		{
 			if (args == null) {
-				if ( pinfo.Length == 0)
+				if (pinfo.Length == 0)
 					return true;
-				else
-					throw new TargetParameterCountException ();
+				
+				throw new TargetParameterCountException ();
 			}
+
 			if (pinfo.Length != args.Length)
 				throw new TargetParameterCountException ();
+			
 			for (int i = 0; i < args.Length; ++i) {
-				object v = binder.ChangeType (args [i], pinfo[i].ParameterType, culture);
-				if ((v == null) && (args [i] != null))
+				var arg = args [i];
+				var pi = pinfo [i];
+				if (arg == Type.Missing) {
+					args [i] = pi.DefaultValue;
+					continue;
+				}
+
+				if (arg != null && arg.GetType () == pi.ParameterType)
+					continue;
+
+				if (exactMatch)
 					return false;
+
+				object v = ChangeType (arg, pi.ParameterType, culture);
+				if (v == null && args [i] != null)
+					return false;
+	
 				args [i] = v;
 			}
+
 			return true;
 		}
 
@@ -105,8 +122,8 @@ namespace System.Reflection
 				// If the argument types differ we
 				// have an ambigous match, as well
 				if (matchId >= 0) {
-					ParameterInfo[] p1 = m.GetParameters ();
-					ParameterInfo[] p2 = match [matchId].GetParameters ();
+					ParameterInfo[] p1 = m.GetParametersInternal ();
+					ParameterInfo[] p2 = match [matchId].GetParametersInternal ();
 					bool equal = true;
 
 					if (p1.Length != p2.Length)
@@ -148,9 +165,6 @@ namespace System.Reflection
 				return null;
 			}
 
-			//
-			// FIXME: There was a MonoTODO, but it does not explain what the problem is
-			// 
 			public override MethodBase BindToMethod (BindingFlags bindingAttr, MethodBase[] match, ref object[] args, ParameterModifier[] modifiers, CultureInfo culture, string[] names, out object state)
 			{
 				Type[] types;
@@ -167,7 +181,7 @@ namespace System.Reflection
 				MethodBase selected = null;
 				if (names != null) {
 					foreach (var m in match) {
-						var parameters = m.GetParameters ();
+						var parameters = m.GetParametersInternal ();
 						int i;
 
 						/*
@@ -209,7 +223,7 @@ namespace System.Reflection
 
 				if (selected != null) {
 					if (args == null)
-						args = new object [0];
+						args = EmptyArray<object>.Value;
 	
 					AdjustArguments (selected, ref args);
 				}
@@ -220,7 +234,7 @@ namespace System.Reflection
 			// probably belongs in ReorderArgumentArray
 			static void AdjustArguments (MethodBase selected, ref object [] args)
 			{
-				var parameters = selected.GetParameters ();
+				var parameters = selected.GetParametersInternal ();
 				var parameters_length = parameters.Length;
 				if (parameters_length == 0)
 					return;
@@ -254,7 +268,7 @@ namespace System.Reflection
 			{
 				object [] newArgs = new object [args.Length];
 				Array.Copy (args, newArgs, args.Length);
-				ParameterInfo [] plist = selected.GetParameters ();
+				ParameterInfo [] plist = selected.GetParametersInternal ();
 				for (int n = 0; n < names.Length; n++)
 					for (int p = 0; p < plist.Length; p++) {
 						if (names [n] == plist [p].Name) {
@@ -454,7 +468,7 @@ namespace System.Reflection
 					false, null);
 			}
 
-			MethodBase SelectMethod (BindingFlags bindingAttr, MethodBase[] match, Type[] types, ParameterModifier[] modifiers, bool allowByRefMatch, object[] parameters)
+			MethodBase SelectMethod (BindingFlags bindingAttr, MethodBase[] match, Type[] types, ParameterModifier[] modifiers, bool allowByRefMatch, object[] arguments)
 			{
 				MethodBase m;
 				int i, j;
@@ -466,9 +480,10 @@ namespace System.Reflection
 				MethodBase exact_match = null;
 				for (i = 0; i < match.Length; ++i) {
 					m = match [i];
-					ParameterInfo[] args = m.GetParameters ();
-					if (args.Length != types.Length)
+					if (m.GetParametersCount () != types.Length)
 						continue;
+
+					ParameterInfo[] args = m.GetParametersInternal ();
 					for (j = 0; j < types.Length; ++j) {
 						if (types [j] != args [j].ParameterType)
 							break;
@@ -486,36 +501,39 @@ namespace System.Reflection
 					return exact_match;
 
 				/* Try methods with ParamArray attribute */
-				bool isdefParamArray = false;
-				Type elementType = null;
-				for (i = 0; i < match.Length; ++i) {
-					m = match [i];
-					ParameterInfo[] args = m.GetParameters ();
-					if (args.Length > types.Length + 1)
-						continue;
-					else if (args.Length == 0)
-						continue;
-					isdefParamArray = Attribute.IsDefined (args [args.Length - 1], typeof (ParamArrayAttribute));
-					if (!isdefParamArray)
-						continue;
-					elementType = args [args.Length - 1].ParameterType.GetElementType ();
-					for (j = 0; j < types.Length; ++j) {
-						if (j < (args.Length - 1) && types [j] != args [j].ParameterType)
-							break;
-						else if (j >= (args.Length - 1) && types [j] != elementType) 
-							break;
+				if (arguments != null) {
+					for (i = 0; i < match.Length; ++i) {
+						m = match [i];
+
+						var count = m.GetParametersCount ();
+						if (count == 0 || count > types.Length + 1)
+							continue;
+
+						var pi = m.GetParametersInternal ();
+						if (!Attribute.IsDefined (pi [pi.Length - 1], typeof (ParamArrayAttribute)))
+							continue;
+
+						var elementType = pi [pi.Length - 1].ParameterType.GetElementType ();
+						for (j = 0; j < types.Length; ++j) {
+							if (j < (pi.Length - 1) && types [j] != pi [j].ParameterType)
+								break;
+							
+							if (j >= (pi.Length - 1) && types [j] != elementType) 
+								break;
+						}
+
+						if (j == types.Length)
+							return m;
 					}
-					if (j == types.Length)
-						return m;
 				}
 
-				if ((int)(bindingAttr & BindingFlags.ExactBinding) != 0)
+				if ((bindingAttr & BindingFlags.ExactBinding) != 0)
 					return null;
 
 				MethodBase result = null;
 				for (i = 0; i < match.Length; ++i) {
 					m = match [i];
-					ParameterInfo[] args = m.GetParameters ();
+					ParameterInfo[] args = m.GetParametersInternal ();
 					if (args.Length != types.Length)
 						continue;
 					if (!check_arguments (types, args, allowByRefMatch))
@@ -527,28 +545,30 @@ namespace System.Reflection
 						result = m;
 				}
 
-				if (result != null || parameters == null || types.Length != parameters.Length)
+				if (result != null || arguments == null || types.Length != arguments.Length)
 					return result;
 
 				// Xamarin-5278: try with parameters that are COM objects
 				// REVIEW: do we also need to implement best method match?
 				for (i = 0; i < match.Length; ++i) {
 					m = match [i];
-					ParameterInfo[] methodArgs = m.GetParameters ();
+					ParameterInfo[] methodArgs = m.GetParametersInternal ();
 					if (methodArgs.Length != types.Length)
 						continue;
 					for (j = 0; j < types.Length; ++j) {
 						var requiredType = methodArgs [j].ParameterType;
 						if (types [j] == requiredType)
 							continue;
+#if !MOBILE
 						if (types [j] == typeof (__ComObject) && requiredType.IsInterface) {
-							var iface = Marshal.GetComInterfaceForObject (parameters [j], requiredType);
+							var iface = Marshal.GetComInterfaceForObject (arguments [j], requiredType);
 							if (iface != IntPtr.Zero) {
 								// the COM object implements the desired interface
 								Marshal.Release (iface);
 								continue;
 							}
 						}
+#endif
 						break;
 					}
 
@@ -560,8 +580,8 @@ namespace System.Reflection
 
 			MethodBase GetBetterMethod (MethodBase m1, MethodBase m2, Type [] types)
 			{
-				ParameterInfo [] pl1 = m1.GetParameters ();
-				ParameterInfo [] pl2 = m2.GetParameters ();
+				ParameterInfo [] pl1 = m1.GetParametersInternal ();
+				ParameterInfo [] pl2 = m2.GetParametersInternal ();
 				int prev = 0;
 				for (int i = 0; i < pl1.Length; i++) {
 					int cmp = CompareCloserType (pl1 [i].ParameterType, pl2 [i].ParameterType);

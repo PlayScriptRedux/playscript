@@ -4,6 +4,9 @@ export HOST_CC
 endif
 
 if JIT_SUPPORTED
+if DISABLE_EXECUTABLES
+runtime_lib=../mini/$(LIBMONO_LA) $(static_libs)
+else
 if !SHARED_MONO
 static_libs=	\
 	$(top_builddir)/mono/metadata/libmonoruntime-static.la	\
@@ -16,13 +19,17 @@ runtime_lib=../mini/$(LIBMONO_LA) $(static_libs)
 else
 runtime_lib=../mini/$(LIBMONO_LA)
 endif
+endif
 else
 runtime_lib=../interpreter/libmint.la
 endif
 
+if DISABLE_LIBRARIES
+else
 bin_PROGRAMS = monograph
+endif
 
-INCLUDES = 				\
+AM_CPPFLAGS = 				\
 	-I$(top_srcdir)			\
 	$(GLIB_CFLAGS)
 

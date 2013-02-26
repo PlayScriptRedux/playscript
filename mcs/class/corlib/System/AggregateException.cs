@@ -22,7 +22,7 @@
 //
 //
 
-#if NET_4_0 || MOBILE
+#if NET_4_0
 using System;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
@@ -150,7 +150,11 @@ namespace System
 
 		public override void GetObjectData (SerializationInfo info,	StreamingContext context)
 		{
-			throw new NotImplementedException ();
+			if (info == null) {
+				throw new ArgumentNullException("info");
+			}
+			base.GetObjectData(info, context);
+			info.AddValue ("InnerExceptions", innerExceptions.ToArray(), typeof (Exception[]));
 		}
 
 		public override Exception GetBaseException ()

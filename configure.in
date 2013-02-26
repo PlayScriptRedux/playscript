@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 #AC_PREREQ([2.62])
 
-AC_INIT(mono, [2.11.5],
+AC_INIT(mono, [3.0.5],
         [http://bugzilla.xamarin.com/enter_bug.cgi?classification=Mono])
 
 AC_CONFIG_SRCDIR([README])
@@ -14,13 +14,15 @@ AC_CANONICAL_HOST
 m4_ifdef([_A][M_PROG_TAR],[_A][M_SET_OPTION([tar-ustar])])
 
 AM_INIT_AUTOMAKE([1.9 dist-bzip2 tar-ustar no-dist-gzip foreign])
-AM_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 AM_MAINTAINER_MODE
 
 API_VER=2.0
 AC_SUBST(API_VER)
 
 AC_PROG_LN_S
+
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 # In case of cygwin, override LN_S, irrespective of what it determines.
 # The build uses cygwin, but the actual runtime doesn't.
@@ -87,6 +89,7 @@ esac
 host_win32=no
 target_win32=no
 platform_android=no
+platform_darwin=no
 case "$host" in
 	*-mingw*|*-*-cygwin*)
 		AC_DEFINE(HOST_WIN32,1,[Host Platform is Win32])
@@ -157,10 +160,10 @@ case "$host" in
 			libmono_cflags="$PTHREAD_CFLAGS"
 		fi
 		if test "x$PTHREAD_LIBS" = "x"; then
-			LDFLAGS="$LDFLAGS -pthread"
+			LDFLAGS="$LDFLAGS -pthread -L/usr/local/lib"
 			libmono_ldflags="-pthread"
 		else
-			LDFLAGS="$LDFLAGS $PTHREAD_LIBS"
+			LDFLAGS="$LDFLAGS $PTHREAD_LIBS -L/usr/local/lib"
 			libmono_ldflags="$PTHREAD_LIBS"
 		fi
 		CPPFLAGS="$CPPFLAGS -DPLATFORM_BSD"
@@ -170,10 +173,6 @@ case "$host" in
 		libgc_threads=pthreads
 		# This doesn't seem to work as of 7.0 on amd64
 		with_sigaltstack=no
-# TLS is only partially implemented on -CURRENT (compiler support
-# but NOT library support)
-#
-		with_tls=pthread
 		use_sigposix=yes
 		;;
 	*-*-*openbsd*)
@@ -238,6 +237,11 @@ case "$host" in
 		libdl="-ldl"
 		libgc_threads=pthreads
 		use_sigposix=yes
+		if test "x$cross_compiling" != "xno"; then
+                	# to bypass the underscore linker check, not
+                	# available during cross-compilation
+                	mono_cv_uscore=no
+                fi
 		;;
 	*-*-nacl*)
 		host_win32=no
@@ -289,11 +293,10 @@ case "$host" in
 		parallel_mark="Disabled_Currently_Hangs_On_MacOSX"
 		host_win32=no
 		platform_darwin=yes
+		target_mach=yes
 		CPPFLAGS="$CPPFLAGS -no-cpp-precomp -D_THREAD_SAFE -DGC_MACOSX_THREADS -DPLATFORM_MACOSX -DUSE_MMAP -DUSE_MUNMAP"
 		CPPFLAGS="$CPPFLAGS -DGetCurrentProcess=MonoGetCurrentProcess -DGetCurrentThread=MonoGetCurrentThread -DCreateEvent=MonoCreateEvent"
 		libmono_cflags="-D_THREAD_SAFE"
-		LDFLAGS="$LDFLAGS -pthread"
-		libmono_ldflags="-pthread"
 		need_link_unlink=yes
 		AC_DEFINE(PTHREAD_POINTER_ID)
 		AC_DEFINE(USE_MACH_SEMA, 1, [...])
@@ -310,7 +313,7 @@ case "$host" in
 		case "$host" in
 			dnl Snow Leopard and newer config.guess reports as this
 			i*86-*-darwin*)
-				BROKEN_DARWIN_FLAGS="-arch i386 -D_XOPEN_SOURCE -mmacosx-version-min=10.5"
+				BROKEN_DARWIN_FLAGS="-arch i386 -D_XOPEN_SOURCE"
 				CPPFLAGS="$CPPFLAGS $BROKEN_DARWIN_FLAGS"
 				CFLAGS="$CFLAGS $BROKEN_DARWIN_FLAGS"
 				CXXFLAGS="$CXXFLAGS $BROKEN_DARWIN_FLAGS"
@@ -320,6 +323,9 @@ case "$host" in
 				CPPFLAGS_FOR_EGLIB="$CPPFLAGS_FOR_EGLIB $BROKEN_DARWIN_FLAGS"
 				CFLAGS_FOR_EGLIB="$CFLAGS_FOR_EGLIB $BROKEN_DARWIN_FLAGS"
 				;;
+			arm*-darwin*)
+				has_dtrace=no
+				;;			
 		esac
 		;;
 	*-*-haiku*)
@@ -357,7 +363,6 @@ AC_PROG_CC
 AC_CHECK_TOOL(CXX, g++, g++)
 AC_PROG_CXX
 AM_PROG_AS
-AM_PROG_CC_STDC
 AC_PROG_INSTALL
 AC_PROG_AWK
 dnl We should use AM_PROG_AS, but it's not available on automake/aclocal 1.4
@@ -487,7 +492,7 @@ AC_CHECK_SIZEOF(void *, 4)
 
 WARN=''
 if test x"$GCC" = xyes; then
-        WARN='-Wall -Wunused -Wmissing-prototypes -Wmissing-declarations -Wstrict-prototypes  -Wmissing-prototypes -Wnested-externs -Wpointer-arith -Wno-cast-qual -Wwrite-strings -Wno-switch-enum'
+        WARN='-Wall -Wunused -Wmissing-prototypes -Wmissing-declarations -Wstrict-prototypes  -Wmissing-prototypes -Wnested-externs -Wpointer-arith -Wno-cast-qual -Wwrite-strings -Wno-switch -Wno-switch-enum -Wno-unused-value'
 		# The runtime code does not respect ANSI C strict aliasing rules
 		CFLAGS="$CFLAGS -fno-strict-aliasing"
 
@@ -530,14 +535,12 @@ CFLAGS_FOR_LIBGC="$CFLAGS_FOR_LIBGC -g"
 
 AC_CACHE_CHECK([for clang],
 	mono_cv_clang,[
-	AC_TRY_RUN([
-		int main () {
-			#ifdef __clang__
-				return 0;
-			#else
-				return 1;
-			#endif
-		}
+	AC_TRY_COMPILE([], [
+		#ifdef __clang__
+		#else
+		#error "FAILED"
+		#endif
+		return 0;
 	],
 	[mono_cv_clang=yes],
 	[mono_cv_clang=no],
@@ -556,6 +559,8 @@ AC_ARG_WITH(mcs-path, [  --with-mcs-path=/path/to/mcs      Specify an alternate 
 		mcsdir=$with_mcs_path
 	fi
 )
+
+AC_ARG_WITH(jumptables, [  --with-jumptables=yes,no      enable/disable support for jumptables (ARM-only for now) (defaults to no)],[],[with_jumptables=no])
 
 #
 # A sanity check to catch cases where the package was unpacked
@@ -676,6 +681,8 @@ AC_ARG_WITH(sigaltstack, [  --with-sigaltstack=yes,no      enable/disable suppor
 
 AC_ARG_WITH(static_mono, [  --with-static_mono=yes,no      link mono statically to libmono (faster) (defaults to yes)],[],[with_static_mono=yes])
 AC_ARG_WITH(shared_mono, [  --with-shared_mono=yes,no      build a shared libmono library (defaults to yes)],[],[with_shared_mono=yes])
+# Same as --with-shared_mono=no
+AC_ARG_ENABLE(libraries, [  --disable-libraries disable the build of libmono], enable_libraries=$enableval, enable_libraries=yes)
 
 if test "x$enable_static" = "xno"; then
    with_static_mono=no
@@ -684,6 +691,12 @@ fi
 if test "x$enable_shared" = "xno"; then
    with_shared_mono=no
 fi
+
+if test "x$enable_libraries" = "xno"; then
+   with_shared_mono=no
+fi
+
+AM_CONDITIONAL(DISABLE_LIBRARIES, test x$enable_libraries = xno)
 
 case $host in
 *nacl* ) with_shared_mono=yes;;
@@ -716,7 +729,6 @@ if test "x$with_xen_opt" = "xyes" -a "x$mono_cv_clang" = "xno"; then
 	])
 fi
 
-AC_ARG_ENABLE(quiet-build, [  --enable-quiet-build  Enable quiet runtime build (on by default)], enable_quiet_build=$enableval, enable_quiet_build=yes)
 AC_ARG_ENABLE(small-config, [  --enable-small-config Enable tweaks to reduce requirements (and capabilities)], enable_small_config=$enableval, enable_small_config=no)
 
 if test x$enable_small_config = xyes; then
@@ -729,8 +741,9 @@ AC_ARG_ENABLE(system-aot, [  --enable-system-aot  Enable the Ahead-Of-Time compi
 DISABLED_FEATURES=none
 
 AC_ARG_ENABLE(minimal, [  --enable-minimal=LIST      drop support for LIST subsystems.
-     LIST is a comma-separated list from: aot, profiler, decimal, pinvoke, debug,
-     reflection_emit, reflection_emit_save, large_code, logging, com, ssa, generics, attach, jit, simd, soft_debug, normalization, assembly_remapping, shared_perfcounters.],
+     LIST is a comma-separated list from: aot, profiler, decimal, pinvoke, debug, appdomains, verifier, 
+     reflection_emit, reflection_emit_save, large_code, logging, com, ssa, generics, attach, jit, simd, soft_debug, perfcounters, normalization, assembly_remapping, shared_perfcounters,
+	 sgen_remset, sgen_marksweep_par, sgen_marksweep_fixed, sgen_marksweep_fixed_par, sgen_copying.],
 [
 	for feature in `echo "$enable_minimal" | sed -e "s/,/ /g"`; do
 		eval "mono_feature_disable_$feature='yes'"
@@ -845,6 +858,10 @@ if test "x$mono_feature_disable_soft_debug" = "xyes"; then
 	AC_MSG_NOTICE([Disabled Soft Debugger.])
 fi
 
+if test "x$mono_feature_disable_perfcounters" = "xyes"; then
+	AC_DEFINE(DISABLE_PERFCOUNTERS, 1, [Disable Performance Counters.])
+	AC_MSG_NOTICE([Disabled Performance Counters.])
+fi
 if test "x$mono_feature_disable_normalization" = "xyes"; then
 	AC_DEFINE(DISABLE_NORMALIZATION, 1, [Disable String normalization support.])
 	AC_MSG_NOTICE([Disabled String normalization support.])
@@ -860,8 +877,47 @@ if test "x$mono_feature_disable_shared_perfcounters" = "xyes"; then
 	AC_MSG_NOTICE([Disabled Shared perfcounters.])
 fi
 
+if test "x$mono_feature_disable_appdomains" = "xyes"; then
+	AC_DEFINE(DISABLE_APPDOMAINS, 1, [Disable support for multiple appdomains.])
+	AC_MSG_NOTICE([Disabled support for multiple appdomains.])
+fi
+
+if test "x$mono_feature_disable_sgen_remset" = "xyes"; then
+	AC_DEFINE(DISABLE_SGEN_REMSET, 1, [Disable wbarrier=remset support in SGEN.])
+	AC_MSG_NOTICE([Disabled wbarrier=remset support in SGEN.])
+fi
+
+if test "x$mono_feature_disable_sgen_marksweep_par" = "xyes"; then
+	AC_DEFINE(DISABLE_SGEN_MAJOR_MARKSWEEP_PAR, 1, [Disable major=marksweep-par support in SGEN.])
+	AC_MSG_NOTICE([Disabled major=marksweep-par support in SGEN.])
+fi
+
+if test "x$mono_feature_disable_sgen_marksweep_fixed" = "xyes"; then
+	AC_DEFINE(DISABLE_SGEN_MAJOR_MARKSWEEP_FIXED, 1, [Disable major=marksweep-fixed support in SGEN.])
+	AC_MSG_NOTICE([Disabled major=marksweep-fixed support in SGEN.])
+fi
+
+if test "x$mono_feature_disable_sgen_marksweep_fixed_par" = "xyes"; then
+	AC_DEFINE(DISABLE_SGEN_MAJOR_MARKSWEEP_FIXED_PAR, 1, [Disable major=marksweep-fixed-par support in SGEN.])
+	AC_MSG_NOTICE([Disabled major=marksweep-fixed-par support in SGEN.])
+fi
+
+if test "x$mono_feature_disable_sgen_copying" = "xyes"; then
+	AC_DEFINE(DISABLE_SGEN_MAJOR_COPYING, 1, [Disable major=copying support in SGEN.])
+	AC_MSG_NOTICE([Disabled major=copying support in SGEN.])
+fi
+
 AC_ARG_ENABLE(executables, [  --disable-executables disable the build of the runtime executables], enable_executables=$enableval, enable_executables=yes)
 AM_CONDITIONAL(DISABLE_EXECUTABLES, test x$enable_executables = xno)
+
+AC_ARG_ENABLE(extension-module, [  --enable-extension-module enables usage of the extension module], has_extension_module=$enableval, has_extension_module=no)
+AM_CONDITIONAL([HAS_EXTENSION_MODULE], [test x$has_extension_module != xno])
+
+if test x$has_extension_module != xno ; then
+	AC_DEFINE([ENABLE_EXTENSION_MODULE], 1, [Extension module enabled])
+	AC_MSG_NOTICE([Enabling mono extension module.])
+fi
+
 
 AC_MSG_CHECKING(for visibility __attribute__)
 AC_COMPILE_IFELSE([
@@ -1159,6 +1215,14 @@ if test x$target_win32 = xno; then
 	dnl *****************************
 	AC_CHECK_LIB(socket, socket, LIBS="$LIBS -lsocket")
 
+	case "$host" in
+		*-*-*freebsd*)
+			dnl *****************************
+			dnl *** Checks for libinotify ***
+			dnl *****************************
+			AC_CHECK_LIB(inotify, inotify_init, LIBS="$LIBS -linotify")
+	esac
+
 	dnl *******************************
 	dnl *** Checks for MSG_NOSIGNAL ***
 	dnl *******************************
@@ -1171,6 +1235,51 @@ if test x$target_win32 = xno; then
 		AC_DEFINE(HAVE_MSG_NOSIGNAL, 1, [Have MSG_NOSIGNAL])
 	], [
 		# We'll have to use signals
+		AC_MSG_RESULT(no)
+	])
+
+	dnl *****************************
+	dnl *** Checks for IPPROTO_IP ***
+	dnl *****************************
+	AC_MSG_CHECKING(for IPPROTO_IP)
+	AC_TRY_COMPILE([#include <netinet/in.h>], [
+		int level = IPPROTO_IP;
+	], [
+		# Yes, we have it...
+		AC_MSG_RESULT(yes)
+		AC_DEFINE(HAVE_IPPROTO_IP, 1, [Have IPPROTO_IP])
+	], [
+		# We'll have to use getprotobyname
+		AC_MSG_RESULT(no)
+	])
+
+	dnl *******************************
+	dnl *** Checks for IPPROTO_IPV6 ***
+	dnl *******************************
+	AC_MSG_CHECKING(for IPPROTO_IPV6)
+	AC_TRY_COMPILE([#include <netinet/in.h>], [
+		int level = IPPROTO_IPV6;
+	], [
+		# Yes, we have it...
+		AC_MSG_RESULT(yes)
+		AC_DEFINE(HAVE_IPPROTO_IPV6, 1, [Have IPPROTO_IPV6])
+	], [
+		# We'll have to use getprotobyname
+		AC_MSG_RESULT(no)
+	])
+
+	dnl ******************************
+	dnl *** Checks for IPPROTO_TCP ***
+	dnl ******************************
+	AC_MSG_CHECKING(for IPPROTO_TCP)
+	AC_TRY_COMPILE([#include <netinet/in.h>], [
+		int level = IPPROTO_TCP;
+	], [
+		# Yes, we have it...
+		AC_MSG_RESULT(yes)
+		AC_DEFINE(HAVE_IPPROTO_TCP, 1, [Have IPPROTO_TCP])
+	], [
+		# We'll have to use getprotobyname
 		AC_MSG_RESULT(no)
 	])
 
@@ -1223,7 +1332,7 @@ if test x$target_win32 = xno; then
 	dnl *** Checks for IP_PKTINFO ***
 	dnl *****************************
 	AC_MSG_CHECKING(for IP_PKTINFO)
-	AC_TRY_COMPILE([#include <netdb.h>], [
+	AC_TRY_COMPILE([#include <linux/in.h>], [
 		int level = IP_PKTINFO;
 	], [
 		# Yes, we have it...
@@ -1248,10 +1357,24 @@ if test x$target_win32 = xno; then
 	])
 
 	dnl **********************************
+	dnl *** Checks for IP_DONTFRAG     ***
+	dnl **********************************
+	AC_MSG_CHECKING(for IP_DONTFRAG)
+	AC_TRY_COMPILE([#include <netinet/in.h>], [
+		int level = IP_DONTFRAG;
+	], [
+		# Yes, we have it...
+		AC_MSG_RESULT(yes)
+		AC_DEFINE(HAVE_IP_DONTFRAG, 1, [Have IP_DONTFRAG])
+	], [
+		AC_MSG_RESULT(no)
+	])
+
+	dnl **********************************
 	dnl *** Checks for IP_DONTFRAGMENT ***
 	dnl **********************************
 	AC_MSG_CHECKING(for IP_DONTFRAGMENT)
-	AC_TRY_COMPILE([#include <netdb.h>], [
+	AC_TRY_COMPILE([#include <Ws2ipdef.h>], [
 		int level = IP_DONTFRAGMENT;
 	], [
 		# Yes, we have it...
@@ -1265,12 +1388,26 @@ if test x$target_win32 = xno; then
 	dnl *** Checks for IP_MTU_DISCOVER ***
 	dnl **********************************
 	AC_MSG_CHECKING(for IP_MTU_DISCOVER)
-	AC_TRY_COMPILE([#include <netdb.h>], [
+	AC_TRY_COMPILE([#include <linux/in.h>], [
 		int level = IP_MTU_DISCOVER;
 	], [
 		# Yes, we have it...
 		AC_MSG_RESULT(yes)
 		AC_DEFINE(HAVE_IP_MTU_DISCOVER, 1, [Have IP_MTU_DISCOVER])
+	], [
+		AC_MSG_RESULT(no)
+	])
+
+	dnl **********************************
+	dnl *** Checks for  IP_PMTUDISC_DO ***
+	dnl **********************************
+	AC_MSG_CHECKING(for IP_PMTUDISC_DO)
+	AC_TRY_COMPILE([#include <linux/in.h>], [
+		int level = IP_PMTUDISC_DO;
+	], [
+		# Yes, we have it...
+		AC_MSG_RESULT(yes)
+		AC_DEFINE(HAVE_IP_PMTUDISC_DO, 1, [Have IP_PMTUDISC_DO])
 	], [
 		AC_MSG_RESULT(no)
 	])
@@ -1388,6 +1525,7 @@ if test x$target_win32 = xno; then
 		;;
 	esac
 	AC_CHECK_HEADERS(pthread.h)
+	AC_CHECK_HEADERS(pthread_np.h)
 	AC_CHECK_FUNCS(pthread_mutex_timedlock)
 	AC_CHECK_FUNCS(pthread_getattr_np pthread_attr_get_np)
 	AC_CHECK_FUNCS(pthread_kill)
@@ -1545,11 +1683,11 @@ if test x$target_win32 = xno; then
 					return 0;
 				}
 
-				for (i = 0; i < 3; ++i) {
-					sleep (1);
+				for (i = 0; i < 300; ++i) {
 					waitpid (son, &status, WNOHANG);
 					if (WIFEXITED (status) && WEXITSTATUS (status) == 0)
 						return 0;
+					usleep (10000);
 				}
 
 				kill (son, SIGKILL);
@@ -1651,9 +1789,21 @@ if test x$target_win32 = xno; then
 	havekqueue=no
         AC_CHECK_FUNCS(kqueue, , AC_MSG_CHECKING(for kqueue in sys/event.h)
                 AC_TRY_LINK([#include <sys/event.h>], 
-                [ kqueue(); ], 
-                AC_DEFINE(HAVE_KQUEUE, 1, [Have kqueue]) AC_MSG_RESULT(yes),
-                AC_MSG_RESULT(no)))
+                [ kqueue(); ],[havekqueue=yes],[]))
+
+	dnl **************************************
+	dnl * Darwin has a race that prevents us from using reliably:
+	dnl * http://lists.apple.com/archives/darwin-dev/2011/Jun/msg00016.html
+	dnl * Since kqueue is mostly used for scaling large web servers, 
+	dnl * and very few folks run Mono on large web servers on OSX, falling
+	dnl * back 
+	dnl **************************************
+	if test x$havekqueue = xyes; then
+		if x$platform_darwin = xno; then
+			AC_DEFINE(USE_KQUEUE_FOR_THREADPOOL, 1, [Use kqueue for the threadpool])
+		fi
+	fi
+
 	dnl ******************************
 	dnl *** Checks for SIOCGIFCONF ***
 	dnl ******************************
@@ -1869,6 +2019,11 @@ if test x$target_win32 = xno; then
 	AC_CHECK_HEADERS(sys/time.h)
 	AC_CHECK_HEADERS(sys/param.h)
 	AC_CHECK_HEADERS(dirent.h)
+
+	dnl ******************************************
+	dnl *** Checks for OSX and iOS compilation ***
+	dnl ******************************************
+	AC_CHECK_HEADERS(CommonCrypto/CommonDigest.h)
 
 	dnl *********************************
 	dnl *** Check for Console 2.0 I/O ***
@@ -2160,13 +2315,21 @@ if test "x$enable_llvm" = "xyes"; then
    	  AC_MSG_ERROR([llvm-config not found.])
    fi
 
+   llvm_codegen="x86codegen"
+   case "$target" in
+   arm*)
+		llvm_codegen="armcodegen"
+		;;
+   esac
+
+
    # The output of --cflags seems to include optimizations flags too
    LLVM_CFLAGS=`$LLVM_CONFIG --cflags | sed -e 's/-O2//g' | sed -e 's/-O0//g' | sed -e 's/-fomit-frame-pointer//g' | sed -e 's/-fPIC//g'`
    # LLVM is compiled with -fno-rtti, so we need this too, since our classes inherit
    # from LLVM classes.
    LLVM_CXXFLAGS="`$LLVM_CONFIG --cxxflags` -fno-rtti"
    LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
-   LLVM_LIBS=`$LLVM_CONFIG --libs core bitwriter jit mcjit x86codegen`
+   LLVM_LIBS=`$LLVM_CONFIG --libs core bitwriter jit mcjit $llvm_codegen`
    LLVM_LIBS="$LLVM_LDFLAGS $LLVM_LIBS -lstdc++"
 
    # Should be something like '2.6' or '2.7svn'
@@ -2410,6 +2573,11 @@ case "$host" in
 		JIT_SUPPORTED=yes
 		sgen_supported=true
 		AOT_SUPPORTED="yes"
+		if test "x$cross_compiling" != "xno"; then
+		   # Provide sane defaults when cross-compiling
+		   CPPFLAGS="$CPPFLAGS -DARM_FPU_VFP=1 -D__ARM_EABI__ -DHAVE_ARMV6=1"
+		   NESTED_LIBGC_FLAGS="$NESTED_LIBGC_FLAGS -DHAVE_ARMV6"
+  		fi
 		;;
 	s390-*-linux*)
 		TARGET=S390;
@@ -2430,10 +2598,23 @@ case "$host" in
 		;;
 esac
 
+HOST=$TARGET
+
 if test "x$host" != "x$target"; then
    AC_DEFINE(MONO_CROSS_COMPILE,1,[The runtime is compiled for cross-compiling mode])
    enable_mcs_build=no
    case "$target" in
+   arm*-darwin*)
+		TARGET=ARM;
+		arch_target=arm;
+		ACCESS_UNALIGNED="no"
+		JIT_SUPPORTED=yes
+		CPPFLAGS="$CPPFLAGS -DARM_FPU_VFP=1 -D__ARM_EABI__ -DHAVE_ARMV6=1"
+		jit_wanted=true
+		# Can't use tls, since it depends on the runtime detection of tls offsets
+		# in mono-compiler.h
+		with_tls=pthread
+		;;
    powerpc64-ps3-linux-gnu)
 		TARGET=POWERPC64
 		arch_target=powerpc64
@@ -2468,20 +2649,7 @@ if test "x$host" != "x$target"; then
 		AC_DEFINE(TARGET_X86, 1, [...])
 		sizeof_register=4
 		;;
-   armv7l-unknown-linux-gnueabi*)
-		# TEGRA
-		TARGET=ARM;
-		arch_target=arm;
-		AC_DEFINE(TARGET_ARM, 1, [...])
-		ACCESS_UNALIGNED="no"
-		JIT_SUPPORTED=yes
-		CPPFLAGS="$CPPFLAGS -DARM_FPU_VFP=1 -D__ARM_EABI__"
-		jit_wanted=true
-		# Can't use tls, since it depends on the runtime detection of tls offsets
-		# in mono-compiler.h
-		with_tls=pthread
-		;;
-   armv5tel-unknown-linux-gnueabi*)
+   arm*-unknown-linux-*)
 		TARGET=ARM;
 		arch_target=arm;
 		AC_DEFINE(TARGET_ARM, 1, [...])
@@ -2492,19 +2660,17 @@ if test "x$host" != "x$target"; then
 		# Can't use tls, since it depends on the runtime detection of tls offsets
 		# in mono-compiler.h
 		with_tls=pthread
-		;;
-   armv5-*-linux-androideabi*)
-		TARGET=ARM;
-		arch_target=arm;
-		AC_DEFINE(TARGET_ARM, 1, [...])
-		AC_DEFINE(TARGET_ANDROID, 1, [...])
-		ACCESS_UNALIGNED="no"
-		JIT_SUPPORTED=yes
-		CPPFLAGS="$CPPFLAGS -D__ARM_EABI__ -DARM_FPU_NONE=1"
-		jit_wanted=true
-		# Can't use tls, since it depends on the runtime detection of tls offset
-		# in mono-compiler.h
-		with_tls=pthread
+		target_mach=no
+		case "$target" in
+		armv7l-unknown-linux-gnueabi*)
+			# TEGRA
+			CPPFLAGS="$CPPFLAGS -DARM_FPU_VFP=1"
+			;;
+   		armv5-*-linux-androideabi*)
+			AC_DEFINE(TARGET_ANDROID, 1, [...])
+			CPPFLAGS="$CPPFLAGS -DARM_FPU_NONE"
+			;;
+		esac
 		;;
 	*)
 		AC_MSG_ERROR([Cross compiling is not supported for target $target])
@@ -2536,6 +2702,25 @@ MIPS)
 	AC_DEFINE(TARGET_MIPS, 1, [...])
 	;;
 esac
+
+if test "x$target_mach" = "xyes"; then
+	AC_TRY_COMPILE([#include "TargetConditionals.h"],[
+	#if TARGET_IPHONE_SIMULATOR == 1 || TARGET_OS_IPHONE == 1
+	#error fail this for ios
+	#endif
+	return 0;
+	], [
+		AC_DEFINE(TARGET_OSX,1,[The JIT/AOT targets OSX])
+		CPPFLAGS_FOR_LIBGC="$CPPFLAGS_FOR_LIBGC -DTARGET_OSX"
+		CFLAGS_FOR_LIBGC="$CFLAGS_FOR_LIBGC -DTARGET_OSX"
+	], [
+		AC_DEFINE(TARGET_IOS,1,[The JIT/AOT targets iOS])
+		CPPFLAGS_FOR_LIBGC="$CPPFLAGS_FOR_LIBGC -DTARGET_IOS"
+		CFLAGS_FOR_LIBGC="$CFLAGS_FOR_LIBGC -DTARGET_IOS"
+	])
+
+   AC_DEFINE(TARGET_MACH,1,[The JIT/AOT targets Apple platforms])
+fi
 
 if test "x$sizeof_register" = "x4"; then
    AC_DEFINE(SIZEOF_REGISTER,4,[size of machine integer registers])
@@ -2573,7 +2758,7 @@ SGEN_DEFINES=
 AC_ARG_WITH(sgen, [  --with-sgen=yes,no             Extra Generational GC, default=yes],[buildsgen=$with_sgen],[buildsgen=$build_sgen_default])
 if test x$buildsgen = xyes; then
    if $sgen_supported; then
-       SGEN_DEFINES="-DHAVE_SGEN_GC -DHAVE_MOVING_COLLECTOR -DHAVE_WRITE_BARRIERS"
+       SGEN_DEFINES="-DHAVE_SGEN_GC -DHAVE_MOVING_COLLECTOR"
        gc_msg="sgen and $gc_msg"
    else
        buildsgen=no
@@ -2721,6 +2906,11 @@ if test "x$icall_tables" = "xno"; then
    AC_DEFINE(DISABLE_ICALL_TABLES, 1, [Icall tables disabled])
 fi
 
+if test "x$mono_cv_clang" = "xyes"; then
+   # FIXME: This causes many compilation errors
+   with_tls=pthread
+fi
+
 if test "x$with_tls" = "x__thread"; then
 	AC_DEFINE(HAVE_KW_THREAD, 1, [Have __thread keyword])
 	# Pass the information to libgc
@@ -2781,6 +2971,12 @@ if test ${TARGET} = ARM && test x$cross_compiling = xno && test x$enable_mcs_bui
 	fi
 fi
 
+if test ${TARGET} = ARM; then
+	if test "x${with_jumptables}" = "xyes"; then
+                AC_DEFINE(USE_JUMP_TABLES, 1, Use jump tables in JIT)
+        fi
+fi
+
 if test ${TARGET} = unknown; then
 	CPPFLAGS="$CPPFLAGS -DNO_PORT"
 	AC_MSG_WARN("mono has not been ported to $host: some things may not work.")
@@ -2816,7 +3012,7 @@ AC_ARG_WITH(profile2,  [  --with-profile2=yes,no          If you want to install
 AC_ARG_WITH(profile4,  [  --with-profile4=yes,no          If you want to install the 4.0 FX (defaults to yes)],                [], [with_profile4=yes])
 AC_ARG_WITH(profile4_5,[  --with-profile4_5=yes,no        If you want to install the 4.5 FX (defaults to yes)],                [], [with_profile4_5=yes])
 AC_ARG_WITH(monodroid, [  --with-monodroid=yes,no         If you want to build the MonoDroid assemblies (defaults to no)],     [], [with_monodroid=no])
-AC_ARG_WITH(monotouch, [  --with-monotouch=yes,no         If you want to build the MonoTouch assemblies (defaults to no)],     [], [with_monotouch=no])
+AC_ARG_WITH(monotouch, [  --with-monotouch=yes,no,only    If you want to build the MonoTouch assemblies (defaults to no)],     [], [with_monotouch=no])
 AC_ARG_WITH(mobile,    [  --with-mobile=yes,no            If you want to build the Mobile assemblies (defaults to no)],        [], [with_mobile=no])
 
 OPROFILE=no
@@ -2866,6 +3062,12 @@ AC_ARG_WITH(moon_gc, [  --with-moon-gc=boehm,sgen		Select the gc to use with Moo
 	fi
 ], [with_moon_gc=boehm])
 
+AC_ARG_WITH(lazy_gc_thread_creation, [  --with-lazy-gc-thread-creation=yes|no      Enable lazy runtime thread creation, embedding host must do it explicitly (defaults to no)],[
+	if test x$with_lazy_gc_thread_creation != xno ; then
+		AC_DEFINE(LAZY_GC_THREAD_CREATION,1,[Enable lazy gc thread creation by the embedding host.])
+	fi
+], [with_lazy_gc_thread_creation=no])
+
 AC_CHECK_HEADER([malloc.h], 
 		[AC_DEFINE([HAVE_USR_INCLUDE_MALLOC_H], [1], 
 			[Define to 1 if you have /usr/include/malloc.h.])],,)
@@ -2880,7 +3082,7 @@ fi
 
 # When --disable-shared is used, libtool transforms libmono-2.0.la into libmono-2.0.so
 # instead of libmono-static.a
-if test "x$enable_shared" = "xno"; then
+if test "x$enable_shared" = "xno" -a "x$enable_executables" = "xyes"; then
    LIBMONO_LA=libmini-static.la
 else
    LIBMONO_LA=libmono-$API_VER.la
@@ -2892,6 +3094,11 @@ dnl Consistency settings
 dnl
 if test x$cross_compiling = xyes -o x$enable_mcs_build = xno; then
    DISABLE_MCS_DOCS=yes
+   with_profile2=no
+   with_profile4=no
+   with_profile4_5=no
+   with_monodroid=no
+   with_monotouch=no
 fi
 
 if test x$DISABLE_MCS_DOCS = xyes; then
@@ -2911,6 +3118,7 @@ AC_SUBST(OPROFILE_LIBS)
 libmono_ldflags="$libmono_ldflags $LIBS"
 
 AM_CONDITIONAL(MOONLIGHT, [test "x$with_moonlight" != "xno"])
+
 AM_CONDITIONAL(ONLY_MOONLIGHT, [test "x$with_moonlight" = "xonly"])
 AM_CONDITIONAL(MOONLIGHT_BOEHM, [test "x$with_moon_gc" = "xboehm"])
 AM_CONDITIONAL(MOONLIGHT_SGEN, [test "x$with_moon_gc" = "xsgen"])
@@ -2918,9 +3126,10 @@ AM_CONDITIONAL(MOONLIGHT_SGEN, [test "x$with_moon_gc" = "xsgen"])
 AM_CONDITIONAL(INSTALL_2_0, [test "x$with_profile2" = xyes])
 AM_CONDITIONAL(INSTALL_4_0, [test "x$with_profile4" = xyes])
 AM_CONDITIONAL(INSTALL_4_5, [test "x$with_profile4_5" = xyes])
-AM_CONDITIONAL(INSTALL_MONODROID, [test "x$with_monodroid" = xyes])
-AM_CONDITIONAL(INSTALL_MONOTOUCH, [test "x$with_monotouch" = xyes])
+AM_CONDITIONAL(INSTALL_MONODROID, [test "x$with_monodroid" != "xno"])
+AM_CONDITIONAL(INSTALL_MONOTOUCH, [test "x$with_monotouch" != "xno"])
 AM_CONDITIONAL(INSTALL_MOBILE, [test "x$with_mobile" = xyes])
+AM_CONDITIONAL(ONLY_MONOTOUCH, [test "x$with_monotouch" = "xonly"])
 
 AM_CONDITIONAL(MIPS_GCC, test ${TARGET}${ac_cv_prog_gcc} = MIPSyes)
 AM_CONDITIONAL(MIPS_SGI, test ${TARGET}${ac_cv_prog_gcc} = MIPSno)
@@ -2938,6 +3147,10 @@ AM_CONDITIONAL(ARM, test x$TARGET = xARM)
 AM_CONDITIONAL(S390, test x$TARGET = xS390)
 AM_CONDITIONAL(S390x, test x$TARGET = xS390x)
 AM_CONDITIONAL(HPPA, test x$TARGET = xHPPA)
+AM_CONDITIONAL(HOST_X86, test x$HOST = xX86)
+AM_CONDITIONAL(HOST_AMD64, test x$HOST = xAMD64)
+AM_CONDITIONAL(HOST_ARM, test x$HOST = xARM)
+AM_CONDITIONAL(CROSS_COMPILE, test "x$host" != "x$target")
 
 AM_CONDITIONAL(JIT_SUPPORTED, test x$JIT_SUPPORTED = xyes)
 AM_CONDITIONAL(INTERP_SUPPORTED, test x$interp_wanted = xtrue)
@@ -3107,16 +3320,7 @@ AC_CONFIG_COMMANDS([runtime/etc/mono/4.5/web.config],
     cd $depth
 ],[LN_S='$LN_S'])
 
-if test x$enable_quiet_build = xyes; then
-   AC_CONFIG_COMMANDS([quiet],
-[  for i in `find mono libgc support -name Makefile`; do
-   	   if [ grep -q 'generated by automake' $i ]; then
-	   	  $srcdir/scripts/patch-quiet.sh $i;
-	   fi;
-   done
-], [shell=$SHELL])
-   AC_CONFIG_COMMANDS([quiet-libtool], [sed -e 's/echo "copying selected/# "copying selected/g' < libtool > libtool.tmp && mv libtool.tmp libtool && chmod a+x libtool; sed -e 's/$ECHO "copying selected/# "copying selected/g' < libtool > libtool.tmp && mv libtool.tmp libtool && chmod a+x libtool])
-fi
+AC_CONFIG_COMMANDS([quiet-libtool], [sed -e 's/echo "copying selected/# "copying selected/g' < libtool > libtool.tmp && mv libtool.tmp libtool && chmod a+x libtool; sed -e 's/$ECHO "copying selected/# "copying selected/g' < libtool > libtool.tmp && mv libtool.tmp libtool && chmod a+x libtool])
 
 AC_OUTPUT([
 Makefile
@@ -3186,6 +3390,7 @@ data/system.web.mvc.pc
 data/system.web.mvc2.pc
 data/system.web.mvc3.pc
 data/aspnetwebstack.pc
+data/reactive.pc
 samples/Makefile
 support/Makefile
 data/config
@@ -3278,6 +3483,10 @@ fi
       echo "MOONLIGHT = 1" >> $srcdir/$mcsdir/build/config.make
     fi
 
+    if test x$has_extension_module != xno; then
+        echo "EXTENSION_MODULE = 1" >> $srcdir/$mcsdir/build/config.make
+    fi
+
 	default_profile=net_2_0
     if test -z "$INSTALL_4_0_TRUE"; then :
   		default_profile=net_4_0
@@ -3339,7 +3548,6 @@ echo "
 	.NET 4.5:      $with_profile4_5
 	MonoDroid:     $with_monodroid
 	MonoTouch:     $with_monotouch
-	Mobile:        $with_mobile
 	JNI support:   $jdk_headers_found
 	libgdiplus:    $libgdiplus_msg
 	zlib:          $zlib_msg

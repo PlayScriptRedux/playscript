@@ -1,15 +1,14 @@
-// System.MonoCustomAttrs.cs
-// Hooks into the runtime to get custom attributes for reflection handles
+//
+// MonoCustomAttrs.cs: Hooks into the runtime to get custom attributes for reflection handles
 //
 // Authors:
 // 	Paolo Molaro (lupus@ximian.com)
 // 	Gonzalo Paniagua Javier (gonzalo@ximian.com)
+// 	Marek Safar (marek.safar@gmail.com)
 //
 // (c) 2002,2003 Ximian, Inc. (http://www.ximian.com)
-//
-
-//
 // Copyright (C) 2004 Novell, Inc (http://www.novell.com)
+// Copyright (C) 2013 Xamarin, Inc (http://www.xamarin.com)
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -35,12 +34,15 @@ using System;
 using System.Reflection;
 using System.Collections;
 using System.Runtime.CompilerServices;
+#if !FULL_AOT_RUNTIME
 using System.Reflection.Emit;
+#endif
+
 using System.Collections.Generic;
 
 namespace System
 {
-	internal class MonoCustomAttrs
+	static class MonoCustomAttrs
 	{
 		static Assembly corlib;
 
@@ -48,7 +50,11 @@ namespace System
 		static bool IsUserCattrProvider (object obj)
 		{
 			Type type = obj as Type;
+#if !FULL_AOT_RUNTIME
 			if ((type is MonoType) || (type is TypeBuilder))
+#else
+			if (type is MonoType)
+#endif
 				return false;
 			if ((obj is Type))
 				return true;
@@ -80,13 +86,13 @@ namespace System
 							return pseudoAttrs;
 						else
 							return new object [] { pseudoAttrs [i] };
-				return new object [0];
+				return EmptyArray<object>.Value;
 			}
-			else
-				return pseudoAttrs;
+
+			return pseudoAttrs;
 		}
 
-		internal static object[] GetCustomAttributesBase (ICustomAttributeProvider obj, Type attributeType)
+		internal static object[] GetCustomAttributesBase (ICustomAttributeProvider obj, Type attributeType, bool inheritedOnly)
 		{
 			object[] attrs;
 			if (IsUserCattrProvider (obj))
@@ -94,15 +100,21 @@ namespace System
 			else
 				attrs = GetCustomAttributesInternal (obj, attributeType, false);
 
-			object[] pseudoAttrs = GetPseudoCustomAttributes (obj, attributeType);
-			if (pseudoAttrs != null) {
-				object[] res = new object [attrs.Length + pseudoAttrs.Length];
-				System.Array.Copy (attrs, res, attrs.Length);
-				System.Array.Copy (pseudoAttrs, 0, res, attrs.Length, pseudoAttrs.Length);
-				return res;
+			//
+			// All pseudo custom attributes are Inherited = false hence we can avoid
+			// building attributes array which would be discarded by inherited checks
+			//
+			if (!inheritedOnly) {
+				object[] pseudoAttrs = GetPseudoCustomAttributes (obj, attributeType);
+				if (pseudoAttrs != null) {
+					object[] res = new object [attrs.Length + pseudoAttrs.Length];
+					System.Array.Copy (attrs, res, attrs.Length);
+					System.Array.Copy (pseudoAttrs, 0, res, attrs.Length, pseudoAttrs.Length);
+					return res;
+				}
 			}
-			else
-				return attrs;
+
+			return attrs;
 		}
 
 		internal static Attribute GetCustomAttribute (ICustomAttributeProvider obj,
@@ -135,7 +147,7 @@ namespace System
 				attributeType = null;
 			
 			object[] r;
-			object[] res = GetCustomAttributesBase (obj, attributeType);
+			object[] res = GetCustomAttributesBase (obj, attributeType, false);
 			// shortcut
 			if (!inherit && res.Length == 1)
 			{
@@ -234,7 +246,7 @@ namespace System
 				if ((btype = GetBase (btype)) != null)
 				{
 					inheritanceLevel++;
-					res = GetCustomAttributesBase (btype, attributeType);
+					res = GetCustomAttributesBase (btype, attributeType, true);
 				}
 			} while (inherit && btype != null);
 
@@ -260,7 +272,7 @@ namespace System
 				throw new ArgumentNullException ("obj");
 
 			if (!inherit)
-				return (object[]) GetCustomAttributesBase (obj, null).Clone ();
+				return (object[]) GetCustomAttributesBase (obj, null, false).Clone ();
 
 			return GetCustomAttributes (obj, typeof (MonoCustomAttrs), inherit);
 		}
@@ -402,8 +414,7 @@ namespace System
 				return new AttributeUsageAttribute (AttributeTargets.Class);
 
 			AttributeUsageAttribute usageAttribute = null;
-			object[] attribs = GetCustomAttributes (attributeType,
-				MonoCustomAttrs.AttributeUsageType, false);
+			object[] attribs = GetCustomAttributes (attributeType, typeof(AttributeUsageAttribute), false);
 			if (attribs.Length == 0)
 			{
 				// if no AttributeUsage was defined on the attribute level, then
@@ -435,7 +446,6 @@ namespace System
 			return ((AttributeUsageAttribute) attribs[0]);
 		}
 
-		private static readonly Type AttributeUsageType = typeof(AttributeUsageAttribute);
 		private static readonly AttributeUsageAttribute DefaultAttributeUsage =
 			new AttributeUsageAttribute (AttributeTargets.All);
 

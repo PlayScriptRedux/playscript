@@ -45,6 +45,7 @@
 
 #include "sgen-gc.h"
 #include "sgen-bridge.h"
+#include "sgen-hash-table.h"
 #include "utils/mono-logger-internal.h"
 #include "utils/mono-time.h"
 
@@ -270,13 +271,13 @@ typedef struct _SCC {
 	DynArray xrefs;		/* these are incoming, not outgoing */
 } SCC;
 
-static SgenHashTable hash_table = SGEN_HASH_TABLE_INIT (INTERNAL_MEM_BRIDGE_DATA, INTERNAL_MEM_BRIDGE_DATA, sizeof (HashEntry), mono_aligned_addr_hash, NULL);
+static SgenHashTable hash_table = SGEN_HASH_TABLE_INIT (INTERNAL_MEM_BRIDGE_HASH_TABLE, INTERNAL_MEM_BRIDGE_HASH_TABLE_ENTRY, sizeof (HashEntry), mono_aligned_addr_hash, NULL);
 
 static MonoGCBridgeCallbacks bridge_callbacks;
 
 static int current_time;
 
-static gboolean bridge_processing_in_progress = FALSE;
+gboolean bridge_processing_in_progress = FALSE;
 
 void
 mono_gc_wait_for_bridge_processing (void)
@@ -553,6 +554,10 @@ sgen_bridge_processing_stw_step (void)
 	if (!registered_bridges.size)
 		return;
 
+	/*
+	 * bridge_processing_in_progress must be set with the world
+	 * stopped.  If not there would be race conditions.
+	 */
 	g_assert (!bridge_processing_in_progress);
 	bridge_processing_in_progress = TRUE;
 
@@ -571,8 +576,18 @@ sgen_bridge_processing_stw_step (void)
 	step_2 = SGEN_TV_ELAPSED (btv, atv);
 }
 
+static mono_bool
+is_bridge_object_alive (MonoObject *obj, void *data)
+{
+	SgenHashTable *table = data;
+	unsigned char *value = sgen_hash_table_lookup (table, obj);
+	if (!value)
+		return TRUE;
+	return *value;
+}
+
 void
-sgen_bridge_processing_finish (void)
+sgen_bridge_processing_finish (int generation)
 {
 	int i, j;
 	int num_sccs, num_xrefs;
@@ -584,6 +599,7 @@ sgen_bridge_processing_finish (void)
 	HashEntry **all_entries;
 	MonoGCBridgeSCC **api_sccs;
 	MonoGCBridgeXRef *api_xrefs;
+	SgenHashTable alive_hash = SGEN_HASH_TABLE_INIT (INTERNAL_MEM_BRIDGE_ALIVE_HASH_TABLE, INTERNAL_MEM_BRIDGE_ALIVE_HASH_TABLE_ENTRY, 1, mono_aligned_addr_hash, NULL);
 	SGEN_TV_DECLARE (atv);
 	SGEN_TV_DECLARE (btv);
 
@@ -666,6 +682,7 @@ sgen_bridge_processing_finish (void)
 			continue;
 
 		api_sccs [j] = sgen_alloc_internal_dynamic (sizeof (MonoGCBridgeSCC) + sizeof (MonoObject*) * scc->num_bridge_entries, INTERNAL_MEM_BRIDGE_DATA, TRUE);
+		api_sccs [j]->is_alive = FALSE;
 		api_sccs [j]->num_objs = scc->num_bridge_entries;
 		scc->num_bridge_entries = 0;
 		scc->api_index = j++;
@@ -733,16 +750,28 @@ sgen_bridge_processing_finish (void)
 
 	bridge_callbacks.cross_references (num_sccs, api_sccs, num_xrefs, api_xrefs);
 
-/*Release for finalization those objects we no longer care. */
+	/* Release for finalization those objects we no longer care. */
 	SGEN_TV_GETTIME (btv);
 	step_7 = SGEN_TV_ELAPSED (atv, btv);
 
 	for (i = 0; i < num_sccs; ++i) {
-		if (!api_sccs [i]->objs [0])
-			continue;
-		for (j = 0; j < api_sccs [i]->num_objs; ++j)
-			sgen_mark_bridge_object (api_sccs [i]->objs [j]);
+		unsigned char alive = api_sccs [i]->is_alive ? 1 : 0;
+		for (j = 0; j < api_sccs [i]->num_objs; ++j) {
+			/* Build hash table for nulling weak links. */
+			sgen_hash_table_replace (&alive_hash, api_sccs [i]->objs [j], &alive, NULL);
+
+			/* Release for finalization those objects we no longer care. */
+			if (!api_sccs [i]->is_alive)
+				sgen_mark_bridge_object (api_sccs [i]->objs [j]);
+		}
 	}
+
+	/* Null weak links to dead objects. */
+	sgen_null_links_with_predicate (GENERATION_NURSERY, is_bridge_object_alive, &alive_hash);
+	if (generation == GENERATION_OLD)
+		sgen_null_links_with_predicate (GENERATION_OLD, is_bridge_object_alive, &alive_hash);
+
+	sgen_hash_table_clean (&alive_hash);
 
 	/* free callback data */
 

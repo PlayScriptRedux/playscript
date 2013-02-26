@@ -87,11 +87,11 @@ gpointer    ves_icall_System_GCHandle_GetAddrOfPinnedObject (guint32 handle) MON
 void        ves_icall_System_GC_register_ephemeron_array (MonoObject *array) MONO_INTERNAL;
 MonoObject  *ves_icall_System_GC_get_ephemeron_tombstone (void) MONO_INTERNAL;
 
+MonoBoolean ves_icall_Mono_Runtime_SetGCAllowSynchronousMajor (MonoBoolean flag) MONO_INTERNAL;
+
 extern void mono_gc_init (void) MONO_INTERNAL;
 extern void mono_gc_base_init (void) MONO_INTERNAL;
 extern void mono_gc_cleanup (void) MONO_INTERNAL;
-extern void mono_gc_enable (void) MONO_INTERNAL;
-extern void mono_gc_disable (void) MONO_INTERNAL;
 
 /*
  * Return whenever the current thread is registered with the GC (i.e. started
@@ -119,19 +119,14 @@ extern void     mono_gc_enable_events (void);
 
 /* disappearing link functionality */
 void        mono_gc_weak_link_add    (void **link_addr, MonoObject *obj, gboolean track) MONO_INTERNAL;
-void        mono_gc_weak_link_remove (void **link_addr) MONO_INTERNAL;
+void        mono_gc_weak_link_remove (void **link_addr, gboolean track) MONO_INTERNAL;
 MonoObject *mono_gc_weak_link_get    (void **link_addr) MONO_INTERNAL;
-
-#ifndef HAVE_SGEN_GC
-void    mono_gc_add_weak_track_handle    (MonoObject *obj, guint32 gchandle) MONO_INTERNAL;
-void    mono_gc_change_weak_track_handle (MonoObject *old_obj, MonoObject *obj, guint32 gchandle) MONO_INTERNAL;
-void    mono_gc_remove_weak_track_handle (guint32 gchandle) MONO_INTERNAL;
-GSList* mono_gc_remove_weak_track_object (MonoDomain *domain, MonoObject *obj) MONO_INTERNAL;
-#endif
 
 /*Ephemeron functionality. Sgen only*/
 gboolean    mono_gc_ephemeron_array_add (MonoObject *obj) MONO_INTERNAL;
 
+/* To disable synchronous, evacuating collections - concurrent SGen only */
+gboolean    mono_gc_set_allow_synchronous_major (gboolean flag) MONO_INTERNAL;
 
 MonoBoolean
 GCHandle_CheckCurrentDomain (guint32 gchandle) MONO_INTERNAL;
@@ -316,6 +311,7 @@ void* mono_gc_invoke_with_gc_lock (MonoGCLockedCallbackFunc func, void *data) MO
 int mono_gc_get_los_limit (void) MONO_INTERNAL;
 
 guint8* mono_gc_get_card_table (int *shift_bits, gpointer *card_mask) MONO_INTERNAL;
+gboolean mono_gc_card_table_nursery_check (void) MONO_INTERNAL;
 
 void* mono_gc_get_nursery (int *shift_bits, size_t *size) MONO_INTERNAL;
 
@@ -345,11 +341,8 @@ typedef struct _MonoReferenceQueue MonoReferenceQueue;
 typedef struct _RefQueueEntry RefQueueEntry;
 
 struct _RefQueueEntry {
-#ifdef HAVE_SGEN_GC
 	void *dis_link;
-#else
 	guint32 gchandle;
-#endif
 	void *user_data;
 	RefQueueEntry *next;
 };

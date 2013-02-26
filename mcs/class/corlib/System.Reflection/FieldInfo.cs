@@ -28,7 +28,6 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 using System.Diagnostics;
-using System.Reflection.Emit;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -191,13 +190,7 @@ namespace System.Reflection {
 		}
 
 		[MethodImplAttribute(MethodImplOptions.InternalCall)]
-		private extern UnmanagedMarshal GetUnmanagedMarshal ();
-
-		internal virtual UnmanagedMarshal UMarshal {
-			get {
-				return GetUnmanagedMarshal ();
-			}
-		}
+		private extern MarshalAsAttribute get_marshal_info ();
 
 		internal object[] GetPseudoCustomAttributes ()
 		{
@@ -209,7 +202,7 @@ namespace System.Reflection {
 			if (DeclaringType.IsExplicitLayout)
 				count ++;
 
-			UnmanagedMarshal marshalAs = UMarshal;
+			MarshalAsAttribute marshalAs = get_marshal_info ();
 			if (marshalAs != null)
 				count ++;
 
@@ -223,7 +216,7 @@ namespace System.Reflection {
 			if (DeclaringType.IsExplicitLayout)
 				attrs [count ++] = new FieldOffsetAttribute (GetFieldOffset ());
 			if (marshalAs != null)
-				attrs [count ++] = marshalAs.ToMarshalAsAttribute ();
+				attrs [count ++] = marshalAs;
 
 			return attrs;
 		}
@@ -301,6 +294,12 @@ namespace System.Reflection {
 		void _FieldInfo.GetIDsOfNames ([In] ref Guid riid, IntPtr rgszNames, uint cNames, uint lcid, IntPtr rgDispId)
 		{
 			throw new NotImplementedException ();
+		}
+
+		Type _FieldInfo.GetType ()
+		{
+			// Required or object::GetType becomes virtual final
+			return base.GetType ();
 		}
 
 		void _FieldInfo.GetTypeInfo (uint iTInfo, uint lcid, IntPtr ppTInfo)

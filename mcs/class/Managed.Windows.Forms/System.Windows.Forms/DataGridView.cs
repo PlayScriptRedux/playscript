@@ -2240,10 +2240,20 @@ namespace System.Windows.Forms {
 			int new_width = 0;
 			
 			if (rowHeadersWidthSizeMode == DataGridViewRowHeadersWidthSizeMode.AutoSizeToDisplayedHeaders) {
-				foreach (DataGridViewRow row in Rows)
-					if (row.Displayed)
+				bool anyRowsDisplayed = false;
+				foreach(DataGridViewRow row in Rows)
+					if(row.Displayed) {
+						anyRowsDisplayed = true;
 						new_width = Math.Max (new_width, row.HeaderCell.PreferredSize.Width);
-						
+					}
+	
+			        // if there are no rows which are displayed, we still have to set new_width
+				// to a value >= 4 as RowHeadersWidth will throw an exception otherwise	
+				if(!anyRowsDisplayed) {
+					foreach (DataGridViewRow row in Rows)
+							new_width = Math.Max (new_width, row.HeaderCell.PreferredSize.Width);
+			        }		
+				
 				if (RowHeadersWidth != new_width)
 					RowHeadersWidth = new_width;
 					
@@ -6332,7 +6342,7 @@ namespace System.Windows.Forms {
 				
 					horizontalScrollBar.SafeValueSet (horizontalScrollBar.Value - delta_x);
 					OnHScrollBarScroll (this, new ScrollEventArgs (ScrollEventType.ThumbPosition, horizontalScrollBar.Value));
-				} else if (disp_x > first_col_index + displayedColumnsCount - 1) {
+				} else if (disp_x > first_col_index + displayedColumnsCount - 1 && disp_x != 0) {
 					RefreshScrollBars ();
 					scrollbarsRefreshed = true;
 					
@@ -6366,7 +6376,7 @@ namespace System.Windows.Forms {
 
 					verticalScrollBar.SafeValueSet (verticalScrollBar.Value - delta_y);
 					OnVScrollBarScroll (this, new ScrollEventArgs (ScrollEventType.ThumbPosition, verticalScrollBar.Value));
-				} else if (disp_y > first_row_index + displayedRowsCount - 1) {
+				} else if (disp_y > first_row_index + displayedRowsCount - 1 && disp_y != 0) {
 					if (!scrollbarsRefreshed)
 						RefreshScrollBars ();
 

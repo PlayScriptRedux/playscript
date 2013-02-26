@@ -80,6 +80,15 @@ int WSAAPI getnameinfo(const struct sockaddr*,socklen_t,char*,DWORD,
 #include "debugger-agent.h"
 #include "mini.h"
 
+/*
+On iOS we can't use System.Environment.Exit () as it will do the wrong
+shutdown sequence.
+*/
+#if !defined (TARGET_IOS)
+#define TRY_MANAGED_SYSTEM_ENVIRONMENT_EXIT
+#endif
+
+
 #ifndef MONO_ARCH_SOFT_DEBUG_SUPPORTED
 #define DISABLE_DEBUGGER_AGENT 1
 #endif
@@ -167,7 +176,6 @@ struct _InvokeData
 typedef struct {
 	MonoThreadUnwindState context;
 
-	gpointer resume_event;
 	/* This is computed on demand when it is requested using the wire protocol */
 	/* It is freed up when the thread is resumed */
 	int frame_count;
@@ -246,9 +254,7 @@ typedef struct {
 	 * The context where single stepping should resume while the thread is suspended because
 	 * of an EXCEPTION event.
 	 */
-	MonoContext catch_ctx;
-
-	gboolean has_catch_ctx;
+	MonoThreadUnwindState catch_state;
 
 	/*
 	 * The context which needs to be restored after handling a single step/breakpoint
@@ -667,6 +673,9 @@ static gboolean protocol_version_set;
 
 /* A hash table containing all active domains */
 static GHashTable *domains;
+
+/* The number of times the runtime is suspended */
+static gint32 suspend_count;
 
 static void transport_init (void);
 static void transport_connect (const char *address);
@@ -1317,8 +1326,7 @@ socket_transport_connect (const char *address)
 #endif
 	}
 	
-	disconnected = !transport_handshake ();
-	if (disconnected)
+	if (!transport_handshake ())
 		exit (1);
 }
 
@@ -1377,6 +1385,15 @@ static DebuggerTransport *transport;
 
 static DebuggerTransport transports [MAX_TRANSPORTS];
 static int ntransports;
+
+void
+mono_debugger_agent_register_transport (DebuggerTransport *trans);
+
+void
+mono_debugger_agent_register_transport (DebuggerTransport *trans)
+{
+	register_transport (trans);
+}
 
 static void
 register_transport (DebuggerTransport *trans)
@@ -1440,12 +1457,20 @@ transport_recv (void *buf, int len)
 	return transport->recv (buf, len);
 }
 
+gboolean
+mono_debugger_agent_transport_handshake (void)
+{
+	return transport_handshake ();
+}
+
 static gboolean
 transport_handshake (void)
 {
 	char handshake_msg [128];
 	guint8 buf [128];
 	int res;
+	
+	disconnected = TRUE;
 	
 	/* Write handshake message */
 	sprintf (handshake_msg, "DWP-Handshake");
@@ -1475,7 +1500,7 @@ transport_handshake (void)
 	 * Set TCP_NODELAY on the socket so the client receives events/command
 	 * results immediately.
 	 */
-	{
+	if (conn_fd) {
 		int flag = 1;
 		int result = setsockopt (conn_fd,
                                  IPPROTO_TCP,
@@ -1488,6 +1513,7 @@ transport_handshake (void)
 	set_keepalive ();
 #endif
 	
+	disconnected = FALSE;
 	return TRUE;
 }
 
@@ -1788,6 +1814,7 @@ objrefs_cleanup (void)
 }
 
 static GHashTable *obj_to_objref;
+static MonoGHashTable *suspended_objs;
 
 /*
  * Return an ObjRef for OBJ.
@@ -1804,8 +1831,18 @@ get_objref (MonoObject *obj)
 
 	mono_loader_lock ();
 
-	if (!obj_to_objref)
+	if (!obj_to_objref) {
 		obj_to_objref = g_hash_table_new (NULL, NULL);
+		suspended_objs = mono_g_hash_table_new_type (NULL, NULL, MONO_HASH_KEY_GC);
+		MONO_GC_REGISTER_ROOT_FIXED (suspended_objs);
+	}
+
+	if (suspend_count) {
+		/*
+		 * Have to keep object refs created during suspensions alive for the duration of the suspension, so GCs during invokes don't collect them.
+		 */
+		mono_g_hash_table_insert (suspended_objs, obj, NULL);
+	}
 	
 	/* FIXME: The tables can grow indefinitely */
 
@@ -1850,6 +1887,20 @@ get_objref (MonoObject *obj)
 	mono_loader_unlock ();
 
 	return ref;
+}
+
+static gboolean
+true_pred (gpointer key, gpointer value, gpointer user_data)
+{
+	return TRUE;
+}
+
+static void
+clear_suspended_objs (void)
+{
+	mono_loader_lock ();
+	mono_g_hash_table_foreach_remove (suspended_objs, true_pred, NULL);
+	mono_loader_unlock ();
 }
 
 static inline int
@@ -2258,9 +2309,6 @@ save_thread_context (MonoContext *ctx)
 		mono_thread_state_init_from_current (&tls->context);
 }
 
-/* The number of times the runtime is suspended */
-static gint32 suspend_count;
-
 /* Number of threads suspended */
 /* 
  * If this is equal to the size of thread_to_tls, the runtime is considered
@@ -2535,13 +2583,19 @@ notify_thread (gpointer key, gpointer value, gpointer user_data)
 		MonoJitInfo *ji;
 
 		info = mono_thread_info_safe_suspend_sync ((MonoNativeThreadId)(gpointer)(gsize)thread->tid, FALSE);
-		g_assert (info);
+		if (!info) {
+			DEBUG(1, fprintf (log_file, "[%p] mono_thread_info_suspend_sync () failed for %p...\n", (gpointer)GetCurrentThreadId (), (gpointer)tid));
+			/* 
+			 * Attached thread which died without detaching.
+			 */
+			tls->terminated = TRUE;
+		} else {
+			ji = mono_jit_info_table_find (info->suspend_state.unwind_data [MONO_UNWIND_DATA_DOMAIN], MONO_CONTEXT_GET_IP (&info->suspend_state.ctx));
 
-		ji = mono_jit_info_table_find (info->suspend_state.unwind_data [MONO_UNWIND_DATA_DOMAIN], MONO_CONTEXT_GET_IP (&info->suspend_state.ctx));
+			thread_interrupt (tls, info, NULL, ji);
 
-		thread_interrupt (tls, info, NULL, ji);
-
-		mono_thread_info_resume (mono_thread_info_get_tid (info));
+			mono_thread_info_resume (mono_thread_info_get_tid (info));
+		}
 	} else {
 		res = mono_thread_kill (thread, mono_thread_get_abort_signal ());
 		if (res) {
@@ -2907,6 +2961,7 @@ find_next_seq_point_for_native_offset (MonoDomain *domain, MonoMethod *method, g
 	int i;
 
 	seq_points = find_seq_points (domain, method);
+	g_assert (seq_points);
 	if (info)
 		*info = seq_points;
 
@@ -2929,9 +2984,11 @@ find_prev_seq_point_for_native_offset (MonoDomain *domain, MonoMethod *method, g
 	MonoSeqPointInfo *seq_points;
 	int i;
 
-	seq_points = find_seq_points (domain, method);
+	seq_points = get_seq_points (domain, method);
 	if (info)
 		*info = seq_points;
+	if (!seq_points)
+		return NULL;
 
 	for (i = seq_points->len - 1; i >= 0; --i) {
 		if (seq_points->seq_points [i].native_offset <= native_offset)
@@ -3294,6 +3351,15 @@ create_event_list (EventKind event, GPtrArray *reqs, MonoJitInfo *ji, EventInfo 
 								s = strdup_tolower (sinfo->source_file);
 								if (g_hash_table_lookup (mod->data.source_files, s))
 									found = TRUE;
+								else {
+									char *s2 = g_path_get_basename (sinfo->source_file);
+									char *s3 = strdup_tolower (s2);
+
+									if (g_hash_table_lookup (mod->data.source_files, s3))
+										found = TRUE;
+									g_free (s2);
+									g_free (s3);
+								}
 								g_free (s);
 							}
 							g_ptr_array_free (source_file_list, TRUE);
@@ -3646,7 +3712,6 @@ thread_startup (MonoProfiler *prof, uintptr_t tid)
 	g_assert (!tls);
 	// FIXME: Free this somewhere
 	tls = g_new0 (DebuggerTlsData, 1);
-	tls->resume_event = CreateEvent (NULL, FALSE, FALSE, NULL);
 	MONO_GC_REGISTER_ROOT_SINGLE (tls->thread);
 	tls->thread = thread;
 	mono_native_tls_set_value (debugger_tls_id, tls);
@@ -4339,6 +4404,7 @@ process_breakpoint_inner (DebuggerTlsData *tls)
 	 * the offset recorded in the seq point map, so find the prev seq point before ip.
 	 */
 	sp = find_prev_seq_point_for_native_offset (mono_domain_get (), ji->method, native_offset, &info);
+	g_assert (sp);
 
 	DEBUG(1, fprintf (log_file, "[%p] Breakpoint hit, method=%s, ip=%p, offset=0x%x, sp il offset=0x%x.\n", (gpointer)GetCurrentThreadId (), ji->method->name, ip, native_offset, sp ? sp->il_offset : -1));
 
@@ -4468,6 +4534,8 @@ resume_from_signal_handler (void *sigctx, void *func)
 	/* Save the original context in TLS */
 	// FIXME: This might not work on an altstack ?
 	tls = mono_native_tls_get_value (debugger_tls_id);
+	if (!tls)
+		fprintf (stderr, "Thread %p is not attached to the JIT.\n", (gpointer)GetCurrentThreadId ());
 	g_assert (tls);
 
 	// FIXME: MonoContext usually doesn't include the fp registers, so these are 
@@ -4974,7 +5042,7 @@ ss_create (MonoInternalThread *thread, StepSize size, StepDepth depth, EventRequ
 	g_assert (tls->context.valid);
 	ss_req->start_sp = ss_req->last_sp = MONO_CONTEXT_GET_SP (&tls->context.ctx);
 
-	if (tls->has_catch_ctx) {
+	if (tls->catch_state.valid) {
 		gboolean res;
 		StackFrameInfo frame;
 		MonoContext new_ctx;
@@ -4985,7 +5053,7 @@ ss_create (MonoInternalThread *thread, StepSize size, StepDepth depth, EventRequ
 		 */
 
 		/* Find the the jit info for the catch context */
-		res = mono_find_jit_info_ext (mono_domain_get (), thread->jit_data, NULL, &tls->catch_ctx, &new_ctx, NULL, &lmf, NULL, &frame);
+		res = mono_find_jit_info_ext (tls->catch_state.unwind_data [MONO_UNWIND_DATA_DOMAIN], thread->jit_data, NULL, &tls->catch_state.ctx, &new_ctx, NULL, &lmf, NULL, &frame);
 		g_assert (res);
 		g_assert (frame.type == FRAME_TYPE_MANAGED);
 
@@ -5095,13 +5163,35 @@ mono_debugger_agent_debug_log_is_enabled (void)
 	return agent_config.enabled;
 }
 
+#ifdef PLATFORM_ANDROID
+void
+mono_debugger_agent_unhandled_exception (MonoException *exc)
+{
+	int suspend_policy;
+	GSList *events;
+	EventInfo ei;
+
+	if (!inited)
+		return;
+
+	memset (&ei, 0, sizeof (EventInfo));
+	ei.exc = (MonoObject*)exc;
+
+	mono_loader_lock ();
+	events = create_event_list (EVENT_KIND_EXCEPTION, NULL, NULL, &ei, &suspend_policy);
+	mono_loader_unlock ();
+
+	process_event (EVENT_KIND_EXCEPTION, &ei, 0, NULL, events, suspend_policy);
+}
+#endif
+
 void
 mono_debugger_agent_handle_exception (MonoException *exc, MonoContext *throw_ctx, 
 				      MonoContext *catch_ctx)
 {
-	int suspend_policy;
+	int i, j, suspend_policy;
 	GSList *events;
-	MonoJitInfo *ji;
+	MonoJitInfo *ji, *catch_ji;
 	EventInfo ei;
 	DebuggerTlsData *tls = NULL;
 
@@ -5164,23 +5254,55 @@ mono_debugger_agent_handle_exception (MonoException *exc, MonoContext *throw_ctx
 		return;
 
 	ji = mini_jit_info_table_find (mono_domain_get (), MONO_CONTEXT_GET_IP (throw_ctx), NULL);
+	if (catch_ctx)
+		catch_ji = mini_jit_info_table_find (mono_domain_get (), MONO_CONTEXT_GET_IP (catch_ctx), NULL);
+	else
+		catch_ji = NULL;
 
 	ei.exc = (MonoObject*)exc;
 	ei.caught = catch_ctx != NULL;
 
 	mono_loader_lock ();
+
+	/* Treat exceptions which are caught in non-user code as unhandled */
+	for (i = 0; i < event_requests->len; ++i) {
+		EventRequest *req = g_ptr_array_index (event_requests, i);
+		if (req->event_kind != EVENT_KIND_EXCEPTION)
+			continue;
+
+		for (j = 0; j < req->nmodifiers; ++j) {
+			Modifier *mod = &req->modifiers [j];
+
+			if (mod->kind == MOD_KIND_ASSEMBLY_ONLY && catch_ji) {
+				int k;
+				gboolean found = FALSE;
+				MonoAssembly **assemblies = mod->data.assemblies;
+
+				if (assemblies) {
+					for (k = 0; assemblies [k]; ++k)
+						if (assemblies [k] == catch_ji->method->klass->image->assembly)
+							found = TRUE;
+				}
+				if (!found)
+					ei.caught = FALSE;
+			}
+		}
+	}
+
 	events = create_event_list (EVENT_KIND_EXCEPTION, NULL, ji, &ei, &suspend_policy);
 	mono_loader_unlock ();
 
-	if (tls && catch_ctx) {
-		tls->catch_ctx = *catch_ctx;
-		tls->has_catch_ctx = TRUE;
+	if (tls && ei.caught && catch_ctx) {
+		memset (&tls->catch_state, 0, sizeof (tls->catch_state));
+		tls->catch_state.ctx = *catch_ctx;
+		tls->catch_state.unwind_data [MONO_UNWIND_DATA_DOMAIN] = mono_domain_get ();
+		tls->catch_state.valid = TRUE;
 	}
 
 	process_event (EVENT_KIND_EXCEPTION, &ei, 0, throw_ctx, events, suspend_policy);
 
 	if (tls)
-		tls->has_catch_ctx = FALSE;
+		tls->catch_state.valid = FALSE;
 }
 
 void
@@ -5251,6 +5373,8 @@ buffer_add_value_full (Buffer *buf, MonoType *t, void *addr, MonoDomain *domain,
 	MonoObject *obj;
 
 	if (t->byref) {
+		if (!(*(void**)addr))
+			printf ("%s\n", mono_type_full_name (t));
 		g_assert (*(void**)addr);
 		addr = *(void**)addr;
 	}
@@ -6228,6 +6352,7 @@ vm_commands (int command, int id, guint8 *p, guint8 *end, Buffer *buf)
 		if (suspend_count == 0)
 			return ERR_NOT_SUSPENDED;
 		resume_vm ();
+		clear_suspended_objs ();
 		break;
 	case CMD_VM_DISPOSE:
 		/* Clear all event requests */
@@ -6278,9 +6403,11 @@ vm_commands (int command, int id, guint8 *p, guint8 *end, Buffer *buf)
 		suspend_vm ();
 		wait_for_suspend ();
 
+#ifdef TRY_MANAGED_SYSTEM_ENVIRONMENT_EXIT
 		env_class = mono_class_from_name (mono_defaults.corlib, "System", "Environment");
 		if (env_class)
 			exit_method = mono_class_get_method_from_name (env_class, "Exit", 1);
+#endif
 
 		mono_loader_lock ();
 		thread = mono_g_hash_table_find (tid_to_thread, is_really_suspended, NULL);
@@ -8574,8 +8701,10 @@ debugger_thread (void *arg)
 		res = transport_recv (header, HEADER_LENGTH);
 
 		/* This will break if the socket is closed during shutdown too */
-		if (res != HEADER_LENGTH)
+		if (res != HEADER_LENGTH) {
+			DEBUG (1, fprintf (log_file, "[dbg] transport_recv () returned %d, expected %d.\n", res, HEADER_LENGTH));
 			break;
+		}
 
 		p = header;
 		end = header + HEADER_LENGTH;
@@ -8605,8 +8734,10 @@ debugger_thread (void *arg)
 		if (len - HEADER_LENGTH > 0)
 		{
 			res = transport_recv (data, len - HEADER_LENGTH);
-			if (res != len - HEADER_LENGTH)
+			if (res != len - HEADER_LENGTH) {
+				DEBUG (1, fprintf (log_file, "[dbg] transport_recv () returned %d, expected %d.\n", res, len - HEADER_LENGTH));
 				break;
+			}
 		}
 
 		p = data;

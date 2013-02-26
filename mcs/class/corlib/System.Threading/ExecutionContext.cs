@@ -31,18 +31,17 @@ using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Security;
 using System.Security.Permissions;
+using System.Runtime.Remoting.Messaging;
 
 namespace System.Threading {
-
 	[Serializable]
 	public sealed class ExecutionContext : ISerializable
 #if NET_4_0
 		, IDisposable
 #endif
 	{
-#if !MOONLIGHT
 		private SecurityContext _sc;
-#endif
+		private LogicalCallContext _lcc;
 		private bool _suppressFlow;
 		private bool _capture;
 
@@ -52,10 +51,8 @@ namespace System.Threading {
 
 		internal ExecutionContext (ExecutionContext ec)
 		{
-#if !MOONLIGHT
 			if (ec._sc != null)
 				_sc = new SecurityContext (ec._sc);
-#endif
 			_suppressFlow = ec._suppressFlow;
 			_capture = true;
 		}
@@ -65,17 +62,23 @@ namespace System.Threading {
 		{
 			throw new NotImplementedException ();
 		}
-		
+
 		public static ExecutionContext Capture ()
+		{
+			return Capture (true);
+		}
+		
+		internal static ExecutionContext Capture (bool captureSyncContext)
 		{
 			ExecutionContext ec = Thread.CurrentThread.ExecutionContext;
 			if (ec.FlowSuppressed)
 				return null;
 
 			ExecutionContext capture = new ExecutionContext (ec);
-#if !MOONLIGHT
 			if (SecurityManager.SecurityEnabled)
 				capture.SecurityContext = SecurityContext.Capture ();
+#if !MONOTOUCH
+			capture.LogicalCallContext = CallContext.CreateLogicalCallContext (false);
 #endif
 			return capture;
 		}
@@ -106,7 +109,18 @@ namespace System.Threading {
 		}
 		
 		// internal stuff
-#if !MOONLIGHT
+
+		internal LogicalCallContext LogicalCallContext {
+			get {
+				if (_lcc == null)
+					return new LogicalCallContext ();
+				return _lcc;
+			}
+			set {
+				_lcc = value;
+			}
+		}
+
 		internal SecurityContext SecurityContext {
 			get {
 				if (_sc == null)
@@ -115,7 +129,6 @@ namespace System.Threading {
 			}
 			set { _sc = value; }
 		}
-#endif
 		internal bool FlowSuppressed {
 			get { return _suppressFlow; }
 			set { _suppressFlow = value; }
@@ -139,7 +152,6 @@ namespace System.Threading {
 			ec.FlowSuppressed = false;
 		}
 
-#if !MOONLIGHT
 		[MonoTODO ("only the SecurityContext is considered")]
 		[SecurityPermission (SecurityAction.LinkDemand, Infrastructure = true)]
 		public static void Run (ExecutionContext executionContext, ContextCallback callback, object state)
@@ -149,10 +161,18 @@ namespace System.Threading {
 					"Null ExecutionContext"));
 			}
 
-			// FIXME: supporting more than one context (the SecurityContext)
-			// will requires a rewrite of this method
-
-			SecurityContext.Run (executionContext.SecurityContext, callback, state);
+			// FIXME: supporting more than one context should be done with executionContextSwitcher
+			// and will requires a rewrite of this method
+			var callContextCallBack = new ContextCallback (new Action<object> ((ostate) => {
+				var originalCallContext = CallContext.CreateLogicalCallContext (true);
+				try {
+					CallContext.SetCurrentCallContext (executionContext.LogicalCallContext);
+					callback (ostate);
+				} finally {
+					CallContext.SetCurrentCallContext (originalCallContext);
+				}
+			}));
+			SecurityContext.Run (executionContext.SecurityContext, callContextCallBack, state);
 		}
 
 		public static AsyncFlowControl SuppressFlow ()
@@ -161,6 +181,5 @@ namespace System.Threading {
 			t.ExecutionContext.FlowSuppressed = true;
 			return new AsyncFlowControl (t, AsyncFlowControlType.Execution);
 		}
-#endif
 	}
 }

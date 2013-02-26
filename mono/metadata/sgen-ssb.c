@@ -1,33 +1,26 @@
 /*
- * sgen-cardtable.c: Card table implementation for sgen
+ * sgen-ssb.c: Remembered sets - sequential store buffer
  *
  * Author:
  * 	Rodrigo Kumpera (rkumpera@novell.com)
  *
- * SGen is licensed under the terms of the MIT X11 license
- *
  * Copyright 2001-2003 Ximian, Inc
  * Copyright 2003-2010 Novell, Inc.
  * Copyright 2011 Xamarin Inc (http://www.xamarin.com)
- * 
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- * 
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * Copyright (C) 2012 Xamarin Inc
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public
+ * License 2.0 as published by the Free Software Foundation;
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU Library General Public
+ * License 2.0 along with this library; if not, write to the Free
+ * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
 #include "config.h"
@@ -37,6 +30,8 @@
 #include "metadata/sgen-ssb.h"
 #include "metadata/sgen-protocol.h"
 #include "utils/mono-counters.h"
+
+#ifndef DISABLE_SGEN_REMSET
 
 /*A two slots cache for recently inserted remsets */
 static gpointer global_remset_cache [2];
@@ -120,7 +115,7 @@ sgen_alloc_remset (int size, gpointer id, gboolean global)
 	res->store_next = res->data;
 	res->end_set = res->data + size;
 	res->next = NULL;
-	DEBUG (4, fprintf (gc_debug_file, "Allocated%s remset size %d at %p for %p\n", global ? " global" : "", size, res->data, id));
+	SGEN_LOG (4, "Allocated%s remset size %d at %p for %p", global ? " global" : "", size, res->data, id);
 	return res;
 }
 
@@ -185,7 +180,7 @@ sgen_ssb_wbarrier_arrayref_copy (gpointer dest_ptr, gpointer src_ptr, int count)
 	mono_gc_memmove (dest_ptr, src_ptr, count * sizeof (gpointer));
 
 	rs = REMEMBERED_SET;
-	DEBUG (8, fprintf (gc_debug_file, "Adding remset at %p, %d\n", dest_ptr, count));
+	SGEN_LOG (8, "Adding remset at %p, %d", dest_ptr, count);
 	if (rs->store_next + 1 < rs->end_set) {
 		*(rs->store_next++) = (mword)dest_ptr | REMSET_RANGE;
 		*(rs->store_next++) = count;
@@ -249,7 +244,7 @@ sgen_ssb_wbarrier_object_copy (MonoObject* obj, MonoObject *src)
 	size = mono_object_class (obj)->instance_size;
 
 	rs = REMEMBERED_SET;
-	DEBUG (6, fprintf (gc_debug_file, "Adding object remset for %p\n", obj));
+	SGEN_LOG (6, "Adding object remset for %p", obj);
 
 	LOCK_GC;
 	/* do not copy the sync state */
@@ -415,21 +410,23 @@ handle_remset (mword *p, void *start_nursery, void *end_nursery, gboolean global
 		//__builtin_prefetch (ptr);
 		if (((void*)ptr < start_nursery || (void*)ptr >= end_nursery)) {
 			gpointer old = *ptr;
+			gpointer copy;
 
 			sgen_get_current_object_ops ()->copy_or_mark_object (ptr, queue);
-			DEBUG (9, fprintf (gc_debug_file, "Overwrote remset at %p with %p\n", ptr, *ptr));
+			copy = *ptr;
+			SGEN_LOG (9, "Overwrote remset at %p with %p", ptr, copy);
 			if (old)
-				binary_protocol_ptr_update (ptr, old, *ptr, (gpointer)LOAD_VTABLE (*ptr), sgen_safe_object_get_size (*ptr));
-			if (!global && *ptr >= start_nursery && *ptr < end_nursery) {
+				binary_protocol_ptr_update (ptr, old, copy, (gpointer)SGEN_LOAD_VTABLE (copy), sgen_safe_object_get_size (copy));
+			if (!global && copy >= start_nursery && copy < end_nursery) {
 				/*
 				 * If the object is pinned, each reference to it from nonpinned objects
 				 * becomes part of the global remset, which can grow very large.
 				 */
-				DEBUG (9, fprintf (gc_debug_file, "Add to global remset because of pinning %p (%p %s)\n", ptr, *ptr, sgen_safe_name (*ptr)));
-				sgen_add_to_global_remset (ptr);
+				SGEN_LOG (9, "Add to global remset because of pinning %p (%p %s)", ptr, copy, sgen_safe_name (copy));
+				sgen_add_to_global_remset (ptr, copy);
 			}
 		} else {
-			DEBUG (9, fprintf (gc_debug_file, "Skipping remset at %p holding %p\n", ptr, *ptr));
+			SGEN_LOG (9, "Skipping remset at %p holding %p", ptr, *ptr);
 		}
 		return p + 1;
 	case REMSET_RANGE: {
@@ -440,10 +437,12 @@ handle_remset (mword *p, void *start_nursery, void *end_nursery, gboolean global
 			return p + 2;
 		count = p [1];
 		while (count-- > 0) {
+			gpointer copy;
 			copy_func (ptr, queue);
-			DEBUG (9, fprintf (gc_debug_file, "Overwrote remset at %p with %p (count: %d)\n", ptr, *ptr, (int)count));
-			if (!global && *ptr >= start_nursery && *ptr < end_nursery)
-				sgen_add_to_global_remset (ptr);
+			copy = *ptr;
+			SGEN_LOG (9, "Overwrote remset at %p with %p (count: %d)", ptr, copy, (int)count);
+			if (!global && copy >= start_nursery && copy < end_nursery)
+				sgen_add_to_global_remset (ptr, copy);
 			++ptr;
 		}
 		return p + 2;
@@ -483,7 +482,7 @@ sgen_ssb_begin_scan_remsets (void *start_nursery, void *end_nursery, SgenGrayQue
 
 	/* the global one */
 	for (remset = global_remset; remset; remset = remset->next) {
-		DEBUG (4, fprintf (gc_debug_file, "Scanning global remset range: %p-%p, size: %td\n", remset->data, remset->store_next, remset->store_next - remset->data));
+		SGEN_LOG (4, "Scanning global remset range: %p-%p, size: %td", remset->data, remset->store_next, remset->store_next - remset->data);
 		store_pos = remset->data;
 		for (p = remset->data; p < remset->store_next; p = next_p) {
 			void **ptr = (void**)p [0];
@@ -549,14 +548,14 @@ sgen_ssb_finish_scan_remsets (void *start_nursery, void *end_nursery, SgenGrayQu
 		RememberedSet *next;
 		int j;
 		for (remset = info->remset; remset; remset = next) {
-			DEBUG (4, fprintf (gc_debug_file, "Scanning remset for thread %p, range: %p-%p, size: %td\n", info, remset->data, remset->store_next, remset->store_next - remset->data));
+			SGEN_LOG (4, "Scanning remset for thread %p, range: %p-%p, size: %td", info, remset->data, remset->store_next, remset->store_next - remset->data);
 			for (p = remset->data; p < remset->store_next;)
 				p = handle_remset (p, start_nursery, end_nursery, FALSE, queue);
 			remset->store_next = remset->data;
 			next = remset->next;
 			remset->next = NULL;
 			if (remset != info->remset) {
-				DEBUG (4, fprintf (gc_debug_file, "Freed remset at %p\n", remset->data));
+				SGEN_LOG (4, "Freed remset at %p", remset->data);
 				sgen_free_internal_dynamic (remset, remset_byte_size (remset), INTERNAL_MEM_REMSET);
 			}
 		}
@@ -569,11 +568,11 @@ sgen_ssb_finish_scan_remsets (void *start_nursery, void *end_nursery, SgenGrayQu
 	while (freed_thread_remsets) {
 		RememberedSet *next;
 		remset = freed_thread_remsets;
-		DEBUG (4, fprintf (gc_debug_file, "Scanning remset for freed thread, range: %p-%p, size: %td\n", remset->data, remset->store_next, remset->store_next - remset->data));
+		SGEN_LOG (4, "Scanning remset for freed thread, range: %p-%p, size: %td", remset->data, remset->store_next, remset->store_next - remset->data);
 		for (p = remset->data; p < remset->store_next;)
 			p = handle_remset (p, start_nursery, end_nursery, FALSE, queue);
 		next = remset->next;
-		DEBUG (4, fprintf (gc_debug_file, "Freed remset at %p\n", remset->data));
+		SGEN_LOG (4, "Freed remset at %p", remset->data);
 		sgen_free_internal_dynamic (remset, remset_byte_size (remset), INTERNAL_MEM_REMSET);
 		freed_thread_remsets = next;
 	}
@@ -663,7 +662,7 @@ sgen_ssb_prepare_for_major_collection (void)
 		next = remset->next;
 		remset->next = NULL;
 		if (remset != global_remset) {
-			DEBUG (4, fprintf (gc_debug_file, "Freed remset at %p\n", remset->data));
+			SGEN_LOG (4, "Freed remset at %p", remset->data);
 			sgen_free_internal_dynamic (remset, remset_byte_size (remset), INTERNAL_MEM_REMSET);
 		}
 	}
@@ -680,7 +679,7 @@ sgen_ssb_prepare_for_major_collection (void)
 			next = remset->next;
 			remset->next = NULL;
 			if (remset != info->remset) {
-				DEBUG (3, fprintf (gc_debug_file, "Freed remset at %p\n", remset->data));
+				SGEN_LOG (3, "Freed remset at %p", remset->data);
 				sgen_free_internal_dynamic (remset, remset_byte_size (remset), INTERNAL_MEM_REMSET);
 			}
 		}
@@ -690,7 +689,7 @@ sgen_ssb_prepare_for_major_collection (void)
 	/* the freed thread ones */
 	while (freed_thread_remsets) {
 		next = freed_thread_remsets->next;
-		DEBUG (4, fprintf (gc_debug_file, "Freed remset at %p\n", freed_thread_remsets->data));
+		SGEN_LOG (4, "Freed remset at %p", freed_thread_remsets->data);
 		sgen_free_internal_dynamic (freed_thread_remsets, remset_byte_size (freed_thread_remsets), INTERNAL_MEM_REMSET);
 		freed_thread_remsets = next;
 	}
@@ -748,14 +747,6 @@ sgen_ssb_record_pointer (gpointer ptr)
 	if (!global_remset_location_was_not_added (ptr))
 		goto done;
 
-	if (G_UNLIKELY (do_pin_stats))
-		sgen_pin_stats_register_global_remset (obj);
-
-	DEBUG (8, fprintf (gc_debug_file, "Adding global remset for %p\n", ptr));
-	binary_protocol_global_remset (ptr, *(gpointer*)ptr, (gpointer)LOAD_VTABLE (obj));
-
-	HEAVY_STAT (++stat_global_remsets_added);
-
 	/* 
 	 * FIXME: If an object remains pinned, we need to add it at every minor collection.
 	 * To avoid uncontrolled growth of the global remset, only add each pointer once.
@@ -769,14 +760,16 @@ sgen_ssb_record_pointer (gpointer ptr)
 	global_remset = rs;
 	*(global_remset->store_next++) = (mword)ptr;
 
+#if SGEN_MAX_DEBUG_LEVEL >= 4
 	{
 		int global_rs_size = 0;
 
 		for (rs = global_remset; rs; rs = rs->next) {
 			global_rs_size += rs->store_next - rs->data;
 		}
-		DEBUG (4, fprintf (gc_debug_file, "Global remset now has size %d\n", global_rs_size));
+		SGEN_LOG (4, "Global remset now has size %d", global_rs_size);
 	}
+#endif
 
  done:
 	if (lock)
@@ -848,7 +841,7 @@ sgen_ssb_find_address (char *addr)
 
 	/* the global one */
 	for (remset = global_remset; remset; remset = remset->next) {
-		DEBUG (4, fprintf (gc_debug_file, "Scanning global remset range: %p-%p, size: %td\n", remset->data, remset->store_next, remset->store_next - remset->data));
+		SGEN_LOG (4, "Scanning global remset range: %p-%p, size: %td", remset->data, remset->store_next, remset->store_next - remset->data);
 		for (p = remset->data; p < remset->store_next;) {
 			p = find_in_remset_loc (p, addr, &found);
 			if (found)
@@ -868,7 +861,7 @@ sgen_ssb_find_address (char *addr)
 	FOREACH_THREAD (info) {
 		int j;
 		for (remset = info->remset; remset; remset = remset->next) {
-			DEBUG (4, fprintf (gc_debug_file, "Scanning remset for thread %p, range: %p-%p, size: %td\n", info, remset->data, remset->store_next, remset->store_next - remset->data));
+			SGEN_LOG (4, "Scanning remset for thread %p, range: %p-%p, size: %td", info, remset->data, remset->store_next, remset->store_next - remset->data);
 			for (p = remset->data; p < remset->store_next;) {
 				p = find_in_remset_loc (p, addr, &found);
 				if (found)
@@ -883,7 +876,7 @@ sgen_ssb_find_address (char *addr)
 
 	/* the freed thread ones */
 	for (remset = freed_thread_remsets; remset; remset = remset->next) {
-		DEBUG (4, fprintf (gc_debug_file, "Scanning remset for freed thread, range: %p-%p, size: %td\n", remset->data, remset->store_next, remset->store_next - remset->data));
+		SGEN_LOG (4, "Scanning remset for freed thread, range: %p-%p, size: %td", remset->data, remset->store_next, remset->store_next - remset->data);
 		for (p = remset->data; p < remset->store_next;) {
 			p = find_in_remset_loc (p, addr, &found);
 			if (found)
@@ -893,7 +886,6 @@ sgen_ssb_find_address (char *addr)
 
 	return FALSE;
 }
-
 
 void
 sgen_ssb_init (SgenRemeberedSet *remset)
@@ -941,4 +933,16 @@ sgen_ssb_init (SgenRemeberedSet *remset)
 
 	remset->find_address = sgen_ssb_find_address;
 }
-#endif
+
+#else
+
+void
+sgen_ssb_init (SgenRemeberedSet *remset)
+{
+	fprintf (stderr, "Error: Mono was configured using --enable-minimal=sgen_wbarrier.\n");
+	exit (1);
+}
+
+#endif /* DISABLE_SGEN_REMSET */
+
+#endif /* HAVE_SGEN_GC */

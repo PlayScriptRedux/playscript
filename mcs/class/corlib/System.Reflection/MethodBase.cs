@@ -30,7 +30,9 @@
 
 using System.Diagnostics;
 using System.Globalization;
+#if !FULL_AOT_RUNTIME
 using System.Reflection.Emit;
+#endif
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -86,10 +88,8 @@ namespace System.Reflection {
 		// This is a quick version for our own use. We should override
 		// it where possible so that it does not allocate an array.
 		//
-		internal virtual int GetParameterCount ()
-		{
-			throw new NotImplementedException ("must be implemented");
-		}
+		internal abstract ParameterInfo[] GetParametersInternal ();
+		internal abstract int GetParametersCount ();
 
 		internal virtual Type GetParameterType (int pos) {
 			throw new NotImplementedException ();
@@ -181,6 +181,7 @@ namespace System.Reflection {
 		}
 
 		internal virtual int get_next_table_index (object obj, int table, bool inc) {
+#if !FULL_AOT_RUNTIME
 			if (this is MethodBuilder) {
 				MethodBuilder mb = (MethodBuilder)this;
 				return mb.get_next_table_index (obj, table, inc);
@@ -189,6 +190,7 @@ namespace System.Reflection {
 				ConstructorBuilder mb = (ConstructorBuilder)this;
 				return mb.get_next_table_index (obj, table, inc);
 			}
+#endif
 			throw new Exception ("Method is not a builder method");
 		}
 
@@ -279,6 +281,12 @@ namespace System.Reflection {
 		{
 			throw new NotImplementedException ();
 		}
+
+		Type _MethodBase.GetType ()
+		{
+			// Required or object::GetType becomes virtual final
+			return base.GetType ();
+		}		
 
 		void _MethodBase.GetTypeInfo (uint iTInfo, uint lcid, IntPtr ppTInfo)
 		{

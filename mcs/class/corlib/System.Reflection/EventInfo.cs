@@ -43,27 +43,28 @@ namespace System.Reflection {
 		public abstract EventAttributes Attributes {get;}
 
 		public
-#if NET_4_0 || MOONLIGHT
+#if NET_4_0
 		virtual
 #endif
 		Type EventHandlerType {
 			get {
 				ParameterInfo[] p;
 				MethodInfo add = GetAddMethod (true);
-				p = add.GetParameters ();
+				p = add.GetParametersInternal ();
 				if (p.Length > 0) {
 					Type t = p [0].ParameterType;
 					/* is it alwasys the first arg?
 					if (!t.IsSubclassOf (typeof (System.Delegate)))
 						throw new Exception ("no delegate in event");*/
 					return t;
-				} else
-					return null;
+				}
+
+				return null;
 			}
 		}
 
 		public
-#if NET_4_0 || MOONLIGHT
+#if NET_4_0
 		virtual
 #endif
 		bool IsMulticast {get {return true;}}
@@ -79,11 +80,21 @@ namespace System.Reflection {
 		[DebuggerHidden]
 		[DebuggerStepThrough]
 		public
-#if NET_4_0 || MOONLIGHT
+#if NET_4_0
 		virtual
 #endif
 		void AddEventHandler (object target, Delegate handler)
 		{
+// this optimization cause problems with full AOT
+// see bug https://bugzilla.xamarin.com/show_bug.cgi?id=3682
+#if FULL_AOT_RUNTIME
+			MethodInfo add = GetAddMethod ();
+			if (add == null)
+				throw new InvalidOperationException ("Cannot add a handler to an event that doesn't have a visible add method");
+			if (target == null && !add.IsStatic)
+				throw new TargetException ("Cannot add a handler to a non static event with a null target");
+			add.Invoke (target, new object [] {handler});
+#else
 			if (cached_add_event == null) {
 				MethodInfo add = GetAddMethod ();
 				if (add == null)
@@ -99,6 +110,7 @@ namespace System.Reflection {
 			//if (target == null && is_instance)
 			//	throw new TargetException ("Cannot add a handler to a non static event with a null target");
 			cached_add_event (target, handler);
+#endif
 		}
 
 		public MethodInfo GetAddMethod() {
@@ -116,7 +128,7 @@ namespace System.Reflection {
 
 		public virtual MethodInfo[] GetOtherMethods (bool nonPublic) {
 			// implemented by the derived class
-			return new MethodInfo [0];
+			return EmptyArray<MethodInfo>.Value;
 		}
 
 		public MethodInfo[] GetOtherMethods () {
@@ -126,7 +138,7 @@ namespace System.Reflection {
 		[DebuggerHidden]
 		[DebuggerStepThrough]
 		public
-#if NET_4_0 || MOONLIGHT
+#if NET_4_0
 		virtual
 #endif
 		void RemoveEventHandler (object target, Delegate handler)
@@ -173,6 +185,12 @@ namespace System.Reflection {
 			throw new NotImplementedException ();
 		}
 
+		Type _EventInfo.GetType ()
+		{
+			// Required or object::GetType becomes virtual final
+			return base.GetType ();
+		}
+
 		void _EventInfo.GetTypeInfo (uint iTInfo, uint lcid, IntPtr ppTInfo)
 		{
 			throw new NotImplementedException ();
@@ -187,7 +205,13 @@ namespace System.Reflection {
 		{
 			throw new NotImplementedException ();
 		}
+
 		delegate void AddEventAdapter (object _this, Delegate dele);
+
+// this optimization cause problems with full AOT
+// see bug https://bugzilla.xamarin.com/show_bug.cgi?id=3682
+// do not revove the above delegate or it's field since it's required by the runtime!
+#if !FULL_AOT_RUNTIME
 		delegate void AddEvent<T, D> (T _this, D dele);
 		delegate void StaticAddEvent<D> (D dele);
 
@@ -222,11 +246,11 @@ namespace System.Reflection {
 			string frameName;
 
 			if (method.IsStatic) {
-				typeVector = new Type[] { method.GetParameters () [0].ParameterType };
+				typeVector = new Type[] { method.GetParametersInternal () [0].ParameterType };
 				addHandlerDelegateType = typeof (StaticAddEvent<>);
 				frameName = "StaticAddEventAdapterFrame";
 			} else {
-				typeVector = new Type[] { method.DeclaringType, method.GetParameters () [0].ParameterType };
+				typeVector = new Type[] { method.DeclaringType, method.GetParametersInternal () [0].ParameterType };
 				addHandlerDelegateType = typeof (AddEvent<,>);
 				frameName = "AddEventFrame";
 			}
@@ -246,5 +270,6 @@ namespace System.Reflection {
 			adapterFrame = adapterFrame.MakeGenericMethod (typeVector);
 			return (AddEventAdapter)Delegate.CreateDelegate (typeof (AddEventAdapter), addHandlerDelegate, adapterFrame, true);
 		}
+#endif
 	}
 }

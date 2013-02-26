@@ -160,7 +160,7 @@ namespace Mono.Security {
 			get {
 				if (rsa == null)
 					return false;
-#if INSIDE_CORLIB && !MOONLIGHT
+#if INSIDE_CORLIB
 				// the easy way
 				if (RSA is RSACryptoServiceProvider) {
 					// available as internal for corlib
@@ -459,7 +459,7 @@ namespace Mono.Security {
 
 #if INSIDE_CORLIB
 		static object lockObject = new object ();
-		static bool initialized = false;
+		static bool initialized;
 
 		// We don't want a dependency on StrongNameManager in Mono.Security.dll
 		static public bool IsAssemblyStrongnamed (string assemblyName) 

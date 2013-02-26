@@ -189,7 +189,7 @@ enum {
 #include <mono/metadata/tpool-poll.c>
 #ifdef HAVE_EPOLL
 #include <mono/metadata/tpool-epoll.c>
-#elif defined(HAVE_KQUEUE)
+#elif defined(USE_KQUEUE_FOR_THREADPOOL)
 #include <mono/metadata/tpool-kqueue.c>
 #endif
 /*
@@ -215,30 +215,11 @@ is_corlib_type (MonoDomain *domain, MonoClass *klass)
 /*
  * Note that we call it is_socket_type() where 'socket' refers to the image
  * that contains the System.Net.Sockets.Socket type.
- * For moonlight there is a System.Net.Sockets.Socket class in both System.dll and System.Net.dll.
 */
 static gboolean
 is_socket_type (MonoDomain *domain, MonoClass *klass)
 {
-	static const char *version = NULL;
-	static gboolean moonlight;
-
-	if (is_system_type (domain, klass))
-		return TRUE;
-
-	/* If moonlight, check if the type is in System.Net.dll too */
-	if (version == NULL) {
-		version = mono_get_runtime_info ()->framework_version;
-		moonlight = !strcmp (version, "2.1");
-	}
-
-	if (!moonlight)
-		return FALSE;
-
-	if (domain->system_net_dll == NULL)
-		domain->system_net_dll = mono_image_loaded ("System.Net");
-	
-	return klass->image == domain->system_net_dll;
+	return is_system_type (domain, klass);
 }
 
 #define check_type_cached(domain, ASSEMBLY, _class, _namespace, _name, loc) do { \
@@ -496,7 +477,7 @@ init_event_system (SocketIOData *data)
 			data->event_system = POLL_BACKEND;
 		}
 	}
-#elif defined(HAVE_KQUEUE)
+#elif defined(USE_KQUEUE_FOR_THREADPOOL)
 	if (data->event_system == KQUEUE_BACKEND)
 		data->event_data = tp_kqueue_init (data);
 #endif
@@ -525,7 +506,7 @@ socket_io_init (SocketIOData *data)
 	data->sock_to_state = mono_g_hash_table_new_type (g_direct_hash, g_direct_equal, MONO_HASH_VALUE_GC);
 #ifdef HAVE_EPOLL
 	data->event_system = EPOLL_BACKEND;
-#elif defined(HAVE_KQUEUE)
+#elif defined(USE_KQUEUE_FOR_THREADPOOL)
 	data->event_system = KQUEUE_BACKEND;
 #else
 	data->event_system = POLL_BACKEND;
@@ -534,7 +515,7 @@ socket_io_init (SocketIOData *data)
 		data->event_system = POLL_BACKEND;
 
 	init_event_system (data);
-	mono_thread_create_internal (mono_get_root_domain (), data->wait, data, TRUE, SMALL_STACK);
+	mono_thread_create_internal (mono_get_root_domain (), data->wait, data, TRUE, FALSE, SMALL_STACK);
 	LeaveCriticalSection (&data->io_lock);
 	data->inited = 2;
 	threadpool_start_thread (&async_io_tp);
@@ -683,8 +664,10 @@ threadpool_start_idle_threads (ThreadPool *tp)
 			if (InterlockedCompareExchange (&tp->nthreads, n + 1, n) == n)
 				break;
 		}
+#ifndef DISABLE_PERFCOUNTERS
 		mono_perfcounter_update_value (tp->pc_nthreads, TRUE, 1);
-		mono_thread_create_internal (mono_get_root_domain (), tp->async_invoke, tp, TRUE, stack_size);
+#endif
+		mono_thread_create_internal (mono_get_root_domain (), tp->async_invoke, tp, TRUE, FALSE, stack_size);
 		SleepEx (100, TRUE);
 	} while (1);
 }
@@ -700,6 +683,7 @@ threadpool_init (ThreadPool *tp, int min_threads, int max_threads, void (*async_
 	MONO_SEM_INIT (&tp->new_job, 0);
 }
 
+#ifndef DISABLE_PERFCOUNTERS
 static void *
 init_perf_counter (const char *category, const char *counter)
 {
@@ -718,6 +702,7 @@ init_perf_counter (const char *category, const char *counter)
 	machine = mono_string_new (root, ".");
 	return mono_perfcounter_get_impl (category_str, counter_str, NULL, machine, &type, &custom);
 }
+#endif
 
 #ifdef DEBUG
 static void
@@ -856,6 +841,7 @@ mono_thread_pool_init ()
 	wsqs = g_ptr_array_sized_new (MAX (100 * cpu_count, thread_count));
 	mono_wsq_init ();
 
+#ifndef DISABLE_PERFCOUNTERS
 	async_tp.pc_nitems = init_perf_counter ("Mono Threadpool", "Work Items Added");
 	g_assert (async_tp.pc_nitems);
 
@@ -867,6 +853,7 @@ mono_thread_pool_init ()
 
 	async_io_tp.pc_nthreads = init_perf_counter ("Mono Threadpool", "# of IO Threads");
 	g_assert (async_io_tp.pc_nthreads);
+#endif
 	tp_inited = 2;
 #ifdef DEBUG
 	signal (SIGALRM, signal_handler);
@@ -1019,8 +1006,10 @@ threadpool_start_thread (ThreadPool *tp)
 	stack_size = (!tp->is_io) ? 0 : SMALL_STACK;
 	while (!mono_runtime_is_shutting_down () && (n = tp->nthreads) < tp->max_threads) {
 		if (InterlockedCompareExchange (&tp->nthreads, n + 1, n) == n) {
+#ifndef DISABLE_PERFCOUNTERS
 			mono_perfcounter_update_value (tp->pc_nthreads, TRUE, 1);
-			mono_thread_create_internal (mono_get_root_domain (), tp->async_invoke, tp, TRUE, stack_size);
+#endif
+			mono_thread_create_internal (mono_get_root_domain (), tp->async_invoke, tp, TRUE, FALSE, stack_size);
 			return TRUE;
 		}
 	}
@@ -1059,12 +1048,12 @@ threadpool_append_jobs (ThreadPool *tp, MonoObject **jobs, gint njobs)
 
 	if (tp->pool_status == 0 && InterlockedCompareExchange (&tp->pool_status, 1, 0) == 0) {
 		if (!tp->is_io) {
-			mono_thread_create_internal (mono_get_root_domain (), monitor_thread, NULL, TRUE, SMALL_STACK);
+			mono_thread_create_internal (mono_get_root_domain (), monitor_thread, NULL, TRUE, FALSE, SMALL_STACK);
 			threadpool_start_thread (tp);
 		}
 		/* Create on demand up to min_threads to avoid startup penalty for apps that don't use
 		 * the threadpool that much
-		* mono_thread_create_internal (mono_get_root_domain (), threadpool_start_idle_threads, tp, TRUE, SMALL_STACK);
+		* mono_thread_create_internal (mono_get_root_domain (), threadpool_start_idle_threads, tp, TRUE, FALSE, SMALL_STACK);
 		*/
 	}
 
@@ -1077,7 +1066,9 @@ threadpool_append_jobs (ThreadPool *tp, MonoObject **jobs, gint njobs)
 			o->add_time = mono_100ns_ticks ();
 		}
 		threadpool_jobs_inc (ar); 
+#ifndef DISABLE_PERFCOUNTERS
 		mono_perfcounter_update_value (tp->pc_nitems, TRUE, 1);
+#endif
 		if (!tp->is_io && mono_wsq_local_push (ar))
 			continue;
 
@@ -1545,7 +1536,9 @@ async_invoke_thread (gpointer data)
 				if (!down && nt <= tp->min_threads)
 					break;
 				if (down || InterlockedCompareExchange (&tp->nthreads, nt - 1, nt) == nt) {
+#ifndef DISABLE_PERFCOUNTERS
 					mono_perfcounter_update_value (tp->pc_nthreads, TRUE, -1);
+#endif
 					if (!tp->is_io) {
 						remove_wsq (wsq);
 					}
@@ -1601,9 +1594,9 @@ ves_icall_System_Threading_ThreadPool_SetMinThreads (gint workerThreads, gint co
 	InterlockedExchange (&async_tp.min_threads, workerThreads);
 	InterlockedExchange (&async_io_tp.min_threads, completionPortThreads);
 	if (workerThreads > async_tp.nthreads)
-		mono_thread_create_internal (mono_get_root_domain (), threadpool_start_idle_threads, &async_tp, TRUE, SMALL_STACK);
+		mono_thread_create_internal (mono_get_root_domain (), threadpool_start_idle_threads, &async_tp, TRUE, FALSE, SMALL_STACK);
 	if (completionPortThreads > async_io_tp.nthreads)
-		mono_thread_create_internal (mono_get_root_domain (), threadpool_start_idle_threads, &async_io_tp, TRUE, SMALL_STACK);
+		mono_thread_create_internal (mono_get_root_domain (), threadpool_start_idle_threads, &async_io_tp, TRUE, FALSE, SMALL_STACK);
 	return TRUE;
 }
 

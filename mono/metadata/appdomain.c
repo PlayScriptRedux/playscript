@@ -75,7 +75,7 @@
  * Changes which are already detected at runtime, like the addition
  * of icalls, do not require an increment.
  */
-#define MONO_CORLIB_VERSION 105
+#define MONO_CORLIB_VERSION 110
 
 typedef struct
 {
@@ -864,12 +864,17 @@ mono_set_private_bin_path_from_config (MonoDomain *domain)
 MonoAppDomain *
 ves_icall_System_AppDomain_createDomain (MonoString *friendly_name, MonoAppDomainSetup *setup)
 {
+#ifdef DISABLE_APPDOMAINS
+	mono_raise_exception (mono_get_exception_not_supported ("AppDomain creation is not supported on this runtime."));
+	return NULL;
+#else
 	char *fname = mono_string_to_utf8 (friendly_name);
 	MonoAppDomain *ad = mono_domain_create_appdomain_internal (fname, setup);
 	
 	g_free (fname);
 
 	return ad;
+#endif
 }
 
 MonoArray *
@@ -997,7 +1002,7 @@ add_assemblies_to_domain (MonoDomain *domain, MonoAssembly *ass, GHashTable *ht)
 	if (!g_hash_table_lookup (ht, ass)) {
 		mono_assembly_addref (ass);
 		g_hash_table_insert (ht, ass, ass);
-		domain->domain_assemblies = g_slist_prepend (domain->domain_assemblies, ass);
+		domain->domain_assemblies = g_slist_append (domain->domain_assemblies, ass);
 		mono_trace (G_LOG_LEVEL_INFO, MONO_TRACE_ASSEMBLY, "Assembly %s[%p] added to domain %s, ref_count=%d", ass->aname.name, ass, domain->friendly_name, ass->ref_count);
 	}
 

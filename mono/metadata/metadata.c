@@ -757,7 +757,6 @@ mono_metadata_compute_size (MonoImage *meta, int tableindex, guint32 *result_bit
 			n = MAX (n, meta->tables [MONO_TABLE_METHOD].rows);
 			n = MAX (n, meta->tables [MONO_TABLE_MODULEREF].rows);
 			n = MAX (n, meta->tables [MONO_TABLE_TYPESPEC].rows);
-			n = MAX (n, meta->tables [MONO_TABLE_MEMBERREF].rows);
 
 			/* 3 bits to encode */
 			field_size = rtsize (n, 16 - 3);
@@ -883,6 +882,7 @@ mono_metadata_locate_token (MonoImage *meta, guint32 token)
 const char *
 mono_metadata_string_heap (MonoImage *meta, guint32 index)
 {
+	g_assert (index < meta->heap_strings.size);
 	g_return_val_if_fail (index < meta->heap_strings.size, "");
 	return meta->heap_strings.data + index;
 }
@@ -897,6 +897,7 @@ mono_metadata_string_heap (MonoImage *meta, guint32 index)
 const char *
 mono_metadata_user_string (MonoImage *meta, guint32 index)
 {
+	g_assert (index < meta->heap_us.size);
 	g_return_val_if_fail (index < meta->heap_us.size, "");
 	return meta->heap_us.data + index;
 }
@@ -911,6 +912,7 @@ mono_metadata_user_string (MonoImage *meta, guint32 index)
 const char *
 mono_metadata_blob_heap (MonoImage *meta, guint32 index)
 {
+	g_assert (index < meta->heap_blob.size);
 	g_return_val_if_fail (index < meta->heap_blob.size, "");/*FIXME shouldn't we return NULL and check for index == 0?*/
 	return meta->heap_blob.data + index;
 }
@@ -4641,6 +4643,9 @@ mono_metadata_class_equal (MonoClass *c1, MonoClass *c2, gboolean signature_only
 	if (signature_only &&
 	    (c1->byval_arg.type == MONO_TYPE_SZARRAY) && (c2->byval_arg.type == MONO_TYPE_SZARRAY))
 		return mono_metadata_class_equal (c1->byval_arg.data.klass, c2->byval_arg.data.klass, signature_only);
+	if (signature_only &&
+	    (c1->byval_arg.type == MONO_TYPE_ARRAY) && (c2->byval_arg.type == MONO_TYPE_ARRAY))
+		return do_mono_metadata_type_equal (&c1->byval_arg, &c2->byval_arg, signature_only);
 	return FALSE;
 }
 

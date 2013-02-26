@@ -56,7 +56,7 @@ namespace System {
 		 * of icalls, do not require an increment.
 		 */
 #pragma warning disable 169
-		private const int mono_corlib_version = 105;
+		private const int mono_corlib_version = 110;
 #pragma warning restore 169
 
 		[ComVisible (true)]
@@ -85,7 +85,7 @@ namespace System {
 			ProgramFiles = 0x26,
 			MyPictures = 0x27,
 			CommonProgramFiles = 0x2b,
-#if NET_4_0 || MOONLIGHT || MOBILE
+#if NET_4_0
 			MyVideos = 0x0e,
 #endif
 #if NET_4_0
@@ -628,7 +628,7 @@ namespace System {
 			
 			case SpecialFolder.Templates:
 				return ReadXdgUserDir (config, home, "XDG_TEMPLATES_DIR", "Templates");
-#if NET_4_0 || MOONLIGHT || MOBILE
+#if NET_4_0
 			case SpecialFolder.MyVideos:
 				return ReadXdgUserDir (config, home, "XDG_VIDEOS_DIR", "Videos");
 #endif
@@ -836,7 +836,7 @@ namespace System {
 			throw new NotImplementedException ();
 		}
 
-#if NET_4_0 || MOONLIGHT || MOBILE
+#if NET_4_0
 		[SecurityCritical]
 		public static void FailFast (string message, Exception exception)
 		{
@@ -849,15 +849,20 @@ namespace System {
 			get { return IntPtr.Size == 8; } // FIXME: is this good enough?
 		}
 
-		public static bool Is64BitProcess {
-			get { return Is64BitOperatingSystem; }
-		}
-
 		public static int SystemPageSize {
 			get { return GetPageSize (); }
 		}
 #endif
 
+#if NET_4_0
+		public
+#else
+		internal
+#endif
+		static bool Is64BitProcess {
+			get { return IntPtr.Size == 8; }
+		}
+		
 		public static extern int ProcessorCount {
 			[EnvironmentPermission (SecurityAction.Demand, Read="NUMBER_OF_PROCESSORS")]
 			[MethodImplAttribute (MethodImplOptions.InternalCall)]

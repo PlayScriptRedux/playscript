@@ -53,17 +53,15 @@ namespace System.Net.Configuration {
 
 namespace System.Net 
 {
-#if MOONLIGHT
-	internal abstract class WebRequest : ISerializable {
-#else
 	[Serializable]
 	public abstract class WebRequest : MarshalByRefObject, ISerializable {
-#endif
 		static HybridDictionary prefixes = new HybridDictionary ();
 		static bool isDefaultWebProxySet;
 		static IWebProxy defaultWebProxy;
+
+#if !NET_2_1		
 		static RequestCachePolicy defaultCachePolicy;
-		
+#endif		
 		// Constructors
 		
 		static WebRequest ()
@@ -118,14 +116,6 @@ namespace System.Net
 				authentication_level = value;
 			}
 		}
-
-		[MonoTODO ("Implement the caching system. Currently always returns a policy with the NoCacheNoStore level")]
-		public virtual RequestCachePolicy CachePolicy
-		{
-			get { return DefaultCachePolicy; }
-			set {
-			}
-		}
 		
 		public virtual string ConnectionGroupName {
 			get { throw GetMustImplement (); }
@@ -147,6 +137,15 @@ namespace System.Net
 			set { throw GetMustImplement (); }
 		}
 
+#if !NET_2_1
+		[MonoTODO ("Implement the caching system. Currently always returns a policy with the NoCacheNoStore level")]
+		public virtual RequestCachePolicy CachePolicy
+		{
+			get { return DefaultCachePolicy; }
+			set {
+			}
+		}
+		
 		public static RequestCachePolicy DefaultCachePolicy
 		{
 			get { return defaultCachePolicy; }
@@ -154,18 +153,18 @@ namespace System.Net
 				throw GetMustImplement ();
 			}
 		}
+#endif
 		
 		public virtual WebHeaderCollection Headers { 
 			get { throw GetMustImplement (); }
 			set { throw GetMustImplement (); }
 		}
 		
-#if !MOONLIGHT
 		public TokenImpersonationLevel ImpersonationLevel {
 			get { throw GetMustImplement (); }
 			set { throw GetMustImplement (); }
 		}
-#endif
+
 		public virtual string Method { 
 			get { throw GetMustImplement (); }
 			set { throw GetMustImplement (); }
@@ -297,7 +296,7 @@ namespace System.Net
 				throw new ArgumentNullException ("requestUri");
 			return GetCreator (requestUri.Scheme).Create (requestUri);
 		}
-#if NET_4_5 || MOBILE	
+#if NET_4_5	
 		[MonoTODO ("for portable library support")]
 		public static HttpWebRequest CreateHttp (string requestUriString)
 		{

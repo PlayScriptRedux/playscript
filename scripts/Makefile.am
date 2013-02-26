@@ -98,7 +98,8 @@ scripts_4_0 = \
 	svcutil$(SCRIPT_SUFFIX)			\
 	xbuild$(SCRIPT_SUFFIX)			\
 	ccrewrite$(SCRIPT_SUFFIX)		\
-	cccheck$(SCRIPT_SUFFIX)
+	cccheck$(SCRIPT_SUFFIX)			\
+	mdbrebase$(SCRIPT_SUFFIX)
 
 MDOC_SUBCOMMANDS = \
 	mdoc-assemble \
@@ -155,7 +156,6 @@ EXTRA_DIST =			\
 	mono-test-install	\
 	mono-heapviz		\
 	$(MDOC_COMPAT)		\
-	patch-quiet.sh		\
 	get-cygwin-deps.sh	\
 	mono-configuration-crypto.in
 

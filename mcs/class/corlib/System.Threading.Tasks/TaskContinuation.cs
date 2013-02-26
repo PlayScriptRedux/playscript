@@ -27,7 +27,7 @@
 //
 //
 
-#if NET_4_0 || MOBILE
+#if NET_4_0
 
 using System.Collections.Generic;
 
@@ -104,7 +104,7 @@ namespace System.Threading.Tasks
 				return;
 
 			if ((continuationOptions & TaskContinuationOptions.ExecuteSynchronously) != 0)
-				task.RunSynchronously (task.scheduler);
+				task.RunSynchronouslyCore (task.scheduler);
 			else
 				task.Schedule ();
 		}
@@ -302,35 +302,6 @@ namespace System.Threading.Tasks
 
 		public void Execute ()
 		{
-			evt.Set ();
-		}
-	}
-
-	sealed class DelayContinuation : IContinuation, IDisposable
-	{
-		readonly ManualResetEventSlim evt;
-
-		public DelayContinuation ()
-		{
-			this.evt = new ManualResetEventSlim ();
-		}
-
-		public ManualResetEventSlim Event
-		{
-			get
-			{
-				return evt;
-			}
-		}
-
-		public void Dispose ()
-		{
-			evt.Dispose ();
-		}
-
-		public void Execute ()
-		{
-			Console.WriteLine ("execute");
 			evt.Set ();
 		}
 	}

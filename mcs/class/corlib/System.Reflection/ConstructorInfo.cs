@@ -56,10 +56,7 @@ namespace System.Reflection {
 		[DebuggerHidden]
 		public object Invoke (object[] parameters)
 		{
-			if (parameters == null)
-				parameters = new object [0];
-
-			return Invoke (BindingFlags.CreateInstance, null, parameters, null);
+			return Invoke (BindingFlags.CreateInstance, null, parameters ?? EmptyArray<object>.Value, null);
 		}
 
 		public abstract object Invoke (BindingFlags invokeAttr, Binder binder, object[] parameters,
@@ -69,6 +66,12 @@ namespace System.Reflection {
 		{
 			throw new NotImplementedException ();
 		}
+
+		Type _ConstructorInfo.GetType ()
+		{
+			// Required or object::GetType becomes virtual final
+			return base.GetType ();
+		}		
 
 		void _ConstructorInfo.GetTypeInfo (uint iTInfo, uint lcid, IntPtr ppTInfo)
 		{

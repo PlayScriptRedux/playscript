@@ -30,6 +30,8 @@
 
 #if SECURITY_DEP
 
+extern alias MonoSecurity;
+
 using System.Collections;
 using System.Collections.Specialized;
 using System.Globalization;
@@ -42,7 +44,7 @@ using System.Security.Authentication.ExtendedProtection;
 #if NET_4_5
 using System.Threading.Tasks;
 #endif
-using Mono.Security.Protocol.Tls;
+using MonoSecurity::Mono.Security.Protocol.Tls;
 
 namespace System.Net {
 	public sealed class HttpListenerRequest
@@ -319,7 +321,7 @@ namespace System.Net {
 				// TODO: test if MS has a timeout when doing this
 				try {
 					IAsyncResult ares = InputStream.BeginRead (bytes, 0, length, null, null);
-					if (!ares.IsCompleted && !ares.AsyncWaitHandle.WaitOne (100))
+					if (!ares.IsCompleted && !ares.AsyncWaitHandle.WaitOne (1000))
 						return false;
 					if (InputStream.EndRead (ares) <= 0)
 						return true;

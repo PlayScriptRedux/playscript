@@ -38,6 +38,9 @@ using System.ServiceModel.Channels;
 using System.ServiceModel.Channels.Http;
 #endif
 using System.ServiceModel.Description;
+#if !MOBILE
+using WS = System.Web.Services.Description;
+#endif
 using System.Xml;
 
 namespace System.ServiceModel.Channels
@@ -54,12 +57,10 @@ namespace System.ServiceModel.Channels
 		string realm = String.Empty;
 		TransferMode transfer_mode;
 		IDefaultCommunicationTimeouts timeouts;
-#if !MOONLIGHT
 		AuthenticationSchemes auth_scheme =
 			AuthenticationSchemes.Anonymous;
 		AuthenticationSchemes proxy_auth_scheme =
 			AuthenticationSchemes.Anonymous;
-#endif
 		// If you add fields, do not forget them in copy constructor.
 
 		public HttpTransportBindingElement ()
@@ -82,10 +83,8 @@ namespace System.ServiceModel.Channels
 			transfer_mode = other.transfer_mode;
 			// FIXME: it does not look safe
 			timeouts = other.timeouts;
-#if !MOONLIGHT
 			auth_scheme = other.auth_scheme;
 			proxy_auth_scheme = other.proxy_auth_scheme;
-#endif
 
 #if NET_4_0
 			DecompressionEnabled = other.DecompressionEnabled;
@@ -94,7 +93,6 @@ namespace System.ServiceModel.Channels
 #endif
 		}
 
-#if !MOONLIGHT
 #if NET_4_0
 		[DefaultValue (AuthenticationSchemes.Anonymous)]
 #endif
@@ -110,7 +108,6 @@ namespace System.ServiceModel.Channels
 			get { return proxy_auth_scheme; }
 			set { proxy_auth_scheme = value; }
 		}
-#endif
 
 #if NET_4_0
 		[DefaultValue (false)]
@@ -278,18 +275,52 @@ namespace System.ServiceModel.Channels
 			PolicyAssertionCollection assertions = context.GetBindingAssertions ();
 			XmlDocument doc = new XmlDocument ();
 
-			assertions.Add (doc.CreateElement ("wsaw", "UsingAddressing", "http://www.w3.org/2006/05/addressing/wsdl"));
+			ExportAddressingPolicy (context);
 
 			switch (auth_scheme) {
-				case AuthenticationSchemes.Basic:
-				case AuthenticationSchemes.Digest:
-				case AuthenticationSchemes.Negotiate:
-				case AuthenticationSchemes.Ntlm:
-					assertions.Add (doc.CreateElement ("http", 
+			case AuthenticationSchemes.Basic:
+			case AuthenticationSchemes.Digest:
+			case AuthenticationSchemes.Negotiate:
+			case AuthenticationSchemes.Ntlm:
+				assertions.Add (doc.CreateElement ("http", 
 						auth_scheme.ToString () + "Authentication", 
 						"http://schemas.microsoft.com/ws/06/2004/policy/http"));
-					break;
+				break;
 			}
+
+			var transportProvider = this as ITransportTokenAssertionProvider;
+			if (transportProvider != null) {
+				var token = transportProvider.GetTransportTokenAssertion ();
+				assertions.Add (CreateTransportBinding (token));
+			}
+		}
+
+		XmlElement CreateTransportBinding (XmlElement transportToken)
+		{
+			var doc = new XmlDocument ();
+			var transportBinding = doc.CreateElement (
+				"sp", "TransportBinding", PolicyImportHelper.SecurityPolicyNS);
+
+			var token = doc.CreateElement (
+				"sp", "TransportToken", PolicyImportHelper.SecurityPolicyNS);
+			PolicyImportHelper.AddWrappedPolicyElement (token, transportToken);
+
+			var algorithmSuite = doc.CreateElement (
+				"sp", "AlgorithmSuite", PolicyImportHelper.SecurityPolicyNS);
+			var basic256 = doc.CreateElement (
+				"sp", "Basic256", PolicyImportHelper.SecurityPolicyNS);
+			PolicyImportHelper.AddWrappedPolicyElement (algorithmSuite, basic256);
+
+			var layout = doc.CreateElement (
+				"sp", "Layout", PolicyImportHelper.SecurityPolicyNS);
+			var strict = doc.CreateElement (
+				"sp", "Strict", PolicyImportHelper.SecurityPolicyNS);
+			PolicyImportHelper.AddWrappedPolicyElement (layout, strict);
+
+			PolicyImportHelper.AddWrappedPolicyElements (
+				transportBinding, token, algorithmSuite, layout);
+
+			return transportBinding;
 		}
 
 		[MonoTODO]
@@ -303,7 +334,15 @@ namespace System.ServiceModel.Channels
 		void IWsdlExportExtension.ExportEndpoint (WsdlExporter exporter,
 			WsdlEndpointConversionContext context)
 		{
-			throw new NotImplementedException ();
+			var soap_binding = new WS.SoapBinding ();
+			soap_binding.Transport = WS.SoapBinding.HttpTransport;
+			soap_binding.Style = WS.SoapBindingStyle.Document;
+			context.WsdlBinding.Extensions.Add (soap_binding);
+
+			var soap_address = new WS.SoapAddressBinding ();
+			soap_address.Location = context.Endpoint.Address.Uri.AbsoluteUri;
+			
+			context.WsdlPort.Extensions.Add (soap_address);
 		}
 #endif
 	}
