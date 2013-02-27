@@ -1,9 +1,19 @@
 package com.zynga.zengine.classes
 {
 	import System.*
-
+	
 	PLATFORM::IOS {
 		import blah.blah.blah
+	}
+
+	public interface IBlah {
+		
+		function boo():void
+			
+		function get ya():int
+				
+		function set goo(i:int):void
+				
 	}
 
 	public class ZZZAttribute 
@@ -48,16 +58,19 @@ package com.zynga.zengine.classes
 			q++
 			++q
 
+			if (q != 0) trace("blah") else trace("blah2")
+
 			q = q
-				- 100
+				- 100 // this is a comment
 
         	var x:XML = <spoof/>;
         
         	var f:Foo = new Foo()
         	var b:Bar = new Bar()
         	var t:Boolean 
-					= true
+					= true /* another comment */
         	
+			var o33:Object = null
         	if (f == b) 
         		trace ("foo")
         	

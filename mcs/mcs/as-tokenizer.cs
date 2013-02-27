@@ -199,6 +199,7 @@ namespace Mono.ActionScript
 		int prev_token_line;
 		int current_token;
 		int current_token_line;
+		int putback_token = -1;
 		int parse_regex_xml = 0;
 		int parse_colon = 0;
 		bool allow_auto_semi = true;
@@ -484,6 +485,7 @@ namespace Mono.ActionScript
 			public int prev_token_line;
 			public int current_token;
 			public int current_token_line;
+			public int putback_token;
 
 			public Position (Tokenizer t)
 			{
@@ -510,6 +512,7 @@ namespace Mono.ActionScript
 				prev_token_line = t.prev_token_line;
 				current_token = t.current_token;
 				current_token_line = t.current_token_line;
+				putback_token = t.putback_token;
 				val = t.val;
 			}
 		}
@@ -561,6 +564,7 @@ namespace Mono.ActionScript
 			allow_auto_semi_after = p.allow_auto_semi_after;
 			current_token = p.current_token;
 			current_token_line = p.current_token_line;
+			putback_token = p.putback_token;
 			val = p.val;
 		}
 
@@ -786,7 +790,10 @@ namespace Mono.ActionScript
 				Token.BOOL,
 				Token.BOOLEAN,
 				Token.SHORT,
-				Token.USHORT
+				Token.USHORT,
+				Token.BREAK,
+				Token.CONTINUE,
+				Token.STAR
 			});
 
 			AddDisallowedNextAutoSemiTokens(new int [] {
@@ -924,8 +931,8 @@ namespace Mono.ActionScript
 			case Token.DO:
 			case Token.TRY:
 			case Token.CATCH:
-			case Token.ELSE:
 			case Token.SWITCH:
+			case Token.CASE:
 				allow_auto_semi = false;
 				allow_auto_semi_after = 0;
 				break;
@@ -2191,11 +2198,18 @@ namespace Mono.ActionScript
 		{
 			prev_token = current_token;
 			prev_token_line = current_token_line;
-
+			
 			current_token = xtoken (true);
 			current_token_line = line;
 
 			return current_token;
+		}
+
+		public void token_putback (int token)
+		{
+			if (putback_token != -1)
+				throw new Exception("Can't put back token twice.'");
+			putback_token = token;
 		}
 
 		int TokenizePreprocessorIdentifier (out int c)
@@ -3389,9 +3403,9 @@ namespace Mono.ActionScript
 			}
 		}
 
-		private int consume_identifier (int s)
+		private int consume_identifier (bool parse_token, int s)
 		{
-			int res = consume_identifier (s, false);
+			int res = consume_identifier (parse_token, s, false);
 
 			if (doc_state == XmlCommentState.Allowed)
 				doc_state = XmlCommentState.NotAllowed;
@@ -3399,7 +3413,7 @@ namespace Mono.ActionScript
 			return res;
 		}
 
-		int consume_identifier (int c, bool quoted) 
+		int consume_identifier (bool parse_token, int c, bool quoted) 
 		{
 			//
 			// This method is very performance sensitive. It accounts
@@ -3489,6 +3503,8 @@ namespace Mono.ActionScript
 				int keyword = GetKeyword (id_builder, pos);
 				if (keyword != -1) {
 					val = ltb.Create (keyword == Token.AWAIT ? "await" : null, current_source, ref_line, column);
+					if (keyword == Token.ELSE && do_auto_semi_insertion(parse_token, line, -1, keyword)) 
+						return Token.SEMICOLON;
 					return keyword;
 				}
 			}
@@ -3535,6 +3551,13 @@ namespace Mono.ActionScript
 		{
 			int d, c, next;
 
+			// Allow next token to be pushed back if we insert semicolons
+			if (putback_token != -1) {
+				next = putback_token;
+				putback_token = -1;
+				return next;
+			}
+
 			// Decrement parse regex counter (allows regex literals to follow 1 token after 
 			// symbols '=', ':', '(', '[', and ',')
 			if (parse_regex_xml > 0)
@@ -3577,7 +3600,7 @@ namespace Mono.ActionScript
 */
 				case '\\':
 					tokens_seen = true;
-					return consume_identifier (c);
+					return consume_identifier (parse_token, c);
 
 				case '{':
 					val = ltb.Create (current_source, ref_line, col);
@@ -3607,19 +3630,8 @@ namespace Mono.ActionScript
 					}
 					return Token.OPEN_BRACE;
 				case '}':
-					if (parse_token && prev_token_line == line && prev_token != Token.SEMICOLON && !handle_asx && allow_auto_semi && 
-					  allow_auto_semi_after == 0 && allowed_auto_semi_tokens[prev_token]) {
-						PushPosition ();
-						next = xtoken ();
-						PopPosition ();
-						if (!disallowed_next_auto_semi_tokens[next]) {
-							putback (c);
-							warn_semi_inserted (Location);
-							return Token.SEMICOLON;
-						}
-					}
-					if (parse_token && has_temp_auto_semi_after_tokens)
-						clear_temp_auto_semi_tokens ();
+					if (do_auto_semi_insertion (parse_token, line, c, -1))
+						return Token.SEMICOLON;
 					val = ltb.Create (current_source, ref_line, col);
 					return Token.CLOSE_BRACE;
 				case '[':
@@ -3922,6 +3934,9 @@ namespace Mono.ActionScript
 
 						while ((d = get_char ()) != -1 && d != '\n');
 
+						if (d == '\n')
+							putback (d);
+
 						any_token_seen |= tokens_seen;
 						tokens_seen = false;
 						comments_seen = false;
@@ -4030,19 +4045,8 @@ namespace Mono.ActionScript
 					return is_number (c);
 
 				case '\n': // white space
-					if (parse_token && prev_token_line == line - 1 && prev_token != Token.SEMICOLON && !handle_asx && 
-					  allow_auto_semi && allow_auto_semi_after == 0 && allowed_auto_semi_tokens[prev_token]) {
-						PushPosition ();
-						next = xtoken ();
-						PopPosition ();
-						if (!disallowed_next_auto_semi_tokens[next]) {
-							putback (c);
-							warn_semi_inserted (Location);
-							return Token.SEMICOLON;
-						}
-					}
-					if (parse_token && has_temp_auto_semi_after_tokens)
-						clear_temp_auto_semi_tokens ();
+					if (do_auto_semi_insertion (parse_token, line - 1, c, -1))
+						return Token.SEMICOLON;
 					any_token_seen |= tokens_seen;
 					tokens_seen = false;
 					comments_seen = false;
@@ -4176,7 +4180,7 @@ namespace Mono.ActionScript
 					PopPosition();
 
 					if (is_identifier_start_character (c)){
-						return consume_identifier (c, true);
+						return consume_identifier (parse_token, c, true);
 					}
 
 					Report.Error (1646, Location, "Keyword, identifier, or string expected after verbatim specifier: @");
@@ -4194,7 +4198,7 @@ namespace Mono.ActionScript
 
 				if (is_identifier_start_character (c)) {
 					tokens_seen = true;
-					return consume_identifier (c);
+					return consume_identifier (parse_token, c);
 				}
 
 				if (char.IsWhiteSpace ((char) c))
@@ -4342,7 +4346,29 @@ namespace Mono.ActionScript
 			xml_comment_buffer.Length = 0;
 		}
 
-		void warn_semi_inserted(Location loc) 
+		bool do_auto_semi_insertion (bool parse_token, int line, int c, int t)
+		{
+			bool insert_semi = false;
+			if (parse_token && prev_token_line == line && prev_token != Token.SEMICOLON && !handle_asx && allow_auto_semi && 
+			    allow_auto_semi_after == 0 && allowed_auto_semi_tokens[prev_token]) {
+				PushPosition ();
+				int next = xtoken ();
+				PopPosition ();
+				if (!disallowed_next_auto_semi_tokens[next]) {
+					if (c != -1)
+						putback (c);
+					else
+						token_putback (t);
+					warn_semi_inserted (Location);
+					insert_semi = true;
+				}
+			}
+			if (parse_token && has_temp_auto_semi_after_tokens)
+				clear_temp_auto_semi_tokens ();
+			return insert_semi;
+		}
+
+		void warn_semi_inserted (Location loc) 
 		{
 			Report.Warning (7093, 1, loc, "Semicolon automatically inserted on unterminated line.");
 		}
