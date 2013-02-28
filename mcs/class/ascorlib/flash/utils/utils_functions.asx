@@ -1,5 +1,8 @@
 package flash.utils {
 
+	import System.AppDomain;
+	import System.Reflection.*;
+
 	public function clearInterval(id:uint):void {
 		Timer.clearInterval(id);
 	}
@@ -18,8 +21,16 @@ package flash.utils {
 	
 	public function getDefinitionByName(name:String):Object {
 		name = name.Replace("::", ".");
-		var t = System.Type.GetType(name);
-		return t;
+
+		// we must iterate over all assemblies because Type.GetType(..) only works on the current assembly
+		for each (var assembly:Assembly in AppDomain.CurrentDomain.GetAssemblies())
+		{
+			var t = assembly.GetType(name, false);
+			if (t != null) {
+				return t;
+			}
+		}
+		return null;
 	}
 	
 	public function getQualifiedClassName(value:*):String {

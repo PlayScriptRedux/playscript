@@ -21,6 +21,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
+    <NoWarn>0414</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -588,6 +589,9 @@
     </Compile>
     <Compile Include="..\ascorlib\SWFAttribute.cs">
       <Link>SWFAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\StageQuality.asx">
+      <Link>flash\display\StageQuality.asx</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

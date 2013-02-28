@@ -42,10 +42,19 @@ namespace flash.display3D {
 		public Context3D(Stage3D stage3D)
 		{
 			mStage3D = stage3D;
+
+			// get default framebuffer for use when restoring rendering to backbuffer
+			GL.GetInteger(GetPName.FramebufferBinding, out mDefaultFrameBufferId);
+
+			// generate framebuffer for render to texture
+			GL.GenFramebuffers(1, out mTextureFrameBufferId);
 		}
 		
 		public void clear(double red = 0.0, double green = 0.0, double blue = 0.0, double alpha = 1.0, 
 		                  double depth = 1.0, uint stencil = 0, uint mask = 0xffffffff) {
+			if (mask != 0xffffffff)
+				throw new NotImplementedException();
+
 			GL.ClearColor ((float)red, (float)green, (float)blue, (float)alpha);
 			GL.ClearDepth((float)depth);
 			GL.ClearStencil((int)stencil);
@@ -54,6 +63,11 @@ namespace flash.display3D {
 		
 		public void configureBackBuffer(int width, int height, int antiAlias, 
 			bool enableDepthAndStencil = true, bool wantsBestResolution = false) {
+			mBackBufferWidth = width;
+			mBackBufferHeight = height;
+			mBackBufferAntiAlias = antiAlias;
+			mBackBufferEnableDepthAndStencil = enableDepthAndStencil;
+			mBackBufferWantsBestResolution = wantsBestResolution;
 		}
 	
 		public CubeTexture createCubeTexture(int size, string format, bool optimizeForRenderToTexture, int streamingLevels = 0) {
@@ -95,6 +109,7 @@ namespace flash.display3D {
 			GL.Flush();
 		}
  	 	
+
 		public void setBlendFactors (string sourceFactor, string destinationFactor)
 		{
 			BlendingFactorSrc src;
@@ -102,21 +117,40 @@ namespace flash.display3D {
 
 			// translate strings into enums
 			switch (sourceFactor) {
-			case "one": 				src = BlendingFactorSrc.One; break;
-			case "zero": 				src = BlendingFactorSrc.Zero; break;
-			case "sourceAlpha": 		src = BlendingFactorSrc.SrcAlpha; break;
-			case "destinationColor": 	src = BlendingFactorSrc.DstColor; break;
+			case Context3DBlendFactor.ONE: 							src = BlendingFactorSrc.One; break;
+			case Context3DBlendFactor.ZERO: 						src = BlendingFactorSrc.Zero; break;
+			case Context3DBlendFactor.SOURCE_ALPHA: 				src = BlendingFactorSrc.SrcAlpha; break;
+#if PLATFORM_MONOTOUCH
+			case Context3DBlendFactor.SOURCE_COLOR: 				src = BlendingFactorSrc.SrcColor; break;
+#endif
+			case Context3DBlendFactor.DESTINATION_ALPHA: 			src = BlendingFactorSrc.DstAlpha; break;
+			case Context3DBlendFactor.DESTINATION_COLOR: 			src = BlendingFactorSrc.DstColor; break;
+			case Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA: 		src = BlendingFactorSrc.OneMinusSrcAlpha; break;
+#if PLATFORM_MONOTOUCH
+			case Context3DBlendFactor.ONE_MINUS_SOURCE_COLOR: 		src = BlendingFactorSrc.OneMinusSrcColor; break;
+#endif
+			case Context3DBlendFactor.ONE_MINUS_DESTINATION_ALPHA: 	src = BlendingFactorSrc.OneMinusDstAlpha; break;
+			case Context3DBlendFactor.ONE_MINUS_DESTINATION_COLOR: 	src = BlendingFactorSrc.OneMinusDstColor; break;
 			default:
 				throw new NotImplementedException();
 			}
 
 			// translate strings into enums
 			switch (destinationFactor) {
-			case "one": 				dest = BlendingFactorDest.One; break;
-			case "zero": 				dest = BlendingFactorDest.Zero; break;
-			case "sourceAlpha": 		dest = BlendingFactorDest.SrcAlpha; break;
-			case "oneMinusSourceAlpha": dest = BlendingFactorDest.OneMinusSrcAlpha; break;
-			case "oneMinusSourceColor": dest = BlendingFactorDest.OneMinusSrcColor; break;
+			case Context3DBlendFactor.ONE: 							dest = BlendingFactorDest.One; break;
+			case Context3DBlendFactor.ZERO: 						dest = BlendingFactorDest.Zero; break;
+			case Context3DBlendFactor.SOURCE_ALPHA: 				dest = BlendingFactorDest.SrcAlpha; break;
+			case Context3DBlendFactor.SOURCE_COLOR: 				dest = BlendingFactorDest.SrcColor; break;
+			case Context3DBlendFactor.DESTINATION_ALPHA: 			dest = BlendingFactorDest.DstAlpha; break;
+#if PLATFORM_MONOTOUCH
+			case Context3DBlendFactor.DESTINATION_COLOR: 			dest = BlendingFactorDest.DstColor; break;
+#endif
+			case Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA: 		dest = BlendingFactorDest.OneMinusSrcAlpha; break;
+			case Context3DBlendFactor.ONE_MINUS_SOURCE_COLOR: 		dest = BlendingFactorDest.OneMinusSrcColor; break;
+			case Context3DBlendFactor.ONE_MINUS_DESTINATION_ALPHA: 	dest = BlendingFactorDest.OneMinusDstAlpha; break;
+#if PLATFORM_MONOTOUCH
+			case Context3DBlendFactor.ONE_MINUS_DESTINATION_COLOR: 	dest = BlendingFactorDest.OneMinusDstColor; break;
+#endif
 			default:
 				throw new NotImplementedException();
 			}
@@ -126,21 +160,65 @@ namespace flash.display3D {
 		}
  	 	
 		public void setColorMask(bool red, bool green, bool blue, bool alpha) {
+			GL.ColorMask (red, green, blue, alpha);
 		}
  	 	
 		public void setCulling (string triangleFaceToCull)
 		{
 			switch (triangleFaceToCull) {
-			case "none":
+			case Context3DTriangleFace.NONE:
 				GL.Disable(EnableCap.CullFace);
+				break;
+			case Context3DTriangleFace.BACK:
+				GL.Enable(EnableCap.CullFace);
+				GL.CullFace (CullFaceMode.Back);
+				break;
+			case Context3DTriangleFace.FRONT:
+				GL.Enable(EnableCap.CullFace);
+				GL.CullFace (CullFaceMode.Front);
+				break;
+			case Context3DTriangleFace.FRONT_AND_BACK:
+				GL.Enable(EnableCap.CullFace);
+				GL.CullFace (CullFaceMode.FrontAndBack);
 				break;
 			default:
 				throw new NotImplementedException();
-				// GL.CullFace(CullFaceMode.
 			}
 		}
  	 	
-		public void setDepthTest(bool depthMask, string passCompareMode) {
+		public void setDepthTest (bool depthMask, string passCompareMode)
+		{
+			GL.Enable (EnableCap.DepthTest);
+			GL.DepthMask(depthMask);
+
+			switch (passCompareMode) {
+			case Context3DCompareMode.ALWAYS:
+				GL.DepthFunc(DepthFunction.Always);
+				break;
+			case Context3DCompareMode.EQUAL:
+				GL.DepthFunc(DepthFunction.Equal);
+				break;
+			case Context3DCompareMode.GREATER:
+				GL.DepthFunc(DepthFunction.Greater);
+				break;
+			case Context3DCompareMode.GREATER_EQUAL:
+				GL.DepthFunc(DepthFunction.Gequal);
+				break;
+			case Context3DCompareMode.LESS:
+				GL.DepthFunc(DepthFunction.Less);
+				break;
+			case Context3DCompareMode.LESS_EQUAL:
+				GL.DepthFunc(DepthFunction.Lequal);
+				break;
+			case Context3DCompareMode.NEVER:
+				GL.DepthFunc(DepthFunction.Never);
+				break;
+			case Context3DCompareMode.NOT_EQUAL:
+				GL.DepthFunc(DepthFunction.Notequal);
+				break;
+			default:
+				throw new NotImplementedException();
+			}
 		}
  	 	
 		public void setProgram (Program3D program)
@@ -159,7 +237,6 @@ namespace flash.display3D {
 		public void setProgramConstantsFromByteArray(string programType, int firstRegister, 
 			int numRegisters, ByteArray data, uint byteArrayOffset) {
 			throw new NotImplementedException();
-			
 		}
 
 		private static void convertDoubleToFloat (float[] dest, Vector<double> source, int count)
@@ -238,18 +315,53 @@ namespace flash.display3D {
 			}
 		}
  	 	
- 	 	public void setRenderToBackBuffer() {
-			// throw new NotImplementedException();
+
+ 	 	public void setRenderToBackBuffer ()
+		{
+			// draw to backbuffer
+			GL.BindFramebuffer (FramebufferTarget.Framebuffer, mDefaultFrameBufferId);
+			// setup viewport for render to backbuffer
+			GL.Viewport(0,0, mBackBufferWidth, mBackBufferHeight);
+			// clear render to texture
+			mRenderToTexture = null;
 		}
  	 	
 		public void setRenderToTexture(TextureBase texture, bool enableDepthAndStencil = false, int antiAlias = 0, 
 		                               int surfaceSelector = 0) {
-			System.Console.WriteLine("NotImplementedWarning: Context3D.setRenderToTexture()");
+
+			var texture2D = texture as Texture;
+			if (texture2D == null) 
+				throw new Exception("Invalid texture");
+
+			GL.BindFramebuffer(FramebufferTarget.Framebuffer, mTextureFrameBufferId);
+#if PLATFORM_MONOTOUCH
+			GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferSlot.ColorAttachment0, TextureTarget.Texture2D, texture.textureId, 0);
+#else
+			GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, texture.textureId, 0);
+#endif
+			// setup viewport for render to texture
+			// $$TODO figure out a way to invert the viewport vertically to account for GL's texture origin
+			GL.Viewport(0,0, texture2D.width, texture2D.height);
+
+			// validate framebuffer status
+			var code = GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
+			if (code != FramebufferErrorCode.FramebufferComplete)
+			{
+				throw new Exception("FrameBuffer status error:" + code);
+			}
+
+			// save texture we're rendering to
+			mRenderToTexture = texture;
 		}
 
 
-		public void setScissorRectangle(Rectangle rectangle) {
-			System.Console.WriteLine("NotImplementedWarning: Context3D.setScissorRectangle()");
+		public void setScissorRectangle (Rectangle rectangle)
+		{
+			if (rectangle != null) {
+				GL.Scissor((int)rectangle.x, (int)rectangle.y, (int)rectangle.width, (int)rectangle.height);
+			} else {
+				GL.Scissor(0, 0, mBackBufferWidth, mBackBufferHeight);
+			}
 		}
 
 		public void setStencilActions(string triangleFace = "frontAndBack", string compareMode = "always", string actionOnBothPass = "keep", 
@@ -305,6 +417,7 @@ namespace flash.display3D {
 			}
 		}
 
+		// stage3D that owns us
 		private readonly Stage3D mStage3D;
 
 		// temporary floating point array for constant conversion
@@ -312,6 +425,18 @@ namespace flash.display3D {
 	
 		// current program
 		private Program3D mProgram;
+
+		// settings for backbuffer
+		private int  mDefaultFrameBufferId;
+		private int  mBackBufferWidth = 0;
+		private int  mBackBufferHeight = 0;
+		private int  mBackBufferAntiAlias = 0;
+		private bool mBackBufferEnableDepthAndStencil = true;
+		private bool mBackBufferWantsBestResolution = false;
+
+		// settings for render to texture
+		private TextureBase mRenderToTexture = null;
+		private int  		mTextureFrameBufferId;
 
 #else
 

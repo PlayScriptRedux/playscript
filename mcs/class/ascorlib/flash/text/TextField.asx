@@ -5,6 +5,17 @@ package flash.text {
 	import flash.geom.Rectangle;
 	import flash.display.DisplayObject;
 
+	
+#if PLATFORM_MONOMAC
+	import MonoMac.CoreGraphics.*;
+	import MonoMac.Foundation.*;
+	import MonoMac.AppKit.*;
+#elif PLATFORM_MONOTOUCH
+	import MonoTouch.Foundation.*;
+	import MonoTouch.CoreGraphics.*;
+	import MonoTouch.UIKit.*;
+#endif
+
 	public class TextField extends InteractiveObject {
 	
 		//
@@ -71,14 +82,30 @@ package flash.text {
 
  	 	public property styleSheet : StyleSheet { get; set; }
 
- 	 	public property text : String { get; set; }
+ 	 	public property text : String 
+		{ 
+			get {return mText;} 
+			set
+			{
+				if (mText != value)
+				{
+					mText = value;
+					// set dirty flag so bounds can be recomputed
+					mDirty = true;
+				}
+			}
+		}
 
  	 	public property textColor : uint { get; set; }
 
-		public property textHeight : Number { get { 
-				// $$TODO
-				return 8.0;
-			} }
+		public property textHeight : Number 
+		{
+			get 
+			{ 
+				UpdateBounds();
+				return mTextHeight;
+			} 
+		}
 
 		public property textInteractionMode : String { get { throw new System.NotImplementedException(); } }
 
@@ -86,7 +113,8 @@ package flash.text {
 		{ 
 			get 
 			{ 
-				return text.Length * 8; // $$TODO
+				UpdateBounds();
+				return mTextWidth;
 			} 
 		}
 
@@ -177,6 +205,43 @@ package flash.text {
 		public function setTextFormat(format:TextFormat, beginIndex:int = -1, endIndex:int = -1):void {
 			throw new NotImplementedException();
 		}
+
+
+		private function UpdateBounds():void
+		{
+			if (mDirty) 
+			{
+#if PLATFORM_MONOTOUCH
+				var format:flash.text.TextFormat = defaultTextFormat;
+				var font:UIFont = UIFont.FromName(format.font, float(Number(format.size)) );
+				if (font != null)
+				{
+					// $$TODO handle wordwrap and single line
+					if (!wordWrap || !multiline) 
+						throw new System.NotImplementedException();
+
+					var size:System.Drawing.SizeF = new NSString(text).StringSize(font, float(width), UILineBreakMode.WordWrap); 
+					mTextWidth  = size.Width;
+					mTextHeight = size.Height;
+				}
+				else
+				{
+					// 
+					mTextWidth = mTextHeight = 0.0;
+				}
+#else
+				// $$TODO
+				mTextWidth  = text.Length * 8.0;
+				mTextHeight = 8.0;
+#endif
+				mDirty = false;
+			}
+		}
+
+		private var mDirty:Boolean = true;
+		private var mText:String;
+		private var mTextWidth:Number;
+		private var mTextHeight:Number;
 	
 	}
 

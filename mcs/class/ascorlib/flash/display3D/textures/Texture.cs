@@ -45,7 +45,7 @@ namespace flash.display3D.textures {
 		{
 			// $$TODO 
 			// this is empty for now
-			Console.WriteLine ("uploadCompressedTextureFromByteArray not implemented");
+			System.Console.WriteLine("NotImplementedWarning: Texture.uploadCompressedTextureFromByteArray()");
 
 			if (async) {
 				// load with a delay
@@ -96,6 +96,10 @@ namespace flash.display3D.textures {
 		public void uploadFromByteArray(ByteArray data, uint byteArrayOffset, uint miplevel = 0) {
 			throw new NotImplementedException();
 		}
+
+		public int width 	{ get { return mWidth; } }
+		public int height 	{ get { return mHeight; } }
+		
 		
 		private readonly Context3D 	mContext;
 		private readonly int 		mWidth;
