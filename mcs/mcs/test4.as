@@ -52,11 +52,15 @@ package com.zynga.zengine.classes
 
         public static function Main() : void {
         
+			use namespace Blah;
+
 			myFunc(100, "Blah");
 
 			var q:int
 			q++
 			++q
+
+			q > 1 ? q : 1;
 
 			if (q != 0) trace("blah") else trace("blah2")
 

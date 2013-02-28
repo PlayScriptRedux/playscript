@@ -307,6 +307,8 @@ namespace Mono.ActionScript
 %token DOTDOT_AT
 %token DOTDOT_STAR
 %token DOTDOTDOT
+%token DOT_OPEN_PARENS
+%token CLOSE_PARENS_DOT
 %token COMMA
 %token COLON
 %token SEMICOLON
@@ -5909,6 +5911,15 @@ labeled_statement
 	  statement
 	;
 
+use_namespace_statement
+	: USE NAMESPACE IDENTIFIER stmnt_end_semicolon
+	  {
+		Lexer.NamespaceParsing = false;
+		var lt = (Tokenizer.LocatedToken) $2;		
+		$$ = new AsUseNamespaceStatement (lt.Value, GetLocation ($1));		
+	  }
+	;
+
 variable_type
 	: variable_type_simple
 	| variable_type_simple rank_specifiers
@@ -6698,6 +6709,7 @@ jump_statement
 	| return_statement
 	| throw_statement
 	| yield_statement
+	| use_namespace_statement
 	;
 
 break_statement
@@ -6876,10 +6888,10 @@ catch_clauses
 	  }
 	;
 
-//opt_identifier
-//	: /* empty */
-//	| identifier_inside_body
-//	;
+opt_identifier
+	: /* empty */
+	| identifier_inside_body
+	;
 
 catch_clause 
 	: CATCH block

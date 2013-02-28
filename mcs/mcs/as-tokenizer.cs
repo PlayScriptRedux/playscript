@@ -1036,8 +1036,7 @@ namespace Mono.ActionScript
 				break;
 
 			case Token.USE:
-				if (!handle_namespace)
-					res = -1;
+				handle_namespace = true;
 				break;
 			case Token.USING:
 				// TODO: some explanation needed
@@ -3719,6 +3718,11 @@ namespace Mono.ActionScript
 
 					return Token.OPEN_PARENS;
 				case ')':
+//					d = peek_char ();
+//					if (d == '.') {
+//						get_char ();
+//						return Token.CLOSE_PARENS_DOT;
+//					}
 					ltb.CreateOptional (current_source, ref_line, col, ref val);
 					return Token.CLOSE_PARENS;
 				case ',':
@@ -4067,6 +4071,11 @@ namespace Mono.ActionScript
 						get_char ();
 						return Token.DOT_STAR;
 					}
+
+//					if (d == '(') {
+//						get_char ();
+//						return Token.DOT_OPEN_PARENS;
+//					}
 
 					if (d == '.') {
 						get_char ();

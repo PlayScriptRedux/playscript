@@ -13,6 +13,7 @@
 using System;
 using System.Collections.Generic;
 using Mono.CSharp.JavaScript;
+using Mono.CSharp.Cpp;
 
 namespace Mono.CSharp
 {
@@ -843,5 +844,54 @@ namespace Mono.CSharp
 		}
 	}
 
+	// Use namespace statement
+	public class AsUseNamespaceStatement : Statement {
+
+		public string NS;
+
+		public AsUseNamespaceStatement(string ns, Location loc)
+		{
+			this.loc = loc;
+			NS = ns;
+		}
+
+		public override bool Resolve (BlockContext ec)
+		{
+			return true;
+		}
+		
+		public override bool ResolveUnreachable (BlockContext ec, bool warn)
+		{
+			return true;
+		}
+		
+		public override void Emit (EmitContext ec)
+		{
+		}
+		
+		public override void EmitJs (JsEmitContext jec)
+		{
+		}
+		
+		public override void EmitCpp (CppEmitContext cec)
+		{
+		}
+		
+		protected override void DoEmit (EmitContext ec)
+		{
+			throw new NotSupportedException ();
+		}
+		
+		protected override void CloneTo (CloneContext clonectx, Statement target)
+		{
+			// nothing needed.
+		}
+		
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}
+
+	}
 
 }
