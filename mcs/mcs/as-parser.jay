@@ -1214,10 +1214,10 @@ constant_declarators
 	;
 	
 constant_declarator
-	: COMMA IDENTIFIER opt_constant_initializer
+	: COMMA IDENTIFIER COLON member_type opt_constant_initializer
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;
-	  	$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), (ConstInitializer) $3);
+	  	$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), (ConstInitializer) $5, (FullNamedExpression) $4);
 	  	lbag.AddLocation ($$, GetLocation ($1));
 	  }
 	;		
@@ -1351,13 +1351,13 @@ field_declarators
 	;
 	
 field_declarator
-	: COMMA IDENTIFIER
+	: COMMA IDENTIFIER COLON member_type
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;
-	  	$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), null);
+	  	$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), null, (FullNamedExpression) $4);
 	  	lbag.AddLocation ($$, GetLocation ($1));
 	  }
-	| COMMA IDENTIFIER ASSIGN
+	| COMMA IDENTIFIER COLON member_type ASSIGN
 	  {
 		++lexer.parsing_block;
 	  }
@@ -1365,8 +1365,8 @@ field_declarator
 	  {
 		--lexer.parsing_block;
 		var lt = (Tokenizer.LocatedToken) $2;	  
-	  	$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), (Expression) $5);
-	  	lbag.AddLocation ($$, GetLocation ($1), GetLocation ($3));
+	  	$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), (Expression) $7, (FullNamedExpression) $4);
+	  	lbag.AddLocation ($$, GetLocation ($1), GetLocation ($5));
 	  }
 	;	
 
@@ -1387,10 +1387,10 @@ fixed_field_declarators
 	;
 	
 fixed_field_declarator
-	: COMMA IDENTIFIER fixed_field_size
+	: COMMA IDENTIFIER fixed_field_size COLON member_type
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;	  
-		$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), (ConstInitializer) $3);
+		$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), (ConstInitializer) $3, (FullNamedExpression) $5);
 		lbag.AddLocation ($$, GetLocation ($1));
 	  }
 	;
@@ -2894,13 +2894,13 @@ event_declarators
 	;
 	
 event_declarator
-	: COMMA IDENTIFIER
+	: COMMA IDENTIFIER COLON member_type
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;
-	  	$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), null);
+	  	$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), null, (FullNamedExpression) $4);
 	  	lbag.AddLocation ($$, GetLocation ($1));
 	  }
-	| COMMA IDENTIFIER ASSIGN
+	| COMMA IDENTIFIER COLON member_type ASSIGN 
 	  {
 		++lexer.parsing_block;
 	  }
@@ -2908,8 +2908,8 @@ event_declarator
 	  {
 		--lexer.parsing_block;
 		var lt = (Tokenizer.LocatedToken) $2;	  
-	  	$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), (Expression) $5);
-	  	lbag.AddLocation ($$, GetLocation ($1), GetLocation ($3));
+	  	$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), (Expression) $7, (FullNamedExpression) $4);
+	  	lbag.AddLocation ($$, GetLocation ($1), GetLocation ($5));
 	  }
 	;
 	

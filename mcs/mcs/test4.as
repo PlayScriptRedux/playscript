@@ -40,6 +40,10 @@ package com.zynga.zengine.classes
 
 	public class Test 
 	{
+		public var a1:int, b1:String, c1:Number;
+		public static var a2:int = 0, b2:String = "asd", c2:Number = 1.3;
+		public const a3:int = 0, b3:String = "asd", c3:Number = 1.3;
+
 		public var dynamic:String = "asdadf";
 
 		public var v:Vector.<String> = new <String> [ "aaa"
@@ -60,7 +64,7 @@ package com.zynga.zengine.classes
 			q++
 			++q
 
-			q > 1 ? q : 1;
+//			q > 1 ? q : 1;
 
 			if (q != 0) trace("blah") else trace("blah2")
 

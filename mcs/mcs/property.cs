@@ -1230,6 +1230,20 @@ namespace Mono.CSharp
 
 			return true;
 		}
+
+		protected override bool ResolveMemberType ()
+		{
+			if (base.ResolveMemberType()) {
+				if (declarators != null) {
+					foreach (var decl in declarators) {
+						if (!decl.ResolveType (this, MemberType)) 
+							return false;
+					}
+				}
+				return true;
+			}
+			return false;
+		}
 	}
 
 	public abstract class Event : PropertyBasedMember

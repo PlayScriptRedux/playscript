@@ -37,12 +37,32 @@ namespace Mono.CSharp
 			this.Initializer = initializer;
 		}
 
+		// ActionScript - field declarators have types
+		public FieldDeclarator (SimpleMemberName name, Expression initializer, FullNamedExpression type_expr)
+		{
+			this.Name = name;
+			this.TypeExpression = type_expr;
+			this.Initializer = initializer;
+		}
+
 		#region Properties
 
 		public SimpleMemberName Name { get; private set; }
+		public FullNamedExpression TypeExpression { get; private set; }
+		public TypeSpec Type { get; private set; }
 		public Expression Initializer { get; private set; }
 
 		#endregion
+
+		public bool ResolveType(IMemberContext mc, TypeSpec defaultType)
+		{
+			if (TypeExpression != null)
+				this.Type = TypeExpression.ResolveAsType (mc);
+			else
+				this.Type = defaultType;
+
+			return this.Type != null;
+		}
 	}
 
 	//
@@ -288,6 +308,20 @@ namespace Mono.CSharp
 			}
 			return true;
 		}
+
+		protected override bool ResolveMemberType ()
+		{
+			if (base.ResolveMemberType()) {
+				if (declarators != null) {
+					foreach (var decl in declarators) {
+						if (!decl.ResolveType (this, MemberType)) 
+							return false;
+					}
+				}
+				return true;
+			}
+			return false;
+		}
 	}
 
 	//
@@ -423,8 +457,8 @@ namespace Mono.CSharp
 					"`{0}': Fixed size buffers type must be one of the following: bool, byte, short, int, long, char, sbyte, ushort, uint, ulong, float or double",
 					GetSignatureForError ());
 			} else if (declarators != null) {
-				var t = new TypeExpression (MemberType, TypeExpression.Location);
 				foreach (var d in declarators) {
+					var t = new TypeExpression (d.Type, TypeExpression.Location);
 					var f = new FixedField (Parent, t, ModFlags, new MemberName (d.Name.Value, d.Name.Location), OptAttributes);
 					f.initializer = d.Initializer;
 					((ConstInitializer) f.initializer).Name = d.Name.Value;
@@ -656,7 +690,7 @@ namespace Mono.CSharp
 
 			if (declarators != null) {
 				foreach (var d in declarators) {
-					var t = new TypeExpression (MemberType, d.Name.Location);
+					var t = new TypeExpression (d.Type, d.Name.Location);
 					var f = new Field (Parent, t, ModFlags, new MemberName (d.Name.Value, d.Name.Location), OptAttributes);
 					if (d.Initializer != null)
 						f.initializer = d.Initializer;

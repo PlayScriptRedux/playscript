@@ -62,10 +62,12 @@ namespace Mono.CSharp {
 					new FieldInitializer (this, initializer, Location));
 
 			if (declarators != null) {
-				var t = new TypeExpression (MemberType, TypeExpression.Location);
 				foreach (var d in declarators) {
+					var t = new TypeExpression (d.Type, TypeExpression.Location);
 					var c = new Const (Parent, t, ModFlags & ~Modifiers.STATIC, new MemberName (d.Name.Value, d.Name.Location), OptAttributes);
 					c.initializer = d.Initializer;
+					if (d.Initializer is ConstInitializer)
+						((ConstInitializer)d.Initializer).Field = c;
 					((ConstInitializer) c.initializer).Name = d.Name.Value;
 					c.Define ();
 					Parent.PartialContainer.Members.Add (c);
@@ -143,13 +145,13 @@ namespace Mono.CSharp {
 	public class ConstInitializer : ShimExpression
 	{
 		bool in_transit;
-		readonly FieldBase field;
+		public FieldBase Field;
 
 		public ConstInitializer (FieldBase field, Expression value, Location loc)
 			: base (value)
 		{
 			this.loc = loc;
-			this.field = field;
+			this.Field = field;
 		}
 
 		public string Name { get; set; }
@@ -160,14 +162,14 @@ namespace Mono.CSharp {
 				return expr;
 
 			var opt = ResolveContext.Options.ConstantScope;
-			if (field is EnumMember)
+			if (Field is EnumMember)
 				opt |= ResolveContext.Options.EnumScope;
 
 			//
 			// Use a context in which the constant was declared and
 			// not the one in which is referenced
 			//
-			var rc = new ResolveContext (field, opt);
+			var rc = new ResolveContext (Field, opt);
 			expr = DoResolveInitializer (rc);
 			type = expr.Type;
 
@@ -177,7 +179,7 @@ namespace Mono.CSharp {
 		protected virtual Expression DoResolveInitializer (ResolveContext rc)
 		{
 			if (in_transit) {
-				field.Compiler.Report.Error (110, expr.Location,
+				Field.Compiler.Report.Error (110, expr.Location,
 					"The evaluation of the constant value for `{0}' involves a circular definition",
 					GetSignatureForError ());
 
@@ -192,24 +194,24 @@ namespace Mono.CSharp {
 			if (expr != null) {
 				Constant c = expr as Constant;
 				if (c != null)
-					c = field.ConvertInitializer (rc, c);
+					c = Field.ConvertInitializer (rc, c);
 
 				if (c == null) {
-					if (TypeSpec.IsReferenceType (field.MemberType))
-						Error_ConstantCanBeInitializedWithNullOnly (rc, field.MemberType, expr.Location, GetSignatureForError ());
+					if (TypeSpec.IsReferenceType (Field.MemberType))
+						Error_ConstantCanBeInitializedWithNullOnly (rc, Field.MemberType, expr.Location, GetSignatureForError ());
 					else if (!(expr is Constant))
 						Error_ExpressionMustBeConstant (rc, expr.Location, GetSignatureForError ());
 					else
-						expr.Error_ValueCannotBeConverted (rc, field.MemberType, false);
+						expr.Error_ValueCannotBeConverted (rc, Field.MemberType, false);
 				}
 
 				expr = c;
 			}
 
 			if (expr == null) {
-				expr = New.Constantify (field.MemberType, Location, rc.FileType);
+				expr = New.Constantify (Field.MemberType, Location, rc.FileType);
 				if (expr == null)
-					expr = Constant.CreateConstantFromValue (field.MemberType, null, Location);
+					expr = Constant.CreateConstantFromValue (Field.MemberType, null, Location);
 				expr = expr.Resolve (rc);
 			}
 
@@ -219,9 +221,9 @@ namespace Mono.CSharp {
 		public override string GetSignatureForError ()
 		{
 			if (Name == null)
-				return field.GetSignatureForError ();
+				return Field.GetSignatureForError ();
 
-			return field.Parent.GetSignatureForError () + "." + Name;
+			return Field.Parent.GetSignatureForError () + "." + Name;
 		}
 
 		public override object Accept (StructuralVisitor visitor)
