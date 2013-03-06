@@ -215,7 +215,6 @@ namespace Mono.ActionScript
 		bool handle_remove_add = false;
 		bool handle_where = false;
 		bool handle_typeof = false;
-		bool handle_delete = false;
 		bool handle_for_in = false;
 		bool lambda_arguments_parsing;
 		List<Location> escaped_identifiers;
@@ -350,11 +349,6 @@ namespace Mono.ActionScript
 			set { handle_typeof = value; }
 		}
 
-		public bool DeleteParsing {
-			get { return handle_delete; }
-			set { handle_delete = value; }
-		}
-	
 		public bool ForInParsing {
 			get { return handle_for_in; }
 			set { handle_for_in = value; }
@@ -674,6 +668,7 @@ namespace Mono.ActionScript
 			AddKeyword ("import", Token.IMPORT);
 			AddKeyword ("in", Token.IN);
 			AddKeyword ("indexer", Token.INDEXER);
+			AddKeyword ("instanceof", Token.INSTANCEOF);
 			AddKeyword ("int", Token.INT);
 			AddKeyword ("interface", Token.INTERFACE);
 			AddKeyword ("internal", Token.INTERNAL);
@@ -793,6 +788,7 @@ namespace Mono.ActionScript
 				Token.USHORT,
 				Token.BREAK,
 				Token.CONTINUE,
+				Token.RETURN,
 				Token.STAR
 			});
 
@@ -1151,7 +1147,7 @@ namespace Mono.ActionScript
 
 				break;
 
-				// ASX Extension keywords
+			// ASX Extension keywords
 			case Token.CHECKED:
 			case Token.EXPLICIT:
 			case Token.IMPLICIT:
@@ -1160,7 +1156,6 @@ namespace Mono.ActionScript
 			case Token.PARAMS:
 			case Token.READONLY:
 			case Token.REF:
-			case Token.TYPEOF:
 			case Token.UNCHECKED:
 			case Token.UNSAFE:
 			case Token.FIXED:
@@ -3670,9 +3665,6 @@ namespace Mono.ActionScript
 					return Token.CLOSE_BRACKET;
 				case '(':
 					val = ltb.Create (current_source, ref_line, col);
-					if (handle_delete) {
-						return Token.OPEN_PARENS_DELETE;
-					}					
 					parse_regex_xml = 2; // regex literals may follow open parens (method param, expressions).
 					//
 					// An expression versions of parens can appear in block context only

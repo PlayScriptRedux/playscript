@@ -128,7 +128,41 @@ namespace _root
 		{
 			throw new System.NotImplementedException();
 		}
-		
+
+	}
+
+	public static class _typeof_fn
+	{
+		public static string _typeof (object d) {
+			if (d == null || d == ActionScript.Undefined._undefined) 
+				return "undefined";
+			
+			if (d is XML || d is XMLList)
+				return "xml";
+			
+			if (d is Delegate)
+				return "function";
+			
+			TypeCode tc = Type.GetTypeCode(d.GetType());
+			switch (tc) {
+			case TypeCode.Boolean:
+				return "boolean";
+			case TypeCode.SByte:
+			case TypeCode.Byte:
+			case TypeCode.Int16:
+			case TypeCode.UInt16:
+			case TypeCode.Int32:
+			case TypeCode.UInt32:
+			case TypeCode.Int64:
+			case TypeCode.UInt64:
+			case TypeCode.Single:
+			case TypeCode.Double:
+			case TypeCode.Decimal:
+				return "number";
+			default:
+				return "object";
+			}
+		}
 	}
 
 }

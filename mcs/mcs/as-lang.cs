@@ -15,6 +15,14 @@ using System.Collections.Generic;
 using Mono.CSharp.JavaScript;
 using Mono.CSharp.Cpp;
 
+#if STATIC
+using IKVM.Reflection;
+using IKVM.Reflection.Emit;
+#else
+using System.Reflection;
+using System.Reflection.Emit;
+#endif
+
 namespace Mono.CSharp
 {
 	//
@@ -447,6 +455,204 @@ namespace Mono.CSharp
 			return visitor.Visit (this);
 		}
 	}
+
+	//
+	// ActionScript: Implements the ActionScript new expression.
+	// This expression is used to implement the as new expression 
+	// which takes either a type expression, an AsArrayInitializer,
+	// or an invocation expression of some form.
+	//
+	public class AsNew : ExpressionStatement {
+		
+		public Expression Expr;
+		private Expression newExpr;
+
+		public AsNew (Expression expr, Location l)
+		{
+			this.Expr = expr;
+			loc = l;
+		}
+		
+		public override bool IsSideEffectFree {
+			get {
+				return newExpr.IsSideEffectFree;
+			}
+		}
+		
+		public override bool ContainsEmitWithAwait ()
+		{
+			return newExpr.ContainsEmitWithAwait ();
+		}
+		
+		protected override Expression DoResolve (ResolveContext ec)
+		{
+			if (ec.Target == Target.JavaScript) {
+				type = ec.BuiltinTypes.Dynamic;
+				eclass = ExprClass.Value;
+				return this;
+			}
+
+			if (Expr is AsArrayInitializer)
+				return Expr.Resolve (ec);
+
+			New newExpr = null;
+
+			if (Expr is Invocation) {
+				var inv = Expr as Invocation;
+				newExpr = new New(inv.Exp, inv.Arguments, loc);
+			} else if (Expr is ElementAccess) {
+				if (loc.SourceFile != null && !loc.SourceFile.AsExtended) {
+					ec.Report.Error (7103, loc, "Native arrays are only suppored in ASX.'");
+					return null;
+				}
+				var elemAcc = Expr as ElementAccess;
+				var exprList = new List<Expression>();
+				foreach (var arg in elemAcc.Arguments) {
+					exprList.Add (arg.Expr);
+				}
+				// TODO: Handle jagged arrays
+				var arrayCreate = new ArrayCreation ((FullNamedExpression) elemAcc.Expr, exprList, 
+				                new ComposedTypeSpecifier (exprList.Count, loc), null, loc);
+				return arrayCreate.Resolve (ec);
+			} else {
+				var resolveExpr = Expr.Resolve (ec);
+				if (resolveExpr == null)
+					return null;
+				newExpr = new New(resolveExpr, new Arguments (0), loc);
+			}
+
+			return newExpr.Resolve (ec);
+		}
+		
+		protected override void CloneTo (CloneContext clonectx, Expression t)
+		{
+			var target = (AsDelete) t;
+			
+			target.Expr = Expr.Clone (clonectx);
+		}
+		
+		public override void Emit (EmitContext ec)
+		{
+			throw new System.NotImplementedException ();
+		}
+		
+		public override void EmitStatement (EmitContext ec)
+		{
+			throw new System.NotImplementedException ();
+		}
+		
+		public override void EmitJs (JsEmitContext jec)
+		{
+			jec.Buf.Write ("new ", Location);
+			Expr.EmitJs (jec);
+		}
+		
+		public override void EmitStatementJs (JsEmitContext jec)
+		{
+			jec.Buf.Write ("\t", Location);
+			EmitJs (jec);
+			jec.Buf.Write (";\n");
+		}
+		
+		public override Expression CreateExpressionTree (ResolveContext ec)
+		{
+			return newExpr.CreateExpressionTree(ec);
+		}
+		
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}
+	}
+
+	//
+	// ActionScript: Implements the ActionScript typeof expression.
+	// This expression is for backwards compatibility with javascript
+	// and is not supported in ASX.
+	//
+	public class AsTypeOf : ExpressionStatement {
+		
+		public Expression Expr;
+		private Expression newExpr;
+		
+		public AsTypeOf (Expression expr, Location l)
+		{
+			this.Expr = expr;
+			loc = l;
+		}
+		
+		public override bool IsSideEffectFree {
+			get {
+				return newExpr.IsSideEffectFree;
+			}
+		}
+		
+		public override bool ContainsEmitWithAwait ()
+		{
+			return newExpr.ContainsEmitWithAwait ();
+		}
+		
+		protected override Expression DoResolve (ResolveContext ec)
+		{
+			if (ec.Target == Target.JavaScript) {
+				type = ec.BuiltinTypes.Dynamic;
+				eclass = ExprClass.Value;
+				return this;
+			}
+
+			if (loc.SourceFile != null && loc.SourceFile.AsExtended) {
+				ec.Report.Error (7101, loc, "'typeof' operator not supported in ASX.'");
+				return null;
+			}
+
+			var args = new Arguments(1);
+			args.Add (new Argument(Expr));
+
+			return new Invocation(new MemberAccess(new MemberAccess(
+				new SimpleName(AsConsts.AsRootNamespace, loc), "_typeof_fn", loc), "_typeof", loc), args).Resolve (ec);
+		}
+		
+		protected override void CloneTo (CloneContext clonectx, Expression t)
+		{
+			var target = (AsDelete) t;
+			
+			target.Expr = Expr.Clone (clonectx);
+		}
+		
+		public override void Emit (EmitContext ec)
+		{
+			throw new System.NotImplementedException ();
+		}
+		
+		public override void EmitStatement (EmitContext ec)
+		{
+			throw new System.NotImplementedException ();
+		}
+		
+		public override void EmitJs (JsEmitContext jec)
+		{
+			jec.Buf.Write ("new ", Location);
+			Expr.EmitJs (jec);
+		}
+		
+		public override void EmitStatementJs (JsEmitContext jec)
+		{
+			jec.Buf.Write ("\t", Location);
+			EmitJs (jec);
+			jec.Buf.Write (";\n");
+		}
+		
+		public override Expression CreateExpressionTree (ResolveContext ec)
+		{
+			return newExpr.CreateExpressionTree(ec);
+		}
+		
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}
+	}
+
 
 	public class RegexLiteral : Constant, ILiteralConstant
 	{
@@ -893,5 +1099,68 @@ namespace Mono.CSharp
 		}
 
 	}
+
+	public class AsNonAssignStatementExpression : Statement
+	{
+		public Expression expr;
+		
+		public AsNonAssignStatementExpression (Expression expr)
+		{
+			this.expr = expr;
+		}
+		
+		public Expression Expr {
+			get {
+				return expr;
+			}
+		}
+
+		public override bool Resolve (BlockContext bc)
+		{
+			if (!base.Resolve (bc))
+				return false;
+
+			return expr.Resolve (bc) != null;
+		}
+
+		protected override void DoEmit (EmitContext ec)
+		{
+			if (!expr.IsSideEffectFree) {
+				expr.EmitSideEffect (ec);
+			}
+		}
+
+		protected override void DoEmitJs (JsEmitContext jec) 
+		{
+			expr.EmitJs (jec);
+		}
+		
+		public override void EmitJs (JsEmitContext jec)
+		{
+			DoEmitJs (jec);
+		}
+
+		protected override void DoEmitCpp (CppEmitContext cec) 
+		{
+			expr.EmitCpp (cec);
+		}
+		
+		public override void EmitCpp (CppEmitContext cec)
+		{
+			DoEmitCpp (cec);
+		}
+
+		protected override void CloneTo (CloneContext clonectx, Statement target)
+		{
+			var t = target as AsNonAssignStatementExpression;
+			t.expr = expr.Clone (clonectx);
+		}
+		
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}
+	}
+
 
 }

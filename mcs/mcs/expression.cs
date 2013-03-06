@@ -840,6 +840,12 @@ namespace Mono.CSharp
 			return visitor.Visit (this);
 		}
 
+//		public override bool IsSideEffectFree {
+//			get {
+//				return Expr.IsSideEffectFree;
+//			}
+//		}
+
 	}
 
 	//
@@ -4245,6 +4251,12 @@ namespace Mono.CSharp
 			}
 		}
 
+//		public override bool IsSideEffectFree {
+//			get {
+//				return left.IsSideEffectFree && right.IsSideEffectFree;
+//			}
+//		}
+
 		public override Expression EmitToField (EmitContext ec)
 		{
 			if ((oper & Operator.LogicalMask) == 0) {
@@ -5173,6 +5185,12 @@ namespace Mono.CSharp
 			target.true_expr = true_expr.Clone (clonectx);
 			target.false_expr = false_expr.Clone (clonectx);
 		}
+
+//		public override bool IsSideEffectFree {
+//			get {
+//				return expr.IsSideEffectFree && true_expr.IsSideEffectFree && false_expr.IsSideEffectFree;
+//			}
+//		}
 	}
 
 	public abstract class VariableReference : Expression, IAssignMethod, IMemoryLocation, IVariableReference
@@ -6330,13 +6348,17 @@ namespace Mono.CSharp
 
 			Expression ret = null;
 
-			// ActionScript can use a type variable in a new expression.
-			if (ec.FileType == SourceFileType.ActionScript && (RequestedType is ATypeNameExpression)) {
-
-				var reqExpr = ((ATypeNameExpression)RequestedType).LookupNameExpression(ec, MemberLookupRestrictions.None);
-				if (reqExpr is TypeExpr) {
-					type = RequestedType.ResolveAsType (ec);
-				} else {
+			// ActionScript can use expression returning a type as a new expression.
+			if (ec.FileType == SourceFileType.ActionScript) {
+				var reqExpr = RequestedType.Resolve (ec);
+				if (reqExpr == null)
+					return null;
+				if (reqExpr is TypeExpression) {
+					type = ((TypeExpression)reqExpr).ResolveAsType (ec);
+				} else if (reqExpr is TypeOf) {
+					type = ((TypeOf)reqExpr).TypeArgument;
+				} else if (reqExpr.Type.BuiltinType == BuiltinTypeSpec.Type.Type ||
+				           reqExpr.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic){
 					bool dynamic;
 					if (arguments != null) {
 						arguments.Resolve (ec, out dynamic);
@@ -6345,7 +6367,9 @@ namespace Mono.CSharp
 					if (arguments == null) {
 						arguments = new Arguments(1);
 					}
-					
+
+					// TODO: Use Activator for this instead of dynamic new.
+
 					arguments.Insert (0, new Argument (reqExpr.Resolve (ec), Argument.AType.DynamicTypeName));
 					ret = new DynamicConstructorBinder (reqExpr, arguments, loc).Resolve (ec);
 				}

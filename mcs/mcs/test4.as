@@ -64,7 +64,7 @@ package com.zynga.zengine.classes
 			q++
 			++q
 
-//			q > 1 ? q : 1;
+			(q < 100 / 4 + -2) ? 1 : 4;
 
 			if (q != 0) trace("blah") else trace("blah2")
 
@@ -95,6 +95,10 @@ package com.zynga.zengine.classes
 			function myFunc(i:int, s:String):void {
 				trace("Foo " + i + s);
 			}
+
+			var ss:String = typeof f;
+
+			var qqq:Object = new byte[100];
 		}
 	}
 }

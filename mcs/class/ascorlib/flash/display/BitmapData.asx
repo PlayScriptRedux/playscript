@@ -345,7 +345,7 @@ package flash.display {
 			return bd;
 #else
 			// create CGImage from NSData
-			var image:CGImage = new UIImage(nsData).CGImage;
+			var image:CGImage = (new UIImage(nsData)).CGImage;
 			var bd:BitmapData = BitmapData.loadFromCGImage(image);
 			image.Dispose();
 			return bd;
@@ -376,7 +376,7 @@ package flash.display {
 			return bd;
 #else
 			// create CGImage from path
-			var image:CGImage = new UIImage(path).CGImage;
+			var image:CGImage = (new UIImage(path)).CGImage;
 			var bd:BitmapData = BitmapData.loadFromCGImage(image);
 			image.Dispose();
 			return bd;

@@ -4,7 +4,7 @@
 // Authors: Miguel de Icaza (miguel@gnome.org)
 //          Ravi Pratap     (ravi@ximian.com)
 //          Marek Safar	    (marek.safar@gmail.com)
-//          Ben Cooley	    (bcooley@zynga.com) - Act0//
+//          Ben Cooley	    (bcooley@zynga.com)
 // Dual Licensed under the terms of the GNU GPL and the MIT X11 license
 //
 // (C) 2001 Ximian, Inc (http://www.ximian.com)
@@ -215,6 +215,7 @@ namespace Mono.ActionScript
 %token IMPORT
 %token IN
 %token INDEXER	
+%token INSTANCEOF
 %token INT	
 %token INTERFACE
 %token INTERNAL	
@@ -373,7 +374,6 @@ namespace Mono.ActionScript
 %token IDENTIFIER_CONFIG
 %token OPEN_PARENS_LAMBDA
 %token OPEN_PARENS_CAST
-%token OPEN_PARENS_DELETE
 %token GENERIC_DIMENSION
 %token DEFAULT_COLON
 %token OPEN_BRACKET_EXPR
@@ -415,6 +415,7 @@ namespace Mono.ActionScript
 %right BANG CARRET UMINUS
 %nonassoc OP_INC OP_DEC
 %left OPEN_PARENS
+%left NEW
 %left OPEN_BRACKET OPEN_BRACE
 %left DOT
 
@@ -3581,7 +3582,7 @@ integral_type
 primary_expression
 	: primary_expression_or_type
 	| literal
-	| array_creation_expression
+//	| array_creation_expression
 	| parenthesized_expression
 	| default_value_expression
 	| invocation_expression
@@ -3590,16 +3591,15 @@ primary_expression
 	| base_access
 	| post_increment_expression
 	| post_decrement_expression
-	| object_or_delegate_creation_expression
-	| anonymous_type_expression
-	| typeof_expression
+//	| object_or_delegate_creation_expression
+//	| anonymous_type_expression
+//	| typeof_expression
 	| sizeof_expression
 	| checked_expression
 	| unchecked_expression
 //	| pointer_member_access
 	| anonymous_method_expression
 //	| undocumented_expressions
-	| delete_expression
 	;
 
 primary_expression_or_type
@@ -4014,6 +4014,21 @@ element_access
 		Error_SyntaxError (yyToken);
 		$$ = new ElementAccess ((Expression) $1, null, GetLocation ($2));
 	  }
+	| builtin_types OPEN_BRACKET_EXPR expression_list_arguments CLOSE_BRACKET	
+	  {
+		$$ = new ElementAccess ((Expression) $1, (Arguments) $3, GetLocation ($2));
+		lbag.AddLocation ($$, GetLocation ($4));
+	  }
+	| builtin_types OPEN_BRACKET_EXPR expression_list_arguments error
+	  {
+		Error_SyntaxError (yyToken);
+		$$ = new ElementAccess ((Expression) $1, (Arguments) $3, GetLocation ($2));
+	  }
+	| builtin_types OPEN_BRACKET_EXPR error
+	  {
+		Error_SyntaxError (yyToken);
+		$$ = new ElementAccess ((Expression) $1, null, GetLocation ($2));
+	  }	  
 	;
 
 expression_list
@@ -4095,126 +4110,136 @@ post_decrement_expression
 	  }
 	;
 	
-object_or_delegate_creation_expression
-	: NEW new_expr_type open_parens_any opt_argument_list CLOSE_PARENS
+//object_or_delegate_creation_expression
+//	: NEW new_expr_type open_parens_any opt_argument_list CLOSE_PARENS
+//	  {
+//	  	$$ = new New ((FullNamedExpression) $2, (Arguments) $4, GetLocation ($1));
+//		
+//		lbag.AddLocation ($$, GetLocation ($3), GetLocation ($5));
+//	  }
+//	| NEW new_expr_type SEMICOLON
+//	  {
+//		$$ = new New ((FullNamedExpression) $2, null, GetLocation ($1));
+//	  	lexer.putback (';');
+//	  }
+//	| NEW OP_LT type_expression OP_GT array_initializer
+//	  {
+//	    var arrayInit = (AsArrayInitializer) $5;
+//	    arrayInit.VectorType = (FullNamedExpression) $3;
+//	    $$ = arrayInit;
+//	  }
+//	;
+
+//array_creation_expression
+//	: NEW new_expr_type OPEN_BRACKET_EXPR expression_list CLOSE_BRACKET
+//	  opt_rank_specifier
+//	  /* opt_array_initializer */
+//	  {
+//	  	CheckIsAsx("arrays", GetLocation($1));
+//		$$ = new ArrayCreation ((FullNamedExpression) $2, (List<Expression>) $4,
+//				new ComposedTypeSpecifier (((List<Expression>) $4).Count, GetLocation ($3)) {
+//	  				Next = (ComposedTypeSpecifier) $6
+//			  	}, (AsArrayInitializer) null /*$7*/, GetLocation ($1));
+//		lbag.AddLocation ($$, GetLocation ($3), GetLocation ($5));
+//	  }
+//	| NEW new_expr_type OPEN_BRACKET CLOSE_BRACKET OPEN_BRACKET_EXPR error CLOSE_BRACKET
+//	  {
+//	  	CheckIsAsx("arrays", GetLocation($1));
+//		report.Error (178, GetLocation ($6), "Invalid rank specifier, expecting `,' or `]'");
+//		$$ = new ArrayCreation ((FullNamedExpression) $2, null, GetLocation ($1));
+//	  }
+//	| NEW new_expr_type error
+//	  {
+//		Error_SyntaxError (yyToken);
+//		// It can be any of new expression, create the most common one
+//		$$ = new New ((FullNamedExpression) $2, null, GetLocation ($1));
+//	  }
+//	;
+
+//new_expr_type
+//	: {
+//		++lexer.parsing_type;
+//	  }
+//	  simple_type
+//	  {
+//		--lexer.parsing_type;
+//		$$ = $2;
+//	  }
+//	;
+
+new_expression
+	: prefixed_unary_expression
+	| OP_LT type_expression OP_GT array_initializer
 	  {
-	  	$$ = new New ((FullNamedExpression) $2, (Arguments) $4, GetLocation ($1));
-		
-		lbag.AddLocation ($$, GetLocation ($3), GetLocation ($5));
-	  }
-	| NEW new_expr_type SEMICOLON
-	  {
-		$$ = new New ((FullNamedExpression) $2, null, GetLocation ($1));
-	  	lexer.putback (';');
-	  }
-	| NEW OP_LT type_expression OP_GT array_initializer
-	  {
-	    var arrayInit = (AsArrayInitializer) $5;
-	    arrayInit.VectorType = (FullNamedExpression) $3;
+	    var arrayInit = (AsArrayInitializer) $4;
+	    arrayInit.VectorType = (FullNamedExpression) $2;
 	    $$ = arrayInit;
 	  }
 	;
 
-array_creation_expression
-	: NEW new_expr_type OPEN_BRACKET_EXPR expression_list CLOSE_BRACKET
-	  opt_rank_specifier
-	  /* opt_array_initializer */
-	  {
-	  	CheckIsAsx("arrays", GetLocation($1));
-		$$ = new ArrayCreation ((FullNamedExpression) $2, (List<Expression>) $4,
-				new ComposedTypeSpecifier (((List<Expression>) $4).Count, GetLocation ($3)) {
-	  				Next = (ComposedTypeSpecifier) $6
-			  	}, (AsArrayInitializer) null /*$7*/, GetLocation ($1));
-		lbag.AddLocation ($$, GetLocation ($3), GetLocation ($5));
-	  }
-	| NEW new_expr_type OPEN_BRACKET CLOSE_BRACKET OPEN_BRACKET_EXPR error CLOSE_BRACKET
-	  {
-	  	CheckIsAsx("arrays", GetLocation($1));
-		report.Error (178, GetLocation ($6), "Invalid rank specifier, expecting `,' or `]'");
-		$$ = new ArrayCreation ((FullNamedExpression) $2, null, GetLocation ($1));
-	  }
-	| NEW new_expr_type error
-	  {
-		Error_SyntaxError (yyToken);
-		// It can be any of new expression, create the most common one
-		$$ = new New ((FullNamedExpression) $2, null, GetLocation ($1));
-	  }
-	;
+//anonymous_type_expression
+//	: NEW OPEN_BRACE anonymous_type_parameters_opt_comma CLOSE_BRACE
+//	  {
+//		if (lang_version <= LanguageVersion.ISO_2)
+//	  		FeatureIsNotAvailable (GetLocation ($1), "anonymous types");
+//
+//		$$ = new NewAnonymousType ((List<AnonymousTypeParameter>) $3, current_container, GetLocation ($1));
+//		
+//		// TODO: lbag comma location
+//		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
+//	  }
+//	;
 
-new_expr_type
-	: {
-		++lexer.parsing_type;
-	  }
-	  simple_type
-	  {
-		--lexer.parsing_type;
-		$$ = $2;
-	  }
-	;
+//anonymous_type_parameters_opt_comma
+//	: anonymous_type_parameters_opt
+//	| anonymous_type_parameters COMMA
+//	;
 
-anonymous_type_expression
-	: NEW OPEN_BRACE anonymous_type_parameters_opt_comma CLOSE_BRACE
-	  {
-		if (lang_version <= LanguageVersion.ISO_2)
-	  		FeatureIsNotAvailable (GetLocation ($1), "anonymous types");
+//anonymous_type_parameters_opt
+//	: { $$ = null; }
+//	| anonymous_type_parameters
+//	;
 
-		$$ = new NewAnonymousType ((List<AnonymousTypeParameter>) $3, current_container, GetLocation ($1));
-		
-		// TODO: lbag comma location
-		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
-	  }
-	;
+//anonymous_type_parameters
+//	: anonymous_type_parameter
+//	  {
+//	  	var a = new List<AnonymousTypeParameter> (4);
+//	  	a.Add ((AnonymousTypeParameter) $1);
+//	  	$$ = a;
+//	  }
+//	| anonymous_type_parameters COMMA anonymous_type_parameter
+//	  {
+//	  	var a = (List<AnonymousTypeParameter>) $1;
+//	  	a.Add ((AnonymousTypeParameter) $3);
+//	  	$$ = a;
+//	  }
+//	;
 
-anonymous_type_parameters_opt_comma
-	: anonymous_type_parameters_opt
-	| anonymous_type_parameters COMMA
-	;
-
-anonymous_type_parameters_opt
-	: { $$ = null; }
-	| anonymous_type_parameters
-	;
-
-anonymous_type_parameters
-	: anonymous_type_parameter
-	  {
-	  	var a = new List<AnonymousTypeParameter> (4);
-	  	a.Add ((AnonymousTypeParameter) $1);
-	  	$$ = a;
-	  }
-	| anonymous_type_parameters COMMA anonymous_type_parameter
-	  {
-	  	var a = (List<AnonymousTypeParameter>) $1;
-	  	a.Add ((AnonymousTypeParameter) $3);
-	  	$$ = a;
-	  }
-	;
-
-anonymous_type_parameter
-	: IDENTIFIER ASSIGN variable_initializer
-	  {
-		var lt = (Tokenizer.LocatedToken)$1;
-	  	$$ = new AnonymousTypeParameter ((Expression)$3, lt.Value, lt.Location);
-	  	lbag.AddLocation ($$, GetLocation ($2));
-	  }
-	| IDENTIFIER
-	  {
-		var lt = (Tokenizer.LocatedToken)$1;
-	  	$$ = new AnonymousTypeParameter (new SimpleName (lt.Value, lt.Location),
-	  		lt.Value, lt.Location);
-	  }
-	| member_access
-	  {
-	  	MemberAccess ma = (MemberAccess) $1;
-	  	$$ = new AnonymousTypeParameter (ma, ma.Name, ma.Location);
-	  }
-	| error
-	  {
-		report.Error (746, lexer.Location,
-			"Invalid anonymous type member declarator. Anonymous type members must be a member assignment, simple name or member access expression");
-		$$ = null;
-	  }
-	;
+//anonymous_type_parameter
+//	: IDENTIFIER ASSIGN variable_initializer
+//	  {
+//		var lt = (Tokenizer.LocatedToken)$1;
+//	  	$$ = new AnonymousTypeParameter ((Expression)$3, lt.Value, lt.Location);
+//	  	lbag.AddLocation ($$, GetLocation ($2));
+//	  }
+//	| IDENTIFIER
+//	  {
+//		var lt = (Tokenizer.LocatedToken)$1;
+//	  	$$ = new AnonymousTypeParameter (new SimpleName (lt.Value, lt.Location),
+//	  		lt.Value, lt.Location);
+//	  }
+//	| member_access
+//	  {
+//	  	MemberAccess ma = (MemberAccess) $1;
+//	  	$$ = new AnonymousTypeParameter (ma, ma.Name, ma.Location);
+//	  }
+//	| error
+//	  {
+//		report.Error (746, lexer.Location,
+//			"Invalid anonymous type member declarator. Anonymous type members must be a member assignment, simple name or member access expression");
+//		$$ = null;
+//	  }
+//	;
 
 opt_rank_specifier
 	: /* empty */
@@ -4328,19 +4353,19 @@ variable_initializer_list
 	  }
 	;
 
-typeof_expression
-	: TYPEOF
-      {
-	  	lexer.TypeOfParsing = true;
-	  }
-	  open_parens_any typeof_type_expression CLOSE_PARENS
-	  {
-		CheckIsAsx("typeof", GetLocation($1)); 	  
-	  	lexer.TypeOfParsing = false;
-		$$ = new TypeOf ((FullNamedExpression) $4, GetLocation ($1));
-		lbag.AddLocation ($$, GetLocation ($3), GetLocation ($5));
-	  }
-	;
+//typeof_expression
+//	: TYPEOF
+//      {
+//	  	lexer.TypeOfParsing = true;
+//	  }
+//	  open_parens_any typeof_type_expression CLOSE_PARENS
+//	  {
+//		CheckIsAsx("typeof", GetLocation($1)); 	  
+//	  	lexer.TypeOfParsing = false;
+//		$$ = new TypeOf ((FullNamedExpression) $4, GetLocation ($1));
+//		lbag.AddLocation ($$, GetLocation ($3), GetLocation ($5));
+//	  }
+//	;
 	
 typeof_type_expression
 	: type_and_void
@@ -4425,7 +4450,7 @@ sizeof_expression
 		$$ = new SizeOf ((Expression) $3, GetLocation ($1));
 		lbag.AddLocation ($$, GetLocation ($2));
 	  }
-	;
+	;	
 
 checked_expression
 	: CHECKED open_parens_any expression CLOSE_PARENS
@@ -4543,17 +4568,17 @@ local_function_statement
 	  }
 	;	
 
-anonymous_method_signature
-	: OPEN_PARENS
-	  {
-	  	valid_param_mod = ParameterModifierType.Ref | ParameterModifierType.Out;
-	  }
-	  opt_formal_parameter_list CLOSE_PARENS opt_method_return_type
-	  {
-		valid_param_mod = 0;
-	  	$$ = $3;
-	  }
-	;
+//anonymous_method_signature
+//	: OPEN_PARENS
+//	  {
+//	  	valid_param_mod = ParameterModifierType.Ref | ParameterModifierType.Out;
+//	  }
+//	  opt_formal_parameter_list CLOSE_PARENS opt_method_return_type
+//	  {
+//		valid_param_mod = 0;
+//	  	$$ = $3;
+//	  }
+//	;
 
 default_value_expression
 	: DEFAULT open_parens_any type CLOSE_PARENS
@@ -4608,6 +4633,23 @@ unary_expression
 	  {
 		$$ = new Unary (Unary.Operator.AsE4xAttribute, (Expression) $2, GetLocation ($1));
 	  }
+	| NEW new_expression
+	  { 
+		$$ = new AsNew ((Expression) $2, GetLocation ($1));
+	  }
+	| TYPEOF prefixed_unary_expression
+	  {
+	  	$$ = new AsTypeOf ((Expression) $2, GetLocation ($1));
+	  }
+	| DELETE prefixed_unary_expression
+	  {
+	  	var expr = $2 as Expression;
+	  	if (!(expr is ElementAccess || expr is MemberAccess)) {
+			report.Error (7022, GetLocation ($1),
+				"delete operator may only be used with element access or member access expressions");
+	  	}
+		$$ = new AsDelete ((Expression) $2, GetLocation ($1));
+	  } 
 	| BANG error
 	  {
 		Error_SyntaxError (yyToken);
@@ -4639,6 +4681,24 @@ unary_expression
 
 		$$ = new Unary (Unary.Operator.AsE4xAttribute, null, GetLocation ($1));
 	  }
+	| NEW error
+	  {
+		Error_SyntaxError (yyToken);
+
+		$$ = new AsNew (null, GetLocation ($1));
+	  }
+	| TYPEOF error
+	  {
+		Error_SyntaxError (yyToken);
+
+		$$ = new AsTypeOf (null, GetLocation ($1));
+	  }	    
+	| DELETE error
+	  {
+		Error_SyntaxError (yyToken);
+		
+		$$ = new AsDelete (null, GetLocation ($1));
+	  }	  
 	;
 
 	//
@@ -5323,25 +5383,7 @@ boolean_expression
 	  {
 		$$ = new BooleanExpression ((Expression) $1);
 	  }
-	;	
-
-delete_expression
-	: DELETE 
-      {
-	  	lexer.DeleteParsing = true;
-	  }
-	  OPEN_PARENS_DELETE expression CLOSE_PARENS
-	  {
-	    lexer.DeleteParsing = false;
-	  	var expr = $4 as Expression;
-	  	if (!(expr is ElementAccess || expr is MemberAccess)) {
-			report.Error (7022, GetLocation ($1),
-				"delete operator may only be used with element access or member access expressions");
-	  	}
-		$$ = new AsDelete ((Expression) $4, GetLocation ($1));
-		lbag.AddLocation ($$, GetLocation ($3), GetLocation ($5));	 
-	  } 
-	;	
+	;
 
 //
 // 10 classes
@@ -5849,7 +5891,7 @@ valid_declaration_statement
 	| using_statement
 	| unsafe_statement
 	| fixed_statement
-	| delete_statement
+//	| delete_statement
 	| local_function_statement
 	;
 
@@ -5867,7 +5909,7 @@ interactive_valid_declaration_statement
 	| using_statement
 	| unsafe_statement
 	| fixed_statement
-	| delete_statement
+//	| delete_statement
 	| local_function_statement
 	;
 
@@ -6434,7 +6476,7 @@ stmnt_do
 	;
 
 do_statement
-	: stmnt_do embedded_statement WHILE open_parens_any boolean_expression CLOSE_PARENS stmnt_end_semicolon
+	: stmnt_do embedded_statement WHILE open_parens_any boolean_expression stmnt_close_parens stmnt_end_semicolon
 	  {
 	    Lexer.AutoSemiInsertion = true;
 	    
@@ -7084,18 +7126,18 @@ using_or_fixed_variable_initializer
 	  }
 	;
 
-delete_statement
-	: DELETE element_access SEMICOLON
-	  {
-		$$ = new StatementExpression (new AsDelete ((Expression) $2, GetLocation ($1)));
-		lbag.AddStatement ($$, GetLocation ($2));
-	  }
-	| DELETE member_access SEMICOLON
-	  {
-		$$ = new StatementExpression (new AsDelete ((Expression) $2, GetLocation ($1)));	
-		lbag.AddStatement ($$, GetLocation ($2));
-	  }
-	;
+//delete_statement
+//	: DELETE element_access SEMICOLON
+//	  {
+//		$$ = new StatementExpression (new AsDelete ((Expression) $2, GetLocation ($1)));
+//		lbag.AddStatement ($$, GetLocation ($2));
+//	  }
+//	| DELETE member_access SEMICOLON
+//	  {
+//		$$ = new StatementExpression (new AsDelete ((Expression) $2, GetLocation ($1)));	
+//		lbag.AddStatement ($$, GetLocation ($2));
+//	  }
+//	;
 
 // LINQ
 
@@ -8213,8 +8255,12 @@ Statement ConvertExpressionToStatement(Expression ex)
 	Statement ret;
 	ExpressionStatement s = ex as ExpressionStatement;
 	if (s == null) {
-		ex.Error_InvalidExpressionStatement (report);
-		ret = new StatementErrorExpression (ex);
+		if (Lexer.AsxParsing) {
+			ex.Error_InvalidExpressionStatement (report);
+			ret = new StatementErrorExpression (ex);
+		} else {
+			ret = new AsNonAssignStatementExpression (ex);
+		}
 	} else {
 		ret = new StatementExpression (s);
 	}
@@ -8478,6 +8524,8 @@ static string GetTokenName (int token)
 		return "in";
 	case Token.INDEXER:
 		return "indexer";
+	case Token.INSTANCEOF:
+		return "instanceof";
 	case Token.INTERFACE:
 		return "interface";
 	case Token.INTERNAL:
@@ -8611,7 +8659,6 @@ static string GetTokenName (int token)
 		return "]";
 	case Token.OPEN_PARENS_CAST:
 	case Token.OPEN_PARENS_LAMBDA:
-	case Token.OPEN_PARENS_DELETE:
 	case Token.OPEN_PARENS:
 		return "(";
 	case Token.CLOSE_PARENS:

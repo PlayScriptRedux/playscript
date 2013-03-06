@@ -4,6 +4,10 @@ package
 
 	//  /noconfig "/r:/Users/bcooley/projects/mono-as3-inst/lib/mono/4.0/mscorlib.dll" -nostdlib "/out:/Users/bcooley/projects/mono-as3/mcs/mcs/test2.exe" "/r:/Users/bcooley/projects/mono-as3-inst/lib/mono/4.0/System.dll" "/r:/Users/bcooley/projects/mono-as3/mcs/class/ascorlib/bin/Debug/ascorlib_monomac.dll" "/r:/Users/bcooley/projects/mono-as3/mcs/class/ActionScript.Dynamic/bin/Debug/ActionScript.Dynamic.dll" "/r:/Users/bcooley/projects/mono-as3-inst/lib/mono/4.0/System.Core.dll" /nologo /warn:4 /debug:full /optimize- /codepage:utf8 "/define:DEBUG"  /t:exe "/Users/bcooley/projects/mono-as3/mcs/mcs/test2.asx" 
 
+	public class Foo {
+		public var i:int;
+	}
+
 	public static class Test {
 	
 		public static function test() : void {
@@ -11,6 +15,24 @@ package
 		}
 	
 		public static function Main() : void {
+
+//			var f:Foo = new Foo();
+
+//			var cl:Class = Foo;
+
+//			f = new cl();
+
+//			f = new (cl != null ? cl : Foo)();
+
+//			f = new Foo;
+
+//			f = new (cl != null ? cl : Foo);
+
+			var a:byte[,,] = new byte[30,40,50];
+
+			var v:Vector.<int> = new <int> [ 100, 200, 300 ];
+
+			var s:String = typeof a;
 		}
 
 	}
