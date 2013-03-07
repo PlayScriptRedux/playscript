@@ -3600,6 +3600,8 @@ primary_expression
 //	| pointer_member_access
 	| anonymous_method_expression
 //	| undocumented_expressions
+	| array_initializer
+	| object_or_collection_initializer
 	;
 
 primary_expression_or_type
@@ -5348,8 +5350,6 @@ non_assignment_expression
 	: conditional_expression
 	| lambda_expression
 	| query_expression
-	| array_initializer
-	| object_or_collection_initializer
 //	| ARGLIST
 //	  {
 //		$$ = new ArglistAccess (GetLocation ($1));
@@ -5917,8 +5917,13 @@ embedded_statement
 	: valid_declaration_statement
 	| block_variable_declaration
 	  {
-		  report.Error (1023, GetLocation ($1), "An embedded statement may not be a declaration or labeled statement");
-		  $$ = null;
+	  	  if (handle_asx) {
+			  report.Error (1023, GetLocation ($1), "An embedded statement may not be a declaration or labeled statement");
+			  $$ = null;
+		  } else {
+		  	  // NOTE: This is actually allowed in ActionScript.  We'll turn it off in ASX though as it's error prone.
+		  	  $$ = $1;
+		  }
 	  }
 	| labeled_statement
 	  {
@@ -6474,9 +6479,16 @@ stmnt_do
 	    Lexer.AutoSemiInsertionAfter = 1;
 	  }
 	;
+	
+do_while_stmnt_close_parens
+	: CLOSE_PARENS
+	  {
+	    Lexer.AutoSemiInsertion = true;
+	  }
+	;
 
 do_statement
-	: stmnt_do embedded_statement WHILE open_parens_any boolean_expression stmnt_close_parens stmnt_end_semicolon
+	: stmnt_do embedded_statement WHILE open_parens_any boolean_expression do_while_stmnt_close_parens stmnt_end_semicolon
 	  {
 	    Lexer.AutoSemiInsertion = true;
 	    

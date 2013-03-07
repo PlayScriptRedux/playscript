@@ -1,7 +1,5 @@
 package com.zynga.zengine.classes
 {
-	import System.*
-	
 	PLATFORM::IOS {
 		import blah.blah.blah
 	}
@@ -18,7 +16,7 @@ package com.zynga.zengine.classes
 
 	public class ZZZAttribute 
 	extends 
-	Attribute 
+	System.Attribute 
 	{
 	}
 
@@ -57,6 +55,10 @@ package com.zynga.zengine.classes
         public static function Main() : void {
         
 			use namespace Blah;
+
+			var ffff:Array = [ 100, 200, 300 ];
+
+			var qqqq:Array = f || [];
 
 			myFunc(100, "Blah");
 
