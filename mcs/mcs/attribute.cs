@@ -1131,7 +1131,7 @@ namespace Mono.CSharp {
 		}
 	}
 	
-	public class Attributes
+	public partial class Attributes
 	{
 		public readonly List<Attribute> Attrs;
 
@@ -1281,10 +1281,6 @@ namespace Mono.CSharp {
 		}
 
 		public void EmitJs (JsEmitContext jec)
-		{
-		}
-
-		public void EmitCpp (CppEmitContext cec)
 		{
 		}
 

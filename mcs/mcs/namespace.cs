@@ -795,7 +795,7 @@ namespace Mono.CSharp {
 	//
 	// Namespace block as created by the parser
 	//
-	public class NamespaceContainer : TypeContainer, IMemberContext
+	public partial class NamespaceContainer : TypeContainer, IMemberContext
 	{
 		static readonly Namespace[] empty_namespaces = new Namespace[0];
 		static readonly Tuple<TypeExpr,TypeSpec>[] empty_types = new Tuple<TypeExpr,TypeSpec>[0]; /* AS SUPPORT */
@@ -1019,33 +1019,6 @@ namespace Mono.CSharp {
 				jec.Buf.Unindent ();
 				jec.Buf.Write ("\t})(", name, " || (", name, " = {});\n");
 			}
-		}
-
-		public override void EmitContainerCpp (CppEmitContext cec)
-		{
-			VerifyClsCompliance ();
-			
-			var ns = cec.MakeCppNamespaceName (this.NS.Name);
-			var ns_names = this.NS.Name.Split (new char[] { '.' });
-			bool is_global_ns = String.IsNullOrEmpty (ns);
-			
-			if (!is_global_ns && ns != cec.PrevNamespace) {
-				if (cec.PrevNamespaceNames != null) {
-					foreach (var n in cec.PrevNamespaceNames) {
-						cec.Buf.Unindent ();
-						cec.Buf.Write ("\t}\n");
-					}
-				}
-				foreach (var n in ns_names) {
-					cec.Buf.Write ("\tnamespace ", n, " {\n");
-					cec.Buf.Indent();
-				}
-				cec.MarkNamespaceDefined (NS.Name);
-				cec.PrevNamespace = ns;
-				cec.PrevNamespaceNames = ns_names;
-			}
-			
-			base.EmitContainerCpp (cec);
 		}
 
 		public ExtensionMethodCandidates LookupExtensionMethod (IMemberContext invocationContext, TypeSpec extensionType, string name, int arity, int position)

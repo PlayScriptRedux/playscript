@@ -32,7 +32,7 @@ namespace Mono.CSharp
 	//
 	// Module (top-level type) container
 	//
-	public sealed class ModuleContainer : TypeContainer
+	public sealed partial class ModuleContainer : TypeContainer
 	{
 #if STATIC
 		//
@@ -468,45 +468,6 @@ namespace Mono.CSharp
 				foreach (var atypes in anonymous_types)
 					foreach (var at in atypes.Value)
 						at.EmitContainerJs (jec);
-			}
-		}
-
-		public override void EmitContainerCpp (CppEmitContext cec)
-		{
-			if (OptAttributes != null)
-				OptAttributes.EmitCpp (cec);
-
-			if (cec.Pass == CppPasses.PREDEF) {
-				foreach (var tc in containers) {
-					tc.PrepareEmit ();
-				}
-			}
-
-			cec.PrevNamespace = null;
-			cec.PrevNamespaceNames = null;
-
-			base.EmitContainerCpp (cec);
-
-			// Close last unclosed namespace..
-			if (cec.PrevNamespaceNames != null) {
-				foreach (var n in cec.PrevNamespaceNames) {
-					cec.Buf.Unindent ();
-					cec.Buf.Write ("\t}\n");
-				}
-			}
-
-			cec.PrevNamespace = null;
-			cec.PrevNamespaceNames = null;
-
-			if (cec.Pass == CppPasses.METHODS) {
-				if (Compiler.Report.Errors == 0 && !Compiler.Settings.WriteMetadataOnly)
-					VerifyMembers ();
-			}
-				
-			if (anonymous_types != null) {
-				foreach (var atypes in anonymous_types)
-					foreach (var at in atypes.Value)
-						at.EmitContainerCpp (cec);
 			}
 		}
 

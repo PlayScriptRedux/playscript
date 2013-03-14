@@ -47,7 +47,7 @@ namespace Mono.CSharp
 	// Like the array initializer, type is inferred from assignment type, parameter type, or
 	// field, var initializer type, or of no type can be inferred it is of type Dictionary<String,Object>.
 	//
-	public class AsObjectInitializer : Expression
+	public partial class AsObjectInitializer : Expression
 	{
 		List<Expression> elements;
 		BlockVariableDeclaration variable;
@@ -203,7 +203,7 @@ namespace Mono.CSharp
 	// assignment type, parameter type, or field/variable initializer type.
 	// If no type is inferred, the type is Vector.<Object>.
 	//
-	public class AsArrayInitializer : ArrayInitializer
+	public partial class AsArrayInitializer : ArrayInitializer
 	{
 		Assign assign;
 		TypeSpec inferredArrayType;
@@ -333,7 +333,7 @@ namespace Mono.CSharp
 	// well as the delete statement.  Handles both the element access
 	// form or the member access form.
 	//
-	public class AsDelete : ExpressionStatement {
+	public partial class AsDelete : ExpressionStatement {
 
 		public Expression Expr;
 		private Invocation removeExpr;
@@ -462,7 +462,7 @@ namespace Mono.CSharp
 	// which takes either a type expression, an AsArrayInitializer,
 	// or an invocation expression of some form.
 	//
-	public class AsNew : ExpressionStatement {
+	public partial class AsNew : ExpressionStatement {
 		
 		public Expression Expr;
 		private Expression newExpr;
@@ -570,7 +570,7 @@ namespace Mono.CSharp
 	// This expression is for backwards compatibility with javascript
 	// and is not supported in ASX.
 	//
-	public class AsTypeOf : ExpressionStatement {
+	public partial class AsTypeOf : ExpressionStatement {
 		
 		public Expression Expr;
 		private Expression newExpr;
@@ -654,7 +654,7 @@ namespace Mono.CSharp
 	}
 
 
-	public class RegexLiteral : Constant, ILiteralConstant
+	public partial class RegexLiteral : Constant, ILiteralConstant
 	{
 		readonly public string Regex;
 		readonly public string Options;
@@ -749,7 +749,7 @@ namespace Mono.CSharp
 		}
 	}
 
-	public class XmlLiteral : Constant, ILiteralConstant
+	public partial class XmlLiteral : Constant, ILiteralConstant
 	{
 		readonly public string Xml;
 
@@ -838,7 +838,7 @@ namespace Mono.CSharp
 	/// <summary>
 	///   Implementation of the ActionScript `in' operator.
 	/// </summary>
-	public class AsIn : Expression
+	public partial class AsIn : Expression
 	{
 		protected Expression expr;
 		protected Expression objExpr;
@@ -933,7 +933,7 @@ namespace Mono.CSharp
 	/// <summary>
 	///   Implementation of the ActionScript `undefined' object constant.
 	/// </summary>
-	public class AsUndefinedLiteral : Expression
+	public partial class AsUndefinedLiteral : Expression
 	{
 		public AsUndefinedLiteral (Location l)
 		{
@@ -994,7 +994,7 @@ namespace Mono.CSharp
 	// well as the delete statement.  Handles both the element access
 	// form or the member access form.
 	//
-	public class AsLocalFunction : Statement {
+	public partial class AsLocalFunction : Statement {
 		
 		public string Name;
 		public AnonymousMethodExpression MethodExpr;
@@ -1051,7 +1051,7 @@ namespace Mono.CSharp
 	}
 
 	// Use namespace statement
-	public class AsUseNamespaceStatement : Statement {
+	public partial class AsUseNamespaceStatement : Statement {
 
 		public string NS;
 
@@ -1078,11 +1078,7 @@ namespace Mono.CSharp
 		public override void EmitJs (JsEmitContext jec)
 		{
 		}
-		
-		public override void EmitCpp (CppEmitContext cec)
-		{
-		}
-		
+
 		protected override void DoEmit (EmitContext ec)
 		{
 			throw new NotSupportedException ();
@@ -1100,7 +1096,7 @@ namespace Mono.CSharp
 
 	}
 
-	public class AsNonAssignStatementExpression : Statement
+	public partial class AsNonAssignStatementExpression : Statement
 	{
 		public Expression expr;
 		
@@ -1138,16 +1134,6 @@ namespace Mono.CSharp
 		public override void EmitJs (JsEmitContext jec)
 		{
 			DoEmitJs (jec);
-		}
-
-		protected override void DoEmitCpp (CppEmitContext cec) 
-		{
-			expr.EmitCpp (cec);
-		}
-		
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			DoEmitCpp (cec);
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Statement target)

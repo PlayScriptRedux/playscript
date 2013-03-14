@@ -539,7 +539,7 @@ namespace Mono.CSharp {
 		}
 	}
 
-	public abstract class MethodOrOperator : MethodCore, IMethodData
+	public abstract partial class MethodOrOperator : MethodCore, IMethodData
 	{
 		public MethodBuilder MethodBuilder;
 		ReturnParameter return_attributes;
@@ -747,34 +747,6 @@ namespace Mono.CSharp {
 			jec.Buf.Write (";\n");
 		}
 
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			base.EmitCpp (cec);
-			
-			if ((this.ModFlags & Modifiers.STATIC) != 0) {
-				cec.Buf.Write ("\tstatic ", Location);
-			} else {
-				cec.Buf.Write ("\t", Location);
-			}
-
-			if (cec.Pass == CppPasses.CLASSDEF) {
-				cec.Buf.Write (cec.MakeCppFullTypeName (this.ReturnType), " ", this.MethodName.Name, "(");
-				parameters.EmitCpp (cec);
-				cec.Buf.Write (");\n");
-			} else {
-				cec.Buf.Write (cec.MakeCppFullTypeName (this.ReturnType), " ", cec.MakeCppTypeName (Parent.CurrentType, false), "::", this.MethodName.Name, "(");
-				parameters.EmitCpp (cec);
-				cec.Buf.Write (") ");
-
-				if (MethodData != null)
-					MethodData.EmitCpp (Parent, cec);
-
-				Block = null;
-				
-				cec.Buf.Write ("\n");
-			}
-		}
-
 		protected void Error_ConditionalAttributeIsNotValid ()
 		{
 			Report.Error (577, Location,
@@ -864,7 +836,7 @@ namespace Mono.CSharp {
 		}
 	}
 
-	public class Method : MethodOrOperator, IGenericMethodDefinition
+	public partial class Method : MethodOrOperator, IGenericMethodDefinition
 	{
 		Method partialMethodImplementation;
 
@@ -1382,17 +1354,6 @@ namespace Mono.CSharp {
 		{
 			try {
 				base.EmitJs (jec);
-			} catch {
-				Console.WriteLine ("Internal compiler error at {0}: exception caught while emitting {1}",
-				                   Location, MethodBuilder);
-				throw;
-			}
-		}
-
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			try {
-				base.EmitCpp (cec);
 			} catch {
 				Console.WriteLine ("Internal compiler error at {0}: exception caught while emitting {1}",
 				                   Location, MethodBuilder);
@@ -2018,7 +1979,7 @@ namespace Mono.CSharp {
 	//
 	// Encapsulates most of the Method's state
 	//
-	public class MethodData
+	public partial class MethodData
 	{
 #if !STATIC
 		static FieldInfo methodbuilder_attrs_field;
@@ -2311,21 +2272,6 @@ namespace Mono.CSharp {
 				BlockContext bc = new BlockContext (mc, block, method.ReturnType);
 				if (block.Resolve (null, bc, method)) {
 					block.EmitBlockJs (jec, false, false);
-				}
-			}
-		}
-
-		public void EmitCpp (TypeDefinition parent, CppEmitContext cec)
-		{
-			var mc = (IMemberContext) method;
-			
-			method.ParameterInfo.ApplyAttributes (mc, MethodBuilder);
-			
-			ToplevelBlock block = method.Block;
-			if (block != null) {
-				BlockContext bc = new BlockContext (mc, block, method.ReturnType);
-				if (block.Resolve (null, bc, method)) {
-					block.EmitBlockCpp (cec, false, false);
 				}
 			}
 		}

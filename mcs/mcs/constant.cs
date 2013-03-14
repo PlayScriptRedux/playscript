@@ -26,7 +26,7 @@ namespace Mono.CSharp {
 	/// <summary>
 	///   Base class for constants and literals.
 	/// </summary>
-	public abstract class Constant : Expression
+	public abstract partial class Constant : Expression
 	{
 		static readonly NumberFormatInfo nfi = CultureInfo.InvariantCulture.NumberFormat;
 
@@ -382,11 +382,6 @@ namespace Mono.CSharp {
 		public override void EmitJs (JsEmitContext jec)
 		{
 			jec.Buf.Write (this.GetValueAsLiteral(), Location);
-		}
-
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			cec.Buf.Write (this.GetValueAsLiteral(), Location);
 		}
 	}
 
@@ -1698,7 +1693,7 @@ namespace Mono.CSharp {
 
 	}
 
-	public class DoubleConstant : Constant
+	public partial class DoubleConstant : Constant
 	{
 		public readonly double Value;
 
@@ -1829,16 +1824,6 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			double d = Value;
-			if (d == System.Math.Floor (d)) {
-				cec.Buf.Write (GetValue ().ToString (), ".0", Location);
-			} else {
-				cec.Buf.Write (GetValue ().ToString (), Location);
-			}
-		}
-
 	}
 
 	public class DecimalConstant : Constant {
@@ -1963,7 +1948,7 @@ namespace Mono.CSharp {
 		}
 	}
 
-	public class StringConstant : Constant {
+	public partial class StringConstant : Constant {
 		public readonly string Value;
 
 		public StringConstant (BuiltinTypes types, string s, Location loc)
@@ -2030,15 +2015,6 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			if (Value != null) {
-				cec.Buf.Write ("\"", cec.Buf.EscapeString(Value), "\"", Location);
-			} else {
-				cec.Buf.Write ("\"\"", Location);
-			}
-		}
-
 		public override void EncodeAttributeValue (IMemberContext rc, AttributeEncoder enc, TypeSpec targetType)
 		{
 			// cast to object
@@ -2075,7 +2051,7 @@ namespace Mono.CSharp {
 	//
 	// Null constant can have its own type, think of `default (Foo)'
 	//
-	public class NullConstant : Constant
+	public partial class NullConstant : Constant
 	{
 		public NullConstant (TypeSpec type, Location loc)
 			: base (loc)
@@ -2132,11 +2108,6 @@ namespace Mono.CSharp {
 		public override void EmitJs (JsEmitContext jec)
 		{
 			jec.Buf.Write (GetValueAsLiteral(), Location);
-		}
-
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			cec.Buf.Write (GetValueAsLiteral(), Location);
 		}
 
 		public override string ExprClassName {

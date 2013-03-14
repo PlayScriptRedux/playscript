@@ -220,7 +220,7 @@ package flash.text {
 					if (!wordWrap || !multiline) 
 						throw new System.NotImplementedException();
 
-					var size:System.Drawing.SizeF = new NSString(text).StringSize(font, float(width), UILineBreakMode.WordWrap); 
+					var size:System.Drawing.SizeF = (new NSString(text)).StringSize(font, float(width), UILineBreakMode.WordWrap); 
 					mTextWidth  = size.Width;
 					mTextHeight = size.Height;
 				}

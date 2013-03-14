@@ -312,7 +312,7 @@ namespace Mono.CSharp
 		}
 	}
 
-	public class StringLiteral : StringConstant, ILiteralConstant
+	public partial class StringLiteral : StringConstant, ILiteralConstant
 	{
 		public StringLiteral (BuiltinTypes types, string s, Location loc)
 			: base (types, s, loc)
@@ -335,11 +335,6 @@ namespace Mono.CSharp
 		public override void EmitJs (JsEmitContext jec)
 		{
 			jec.Buf.Write ("\"", jec.Buf.EscapeString(Value), "\"", loc);
-		}
-
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			cec.Buf.Write ("\"", cec.Buf.EscapeString(Value), "\"", loc);
 		}
 	}
 }

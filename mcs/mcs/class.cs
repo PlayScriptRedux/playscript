@@ -43,7 +43,7 @@ namespace Mono.CSharp
 	//
 	// General types container, used as a base class for all constructs which can hold types
 	//
-	public abstract class TypeContainer : MemberCore
+	public abstract partial class TypeContainer : MemberCore
 	{
 		public readonly MemberKind Kind;
 		public readonly string Basename;
@@ -342,14 +342,6 @@ namespace Mono.CSharp
 			}
 		}
 
-		public virtual void EmitContainerCpp (CppEmitContext cec)
-		{
-			if (containers != null) {
-				for (int i = 0; i < containers.Count; ++i)
-					containers[i].EmitContainerCpp (cec);
-			}
-		}
-
 		protected void Error_MissingPartialModifier (MemberCore type)
 		{
 			Report.Error (260, type.Location,
@@ -415,7 +407,7 @@ namespace Mono.CSharp
 		}
 	}
 
-	public abstract class TypeDefinition : TypeContainer, ITypeDefinition
+	public abstract partial class TypeDefinition : TypeContainer, ITypeDefinition
 	{
 		//
 		// Different context is needed when resolving type container base
@@ -2251,85 +2243,6 @@ namespace Mono.CSharp
 
 		}
 
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			if (cec.Pass == CppPasses.PREDEF) {
-				ValidateEmit ();
-			}
-			
-			base.EmitCpp (cec);
-
-			if (cec.Pass == CppPasses.PREDEF) {
-				return;
-			}
-
-			int i;
-			MemberCore m;
-			HashSet<MemberCore> emitted = new HashSet<MemberCore> ();
-
-			// Fields
-			if (cec.Pass == CppPasses.CLASSDEF) {
-				for (i = 0; i < members.Count; i++) {
-					m = members [i];
-					var f = m as Field;
-					if (f != null) {
-						f.EmitCpp (cec);
-						emitted.Add (f);
-					}
-				}
-			}
-
-			if (cec.Pass == CppPasses.CLASSDEF || cec.Pass == CppPasses.METHODS) {
-
-				// Constructors
-				for (i = 0; i < members.Count; i++) {
-					m = members [i];
-					var c = m as Constructor;
-					if (c != null && (c.ModFlags & Modifiers.STATIC) == 0) {
-						c.EmitCpp (cec);
-						emitted.Add (c);
-					}
-				}
-				
-				// Static constructors
-				for (i = 0; i < members.Count; i++) {
-					m = members [i];
-					var c = m as Constructor;
-					if (c != null && (c.ModFlags & Modifiers.STATIC) != 0) {
-						c.EmitCpp (cec);
-						emitted.Add (c);
-					}
-				}
-				
-				// Properties
-				for (i = 0; i < members.Count; i++) {
-					m = members [i];
-					if (m is Property) {
-						m.EmitCpp (cec);
-						emitted.Add (m);
-					}
-				}
-				
-				// Methods
-				for (i = 0; i < members.Count; i++) {
-					m = members [i];
-					if (m is Method) {
-						m.EmitCpp (cec);
-						emitted.Add (m);
-					}
-				}
-				
-				// Whatever else
-				for (i = 0; i < members.Count; i++) {
-					m = members [i];
-					if (!emitted.Contains (m)) {
-						m.EmitCpp (cec);
-					}
-				}
-			}
-			
-		}
-
 		void CheckAttributeClsCompliance ()
 		{
 			if (!spec.IsAttribute || !IsExposedFromAssembly () || !Compiler.Settings.VerifyClsCompliance || !IsClsComplianceRequired ())
@@ -2361,14 +2274,6 @@ namespace Mono.CSharp
 				return;
 			
 			EmitJs (jec);
-		}
-
-		public sealed override void EmitContainerCpp (CppEmitContext cec)
-		{
-			if ((caching_flags & Flags.CloseTypeCreated) != 0)
-				return;
-			
-			EmitCpp (cec);
 		}
 
 		public override void CloseContainer ()
@@ -2671,7 +2576,7 @@ namespace Mono.CSharp
 		}
 	}
 
-	public abstract class ClassOrStruct : TypeDefinition
+	public abstract partial class ClassOrStruct : TypeDefinition
 	{
 		public const TypeAttributes StaticClassAttribute = TypeAttributes.Abstract | TypeAttributes.Sealed;
 
@@ -2848,61 +2753,9 @@ namespace Mono.CSharp
 			jec.Buf.Write ("\t", nsname, ".", this.MemberName.Name, " = ", this.MemberName.Name, ";\n");
 		}
 
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			if (cec.Pass == CppPasses.PREDEF) {
-
-				if (!cec.CheckCanEmit (Location))
-					return;
-				
-				if (!has_static_constructor && HasStaticFieldInitializer) {
-					var c = DefineDefaultConstructor (true);
-					c.Define ();
-				}
-				
-				if (!(this.Parent is NamespaceContainer)) {
-					cec.Report.Error (7175, Location, "C++ code generation for nested types not supported.");
-					return;
-				}
-
-				Constructor constructor = null;
-				
-				foreach (var member in Members) {
-					var c = member as Constructor;
-					if (c != null) {
-						if ((c.ModFlags & Modifiers.STATIC) != 0) {
-							continue;
-						} 
-						if (constructor != null) {
-							cec.Report.Error (7177, c.Location, "C++ generation not supported for overloaded constructors");
-							return;
-						}
-						constructor = c;
-					}
-				}
-
-			}
-
-			if (cec.Pass == CppPasses.PREDEF) {
-				cec.Buf.Write ("\tclass ", MemberName.Name, ";\n");
-			} else if (cec.Pass == CppPasses.CLASSDEF) {
-				cec.Buf.Write ("\tclass ", MemberName.Name, " {\n", Location);
-				cec.Buf.Indent ();
-				cec.Buf.Write ("\tpublic:\n");
-			}
-			
-			base.EmitCpp (cec);
-
-			if (cec.Pass == CppPasses.CLASSDEF) {
-				cec.Buf.Unindent();
-				cec.Buf.Write ("\t};\n");
-			}
-
-		}
-
 	}
 
-	public sealed class Class : ClassOrStruct
+	public sealed partial class Class : ClassOrStruct
 	{
 		const Modifiers AllowedModifiers =
 			Modifiers.NEW |
@@ -3045,11 +2898,6 @@ namespace Mono.CSharp
 			base.EmitJs (jec);
 		}
 
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			base.EmitCpp (cec);
-		}
-
 		protected override TypeSpec[] ResolveBaseTypes (out FullNamedExpression base_class)
 		{
 			var ifaces = base.ResolveBaseTypes (out base_class);
@@ -3130,7 +2978,7 @@ namespace Mono.CSharp
 		}
 	}
 
-	public sealed class Struct : ClassOrStruct
+	public sealed partial class Struct : ClassOrStruct
 	{
 		bool is_unmanaged, has_unmanaged_check_done;
 		bool InTransit;
@@ -3255,13 +3103,6 @@ namespace Mono.CSharp
 			CheckStructCycles ();
 			
 			base.EmitJs (jec);
-		}
-
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			CheckStructCycles ();
-			
-			base.EmitCpp (cec);
 		}
 
 		public override bool IsUnmanagedType ()
@@ -3410,7 +3251,7 @@ namespace Mono.CSharp
 		}
 	}
 
-	public abstract class InterfaceMemberBase : MemberBase
+	public abstract partial class InterfaceMemberBase : MemberBase
 	{
 		//
 		// Common modifiers allowed in a class declaration
@@ -3794,13 +3635,6 @@ namespace Mono.CSharp
 			CheckExternImpl ();
 			
 			base.EmitJs (jec);
-		}
-
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			CheckExternImpl ();
-			
-			base.EmitCpp (cec);
 		}
 
 		public override bool EnableOverloadChecks (MemberCore overload)

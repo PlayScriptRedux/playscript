@@ -221,7 +221,7 @@ namespace Mono.CSharp {
 	///   of Name, Location and Modifier flags, and handling Attributes.
 	/// </summary>
 	[System.Diagnostics.DebuggerDisplay ("{GetSignatureForError()}")]
-	public abstract class MemberCore : Attributable, IMemberContext, IMemberDefinition
+	public abstract partial class MemberCore : Attributable, IMemberContext, IMemberDefinition
 	{
 		string IMemberDefinition.Name {
 			get {
@@ -433,17 +433,6 @@ namespace Mono.CSharp {
 		/// Base JS emit method.  This is also entry point for CLS-Compliant verification.
 		/// </summary>
 		public virtual void EmitJs (JsEmitContext jec)
-		{
-			if (!Compiler.Settings.VerifyClsCompliance)
-				return;
-			
-			VerifyClsCompliance ();
-		}
-
-		/// <summary>
-		/// Base C++ emit method.  This is also entry point for CLS-Compliant verification.
-		/// </summary>
-		public virtual void EmitCpp (CppEmitContext cec)
 		{
 			if (!Compiler.Settings.VerifyClsCompliance)
 				return;

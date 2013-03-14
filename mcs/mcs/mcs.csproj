@@ -163,6 +163,8 @@
     <Compile Include="as-lang.cs" />
     <Compile Include="js-target.cs" />
     <Compile Include="cxx-target.cs" />
+    <Compile Include="cxx-emit.cs" />
+    <Compile Include="js-emit.cs" />
   </ItemGroup>
   <ItemGroup Label="IKVM.Reflection">
     <Compile Include="..\..\external\ikvm\reflect\*.cs">

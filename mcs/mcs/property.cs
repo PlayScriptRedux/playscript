@@ -186,9 +186,9 @@ namespace Mono.CSharp
 	// Properties and Indexers both generate PropertyBuilders, we use this to share 
 	// their common bits.
 	//
-	abstract public class PropertyBase : PropertyBasedMember {
+	abstract public partial class PropertyBase : PropertyBasedMember {
 
-		public class GetMethod : PropertyMethod
+		public partial class GetMethod : PropertyMethod
 		{
 			static readonly string[] attribute_targets = new string [] { "method", "return" };
 
@@ -241,23 +241,9 @@ namespace Mono.CSharp
 
 				block = null;
 			}
-
-			public override void EmitCpp (CppEmitContext cec)
-			{
-				if (cec.Pass == CppPasses.CLASSDEF) {
-					cec.Buf.Write ("\t", cec.MakeCppFullTypeName (this.Property.MemberType), " get_", Property.MemberName.Name, "();\n");
-				} else {
-					cec.Buf.Write ("\t", cec.MakeCppFullTypeName (this.Property.MemberType), cec.MakeCppTypeName (Parent.CurrentType, false), "::", " get_", Property.MemberName.Name, "() ", Location);
-					method_data.EmitCpp (Parent as TypeDefinition, cec);
-					cec.Buf.Write ("\n");
-					
-					block = null;
-				}
-			}
-
 		}
 
-		public class SetMethod : PropertyMethod {
+		public partial class SetMethod : PropertyMethod {
 
 			static readonly string[] attribute_targets = new string[] { "method", "param", "return" };
 
@@ -326,26 +312,6 @@ namespace Mono.CSharp
 
 				block = null;
 			}
-
-			public override void EmitCpp (CppEmitContext cec)
-			{
-				if (cec.Pass == CppPasses.CLASSDEF) {
-					var parms = this.ParameterInfo;
-					cec.Buf.Write ("\tvoid set_", Property.MemberName.Name, "(");
-					cec.Buf.Write (cec.MakeCppFullTypeName (((Parameter)parms [0]).Type), " ", parms [0].Name);
-					cec.Buf.Write (");\n");
-				} else {
-					var parms = this.ParameterInfo;
-					cec.Buf.Write ("\tvoid set_", cec.MakeCppTypeName (Parent.CurrentType, false), "::", Property.MemberName.Name, "(");
-					cec.Buf.Write (cec.MakeCppFullTypeName (((Parameter)parms [0]).Type), " ", parms [0].Name);
-					cec.Buf.Write (") ", Location);
-					method_data.EmitCpp (Parent as TypeDefinition, cec);
-					cec.Buf.Write ("\n");
-					
-					block = null;
-				}
-			}
-
 		}
 
 		static readonly string[] attribute_targets = new string[] { "property" };
@@ -915,18 +881,6 @@ namespace Mono.CSharp
 			jec.Buf.Unindent ();
 			jec.Buf.Write ("\t});\n");
 		}
-
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			if (this.Get != null) {
-				this.Get.EmitCpp (cec);
-			}
-			
-			if (this.Set != null) {
-				this.Set.EmitCpp (cec);
-			}
-		}
-
 	}
 
 	/// <summary>

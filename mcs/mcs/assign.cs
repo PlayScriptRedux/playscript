@@ -292,7 +292,7 @@ namespace Mono.CSharp {
 	///   The Assign node takes care of assigning the value of source into
 	///   the expression represented by target.
 	/// </summary>
-	public abstract class Assign : ExpressionStatement {
+	public abstract partial class Assign : ExpressionStatement {
 		protected Expression target, source;
 
 		protected Assign (Expression target, Expression source, Location loc)
@@ -455,26 +455,6 @@ namespace Mono.CSharp {
 			jec.Buf.Write (" = ");
 			Source.EmitJs (jec);
 			jec.Buf.Write (";\n");
-		}
-
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			if (Target is PropertyExpr) {
-				((PropertyExpr)Target).EmitAssignCpp (cec, Source, false, false);
-			} else {
-				Target.EmitCpp (cec);
-				cec.Buf.Write (" = ");
-				Source.EmitCpp (cec);
-			}
-		}
-		
-		public override void EmitStatementCpp (CppEmitContext cec)
-		{
-			cec.Buf.Write ("\t", Location);
-			Target.EmitCpp (cec);
-			cec.Buf.Write (" = ");
-			Source.EmitCpp (cec);
-			cec.Buf.Write (";\n");
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Expression t)
@@ -669,10 +649,10 @@ namespace Mono.CSharp {
 	//
 	// This class is used for compound assignments.
 	//
-	public class CompoundAssign : Assign
+	public partial class CompoundAssign : Assign
 	{
 		// This is just a hack implemented for arrays only
-		public sealed class TargetExpression : Expression
+		public sealed partial class TargetExpression : Expression
 		{
 			readonly Expression child;
 
@@ -707,11 +687,6 @@ namespace Mono.CSharp {
 			public override void EmitJs (JsEmitContext jec)
 			{
 				child.EmitJs (jec);
-			}
-
-			public override void EmitCpp (CppEmitContext cec)
-			{
-				child.EmitCpp (cec);
 			}
 
 			public override Expression EmitToField (EmitContext ec)

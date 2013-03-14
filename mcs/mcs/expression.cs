@@ -127,7 +127,7 @@ namespace Mono.CSharp
 	//
 	//   Unary implements unary expressions.
 	//
-	public class Unary : Expression
+	public partial class Unary : Expression
 	{
 		public enum Operator : byte {
 			UnaryPlus, UnaryNegation, LogicalNot, OnesComplement,
@@ -538,18 +538,6 @@ namespace Mono.CSharp
 			Expr.EmitJs (jec);
 			if (needsParen)
 				jec.Buf.Write (")");
-		}
-
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			bool needsParen = cec.NeedParens (this, Expr);
-			
-			cec.Buf.Write (OperName (Oper), Location);
-			if (needsParen)
-				cec.Buf.Write ("(");
-			Expr.EmitCpp (cec);
-			if (needsParen)
-				cec.Buf.Write (")");
 		}
 
 		protected void EmitOperator (EmitContext ec, TypeSpec type)
@@ -990,7 +978,7 @@ namespace Mono.CSharp
 	/// classes (indexers require temporary access;  overloaded require method)
 	///
 	/// </remarks>
-	public class UnaryMutator : ExpressionStatement
+	public partial class UnaryMutator : ExpressionStatement
 	{
 		class DynamicPostMutator : Expression, IAssignMethod
 		{
@@ -1340,36 +1328,6 @@ namespace Mono.CSharp
 			EmitOpJs (jec);
 			jec.Buf.Write (";\n");
 		}
-
-		private void EmitOpCpp (CppEmitContext cec)
-		{
-			if (mode == Mode.PreIncrement)
-				cec.Buf.Write ("++", Location);
-			else if (mode == Mode.PreDecrement)
-				cec.Buf.Write ("--", Location);
-			
-			// NOTE: TODO - Add parentheses if child op precedence is lower.
-			
-			Expr.EmitCpp (cec);
-			
-			if (mode == Mode.PostIncrement)
-				cec.Buf.Write ("++");
-			else if (mode == Mode.PostDecrement)
-				cec.Buf.Write ("--");
-		}
-
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			EmitOpCpp (cec);
-		}
-		
-		public override void EmitStatementCpp (CppEmitContext cec)
-		{
-			cec.Buf.Write ("\t", Location);
-			EmitOpCpp (cec);
-			cec.Buf.Write (";\n");
-		}
-
 
 		//
 		// Converts operator to System.Linq.Expressions.ExpressionType enum name
@@ -1995,7 +1953,7 @@ namespace Mono.CSharp
 	/// <summary>
 	///   Binary operators
 	/// </summary>
-	public class Binary : Expression, IDynamicBinder
+	public partial class Binary : Expression, IDynamicBinder
 	{
 		public class PredefinedOperator
 		{
@@ -4296,24 +4254,6 @@ namespace Mono.CSharp
 				jec.Buf.Write (")");
 		}
 
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			var leftParens = cec.NeedParens(this, Left);
-			var rightParens = cec.NeedParens(this, Right);
-			
-			if (leftParens)
-				cec.Buf.Write ("(", Location);
-			Left.EmitCpp (cec);
-			if (leftParens)
-				cec.Buf.Write (")");
-			cec.Buf.Write (" " + this.OperName (oper) + " ");
-			if (rightParens)
-				cec.Buf.Write ("(", Location);
-			Right.EmitCpp (cec);
-			if (rightParens)
-				cec.Buf.Write (")");
-		}
-
 		protected override void CloneTo (CloneContext clonectx, Expression t)
 		{
 			Binary target = (Binary) t;
@@ -4458,7 +4398,7 @@ namespace Mono.CSharp
 	// Represents the operation a + b [+ c [+ d [+ ...]]], where a is a string
 	// b, c, d... may be strings or objects.
 	//
-	public class StringConcat : Expression
+	public partial class StringConcat : Expression
 	{
 		Arguments arguments;
 		
@@ -4586,20 +4526,6 @@ namespace Mono.CSharp
 				a.Expr.EmitJs (jec);
 				first = false;
 			}
-		}
-
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			cec.Buf.Write ("_root::String.concat(", loc);
-			bool first = true;
-			foreach (var a in arguments) {
-				if (!first) {
-					cec.Buf.Write (", ");
-				}
-				a.Expr.EmitCpp (cec);
-				first = false;
-			}
-			cec.Buf.Write (")", loc);
 		}
 
 		public override SLE.Expression MakeExpression (BuilderContext ctx)
@@ -4928,7 +4854,7 @@ namespace Mono.CSharp
 	/// <summary>
 	///   Implements the ternary conditional operator (?:)
 	/// </summary>
-	public class Conditional : Expression {
+	public partial class Conditional : Expression {
 		Expression expr, true_expr, false_expr;
 
 		public Conditional (Expression expr, Expression true_expr, Expression false_expr, Location loc)
@@ -5144,39 +5070,6 @@ namespace Mono.CSharp
 			}
 		}
 
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			bool test_parens = cec.NeedParens (this, expr);
-			bool true_parens = cec.NeedParens (this, true_expr);
-			bool false_parens = cec.NeedParens (this, false_expr);
-			
-			if (test_parens) {
-				cec.Buf.Write ("(");
-				expr.EmitCpp (cec);
-				cec.Buf.Write (") ? ");
-			} else {
-				expr.EmitCpp (cec);
-				cec.Buf.Write (" ? ");
-			}
-			
-			if (true_parens) {
-				cec.Buf.Write ("(");
-				true_expr.EmitCpp (cec);
-				cec.Buf.Write (") : ");
-			} else {
-				true_expr.EmitCpp (cec);
-				cec.Buf.Write (" : ");
-			}
-			
-			if (false_parens) {
-				cec.Buf.Write ("(");
-				false_expr.EmitCpp (cec);
-				cec.Buf.Write (")");
-			} else {
-				false_expr.EmitCpp (cec);
-			}
-		}
-
 		protected override void CloneTo (CloneContext clonectx, Expression t)
 		{
 			Conditional target = (Conditional) t;
@@ -5193,7 +5086,7 @@ namespace Mono.CSharp
 //		}
 	}
 
-	public abstract class VariableReference : Expression, IAssignMethod, IMemoryLocation, IVariableReference
+	public abstract partial class VariableReference : Expression, IAssignMethod, IMemoryLocation, IVariableReference
 	{
 		LocalTemporary temp;
 
@@ -5364,11 +5257,6 @@ namespace Mono.CSharp
 		public override void EmitJs (JsEmitContext jec)
 		{
 			jec.Buf.Write (Name, Location);
-		}
-
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			cec.Buf.Write (Name, Location);
 		}
 
 		public HoistedVariable GetHoistedVariable (ResolveContext rc)
@@ -5755,7 +5643,7 @@ namespace Mono.CSharp
 	/// <summary>
 	///   Invocation of methods or delegates.
 	/// </summary>
-	public class Invocation : ExpressionStatement
+	public partial class Invocation : ExpressionStatement
 	{
 		protected Arguments arguments;
 		protected Expression expr;
@@ -6152,34 +6040,6 @@ namespace Mono.CSharp
 			jec.Buf.Write (";\n");
 		}
 
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			// Write CPP literal code for __cpp__() invocation.
-			if (expr is SimpleName && ((SimpleName)expr).Name == "__cpp__" && 
-			    arguments.Count == 1 && arguments[0].Expr is StringLiteral) {
-				cec.Buf.Write (((StringLiteral)arguments[0].Expr).Value);
-				return;
-			}
-
-			if (expr != null) {
-				if (mg.IsStatic && expr is TypeExpr) {
-					cec.Buf.Write (cec.MakeCppFullTypeName(((TypeExpr)expr).Type, false), "::", Location);
-				} else {
-					expr.EmitCpp (cec);
-				}
-			}
-			mg.EmitCallCpp (cec, arguments);
-		}
-		
-		public override void EmitStatementCpp (CppEmitContext cec)
-		{
-			cec.Buf.Write ("\t", Location);
-			
-			EmitCpp (cec);
-			
-			cec.Buf.Write (";\n");
-		}
-
 		public override SLE.Expression MakeExpression (BuilderContext ctx)
 		{
 			return MakeExpression (ctx, mg.InstanceExpression, mg.BestCandidate, arguments);
@@ -6204,7 +6064,7 @@ namespace Mono.CSharp
 	//
 	// Implements simple new expression 
 	//
-	public class New : ExpressionStatement, IMemoryLocation
+	public partial class New : ExpressionStatement, IMemoryLocation
 	{
 		protected Arguments arguments;
 
@@ -6617,21 +6477,6 @@ namespace Mono.CSharp
 			jec.Buf.Write ("\t", Location);
 			EmitJs (jec);
 			jec.Buf.Write (";\n");
-		}
-
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			cec.Buf.Write("new ", cec.MakeCppFullTypeName(Type, false) ,"(", Location);
-			if (arguments != null)
-				arguments.EmitCpp (cec);
-			cec.Buf.Write(")");
-		}
-		
-		public override void EmitStatementCpp (CppEmitContext cec)
-		{
-			cec.Buf.Write ("\t", Location);
-			EmitCpp (cec);
-			cec.Buf.Write (";\n");
 		}
 
 		public void AddressOf (EmitContext ec, AddressOp mode)
@@ -8580,7 +8425,7 @@ namespace Mono.CSharp
 	/// <summary>
 	///   Implements the member access expression
 	/// </summary>
-	public class MemberAccess : ATypeNameExpression
+	public partial class MemberAccess : ATypeNameExpression
 	{
 		public enum Accessor {
 			Member,
@@ -9147,13 +8992,6 @@ namespace Mono.CSharp
 			jec.Buf.Write (Name);
 		}
 
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			expr.EmitCpp (cec);
-			cec.Buf.Write ("->");
-			cec.Buf.Write (Name);
-		}
-		
 		public override object Accept (StructuralVisitor visitor)
 		{
 			return visitor.Visit (this);
@@ -9678,7 +9516,7 @@ namespace Mono.CSharp
 	//
 	// Indexer access expression
 	//
-	sealed class IndexerExpr : PropertyOrIndexerExpr<IndexerSpec>, OverloadResolver.IBaseMembersProvider
+	sealed partial class IndexerExpr : PropertyOrIndexerExpr<IndexerSpec>, OverloadResolver.IBaseMembersProvider
 	{
 		IList<MemberSpec> indexers;
 		Arguments arguments;
@@ -9827,20 +9665,6 @@ namespace Mono.CSharp
 				first = false;
 			}
 			jec.Buf.Write ("]");
-		}
-
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			InstanceExpression.EmitCpp (cec);
-			cec.Buf.Write ("[");
-			bool first = true;
-			foreach (var arg in arguments) {
-				if (!first)
-					cec.Buf.Write (", ");
-				arg.Expr.EmitCpp (cec);
-				first = false;
-			}
-			cec.Buf.Write ("]");
 		}
 
 		public override string GetSignatureForError ()

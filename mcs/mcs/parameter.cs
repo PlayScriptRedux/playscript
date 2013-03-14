@@ -1032,7 +1032,7 @@ namespace Mono.CSharp {
 	/// <summary>
 	///   Represents the methods parameters
 	/// </summary>
-	public class ParametersCompiled : AParametersCollection
+	public partial class ParametersCompiled : AParametersCollection
 	{
 		public static readonly ParametersCompiled EmptyReadOnlyParameters = new ParametersCompiled ();
 		
@@ -1321,21 +1321,6 @@ namespace Mono.CSharp {
 				}
 				jec.Buf.Write (param.Name);
 				first = false;
-			}
-		}
-
-		public void EmitCpp (CppEmitContext cec)
-		{
-			bool first = true;
-			foreach (var p in this.FixedParameters) {
-				var param = p as Parameter;
-				if (param != null) {
-					if (!first) {
-						cec.Buf.Write (", ");
-					}
-					cec.Buf.Write (cec.MakeCppFullTypeName(param.Type), " ", param.Name);
-					first = false;
-				}
 			}
 		}
 	}

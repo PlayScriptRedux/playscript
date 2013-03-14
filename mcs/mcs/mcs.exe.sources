@@ -16,6 +16,7 @@ const.cs
 constant.cs
 convert.cs
 context.cs
+cxx-emit.cs
 cxx-target.cs
 decl.cs
 delegate.cs
@@ -32,6 +33,7 @@ generic.cs
 import.cs
 iterators.cs
 ikvm.cs
+js-emit.cs
 js-target.cs
 lambda.cs
 linq.cs

@@ -259,7 +259,7 @@ namespace Mono.CSharp
 		}
 	}
 	
-	public class Arguments
+	public partial class Arguments
 	{
 		sealed class ArgumentsOrdered : Arguments
 		{
@@ -516,17 +516,6 @@ namespace Mono.CSharp
 				if (!first)
 					jec.Buf.Write(", ");
 				a.Expr.EmitJs (jec);
-				first = false;
-			}
-		}
-
-		public virtual void EmitCpp (CppEmitContext cec)
-		{
-			bool first = true;
-			foreach (Argument a in args) {
-				if (!first)
-					cec.Buf.Write(", ");
-				a.Expr.EmitCpp (cec);
 				first = false;
 			}
 		}

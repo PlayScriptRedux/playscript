@@ -128,7 +128,7 @@ namespace Mono.CSharp {
 	/// <remarks>
 	///   Base class for expressions
 	/// </remarks>
-	public abstract class Expression {
+	public abstract partial class Expression {
 		public ExprClass eclass;
 		protected TypeSpec type;
 		protected Location loc;
@@ -640,12 +640,6 @@ namespace Mono.CSharp {
 			jec.Buf.Write ("<<" + this.GetType ().Name + " expr>>");
 		}
 
-		public virtual void EmitCpp (CppEmitContext cec)
-		{
-			cec.Report.Error (7174, this.loc, "C++ code generation for " + this.GetType ().Name + " expression not supported.");
-			cec.Buf.Write ("<<" + this.GetType ().Name + " expr>>");
-		}
-
 		/// <summary>
 		///   Protected constructor.  Only derivate types should
 		///   be able to be created
@@ -1083,7 +1077,7 @@ namespace Mono.CSharp {
 	///   being that they would support an extra Emition interface that
 	///   does not leave a result on the stack.
 	/// </summary>
-	public abstract class ExpressionStatement : Expression {
+	public abstract partial class ExpressionStatement : Expression {
 
 		public ExpressionStatement ResolveStatement (BlockContext ec)
 		{
@@ -1164,12 +1158,6 @@ namespace Mono.CSharp {
 			jec.Report.Error(7072, Location, "JavaScript code generation for " + this.GetType ().Name + " statement not supported.");
 			jec.Buf.Write ("<<" + this.GetType ().Name + " stmtexpr>>");
 		}
-		
-		public virtual void EmitStatementCpp (CppEmitContext cec)
-		{
-			cec.Report.Error(7172, Location, "C++ code generation for " + this.GetType ().Name + " statement not supported.");
-			cec.Buf.Write ("<<" + this.GetType ().Name + " stmtexpr>>");
-		}
 	}
 
 	/// <summary>
@@ -1184,7 +1172,7 @@ namespace Mono.CSharp {
 	///   would be "unsigned int".
 	///
 	/// </summary>
-	public abstract class TypeCast : Expression
+	public abstract partial class TypeCast : Expression
 	{
 		protected readonly Expression child;
 
@@ -1249,13 +1237,6 @@ namespace Mono.CSharp {
 			Child.EmitJs (jec);
 		}
 
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			cec.Buf.Write ("(", cec.MakeCppFullTypeName(Type), ")(", loc);
-			Child.EmitCpp (cec);
-			cec.Buf.Write (")");
-		}
-
 		protected override void CloneTo (CloneContext clonectx, Expression t)
 		{
 			// Nothing to clone
@@ -1266,7 +1247,7 @@ namespace Mono.CSharp {
 		}
 	}
 
-	public class EmptyCast : TypeCast {
+	public partial class EmptyCast : TypeCast {
 		EmptyCast (Expression child, TypeSpec target_type)
 			: base (child, target_type)
 		{
@@ -1298,13 +1279,6 @@ namespace Mono.CSharp {
 		public override void EmitJs (JsEmitContext jec)
 		{
 			Child.EmitJs (jec);
-		}
-
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			cec.Buf.Write ("(", cec.MakeCppFullTypeName(Type), ")(", loc);
-			Child.EmitCpp (cec);
-			cec.Buf.Write (")");
 		}
 	}
 
@@ -1889,7 +1863,7 @@ namespace Mono.CSharp {
 		}
 	}
 	
-	class OpcodeCast : TypeCast
+	partial class OpcodeCast : TypeCast
 	{
 		readonly OpCode op;
 		
@@ -1917,13 +1891,6 @@ namespace Mono.CSharp {
 		{
 			// We do nothing here for JavaScript.. implicit casts or fail.
 			Child.EmitJs (jec);
-		}
-
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			cec.Buf.Write ("(", cec.MakeCppFullTypeName(Type), ")(", loc);
-			Child.EmitCpp (cec);
-			cec.Buf.Write (")");
 		}
 
 		public TypeSpec UnderlyingType {
@@ -2384,7 +2351,7 @@ namespace Mono.CSharp {
 	///   SimpleName expressions are formed of a single word and only happen at the beginning 
 	///   of a dotted-name.
 	/// </summary>
-	public class SimpleName : ATypeNameExpression
+	public partial class SimpleName : ATypeNameExpression
 	{
 		public SimpleName (string name, Location l)
 			: base (name, l)
@@ -2824,11 +2791,6 @@ namespace Mono.CSharp {
 			jec.Buf.Write (Name, Location);
 		}
 
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			cec.Buf.Write (Name, Location);
-		}
-		
 		public override object Accept (StructuralVisitor visitor)
 		{
 			return visitor.Visit (this);
@@ -2839,7 +2801,7 @@ namespace Mono.CSharp {
 	///   Represents a namespace or a type.  The name of the class was inspired by
 	///   section 10.8.1 (Fully Qualified Names).
 	/// </summary>
-	public abstract class FullNamedExpression : Expression
+	public abstract partial class FullNamedExpression : Expression
 	{
 		protected override void CloneTo (CloneContext clonectx, Expression target)
 		{
@@ -2914,11 +2876,6 @@ namespace Mono.CSharp {
 		{
 			jec.Buf.Write (jec.MakeJsNamespaceName(type.MemberDefinition.Namespace), ".", 
 			               jec.MakeJsTypeName(type.Name), Location);
-		}
-
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			cec.Buf.Write (cec.MakeCppFullTypeName(type), Location);
 		}
 	}
 	
@@ -3521,7 +3478,7 @@ namespace Mono.CSharp {
 	///   MethodGroupExpr represents a group of method candidates which
 	///   can be resolved to the best method overload
 	/// </summary>
-	public class MethodGroupExpr : MemberExpr, OverloadResolver.IBaseMembersProvider
+	public partial class MethodGroupExpr : MemberExpr, OverloadResolver.IBaseMembersProvider
 	{
 		protected IList<MemberSpec> Methods;
 		MethodSpec best_candidate;
@@ -3673,14 +3630,6 @@ namespace Mono.CSharp {
 			if (arguments != null)
 				arguments.EmitJs (jec);
 			jec.Buf.Write(")");
-		}
-
-		public void EmitCallCpp (CppEmitContext cec, Arguments arguments)
-		{
-			cec.Buf.Write("(", Location);
-			if (arguments != null)
-				arguments.EmitCpp (cec);
-			cec.Buf.Write(")");
 		}
 
 		public override void Error_ValueCannotBeConverted (ResolveContext ec, TypeSpec target, bool expl)
@@ -5574,7 +5523,7 @@ namespace Mono.CSharp {
 	//
 	// Fully resolved expression that references a Field
 	//
-	public class FieldExpr : MemberExpr, IDynamicAssign, IMemoryLocation, IVariableReference
+	public partial class FieldExpr : MemberExpr, IDynamicAssign, IMemoryLocation, IVariableReference
 	{
 		protected FieldSpec spec;
 		VariableInfo variable_info;
@@ -6044,17 +5993,6 @@ namespace Mono.CSharp {
 			jec.Buf.Write (Name);
 		}
 
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			if (InstanceExpression != null) {
-				InstanceExpression.EmitCpp (cec);
-				cec.Buf.Write ("->");
-			} else {
-				cec.Buf.Write (DeclaringType.Name, "->", Location);
-			}
-			cec.Buf.Write (Name);
-		}
-
 		public virtual void AddressOf (EmitContext ec, AddressOp mode)
 		{
 			if ((mode & AddressOp.Store) != 0)
@@ -6127,7 +6065,7 @@ namespace Mono.CSharp {
 	// This is not an LValue because we need to re-write the expression. We
 	// can not take data from the stack and store it.
 	//
-	sealed class PropertyExpr : PropertyOrIndexerExpr<PropertySpec>
+	sealed partial class PropertyExpr : PropertyOrIndexerExpr<PropertySpec>
 	{
 		Arguments arguments;
 
@@ -6343,28 +6281,6 @@ namespace Mono.CSharp {
 			jec.Buf.Write (".", best_candidate.Name);
 		}
 
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			if (IsStatic) { 
-				cec.Buf.Write (cec.MakeCppFullTypeName (best_candidate.DeclaringType, false), loc);
-			} else {
-				InstanceExpression.EmitCpp (cec);
-			}
-			cec.Buf.Write ("->", "get_", best_candidate.Name,  "()", loc);
-		}
-
-		public override void EmitAssignCpp (CppEmitContext cec, Expression source, bool leave_copy, bool isCompound)
-		{
-			if (IsStatic) { 
-				cec.Buf.Write (cec.MakeCppFullTypeName (best_candidate.DeclaringType, false), loc);
-			} else {
-				InstanceExpression.EmitCpp (cec);
-			}
-			cec.Buf.Write ("->", "set_", best_candidate.Name,  "(");
-			source.EmitCpp (cec);
-			cec.Buf.Write (")", loc);
-		}
-
 		protected override Expression OverloadResolve (ResolveContext rc, Expression right_side)
 		{
 			eclass = ExprClass.PropertyAccess;
@@ -6409,7 +6325,7 @@ namespace Mono.CSharp {
 		}
 	}
 
-	abstract class PropertyOrIndexerExpr<T> : MemberExpr, IDynamicAssign where T : PropertySpec
+	abstract partial class PropertyOrIndexerExpr<T> : MemberExpr, IDynamicAssign where T : PropertySpec
 	{
 		// getter and setter can be different for base calls
 		MethodSpec getter, setter;
@@ -6526,11 +6442,6 @@ namespace Mono.CSharp {
 		public override void Emit (EmitContext ec)
 		{
 			Emit (ec, false);
-		}
-
-		public virtual void EmitAssignCpp (CppEmitContext cec, Expression source, bool leave_copy, bool isCompound)
-		{
-			EmitCpp (cec);
 		}
 
 		protected override FieldExpr EmitToFieldSource (EmitContext ec)
@@ -6777,7 +6688,7 @@ namespace Mono.CSharp {
 		}
 	}
 
-	public class TemporaryVariableReference : VariableReference
+	public partial class TemporaryVariableReference : VariableReference
 	{
 		public class Declarator : Statement
 		{
@@ -6876,12 +6787,6 @@ namespace Mono.CSharp {
 		{
 			jec.Report.Error (7074, this.loc, "JavaScript code generation for " + this.GetType ().Name + " expression not supported.");
 			jec.Buf.Write ("<<" + this.GetType ().Name + " expr>>");
-		}
-
-		public override void EmitCpp (CppEmitContext cec)
-		{
-			cec.Report.Error (7174, this.loc, "C++ code generation for " + this.GetType ().Name + " expression not supported.");
-			cec.Buf.Write ("<<" + this.GetType ().Name + " expr>>");
 		}
 
 		public override HoistedVariable GetHoistedVariable (AnonymousExpression ae)
