@@ -4705,28 +4705,30 @@ namespace Mono.CSharp {
 
 		protected override void DoEmitJs (JsEmitContext jec)
 		{
-			jec.Buf.Write ("\tswitch (", loc);
-			Expr.EmitJs (jec);
-			jec.Buf.Write (") {\n");
-			jec.Buf.Indent ();
-
-			foreach (var section in Sections) {
-				foreach (var label in section.Labels) {
-					if (label.IsDefault) {
-						jec.Buf.Write ("\tdefault:\n", label.Location);
-					} else {
-						jec.Buf.Write ("\tcase ", label.Location);
-						label.Label.EmitJs (jec);
-						jec.Buf.Write (":\n");
-					}
-				}
-				jec.Buf.Indent ();
-				section.Block.EmitBlockJs (jec, true, true);
-				jec.Buf.Unindent ();
-			}
-
-			jec.Buf.Unindent ();
-			jec.Buf.Write ("\t}\n");
+			// FIXME: Switch has changed..
+			base.DoEmitJs (jec);
+//			jec.Buf.Write ("\tswitch (", loc);
+//			Expr.EmitJs (jec);
+//			jec.Buf.Write (") {\n");
+//			jec.Buf.Indent ();
+//
+//			foreach (var section in Sections) {
+//				foreach (var label in section.Labels) {
+//					if (label.IsDefault) {
+//						jec.Buf.Write ("\tdefault:\n", label.Location);
+//					} else {
+//						jec.Buf.Write ("\tcase ", label.Location);
+//						label.Label.EmitJs (jec);
+//						jec.Buf.Write (":\n");
+//					}
+//				}
+//				jec.Buf.Indent ();
+//				section.Block.EmitBlockJs (jec, true, true);
+//				jec.Buf.Unindent ();
+//			}
+//
+//			jec.Buf.Unindent ();
+//			jec.Buf.Write ("\t}\n");
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Statement t)

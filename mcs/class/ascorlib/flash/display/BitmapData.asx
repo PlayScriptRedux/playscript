@@ -339,7 +339,7 @@ package flash.display {
 			// create NSImage from NSData
 			var src:NSImage = new NSImage(nsData);
 			var rect:System.Drawing.RectangleF = System.Drawing.RectangleF.Empty;
-			var image:CGImage = src.AsCGImage (rect, null, null);
+			var image:CGImage = src.AsCGImage (ref rect, null, null);
 			var bd:BitmapData = BitmapData.loadFromCGImage(image);
 			image.Dispose();
 			return bd;
@@ -370,7 +370,7 @@ package flash.display {
 			// create NSImage from path
 			var src:NSImage = new NSImage (path);
 			var rect:System.Drawing.RectangleF = System.Drawing.RectangleF.Empty;
-			var image:CGImage = src.AsCGImage (rect, null, null);
+			var image:CGImage = src.AsCGImage (ref rect, null, null);
 			var bd:BitmapData = BitmapData.loadFromCGImage(image);
 			image.Dispose();
 			return bd;

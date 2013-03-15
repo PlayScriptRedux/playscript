@@ -58,7 +58,7 @@ package com.zynga.zengine.classes
 
 			var ffff:Array = [ 100, 200, 300 ];
 
-			var qqqq:Array = f || [];
+//			var qqqq:Array = f || [];
 
 			myFunc(100, "Blah");
 
@@ -100,7 +100,7 @@ package com.zynga.zengine.classes
 
 			var ss:String = typeof f;
 
-			var qqq:Object = new byte[100];
+//			var qqq:Object = new byte[100];
 		}
 	}
 }

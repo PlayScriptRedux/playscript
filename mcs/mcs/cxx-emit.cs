@@ -1138,28 +1138,30 @@ namespace Mono.CSharp
 	{
 		protected override void DoEmitCpp (CppEmitContext cec)
 		{
-			cec.Buf.Write ("\tswitch (", loc);
-			Expr.EmitCpp (cec);
-			cec.Buf.Write (") {\n");
-			cec.Buf.Indent ();
-			
-			foreach (var section in Sections) {
-				foreach (var label in section.Labels) {
-					if (label.IsDefault) {
-						cec.Buf.Write ("\tdefault:\n", label.Location);
-					} else {
-						cec.Buf.Write ("\tcase ", label.Location);
-						label.Label.EmitCpp (cec);
-						cec.Buf.Write (":\n");
-					}
-				}
-				cec.Buf.Indent ();
-				section.Block.EmitBlockCpp (cec, true, true);
-				cec.Buf.Unindent ();
-			}
-			
-			cec.Buf.Unindent ();
-			cec.Buf.Write ("\t}\n");
+			// FIXME: Switch has changed..
+			base.DoEmitCpp (cec);
+//			cec.Buf.Write ("\tswitch (", loc);
+//			Expr.EmitCpp (cec);
+//			cec.Buf.Write (") {\n");
+//			cec.Buf.Indent ();
+//			
+//			foreach (var section in Sections) {
+//				foreach (var label in section.Labels) {
+//					if (label.IsDefault) {
+//						cec.Buf.Write ("\tdefault:\n", label.Location);
+//					} else {
+//						cec.Buf.Write ("\tcase ", label.Location);
+//						label.Label.EmitCpp (cec);
+//						cec.Buf.Write (":\n");
+//					}
+//				}
+//				cec.Buf.Indent ();
+//				section.Block.EmitBlockCpp (cec, true, true);
+//				cec.Buf.Unindent ();
+//			}
+//			
+//			cec.Buf.Unindent ();
+//			cec.Buf.Write ("\t}\n");
 		}
 	}
 
