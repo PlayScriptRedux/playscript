@@ -645,6 +645,9 @@ namespace Mono.ActionScript
 			AddKeyword ("delete", Token.DELETE);
 			AddKeyword ("do", Token.DO);
 			AddKeyword ("double", Token.DOUBLE);
+			AddKeyword ("double2", Token.DOUBLE2);
+			AddKeyword ("double3", Token.DOUBLE3);
+			AddKeyword ("double4", Token.DOUBLE4);
 			AddKeyword ("dynamic", Token.DYNAMIC);
 			AddKeyword ("each", Token.EACH);
 			AddKeyword ("else", Token.ELSE);
@@ -658,6 +661,9 @@ namespace Mono.ActionScript
 			AddKeyword ("finally", Token.FINALLY);
 			AddKeyword ("fixed", Token.FIXED);
 			AddKeyword ("float", Token.FLOAT);
+			AddKeyword ("float2", Token.FLOAT2);
+			AddKeyword ("float3", Token.FLOAT3);
+			AddKeyword ("float4", Token.FLOAT4);
 			AddKeyword ("for", Token.FOR);
 			AddKeyword ("function", Token.FUNCTION);
 			AddKeyword ("goto", Token.GOTO);
@@ -780,7 +786,13 @@ namespace Mono.ActionScript
 				Token.ULONG,
 				Token.VOID,
 				Token.DOUBLE,
+				Token.DOUBLE2,
+				Token.DOUBLE3,
+				Token.DOUBLE4,
 				Token.FLOAT,
+				Token.FLOAT2,
+				Token.FLOAT3,
+				Token.FLOAT4,
 				Token.STRING,
 				Token.BOOL,
 				Token.BOOLEAN,
@@ -1141,7 +1153,13 @@ namespace Mono.ActionScript
 			case Token.SHORT:
 			case Token.USHORT:
 			case Token.FLOAT:
+			case Token.FLOAT2:
+			case Token.FLOAT3:
+			case Token.FLOAT4:
 			case Token.DOUBLE:
+			case Token.DOUBLE2:
+			case Token.DOUBLE3:
+			case Token.DOUBLE4:
 				if (!handle_asx)
 					res = -1;
 

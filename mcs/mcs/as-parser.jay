@@ -191,6 +191,9 @@ namespace Mono.ActionScript
 %token DELETE
 %token DO	
 %token DOUBLE
+%token DOUBLE2
+%token DOUBLE3
+%token DOUBLE4
 %token DYNAMIC
 %token EACH	
 %token ELSE	
@@ -202,7 +205,10 @@ namespace Mono.ActionScript
 %token FINAL	
 %token FINALLY	
 %token FIXED	
-%token FLOAT	
+%token FLOAT
+%token FLOAT2
+%token FLOAT3
+%token FLOAT4
 %token FOR	
 %token FOR_EACH	
 %token FUNCTION 
@@ -3558,7 +3564,13 @@ builtin_types
 	| BOOL		{ $$ = new TypeExpression (compiler.BuiltinTypes.Bool, GetLocation ($1)); }
 	| */ DECIMAL { CheckIsAsx("decimal", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Decimal, GetLocation ($1)); }
 	| FLOAT		{ CheckIsAsx("float", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Float, GetLocation ($1)); }
+	| FLOAT2	{ CheckIsAsx("float2", GetLocation($1)); $$ = MakeMonoSimdType("Vector4f", GetLocation($1)); }
+	| FLOAT3	{ CheckIsAsx("float3", GetLocation($1)); $$ = MakeMonoSimdType("Vector4f", GetLocation($1)); }
+	| FLOAT4	{ CheckIsAsx("float4", GetLocation($1)); $$ = MakeMonoSimdType("Vector4f", GetLocation($1)); }
 	| DOUBLE	{ CheckIsAsx("double", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Double, GetLocation ($1)); }
+	| DOUBLE2	{ CheckIsAsx("double2", GetLocation($1)); $$ = MakeMonoSimdType("Vector2d", GetLocation($1)); }
+	| DOUBLE3	{ CheckIsAsx("double3", GetLocation($1)); $$ = MakeMonoSimdType("Vector4d", GetLocation($1)); }
+	| DOUBLE4	{ CheckIsAsx("double4", GetLocation($1)); $$ = MakeMonoSimdType("Vector4d", GetLocation($1)); }
 	| integral_type
 	;
 
@@ -8252,7 +8264,12 @@ Statement ConvertExpressionToStatement(Expression ex)
 	}
 	return ret;
 }
- 
+
+Expression MakeMonoSimdType(string typeName, Location loc)
+{
+	return new MemberAccess(new MemberAccess(new SimpleName("Mono", loc), "Simd", loc), typeName, loc);
+}
+
 string GetExpecting ()
 {
 	int [] tokens = yyExpectingTokens (yyExpectingState);
@@ -8324,10 +8341,22 @@ string GetSymbolName (int token)
 		return "decimal";
 	case Token.DOUBLE:
 		return "double";
+	case Token.DOUBLE2:
+		return "double2";
+	case Token.DOUBLE3:
+		return "double3";
+	case Token.DOUBLE4:
+		return "double4";
 	case Token.DYNAMIC:
 		return "dynamic";
 	case Token.FLOAT:
 		return "float";
+	case Token.FLOAT2:
+		return "float2";
+	case Token.FLOAT3:
+		return "float3";
+	case Token.FLOAT4:
+		return "float4";
 	case Token.INT:
 		return "int";
 	case Token.LONG:
