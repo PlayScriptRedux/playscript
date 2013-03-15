@@ -198,7 +198,6 @@
 #include "metadata/object-internals.h"
 #include "metadata/threads.h"
 #include "metadata/sgen-cardtable.h"
-#include "metadata/sgen-ssb.h"
 #include "metadata/sgen-protocol.h"
 #include "metadata/sgen-archdep.h"
 #include "metadata/sgen-bridge.h"
@@ -215,6 +214,7 @@
 #include "metadata/sgen-cardtable.h"
 #include "metadata/sgen-pinning.h"
 #include "metadata/sgen-workers.h"
+#include "metadata/sgen-layout-stats.h"
 #include "utils/mono-mmap.h"
 #include "utils/mono-time.h"
 #include "utils/mono-semaphore.h"
@@ -310,6 +310,7 @@ long long stat_nursery_copy_object_failed_forwarded = 0;
 long long stat_nursery_copy_object_failed_pinned = 0;
 long long stat_nursery_copy_object_failed_to_space = 0;
 
+static int stat_wbarrier_add_to_global_remset = 0;
 static int stat_wbarrier_set_field = 0;
 static int stat_wbarrier_set_arrayref = 0;
 static int stat_wbarrier_arrayref_copy = 0;
@@ -398,8 +399,6 @@ sgen_safe_name (void* obj)
  */
 LOCK_DECLARE (gc_mutex);
 
-static gboolean use_cardtable;
-
 #define SCAN_START_SIZE	SGEN_SCAN_START_SIZE
 
 static mword pagesize = 4096;
@@ -486,10 +485,7 @@ MonoNativeTlsKey thread_info_key;
 
 #ifdef HAVE_KW_THREAD
 __thread SgenThreadInfo *sgen_thread_info;
-__thread gpointer *store_remset_buffer;
-__thread long store_remset_buffer_index;
 __thread char *stack_end;
-__thread long *store_remset_buffer_index_addr;
 #endif
 
 /* The size of a TLAB */
@@ -550,7 +546,7 @@ static void report_registered_roots (void);
 
 static void pin_from_roots (void *start_nursery, void *end_nursery, GrayQueue *queue);
 static int pin_objects_from_addresses (GCMemSection *section, void **start, void **end, void *start_nursery, void *end_nursery, ScanCopyContext ctx);
-static void finish_gray_stack (char *start_addr, char *end_addr, int generation, GrayQueue *queue);
+static void finish_gray_stack (int generation, GrayQueue *queue);
 
 void mono_gc_scan_for_specific_ref (MonoObject *key, gboolean precise);
 
@@ -620,9 +616,12 @@ is_xdomain_ref_allowed (gpointer *ptr, char *obj, MonoDomain *domain)
 		return TRUE;
 	if (o->vtable->klass == mono_defaults.internal_thread_class && offset == G_STRUCT_OFFSET (MonoInternalThread, current_appcontext))
 		return TRUE;
+
+#ifndef DISABLE_REMOTING
 	if (mono_class_has_parent_fast (o->vtable->klass, mono_defaults.real_proxy_class) &&
 			offset == G_STRUCT_OFFSET (MonoRealProxy, unwrapped_server))
 		return TRUE;
+#endif
 	/* Thread.cached_culture_info */
 	if (!strcmp (ref->vtable->klass->name_space, "System.Globalization") &&
 			!strcmp (ref->vtable->klass->name, "CultureInfo") &&
@@ -893,6 +892,7 @@ process_object_for_domain_clearing (char *start, MonoDomain *domain)
 		g_assert (mono_object_domain (start) == mono_get_root_domain ());
 	/* The object could be a proxy for an object in the domain
 	   we're deleting. */
+#ifndef DISABLE_REMOTING
 	if (mono_class_has_parent_fast (vt->klass, mono_defaults.real_proxy_class)) {
 		MonoObject *server = ((MonoRealProxy*)start)->unwrapped_server;
 
@@ -903,6 +903,7 @@ process_object_for_domain_clearing (char *start, MonoDomain *domain)
 			((MonoRealProxy*)start)->unwrapped_server = NULL;
 		}
 	}
+#endif
 }
 
 static MonoDomain *check_domain = NULL;
@@ -1103,9 +1104,10 @@ mono_gc_clear_domain (MonoDomain * domain)
 	major_collector.iterate_objects (TRUE, FALSE, (IterateObjectCallbackFunc)clear_domain_free_major_non_pinned_object_callback, domain);
 	major_collector.iterate_objects (FALSE, TRUE, (IterateObjectCallbackFunc)clear_domain_free_major_pinned_object_callback, domain);
 
-	if (G_UNLIKELY (do_pin_stats)) {
-		if (domain == mono_get_root_domain ())
+	if (domain == mono_get_root_domain ()) {
+		if (G_UNLIKELY (do_pin_stats))
 			sgen_pin_stats_print_class_stats ();
+		sgen_object_layout_dump (stdout);
 	}
 
 	UNLOCK_GC;
@@ -1124,6 +1126,8 @@ void
 sgen_add_to_global_remset (gpointer ptr, gpointer obj)
 {
 	SGEN_ASSERT (5, sgen_ptr_in_nursery (obj), "Target pointer of global remset must be in the nursery");
+
+	HEAVY_STAT (++stat_wbarrier_add_to_global_remset);
 
 	if (!major_collector.is_concurrent) {
 		SGEN_ASSERT (5, current_collection_generation != -1, "Global remsets can only be added during collections");
@@ -1145,7 +1149,6 @@ sgen_add_to_global_remset (gpointer ptr, gpointer obj)
 	SGEN_LOG (8, "Adding global remset for %p", ptr);
 	binary_protocol_global_remset (ptr, obj, (gpointer)SGEN_LOAD_VTABLE (obj));
 
-	HEAVY_STAT (++stat_global_remsets_added);
 
 #ifdef ENABLE_DTRACE
 	if (G_UNLIKELY (MONO_GC_GLOBAL_REMSET_ADD_ENABLED ())) {
@@ -1868,7 +1871,7 @@ sgen_get_current_object_ops (void){
 
 
 static void
-finish_gray_stack (char *start_addr, char *end_addr, int generation, GrayQueue *queue)
+finish_gray_stack (int generation, GrayQueue *queue)
 {
 	TV_DECLARE (atv);
 	TV_DECLARE (btv);
@@ -1876,6 +1879,8 @@ finish_gray_stack (char *start_addr, char *end_addr, int generation, GrayQueue *
 	CopyOrMarkObjectFunc copy_func = current_object_ops.copy_or_mark_object;
 	ScanObjectFunc scan_func = current_object_ops.scan_object;
 	ScanCopyContext ctx = { scan_func, copy_func, queue };
+	char *start_addr = generation == GENERATION_NURSERY ? sgen_get_nursery_start () : NULL;
+	char *end_addr = generation == GENERATION_NURSERY ? sgen_get_nursery_end () : (char*)-1;
 
 	/*
 	 * We copied all the reachable objects. Now it's the time to copy
@@ -1916,8 +1921,6 @@ finish_gray_stack (char *start_addr, char *end_addr, int generation, GrayQueue *
 	} while (!done_with_ephemerons);
 
 	sgen_scan_togglerefs (start_addr, end_addr, ctx);
-	if (generation == GENERATION_OLD)
-		sgen_scan_togglerefs (sgen_get_nursery_start (), sgen_get_nursery_end (), ctx);
 
 	if (sgen_need_bridge_processing ()) {
 		sgen_collect_bridge_objects (generation, ctx);
@@ -2199,6 +2202,7 @@ init_stats (void)
 	mono_counters_register ("Number of pinned objects", MONO_COUNTER_GC | MONO_COUNTER_LONG, &stat_pinned_objects);
 
 #ifdef HEAVY_STATISTICS
+	mono_counters_register ("WBarrier remember pointer", MONO_COUNTER_GC | MONO_COUNTER_INT, &stat_wbarrier_add_to_global_remset);
 	mono_counters_register ("WBarrier set field", MONO_COUNTER_GC | MONO_COUNTER_INT, &stat_wbarrier_set_field);
 	mono_counters_register ("WBarrier set arrayref", MONO_COUNTER_GC | MONO_COUNTER_INT, &stat_wbarrier_set_arrayref);
 	mono_counters_register ("WBarrier arrayref copy", MONO_COUNTER_GC | MONO_COUNTER_INT, &stat_wbarrier_arrayref_copy);
@@ -2539,9 +2543,6 @@ collect_nursery (SgenGrayQueue *unpin_queue, gboolean finish_up_concurrent_mark)
 	stat_minor_gcs++;
 	gc_stats.minor_gc_count ++;
 
-	if (remset.prepare_for_minor_collection)
-		remset.prepare_for_minor_collection ();
-
 	MONO_GC_CHECKPOINT_1 (GENERATION_NURSERY);
 
 	sgen_process_fin_stage_entries ();
@@ -2579,14 +2580,6 @@ collect_nursery (SgenGrayQueue *unpin_queue, gboolean finish_up_concurrent_mark)
 		sgen_check_consistency ();
 
 	sgen_workers_start_all_workers ();
-
-	/*
-	 * Perform the sequential part of remembered set scanning.
-	 * This usually involves scanning global information that might later be produced by evacuation.
-	 */
-	if (remset.begin_scan_remsets)
-		remset.begin_scan_remsets (sgen_get_nursery_start (), nursery_next, WORKERS_DISTRIBUTE_GRAY_QUEUE);
-
 	sgen_workers_start_marking ();
 
 	frssjd = sgen_alloc_internal_dynamic (sizeof (FinishRememberedSetScanJobData), INTERNAL_MEM_WORKER_JOB_DATA, TRUE);
@@ -2667,7 +2660,7 @@ collect_nursery (SgenGrayQueue *unpin_queue, gboolean finish_up_concurrent_mark)
 
 	MONO_GC_CHECKPOINT_8 (GENERATION_NURSERY);
 
-	finish_gray_stack (sgen_get_nursery_start (), nursery_next, GENERATION_NURSERY, &gray_queue);
+	finish_gray_stack (GENERATION_NURSERY, &gray_queue);
 	TV_GETTIME (atv);
 	time_minor_finish_gray_stack += TV_ELAPSED (btv, atv);
 	mono_profiler_gc_event (MONO_GC_EVENT_MARK_END, 0);
@@ -2729,8 +2722,7 @@ collect_nursery (SgenGrayQueue *unpin_queue, gboolean finish_up_concurrent_mark)
 
 	g_assert (sgen_gray_object_queue_is_empty (&gray_queue));
 
-	if (remset.finish_minor_collection)
-		remset.finish_minor_collection ();
+	remset.finish_minor_collection ();
 
 	check_scan_starts ();
 
@@ -2834,17 +2826,20 @@ major_copy_or_mark_from_roots (int *old_next_pin_slot, gboolean finish_up_concur
 	SGEN_LOG (6, "Collecting pinned addresses");
 	pin_from_roots ((void*)lowest_heap_address, (void*)highest_heap_address, WORKERS_DISTRIBUTE_GRAY_QUEUE);
 
-	if (!concurrent_collection_in_progress) {
+	if (!concurrent_collection_in_progress || finish_up_concurrent_mark) {
 		if (major_collector.is_concurrent) {
 			/*
 			 * The concurrent major collector cannot evict
 			 * yet, so we need to pin cemented objects to
 			 * not break some asserts.
+			 *
+			 * FIXME: We could evict now!
 			 */
 			sgen_cement_iterate (pin_stage_object_callback, NULL);
 		}
 
-		sgen_cement_reset ();
+		if (!concurrent_collection_in_progress)
+			sgen_cement_reset ();
 	}
 
 	sgen_optimize_pin_queue (0);
@@ -3100,8 +3095,6 @@ major_finish_collection (const char *reason, int old_next_pin_slot, gboolean sca
 	LOSObject *bigobj, *prevbo;
 	TV_DECLARE (atv);
 	TV_DECLARE (btv);
-	char *heap_start = NULL;
-	char *heap_end = (char*)-1;
 
 	TV_GETTIME (btv);
 
@@ -3131,7 +3124,7 @@ major_finish_collection (const char *reason, int old_next_pin_slot, gboolean sca
 	g_assert (sgen_section_gray_queue_is_empty (sgen_workers_get_distribute_section_gray_queue ()));
 
 	/* all the objects in the heap */
-	finish_gray_stack (heap_start, heap_end, GENERATION_OLD, &gray_queue);
+	finish_gray_stack (GENERATION_OLD, &gray_queue);
 	TV_GETTIME (atv);
 	time_major_finish_gray_stack += TV_ELAPSED (btv, atv);
 
@@ -3930,13 +3923,6 @@ mono_gc_deregister_root (char* addr)
 
 unsigned int sgen_global_stop_count = 0;
 
-void
-sgen_fill_thread_info_for_suspend (SgenThreadInfo *info)
-{
-	if (remset.fill_thread_info_for_suspend)
-		remset.fill_thread_info_for_suspend (info);
-}
-
 int
 sgen_get_current_collection_generation (void)
 {
@@ -4040,10 +4026,6 @@ ptr_on_stack (void *ptr)
 static void*
 sgen_thread_register (SgenThreadInfo* info, void *addr)
 {
-#ifndef HAVE_KW_THREAD
-	SgenThreadInfo *__thread_info__ = info;
-#endif
-
 	LOCK_GC;
 #ifndef HAVE_KW_THREAD
 	info->tlab_start = info->tlab_next = info->tlab_temp_end = info->tlab_real_end = NULL;
@@ -4063,8 +4045,6 @@ sgen_thread_register (SgenThreadInfo* info, void *addr)
 	info->doing_handshake = FALSE;
 	info->thread_is_dying = FALSE;
 	info->stack_start = NULL;
-	info->store_remset_buffer_addr = &STORE_REMSET_BUFFER;
-	info->store_remset_buffer_index_addr = &STORE_REMSET_BUFFER_INDEX;
 	info->stopped_ip = NULL;
 	info->stopped_domain = NULL;
 #ifdef USE_MONO_CTX
@@ -4076,10 +4056,6 @@ sgen_thread_register (SgenThreadInfo* info, void *addr)
 	sgen_init_tlab_info (info);
 
 	binary_protocol_thread_register ((gpointer)mono_thread_info_get_tid (info));
-
-#ifdef HAVE_KW_THREAD
-	store_remset_buffer_index_addr = &store_remset_buffer_index;
-#endif
 
 	/* try to get it with attributes first */
 #if (defined(HAVE_PTHREAD_GETATTR_NP) || defined(HAVE_PTHREAD_ATTR_GET_NP)) && defined(HAVE_PTHREAD_ATTR_GETSTACK)
@@ -4121,9 +4097,6 @@ sgen_thread_register (SgenThreadInfo* info, void *addr)
 	stack_end = info->stack_end;
 #endif
 
-	if (remset.register_thread)
-		remset.register_thread (info);
-
 	SGEN_LOG (3, "registered thread %p (%p) stack end %p", info, (gpointer)mono_thread_info_get_tid (info), info->stack_end);
 
 	if (gc_callbacks.thread_attach_func)
@@ -4131,13 +4104,6 @@ sgen_thread_register (SgenThreadInfo* info, void *addr)
 
 	UNLOCK_GC;
 	return info;
-}
-
-static void
-sgen_wbarrier_cleanup_thread (SgenThreadInfo *p)
-{
-	if (remset.cleanup_thread)
-		remset.cleanup_thread (p);
 }
 
 static void
@@ -4191,7 +4157,6 @@ sgen_thread_unregister (SgenThreadInfo *p)
 		gc_callbacks.thread_detach_func (p->runtime_data);
 		p->runtime_data = NULL;
 	}
-	sgen_wbarrier_cleanup_thread (p);
 
 	mono_threads_unregister_current_thread (p);
 	UNLOCK_GC;
@@ -4783,7 +4748,40 @@ is_critical_method (MonoMethod *method)
 {
 	return mono_runtime_is_critical_method (method) || sgen_is_critical_method (method);
 }
-	
+
+void
+sgen_env_var_error (const char *env_var, const char *fallback, const char *description_format, ...)
+{
+	va_list ap;
+
+	va_start (ap, description_format);
+
+	fprintf (stderr, "Warning: In environment variable `%s': ", env_var);
+	vfprintf (stderr, description_format, ap);
+	if (fallback)
+		fprintf (stderr, " - %s", fallback);
+	fprintf (stderr, "\n");
+
+	va_end (ap);
+}
+
+static gboolean
+parse_double_in_interval (const char *env_var, const char *opt_name, const char *opt, double min, double max, double *result)
+{
+	char *endptr;
+	double val = strtod (opt, &endptr);
+	if (endptr == opt) {
+		sgen_env_var_error (env_var, "Using default value.", "`%s` must be a number.", opt_name);
+		return FALSE;
+	}
+	else if (val < min || val > max) {
+		sgen_env_var_error (env_var, "Using default value.", "`%s` must be between %.2f - %.2f.", opt_name, min, max);
+		return FALSE;
+	}
+	*result = val;
+	return TRUE;
+}
+
 void
 mono_gc_base_init (void)
 {
@@ -4840,7 +4838,7 @@ mono_gc_base_init (void)
 
 	init_user_copy_or_mark_key ();
 
-	if ((env = getenv ("MONO_GC_PARAMS"))) {
+	if ((env = getenv (MONO_GC_PARAMS_NAME))) {
 		opts = g_strsplit (env, ",", -1);
 		for (ptr = opts; *ptr; ++ptr) {
 			char *opt = *ptr;
@@ -4863,8 +4861,6 @@ mono_gc_base_init (void)
 	sgen_register_fixed_internal_mem_type (INTERNAL_MEM_SECTION, SGEN_SIZEOF_GC_MEM_SECTION);
 	sgen_register_fixed_internal_mem_type (INTERNAL_MEM_FINALIZE_READY_ENTRY, sizeof (FinalizeReadyEntry));
 	sgen_register_fixed_internal_mem_type (INTERNAL_MEM_GRAY_QUEUE, sizeof (GrayQueueSection));
-	g_assert (sizeof (GenericStoreRememberedSet) == sizeof (gpointer) * STORE_REMSET_BUFFER_SIZE);
-	sgen_register_fixed_internal_mem_type (INTERNAL_MEM_STORE_REMSET, sizeof (GenericStoreRememberedSet));
 	sgen_register_fixed_internal_mem_type (INTERNAL_MEM_EPHEMERON_LINK, sizeof (EphemeronLinkNode));
 
 #ifndef HAVE_KW_THREAD
@@ -4884,17 +4880,19 @@ mono_gc_base_init (void)
 		sgen_simple_nursery_init (&sgen_minor_collector);
 	} else {
 		if (!strcmp (minor_collector_opt, "simple")) {
+		use_simple_nursery:
 			sgen_simple_nursery_init (&sgen_minor_collector);
 		} else if (!strcmp (minor_collector_opt, "split")) {
 			sgen_split_nursery_init (&sgen_minor_collector);
 			have_split_nursery = TRUE;
 		} else {
-			fprintf (stderr, "Unknown minor collector `%s'.\n", minor_collector_opt);
-			exit (1);
+			sgen_env_var_error (MONO_GC_PARAMS_NAME, "Using `simple` instead.", "Unknown minor collector `%s'.", minor_collector_opt);
+			goto use_simple_nursery;
 		}
 	}
 
 	if (!major_collector_opt || !strcmp (major_collector_opt, "marksweep")) {
+	use_marksweep_major:
 		sgen_marksweep_init (&major_collector);
 	} else if (!major_collector_opt || !strcmp (major_collector_opt, "marksweep-fixed")) {
 		sgen_marksweep_fixed_init (&major_collector);
@@ -4905,15 +4903,14 @@ mono_gc_base_init (void)
 	} else if (!major_collector_opt || !strcmp (major_collector_opt, "marksweep-conc")) {
 		sgen_marksweep_conc_init (&major_collector);
 	} else {
-		fprintf (stderr, "Unknown major collector `%s'.\n", major_collector_opt);
-		exit (1);
+		sgen_env_var_error (MONO_GC_PARAMS_NAME, "Using `marksweep` instead.", "Unknown major collector `%s'.", major_collector_opt);
+		goto use_marksweep_major;
 	}
 
-#ifdef SGEN_HAVE_CARDTABLE
-	use_cardtable = major_collector.supports_cardtable;
-#else
-	use_cardtable = FALSE;
-#endif
+	if (have_split_nursery && major_collector.is_parallel) {
+		sgen_env_var_error (MONO_GC_PARAMS_NAME, "Disabling split minor collector.", "`minor=split` is not supported with the parallel collector yet.");
+		have_split_nursery = FALSE;
+	}
 
 	num_workers = mono_cpu_count ();
 	g_assert (num_workers > 0);
@@ -4927,44 +4924,25 @@ mono_gc_base_init (void)
 	sgen_nursery_size = DEFAULT_NURSERY_SIZE;
 
 	if (opts) {
+		gboolean usage_printed = FALSE;
+
 		for (ptr = opts; *ptr; ++ptr) {
 			char *opt = *ptr;
+			if (!strcmp (opt, ""))
+				continue;
 			if (g_str_has_prefix (opt, "major="))
 				continue;
 			if (g_str_has_prefix (opt, "minor="))
 				continue;
-			if (g_str_has_prefix (opt, "wbarrier=")) {
-				opt = strchr (opt, '=') + 1;
-				if (strcmp (opt, "remset") == 0) {
-					if (major_collector.is_concurrent) {
-						fprintf (stderr, "The concurrent collector does not support the SSB write barrier.\n");
-						exit (1);
-					}
-					use_cardtable = FALSE;
-				} else if (strcmp (opt, "cardtable") == 0) {
-					if (!use_cardtable) {
-						if (major_collector.supports_cardtable)
-							fprintf (stderr, "The cardtable write barrier is not supported on this platform.\n");
-						else
-							fprintf (stderr, "The major collector does not support the cardtable write barrier.\n");
-						exit (1);
-					}
-				} else {
-					fprintf (stderr, "wbarrier must either be `remset' or `cardtable'.");
-					exit (1);
-				}
-				continue;
-			}
 			if (g_str_has_prefix (opt, "max-heap-size=")) {
+				glong max_heap_candidate = 0;
 				opt = strchr (opt, '=') + 1;
-				if (*opt && mono_gc_parse_environment_string_extract_number (opt, &max_heap)) {
-					if ((max_heap & (mono_pagesize () - 1))) {
-						fprintf (stderr, "max-heap-size size must be a multiple of %d.\n", mono_pagesize ());
-						exit (1);
-					}
+				if (*opt && mono_gc_parse_environment_string_extract_number (opt, &max_heap_candidate)) {
+					max_heap = (max_heap_candidate + mono_pagesize () - 1) & ~(glong)(mono_pagesize () - 1);
+					if (max_heap != max_heap_candidate)
+						sgen_env_var_error (MONO_GC_PARAMS_NAME, "Rounding up.", "`max-heap-size` size must be a multiple of %d.", mono_pagesize ());
 				} else {
-					fprintf (stderr, "max-heap-size must be an integer.\n");
-					exit (1);
+					sgen_env_var_error (MONO_GC_PARAMS_NAME, NULL, "`max-heap-size` must be an integer.");
 				}
 				continue;
 			}
@@ -4972,12 +4950,11 @@ mono_gc_base_init (void)
 				opt = strchr (opt, '=') + 1;
 				if (*opt && mono_gc_parse_environment_string_extract_number (opt, &soft_limit)) {
 					if (soft_limit <= 0) {
-						fprintf (stderr, "soft-heap-limit must be positive.\n");
-						exit (1);
+						sgen_env_var_error (MONO_GC_PARAMS_NAME, NULL, "`soft-heap-limit` must be positive.");
+						soft_limit = 0;
 					}
 				} else {
-					fprintf (stderr, "soft-heap-limit must be an integer.\n");
-					exit (1);
+					sgen_env_var_error (MONO_GC_PARAMS_NAME, NULL, "`soft-heap-limit` must be an integer.");
 				}
 				continue;
 			}
@@ -4985,18 +4962,18 @@ mono_gc_base_init (void)
 				long val;
 				char *endptr;
 				if (!major_collector.is_parallel) {
-					fprintf (stderr, "The workers= option can only be used for parallel collectors.");
-					exit (1);
+					sgen_env_var_error (MONO_GC_PARAMS_NAME, "Ignoring.", "The `workers` option can only be used for parallel collectors.");
+					continue;
 				}
 				opt = strchr (opt, '=') + 1;
 				val = strtol (opt, &endptr, 10);
 				if (!*opt || *endptr) {
-					fprintf (stderr, "Cannot parse the workers= option value.");
-					exit (1);
+					sgen_env_var_error (MONO_GC_PARAMS_NAME, "Ignoring.", "Cannot parse the `workers` option value.");
+					continue;
 				}
 				if (val <= 0 || val > 16) {
-					fprintf (stderr, "The number of workers must be in the range 1 to 16.");
-					exit (1);
+					sgen_env_var_error (MONO_GC_PARAMS_NAME, "Using default value.", "The number of `workers` must be in the range 1 to 16.");
+					continue;
 				}
 				num_workers = (int)val;
 				continue;
@@ -5008,8 +4985,8 @@ mono_gc_base_init (void)
 				} else if (!strcmp (opt, "conservative")) {
 					conservative_stack_mark = TRUE;
 				} else {
-					fprintf (stderr, "Invalid value '%s' for stack-mark= option, possible values are: 'precise', 'conservative'.\n", opt);
-					exit (1);
+					sgen_env_var_error (MONO_GC_PARAMS_NAME, conservative_stack_mark ? "Using `conservative`." : "Using `precise`.",
+							"Invalid value `%s` for `stack-mark` option, possible values are: `precise`, `conservative`.", opt);
 				}
 				continue;
 			}
@@ -5023,61 +5000,53 @@ mono_gc_base_init (void)
 				long val;
 				opt = strchr (opt, '=') + 1;
 				if (*opt && mono_gc_parse_environment_string_extract_number (opt, &val)) {
-					sgen_nursery_size = val;
 #ifdef SGEN_ALIGN_NURSERY
 					if ((val & (val - 1))) {
-						fprintf (stderr, "The nursery size must be a power of two.\n");
-						exit (1);
+						sgen_env_var_error (MONO_GC_PARAMS_NAME, "Using default value.", "`nursery-size` must be a power of two.");
+						continue;
 					}
 
 					if (val < SGEN_MAX_NURSERY_WASTE) {
-						fprintf (stderr, "The nursery size must be at least %d bytes.\n", SGEN_MAX_NURSERY_WASTE);
-						exit (1);
+						sgen_env_var_error (MONO_GC_PARAMS_NAME, "Using default value.",
+								"`nursery-size` must be at least %d bytes.\n", SGEN_MAX_NURSERY_WASTE);
+						continue;
 					}
 
+					sgen_nursery_size = val;
 					sgen_nursery_bits = 0;
 					while (1 << (++ sgen_nursery_bits) != sgen_nursery_size)
 						;
+#else
+					sgen_nursery_size = val;
 #endif
 				} else {
-					fprintf (stderr, "nursery-size must be an integer.\n");
-					exit (1);
+					sgen_env_var_error (MONO_GC_PARAMS_NAME, "Using default value.", "`nursery-size` must be an integer.");
+					continue;
 				}
 				continue;
 			}
 #endif
 			if (g_str_has_prefix (opt, "save-target-ratio=")) {
-				char *endptr;
+				double val;
 				opt = strchr (opt, '=') + 1;
-				save_target = strtod (opt, &endptr);
-				if (endptr == opt) {
-					fprintf (stderr, "save-target-ratio must be a number.");
-					exit (1);
-				}
-				if (save_target < SGEN_MIN_SAVE_TARGET_RATIO || save_target > SGEN_MAX_SAVE_TARGET_RATIO) {
-					fprintf (stderr, "save-target-ratio must be between %.2f - %.2f.", SGEN_MIN_SAVE_TARGET_RATIO, SGEN_MAX_SAVE_TARGET_RATIO);
-					exit (1);
+				if (parse_double_in_interval (MONO_GC_PARAMS_NAME, "save-target-ratio", opt,
+						SGEN_MIN_SAVE_TARGET_RATIO, SGEN_MAX_SAVE_TARGET_RATIO, &val)) {
+					save_target = val;
 				}
 				continue;
 			}
 			if (g_str_has_prefix (opt, "default-allowance-ratio=")) {
-				char *endptr;
+				double val;
 				opt = strchr (opt, '=') + 1;
-
-				allowance_ratio = strtod (opt, &endptr);
-				if (endptr == opt) {
-					fprintf (stderr, "save-target-ratio must be a number.");
-					exit (1);
-				}
-				if (allowance_ratio < SGEN_MIN_ALLOWANCE_NURSERY_SIZE_RATIO || allowance_ratio > SGEN_MIN_ALLOWANCE_NURSERY_SIZE_RATIO) {
-					fprintf (stderr, "default-allowance-ratio must be between %.2f - %.2f.", SGEN_MIN_ALLOWANCE_NURSERY_SIZE_RATIO, SGEN_MIN_ALLOWANCE_NURSERY_SIZE_RATIO);
-					exit (1);
+				if (parse_double_in_interval (MONO_GC_PARAMS_NAME, "default-allowance-ratio", opt,
+						SGEN_MIN_ALLOWANCE_NURSERY_SIZE_RATIO, SGEN_MIN_ALLOWANCE_NURSERY_SIZE_RATIO, &val)) {
+					allowance_ratio = val;
 				}
 				continue;
 			}
 			if (g_str_has_prefix (opt, "allow-synchronous-major=")) {
 				if (!major_collector.is_concurrent) {
-					fprintf (stderr, "Warning: allow-synchronous-major has no effect because the major collector is not concurrent.\n");
+					sgen_env_var_error (MONO_GC_PARAMS_NAME, "Ignoring.", "`allow-synchronous-major` is only valid for the concurrent major collector.");
 					continue;
 				}
 
@@ -5088,8 +5057,8 @@ mono_gc_base_init (void)
 				} else if (!strcmp (opt, "no")) {
 					allow_synchronous_major = FALSE;
 				} else {
-					fprintf (stderr, "allow-synchronous-major must be either `yes' or `no'.\n");
-					exit (1);
+					sgen_env_var_error (MONO_GC_PARAMS_NAME, "Using default value.", "`allow-synchronous-major` must be either `yes' or `no'.");
+					continue;
 				}
 			}
 
@@ -5108,7 +5077,12 @@ mono_gc_base_init (void)
 			if (sgen_minor_collector.handle_gc_param && sgen_minor_collector.handle_gc_param (opt))
 				continue;
 
-			fprintf (stderr, "MONO_GC_PARAMS must be a comma-delimited list of one or more of the following:\n");
+			sgen_env_var_error (MONO_GC_PARAMS_NAME, "Ignoring.", "Unknown option `%s`.", opt);
+
+			if (usage_printed)
+				continue;
+
+			fprintf (stderr, "\n%s must be a comma-delimited list of one or more of the following:\n", MONO_GC_PARAMS_NAME);
 			fprintf (stderr, "  max-heap-size=N (where N is an integer, possibly with a k, m or a g suffix)\n");
 			fprintf (stderr, "  soft-heap-limit=n (where N is an integer, possibly with a k, m or a g suffix)\n");
 			fprintf (stderr, "  nursery-size=N (where N is an integer, possibly with a k, m or a g suffix)\n");
@@ -5126,7 +5100,9 @@ mono_gc_base_init (void)
 			fprintf (stderr, " Experimental options:\n");
 			fprintf (stderr, "  save-target-ratio=R (where R must be between %.2f - %.2f).\n", SGEN_MIN_SAVE_TARGET_RATIO, SGEN_MAX_SAVE_TARGET_RATIO);
 			fprintf (stderr, "  default-allowance-ratio=R (where R must be between %.2f - %.2f).\n", SGEN_MIN_ALLOWANCE_NURSERY_SIZE_RATIO, SGEN_MAX_ALLOWANCE_NURSERY_SIZE_RATIO);
-			exit (1);
+			fprintf (stderr, "\n");
+
+			usage_printed = TRUE;
 		}
 		g_strfreev (opts);
 	}
@@ -5146,10 +5122,14 @@ mono_gc_base_init (void)
 
 	sgen_cement_init (cement_enabled);
 
-	if ((env = getenv ("MONO_GC_DEBUG"))) {
+	if ((env = getenv (MONO_GC_DEBUG_NAME))) {
+		gboolean usage_printed = FALSE;
+
 		opts = g_strsplit (env, ",", -1);
 		for (ptr = opts; ptr && *ptr; ptr ++) {
 			char *opt = *ptr;
+			if (!strcmp (opt, ""))
+				continue;
 			if (opt [0] >= '0' && opt [0] <= '9') {
 				gc_debug_level = atoi (opt);
 				opt++;
@@ -5205,8 +5185,8 @@ mono_gc_base_init (void)
 				do_verify_nursery = TRUE;
 			} else if (!strcmp (opt, "check-concurrent")) {
 				if (!major_collector.is_concurrent) {
-					fprintf (stderr, "Error: check-concurrent only world with concurrent major collectors.\n");
-					exit (1);
+					sgen_env_var_error (MONO_GC_DEBUG_NAME, "Ignoring.", "`check-concurrent` only works with concurrent major collectors.");
+					continue;
 				}
 				do_concurrent_checks = TRUE;
 			} else if (!strcmp (opt, "dump-nursery-at-minor-gc")) {
@@ -5229,13 +5209,15 @@ mono_gc_base_init (void)
 			} else if (g_str_has_prefix (opt, "binary-protocol=")) {
 				char *filename = strchr (opt, '=') + 1;
 				binary_protocol_init (filename);
-				if (use_cardtable)
-					fprintf (stderr, "Warning: Cardtable write barriers will not be binary-protocolled.\n");
 #endif
 			} else {
-				fprintf (stderr, "Invalid format for the MONO_GC_DEBUG env variable: '%s'\n", env);
-				fprintf (stderr, "The format is: MONO_GC_DEBUG=[l[:filename]|<option>]+ where l is a debug level 0-9.\n");
-				fprintf (stderr, "Valid options are:\n");
+				sgen_env_var_error (MONO_GC_DEBUG_NAME, "Ignoring.", "Unknown option `%s`.", opt);
+
+				if (usage_printed)
+					continue;
+
+				fprintf (stderr, "\n%s must be of the format [<l>[:<filename>]|<option>]+ where <l> is a debug level 0-9.\n", MONO_GC_DEBUG_NAME);
+				fprintf (stderr, "Valid <option>s are:\n");
 				fprintf (stderr, "  collect-before-allocs[=<n>]\n");
 				fprintf (stderr, "  verify-before-allocs[=<n>]\n");
 				fprintf (stderr, "  check-at-minor-collections\n");
@@ -5258,7 +5240,9 @@ mono_gc_base_init (void)
 #ifdef SGEN_BINARY_PROTOCOL
 				fprintf (stderr, "  binary-protocol=<filename>\n");
 #endif
-				exit (1);
+				fprintf (stderr, "\n");
+
+				usage_printed = TRUE;
 			}
 		}
 		g_strfreev (opts);
@@ -5266,12 +5250,13 @@ mono_gc_base_init (void)
 
 	if (major_collector.is_parallel) {
 		if (heap_dump_file) {
-			fprintf (stderr, "Error: Cannot do heap dump with the parallel collector.\n");
-			exit (1);
+			sgen_env_var_error (MONO_GC_DEBUG_NAME, "Disabling.", "Cannot do `heap-dump` with the parallel collector.");
+			fclose (heap_dump_file);
+			heap_dump_file = NULL;
 		}
 		if (do_pin_stats) {
-			fprintf (stderr, "Error: Cannot gather pinning statistics with the parallel collector.\n");
-			exit (1);
+			sgen_env_var_error (MONO_GC_DEBUG_NAME, "Disabling.", "`print-pinning` is not supported with the parallel collector.");
+			do_pin_stats = FALSE;
 		}
 	}
 
@@ -5282,15 +5267,7 @@ mono_gc_base_init (void)
 
 	memset (&remset, 0, sizeof (remset));
 
-#ifdef SGEN_HAVE_CARDTABLE
-	if (use_cardtable)
-		sgen_card_table_init (&remset);
-	else
-#endif
-		sgen_ssb_init (&remset);
-
-	if (remset.register_thread)
-		remset.register_thread (mono_thread_info_current ());
+	sgen_card_table_init (&remset);
 
 	gc_initialized = 1;
 }
@@ -5392,21 +5369,12 @@ mono_gc_get_write_barrier (void)
 	MonoMethodSignature *sig;
 #ifdef MANAGED_WBARRIER
 	int i, nursery_check_labels [3];
-	int label_no_wb_3, label_no_wb_4, label_need_wb, label_slow_path;
-	int buffer_var, buffer_index_var, dummy_var;
 
 #ifdef HAVE_KW_THREAD
-	int stack_end_offset = -1, store_remset_buffer_offset = -1;
-	int store_remset_buffer_index_offset = -1, store_remset_buffer_index_addr_offset = -1;
+	int stack_end_offset = -1;
 
 	MONO_THREAD_VAR_OFFSET (stack_end, stack_end_offset);
 	g_assert (stack_end_offset != -1);
-	MONO_THREAD_VAR_OFFSET (store_remset_buffer, store_remset_buffer_offset);
-	g_assert (store_remset_buffer_offset != -1);
-	MONO_THREAD_VAR_OFFSET (store_remset_buffer_index, store_remset_buffer_index_offset);
-	g_assert (store_remset_buffer_index_offset != -1);
-	MONO_THREAD_VAR_OFFSET (store_remset_buffer_index_addr, store_remset_buffer_index_addr_offset);
-	g_assert (store_remset_buffer_index_addr_offset != -1);
 #endif
 #endif
 
@@ -5424,132 +5392,49 @@ mono_gc_get_write_barrier (void)
 
 #ifndef DISABLE_JIT
 #ifdef MANAGED_WBARRIER
-	if (use_cardtable) {
-		emit_nursery_check (mb, nursery_check_labels);
-		/*
-		addr = sgen_cardtable + ((address >> CARD_BITS) & CARD_MASK)
-		*addr = 1;
+	emit_nursery_check (mb, nursery_check_labels);
+	/*
+	addr = sgen_cardtable + ((address >> CARD_BITS) & CARD_MASK)
+	*addr = 1;
 
-		sgen_cardtable: 
-			LDC_PTR sgen_cardtable
+	sgen_cardtable:
+		LDC_PTR sgen_cardtable
 
-		address >> CARD_BITS
-			LDARG_0
-			LDC_I4 CARD_BITS
-			SHR_UN
-		if (SGEN_HAVE_OVERLAPPING_CARDS) {
-			LDC_PTR card_table_mask
-			AND
-		}
+	address >> CARD_BITS
+		LDARG_0
+		LDC_I4 CARD_BITS
+		SHR_UN
+	if (SGEN_HAVE_OVERLAPPING_CARDS) {
+		LDC_PTR card_table_mask
 		AND
-		ldc_i4_1
-		stind_i1
-		*/
-		mono_mb_emit_ptr (mb, sgen_cardtable);
-		mono_mb_emit_ldarg (mb, 0);
-		mono_mb_emit_icon (mb, CARD_BITS);
-		mono_mb_emit_byte (mb, CEE_SHR_UN);
-#ifdef SGEN_HAVE_OVERLAPPING_CARDS
-		mono_mb_emit_ptr (mb, (gpointer)CARD_MASK);
-		mono_mb_emit_byte (mb, CEE_AND);
-#endif
-		mono_mb_emit_byte (mb, CEE_ADD);
-		mono_mb_emit_icon (mb, 1);
-		mono_mb_emit_byte (mb, CEE_STIND_I1);
-
-		// return;
-		for (i = 0; i < 3; ++i) {
-			if (nursery_check_labels [i])
-				mono_mb_patch_branch (mb, nursery_check_labels [i]);
-		}		
-		mono_mb_emit_byte (mb, CEE_RET);
-	} else if (mono_runtime_has_tls_get ()) {
-		emit_nursery_check (mb, nursery_check_labels);
-
-		// if (ptr >= stack_end) goto need_wb;
-		mono_mb_emit_ldarg (mb, 0);
-		EMIT_TLS_ACCESS (mb, stack_end, stack_end_offset);
-		label_need_wb = mono_mb_emit_branch (mb, CEE_BGE_UN);
-
-		// if (ptr >= stack_start) return;
-		dummy_var = mono_mb_add_local (mb, &mono_defaults.int_class->byval_arg);
-		mono_mb_emit_ldarg (mb, 0);
-		mono_mb_emit_ldloc_addr (mb, dummy_var);
-		label_no_wb_3 = mono_mb_emit_branch (mb, CEE_BGE_UN);
-
-		// need_wb:
-		mono_mb_patch_branch (mb, label_need_wb);
-
-		// buffer = STORE_REMSET_BUFFER;
-		buffer_var = mono_mb_add_local (mb, &mono_defaults.int_class->byval_arg);
-		EMIT_TLS_ACCESS (mb, store_remset_buffer, store_remset_buffer_offset);
-		mono_mb_emit_stloc (mb, buffer_var);
-
-		// buffer_index = STORE_REMSET_BUFFER_INDEX;
-		buffer_index_var = mono_mb_add_local (mb, &mono_defaults.int_class->byval_arg);
-		EMIT_TLS_ACCESS (mb, store_remset_buffer_index, store_remset_buffer_index_offset);
-		mono_mb_emit_stloc (mb, buffer_index_var);
-
-		// if (buffer [buffer_index] == ptr) return;
-		mono_mb_emit_ldloc (mb, buffer_var);
-		mono_mb_emit_ldloc (mb, buffer_index_var);
-		g_assert (sizeof (gpointer) == 4 || sizeof (gpointer) == 8);
-		mono_mb_emit_icon (mb, sizeof (gpointer) == 4 ? 2 : 3);
-		mono_mb_emit_byte (mb, CEE_SHL);
-		mono_mb_emit_byte (mb, CEE_ADD);
-		mono_mb_emit_byte (mb, CEE_LDIND_I);
-		mono_mb_emit_ldarg (mb, 0);
-		label_no_wb_4 = mono_mb_emit_branch (mb, CEE_BEQ);
-
-		// ++buffer_index;
-		mono_mb_emit_ldloc (mb, buffer_index_var);
-		mono_mb_emit_icon (mb, 1);
-		mono_mb_emit_byte (mb, CEE_ADD);
-		mono_mb_emit_stloc (mb, buffer_index_var);
-
-		// if (buffer_index >= STORE_REMSET_BUFFER_SIZE) goto slow_path;
-		mono_mb_emit_ldloc (mb, buffer_index_var);
-		mono_mb_emit_icon (mb, STORE_REMSET_BUFFER_SIZE);
-		label_slow_path = mono_mb_emit_branch (mb, CEE_BGE);
-
-		// buffer [buffer_index] = ptr;
-		mono_mb_emit_ldloc (mb, buffer_var);
-		mono_mb_emit_ldloc (mb, buffer_index_var);
-		g_assert (sizeof (gpointer) == 4 || sizeof (gpointer) == 8);
-		mono_mb_emit_icon (mb, sizeof (gpointer) == 4 ? 2 : 3);
-		mono_mb_emit_byte (mb, CEE_SHL);
-		mono_mb_emit_byte (mb, CEE_ADD);
-		mono_mb_emit_ldarg (mb, 0);
-		mono_mb_emit_byte (mb, CEE_STIND_I);
-
-		// STORE_REMSET_BUFFER_INDEX = buffer_index;
-		EMIT_TLS_ACCESS (mb, store_remset_buffer_index_addr, store_remset_buffer_index_addr_offset);
-		mono_mb_emit_ldloc (mb, buffer_index_var);
-		mono_mb_emit_byte (mb, CEE_STIND_I);
-
-		// return;
-		for (i = 0; i < 3; ++i) {
-			if (nursery_check_labels [i])
-				mono_mb_patch_branch (mb, nursery_check_labels [i]);
-		}
-		mono_mb_patch_branch (mb, label_no_wb_3);
-		mono_mb_patch_branch (mb, label_no_wb_4);
-		mono_mb_emit_byte (mb, CEE_RET);
-
-		// slow path
-		mono_mb_patch_branch (mb, label_slow_path);
-
-		mono_mb_emit_ldarg (mb, 0);
-		mono_mb_emit_icall (mb, mono_gc_wbarrier_generic_nostore);
-		mono_mb_emit_byte (mb, CEE_RET);
-	} else
-#endif
-	{
-		mono_mb_emit_ldarg (mb, 0);
-		mono_mb_emit_icall (mb, mono_gc_wbarrier_generic_nostore);
-		mono_mb_emit_byte (mb, CEE_RET);
 	}
+	AND
+	ldc_i4_1
+	stind_i1
+	*/
+	mono_mb_emit_ptr (mb, sgen_cardtable);
+	mono_mb_emit_ldarg (mb, 0);
+	mono_mb_emit_icon (mb, CARD_BITS);
+	mono_mb_emit_byte (mb, CEE_SHR_UN);
+#ifdef SGEN_HAVE_OVERLAPPING_CARDS
+	mono_mb_emit_ptr (mb, (gpointer)CARD_MASK);
+	mono_mb_emit_byte (mb, CEE_AND);
+#endif
+	mono_mb_emit_byte (mb, CEE_ADD);
+	mono_mb_emit_icon (mb, 1);
+	mono_mb_emit_byte (mb, CEE_STIND_I1);
 
+	// return;
+	for (i = 0; i < 3; ++i) {
+		if (nursery_check_labels [i])
+			mono_mb_patch_branch (mb, nursery_check_labels [i]);
+	}
+	mono_mb_emit_byte (mb, CEE_RET);
+#else
+	mono_mb_emit_ldarg (mb, 0);
+	mono_mb_emit_icall (mb, mono_gc_wbarrier_generic_nostore);
+	mono_mb_emit_byte (mb, CEE_RET);
+#endif
 #endif
 	res = mono_mb_create_method (mb, sig, 16);
 	mono_mb_free (mb);

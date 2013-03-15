@@ -312,6 +312,12 @@ namespace Mono.CSharp {
 			}
 		}
 
+		public override Location StartLocation {
+			get {
+				return target.StartLocation;
+			}
+		}
+
 		public override bool ContainsEmitWithAwait ()
 		{
 			return target.ContainsEmitWithAwait () || source.ContainsEmitWithAwait ();

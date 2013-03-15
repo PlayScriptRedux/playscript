@@ -531,10 +531,10 @@ namespace System {
 							string path = line.Substring (delim_index + 1).Trim ('"');
 							bool relative = false;
 							
-							if (path.StartsWith ("$HOME/")) {
+							if (path.StartsWithOrdinalUnchecked ("$HOME/")) {
 								relative = true;
 								path = path.Substring (6);
-							} else if (!path.StartsWith ("/")) {
+							} else if (!path.StartsWithOrdinalUnchecked ("/")) {
 								relative = true;
 							}
 							
@@ -870,10 +870,14 @@ namespace System {
 		}
 
 		// private methods
-
+#if MOBILE 
+		internal const bool IsRunningOnWindows = false;
+#else
 		internal static bool IsRunningOnWindows {
 			get { return ((int) Platform < 4); }
 		}
+#endif
+
 #if !NET_2_1
 		//
 		// Used by gacutil.exe

@@ -72,6 +72,7 @@ int WSAAPI getnameinfo(const struct sockaddr*,socklen_t,char*,DWORD,
 #include <mono/metadata/threads-types.h>
 #include <mono/metadata/socket-io.h>
 #include <mono/metadata/assembly.h>
+#include <mono/metadata/runtime.h>
 #include <mono/utils/mono-semaphore.h>
 #include <mono/utils/mono-error-internals.h>
 #include <mono/utils/mono-stack-unwinding.h>
@@ -280,7 +281,7 @@ typedef struct {
 #define HEADER_LENGTH 11
 
 #define MAJOR_VERSION 2
-#define MINOR_VERSION 22
+#define MINOR_VERSION 23
 
 typedef enum {
 	CMD_SET_VM = 1,
@@ -482,6 +483,7 @@ typedef enum {
 	CMD_TYPE_GET_METHODS_BY_NAME_FLAGS = 15,
 	CMD_TYPE_GET_INTERFACES = 16,
 	CMD_TYPE_GET_INTERFACE_MAP = 17,
+	CMD_TYPE_IS_INITIALIZED = 18
 } CmdType;
 
 typedef enum {
@@ -5522,7 +5524,7 @@ obj_is_of_type (MonoObject *obj, MonoType *t)
 {
 	MonoClass *klass = obj->vtable->klass;
 	if (!mono_class_is_assignable_from (mono_class_from_mono_type (t), klass)) {
-		if (klass == mono_defaults.transparent_proxy_class) {
+		if (mono_class_is_transparent_proxy (klass)) {
 			klass = ((MonoTransparentProxy *)obj)->remote_class->proxy_class;
 			if (mono_class_is_assignable_from (mono_class_from_mono_type (t), klass)) {
 				return TRUE;
@@ -6437,9 +6439,7 @@ vm_commands (int command, int id, guint8 *p, guint8 *end, Buffer *buf)
 			while (suspend_count > 0)
 				resume_vm ();
 
-			mono_runtime_set_shutting_down ();
-
-			mono_threads_set_shutting_down ();
+			mono_runtime_shutdown ();
 
 			/* Suspend all managed threads since the runtime is going away */
 			DEBUG(1, fprintf (log_file, "Suspending all threads...\n"));
@@ -7674,6 +7674,15 @@ type_commands_internal (int command, MonoClass *klass, MonoDomain *domain, guint
 			for (i = 0; i < nmethods; ++i)
 				buffer_add_methodid (buf, domain, klass->vtable [i + ioffset]);
 		}
+		break;
+	}
+	case CMD_TYPE_IS_INITIALIZED: {
+		MonoVTable *vtable = mono_class_vtable (domain, klass);
+
+		if (vtable)
+			buffer_add_int (buf, (vtable->initialized || vtable->init_failed) ? 1 : 0);
+		else
+			buffer_add_int (buf, 0);
 		break;
 	}
 	default:

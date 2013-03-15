@@ -30,11 +30,10 @@
 #include "metadata/sgen-cardtable.h"
 #include "metadata/sgen-memory-governor.h"
 #include "metadata/sgen-protocol.h"
+#include "metadata/sgen-layout-stats.h"
 #include "utils/mono-counters.h"
 #include "utils/mono-time.h"
 #include "utils/mono-memory-model.h"
-
-#ifdef SGEN_HAVE_CARDTABLE
 
 //#define CARDTABLE_STATS
 
@@ -492,8 +491,10 @@ sgen_cardtable_scan_object (char *obj, mword block_obj_size, guint8 *cards, gboo
 
 	HEAVY_STAT (++large_objects);
 
-	if (!SGEN_VTABLE_HAS_REFERENCES (vt))
+	if (!SGEN_VTABLE_HAS_REFERENCES (vt)) {
+		sgen_object_layout_scanned_bitmap (0);
 		return;
+	}
 
 	if (vt->rank) {
 		guint8 *card_data, *card_base;
@@ -510,6 +511,13 @@ sgen_cardtable_scan_object (char *obj, mword block_obj_size, guint8 *cards, gboo
 
 #ifdef SGEN_HAVE_OVERLAPPING_CARDS
 		guint8 *overflow_scan_end = NULL;
+#endif
+
+#ifdef SGEN_OBJECT_LAYOUT_STATISTICS
+		if (klass->element_class->valuetype)
+			sgen_object_layout_scanned_vtype_array ();
+		else
+			sgen_object_layout_scanned_ref_array ();
 #endif
 
 		if (cards)
@@ -557,7 +565,7 @@ LOOP_HEAD:
 				ScanVTypeFunc scan_vtype_func = sgen_get_current_object_ops ()->scan_vtype;
 
 				for (; elem < card_end; elem += elem_size)
-					scan_vtype_func (elem, desc, queue);
+					scan_vtype_func (elem, desc, queue BINARY_PROTOCOL_ARG (elem_size));
 			} else {
 				CopyOrMarkObjectFunc copy_func = sgen_get_current_object_ops ()->copy_or_mark_object;
 
@@ -723,7 +731,5 @@ mono_gc_get_card_table (int *shift_bits, gpointer *mask)
 {
 	return NULL;
 }
-
-#endif
 
 #endif /*HAVE_SGEN_GC*/

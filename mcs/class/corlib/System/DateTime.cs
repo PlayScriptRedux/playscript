@@ -376,7 +376,7 @@ namespace System
 		DateTime (SerializationInfo info, StreamingContext context)
 		{
 			if (info.HasKey ("dateData")){
-				encoded = info.GetInt64 ("dateData");
+				encoded = (Int64)info.GetUInt64 ("dateData");
 			} else if (info.HasKey ("ticks")){
 				encoded = info.GetInt64 ("ticks") & TicksMask;
 			} else {
@@ -1046,7 +1046,7 @@ namespace System
 			if (maxlength <= 0)
 				maxlength = value.Length;
 
-			if (sPos + maxlength <= s.Length && String.Compare (s, sPos, value, 0, maxlength, true, CultureInfo.InvariantCulture) == 0) {
+			if (sPos + maxlength <= s.Length && String.CompareOrdinalCaseInsensitive (s, sPos, value, 0, maxlength) == 0) {
 				num_parsed = maxlength;
 				return true;
 			}
@@ -2186,7 +2186,7 @@ namespace System
 			info.AddValue ("ticks", t);
 
 			// This is the new .NET format, encodes the kind on the top bits
-			info.AddValue ("dateData", encoded);
+			info.AddValue ("dateData", (UInt64)encoded);
 		}
 		
 #if MONOTOUCH

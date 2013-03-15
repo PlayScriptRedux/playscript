@@ -254,7 +254,7 @@ cominterop_object_is_rcw (MonoObject *obj)
 	if (!obj)
 		return FALSE;
 	klass = mono_object_class (obj);
-	if (klass != mono_defaults.transparent_proxy_class)
+	if (!mono_class_is_transparent_proxy (klass))
 		return FALSE;
 
 	real_proxy = ((MonoTransparentProxy*)obj)->rp;
@@ -608,8 +608,10 @@ mono_cominterop_emit_ptr_to_object_conv (MonoMethodBuilder *mb, MonoType *type, 
 			com_interop_proxy_class = mono_class_from_name (mono_defaults.corlib, "Mono.Interop", "ComInteropProxy");
 		if (!com_interop_proxy_get_proxy)
 			com_interop_proxy_get_proxy = mono_class_get_method_from_name_flags (com_interop_proxy_class, "GetProxy", 2, METHOD_ATTRIBUTE_PRIVATE);
+#ifndef DISABLE_REMOTING
 		if (!get_transparent_proxy)
 			get_transparent_proxy = mono_class_get_method_from_name (mono_defaults.real_proxy_class, "GetTransparentProxy", 0);
+#endif
 
 		real_proxy = mono_mb_add_local (mb, &com_interop_proxy_class->byval_arg);
 
@@ -1456,7 +1458,7 @@ ves_icall_System_Runtime_InteropServices_Marshal_GetIUnknownForObjectInternal (M
 		if (!object)
 			return NULL;
 		klass = mono_object_class (object);
-		if (klass != mono_defaults.transparent_proxy_class) {
+		if (!mono_class_is_transparent_proxy (klass)) {
 			g_assert_not_reached ();
 			return NULL;
 		}
@@ -2075,6 +2077,12 @@ mono_marshal_free_ccw (MonoObject* object)
 
 			/* remove ccw from list */
 			ccw_list = g_list_remove (ccw_list, ccw_iter);
+
+#ifdef HOST_WIN32
+			if (ccw_iter->free_marshaler)
+				ves_icall_System_Runtime_InteropServices_Marshal_ReleaseInternal (ccw_iter->free_marshaler);
+#endif
+
 			g_free (ccw_iter);
 		}
 		else
@@ -2276,10 +2284,6 @@ cominterop_ccw_release (MonoCCWInterface* ccwe)
 		/* allow gc of object */
 		guint32 oldhandle = ccw->gc_handle;
 		g_assert (oldhandle);
-#ifdef HOST_WIN32
-		if (ccw->free_marshaler)
-			ves_icall_System_Runtime_InteropServices_Marshal_ReleaseInternal (ccw->free_marshaler);
-#endif
 		ccw->gc_handle = mono_gchandle_new_weakref (mono_gchandle_get_target (oldhandle), FALSE);
 		mono_gchandle_free (oldhandle);
 	}
@@ -2300,10 +2304,7 @@ cominterop_ccw_getfreethreadedmarshaler (MonoCCW* ccw, MonoObject* object, gpoin
 		int ret = 0;
 		gpointer tunk;
 		tunk = cominterop_get_ccw (object, mono_defaults.iunknown_class);
-		/* remember to addref on QI */
-		cominterop_ccw_addref (tunk);
 		ret = CoCreateFreeThreadedMarshaler (tunk, (LPUNKNOWN*)&ccw->free_marshaler);
-		cominterop_ccw_release(tunk);
 	}
 		
 	if (!ccw->free_marshaler)

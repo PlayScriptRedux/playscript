@@ -144,6 +144,12 @@ Defaults to 128.
 .I nodebug
 Instructs the AOT compiler to not output any debugging information.
 .TP
+.I dwarfdebug
+Instructs the AOT compiler to emit DWARF debugging information. When
+used together with the nodebug option, only DWARF debugging
+information is emitted, but not the information that can be used at
+runtime.
+.TP
 .I nrgctx-trampolines=[number]
 When compiling in full aot mode, the generic sharing trampolines must be precreated
 in the AOT image.  You can add additional method trampolines with this argument.
@@ -1067,15 +1073,6 @@ The default is 512 megabytes.
 Once the heap size gets larger than this size, ignore what the default
 major collection trigger metric says and only allow four nursery size's
 of major heap growth between major collections.
-.TP
-\fBwbarrier=\fIwbarrier\fR
-Specifies which write barrier to use.  Options are `cardtable' and
-`remset'.  The card table barrier is faster but less precise, and only
-supported for the Mark&Sweep major collector on 32 bit platforms.  The
-default is `cardtable' if it is supported, otherwise `remset'. The cardtable
-write barrier is faster and has a more stable and usually smaller
-memory footprint. If the program causes too much pinning during
-thread scan, it might be faster to enable remset.
 .TP
 \fBevacuation-threshold=\fIthreshold\fR
 Sets the evacuation threshold in percent.  This option is only available

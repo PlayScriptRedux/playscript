@@ -1096,13 +1096,16 @@ instantiate_info (MonoDomain *domain, MonoRuntimeGenericContextInfoTemplate *oti
 		return mono_type_get_object (domain, data);
 	case MONO_RGCTX_INFO_METHOD:
 		return data;
-	case MONO_RGCTX_INFO_GENERIC_METHOD_CODE:
-		/*
-		 * We can't create a jump trampoline here, as it cannot be patched.
-		 */
-		return mono_compile_method (data);
+	case MONO_RGCTX_INFO_GENERIC_METHOD_CODE: {
+		gpointer addr;
+
+		addr = mono_compile_method (data);
+		return mini_add_method_trampoline (NULL, data, addr, mono_method_needs_static_rgctx_invoke (data, FALSE));
+	}
+#ifndef DISABLE_REMOTING
 	case MONO_RGCTX_INFO_REMOTING_INVOKE_WITH_CHECK:
 		return mono_compile_method (mono_marshal_get_remoting_invoke_with_check (data));
+#endif
 	case MONO_RGCTX_INFO_METHOD_DELEGATE_CODE:
 		return mono_domain_alloc0 (domain, sizeof (gpointer));
 	case MONO_RGCTX_INFO_CLASS_FIELD:
@@ -1187,7 +1190,11 @@ instantiate_info (MonoDomain *domain, MonoRuntimeGenericContextInfoTemplate *oti
 #ifndef MONO_ARCH_HAVE_IMT
 			NOT_IMPLEMENTED;
 #endif
-			if (method->klass->flags & TYPE_ATTRIBUTE_INTERFACE) {
+			if ((method->klass->parent == mono_defaults.multicastdelegate_class) && (!strcmp (method->name, "Invoke"))) {
+				/* See mono_emit_method_call_full () */
+				/* The gsharedvt trampoline will recognize this constant */
+				vcall_offset = MONO_GSHAREDVT_DEL_INVOKE_VT_OFFSET;
+			} else if (method->klass->flags & TYPE_ATTRIBUTE_INTERFACE) {
 				guint32 imt_slot = mono_method_get_imt_slot (method);
 				vcall_offset = ((gint32)imt_slot - MONO_IMT_SIZE) * SIZEOF_VOID_P;
 			} else {

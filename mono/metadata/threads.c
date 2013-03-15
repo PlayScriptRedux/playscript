@@ -33,6 +33,7 @@
 #include <mono/metadata/monitor.h>
 #include <mono/metadata/gc-internal.h>
 #include <mono/metadata/marshal.h>
+#include <mono/metadata/runtime.h>
 #include <mono/io-layer/io-layer.h>
 #ifndef HOST_WIN32
 #include <mono/io-layer/threads.h>
@@ -2466,6 +2467,12 @@ ves_icall_System_Threading_Thread_VolatileReadFloat (void *ptr)
 	return *((volatile float *) (ptr));
 }
 
+MonoObject*
+ves_icall_System_Threading_Volatile_Read_T (void *ptr)
+{
+	return (MonoObject*)*((volatile MonoObject**)ptr);
+}
+
 void
 ves_icall_System_Threading_Thread_VolatileWrite1 (void *ptr, gint8 value)
 {
@@ -2512,6 +2519,13 @@ void
 ves_icall_System_Threading_Thread_VolatileWriteFloat (void *ptr, float value)
 {
 	*((volatile float *) ptr) = value;
+}
+
+void
+ves_icall_System_Threading_Volatile_Write_T (void *ptr, MonoObject *value)
+{
+	*((volatile MonoObject **) ptr) = value;
+	mono_gc_wbarrier_generic_nostore (ptr);
 }
 
 void mono_thread_init (MonoThreadStartCB start_cb,
@@ -2893,11 +2907,7 @@ void mono_thread_manage (void)
 		THREAD_DEBUG (g_message ("%s: I have %d threads after waiting.", __func__, wait->num));
 	} while(wait->num>0);
 
-	mono_threads_set_shutting_down ();
-
-	/* No new threads will be created after this point */
-
-	mono_runtime_set_shutting_down ();
+	mono_runtime_shutdown ();
 
 	THREAD_DEBUG (g_message ("%s: threadpool cleanup", __func__));
 	mono_thread_pool_cleanup ();
@@ -4603,8 +4613,10 @@ suspend_thread_internal (MonoInternalThread *thread, gboolean interrupt)
 		gboolean running_managed;
 
 		/*A null info usually means the thread is already dead. */
-		if (!(info = mono_thread_info_safe_suspend_sync ((MonoNativeThreadId)(gsize)thread->tid, interrupt)))
+		if (!(info = mono_thread_info_safe_suspend_sync ((MonoNativeThreadId)(gsize)thread->tid, interrupt))) {
+			LeaveCriticalSection (thread->synch_cs);
 			return;
+		}
 
 		ji = mono_thread_info_get_last_managed (info);
 		protected_wrapper = ji && mono_threads_is_critical_method (ji->method);

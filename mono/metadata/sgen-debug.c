@@ -29,7 +29,6 @@
 
 #include "metadata/sgen-gc.h"
 #include "metadata/sgen-cardtable.h"
-#include "metadata/sgen-ssb.h"
 #include "metadata/sgen-protocol.h"
 #include "metadata/sgen-memory-governor.h"
 #include "metadata/sgen-pinning.h"
@@ -50,14 +49,14 @@ void check_object (char *start);
  */
 
 const char*descriptor_types [] = {
+	"INVALID",
 	"run_length",
 	"small_bitmap",
-	"string",
 	"complex",
 	"vector",
-	"array",
 	"large_bitmap",
-	"complex_arr"
+	"complex_arr",
+	"complex_ptrfree"
 };
 
 static char* describe_nursery_ptr (char *ptr, gboolean need_setup);
@@ -173,7 +172,6 @@ check_consistency_callback (char *start, size_t size, void *dummy)
 	GCVTable *vt = (GCVTable*)LOAD_VTABLE (start);
 	SGEN_LOG (8, "Scanning object %p, vtable: %p (%s)", start, vt, vt->klass->name);
 
-#define SCAN_OBJECT_ACTION
 #include "sgen-scan-object.h"
 }
 
@@ -212,7 +210,6 @@ sgen_check_consistency (void)
 static void
 check_major_refs_callback (char *start, size_t size, void *dummy)
 {
-#define SCAN_OBJECT_ACTION
 #include "sgen-scan-object.h"
 }
 
@@ -370,7 +367,6 @@ verify_object_pointers_callback (char *start, size_t size, void *data)
 {
 	gboolean allow_missing_pinned = (gboolean)data;
 
-#define SCAN_OBJECT_ACTION
 #include "sgen-scan-object.h"
 }
 
@@ -502,7 +498,6 @@ check_marked_callback (char *start, size_t size, void *dummy)
 			return;
 	}
 
-#define SCAN_OBJECT_ACTION
 #include "sgen-scan-object.h"
 }
 

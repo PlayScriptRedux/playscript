@@ -1,4 +1,4 @@
-SUBDIRS = cas assemblyresolve
+SUBDIRS = cas assemblyresolve gc-descriptors
 
 check-local: test
 
@@ -807,16 +807,8 @@ SGEN_CONFIGURATIONS =	\
 	"major=marksweep-par|ms-par"	\
 	"major=marksweep-conc|ms-conc"	\
 	"major=marksweep-conc,minor=split|ms-conc-split"	\
-	"major=marksweep-par,minor=split|ms-par-split"	\
 	"minor=split|ms-split"	\
-	"major=marksweep-par,minor=split,alloc-ratio=95|ms-par-split-95"	\
-	"minor=split,alloc-ratio=95|ms-split-95"	\
-	"major=marksweep-par,wbarrier=remset|ms-par-ssb"	\
-	"wbarrier=remset|ms-ssb"	\
-	"major=marksweep-par,minor=split,wbarrier=remset|ms-par-split-ssb"	\
-	"minor=split,wbarrier=remset|ms-split-ssb"	\
-	"major=marksweep-par,minor=split,alloc-ratio=95,wbarrier=remset|ms-par-split-ssb-95"	\
-	"minor=split,alloc-ratio=95,wbarrier=remset|ms-split-ssb-95"
+	"minor=split,alloc-ratio=95|ms-split-95"
 
 #FIXME We should move to use SGEN_CONFIGURATIONS once sgen supports trailling commas or its argument list.
 SGEN_BRIDGE_CONFIGURATIONS =	\
@@ -1070,12 +1062,16 @@ patch-libtool:
 	sed -e 's,LIBTOOL =,LIBTOOL2 =,g' Makefile > 2 && echo "LIBTOOL = bash ./libtool" > 1 && cat 1 2 > Makefile
 	touch libtest.c
 
-EXTRA_DIST += bug-438454.cs bug-438454.exe.stdout.expected
+EXTRA_DIST += bug-438454.cs bug-438454.exe.stdout.expected threadpool-in-processexit.cs threadpool-in-processexit.exe.stdout.expected
 test-process-exit:
 	@$(MCS) $(srcdir)/bug-438454.cs -out:bug-438454.exe
 	@echo "Testing bug-438454.exe..."
 	@$(RUNTIME) bug-438454.exe > bug-438454.exe.stdout
 	@diff -w bug-438454.exe.stdout $(srcdir)/bug-438454.exe.stdout.expected
+	@$(MCS) $(srcdir)/threadpool-in-processexit.cs -out:threadpool-in-processexit.exe
+	@echo "Testing threadpool-in-processexit.exe..."
+	@$(RUNTIME) threadpool-in-processexit.exe > threadpool-in-processexit.exe.stdout
+	@diff -w threadpool-in-processexit.exe.stdout $(srcdir)/threadpool-in-processexit.exe.stdout.expected
 
 OOM_TESTS =	\
 	gc-oom-handling.exe	\

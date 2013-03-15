@@ -36,7 +36,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.IO;
-using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Security;
 using System.Runtime.ConstrainedExecution;
@@ -122,7 +122,11 @@ namespace System.Threading {
 	[ComVisible (true)]
 	[ComDefaultInterface (typeof (_Thread))]
 	[StructLayout (LayoutKind.Sequential)]
+#if MOBILE
+	public sealed class Thread : CriticalFinalizerObject {
+#else
 	public sealed class Thread : CriticalFinalizerObject, _Thread {
+#endif
 #pragma warning disable 414		
 		#region Sync with metadata/object-internals.h
 		private InternalThread internal_thread;
@@ -149,6 +153,8 @@ namespace System.Threading {
 		   AppDomains. */
 		[ThreadStatic]
 		static ExecutionContext _ec;
+
+		static NamedDataSlot namedDataSlot;		
 
 		// can be both a ThreadStart and a ParameterizedThreadStart
 		private MulticastDelegate threadstart;
@@ -321,51 +327,28 @@ namespace System.Threading {
 				return (int)(CurrentThread.internal_thread.thread_id);
 			}
 		}
-
-		// Stores a hash keyed by strings of LocalDataStoreSlot objects
-		static Hashtable datastorehash;
-		private static object datastore_lock = new object ();
 		
-		private static void InitDataStoreHash () {
-			lock (datastore_lock) {
-				if (datastorehash == null) {
-					datastorehash = Hashtable.Synchronized(new Hashtable());
-				}
+		static NamedDataSlot NamedDataSlot {
+			get {
+				if (namedDataSlot == null)
+					Interlocked.CompareExchange (ref namedDataSlot, new NamedDataSlot (), null);
+
+				return namedDataSlot;
 			}
 		}
 		
-		public static LocalDataStoreSlot AllocateNamedDataSlot (string name) {
-			lock (datastore_lock) {
-				if (datastorehash == null)
-					InitDataStoreHash ();
-				LocalDataStoreSlot slot = (LocalDataStoreSlot)datastorehash [name];
-				if (slot != null) {
-					// This exception isnt documented (of
-					// course) but .net throws it
-					throw new ArgumentException("Named data slot already added");
-				}
-			
-				slot = AllocateDataSlot ();
-
-				datastorehash.Add (name, slot);
-
-				return slot;
-			}
+		public static LocalDataStoreSlot AllocateNamedDataSlot (string name)
+		{
+			return NamedDataSlot.Allocate (name);
 		}
 
-		public static void FreeNamedDataSlot (string name) {
-			lock (datastore_lock) {
-				if (datastorehash == null)
-					InitDataStoreHash ();
-				LocalDataStoreSlot slot = (LocalDataStoreSlot)datastorehash [name];
-
-				if (slot != null) {
-					datastorehash.Remove (slot);
-				}
-			}
+		public static void FreeNamedDataSlot (string name)
+		{
+			NamedDataSlot.Free (name);
 		}
 
-		public static LocalDataStoreSlot AllocateDataSlot () {
+		public static LocalDataStoreSlot AllocateDataSlot ()
+		{
 			return new LocalDataStoreSlot (true);
 		}
 
@@ -397,18 +380,9 @@ namespace System.Threading {
 		[MethodImplAttribute (MethodImplOptions.InternalCall)]
 		internal extern static void FreeLocalSlotValues (int slot, bool thread_local);
 
-		public static LocalDataStoreSlot GetNamedDataSlot(string name) {
-			lock (datastore_lock) {
-				if (datastorehash == null)
-					InitDataStoreHash ();
-				LocalDataStoreSlot slot=(LocalDataStoreSlot)datastorehash[name];
-
-				if(slot==null) {
-					slot=AllocateNamedDataSlot(name);
-				}
-			
-				return(slot);
-			}
+		public static LocalDataStoreSlot GetNamedDataSlot(string name)
+	 	{
+	 		return NamedDataSlot.Get (name);
 		}
 		
 		public static AppDomain GetDomain() {
@@ -698,31 +672,6 @@ namespace System.Threading {
 			}
 		}
 
-#if MONOTOUCH
-		static ConstructorInfo nsautoreleasepool_ctor;
-		
-		IDisposable GetNSAutoreleasePool ()
-		{
-			if (nsautoreleasepool_ctor == null) {
-				Type t = Type.GetType ("MonoTouch.Foundation.NSAutoreleasePool, monotouch, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null");
-				nsautoreleasepool_ctor = t.GetConstructor (Type.EmptyTypes);
-			}
-			return (IDisposable) nsautoreleasepool_ctor.Invoke (null);
-		}
-		
-		private void StartInternal ()
-		{
-			using (var pool = GetNSAutoreleasePool ()) {
-				current_thread = this;
-			
-				if (threadstart is ThreadStart) {
-					((ThreadStart) threadstart) ();
-				} else {
-					((ParameterizedThreadStart) threadstart) (start_obj);
-				}
-			}
-		}
-#else
 		private void StartInternal ()
 		{
 			current_thread = this;
@@ -733,7 +682,7 @@ namespace System.Threading {
 				((ParameterizedThreadStart) threadstart) (start_obj);
 			}
 		}
-#endif
+
 		public void Start() {
 			// propagate informations from the original thread to the new thread
 			if (!ExecutionContext.IsFlowSuppressed ())
@@ -987,14 +936,17 @@ namespace System.Threading {
 		[SecurityPermission (SecurityAction.LinkDemand, UnmanagedCode = true)]
 		[StrongNameIdentityPermission (SecurityAction.LinkDemand, PublicKey="00000000000000000400000000000000")]
 		[Obsolete ("see CompressedStack class")]
-		public
-		CompressedStack GetCompressedStack ()
+		public CompressedStack GetCompressedStack ()
 		{
+#if MOBILE
+			throw new NotSupportedException ();
+#else			
 			// Note: returns null if no CompressedStack has been set.
 			// However CompressedStack.GetCompressedStack returns an 
 			// (empty?) CompressedStack instance.
 			CompressedStack cs = ExecutionContext.SecurityContext.CompressedStack;
 			return ((cs == null) || cs.IsEmpty ()) ? null : cs.CreateCopy ();
+#endif
 		}
 
 		// NOTE: This method doesn't show in the class library status page because
@@ -1003,12 +955,16 @@ namespace System.Threading {
 		[SecurityPermission (SecurityAction.LinkDemand, UnmanagedCode = true)]
 		[StrongNameIdentityPermission (SecurityAction.LinkDemand, PublicKey="00000000000000000400000000000000")]
 		[Obsolete ("see CompressedStack class")]
-		public
-		void SetCompressedStack (CompressedStack stack)
+		public void SetCompressedStack (CompressedStack stack)
 		{
+#if MOBILE
+			throw new NotSupportedException ();
+#else
 			ExecutionContext.SecurityContext.CompressedStack = stack;
+#endif
 		}
 
+#if !MOBILE
 		void _Thread.GetIDsOfNames ([In] ref Guid riid, IntPtr rgszNames, uint cNames, uint lcid, IntPtr rgDispId)
 		{
 			throw new NotImplementedException ();
@@ -1029,5 +985,6 @@ namespace System.Threading {
 		{
 			throw new NotImplementedException ();
 		}
+#endif
 	}
 }

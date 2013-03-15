@@ -495,7 +495,7 @@ ICALL(ASSEM_7, "GetManifestResourceInfoInternal", ves_icall_System_Reflection_As
 ICALL(ASSEM_8, "GetManifestResourceInternal", ves_icall_System_Reflection_Assembly_GetManifestResourceInternal)
 ICALL(ASSEM_9, "GetManifestResourceNames", ves_icall_System_Reflection_Assembly_GetManifestResourceNames)
 ICALL(ASSEM_10, "GetModulesInternal", ves_icall_System_Reflection_Assembly_GetModulesInternal)
-ICALL(ASSEM_11, "GetNamespaces", ves_icall_System_Reflection_Assembly_GetNamespaces)
+//ICALL(ASSEM_11, "GetNamespaces", ves_icall_System_Reflection_Assembly_GetNamespaces)
 ICALL(ASSEM_12, "GetReferencedAssemblies", ves_icall_System_Reflection_Assembly_GetReferencedAssemblies)
 ICALL(ASSEM_13, "GetTypes", ves_icall_System_Reflection_Assembly_GetTypes)
 ICALL(ASSEM_14, "InternalGetAssemblyName", ves_icall_System_Reflection_Assembly_InternalGetAssemblyName)
@@ -740,11 +740,14 @@ ICALL(MARSHAL_42, "copy_to_unmanaged", ves_icall_System_Runtime_InteropServices_
 
 ICALL_TYPE(ACTS, "System.Runtime.Remoting.Activation.ActivationServices", ACTS_1)
 ICALL(ACTS_1, "AllocateUninitializedClassInstance", ves_icall_System_Runtime_Activation_ActivationServices_AllocateUninitializedClassInstance)
+#ifndef DISABLE_REMOTING
 ICALL(ACTS_2, "EnableProxyActivation", ves_icall_System_Runtime_Activation_ActivationServices_EnableProxyActivation)
+#endif
 
 ICALL_TYPE(MONOMM, "System.Runtime.Remoting.Messaging.MonoMethodMessage", MONOMM_1)
 ICALL(MONOMM_1, "InitMessage", ves_icall_MonoMethodMessage_InitMessage)
 
+#ifndef DISABLE_REMOTING
 ICALL_TYPE(REALP, "System.Runtime.Remoting.Proxies.RealProxy", REALP_1)
 ICALL(REALP_1, "InternalGetProxyType", ves_icall_Remoting_RealProxy_InternalGetProxyType)
 ICALL(REALP_2, "InternalGetTransparentProxy", ves_icall_Remoting_RealProxy_GetTransparentProxy)
@@ -753,6 +756,7 @@ ICALL_TYPE(REMSER, "System.Runtime.Remoting.RemotingServices", REMSER_0)
 ICALL(REMSER_0, "GetVirtualMethod", ves_icall_Remoting_RemotingServices_GetVirtualMethod)
 ICALL(REMSER_1, "InternalExecute", ves_icall_InternalExecute)
 ICALL(REMSER_2, "IsTransparentProxy", ves_icall_IsTransparentProxy)
+#endif
 
 ICALL_TYPE(MHAN, "System.RuntimeMethodHandle", MHAN_1)
 ICALL(MHAN_1, "GetFunctionPointer", ves_icall_RuntimeMethod_GetFunctionPointer)
@@ -929,7 +933,8 @@ ICALL(THREADP_35, "SetMaxThreads", ves_icall_System_Threading_ThreadPool_SetMaxT
 ICALL(THREADP_4, "SetMinThreads", ves_icall_System_Threading_ThreadPool_SetMinThreads)
 ICALL(THREADP_5, "pool_queue", icall_append_job)
 
-ICALL_TYPE(VOLATILE, "System.Threading.Volatile", VOLATILE_1)
+ICALL_TYPE(VOLATILE, "System.Threading.Volatile", VOLATILE_28)
+ICALL(VOLATILE_28, "Read(T&)", ves_icall_System_Threading_Volatile_Read_T)
 ICALL(VOLATILE_1, "Read(bool&)", ves_icall_System_Threading_Thread_VolatileRead1)
 ICALL(VOLATILE_2, "Read(byte&)", ves_icall_System_Threading_Thread_VolatileRead1)
 ICALL(VOLATILE_3, "Read(double&)", ves_icall_System_Threading_Thread_VolatileReadDouble)
@@ -943,6 +948,7 @@ ICALL(VOLATILE_10, "Read(uint&)", ves_icall_System_Threading_Thread_VolatileRead
 ICALL(VOLATILE_11, "Read(uint16&)", ves_icall_System_Threading_Thread_VolatileRead2)
 ICALL(VOLATILE_12, "Read(uintptr&)", ves_icall_System_Threading_Thread_VolatileReadIntPtr)
 ICALL(VOLATILE_13, "Read(ulong&)", ves_icall_System_Threading_Thread_VolatileRead8)
+ICALL(VOLATILE_27, "Write(T&,T)", ves_icall_System_Threading_Volatile_Write_T)
 ICALL(VOLATILE_14, "Write(bool&,bool)", ves_icall_System_Threading_Thread_VolatileWrite1)
 ICALL(VOLATILE_15, "Write(byte&,byte)", ves_icall_System_Threading_Thread_VolatileWrite1)
 ICALL(VOLATILE_16, "Write(double&,double)", ves_icall_System_Threading_Thread_VolatileWriteDouble)
