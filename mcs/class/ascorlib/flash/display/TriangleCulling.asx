@@ -1,0 +1,5 @@
+package flash.display
+{
+	public class TriangleCulling {}
+}
+

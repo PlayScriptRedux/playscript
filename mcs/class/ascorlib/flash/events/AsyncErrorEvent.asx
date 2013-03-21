@@ -1,0 +1,11 @@
+package flash.events {
+	
+	public class AsyncErrorEvent extends Event {
+		
+		public function AsyncErrorEvent(type:String, bubbles:Boolean = false, cancelable:Boolean = false) {
+			super(type, bubbles, cancelable);
+		}
+	}
+	
+}
+

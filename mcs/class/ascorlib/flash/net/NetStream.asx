@@ -1,0 +1,4 @@
+package flash.net
+{
+	public class NetStream {}
+}

@@ -1,0 +1,19 @@
+package flash.ui {
+	import flash.display.NativeMenu;
+	
+	public class ContextMenu extends NativeMenu {
+		// $$TODO
+
+		public function get customItems():Array
+		{
+			return _customItems;
+		}
+
+		public function set customItems(value:Array):void
+		{
+			_customItems = value;
+		}
+
+		private var _customItems:Array;
+	}
+}

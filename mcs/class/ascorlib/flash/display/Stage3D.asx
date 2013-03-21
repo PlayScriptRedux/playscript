@@ -4,8 +4,7 @@ package flash.display {
 	import flash.geom.Rectangle;
 	import flash.events.*;
 	import flash.utils.Timer;
-	import flash.utils.TimerEvent;
-	
+
 	import System.IntPtr;
 
 	public class Stage3D extends EventDispatcher {

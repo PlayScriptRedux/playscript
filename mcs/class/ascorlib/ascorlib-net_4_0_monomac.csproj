@@ -42,9 +42,6 @@
     <Reference Include="MonoMac, Version=0.0.0.0, Culture=neutral">
       <Private>False</Private>
     </Reference>
-    <Reference Include="test2">
-      <HintPath>..\..\mcs\test2.exe</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActionScript\Undefined.cs" />
@@ -73,7 +70,6 @@
     <Compile Include="SyntaxError.asx" />
     <Compile Include="TypeError.asx" />
     <Compile Include="URIError.asx" />
-    <Compile Include="Vector.asx" />
     <Compile Include="VerifyError.asx" />
     <Compile Include="XML.asx" />
     <Compile Include="XMLList.asx" />
@@ -119,6 +115,22 @@
     <Compile Include="flash\desktop\NativeApplication.asx" />
     <Compile Include="SWFAttribute.cs" />
     <Compile Include="flash\display\StageQuality.asx" />
+    <Compile Include="Vector.cs" />
+    <Compile Include="flash\events\ContextMenuEvent.as" />
+    <Compile Include="flash\events\SecurityErrorEvent.asx" />
+    <Compile Include="flash\events\NetStatusEvent.asx" />
+    <Compile Include="flash\events\AsyncErrorEvent.asx" />
+    <Compile Include="flash\events\TimerEvent.asx" />
+    <Compile Include="flash\display\CapsStyle.asx" />
+    <Compile Include="flash\display\LineScaleMode.asx" />
+    <Compile Include="flash\display\BitmapDataChannel.asx" />
+    <Compile Include="flash\display\TriangleCulling.asx" />
+    <Compile Include="flash\filters\ColorMatrixFilter.asx" />
+    <Compile Include="flash\net\navigateToURL.asx" />
+    <Compile Include="flash\net\NetConnection.asx" />
+    <Compile Include="flash\net\NetStream.asx" />
+    <Compile Include="flash\ui\ContextMenu.asx" />
+    <Compile Include="flash\ui\ContextMenuItem.asx" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -248,6 +260,10 @@
     <ProjectReference Include="..\ActionScript.Dynamic\ActionScript.Dynamic-net_4_0.csproj">
       <Project>{5F7F9AF6-CE83-4F13-A25F-355DB2861D43}</Project>
       <Name>ActionScript.Dynamic-net_4_0</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Mono.CSharp\Mono.CSharp-net_4_0.csproj">
+      <Project>{4FADEA1C-3DCC-4658-A411-EDEF0CF30884}</Project>
+      <Name>Mono.CSharp-net_4_0</Name>
     </ProjectReference>
   </ItemGroup>
 </Project>

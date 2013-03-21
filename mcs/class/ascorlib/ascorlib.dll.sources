@@ -2,6 +2,7 @@
 ./Array.cs
 ./AssemblyInfo.cs
 ./Boolean.cs
+./DeprecatedAttribute.cs
 ./EmbedAttribute.cs
 ./EventAttribute.cs
 ./Extensions.cs
@@ -29,7 +30,9 @@
 ./flash/display/ActionScriptVersion.asx
 ./flash/display/Bitmap.asx
 ./flash/display/BitmapData.asx
+./flash/display/BitmapDataChannel.asx
 ./flash/display/BlendMode.asx
+./flash/display/CapsStyle.asx
 ./flash/display/DisplayObject.asx
 ./flash/display/DisplayObjectContainer.asx
 ./flash/display/GradientType.asx
@@ -38,6 +41,7 @@
 ./flash/display/IGraphicsData.asx
 ./flash/display/InteractiveObject.asx
 ./flash/display/InterpolationMethod.asx
+./flash/display/LineScaleMode.asx
 ./flash/display/Loader.asx
 ./flash/display/LoaderInfo.asx
 ./flash/display/MorphShape.asx
@@ -57,6 +61,7 @@
 ./flash/display/StageAlign.asx
 ./flash/display/StageScaleMode.asx
 ./flash/display/SWFVersion.asx
+./flash/display/TriangleCulling.asx
 ./flash/display3D/Context3DBlendFactor.asx
 ./flash/display3D/Context3DClearMask.asx
 ./flash/display3D/Context3DCompareMode.asx
@@ -76,16 +81,22 @@
 ./flash/errors/IOError.asx
 ./flash/errors/MemoryError.asx
 ./flash/errors/StackOverflowError.asx
+./flash/events/AsyncErrorEvent.asx
+./flash/events/ContextMenuEvent.as
 ./flash/events/ErrorEvent.asx
 ./flash/events/EventPhase.asx
 ./flash/events/IOErrorEvent.asx
 ./flash/events/KeyboardEvent.asx
 ./flash/events/MouseEvent.asx
+./flash/events/NetStatusEvent.asx
 ./flash/events/ProgressEvent.asx
+./flash/events/SecurityErrorEvent.asx
 ./flash/events/ShaderEvent.asx
+./flash/events/TimerEvent.asx
 ./flash/events/TouchEvent.asx
 ./flash/events/UncaughtErrorEvents.asx
 ./flash/filters/BitmapFilter.asx
+./flash/filters/ColorMatrixFilter.asx
 ./flash/filters/ShaderFilter.asx
 ./flash/geom/ColorTransform.asx
 ./flash/geom/Matrix.asx
@@ -104,6 +115,9 @@
 ./flash/media/SoundTransform.asx
 ./flash/media/StageVideo.asx
 ./flash/net/FileReference.asx
+./flash/net/navigateToURL.asx
+./flash/net/NetConnection.asx
+./flash/net/NetStream.asx
 ./flash/net/URLLoader.asx
 ./flash/net/URLLoaderDataFormat.asx
 ./flash/net/URLRequest.asx
@@ -142,6 +156,8 @@
 ./flash/text/TextLineMetrics.asx
 ./flash/text/TextRenderer.asx
 ./flash/text/TextSnapshot.asx
+./flash/ui/ContextMenu.asx
+./flash/ui/ContextMenuItem.asx
 ./flash/ui/Keyboard.asx
 ./flash/ui/KeyboardType.asx
 ./flash/ui/KeyLocation.asx
@@ -170,7 +186,7 @@
 ./SyntaxError.asx
 ./TypeError.asx
 ./URIError.asx
-./Vector.asx
+./Vector.cs
 ./VerifyError.asx
 ./XML.asx
 ./XMLList.asx

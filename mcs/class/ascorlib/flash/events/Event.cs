@@ -149,6 +149,21 @@ namespace flash.events
 			return null;
 		}
 
+		public virtual void preventDefault()
+		{
+			throw new System.NotImplementedException();
+		}
+
+		public virtual bool isDefaultPrevented()
+		{
+			throw new System.NotImplementedException();
+		}
+
+		public virtual void stopPropagation() 
+		{
+			throw new System.NotImplementedException();
+		}
+
 		public virtual void stopImmediatePropagation() {
 			throw new System.NotImplementedException();
 		}
