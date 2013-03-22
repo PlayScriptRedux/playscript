@@ -137,9 +137,6 @@
     <Compile Include="..\ascorlib\URIError.asx">
       <Link>URIError.asx</Link>
     </Compile>
-    <Compile Include="..\ascorlib\Vector.asx">
-      <Link>Vector.asx</Link>
-    </Compile>
     <Compile Include="..\ascorlib\VerifyError.asx">
       <Link>VerifyError.asx</Link>
     </Compile>
@@ -401,9 +398,6 @@
     <Compile Include="..\ascorlib\flash\media\ID3Info.asx">
       <Link>flash\media\ID3Info.asx</Link>
     </Compile>
-    <Compile Include="..\ascorlib\flash\media\SouncChannel.asx">
-      <Link>flash\media\SouncChannel.asx</Link>
-    </Compile>
     <Compile Include="..\ascorlib\flash\media\Sound.asx">
       <Link>flash\media\Sound.asx</Link>
     </Compile>
@@ -592,6 +586,66 @@
     </Compile>
     <Compile Include="..\ascorlib\flash\display\StageQuality.asx">
       <Link>flash\display\StageQuality.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\Vector.cs">
+      <Link>Vector.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\ContextMenuEvent.as">
+      <Link>flash\events\ContextMenuEvent.as</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\SecurityErrorEvent.asx">
+      <Link>flash\events\SecurityErrorEvent.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\NetStatusEvent.asx">
+      <Link>flash\events\NetStatusEvent.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\AsyncErrorEvent.asx">
+      <Link>flash\events\AsyncErrorEvent.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\TimerEvent.asx">
+      <Link>flash\events\TimerEvent.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\CapsStyle.asx">
+      <Link>flash\display\CapsStyle.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\LineScaleMode.asx">
+      <Link>flash\display\LineScaleMode.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\BitmapDataChannel.asx">
+      <Link>flash\display\BitmapDataChannel.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\TriangleCulling.asx">
+      <Link>flash\display\TriangleCulling.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\filters\ColorMatrixFilter.asx">
+      <Link>flash\filters\ColorMatrixFilter.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\net\navigateToURL.asx">
+      <Link>flash\net\navigateToURL.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\net\NetConnection.asx">
+      <Link>flash\net\NetConnection.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\net\NetStream.asx">
+      <Link>flash\net\NetStream.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\ui\ContextMenu.asx">
+      <Link>flash\ui\ContextMenu.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\ui\ContextMenuItem.asx">
+      <Link>flash\ui\ContextMenuItem.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\media\Camera.asx">
+      <Link>flash\media\Camera.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\media\Video.asx">
+      <Link>flash\media\Video.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\media\SoundChannel.asx">
+      <Link>flash\media\SoundChannel.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\DeprecatedAttribute.cs">
+      <Link>DeprecatedAttribute.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

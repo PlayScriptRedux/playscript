@@ -1,0 +1,7 @@
+package flash.net {
+
+	public function navigateToURL(request:URLRequest, name:String = null):void {
+		throw new System.NotImplementedException();
+	}
+	
+}

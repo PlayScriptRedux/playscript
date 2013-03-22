@@ -1,0 +1,8 @@
+package flash.filters {
+
+	public class ColorMatrixFilter{
+		//$$TODO
+	}
+
+}
+

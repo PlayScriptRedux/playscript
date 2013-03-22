@@ -83,6 +83,7 @@
 ../ascorlib/flash/events/MouseEvent.asx
 ../ascorlib/flash/events/ProgressEvent.asx
 ../ascorlib/flash/events/ShaderEvent.asx
+../ascorlib/flash/events/TimerEvent.asx
 ../ascorlib/flash/events/TouchEvent.asx
 ../ascorlib/flash/events/UncaughtErrorEvents.asx
 ../ascorlib/flash/filters/BitmapFilter.asx
@@ -98,7 +99,7 @@
 ../ascorlib/flash/geom/Utils3D.asx
 ../ascorlib/flash/geom/Vector3D.asx
 ../ascorlib/flash/media/ID3Info.asx
-../ascorlib/flash/media/SouncChannel.asx
+../ascorlib/flash/media/SoundChannel.asx
 ../ascorlib/flash/media/Sound.asx
 ../ascorlib/flash/media/SoundLoaderContext.asx
 ../ascorlib/flash/media/SoundTransform.asx
@@ -170,7 +171,7 @@
 ../ascorlib/SyntaxError.asx
 ../ascorlib/TypeError.asx
 ../ascorlib/URIError.asx
-../ascorlib/Vector.asx
+../ascorlib/Vector.cs
 ../ascorlib/VerifyError.asx
 ../ascorlib/XML.asx
 ../ascorlib/XMLList.asx

@@ -4,12 +4,6 @@ package flash.utils {
 	import System.Diagnostics.Stopwatch;
 	import System.Collections.Generic.*;
 	import System.Linq.*;
-	
-	public class TimerEvent
-	{
-		public static const TIMER:String = "TIMER";
-		public static const TIMER_COMPLETE:String = "TIMER_COMPLETE";
-	};
 
 	public class Timer extends EventDispatcher {
 	

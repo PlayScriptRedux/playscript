@@ -1,0 +1,9 @@
+package flash.display
+{
+	public static class BitmapDataChannel {
+		public const ALPHA : uint = 8;
+		public const BLUE : uint = 4;
+		public const GREEN : uint = 2;
+		public const RED : uint = 1;
+	}
+}

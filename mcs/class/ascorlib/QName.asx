@@ -6,24 +6,29 @@ package {
 		// Properties
 		//
 		
-		public property localName : String { get { return null; } }
+		public property localName : String { get { return mLocalName; } }
 
- 	 	public property uri : String { get { return null; } }
+ 	 	public property uri : String { get { return mUri; } }
 
 		//
 		// Methods 
 		//
 		
-		public function QName(qname:*, localName:QName = null) {
+		public function QName(uri:String, localName:String) {
+			mUri = uri;
+			mLocalName = localName;
 		}
  	 	
 		public function toString():String {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function valueOf():QName {
-			return null;
+			throw new System.NotImplementedException();
 		}
+
+		private var mUri:String;
+		private var mLocalName:String;
 	
 	}
 

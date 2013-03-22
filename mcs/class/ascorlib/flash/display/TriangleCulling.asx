@@ -1,0 +1,10 @@
+package flash.display
+{
+	public static class TriangleCulling {
+
+		public const NEGATIVE : String = "negative";
+		public const NONE : String = "none";
+		public const POSITIVE : String = "positive";
+	}
+}
+

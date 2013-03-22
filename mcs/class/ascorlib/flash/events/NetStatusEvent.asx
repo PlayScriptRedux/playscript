@@ -1,0 +1,17 @@
+package flash.events {
+	import flash.utils.Dictionary;
+
+	public class NetStatusEvent extends Event {
+		
+		public function NetStatusEvent(type:String, bubbles:Boolean = false, cancelable:Boolean = false) {
+			super(type, bubbles, cancelable);
+
+			info = new Dictionary();
+		}
+
+		public property info : Dictionary { get; set; }
+
+	}
+	
+}
+

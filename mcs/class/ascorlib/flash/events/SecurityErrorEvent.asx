@@ -1,0 +1,13 @@
+package flash.events {
+	
+	public class SecurityErrorEvent extends Event {
+		
+		public function SecurityErrorEvent(type:String, bubbles:Boolean = false, cancelable:Boolean = false) {
+			super(type, bubbles, cancelable);
+		}
+
+		public property text : String { get; set; }
+	}
+	
+}
+

@@ -163,8 +163,8 @@ package {
 			return mElement.LocalName;
 		}
 		
-		public function name():String {
-			return mElement.Name;
+		public function name():QName {
+			return new QName(mElement.NamespaceURI, mElement.Name);
 		}
 		
 		public function @namespace(prefix:String = null):* {

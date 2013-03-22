@@ -1,0 +1,8 @@
+package flash.media
+{
+	public class Video 
+	{
+		public property width:int {get;set;}
+		public property height:int {get;set;}
+	}
+}

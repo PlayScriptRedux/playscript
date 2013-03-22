@@ -89,6 +89,7 @@ package flash.display {
 			this.stageHeight = height;
 			this.fullScreenWidth = uint(width); 
 			this.fullScreenHeight = uint(height);
+			this.frameRate = 60;
 	
 			var stage3D = new Stage3D(); 
 			mStage3Ds.push( stage3D );
