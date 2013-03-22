@@ -1116,7 +1116,9 @@ namespace Mono.CSharp
 			if (!base.Resolve (bc))
 				return false;
 
-			return expr.Resolve (bc) != null;
+			expr = expr.Resolve (bc);
+
+			return expr != null;
 		}
 
 		protected override void DoEmit (EmitContext ec)

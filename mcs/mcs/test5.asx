@@ -30,12 +30,20 @@ package com.zynga.zengine.classes
 			}
 		}
 
+		public property goo:int {
+			get { return 1; }
+			set { }
+		}
+
 		public indexer this (index:String):Number {
 			get {throw new System.NotImplementedException(); }
 			set {throw new System.NotImplementedException(); }
 		}
 
 		public static function Main():void {
+
+			var t:Test;
+			t.goo;
 
 			var i:int = 100;
 			if (i == 100) {

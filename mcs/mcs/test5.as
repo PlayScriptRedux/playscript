@@ -30,7 +30,18 @@ package com.zynga.zengine.classes
 			}
 		}
 
+		public function get goo():int {
+			return 10;
+		}
+
+		public function set goo(i:int):void {
+		}
+
 		public static function Main():void {
+
+			var v:Test;
+
+			v.goo;
 
 			var i:int = 100;
 			if (i == 100) {

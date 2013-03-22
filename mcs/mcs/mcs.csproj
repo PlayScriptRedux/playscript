@@ -22,7 +22,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <Commandlineparameters>/noconfig "/r:/Users/bcooley/projects/mono-as3-inst/lib/mono/4.0/mscorlib.dll" -nostdlib "/out:/Users/bcooley/projects/mono-as3/mcs/mcs/test2.exe" "/r:/Users/bcooley/projects/mono-as3-inst/lib/mono/4.0/System.dll" "/r:/Users/bcooley/projects/mono-as3/mcs/class/ascorlib/bin/Debug/ascorlib_monomac.dll" "/r:/Users/bcooley/projects/mono-as3/mcs/class/ActionScript.Dynamic/bin/Debug/ActionScript.Dynamic.dll" "/r:/Users/bcooley/projects/mono-as3-inst/lib/mono/4.0/System.Core.dll" /nologo /warn:4 /debug:full /optimize- /codepage:utf8 "/define:DEBUG"  /t:exe "/Users/bcooley/projects/mono-as3/mcs/mcs/test5.asx" </Commandlineparameters>
+    <Commandlineparameters>/noconfig "/r:/Users/bcooley/projects/mono-as3-inst/lib/mono/4.0/mscorlib.dll" -nostdlib "/out:/Users/bcooley/projects/mono-as3/mcs/mcs/test2.exe" "/r:/Users/bcooley/projects/mono-as3-inst/lib/mono/4.0/System.dll" "/r:/Users/bcooley/projects/mono-as3/mcs/class/ascorlib/bin/Debug/ascorlib_monomac.dll" "/r:/Users/bcooley/projects/mono-as3/mcs/class/ActionScript.Dynamic/bin/Debug/ActionScript.Dynamic.dll" "/r:/Users/bcooley/projects/mono-as3-inst/lib/mono/4.0/System.Core.dll" /nologo /warn:4 /debug:full /optimize- /codepage:utf8 "/define:DEBUG"  /t:exe "/Users/bcooley/projects/mono-as3/mcs/mcs/test5.as" </Commandlineparameters>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
