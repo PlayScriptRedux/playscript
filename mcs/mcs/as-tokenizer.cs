@@ -3471,7 +3471,7 @@ namespace Mono.ActionScript
 						continue;
 					}
 
-					if (c == ':' && !is_config_ident) {
+					if (parsing_block == 0 && c == ':' && !is_config_ident) {
 						var colonPos = reader.Position;
 						c = reader.Read ();
 						if (c == ':') { 

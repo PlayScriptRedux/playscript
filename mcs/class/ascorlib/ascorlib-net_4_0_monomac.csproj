@@ -135,6 +135,7 @@
     <Compile Include="flash\geom\Vector3D.asx" />
     <Compile Include="flash\media\Camera.asx" />
     <Compile Include="flash\media\Video.asx" />
+    <Compile Include="PartialAttribute.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
