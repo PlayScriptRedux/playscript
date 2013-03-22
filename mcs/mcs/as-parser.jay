@@ -5798,27 +5798,31 @@ block
 //	method_body
 //      
 config_block
-	: IDENTIFIER DOUBLE_COLON IDENTIFIER OPEN_BRACE  
+	: opt_block_config OPEN_BRACE  
 	  {
 		++lexer.parsing_block;
-		start_block (GetLocation ($4));
+		start_block (GetLocation ($2));
 	  } 
 	  opt_statement_list block_end
 	  {
-	    var is_config_enabled = true;
-	    
-	    // If we have a config prefix, check to see if it's defined..
+	    if (is_config_enabled) {
+	      // This block should be included
+  		  $$ = $5;
+  		} else {
+  		  // This block should not be included.. create an empty block
+  		  start_block (GetLocation ($2));
+  		  $$ = end_block (GetLocation ($5));
+  		}
+	  }
+	;
+
+opt_block_config
+	: /* empty */
+	| IDENTIFIER DOUBLE_COLON IDENTIFIER
+	  {
 	    var lt1 = (Tokenizer.LocatedToken) $1;
 	    var lt2 = (Tokenizer.LocatedToken) $3;
         is_config_enabled = file.IsConditionalDefined (lt1.Value + "_" + lt2.Value);
-	    if (is_config_enabled) {
-	      // This block should be included
-  		  $$ = $7;
-  		} else {
-  		  // This block should not be included.. create an empty block
-  		  start_block (GetLocation ($4));
-  		  $$ = end_block (GetLocation ($7));
-  		}
 	  }
 	;
 
