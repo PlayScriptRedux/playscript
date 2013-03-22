@@ -8456,7 +8456,8 @@ namespace Mono.CSharp
 			AsE4xDescendant,				// The ActionScript E4X .. operator.
 			AsE4xChildAll,					// The ActionScript E4X .* operator.
 			AsE4xChildAttribute,			// The ActionScript E4X .@ operator.
-			AsE4xDescendantAll				// The ActionScript E4X ..* operator.
+			AsE4xDescendantAll,				// The ActionScript E4X ..* operator.
+			AsNamespace						// The ActionScript :: operator.
 //			AsE4xDescendantAttribute		// The ActionScript E4X ..@ operator (Actually, don't think this is valid)
 		}
 

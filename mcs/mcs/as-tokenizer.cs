@@ -2084,6 +2084,8 @@ namespace Mono.ActionScript
 				v = '\r'; break;
 			case '\\':
 				v = '\\'; break;
+			case '/':
+				v = '/'; break;
 			case 'f':
 				v = '\f'; break;
 			case '0':
@@ -3297,7 +3299,17 @@ namespace Mono.ActionScript
 
 			while (true) {
 				c = get_char ();
-				if (c == '/') {
+				if (c == '\\') {
+					if (pos == value_builder.Length)
+						Array.Resize (ref value_builder, pos * 2);
+					value_builder[pos++] = (char) c;
+					c = get_char ();
+					if (c != -1) {
+						if (pos == value_builder.Length)
+							Array.Resize (ref value_builder, pos * 2);
+						value_builder[pos++] = (char) c;
+					}
+				} else if (c == '/') {
 
 					c = peek_char();
 					while (c == 'g' || c == 'i' || c == 'm' || c == 's' || c == 'x') {

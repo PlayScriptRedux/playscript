@@ -3712,6 +3712,14 @@ member_access
 		lbag.AddLocation ($$, GetLocation ($2));
 		$$ = ma;
 	  }
+	| primary_expression COLON_COLON IDENTIFIER
+	  {
+		var lt = (Tokenizer.LocatedToken) $3;
+		var ma = new MemberAccess ((Expression) $1, lt.Value, null, lt.Location);
+		ma.AccessorType = MemberAccess.Accessor.AsNamespace;
+		lbag.AddLocation ($$, GetLocation ($2));
+		$$ = ma;
+	  } 
 //	| primary_expression DOTDOT_AT IDENTIFIER
 //	  {
 //		var lt = (Tokenizer.LocatedToken) $3;

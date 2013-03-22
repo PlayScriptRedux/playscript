@@ -56,6 +56,8 @@ package com.zynga.zengine.classes
         
 			use namespace Blah;
 
+			var scheme_re:RegExp = /^[a-zA-Z]{3,4}:\/\//;
+
 			var ffff:Array = [ 100, 200, 300 ];
 
 //			var qqqq:Array = f || [];
