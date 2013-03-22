@@ -30,11 +30,6 @@ package com.zynga.zengine.classes
 			}
 		}
 
-		public property goo:int {
-			get { return 1; }
-			set { }
-		}
-
 		public indexer this (index:String):Number {
 			get {throw new System.NotImplementedException(); }
 			set {throw new System.NotImplementedException(); }
@@ -42,8 +37,6 @@ package com.zynga.zengine.classes
 
 		public static function Main():void {
 
-			var t:Test;
-			t.goo;
 
 			var i:int = 100;
 			if (i == 100) {
@@ -52,6 +45,15 @@ package com.zynga.zengine.classes
 
 			PLATFORM::IOS {
 				trace("boo!");
+			}
+
+			switch (i) {
+			case 1:
+				trace(1);
+			case 2:
+				trace(2);
+			default:
+				trace(3);
 			}
 		}
 	}

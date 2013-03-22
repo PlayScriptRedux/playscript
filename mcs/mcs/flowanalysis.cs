@@ -309,7 +309,12 @@ namespace Mono.CSharp
 				// we need to look at (see above).
 				//
 
-				if ((Type == SiblingType.SwitchSection) && !new_isunr) {
+				// NOTE: Actionscript allows fallthrough (but we won't in asx)
+				bool allow_fallthrough = child.Block != null && child.Block.loc.SourceFile != null && 
+					child.Block.loc.SourceFile.FileType == Mono.CSharp.SourceFileType.ActionScript &&
+						!child.Block.loc.SourceFile.AsExtended;
+
+				if ((Type == SiblingType.SwitchSection) && !new_isunr && !allow_fallthrough) {
 					Report.Error (163, Location,
 						      "Control cannot fall through from one " +
 						      "case label to another");

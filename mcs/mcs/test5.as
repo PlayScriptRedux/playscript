@@ -51,6 +51,17 @@ package com.zynga.zengine.classes
 			PLATFORM::IOS {
 				trace("boo!");
 			}
+
+			var j:int = 0;
+			
+			switch (i) {
+			case 1:
+				trace(1);
+			case 2:
+				trace(2);
+			default:
+				trace(3);
+			}
 		}
 
 	}
