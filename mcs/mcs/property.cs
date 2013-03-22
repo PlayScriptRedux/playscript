@@ -597,11 +597,11 @@ namespace Mono.CSharp
 				Error_StaticReturnType ();
 
 			// Check to make sure property method return types match (ActionScript).
-			if (this.Location.SourceFile.FileType == SourceFileType.ActionScript) {
-				int valueParamIdx = this.Set.ParameterInfo.Count - 1;
-				if (this.Set != null && this.Set.ParameterTypes == null)
+			if (this.Location.SourceFile.FileType == SourceFileType.ActionScript && this.Get != null && this.Set != null) {
+				if (this.Set.ParameterTypes == null)
 					this.Set.ParameterInfo.Resolve(this.Set);
-				if (this.Get != null && this.Set != null && this.Get.ReturnType != this.Set.ParameterTypes[valueParamIdx]) {
+				int valueParamIdx = this.Set.ParameterInfo.Count - 1;
+				if (this.Get.ReturnType != this.Set.ParameterTypes[valueParamIdx]) {
 					Report.Error (7002, Location, "Type of property getter and setter must match");
 				}
 			}
