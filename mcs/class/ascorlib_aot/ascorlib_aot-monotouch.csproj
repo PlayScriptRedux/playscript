@@ -398,9 +398,6 @@
     <Compile Include="..\ascorlib\flash\media\ID3Info.asx">
       <Link>flash\media\ID3Info.asx</Link>
     </Compile>
-    <Compile Include="..\ascorlib\flash\media\SouncChannel.asx">
-      <Link>flash\media\SouncChannel.asx</Link>
-    </Compile>
     <Compile Include="..\ascorlib\flash\media\Sound.asx">
       <Link>flash\media\Sound.asx</Link>
     </Compile>
@@ -637,6 +634,18 @@
     </Compile>
     <Compile Include="..\ascorlib\flash\ui\ContextMenuItem.asx">
       <Link>flash\ui\ContextMenuItem.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\media\Camera.asx">
+      <Link>flash\media\Camera.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\media\Video.asx">
+      <Link>flash\media\Video.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\media\SoundChannel.asx">
+      <Link>flash\media\SoundChannel.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\DeprecatedAttribute.cs">
+      <Link>DeprecatedAttribute.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

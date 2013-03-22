@@ -1,4 +1,22 @@
 package flash.net
 {
-	public class NetStream {}
+	import flash.media.SoundTransform;
+
+	public class NetStream {
+
+		public function play(src:String):void {
+			throw new System.NotImplementedException();
+		}
+
+		public function pause():void {
+			throw new System.NotImplementedException();
+		}
+
+		public property time:Number {get;set;}
+
+		public property soundTransform:SoundTransform
+		{
+			get; set;
+		}
+	}
 }

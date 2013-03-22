@@ -109,7 +109,7 @@
 ./flash/geom/Utils3D.asx
 ./flash/geom/Vector3D.asx
 ./flash/media/ID3Info.asx
-./flash/media/SouncChannel.asx
+./flash/media/SoundChannel.asx
 ./flash/media/Sound.asx
 ./flash/media/SoundLoaderContext.asx
 ./flash/media/SoundTransform.asx

@@ -119,7 +119,7 @@ package flash.geom {
 
 		public indexer this (index:String):Number {
 			get {throw new System.NotImplementedException(); }
-		//	set {throw new System.NotImplementedException(); }
+			set {throw new System.NotImplementedException(); }
 		}
 
 	}

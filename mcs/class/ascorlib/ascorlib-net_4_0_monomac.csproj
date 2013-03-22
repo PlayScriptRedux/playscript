@@ -131,6 +131,10 @@
     <Compile Include="flash\net\NetStream.asx" />
     <Compile Include="flash\ui\ContextMenu.asx" />
     <Compile Include="flash\ui\ContextMenuItem.asx" />
+    <Compile Include="flash\media\SoundChannel.asx" />
+    <Compile Include="flash\geom\Vector3D.asx" />
+    <Compile Include="flash\media\Camera.asx" />
+    <Compile Include="flash\media\Video.asx" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -202,9 +206,7 @@
     <Compile Include="flash\geom\Rectangle.asx" />
     <Compile Include="flash\geom\Transform.asx" />
     <Compile Include="flash\geom\Utils3D.asx" />
-    <Compile Include="flash\geom\Vector3D.asx" />
     <Compile Include="flash\media\ID3Info.asx" />
-    <Compile Include="flash\media\SouncChannel.asx" />
     <Compile Include="flash\media\Sound.asx" />
     <Compile Include="flash\media\SoundLoaderContext.asx" />
     <Compile Include="flash\media\SoundTransform.asx" />
