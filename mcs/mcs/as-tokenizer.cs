@@ -3304,11 +3304,7 @@ namespace Mono.ActionScript
 						Array.Resize (ref value_builder, pos * 2);
 					value_builder[pos++] = (char) c;
 					c = get_char ();
-					if (c != -1) {
-						if (pos == value_builder.Length)
-							Array.Resize (ref value_builder, pos * 2);
-						value_builder[pos++] = (char) c;
-					}
+					// c will be added automatically at the end of this block
 				} else if (c == '/') {
 
 					c = peek_char();
