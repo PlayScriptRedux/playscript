@@ -2548,11 +2548,30 @@ namespace Mono.CSharp {
 				//
 				if (current_block != null && lookup_arity == 0) {
 					if (current_block.ParametersBlock.TopBlock.GetLocalName (name, current_block.Original, ref variable)) {
+						// In ActionScript we allow unassigned variables.  It's technically bad coding but not much we can do about it.
 						if (!variable.IsDeclared) {
-							// We found local name in accessible block but it's not
-							// initialized yet, maybe the user wanted to bind to something else
-							errorMode = true;
-							variable_found = true;
+							if (rc.FileType == SourceFileType.ActionScript && !rc.AsExtended) {
+								rc.Report.Warning(7156, 1, loc, "Use of local variable before declaration");
+								if (variable is LocalVariable) {
+									var locVar = variable as LocalVariable;
+									if (locVar.Type == null && locVar.TypeExpr != null) {
+										locVar.AsUsedBeforeDeclaration = true;
+										locVar.Type = locVar.TypeExpr.ResolveAsType(rc);
+									}
+								}
+								e = variable.CreateReferenceExpression (rc, loc);
+								if (e != null) {
+									if (Arity > 0)
+										Error_TypeArgumentsCannotBeUsed (rc, "variable", name, loc);
+									
+									return e;
+								}
+							} else {
+								// We found local name in accessible block but it's not
+								// initialized yet, maybe the user wanted to bind to something else
+								errorMode = true;
+								variable_found = true;
+							}
 						} else {
 							e = variable.CreateReferenceExpression (rc, loc);
 							if (e != null) {
@@ -2689,6 +2708,8 @@ namespace Mono.CSharp {
 				if (rc.FileType == SourceFileType.ActionScript && !variable_found) {
 					if (name == "NaN") {
 						return new DoubleLiteral (rc.BuiltinTypes, double.NaN, loc);
+					} else if (name == "Infinity") {
+						return new DoubleLiteral (rc.BuiltinTypes, double.PositiveInfinity, loc);
 					} else if (name == "String") {
 						return new TypeExpression(rc.BuiltinTypes.String, loc);
 					} else if (name == "Boolean") {

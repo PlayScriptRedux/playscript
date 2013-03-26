@@ -1950,8 +1950,10 @@ namespace Mono.CSharp {
 			UsingVariable = 1 << 7,
 //			DefinitelyAssigned = 1 << 8,
 			IsLocked = 1 << 9,
+			AsUsedBeforeDeclaration = 1 << 10,
 
-			ReadonlyMask = ForeachVariable | FixedVariable | UsingVariable
+			ReadonlyMask = ForeachVariable | FixedVariable | UsingVariable,
+			CreateBuilderMask = CompilerGenerated | AsUsedBeforeDeclaration
 		}
 
 		TypeSpec type;
@@ -1966,8 +1968,16 @@ namespace Mono.CSharp {
 
 		LocalBuilder builder;
 
+		// ActionScript - We need a copy of the type expression here to handle default initialization.
+		public FullNamedExpression TypeExpr;
+
 		public LocalVariable (Block block, string name, Location loc)
 		{
+			// ActionScript local variable hoisting
+			if (loc.SourceFile != null && loc.SourceFile.FileType == SourceFileType.ActionScript && loc.SourceFile.AsExtended == false) {
+				block = block.ParametersBlock.TopBlock;
+			}
+
 			this.block = block;
 			this.name = name;
 			this.loc = loc;
@@ -2094,6 +2104,18 @@ namespace Mono.CSharp {
 			}
 		}
 
+		// This local variable was used before it was declared.  Not an error in ActionScript, but
+		// we have to make it work in .NET.
+		public bool AsUsedBeforeDeclaration {
+			get { return (flags & Flags.AsUsedBeforeDeclaration) != 0; }
+			set {
+				if (value) 
+					flags |= Flags.AsUsedBeforeDeclaration;
+				else 
+					flags &= ~Flags.AsUsedBeforeDeclaration;
+			}
+		}
+
 		#endregion
 
 		public void CreateBuilder (EmitContext ec)
@@ -2114,7 +2136,7 @@ namespace Mono.CSharp {
 				return;
 
 			if (builder != null) {
-				if ((flags & Flags.CompilerGenerated) != 0)
+				if ((flags & Flags.CreateBuilderMask) != 0)
 					return;
 
 				// To avoid Used warning duplicates
@@ -2147,7 +2169,7 @@ namespace Mono.CSharp {
 		public void Emit (EmitContext ec)
 		{
 			// TODO: Need something better for temporary variables
-			if ((flags & Flags.CompilerGenerated) != 0)
+			if ((flags & Flags.CreateBuilderMask) != 0)
 				CreateBuilder (ec);
 
 			ec.Emit (OpCodes.Ldloc, builder);
@@ -2156,7 +2178,7 @@ namespace Mono.CSharp {
 		public void EmitAssign (EmitContext ec)
 		{
 			// TODO: Need something better for temporary variables
-			if ((flags & Flags.CompilerGenerated) != 0)
+			if ((flags & Flags.CreateBuilderMask) != 0)
 				CreateBuilder (ec);
 
 			ec.Emit (OpCodes.Stloc, builder);

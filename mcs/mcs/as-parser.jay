@@ -4569,14 +4569,11 @@ local_function_statement
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;
 		var anonMethod = end_anonymous ((ParametersBlock) $10);
-		var topBlock = current_block;
-		while (topBlock.Parent != null)
-			topBlock = topBlock.Parent;
-		var li = new LocalVariable (topBlock, lt.Value, lt.Location);
+		var li = new LocalVariable (current_block.ParametersBlock.TopBlock, lt.Value, lt.Location);
 		var decl = new BlockVariableDeclaration(new VarExpr(GetLocation($1)), li);
 		decl.Initializer = anonMethod;
-		topBlock.AddLocalName (li);
-		topBlock.AddScopeStatement (decl);	
+		current_block.AddLocalName (li);
+		current_block.ParametersBlock.TopBlock.AddScopeStatement (decl);	
 		$$ = new AsLocalFunction(GetLocation($1), lt.Value, anonMethod, decl);
 	  }
 	| ASYNC FUNCTION IDENTIFIER OPEN_PARENS
@@ -4592,14 +4589,11 @@ local_function_statement
 	  {
 	    var lt = (Tokenizer.LocatedToken) $3;
 		var anonMethod = end_anonymous ((ParametersBlock) $11);
-		var topBlock = current_block;
-		while (topBlock.Parent != null)
-			topBlock = topBlock.Parent;
-		var li = new LocalVariable (topBlock, lt.Value, lt.Location);
+		var li = new LocalVariable (current_block.ParametersBlock.TopBlock, lt.Value, lt.Location);
 		var decl = new BlockVariableDeclaration(new VarExpr(GetLocation($1)), li);
 		decl.Initializer = anonMethod;
-		topBlock.AddLocalName (li);
-		topBlock.AddScopeStatement (decl);	
+		current_block.AddLocalName (li);
+		current_block.ParametersBlock.TopBlock.AddScopeStatement (decl);	
 		$$ = new AsLocalFunction(GetLocation($1), lt.Value, anonMethod, decl);
 	  }
 	;	
@@ -6116,6 +6110,7 @@ block_variable_declaration
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;
 		var li = new LocalVariable (current_block, lt.Value, lt.Location);
+		li.TypeExpr = (FullNamedExpression) $4;
 		current_block.AddLocalName (li);
 		current_variable = new BlockVariableDeclaration ((FullNamedExpression) $4, li);
 	  }
@@ -6142,6 +6137,7 @@ block_variable_declaration
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;
 		var li = new LocalVariable (current_block, lt.Value, LocalVariable.Flags.Constant, lt.Location);
+		li.TypeExpr = (FullNamedExpression) $4;
 		current_block.AddLocalName (li);
 		current_variable = new BlockConstantDeclaration ((FullNamedExpression) $4, li);
 	  }
@@ -6197,6 +6193,7 @@ variable_declarator
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;	  
 		var li = new LocalVariable (current_variable.Variable, lt.Value, lt.Location);
+		li.TypeExpr = current_variable.TypeExpression;		
 		var d = new BlockVariableDeclaration.Declarator (li, null);
 		current_variable.AddDeclarator (d);
 		current_block.AddLocalName (li);
@@ -6206,6 +6203,7 @@ variable_declarator
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;	  
 		var li = new LocalVariable (current_variable.Variable, lt.Value, lt.Location);
+		li.TypeExpr = current_variable.TypeExpression;
 		var d = new BlockVariableDeclaration.Declarator (li, (Expression) $4);
 		current_variable.AddDeclarator (d);
 		current_block.AddLocalName (li);
@@ -6215,6 +6213,7 @@ variable_declarator
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;	  
 		var li = new LocalVariable (current_variable.Variable, lt.Value, lt.Location);
+		li.TypeExpr = (FullNamedExpression) $4;		
 		var d = new BlockVariableDeclaration.Declarator (li, null, (FullNamedExpression) $4);
 		d.Location = GetLocation($2);
 		current_variable.AddDeclarator (d);
@@ -6225,6 +6224,7 @@ variable_declarator
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;	  
 		var li = new LocalVariable (current_variable.Variable, lt.Value, lt.Location);
+		li.TypeExpr = (FullNamedExpression) $4;		
 		var d = new BlockVariableDeclaration.Declarator (li, (Expression) $6, (FullNamedExpression) $4);
 		d.Location = GetLocation($2);
 		current_variable.AddDeclarator (d);

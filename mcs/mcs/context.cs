@@ -318,7 +318,9 @@ namespace Mono.CSharp
 
 			ExpressionTreeConversion = 1 << 25,
 
-			InvokeSpecialName = 1 << 26
+			InvokeSpecialName = 1 << 26,
+
+			AsExtended = 1 << 27
 		}
 
 		// utility helper for CheckExpr, UnCheckExpr, Checked and Unchecked statements
@@ -402,6 +404,8 @@ namespace Mono.CSharp
 				fileType = memberCore.Location.SourceFile.FileType;
 			} else if (mc.Module != null && mc.Module.Location.SourceFile != null) {
 				fileType = mc.Module.Location.SourceFile.FileType;
+				if (mc.Module.Location.SourceFile.AsExtended)
+					flags |= Options.AsExtended;
 			} else {
 				fileType = SourceFileType.CSharp;
 			}
@@ -515,6 +519,16 @@ namespace Mono.CSharp
 		public SourceFileType FileType {
 			get { return fileType; }
 			set { fileType = value; }
+		}
+
+		public bool AsExtended {
+			get { return (flags & Options.AsExtended) != 0; }
+			set { 
+				if (value) 
+					flags |= Options.AsExtended; 
+				else 
+					flags &= ~Options.AsExtended; 
+			}
 		}
 
 		public Target Target {
