@@ -9214,6 +9214,15 @@ namespace Mono.CSharp
 				return new IndexerExpr (indexers, type, this);
 			}
 
+			// In ActionScript, use dynamic
+			if (ec.FileType == SourceFileType.ActionScript) {
+				if (loc.SourceFile == null || !loc.SourceFile.AsExtended) { // ASX doesn't allow this
+					type = ec.BuiltinTypes.Dynamic;
+					Expr = EmptyCast.Create (Expr, type);
+					return new IndexerExpr (indexers, ec.BuiltinTypes.Dynamic, this);
+				}
+			}
+
 			if (type != InternalType.ErrorType) {
 				ec.Report.Error (21, loc, "Cannot apply indexing with [] to an expression of type `{0}'",
 					type.GetSignatureForError ());

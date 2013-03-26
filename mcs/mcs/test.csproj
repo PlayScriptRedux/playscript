@@ -43,8 +43,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\tests\as3test-003.asx">
-      <Link>as3test-003.asx</Link>
+    <Compile Include="..\tests\as3test-001.as">
+      <Link>as3test-001.as</Link>
     </Compile>
   </ItemGroup>
 </Project>
