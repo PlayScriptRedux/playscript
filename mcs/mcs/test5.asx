@@ -66,4 +66,23 @@ package com.zynga.zengine.classes
 			trace("bar");
 		}
 	}
+
+	public class Bar {
+
+		public function Bar(a:int, b:int):void {
+
+		}
+	}
+
+	public class BarBar {
+
+		var _a:int = 100;
+
+		public function BarBar() {
+			var b:int = 200;
+			super(_a, b);
+		}
+	}
+
+
 }

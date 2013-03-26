@@ -7610,8 +7610,14 @@ namespace Mono.CSharp
 
 		public static bool IsThisAvailable (ResolveContext ec, bool ignoreAnonymous)
 		{
-			if (ec.IsStatic || ec.HasAny (ResolveContext.Options.FieldInitializerScope | ResolveContext.Options.BaseInitializer | ResolveContext.Options.ConstantScope))
-				return false;
+			// Actionscript allows "this" access during constructor base initializer calls.
+			if (ec.FileType == SourceFileType.ActionScript) {
+				if (ec.IsStatic || ec.HasAny (ResolveContext.Options.FieldInitializerScope | ResolveContext.Options.ConstantScope))
+					return false;
+			} else {
+				if (ec.IsStatic || ec.HasAny (ResolveContext.Options.FieldInitializerScope | ResolveContext.Options.BaseInitializer | ResolveContext.Options.ConstantScope))
+					return false;
+			}
 
 			if (ignoreAnonymous || ec.CurrentAnonymousMethod == null)
 				return true;
