@@ -9217,6 +9217,7 @@ namespace Mono.CSharp
 			// In ActionScript, use dynamic
 			if (ec.FileType == SourceFileType.ActionScript) {
 				if (loc.SourceFile == null || !loc.SourceFile.AsExtended) { // ASX doesn't allow this
+					ec.Report.Warning(7157, 1, loc, "Use of property indexer on non Object type.  Was this intended?");
 					type = ec.BuiltinTypes.Dynamic;
 					Expr = EmptyCast.Create (Expr, type);
 					return new IndexerExpr (indexers, ec.BuiltinTypes.Dynamic, this);
