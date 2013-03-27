@@ -13,7 +13,17 @@ package flash.display {
 
  	 	public property dropTarget : DisplayObject { get { return null; } }
 
- 	 	public property graphics : Graphics { get { return null; } }
+ 	 	public property graphics : Graphics 
+		{ 
+			get 
+			{ 
+				if (!mGraphics)
+				{
+					mGraphics = new Graphics();
+				}
+				return mGraphics;
+			}
+		}
 
  	 	public property hitArea : Sprite { get; set; }
 
@@ -43,6 +53,8 @@ package flash.display {
 		public function stopTouchDrag(touchPointID:int):void {
 			throw new System.NotImplementedException();		
 		}
+
+		var mGraphics:Graphics;
 	
 	}
 

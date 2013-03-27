@@ -9,6 +9,7 @@ namespace _root
 		public string height { get; set; }
 		public string frameRate { get; set; }
 		public string backgroundColor { get; set; }
+		public string quality {get;set;}
 		
 		public SWFAttribute ()
 		{

@@ -1,0 +1,14 @@
+package flash.filters {
+	
+	public class BlurFilter extends BitmapFilter
+	{
+
+		public function BlurFilter(blurX:Number = 4.0, blurY:Number = 4.0, quality:int = 1):void
+		{
+		}
+
+		//$$TODO
+	}
+	
+}
+

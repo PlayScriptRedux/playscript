@@ -6,50 +6,211 @@ package flash.geom {
 		// Properties
 		//
 	
-		public property determinant : Number { get { return 0.0; } }
+		public property determinant : Number { 
+			get { 
+				throw new System.NotImplementedException();
+			} 
+		}
 
- 	 	public property position : Vector3D { get; set; }
+ 	 	public property position : Vector3D 
+		{ 
+			get {return new Vector3D(mData[12], mData[13], mData[14]);}
+		}
 
- 	 	public property rawData : Vector.<Number> { get; set; }
+ 	 	public property rawData : Vector.<Number> 
+		{ 
+			get
+			{
+				// allocate vector on demand, this is gross
+				var rd:Vector.<Number> = new Vector.<Number>();
+
+				// copy array to vector
+				for (var i:int=0; i < 16; i++)
+				{
+					rd[i] = mData[i]; 
+				}
+
+				return rd;
+			}
+			set
+			{
+				// copy to internal array
+				for (var i:int=0; i < 16; i++)
+				{
+					mData[i] = value[i]; 
+				}
+			}
+		}
 
 		//
 		// Methods
 		//
 		
 		public function Matrix3D(v:Vector.<Number> = null) {
-			mData = new Vector.<Number>(16, true);
+			identity();
 		}
  	 	
 		public function append(lhs:Matrix3D):void {
-			throw new System.NotImplementedException();
+
+			var a:double[] = this.mData;
+			var b:double[] = lhs.mData;
+
+			// concat 4x4 matrices
+			var m0:Number = a[0]  * b[0] + a[1]  * b[4] + a[2]  * b[8]  + a[3]  * b[12];
+			var m1:Number = a[0]  * b[1] + a[1]  * b[5] + a[2]  * b[9]  + a[3]  * b[13];
+			var m2:Number = a[0]  * b[2] + a[1]  * b[6] + a[2]  * b[10] + a[3]  * b[14];
+			var m3:Number = a[0]  * b[3] + a[1]  * b[7] + a[2]  * b[11] + a[3]  * b[15];
+
+			var m4:Number = a[4]  * b[0] + a[5]  * b[4] + a[6]  * b[8]  + a[7]  * b[12];
+			var m5:Number = a[4]  * b[1] + a[5]  * b[5] + a[6]  * b[9]  + a[7]  * b[13];
+			var m6:Number = a[4]  * b[2] + a[5]  * b[6] + a[6]  * b[10] + a[7]  * b[14];
+			var m7:Number = a[4]  * b[3] + a[5]  * b[7] + a[6]  * b[11] + a[7]  * b[15];
+
+			var m8:Number = a[8]  * b[0] + a[9]  * b[4] + a[10] * b[8]  + a[11] * b[12];
+			var m9:Number = a[8]  * b[1] + a[9]  * b[5] + a[10] * b[9]  + a[11] * b[13];
+			var m10:Number= a[8]  * b[2] + a[9]  * b[6] + a[10] * b[10] + a[11] * b[14];
+			var m11:Number= a[8]  * b[3] + a[9]  * b[7] + a[10] * b[11] + a[11] * b[15];
+			 
+			var m12:Number= a[12] * b[0] + a[13] * b[4] + a[14] * b[8]  + a[15] * b[12];
+			var m13:Number= a[12] * b[1] + a[13] * b[5] + a[14] * b[9]  + a[15] * b[13];
+			var m14:Number= a[12] * b[2] + a[13] * b[6] + a[14] * b[10] + a[15] * b[14];
+			var m15:Number= a[12] * b[3] + a[13] * b[7] + a[14] * b[11] + a[15] * b[15];
+
+			// store result
+			var o:double[] = this.mData;
+			o[0] = m0;
+			o[1] = m1;
+			o[2] = m2;
+			o[3] = m3;
+			o[4] = m4;
+			o[5] = m5;
+			o[6] = m6;
+			o[7] = m7;
+			o[8] = m8;
+			o[9] = m9;
+			o[10] = m10;
+			o[11] = m11;
+			o[12] = m12;
+			o[13] = m13;
+			o[14] = m14;
+			o[15] = m15;
+		}
+
+		private static function createAxisAngleRotation(outRotationMatrix:Matrix3D, degrees:Number, axis:Vector3D, pivotPoint:Vector3D = null):void
+		{
+			if (pivotPoint != null) throw new System.NotImplementedException();
+			
+			var radians:Number = degrees*(System.Math.PI / 180.0);
+			var s:Number = System.Math.Sin(radians);
+			var c:Number = System.Math.Cos(radians);
+
+			var x:Number = axis.x;
+			var y:Number = axis.y;
+			var z:Number = axis.z;
+
+			var xx:Number = x * x;
+			var yy:Number = y * y;
+			var zz:Number = z * z;
+			
+			var scale:Number = 1.0 / System.Math.Sqrt(xx + yy + zz);
+			
+			// normalize
+			x *= scale;
+			y *= scale;
+			z *= scale;
+			
+			var xy:Number = x * y;
+			var yz:Number = y * z;
+			var zx:Number = z * x;
+			
+			var xs:Number = x * s;
+			var ys:Number = y * s;
+			var zs:Number = z * s;
+			
+			var one_minus_c:Number = 1.0 - c;
+
+			// write matrix			
+			var m:double[] = outRotationMatrix.mData;
+			m[0] = (one_minus_c * xx) + c;
+			m[1] = (one_minus_c * xy) + zs;
+			m[2] = (one_minus_c * zx) - ys;
+			m[3] = 0.0;
+			
+			m[4] = (one_minus_c * xy) - zs;
+			m[5] = (one_minus_c * yy) + c;
+			m[6] = (one_minus_c * yz) + xs;
+			m[7] = 0.0;
+			
+			m[8] = (one_minus_c * zx) + ys;
+			m[9] = (one_minus_c * yz) - xs;
+			m[10] = (one_minus_c * zz) + c;
+			m[11] = 0.0;
+			
+			m[12] = 0.0;
+			m[13] = 0.0;
+			m[14] = 0.0;
+			m[15] = 1.0;
 		}
  	 	
 		public function appendRotation(degrees:Number, axis:Vector3D, pivotPoint:Vector3D = null):void {
-			throw new System.NotImplementedException();
+			// create axis-angle rotation matrix and append it
+			var rotationMatrix:Matrix3D = new Matrix3D();
+			createAxisAngleRotation(rotationMatrix, degrees, axis, pivotPoint);
+			append(rotationMatrix);
 		}
  	 	
 		public function appendScale(xScale:Number, yScale:Number, zScale:Number):void {
-			throw new System.NotImplementedException();
+			mData[0] *= xScale;
+			mData[1] *= xScale;
+			mData[2] *= xScale;
+			mData[3] *= xScale;
+			
+			mData[4] *= yScale;
+			mData[5] *= yScale;
+			mData[6] *= yScale;
+			mData[7] *= yScale;
+			
+			mData[8] *= zScale;
+			mData[9] *= zScale;
+			mData[10]*= zScale;
+			mData[11]*= zScale;
+
+			// dont touch the W row
 		}
  	 	
 		public function appendTranslation(x:Number, y:Number, z:Number):void {
-			throw new System.NotImplementedException();
+			mData[12] += x;
+			mData[13] += y;
+			mData[14] += z;
 		}
  	 	
 		public function clone():Matrix3D {
-			throw new System.NotImplementedException();
+			var m:Matrix3D = new Matrix3D();
+			m.copyFrom(this);
+			return m;
 		}
  	 	
 		public function copyColumnFrom(column:uint, vector3D:Vector3D):void {
-			throw new System.NotImplementedException();
+			var i:int = (column * 4);
+			mData[i + 0] = vector3D.x;
+			mData[i + 1] = vector3D.y;
+			mData[i + 2] = vector3D.z;
+			mData[i + 3] = vector3D.w;
 		}
  	 	
 		public function copyColumnTo(column:uint, vector3D:Vector3D):void {
-			throw new System.NotImplementedException();
+			var i:int = (column * 4);
+			vector3D.x = mData[i + 0];
+			vector3D.y = mData[i + 1];
+			vector3D.z = mData[i + 2];
+			vector3D.w = mData[i + 3];
 		}
  	 	
 		public function copyFrom(sourceMatrix3D:Matrix3D):void {
-			throw new System.NotImplementedException();
+			var source:double[] = sourceMatrix3D.mData;
+			for (var i:int=0; i < 16; i++) {
+				mData[i] = source[i];
+			}
 		}
  	 	
 		public function copyRawDataFrom(vector:Vector.<Number>, index:uint = 0, transpose:Boolean = false):void {
@@ -62,23 +223,68 @@ package flash.geom {
 		}
  	 	
 		public function copyRawDataTo(vector:Vector.<Number>, index:uint = 0, transpose:Boolean = false):void {
-			throw new System.NotImplementedException();
+			if (index != 0 || transpose)
+				throw new System.NotImplementedException();
+			
+			for (var i:int=0; i < 16; i++) {
+				vector[i] = mData[i];
+			}
 		}
  	 	
 		public function copyRowFrom(row:uint, vector3D:Vector3D):void {
-			throw new System.NotImplementedException();
+			var i:int = row;
+			mData[i + 0] = vector3D.x;
+			mData[i + 4] = vector3D.y;
+			mData[i + 8] = vector3D.z;
+			mData[i +12] = vector3D.w;
 		}
  	 	
 		public function copyRowTo(row:uint, vector3D:Vector3D):void {
-			throw new System.NotImplementedException();
+			var i:int = row;
+			vector3D.x = mData[i + 0];
+			vector3D.y = mData[i + 4];
+			vector3D.z = mData[i + 8];
+			vector3D.w = mData[i +12];
 		}
  	 	
 		public function copyToMatrix3D(dest:Matrix3D):void {
-			throw new System.NotImplementedException();
+			var d:double[] = dest.mData;
+			for (var i:int=0; i < 16; i++) {
+				d[i] = mData[i];
+			}
 		}
- 	 	
+
+		private static var sTemp:Vector3D = new Vector3D();
+
 		public function decompose(orientationStyle:String = "eulerAngles"):Vector.<Vector3D> {
-			throw new System.NotImplementedException();
+			if (orientationStyle != "eulerAngles") throw new System.NotImplementedException();
+
+			// get translation
+			var translation:Vector3D = new Vector3D(mData[12], mData[13], mData[14]);
+
+			// get rotation 3x3
+			// $$TODO probably need to remove scale FIRST before decomposing rotation
+			var r11:Number = mData[0];
+			var r21:Number = mData[1];
+			var r31:Number = mData[2];
+			var r32:Number = mData[6];
+			var r33:Number = mData[10];
+
+			var rx:Number = System.Math.Atan2(r32, r33);
+			var ry:Number =-System.Math.Asin(r31);
+			var rz:Number = System.Math.Atan2(r21, r11);
+			var rotation:Vector3D = new Vector3D(rx, ry, rz);
+
+			// get scale
+			var scale:Vector3D = new Vector3D(1,1,1);
+			this.copyRowTo(0,sTemp);
+			scale.x = sTemp.length;
+			this.copyRowTo(1,sTemp);
+			scale.y = sTemp.length;
+			this.copyRowTo(1,sTemp);
+			scale.z = sTemp.length;
+
+			return new <Vector3D>[translation, rotation, scale];
 		}
  	 	
 		public function deltaTransformVector(v:Vector3D):Vector3D {
@@ -114,9 +320,132 @@ package flash.geom {
 		public function interpolateTo(toMat:Matrix3D, percent:Number):void {
 			throw new System.NotImplementedException();
 		}
- 	 	
+
+		private static var inv:double[] = new double[16];
+
 		public function invert():Boolean {
-			throw new System.NotImplementedException();
+			var m:double[] = mData;
+			inv[0] = m[5]  * m[10] * m[15] - 
+					m[5]  * m[11] * m[14] - 
+					m[9]  * m[6]  * m[15] + 
+					m[9]  * m[7]  * m[14] +
+					m[13] * m[6]  * m[11] - 
+					m[13] * m[7]  * m[10];
+			
+			inv[4] = -m[4]  * m[10] * m[15] + 
+					m[4]  * m[11] * m[14] + 
+					m[8]  * m[6]  * m[15] - 
+					m[8]  * m[7]  * m[14] - 
+					m[12] * m[6]  * m[11] + 
+					m[12] * m[7]  * m[10];
+			
+			inv[8] = m[4]  * m[9] * m[15] - 
+					m[4]  * m[11] * m[13] - 
+					m[8]  * m[5] * m[15] + 
+					m[8]  * m[7] * m[13] + 
+					m[12] * m[5] * m[11] - 
+					m[12] * m[7] * m[9];
+			
+			inv[12] = -m[4]  * m[9] * m[14] + 
+					m[4]  * m[10] * m[13] +
+					m[8]  * m[5] * m[14] - 
+					m[8]  * m[6] * m[13] - 
+					m[12] * m[5] * m[10] + 
+					m[12] * m[6] * m[9];
+			
+			inv[1] = -m[1]  * m[10] * m[15] + 
+					m[1]  * m[11] * m[14] + 
+					m[9]  * m[2] * m[15] - 
+					m[9]  * m[3] * m[14] - 
+					m[13] * m[2] * m[11] + 
+					m[13] * m[3] * m[10];
+			
+			inv[5] = m[0]  * m[10] * m[15] - 
+					m[0]  * m[11] * m[14] - 
+					m[8]  * m[2] * m[15] + 
+					m[8]  * m[3] * m[14] + 
+					m[12] * m[2] * m[11] - 
+					m[12] * m[3] * m[10];
+			
+			inv[9] = -m[0]  * m[9] * m[15] + 
+					m[0]  * m[11] * m[13] + 
+					m[8]  * m[1] * m[15] - 
+					m[8]  * m[3] * m[13] - 
+					m[12] * m[1] * m[11] + 
+					m[12] * m[3] * m[9];
+			
+			inv[13] = m[0]  * m[9] * m[14] - 
+					m[0]  * m[10] * m[13] - 
+					m[8]  * m[1] * m[14] + 
+					m[8]  * m[2] * m[13] + 
+					m[12] * m[1] * m[10] - 
+					m[12] * m[2] * m[9];
+			
+			inv[2] = m[1]  * m[6] * m[15] - 
+					m[1]  * m[7] * m[14] - 
+					m[5]  * m[2] * m[15] + 
+					m[5]  * m[3] * m[14] + 
+					m[13] * m[2] * m[7] - 
+					m[13] * m[3] * m[6];
+			
+			inv[6] = -m[0]  * m[6] * m[15] + 
+					m[0]  * m[7] * m[14] + 
+					m[4]  * m[2] * m[15] - 
+					m[4]  * m[3] * m[14] - 
+					m[12] * m[2] * m[7] + 
+					m[12] * m[3] * m[6];
+			
+			inv[10] = m[0]  * m[5] * m[15] - 
+					m[0]  * m[7] * m[13] - 
+					m[4]  * m[1] * m[15] + 
+					m[4]  * m[3] * m[13] + 
+					m[12] * m[1] * m[7] - 
+					m[12] * m[3] * m[5];
+			
+			inv[14] = -m[0]  * m[5] * m[14] + 
+					m[0]  * m[6] * m[13] + 
+					m[4]  * m[1] * m[14] - 
+					m[4]  * m[2] * m[13] - 
+					m[12] * m[1] * m[6] + 
+					m[12] * m[2] * m[5];
+			
+			inv[3] = -m[1] * m[6] * m[11] + 
+					m[1] * m[7] * m[10] + 
+					m[5] * m[2] * m[11] - 
+					m[5] * m[3] * m[10] - 
+					m[9] * m[2] * m[7] + 
+					m[9] * m[3] * m[6];
+			
+			inv[7] = m[0] * m[6] * m[11] - 
+					m[0] * m[7] * m[10] - 
+					m[4] * m[2] * m[11] + 
+					m[4] * m[3] * m[10] + 
+					m[8] * m[2] * m[7] - 
+					m[8] * m[3] * m[6];
+			
+			inv[11] = -m[0] * m[5] * m[11] + 
+					m[0] * m[7] * m[9] + 
+					m[4] * m[1] * m[11] - 
+					m[4] * m[3] * m[9] - 
+					m[8] * m[1] * m[7] + 
+					m[8] * m[3] * m[5];
+			
+			inv[15] = m[0] * m[5] * m[10] - 
+					m[0] * m[6] * m[9] - 
+					m[4] * m[1] * m[10] + 
+					m[4] * m[2] * m[9] + 
+					m[8] * m[1] * m[6] - 
+					m[8] * m[2] * m[5];
+			
+			var det:Number = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
+			if (det == 0)
+				return false;
+			
+			det = 1.0 / det;
+			for (var i:int = 0; i < 16; i++)
+				m[i] = inv[i] * det;
+			
+			return true;
 		}
  	 	
 		public function pointAt(pos:Vector3D, at:Vector3D = null, up:Vector3D = null):void {
@@ -140,7 +469,32 @@ package flash.geom {
 		}
  	 	
 		public function recompose(components:Vector.<Vector3D>, orientationStyle:String = "eulerAngles"):Boolean {
-			throw new System.NotImplementedException();
+			var translate:Vector3D=components[0];
+			var rotate:Vector3D=components[1];
+			var scale:Vector3D=components[2];
+
+			this.identity();
+
+			// $$TODO is this the right order?
+			if (rotate.x != 0.0) 
+			{
+				this.appendRotation(rotate.x * 180.0 / System.Math.PI, Vector3D.X_AXIS);
+			}
+			if (rotate.y != 0.0)
+			{
+				this.appendRotation(rotate.y * 180.0 / System.Math.PI, Vector3D.Y_AXIS);
+			}
+			if (rotate.z != 0.0) 
+			{
+				this.appendRotation(rotate.z * 180.0 / System.Math.PI, Vector3D.Z_AXIS);
+			}
+
+			// $$TODO is this the right order?
+			this.appendTranslation(translate.x, translate.y, translate.z);
+
+			// $$TODO is this the right order?
+			this.appendScale(scale.x, scale.y, scale.z);
+			return true;
 		}
  	 	
 		public function transformVector(v:Vector3D):Vector3D {
@@ -155,7 +509,7 @@ package flash.geom {
 			throw new System.NotImplementedException();
 		}
 		
-		public var mData:Vector.<Number>;
+		public var mData:double[] = new double[16];
 	}
 
 }

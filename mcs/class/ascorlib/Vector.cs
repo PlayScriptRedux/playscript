@@ -70,6 +70,8 @@ namespace _root {
 			}
 			set
 			{
+				// auto expand vector
+				expand(i + 1);
 				mList[i] = value;
 			}
 		}
@@ -82,6 +84,8 @@ namespace _root {
 			}
 			set
 			{
+				// auto expand vector
+				expand( (int)(i + 1));
 				mList[(int)i] = value;
 			}
 		}
