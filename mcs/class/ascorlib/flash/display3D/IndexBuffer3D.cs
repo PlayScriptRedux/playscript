@@ -43,7 +43,7 @@ namespace flash.display3D {
 #elif PLATFORM_MONOTOUCH
 			GL.BufferData<uint>(BufferTarget.ElementArrayBuffer, 
                 (IntPtr)(count * sizeof(uint)), 
-                data.ToArray(), 
+                data._GetInnerArray(), 
                 BufferUsage.StaticDraw);
 #endif
 		}

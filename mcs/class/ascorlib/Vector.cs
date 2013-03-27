@@ -5,6 +5,8 @@ using System.Collections.Generic;
 namespace _root {
 
 
+#if OLDVECTOR
+
 	public class Vector<T> : IEnumerable<T>
 	{
 		//
@@ -172,7 +174,7 @@ namespace _root {
 
 		public uint push(T value) {
 			mList.Add(value);
-			return (uint)(mList.Count - 1);
+			return length;
 		}
   
 		public uint push(T value, params T[] args) {
@@ -301,7 +303,7 @@ namespace _root {
 		public string toString() {
 			throw new System.NotImplementedException();
 		}
- 	 	
+
 		public uint unshift(params T[] args) {
 			for (int i=0; i < args.Length; i++)
 			{
@@ -327,6 +329,698 @@ namespace _root {
 		private readonly List<T> mList = new List<T>();
 	}
 
+#else
+
+		
+	public class Vector<T> : IList<T>
+	{
+		private const string ERROR_RESIZING_FIXED = "Error resizing fixed vector.";
+
+		private T[] mArray;
+		private uint mCount;
+		private bool mFixed = false;
+		
+		//
+		// Properties
+		//
+		
+		public bool @fixed 
+		{ 
+			get { return mFixed; } 
+			set { mFixed = value;} 
+		}
+		
+		public uint length
+		{ 
+			get { return mCount; } 
+			set { 
+				if (value == 0) {
+					System.Array.Clear (mArray, 0, (int)mCount);
+				} else if (mCount < value) {
+					EnsureCapacity(value);
+				} else if (mCount > value) {
+					System.Array.Clear (mArray, (int)value, (int)(mCount - value));
+				}
+				mCount = value;
+			} 
+		}
+		
+		//
+		// Methods
+		//
+		
+		public Vector(Vector<T> v) 
+		{
+			mArray = v.mArray.Clone() as T[];
+			mCount = v.mCount;
+			mFixed = v.mFixed;
+		}
+		
+		public Vector(Array a)
+		{
+			throw new System.NotImplementedException();
+		}
+		
+		public Vector(uint length = 0, bool @fixed = false)
+		{
+			if (length != 0)
+				mArray = new T[(int)length];
+			else
+				mArray = new T[4];
+			mCount = length;
+			mFixed = @fixed;
+		}
+		
+		public T this[int i]
+		{
+			get {
+				return mArray[i];
+			}
+			set {
+				mArray[i] = value;
+			}
+		}
+
+		public T this[uint i]
+		{
+			get {
+				return mArray[(int)i];
+			}
+			set {
+				mArray[(int)i] = value;
+			}
+		}
+		
+		public T[] ToArray()
+		{
+			T[] ret = new T[mCount];
+			System.Array.Copy(mArray, ret, mCount);
+			return ret;
+		}
+
+		public T[] _GetInnerArray()
+		{
+			return mArray;
+		}
+
+		private void EnsureCapacity(uint size)
+		{
+			if (mArray.Length < size) {
+				if (mFixed)
+					throw new InvalidOperationException(ERROR_RESIZING_FIXED);
+				int newSize = mArray.Length * 2;
+				while (newSize < size)
+					newSize = newSize * 2;
+				T[] newArray = new T[newSize];
+				System.Array.Copy(mArray, newArray, mArray.Length);
+				mArray = newArray;
+			}
+		}
+		
+		public void Add(T value) 
+		{
+			this.push (value);
+		}
+
+		private void _Insert(int index, T value) 
+		{
+			if (mCount >= mArray.Length)
+				EnsureCapacity(mCount + 1);
+			if (index < (int)mCount)
+				System.Array.Copy (mArray, index, mArray, index + 1, (int)mCount - index);
+			mArray[index] = value;
+			mCount++;
+		}
+
+		private void _RemoveAt(int index)
+		{
+			if (index < 0 || index >= (int)mCount)
+				throw new IndexOutOfRangeException();
+
+			if (index == (int)mCount - 1) {
+				mArray[index] = default(T);
+			} else {
+				System.Array.Copy (mArray, index + 1, mArray, index, (int)mCount - index - 1);
+			}
+			mCount--;
+		}
+
+		// optionally expands the vector to accomodate the new size
+		// if the vector is big enough then nothing is done
+		public void expand(uint newSize) 
+		{
+			EnsureCapacity(newSize);
+			if (mCount < newSize)
+				mCount = newSize;
+		}
+
+		public void append(Vector<T> vec)
+		{
+			EnsureCapacity(mCount + vec.mCount);
+			System.Array.Copy (mArray, mCount, vec.mArray, 0, vec.mCount);
+			mCount += vec.mCount;
+		}
+
+		public void append(IEnumerable<T> items)
+		{
+			if (items is IList<T>) {
+				var list = (items as IList<T>);
+				EnsureCapacity(mCount + (uint)list.Count);
+			}
+		
+			foreach (var item in items) {
+				this.Add (item);
+			}
+		}
+
+		public Vector<T> concat(params object[] args) 
+		{
+			
+			Vector<T> v = new Vector<T>((uint)args.Length + mCount);
+			// add this vector
+			v.append (this);
+
+			// concat all supplied vectors
+			foreach (var o in args) {
+				if (o is Vector<T>) {
+					v.append (o as Vector<T>);
+				} else if (o is IEnumerable<T>) {
+					v.append (o as IEnumerable<T>);
+				} else {
+					throw new System.NotImplementedException();
+				}
+			}
+			
+			return v;
+		}
+		
+		public bool every(Delegate callback, dynamic thisObject = null) 
+		{
+			throw new System.NotImplementedException();
+		}
+		
+		public Vector<T> filter(Delegate callback, dynamic thisObject = null) 
+		{
+			throw new System.NotImplementedException();
+		}
+		
+		public void forEach(Delegate callback, dynamic thisObject = null) 
+		{
+			throw new System.NotImplementedException();
+		}
+		
+		public int indexOf(T searchElement) 
+		{
+			uint len = mCount;
+			if (len > 0) {
+				switch (Type.GetTypeCode(typeof(T))) {
+				case TypeCode.Object:
+					object obj = searchElement;
+					for (var i = 0; i < len; i++) {
+						if (Object.ReferenceEquals(mArray[i], obj))
+							return i;
+					}
+					break;
+				case TypeCode.Int32:
+					int[] intArry = mArray as int[];
+					int intElem = (int)(object)searchElement;
+					for (var i = 0; i < len; i++) {
+						if (intArry[i] == intElem)
+							return i;
+					}
+					break;
+				case TypeCode.String:
+					string[] strArry = mArray as string[];
+					string strElem = searchElement as string;
+					for (var i = 0; i < len; i++) {
+						if (strArry[i] == strElem)
+							return i;
+					}
+					break;
+				default:
+					for (var i = 0; i < len; i++) {
+						if (mArray[i].Equals(searchElement))
+							return i;
+					}
+					break;
+				}
+			}
+			return -1;
+		}
+		
+		public int indexOf(T searchElement, int fromIndex) 
+		{
+			throw new System.NotImplementedException();
+		}
+		
+		public string join(string sep = ",") 
+		{
+			throw new System.NotImplementedException();
+		}
+		
+		public int lastIndexOf(T searchElement, int fromIndex = 0x7fffffff) 
+		{
+			throw new System.NotImplementedException();
+		}
+		
+		public Vector<T> map(Delegate callback, dynamic thisObject = null) 
+		{
+			throw new System.NotImplementedException();
+		}
+		
+		public T pop() 
+		{
+			if (mFixed)
+				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
+			T val = mArray[mCount - 1]; // Will throw if out of range
+			mCount--;
+			mArray[mCount] = default(T);
+			return val;
+		}
+		
+		public uint push(T value) 
+		{
+			if (mFixed)
+				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
+			if (mCount >= mArray.Length)
+				EnsureCapacity(mCount + 1);
+			mArray[mCount] = value;
+			mCount++;
+			return mCount;
+		}
+		
+		public uint push(T value, params T[] args) 
+		{
+			if (mFixed)
+				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
+			uint len = (uint)args.Length;
+			if (mArray.Length < mCount + 1 + len)
+				EnsureCapacity(mCount + 1 + len);
+			mArray[mCount++] = value;
+			for (var i = 0; i < len; i++)
+				mArray[mCount++] = args[i];
+			return mCount;
+		}
+		
+		public Vector<T> reverse() 
+		{
+			throw new System.NotImplementedException();
+		}
+		
+		public T shift() 
+		{
+			if (mFixed)
+				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
+			throw new System.NotImplementedException();
+		}
+		
+		public Vector<T> slice(int startIndex = 0, int endIndex = 16777215) 
+		{
+			throw new System.NotImplementedException();
+		}
+		
+		public bool some(Delegate callback, dynamic thisObject = null) 
+		{
+			throw new System.NotImplementedException();
+		}
+		
+		private class FunctionSorter : System.Collections.Generic.IComparer<T>
+		{
+			public FunctionSorter(dynamic func)
+			{
+				mFunc = func;
+			}
+			
+			public int Compare(T x, T y)
+			{
+				return (int)mFunc(x,y);
+			}
+			
+			private dynamic mFunc;
+		};
+		
+		private class OptionsSorter : System.Collections.Generic.IComparer<T>
+		{
+			public OptionsSorter(uint options)
+			{
+				// mOptions = options;
+			}
+			
+			public int Compare(T x, T y)
+			{
+				//$$TODO examine options
+				var xc = x as System.IComparable<T>;
+				if (xc != null)
+				{
+					return xc.CompareTo(y);
+				}
+				else
+				{
+					throw new System.NotImplementedException();
+				}
+			}
+			
+			// private uint mOptions;
+		};
+		
+		public Vector<T> sort(dynamic sortBehavior) 
+		{
+			
+			if (sortBehavior is Delegate)
+			{
+				var fs = new FunctionSorter(sortBehavior);
+				System.Array.Sort (mArray, 0, (int)mCount, fs);
+				return this;
+			}
+			else if (sortBehavior is uint)
+			{
+				var os = new OptionsSorter((uint)sortBehavior);
+				System.Array.Sort (mArray, 0, (int)mCount, os);
+				return this;
+			}
+			else 
+			{
+				throw new System.NotImplementedException();
+			}
+		}
+		
+		public Vector<T> splice(int startIndex, uint deleteCount = 4294967295) 
+		{
+			Vector<T> removed = null;
+
+			if (mFixed)
+				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
+
+			// determine number of items to delete
+			int toDelete = (int)mCount - startIndex;
+			if ((uint)toDelete > deleteCount) 
+				toDelete = (int)deleteCount;
+
+			if (toDelete == 1) {
+				removed = new Vector<T>(1);
+				removed.mArray[0] = mArray[startIndex];
+				int toMove = (int)mCount - 1 - startIndex;
+				if (toMove > 0)
+					System.Array.Copy (mArray, startIndex + toDelete, mArray, startIndex, toMove);
+				mArray[mCount - 1] = default(T);
+				mCount--;
+			} else if (toDelete > 1) {
+				removed = new Vector<T>((uint)toDelete);
+				System.Array.Copy (mArray, startIndex, removed.mArray, 0, toDelete);
+				int toMove = (int)mCount - toDelete - startIndex;
+				if (toMove > 0)
+					System.Array.Copy (mArray, startIndex + toDelete, mArray, startIndex, toMove);
+				System.Array.Clear (mArray, startIndex + toMove, toDelete);
+				mCount = (uint)(startIndex + toMove);
+			}
+			
+			return removed;
+		}
+		
+		public Vector<T> splice(int startIndex, uint deleteCount = 4294967295, params T[] items) 
+		{
+			Vector<T> removed = null;
+
+			if (mFixed)
+				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
+
+			// determine number of items to delete
+			int toDelete = (int)mCount - startIndex;
+			if ((uint)toDelete > deleteCount) 
+				toDelete = (int)deleteCount;
+			
+			if (toDelete == 1) {
+				removed = new Vector<T>(1);
+				removed.mArray[0] = mArray[startIndex];
+				int toMove = (int)mCount - 1 - startIndex;
+				if (toMove > 0)
+					System.Array.Copy (mArray, startIndex + toDelete, mArray, startIndex, toMove);
+				mArray[mCount - 1] = default(T);
+				mCount--;
+			} else if (toDelete > 1) {
+				removed = new Vector<T>((uint)toDelete);
+				System.Array.Copy (mArray, startIndex, removed.mArray, 0, toDelete);
+				int toMove = (int)mCount - toDelete - startIndex;
+				if (toMove > 0)
+					System.Array.Copy (mArray, startIndex + toDelete, mArray, startIndex, toMove);
+				System.Array.Clear (mArray, startIndex + toMove, toDelete);
+				mCount = (uint)(startIndex + toMove);
+			}
+
+			uint itemsLen = (uint)items.Length;
+			if (itemsLen > 0) {
+				EnsureCapacity(mCount + itemsLen);
+				int toMove = (int)mCount - startIndex;
+				if (toMove > 0)
+					System.Array.Copy (mArray, startIndex, mArray, startIndex + itemsLen, toMove);
+				if (itemsLen == 1)
+					mArray[startIndex] = items[0];
+				else
+					System.Array.Copy (items, 0, mArray, startIndex, itemsLen);
+				mCount += itemsLen;
+			}
+			
+			return removed;
+		}
+		
+		public void splice_noret(int startIndex, uint deleteCount = 4294967295) 
+		{
+			if (mFixed)
+				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
+
+			// determine number of items to delete
+			int toDelete = (int)mCount - startIndex;
+			if ((uint)toDelete > deleteCount) 
+				toDelete = (int)deleteCount;
+			
+			if (toDelete == 1) {
+				int toMove = (int)mCount - 1 - startIndex;
+				if (toMove > 0)
+					System.Array.Copy (mArray, startIndex + toDelete, mArray, startIndex, toMove);
+				mArray[mCount - 1] = default(T);
+				mCount--;
+			} else if (toDelete > 1) {
+				int toMove = (int)mCount - toDelete - startIndex;
+				if (toMove > 0)
+					System.Array.Copy (mArray, startIndex + toDelete, mArray, startIndex, toMove);
+				System.Array.Clear (mArray, startIndex + toMove, toDelete);
+				mCount = (uint)(startIndex + toMove);
+			}
+		}
+
+		public void splice_noret(int startIndex, uint deleteCount = 4294967295, params T[] items) 
+		{
+			if (mFixed)
+				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
+
+			// determine number of items to delete
+			int toDelete = (int)mCount - startIndex;
+			if ((uint)toDelete > deleteCount) 
+				toDelete = (int)deleteCount;
+			
+			if (toDelete == 1) {
+				int toMove = (int)mCount - 1 - startIndex;
+				if (toMove > 0)
+					System.Array.Copy (mArray, startIndex + toDelete, mArray, startIndex, toMove);
+				mArray[mCount - 1] = default(T);
+				mCount--;
+			} else if (toDelete > 1) {
+				int toMove = (int)mCount - toDelete - startIndex;
+				if (toMove > 0)
+					System.Array.Copy (mArray, startIndex + toDelete, mArray, startIndex, toMove);
+				System.Array.Clear (mArray, startIndex + toMove, toDelete);
+				mCount = (uint)(startIndex + toMove);
+			}
+			
+			uint itemsLen = (uint)items.Length;
+			if (itemsLen > 0) {
+				EnsureCapacity(mCount + itemsLen);
+				int toMove = (int)mCount - startIndex;
+				if (toMove > 0)
+					System.Array.Copy (mArray, startIndex, mArray, startIndex + itemsLen, toMove);
+				if (itemsLen == 1)
+					mArray[startIndex] = items[0];
+				else
+					System.Array.Copy (items, 0, mArray, startIndex, itemsLen);
+				mCount += itemsLen;
+			}
+		}
+		
+		public string toLocaleString() 
+		{
+			throw new System.NotImplementedException();
+		}
+		
+		public string toString() 
+		{
+			throw new System.NotImplementedException();
+		}
+
+		public uint unshift(T item) 
+		{
+			if (mFixed)
+				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
+			if (mCount >= mArray.Length)
+				EnsureCapacity(mCount + 1);
+			if (mCount > 0)
+				System.Array.Copy (mArray, 0, mArray, 1, (int)mCount);
+			mArray[0] = item;
+			mCount++;
+			return mCount;
+		}
+
+		public uint unshift(T item, params T[] args) 
+		{
+			if (mFixed)
+				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
+			uint argsLen = (uint)args.Length;
+			EnsureCapacity(mCount + 1 + argsLen);
+			if (mCount > 0)
+				System.Array.Copy (mArray, 0, mArray, args.Length, (int)mCount);
+			mArray[0] = item;
+			System.Array.Copy (args, 0, mArray, 1, argsLen);
+			mCount += 1 + argsLen;
+			return mCount;
+		}
+		
+		#region IList implementation
+
+		int IList<T>.IndexOf (T item)
+		{
+			return this.indexOf(item);
+		}
+
+		void IList<T>.Insert (int index, T item)
+		{
+			_Insert (index, item);
+		}
+
+		void IList<T>.RemoveAt (int index)
+		{
+			_RemoveAt(index);
+		}
+
+		#endregion
+
+		#region ICollection implementation
+
+//		void ICollection<T>.Add (T item)
+//		{
+//			this._Add (item);
+//		}
+
+		void ICollection<T>.Clear ()
+		{
+			this.length = 0;
+		}
+
+		bool ICollection<T>.Contains (T item)
+		{
+			return this.indexOf(item) != -1;
+		}
+
+		void ICollection<T>.CopyTo (T[] array, int arrayIndex)
+		{
+			System.Array.Copy (mArray, 0, array, arrayIndex, (int)mCount);
+		}
+
+		bool ICollection<T>.Remove (T item)
+		{
+			int i = this.indexOf(item);
+			if (i >= 0) {
+				_RemoveAt(i);
+				return true;
+			} else {
+				return false;
+			}
+		}
+
+		int ICollection<T>.Count {
+			get {
+				return (int)mCount;
+			}
+		}
+
+		bool ICollection<T>.IsReadOnly {
+			get {
+				return false;
+			}
+		}
+
+		#endregion
+
+		#region IEnumerable implementation
+
+		private class VectorEnumerator : IEnumerator<T>
+		{
+			public Vector<T> mVector;
+			public int mIndex;
+
+			public VectorEnumerator(Vector<T> vector)
+			{
+				mVector = vector;
+				mIndex = -1;
+			}
+
+			#region IEnumerator implementation
+
+			public bool MoveNext ()
+			{
+				mIndex++;
+				return mIndex < mVector.mCount;
+			}
+
+			public void Reset ()
+			{
+				mIndex = -1;
+			}
+
+			object System.Collections.IEnumerator.Current {
+				get {
+					return mVector.mArray[mIndex];
+				}
+			}
+
+			#endregion
+
+			#region IDisposable implementation
+
+			public void Dispose ()
+			{
+			}
+
+			#endregion
+
+			#region IEnumerator implementation
+
+			public T Current {
+				get {
+					return mVector.mArray[mIndex];
+				}
+			}
+
+			#endregion
+
+		}
+
+		IEnumerator<T> IEnumerable<T>.GetEnumerator ()
+		{
+			return new VectorEnumerator(this);
+		}
+
+		#endregion
+
+		#region IEnumerable implementation
+
+		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator ()
+		{
+			return new VectorEnumerator(this);
+		}
+
+		#endregion
+	}
+
+#endif
 
 }
 

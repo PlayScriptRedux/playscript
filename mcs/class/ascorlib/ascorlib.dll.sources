@@ -190,4 +190,7 @@
 ./VerifyError.asx
 ./XML.asx
 ./XMLList.asx
+./Object.cs
+./PartialAttribute.cs
+
 

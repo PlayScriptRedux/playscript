@@ -8,17 +8,17 @@ package flash.geom {
 		// Properties
 		//
 	
-		public property a : Number { get; set; }
+		public var a : Number;
 
- 	 	public property b : Number { get; set; }
+		public var b : Number;
 
- 	 	public property c : Number { get; set; }
+		public var c : Number;
 
- 	 	public property d : Number { get; set; }
+		public var d : Number;
 
- 	 	public property tx : Number { get; set; }
+		public var tx : Number;
 
- 	 	public property ty : Number { get; set; }
+		public var ty : Number;
 
  	 	//
  	 	// Methods 

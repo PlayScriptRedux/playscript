@@ -175,4 +175,5 @@
 ../ascorlib/VerifyError.asx
 ../ascorlib/XML.asx
 ../ascorlib/XMLList.asx
-
+../ascorlib/Object.cs
+../ascorlib/PartialAttribute.cs

@@ -1134,7 +1134,17 @@ namespace Mono.CSharp
 		/// </summary>
 		protected virtual TypeSpec[] ResolveBaseTypes (out FullNamedExpression base_class)
 		{
-			base_class = null;
+			// ActionScript will default to the "_root.Object" base class.. not null.
+			if (this.Location.SourceFile != null &&
+			    this.Location.SourceFile.FileType == SourceFileType.ActionScript) {
+				base_class = new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "Object");
+				base_type = base_class.ResolveAsType (new BaseContext (this));
+				if (base_type == null)
+					base_class = null;
+			} else {
+				base_class = null;
+			}
+
 			if (type_bases == null)
 				return null;
 

@@ -42,6 +42,9 @@
     <Reference Include="MonoMac, Version=0.0.0.0, Culture=neutral">
       <Private>False</Private>
     </Reference>
+    <Reference Include="test2">
+      <HintPath>..\..\mcs\test2.exe</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActionScript\Undefined.cs" />
@@ -136,6 +139,7 @@
     <Compile Include="flash\media\Camera.asx" />
     <Compile Include="flash\media\Video.asx" />
     <Compile Include="PartialAttribute.cs" />
+    <Compile Include="Object.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
