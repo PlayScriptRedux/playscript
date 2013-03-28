@@ -1136,7 +1136,8 @@ namespace Mono.CSharp
 		{
 			// ActionScript will default to the "_root.Object" base class.. not null.
 			if (this.Location.SourceFile != null &&
-			    this.Location.SourceFile.FileType == SourceFileType.ActionScript) {
+			    this.Location.SourceFile.FileType == SourceFileType.ActionScript &&
+			    !this.IsStatic) {
 				base_class = new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "Object");
 				base_type = base_class.ResolveAsType (new BaseContext (this));
 				if (base_type == null)

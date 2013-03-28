@@ -13,6 +13,8 @@ namespace _root
 
 		public string fontFamily { get; set; }
 
+		public string symbol { get; set; }
+
 		public EmbedAttribute (string _source = null)
 		{
 			source = _source;

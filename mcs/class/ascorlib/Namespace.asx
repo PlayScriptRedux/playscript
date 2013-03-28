@@ -20,12 +20,12 @@ package {
 		public function Namespace(uriValue:*) {
 		}
 
-		public function toString():String {
-			return null;
+		public override function toString():String {
+			throw new System.NotImplementedException();
 		}
 
-		public function valueOf():String {
-			return null;		
+		public override function valueOf():Object {
+			throw new System.NotImplementedException();
 		}
 	
 	}

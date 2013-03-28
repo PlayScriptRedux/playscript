@@ -12,8 +12,8 @@ package flash.net {
 		public function decode(source:String):void {
 		}
  	 	
-		public function toString():String {
-			return null;
+		public override function toString():String {
+			throw new System.NotImplementedException();
 		}
 	
 		//

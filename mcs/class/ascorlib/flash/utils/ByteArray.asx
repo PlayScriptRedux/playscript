@@ -181,8 +181,8 @@ package flash.utils {
 			throw new NotImplementedException();
 		}
 
-		public function toString():String {
-			throw new NotImplementedException();
+		public override function toString():String {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public function uncompress(algorithm:String = null):void {

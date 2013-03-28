@@ -30,7 +30,8 @@ package flash.display {
  	 		for (var i:int = 0; i < len; i++) {
  	 			var child:DisplayObject = mChildren[i];
  	 			child.mStage = s;
- 	 			if (child is DisplayObjectContainer) {
+				child.dispatchEvent (new flash.events.Event (flash.events.Event.ADDED_TO_STAGE));
+				if (child is DisplayObjectContainer) {
  	 				DisplayObjectContainer(child).setStageRecursive(s);
  	 			}
  	 		}
@@ -41,7 +42,12 @@ package flash.display {
 			if (child is DisplayObjectContainer) {
 				DisplayObjectContainer(child).setStageRecursive(mStage);
 			}
+
 			mChildren.push(child);
+			child.mParent = this;
+
+			child.dispatchEvent (new flash.events.Event (flash.events.Event.ADDED_TO_STAGE));
+			child.dispatchEvent (new flash.events.Event (flash.events.Event.ADDED));
 			return child;
 		}
  	 	

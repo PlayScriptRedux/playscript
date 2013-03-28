@@ -5,7 +5,7 @@ using System.Collections.Generic;
 namespace _root {
 
 
-#if OLDVECTOR
+#if !NEWVECTOR
 
 	public class Vector<T> : IEnumerable<T>
 	{
@@ -72,6 +72,8 @@ namespace _root {
 			}
 			set
 			{
+				// auto expand vector
+				expand(i + 1);
 				mList[i] = value;
 			}
 		}
@@ -84,6 +86,8 @@ namespace _root {
 			}
 			set
 			{
+				// auto expand vector
+				expand( (int)(i + 1));
 				mList[(int)i] = value;
 			}
 		}
@@ -331,6 +335,7 @@ namespace _root {
 
 #else
 
+	// Optimized vector.
 		
 	public class Vector<T> : IList<T>
 	{

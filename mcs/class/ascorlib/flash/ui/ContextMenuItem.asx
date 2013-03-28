@@ -4,7 +4,7 @@ package flash.ui {
 	public class ContextMenuItem extends EventDispatcher {
 		public function ContextMenuItem(caption:String, separatorBefore:Boolean = false, enabled:Boolean = true, visible:Boolean = true)
 		{
-			throw new System.NotImplementedException();
+			// $$TODO
 		}
 	}
 }

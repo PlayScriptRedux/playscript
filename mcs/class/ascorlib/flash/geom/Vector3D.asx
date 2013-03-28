@@ -7,32 +7,31 @@ package flash.geom {
 		//
 		
  	
- 	 	public static const X_AXIS : Vector3D = null;
+ 	 	public static const X_AXIS : Vector3D = new Vector3D(1,0,0);
 
- 	 	public static const Y_AXIS : Vector3D = null;
+		public static const Y_AXIS : Vector3D = new Vector3D(0,1,0);
 
- 	 	public static const Z_AXIS : Vector3D = null;
+		public static const Z_AXIS : Vector3D = new Vector3D(0,0,1);
 	
 		//
 		// Properties
 		//
 	
-	 	public property length : Number { get { 
-				throw new System.NotImplementedException();
-			} }
+	 	public property length : Number 
+		{ 
+			get {return System.Math.Sqrt(x * x + y * y + z * z);} 
+		}
 
-		public property lengthSquared : Number { get { 			
-				throw new System.NotImplementedException();
-			} }
+		public property lengthSquared : Number 
+		{ 
+			get {return (x * x + y * y + z * z);} 
+		}
 
- 	 	public property w : Number { get; set; }
+		public var x : Number;
+		public var y : Number;
+		public var z : Number;
+		public var w : Number;
 
- 	 	public property x : Number { get; set; }
-
- 	 	public property y : Number { get; set; }
-
- 	 	public property z : Number { get; set; }
- 	 	
  	 	//
  	 	// Methods
  	 	//
@@ -53,7 +52,7 @@ package flash.geom {
 		}
  	 	
 		public function clone():Vector3D {
-			throw new System.NotImplementedException();
+			return new Vector3D(x,y,z,w);
 		}
 
 		public function copyFrom(sourceVector3D:Vector3D):void {
@@ -61,7 +60,15 @@ package flash.geom {
 		}
  	 	
 		public function crossProduct(a:Vector3D):Vector3D {
-			throw new System.NotImplementedException();
+			var result:Vector3D = new Vector3D();
+			var v1:Vector3D = this;
+			var v2:Vector3D = a;
+
+			result.x =  v1.y * v2.z - v1.z * v2.y;
+			result.y =  v1.z * v2.x - v1.x * v2.z;
+			result.z =  v1.x * v2.y - v1.y * v2.x;
+			result.w = 1.0;
+			return result;
 		}
  	 	
 		public function decrementBy(a:Vector3D):void {
@@ -94,7 +101,13 @@ package flash.geom {
 		}
  	 	
 		public function normalize():Number {
-			throw new System.NotImplementedException();
+			var mag:double = length;
+			var invmag:double = 1.0 / mag;
+			// normalize
+			x *= invmag;
+			y *= invmag;
+			z *= invmag;
+			return mag; // or return 1.0 ? 
 		}
  	 	
 		public function project():void {
@@ -106,21 +119,27 @@ package flash.geom {
 		}
  	 	
 		public function setTo(xa:Number, ya:Number, za:Number):void {
-			throw new System.NotImplementedException();
+			this.x = xa;
+			this.y = ya;
+			this.z = za;
 		}
  	 	
 		public function subtract(a:Vector3D):Vector3D {
-			throw new System.NotImplementedException();
+			var o:Vector3D = new Vector3D();
+			o.x = this.x - a.x;
+			o.y = this.y - a.y;
+			o.z = this.z - a.z;
+			return o;
 		}
  	 	
-		public function toString():String {
+		public override function toString():String {
 			throw new System.NotImplementedException();
 		}
 
-//		public indexer this (index:String):Number {
-//			get {throw new System.NotImplementedException(); }
-//			set {throw new System.NotImplementedException(); }
-//		}
+		public indexer this (index:String):Number {
+			get {throw new System.NotImplementedException(); }
+			set {throw new System.NotImplementedException(); }
+		}
 
 	}
 

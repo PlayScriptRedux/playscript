@@ -140,6 +140,7 @@
     <Compile Include="flash\media\Video.asx" />
     <Compile Include="PartialAttribute.cs" />
     <Compile Include="Object.cs" />
+    <Compile Include="flash\filters\BlurFilter.asx" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

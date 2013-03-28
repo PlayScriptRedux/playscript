@@ -85,6 +85,8 @@ package flash.display {
 		// 
 		
 		public function Stage(width:int, height:int) {
+			this.width = width;
+			this.height = height;
 			this.stageWidth = width;
 			this.stageHeight = height;
 			this.fullScreenWidth = uint(width); 

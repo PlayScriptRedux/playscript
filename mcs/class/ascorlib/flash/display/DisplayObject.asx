@@ -43,7 +43,7 @@ package flash.display {
 
  	 	public property opaqueBackground : Object { get; set; }
 
- 	 	public property parent : DisplayObjectContainer { get { return null; }  }
+		public property parent : DisplayObjectContainer { get { return mParent; }  }
 
  	 	public property root : DisplayObject { get { return null; } }
 
@@ -122,8 +122,13 @@ package flash.display {
 		}
  	 	
 		public function localToGlobal(point:Point):Point {
-			throw new NotImplementedException();
+			// $$TODO
+			//trace("not implemented: DisplayObject.localToGlobal");
+			return point.clone();
+			//throw new NotImplementedException();
 		}
+
+		internal var mParent:DisplayObjectContainer;
 	
 	}
 

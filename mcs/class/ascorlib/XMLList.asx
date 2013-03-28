@@ -117,7 +117,7 @@ package {
 			throw new System.NotImplementedException();
 		}
 		
-		public function toString():String {
+		public override function toString():String {
 			throw new System.NotImplementedException();
 		}
 		
@@ -125,7 +125,7 @@ package {
 			throw new System.NotImplementedException();
 		}
 		
-		public function valueOf():XMLList {
+		public override function valueOf():Object {
 			throw new System.NotImplementedException();
 		}
 		

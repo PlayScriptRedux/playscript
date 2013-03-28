@@ -86,7 +86,9 @@
 ../ascorlib/flash/events/TimerEvent.asx
 ../ascorlib/flash/events/TouchEvent.asx
 ../ascorlib/flash/events/UncaughtErrorEvents.asx
+../ascorlib/flash/filters/BlurFilter.asx
 ../ascorlib/flash/filters/BitmapFilter.asx
+../ascorlib/flash/filters/ColorMatrixFilter.asx
 ../ascorlib/flash/filters/ShaderFilter.asx
 ../ascorlib/flash/geom/ColorTransform.asx
 ../ascorlib/flash/geom/Matrix.asx

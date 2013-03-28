@@ -118,7 +118,7 @@ package flash.geom {
 			mHeight = height;
 		}
  	 	
-		public function toString():String {
+		public override function toString():String {
 			return "(" + mX + "," + mY + "," + mWidth + "," + mHeight + ")";
 		}
 

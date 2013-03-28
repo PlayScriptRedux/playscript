@@ -38,9 +38,8 @@ package flash.geom {
 			throw new System.NotImplementedException();
 		}
 		
-		public function toString():String {
+		public override function toString():String {
 			throw new System.NotImplementedException();
-//			return null;
 		}
 	
 	}

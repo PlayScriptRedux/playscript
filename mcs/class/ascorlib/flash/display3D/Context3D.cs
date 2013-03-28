@@ -171,11 +171,11 @@ namespace flash.display3D {
 				break;
 			case Context3DTriangleFace.BACK:
 				GL.Enable(EnableCap.CullFace);
-				GL.CullFace (CullFaceMode.Back);
+				GL.CullFace (CullFaceMode.Front);		// oddly this is inverted
 				break;
 			case Context3DTriangleFace.FRONT:
 				GL.Enable(EnableCap.CullFace);
-				GL.CullFace (CullFaceMode.Front);
+				GL.CullFace (CullFaceMode.Back);		// oddly this is inverted
 				break;
 			case Context3DTriangleFace.FRONT_AND_BACK:
 				GL.Enable(EnableCap.CullFace);
@@ -239,6 +239,14 @@ namespace flash.display3D {
 			throw new NotImplementedException();
 		}
 
+		private static void convertDoubleToFloat (float[] dest, double[] source, int count)
+		{
+			// $$TODO optimize this
+			for (int i=0; i < count; i++) {
+				dest[i] = (float)source[i];
+			}
+		}
+
 		private static void convertDoubleToFloat (float[] dest, Vector<double> source, int count)
 		{
 			// $$TODO optimize this
@@ -256,7 +264,7 @@ namespace flash.display3D {
 				//    4  5  6  7
 				//    8  9 10 11
 				//   12 13 14 15
-				Vector<double> source = matrix.mData;
+				double[] source = matrix.mData;
 				mTemp[0] = (float)source[0];
 				mTemp[1] = (float)source[4];
 				mTemp[2] = (float)source[8];
@@ -285,33 +293,61 @@ namespace flash.display3D {
 			if (programType == "vertex") {
 				// set uniform registers
 				int location = mProgram.getVertexLocation(firstRegister);
-				GL.UniformMatrix4(location, 1, false, mTemp);
+				if (location >= 0)
+				{
+					GL.UniformMatrix4(location, 1, false, mTemp);
+				}
 
 			} else {
 				// set uniform registers
 				int location = mProgram.getFragmentLocation(firstRegister);
-				GL.UniformMatrix4(location, 1, false, mTemp);
+				if (location >= 0)
+				{
+					GL.UniformMatrix4(location, 1, false, mTemp);
+				}
 			}
 		}
 
  	 	
 		public void setProgramConstantsFromVector (string programType, int firstRegister, Vector<double> data, int numRegisters = -1)
 		{
+			if (numRegisters == 0) return;
+
 			if (numRegisters == -1) {
 				numRegisters = (int)(data.length / 4);
 			}
 
-			// convert double->float
-			convertDoubleToFloat (mTemp, data, numRegisters * 4);
-
 			if (programType == "vertex") {
 				// set uniform registers
-				int location = mProgram.getVertexLocation(firstRegister);
-				GL.Uniform4(location, numRegisters, mTemp);
+				for (int i=0; i < numRegisters; i++)
+				{
+					// set each register individually because they can be at non-contiguous locations
+					int location = mProgram.getVertexLocation(firstRegister + i);
+					if (location >= 0)
+					{
+						mTemp[0] = (float)data[i * 4 + 0];
+						mTemp[1] = (float)data[i * 4 + 1];
+						mTemp[2] = (float)data[i * 4 + 2];
+						mTemp[3] = (float)data[i * 4 + 3];
+						GL.Uniform4(location, 1, mTemp);
+					}
+				}
 			} else {
+
 				// set uniform registers
-				int location = mProgram.getFragmentLocation(firstRegister);
-				GL.Uniform4(location, numRegisters, mTemp);
+				for (int i=0; i < numRegisters; i++)
+				{
+					// set each register individually because they can be at non-contiguous locations
+					int location = mProgram.getFragmentLocation(firstRegister + i);
+					if (location >= 0)
+					{
+						mTemp[0] = (float)data[i * 4 + 0];
+						mTemp[1] = (float)data[i * 4 + 1];
+						mTemp[2] = (float)data[i * 4 + 2];
+						mTemp[3] = (float)data[i * 4 + 3];
+						GL.Uniform4(location, 1, mTemp);
+					}
+				}
 			}
 		}
  	 	

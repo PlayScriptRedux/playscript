@@ -95,6 +95,7 @@
 ./flash/events/TimerEvent.asx
 ./flash/events/TouchEvent.asx
 ./flash/events/UncaughtErrorEvents.asx
+./flash/filters/BlurFilter.asx
 ./flash/filters/BitmapFilter.asx
 ./flash/filters/ColorMatrixFilter.asx
 ./flash/filters/ShaderFilter.asx

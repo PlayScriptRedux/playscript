@@ -75,7 +75,7 @@ package flash.geom {
 			return new Point(this.x - v.x, this.y - v.y);
 		}
  	 	
-		public function toString():String {
+		public override function toString():String {
 			return "(" + this.x + "," + this.y + ")";
 		}
 		

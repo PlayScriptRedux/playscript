@@ -19,11 +19,11 @@ package {
 			mLocalName = localName;
 		}
  	 	
-		public function toString():String {
+		public override function toString():String {
 			throw new System.NotImplementedException();
 		}
  	 	
-		public function valueOf():QName {
+		public override function valueOf():Object {
 			throw new System.NotImplementedException();
 		}
 

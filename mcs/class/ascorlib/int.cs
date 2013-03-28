@@ -25,7 +25,7 @@ namespace _root
 		}
 	
 		public static string toString(this int i, uint radix) {
-			throw new NotImplementedException();
+			return Convert.ToString(i, (int)radix);
 		}
 			
 		public static int valueOf(this int i) {

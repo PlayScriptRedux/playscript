@@ -51,7 +51,7 @@ namespace flash.display3D
 				var str = PrefixFromType (type, programType);
 				str += n.ToString ();
 
-#if false
+#if true
 				if (useMask && mask != 0xF) {
 					str += ".";
 					if ((mask & 1)!=0) str += "x";
@@ -74,8 +74,9 @@ namespace flash.display3D
 			public int s;
 			public int o;
 			public int n;
+			public int destMask;
 
-			public static SourceReg Parse (ulong v, ProgramType programType)
+			public static SourceReg Parse (ulong v, ProgramType programType, int destMask)
 			{
 				var sr = new SourceReg();
 				sr.programType = programType;
@@ -86,6 +87,7 @@ namespace flash.display3D
 				sr.s = (int)((v >> 24) & 0xFF); // swizzle
 				sr.o = (int)((v >> 16) & 0xFF);  // indirect offset
 				sr.n = (int)(v & 0xFFFF);		// number
+				sr.destMask = destMask;
 				return sr;
 			}
 
@@ -102,20 +104,25 @@ namespace flash.display3D
 				var swizzle = "";
 				if (type != RegType.Sampler && s != 228) {
 					for (var i=0; i < 4; i++) {
-						switch ((s >> (i * 2)) & 3) {
-						case 0:
-							swizzle += "x";
-							break;
-						case 1:
-							swizzle += "y";
-							break;
-						case 2:
-							swizzle += "z";
-							break;
-						case 3:
-							swizzle += "w";
-							break;
-							
+
+						// only output swizzles for each dest mask
+						if ((destMask & (1<<i))!=0)
+						{
+							switch ((s >> (i * 2)) & 3) {
+							case 0:
+								swizzle += "x";
+								break;
+							case 1:
+								swizzle += "y";
+								break;
+							case 2:
+								swizzle += "z";
+								break;
+							case 3:
+								swizzle += "w";
+								break;
+								
+							}
 						}
 					}
 				}
@@ -362,8 +369,8 @@ namespace flash.display3D
 
 				// parse registers
 				var dr  = DestReg.Parse(dest,programType);
-				var sr1 = SourceReg.Parse(source1,programType);
-				var sr2 = SourceReg.Parse(source2,programType);
+				var sr1 = SourceReg.Parse(source1,programType, dr.mask);
+				var sr2 = SourceReg.Parse(source2,programType, dr.mask);
 
 
 				//var dname = dr.ToGLSL();
@@ -421,6 +428,12 @@ namespace flash.display3D
 					map.Add(sr2, RegisterUsage.Vector4);
 					break;
 
+				case 0x16: // saturate
+					sb.AppendFormat("{0} = clamp({1}, 0.0, 1.0); // saturate", dr.ToGLSL(), sr1.ToGLSL() ); 
+					map.Add(dr, RegisterUsage.Vector4);
+					map.Add(sr1, RegisterUsage.Vector4);
+					break;
+
 				case 0x28: // tex
 					SamplerReg sampler = SamplerReg.Parse(source2, programType);
 					sb.AppendFormat("{0} = texture2D({2}, {1}.st); // tex", dr.ToGLSL(), sr1.ToGLSL(), sampler.ToGLSL() ); 
@@ -430,11 +443,13 @@ namespace flash.display3D
 					map.Add(sampler, RegisterUsage.Sampler2D);
 					break;
 				default:
+					//sb.AppendFormat ("unsupported opcode" + opcode);
 					throw new NotSupportedException("Opcode " + opcode);
 				}
 
 				sb.AppendLine();
 			}
+
 
 #if PLATFORM_MONOMAC
 			var glslVersion = 120;
@@ -455,6 +470,7 @@ namespace flash.display3D
 			glsl.Append (map.ToGLSL(true));
 			glsl.Append(sb.ToString());
 			glsl.AppendLine("}");
+			System.Console.WriteLine(glsl);
 			return glsl.ToString();;
 		}
 	}
