@@ -1,5 +1,5 @@
 //
-// as-lang.cs: ActionScript language support
+// ps-lang.cs: PlayScript language support
 //
 // Author: Ben Cooley (bcooley@zynga.com)
 //
@@ -29,12 +29,12 @@ namespace Mono.CSharp
 	// Constants
 	//
 
-	public static class AsConsts 
+	public static class PsConsts 
 	{
 		//
 		// The namespace used for the root package.
 		//
-		public const string AsRootNamespace = "_root";
+		public const string PsRootNamespace = "_root";
 	}
 
 	//
@@ -501,7 +501,7 @@ namespace Mono.CSharp
 				var inv = Expr as Invocation;
 				newExpr = new New(inv.Exp, inv.Arguments, loc);
 			} else if (Expr is ElementAccess) {
-				if (loc.SourceFile != null && !loc.SourceFile.AsExtended) {
+				if (loc.SourceFile != null && !loc.SourceFile.PsExtended) {
 					ec.Report.Error (7103, loc, "Native arrays are only suppored in ASX.'");
 					return null;
 				}
@@ -600,7 +600,7 @@ namespace Mono.CSharp
 				return this;
 			}
 
-			if (loc.SourceFile != null && loc.SourceFile.AsExtended) {
+			if (loc.SourceFile != null && loc.SourceFile.PsExtended) {
 				ec.Report.Error (7101, loc, "'typeof' operator not supported in ASX.'");
 				return null;
 			}
@@ -609,7 +609,7 @@ namespace Mono.CSharp
 			args.Add (new Argument(Expr));
 
 			return new Invocation(new MemberAccess(new MemberAccess(
-				new SimpleName(AsConsts.AsRootNamespace, loc), "_typeof_fn", loc), "_typeof", loc), args).Resolve (ec);
+				new SimpleName(PsConsts.PsRootNamespace, loc), "_typeof_fn", loc), "_typeof", loc), args).Resolve (ec);
 		}
 		
 		protected override void CloneTo (CloneContext clonectx, Expression t)

@@ -1411,7 +1411,7 @@ namespace Mono.CSharp {
 		Arguments argument_list;
 		MethodSpec base_ctor;
 
-		// ActionScript: Initializer is explicitly called via super() call in constructor method.
+		// PlayScript: Initializer is explicitly called via super() call in constructor method.
 		public bool IsAsExplicitSuperCall;
 
 		public ConstructorInitializer (Arguments argument_list, Location loc)
@@ -1452,7 +1452,7 @@ namespace Mono.CSharp {
 					argument_list.Resolve (ec, out dynamic);
 
 					// If actionscript, convert dynamic constructor arguments to type System.Object.
-					if (dynamic && ec.FileType == SourceFileType.ActionScript) {
+					if (dynamic && ec.FileType == SourceFileType.PlayScript) {
 						var ctors = MemberCache.FindMembers (ec.CurrentType.BaseType, Constructor.ConstructorName, true);
 						if (ctors != null) {
 							if (argument_list.AsTryResolveDynamicArgs(ec, ctors)) {
@@ -1778,7 +1778,7 @@ namespace Mono.CSharp {
 					}
 
 					if (Initializer != null && 
-					    !(bc.FileType == SourceFileType.ActionScript && Initializer.IsAsExplicitSuperCall)) {
+					    !(bc.FileType == SourceFileType.PlayScript && Initializer.IsAsExplicitSuperCall)) {
 						//
 						// mdb format does not support reqions. Try to workaround this by emitting the
 						// sequence point at initializer. Any breakpoint at constructor header should
@@ -1849,7 +1849,7 @@ namespace Mono.CSharp {
 					}
 					
 					if (Initializer != null && 
-						!(bc.FileType == SourceFileType.ActionScript && Initializer.IsAsExplicitSuperCall)) {
+						!(bc.FileType == SourceFileType.PlayScript && Initializer.IsAsExplicitSuperCall)) {
 						//
 						// mdb format does not support reqions. Try to workaround this by emitting the
 						// sequence point at initializer. Any breakpoint at constructor header should
@@ -2498,7 +2498,7 @@ namespace Mono.CSharp {
 		protected virtual void ApplyToExtraTarget (Attribute a, MethodSpec ctor, byte[] cdata, PredefinedAttributes pa)
 		{
 			// We ignore this error in AS as attributes are always applied to getters/setters (seems like a missing feature in C#).
-			if (a.Location.SourceFile != null && a.Location.SourceFile.FileType == SourceFileType.ActionScript)
+			if (a.Location.SourceFile != null && a.Location.SourceFile.FileType == SourceFileType.PlayScript)
 				return;
 
 			throw new NotSupportedException ("You forgot to define special attribute target handling");
@@ -2631,9 +2631,9 @@ namespace Mono.CSharp {
 			GreaterThanOrEqual,
 			LessThanOrEqual,
 
-			// ActionScript binary operators
-			AsIn, 			// ActionScript "in" operator
-			AsURightShift, 	// ActionScript unsigned shift right
+			// PlayScript binary operators
+			AsIn, 			// PlayScript "in" operator
+			AsURightShift, 	// PlayScript unsigned shift right
 
 			// Implicit and Explicit
 			Implicit,
@@ -2920,7 +2920,7 @@ namespace Mono.CSharp {
 				return OpType.LessThanOrEqual;
 			case OpType.LessThanOrEqual:
 				return OpType.GreaterThanOrEqual;
-			case OpType.AsIn:  // ActionScript "in" operator
+			case OpType.AsIn:  // PlayScript "in" operator
 				return OpType.AsIn;
 			default:
 				return OpType.TOP;

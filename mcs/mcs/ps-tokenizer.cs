@@ -1,9 +1,10 @@
 //
-// cs-tokenizer.cs: The Tokenizer for the C# compiler
+// cs-tokenizer.cs: The Tokenizer for the PlayScript compiler
 //                  This also implements the preprocessor
 //
 // Author: Miguel de Icaza (miguel@gnu.org)
 //         Marek Safar (marek.safar@gmail.com)
+//         Ben Cooley (bcooley@zynga.com)
 //
 // Dual licensed under the terms of the MIT X11 or GNU GPL
 //
@@ -20,7 +21,7 @@ using System.Diagnostics;
 using System.Collections;
 using Mono.CSharp;
 
-namespace Mono.ActionScript
+namespace Mono.PlayScript
 {
 	/// <summary>
 	///    Tokenizer for C# source code. 
@@ -207,7 +208,7 @@ namespace Mono.ActionScript
 		bool has_temp_auto_semi_after_tokens = false;
 		List<int> temp_auto_semi_after_tokens = new List<int>();
 		readonly int tab_size;
-		bool handle_asx = false;
+		bool parsing_playscript = false;
 		bool handle_namespace = true;
 		bool handle_get_set = false;
 		bool handle_dynamic = true;
@@ -319,9 +320,9 @@ namespace Mono.ActionScript
 
 		static readonly char[] simple_whitespaces = new char[] { ' ', '\t' };
 
-		public bool AsxParsing {
-			get { return handle_asx; }
-			set { handle_asx = value; }
+		public bool ParsingPlayScript {
+			get { return parsing_playscript; }
+			set { parsing_playscript = value; }
 		}
 
 		public bool NamespaceParsing {
@@ -514,7 +515,7 @@ namespace Mono.ActionScript
 		public Tokenizer (SeekableStreamReader input, CompilationSourceFile file, ParserSession session)
 		{
 			this.source_file = file;
-			this.handle_asx = file.SourceFile.AsExtended;
+			this.parsing_playscript = file.SourceFile.PsExtended;
 			this.context = file.Compiler;
 			this.current_source = file.SourceFile;
 			this.identifiers = session.Identifiers;
@@ -954,11 +955,11 @@ namespace Mono.ActionScript
 				break;
 			case Token.REMOVE:
 			case Token.ADD:
-				if (!handle_remove_add || !handle_asx)
+				if (!handle_remove_add || !parsing_playscript)
 					res = -1;
 				break;
 			case Token.EXTERN:
-				if (parsing_declaration != 0 || !handle_asx)
+				if (parsing_declaration != 0 || !parsing_playscript)
 					res = -1;
 				break;
 			case Token.DEFAULT:
@@ -968,7 +969,7 @@ namespace Mono.ActionScript
 				}
 				break;
 			case Token.WHERE:
-				if (!handle_where && !query_parsing || !handle_asx)
+				if (!handle_where && !query_parsing || !parsing_playscript)
 					res = -1;
 				break;
 			case Token.FROM:
@@ -976,7 +977,7 @@ namespace Mono.ActionScript
 				// A query expression is any expression that starts with `from identifier'
 				// followed by any token except ; , =
 				// 
-				if (!handle_asx) {
+				if (!parsing_playscript) {
 					res = -1;
 				} else if (!query_parsing) {
 					if (lambda_arguments_parsing) {
@@ -1034,7 +1035,7 @@ namespace Mono.ActionScript
 			case Token.ASCENDING:
 			case Token.DESCENDING:
 			case Token.INTO:
-				if (!query_parsing || !handle_asx)
+				if (!query_parsing || !parsing_playscript)
 					res = -1;
 				break;
 
@@ -1059,7 +1060,7 @@ namespace Mono.ActionScript
 				break;
 				
 			case Token.PARTIAL:
-				if (parsing_block > 0 || !handle_asx) {
+				if (parsing_block > 0 || !parsing_playscript) {
 					res = -1;
 					break;
 				}
@@ -1095,7 +1096,7 @@ namespace Mono.ActionScript
 				break;
 
 			case Token.ASYNC:
-				if (!handle_asx) {
+				if (!parsing_playscript) {
 					return -1;
 				} else if (parsing_modifiers) {
 					//
@@ -1135,7 +1136,7 @@ namespace Mono.ActionScript
 				break;
 
 			case Token.AWAIT:
-				if (parsing_block == 0 || !handle_asx)
+				if (parsing_block == 0 || !parsing_playscript)
 					res = -1;
 
 				break;
@@ -1160,7 +1161,7 @@ namespace Mono.ActionScript
 			case Token.DOUBLE2:
 			case Token.DOUBLE3:
 			case Token.DOUBLE4:
-				if (!handle_asx)
+				if (!parsing_playscript)
 					res = -1;
 
 				break;
@@ -1178,7 +1179,7 @@ namespace Mono.ActionScript
 			case Token.UNSAFE:
 			case Token.FIXED:
 			case Token.GOTO:
-				if (!handle_asx)
+				if (!parsing_playscript)
 					res = -1;
 
 				break;
@@ -1187,7 +1188,7 @@ namespace Mono.ActionScript
 			case Token.INDEXER:
 			case Token.OPERATOR:
 			case Token.PROPERTY:
-				if (!handle_asx)
+				if (!parsing_playscript)
 					res = -1;
 				else
 					parsing_modifiers = false;
@@ -1197,7 +1198,7 @@ namespace Mono.ActionScript
 			case Token.STRUCT:
 			case Token.DELEGATE:
 			case Token.ENUM:
-				if (!handle_asx)
+				if (!parsing_playscript)
 					res = -1;
 				else
 					parsing_modifiers = handle_namespace = false;
@@ -3875,7 +3876,7 @@ namespace Mono.ActionScript
 						}
 						return Token.OP_EQ;
 					}
-					if (d == '>' && handle_asx) {
+					if (d == '>' && parsing_playscript) {
 						get_char ();
 						return Token.ARROW;
 					}
@@ -4177,7 +4178,7 @@ namespace Mono.ActionScript
 //					return TokenizeBackslash ();
 				
 				case '@':
-					if (!handle_asx)
+					if (!parsing_playscript)
 						return Token.OP_AT;
 
 					c = get_char ();
@@ -4376,7 +4377,7 @@ namespace Mono.ActionScript
 		bool do_auto_semi_insertion (bool parse_token, int line, int c, int t)
 		{
 			bool insert_semi = false;
-			if (parse_token && prev_token_line == line && prev_token != Token.SEMICOLON && !handle_asx && allow_auto_semi && 
+			if (parse_token && prev_token_line == line && prev_token != Token.SEMICOLON && !parsing_playscript && allow_auto_semi && 
 			    allow_auto_semi_after == 0 && allowed_auto_semi_tokens[prev_token]) {
 				PushPosition ();
 				int next = xtoken ();

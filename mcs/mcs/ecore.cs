@@ -432,8 +432,8 @@ namespace Mono.CSharp {
 					return null;
 
 				if ((flags & e.ExprClassToResolveFlags) == 0) {
-					// We automatically do a typeof(type) in ActionScript for type values..
-					if (ec.FileType == SourceFileType.ActionScript && 
+					// We automatically do a typeof(type) in PlayScript for type values..
+					if (ec.FileType == SourceFileType.PlayScript && 
 					  (e is TypeExpr) && (flags & ResolveFlags.VariableOrValue) != 0) {
 						return (new TypeOf(e.Type, e.Location)).Resolve (ec);
 					}
@@ -2533,9 +2533,9 @@ namespace Mono.CSharp {
 			while (true) {
 
 				//
-				// ActionScript: Perform member renaming
+				// PlayScript: Perform member renaming
 				//
-				if (rc.FileType == SourceFileType.ActionScript) {
+				if (rc.FileType == SourceFileType.PlayScript) {
 					if (name == "toString") {
 						name = "ToString";
 					}
@@ -2548,9 +2548,9 @@ namespace Mono.CSharp {
 				//
 				if (current_block != null && lookup_arity == 0) {
 					if (current_block.ParametersBlock.TopBlock.GetLocalName (name, current_block.Original, ref variable)) {
-						// In ActionScript we allow unassigned variables.  It's technically bad coding but not much we can do about it.
+						// In PlayScript we allow unassigned variables.  It's technically bad coding but not much we can do about it.
 						if (!variable.IsDeclared) {
-							if (rc.FileType == SourceFileType.ActionScript && !rc.AsExtended) {
+							if (rc.FileType == SourceFileType.PlayScript && !rc.PsExtended) {
 								rc.Report.Warning(7156, 1, loc, "Use of local variable before declaration");
 								if (variable is LocalVariable) {
 									var locVar = variable as LocalVariable;
@@ -2658,9 +2658,9 @@ namespace Mono.CSharp {
 				}
 
 				//
-				// Check for "Object" type if ActionScript
+				// Check for "Object" type if PlayScript
 				//
-				if (rc.FileType == SourceFileType.ActionScript && !variable_found) {
+				if (rc.FileType == SourceFileType.PlayScript && !variable_found) {
 					if (name == "Object") {
 						return new TypeExpression(rc.BuiltinTypes.Dynamic, loc);
 					}
@@ -2681,9 +2681,9 @@ namespace Mono.CSharp {
 				}
 
 				//
-				// Stage 4: If ActionScript, lookup package level functions.
+				// Stage 4: If PlayScript, lookup package level functions.
 				//
-				if (rc.FileType == SourceFileType.ActionScript && 
+				if (rc.FileType == SourceFileType.PlayScript && 
 				    (restrictions & MemberLookupRestrictions.InvocableOnly) != 0 && !variable_found) {
 
 					// Is this a package level function?
@@ -2691,7 +2691,7 @@ namespace Mono.CSharp {
 					if (pkgFn != null)
 						return pkgFn;
 
-					// Is this a function style ActionScript cast.
+					// Is this a function style PlayScript cast.
 					if ((restrictions & MemberLookupRestrictions.AsTypeCast) != 0 && IsPossibleTypeOrNamespace (rc)) {
 						if (variable != null) {
 							rc.Report.SymbolRelatedToPreviousError (variable.Location, name);
@@ -2705,7 +2705,7 @@ namespace Mono.CSharp {
 				//
 				// Stage 5: handle actionscript builtin uppercase names (Not keywords).
 				//
-				if (rc.FileType == SourceFileType.ActionScript && !variable_found) {
+				if (rc.FileType == SourceFileType.PlayScript && !variable_found) {
 					if (name == "NaN") {
 						return new DoubleLiteral (rc.BuiltinTypes, double.NaN, loc);
 					} else if (name == "Infinity") {
@@ -3459,8 +3459,8 @@ namespace Mono.CSharp {
 
 		public override Expression DoResolveLValue (ResolveContext rc, Expression right_side)
 		{
-			// Handle extension setters for ActionScript
-			if (rc.FileType == SourceFileType.ActionScript) {
+			// Handle extension setters for PlayScript
+			if (rc.FileType == SourceFileType.PlayScript) {
 				var args = new Arguments(1);
 				args.Add(new Argument(right_side));
 				return new Invocation(new MemberAccess(ExtensionExpression, Name, type_arguments, Location), args).Resolve (rc);
@@ -4826,7 +4826,7 @@ namespace Mono.CSharp {
 				//
 				// If we're an actionscript file and we have an untyped array initializer as a parameter just
 				// resolve the initializer 
-				if (ec.FileType == SourceFileType.ActionScript) {
+				if (ec.FileType == SourceFileType.PlayScript) {
 					if (argument.InferArrayInitializer != null) {
 						if (parameter.ImplementsInterface(ec.BuiltinTypes.IEnumerable, false)) {
 							argument.Expr = argument.InferArrayInitializer.InferredResolveWithArrayType (ec, parameter);

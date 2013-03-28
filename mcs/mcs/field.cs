@@ -37,7 +37,7 @@ namespace Mono.CSharp
 			this.Initializer = initializer;
 		}
 
-		// ActionScript - field declarators have types
+		// PlayScript - field declarators have types
 		public FieldDeclarator (SimpleMemberName name, Expression initializer, FullNamedExpression type_expr)
 		{
 			this.Name = name;

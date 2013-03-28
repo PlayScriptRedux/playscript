@@ -158,13 +158,13 @@
     <Compile Include="field.cs" />
     <Compile Include="typespec.cs" />
     <Compile Include="visit.cs" />
-    <Compile Include="as-parser.cs" />
-    <Compile Include="as-tokenizer.cs" />
-    <Compile Include="as-lang.cs" />
     <Compile Include="js-target.cs" />
     <Compile Include="cxx-target.cs" />
     <Compile Include="cxx-emit.cs" />
     <Compile Include="js-emit.cs" />
+    <Compile Include="ps-lang.cs" />
+    <Compile Include="ps-parser.cs" />
+    <Compile Include="ps-tokenizer.cs" />
   </ItemGroup>
   <ItemGroup Label="IKVM.Reflection">
     <Compile Include="..\..\external\ikvm\reflect\*.cs">
@@ -201,8 +201,8 @@
     <Content Include="cs-parser.jay">
       <Gettext-ScanForTranslations>False</Gettext-ScanForTranslations>
     </Content>
-    <Content Include="as-parser.jay">
-      <Gettext-ScanForTranslations>False</Gettext-ScanForTranslations>
-    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ps-parser.jay" />
   </ItemGroup>
 </Project>

@@ -41,7 +41,7 @@ namespace Mono.CSharp
 		public readonly AType ArgType;
 		public Expression Expr;
 
-		// For ActionScript array/object initializer type inference.
+		// For PlayScript array/object initializer type inference.
 		public AsArrayInitializer InferArrayInitializer;
 		public AsObjectInitializer InferObjInitializer;
 
@@ -165,7 +165,7 @@ namespace Mono.CSharp
 
 				// Keep track of the array initializer, we need it to do array type inference when searching for
 				// a matching method.
-				if (ec.FileType == SourceFileType.ActionScript) {
+				if (ec.FileType == SourceFileType.PlayScript) {
 					if (Expr is AsArrayInitializer) {
 						InferArrayInitializer = (AsArrayInitializer)Expr;
 					} else if (Expr is AsObjectInitializer) {
@@ -357,7 +357,7 @@ namespace Mono.CSharp
 
 				TypeSpec arg_type;
 
-				if (rc.FileType == SourceFileType.ActionScript &&
+				if (rc.FileType == SourceFileType.PlayScript &&
 				    a.Expr is ArrayInitializer || a.Expr is AsObjectInitializer) {
 					if (a.Expr is ArrayInitializer) {
 						arg_type = rc.Module.PredefinedTypes.AsArray.Resolve();
@@ -637,7 +637,7 @@ namespace Mono.CSharp
 			set { args [index] = value; }
 		}
 
-		// Resolve any dynamic params to the type of the target parameters list (for ActionScript only).
+		// Resolve any dynamic params to the type of the target parameters list (for PlayScript only).
 		public bool AsTryResolveDynamicArgs (ResolveContext ec, System.Collections.IEnumerable candidates)
 		{
 			MethodSpec ms = null;

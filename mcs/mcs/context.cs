@@ -320,7 +320,7 @@ namespace Mono.CSharp
 
 			InvokeSpecialName = 1 << 26,
 
-			AsExtended = 1 << 27
+			PsExtended = 1 << 27
 		}
 
 		// utility helper for CheckExpr, UnCheckExpr, Checked and Unchecked statements
@@ -404,8 +404,8 @@ namespace Mono.CSharp
 				fileType = memberCore.Location.SourceFile.FileType;
 			} else if (mc.Module != null && mc.Module.Location.SourceFile != null) {
 				fileType = mc.Module.Location.SourceFile.FileType;
-				if (mc.Module.Location.SourceFile.AsExtended)
-					flags |= Options.AsExtended;
+				if (mc.Module.Location.SourceFile.PsExtended)
+					flags |= Options.PsExtended;
 			} else {
 				fileType = SourceFileType.CSharp;
 			}
@@ -521,13 +521,13 @@ namespace Mono.CSharp
 			set { fileType = value; }
 		}
 
-		public bool AsExtended {
-			get { return (flags & Options.AsExtended) != 0; }
+		public bool PsExtended {
+			get { return (flags & Options.PsExtended) != 0; }
 			set { 
 				if (value) 
-					flags |= Options.AsExtended; 
+					flags |= Options.PsExtended; 
 				else 
-					flags &= ~Options.AsExtended; 
+					flags &= ~Options.PsExtended; 
 			}
 		}
 
@@ -821,7 +821,7 @@ namespace Mono.CSharp
 		public LocationsBag LocationsBag { get; set; }
 		public bool UseJayGlobalArrays { get; set; }
 		public Tokenizer.LocatedToken[] LocatedTokens { get; set; }
-		public Mono.ActionScript.Tokenizer.LocatedToken[] AsLocatedTokens { get; set; }
+		public Mono.PlayScript.Tokenizer.LocatedToken[] AsLocatedTokens { get; set; }
 
 		public MD5 GetChecksumAlgorithm ()
 		{

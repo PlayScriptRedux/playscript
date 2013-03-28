@@ -1725,7 +1725,7 @@ namespace Mono.CSharp {
 					if (d.TypeExpression == null) {
 						d.Variable.Type = declType;
 					} else {
-						// ActionScript - Declarators can specify their own types (not really declarators, but close enough).
+						// PlayScript - Declarators can specify their own types (not really declarators, but close enough).
 						Expression declResolvedInitializer = null;
 						declType = ResolveVariableType(d.Variable, d.TypeExpression, d.Initializer, out declResolvedInitializer, null, d.Location, bc);
 						if (declType == null)
@@ -1968,13 +1968,13 @@ namespace Mono.CSharp {
 
 		LocalBuilder builder;
 
-		// ActionScript - We need a copy of the type expression here to handle default initialization.
+		// PlayScript - We need a copy of the type expression here to handle default initialization.
 		public FullNamedExpression TypeExpr;
 
 		public LocalVariable (Block block, string name, Location loc)
 		{
-			// ActionScript local variable hoisting
-			if (loc.SourceFile != null && loc.SourceFile.FileType == SourceFileType.ActionScript && loc.SourceFile.AsExtended == false) {
+			// PlayScript local variable hoisting
+			if (loc.SourceFile != null && loc.SourceFile.FileType == SourceFileType.PlayScript && loc.SourceFile.PsExtended == false) {
 				block = block.ParametersBlock.TopBlock;
 			}
 
@@ -2104,7 +2104,7 @@ namespace Mono.CSharp {
 			}
 		}
 
-		// This local variable was used before it was declared.  Not an error in ActionScript, but
+		// This local variable was used before it was declared.  Not an error in PlayScript, but
 		// we have to make it work in .NET.
 		public bool AsUsedBeforeDeclaration {
 			get { return (flags & Flags.AsUsedBeforeDeclaration) != 0; }
@@ -6149,7 +6149,7 @@ namespace Mono.CSharp {
 	}
 
 	/// <summary>
-	/// ActionScript ForEach type.
+	/// PlayScript ForEach type.
 	/// </summary>/
 	public enum AsForEachType {
 		/// <summary>
@@ -6157,11 +6157,11 @@ namespace Mono.CSharp {
 		/// </summary>
 		CSharpForEach,
 		/// <summary>
-		/// Generate an ActionScript for (var a in collection) statement.  Yields keys.
+		/// Generate an PlayScript for (var a in collection) statement.  Yields keys.
 		/// </summary>
 		ForEachKey,
 		/// <summary>
-		/// Generate an ActionScript for each (var a in collection) statement.  Yields values.
+		/// Generate an PlayScript for each (var a in collection) statement.  Yields values.
 		/// </summary>
 		ForEachValue
 	}
@@ -6222,7 +6222,7 @@ namespace Mono.CSharp {
 
 			public override bool Resolve (BlockContext ec)
 			{
-				if (ec.FileType == SourceFileType.ActionScript &&
+				if (ec.FileType == SourceFileType.PlayScript &&
 				    for_each.AsForEachType == AsForEachType.ForEachKey) {
 					ec.Report.Error (7018, loc, "for(in) statement cannot be used with arrays.");
 					return false;
@@ -6578,8 +6578,8 @@ namespace Mono.CSharp {
 				if (current_pe == null)
 					return false;
 
-				// Handle ActionScript Key for (.. in .. ) and value for each (.. in ..) statements.
-				if (ec.FileType == SourceFileType.ActionScript) {
+				// Handle PlayScript Key for (.. in .. ) and value for each (.. in ..) statements.
+				if (ec.FileType == SourceFileType.PlayScript) {
 					var infTypeSpec = current_pe.Type as InflatedTypeSpec;
 					if (infTypeSpec != null) {
 						var defTypeSpec = infTypeSpec.GetDefinition();
@@ -6598,7 +6598,7 @@ namespace Mono.CSharp {
 							}
 						}
 					}
-					// Actually, for(in) statements iterate over array values too in ActionScript.
+					// Actually, for(in) statements iterate over array values too in PlayScript.
 //					else {  
 //						if (for_each.AsForEachType == AsForEachType.ForEachKey) {
 //							ec.Report.Error (7017, loc, "for(in) statement cannot operate on keys of non dictionary collections.");
@@ -6821,7 +6821,7 @@ namespace Mono.CSharp {
 
 		protected override void DoEmit (EmitContext ec)
 		{
-			// Only create variable if we aren't referencing a var (ActionScript only).
+			// Only create variable if we aren't referencing a var (PlayScript only).
 			if (varRef == null)
 				variable.CreateBuilder (ec);
 

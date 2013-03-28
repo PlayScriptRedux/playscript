@@ -333,9 +333,9 @@ namespace Mono.CSharp {
 		{
 			bool ok = true;
 
-			// ActionScript: resolve LValue first if source is an initializer to be able to
+			// PlayScript: resolve LValue first if source is an initializer to be able to
 			// infer initializer type correctly.
-			if (ec.FileType == SourceFileType.ActionScript &&
+			if (ec.FileType == SourceFileType.PlayScript &&
 				(source is AsArrayInitializer || source is AsObjectInitializer)) {
 
 				target = target.ResolveLValue (ec, source);

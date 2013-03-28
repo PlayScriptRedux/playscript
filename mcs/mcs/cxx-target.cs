@@ -44,7 +44,7 @@ namespace Mono.CSharp.Cpp
 		
 		public bool CheckCanEmit(Location loc) {
 			//			if (loc.SourceFile != null && 
-			//			    (loc.SourceFile.FileType != SourceFileType.ActionScript || loc.SourceFile.AsExtended == true)) {
+			//			    (loc.SourceFile.FileType != SourceFileType.PlayScript || loc.SourceFile.PsExtended == true)) {
 			//				this.Report.Error (7071, loc,  "JavaScript code generation for C# or ASX types not supported.");
 			//				return false;
 			//			}
@@ -213,7 +213,7 @@ namespace Mono.CSharp.Cpp
 				case Binary.Operator.GreaterThanOrEqual: return 6;
 				case Binary.Operator.LessThanOrEqual: return 6;
 					
-					// ActionScript binary operators
+					// PlayScript binary operators
 				case Binary.Operator.AsURightShift: return 5;
 				case Binary.Operator.AsRefEquality: return 7;
 				}

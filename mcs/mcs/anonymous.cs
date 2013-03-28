@@ -1325,8 +1325,8 @@ namespace Mono.CSharp {
 				bc.NeedReturnLabel ();
 #endif
 
-			// Cast to Delgate for ActionScript (forces implicit conversion to Func<> or Action<> delegate types).
-			if (ec.FileType == SourceFileType.ActionScript) {
+			// Cast to Delgate for PlayScript (forces implicit conversion to Func<> or Action<> delegate types).
+			if (ec.FileType == SourceFileType.PlayScript) {
 				return new Cast(new TypeExpression(ec.BuiltinTypes.Delegate, this.Location), this, this.Location).Resolve (ec);
 			}
 

@@ -250,8 +250,8 @@ namespace Mono.CSharp
 		protected IDynamicBinder binder;
 		protected Expression binder_expr;
 
-		private bool isActionScriptDynamicMode;
-		private bool isActionScriptAotMode;
+		private bool isPlayScriptDynamicMode;
+		private bool isPlayScriptAotMode;
 
 		// Used by BinderFlags
 		protected CSharpBinderFlags flags;
@@ -301,11 +301,11 @@ namespace Mono.CSharp
 
 			binder_type = pt.GetBinder (rc).Resolve ();
 
-			isActionScriptDynamicMode = pt.IsActionScriptDynamicMode;
-			isActionScriptAotMode = pt.IsActionScriptAotMode;
+			isPlayScriptDynamicMode = pt.IsPlayScriptDynamicMode;
+			isPlayScriptAotMode = pt.IsPlayScriptAotMode;
 
-			// NOTE: Use AsCallSite if in ActionScript AOT mode only.
-			if (isActionScriptAotMode) { 
+			// NOTE: Use AsCallSite if in PlayScript AOT mode only.
+			if (isPlayScriptAotMode) { 
 				pt.AsCallSite.Resolve ();
 				pt.AsCallSiteGeneric.Resolve ();
 			} else {
@@ -321,9 +321,9 @@ namespace Mono.CSharp
 			if (rc.Report.Errors == errors)
 				return true;
 
-			if (isActionScriptDynamicMode) {
+			if (isPlayScriptDynamicMode) {
 				rc.Report.Error (7027, loc,
-					"ActionScript dynamic operation cannot be compiled without `ascorlib.dll' assembly reference");
+					"PlayScript dynamic operation cannot be compiled without `ascorlib.dll' assembly reference");
 			} else {
 				rc.Report.Error (1969, loc,
 					"Dynamic operation cannot be compiled without `Microsoft.CSharp.dll' assembly reference");
@@ -341,10 +341,10 @@ namespace Mono.CSharp
 			EmitCall (ec, binder_expr, arguments, true);
 		}
 
-		private bool IsValidActionScriptAotType(TypeSpec t, bool is_invoke)
+		private bool IsValidPlayScriptAotType(TypeSpec t, bool is_invoke)
 		{
 			return (t.BuiltinType == BuiltinTypeSpec.Type.Object ||
-					  t.BuiltinType == BuiltinTypeSpec.Type.Int || 	// Specialize only on basic ActionScript types in AOT mode.
+					  t.BuiltinType == BuiltinTypeSpec.Type.Int || 	// Specialize only on basic PlayScript types in AOT mode.
 					  t.BuiltinType == BuiltinTypeSpec.Type.UInt || 	// (NOTE: We can still handle other types, but we box to Object).
 					  t.BuiltinType == BuiltinTypeSpec.Type.Bool || 
 					  t.BuiltinType == BuiltinTypeSpec.Type.Double || 
@@ -374,7 +374,7 @@ namespace Mono.CSharp
 			TypeSpec callSite;
 			TypeSpec callSiteGeneric;
 			
-			if (isActionScriptAotMode) {
+			if (isPlayScriptAotMode) {
 				callSite = module.PredefinedTypes.AsCallSite.TypeSpec;
 				callSiteGeneric = module.PredefinedTypes.AsCallSiteGeneric.TypeSpec;
 			} else {
@@ -420,8 +420,8 @@ namespace Mono.CSharp
 				if (t.Kind == MemberKind.InternalCompilerType)
 					t = ec.BuiltinTypes.Object;
 
-				// ActionScript AOT mode - Convert all types to object if they are not basic AS types or this is an invocation.
-				if (isActionScriptAotMode && !IsValidActionScriptAotType (t, is_invoke)) {	// Always box to Object for invoke argument lists
+				// PlayScript AOT mode - Convert all types to object if they are not basic AS types or this is an invocation.
+				if (isPlayScriptAotMode && !IsValidPlayScriptAotType (t, is_invoke)) {	// Always box to Object for invoke argument lists
 					t = ec.BuiltinTypes.Object;
 					arguments[i] = new Argument(new BoxedCast(a.Expr, ec.BuiltinTypes.Object));
 				}
@@ -437,7 +437,7 @@ namespace Mono.CSharp
 
 			// Always use "object" as return type in AOT mode.
 			var ret_type = type;
-			if (isActionScriptAotMode && !isStatement && !IsValidActionScriptAotType (ret_type, is_invoke)) {
+			if (isPlayScriptAotMode && !isStatement && !IsValidPlayScriptAotType (ret_type, is_invoke)) {
 				ret_type = ec.BuiltinTypes.Object;
 			}
 
@@ -580,8 +580,8 @@ namespace Mono.CSharp
 				}
 
 				Expression target;
-				if (isActionScriptAotMode && !isStatement && type != ret_type) {
-					// ActionScript: If doing an invoke, we have to cast the return type to the type expected by the expression..
+				if (isPlayScriptAotMode && !isStatement && type != ret_type) {
+					// PlayScript: If doing an invoke, we have to cast the return type to the type expected by the expression..
 					target = new Cast(new TypeExpression(type, loc), new DelegateInvocation (new MemberAccess (site_field_expr, "Target", loc).Resolve (bc), args, loc), loc).Resolve (bc);
 				} else {
 					target = new DelegateInvocation (new MemberAccess (site_field_expr, "Target", loc).Resolve (bc), args, loc).Resolve (bc);
@@ -593,7 +593,7 @@ namespace Mono.CSharp
 
 		public static MemberAccess GetBinderNamespace (ResolveContext rc, Location loc)
 		{
-			if (rc.Module.PredefinedTypes.IsActionScriptDynamicMode) {
+			if (rc.Module.PredefinedTypes.IsPlayScriptDynamicMode) {
 				return new MemberAccess (
 					new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "ActionScript", loc), "RuntimeBinder", loc);
 			} else {
@@ -1021,7 +1021,7 @@ namespace Mono.CSharp
 			Arguments binder_args = new Arguments (4);
 
 			MemberAccess ns;
-			if (ec.Module.PredefinedTypes.IsActionScriptAotMode) {
+			if (ec.Module.PredefinedTypes.IsPlayScriptAotMode) {
 				ns = new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "ActionScript", loc);
 			} else {
 				ns = new MemberAccess (new MemberAccess (

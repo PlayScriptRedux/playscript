@@ -45,8 +45,8 @@ namespace Mono.CSharp {
 			TypeSpec ltype = left.Type;
 			TypeSpec rtype = right.Type;
 
-			// ActionScript - AS has bool as an additional binary promotion type.
-			TypeSpec[] binaryPromotionsTypes = (rc.FileType == SourceFileType.ActionScript ? 
+			// PlayScript - AS has bool as an additional binary promotion type.
+			TypeSpec[] binaryPromotionsTypes = (rc.FileType == SourceFileType.PlayScript ? 
 			                                    rc.BuiltinTypes.AsBinaryPromotionsTypes : rc.BuiltinTypes.BinaryPromotionsTypes);
 
 			foreach (TypeSpec t in binaryPromotionsTypes) {

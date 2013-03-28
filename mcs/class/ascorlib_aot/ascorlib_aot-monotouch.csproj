@@ -650,6 +650,9 @@
     <Compile Include="..\ascorlib\flash\filters\BlurFilter.asx">
       <Link>flash\filters\BlurFilter.asx</Link>
     </Compile>
+    <Compile Include="..\ascorlib\Object.cs">
+      <Link>Object.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ActionScript.Dynamic_aot\ActionScript.Dynamic_aot-monotouch.csproj">

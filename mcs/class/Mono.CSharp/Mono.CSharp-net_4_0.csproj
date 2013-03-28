@@ -99,15 +99,6 @@
     <Compile Include="..\Mono.CompilerServices.SymbolWriter\MonoSymbolFile.cs" />
     <Compile Include="..\Mono.CompilerServices.SymbolWriter\MonoSymbolTable.cs" />
     <Compile Include="..\Mono.CompilerServices.SymbolWriter\SourceMethodBuilder.cs" />
-    <Compile Include="..\..\mcs\as-lang.cs">
-      <Link>as-lang.cs</Link>
-    </Compile>
-    <Compile Include="..\..\mcs\as-parser.cs">
-      <Link>as-parser.cs</Link>
-    </Compile>
-    <Compile Include="..\..\mcs\as-tokenizer.cs">
-      <Link>as-tokenizer.cs</Link>
-    </Compile>
     <Compile Include="..\..\mcs\cxx-target.cs">
       <Link>cxx-target.cs</Link>
     </Compile>
@@ -119,6 +110,15 @@
     </Compile>
     <Compile Include="..\..\mcs\js-emit.cs">
       <Link>js-emit.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\ps-lang.cs">
+      <Link>ps-lang.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\ps-parser.cs">
+      <Link>ps-parser.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\ps-tokenizer.cs">
+      <Link>ps-tokenizer.cs</Link>
     </Compile>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

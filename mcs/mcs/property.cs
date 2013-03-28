@@ -596,8 +596,8 @@ namespace Mono.CSharp
 			if (MemberType.IsStatic)
 				Error_StaticReturnType ();
 
-			// Check to make sure property method return types match (ActionScript).
-			if (this.Location.SourceFile.FileType == SourceFileType.ActionScript && this.Get != null && this.Set != null) {
+			// Check to make sure property method return types match (PlayScript).
+			if (this.Location.SourceFile.FileType == SourceFileType.PlayScript && this.Get != null && this.Set != null) {
 				if (this.Set.ParameterTypes == null)
 					this.Set.ParameterInfo.Resolve(this.Set);
 				int valueParamIdx = this.Set.ParameterInfo.Count - 1;

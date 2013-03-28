@@ -21,7 +21,7 @@ using System.Text;
 using System.Globalization;
 using System.Diagnostics;
 using System.Threading;
-using Mono.ActionScript;
+using Mono.PlayScript;
 
 namespace Mono.CSharp
 {
@@ -68,13 +68,13 @@ namespace Mono.CSharp
 							errors++;
 					}
 				} else {
-					Mono.ActionScript.Tokenizer lexer = new Mono.ActionScript.Tokenizer (reader, file, session);
-					lexer.AsxParsing = sourceFile.AsExtended;
+					Mono.PlayScript.Tokenizer lexer = new Mono.PlayScript.Tokenizer (reader, file, session);
+					lexer.ParsingPlayScript = sourceFile.PsExtended;
 					int token, tokens = 0, errors = 0;
 	
-					while ((token = lexer.token ()) != Mono.ActionScript.Token.EOF){
+					while ((token = lexer.token ()) != Mono.PlayScript.Token.EOF){
 						tokens++;
-						if (token == Mono.ActionScript.Token.ERROR)
+						if (token == Mono.PlayScript.Token.ERROR)
 							errors++;
 					}
 				}
@@ -93,7 +93,7 @@ namespace Mono.CSharp
 			var session = new ParserSession () {
 				UseJayGlobalArrays = true,
 				LocatedTokens = new Tokenizer.LocatedToken[15000],
-				AsLocatedTokens = new Mono.ActionScript.Tokenizer.LocatedToken[15000]
+				AsLocatedTokens = new Mono.PlayScript.Tokenizer.LocatedToken[15000]
 			};
 
 			for (int i = 0; i < sources.Count; ++i) {
@@ -183,8 +183,8 @@ namespace Mono.CSharp
 				CSharpParser parser = new CSharpParser (reader, file, session);
 				parser.parse ();
 			} else {
-				ActionScriptParser parser = new ActionScriptParser (reader, file, session);
-				parser.handle_asx = sourceFile.AsExtended;
+				PlayScriptParser parser = new PlayScriptParser (reader, file, session);
+				parser.parsing_playscript = sourceFile.PsExtended;
 				parser.parse ();
 			}
 		}

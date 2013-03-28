@@ -1,6 +1,6 @@
 %{
 //
-// as-parser.jay: The Parser for the ActionScr
+// ps-parser.jay: The Parser for the PlayScript language
 // Authors: Miguel de Icaza (miguel@gnome.org)
 //          Ravi Pratap     (ravi@ximian.com)
 //          Marek Safar	    (marek.safar@gmail.com)
@@ -23,12 +23,12 @@ using Attribute = Mono.CSharp.Attribute;
 using Delegate = Mono.CSharp.Delegate;
 using Nullable = Mono.CSharp.Nullable;
 
-namespace Mono.ActionScript
+namespace Mono.PlayScript
 {
 	/// <summary>
-	///    The ActionScript Parser
+	///    The PlayScript Parser
 	/// </summary>
-	public class ActionScriptParser
+	public class PlayScriptParser
 	{
 		[Flags]
 		enum ParameterModifierType
@@ -43,11 +43,11 @@ namespace Mono.ActionScript
 			All = Ref | Out | This | Params | Arglist | DefaultValue
 		}
 		
-		public bool handle_asx = false;
+		public bool parsing_playscript = false;
 		
 		static readonly object ModifierNone = 0;
 	
-		const string RootNs = AsConsts.AsRootNamespace;
+		const string RootNs = PsConsts.PsRootNamespace;
 	
 		NamespaceContainer current_namespace;
 		NamespaceContainer prev_namespace;
@@ -1056,12 +1056,12 @@ opt_named_modifier
 	: /* empty */   { $$ = null; }
 	| REF
 	  { 
-	  	CheckIsAsx("ref parameters", GetLocation($1));
+	  	CheckIsPlayScript("ref parameters", GetLocation($1));
 		$$ = Argument.AType.Ref;
 	  }
 	| OUT
 	  { 
-	  	CheckIsAsx("out parameters", GetLocation($1));
+	  	CheckIsPlayScript("out parameters", GetLocation($1));
 		$$ = Argument.AType.Out;
 	  }
 	;
@@ -2173,7 +2173,7 @@ property_declaration
 	  }
 	  CLOSE_BRACE
 	  {
-  		CheckIsAsx("property", GetLocation($3)); 	
+  		CheckIsPlayScript("property", GetLocation($3)); 	
   		  
 		lbag.AppendToMember (current_property, GetLocation ($12));
 		current_property = null;
@@ -2229,7 +2229,7 @@ indexer_declaration
 	  }
 	  CLOSE_BRACE
 	  {
-  		CheckIsAsx("indexer", GetLocation($3)); 	
+  		CheckIsPlayScript("indexer", GetLocation($3)); 	
 	  
 		if (current_property.AccessorFirst != null && current_property.AccessorFirst.Block == null)
 			((Indexer) current_property).ParameterInfo.CheckParameters (current_property);
@@ -2529,7 +2529,7 @@ operator_declarator
 	  }
 	  opt_formal_parameter_list CLOSE_PARENS COLON operator_type 
 	  {
-		CheckIsAsx("operator", GetLocation($1)); 	  
+		CheckIsPlayScript("operator", GetLocation($1)); 	  
 	  
 		valid_param_mod = 0;
 
@@ -3074,7 +3074,7 @@ enum_declaration
 	  }
 	  CLOSE_BRACE opt_semicolon
 	  {
-	  	CheckIsAsx("enum", GetLocation($3));
+	  	CheckIsPlayScript("enum", GetLocation($3));
 	  
 		if (doc_support)
 			current_container.DocComment = enumTypeComment;
@@ -3208,7 +3208,7 @@ delegate_declaration
 	  }
 	  SEMICOLON
 	  {
-	  	CheckIsAsx("delegate", GetLocation($3));
+	  	CheckIsPlayScript("delegate", GetLocation($3));
 	  	
 		if (doc_support) {
 			current_delegate.DocComment = Lexer.consume_doc_comment ();
@@ -3501,7 +3501,7 @@ type_expression_or_array
 	: type_expression
 	| type_expression rank_specifiers
 	  {
-	  	CheckIsAsx("arrays", GetLocation($2));
+	  	CheckIsPlayScript("arrays", GetLocation($2));
 		$$ = new ComposedCast ((FullNamedExpression) $1, (ComposedTypeSpecifier) $2);
 	  }
 	;
@@ -3575,28 +3575,28 @@ builtin_types
 	: /* OBJECT	{ $$ = new TypeExpression (compiler.BuiltinTypes.Object, GetLocation ($1)); }
 	| STRING	{ $$ = new TypeExpression (compiler.BuiltinTypes.String, GetLocation ($1)); }
 	| BOOL		{ $$ = new TypeExpression (compiler.BuiltinTypes.Bool, GetLocation ($1)); }
-	| */ DECIMAL { CheckIsAsx("decimal", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Decimal, GetLocation ($1)); }
-	| FLOAT		{ CheckIsAsx("float", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Float, GetLocation ($1)); }
-//	| FLOAT2	{ CheckIsAsx("float2", GetLocation($1)); $$ = MakeMonoSimdType("Vector4f", GetLocation($1)); }
-//	| FLOAT3	{ CheckIsAsx("float3", GetLocation($1)); $$ = MakeMonoSimdType("Vector4f", GetLocation($1)); }
-//	| FLOAT4	{ CheckIsAsx("float4", GetLocation($1)); $$ = MakeMonoSimdType("Vector4f", GetLocation($1)); }
-	| DOUBLE	{ CheckIsAsx("double", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Double, GetLocation ($1)); }
-//	| DOUBLE2	{ CheckIsAsx("double2", GetLocation($1)); $$ = MakeMonoSimdType("Vector2d", GetLocation($1)); }
-//	| DOUBLE3	{ CheckIsAsx("double3", GetLocation($1)); $$ = MakeMonoSimdType("Vector4d", GetLocation($1)); }
-//	| DOUBLE4	{ CheckIsAsx("double4", GetLocation($1)); $$ = MakeMonoSimdType("Vector4d", GetLocation($1)); }
+	| */ DECIMAL { CheckIsPlayScript("decimal", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Decimal, GetLocation ($1)); }
+	| FLOAT		{ CheckIsPlayScript("float", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Float, GetLocation ($1)); }
+//	| FLOAT2	{ CheckIsPlayScript("float2", GetLocation($1)); $$ = MakeMonoSimdType("Vector4f", GetLocation($1)); }
+//	| FLOAT3	{ CheckIsPlayScript("float3", GetLocation($1)); $$ = MakeMonoSimdType("Vector4f", GetLocation($1)); }
+//	| FLOAT4	{ CheckIsPlayScript("float4", GetLocation($1)); $$ = MakeMonoSimdType("Vector4f", GetLocation($1)); }
+	| DOUBLE	{ CheckIsPlayScript("double", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Double, GetLocation ($1)); }
+//	| DOUBLE2	{ CheckIsPlayScript("double2", GetLocation($1)); $$ = MakeMonoSimdType("Vector2d", GetLocation($1)); }
+//	| DOUBLE3	{ CheckIsPlayScript("double3", GetLocation($1)); $$ = MakeMonoSimdType("Vector4d", GetLocation($1)); }
+//	| DOUBLE4	{ CheckIsPlayScript("double4", GetLocation($1)); $$ = MakeMonoSimdType("Vector4d", GetLocation($1)); }
 	| integral_type
 	;
 
 integral_type
-	: SBYTE		{ CheckIsAsx("sbyte", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.SByte, GetLocation ($1)); }
-	| BYTE		{ CheckIsAsx("byte", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Byte, GetLocation ($1)); }
-	| SHORT		{ CheckIsAsx("short", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Short, GetLocation ($1)); }
-	| USHORT	{ CheckIsAsx("ushort", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.UShort, GetLocation ($1)); }
+	: SBYTE		{ CheckIsPlayScript("sbyte", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.SByte, GetLocation ($1)); }
+	| BYTE		{ CheckIsPlayScript("byte", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Byte, GetLocation ($1)); }
+	| SHORT		{ CheckIsPlayScript("short", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Short, GetLocation ($1)); }
+	| USHORT	{ CheckIsPlayScript("ushort", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.UShort, GetLocation ($1)); }
 	| INT		{ $$ = new TypeExpression (compiler.BuiltinTypes.Int, GetLocation ($1)); }
 	| UINT		{ $$ = new TypeExpression (compiler.BuiltinTypes.UInt, GetLocation ($1)); }
-	| LONG		{ CheckIsAsx("long", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Long, GetLocation ($1)); }
-	| ULONG		{ CheckIsAsx("ulong", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.ULong, GetLocation ($1)); }
-	| CHAR		{ CheckIsAsx("char", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Char, GetLocation ($1)); }
+	| LONG		{ CheckIsPlayScript("long", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Long, GetLocation ($1)); }
+	| ULONG		{ CheckIsPlayScript("ulong", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.ULong, GetLocation ($1)); }
+	| CHAR		{ CheckIsPlayScript("char", GetLocation($1)); $$ = new TypeExpression (compiler.BuiltinTypes.Char, GetLocation ($1)); }
 	;
 
 //
@@ -4171,7 +4171,7 @@ post_decrement_expression
 //	  opt_rank_specifier
 //	  /* opt_array_initializer */
 //	  {
-//	  	CheckIsAsx("arrays", GetLocation($1));
+//	  	CheckIsPlayScript("arrays", GetLocation($1));
 //		$$ = new ArrayCreation ((FullNamedExpression) $2, (List<Expression>) $4,
 //				new ComposedTypeSpecifier (((List<Expression>) $4).Count, GetLocation ($3)) {
 //	  				Next = (ComposedTypeSpecifier) $6
@@ -4180,7 +4180,7 @@ post_decrement_expression
 //	  }
 //	| NEW new_expr_type OPEN_BRACKET CLOSE_BRACKET OPEN_BRACKET_EXPR error CLOSE_BRACKET
 //	  {
-//	  	CheckIsAsx("arrays", GetLocation($1));
+//	  	CheckIsPlayScript("arrays", GetLocation($1));
 //		report.Error (178, GetLocation ($6), "Invalid rank specifier, expecting `,' or `]'");
 //		$$ = new ArrayCreation ((FullNamedExpression) $2, null, GetLocation ($1));
 //	  }
@@ -4396,7 +4396,7 @@ variable_initializer_list
 //	  }
 //	  open_parens_any typeof_type_expression CLOSE_PARENS
 //	  {
-//		CheckIsAsx("typeof", GetLocation($1)); 	  
+//		CheckIsPlayScript("typeof", GetLocation($1)); 	  
 //	  	lexer.TypeOfParsing = false;
 //		$$ = new TypeOf ((FullNamedExpression) $4, GetLocation ($1));
 //		lbag.AddLocation ($$, GetLocation ($3), GetLocation ($5));
@@ -4475,7 +4475,7 @@ generic_dimension
 sizeof_expression
 	: SIZEOF open_parens_any type CLOSE_PARENS
 	  { 
-		CheckIsAsx("sizeof", GetLocation($1)); 	  
+		CheckIsPlayScript("sizeof", GetLocation($1)); 	  
 		$$ = new SizeOf ((Expression) $3, GetLocation ($1));
 		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
 	  }
@@ -4491,7 +4491,7 @@ sizeof_expression
 checked_expression
 	: CHECKED open_parens_any expression CLOSE_PARENS
 	  {
-		CheckIsAsx("checked", GetLocation($1)); 	  
+		CheckIsPlayScript("checked", GetLocation($1)); 	  
 		$$ = new CheckedExpr ((Expression) $3, GetLocation ($1));
 		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
 	  }
@@ -4506,7 +4506,7 @@ checked_expression
 unchecked_expression
 	: UNCHECKED open_parens_any expression CLOSE_PARENS
 	  {
-		CheckIsAsx("unchecked", GetLocation($1)); 	  
+		CheckIsPlayScript("unchecked", GetLocation($1)); 	  
 		$$ = new UnCheckedExpr ((Expression) $3, GetLocation ($1));
 		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
 	  }
@@ -4613,7 +4613,7 @@ local_function_statement
 default_value_expression
 	: DEFAULT open_parens_any type CLOSE_PARENS
 	  {
-	  	CheckIsAsx("default values", GetLocation($1));
+	  	CheckIsPlayScript("default values", GetLocation($1));
 	  
 		if (lang_version < LanguageVersion.ISO_2)
 			FeatureIsNotAvailable (GetLocation ($1), "default value expression");
@@ -4640,7 +4640,7 @@ unary_expression
 //	  }
 	| AWAIT prefixed_unary_expression
 	  {
-	  	CheckIsAsx("await", GetLocation($1));
+	  	CheckIsPlayScript("await", GetLocation($1));
 	  	
 		if (!async_block) {
 			 if (current_anonymous_method is LambdaExpression) {
@@ -5097,7 +5097,7 @@ null_coalescing_expression
 	: conditional_or_expression
 	| conditional_or_expression OP_COALESCING null_coalescing_expression
 	  {
-	  	CheckIsAsx("?? operator", GetLocation($2));
+	  	CheckIsPlayScript("?? operator", GetLocation($2));
 	  
 		if (lang_version < LanguageVersion.ISO_2)
 			FeatureIsNotAvailable (GetLocation ($2), "null coalescing operator");
@@ -5309,7 +5309,7 @@ lambda_expression
 	  }
 	  lambda_expression_body
 	  {
-		CheckIsAsx("lambda", GetLocation($1)); 	  
+		CheckIsPlayScript("lambda", GetLocation($1)); 	  
 		$$ = end_anonymous ((ParametersBlock) $4);
 		lbag.AddLocation ($$, GetLocation ($2));
 	  }
@@ -5321,7 +5321,7 @@ lambda_expression
 	  }
 	  lambda_expression_body
 	  {
-		CheckIsAsx("lambda", GetLocation($1)); 	  
+		CheckIsPlayScript("lambda", GetLocation($1)); 	  
 		$$ = end_anonymous ((ParametersBlock) $4);
 		lbag.AddLocation ($$, GetLocation ($2));
 	  }
@@ -5333,7 +5333,7 @@ lambda_expression
 	  }
 	  lambda_expression_body
 	  {
-		CheckIsAsx("lambda", GetLocation($1)); 	  
+		CheckIsPlayScript("lambda", GetLocation($1)); 	  
 		$$ = end_anonymous ((ParametersBlock) $5);
 		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($3));
 	  }
@@ -5348,7 +5348,7 @@ lambda_expression
 	  }
 	  lambda_expression_body
 	  {
-		CheckIsAsx("lambda", GetLocation($1)); 	  
+		CheckIsPlayScript("lambda", GetLocation($1)); 	  
 		$$ = end_anonymous ((ParametersBlock) $7);
 		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($4), GetLocation ($5));
 	  }
@@ -5363,7 +5363,7 @@ lambda_expression
 	  }
 	  lambda_expression_body
 	  {
-		CheckIsAsx("lambda", GetLocation($1)); 	  
+		CheckIsPlayScript("lambda", GetLocation($1)); 	  
 		$$ = end_anonymous ((ParametersBlock) $8);
 		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($2), GetLocation ($5), GetLocation ($6));
 	  }
@@ -5940,11 +5940,11 @@ embedded_statement
 	: valid_declaration_statement
 	| block_variable_declaration
 	  {
-	  	  if (handle_asx) {
+	  	  if (parsing_playscript) {
 			  report.Error (1023, GetLocation ($1), "An embedded statement may not be a declaration or labeled statement");
 			  $$ = null;
 		  } else {
-		  	  // NOTE: This is actually allowed in ActionScript.  We'll turn it off in ASX though as it's error prone.
+		  	  // NOTE: This is actually allowed in PlayScript.  We'll turn it off in ASX though as it's error prone.
 		  	  $$ = $1;
 		  }
 	  }
@@ -7089,7 +7089,7 @@ using_statement
 	  }
 	  embedded_statement
 	  {
-	  	CheckIsAsx("using", GetLocation($2));
+	  	CheckIsPlayScript("using", GetLocation($2));
 	  	
 		if ($9 is EmptyStatement && lexer.peek_token () == Token.OPEN_BRACE)
 			Warning_EmptyStatement (GetLocation ($9));
@@ -7100,7 +7100,7 @@ using_statement
 	  }
 	| USING open_parens_any expression CLOSE_PARENS embedded_statement
 	  {
-	  	CheckIsAsx("using", GetLocation($2));
+	  	CheckIsPlayScript("using", GetLocation($2));
 
 		if ($5 is EmptyStatement && lexer.peek_token () == Token.OPEN_BRACE)
 			Warning_EmptyStatement (GetLocation ($5));
@@ -7110,7 +7110,7 @@ using_statement
 	  }
 	| USING open_parens_any expression error
 	  {
-	  	CheckIsAsx("using", GetLocation($2));
+	  	CheckIsPlayScript("using", GetLocation($2));
 	  
 		Error_SyntaxError (yyToken);
 		
@@ -8019,12 +8019,12 @@ public Tokenizer Lexer {
 	}
 }		   
 
-public ActionScriptParser (SeekableStreamReader reader, CompilationSourceFile file, ParserSession session)
+public PlayScriptParser (SeekableStreamReader reader, CompilationSourceFile file, ParserSession session)
 	: this (reader, file, file.Compiler.Report, session)
 {
 }
 
-public ActionScriptParser (SeekableStreamReader reader, CompilationSourceFile file, Report report, ParserSession session)
+public PlayScriptParser (SeekableStreamReader reader, CompilationSourceFile file, Report report, ParserSession session)
 {
 	this.file = file;
 	current_container = current_namespace = file;
@@ -8233,10 +8233,10 @@ void Error_SyntaxError (int error_code, int token, string msg)
 		report.Error (error_code, loc, "{2} `{0}', expecting {1}", symbol, expecting, msg);	  
 }
 
-void CheckIsAsx(string elem, Location loc) 
+void CheckIsPlayScript(string elem, Location loc) 
 {
-	if (!handle_asx) {
-		report.Error (7035, loc, "`{0}' only supported with asx extended syntax", elem);
+	if (!parsing_playscript) {
+		report.Error (7035, loc, "`{0}' only supported in PlayScript", elem);
 	}
 
 }
@@ -8281,7 +8281,7 @@ Statement ConvertExpressionToStatement(Expression ex)
 	Statement ret;
 	ExpressionStatement s = ex as ExpressionStatement;
 	if (s == null) {
-		if (Lexer.AsxParsing) {
+		if (Lexer.ParsingPlayScript) {
 			ex.Error_InvalidExpressionStatement (report);
 			ret = new StatementErrorExpression (ex);
 		} else {

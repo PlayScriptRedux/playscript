@@ -3,8 +3,8 @@
 ../../mcs/assign.cs
 ../../mcs/assembly.cs
 ../../mcs/async.cs
-../../mcs/as-lang.cs
-../../mcs/as-tokenizer.cs
+../../mcs/ps-lang.cs
+../../mcs/ps-tokenizer.cs
 ../../mcs/attribute.cs
 ../../mcs/cs-tokenizer.cs
 ../../mcs/cfold.cs
@@ -61,5 +61,5 @@
 ../../build/common/Consts.cs
 ../../tools/monop/outline.cs
 ../../mcs/cs-parser.cs
-../../mcs/as-parser.cs
+../../mcs/ps-parser.cs
 Assembly/AssemblyInfo.cs

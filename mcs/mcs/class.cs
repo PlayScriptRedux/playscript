@@ -1134,11 +1134,11 @@ namespace Mono.CSharp
 		/// </summary>
 		protected virtual TypeSpec[] ResolveBaseTypes (out FullNamedExpression base_class)
 		{
-			// ActionScript will default to the "_root.Object" base class.. not null.
+			// PlayScript will default to the "_root.Object" base class.. not null.
 			if (this.Location.SourceFile != null &&
-			    this.Location.SourceFile.FileType == SourceFileType.ActionScript &&
+			    this.Location.SourceFile.FileType == SourceFileType.PlayScript &&
 			    !this.IsStatic) {
-				base_class = new MemberAccess(new SimpleName(AsConsts.AsRootNamespace, Location), "Object");
+				base_class = new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, Location), "Object");
 				base_type = base_class.ResolveAsType (new BaseContext (this));
 				if (base_type == null)
 					base_class = null;
@@ -1912,8 +1912,8 @@ namespace Mono.CSharp
 
 			var count = members.Count;		
 
-			// ActionScript: Switch non null "const" fields to vars.
-			if (this.Location.SourceFile != null && this.Location.SourceFile.FileType == SourceFileType.ActionScript) {
+			// PlayScript: Switch non null "const" fields to vars.
+			if (this.Location.SourceFile != null && this.Location.SourceFile.FileType == SourceFileType.PlayScript) {
 				for (int i = 0; i < count; ++i) {
 					var c = members[i] as Const;
 					if (c == null)
@@ -2784,10 +2784,10 @@ namespace Mono.CSharp
 		{
 			var accmods = IsTopLevel ? Modifiers.INTERNAL : Modifiers.PRIVATE;
 			var allowedMods = AllowedModifiers;
-			// Modify allowed modifiers for classes in ActionScript
-			if (this.Location.SourceFile != null && this.Location.SourceFile.FileType == SourceFileType.ActionScript) {
+			// Modify allowed modifiers for classes in PlayScript
+			if (this.Location.SourceFile != null && this.Location.SourceFile.FileType == SourceFileType.PlayScript) {
 				allowedMods = allowedMods | Modifiers.AS_DYNAMIC & ~Modifiers.UNSAFE; // Dynamic classes yes, but no unsafe code in AS
-				if (!this.Location.SourceFile.AsExtended) { // Normal AS does not support STATIC or ABSTRACT classes either
+				if (!this.Location.SourceFile.PsExtended) { // Normal AS does not support STATIC or ABSTRACT classes either
 					allowedMods &= ~(Modifiers.ABSTRACT | Modifiers.NEW);
 					if (!name.Basename.EndsWith("_fn"))
 						allowedMods &= ~Modifiers.STATIC;  // Only function classes can be static in standard AS

@@ -67,14 +67,14 @@ namespace Mono.CSharp
 
 		// Predefined operators tables
 		public readonly Binary.PredefinedOperator[] OperatorsBinaryStandard;
-		public readonly Binary.PredefinedOperator[] AsOperatorsBinaryStandard; // ActionScript - Include BOOL conversions for logical ops
+		public readonly Binary.PredefinedOperator[] AsOperatorsBinaryStandard; // PlayScript - Include BOOL conversions for logical ops
 		public readonly Binary.PredefinedOperator[] OperatorsBinaryEquality;
 		public readonly Binary.PredefinedOperator[] OperatorsBinaryUnsafe;
 		public readonly TypeSpec[][] OperatorsUnary;
 		public readonly TypeSpec[] OperatorsUnaryMutator;
 
 		public readonly TypeSpec[] BinaryPromotionsTypes;
-		public readonly TypeSpec[] AsBinaryPromotionsTypes;  // ActionScript binary promotion types - includes BOOL.
+		public readonly TypeSpec[] AsBinaryPromotionsTypes;  // PlayScript binary promotion types - includes BOOL.
 		public readonly TypeSpec[] SwitchUserTypes;
 
 		readonly BuiltinTypeSpec[] types;
@@ -128,7 +128,7 @@ namespace Mono.CSharp
 			OperatorsUnaryMutator = UnaryMutator.CreatePredefinedOperatorsTable (this);
 
 			BinaryPromotionsTypes = ConstantFold.CreateBinaryPromotionsTypes (this);
-			// ActionScript binary promotion types (includes bool).
+			// PlayScript binary promotion types (includes bool).
 			AsBinaryPromotionsTypes = ConstantFold.CreateAsBinaryPromotionsTypes (this);
 			SwitchUserTypes = Switch.CreateSwitchUserTypes (this);
 
@@ -261,7 +261,7 @@ namespace Mono.CSharp
 		public readonly PredefinedType AsRegExp;
 		public readonly PredefinedType AsXml;
 
-		// ActionScript dynamic binder AOT mode support..
+		// PlayScript dynamic binder AOT mode support..
 		private bool checkedAsDynamicMode = false;
 		private bool isAsDynamicMode = false;
 		private bool isAsAotMode = false;
@@ -325,18 +325,18 @@ namespace Mono.CSharp
 			ICriticalNotifyCompletion = new PredefinedType (module, MemberKind.Interface, "System.Runtime.CompilerServices", "ICriticalNotifyCompletion");
 
 			AsObject = new PredefinedType (module, MemberKind.Class, "ActionScript.Expando", "ExpandoObject");
-			AsArray = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "Array");
-			AsVector = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "Vector", 1);
-			AsError = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "Error");
-			AsFunction = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "Function");
+			AsArray = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "Array");
+			AsVector = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "Vector", 1);
+			AsError = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "Error");
+			AsFunction = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "Function");
 			AsUndefined = new PredefinedType (module, MemberKind.Class, "ActionScript", "Undefined");
 			AsCallSite = new PredefinedType (module, MemberKind.Class, "ActionScript", "CallSite");
 			AsCallSiteGeneric = new PredefinedType (module, MemberKind.Class, "ActionScript", "CallSite", 1);
 			AsExpressionType = new PredefinedType (module, MemberKind.Enum, "ActionScript", "ExpressionType");
 			AsBinder = new PredefinedType (module, MemberKind.Class, "ActionScript.RuntimeBinder", "Binder");
 			AsBinderFlags = new PredefinedType (module, MemberKind.Enum, "ActionScript.RuntimeBinder", "CSharpBinderFlags");
-			AsRegExp = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "RegExp");
-			AsXml = new PredefinedType (module, MemberKind.Class, AsConsts.AsRootNamespace, "XML");
+			AsRegExp = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "RegExp");
+			AsXml = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "XML");
 
 			//
 			// Define types which are used for comparison. It does not matter
@@ -368,33 +368,33 @@ namespace Mono.CSharp
 				TaskGeneric.TypeSpec.IsGenericTask = true;
 		}
 
-		private void CheckActionScriptDynamicMode()
+		private void CheckPlayScriptDynamicMode()
 		{
 			if (!checkedAsDynamicMode) {
-				isAsDynamicMode = AsBinder.Define ();  	// Using ActionScript dynamic support.
-				isAsAotMode = AsCallSite.Define ();		// Using ActionScript dynamic support, in AOT mode.
+				isAsDynamicMode = AsBinder.Define ();  	// Using PlayScript dynamic support.
+				isAsAotMode = AsCallSite.Define ();		// Using PlayScript dynamic support, in AOT mode.
 				checkedAsDynamicMode = true;
 			}
 		}
 
-		public bool IsActionScriptDynamicMode {
+		public bool IsPlayScriptDynamicMode {
 			get {
 				if (!checkedAsDynamicMode)
-					CheckActionScriptDynamicMode();
+					CheckPlayScriptDynamicMode();
 				return isAsDynamicMode;
 			}
 		}
 
-		public bool IsActionScriptAotMode {
+		public bool IsPlayScriptAotMode {
 			get {
 				if (!checkedAsDynamicMode)
-					CheckActionScriptDynamicMode();
+					CheckPlayScriptDynamicMode();
 				return isAsAotMode;
 			}
 		}
 
 		public PredefinedType GetBinder(ResolveContext ec) {
-			if (IsActionScriptDynamicMode) {
+			if (IsPlayScriptDynamicMode) {
 				return AsBinder;
 			} else {
 				return Binder;
@@ -402,7 +402,7 @@ namespace Mono.CSharp
 		}
 
 		public PredefinedType GetBinderFlags(ResolveContext ec) {
-			if (IsActionScriptDynamicMode) {
+			if (IsPlayScriptDynamicMode) {
 				return AsBinderFlags;
 			} else {
 				return BinderFlags;

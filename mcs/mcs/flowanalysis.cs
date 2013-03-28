@@ -311,8 +311,8 @@ namespace Mono.CSharp
 
 				// NOTE: Actionscript allows fallthrough (but we won't in asx)
 				bool allow_fallthrough = child.Block != null && child.Block.loc.SourceFile != null && 
-					child.Block.loc.SourceFile.FileType == Mono.CSharp.SourceFileType.ActionScript &&
-						!child.Block.loc.SourceFile.AsExtended;
+					child.Block.loc.SourceFile.FileType == Mono.CSharp.SourceFileType.PlayScript &&
+						!child.Block.loc.SourceFile.PsExtended;
 
 				if ((Type == SiblingType.SwitchSection) && !new_isunr && !allow_fallthrough) {
 					Report.Error (163, Location,
