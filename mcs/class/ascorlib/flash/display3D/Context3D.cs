@@ -328,15 +328,14 @@ namespace flash.display3D {
 					return;
 				}
 				// convert source data into floating point
+				int tempIndex = 0;
 				for (int i=0; i < uniform.RegCount; i++)
 				{
-					mTemp[i * 4 + 0] = (float)data[dataIndex++];
-					mTemp[i * 4 + 1] = (float)data[dataIndex++];
-					mTemp[i * 4 + 2] = (float)data[dataIndex++];
-					mTemp[i * 4 + 3] = (float)data[dataIndex++];
-					// next register
-					register++;
-					numRegisters--;
+					// convert vector4 double->float
+					mTemp[tempIndex++] = (float)data[dataIndex++];
+					mTemp[tempIndex++] = (float)data[dataIndex++];
+					mTemp[tempIndex++] = (float)data[dataIndex++];
+					mTemp[tempIndex++] = (float)data[dataIndex++];
 				}
 
 				// set uniforms based on type
@@ -355,6 +354,10 @@ namespace flash.display3D {
 					GL.Uniform4(uniform.Location, uniform.RegCount, mTemp);
 					break;
 				}
+
+				// advance register number
+				register     += uniform.RegCount;
+				numRegisters -= uniform.RegCount;
 			}
 			
 		}
