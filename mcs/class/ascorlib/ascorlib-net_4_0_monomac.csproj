@@ -141,6 +141,7 @@
     <Compile Include="PartialAttribute.cs" />
     <Compile Include="Object.cs" />
     <Compile Include="flash\filters\BlurFilter.asx" />
+    <Compile Include="flash\display3D\textures\CubeTexture.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -188,7 +189,6 @@
     <Compile Include="flash\display3D\Context3DTextureFormat.asx" />
     <Compile Include="flash\display3D\Context3DTriangleFace.asx" />
     <Compile Include="flash\display3D\Context3DVertexBufferFormat.asx" />
-    <Compile Include="flash\display3D\textures\CubeTexture.asx" />
     <Compile Include="flash\display3D\textures\RectangleTexture.asx" />
     <Compile Include="flash\display3D\textures\TextureBase.asx" />
     <Compile Include="flash\errors\EOFError.asx" />

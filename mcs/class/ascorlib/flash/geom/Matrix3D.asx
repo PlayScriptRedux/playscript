@@ -2,6 +2,9 @@ package flash.geom {
 
 	public class Matrix3D {
 	
+		private static var sTempMatrix:Matrix3D = new Matrix3D();
+		private static var sTempVector:Vector3D = new Vector3D();
+
 		//
 		// Properties
 		//
@@ -49,35 +52,37 @@ package flash.geom {
 		public function Matrix3D(v:Vector.<Number> = null) {
 			identity();
 		}
- 	 	
-		public function append(lhs:Matrix3D):void {
 
-			var a:double[] = this.mData;
+		// matrix4x4 concatenation
+		// result = lhs * rhs
+		private static function concat(result:Matrix3D, lhs:Matrix3D, rhs:Matrix3D):void
+		{
+			var a:double[] = rhs.mData;
 			var b:double[] = lhs.mData;
-
+			
 			// concat 4x4 matrices
 			var m0:Number = a[0]  * b[0] + a[1]  * b[4] + a[2]  * b[8]  + a[3]  * b[12];
 			var m1:Number = a[0]  * b[1] + a[1]  * b[5] + a[2]  * b[9]  + a[3]  * b[13];
 			var m2:Number = a[0]  * b[2] + a[1]  * b[6] + a[2]  * b[10] + a[3]  * b[14];
 			var m3:Number = a[0]  * b[3] + a[1]  * b[7] + a[2]  * b[11] + a[3]  * b[15];
-
+			
 			var m4:Number = a[4]  * b[0] + a[5]  * b[4] + a[6]  * b[8]  + a[7]  * b[12];
 			var m5:Number = a[4]  * b[1] + a[5]  * b[5] + a[6]  * b[9]  + a[7]  * b[13];
 			var m6:Number = a[4]  * b[2] + a[5]  * b[6] + a[6]  * b[10] + a[7]  * b[14];
 			var m7:Number = a[4]  * b[3] + a[5]  * b[7] + a[6]  * b[11] + a[7]  * b[15];
-
+			
 			var m8:Number = a[8]  * b[0] + a[9]  * b[4] + a[10] * b[8]  + a[11] * b[12];
 			var m9:Number = a[8]  * b[1] + a[9]  * b[5] + a[10] * b[9]  + a[11] * b[13];
 			var m10:Number= a[8]  * b[2] + a[9]  * b[6] + a[10] * b[10] + a[11] * b[14];
 			var m11:Number= a[8]  * b[3] + a[9]  * b[7] + a[10] * b[11] + a[11] * b[15];
-			 
+			
 			var m12:Number= a[12] * b[0] + a[13] * b[4] + a[14] * b[8]  + a[15] * b[12];
 			var m13:Number= a[12] * b[1] + a[13] * b[5] + a[14] * b[9]  + a[15] * b[13];
 			var m14:Number= a[12] * b[2] + a[13] * b[6] + a[14] * b[10] + a[15] * b[14];
 			var m15:Number= a[12] * b[3] + a[13] * b[7] + a[14] * b[11] + a[15] * b[15];
-
+			
 			// store result
-			var o:double[] = this.mData;
+			var o:double[] = result.mData;
 			o[0] = m0;
 			o[1] = m1;
 			o[2] = m2;
@@ -95,14 +100,19 @@ package flash.geom {
 			o[14] = m14;
 			o[15] = m15;
 		}
+ 	 	
+		public function append(lhs:Matrix3D):void {
+			concat(this, lhs, this);
+		}
 
-		private static function createAxisAngleRotation(outRotationMatrix:Matrix3D, degrees:Number, axis:Vector3D, pivotPoint:Vector3D = null):void
+		private static function createAxisAngleRotationMatrix(outMatrix:Matrix3D, degrees:Number, axis:Vector3D, pivotPoint:Vector3D = null):void
 		{
 			if (pivotPoint != null) throw new System.NotImplementedException();
 			
 			var radians:Number = degrees*(System.Math.PI / 180.0);
-			var s:Number = System.Math.Sin(radians);
-			var c:Number = System.Math.Cos(radians);
+			var sin:Number = System.Math.Sin(radians);
+			var cos:Number = System.Math.Cos(radians);
+			var invCos:Number = 1.0 - cos;
 
 			var x:Number = axis.x;
 			var y:Number = axis.y;
@@ -112,38 +122,36 @@ package flash.geom {
 			var yy:Number = y * y;
 			var zz:Number = z * z;
 			
-			var scale:Number = 1.0 / System.Math.Sqrt(xx + yy + zz);
-			
 			// normalize
-			x *= scale;
-			y *= scale;
-			z *= scale;
+			var invScale:Number = 1.0 / System.Math.Sqrt(xx + yy + zz);
+			x *= invScale;
+			y *= invScale;
+			z *= invScale;
 			
 			var xy:Number = x * y;
 			var yz:Number = y * z;
 			var zx:Number = z * x;
 			
-			var xs:Number = x * s;
-			var ys:Number = y * s;
-			var zs:Number = z * s;
+			var xs:Number = x * sin;
+			var ys:Number = y * sin;
+			var zs:Number = z * sin;
 			
-			var one_minus_c:Number = 1.0 - c;
 
 			// write matrix			
-			var m:double[] = outRotationMatrix.mData;
-			m[0] = (one_minus_c * xx) + c;
-			m[1] = (one_minus_c * xy) + zs;
-			m[2] = (one_minus_c * zx) - ys;
+			var m:double[] = outMatrix.mData;
+			m[0] = (invCos * xx) + cos;
+			m[1] = (invCos * xy) + zs;
+			m[2] = (invCos * zx) - ys;
 			m[3] = 0.0;
 			
-			m[4] = (one_minus_c * xy) - zs;
-			m[5] = (one_minus_c * yy) + c;
-			m[6] = (one_minus_c * yz) + xs;
+			m[4] = (invCos * xy) - zs;
+			m[5] = (invCos * yy) + cos;
+			m[6] = (invCos * yz) + xs;
 			m[7] = 0.0;
 			
-			m[8] = (one_minus_c * zx) + ys;
-			m[9] = (one_minus_c * yz) - xs;
-			m[10] = (one_minus_c * zz) + c;
+			m[8] = (invCos * zx) + ys;
+			m[9] = (invCos * yz) - xs;
+			m[10] =(invCos * zz) + cos;
 			m[11] = 0.0;
 			
 			m[12] = 0.0;
@@ -151,37 +159,73 @@ package flash.geom {
 			m[14] = 0.0;
 			m[15] = 1.0;
 		}
- 	 	
+
+		private static function createScaleMatrix(outMatrix:Matrix3D, sx:Number, sy:Number, sz:Number):void
+		{
+			var m:double[] = outMatrix.mData;
+			m[0] = sx;
+			m[1] = 0.0;
+			m[2] = 0.0;
+			m[3] = 0.0;
+			
+			m[4] = 0.0;
+			m[5] = sy;
+			m[6] = 0.0;
+			m[7] = 0.0;
+			
+			m[8] = 0.0;
+			m[9] = 0.0;
+			m[10]= sz;
+			m[11]= 0.0;
+			
+			m[12]= 0.0;
+			m[13]= 0.0;
+			m[14]= 0.0;
+			m[15]= 1.0;
+		}
+
+		private static function createTranslationMatrix(outMatrix:Matrix3D, tx:Number, ty:Number, tz:Number):void
+		{
+			var m:double[] = outMatrix.mData;
+			m[0] = 1.0;
+			m[1] = 0.0;
+			m[2] = 0.0;
+			m[3] = 0.0;
+			
+			m[4] = 0.0;
+			m[5] = 1.0;
+			m[6] = 0.0;
+			m[7] = 0.0;
+			
+			m[8] = 0.0;
+			m[9] = 0.0;
+			m[10]= 1.0;
+			m[11]= 0.0;
+			
+			m[12]= tx;
+			m[13]= ty;
+			m[14]= tz;
+			m[15]= 1.0;
+		}
+
 		public function appendRotation(degrees:Number, axis:Vector3D, pivotPoint:Vector3D = null):void {
-			// create axis-angle rotation matrix and append it
-			var rotationMatrix:Matrix3D = new Matrix3D();
-			createAxisAngleRotation(rotationMatrix, degrees, axis, pivotPoint);
-			append(rotationMatrix);
+			// create matrix and append it
+			createAxisAngleRotationMatrix(sTempMatrix, degrees, axis, pivotPoint);
+			append(sTempMatrix);
 		}
  	 	
 		public function appendScale(xScale:Number, yScale:Number, zScale:Number):void {
-			mData[0] *= xScale;
-			mData[1] *= xScale;
-			mData[2] *= xScale;
-			mData[3] *= xScale;
-			
-			mData[4] *= yScale;
-			mData[5] *= yScale;
-			mData[6] *= yScale;
-			mData[7] *= yScale;
-			
-			mData[8] *= zScale;
-			mData[9] *= zScale;
-			mData[10]*= zScale;
-			mData[11]*= zScale;
-
-			// dont touch the W row
+			// create matrix and append it
+			// $$TODO optimize this
+			createScaleMatrix(sTempMatrix, xScale, yScale, zScale);
+			append(sTempMatrix);
 		}
  	 	
 		public function appendTranslation(x:Number, y:Number, z:Number):void {
-			mData[12] += x;
-			mData[13] += y;
-			mData[14] += z;
+			// create matrix and append it
+			// $$TODO optimize this
+			createTranslationMatrix(sTempMatrix, x, y, z);
+			append(sTempMatrix);
 		}
  	 	
 		public function clone():Matrix3D {
@@ -214,20 +258,66 @@ package flash.geom {
 		}
  	 	
 		public function copyRawDataFrom(vector:Vector.<Number>, index:uint = 0, transpose:Boolean = false):void {
-			if (index != 0 || transpose)
-				throw new System.NotImplementedException();
+			if (!transpose)
+			{
+				for (var i:int=0; i < 16; i++) {
+					mData[i] = vector[index + i];
+				}
+			}
+			else
+			{
+				// copy transposed
+				mData[0] = vector[index + 0];
+				mData[4] = vector[index + 1];
+				mData[8] = vector[index + 2];
+				mData[12]= vector[index + 3];
+				 
+				mData[1] = vector[index + 4];
+				mData[5] = vector[index + 5];
+				mData[9] = vector[index + 6];
+				mData[13]= vector[index + 7];
 				
-			for (var i:int=0; i < 16; i++) {
-				mData[i] = vector[i];
+				mData[2] = vector[index + 8];
+				mData[6] = vector[index + 9];
+				mData[10]= vector[index + 10];
+				mData[14]= vector[index + 11];
+				
+				mData[3] = vector[index + 12];
+				mData[7] = vector[index + 13];
+				mData[11]= vector[index + 14];
+				mData[15]= vector[index + 15];
 			}
 		}
  	 	
 		public function copyRawDataTo(vector:Vector.<Number>, index:uint = 0, transpose:Boolean = false):void {
-			if (index != 0 || transpose)
-				throw new System.NotImplementedException();
-			
-			for (var i:int=0; i < 16; i++) {
-				vector[i] = mData[i];
+			if (!transpose)
+			{
+				for (var i:int=0; i < 16; i++) {
+					vector[index + i] = mData[i];
+				}
+			}
+			else
+			{
+				// copy transposed
+				vector[index + 0] = mData[0];
+				vector[index + 1] = mData[4];
+				vector[index + 2] = mData[8];
+				vector[index + 3] = mData[12];
+
+				vector[index + 4] = mData[1];
+				vector[index + 5] = mData[5];
+				vector[index + 6] = mData[9];
+				vector[index + 7] = mData[13];
+
+				vector[index + 8] = mData[2];
+				vector[index + 9] = mData[6];
+				vector[index + 10] = mData[10];
+				vector[index + 11] = mData[14];
+
+				vector[index + 12] = mData[3];
+				vector[index + 13] = mData[7];
+				vector[index + 14] = mData[11];
+				vector[index + 15] = mData[15];
 			}
 		}
  	 	
@@ -254,8 +344,6 @@ package flash.geom {
 			}
 		}
 
-		private static var sTemp:Vector3D = new Vector3D();
-
 		public function decompose(orientationStyle:String = "eulerAngles"):Vector.<Vector3D> {
 			if (orientationStyle != "eulerAngles") throw new System.NotImplementedException();
 
@@ -277,12 +365,12 @@ package flash.geom {
 
 			// get scale
 			var scale:Vector3D = new Vector3D(1,1,1);
-			this.copyRowTo(0,sTemp);
-			scale.x = sTemp.length;
-			this.copyRowTo(1,sTemp);
-			scale.y = sTemp.length;
-			this.copyRowTo(1,sTemp);
-			scale.z = sTemp.length;
+			this.copyRowTo(0,sTempVector);
+			scale.x = sTempVector.length;
+			this.copyRowTo(1,sTempVector);
+			scale.y = sTempVector.length;
+			this.copyRowTo(2,sTempVector);
+			scale.z = sTempVector.length;
 
 			return new <Vector3D>[translation, rotation, scale];
 		}
@@ -321,130 +409,49 @@ package flash.geom {
 			throw new System.NotImplementedException();
 		}
 
-		private static var inv:double[] = new double[16];
-
 		public function invert():Boolean {
 			var m:double[] = mData;
-			inv[0] = m[5]  * m[10] * m[15] - 
-					m[5]  * m[11] * m[14] - 
-					m[9]  * m[6]  * m[15] + 
-					m[9]  * m[7]  * m[14] +
-					m[13] * m[6]  * m[11] - 
-					m[13] * m[7]  * m[10];
-			
-			inv[4] = -m[4]  * m[10] * m[15] + 
-					m[4]  * m[11] * m[14] + 
-					m[8]  * m[6]  * m[15] - 
-					m[8]  * m[7]  * m[14] - 
-					m[12] * m[6]  * m[11] + 
-					m[12] * m[7]  * m[10];
-			
-			inv[8] = m[4]  * m[9] * m[15] - 
-					m[4]  * m[11] * m[13] - 
-					m[8]  * m[5] * m[15] + 
-					m[8]  * m[7] * m[13] + 
-					m[12] * m[5] * m[11] - 
-					m[12] * m[7] * m[9];
-			
-			inv[12] = -m[4]  * m[9] * m[14] + 
-					m[4]  * m[10] * m[13] +
-					m[8]  * m[5] * m[14] - 
-					m[8]  * m[6] * m[13] - 
-					m[12] * m[5] * m[10] + 
-					m[12] * m[6] * m[9];
-			
-			inv[1] = -m[1]  * m[10] * m[15] + 
-					m[1]  * m[11] * m[14] + 
-					m[9]  * m[2] * m[15] - 
-					m[9]  * m[3] * m[14] - 
-					m[13] * m[2] * m[11] + 
-					m[13] * m[3] * m[10];
-			
-			inv[5] = m[0]  * m[10] * m[15] - 
-					m[0]  * m[11] * m[14] - 
-					m[8]  * m[2] * m[15] + 
-					m[8]  * m[3] * m[14] + 
-					m[12] * m[2] * m[11] - 
-					m[12] * m[3] * m[10];
-			
-			inv[9] = -m[0]  * m[9] * m[15] + 
-					m[0]  * m[11] * m[13] + 
-					m[8]  * m[1] * m[15] - 
-					m[8]  * m[3] * m[13] - 
-					m[12] * m[1] * m[11] + 
-					m[12] * m[3] * m[9];
-			
-			inv[13] = m[0]  * m[9] * m[14] - 
-					m[0]  * m[10] * m[13] - 
-					m[8]  * m[1] * m[14] + 
-					m[8]  * m[2] * m[13] + 
-					m[12] * m[1] * m[10] - 
-					m[12] * m[2] * m[9];
-			
-			inv[2] = m[1]  * m[6] * m[15] - 
-					m[1]  * m[7] * m[14] - 
-					m[5]  * m[2] * m[15] + 
-					m[5]  * m[3] * m[14] + 
-					m[13] * m[2] * m[7] - 
-					m[13] * m[3] * m[6];
-			
-			inv[6] = -m[0]  * m[6] * m[15] + 
-					m[0]  * m[7] * m[14] + 
-					m[4]  * m[2] * m[15] - 
-					m[4]  * m[3] * m[14] - 
-					m[12] * m[2] * m[7] + 
-					m[12] * m[3] * m[6];
-			
-			inv[10] = m[0]  * m[5] * m[15] - 
-					m[0]  * m[7] * m[13] - 
-					m[4]  * m[1] * m[15] + 
-					m[4]  * m[3] * m[13] + 
-					m[12] * m[1] * m[7] - 
-					m[12] * m[3] * m[5];
-			
-			inv[14] = -m[0]  * m[5] * m[14] + 
-					m[0]  * m[6] * m[13] + 
-					m[4]  * m[1] * m[14] - 
-					m[4]  * m[2] * m[13] - 
-					m[12] * m[1] * m[6] + 
-					m[12] * m[2] * m[5];
-			
-			inv[3] = -m[1] * m[6] * m[11] + 
-					m[1] * m[7] * m[10] + 
-					m[5] * m[2] * m[11] - 
-					m[5] * m[3] * m[10] - 
-					m[9] * m[2] * m[7] + 
-					m[9] * m[3] * m[6];
-			
-			inv[7] = m[0] * m[6] * m[11] - 
-					m[0] * m[7] * m[10] - 
-					m[4] * m[2] * m[11] + 
-					m[4] * m[3] * m[10] + 
-					m[8] * m[2] * m[7] - 
-					m[8] * m[3] * m[6];
-			
-			inv[11] = -m[0] * m[5] * m[11] + 
-					m[0] * m[7] * m[9] + 
-					m[4] * m[1] * m[11] - 
-					m[4] * m[3] * m[9] - 
-					m[8] * m[1] * m[7] + 
-					m[8] * m[3] * m[5];
-			
-			inv[15] = m[0] * m[5] * m[10] - 
-					m[0] * m[6] * m[9] - 
-					m[4] * m[1] * m[10] + 
-					m[4] * m[2] * m[9] + 
-					m[8] * m[1] * m[6] - 
-					m[8] * m[2] * m[5];
-			
-			var det:Number = m[0] * inv[0] + m[1] * inv[4] + m[2] * inv[8] + m[3] * inv[12];
-			if (det == 0)
+			var i0:double  =  (m[5]  * m[10] * m[15]) - (m[5]  * m[11] * m[14]) - (m[9]  * m[6]  * m[15]) + (m[9]  * m[7]  * m[14]) + (m[13] * m[6]  * m[11]) - (m[13] * m[7] * m[10]);
+			var i1:double  = -(m[1]  * m[10] * m[15]) + (m[1]  * m[11] * m[14]) + (m[9]  * m[2]  * m[15]) - (m[9]  * m[3]  * m[14]) - (m[13] * m[2]  * m[11]) + (m[13] * m[3] * m[10]);
+			var i2:double  =  (m[1]  * m[6]  * m[15]) - (m[1]  * m[7]  * m[14]) - (m[5]  * m[2]  * m[15]) + (m[5]  * m[3]  * m[14]) + (m[13] * m[2]  * m[7])  - (m[13] * m[3] * m[6]);
+			var i3:double  = -(m[1]  * m[6]  * m[11]) + (m[1]  * m[7]  * m[10]) + (m[5]  * m[2]  * m[11]) - (m[5]  * m[3]  * m[10]) - (m[9]  * m[2]  * m[7])  + (m[9]  * m[3] * m[6]);
+			var i4:double  = -(m[4]  * m[10] * m[15]) + (m[4]  * m[11] * m[14]) + (m[8]  * m[6]  * m[15]) - (m[8]  * m[7]  * m[14]) - (m[12] * m[6]  * m[11]) + (m[12] * m[7] * m[10]);
+			var i5:double  =  (m[0]  * m[10] * m[15]) - (m[0]  * m[11] * m[14]) - (m[8]  * m[2]  * m[15]) + (m[8]  * m[3]  * m[14]) + (m[12] * m[2]  * m[11]) - (m[12] * m[3] * m[10]);
+			var i6:double  = -(m[0]  * m[6]  * m[15]) + (m[0]  * m[7]  * m[14]) + (m[4]  * m[2]  * m[15]) - (m[4]  * m[3]  * m[14]) - (m[12] * m[2]  * m[7])  + (m[12] * m[3] * m[6]);
+			var i7:double  =  (m[0]  * m[6]  * m[11]) - (m[0]  * m[7]  * m[10]) - (m[4]  * m[2]  * m[11]) + (m[4]  * m[3]  * m[10]) + (m[8]  * m[2]  * m[7])  - (m[8]  * m[3] * m[6]);
+			var i8:double  =  (m[4]  * m[9]  * m[15]) - (m[4]  * m[11] * m[13]) - (m[8]  * m[5]  * m[15]) + (m[8]  * m[7]  * m[13]) + (m[12] * m[5]  * m[11]) - (m[12] * m[7] * m[9]);
+			var i9:double  = -(m[0]  * m[9]  * m[15]) + (m[0]  * m[11] * m[13]) + (m[8]  * m[1]  * m[15]) - (m[8]  * m[3]  * m[13]) - (m[12] * m[1]  * m[11]) + (m[12] * m[3] * m[9]);
+			var i10:double =  (m[0]  * m[5]  * m[15]) - (m[0]  * m[7]  * m[13]) - (m[4]  * m[1]  * m[15]) + (m[4]  * m[3]  * m[13]) + (m[12] * m[1]  * m[7])  - (m[12] * m[3] * m[5]);
+			var i11:double = -(m[0]  * m[5]  * m[11]) + (m[0]  * m[7]  * m[9])  + (m[4]  * m[1]  * m[11]) - (m[4]  * m[3]  * m[9])  - (m[8]  * m[1]  * m[7])  + (m[8]  * m[3] * m[5]);
+			var i12:double = -(m[4]  * m[9]  * m[14]) + (m[4]  * m[10] * m[13]) + (m[8]  * m[5]  * m[14]) - (m[8]  * m[6]  * m[13]) - (m[12] * m[5]  * m[10]) + (m[12] * m[6] * m[9]);
+			var i13:double =  (m[0]  * m[9]  * m[14]) - (m[0]  * m[10] * m[13]) - (m[8]  * m[1]  * m[14]) + (m[8]  * m[2]  * m[13]) + (m[12] * m[1]  * m[10]) - (m[12] * m[2] * m[9]);
+			var i14:double = -(m[0]  * m[5]  * m[14]) + (m[0]  * m[6]  * m[13]) + (m[4]  * m[1]  * m[14]) - (m[4]  * m[2]  * m[13]) - (m[12] * m[1]  * m[6])  + (m[12] * m[2] * m[5]);
+			var i15:double =  (m[0]  * m[5]  * m[10]) - (m[0]  * m[6]  * m[9])  - (m[4]  * m[1]  * m[10]) + (m[4]  * m[2]  * m[9])  + (m[8]  * m[1]  * m[6])  - (m[8]  * m[2] * m[5]);
+
+			// compute determinant
+			var d:Number = (m[0] * i0) + (m[1] * i4) + (m[2] * i8) + (m[3] * i12);
+			if (d == 0)
 				return false;
-			
-			det = 1.0 / det;
-			for (var i:int = 0; i < 16; i++)
-				m[i] = inv[i] * det;
-			
+
+			d = 1.0 / d;
+
+			// apply inverted determinant to matrix			                                                           
+			m[0] = i0 * d;
+			m[1] = i1 * d;
+			m[2] = i2 * d;
+			m[3] = i3 * d;
+			m[4] = i4 * d;
+			m[5] = i5 * d;
+			m[6] = i6 * d;
+			m[7] = i7 * d;
+			m[8] = i8 * d;
+			m[9] = i9 * d;
+			m[10] = i10 * d;
+			m[11] = i11 * d;
+			m[12] = i12 * d;
+			m[13] = i13 * d;
+			m[14] = i14 * d;
+			m[15] = i15 * d;
 			return true;
 		}
  	 	
@@ -453,19 +460,27 @@ package flash.geom {
 		}
 
 		public function prepend(rhs:Matrix3D):void {
-			throw new System.NotImplementedException();
+			concat(this, this, rhs);
 		}
  	 	
 		public function prependRotation(degrees:Number, axis:Vector3D, pivotPoint:Vector3D = null):void {
-			throw new System.NotImplementedException();
+			// create matrix and prepend it
+			createAxisAngleRotationMatrix(sTempMatrix, degrees, axis, pivotPoint);
+			prepend(sTempMatrix);
 		}
  	 	
 		public function prependScale(xScale:Number, yScale:Number, zScale:Number):void {
-			throw new System.NotImplementedException();
+			// create matrix and prepend it
+			// $$TODO optimize this
+			createScaleMatrix(sTempMatrix, xScale, yScale, zScale);
+			prepend(sTempMatrix);
 		}
  	 	
 		public function prependTranslation(x:Number, y:Number, z:Number):void {
-			throw new System.NotImplementedException();
+			// create matrix and prepend it
+			// $$TODO optimize this
+			createTranslationMatrix(sTempMatrix, x, y, z);
+			prepend(sTempMatrix);
 		}
  	 	
 		public function recompose(components:Vector.<Vector3D>, orientationStyle:String = "eulerAngles"):Boolean {

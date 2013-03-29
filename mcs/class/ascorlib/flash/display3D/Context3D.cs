@@ -71,7 +71,7 @@ namespace flash.display3D {
 		}
 	
 		public CubeTexture createCubeTexture(int size, string format, bool optimizeForRenderToTexture, int streamingLevels = 0) {
-			throw new NotImplementedException();
+			return new CubeTexture(this, size, format, optimizeForRenderToTexture, streamingLevels);
 		}
 
  	 	public IndexBuffer3D createIndexBuffer(int numIndices) {

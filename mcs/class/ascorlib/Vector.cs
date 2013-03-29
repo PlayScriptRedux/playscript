@@ -402,6 +402,9 @@ namespace _root {
 				return mArray[i];
 			}
 			set {
+				if (i >= mCount) {
+					expand(i+1);
+				}
 				mArray[i] = value;
 			}
 		}
@@ -412,6 +415,9 @@ namespace _root {
 				return mArray[(int)i];
 			}
 			set {
+				if (i >= mCount) {
+					expand((int)(i+1));
+				}
 				mArray[(int)i] = value;
 			}
 		}

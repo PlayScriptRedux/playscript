@@ -381,6 +381,12 @@ namespace flash.display3D
 				sb.Append("\t");
 				switch (opcode)
 				{
+				case 0x17: // m33
+					sb.AppendFormat("{0} = {1} * mat3({2}); // m33", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL() ); 
+					map.Add(dr, RegisterUsage.Vector4);
+					map.Add(sr1, RegisterUsage.Vector4);
+					map.Add(sr2, RegisterUsage.Matrix44); // 33?
+					break;
 				case 0x18: // m44
 					sb.AppendFormat("{0} = {1} * {2}; // m44", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL() ); 
 					map.Add(dr, RegisterUsage.Vector4);
@@ -428,9 +434,34 @@ namespace flash.display3D
 					map.Add(sr2, RegisterUsage.Vector4);
 					break;
 
+				case 0x12: // dp3
+					sb.AppendFormat("{0} = dot(vec3({1}), vec3({2})); // dp3", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL() ); 
+					map.Add(dr, RegisterUsage.Vector4);
+					map.Add(sr1, RegisterUsage.Vector4);
+					map.Add(sr2, RegisterUsage.Vector4);
+					break;
+				
+				case 0x13: // dp4
+					sb.AppendFormat("{0} = dot(vec4({1}), vec4({2})); // dp4", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL() ); 
+					map.Add(dr, RegisterUsage.Vector4);
+					map.Add(sr1, RegisterUsage.Vector4);
+					map.Add(sr2, RegisterUsage.Vector4);
+					break;
+
 				case 0x16: // saturate
 					sb.AppendFormat("{0} = clamp({1}, 0.0, 1.0); // saturate", dr.ToGLSL(), sr1.ToGLSL() ); 
 					map.Add(dr, RegisterUsage.Vector4);
+					map.Add(sr1, RegisterUsage.Vector4);
+					break;
+
+				case 0x0E: // normalize
+					sb.AppendFormat("{0} = normalize({1}); // normalize", dr.ToGLSL(), sr1.ToGLSL() ); 
+					map.Add(dr, RegisterUsage.Vector4);
+					map.Add(sr1, RegisterUsage.Vector4);
+					break;
+
+				case 0x27: // kill /  discard
+					sb.AppendFormat("if ({0} > 0.0) discard;", sr1.ToGLSL() ); 
 					map.Add(sr1, RegisterUsage.Vector4);
 					break;
 

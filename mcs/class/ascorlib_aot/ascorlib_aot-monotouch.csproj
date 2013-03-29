@@ -293,9 +293,6 @@
     <Compile Include="..\ascorlib\flash\display3D\VertexBuffer3D.cs">
       <Link>flash\display3D\VertexBuffer3D.cs</Link>
     </Compile>
-    <Compile Include="..\ascorlib\flash\display3D\textures\CubeTexture.asx">
-      <Link>flash\display3D\textures\CubeTexture.asx</Link>
-    </Compile>
     <Compile Include="..\ascorlib\flash\display3D\textures\RectangleTexture.asx">
       <Link>flash\display3D\textures\RectangleTexture.asx</Link>
     </Compile>
@@ -652,6 +649,9 @@
     </Compile>
     <Compile Include="..\ascorlib\Object.cs">
       <Link>Object.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\textures\CubeTexture.cs">
+      <Link>flash\display3D\textures\CubeTexture.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>
