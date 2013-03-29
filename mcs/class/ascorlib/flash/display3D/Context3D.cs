@@ -289,22 +289,17 @@ namespace flash.display3D {
 				convertDoubleToFloat (mTemp, matrix.mData, 16);
 			}
 
+			bool isVertex = (programType == "vertex");
 
-			if (programType == "vertex") {
-				// set uniform registers
-				int location = mProgram.getVertexLocation(firstRegister);
-				if (location >= 0)
-				{
-					GL.UniformMatrix4(location, 1, false, mTemp);
-				}
-
-			} else {
-				// set uniform registers
-				int location = mProgram.getFragmentLocation(firstRegister);
-				if (location >= 0)
-				{
-					GL.UniformMatrix4(location, 1, false, mTemp);
-				}
+			// set uniform registers
+			Program3D.Uniform uniform =mProgram.getUniform(isVertex, firstRegister);
+			if (uniform != null)
+			{
+				GL.UniformMatrix4(uniform.Location, 1, false, mTemp);
+			}
+			else
+			{
+				Console.WriteLine ("warning: vertex program register not found: {0}", firstRegister);
 			}
 		}
 
@@ -317,38 +312,51 @@ namespace flash.display3D {
 				numRegisters = (int)(data.length / 4);
 			}
 
-			if (programType == "vertex") {
-				// set uniform registers
-				for (int i=0; i < numRegisters; i++)
-				{
-					// set each register individually because they can be at non-contiguous locations
-					int location = mProgram.getVertexLocation(firstRegister + i);
-					if (location >= 0)
-					{
-						mTemp[0] = (float)data[i * 4 + 0];
-						mTemp[1] = (float)data[i * 4 + 1];
-						mTemp[2] = (float)data[i * 4 + 2];
-						mTemp[3] = (float)data[i * 4 + 3];
-						GL.Uniform4(location, 1, mTemp);
-					}
-				}
-			} else {
+			bool isVertex = (programType == "vertex");
 
-				// set uniform registers
-				for (int i=0; i < numRegisters; i++)
+			// set all registers
+			int register = firstRegister;
+			int dataIndex = 0;
+			while (numRegisters > 0)
+			{
+				// get uniform mapped to register
+				Program3D.Uniform uniform = mProgram.getUniform(isVertex, register);
+				if (uniform == null)
 				{
-					// set each register individually because they can be at non-contiguous locations
-					int location = mProgram.getFragmentLocation(firstRegister + i);
-					if (location >= 0)
-					{
-						mTemp[0] = (float)data[i * 4 + 0];
-						mTemp[1] = (float)data[i * 4 + 1];
-						mTemp[2] = (float)data[i * 4 + 2];
-						mTemp[3] = (float)data[i * 4 + 3];
-						GL.Uniform4(location, 1, mTemp);
-					}
+					// abort
+					Console.WriteLine ("warning: vertex program register not found: {0}", register);
+					return;
+				}
+				// convert source data into floating point
+				for (int i=0; i < uniform.RegCount; i++)
+				{
+					mTemp[i * 4 + 0] = (float)data[dataIndex++];
+					mTemp[i * 4 + 1] = (float)data[dataIndex++];
+					mTemp[i * 4 + 2] = (float)data[dataIndex++];
+					mTemp[i * 4 + 3] = (float)data[dataIndex++];
+					// next register
+					register++;
+					numRegisters--;
+				}
+
+				// set uniforms based on type
+				switch (uniform.Type)
+				{
+				case ActiveUniformType.FloatMat2:
+					GL.UniformMatrix2(uniform.Location, 1, false, mTemp);
+					break;
+				case ActiveUniformType.FloatMat3:
+					GL.UniformMatrix3(uniform.Location, 1, false, mTemp);
+					break;
+				case ActiveUniformType.FloatMat4:
+					GL.UniformMatrix4(uniform.Location, 1, false, mTemp);
+					break;
+				default:
+					GL.Uniform4(uniform.Location, uniform.RegCount, mTemp);
+					break;
 				}
 			}
+			
 		}
  	 	
 
