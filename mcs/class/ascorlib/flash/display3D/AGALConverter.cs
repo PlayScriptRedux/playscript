@@ -74,9 +74,9 @@ namespace flash.display3D
 			public int s;
 			public int o;
 			public int n;
-			public int destMask;
+			public int sourceMask;
 
-			public static SourceReg Parse (ulong v, ProgramType programType, int destMask)
+			public static SourceReg Parse (ulong v, ProgramType programType, int sourceMask)
 			{
 				var sr = new SourceReg();
 				sr.programType = programType;
@@ -87,7 +87,7 @@ namespace flash.display3D
 				sr.s = (int)((v >> 24) & 0xFF); // swizzle
 				sr.o = (int)((v >> 16) & 0xFF);  // indirect offset
 				sr.n = (int)(v & 0xFFFF);		// number
-				sr.destMask = destMask;
+				sr.sourceMask = sourceMask;
 				return sr;
 			}
 
@@ -105,8 +105,8 @@ namespace flash.display3D
 				if (type != RegType.Sampler && s != 228) {
 					for (var i=0; i < 4; i++) {
 
-						// only output swizzles for each dest mask
-						if ((destMask & (1<<i))!=0)
+						// only output swizzles for each source mask
+						if ((sourceMask & (1<<i))!=0)
 						{
 							switch ((s >> (i * 2)) & 3) {
 							case 0:
@@ -177,7 +177,8 @@ namespace flash.display3D
 		{
 			Vector4,
 			Matrix44,
-			Sampler2D
+			Sampler2D,
+			SamplerCube
 		};
 
 		class RegisterMap
@@ -299,6 +300,9 @@ namespace flash.display3D
 					case RegisterUsage.Sampler2D:
 						sb.Append("sampler2D ");
 						break;
+					case RegisterUsage.SamplerCube:
+						sb.Append("samplerCube ");
+						break;
 					}
 
 					sb.Append(entry.name);
@@ -372,11 +376,6 @@ namespace flash.display3D
 				var sr1 = SourceReg.Parse(source1,programType, dr.mask);
 				var sr2 = SourceReg.Parse(source2,programType, dr.mask);
 
-
-				//var dname = dr.ToGLSL();
-				//var sr1name = dr.ToGLSL();
-				
-				
 				// switch on opcode and emit GLSL 
 				sb.Append("\t");
 				switch (opcode)
@@ -435,6 +434,7 @@ namespace flash.display3D
 					break;
 
 				case 0x12: // dp3
+					sr1.sourceMask = sr2.sourceMask = 7; // adjust dest mask for xyz input to dot product
 					sb.AppendFormat("{0} = dot(vec3({1}), vec3({2})); // dp3", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL() ); 
 					map.Add(dr, RegisterUsage.Vector4);
 					map.Add(sr1, RegisterUsage.Vector4);
@@ -442,6 +442,7 @@ namespace flash.display3D
 					break;
 				
 				case 0x13: // dp4
+					sr1.sourceMask = sr2.sourceMask = 0xF; // adjust dest mask for xyzw input to dot product
 					sb.AppendFormat("{0} = dot(vec4({1}), vec4({2})); // dp4", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL() ); 
 					map.Add(dr, RegisterUsage.Vector4);
 					map.Add(sr1, RegisterUsage.Vector4);
@@ -461,17 +462,29 @@ namespace flash.display3D
 					break;
 
 				case 0x27: // kill /  discard
-					sb.AppendFormat("if ({0} > 0.0) discard;", sr1.ToGLSL() ); 
+					sb.AppendFormat("// if ({0} > 0.0) discard;", sr1.ToGLSL() ); 
 					map.Add(sr1, RegisterUsage.Vector4);
 					break;
 
 				case 0x28: // tex
 					SamplerReg sampler = SamplerReg.Parse(source2, programType);
-					sb.AppendFormat("{0} = texture2D({2}, {1}.st); // tex", dr.ToGLSL(), sr1.ToGLSL(), sampler.ToGLSL() ); 
+
+					switch (sampler.d)
+					{
+					case 0: // 2d texture
+						sr1.sourceMask = 0x3;
+						sb.AppendFormat("{0} = texture2D({2}, {1}.st); // tex", dr.ToGLSL(), sr1.ToGLSL(), sampler.ToGLSL() ); 
+						map.Add(sampler, RegisterUsage.Sampler2D);
+						break;
+					case 1: // cube texture
+						sr1.sourceMask = 0x7;
+						sb.AppendFormat("{0} = textureCube({2}, {1}.xyz); // tex", dr.ToGLSL(), sr1.ToGLSL(), sampler.ToGLSL() ); 
+						map.Add(sampler, RegisterUsage.SamplerCube);
+						break;
+					}
 					//sb.AppendFormat("{0} = vec4(0,1,0,1);", dr.ToGLSL() ); 
 					map.Add(dr, RegisterUsage.Vector4);
 					map.Add(sr1, RegisterUsage.Vector4);
-					map.Add(sampler, RegisterUsage.Sampler2D);
 					break;
 				default:
 					//sb.AppendFormat ("unsupported opcode" + opcode);

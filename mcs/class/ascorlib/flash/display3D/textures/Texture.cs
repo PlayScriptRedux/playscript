@@ -22,6 +22,7 @@ namespace flash.display3D.textures {
 
 		public Texture(Context3D context, int width, int height, string format, 
 		                        bool optimizeForRenderToTexture, int streamingLevels)
+			: base(TextureTarget.Texture2D)
 		{
 			mContext = context;
 			mWidth = width;
@@ -29,10 +30,6 @@ namespace flash.display3D.textures {
 			mFormat = format;
 			mOptimizeForRenderToTexture = optimizeForRenderToTexture;
 			mStreamingLevels = streamingLevels;
-
-			// create texture and pixel buffer
-			GL.GenTextures (1, out mTextureId);
-			// GL.GenBuffers (1, out mBufferId);
 
 			// we do this to clear the texture on creation
 			// $$TODO we dont need to allocate a bitmapdata to do this, we should just use a PBO and clear it
@@ -68,7 +65,7 @@ namespace flash.display3D.textures {
 			}
 
 			// Bind the texture
-			GL.BindTexture (TextureTarget.Texture2D, mTextureId);
+			GL.BindTexture (TextureTarget.Texture2D, textureId);
 			
 			// Bind the PBO
 			//GL.BindBuffer (BufferTarget.PixelUnpackBuffer, mBufferId);

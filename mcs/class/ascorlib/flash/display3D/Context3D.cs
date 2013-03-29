@@ -413,7 +413,7 @@ namespace flash.display3D {
 		{
 			if (texture != null) {
 				GL.ActiveTexture(TextureUnit.Texture0 + sampler);
-				GL.BindTexture (TextureTarget.Texture2D, texture.textureId);
+				GL.BindTexture (texture.textureTarget, texture.textureId);
 			} else {
 				GL.ActiveTexture(TextureUnit.Texture0 + sampler);
 				GL.BindTexture (TextureTarget.Texture2D, 0);
