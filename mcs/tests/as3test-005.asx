@@ -1,0 +1,64 @@
+package
+{
+	// Class declaration tests.
+
+	// Test interface delarations
+
+	public interface Inter1 {
+
+		function a():void;
+
+		property b:int;
+
+		property c:int { get; }
+
+		property d:int { get; }
+
+		indexer this[int i];
+
+	}
+
+	public interface Inter2 extends Inter1 {
+
+
+	}
+
+	public class Class1 {
+
+
+		public override hasOwnProperty(string name):Boolean {
+			return false;
+		}
+
+		public override toString():String {
+			return "";
+		}
+
+
+
+
+	}
+
+
+	public class Test 
+	{
+		public static function Main():void {
+			var f:Foo = new Foo();
+
+			// Normal property accessors should work
+			f.x = 50.0;
+			f.y = 100.0;
+
+			trace(f.x);
+			trace(f.y);
+
+			// Accessing properties using indexer syntax should invoke properties via dynamic
+			f["x"] = 20.0;
+			f["y"] = 30.0;
+
+			trace(f["x"]);
+			trace(f["y"]);
+		}
+	}
+
+}

@@ -26,7 +26,7 @@ package
 			trace(k);
 
 			// This should generate a warning
-//			var i:int = 300;
+			var i:int = 300;
 		}
 	}
 
