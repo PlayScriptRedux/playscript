@@ -1097,14 +1097,36 @@ class_member_declaration
 	| member_config_block
 	| config_member_declaration	
 	| attributes_without_members
-	| import_directive
-	| use_namespace_directive
+	| use_namespace_class_directive
+	| import_class_directive
 	| error
 	  {
 		report.Error (1519, lexer.Location, "Unexpected symbol `{0}' in class, struct, or interface member declaration",
 			GetSymbolName (yyToken));
 		$$ = null;
 		lexer.parsing_generic_declaration = false;
+	  }
+	;
+	
+use_namespace_class_directive
+	: opt_attributes
+	  opt_modifiers
+	  use_namespace_directive
+	  {
+	  	if ($1 != null || (Modifiers) $2 != 0) {
+			report.Error (7058, GetLocation($1 ?? $2), "Modifiers and attributes not allowed");
+	  	}
+	  }
+	;
+
+import_class_directive
+	: opt_attributes
+	  opt_modifiers
+	  import_directive
+	  {
+	  	if ($1 != null || (Modifiers) $2 != 0) {
+			report.Error (7058, GetLocation($1 ?? $2), "Modifiers and attributes not allowed");
+	  	}
 	  }
 	;
 
@@ -3907,16 +3929,20 @@ member_initializer
 	  }	  
 	| LITERAL COLON initializer_value
 	  {
-	  	StringLiteral lit = $1 as StringLiteral;
+	  	ILiteralConstant lit = $1 as ILiteralConstant;
 		string nm;	  	
-	  	if (lit == null) {
-		  	report.Error (7019, GetLocation ($1), "Must be identifier or string literal");
-		  	nm = "err";
+	  	if (lit is StringLiteral) {
+			nm = ((StringLiteral)lit).Value;
 		} else {
-			nm = lit.Value;
+	  		if (parsing_playscript || !(lit is IntLiteral || lit is DoubleLiteral || lit is BoolLiteral)) {
+			  	report.Error (7019, GetLocation ($1), "Must be identifier or string literal");
+			  	nm = "err";
+			 } else {
+				nm = ((Constant)$1).GetValueAsLiteral();			 
+			 }
 		}
 	  
-	  	$$ = new ElementInitializer (nm, (Expression)$3, lit.Location);
+	  	$$ = new ElementInitializer (nm, (Expression)$3, GetLocation($1));
 	  	lbag.AddLocation ($$, GetLocation ($2));
 	  } 
 	| GENERATE_COMPLETION 
@@ -8352,11 +8378,11 @@ string GetSymbolName (int token)
 {
 	switch (token){
 	case Token.LITERAL:
-		return ((Constant)lexer.Value).GetValue ().ToString ();
+		return "Literal " + ((Constant)lexer.Value).GetValue ().ToString ();
 	case Token.IDENTIFIER:
 	case Token.IDENTIFIER_MODIFIER:
 	case Token.IDENTIFIER_CONFIG:
-		return ((Tokenizer.LocatedToken)lexer.Value).Value ?? "";
+		return "Identifier " + ((Tokenizer.LocatedToken)lexer.Value).Value ?? "";
 	case Token.BOOL:
 		return "bool";
 	case Token.BOOLEAN:
@@ -8565,6 +8591,8 @@ static string GetTokenName (int token)
 		return "implements";
 	case Token.IMPLICIT:
 		return "implicit";
+	case Token.IMPORT:
+		return "import";
 	case Token.IN:
 		return "in";
 	case Token.INDEXER:

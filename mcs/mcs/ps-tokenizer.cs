@@ -3638,7 +3638,7 @@ namespace Mono.PlayScript
 						PushPosition();
 						next = token ();
 						if (next != Token.CLOSE_BRACE) {
-							if (next != Token.IDENTIFIER && !(next == Token.LITERAL && (val is StringLiteral))) {
+							if (next != Token.IDENTIFIER && next != Token.LITERAL) {
 								isInit = false;
 							} else {
 								next = token ();
