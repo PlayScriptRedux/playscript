@@ -46,6 +46,7 @@ package
 				trace(i);
 				if (i > 50)
 					continue;
+				var b:Boolean = false;
 			}
 			i = 0;
 			for (;;) {
@@ -90,27 +91,30 @@ package
 			// Test switch
 
 			switch (i) {
+				// Should generate empty switch block warning
+			}
+
+			switch (i) {
+			case 0:			// AS allows fall throughs.
+				trace(0);
 			case 1:
 				trace(1);
-				break;
 			default:
 				trace(2);
-				break;
+			}
+
+			switch (i) { // Should generate empty switch block warning
+			case 1:
+			case 2:		// Note that AS allows empty case blocks.
 			}
 
 			switch (i) {
 			case 1:
 			case 2:
-				break;
+			default:  // Note that AS allows empty case blocks.
 			}
 
-			switch (i) {
-			case 1:
-			default:
-				break;
-			}
-
-			switch (i) {
+			switch (i) { // Should generate empty switch block warning
 			case 1:
 			case 2:
 				trace(1);
@@ -120,7 +124,6 @@ package
 				trace (3);
 				break;
 			default:
-				break;
 			}
 
 		}

@@ -3754,10 +3754,24 @@ member_access
 	  {
 		var lt = (Tokenizer.LocatedToken) $3;
 		var ma = new MemberAccess ((Expression) $1, lt.Value, null, lt.Location);
-		ma.AccessorType = MemberAccess.Accessor.AsNamespace;
+		ma.AccessorType = MemberAccess.Accessor.AsE4xNamespace;
 		lbag.AddLocation ($$, GetLocation ($2));
 		$$ = ma;
-	  } 
+	  }
+	| primary_expression DOUBLE_COLON OPEN_BRACKET_EXPR expression_list_arguments CLOSE_BRACKET
+	  {
+		var ea = new ElementAccess ((Expression) $1, (Arguments) $4, GetLocation ($3));
+		ea.AccessorType = ElementAccess.Accessor.AsE4xNamespaceAccess;
+		lbag.AddLocation (GetLocation ($3), GetLocation ($5));
+		$$ = ea;
+	  }	  
+	| primary_expression DOT_AT OPEN_BRACKET_EXPR expression_list_arguments CLOSE_BRACKET
+	  {
+		var ea = new ElementAccess ((Expression) $1, (Arguments) $4, GetLocation ($3));
+		ea.AccessorType = ElementAccess.Accessor.AsE4xAttributeAccess;
+		lbag.AddLocation (GetLocation ($3), GetLocation ($5));
+		$$ = ea;
+	  }	  
 	| primary_expression DOT OPEN_PARENS expression CLOSE_PARENS
 	  {
 		var lt = (Tokenizer.LocatedToken) $3;
