@@ -55,10 +55,20 @@ namespace flash.display3D {
 			if (mask != 0xffffffff)
 				throw new NotImplementedException();
 
+			// save old depth mask
+			bool oldDepthWriteMask;
+			GL.GetBoolean(GetPName.DepthWritemask, out oldDepthWriteMask);
+
+			// depth writes must be enabled to clear the depth buffer!
+			GL.DepthMask(true);
+
 			GL.ClearColor ((float)red, (float)green, (float)blue, (float)alpha);
 			GL.ClearDepth((float)depth);
 			GL.ClearStencil((int)stencil);
 			GL.Clear (ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
+
+			// restore depth mask
+			GL.DepthMask(oldDepthWriteMask);
 		}
 		
 		public void configureBackBuffer(int width, int height, int antiAlias, 
