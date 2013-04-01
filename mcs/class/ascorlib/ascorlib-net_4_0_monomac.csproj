@@ -42,9 +42,6 @@
     <Reference Include="MonoMac, Version=0.0.0.0, Culture=neutral">
       <Private>False</Private>
     </Reference>
-    <Reference Include="test2">
-      <HintPath>..\..\mcs\test2.exe</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ActionScript\Undefined.cs" />
@@ -265,10 +262,6 @@
     <None Include="Makefile" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ActionScript.Dynamic\ActionScript.Dynamic-net_4_0.csproj">
-      <Project>{5F7F9AF6-CE83-4F13-A25F-355DB2861D43}</Project>
-      <Name>ActionScript.Dynamic-net_4_0</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Mono.CSharp\Mono.CSharp-net_4_0.csproj">
       <Project>{4FADEA1C-3DCC-4658-A411-EDEF0CF30884}</Project>
       <Name>Mono.CSharp-net_4_0</Name>

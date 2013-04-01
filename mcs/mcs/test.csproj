@@ -33,18 +33,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <ProjectReference Include="..\class\ascorlib\ascorlib-net_4_0_monomac.csproj">
-      <Project>{EDBACFCB-2817-4A2E-8DDF-B24AEFA56352}</Project>
-      <Name>ascorlib-net_4_0_monomac</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\class\ActionScript.Dynamic\ActionScript.Dynamic-net_4_0.csproj">
-      <Project>{5F7F9AF6-CE83-4F13-A25F-355DB2861D43}</Project>
-      <Name>ActionScript.Dynamic-net_4_0</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="..\tests\as3test-002.as">
-      <Link>as3test-002.as</Link>
+    <Compile Include="..\tests\pstest-000.play">
+      <Link>pstest-000.play</Link>
     </Compile>
   </ItemGroup>
 </Project>

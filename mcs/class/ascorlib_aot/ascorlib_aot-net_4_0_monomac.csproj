@@ -15,7 +15,7 @@
     <DebugType>full</DebugType>
     <Optimize>False</Optimize>
     <OutputPath>bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;</DefineConstants>
+    <DefineConstants>DEBUG;PLATFORM_MONOMAC</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
@@ -27,149 +27,53 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
+    <DefineConstants>PLATFORM_MONOMAC</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Dynamic" />
-    <Reference Include="Microsoft.CSharp" />
     <Reference Include="Mono.CSharp" />
     <Reference Include="System.Core" />
     <Reference Include="mscorlib">
       <HintPath>..\..\..\..\mono-as3-inst\lib\mono\4.0\mscorlib.dll</HintPath>
     </Reference>
     <Reference Include="MonoMac" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="zlib.net">
+      <HintPath>..\zlib.NET_104\bin\zlib.net.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
+    <Compile Include="..\ascorlib\ActionScript\Undefined.cs">
+      <Link>ActionScript\Undefined.cs</Link>
+    </Compile>
     <Compile Include="..\ascorlib\Array.cs">
       <Link>Array.cs</Link>
     </Compile>
     <Compile Include="..\ascorlib\AssemblyInfo.cs">
       <Link>AssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="..\ascorlib\Boolean.cs">
+      <Link>Boolean.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\EmbedAttribute.cs">
+      <Link>EmbedAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\EventAttribute.cs">
+      <Link>EventAttribute.cs</Link>
+    </Compile>
     <Compile Include="..\ascorlib\Extensions.cs">
       <Link>Extensions.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\FunctionExtensions.cs">
+      <Link>FunctionExtensions.cs</Link>
     </Compile>
     <Compile Include="..\ascorlib\functions.cs">
       <Link>functions.cs</Link>
     </Compile>
-    <Compile Include="..\ascorlib\ActionScript\Undefined.cs">
-      <Link>ActionScript\Undefined.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\Expando\BindingRestrictionsEx.cs">
-      <Link>ActionScript\Expando\BindingRestrictionsEx.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\Expando\CacheDict.cs">
-      <Link>ActionScript\Expando\CacheDict.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\Expando\ContractUtils.cs">
-      <Link>ActionScript\Expando\ContractUtils.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\Expando\ExceptionFactory.Generated.cs">
-      <Link>ActionScript\Expando\ExceptionFactory.Generated.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\Expando\ExpandoClass.cs">
-      <Link>ActionScript\Expando\ExpandoClass.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\Expando\ExpandoObject.cs">
-      <Link>ActionScript\Expando\ExpandoObject.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\Expando\TypeExtensions.cs">
-      <Link>ActionScript\Expando\TypeExtensions.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\Expando\TypeUtils.cs">
-      <Link>ActionScript\Expando\TypeUtils.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\Binder.cs">
-      <Link>ActionScript\RuntimeBinder\Binder.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpArgumentInfo.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpArgumentInfo.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpArgumentInfoFlags.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpArgumentInfoFlags.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpBinaryOperationBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpBinaryOperationBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpBinderFlags.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpBinderFlags.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpConvertBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpConvertBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpGetIndexBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpGetIndexBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpGetMemberBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpGetMemberBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpInvokeBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpInvokeBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpInvokeConstructorBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpInvokeConstructorBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpInvokeMemberBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpInvokeMemberBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpIsEventBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpIsEventBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpSetIndexBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpSetIndexBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpSetMemberBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpSetMemberBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\CSharpUnaryOperationBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpUnaryOperationBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\DynamicContext.cs">
-      <Link>ActionScript\RuntimeBinder\DynamicContext.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\ErrorPrinter.cs">
-      <Link>ActionScript\RuntimeBinder\ErrorPrinter.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\Extensions.cs">
-      <Link>ActionScript\RuntimeBinder\Extensions.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\RuntimeBinderContext.cs">
-      <Link>ActionScript\RuntimeBinder\RuntimeBinderContext.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\RuntimeBinderException.cs">
-      <Link>ActionScript\RuntimeBinder\RuntimeBinderException.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\RuntimeBinder\RuntimeBinderInternalCompilerException.cs">
-      <Link>ActionScript\RuntimeBinder\RuntimeBinderInternalCompilerException.cs</Link>
-    </Compile>
-    <Compile Include="ActionScript\CallSite.cs" />
-    <Compile Include="ActionScript\CallSiteBinder.cs" />
-    <Compile Include="ActionScript\ExpressionType.cs" />
-    <Compile Include="..\ascorlib\ActionScript\Expando\CollectionDebuggerView.cs">
-      <Link>ActionScript\Expando\CollectionDebuggerView.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\ActionScript\Expando\Hashtable.cs">
-      <Link>ActionScript\Expando\Hashtable.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\Error.asx">
-      <Link>Error.asx</Link>
-    </Compile>
-    <Compile Include="System\Runtime\CompilerServices\DynamicAttribute.cs" />
-    <Compile Include="..\ascorlib\flash\events\Event.cs">
-      <Link>flash\events\Event.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\flash\events\EventDispatcher.cs">
-      <Link>flash\events\EventDispatcher.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\flash\events\IEventDispatcher.cs">
-      <Link>flash\events\IEventDispatcher.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\EmbedAttribute.cs">
-      <Link>EmbedAttribute.cs</Link>
+    <Compile Include="..\ascorlib\int.cs">
+      <Link>int.cs</Link>
     </Compile>
     <Compile Include="..\ascorlib\Number.cs">
       <Link>Number.cs</Link>
@@ -177,50 +81,23 @@
     <Compile Include="..\ascorlib\String.cs">
       <Link>String.cs</Link>
     </Compile>
-    <Compile Include="..\ascorlib\VerifyError.asx">
-      <Link>VerifyError.asx</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\URIError.asx">
-      <Link>URIError.asx</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\TypeError.asx">
-      <Link>TypeError.asx</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\SyntaxError.asx">
-      <Link>SyntaxError.asx</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\int.cs">
-      <Link>int.cs</Link>
-    </Compile>
     <Compile Include="..\ascorlib\ArgumentError.asx">
       <Link>ArgumentError.asx</Link>
     </Compile>
-    <Compile Include="..\ascorlib\RangeError.asx">
-      <Link>RangeError.asx</Link>
+    <Compile Include="..\ascorlib\DefinitionError.asx">
+      <Link>DefinitionError.asx</Link>
     </Compile>
-    <Compile Include="..\ascorlib\Boolean.cs">
-      <Link>Boolean.cs</Link>
+    <Compile Include="..\ascorlib\Dynamic.asx">
+      <Link>Dynamic.asx</Link>
     </Compile>
-    <Compile Include="..\ascorlib\flash\display3D\Context3D.cs">
-      <Link>flash\display3D\Context3D.cs</Link>
+    <Compile Include="..\ascorlib\Error.asx">
+      <Link>Error.asx</Link>
     </Compile>
-    <Compile Include="..\ascorlib\flash\display3D\IndexBuffer3D.cs">
-      <Link>flash\display3D\IndexBuffer3D.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\flash\display3D\VertexBuffer3D.cs">
-      <Link>flash\display3D\VertexBuffer3D.cs</Link>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="ActionScript\" />
-    <Folder Include="System\" />
-    <Folder Include="flash\" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ascorlib_aot.dll.sources" />
-    <None Include="Makefile" />
     <Compile Include="..\ascorlib\functions.asx">
       <Link>functions.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\IDynamicClass.asx">
+      <Link>IDynamicClass.asx</Link>
     </Compile>
     <Compile Include="..\ascorlib\JSON.asx">
       <Link>JSON.asx</Link>
@@ -231,11 +108,32 @@
     <Compile Include="..\ascorlib\Namespace.asx">
       <Link>Namespace.asx</Link>
     </Compile>
+    <Compile Include="..\ascorlib\QName.asx">
+      <Link>QName.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\RangeError.asx">
+      <Link>RangeError.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\ReferenceError.asx">
+      <Link>ReferenceError.asx</Link>
+    </Compile>
     <Compile Include="..\ascorlib\RegExp.asx">
       <Link>RegExp.asx</Link>
     </Compile>
-    <Compile Include="..\ascorlib\Vector.asx">
-      <Link>Vector.asx</Link>
+    <Compile Include="..\ascorlib\SecurityError.asx">
+      <Link>SecurityError.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\SyntaxError.asx">
+      <Link>SyntaxError.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\TypeError.asx">
+      <Link>TypeError.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\URIError.asx">
+      <Link>URIError.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\VerifyError.asx">
+      <Link>VerifyError.asx</Link>
     </Compile>
     <Compile Include="..\ascorlib\XML.asx">
       <Link>XML.asx</Link>
@@ -261,11 +159,17 @@
     <Compile Include="..\ascorlib\flash\display\BitmapData.asx">
       <Link>flash\display\BitmapData.asx</Link>
     </Compile>
+    <Compile Include="..\ascorlib\flash\display\BlendMode.asx">
+      <Link>flash\display\BlendMode.asx</Link>
+    </Compile>
     <Compile Include="..\ascorlib\flash\display\DisplayObject.asx">
       <Link>flash\display\DisplayObject.asx</Link>
     </Compile>
     <Compile Include="..\ascorlib\flash\display\DisplayObjectContainer.asx">
       <Link>flash\display\DisplayObjectContainer.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\GradientType.asx">
+      <Link>flash\display\GradientType.asx</Link>
     </Compile>
     <Compile Include="..\ascorlib\flash\display\Graphics.asx">
       <Link>flash\display\Graphics.asx</Link>
@@ -278,6 +182,9 @@
     </Compile>
     <Compile Include="..\ascorlib\flash\display\InteractiveObject.asx">
       <Link>flash\display\InteractiveObject.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\InterpolationMethod.asx">
+      <Link>flash\display\InterpolationMethod.asx</Link>
     </Compile>
     <Compile Include="..\ascorlib\flash\display\Loader.asx">
       <Link>flash\display\Loader.asx</Link>
@@ -312,6 +219,15 @@
     <Compile Include="..\ascorlib\flash\display\ShaderData.asx">
       <Link>flash\display\ShaderData.asx</Link>
     </Compile>
+    <Compile Include="..\ascorlib\flash\display\ShaderJob.asx">
+      <Link>flash\display\ShaderJob.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\Shape.asx">
+      <Link>flash\display\Shape.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\SpreadMethod.asx">
+      <Link>flash\display\SpreadMethod.asx</Link>
+    </Compile>
     <Compile Include="..\ascorlib\flash\display\Sprite.asx">
       <Link>flash\display\Sprite.asx</Link>
     </Compile>
@@ -320,6 +236,18 @@
     </Compile>
     <Compile Include="..\ascorlib\flash\display\Stage3D.asx">
       <Link>flash\display\Stage3D.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\StageAlign.asx">
+      <Link>flash\display\StageAlign.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\StageScaleMode.asx">
+      <Link>flash\display\StageScaleMode.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\AGALConverter.cs">
+      <Link>flash\display3D\AGALConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\Context3D.cs">
+      <Link>flash\display3D\Context3D.cs</Link>
     </Compile>
     <Compile Include="..\ascorlib\flash\display3D\Context3DBlendFactor.asx">
       <Link>flash\display3D\Context3DBlendFactor.asx</Link>
@@ -351,8 +279,14 @@
     <Compile Include="..\ascorlib\flash\display3D\Context3DVertexBufferFormat.asx">
       <Link>flash\display3D\Context3DVertexBufferFormat.asx</Link>
     </Compile>
-    <Compile Include="..\ascorlib\flash\display3D\Program3D.asx">
-      <Link>flash\display3D\Program3D.asx</Link>
+    <Compile Include="..\ascorlib\flash\display3D\IndexBuffer3D.cs">
+      <Link>flash\display3D\IndexBuffer3D.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\Program3D.cs">
+      <Link>flash\display3D\Program3D.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\VertexBuffer3D.cs">
+      <Link>flash\display3D\VertexBuffer3D.cs</Link>
     </Compile>
     <Compile Include="..\ascorlib\flash\display3D\textures\CubeTexture.asx">
       <Link>flash\display3D\textures\CubeTexture.asx</Link>
@@ -360,8 +294,8 @@
     <Compile Include="..\ascorlib\flash\display3D\textures\RectangleTexture.asx">
       <Link>flash\display3D\textures\RectangleTexture.asx</Link>
     </Compile>
-    <Compile Include="..\ascorlib\flash\display3D\textures\Texture.asx">
-      <Link>flash\display3D\textures\Texture.asx</Link>
+    <Compile Include="..\ascorlib\flash\display3D\textures\Texture.cs">
+      <Link>flash\display3D\textures\Texture.cs</Link>
     </Compile>
     <Compile Include="..\ascorlib\flash\display3D\textures\TextureBase.asx">
       <Link>flash\display3D\textures\TextureBase.asx</Link>
@@ -387,11 +321,32 @@
     <Compile Include="..\ascorlib\flash\events\ErrorEvent.asx">
       <Link>flash\events\ErrorEvent.asx</Link>
     </Compile>
+    <Compile Include="..\ascorlib\flash\events\Event.cs">
+      <Link>flash\events\Event.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\EventDispatcher.cs">
+      <Link>flash\events\EventDispatcher.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\EventPhase.asx">
+      <Link>flash\events\EventPhase.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\IEventDispatcher.cs">
+      <Link>flash\events\IEventDispatcher.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\IOErrorEvent.asx">
+      <Link>flash\events\IOErrorEvent.asx</Link>
+    </Compile>
     <Compile Include="..\ascorlib\flash\events\KeyboardEvent.asx">
       <Link>flash\events\KeyboardEvent.asx</Link>
     </Compile>
     <Compile Include="..\ascorlib\flash\events\MouseEvent.asx">
       <Link>flash\events\MouseEvent.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\ProgressEvent.asx">
+      <Link>flash\events\ProgressEvent.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\ShaderEvent.asx">
+      <Link>flash\events\ShaderEvent.asx</Link>
     </Compile>
     <Compile Include="..\ascorlib\flash\events\TouchEvent.asx">
       <Link>flash\events\TouchEvent.asx</Link>
@@ -401,6 +356,9 @@
     </Compile>
     <Compile Include="..\ascorlib\flash\filters\BitmapFilter.asx">
       <Link>flash\filters\BitmapFilter.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\filters\ShaderFilter.asx">
+      <Link>flash\filters\ShaderFilter.asx</Link>
     </Compile>
     <Compile Include="..\ascorlib\flash\geom\ColorTransform.asx">
       <Link>flash\geom\ColorTransform.asx</Link>
@@ -435,9 +393,6 @@
     <Compile Include="..\ascorlib\flash\media\ID3Info.asx">
       <Link>flash\media\ID3Info.asx</Link>
     </Compile>
-    <Compile Include="..\ascorlib\flash\media\SouncChannel.asx">
-      <Link>flash\media\SouncChannel.asx</Link>
-    </Compile>
     <Compile Include="..\ascorlib\flash\media\Sound.asx">
       <Link>flash\media\Sound.asx</Link>
     </Compile>
@@ -450,8 +405,38 @@
     <Compile Include="..\ascorlib\flash\media\StageVideo.asx">
       <Link>flash\media\StageVideo.asx</Link>
     </Compile>
+    <Compile Include="..\ascorlib\flash\net\FileReference.asx">
+      <Link>flash\net\FileReference.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\net\URLLoader.asx">
+      <Link>flash\net\URLLoader.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\net\URLLoaderDataFormat.asx">
+      <Link>flash\net\URLLoaderDataFormat.asx</Link>
+    </Compile>
     <Compile Include="..\ascorlib\flash\net\URLRequest.asx">
       <Link>flash\net\URLRequest.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\net\URLRequestDefaults.asx">
+      <Link>flash\net\URLRequestDefaults.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\net\URLStream.asx">
+      <Link>flash\net\URLStream.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\net\URLVariables.asx">
+      <Link>flash\net\URLVariables.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\sampler\DeleteObjectSample.asx">
+      <Link>flash\sampler\DeleteObjectSample.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\sampler\NewObjectSample.asx">
+      <Link>flash\sampler\NewObjectSample.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\sampler\Sample.asx">
+      <Link>flash\sampler\Sample.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\sampler\functions.asx">
+      <Link>flash\sampler\functions.asx</Link>
     </Compile>
     <Compile Include="..\ascorlib\flash\system\ApplicationDomain.asx">
       <Link>flash\system\ApplicationDomain.asx</Link>
@@ -464,6 +449,9 @@
     </Compile>
     <Compile Include="..\ascorlib\flash\system\IMEConversionMode.asx">
       <Link>flash\system\IMEConversionMode.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\system\ImageDecodingPolicy.asx">
+      <Link>flash\system\ImageDecodingPolicy.asx</Link>
     </Compile>
     <Compile Include="..\ascorlib\flash\system\JPEGLoaderContext.asx">
       <Link>flash\system\JPEGLoaderContext.asx</Link>
@@ -561,8 +549,11 @@
     <Compile Include="..\ascorlib\flash\utils\ByteArray.asx">
       <Link>flash\utils\ByteArray.asx</Link>
     </Compile>
-    <Compile Include="..\ascorlib\flash\utils\Dictionary.asx">
-      <Link>flash\utils\Dictionary.asx</Link>
+    <Compile Include="..\ascorlib\flash\utils\CompressionAlgorithm.asx">
+      <Link>flash\utils\CompressionAlgorithm.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\utils\Dictionary.cs">
+      <Link>flash\utils\Dictionary.cs</Link>
     </Compile>
     <Compile Include="..\ascorlib\flash\utils\Endian.asx">
       <Link>flash\utils\Endian.asx</Link>
@@ -579,20 +570,89 @@
     <Compile Include="..\ascorlib\flash\utils\utils_functions.asx">
       <Link>flash\utils\utils_functions.asx</Link>
     </Compile>
-    <None Include="..\ascorlib\DefinitionError.asx">
-      <Link>DefinitionError.asx</Link>
-    </None>
-    <None Include="..\ascorlib\ReferenceError.asx">
-      <Link>ReferenceError.asx</Link>
-    </None>
-    <None Include="..\ascorlib\SecurityError.asx">
-      <Link>SecurityError.asx</Link>
-    </None>
-    <None Include="..\ascorlib\Dynamic.asx">
-      <Link>Dynamic.asx</Link>
-    </None>
-    <None Include="..\ascorlib\IDynamicClass.asx">
-      <Link>IDynamicClass.asx</Link>
-    </None>
+    <Compile Include="..\ascorlib\flash\filesystem\File.asx">
+      <Link>flash\filesystem\File.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\desktop\NativeApplication.asx">
+      <Link>flash\desktop\NativeApplication.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\SWFAttribute.cs">
+      <Link>SWFAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\StageQuality.asx">
+      <Link>flash\display\StageQuality.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\Vector.cs">
+      <Link>Vector.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\ContextMenuEvent.as">
+      <Link>flash\events\ContextMenuEvent.as</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\SecurityErrorEvent.asx">
+      <Link>flash\events\SecurityErrorEvent.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\NetStatusEvent.asx">
+      <Link>flash\events\NetStatusEvent.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\AsyncErrorEvent.asx">
+      <Link>flash\events\AsyncErrorEvent.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\events\TimerEvent.asx">
+      <Link>flash\events\TimerEvent.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\CapsStyle.asx">
+      <Link>flash\display\CapsStyle.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\LineScaleMode.asx">
+      <Link>flash\display\LineScaleMode.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\BitmapDataChannel.asx">
+      <Link>flash\display\BitmapDataChannel.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display\TriangleCulling.asx">
+      <Link>flash\display\TriangleCulling.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\filters\ColorMatrixFilter.asx">
+      <Link>flash\filters\ColorMatrixFilter.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\net\navigateToURL.asx">
+      <Link>flash\net\navigateToURL.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\net\NetConnection.asx">
+      <Link>flash\net\NetConnection.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\net\NetStream.asx">
+      <Link>flash\net\NetStream.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\ui\ContextMenu.asx">
+      <Link>flash\ui\ContextMenu.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\ui\ContextMenuItem.asx">
+      <Link>flash\ui\ContextMenuItem.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\media\Camera.asx">
+      <Link>flash\media\Camera.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\media\Video.asx">
+      <Link>flash\media\Video.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\media\SoundChannel.asx">
+      <Link>flash\media\SoundChannel.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\DeprecatedAttribute.cs">
+      <Link>DeprecatedAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\filters\BlurFilter.asx">
+      <Link>flash\filters\BlurFilter.asx</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\Object.cs">
+      <Link>Object.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ActionScript.Dynamic_aot\ActionScript.Dynamic_aot-net_4_0\ActionScript.Dynamic_aot-net_4_0.csproj">
+      <Project>{0BACBE20-34DD-4E24-8B91-87970E8A23B9}</Project>
+      <Name>ActionScript.Dynamic_aot-net_4_0</Name>
+    </ProjectReference>
   </ItemGroup>
 </Project>

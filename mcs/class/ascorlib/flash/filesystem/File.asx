@@ -7,7 +7,7 @@ package flash.filesystem {
 	import MonoMac.CoreGraphics.*;
 	import MonoMac.Foundation.*;
 	import MonoMac.AppKit.*;
-#else
+#elif PLATFORM_MONOTOUCH
 	import MonoTouch.Foundation.*;
 #endif
 
@@ -24,7 +24,7 @@ package flash.filesystem {
 					//var appPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
 #if PLATFORM_MONOMAC
 					var appPath = NSBundle.MainBundle.ResourcePath + "/demo/assets";
-#else
+#elif PLATFORM_MONOTOUCH
 					var appPath = NSBundle.MainBundle.ResourcePath + "/demo/assets";
 #endif
 					// create new file 
