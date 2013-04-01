@@ -6430,7 +6430,11 @@ opt_switch_sections
       {
 		report.Warning (1522, 1, current_block.StartLocation, "Empty switch block"); 
 	  }
-	| switch_sections
+	| switch_labels
+      {
+		report.Warning (1522, 1, current_block.StartLocation, "Empty switch block"); 
+	  }
+	| switch_sections opt_switch_labels
 	;
 
 switch_sections
@@ -6444,6 +6448,11 @@ switch_sections
 
 switch_section
 	: switch_labels statement_list 
+	;
+
+opt_switch_labels
+	: /* empty */
+	| switch_labels
 	;
 
 switch_labels
