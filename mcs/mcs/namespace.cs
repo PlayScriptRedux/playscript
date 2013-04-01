@@ -885,7 +885,11 @@ namespace Mono.CSharp {
 
 		public void AddUsing (UsingNamespace un, bool forceAppend = false)
 		{
-			if (DeclarationFound && !forceAppend){
+			bool isPlayScript = this.CompilationSourceFile != null &&
+				this.CompilationSourceFile.SourceFile != null && 
+				this.CompilationSourceFile.SourceFile.FileType == Mono.CSharp.SourceFileType.PlayScript;
+
+			if (DeclarationFound && !forceAppend && !isPlayScript){
 				Compiler.Report.Error (1529, un.Location, "A using clause must precede all other namespace elements except extern alias declarations");
 			}
 

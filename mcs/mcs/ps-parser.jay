@@ -235,7 +235,8 @@ namespace Mono.PlayScript
 %token OBJECT	
 %token OPERATOR	
 %token OUT	
-%token OVERRIDE	
+%token OVERRIDE
+%token OVERLOAD
 %token PACKAGE
 %token PARAMS	
 %token PRIVATE
@@ -1096,12 +1097,36 @@ class_member_declaration
 	| member_config_block
 	| config_member_declaration	
 	| attributes_without_members
+	| use_namespace_class_directive
+	| import_class_directive
 	| error
 	  {
 		report.Error (1519, lexer.Location, "Unexpected symbol `{0}' in class, struct, or interface member declaration",
 			GetSymbolName (yyToken));
 		$$ = null;
 		lexer.parsing_generic_declaration = false;
+	  }
+	;
+	
+use_namespace_class_directive
+	: opt_attributes
+	  opt_modifiers
+	  use_namespace_directive
+	  {
+	  	if ($1 != null || (Modifiers) $2 != 0) {
+			report.Error (7058, GetLocation($1 ?? $2), "Modifiers and attributes not allowed");
+	  	}
+	  }
+	;
+
+import_class_directive
+	: opt_attributes
+	  opt_modifiers
+	  import_directive
+	  {
+	  	if ($1 != null || (Modifiers) $2 != 0) {
+			report.Error (7058, GetLocation($1 ?? $2), "Modifiers and attributes not allowed");
+	  	}
 	  }
 	;
 
@@ -3733,14 +3758,13 @@ member_access
 		lbag.AddLocation ($$, GetLocation ($2));
 		$$ = ma;
 	  } 
-//	| primary_expression DOTDOT_AT IDENTIFIER
-//	  {
-//		var lt = (Tokenizer.LocatedToken) $3;
-//		var ma = new MemberAccess ((Expression) $1, lt.Value, null, lt.Location);
-//		ma.AccessorType = MemberAccess.Accessor.AsE4xDescendantAttribute;
-//		lbag.AddLocation ($$, GetLocation ($2));
-//		$$ = ma;
-//	  }	  
+	| primary_expression DOT OPEN_PARENS expression CLOSE_PARENS
+	  {
+		var lt = (Tokenizer.LocatedToken) $3;
+		var ma = new AsXmlQueryExpression ((Expression) $1, (Expression) $4, lt.Location);
+		lbag.AddLocation ($$, GetLocation ($2));
+		$$ = ma;
+	  }   
 	| builtin_types DOT IDENTIFIER opt_type_argument_list
 	  {
 		var lt = (Tokenizer.LocatedToken) $3;
@@ -3905,16 +3929,20 @@ member_initializer
 	  }	  
 	| LITERAL COLON initializer_value
 	  {
-	  	StringLiteral lit = $1 as StringLiteral;
+	  	ILiteralConstant lit = $1 as ILiteralConstant;
 		string nm;	  	
-	  	if (lit == null) {
-		  	report.Error (7019, GetLocation ($1), "Must be identifier or string literal");
-		  	nm = "err";
+	  	if (lit is StringLiteral) {
+			nm = ((StringLiteral)lit).Value;
 		} else {
-			nm = lit.Value;
+	  		if (parsing_playscript || !(lit is IntLiteral || lit is DoubleLiteral || lit is BoolLiteral)) {
+			  	report.Error (7019, GetLocation ($1), "Must be identifier or string literal");
+			  	nm = "err";
+			 } else {
+				nm = ((Constant)$1).GetValueAsLiteral();			 
+			 }
 		}
 	  
-	  	$$ = new ElementInitializer (nm, (Expression)$3, lit.Location);
+	  	$$ = new ElementInitializer (nm, (Expression)$3, GetLocation($1));
 	  	lbag.AddLocation ($$, GetLocation ($2));
 	  } 
 	| GENERATE_COMPLETION 
@@ -6402,7 +6430,11 @@ opt_switch_sections
       {
 		report.Warning (1522, 1, current_block.StartLocation, "Empty switch block"); 
 	  }
-	| switch_sections
+	| switch_labels
+      {
+		report.Warning (1522, 1, current_block.StartLocation, "Empty switch block"); 
+	  }
+	| switch_sections opt_switch_labels
 	;
 
 switch_sections
@@ -6416,6 +6448,11 @@ switch_sections
 
 switch_section
 	: switch_labels statement_list 
+	;
+
+opt_switch_labels
+	: /* empty */
+	| switch_labels
 	;
 
 switch_labels
@@ -8350,11 +8387,11 @@ string GetSymbolName (int token)
 {
 	switch (token){
 	case Token.LITERAL:
-		return ((Constant)lexer.Value).GetValue ().ToString ();
+		return "Literal " + ((Constant)lexer.Value).GetValue ().ToString ();
 	case Token.IDENTIFIER:
 	case Token.IDENTIFIER_MODIFIER:
 	case Token.IDENTIFIER_CONFIG:
-		return ((Tokenizer.LocatedToken)lexer.Value).Value ?? "";
+		return "Identifier " + ((Tokenizer.LocatedToken)lexer.Value).Value ?? "";
 	case Token.BOOL:
 		return "bool";
 	case Token.BOOLEAN:
@@ -8563,6 +8600,8 @@ static string GetTokenName (int token)
 		return "implements";
 	case Token.IMPLICIT:
 		return "implicit";
+	case Token.IMPORT:
+		return "import";
 	case Token.IN:
 		return "in";
 	case Token.INDEXER:
@@ -8591,6 +8630,8 @@ static string GetTokenName (int token)
 		return "out";
 	case Token.OVERRIDE:
 		return "override";
+	case Token.OVERLOAD:
+		return "overload";
 	case Token.PARAMS:
 		return "params";
 	case Token.PRIVATE:

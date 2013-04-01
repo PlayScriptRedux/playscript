@@ -9,7 +9,10 @@
 ./flash/display3D/Context3D.cs
 ./flash/display3D/IndexBuffer3D.cs
 ./flash/display3D/Program3D.cs
+./flash/display3D/textures/CubeTexture.cs
+./flash/display3D/textures/RectangleTexture.cs
 ./flash/display3D/textures/Texture.cs
+./flash/display3D/textures/TextureBase.cs
 ./flash/display3D/VertexBuffer3D.cs
 ./flash/events/Event.cs
 ./flash/events/EventDispatcher.cs
@@ -72,9 +75,6 @@
 ./flash/display3D/Context3DTextureFormat.asx
 ./flash/display3D/Context3DTriangleFace.asx
 ./flash/display3D/Context3DVertexBufferFormat.asx
-./flash/display3D/textures/CubeTexture.asx
-./flash/display3D/textures/RectangleTexture.asx
-./flash/display3D/textures/TextureBase.asx
 ./flash/errors/EOFError.asx
 ./flash/errors/IllegalOperationError.asx
 ./flash/errors/InvalidSWFError.asx

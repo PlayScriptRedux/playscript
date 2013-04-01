@@ -55,23 +55,75 @@ namespace flash.display3D {
 			if (mask != 0xffffffff)
 				throw new NotImplementedException();
 
+			// save old depth mask
+			bool oldDepthWriteMask;
+			GL.GetBoolean(GetPName.DepthWritemask, out oldDepthWriteMask);
+
+			// depth writes must be enabled to clear the depth buffer!
+			GL.DepthMask(true);
+
 			GL.ClearColor ((float)red, (float)green, (float)blue, (float)alpha);
 			GL.ClearDepth((float)depth);
 			GL.ClearStencil((int)stencil);
 			GL.Clear (ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
+
+			// restore depth mask
+			GL.DepthMask(oldDepthWriteMask);
 		}
 		
 		public void configureBackBuffer(int width, int height, int antiAlias, 
 			bool enableDepthAndStencil = true, bool wantsBestResolution = false) {
+
+			// $$TODO allow for resizing of frame buffer here
 			mBackBufferWidth = width;
 			mBackBufferHeight = height;
 			mBackBufferAntiAlias = antiAlias;
 			mBackBufferEnableDepthAndStencil = enableDepthAndStencil;
 			mBackBufferWantsBestResolution = wantsBestResolution;
+
+			#if PLATFORM_MONOTOUCH
+
+			if (enableDepthAndStencil)
+			{
+				// setup depth buffer
+				if (mDepthRenderBufferId == 0)
+				{
+					// create depth buffer
+					// $$TODO allow for resizing of depth buffer here
+					GL.GenRenderbuffers (1, out mDepthRenderBufferId);
+					GL.BindRenderbuffer (RenderbufferTarget.Renderbuffer, mDepthRenderBufferId);
+					GL.RenderbufferStorage (RenderbufferTarget.Renderbuffer, RenderbufferInternalFormat.DepthComponent16, width, height);
+					GL.FramebufferRenderbuffer (FramebufferTarget.Framebuffer,
+					                            FramebufferSlot.DepthAttachment,
+					                            RenderbufferTarget.Renderbuffer, 
+					                            mDepthRenderBufferId);
+				}
+			}
+			else
+			{
+				// delete depth render buffer
+				if (mDepthRenderBufferId != 0)
+				{
+					GL.FramebufferRenderbuffer (FramebufferTarget.Framebuffer,
+					                            FramebufferSlot.DepthAttachment,
+					                            RenderbufferTarget.Renderbuffer, 
+					                            0);
+
+					GL.DeleteRenderbuffers(1, ref mDepthRenderBufferId);
+					mDepthRenderBufferId = 0;
+				}
+			}
+			#endif
+
+			// validate framebuffer status
+			var status = GL.CheckFramebufferStatus (FramebufferTarget.Framebuffer);
+			if (status != FramebufferErrorCode.FramebufferComplete) {
+				Console.Error.WriteLine("FrameBuffer configuration error: {0}", status);
+			}
 		}
 	
 		public CubeTexture createCubeTexture(int size, string format, bool optimizeForRenderToTexture, int streamingLevels = 0) {
-			throw new NotImplementedException();
+			return new CubeTexture(this, size, format, optimizeForRenderToTexture, streamingLevels);
 		}
 
  	 	public IndexBuffer3D createIndexBuffer(int numIndices) {
@@ -289,22 +341,17 @@ namespace flash.display3D {
 				convertDoubleToFloat (mTemp, matrix.mData, 16);
 			}
 
+			bool isVertex = (programType == "vertex");
 
-			if (programType == "vertex") {
-				// set uniform registers
-				int location = mProgram.getVertexLocation(firstRegister);
-				if (location >= 0)
-				{
-					GL.UniformMatrix4(location, 1, false, mTemp);
-				}
-
-			} else {
-				// set uniform registers
-				int location = mProgram.getFragmentLocation(firstRegister);
-				if (location >= 0)
-				{
-					GL.UniformMatrix4(location, 1, false, mTemp);
-				}
+			// set uniform registers
+			Program3D.Uniform uniform =mProgram.getUniform(isVertex, firstRegister);
+			if (uniform != null)
+			{
+				GL.UniformMatrix4(uniform.Location, 1, false, mTemp);
+			}
+			else
+			{
+				Console.WriteLine ("warning: vertex program register not found: {0}", firstRegister);
 			}
 		}
 
@@ -317,38 +364,54 @@ namespace flash.display3D {
 				numRegisters = (int)(data.length / 4);
 			}
 
-			if (programType == "vertex") {
-				// set uniform registers
-				for (int i=0; i < numRegisters; i++)
-				{
-					// set each register individually because they can be at non-contiguous locations
-					int location = mProgram.getVertexLocation(firstRegister + i);
-					if (location >= 0)
-					{
-						mTemp[0] = (float)data[i * 4 + 0];
-						mTemp[1] = (float)data[i * 4 + 1];
-						mTemp[2] = (float)data[i * 4 + 2];
-						mTemp[3] = (float)data[i * 4 + 3];
-						GL.Uniform4(location, 1, mTemp);
-					}
-				}
-			} else {
+			bool isVertex = (programType == "vertex");
 
-				// set uniform registers
-				for (int i=0; i < numRegisters; i++)
+			// set all registers
+			int register = firstRegister;
+			int dataIndex = 0;
+			while (numRegisters > 0)
+			{
+				// get uniform mapped to register
+				Program3D.Uniform uniform = mProgram.getUniform(isVertex, register);
+				if (uniform == null)
 				{
-					// set each register individually because they can be at non-contiguous locations
-					int location = mProgram.getFragmentLocation(firstRegister + i);
-					if (location >= 0)
-					{
-						mTemp[0] = (float)data[i * 4 + 0];
-						mTemp[1] = (float)data[i * 4 + 1];
-						mTemp[2] = (float)data[i * 4 + 2];
-						mTemp[3] = (float)data[i * 4 + 3];
-						GL.Uniform4(location, 1, mTemp);
-					}
+					// abort
+					Console.WriteLine ("warning: vertex program register not found: {0}", register);
+					return;
 				}
+				// convert source data into floating point
+				int tempIndex = 0;
+				for (int i=0; i < uniform.RegCount; i++)
+				{
+					// convert vector4 double->float
+					mTemp[tempIndex++] = (float)data[dataIndex++];
+					mTemp[tempIndex++] = (float)data[dataIndex++];
+					mTemp[tempIndex++] = (float)data[dataIndex++];
+					mTemp[tempIndex++] = (float)data[dataIndex++];
+				}
+
+				// set uniforms based on type
+				switch (uniform.Type)
+				{
+				case ActiveUniformType.FloatMat2:
+					GL.UniformMatrix2(uniform.Location, 1, false, mTemp);
+					break;
+				case ActiveUniformType.FloatMat3:
+					GL.UniformMatrix3(uniform.Location, 1, false, mTemp);
+					break;
+				case ActiveUniformType.FloatMat4:
+					GL.UniformMatrix4(uniform.Location, 1, false, mTemp);
+					break;
+				default:
+					GL.Uniform4(uniform.Location, uniform.RegCount, mTemp);
+					break;
+				}
+
+				// advance register number
+				register     += uniform.RegCount;
+				numRegisters -= uniform.RegCount;
 			}
+			
 		}
  	 	
 
@@ -413,7 +476,7 @@ namespace flash.display3D {
 		{
 			if (texture != null) {
 				GL.ActiveTexture(TextureUnit.Texture0 + sampler);
-				GL.BindTexture (TextureTarget.Texture2D, texture.textureId);
+				GL.BindTexture (texture.textureTarget, texture.textureId);
 			} else {
 				GL.ActiveTexture(TextureUnit.Texture0 + sampler);
 				GL.BindTexture (TextureTarget.Texture2D, 0);
@@ -464,6 +527,7 @@ namespace flash.display3D {
 
 		// settings for backbuffer
 		private int  mDefaultFrameBufferId;
+		private int  mDepthRenderBufferId;
 		private int  mBackBufferWidth = 0;
 		private int  mBackBufferHeight = 0;
 		private int  mBackBufferAntiAlias = 0;

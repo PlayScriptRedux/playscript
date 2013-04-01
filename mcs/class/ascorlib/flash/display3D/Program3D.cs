@@ -133,37 +133,84 @@ namespace flash.display3D {
 				Console.Write ("program: {0}", infoLog);
 			}
 
-			// clear register map
-			mVertexRegisterToLocation.Clear();
-			mFragmentRegisterToLocation.Clear();
+			// build uniform list
+			buildUniformList();
 		}
 
-		public int getVertexLocation (int register)
+		public class Uniform
 		{
-			// maintain a map of register number to GLSL location
-			// $$TODO this map could be eliminated by using a single GLSL array for all registers
-			int location = -1;
-			if (!mVertexRegisterToLocation.TryGetValue (register, out location)) {
-
-				var name = "vc" + register;
-				location = GL.GetUniformLocation (mProgramId, name);
-				mVertexRegisterToLocation.Add(register, location);
-			}
-			return location;
+			public string 				Name;
+			public int 					Location;
+			public ActiveUniformType	Type;
+			public int 					Size;
+			public int 					RegIndex;	// virtual register index
+			public int 					RegCount;	// virtual register count (usually 1 except for matrices)
 		}
 
-		public int getFragmentLocation (int register)
+		private void buildUniformList()
 		{
-			// maintain a map of register number to GLSL location
-			// $$TODO this map could be eliminated by using a single GLSL array for all registers
-			int location = -1;
-			if (!mFragmentRegisterToLocation.TryGetValue (register, out location)) {
-				
-				var name = "fc" + register;
-				location = GL.GetUniformLocation (mProgramId, name);
-				mFragmentRegisterToLocation.Add(register, location);
+			// clear internal lists
+			mUniforms.Clear();
+			mVertexUniformLookup  = new Uniform[512];
+			mFragmentUniformLookup = new Uniform[512];
+
+			int numActive = 0;
+			GL.GetProgram(mProgramId, ProgramParameter.ActiveUniforms, out numActive);
+			for (int i=0; i < numActive; i++)
+			{
+				// create new uniform
+				var uniform = new Uniform();
+
+				int length;
+				var name = new StringBuilder(1024);
+				GL.GetActiveUniform(mProgramId, i, name.MaxCapacity, out length, out uniform.Size, out uniform.Type, name);
+				uniform.Name 	 = name.ToString();
+				uniform.Location = GL.GetUniformLocation (mProgramId, uniform.Name );
+
+				// determine register count for uniform
+				switch (uniform.Type)
+				{
+				case ActiveUniformType.FloatMat2: uniform.RegCount = 2; break;
+				case ActiveUniformType.FloatMat3: uniform.RegCount = 3; break;
+				case ActiveUniformType.FloatMat4: uniform.RegCount = 4; break;
+				default:
+					uniform.RegCount = 1; // 1 by default
+					break;
+				}
+
+				// multiple regcount by size
+				uniform.RegCount *= uniform.Size;
+
+				// add uniform to program list
+				mUniforms.Add(uniform);
+
+				if (uniform.Name.StartsWith("vc"))
+				{
+					// vertex uniform
+					uniform.RegIndex = int.Parse (uniform.Name.Substring(2));
+					// store in vertex lookup table
+					mVertexUniformLookup[uniform.RegIndex] = uniform;
+				}
+				else if (uniform.Name.StartsWith("fc"))
+				{
+					// fragment uniform
+					uniform.RegIndex = int.Parse (uniform.Name.Substring(2));
+					// store in fragment lookup table
+					mFragmentUniformLookup[uniform.RegIndex] = uniform;
+				}
+
+				Console.WriteLine ("{0} name:{1} type:{2} size:{3} location:{4}", i, uniform.Name, uniform.Type, uniform.Size, uniform.Location);
 			}
-			return location;
+		}
+
+		public Uniform getUniform(bool isVertex, int register)
+		{
+			// maintain a map of register number to GLSL uniform
+			if (isVertex) {
+				return mVertexUniformLookup[register];
+			} else {
+				return mFragmentUniformLookup[register];
+			}
 		}
 
 		private int 			   mVertexShaderId = 0;
@@ -173,8 +220,10 @@ namespace flash.display3D {
 		private string 			   mVertexSource;
 		private string 			   mFragmentSource;
 
-		private readonly Dictionary<int, int> mVertexRegisterToLocation = new Dictionary<int, int>();
-		private readonly Dictionary<int, int> mFragmentRegisterToLocation = new Dictionary<int, int>();
+		// uniform lookup tables
+		private List<Uniform>	   mUniforms = new List<Uniform>();
+		private Uniform[]		   mVertexUniformLookup;
+		private Uniform[]		   mFragmentUniformLookup;
 
 #else
 

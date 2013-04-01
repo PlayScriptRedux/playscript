@@ -1150,4 +1150,68 @@ namespace Mono.CSharp
 		}
 	}
 
+	/// <summary>
+	///   Implementation of the ActionScript E4X xml query.
+	/// </summary>
+	public partial class AsXmlQueryExpression : Expression
+	{
+		protected Expression expr;
+		protected Expression query;
+		
+		public AsXmlQueryExpression (Expression expr, Expression query, Location l)
+		{
+			this.expr = expr;
+			this.query = query;
+			loc = l;
+		}
+		
+		public Expression Expr {
+			get {
+				return expr;
+			}
+		}
+
+		public Expression Query {
+			get {
+				return query;
+			}
+		}
+
+		public override bool ContainsEmitWithAwait ()
+		{
+			throw new NotSupportedException ();
+		}
+		
+		public override Expression CreateExpressionTree (ResolveContext ec)
+		{
+			throw new NotSupportedException ("ET");
+		}
+		
+		protected override Expression DoResolve (ResolveContext ec)
+		{
+			// TODO: Implement XML query expression.
+			return null;
+		}
+		
+		protected override void CloneTo (CloneContext clonectx, Expression t)
+		{
+			AsXmlQueryExpression target = (AsXmlQueryExpression) t;
+			
+			target.expr = expr.Clone (clonectx);
+			target.query = query.Clone (clonectx);
+		}
+		
+		public override void Emit (EmitContext ec)
+		{
+			throw new InternalErrorException ("Missing Resolve call");
+		}
+
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}
+		
+	}
+
+
 }

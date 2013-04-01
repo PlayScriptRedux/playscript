@@ -690,6 +690,7 @@ namespace Mono.PlayScript
 			AddKeyword ("operator", Token.OPERATOR);
 			AddKeyword ("out", Token.OUT);
 			AddKeyword ("override", Token.OVERRIDE);
+			AddKeyword ("overload", Token.OVERLOAD);
 			AddKeyword ("package", Token.PACKAGE);
 			AddKeyword ("params", Token.PARAMS);
 			AddKeyword ("property", Token.PROPERTY);
@@ -1141,7 +1142,7 @@ namespace Mono.PlayScript
 
 				break;
 
-				// ASX Extension Type keywords
+				// PLAYSCRIPT Extension Type keywords
 			case Token.BOOL:
 			case Token.CHAR:
 			case Token.BYTE:
@@ -1166,10 +1167,11 @@ namespace Mono.PlayScript
 
 				break;
 
-			// ASX Extension keywords
+				// PLAYSCRIPT Extension keywords
 			case Token.CHECKED:
 			case Token.EXPLICIT:
 			case Token.IMPLICIT:
+			case Token.OVERLOAD:
 			case Token.LOCK:
 			case Token.OUT:
 			case Token.PARAMS:
@@ -3636,7 +3638,7 @@ namespace Mono.PlayScript
 						PushPosition();
 						next = token ();
 						if (next != Token.CLOSE_BRACE) {
-							if (next != Token.IDENTIFIER && !(next == Token.LITERAL && (val is StringLiteral))) {
+							if (next != Token.IDENTIFIER && next != Token.LITERAL) {
 								isInit = false;
 							} else {
 								next = token ();
