@@ -49,19 +49,110 @@ namespace _root {
  	 	//
  	 	// Methods
  	 	//
+
+		public Vector() {
+		}
  	 	 	 	
 		public Vector(Vector<T> v) {
-			throw new System.NotImplementedException();
+			this.mList.AddRange(v);
  	 	}
 
 		public Vector(Array a) {
-			throw new System.NotImplementedException();
+			foreach (T item in a)
+				this.mList.Add (item);
 		}
 
-		public Vector(uint length = 0, bool @fixed = false)
+		public Vector(uint length)
 		{
-			mFixed = @fixed;
 			expand((int)length);
+		}
+
+		public Vector(uint length, bool @fixed = false)
+		{
+			expand((int)length);
+			mFixed = @fixed;
+		}
+
+
+		public Vector(object o1)
+		{
+			this.mList.Add ((T)o1);
+		}
+
+		public Vector(T o1, T o2)
+		{
+			this.mList.Add (o1);
+			this.mList.Add (o2);
+		}
+
+		public Vector(T o1, T o2, T o3)
+		{
+			this.mList.Add (o1);
+			this.mList.Add (o2);
+			this.mList.Add (o3);
+		}
+
+		public Vector(T o1, T o2, T o3, T o4)
+		{
+			this.mList.Add (o1);
+			this.mList.Add (o2);
+			this.mList.Add (o3);
+			this.mList.Add (o4);
+		}
+
+		public Vector(T o1, T o2, T o3, T o4, T o5)
+		{
+			this.mList.Add (o1);
+			this.mList.Add (o2);
+			this.mList.Add (o3);
+			this.mList.Add (o4);
+			this.mList.Add (o5);
+		}
+
+		public Vector(T o1, T o2, T o3, T o4, T o5, T o6)
+		{
+			this.mList.Add (o1);
+			this.mList.Add (o2);
+			this.mList.Add (o3);
+			this.mList.Add (o4);
+			this.mList.Add (o5);
+			this.mList.Add (o6);
+		}
+
+		public Vector(T o1, T o2, T o3, T o4, T o5, T o6, T o7)
+		{
+			this.mList.Add (o1);
+			this.mList.Add (o2);
+			this.mList.Add (o3);
+			this.mList.Add (o4);
+			this.mList.Add (o5);
+			this.mList.Add (o6);
+			this.mList.Add (o7);
+		}
+
+		public Vector(T o1, T o2, T o3, T o4, T o5, T o6, T o7, T o8)
+		{
+			this.mList.Add (o1);
+			this.mList.Add (o2);
+			this.mList.Add (o3);
+			this.mList.Add (o4);
+			this.mList.Add (o5);
+			this.mList.Add (o6);
+			this.mList.Add (o7);
+			this.mList.Add (o8);
+		}
+
+		public Vector(T o1, T o2, T o3, T o4, T o5, T o6, T o7, T o8, params T[] args)
+		{
+			this.mList.Add (o1);
+			this.mList.Add (o2);
+			this.mList.Add (o3);
+			this.mList.Add (o4);
+			this.mList.Add (o5);
+			this.mList.Add (o6);
+			this.mList.Add (o7);
+			this.mList.Add (o8);
+			this.mList.AddRange (args);
 		}
 
 		public T this[int i]
