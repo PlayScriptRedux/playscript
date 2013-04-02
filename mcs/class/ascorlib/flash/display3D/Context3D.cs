@@ -55,19 +55,71 @@ namespace flash.display3D {
 			if (mask != 0xffffffff)
 				throw new NotImplementedException();
 
+			// save old depth mask
+			bool oldDepthWriteMask;
+			GL.GetBoolean(GetPName.DepthWritemask, out oldDepthWriteMask);
+
+			// depth writes must be enabled to clear the depth buffer!
+			GL.DepthMask(true);
+
 			GL.ClearColor ((float)red, (float)green, (float)blue, (float)alpha);
 			GL.ClearDepth((float)depth);
 			GL.ClearStencil((int)stencil);
 			GL.Clear (ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
+
+			// restore depth mask
+			GL.DepthMask(oldDepthWriteMask);
 		}
 		
 		public void configureBackBuffer(int width, int height, int antiAlias, 
 			bool enableDepthAndStencil = true, bool wantsBestResolution = false) {
+
+			// $$TODO allow for resizing of frame buffer here
 			mBackBufferWidth = width;
 			mBackBufferHeight = height;
 			mBackBufferAntiAlias = antiAlias;
 			mBackBufferEnableDepthAndStencil = enableDepthAndStencil;
 			mBackBufferWantsBestResolution = wantsBestResolution;
+
+			#if PLATFORM_MONOTOUCH
+
+			if (enableDepthAndStencil)
+			{
+				// setup depth buffer
+				if (mDepthRenderBufferId == 0)
+				{
+					// create depth buffer
+					// $$TODO allow for resizing of depth buffer here
+					GL.GenRenderbuffers (1, out mDepthRenderBufferId);
+					GL.BindRenderbuffer (RenderbufferTarget.Renderbuffer, mDepthRenderBufferId);
+					GL.RenderbufferStorage (RenderbufferTarget.Renderbuffer, RenderbufferInternalFormat.DepthComponent16, width, height);
+					GL.FramebufferRenderbuffer (FramebufferTarget.Framebuffer,
+					                            FramebufferSlot.DepthAttachment,
+					                            RenderbufferTarget.Renderbuffer, 
+					                            mDepthRenderBufferId);
+				}
+			}
+			else
+			{
+				// delete depth render buffer
+				if (mDepthRenderBufferId != 0)
+				{
+					GL.FramebufferRenderbuffer (FramebufferTarget.Framebuffer,
+					                            FramebufferSlot.DepthAttachment,
+					                            RenderbufferTarget.Renderbuffer, 
+					                            0);
+
+					GL.DeleteRenderbuffers(1, ref mDepthRenderBufferId);
+					mDepthRenderBufferId = 0;
+				}
+			}
+			#endif
+
+			// validate framebuffer status
+			var status = GL.CheckFramebufferStatus (FramebufferTarget.Framebuffer);
+			if (status != FramebufferErrorCode.FramebufferComplete) {
+				Console.Error.WriteLine("FrameBuffer configuration error: {0}", status);
+			}
 		}
 	
 		public CubeTexture createCubeTexture(int size, string format, bool optimizeForRenderToTexture, int streamingLevels = 0) {
@@ -475,6 +527,7 @@ namespace flash.display3D {
 
 		// settings for backbuffer
 		private int  mDefaultFrameBufferId;
+		private int  mDepthRenderBufferId;
 		private int  mBackBufferWidth = 0;
 		private int  mBackBufferHeight = 0;
 		private int  mBackBufferAntiAlias = 0;
