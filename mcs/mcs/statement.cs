@@ -1550,6 +1550,7 @@ namespace Mono.CSharp {
 		bool IsDeclared { get; }
 		bool IsParameter { get; }
 		Location Location { get; }
+		FullNamedExpression TypeExpr { get; set; }
 	}
 
 	public partial class BlockVariableDeclaration : Statement
@@ -1969,7 +1970,7 @@ namespace Mono.CSharp {
 		LocalBuilder builder;
 
 		// PlayScript - We need a copy of the type expression here to handle default initialization.
-		public FullNamedExpression TypeExpr;
+		public FullNamedExpression typeExpr;
 
 		public LocalVariable (Block block, string name, Location loc)
 		{
@@ -2017,6 +2018,16 @@ namespace Mono.CSharp {
 			}
 			set {
 				const_value = value;
+			}
+		}
+
+		// ActionScript - Needs type expression to detect when two local declarations are the same declaration.
+		public FullNamedExpression TypeExpr {
+			get { 
+				return typeExpr; 
+			}
+			set { 
+				typeExpr = value; 
 			}
 		}
 
@@ -2973,6 +2984,8 @@ namespace Mono.CSharp {
 			public VariableInfo VariableInfo;
 			bool is_locked;
 
+			private FullNamedExpression typeExpr;
+
 			public ParameterInfo (ParametersBlock block, int index)
 			{
 				this.block = block;
@@ -3029,6 +3042,16 @@ namespace Mono.CSharp {
 			public TypeSpec ParameterType {
 				get {
 					return Parameter.Type;
+				}
+			}
+
+			// ActionScript - Needs type expression to detect when two local declarations are the same declaration.
+			public FullNamedExpression TypeExpr {
+				get {
+					return typeExpr;
+				}
+				set {
+					typeExpr = value;
 				}
 			}
 
@@ -3285,6 +3308,8 @@ namespace Mono.CSharp {
 
 				// TODO: Should use Parameter only and more block there
 				parameter_info[i] = new ParameterInfo (this, i);
+				if (p is Parameter)
+					parameter_info[i].TypeExpr = ((Parameter)p).TypeExpression;
 				if (p.Name != null)
 					AddLocalName (p.Name, parameter_info[i]);
 			}
@@ -3544,6 +3569,21 @@ namespace Mono.CSharp {
 
 				// Collision at same level
 				if (variable_block == b) {
+
+					// If we're ActionScript and two local vars are declared with identical 
+					// declarations, we're okay with that
+					if (b.loc.SourceFile != null && 
+					    b.loc.SourceFile.FileType == SourceFileType.PlayScript && 
+					    !b.loc.SourceFile.PsExtended && 
+					    li.TypeExpr != null && existing.TypeExpr != null) {
+					
+						if (li.TypeExpr.Equals (existing.TypeExpr)) {
+							li.Block.ParametersBlock.TopBlock.Report.Warning (7138, 1, li.Location,
+								"Variable is declared more than once.");
+							return;
+						}
+					} 
+
 					li.Block.Error_AlreadyDeclared (name, li);
 					break;
 				}
