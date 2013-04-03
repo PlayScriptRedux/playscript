@@ -484,6 +484,7 @@ namespace Mono.CSharp
 					// PlayScript: Call the "Boolean()" static method to convert a dynamic to a bool.  EXPENSIVE, but hey..
 					Arguments args = new Arguments (1);
 					args.Add (new Argument(EmptyCast.Create(Expr, ec.BuiltinTypes.Object)));
+					ec.Report.Warning (7164, 1, loc, "Expensive reference conversion to bool");
 					Expr = new Invocation(new MemberAccess(new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, loc), "Boolean_fn", loc), "Boolean", loc), args).Resolve (ec);
 				} else {
 					Arguments args = new Arguments (1);
