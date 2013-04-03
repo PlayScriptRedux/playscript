@@ -101,6 +101,7 @@ namespace flash.display3D {
 			var vertexInfoLog = GL.GetShaderInfoLog (mVertexShaderId);
 			if (!string.IsNullOrEmpty (vertexInfoLog)) {
 				Console.Write ("vertex: {0}", vertexInfoLog);
+				throw new Exception("Error compiling vertex shader: " + vertexInfoLog);
 			}
 
 			// compile fragment shader
@@ -110,6 +111,7 @@ namespace flash.display3D {
 			var fragmentInfoLog = GL.GetShaderInfoLog (mFragmentShaderId);
 			if (!string.IsNullOrEmpty (fragmentInfoLog)) {
 				Console.Write ("fragment: {0}", fragmentInfoLog);
+				throw new Exception("Error compiling fragment shader: " + fragmentInfoLog);
 			}
 			
 			// create program
@@ -131,6 +133,7 @@ namespace flash.display3D {
 			var infoLog = GL.GetProgramInfoLog (mProgramId);
 			if (!string.IsNullOrEmpty (infoLog)) {
 				Console.Write ("program: {0}", infoLog);
+				throw new Exception("Error linking program: " + infoLog);
 			}
 
 			// build uniform list
