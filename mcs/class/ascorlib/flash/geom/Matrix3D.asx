@@ -343,25 +343,10 @@ package flash.geom {
 				d[i] = mData[i];
 			}
 		}
-
-		public function decompose(orientationStyle:String = "eulerAngles"):Vector.<Vector3D> {
-			if (orientationStyle != "eulerAngles") throw new System.NotImplementedException();
-
+		
+		public function decompose(orientationStyle:String = Orientation3D.EULER_ANGLES):Vector.<Vector3D> {
 			// get translation
 			var translation:Vector3D = new Vector3D(mData[12], mData[13], mData[14]);
-
-			// get rotation 3x3
-			// $$TODO probably need to remove scale FIRST before decomposing rotation
-			var r11:Number = mData[0];
-			var r21:Number = mData[1];
-			var r31:Number = mData[2];
-			var r32:Number = mData[6];
-			var r33:Number = mData[10];
-
-			var rx:Number = System.Math.Atan2(r32, r33);
-			var ry:Number =-System.Math.Asin(r31);
-			var rz:Number = System.Math.Atan2(r21, r11);
-			var rotation:Vector3D = new Vector3D(rx, ry, rz);
 
 			// get scale
 			var scale:Vector3D = new Vector3D(1,1,1);
@@ -371,6 +356,46 @@ package flash.geom {
 			scale.y = sTempVector.length;
 			this.copyRowTo(2,sTempVector);
 			scale.z = sTempVector.length;
+
+			// get rotation 3x3
+			// $$TODO probably need to remove scale FIRST before decomposing rotation
+			var r11:Number = mData[0];
+			var r21:Number = mData[1];
+			var r31:Number = mData[2];
+			
+			var r12:Number = mData[4];
+			var r22:Number = mData[5];
+			var r32:Number = mData[6];
+
+			var r13:Number = mData[8];
+			var r23:Number = mData[9];
+			var r33:Number = mData[10];
+
+			var rotation:Vector3D = new Vector3D();
+			switch (orientationStyle)
+			{
+			case Orientation3D.EULER_ANGLES:
+				{
+					rotation.x = System.Math.Atan2(r32, r33);
+					rotation.y =-System.Math.Asin(r31);
+					rotation.z = System.Math.Atan2(r21, r11);
+				}
+				break;
+			case Orientation3D.AXIS_ANGLE:
+				{
+					// compute axis
+					rotation.x = r32 - r23;
+					rotation.y = r13 - r31;
+					rotation.z = r21 - r12;
+					rotation.normalize();
+					
+					// compute angle
+					rotation.w = System.Math.Acos((r11 + r22 + r33 - 1)/2);
+					break;
+				}
+			case Orientation3D.QUATERNION:
+				throw new System.NotImplementedException();
+			}
 
 			return new <Vector3D>[translation, rotation, scale];
 		}
@@ -482,6 +507,10 @@ package flash.geom {
 			createTranslationMatrix(sTempMatrix, x, y, z);
 			prepend(sTempMatrix);
 		}
+		
+		private static function radiansToDegrees(radians:Number):Number {
+			return radians * 180.0 / System.Math.PI;
+		}
  	 	
 		public function recompose(components:Vector.<Vector3D>, orientationStyle:String = "eulerAngles"):Boolean {
 			var translate:Vector3D=components[0];
@@ -490,18 +519,32 @@ package flash.geom {
 
 			this.identity();
 
-			// $$TODO is this the right order?
-			if (rotate.x != 0.0) 
+			switch (orientationStyle)
 			{
-				this.appendRotation(rotate.x * 180.0 / System.Math.PI, Vector3D.X_AXIS);
-			}
-			if (rotate.y != 0.0)
-			{
-				this.appendRotation(rotate.y * 180.0 / System.Math.PI, Vector3D.Y_AXIS);
-			}
-			if (rotate.z != 0.0) 
-			{
-				this.appendRotation(rotate.z * 180.0 / System.Math.PI, Vector3D.Z_AXIS);
+			case Orientation3D.EULER_ANGLES:
+				{
+					// $$TODO is this the right order?
+					if (rotate.x != 0.0) 
+					{
+						this.appendRotation(radiansToDegrees(rotate.x), Vector3D.X_AXIS);
+					}
+					if (rotate.y != 0.0)
+					{
+						this.appendRotation(radiansToDegrees(rotate.y), Vector3D.Y_AXIS);
+					}
+					if (rotate.z != 0.0) 
+					{
+						this.appendRotation(radiansToDegrees(rotate.z), Vector3D.Z_AXIS);
+					}
+				}
+				break;
+			case Orientation3D.AXIS_ANGLE:
+				{
+					this.appendRotation(radiansToDegrees(rotate.w), rotate);
+					break;
+				}
+			case Orientation3D.QUATERNION:
+				throw new System.NotImplementedException();
 			}
 
 			// $$TODO is this the right order?
