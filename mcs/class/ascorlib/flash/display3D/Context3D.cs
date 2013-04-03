@@ -351,7 +351,9 @@ namespace flash.display3D {
 			}
 			else
 			{
-				Console.WriteLine ("warning: vertex program register not found: {0}", firstRegister);
+				if (enableErrorChecking) {
+					Console.WriteLine ("warning: vertex program register not found: {0}", firstRegister);
+				}
 			}
 		}
 
@@ -376,7 +378,9 @@ namespace flash.display3D {
 				if (uniform == null)
 				{
 					// abort
-					Console.WriteLine ("warning: vertex program register not found: {0}", register);
+					if (enableErrorChecking) {
+						Console.WriteLine ("warning: vertex program register not found: {0}", register);
+					}
 					return;
 				}
 				// convert source data into floating point
@@ -394,16 +398,16 @@ namespace flash.display3D {
 				switch (uniform.Type)
 				{
 				case ActiveUniformType.FloatMat2:
-					GL.UniformMatrix2(uniform.Location, 1, false, mTemp);
+					GL.UniformMatrix2(uniform.Location, uniform.Size, false, mTemp);
 					break;
 				case ActiveUniformType.FloatMat3:
-					GL.UniformMatrix3(uniform.Location, 1, false, mTemp);
+					GL.UniformMatrix3(uniform.Location, uniform.Size, false, mTemp);
 					break;
 				case ActiveUniformType.FloatMat4:
-					GL.UniformMatrix4(uniform.Location, 1, false, mTemp);
+					GL.UniformMatrix4(uniform.Location, uniform.Size, false, mTemp);
 					break;
 				default:
-					GL.Uniform4(uniform.Location, uniform.RegCount, mTemp);
+					GL.Uniform4(uniform.Location, uniform.Size, mTemp);
 					break;
 				}
 
