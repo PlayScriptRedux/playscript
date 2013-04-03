@@ -288,17 +288,8 @@
     <Compile Include="..\ascorlib\flash\display3D\VertexBuffer3D.cs">
       <Link>flash\display3D\VertexBuffer3D.cs</Link>
     </Compile>
-    <Compile Include="..\ascorlib\flash\display3D\textures\CubeTexture.asx">
-      <Link>flash\display3D\textures\CubeTexture.asx</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\flash\display3D\textures\RectangleTexture.asx">
-      <Link>flash\display3D\textures\RectangleTexture.asx</Link>
-    </Compile>
     <Compile Include="..\ascorlib\flash\display3D\textures\Texture.cs">
       <Link>flash\display3D\textures\Texture.cs</Link>
-    </Compile>
-    <Compile Include="..\ascorlib\flash\display3D\textures\TextureBase.asx">
-      <Link>flash\display3D\textures\TextureBase.asx</Link>
     </Compile>
     <Compile Include="..\ascorlib\flash\errors\EOFError.asx">
       <Link>flash\errors\EOFError.asx</Link>
@@ -647,6 +638,15 @@
     </Compile>
     <Compile Include="..\ascorlib\Object.cs">
       <Link>Object.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\textures\CubeTexture.cs">
+      <Link>flash\display3D\textures\CubeTexture.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\textures\RectangleTexture.cs">
+      <Link>flash\display3D\textures\RectangleTexture.cs</Link>
+    </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\textures\TextureBase.cs">
+      <Link>flash\display3D\textures\TextureBase.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>
