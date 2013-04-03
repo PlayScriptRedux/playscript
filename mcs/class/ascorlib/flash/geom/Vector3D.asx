@@ -133,7 +133,7 @@ package flash.geom {
 		}
  	 	
 		public override function toString():String {
-			throw new System.NotImplementedException();
+			return  x.ToString() + ","  + y.ToString() + "," + z.ToString();
 		}
 
 		public indexer this (index:String):Number {
