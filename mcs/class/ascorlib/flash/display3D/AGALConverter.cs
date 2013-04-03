@@ -501,11 +501,36 @@ namespace flash.display3D
 
 				case 0x29: // sge
 					sr1.sourceMask = sr2.sourceMask = 0xF; // sge only supports vec4
-					sb.AppendFormat("{0} = vec4(greaterThanEqual({1}, {2})){3}; // gte", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL(), dr.GetWriteMask() ); 
+					sb.AppendFormat("{0} = vec4(greaterThanEqual({1}, {2})){3}; // ste", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL(), dr.GetWriteMask() ); 
 					map.Add(dr, RegisterUsage.Vector4);
 					map.Add(sr1, RegisterUsage.Vector4);
 					map.Add(sr2, RegisterUsage.Vector4);
 					break;
+
+				case 0x2A: // slt
+					sr1.sourceMask = sr2.sourceMask = 0xF; // slt only supports vec4
+					sb.AppendFormat("{0} = vec4(lessThan({1}, {2})){3}; // slt", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL(), dr.GetWriteMask() ); 
+					map.Add(dr, RegisterUsage.Vector4);
+					map.Add(sr1, RegisterUsage.Vector4);
+					map.Add(sr2, RegisterUsage.Vector4);
+					break;
+				
+				case 0x2C: // seq
+					sr1.sourceMask = sr2.sourceMask = 0xF; // seq only supports vec4
+					sb.AppendFormat("{0} = vec4(equal({1}, {2})){3}; // seq", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL(), dr.GetWriteMask() ); 
+					map.Add(dr, RegisterUsage.Vector4);
+					map.Add(sr1, RegisterUsage.Vector4);
+					map.Add(sr2, RegisterUsage.Vector4);
+					break;
+				
+				case 0x2D: // sne
+					sr1.sourceMask = sr2.sourceMask = 0xF; // sne only supports vec4
+					sb.AppendFormat("{0} = vec4(notEqual({1}, {2})){3}; // sne", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL(), dr.GetWriteMask() ); 
+					map.Add(dr, RegisterUsage.Vector4);
+					map.Add(sr1, RegisterUsage.Vector4);
+					map.Add(sr2, RegisterUsage.Vector4);
+					break;
+
 				default:
 					//sb.AppendFormat ("unsupported opcode" + opcode);
 					throw new NotSupportedException("Opcode " + opcode);
