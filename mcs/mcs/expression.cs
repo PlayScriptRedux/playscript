@@ -484,6 +484,7 @@ namespace Mono.CSharp
 					// PlayScript: Call the "Boolean()" static method to convert a dynamic to a bool.  EXPENSIVE, but hey..
 					Arguments args = new Arguments (1);
 					args.Add (new Argument(EmptyCast.Create(Expr, ec.BuiltinTypes.Object)));
+					ec.Report.Warning (7164, 1, loc, "Expensive reference conversion to bool");
 					Expr = new Invocation(new MemberAccess(new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, loc), "Boolean_fn", loc), "Boolean", loc), args).Resolve (ec);
 				} else {
 					Arguments args = new Arguments (1);
@@ -8463,8 +8464,7 @@ namespace Mono.CSharp
 			AsE4xChildAll,					// The PlayScript E4X .* operator.
 			AsE4xChildAttribute,			// The PlayScript E4X .@ operator.
 			AsE4xDescendantAll,				// The PlayScript E4X ..* operator.
-			AsNamespace						// The PlayScript :: operator.
-//			AsE4xDescendantAttribute		// The PlayScript E4X ..@ operator (Actually, don't think this is valid)
+			AsE4xNamespace					// The PlayScript :: operator.
 		}
 
 		public Accessor AccessorType = Accessor.Member;
@@ -8529,9 +8529,9 @@ namespace Mono.CSharp
 					return MakeE4xInvocation (rc, "attribute", Name).Resolve (rc);
 				} else if (AccessorType == Accessor.AsE4xDescendant) {
 					return MakeE4xInvocation (rc, "descendants", Name).Resolve (rc);
+				} else if (AccessorType == Accessor.AsE4xNamespace) {
+					return MakeE4xInvocation (rc, "namespace", Name).Resolve (rc);
 				}
-//				else if (AccessorType == Accessor.AsE4xDescendantAttribute) {
-//				}
 			}
 
 			var e = DoResolveName (rc, null);
@@ -9171,6 +9171,14 @@ namespace Mono.CSharp
 		public Arguments Arguments;
 		public Expression Expr;
 
+		public enum Accessor {
+			ElementAccess,
+			AsE4xNamespaceAccess,
+			AsE4xAttributeAccess
+		}
+
+		public Accessor AccessorType = Accessor.ElementAccess;
+
 		public ElementAccess (Expression e, Arguments args, Location loc)
 		{
 			Expr = e;
@@ -9256,6 +9264,15 @@ namespace Mono.CSharp
 		
 		protected override Expression DoResolve (ResolveContext ec)
 		{
+			// Handle PlayScript E4X namespace and attribute accessors.
+			if (ec.FileType == SourceFileType.PlayScript && AccessorType != Accessor.ElementAccess) {
+				if (AccessorType == Accessor.AsE4xAttributeAccess) {
+					return new Invocation(new MemberAccess(Expr, "attribute", loc), Arguments).Resolve (ec);
+				} else if (AccessorType == Accessor.AsE4xNamespaceAccess) {
+					return new Invocation(new MemberAccess(Expr, "namespace", loc), Arguments).Resolve (ec);
+				}
+			}
+
 			Expr = Expr.Resolve (ec);
 			if (Expr == null)
 				return null;

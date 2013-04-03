@@ -365,6 +365,12 @@ namespace Mono.CSharp.Linq
 
 		public string Name { get; private set; }
 
+		// PlayScript - Not used.
+		FullNamedExpression INamedBlockVariable.TypeExpr {
+			get { return null; }
+			set { }
+		}
+
 		#endregion
 
 		public Expression CreateReferenceExpression (ResolveContext rc, Location loc)

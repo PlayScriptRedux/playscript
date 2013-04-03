@@ -35,9 +35,9 @@ package flash.display {
  	 	
  	 	public property mask : DisplayObject  { get; set; }
 
- 	 	public property mouseX : Number { get { return 0.0; } }
+ 	 	public property mouseX : Number { get; set; }
  	 	
- 	 	public property mouseY : Number { get { return 0.0; } }
+ 	 	public property mouseY : Number { get; set; }
 
  	 	public property name : String { get; set; }
 

@@ -42,6 +42,16 @@ namespace flash.display3D
 				return dr;
 			}
 
+			public string GetWriteMask()
+			{
+				string str = ".";
+				if ((mask & 1)!=0) str += "x";
+				if ((mask & 2)!=0) str += "y";
+				if ((mask & 4)!=0) str += "z";
+				if ((mask & 8)!=0) str += "w";
+				return str;
+			}
+
 			public string ToGLSL (bool useMask = true)
 			{
 				if (type == RegType.Output) {
@@ -51,15 +61,9 @@ namespace flash.display3D
 				var str = PrefixFromType (type, programType);
 				str += n.ToString ();
 
-#if true
 				if (useMask && mask != 0xF) {
-					str += ".";
-					if ((mask & 1)!=0) str += "x";
-					if ((mask & 2)!=0) str += "y";
-					if ((mask & 4)!=0) str += "z";
-					if ((mask & 8)!=0) str += "w";
+					str += GetWriteMask();
 				}
-#endif
 				return str;
 			}
 		};
@@ -91,7 +95,7 @@ namespace flash.display3D
 				return sr;
 			}
 
-			public string ToGLSL (bool useMask = true)
+			public string ToGLSL (bool emitSwizzle = true)
 			{
 				if (type == RegType.Output) {
 					return programType == ProgramType.Vertex ? "gl_Position" : "gl_FragColor";
@@ -101,8 +105,10 @@ namespace flash.display3D
 					throw new NotImplementedException ();
 				}
 
+				bool fullxyzw = (s == 228) && (sourceMask == 0xF);
+
 				var swizzle = "";
-				if (type != RegType.Sampler && s != 228) {
+				if (type != RegType.Sampler && !fullxyzw) {
 					for (var i=0; i < 4; i++) {
 
 						// only output swizzles for each source mask
@@ -129,7 +135,7 @@ namespace flash.display3D
 
 				var str = PrefixFromType (type, programType);
 				str += n.ToString ();
-				if (useMask && swizzle != "") {
+				if (emitSwizzle && swizzle != "") {
 					str += "." + swizzle;
 				}
 				return str;
@@ -381,13 +387,13 @@ namespace flash.display3D
 				switch (opcode)
 				{
 				case 0x17: // m33
-					sb.AppendFormat("{0} = {1} * mat3({2}); // m33", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL() ); 
+					sb.AppendFormat("{0} = {1} * mat3({2}); // m33", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL(false) ); 
 					map.Add(dr, RegisterUsage.Vector4);
 					map.Add(sr1, RegisterUsage.Vector4);
 					map.Add(sr2, RegisterUsage.Matrix44); // 33?
 					break;
 				case 0x18: // m44
-					sb.AppendFormat("{0} = {1} * {2}; // m44", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL() ); 
+					sb.AppendFormat("{0} = {1} * {2}; // m44", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL(false) ); 
 					map.Add(dr, RegisterUsage.Vector4);
 					map.Add(sr1, RegisterUsage.Vector4);
 					map.Add(sr2, RegisterUsage.Matrix44);
@@ -449,6 +455,12 @@ namespace flash.display3D
 					map.Add(sr2, RegisterUsage.Vector4);
 					break;
 
+				case 0x8: // frc
+					sb.AppendFormat("{0} = fract({1}); // frc", dr.ToGLSL(), sr1.ToGLSL() ); 
+					map.Add(dr, RegisterUsage.Vector4);
+					map.Add(sr1, RegisterUsage.Vector4);
+					break;
+
 				case 0x16: // saturate
 					sb.AppendFormat("{0} = clamp({1}, 0.0, 1.0); // saturate", dr.ToGLSL(), sr1.ToGLSL() ); 
 					map.Add(dr, RegisterUsage.Vector4);
@@ -473,18 +485,26 @@ namespace flash.display3D
 					{
 					case 0: // 2d texture
 						sr1.sourceMask = 0x3;
-						sb.AppendFormat("{0} = texture2D({2}, {1}.st); // tex", dr.ToGLSL(), sr1.ToGLSL(), sampler.ToGLSL() ); 
+						sb.AppendFormat("{0} = texture2D({2}, {1}); // tex", dr.ToGLSL(), sr1.ToGLSL(), sampler.ToGLSL() ); 
 						map.Add(sampler, RegisterUsage.Sampler2D);
 						break;
 					case 1: // cube texture
 						sr1.sourceMask = 0x7;
-						sb.AppendFormat("{0} = textureCube({2}, {1}.xyz); // tex", dr.ToGLSL(), sr1.ToGLSL(), sampler.ToGLSL() ); 
+						sb.AppendFormat("{0} = textureCube({2}, {1}); // tex", dr.ToGLSL(), sr1.ToGLSL(), sampler.ToGLSL() ); 
 						map.Add(sampler, RegisterUsage.SamplerCube);
 						break;
 					}
 					//sb.AppendFormat("{0} = vec4(0,1,0,1);", dr.ToGLSL() ); 
 					map.Add(dr, RegisterUsage.Vector4);
 					map.Add(sr1, RegisterUsage.Vector4);
+					break;
+
+				case 0x29: // sge
+					sr1.sourceMask = sr2.sourceMask = 0xF; // sge only supports vec4
+					sb.AppendFormat("{0} = vec4(greaterThanEqual({1}, {2})){3}; // gte", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL(), dr.GetWriteMask() ); 
+					map.Add(dr, RegisterUsage.Vector4);
+					map.Add(sr1, RegisterUsage.Vector4);
+					map.Add(sr2, RegisterUsage.Vector4);
 					break;
 				default:
 					//sb.AppendFormat ("unsupported opcode" + opcode);

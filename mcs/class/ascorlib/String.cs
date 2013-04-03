@@ -94,7 +94,14 @@ namespace _root
 				throw new NotImplementedException ();
 			}
 
-			return new Array( s.Split( delimiter.ToString()[0] ) );
+			if (delimiter is RegExp) {
+				var re = delimiter as RegExp;
+				return re.split(s);
+			} else if (delimiter is string) {
+				return new Array( s.Split(new string[] {(string)delimiter}, StringSplitOptions.None ));
+			} else {
+				throw new NotImplementedException ();
+			}
 		}
 
 		public static string substr(this string s, double startIndex = 0, double len = 0x7fffffff) {

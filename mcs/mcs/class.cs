@@ -1137,7 +1137,7 @@ namespace Mono.CSharp
 			// PlayScript will default to the "_root.Object" base class.. not null.
 			if (this.Location.SourceFile != null &&
 			    this.Location.SourceFile.FileType == SourceFileType.PlayScript &&
-			    !this.IsStatic) {
+			    this is Class && !this.IsStatic) {
 				base_class = new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, Location), "Object");
 				base_type = base_class.ResolveAsType (new BaseContext (this));
 				if (base_type == null)

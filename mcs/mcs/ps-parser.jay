@@ -3309,6 +3309,7 @@ member_name
 	: simple_name_expr
 	| namespace_or_type_expr DOT IDENTIFIER opt_type_argument_list
 	  {
+	    // member_name
 		var lt = (Tokenizer.LocatedToken) $3;
 		$$ = new MemberAccess ((Expression) $1, lt.Value, (TypeArguments) $4, lt.Location);
 		lbag.AddLocation ($$, GetLocation ($2));
@@ -3318,6 +3319,7 @@ member_name
 simple_name_expr
 	: IDENTIFIER opt_type_argument_list
 	  {
+	    // simple_name_expr
 		var lt = (Tokenizer.LocatedToken) $1;
 		$$ = new SimpleName (lt.Value, (TypeArguments)$2, lt.Location);
 	  }
@@ -3647,6 +3649,7 @@ primary_expression
 	| sizeof_expression
 	| checked_expression
 	| unchecked_expression
+	| new_expression
 //	| pointer_member_access
 	| anonymous_method_expression
 //	| undocumented_expressions
@@ -3657,6 +3660,7 @@ primary_expression
 primary_expression_or_type
 	: IDENTIFIER opt_type_argument_list
 	  {
+	    // primary_expression_or_type
 		var lt = (Tokenizer.LocatedToken) $1;
 		$$ = new SimpleName (lt.Value, (TypeArguments)$2, lt.Location);	  
 	  }
@@ -3715,6 +3719,7 @@ parenthesized_expression
 member_access
 	: primary_expression DOT IDENTIFIER opt_type_argument_list
 	  {
+	    // member_access
 		var lt = (Tokenizer.LocatedToken) $3;
 		$$ = new MemberAccess ((Expression) $1, lt.Value, (TypeArguments) $4, lt.Location);
 		lbag.AddLocation ($$, GetLocation ($2));
@@ -3754,10 +3759,24 @@ member_access
 	  {
 		var lt = (Tokenizer.LocatedToken) $3;
 		var ma = new MemberAccess ((Expression) $1, lt.Value, null, lt.Location);
-		ma.AccessorType = MemberAccess.Accessor.AsNamespace;
+		ma.AccessorType = MemberAccess.Accessor.AsE4xNamespace;
 		lbag.AddLocation ($$, GetLocation ($2));
 		$$ = ma;
-	  } 
+	  }
+	| primary_expression DOUBLE_COLON OPEN_BRACKET_EXPR expression_list_arguments CLOSE_BRACKET
+	  {
+		var ea = new ElementAccess ((Expression) $1, (Arguments) $4, GetLocation ($3));
+		ea.AccessorType = ElementAccess.Accessor.AsE4xNamespaceAccess;
+		lbag.AddLocation (GetLocation ($3), GetLocation ($5));
+		$$ = ea;
+	  }	  
+	| primary_expression DOT_AT OPEN_BRACKET_EXPR expression_list_arguments CLOSE_BRACKET
+	  {
+		var ea = new ElementAccess ((Expression) $1, (Arguments) $4, GetLocation ($3));
+		ea.AccessorType = ElementAccess.Accessor.AsE4xAttributeAccess;
+		lbag.AddLocation (GetLocation ($3), GetLocation ($5));
+		$$ = ea;
+	  }	  
 	| primary_expression DOT OPEN_PARENS expression CLOSE_PARENS
 	  {
 		var lt = (Tokenizer.LocatedToken) $3;
@@ -3820,7 +3839,16 @@ invocation_expression
 	  }  
 	| primary_expression open_parens_any opt_argument_list close_parens
 	  {
-		$$ = new Invocation ((Expression) $1, (Arguments) $3);
+	    var newExpr = $1 as AsNew;
+	    if (newExpr != null) {
+		    // Convert Invocation(AsNew()) into AsNew(Invocation())
+			var invExpr = new Invocation(newExpr.Expr, (Arguments) $3);
+			newExpr.Expr = invExpr;
+			$$ = newExpr;
+	    } else {
+	    	// Just a normal invocation
+			$$ = new Invocation ((Expression) $1, (Arguments) $3);
+	    }
 		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
 	  }
 	| primary_expression open_parens_any argument_list error
@@ -3830,10 +3858,7 @@ invocation_expression
 		$$ = new Invocation ((Expression) $1, (Arguments) $3);
 		lbag.AddLocation ($$, GetLocation ($2));
 	  }
-	
 	;
-
-
 
 object_or_collection_initializer
     : init_open_brace opt_member_initializer_list init_close_brace_or_complete_completion
@@ -4065,7 +4090,15 @@ variable_reference
 element_access
 	: primary_expression OPEN_BRACKET_EXPR expression_list_arguments CLOSE_BRACKET	
 	  {
-		$$ = new ElementAccess ((Expression) $1, (Arguments) $3, GetLocation ($2));
+	    var newExpr = $1 as AsNew;
+	    if (newExpr != null) {
+		    // Convert ElementAccess(AsNew()) into AsNew(ElementAccess())
+			var elemAccessExpr = new ElementAccess(newExpr.Expr, (Arguments) $3, GetLocation ($2));
+			newExpr.Expr = elemAccessExpr;
+			$$ = newExpr;
+	    } else {
+			$$ = new ElementAccess ((Expression) $1, (Arguments) $3, GetLocation ($2));
+		}
 		lbag.AddLocation ($$, GetLocation ($4));
 	  }
 	| primary_expression OPEN_BRACKET_EXPR expression_list_arguments error
@@ -4232,11 +4265,22 @@ post_decrement_expression
 //	;
 
 new_expression
-	: prefixed_unary_expression
-	| OP_LT type_expression OP_GT array_initializer
+	: NEW namespace_or_type_expr
 	  {
-	    var arrayInit = (AsArrayInitializer) $4;
-	    arrayInit.VectorType = (FullNamedExpression) $2;
+		$$ = new AsNew ((Expression) $2, GetLocation ($1));
+	  }
+	| NEW builtin_types
+	  {
+		$$ = new AsNew ((Expression) $2, GetLocation ($1));
+	  }	  
+	| NEW OPEN_PARENS expression CLOSE_PARENS
+	  {
+		$$ = new AsNew ((Expression) $3, GetLocation ($1));
+	  }
+	| NEW OP_LT type_expression OP_GT array_initializer
+	  {
+	    var arrayInit = (AsArrayInitializer) $5;
+	    arrayInit.VectorType = (FullNamedExpression) $3;
 	    $$ = arrayInit;
 	  }
 	;
@@ -4691,10 +4735,6 @@ unary_expression
 	  {
 		$$ = new Unary (Unary.Operator.AsE4xAttribute, (Expression) $2, GetLocation ($1));
 	  }
-	| NEW new_expression
-	  { 
-		$$ = new AsNew ((Expression) $2, GetLocation ($1));
-	  }
 	| TYPEOF prefixed_unary_expression
 	  {
 	  	$$ = new AsTypeOf ((Expression) $2, GetLocation ($1));
@@ -4738,12 +4778,6 @@ unary_expression
 		Error_SyntaxError (yyToken);
 
 		$$ = new Unary (Unary.Operator.AsE4xAttribute, null, GetLocation ($1));
-	  }
-	| NEW error
-	  {
-		Error_SyntaxError (yyToken);
-
-		$$ = new AsNew (null, GetLocation ($1));
 	  }
 	| TYPEOF error
 	  {
