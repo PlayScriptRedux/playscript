@@ -109,7 +109,7 @@ namespace flash.display3D
 				return sr;
 			}
 
-			public string ToGLSL (bool emitSwizzle = true)
+			public string ToGLSL (bool emitSwizzle = true, int offset = 0)
 			{
 				if (type == RegType.Output) {
 					return programType == ProgramType.Vertex ? "gl_Position" : "gl_FragColor";
@@ -148,7 +148,7 @@ namespace flash.display3D
 				}
 
 				var str = PrefixFromType (type, programType);
-				str += n.ToString ();
+				str += (n + offset).ToString ();
 				if (emitSwizzle && swizzle != "") {
 					str += "." + swizzle;
 				}
@@ -195,6 +195,7 @@ namespace flash.display3D
 
 		enum RegisterUsage
 		{
+			Unused,
 			Vector4,
 			Matrix44,
 			Sampler2D,
@@ -215,6 +216,22 @@ namespace flash.display3D
 			public RegisterMap()
 			{
 			}
+
+			public RegisterUsage GetUsage(RegType type, string name, int number)
+			{
+				foreach (var entry in mEntries) {
+					if (entry.type == type && entry.name == name && entry.number == number) {
+						return entry.usage;
+					}
+				}
+				return RegisterUsage.Unused;
+			}
+
+			public RegisterUsage GetUsage(SourceReg sr)
+			{
+				return GetUsage(sr.type, sr.ToGLSL(false), sr.n);
+			}
+
 
 			public void Add(SourceReg sr, RegisterUsage usage)
 			{
@@ -237,7 +254,7 @@ namespace flash.display3D
 
 					if (entry.type == type && entry.name == name && entry.number == number) {
 						if (entry.usage != usage) {
-							throw new InvalidOperationException ("Cannot use register in multiple ways yet (mat44/vec4)");
+							throw new InvalidOperationException ("Cannot use register in multiple ways yet (mat4/vec4)");
 						}
 						return;
 					}
@@ -340,7 +357,7 @@ namespace flash.display3D
 			switch (t) {
 			case RegType.Attribute: return "va";
 			case RegType.Constant:  return (pt == ProgramType.Vertex) ? "vc" : "fc";
-			case RegType.Temporary: return "vt";
+			case RegType.Temporary: return (pt == ProgramType.Vertex) ? "vt" : "ft";
 			case RegType.Output:    return "output_";
 			case RegType.Varying:   return "v";
 			case RegType.Sampler:   return "sampler";
@@ -401,16 +418,57 @@ namespace flash.display3D
 				switch (opcode)
 				{
 				case 0x17: // m33
-					sb.AppendFormat("{0} = {1} * mat3({2}); // m33", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL(false) ); 
-					map.Add(dr, RegisterUsage.Vector4);
-					map.Add(sr1, RegisterUsage.Vector4);
-					map.Add(sr2, RegisterUsage.Matrix44); // 33?
+
+				{
+					var existingUsage = map.GetUsage(sr2);
+					if (existingUsage != RegisterUsage.Vector4)
+					{
+						sb.AppendFormat("{0} = {1} * mat3({2}); // m33", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL(false) ); 
+						map.Add(dr, RegisterUsage.Vector4);
+						map.Add(sr1, RegisterUsage.Vector4);
+						map.Add(sr2, RegisterUsage.Matrix44); // 33?
+					}
+					else
+					{
+						// they are using a vector4 as a mat33 so we need to construct a mat33 on the fly
+						// $$TODO there's probably a betetr way to handle this
+						sb.AppendFormat("{0} = {1} * mat3({2}, {3}, {4}); // m33", dr.ToGLSL(), sr1.ToGLSL(), 
+						                sr2.ToGLSL(false,0),
+						                sr2.ToGLSL(false,1), 
+						                sr2.ToGLSL(false,2) 
+						                ); 
+						map.Add(dr, RegisterUsage.Vector4);
+						map.Add(sr1, RegisterUsage.Vector4);
+						map.Add(sr2, RegisterUsage.Vector4); 
+					}
+				}
 					break;
+
 				case 0x18: // m44
-					sb.AppendFormat("{0} = {1} * {2}; // m44", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL(false) ); 
-					map.Add(dr, RegisterUsage.Vector4);
-					map.Add(sr1, RegisterUsage.Vector4);
-					map.Add(sr2, RegisterUsage.Matrix44);
+				{
+					var existingUsage = map.GetUsage(sr2);
+					if (existingUsage != RegisterUsage.Vector4)
+					{
+						sb.AppendFormat("{0} = {1} * {2}; // m44", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL(false) ); 
+						map.Add(dr, RegisterUsage.Vector4);
+						map.Add(sr1, RegisterUsage.Vector4);
+						map.Add(sr2, RegisterUsage.Matrix44);
+					}
+					else
+					{
+						// they are using a vector4 as a mat44 so we need to construct a mat33 on the fly
+						// $$TODO there's probably a betetr way to handle this
+						sb.AppendFormat("{0} = {1} * mat4({2}, {3}, {4}, {5}); // m44", dr.ToGLSL(), sr1.ToGLSL(), 
+						                sr2.ToGLSL(false,0),
+						                sr2.ToGLSL(false,1), 
+						                sr2.ToGLSL(false,2),
+						                sr2.ToGLSL(false,3) 
+						                ); 
+						map.Add(dr, RegisterUsage.Vector4);
+						map.Add(sr1, RegisterUsage.Vector4);
+						map.Add(sr2, RegisterUsage.Vector4); 
+					}
+				}
 					break;
 				case 0x00: // mov
 					sb.AppendFormat("{0} = {1}; // mov", dr.ToGLSL(), sr1.ToGLSL()); 
@@ -446,6 +504,13 @@ namespace flash.display3D
 					map.Add(sr2, RegisterUsage.Vector4);
 					break;
 
+				case 0x06: // min
+					sb.AppendFormat("{0} = min({1}, {2}); // min", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL() ); 
+					map.Add(dr, RegisterUsage.Vector4);
+					map.Add(sr1, RegisterUsage.Vector4);
+					map.Add(sr2, RegisterUsage.Vector4);
+					break;
+
 				case 0x07: // max
 					sb.AppendFormat("{0} = max({1}, {2}); // max", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL() ); 
 					map.Add(dr, RegisterUsage.Vector4);
@@ -473,6 +538,25 @@ namespace flash.display3D
 					sb.AppendFormat("{0} = fract({1}); // frc", dr.ToGLSL(), sr1.ToGLSL() ); 
 					map.Add(dr, RegisterUsage.Vector4);
 					map.Add(sr1, RegisterUsage.Vector4);
+					break;
+
+				case 0x9: // sqrt
+					sb.AppendFormat("{0} = sqrt({1}); // sqrt", dr.ToGLSL(), sr1.ToGLSL() ); 
+					map.Add(dr, RegisterUsage.Vector4);
+					map.Add(sr1, RegisterUsage.Vector4);
+					break;
+
+				case 0xA: // rsq
+					sb.AppendFormat("{0} = inversesqrt({1}); // rsq", dr.ToGLSL(), sr1.ToGLSL() ); 
+					map.Add(dr, RegisterUsage.Vector4);
+					map.Add(sr1, RegisterUsage.Vector4);
+					break;
+
+				case 0x0B: // pow
+					sb.AppendFormat("{0} = pow({1}, {2}); // pow", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL() ); 
+					map.Add(dr, RegisterUsage.Vector4);
+					map.Add(sr1, RegisterUsage.Vector4);
+					map.Add(sr2, RegisterUsage.Vector4);
 					break;
 
 				case 0x16: // saturate
