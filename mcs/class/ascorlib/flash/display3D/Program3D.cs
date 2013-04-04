@@ -75,12 +75,6 @@ namespace flash.display3D {
 			uploadFromGLSL(glslVertex, glslFragment);
 		}
 
-		public int programId {
-			get {
-				return mProgramId;
-			}
-		}
-		
 		private string loadShaderSource (string filePath)
 		{
 			//var path = NSBundle.MainBundle.ResourcePath + Path.DirectorySeparatorChar + "GLSL";
@@ -147,11 +141,23 @@ namespace flash.display3D {
 			var infoLog = GL.GetProgramInfoLog (mProgramId);
 			if (!string.IsNullOrEmpty (infoLog)) {
 				Console.Write ("program: {0}", infoLog);
-				throw new Exception("Error linking program: " + infoLog);
 			}
 
 			// build uniform list
 			buildUniformList();
+		}
+
+
+		internal void Use()
+		{
+			// use program
+			GL.UseProgram (mProgramId);
+			
+			// update texture units for all sampler uniforms
+			foreach (var sampler in mSamplerUniforms)
+			{
+				GL.Uniform1(sampler.Location, sampler.RegIndex);
+			}
 		}
 
 		public class Uniform
@@ -170,6 +176,7 @@ namespace flash.display3D {
 			mUniforms.Clear();
 			mVertexUniformLookup  = new Uniform[512];
 			mFragmentUniformLookup = new Uniform[512];
+			mSamplerUniforms.Clear();
 
 			int numActive = 0;
 			GL.GetProgram(mProgramId, ProgramParameter.ActiveUniforms, out numActive);
@@ -215,6 +222,13 @@ namespace flash.display3D {
 					// store in fragment lookup table
 					mFragmentUniformLookup[uniform.RegIndex] = uniform;
 				}
+				else if (uniform.Name.StartsWith("sampler"))
+				{
+					// sampler uniform
+					uniform.RegIndex = int.Parse (uniform.Name.Substring(7));
+					// add to list of sampler uniforms
+					mSamplerUniforms.Add (uniform);
+				}
 
 				Console.WriteLine ("{0} name:{1} type:{2} size:{3} location:{4}", i, uniform.Name, uniform.Type, uniform.Size, uniform.Location);
 			}
@@ -239,6 +253,7 @@ namespace flash.display3D {
 
 		// uniform lookup tables
 		private List<Uniform>	   mUniforms = new List<Uniform>();
+		private List<Uniform>      mSamplerUniforms = new List<Uniform>();
 		private Uniform[]		   mVertexUniformLookup;
 		private Uniform[]		   mFragmentUniformLookup;
 

@@ -290,7 +290,7 @@ namespace flash.display3D {
 		public void setProgram (Program3D program)
 		{
 			if (program != null) {
-				GL.UseProgram (program.programId);
+				program.Use();
 			} else {
 				// ?? 
 				throw new NotImplementedException();
@@ -401,6 +401,9 @@ namespace flash.display3D {
 				int tempIndex = 0;
 				for (int i=0; i < uniform.RegCount; i++)
 				{
+					// debug print the constant data
+//					Console.WriteLine ("{5}[{0}]: {1}, {2}, {3}, {4}", register + i, data[dataIndex+0], data[dataIndex+1], data[dataIndex+2], data[dataIndex+3], programType);
+
 					// convert vector4 double->float
 					mTemp[tempIndex++] = (float)data[dataIndex++];
 					mTemp[tempIndex++] = (float)data[dataIndex++];
