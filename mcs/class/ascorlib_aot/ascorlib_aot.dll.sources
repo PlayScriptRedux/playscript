@@ -10,6 +10,7 @@
 ../ascorlib/flash/display3D/Program3D.cs
 ../ascorlib/flash/display3D/textures/CubeTexture.cs
 ../ascorlib/flash/display3D/textures/RectangleTexture.cs
+../ascorlib/flash/display3D/textures/SamplerState.cs
 ../ascorlib/flash/display3D/textures/Texture.cs
 ../ascorlib/flash/display3D/textures/TextureBase.cs
 ../ascorlib/flash/display3D/VertexBuffer3D.cs

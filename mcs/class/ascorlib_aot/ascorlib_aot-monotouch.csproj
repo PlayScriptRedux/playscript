@@ -653,6 +653,9 @@
     <Compile Include="..\ascorlib\flash\display3D\textures\TextureBase.cs">
       <Link>flash\display3D\textures\TextureBase.cs</Link>
     </Compile>
+    <Compile Include="..\ascorlib\flash\display3D\textures\SamplerState.cs">
+      <Link>flash\display3D\textures\SamplerState.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ActionScript.Dynamic_aot\ActionScript.Dynamic_aot-monotouch.csproj">

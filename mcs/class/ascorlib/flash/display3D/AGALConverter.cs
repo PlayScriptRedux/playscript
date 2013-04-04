@@ -18,6 +18,12 @@ using System.IO;
 using System.Collections.Generic;
 using flash.utils;
 
+#if PLATFORM_MONOMAC
+using MonoMac.OpenGL;
+#elif PLATFORM_MONOTOUCH
+using OpenTK.Graphics.ES20;
+#endif
+
 namespace flash.display3D
 {
 	public static class AGALConverter
@@ -188,6 +194,64 @@ namespace flash.display3D
 				var str = PrefixFromType (type, programType);
 				str += n.ToString ();
 				return str;
+			}
+
+			public textures.SamplerState ToSamplerState()
+			{
+				var state = new textures.SamplerState();
+
+				// translate mag filter
+				switch (f)
+				{
+				case 0:	
+					state.MagFilter = TextureMagFilter.Nearest;		
+					break;
+				case 1:	
+					state.MagFilter = TextureMagFilter.Linear;		
+					break;
+				default:
+					throw new NotImplementedException();
+				}
+
+				// translate min filter
+				switch (m)
+				{
+					// disable
+				case 0:	
+					state.MinFilter = (f!=0) ? TextureMinFilter.Linear : TextureMinFilter.Nearest;		
+					break;
+					// nearest
+				case 1:	
+					state.MinFilter = (f!=0) ? TextureMinFilter.NearestMipmapLinear : TextureMinFilter.NearestMipmapNearest;		
+					break;
+					// linear
+				case 2:	
+					state.MinFilter = (f!=0) ? TextureMinFilter.LinearMipmapLinear : TextureMinFilter.LinearMipmapNearest;		
+					break;
+				default:
+					throw new NotImplementedException();
+				}
+
+				// translate wrapping mode
+				switch (w)
+				{
+				case 0:
+					state.WrapModeS = TextureWrapMode.ClampToEdge;
+					state.WrapModeT = TextureWrapMode.ClampToEdge;
+					break;
+				case 1:
+					state.WrapModeS = TextureWrapMode.Repeat;
+					state.WrapModeT = TextureWrapMode.Repeat;
+					break;
+				default:
+					throw new NotImplementedException();
+				}
+
+				// translate lod bias, sign extend and /8
+				state.LodBias = ((float)((b << 24) >> 24)) / 8.0f;
+
+				state.MaxAniso = 0.0f;
+				return state;
 			}
 		};
 
@@ -374,7 +438,7 @@ namespace flash.display3D
 			return (hi << 32) | lo;
 		}
 
-		public static string ConvertToGLSL (ByteArray agal)
+		public static string ConvertToGLSL (ByteArray agal, textures.SamplerState[] outSamplers)
 		{
 			agal.position = 0;
 
@@ -684,6 +748,12 @@ namespace flash.display3D
 					//sb.AppendFormat("{0} = vec4(0,1,0,1);", dr.ToGLSL() ); 
 					map.Add(dr, RegisterUsage.Vector4);
 					map.Add(sr1, RegisterUsage.Vector4);
+
+					if (outSamplers != null)
+					{
+						// add sampler state to output list for caller
+						outSamplers[sampler.n] = sampler.ToSamplerState();
+					}
 					break;
 
 				case 0x29: // sge

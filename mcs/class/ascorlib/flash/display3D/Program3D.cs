@@ -13,6 +13,7 @@
 //      limitations under the License.
 
 using flash.utils;
+using flash.display3D.textures;
 
 using System;
 using System.IO;
@@ -68,9 +69,15 @@ namespace flash.display3D {
 		}
 		
 		public void upload(ByteArray vertexProgram, ByteArray fragmentProgram) {
+
+			// clear sampler state array
+			for (int i=0; i < mSamplerStates.Length; i++) {
+				mSamplerStates[i] = null;
+			}
+
 			// convert shaders from AGAL to GLSL
-			var glslVertex = AGALConverter.ConvertToGLSL(vertexProgram);
-			var glslFragment = AGALConverter.ConvertToGLSL(fragmentProgram);
+			var glslVertex = AGALConverter.ConvertToGLSL(vertexProgram, null);
+			var glslFragment = AGALConverter.ConvertToGLSL(fragmentProgram, mSamplerStates);
 			// upload as GLSL
 			uploadFromGLSL(glslVertex, glslFragment);
 		}
@@ -256,6 +263,9 @@ namespace flash.display3D {
 		private List<Uniform>      mSamplerUniforms = new List<Uniform>();
 		private Uniform[]		   mVertexUniformLookup;
 		private Uniform[]		   mFragmentUniformLookup;
+
+		// sampler state information
+		private SamplerState[]     mSamplerStates = new SamplerState[16];
 
 #else
 
