@@ -38,7 +38,17 @@ namespace flash.display3D.textures {
 			// delete texture
 			GL.DeleteTexture(mTextureId);
 		}
-		
+
+		/// <summary>
+		/// Computes a complete set of mipmap arrays derived from the zero level array. 
+		/// Array levels up to and including the 1x1 dimension texture image are replaced with the derived arrays, regardless of previous contents. 
+		/// The zero level texture image is left unchanged.
+		/// </summary>
+		public void generateMipmaps() {
+			GL.BindTexture(mTextureTarget, mTextureId);
+			GL.GenerateMipmap(mTextureTarget);
+		}
+
 		public int	 		 textureId 		{get {return mTextureId;}}
 		public TextureTarget textureTarget 	{get {return mTextureTarget;}}
 

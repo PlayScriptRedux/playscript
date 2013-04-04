@@ -74,31 +74,16 @@ namespace flash.display3D.textures {
 		
 		public void uploadFromBitmapData (BitmapData source, uint miplevel = 0)
 		{
-			if (miplevel != 0) {
-				throw new NotImplementedException();
-			}
-
 			// Bind the texture
 			GL.BindTexture (TextureTarget.Texture2D, textureId);
 			
-			// Bind the PBO
-			//GL.BindBuffer (BufferTarget.PixelUnpackBuffer, mBufferId);
-			//GL.BufferData (BufferTarget.PixelUnpackBuffer, new IntPtr (mWidth * mHeight * sizeof(System.UInt32)), source.getRawData(), BufferUsageHint.StaticDraw);
-			//GL.TexImage2D (TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, mWidth, mHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
-			//GL.BindBuffer (BufferTarget.PixelUnpackBuffer, 0);
+			GL.TexImage2D(TextureTarget.Texture2D, (int)miplevel, PixelInternalFormat.Rgba, mWidth, mHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte,source.getRawData());
 
-#if PLATFORM_MONOMAC
-			GL.PixelStore (PixelStoreParameter.UnpackRowLength, 0);
-#elif PLATFORM_MONOTOUCH
-			GL.PixelStore (PixelStoreParameter.UnpackAlignment, 0);
-#endif
-			GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, mWidth, mHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte,source.getRawData());
-
-			// Setup texture parameters
-			GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)All.Linear);
-			GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)All.Linear);
-			GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)All.Repeat);
-			GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)All.Repeat);
+			// setup texture parameters
+			GL.TexParameter (TextureTarget.TextureCubeMap, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
+			GL.TexParameter (TextureTarget.TextureCubeMap, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+			GL.TexParameter (TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+			GL.TexParameter (TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
 
 			// unbind texture and pixel buffer
 			GL.BindTexture (TextureTarget.Texture2D, 0);

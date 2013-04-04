@@ -48,12 +48,7 @@ namespace flash.display3D.textures
 		}
 		
 		public void uploadFromBitmapData(BitmapData source, uint side, uint miplevel = 0) {
-
-			if (miplevel != 0) {
-				throw new NotImplementedException();
-			}
-			
-			// Bind the texture
+			// bind the texture
 			GL.BindTexture (TextureTarget.TextureCubeMap, textureId);
 
 			// determine which side of the cubmap to upload
@@ -68,18 +63,14 @@ namespace flash.display3D.textures
 			case 5: target = TextureTarget.TextureCubeMapNegativeZ; break;
 			}
 
-			#if PLATFORM_MONOMAC
-			GL.PixelStore (PixelStoreParameter.UnpackRowLength, 0);
-			#elif PLATFORM_MONOTOUCH
-			GL.PixelStore (PixelStoreParameter.UnpackAlignment, 0);
-			#endif
-			GL.TexImage2D(target, 0, PixelInternalFormat.Rgba, size, size, 0, PixelFormat.Rgba, PixelType.UnsignedByte,source.getRawData());
+			// perform upload
+			GL.TexImage2D(target, (int)miplevel, PixelInternalFormat.Rgba, size, size, 0, PixelFormat.Rgba, PixelType.UnsignedByte, source.getRawData());
 
-			// Setup texture parameters
-			GL.TexParameter (TextureTarget.TextureCubeMap, TextureParameterName.TextureMinFilter, (int)All.Linear);
-			GL.TexParameter (TextureTarget.TextureCubeMap, TextureParameterName.TextureMagFilter, (int)All.Linear);
-			GL.TexParameter (TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapS, (int)All.ClampToEdge);
-			GL.TexParameter (TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapT, (int)All.ClampToEdge);
+			// setup texture parameters
+			GL.TexParameter (TextureTarget.TextureCubeMap, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
+			GL.TexParameter (TextureTarget.TextureCubeMap, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+			GL.TexParameter (TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+			GL.TexParameter (TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
 			
 			// unbind texture and pixel buffer
 			GL.BindTexture (TextureTarget.TextureCubeMap, 0);
