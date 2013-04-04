@@ -49,7 +49,7 @@ namespace flash.display3D.textures
 		
 		public void uploadFromBitmapData(BitmapData source, uint side, uint miplevel = 0) {
 			// bind the texture
-			GL.BindTexture (TextureTarget.TextureCubeMap, textureId);
+			GL.BindTexture (textureTarget, textureId);
 
 			// determine which side of the cubmap to upload
 			TextureTarget target;
@@ -67,13 +67,20 @@ namespace flash.display3D.textures
 			GL.TexImage2D(target, (int)miplevel, PixelInternalFormat.Rgba, size, size, 0, PixelFormat.Rgba, PixelType.UnsignedByte, source.getRawData());
 
 			// setup texture parameters
-			GL.TexParameter (TextureTarget.TextureCubeMap, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
-			GL.TexParameter (TextureTarget.TextureCubeMap, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-			GL.TexParameter (TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
-			GL.TexParameter (TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+			GL.TexParameter (textureTarget, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
+			GL.TexParameter (textureTarget, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+			GL.TexParameter (textureTarget, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+			GL.TexParameter (textureTarget, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
 			
+			#if false
+			// set max aniso
+			float maxAniso;
+			GL.GetFloat((GetPName) Unknown.MaxTextureMaxAnisotropyExt, out maxAniso);
+			GL.TexParameter(textureTarget, (TextureParameterName) Unknown.TextureMaxAnisotropyExt, maxAniso);
+			#endif
+
 			// unbind texture and pixel buffer
-			GL.BindTexture (TextureTarget.TextureCubeMap, 0);
+			GL.BindTexture (textureTarget, 0);
 		}
 		
 		public void uploadFromByteArray(ByteArray data, uint byteArrayOffset, uint side, uint miplevel = 0) {
