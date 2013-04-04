@@ -97,8 +97,8 @@ namespace flash.display3D.textures {
 			// Setup texture parameters
 			GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)All.Linear);
 			GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)All.Linear);
-			GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)All.ClampToEdge);
-			GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)All.ClampToEdge);
+			GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)All.Repeat);
+			GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)All.Repeat);
 
 			// unbind texture and pixel buffer
 			GL.BindTexture (TextureTarget.Texture2D, 0);
