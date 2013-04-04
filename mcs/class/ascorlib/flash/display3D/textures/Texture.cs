@@ -45,6 +45,15 @@ namespace flash.display3D.textures {
 			mOptimizeForRenderToTexture = optimizeForRenderToTexture;
 			mStreamingLevels = streamingLevels;
 
+			// setup default texture parameters
+			// $$TODO filtering modes should be setup later on based on AGAL samplers, but we do them here now
+			GL.BindTexture(textureTarget, textureId);
+			GL.TexParameter (textureTarget, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+			GL.TexParameter (textureTarget, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+			GL.TexParameter (textureTarget, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+			GL.TexParameter (textureTarget, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+
+
 			// we do this to clear the texture on creation
 			// $$TODO we dont need to allocate a bitmapdata to do this, we should just use a PBO and clear it
 			var clearData = new BitmapData(width, height);
@@ -76,21 +85,7 @@ namespace flash.display3D.textures {
 		{
 			// Bind the texture
 			GL.BindTexture (textureTarget, textureId);
-			
 			GL.TexImage2D(textureTarget, (int)miplevel, PixelInternalFormat.Rgba, mWidth, mHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte,source.getRawData());
-
-			// setup texture parameters
-			GL.TexParameter (textureTarget, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
-			GL.TexParameter (textureTarget, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-			GL.TexParameter (textureTarget, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-			GL.TexParameter (textureTarget, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
-
-#if false
-			// set max aniso
-			float maxAniso;
-			GL.GetFloat((GetPName) Unknown.MaxTextureMaxAnisotropyExt, out maxAniso);
-			GL.TexParameter(textureTarget, (TextureParameterName) Unknown.TextureMaxAnisotropyExt, maxAniso);
-#endif
 
 			// unbind texture and pixel buffer
 			GL.BindTexture (textureTarget, 0);
@@ -110,8 +105,6 @@ namespace flash.display3D.textures {
 		private readonly string 	mFormat;
 		private readonly bool 		mOptimizeForRenderToTexture;
 		private readonly int    	mStreamingLevels;
-
-		// private int             	mBufferId;
 
 #else
 

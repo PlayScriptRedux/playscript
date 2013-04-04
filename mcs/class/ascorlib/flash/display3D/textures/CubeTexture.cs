@@ -41,6 +41,14 @@ namespace flash.display3D.textures
 			mFormat = format;
 			mOptimizeForRenderToTexture = optimizeForRenderToTexture;
 			mStreamingLevels = streamingLevels;
+
+			// setup default texture parameters
+			// $$TODO filtering modes should be setup later on based on AGAL samplers, but we do them here now
+			GL.BindTexture(textureTarget, textureId);
+			GL.TexParameter (textureTarget, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+			GL.TexParameter (textureTarget, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+			GL.TexParameter (textureTarget, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+			GL.TexParameter (textureTarget, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
 		}
 
 		public void uploadCompressedTextureFromByteArray(ByteArray data, uint byteArrayOffset, bool async = false) {
@@ -65,19 +73,6 @@ namespace flash.display3D.textures
 
 			// perform upload
 			GL.TexImage2D(target, (int)miplevel, PixelInternalFormat.Rgba, size, size, 0, PixelFormat.Rgba, PixelType.UnsignedByte, source.getRawData());
-
-			// setup texture parameters
-			GL.TexParameter (textureTarget, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
-			GL.TexParameter (textureTarget, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-			GL.TexParameter (textureTarget, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-			GL.TexParameter (textureTarget, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
-			
-			#if false
-			// set max aniso
-			float maxAniso;
-			GL.GetFloat((GetPName) Unknown.MaxTextureMaxAnisotropyExt, out maxAniso);
-			GL.TexParameter(textureTarget, (TextureParameterName) Unknown.TextureMaxAnisotropyExt, maxAniso);
-			#endif
 
 			// unbind texture and pixel buffer
 			GL.BindTexture (textureTarget, 0);

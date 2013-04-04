@@ -47,6 +47,17 @@ namespace flash.display3D.textures {
 		public void generateMipmaps() {
 			GL.BindTexture(mTextureTarget, mTextureId);
 			GL.GenerateMipmap(mTextureTarget);
+
+			// now enable trilinear filtering
+			// $$TODO filtering modes should be setup later on based on AGAL samplers, but we do them here now
+			GL.TexParameter (textureTarget, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
+
+			#if false
+			// set max aniso
+			float maxAniso;
+			GL.GetFloat((GetPName) Unknown.MaxTextureMaxAnisotropyExt, out maxAniso);
+			GL.TexParameter(textureTarget, (TextureParameterName) Unknown.TextureMaxAnisotropyExt, maxAniso);
+			#endif
 		}
 
 		public int	 		 textureId 		{get {return mTextureId;}}
