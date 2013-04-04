@@ -404,9 +404,9 @@ namespace flash.display3D
 				uint dest = (uint)agal.readInt();
 				ulong source1 = ReadUInt64(agal);
 				ulong source2 = ReadUInt64(agal);
-				sb.Append("\t");
-				sb.AppendFormat("// opcode:{0:X} dest:{1:X} source1:{2:X} source2:{3:X}\n", opcode,
-				                dest, source1, source2);
+//				sb.Append("\t");
+//				sb.AppendFormat("// opcode:{0:X} dest:{1:X} source1:{2:X} source2:{3:X}\n", opcode,
+//				                dest, source1, source2);
 
 				// parse registers
 				var dr  = DestReg.Parse(dest,programType);
@@ -432,7 +432,8 @@ namespace flash.display3D
 					{
 						// they are using a vector4 as a mat33 so we need to construct a mat33 on the fly
 						// $$TODO there's probably a betetr way to handle this
-						sb.AppendFormat("{0} = {1} * mat3({2}, {3}, {4}); // m33", dr.ToGLSL(), sr1.ToGLSL(), 
+//						sb.AppendFormat("{0} = {1} * mat3({2}, {3}, {4}); // m33", dr.ToGLSL(), sr1.ToGLSL(), 
+						sb.AppendFormat("{0} = mat3({2}, {3}, {4}) * {1}; // m33", dr.ToGLSL(), sr1.ToGLSL(), 
 						                sr2.ToGLSL(false,0),
 						                sr2.ToGLSL(false,1), 
 						                sr2.ToGLSL(false,2) 
@@ -458,7 +459,8 @@ namespace flash.display3D
 					{
 						// they are using a vector4 as a mat44 so we need to construct a mat33 on the fly
 						// $$TODO there's probably a betetr way to handle this
-						sb.AppendFormat("{0} = {1} * mat4({2}, {3}, {4}, {5}); // m44", dr.ToGLSL(), sr1.ToGLSL(), 
+//						sb.AppendFormat("{0} = {1} * mat4({2}, {3}, {4}, {5}); // m44", dr.ToGLSL(), sr1.ToGLSL(), 
+						sb.AppendFormat("{0} = mat4({2}, {3}, {4}, {5}) * {1}; // m44", dr.ToGLSL(), sr1.ToGLSL(), 
 						                sr2.ToGLSL(false,0),
 						                sr2.ToGLSL(false,1), 
 						                sr2.ToGLSL(false,2),
