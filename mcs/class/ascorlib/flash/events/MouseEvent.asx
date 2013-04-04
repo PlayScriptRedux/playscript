@@ -66,7 +66,7 @@ package flash.events {
 
  	 	public property	buttonDown : Boolean { get; set; }
 
- 	 	public property clickCount : int { get { return 0; } }
+ 	 	public property clickCount : int { get; set;}
 
  	 	public property commandKey : Boolean { get; set; }
 
@@ -78,9 +78,9 @@ package flash.events {
 
  	 	public property isRelatedObjectInaccessible : Boolean { get; set; }
 
- 	 	public property localX : Number { get; set; }
+ 	 	public property localX : Number { get; private set; }
 
- 	 	public property localY : Number { get; set; }
+ 	 	public property localY : Number { get; private set; }
 
  	 	public property movementX : Number { get; set; }
 
@@ -90,9 +90,9 @@ package flash.events {
 
  	 	public property shiftKey : Boolean { get; set; }
 
- 	 	public property stageX : Number { get { return 0.0; } }
+ 	 	public property stageX : Number { get; private set; }
 
- 	 	public property stageY : Number { get { return 0.0; } }
+ 	 	public property stageY : Number { get; private set; }
 
  	 	//
  	 	// Methods
@@ -103,11 +103,17 @@ package flash.events {
  	 		ctrlKey:Boolean = false, altKey:Boolean = false, shiftKey:Boolean = false, 
  	 		buttonDown:Boolean = false, delta:int = 0, commandKey:Boolean = false, 
  	 		controlKey:Boolean = false, clickCount:int = 0) {
- 	 		super(type);
+ 	 		super(type, bubbles, cancelable);
+ 	 		
+ 	 		this.localX = localX;
+ 	 		this.localY = localY;
+ 	 		this.stageX = localX;
+ 	 		this.stageY = localY;
+ 	 		this.relatedObject = relatedObject;
  	 	}
 
 		public override function clone():Event {
-			return null;
+			throw new System.NotImplementedException();
 		}
  	 	
 		public override function toString():String {
@@ -116,6 +122,8 @@ package flash.events {
  	 	
 		public function updateAfterEvent():void {
 		}
+		
+		
 
 	}
 
