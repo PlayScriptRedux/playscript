@@ -4619,7 +4619,7 @@ anonymous_method_expression
 	  opt_formal_parameter_list CLOSE_PARENS COLON member_type
 	  {
 		valid_param_mod = 0;
-		start_anonymous (false, (ParametersCompiled) $5, (TypeExpr) $8, true, GetLocation ($1));
+		start_anonymous (false, (ParametersCompiled) $5, (FullNamedExpression) $8, true, GetLocation ($1));
 	  }
 	  block
 	  {
@@ -4635,7 +4635,7 @@ local_function_statement
 	  opt_formal_parameter_list CLOSE_PARENS COLON member_type
 	  {
 		valid_param_mod = 0;
-		start_anonymous (false, (ParametersCompiled) $5, (TypeExpr) $8, false, GetLocation ($1));
+		start_anonymous (false, (ParametersCompiled) $5, (FullNamedExpression) $8, false, GetLocation ($1));
 	  }
 	  block
 	  {
@@ -4655,7 +4655,7 @@ local_function_statement
 	  opt_formal_parameter_list CLOSE_PARENS COLON member_type
 	  {
 		valid_param_mod = 0;
-		start_anonymous (false, (ParametersCompiled) $6, (TypeExpr) $9, true, GetLocation ($1));
+		start_anonymous (false, (ParametersCompiled) $6, (FullNamedExpression) $9, true, GetLocation ($1));
 	  }
 	  block
 	  {
@@ -8207,7 +8207,7 @@ end_block (Location loc)
 	return retval;
 }
 
-void start_anonymous (bool isLambda, ParametersCompiled parameters, TypeExpr retType, bool isAsync, Location loc)
+void start_anonymous (bool isLambda, ParametersCompiled parameters, FullNamedExpression retType, bool isAsync, Location loc)
 {
 	oob_stack.Push (current_anonymous_method);
 	oob_stack.Push (current_local_parameters);

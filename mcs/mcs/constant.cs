@@ -95,7 +95,7 @@ namespace Mono.CSharp {
 				return null;
 
 			bool fail;			
-			object constant_value = ChangeType (GetValue (), type, out fail);
+			object constant_value = ChangeType (GetValue (), type, opt_ec, out fail);
 			if (fail){
 				//
 				// We should always catch the error before this is ever
@@ -182,7 +182,7 @@ namespace Mono.CSharp {
 
 		// This is a custom version of Convert.ChangeType() which works
 		// with the TypeBuilder defined types when compiling corlib.
-		static object ChangeType (object value, TypeSpec targetType, out bool error)
+		static object ChangeType (object value, TypeSpec targetType, ResolveContext opt_ec, out bool error)
 		{
 			IConvertible convert_value = value as IConvertible;
 
@@ -190,6 +190,36 @@ namespace Mono.CSharp {
 				error = true;
 				return null;
 			}
+
+			// PlayScript: Make sure we convert NaN, Ivaluenity, -Infinity, +Infinity to 0 for int conversions.
+			if (opt_ec != null && opt_ec.FileType == SourceFileType.PlayScript && (value is double || value is float)) {
+				switch (targetType.BuiltinType) {
+				case BuiltinTypeSpec.Type.Bool:
+				case BuiltinTypeSpec.Type.Byte:
+				case BuiltinTypeSpec.Type.SByte:
+				case BuiltinTypeSpec.Type.Char:
+				case BuiltinTypeSpec.Type.Short:
+				case BuiltinTypeSpec.Type.UShort:
+				case BuiltinTypeSpec.Type.Int:
+				case BuiltinTypeSpec.Type.UInt:
+				case BuiltinTypeSpec.Type.Long:
+				case BuiltinTypeSpec.Type.ULong:
+				case BuiltinTypeSpec.Type.Decimal:
+					if (value is double && 
+					    (double.IsNaN((double)value) || double.IsInfinity((double)value) || 
+					 double.IsNegativeInfinity((double)value) || double.IsPositiveInfinity((double)value)))
+					{
+						value = 0.0;
+					}
+					if (value is float && 
+					    (float.IsNaN((float)value) || float.IsInfinity((float)value) || 
+					 float.IsNegativeInfinity((float)value) || float.IsPositiveInfinity((float)value)))
+					{
+						value = 0.0f;
+					}
+					break;
+				}
+			} 
 
 			//
 			// We cannot rely on build-in type conversions as they are

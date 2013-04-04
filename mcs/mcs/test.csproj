@@ -43,6 +43,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="test7.asx" />
+    <Compile Include="test6.as" />
   </ItemGroup>
 </Project>

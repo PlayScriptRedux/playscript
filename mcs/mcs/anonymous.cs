@@ -934,17 +934,18 @@ namespace Mono.CSharp {
 
 		public ParametersBlock Block;
 
-		public ParametersCompiled asParameters;
-		public TypeExpr asReturnType;
+		// PlayScript requires us to remember both parameters and return type./
+		public ParametersCompiled AsParameters;
+		public FullNamedExpression AsReturnType;
 
-		public AnonymousMethodExpression (Location loc, ParametersCompiled asParameters = null, TypeExpr asReturnType = null)
+		public AnonymousMethodExpression (Location loc, ParametersCompiled asParameters = null, FullNamedExpression asReturnType = null)
 		{
 			this.loc = loc;
 			this.compatibles = new Dictionary<TypeSpec, Expression> ();
 
 			// Actionscript anon function declarations include concrete parameter types and return types.
-			this.asParameters = asParameters;
-			this.asReturnType = asReturnType;
+			this.AsParameters = asParameters;
+			this.AsReturnType = asReturnType;
 		}
 
 		#region Properties
