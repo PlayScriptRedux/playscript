@@ -116,6 +116,11 @@ package flash.geom {
  	 	
 		public function normalize():Number {
 			var mag:double = length;
+			if (mag == 0.0) {
+				// handle normalization of a zero length vector
+				return 0.0;
+			}
+			
 			var invmag:double = 1.0 / mag;
 			// normalize
 			x *= invmag;
