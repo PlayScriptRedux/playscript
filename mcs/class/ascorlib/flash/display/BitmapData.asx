@@ -213,7 +213,12 @@ package flash.display {
 		}
  	 	
 		public function getPixel(x:int, y:int):uint {
-			throw new System.NotImplementedException();
+			if (x < 0 || y < 0 || x >= width || y >= height) {			
+				throw new System.ArgumentOutOfRangeException("XY position out of range");
+			}
+			
+			// return color
+			return mData[y * mWidth + x];
 		}
 		
 		public function getPixel32(x:int, y:int):uint {
