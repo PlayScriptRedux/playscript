@@ -83,26 +83,30 @@ You should now be able to add .as Files and .play files to your projects and com
 
 ## Features:
 
-* **Native Performance**
+#### Native Performance
+
   * Using "unsafe" code.
   * Direct interop with native code (Cocos2D-X, other C+\+ based engines such as Page44, etc).
   * Optimized compiler for JavaScript generation.
   * Optional full C+\+ target with minimal app size and startup overhead.
 
 
-* **Advanced Tools Support**
+#### Advanced Tools Support 
+
   * Complete tool support including Syntax Highlighting and intellisense in the MonoDevelop IDE.
   * Source Debugging on all platforms (FlashBuilder for Flash).
   * Fast Release mode compiles and rapid iteration.
 
 
-* **Full Platform API's**
+#### Full Platform API's
+
   * Complete iOS platform API via Xamarin MonoTouch and Mono for Android
   * Complete Windows/MacOSX API's.
   * Complete integration with UI builder (iOS), and Android GUI builder via Xamarin Studio.
 
 
-* **Differences between PlayScript and ActionScript**
+#### Differences between PlayScript and ActionScript
+
   * PlayScript supports most features of C# 5.
   * PlayScript requires semicolons after all statements.
   * PlayScript uses block scoping for variables.
@@ -113,7 +117,8 @@ You should now be able to add .as Files and .play files to your projects and com
   * PlayScript implements AS3 namespaces by converting them to .NET internal.
 
 
-* **Differences between PlayScript and C#**
+#### Differences between PlayScript and C#
+
   * PlayScript requires the use of the "overload" keyword on addtional overload methods (allows more readable JavaScript code by only mangling overload method names).
   * PlayScript does not support using blocks.
   * PlayScript does not support checked, unchecked.
