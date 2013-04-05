@@ -117,7 +117,7 @@ You should now be able to add .as Files and .play files to your projects and com
   * PlayScript implements AS3 namespaces by converting them to .NET internal.
 
 
-#### Differences between PlayScript and C#
+#### Differences between PlayScript and CSharp
 
   * PlayScript requires the use of the "overload" keyword on addtional overload methods (allows more readable JavaScript code by only mangling overload method names).
   * PlayScript does not support using blocks.
