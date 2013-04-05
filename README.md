@@ -101,6 +101,26 @@ You should now be able to add .as Files and .play files to your projects and com
   * Complete Windows/MacOSX API's.
   * Complete integration with UI builder (iOS), and Android GUI builder via Xamarin Studio.
 
+
+* **Differences between PlayScript and ActionScript**
+  * PlayScript supports most features of C# 5.
+  * PlayScript requires semicolons after all statements.
+  * PlayScript uses block scoping for variables.
+  * PlayScript requires breaks in switch statements.
+  * PlayScript supports generics using the .<> syntax introduced in AS3 with the normal C# feature set.
+  * PlayScript supports properties using the "property" keyword with syntax similar to C#.
+  * PlayScript supports indexers and operator overloads using the "indexer" and "operator" keywords.
+  * PlayScript implements AS3 namespaces by converting them to .NET internal.
+
+
+* **Differences between PlayScript and C#**
+  * PlayScript requires the use of the "overload" keyword on addtional overload methods (allows more readable JavaScript code by only mangling overload method names).
+  * PlayScript does not support using blocks.
+  * PlayScript does not support checked, unchecked.
+  * PlayScript does not "presently" support unsafe code (though this will be added in the future).  Currently unsafe code can be added to mobile projects via C#.
+  * In PlayScript you may not directly access the base properties of Object (ToString(), GetType(), GetHashCode()) unless you cast an objet to a System.Object.  Doing this however will make your code incompatible with the C++ or JavaScript target backends.
+
+
 ## License
 
 Code contributed to this project by Zynga is released under the Apache open source license.
