@@ -1,8 +1,8 @@
  ![logo](https://raw.github.com/playscript/playscript-mono/master/PlayscriptLogo.png) 
 
-PLAYSCRIPT
+# PLAYSCRIPT
 
-*What is PlayScript?*
+## What is PlayScript?
 
 PlayScript is an open source Adobe ActionScript compatible compiler and Flash compatible runtime that runs in the Mono .NET environment, targeting mobile devices through the Xamarin Studio MonoTouch and Mono for Android platforms.   With a combination of Adobe FlashBuilder for Web and Xamarin Studio for mobile complex large scale cross-mobile-web projects can be developed with full IDE, source debugging and intellisense support on all platforms, with access to the full native mobile API's on the mobile platform.
 
@@ -14,35 +14,59 @@ Finally, the PlayScript runtime supports a full Stage3D compatible implementatio
 
 The PlayScript compiler and runtime provides a complete toolset for building and running ActionScript based games on mobile via the Xamarin Mono runtime, on the web via Adobe Flash or  JavaScript/HTML5.
 
-*How is PlayScript Implemented?*
+# How is PlayScript Implemented?
 
 The PlayScript compiler is implemented as an additional front end to the Mono MCS compiler.   Installing the PlayScript version of the Mono framework allows you to compile, with the MCS compiler all three langauges: C#, ActionScript, and PlayScript simply by adding files with .cs, .as, and .play file extensions to the MCS command line.
 
 Likewise with the Xamarin Studio IDE, pointing the Xamarin Studio ".NET Frameworks" peferences page selection to the PlayScript Mono framework allows you to simply add .as or .play files to any C# project, and compile them directly into your MonoTouch or Mono for Android project.  You can then compile ActionScript or PlayScript code and debug it on the device just as you would any C# code.  ActionScript code can directly call C# code, and vica versa.
 
-*How is the Stage3D Flash Runtime Implemented?*
+# How is the Stage3D Flash Runtime Implemented?
 
 PlayScript includes two libraries: PlayScript.Dynamic_aot.dll, and pscorlib.dll, which implement the basic flash runtime and Stage3D over OpenGL.  Referencing these libraries (or the monotouch or mono for android versions of them) in your project in Xamarin Studio allows you to run existing Flash Stage3D code with no modifications.  (NOTE: A stubbed version of the flash "display" library is included, but is non functional except for various functionality in Bitmap, BitmapData, and TextField).
 
-Features:
+# How do I install PlayScript?
 
-# *Native Performance*
-## Using "unsafe" code.
-## Direct interop with native code (Cocos2D-X, other C+\+ based engines such as Page44, etc).
-## Optimized compiler for JavaScript generation.
-## Optional full C+\+ target with minimal app size and startup overhead.
+See the MONO build instructions below.  PlayScript is simply part of the regular Mono build and the MCS compiler build by Mono will compile ActionScript and PlayScript .as and .play files.
 
-# *Advanced Tools Support*
-## Complete tool support including Syntax Highlighting and intellisense in the MonoDevelop IDE.
-## Source Debugging on all platforms (FlashBuilder for Flash).
-## Fast Release mode compiles and rapid iteration.
+Also, the base pscorlib.dll and PlayScript.Dynamic.dll runtime libraries (minus Stage3D support) will be pre-built and added to the GAC gache in the final mono install.  To use the "monotouch" or "monomac" or "monoandroid" versions of these libraries, use the included .csproj files in the mcs/class folder in this repository.
 
-# *Full Platform API's*
-## Complete iOS platform API via Xamarin MonoTouch and Mono for Android
-## Complete Windows/MacOSX API's.
-## Complete integration with UI builder (iOS), and Android GUI builder via Xamarin Studio.
+# How do I use PlayScript from Xamarin Studio?
 
-*Sample Code*
+1. Build the Mono framework from this repo using the Mono build instructions.   Use --prefix=/Users/myname/playscript-mono-inst to install the framework to a reasonable location on your hard disk.
+2. Open Xamarin Studio, and select Preferences..
+3. Select the .NET runtimes tab.
+4. Click the "Add" button, and select the folder where you build the PlayScript mono framework from step 1.
+5. Click the "Set as Default" button.
+6. Exit Xamarin Studio, then restart.
+
+You should now be able to add .as Files and .play files to your projects and compile them.  Note that you must make sure the file is toggled to compile by selecting the "Properties" panel in Xamarin Studio and setting the "Build Action" to compile.
+
+(NOTE: A modified version of MonoDevelop should be available in the playsript-monodevelop repository that includes full support - including syntax highlighting for both .as and .play files.)
+
+
+## Features:
+
+* **Native Performance**
+  * Using "unsafe" code.
+  * Direct interop with native code (Cocos2D-X, other C+\+ based engines such as Page44, etc).
+  * Optimized compiler for JavaScript generation.
+  * Optional full C+\+ target with minimal app size and startup overhead.
+
+* **Advanced Tools Support**
+  * Complete tool support including Syntax Highlighting and intellisense in the MonoDevelop IDE.
+  * Source Debugging on all platforms (FlashBuilder for Flash).
+  * Fast Release mode compiles and rapid iteration.
+
+* **Full Platform API's**
+  * Complete iOS platform API via Xamarin MonoTouch and Mono for Android
+  * Complete Windows/MacOSX API's.
+  * Complete integration with UI builder (iOS), and Android GUI builder via Xamarin Studio.
+
+## License
+
+Code contributed to this project by Zynga is released under the Apache open source license.
+
+## Sample Code
 
 ```actionscript
 // Basic types
@@ -95,10 +119,7 @@ public class Foo.<T> {
     }
 }
 ```
-
-===============================
-
-MONO README
+# MONO README
 
 This is Mono.
 
