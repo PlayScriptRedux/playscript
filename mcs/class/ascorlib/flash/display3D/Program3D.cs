@@ -70,16 +70,14 @@ namespace flash.display3D {
 		
 		public void upload(ByteArray vertexProgram, ByteArray fragmentProgram) {
 
-			// clear sampler state array
-			for (int i=0; i < mSamplerStates.Length; i++) {
-				mSamplerStates[i] = null;
-			}
+			// create array to hold sampler states
+			var samplerStates = new SamplerState[16];
 
 			// convert shaders from AGAL to GLSL
 			var glslVertex = AGALConverter.ConvertToGLSL(vertexProgram, null);
-			var glslFragment = AGALConverter.ConvertToGLSL(fragmentProgram, mSamplerStates);
+			var glslFragment = AGALConverter.ConvertToGLSL(fragmentProgram, samplerStates);
 			// upload as GLSL
-			uploadFromGLSL(glslVertex, glslFragment);
+			uploadFromGLSL(glslVertex, glslFragment, samplerStates);
 		}
 
 		private string loadShaderSource (string filePath)
@@ -98,7 +96,7 @@ namespace flash.display3D {
 			uploadFromGLSL(vertexShaderSource, fragmentShaderSource);
 		}
 
-		public void uploadFromGLSL (string vertexShaderSource, string fragmentShaderSource)
+		public void uploadFromGLSL (string vertexShaderSource, string fragmentShaderSource, SamplerState[] samplerStates = null)
 		{
 			// delete existing shaders
 			deleteShaders ();
@@ -152,6 +150,19 @@ namespace flash.display3D {
 
 			// build uniform list
 			buildUniformList();
+
+			// process sampler states
+			mSamplerUsageMask = 0;
+			for (int i=0; i < mSamplerStates.Length; i++) {
+				// copy over sampler state from provided array
+				mSamplerStates[i] = (samplerStates!=null) ? samplerStates[i] : null;
+
+				// set sampler usage mask
+				if (mSamplerStates[i] != null) {
+					mSamplerUsageMask |= (1 << i);
+				}
+			}
+
 		}
 
 
@@ -251,6 +262,15 @@ namespace flash.display3D {
 			}
 		}
 
+		public SamplerState getSamplerState(int sampler)
+		{
+			return mSamplerStates[sampler];
+		}
+
+		public int samplerUsageMask {
+			get {return mSamplerUsageMask;}
+		}
+
 		private int 			   mVertexShaderId = 0;
 		private int 			   mFragmentShaderId = 0;
 		private int 			   mProgramId = 0;
@@ -266,6 +286,7 @@ namespace flash.display3D {
 
 		// sampler state information
 		private SamplerState[]     mSamplerStates = new SamplerState[16];
+		private int				   mSamplerUsageMask = 0; 				
 
 #else
 
