@@ -10,7 +10,7 @@ The PlayScript compiler also targets both C++ and JavaScript (similar to the Hax
 
 In addition to accurate ActionScript language support, the PlayScript compiler also supports a new language - PlayScript - which is derived from both C# and ActionScript.  This new language supports all of the features of C#, including generics, properties, events, value types, operator overloading, async programming, linq, while at the same time being upwards compatible with ActionScript.  The PlayScript language can be used to target both web and mobile (via Xamarin and JavaScript), and existing Flash code can easily be converted to PlayScript code by simply renaming files from .as to .play, and fixing a few issues related to the stricter syntax and semantics of the PlayScript language.
 
-Finally, the PlayScript runtime supports a full Stage3D compatible implementation of the Flash runtime allowing games that are Stage3D compliant to run unmodified on mobile via the Xamarin/Mono runtime.  A subset of the "display" library is implemented to support Stage3D libraries such as Starling, Away3D, and Feathers, though there are no plans to (ever) implement the full Flash display system.  
+Finally, the PlayScript runtime supports a full Stage3D compatible implementation of the Flash runtime allowing games that are Stage3D compliant to run with very minor modifications on mobile via the Xamarin/Mono runtime.  A subset of the "display" library is implemented to support Stage3D libraries such as Starling, Away3D, and Feathers, though there are no plans at the present time implement the full Flash display system.  
 
 The PlayScript compiler and runtime provides a complete toolset for building and running ActionScript based games on mobile via the Xamarin Mono runtime, on the web via Adobe Flash or  JavaScript/HTML5.
 
@@ -23,6 +23,32 @@ Likewise with the Xamarin Studio IDE, pointing the Xamarin Studio ".NET Framewor
 # How is the Stage3D Flash Runtime Implemented?
 
 PlayScript includes two libraries: PlayScript.Dynamic_aot.dll, and pscorlib.dll, which implement the basic flash runtime and Stage3D over OpenGL.  Referencing these libraries (or the monotouch or mono for android versions of them) in your project in Xamarin Studio allows you to run existing Flash Stage3D code with no modifications.  (NOTE: A stubbed version of the flash "display" library is included, but is non functional except for various functionality in Bitmap, BitmapData, and TextField).
+
+# Current Status
+
+The PlayScript and ActionScript compiler front ends are fairly stable at this point (given that they are built on top of the very mature Mono compiler and runtime), but there are still several ActionScript language features that are not fully implemented, and certain constructs taht are not parsed or compiled as they are in ActionScript.  Work is ongoing to eliminate these last remaining issues and deliver full ActionScript compatibility.
+
+### ActionScript support
+
+1. Dynamic classes are compiled but are not implemented yet.
+2. The [Embed] tag is not yet implemented.
+3. The singleton guard pattern is not supported (using a private parameter to a public constructor).
+4. Static and non static members of the same name are not supported.
+5. Class and package level statements are not supported.
+6. Variety of small bugs which require minor work arounds (these are being eliminated over time).
+
+### PlayScript support
+
+1. Unsafe code is not supported (conflict with the use of the * symbol in ActionScript).
+2. Some issues with multi dimensional arrays.
+3. JavaScript and C++ targets are experimental.
+
+### Runtime support
+
+1. Much work has been done on the Stage3D library support, and full AGAL to HLSL support has been implemented.
+2. Starling and Away3D libraries are functional and most features are supported.
+2. Very little work has been done on net, and other core libraries.
+
 
 # How do I install PlayScript?
 
