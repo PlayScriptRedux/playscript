@@ -157,6 +157,16 @@ public class Foo.<T> {
     public function foo<T>(v:T):void {
     }
 }
+
+// Async
+async function AccessTheWebAsync():Task.<int> 
+{ 
+    var client:HttpClient= new HttpClient();
+    var getStringTask:Task.<String> = client.GetStringAsync("http://msdn.microsoft.com");
+    var urlContents:String = await getStringTask;
+    return urlContents.Length;
+}
+
 ```
 # MONO README
 
