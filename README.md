@@ -26,7 +26,18 @@ PlayScript includes two libraries: PlayScript.Dynamic_aot.dll, and pscorlib.dll,
 
 # How do I install PlayScript?
 
-See the MONO build instructions below.  PlayScript is simply part of the regular Mono build and the MCS compiler build by Mono will compile ActionScript and PlayScript .as and .play files.
+PlayScript is simply part of the regular Mono build and the MCS compiler build by Mono will compile ActionScript and PlayScript .as and .play files.
+
+See the MONO build instructions below.
+
+Mac:
+
+http://www.mono-project.com/Compiling_Mono_on_OSX
+
+Windows:
+
+http://www.mono-project.com/Compiling_Mono_on_Windows
+
 
 Also, the base pscorlib.dll and PlayScript.Dynamic.dll runtime libraries (minus Stage3D support) will be pre-built and added to the GAC gache in the final mono install.  To use the "monotouch" or "monomac" or "monoandroid" versions of these libraries, use the included .csproj files in the mcs/class folder in this repository.
 
