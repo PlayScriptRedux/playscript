@@ -103,7 +103,7 @@ You should now be able to add .as Files and .play files to your projects and com
 
 Code contributed to this project by Zynga is released under the Apache open source license.
 
-## Sample Code
+## PlayScript Sample Code
 
 ```actionscript
 // Basic types
