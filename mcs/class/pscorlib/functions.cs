@@ -148,7 +148,7 @@ namespace _root
 	public static class _typeof_fn
 	{
 		public static string _typeof (object d) {
-			if (d == null || d == ActionScript.Undefined._undefined) 
+			if (d == null || d == PlayScript.Undefined._undefined) 
 				return "undefined";
 			
 			if (d is XML || d is XMLList)

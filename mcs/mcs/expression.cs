@@ -4281,7 +4281,7 @@ namespace Mono.CSharp
 
 			MemberAccess ns;
 			if (ec.Module.PredefinedTypes.IsPlayScriptAotMode) {
-				ns = new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "ActionScript", loc);
+				ns = new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "PlayScript", loc);
 			} else {
 				ns = new MemberAccess (new MemberAccess (
 							new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "System", loc), "Linq", loc), "Expressions", loc);

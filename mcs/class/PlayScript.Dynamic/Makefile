@@ -1,7 +1,7 @@
-thisdir = class/ActionScript.Dynamic
+thisdir = class/PlayScript.Dynamic
 include ../../build/rules.make
 
-LIBRARY = ActionScript.Dynamic.dll
+LIBRARY = PlayScript.Dynamic.dll
 LIBRARY_SNK = ../mono.snk
 LIBRARY_PACKAGE = none
 

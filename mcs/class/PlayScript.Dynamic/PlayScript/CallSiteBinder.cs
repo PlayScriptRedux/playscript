@@ -12,13 +12,23 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
+using System.Reflection;
+
+#if !DYNAMIC_SUPPORT
+
 using System;
 
 namespace PlayScript
 {
-	public class Undefined
+	public abstract class CallSiteBinder
 	{
-		public static Undefined _undefined = new Undefined();
+		public CallSiteBinder ()
+		{
+		}
+
+		public abstract object Bind(Type delegateType);
+
 	}
 }
 
+#endif

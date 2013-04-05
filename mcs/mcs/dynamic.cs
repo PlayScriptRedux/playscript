@@ -595,7 +595,7 @@ namespace Mono.CSharp
 		{
 			if (rc.Module.PredefinedTypes.IsPlayScriptDynamicMode) {
 				return new MemberAccess (
-					new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "ActionScript", loc), "RuntimeBinder", loc);
+					new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "PlayScript", loc), "RuntimeBinder", loc);
 			} else {
 				return new MemberAccess (new MemberAccess (
 					new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "Microsoft", loc), "CSharp", loc), "RuntimeBinder", loc);
@@ -1022,7 +1022,7 @@ namespace Mono.CSharp
 
 			MemberAccess ns;
 			if (ec.Module.PredefinedTypes.IsPlayScriptAotMode) {
-				ns = new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "ActionScript", loc);
+				ns = new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "PlayScript", loc);
 			} else {
 				ns = new MemberAccess (new MemberAccess (
 					new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "System", loc), "Linq", loc), "Expressions", loc);

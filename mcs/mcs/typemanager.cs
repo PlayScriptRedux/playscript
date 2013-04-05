@@ -324,17 +324,17 @@ namespace Mono.CSharp
 			INotifyCompletion = new PredefinedType (module, MemberKind.Interface, "System.Runtime.CompilerServices", "INotifyCompletion");
 			ICriticalNotifyCompletion = new PredefinedType (module, MemberKind.Interface, "System.Runtime.CompilerServices", "ICriticalNotifyCompletion");
 
-			AsObject = new PredefinedType (module, MemberKind.Class, "ActionScript.Expando", "ExpandoObject");
+			AsObject = new PredefinedType (module, MemberKind.Class, "PlayScript.Expando", "ExpandoObject");
 			AsArray = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "Array");
 			AsVector = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "Vector", 1);
 			AsError = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "Error");
 			AsFunction = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "Function");
-			AsUndefined = new PredefinedType (module, MemberKind.Class, "ActionScript", "Undefined");
-			AsCallSite = new PredefinedType (module, MemberKind.Class, "ActionScript", "CallSite");
-			AsCallSiteGeneric = new PredefinedType (module, MemberKind.Class, "ActionScript", "CallSite", 1);
-			AsExpressionType = new PredefinedType (module, MemberKind.Enum, "ActionScript", "ExpressionType");
-			AsBinder = new PredefinedType (module, MemberKind.Class, "ActionScript.RuntimeBinder", "Binder");
-			AsBinderFlags = new PredefinedType (module, MemberKind.Enum, "ActionScript.RuntimeBinder", "CSharpBinderFlags");
+			AsUndefined = new PredefinedType (module, MemberKind.Class, "PlayScript", "Undefined");
+			AsCallSite = new PredefinedType (module, MemberKind.Class, "PlayScript", "CallSite");
+			AsCallSiteGeneric = new PredefinedType (module, MemberKind.Class, "PlayScript", "CallSite", 1);
+			AsExpressionType = new PredefinedType (module, MemberKind.Enum, "PlayScript", "ExpressionType");
+			AsBinder = new PredefinedType (module, MemberKind.Class, "PlayScript.RuntimeBinder", "Binder");
+			AsBinderFlags = new PredefinedType (module, MemberKind.Enum, "PlayScript.RuntimeBinder", "CSharpBinderFlags");
 			AsRegExp = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "RegExp");
 			AsXml = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "XML");
 

@@ -229,10 +229,10 @@ net_4_0_dirs := \
 	System.Data.Services.Client	\
 	System.Data.Services \
 	System.Json.Microsoft \
-	ActionScript.Dynamic \
-	ActionScript.Dynamic_aot \
-	ascorlib \
-	ascorlib_aot \
+	PlayScript.Dynamic \
+	PlayScript.Dynamic_aot \
+	pscorlib \
+	pscorlib_aot \
 	monodoc
 	
 net_4_0_only_dirs := \
