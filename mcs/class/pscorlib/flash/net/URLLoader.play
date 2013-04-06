@@ -53,7 +53,7 @@ package flash.net {
 		}
  	 	
 		public function load(request:URLRequest):void {
-			if (request) {
+			if (request != null) {
 				mRequest = request;
 			}
 
