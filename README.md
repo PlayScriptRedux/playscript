@@ -193,6 +193,14 @@ async function AccessTheWebAsync():Task.<int>
 }
 
 ```
+
+## PlayScript Google Group
+
+Please join the discussion on Google Groups here:
+
+https://groups.google.com/forum/?fromgroups#!forum/playscript
+
+
 # MONO README
 
 This is Mono.
