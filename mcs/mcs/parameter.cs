@@ -1377,7 +1377,12 @@ namespace Mono.CSharp {
 					}
 				}
 
-				if (!expr.IsNull && TypeSpec.IsReferenceType (parameter_type) && parameter_type.BuiltinType != BuiltinTypeSpec.Type.String) {
+				// ActionScript allows * and Object types to have default values as well.
+				bool param_is_as_obj = rc.FileType == Mono.CSharp.SourceFileType.PlayScript &&
+					(parameter_type.BuiltinType == Mono.CSharp.BuiltinTypeSpec.Type.Dynamic || 
+					 parameter_type.BuiltinType == Mono.CSharp.BuiltinTypeSpec.Type.Object);
+
+				if (!expr.IsNull && TypeSpec.IsReferenceType (parameter_type) && parameter_type.BuiltinType != BuiltinTypeSpec.Type.String && !param_is_as_obj) {
 					rc.Report.Error (1763, Location,
 						"Optional parameter `{0}' of type `{1}' can only be initialized with `null'",
 						p.Name, parameter_type.GetSignatureForError ());

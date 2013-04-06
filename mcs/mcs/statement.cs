@@ -1970,7 +1970,7 @@ namespace Mono.CSharp {
 		LocalBuilder builder;
 
 		// PlayScript - We need a copy of the type expression here to handle default initialization.
-		public FullNamedExpression typeExpr;
+		FullNamedExpression typeExpr;
 
 		public LocalVariable (Block block, string name, Location loc)
 		{

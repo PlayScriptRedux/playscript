@@ -15,7 +15,7 @@
     <DebugType>full</DebugType>
     <Optimize>False</Optimize>
     <OutputPath>bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;PLATFORM_MONOMAC</DefineConstants>
+    <DefineConstants>DEBUG;PLATFORM_MONOMAC;OPENGL</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
@@ -39,9 +39,7 @@
     <Reference Include="MonoMac" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Drawing" />
-    <Reference Include="zlib.net">
-      <HintPath>..\zlib.NET_104\bin\zlib.net.dll</HintPath>
-    </Reference>
+    <Reference Include="ICSharpCode.SharpZipLib" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -648,9 +646,12 @@
     <Compile Include="..\pscorlib\flash\display3D\textures\TextureBase.cs">
       <Link>flash\display3D\textures\TextureBase.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\flash\display3D\textures\SamplerState.cs">
+      <Link>flash\display3D\textures\SamplerState.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net_4_0\PlayScript.Dynamic_aot-net_4_0.csproj">
+    <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net_4_0.csproj">
       <Project>{0BACBE20-34DD-4E24-8B91-87970E8A23B9}</Project>
       <Name>PlayScript.Dynamic_aot-net_4_0</Name>
     </ProjectReference>

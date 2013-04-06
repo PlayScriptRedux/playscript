@@ -7033,6 +7033,7 @@ catch_clause
 
 		var lt = (Tokenizer.LocatedToken) $3;
 		c.Variable = new LocalVariable (current_block, lt.Value, lt.Location);
+		c.Variable.TypeExpr = c.TypeExpression;
 		current_block.AddLocalName (c.Variable);
 		
 		lbag.AddLocation (c, GetLocation ($2), GetLocation ($6));
