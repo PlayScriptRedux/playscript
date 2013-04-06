@@ -11,6 +11,7 @@
 ./flash/display3D/Program3D.cs
 ./flash/display3D/textures/CubeTexture.cs
 ./flash/display3D/textures/RectangleTexture.cs
+./flash/display3D/textures/SamplerState.cs
 ./flash/display3D/textures/Texture.cs
 ./flash/display3D/textures/TextureBase.cs
 ./flash/display3D/VertexBuffer3D.cs

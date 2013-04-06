@@ -419,8 +419,6 @@ namespace Mono.CSharp {
 			if (ec != null) {
 				if (this.Location.SourceFile != null) {
 					ec.FileType = this.Location.SourceFile.FileType;
-				} else {
-					ec.FileType = SourceFileType.CSharp;
 				}
 			}
 

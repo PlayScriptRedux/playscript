@@ -13,6 +13,7 @@
 //      limitations under the License.
 
 using flash.utils;
+using flash.display3D.textures;
 
 using System;
 using System.IO;
@@ -68,19 +69,17 @@ namespace flash.display3D {
 		}
 		
 		public void upload(ByteArray vertexProgram, ByteArray fragmentProgram) {
+
+			// create array to hold sampler states
+			var samplerStates = new SamplerState[16];
+
 			// convert shaders from AGAL to GLSL
-			var glslVertex = AGALConverter.ConvertToGLSL(vertexProgram);
-			var glslFragment = AGALConverter.ConvertToGLSL(fragmentProgram);
+			var glslVertex = AGALConverter.ConvertToGLSL(vertexProgram, null);
+			var glslFragment = AGALConverter.ConvertToGLSL(fragmentProgram, samplerStates);
 			// upload as GLSL
-			uploadFromGLSL(glslVertex, glslFragment);
+			uploadFromGLSL(glslVertex, glslFragment, samplerStates);
 		}
 
-		public int programId {
-			get {
-				return mProgramId;
-			}
-		}
-		
 		private string loadShaderSource (string filePath)
 		{
 			//var path = NSBundle.MainBundle.ResourcePath + Path.DirectorySeparatorChar + "GLSL";
@@ -97,7 +96,7 @@ namespace flash.display3D {
 			uploadFromGLSL(vertexShaderSource, fragmentShaderSource);
 		}
 
-		public void uploadFromGLSL (string vertexShaderSource, string fragmentShaderSource)
+		public void uploadFromGLSL (string vertexShaderSource, string fragmentShaderSource, SamplerState[] samplerStates = null)
 		{
 			// delete existing shaders
 			deleteShaders ();
@@ -147,11 +146,36 @@ namespace flash.display3D {
 			var infoLog = GL.GetProgramInfoLog (mProgramId);
 			if (!string.IsNullOrEmpty (infoLog)) {
 				Console.Write ("program: {0}", infoLog);
-				throw new Exception("Error linking program: " + infoLog);
 			}
 
 			// build uniform list
 			buildUniformList();
+
+			// process sampler states
+			mSamplerUsageMask = 0;
+			for (int i=0; i < mSamplerStates.Length; i++) {
+				// copy over sampler state from provided array
+				mSamplerStates[i] = (samplerStates!=null) ? samplerStates[i] : null;
+
+				// set sampler usage mask
+				if (mSamplerStates[i] != null) {
+					mSamplerUsageMask |= (1 << i);
+				}
+			}
+
+		}
+
+
+		internal void Use()
+		{
+			// use program
+			GL.UseProgram (mProgramId);
+			
+			// update texture units for all sampler uniforms
+			foreach (var sampler in mSamplerUniforms)
+			{
+				GL.Uniform1(sampler.Location, sampler.RegIndex);
+			}
 		}
 
 		public class Uniform
@@ -170,6 +194,7 @@ namespace flash.display3D {
 			mUniforms.Clear();
 			mVertexUniformLookup  = new Uniform[512];
 			mFragmentUniformLookup = new Uniform[512];
+			mSamplerUniforms.Clear();
 
 			int numActive = 0;
 			GL.GetProgram(mProgramId, ProgramParameter.ActiveUniforms, out numActive);
@@ -215,6 +240,13 @@ namespace flash.display3D {
 					// store in fragment lookup table
 					mFragmentUniformLookup[uniform.RegIndex] = uniform;
 				}
+				else if (uniform.Name.StartsWith("sampler"))
+				{
+					// sampler uniform
+					uniform.RegIndex = int.Parse (uniform.Name.Substring(7));
+					// add to list of sampler uniforms
+					mSamplerUniforms.Add (uniform);
+				}
 
 				Console.WriteLine ("{0} name:{1} type:{2} size:{3} location:{4}", i, uniform.Name, uniform.Type, uniform.Size, uniform.Location);
 			}
@@ -230,6 +262,15 @@ namespace flash.display3D {
 			}
 		}
 
+		public SamplerState getSamplerState(int sampler)
+		{
+			return mSamplerStates[sampler];
+		}
+
+		public int samplerUsageMask {
+			get {return mSamplerUsageMask;}
+		}
+
 		private int 			   mVertexShaderId = 0;
 		private int 			   mFragmentShaderId = 0;
 		private int 			   mProgramId = 0;
@@ -239,8 +280,13 @@ namespace flash.display3D {
 
 		// uniform lookup tables
 		private List<Uniform>	   mUniforms = new List<Uniform>();
+		private List<Uniform>      mSamplerUniforms = new List<Uniform>();
 		private Uniform[]		   mVertexUniformLookup;
 		private Uniform[]		   mFragmentUniformLookup;
+
+		// sampler state information
+		private SamplerState[]     mSamplerStates = new SamplerState[16];
+		private int				   mSamplerUsageMask = 0; 				
 
 #else
 

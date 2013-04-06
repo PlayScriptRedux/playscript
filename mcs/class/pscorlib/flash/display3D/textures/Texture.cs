@@ -74,34 +74,12 @@ namespace flash.display3D.textures {
 		
 		public void uploadFromBitmapData (BitmapData source, uint miplevel = 0)
 		{
-			if (miplevel != 0) {
-				throw new NotImplementedException();
-			}
-
 			// Bind the texture
-			GL.BindTexture (TextureTarget.Texture2D, textureId);
-			
-			// Bind the PBO
-			//GL.BindBuffer (BufferTarget.PixelUnpackBuffer, mBufferId);
-			//GL.BufferData (BufferTarget.PixelUnpackBuffer, new IntPtr (mWidth * mHeight * sizeof(System.UInt32)), source.getRawData(), BufferUsageHint.StaticDraw);
-			//GL.TexImage2D (TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, mWidth, mHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
-			//GL.BindBuffer (BufferTarget.PixelUnpackBuffer, 0);
-
-#if PLATFORM_MONOMAC
-			GL.PixelStore (PixelStoreParameter.UnpackRowLength, 0);
-#elif PLATFORM_MONOTOUCH
-			GL.PixelStore (PixelStoreParameter.UnpackAlignment, 0);
-#endif
-			GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, mWidth, mHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte,source.getRawData());
-
-			// Setup texture parameters
-			GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)All.Linear);
-			GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)All.Linear);
-			GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)All.ClampToEdge);
-			GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)All.ClampToEdge);
+			GL.BindTexture (textureTarget, textureId);
+			GL.TexImage2D(textureTarget, (int)miplevel, PixelInternalFormat.Rgba, mWidth, mHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte,source.getRawData());
 
 			// unbind texture and pixel buffer
-			GL.BindTexture (TextureTarget.Texture2D, 0);
+			GL.BindTexture (textureTarget, 0);
 		}
 		
 		public void uploadFromByteArray(ByteArray data, uint byteArrayOffset, uint miplevel = 0) {
@@ -118,8 +96,6 @@ namespace flash.display3D.textures {
 		private readonly string 	mFormat;
 		private readonly bool 		mOptimizeForRenderToTexture;
 		private readonly int    	mStreamingLevels;
-
-		// private int             	mBufferId;
 
 #else
 

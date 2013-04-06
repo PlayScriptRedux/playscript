@@ -1560,7 +1560,7 @@ namespace Mono.CSharp {
 				AnonymousMethodExpression ame = (AnonymousMethodExpression) expr;
 				if (ec.FileType == SourceFileType.PlayScript && 
 				    (target_type == ec.BuiltinTypes.Dynamic || target_type == ec.BuiltinTypes.Delegate)) {
-					var del_type = Delegate.CreateDelegateType (ec, ame.asParameters, ame.asReturnType.ResolveAsType(ec), loc);
+					var del_type = Delegate.CreateDelegateType (ec, ame.AsParameters, ame.AsReturnType.ResolveAsType(ec), loc);
 					return new Cast(new TypeExpression(del_type, loc), expr, loc).Resolve(ec);
 				}
 				Expression am = ame.Compatible (ec, target_type);

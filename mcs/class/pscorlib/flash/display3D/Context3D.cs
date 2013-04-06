@@ -166,6 +166,10 @@ namespace flash.display3D {
 		}
  	 	
 		public void drawTriangles(IndexBuffer3D indexBuffer, int firstIndex = 0, int numTriangles = -1) {
+
+			// flush sampler state before drawing
+			flushSamplerState();
+
 			int count = (numTriangles == -1) ? indexBuffer.numIndices : (numTriangles * 3);
 			GL.BindBuffer(BufferTarget.ElementArrayBuffer, indexBuffer.id);
 			GL.DrawElements(BeginMode.Triangles, count, DrawElementsType.UnsignedInt, firstIndex );
@@ -290,7 +294,7 @@ namespace flash.display3D {
 		public void setProgram (Program3D program)
 		{
 			if (program != null) {
-				GL.UseProgram (program.programId);
+				program.Use();
 			} else {
 				// ?? 
 				throw new NotImplementedException();
@@ -298,6 +302,9 @@ namespace flash.display3D {
 
 			// store current program
 			mProgram = program;
+
+			// mark all samplers that this program uses as dirty
+			mSamplerDirty |= mProgram.samplerUsageMask;
 		}
  	 	
 		public void setProgramConstantsFromByteArray(string programType, int firstRegister, 
@@ -401,6 +408,9 @@ namespace flash.display3D {
 				int tempIndex = 0;
 				for (int i=0; i < uniform.RegCount; i++)
 				{
+					// debug print the constant data
+//					Console.WriteLine ("{5}[{0}]: {1}, {2}, {3}, {4}", register + i, data[dataIndex+0], data[dataIndex+1], data[dataIndex+2], data[dataIndex+3], programType);
+
 					// convert vector4 double->float
 					mTemp[tempIndex++] = (float)data[dataIndex++];
 					mTemp[tempIndex++] = (float)data[dataIndex++];
@@ -492,12 +502,14 @@ namespace flash.display3D {
 
 		public void setTextureAt (int sampler, TextureBase texture)
 		{
-			if (texture != null) {
-				GL.ActiveTexture(TextureUnit.Texture0 + sampler);
-				GL.BindTexture (texture.textureTarget, texture.textureId);
-			} else {
-				GL.ActiveTexture(TextureUnit.Texture0 + sampler);
-				GL.BindTexture (TextureTarget.Texture2D, 0);
+			// see if texture changed
+			if (mSamplerTextures[sampler] != texture)
+			{
+				// set sampler texture
+				mSamplerTextures[sampler] = texture;
+
+				// set flag indicating that this sampler is dirty
+				mSamplerDirty |= (1 << sampler);
 			}
 		}
 
@@ -534,6 +546,62 @@ namespace flash.display3D {
 			}
 		}
 
+		/// <summary>
+		/// This method flushes all sampler state. Sampler state comes from two sources, the context.setTextureAt() 
+		/// and the Program3D's filtering parameters that are specified per tex instruction. Due to the way that GL works,
+		/// the filtering parameters need to be associated with bound textures so that is performed here before drawing.
+		/// </summary>
+		private void flushSamplerState()
+		{
+			int sampler=0;
+			// loop until all dirty samplers have been processed
+			while (mSamplerDirty != 0) {
+
+				// determine if sampler is dirty
+				if ((mSamplerDirty & (1 << sampler)) != 0) {
+
+					// activate texture unit for GL
+					GL.ActiveTexture(TextureUnit.Texture0 + sampler);
+
+					// get texture for sampler
+					TextureBase texture = mSamplerTextures[sampler];
+					if (texture != null) {
+						// bind texture 
+						GL.BindTexture (texture.textureTarget, texture.textureId);
+
+						// get sampler state from program
+						SamplerState state = mProgram.getSamplerState(sampler);
+						if (state != null) {
+							var target = texture.textureTarget;
+							GL.TexParameter (target, TextureParameterName.TextureMinFilter, (int)state.MinFilter);
+							GL.TexParameter (target, TextureParameterName.TextureMagFilter, (int)state.MagFilter);
+							GL.TexParameter (target, TextureParameterName.TextureWrapS, (int)state.WrapModeS);
+							GL.TexParameter (target, TextureParameterName.TextureWrapT, (int)state.WrapModeT);
+							if (state.LodBias != 0.0) {
+								throw new NotImplementedException("Lod bias setting not supported yet");
+							}
+						}
+						else
+						{
+							if (enableErrorChecking) {
+								Console.WriteLine("warning: no sampler state found for sampler {0}", sampler);
+							}
+						}
+					} else {
+						// texture is null so unbind texture
+						GL.BindTexture (TextureTarget.Texture2D, 0);
+					}
+
+					// clear dirty bit
+					mSamplerDirty &= ~(1<<sampler);
+				}
+
+				// next sampler
+				sampler++;
+			}
+
+		}
+
 		// stage3D that owns us
 		private readonly Stage3D mStage3D;
 
@@ -542,6 +610,10 @@ namespace flash.display3D {
 	
 		// current program
 		private Program3D mProgram;
+
+		// sampler settings
+		private int 				mSamplerDirty = 0;
+		private TextureBase[]		mSamplerTextures = new TextureBase[16];
 
 		// settings for backbuffer
 		private int  mDefaultFrameBufferId;

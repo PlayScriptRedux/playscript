@@ -16,7 +16,6 @@ package flash.utils {
 	import System.*;
 	import System.IO.*;
 	import System.IO.Compression.*;
-	import zlib.*;
 
 	public class ByteArray implements IDataInput, IDataOutput {
 
@@ -210,10 +209,12 @@ package flash.utils {
 			case null:
 			case CompressionAlgorithm.ZLIB:
 			{
-				var dc:zlib.ZInputStream = new ZInputStream(mStream);
+				// create inflater
+				var inflater =  new ICSharpCode.SharpZipLib.Zip.Compression.Streams.InflaterInputStream(mStream);
 
+				// copy stream				
 				var data:int;
-				while ( (data=dc.Read()) >= 0)
+				while ( (data=inflater.ReadByte()) >= 0)
 				{
 					outStream.WriteByte( byte(data) );
 				}
