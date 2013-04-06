@@ -46,7 +46,11 @@ namespace flash.display3D.textures {
 		/// </summary>
 		public void generateMipmaps() {
 			GL.BindTexture(mTextureTarget, mTextureId);
+#if PLATFORM_MONOTOUCH
 			GL.GenerateMipmap(mTextureTarget);
+#else
+			throw new System.NotImplementedException();
+#endif
 		}
 
 		public int	 		 textureId 		{get {return mTextureId;}}
