@@ -38,8 +38,8 @@
     <Reference Include="System.Core" />
     <Reference Include="OpenTK-1.0" />
     <Reference Include="System.Xml" />
-    <Reference Include="zlib.net">
-      <HintPath>..\zlib.NET_104\bin\zlib.net.dll</HintPath>
+    <Reference Include="ICSharpCode.SharpZipLib">
+      <HintPath>..\lib\net_4_5\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -652,6 +652,9 @@
     </Compile>
     <Compile Include="..\pscorlib\flash\display3D\textures\TextureBase.cs">
       <Link>flash\display3D\textures\TextureBase.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\display3D\textures\SamplerState.cs">
+      <Link>flash\display3D\textures\SamplerState.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>
