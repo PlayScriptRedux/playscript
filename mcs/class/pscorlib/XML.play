@@ -254,7 +254,7 @@ package {
 		}
 		
 		public override function toString():String {
-			throw new System.NotImplementedException();
+            return super.toString();
 		}
 		
 		public function toXMLString():String {
