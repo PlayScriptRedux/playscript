@@ -1,48 +1,32 @@
 package
 {
-	// Test local variable hoisting.
+	import flash.display.Sprite;
+	import flash.events.Event;
+
+	// Delegate and closure support.
 
 	public class Test 
 	{
 
 		public static function Main():void {
-		}
+			
+			trace("blah");
+			
+			// Apply should work.			
+			function foo():void { 
+				trace("foo"); 
+			}
+			foo.apply(null, null);
 
-		public static function foo(qqq:Object=""):void {
-
-			// This should generate a warning, but work.
-			i = 100;
-
+			// Using the function id declared in parent block should work.
+			var s:Sprite;
+ 			function onEvent(event:Event):void
 			{
-				{
-					{
-						// This should be hoisted to top block.
-						var i:int = 100;
-					}
-				}
+				s.removeEventListener("eventName", onEvent);
 			}
-
-			// This should generate a warning, but work.
-			var i:int = 200;
-
-			try {
-
-			} catch (e:Error) {
-				trace("err1");
-			}
-
-			try {
-
-			} catch (e:Error) {
-				trace("err2");
-			}
-
-
-			function foo():void {
-			}
-
+		
 		}
-
+		
 	}
 
 }

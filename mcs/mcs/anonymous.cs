@@ -934,7 +934,7 @@ namespace Mono.CSharp {
 
 		public ParametersBlock Block;
 
-		// PlayScript requires us to remember both parameters and return type./
+		// PlayScript requires us to remember both parameters and return type.  (Will be null in C#)
 		public ParametersCompiled AsParameters;
 		public FullNamedExpression AsReturnType;
 

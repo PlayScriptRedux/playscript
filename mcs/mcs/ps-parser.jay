@@ -4642,7 +4642,8 @@ local_function_statement
 		var lt = (Tokenizer.LocatedToken) $2;
 		var anonMethod = end_anonymous ((ParametersBlock) $10);
 		var li = new LocalVariable (current_block.ParametersBlock.TopBlock, lt.Value, lt.Location);
-		var decl = new BlockVariableDeclaration(new VarExpr(GetLocation($1)), li);
+		var type = Delegate.CreateDelegateTypeExpression(compiler.BuiltinTypes, anonMethod.AsParameters, anonMethod.AsReturnType, GetLocation($1));
+		var decl = new BlockVariableDeclaration(type, li);
 		decl.Initializer = anonMethod;
 		current_block.AddLocalName (li);
 		current_block.ParametersBlock.TopBlock.AddScopeStatement (decl);	
@@ -4662,7 +4663,8 @@ local_function_statement
 	    var lt = (Tokenizer.LocatedToken) $3;
 		var anonMethod = end_anonymous ((ParametersBlock) $11);
 		var li = new LocalVariable (current_block.ParametersBlock.TopBlock, lt.Value, lt.Location);
-		var decl = new BlockVariableDeclaration(new VarExpr(GetLocation($1)), li);
+		var type = Delegate.CreateDelegateTypeExpression(compiler.BuiltinTypes, anonMethod.AsParameters, anonMethod.AsReturnType, GetLocation($1));
+		var decl = new BlockVariableDeclaration(type, li);
 		decl.Initializer = anonMethod;
 		current_block.AddLocalName (li);
 		current_block.ParametersBlock.TopBlock.AddScopeStatement (decl);	

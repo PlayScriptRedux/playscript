@@ -95,6 +95,34 @@ namespace Mono.CSharp {
 			}
 		}
 
+		public static FullNamedExpression CreateDelegateTypeExpression (BuiltinTypes builtinTypes, ParametersCompiled parameters, FullNamedExpression retType, Location loc){
+			bool hasParams = parameters != null && parameters.Count > 0;
+			int paramCount = hasParams ? parameters.Count : 0;
+			bool hasRetType = !(retType is TypeExpression && ((TypeExpression)retType).Type == builtinTypes.Void);
+			int typeParamCount = paramCount;
+			if (hasRetType)
+				typeParamCount++;
+			TypeArguments typeArgs = null;
+			if (typeParamCount > 0) {
+				var typeArgArray = new FullNamedExpression[typeParamCount];
+				for (var i = 0; i < paramCount; i++) {
+					if (i < paramCount) {
+						var param = parameters.FixedParameters[i] as Parameter;
+						typeArgArray[i] = param.TypeExpression;
+					} else {
+						typeArgArray[i] = retType;
+					}
+				}
+				typeArgs = new TypeArguments (typeArgArray);
+			}
+			if (!hasRetType) {
+				return new MemberAccess(new SimpleName("System", loc), "Action", typeArgs, loc);
+			} else {
+				return new MemberAccess(new SimpleName("System", loc), "Func", typeArgs, loc);
+			}
+		}
+
+
 		public static TypeSpec CreateDelegateTypeFromMethodSpec (ResolveContext rc, MethodSpec ms, Location loc)
 		{
 			return CreateDelegateType (rc, ms.Parameters, ms.ReturnType, loc);

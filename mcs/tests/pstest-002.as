@@ -1,33 +1,48 @@
 package
 {
-	// Test local variable hoisting in AS
+	// Test local variable hoisting.
 
 	public class Test 
 	{
-		public static function Main():void {
 
-			// This should generate a warning
+		public static function Main():void {
+		}
+
+		public static function foo(qqq:Object=""):void {
+
+			// This should generate a warning, but work.
 			i = 100;
-			j = 40;
-			trace(k);
 
 			{
 				{
 					{
-						// This should declare i for outer blocks, but generate a warning
-						var i:int = 200;
-						var j:int = 300, k:Number = 400.0;
+						// This should be hoisted to top block.
+						var i:int = 100;
 					}
 				}
 			}
 
-			trace(i);
-			trace(j);
-			trace(k);
+			// This should generate a warning, but work.
+			var i:int = 200;
 
-			// This should generate a warning
-			var i:int = 300;
+			try {
+
+			} catch (e:Error) {
+				trace("err1");
+			}
+
+			try {
+
+			} catch (e:Error) {
+				trace("err2");
+			}
+
+
+			function foo():void {
+			}
+
 		}
+
 	}
 
 }
