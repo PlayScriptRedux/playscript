@@ -58,6 +58,9 @@ You can download the current PlayScript mono framework binaries here:
 
 Windows: (Coming)
 
+The mono framework folder includes the entire mono SDK, tools, and libraries.  To use the framework, you must install Xamarin Studio, and follow the
+instructions (below) to set the PlayScript mono framework as the default framework.
+
 #### Building From Source
 
 PlayScript is simply part of the regular Mono build and the MCS compiler build by Mono will compile ActionScript and PlayScript .as and .play files.
