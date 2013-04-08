@@ -6173,9 +6173,7 @@ block_variable_declaration
 	: VAR identifier_inside_body COLON type 
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;
-		var li = new LocalVariable (current_block, lt.Value, lt.Location);
-		li.TypeExpr = (FullNamedExpression) $4;
-		current_block.AddLocalName (li);
+		var li = GetOrCreateLocalVariable (current_block, lt.Value, 0, (FullNamedExpression) $4, lt.Location);
 		current_variable = new BlockVariableDeclaration ((FullNamedExpression) $4, li);
 	  }
 	  opt_local_variable_initializer opt_variable_declarators stmnt_end_semicolon
@@ -6187,8 +6185,7 @@ block_variable_declaration
 	| VAR identifier_inside_body 
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;
-		var li = new LocalVariable (current_block, lt.Value, lt.Location);
-		current_block.AddLocalName (li);
+		var li = GetOrCreateLocalVariable (current_block, lt.Value, 0, null, lt.Location);
 		current_variable = new BlockVariableDeclaration (new VarExpr (GetLocation($1)), li);
 	  }
 	  opt_local_variable_initializer opt_variable_declarators stmnt_end_semicolon
@@ -6200,9 +6197,7 @@ block_variable_declaration
 	| CONST identifier_inside_body COLON type 
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;
-		var li = new LocalVariable (current_block, lt.Value, LocalVariable.Flags.Constant, lt.Location);
-		li.TypeExpr = (FullNamedExpression) $4;
-		current_block.AddLocalName (li);
+		var li = GetOrCreateLocalVariable (current_block, lt.Value, LocalVariable.Flags.Constant, null, lt.Location);
 		current_variable = new BlockConstantDeclaration ((FullNamedExpression) $4, li);
 	  }
 	  const_variable_initializer opt_const_declarators stmnt_end_semicolon
@@ -6256,43 +6251,39 @@ variable_declarator
 	: COMMA identifier_inside_body
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;	  
-		var li = new LocalVariable (current_variable.Variable, lt.Value, lt.Location);
-		li.TypeExpr = current_variable.TypeExpression;		
+		var li = GetOrCreateLocalVariable (current_variable.Variable.Block, lt.Value, 
+			current_variable.Variable.DeclFlags, current_variable.TypeExpression, lt.Location);
 		var d = new BlockVariableDeclaration.Declarator (li, null);
 		current_variable.AddDeclarator (d);
-		current_block.AddLocalName (li);
 	  	lbag.AddLocation (d, GetLocation ($1));
 	  }
 	| COMMA identifier_inside_body ASSIGN block_variable_initializer
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;	  
-		var li = new LocalVariable (current_variable.Variable, lt.Value, lt.Location);
-		li.TypeExpr = current_variable.TypeExpression;
+		var li = GetOrCreateLocalVariable (current_variable.Variable.Block, lt.Value, 
+			current_variable.Variable.DeclFlags, current_variable.TypeExpression, lt.Location);
 		var d = new BlockVariableDeclaration.Declarator (li, (Expression) $4);
 		current_variable.AddDeclarator (d);
-		current_block.AddLocalName (li);
 	  	lbag.AddLocation (d, GetLocation ($1), GetLocation ($3));
 	  }
 	| COMMA identifier_inside_body COLON type
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;	  
-		var li = new LocalVariable (current_variable.Variable, lt.Value, lt.Location);
-		li.TypeExpr = (FullNamedExpression) $4;		
+		var li = GetOrCreateLocalVariable (current_variable.Variable.Block, lt.Value, 
+			current_variable.Variable.DeclFlags, (FullNamedExpression) $4, lt.Location);
 		var d = new BlockVariableDeclaration.Declarator (li, null, (FullNamedExpression) $4);
 		d.Location = GetLocation($2);
 		current_variable.AddDeclarator (d);
-		current_block.AddLocalName (li);
 	  	lbag.AddLocation (d, GetLocation ($1));
 	  }
 	| COMMA identifier_inside_body COLON type ASSIGN block_variable_initializer
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;	  
-		var li = new LocalVariable (current_variable.Variable, lt.Value, lt.Location);
-		li.TypeExpr = (FullNamedExpression) $4;		
+		var li = GetOrCreateLocalVariable (current_variable.Variable.Block, lt.Value, 
+			current_variable.Variable.DeclFlags, (FullNamedExpression) $4, lt.Location);
 		var d = new BlockVariableDeclaration.Declarator (li, (Expression) $6, (FullNamedExpression) $4);
 		d.Location = GetLocation($2);
 		current_variable.AddDeclarator (d);
-		current_block.AddLocalName (li);
 	  	lbag.AddLocation (d, GetLocation ($1), GetLocation ($5));
 	  }		  
 	;
@@ -6322,10 +6313,10 @@ const_declarator
 	: COMMA identifier_inside_body ASSIGN constant_initializer_expr
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;	  
-		var li = new LocalVariable (current_block, lt.Value, LocalVariable.Flags.Constant, lt.Location);
+		var li = GetOrCreateLocalVariable (current_block, lt.Value, 
+			LocalVariable.Flags.Constant, current_variable.TypeExpression, lt.Location);
 		var d = new BlockVariableDeclaration.Declarator (li, (Expression) $4);
 		current_variable.AddDeclarator (d);
-		current_block.AddLocalName (li);
 	  	lbag.AddLocation (d, GetLocation ($1), GetLocation ($3));
 	  }
 	;
@@ -6737,9 +6728,9 @@ for_initializer
 	: VAR identifier_inside_body COLON type
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;
-		var li = new LocalVariable (current_block, lt.Value, lt.Location);
-		current_block.AddLocalName (li);
-		current_variable = new BlockVariableDeclaration ((FullNamedExpression) $4, li);
+		var type = (FullNamedExpression) $4;
+		var li = GetOrCreateLocalVariable (current_block, lt.Value, 0, type, lt.Location);
+		current_variable = new BlockVariableDeclaration (type, li);
 	  }
 	  opt_local_variable_initializer opt_variable_declarators
 	  {
@@ -8370,6 +8361,32 @@ Statement ConvertExpressionToStatement(Expression ex)
 Expression MakeMonoSimdType(string typeName, Location loc)
 {
 	return new MemberAccess(new MemberAccess(new SimpleName("Mono", loc), "Simd", loc), typeName, loc);
+}
+
+LocalVariable GetOrCreateLocalVariable(Block block, string name, LocalVariable.Flags flags, FullNamedExpression typeExpr, Location loc)
+{
+	INamedBlockVariable existing = null;
+	LocalVariable li = null;
+
+	if (!parsing_playscript) {
+		if (block.ParametersBlock.TopBlock.GetLocalName (name, block, ref existing)) {
+			if (existing is LocalVariable) {
+				li = existing as LocalVariable;
+				if (li.TypeExpr != null && existing.TypeExpr != null && li.TypeExpr.Equals (existing.TypeExpr)) {
+					report.Warning (7138, 1, loc, "Variable is declared more than once.");
+					li.DeclFlags |= LocalVariable.Flags.AsIgnoreMultiple;
+					return li;
+				}
+			}
+		}
+	}
+	
+	li = new LocalVariable(block, name, flags, loc);
+	li.TypeExpr = typeExpr;
+
+	block.AddLocalName (li);
+	
+	return li;
 }
 
 string GetExpecting ()

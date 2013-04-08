@@ -6,9 +6,6 @@ package
 	{
 
 		public static function Main():void {
-		}
-
-		public static function foo(qqq:Object=""):void {
 
 			// This should generate a warning, but work.
 			i = 100;
@@ -25,21 +22,25 @@ package
 			// This should generate a warning, but work.
 			var i:int = 200;
 
+			// These two declarations should compile, and be the same variable.
 			try {
-
 			} catch (e:Error) {
 				trace("err1");
 			}
-
 			try {
-
 			} catch (e:Error) {
 				trace("err2");
 			}
 
-
-			function foo():void {
-			}
+			// The var "a" should be set to two different values but be the same variable.
+            {
+                var a:int = 1;
+                trace(a);       // prints 1
+            }
+            {
+                var a:int = 2;
+                trace(a);       // should print 2
+            }
 
 		}
 

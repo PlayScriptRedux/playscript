@@ -2553,7 +2553,7 @@ namespace Mono.CSharp {
 								if (variable is LocalVariable) {
 									var locVar = variable as LocalVariable;
 									if (locVar.Type == null && locVar.TypeExpr != null) {
-										locVar.AsUsedBeforeDeclaration = true;
+										locVar.DeclFlags |= LocalVariable.Flags.AsIgnoreMultiple;
 										locVar.Type = locVar.TypeExpr.ResolveAsType(rc);
 									}
 								}

@@ -1951,10 +1951,10 @@ namespace Mono.CSharp {
 			UsingVariable = 1 << 7,
 //			DefinitelyAssigned = 1 << 8,
 			IsLocked = 1 << 9,
-			AsUsedBeforeDeclaration = 1 << 10,
+			AsIgnoreMultiple = 1 << 10,  // ActionScript: Should ignore multiple decls
 
 			ReadonlyMask = ForeachVariable | FixedVariable | UsingVariable,
-			CreateBuilderMask = CompilerGenerated | AsUsedBeforeDeclaration
+			CreateBuilderMask = CompilerGenerated | AsIgnoreMultiple
 		}
 
 		TypeSpec type;
@@ -2115,15 +2115,12 @@ namespace Mono.CSharp {
 			}
 		}
 
-		// This local variable was used before it was declared.  Not an error in PlayScript, but
-		// we have to make it work in .NET.
-		public bool AsUsedBeforeDeclaration {
-			get { return (flags & Flags.AsUsedBeforeDeclaration) != 0; }
+		public Flags DeclFlags {
+			get {
+				return flags;
+			}
 			set {
-				if (value) 
-					flags |= Flags.AsUsedBeforeDeclaration;
-				else 
-					flags &= ~Flags.AsUsedBeforeDeclaration;
+				flags = value;
 			}
 		}
 
@@ -3559,10 +3556,16 @@ namespace Mono.CSharp {
 				existing_list = (List<INamedBlockVariable>) value;
 			}
 
+			var variable_block = li.Block.Explicit;
+
+			// Check if we're ActionScript..
+			bool isActionScript = variable_block != null && variable_block.loc.SourceFile != null && 
+				variable_block.loc.SourceFile.FileType == SourceFileType.PlayScript && 
+				!variable_block.loc.SourceFile.PsExtended;
+
 			//
 			// A collision checking between local names
 			//
-			var variable_block = li.Block.Explicit;
 			for (int i = 0; i < existing_list.Count; ++i) {
 				existing = existing_list[i];
 				Block b = existing.Block.Explicit;
@@ -3571,21 +3574,18 @@ namespace Mono.CSharp {
 				if (variable_block == b) {
 
 					// If we're ActionScript and two local vars are declared with identical 
-					// declarations, we're okay with that
-					if (b.loc.SourceFile != null && 
-					    b.loc.SourceFile.FileType == SourceFileType.PlayScript && 
-					    !b.loc.SourceFile.PsExtended && 
-					    li.TypeExpr != null && existing.TypeExpr != null) {
-					
-						if (li.TypeExpr.Equals (existing.TypeExpr)) {
-							li.Block.ParametersBlock.TopBlock.Report.Warning (7138, 1, li.Location,
-								"Variable is declared more than once.");
-							return;
-						}
+					// declarations, we return the previous declaration var info and discard ours.
+					if (isActionScript && li.TypeExpr != null && existing.TypeExpr != null && 
+					    li.TypeExpr.Equals (existing.TypeExpr)) {
+
+						li.Block.ParametersBlock.TopBlock.Report.Warning (7138, 1, li.Location,
+							"Variable is declared more than once.");
+
+						return;
 					} 
 
 					li.Block.Error_AlreadyDeclared (name, li);
-					break;
+					return;
 				}
 
 				// Collision with parent
@@ -3594,7 +3594,7 @@ namespace Mono.CSharp {
 					if (parent == b) {
 						li.Block.Error_AlreadyDeclared (name, li, "parent or current");
 						i = existing_list.Count;
-						break;
+						return;
 					}
 				}
 
@@ -3604,7 +3604,7 @@ namespace Mono.CSharp {
 						if (variable_block == b) {
 							li.Block.Error_AlreadyDeclared (name, li, "child");
 							i = existing_list.Count;
-							break;
+							return;
 						}
 					}
 				}
