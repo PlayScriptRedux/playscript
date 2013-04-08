@@ -10,23 +10,23 @@ The PlayScript compiler also targets both C++ and JavaScript (similar to the Hax
 
 In addition to accurate ActionScript language support, the PlayScript compiler also supports a new language - PlayScript - which is derived from both C# and ActionScript.  This new language supports all of the features of C#, including generics, properties, events, value types, operator overloading, async programming, linq, while at the same time being upwards compatible with ActionScript.  The PlayScript language can be used to target both web and mobile (via Xamarin and JavaScript), and existing Flash code can easily be converted to PlayScript code by simply renaming files from .as to .play, and fixing a few issues related to the stricter syntax and semantics of the PlayScript language.
 
-Finally, the PlayScript runtime supports a full Stage3D compatible implementation of the Flash runtime allowing games that are Stage3D compliant to run with very minor modifications on mobile via the Xamarin/Mono runtime.  A subset of the "display" library is implemented to support Stage3D libraries such as Starling, Away3D, and Feathers, though there are no plans at the present time implement the full Flash display system.  
+Finally, the PlayScript runtime supports a full Stage3D compatible implementation of the Flash runtime allowing games that are Stage3D compliant to run with very minor modifications on mobile via the Xamarin/Mono runtime.  A subset of the "display" library is implemented to support Stage3D libraries such as Starling, Away3D, and Feathers, though there are no plans at the present time to implement the full Flash display system.  
 
-The PlayScript compiler and runtime provides a complete toolset for building and running ActionScript based games on mobile via the Xamarin Mono runtime, on the web via Adobe Flash or  JavaScript/HTML5.
+The PlayScript compiler and runtime provides a complete toolset for building and running ActionScript based games on mobile via the Xamarin Mono runtime, on the web via Adobe Flash or JavaScript/HTML5.
 
 # How is PlayScript Implemented?
 
 The PlayScript compiler is implemented as an additional front end to the Mono MCS compiler.   Installing the PlayScript version of the Mono framework allows you to compile, with the MCS compiler all three langauges: C#, ActionScript, and PlayScript simply by adding files with .cs, .as, and .play file extensions to the MCS command line.
 
-Likewise with the Xamarin Studio IDE, pointing the Xamarin Studio ".NET Frameworks" peferences page selection to the PlayScript Mono framework allows you to simply add .as or .play files to any C# project, and compile them directly into your MonoTouch or Mono for Android project.  You can then compile ActionScript or PlayScript code and debug it on the device just as you would any C# code.  ActionScript code can directly call C# code, and vice versa.
+Likewise with the Xamarin Studio IDE, pointing the Xamarin Studio ".NET Frameworks" preferences page selection to the PlayScript Mono framework allows you to simply add .as or .play files to any C# project, and compile them directly into your MonoTouch or Mono for Android project.  You can then compile ActionScript or PlayScript code and debug it on the device just as you would any C# code.  ActionScript code can directly call C# code, and vice versa.
 
 # How is the Stage3D Flash Runtime Implemented?
 
-PlayScript includes two libraries: PlayScript.Dynamic_aot.dll, and pscorlib.dll, which implement the basic flash runtime and Stage3D over OpenGL.  Referencing these libraries (or the monotouch or mono for android versions of them) in your project in Xamarin Studio allows you to run existing Flash Stage3D code with no modifications.  (NOTE: A stubbed version of the flash "display" library is included, but is non functional except for various functionality in Bitmap, BitmapData, and TextField).
+PlayScript includes two libraries: PlayScript.Dynamic_aot.dll, and pscorlib.dll, which implement the basic flash runtime and Stage3D over OpenGL.  Referencing these libraries (or the Monotouch or Mono for Android versions of them) in your project in Xamarin Studio allows you to run existing Flash Stage3D code with no modifications.  (NOTE: A stubbed version of the flash "display" library is included, but is non functional except for various functionality in Bitmap, BitmapData, and TextField).
 
 # Current Status
 
-The PlayScript and ActionScript compiler front ends are fairly stable at this point (given that they are built on top of the very mature Mono compiler and runtime), but there are still several ActionScript language features that are not fully implemented, and certain constructs taht are not parsed or compiled as they are in ActionScript.  Work is ongoing to eliminate these last remaining issues and deliver full ActionScript compatibility.
+The PlayScript and ActionScript compiler front ends are fairly stable at this point (given that they are built on top of the very mature Mono compiler and runtime), but there are still several ActionScript language features that are not fully implemented, and certain constructs that are not parsed or compiled as they are in ActionScript.  Work is ongoing to eliminate these last remaining issues and deliver full ActionScript compatibility.
 
 ### ActionScript support
 
@@ -84,9 +84,9 @@ Also, the base pscorlib.dll and PlayScript.Dynamic.dll runtime libraries (minus 
 5. Click the "Set as Default" button.
 6. Exit Xamarin Studio, then restart.
 
-You should now be able to add .as Files and .play files to your projects and compile them.  Note that you must make sure the file is toggled to compile by selecting the "Properties" panel in Xamarin Studio and setting the "Build Action" to compile.
+You should now be able to add .as files and .play files to your projects and compile them.  Note that you must make sure the file is toggled to compile by selecting the "Properties" panel in Xamarin Studio and setting the "Build Action" to compile.
 
-(NOTE: A modified version of MonoDevelop should be available in the playsript-monodevelop repository that includes full support - including syntax highlighting for both .as and .play files.)
+(NOTE: A modified version of MonoDevelop should be available in the playscript-monodevelop repository that includes full support - including syntax highlighting for both .as and .play files.)
 
 
 ## Features:
@@ -101,7 +101,7 @@ You should now be able to add .as Files and .play files to your projects and com
 
 #### Advanced Tools Support 
 
-  * Complete tool support including Syntax Highlighting and intellisense in the MonoDevelop IDE.
+  * Complete tool support including Syntax Highlighting and Intellisense in the MonoDevelop IDE.
   * Source Debugging on all platforms (FlashBuilder for Flash).
   * Fast Release mode compiles and rapid iteration.
 
@@ -131,7 +131,7 @@ You should now be able to add .as Files and .play files to your projects and com
   * PlayScript does not support using blocks.
   * PlayScript does not support checked, unchecked.
   * PlayScript does not "presently" support unsafe code (though this will be added in the future).  Currently unsafe code can be added to mobile projects via C#.
-  * In PlayScript you may not directly access the base properties of Object (ToString(), GetType(), GetHashCode()) unless you cast an objet to a System.Object.  Doing this however will make your code incompatible with the C++ or JavaScript target backends.
+  * In PlayScript you may not directly access the base properties of Object (ToString(), GetType(), GetHashCode()) unless you cast an object to a System.Object.  Doing this however will make your code incompatible with the C++ or JavaScript target backends.
 
 
 ## License
@@ -294,7 +294,7 @@ This is Mono.
 	   If you are an anonymous user:
 		git clone git://github.com/mono/mono.git
 
-           If you are a Mono contributors with read/write privileges:
+           If you are a Mono contributor with read/write privileges:
 	        git clone git@github.com:mono/mono.git
 
 
@@ -405,7 +405,7 @@ This is Mono.
 	  	use, the default is the "included" value.
 	
 		included: 
-			This is the default value, and its
+			This is the default value, and it's
 	  		the most feature complete, it will allow Mono
 		  	to use typed allocations and support the
 		  	debugger.
@@ -535,7 +535,7 @@ This is Mono.
 
 	--with-libgdiplus=installed,sibling,<path>
 
-		This is used to configure where should Mono look for
+		This is used to configure where Mono should look for
 	  	libgdiplus when running the System.Drawing tests.
 
 		It defaults to `installed', which means that the
@@ -561,7 +561,7 @@ This is Mono.
 	--enable-minimal=LIST
 
 		Use this feature to specify optional runtime
-	  	components that you might not want to include.  This
+	  	components that you might not want to include. This
 	  	is only useful for developers embedding Mono that
 	  	require a subset of Mono functionality.
 
@@ -664,7 +664,7 @@ This is Mono.
 
 	--enable-big-arrays
 
-		This enables the use arrays whose indexes are larger
+		This enables the use of arrays whose indexes are larger
 		than Int32.MaxValue.   
 
 		By default Mono has the same limitation as .NET on
@@ -698,7 +698,7 @@ This is Mono.
 	--disable-dev-random
 
 		Mono uses /dev/random to obtain good random data for
-	  	any source that requires random numbers.   If your
+	  	any source that requires random numbers. If your
 	  	system does not support this, you might want to
 	  	disable it.
 
