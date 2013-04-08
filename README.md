@@ -52,6 +52,14 @@ The PlayScript and ActionScript compiler front ends are fairly stable at this po
 
 # How do I install PlayScript?
 
+You can download the current PlayScript mono framework binaries here:
+
+[Mac OSX 0.1.2 (Mono 3.0.8)](https://s3.amazonaws.com/playscript/playscript-mono-osx-0.1.2.dmg)
+
+Windows: (Coming)
+
+#### Building From Source
+
 PlayScript is simply part of the regular Mono build and the MCS compiler build by Mono will compile ActionScript and PlayScript .as and .play files.
 
 See the MONO build instructions below.

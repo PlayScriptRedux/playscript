@@ -27,6 +27,10 @@ package
 			{
 				s.removeEventListener("eventName", onEvent);
 			}
+			
+			// This should work
+            resume();
+            function resume():void {}			
 		
 		}
 		
