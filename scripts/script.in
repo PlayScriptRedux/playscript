@@ -1,2 +1,3 @@
 #!/bin/sh
-exec @bindir@/@mono_interp@ $MONO_OPTIONS @mono_instdir@/@framework_version@/@exe_name@.exe "$@"
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+exec $DIR/@mono_interp@ $MONO_OPTIONS $DIR/../lib/@framework_version@/@exe_name@.exe "$@"
