@@ -1,3 +1,4 @@
 #!/bin/sh
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-exec $DIR/@mono_interp@ $MONO_OPTIONS $DIR/../lib/@framework_version@/@exe_name@.exe "$@"
+BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+LIB_DIR=$BIN_DIR/../lib
+exec $BIN_DIR/@mono_interp@ $MONO_OPTIONS $LIB_DIR/mono/@framework_version@/@exe_name@.exe "$@"
