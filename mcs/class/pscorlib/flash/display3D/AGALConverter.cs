@@ -644,15 +644,15 @@ namespace flash.display3D
 					}
 					else
 					{
-						// they are using a vector4 as a mat33 so we need to construct a mat33 on the fly
-						// $$TODO there's probably a betetr way to handle this
-//						sb.AppendFormat("{0} = {1} * mat3({2}, {3}, {4}); // m33", dr.ToGLSL(), sr1.ToGLSL(), 
-						sb.AppendFormat("{0} = mat3({2}, {3}, {4}) * {1}; // m33", dr.ToGLSL(), sr1.ToGLSL(), 
-						                sr2.ToGLSL(false,0),
-						                sr2.ToGLSL(false,1), 
-						                sr2.ToGLSL(false,2) 
-						                ); 
-						map.Add(dr, RegisterUsage.Vector4);
+                        // compose the matrix multiply from dot products
+                        sr1.sourceMask = sr2.sourceMask = 7;
+                        sb.AppendFormat("{0} = vec3(dot({1},{2}), dot({1},{3}), dot({1},{4})); // m33", dr.ToGLSL(), sr1.ToGLSL(true), 
+                                        sr2.ToGLSL(true,0),
+                                        sr2.ToGLSL(true,1), 
+                                        sr2.ToGLSL(true,2) 
+                                        ); 
+
+                        map.Add(dr, RegisterUsage.Vector4);
 						map.Add(sr1, RegisterUsage.Vector4);
 						map.Add(sr2, RegisterUsage.Vector4, 0); 
 						map.Add(sr2, RegisterUsage.Vector4, 1); 
@@ -673,16 +673,16 @@ namespace flash.display3D
 					}
 					else
 					{
-						// they are using a vector4 as a mat44 so we need to construct a mat33 on the fly
-						// $$TODO there's probably a betetr way to handle this
-//						sb.AppendFormat("{0} = {1} * mat4({2}, {3}, {4}, {5}); // m44", dr.ToGLSL(), sr1.ToGLSL(), 
-						sb.AppendFormat("{0} = mat4({2}, {3}, {4}, {5}) * {1}; // m44", dr.ToGLSL(), sr1.ToGLSL(), 
-						                sr2.ToGLSL(false,0),
-						                sr2.ToGLSL(false,1), 
-						                sr2.ToGLSL(false,2),
-						                sr2.ToGLSL(false,3) 
-						                ); 
-						map.Add(dr, RegisterUsage.Vector4);
+                        // compose the matrix multiply from dot products
+                        sr1.sourceMask = sr2.sourceMask = 0xF;
+                        sb.AppendFormat("{0} = vec4(dot({1},{2}), dot({1},{3}), dot({1},{4}, dot({1},{5})); // m44", dr.ToGLSL(), sr1.ToGLSL(true), 
+                                        sr2.ToGLSL(true,0),
+                                        sr2.ToGLSL(true,1), 
+                                        sr2.ToGLSL(true,2), 
+                                        sr2.ToGLSL(true,3) 
+                                        ); 
+
+                        map.Add(dr, RegisterUsage.Vector4);
 						map.Add(sr1, RegisterUsage.Vector4);
 						map.Add(sr2, RegisterUsage.Vector4, 0); 
 						map.Add(sr2, RegisterUsage.Vector4, 1); 
@@ -707,15 +707,15 @@ namespace flash.display3D
 					}
 					else
 					{
-						// they are using a vector4 as a mat44 so we need to construct a mat33 on the fly
-						// $$TODO there's probably a betetr way to handle this
-						//						sb.AppendFormat("{0} = {1} * mat4({2}, {3}, {4}, vec4(0)); // m34", dr.ToGLSL(), sr1.ToGLSL(), 
-						sb.AppendFormat("{0} = mat4({2}, {3}, {4}, vec4(0) ) * {1}; // m34", dr.ToGLSL(), sr1.ToGLSL(), 
-						                sr2.ToGLSL(false,0),
-						                sr2.ToGLSL(false,1), 
-						                sr2.ToGLSL(false,2)
-						                ); 
-						map.Add(dr, RegisterUsage.Vector4);
+                        // compose the matrix multiply from dot products
+                        sr1.sourceMask = sr2.sourceMask = 0xF;
+                        sb.AppendFormat("{0} = vec3(dot({1},{2}), dot({1},{3}), dot({1},{4}); // m34", dr.ToGLSL(), sr1.ToGLSL(true), 
+                                        sr2.ToGLSL(true,0),
+                                        sr2.ToGLSL(true,1), 
+                                        sr2.ToGLSL(true,2)
+                                        ); 
+
+                        map.Add(dr, RegisterUsage.Vector4);
 						map.Add(sr1, RegisterUsage.Vector4);
 						map.Add(sr2, RegisterUsage.Vector4, 0); 
 						map.Add(sr2, RegisterUsage.Vector4, 1); 
