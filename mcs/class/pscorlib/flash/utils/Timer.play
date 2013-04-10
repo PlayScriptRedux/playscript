@@ -100,14 +100,16 @@ package flash.utils {
 			}
 		}
 		
-		public static function advanceAllTimers(time:Number):void 
+        // advances all active Timer objects by the delta time specified
+        // the game can call this directly giving it the delta time passed per frame
+		public static function advanceAllTimersWithTimeDelta(deltaTimeMS:Number):void 
 		{
 			// iterate through all timers and advance their time
 			// note that we clone the array here to deal with timers that add timers or timers that must be removed
 			for each (var timer:Timer in sActiveTimerList.ToArray() )
 			{
 				// advance time
-				timer.advanceTime(time);
+				timer.advanceTime(deltaTimeMS);
 				if (!timer.running)
 				{
 					// remove this timer from the active list 
@@ -115,6 +117,15 @@ package flash.utils {
 				}
 			}
 		}
+
+        // advances all timers using the appropriate delta time since the last time this method was called
+        // the game can call this if it doesn't want to specify its own delta time 
+        public static function advanceAllTimers():void 
+        {
+            var elapsedMS:Number = sEventTimer.ElapsedMilliseconds;
+            sEventTimer.Restart();
+            advanceAllTimersWithTimeDelta(elapsedMS);
+        }
 		
 		
 		private static function createTimer(closure:Function, delay:Number, arguments:Object[], repeat:int):uint {
@@ -158,15 +169,18 @@ package flash.utils {
 		}
 		
 		internal static function getTimer():int {
-			return sStopwatch.ElapsedMilliseconds;
+			return sUtilsTimer.ElapsedMilliseconds;
 		}
 		
 		private var mRunning:Boolean;
 		private var mCurrentCount:int;
 		private var mCurrentTime:Number;
 				
-		// stopwatch for user by flash.utils.getTimer()
-		private static var sStopwatch : Stopwatch = Stopwatch.StartNew();
+		// stopwatch for use by flash.utils.getTimer()
+		private static var sUtilsTimer : Stopwatch = Stopwatch.StartNew();
+        
+        // stopwatch for advancing all timer events
+        private static var sEventTimer : Stopwatch = Stopwatch.StartNew();
 		
 		// list of all active timers that need per-frame processing
 		private static var sActiveTimerList:List.<Timer> = new List.<Timer>();
