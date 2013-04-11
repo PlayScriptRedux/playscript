@@ -1423,7 +1423,7 @@ namespace Mono.CSharp {
 							}
 							var ms = (MethodSpec)mg.Candidates[0];
 							var del_type = Delegate.CreateDelegateTypeFromMethodSpec(ec, ms, loc);
-							return ImplicitDelegateCreation.Create (ec, mg, del_type, loc);
+							return new ImplicitDelegateCreation (del_type, mg, loc).Resolve (ec);
 						}
 					}
 					return null;

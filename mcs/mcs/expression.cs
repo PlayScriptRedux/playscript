@@ -6265,6 +6265,7 @@ namespace Mono.CSharp
 		protected override Expression DoResolve (ResolveContext ec)
 		{
 			bool isAsObject = false;
+			bool dynamic = false;
 
 			// PlayScript: Make sure a "new Object()" call in as uses an actual object type and not
 			// dynamic.
@@ -6288,7 +6289,6 @@ namespace Mono.CSharp
 					type = ((TypeOf)reqExpr).TypeArgument;
 				} else if (reqExpr.Type.BuiltinType == BuiltinTypeSpec.Type.Type ||
 				           reqExpr.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic){
-					bool dynamic;
 					if (arguments != null) {
 						arguments.Resolve (ec, out dynamic);
 					}
@@ -6374,7 +6374,6 @@ namespace Mono.CSharp
 			if (type.IsStruct && arguments == null)
 				return this;
 
-			bool dynamic;
 			if (arguments != null) {
 				arguments.Resolve (ec, out dynamic);
 			} else {
