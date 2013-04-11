@@ -56,7 +56,7 @@ You can download the current PlayScript mono framework binaries here:
 
 [Mac OSX 0.1.2 (Mono 3.0.8)](https://s3.amazonaws.com/playscript/playscript-mono-osx-0.1.2.dmg)
 
-Windows: (Coming)
+[Windows Win32 0.1.2 (Mono 3.0.9)](https://s3.amazonaws.com/playscript/playscript-mono-win32-0.1.2.zip)
 
 The mono framework folder includes the entire mono SDK, tools, and libraries.  To use the framework, you must install Xamarin Studio, and follow the
 instructions (below) to set the PlayScript mono framework as the default framework.
