@@ -822,12 +822,19 @@ namespace Mono.CSharp {
 		public StatementErrorExpression (Expression expr)
 		{
 			this.expr = expr;
+			this.loc = expr.StartLocation;
 		}
 
 		public Expression Expr {
 			get {
 				return expr;
 			}
+		}
+
+		public override bool Resolve (BlockContext bc)
+		{
+			expr.Error_InvalidExpressionStatement (bc);
+			return true;
 		}
 
 		protected override void DoEmit (EmitContext ec)
@@ -1019,9 +1026,18 @@ namespace Mono.CSharp {
 							if (this is ContextualReturn)
 								return true;
 
-							ec.Report.Error (1997, loc,
-								"`{0}': A return keyword must not be followed by an expression when async method returns `Task'. Consider using `Task<T>' return type",
-								ec.GetSignatureForError ());
+							// Same error code as .NET but better error message
+							if (async_block.DelegateType != null) {
+								ec.Report.Error (1997, loc,
+									"`{0}': A return keyword must not be followed by an expression when async delegate returns `Task'. Consider using `Task<T>' return type",
+									async_block.DelegateType.GetSignatureForError ());
+							} else {
+								ec.Report.Error (1997, loc,
+									"`{0}': A return keyword must not be followed by an expression when async method returns `Task'. Consider using `Task<T>' return type",
+									ec.GetSignatureForError ());
+
+							}
+
 							return false;
 						}
 
@@ -1047,9 +1063,19 @@ namespace Mono.CSharp {
 					}
 
 					var l = am as AnonymousMethodBody;
-					if (l != null && l.ReturnTypeInference != null && expr != null) {
-						l.ReturnTypeInference.AddCommonTypeBound (expr.Type);
-						return true;
+					if (l != null && expr != null) {
+						if (l.ReturnTypeInference != null) {
+							l.ReturnTypeInference.AddCommonTypeBound (expr.Type);
+							return true;
+						}
+
+						//
+						// Try to optimize simple lambda. Only when optimizations are enabled not to cause
+						// unexpected debugging experience
+						//
+						if (this is ContextualReturn && !ec.IsInProbingMode && ec.Module.Compiler.Settings.Optimize) {
+							l.DirectMethodGroupConversion = expr.CanReduceLambda (l);
+						}
 					}
 				}
 			}
@@ -1367,7 +1393,7 @@ namespace Mono.CSharp {
 				if (!Convert.ImplicitStandardConversionExists (c, type, ec))
 					ec.Report.Warning (469, 2, loc,
 						"The `goto case' value is not implicitly convertible to type `{0}'",
-						TypeManager.CSharpName (type));
+						type.GetSignatureForError ());
 
 			}
 
@@ -1711,7 +1737,7 @@ namespace Mono.CSharp {
 			bool eval_global = bc.Module.Compiler.Settings.StatementMode && bc.CurrentBlock is ToplevelBlock;
 			if (eval_global) {
 				CreateEvaluatorVariable (bc, li);
-			} else {
+			} else if (type != InternalType.ErrorType) {
 				li.PrepareForFlowAnalysis (bc);
 			}
 
@@ -1737,7 +1763,7 @@ namespace Mono.CSharp {
 					}
 					if (eval_global) {
 						CreateEvaluatorVariable (bc, d.Variable);
-					} else {
+					} else if (type != InternalType.ErrorType) {
 						d.Variable.PrepareForFlowAnalysis (bc);
 					}
 
@@ -2295,7 +2321,8 @@ namespace Mono.CSharp {
 			HasAsyncModifier = 1 << 10,
 			Resolved = 1 << 11,
 			YieldBlock = 1 << 12,
-			AwaitBlock = 1 << 13
+			AwaitBlock = 1 << 13,
+			Iterator = 1 << 14
 		}
 
 		public Block Parent;
@@ -2931,6 +2958,7 @@ namespace Mono.CSharp {
 			}
 
 			storey.Define ();
+			storey.PrepareEmit ();
 			storey.Parent.PartialContainer.AddCompilerGeneratedClass (storey);
 		}
 
@@ -2949,6 +2977,8 @@ namespace Mono.CSharp {
 
 		public void RegisterIteratorYield ()
 		{
+			ParametersBlock.TopBlock.IsIterator = true;
+
 			var block = this;
 			while ((block.flags & Flags.YieldBlock) == 0) {
 				block.flags |= Flags.YieldBlock;
@@ -3411,7 +3441,7 @@ namespace Mono.CSharp {
 			return tlb;
 		}
 
-		public ParametersBlock ConvertToAsyncTask (IMemberContext context, TypeDefinition host, ParametersCompiled parameters, TypeSpec returnType, Location loc)
+		public ParametersBlock ConvertToAsyncTask (IMemberContext context, TypeDefinition host, ParametersCompiled parameters, TypeSpec returnType, TypeSpec delegateType, Location loc)
 		{
 			for (int i = 0; i < parameters.Count; i++) {
 				Parameter p = parameters[i];
@@ -3443,6 +3473,7 @@ namespace Mono.CSharp {
 			var block_type = host.Module.Compiler.BuiltinTypes.Void;
 			var initializer = new AsyncInitializer (this, host, block_type);
 			initializer.Type = block_type;
+			initializer.DelegateType = delegateType;
 
 			var stateMachine = new AsyncTaskStorey (this, context, initializer, returnType);
 
@@ -3506,7 +3537,10 @@ namespace Mono.CSharp {
 
 		public bool IsIterator {
 			get {
-				return HasYield;
+				return (flags & Flags.Iterator) != 0;
+			}
+			set {
+				flags = value ? flags | Flags.Iterator : flags & ~Flags.Iterator;
 			}
 		}
 
@@ -3817,9 +3851,7 @@ namespace Mono.CSharp {
 			if (Report.Errors > 0)
 				return;
 
-#if PRODUCTION
 			try {
-#endif
 			if (IsCompilerGenerated) {
 				using (ec.With (BuilderContext.Options.OmitDebugInfo, true)) {
 					base.Emit (ec);
@@ -3853,15 +3885,9 @@ namespace Mono.CSharp {
 				ec.Emit (OpCodes.Ret);
 			}
 
-#if PRODUCTION
-			} catch (Exception e){
-				Console.WriteLine ("Exception caught by the compiler while emitting:");
-				Console.WriteLine ("   Block that caused the problem begin at: " + block.loc);
-					
-				Console.WriteLine (e.GetType ().FullName + ": " + e.Message);
-				throw;
+			} catch (Exception e) {
+				throw new InternalErrorException (e, StartLocation);
 			}
-#endif
 		}
 
 		public override void EmitJs (JsEmitContext jec)
@@ -4457,10 +4483,13 @@ namespace Mono.CSharp {
 				new_expr = SwitchGoverningType (ec, unwrap);
 			}
 
-			if (new_expr == null){
-				ec.Report.Error (151, loc,
-					"A switch expression of type `{0}' cannot be converted to an integral type, bool, char, string, enum or nullable type",
-					TypeManager.CSharpName (Expr.Type));
+			if (new_expr == null) {
+				if (Expr.Type != InternalType.ErrorType) {
+					ec.Report.Error (151, loc,
+						"A switch expression of type `{0}' cannot be converted to an integral type, bool, char, string, enum or nullable type",
+						Expr.Type.GetSignatureForError ());
+				}
+
 				return false;
 			}
 
@@ -4887,6 +4916,7 @@ namespace Mono.CSharp {
 
 			if (finally_host != null) {
 				finally_host.Define ();
+				finally_host.PrepareEmit ();
 				finally_host.Emit ();
 
 				// Now it's safe to add, to close it properly and emit sequence points

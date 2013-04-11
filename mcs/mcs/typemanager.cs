@@ -1080,15 +1080,7 @@ namespace Mono.CSharp
 
 	partial class TypeManager {
 
-	/// <summary>
-	///   Returns the C# name of a type if possible, or the full type name otherwise
-	/// </summary>
-	static public string CSharpName (TypeSpec t)
-	{
-		return t.GetSignatureForError ();
-	}
-
-	static public string CSharpName (IList<TypeSpec> types)
+	static public string CSharpName(IList<TypeSpec> types)
 	{
 		if (types.Count == 0)
 			return string.Empty;
@@ -1098,7 +1090,7 @@ namespace Mono.CSharp
 			if (i > 0)
 				sb.Append (",");
 
-			sb.Append (CSharpName (types [i]));
+			sb.Append (types [i].GetSignatureForError ());
 		}
 		return sb.ToString ();
 	}
@@ -1186,7 +1178,7 @@ namespace Mono.CSharp
 		rc.Compiler.Report.SymbolRelatedToPreviousError (t);
 		rc.Compiler.Report.Error (208, loc,
 			"Cannot take the address of, get the size of, or declare a pointer to a managed type `{0}'",
-			CSharpName (t));
+			t.GetSignatureForError ());
 
 		return false;	
 	}

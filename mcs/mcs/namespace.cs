@@ -254,7 +254,7 @@ namespace Mono.CSharp {
 
 			case "System.Windows.Forms":
 			case "System.Windows.Forms.Layout":
-				assembly = "System.Windows.Name";
+				assembly = "System.Windows.Forms";
 				break;
 			}
 

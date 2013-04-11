@@ -960,7 +960,8 @@ namespace Mono.CSharp {
 			InflatedExpressionType = 1 << 19,
 			InflatedNullableType = 1 << 20,
 			GenericIterateInterface = 1 << 21,
-			GenericTask = 1 << 22
+			GenericTask = 1 << 22,
+			InterfacesImported = 1 << 23,
 		}
 
 		//
@@ -1295,6 +1296,11 @@ namespace Mono.CSharp {
 		ObsoleteAttribute GetAttributeObsolete ();
 		void SetIsAssigned ();
 		void SetIsUsed ();
+	}
+
+	public interface IMethodDefinition : IMemberDefinition
+	{
+		MethodBase Metadata { get; }
 	}
 
 	public interface IParametersMember : IInterfaceMemberSpec

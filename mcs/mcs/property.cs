@@ -203,14 +203,14 @@ namespace Mono.CSharp
 			{
 				base.Define (parent);
 
-				Spec = new MethodSpec (MemberKind.Method, parent.PartialContainer.Definition, this, ReturnType, null, ParameterInfo, ModFlags);
+				Spec = new MethodSpec (MemberKind.Method, parent.PartialContainer.Definition, this, ReturnType, ParameterInfo, ModFlags);
 
 				method_data = new MethodData (method, ModFlags, flags, this);
 
 				if (!method_data.Define (parent.PartialContainer, method.GetFullName (MemberName)))
 					return null;
 
-				Spec.SetMetaInfo (method_data.MethodBuilder);
+				method_data.DefineMethodBuilder (parent.PartialContainer, ParameterInfo);
 
 				return method_data.MethodBuilder;
 			}
@@ -279,14 +279,14 @@ namespace Mono.CSharp
 				
 				base.Define (parent);
 
-				Spec = new MethodSpec (MemberKind.Method, parent.PartialContainer.Definition, this, ReturnType, null, ParameterInfo, ModFlags);
+				Spec = new MethodSpec (MemberKind.Method, parent.PartialContainer.Definition, this, ReturnType, ParameterInfo, ModFlags);
 
 				method_data = new MethodData (method, ModFlags, flags, this);
 
 				if (!method_data.Define (parent.PartialContainer, method.GetFullName (MemberName)))
 					return null;
 
-				Spec.SetMetaInfo (method_data.MethodBuilder);
+				method_data.DefineMethodBuilder (parent.PartialContainer, ParameterInfo);
 
 				return method_data.MethodBuilder;
 			}
@@ -1268,15 +1268,15 @@ namespace Mono.CSharp
 				if (!method_data.Define (parent.PartialContainer, method.GetFullName (MemberName)))
 					return null;
 
+				method_data.DefineMethodBuilder (parent.PartialContainer, ParameterInfo);
+
 				if (Compiler.Settings.WriteMetadataOnly)
 					block = null;
 
-				MethodBuilder mb = method_data.MethodBuilder;
-
-				Spec = new MethodSpec (MemberKind.Method, parent.PartialContainer.Definition, this, ReturnType, mb, ParameterInfo, method.ModFlags);
+				Spec = new MethodSpec (MemberKind.Method, parent.PartialContainer.Definition, this, ReturnType, ParameterInfo, method.ModFlags);
 				Spec.IsAccessor = true;
 
-				return mb;
+				return method_data.MethodBuilder;
 			}
 
 			public override TypeSpec ReturnType {

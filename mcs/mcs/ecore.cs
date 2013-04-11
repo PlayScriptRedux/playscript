@@ -164,6 +164,25 @@ namespace Mono.CSharp {
 			}
 		}
 
+		public virtual MethodGroupExpr CanReduceLambda (AnonymousMethodBody body)
+		{
+			//
+			// Return method-group expression when the expression can be used as
+			// lambda replacement. A good example is array sorting where instead of
+			// code like
+			//
+			//  Array.Sort (s, (a, b) => String.Compare (a, b));
+			//
+			// we can use method group directly
+			//
+			//  Array.Sort (s, String.Compare);
+			//
+			// Correct overload will be used because we do the reduction after
+			// best candidate was found.
+			//
+			return null;
+		}
+
 		//
 		// Returns true when the expression during Emit phase breaks stack
 		// by using await expression
@@ -234,7 +253,7 @@ namespace Mono.CSharp {
 		public void Error_ConstantCanBeInitializedWithNullOnly (ResolveContext rc, TypeSpec type, Location loc, string name)
 		{
 			rc.Report.Error (134, loc, "A constant `{0}' of reference type `{1}' can only be initialized with null",
-				name, TypeManager.CSharpName (type));
+				name, type.GetSignatureForError ());
 		}
 
 		protected virtual void Error_InvalidExpressionStatement (Report report, Location loc)
@@ -265,7 +284,10 @@ namespace Mono.CSharp {
 		protected void Error_ValueCannotBeConvertedCore (ResolveContext ec, Location loc, TypeSpec target, bool expl)
 		{
 			// The error was already reported as CS1660
-			if (type == InternalType.AnonymousMethod || type == InternalType.ErrorType)
+			if (type == InternalType.AnonymousMethod)
+				return;
+
+			if (type == InternalType.ErrorType || target == InternalType.ErrorType)
 				return;
 
 			string from_type = type.GetSignatureForError ();
@@ -334,7 +356,7 @@ namespace Mono.CSharp {
 		{
 			ec.Report.SymbolRelatedToPreviousError (type);
 			ec.Report.Error (117, loc, "`{0}' does not contain a definition for `{1}'",
-				TypeManager.CSharpName (type), name);
+				type.GetSignatureForError (), name);
 		}
 
 		public virtual void Error_ValueAssignment (ResolveContext rc, Expression rhs)
@@ -1493,7 +1515,7 @@ namespace Mono.CSharp {
 
 		public override string GetSignatureForError()
 		{
-			return TypeManager.CSharpName (Type);
+			return Type.GetSignatureForError ();
 		}
 
 		public override object GetValue ()
@@ -3389,7 +3411,7 @@ namespace Mono.CSharp {
 	class ExtensionMethodGroupExpr : MethodGroupExpr, OverloadResolver.IErrorHandler
 	{
 		ExtensionMethodCandidates candidates;
-		public readonly Expression ExtensionExpression;
+		public Expression ExtensionExpression;
 
 		public ExtensionMethodGroupExpr (ExtensionMethodCandidates candidates, Expression extensionExpr, Location loc)
 			: base (candidates.Methods.Cast<MemberSpec>().ToList (), extensionExpr.Type, loc)
@@ -3432,6 +3454,10 @@ namespace Mono.CSharp {
 		{
 			if (arguments == null)
 				arguments = new Arguments (1);
+
+			ExtensionExpression = ExtensionExpression.Resolve (ec);
+			if (ExtensionExpression == null)
+				return null;
 
 			arguments.Insert (0, new Argument (ExtensionExpression, Argument.AType.ExtensionType));
 			var res = base.OverloadResolve (ec, ref arguments, ehandler ?? this, restr);
@@ -3664,7 +3690,7 @@ namespace Mono.CSharp {
 		public override void Error_ValueCannotBeConverted (ResolveContext ec, TypeSpec target, bool expl)
 		{
 			ec.Report.Error (428, loc, "Cannot convert method group `{0}' to non-delegate type `{1}'. Consider using parentheses to invoke the method",
-				Name, TypeManager.CSharpName (target));
+				Name, target.GetSignatureForError ());
 		}
 
 		public static bool IsExtensionMethodArgument (Expression expr)
@@ -4716,17 +4742,18 @@ namespace Mono.CSharp {
 				// It can be applicable in expanded form (when not doing exact match like for delegates)
 				//
 				if (score != 0 && (p_mod & Parameter.Modifier.PARAMS) != 0 && (restrictions & Restrictions.CovariantDelegate) == 0) {
-					if (!params_expanded_form)
+					if (!params_expanded_form) {
 						pt = ((ElementTypeSpec) pt).Element;
+					}
 
 					if (score > 0)
 						score = IsArgumentCompatible (ec, a, Parameter.Modifier.NONE, pt);
 
-					if (score == 0) {
-						params_expanded_form = true;
-					} else if (score < 0) {
+					if (score < 0) {
 						params_expanded_form = true;
 						dynamicArgument = true;
+					} else if (score == 0 || arg_count > pd.Count) {
+						params_expanded_form = true;
 					}
 				}
 
@@ -5223,14 +5250,14 @@ namespace Mono.CSharp {
 			string index = (idx + 1).ToString ();
 			if (((mod & Parameter.Modifier.RefOutMask) ^ (a.Modifier & Parameter.Modifier.RefOutMask)) != 0) {
 				if ((mod & Parameter.Modifier.RefOutMask) == 0)
-					ec.Report.Error (1615, loc, "Argument `#{0}' does not require `{1}' modifier. Consider removing `{1}' modifier",
+					ec.Report.Error (1615, a.Expr.Location, "Argument `#{0}' does not require `{1}' modifier. Consider removing `{1}' modifier",
 						index, Parameter.GetModifierSignature (a.Modifier));
 				else
-					ec.Report.Error (1620, loc, "Argument `#{0}' is missing `{1}' modifier",
+					ec.Report.Error (1620, a.Expr.Location, "Argument `#{0}' is missing `{1}' modifier",
 						index, Parameter.GetModifierSignature (mod));
 			} else {
 				string p1 = a.GetSignatureForError ();
-				string p2 = TypeManager.CSharpName (paramType);
+				string p2 = paramType.GetSignatureForError ();
 
 				if (p1 == p2) {
 					p1 = a.Type.GetSignatureForErrorIncludingAssemblyName ();
@@ -6156,6 +6183,21 @@ namespace Mono.CSharp {
 		}
 
 		#endregion
+
+		public override MethodGroupExpr CanReduceLambda (AnonymousMethodBody body)
+		{
+			if (best_candidate == null || !(best_candidate.IsStatic || InstanceExpression is This))
+				return null;
+
+			var args_count = arguments == null ? 0 : arguments.Count;
+			if (args_count != body.Parameters.Count && args_count == 0)
+				return null;
+
+			var mg = MethodGroupExpr.CreatePredefined (best_candidate.Get, DeclaringType, loc);
+			mg.InstanceExpression = InstanceExpression;
+
+			return mg;
+		}
 
 		public static PropertyExpr CreatePredefined (PropertySpec spec, Location loc)
 		{

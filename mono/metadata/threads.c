@@ -47,6 +47,7 @@
 #include <mono/utils/mono-threads.h>
 #include <mono/utils/hazard-pointer.h>
 #include <mono/utils/mono-tls.h>
+#include <mono/utils/atomic.h>
 
 #include <mono/metadata/gc-internal.h>
 
@@ -797,6 +798,18 @@ mono_thread_create (MonoDomain *domain, gpointer func, gpointer arg)
 	mono_thread_create_internal (domain, func, arg, FALSE, FALSE, 0);
 }
 
+#if defined(HOST_WIN32) && defined(__GNUC__)
+static __inline__ __attribute__((always_inline))
+/* This is not defined by gcc */
+unsigned long long
+__readfsdword (unsigned long long offset)
+{
+	unsigned long long value;
+	__asm__("movl %%fs:%a[offset], %k[value]" : [value] "=q" (value) : [offset] "irm" (offset));
+	return value;
+}
+#endif
+
 /*
  * mono_thread_get_stack_bounds:
  *
@@ -815,9 +828,21 @@ mono_thread_get_stack_bounds (guint8 **staddr, size_t *stsize)
 	*staddr = (guint8*)((gssize)*staddr & ~(mono_pagesize () - 1));
 	return;
 	/* FIXME: simplify the mess below */
-#elif !defined(HOST_WIN32)
+#elif defined(HOST_WIN32)
+	/* http://en.wikipedia.org/wiki/Win32_Thread_Information_Block */
+	void* tib = (void*)__readfsdword(0x18);
+	guint8 *stackTop = (guint8*)*(int*)((char*)tib + 4);
+	guint8 *stackBottom = (guint8*)*(int*)((char*)tib + 8);
+
+	*staddr = stackBottom;
+	*stsize = stackTop - stackBottom;
+	return;
+#else
 	pthread_attr_t attr;
 	guint8 *current = (guint8*)&attr;
+
+	*staddr = NULL;
+	*stsize = (size_t)-1;
 
 	pthread_attr_init (&attr);
 #  ifdef HAVE_PTHREAD_GETATTR_NP
@@ -853,9 +878,6 @@ mono_thread_get_stack_bounds (guint8 **staddr, size_t *stsize)
 #  endif
 
 	pthread_attr_destroy (&attr);
-#else
-	*staddr = NULL;
-	*stsize = (size_t)-1;
 #endif
 
 	/* When running under emacs, sometimes staddr is not aligned to a page size */
@@ -3465,6 +3487,10 @@ collect_appdomain_thread (gpointer key, gpointer value, gpointer user_data)
 gboolean
 mono_threads_abort_appdomain_threads (MonoDomain *domain, int timeout)
 {
+#ifdef __native_client__
+	return FALSE;
+#endif
+
 	abort_appdomain_data user_data;
 	guint32 start_time;
 	int orig_timeout = timeout;
@@ -4440,6 +4466,10 @@ mono_runtime_has_tls_get (void)
 int
 mono_thread_kill (MonoInternalThread *thread, int signal)
 {
+#ifdef __native_client__
+	/* Workaround pthread_kill abort() in NaCl glibc. */
+	return -1;
+#endif
 #ifdef HOST_WIN32
 	/* Win32 uses QueueUserAPC and callers of this are guarded */
 	g_assert_not_reached ();

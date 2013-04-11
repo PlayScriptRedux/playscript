@@ -17,7 +17,6 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Security.Permissions;
-using System.Linq;
 using System.Text;
 using System.Diagnostics;
 using Mono.CompilerServices.SymbolWriter;
@@ -561,6 +560,7 @@ namespace Mono.CSharp
 
 		public int DynamicSitesCounter;
 		public int AnonymousMethodsCounter;
+		public int MethodGroupsCounter;
 
 		static readonly string[] attribute_targets = new string[] { "type" };
 
@@ -1321,8 +1321,10 @@ namespace Mono.CSharp
 
 				all_tp_builders = TypeBuilder.DefineGenericParameters (tparam_names);
 
-				if (CurrentTypeParameters != null)
-					CurrentTypeParameters.Define (all_tp_builders, spec, CurrentTypeParametersStartIndex, this);
+				if (CurrentTypeParameters != null) {
+					CurrentTypeParameters.Create (spec, CurrentTypeParametersStartIndex, this);
+					CurrentTypeParameters.Define (all_tp_builders);
+				}
 			}
 
 			return true;
@@ -1483,6 +1485,7 @@ namespace Mono.CSharp
 
 				members.Add (proxy_method);
 				proxy_method.Define ();
+				proxy_method.PrepareEmit ();
 
 				hoisted_base_call_proxies.Add (method, proxy_method);
 			}
@@ -1665,6 +1668,10 @@ namespace Mono.CSharp
 			foreach (var member in members) {
 				var pm = member as IParametersMember;
 				if (pm != null) {
+					var mc = member as MethodOrOperator;
+					if (mc != null) {
+						mc.PrepareEmit ();
+					}
 
 					var p = pm.Parameters;
 					if (p.IsEmpty)
@@ -1736,19 +1743,6 @@ namespace Mono.CSharp
 			current_type = null;
 		}
 
-		void UpdateTypeParameterConstraints (TypeDefinition part)
-		{
-			for (int i = 0; i < CurrentTypeParameters.Count; i++) {
-				if (CurrentTypeParameters[i].AddPartialConstraints (part, part.MemberName.TypeParameters[i]))
-					continue;
-
-				Report.SymbolRelatedToPreviousError (Location, "");
-				Report.Error (265, part.Location,
-					"Partial declarations of `{0}' have inconsistent constraints for type parameter `{1}'",
-					GetSignatureForError (), CurrentTypeParameters[i].GetSignatureForError ());
-			}
-		}
-
 		public override void RemoveContainer (TypeContainer cont)
 		{
 			base.RemoveContainer (cont);
@@ -1773,7 +1767,7 @@ namespace Mono.CSharp
 			}
 
 			if (IsPartialPart) {
-				PartialContainer.UpdateTypeParameterConstraints (this);
+				PartialContainer.CurrentTypeParameters.UpdateConstraints (this);
 			}
 
 			return true;
@@ -2432,7 +2426,7 @@ namespace Mono.CSharp
 			
 			Report.SymbolRelatedToPreviousError (mb.InterfaceType);
 			Report.Error (540, mb.Location, "`{0}': containing type does not implement interface `{1}'",
-				mb.GetSignatureForError (), TypeManager.CSharpName (mb.InterfaceType));
+				mb.GetSignatureForError (), mb.InterfaceType.GetSignatureForError ());
 			return false;
 		}
 
@@ -2662,7 +2656,7 @@ namespace Mono.CSharp
 		/// <summary>
 		/// Defines the default constructors 
 		/// </summary>
-		protected Constructor DefineDefaultConstructor (bool is_static)
+		protected virtual Constructor DefineDefaultConstructor (bool is_static)
 		{
 			// The default instance constructor is public
 			// If the class is abstract, the default constructor is protected
@@ -3254,7 +3248,7 @@ namespace Mono.CSharp
 
 					Report.SymbolRelatedToPreviousError (iface);
 					Report.Warning (3027, 1, Location, "`{0}' is not CLS-compliant because base interface `{1}' is not CLS-compliant",
-						GetSignatureForError (), TypeManager.CSharpName (iface));
+						GetSignatureForError (), iface.GetSignatureForError ());
 				}
 			}
 
@@ -3489,10 +3483,10 @@ namespace Mono.CSharp
 				Report.SymbolRelatedToPreviousError (base_member);
 				if (this is PropertyBasedMember) {
 					Report.Error (1715, Location, "`{0}': type must be `{1}' to match overridden member `{2}'",
-						GetSignatureForError (), TypeManager.CSharpName (base_member_type), TypeManager.CSharpSignature (base_member));
+						GetSignatureForError (), base_member_type.GetSignatureForError (), base_member.GetSignatureForError ());
 				} else {
 					Report.Error (508, Location, "`{0}': return type must be `{1}' to match overridden member `{2}'",
-						GetSignatureForError (), TypeManager.CSharpName (base_member_type), TypeManager.CSharpSignature (base_member));
+						GetSignatureForError (), base_member_type.GetSignatureForError (), base_member.GetSignatureForError ());
 				}
 				ok = false;
 			}
@@ -3566,7 +3560,7 @@ namespace Mono.CSharp
 				if (!InterfaceType.IsInterface) {
 					Report.SymbolRelatedToPreviousError (InterfaceType);
 					Report.Error (538, Location, "The type `{0}' in explicit interface declaration is not an interface",
-						TypeManager.CSharpName (InterfaceType));
+						InterfaceType.GetSignatureForError ());
 				} else {
 					Parent.PartialContainer.VerifyImplements (this);
 				}
@@ -3597,15 +3591,15 @@ namespace Mono.CSharp
 				if (this is Indexer)
 					Report.Error (55, Location,
 						      "Inconsistent accessibility: parameter type `{0}' is less accessible than indexer `{1}'",
-						      TypeManager.CSharpName (t), GetSignatureForError ());
+						      t.GetSignatureForError (), GetSignatureForError ());
 				else if (this is Operator)
 					Report.Error (57, Location,
 						      "Inconsistent accessibility: parameter type `{0}' is less accessible than operator `{1}'",
-						      TypeManager.CSharpName (t), GetSignatureForError ());
+						      t.GetSignatureForError (), GetSignatureForError ());
 				else
 					Report.Error (51, Location,
 						"Inconsistent accessibility: parameter type `{0}' is less accessible than method `{1}'",
-						TypeManager.CSharpName (t), GetSignatureForError ());
+						t.GetSignatureForError (), GetSignatureForError ());
 				error = true;
 			}
 			return !error;
@@ -3726,7 +3720,7 @@ namespace Mono.CSharp
 			// replacing predefined names which saves some space and name
 			// is still unique
 			//
-			return TypeManager.CSharpName (InterfaceType) + "." + name;
+			return InterfaceType.GetSignatureForError () + "." + name;
 		}
 
 		public override string GetSignatureForDocumentation ()
@@ -3765,7 +3759,9 @@ namespace Mono.CSharp
 		{
 			this.Parent = parent;
 			this.type_expr = type;
-			ModFlags = ModifiersExtensions.Check (allowed_mod, mod, def_mod, Location, Report);
+
+			if (name != MemberName.Null)
+				ModFlags = ModifiersExtensions.Check (allowed_mod, mod, def_mod, Location, Report);
 		}
 
 		#region Properties
@@ -3824,28 +3820,28 @@ namespace Mono.CSharp
 				if (this is Property)
 					Report.Error (53, Location,
 						      "Inconsistent accessibility: property type `" +
-						      TypeManager.CSharpName (MemberType) + "' is less " +
+						      MemberType.GetSignatureForError () + "' is less " +
 						      "accessible than property `" + GetSignatureForError () + "'");
 				else if (this is Indexer)
 					Report.Error (54, Location,
 						      "Inconsistent accessibility: indexer return type `" +
-						      TypeManager.CSharpName (MemberType) + "' is less " +
+						      MemberType.GetSignatureForError () + "' is less " +
 						      "accessible than indexer `" + GetSignatureForError () + "'");
 				else if (this is MethodCore) {
 					if (this is Operator)
 						Report.Error (56, Location,
 							      "Inconsistent accessibility: return type `" +
-							      TypeManager.CSharpName (MemberType) + "' is less " +
+							      MemberType.GetSignatureForError () + "' is less " +
 							      "accessible than operator `" + GetSignatureForError () + "'");
 					else
 						Report.Error (50, Location,
 							      "Inconsistent accessibility: return type `" +
-							      TypeManager.CSharpName (MemberType) + "' is less " +
+							      MemberType.GetSignatureForError () + "' is less " +
 							      "accessible than method `" + GetSignatureForError () + "'");
 				} else {
 					Report.Error (52, Location,
 						      "Inconsistent accessibility: field type `" +
-						      TypeManager.CSharpName (MemberType) + "' is less " +
+						      MemberType.GetSignatureForError () + "' is less " +
 						      "accessible than field `" + GetSignatureForError () + "'");
 				}
 			}

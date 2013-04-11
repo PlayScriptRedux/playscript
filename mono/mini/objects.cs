@@ -114,8 +114,8 @@ struct Gamma {
 
 class Tests {
 
-	static int Main () {
-		return TestDriver.RunTests (typeof (Tests));
+	public static int Main (string[] args) {
+		return TestDriver.RunTests (typeof (Tests), args);
 	}
 	
 	public static int test_0_return () {
@@ -1577,5 +1577,23 @@ ncells ) {
 		return 0;
 	}
 
+	public static void do_throw () {
+		throw new Exception ();
+	}
+
+	[MethodImplAttribute (MethodImplOptions.NoInlining)]
+	static void empty () {
+	}
+
+	// #11297
+	public static int test_0_llvm_inline_throw () {
+		try {
+			empty ();
+		} catch (Exception ex) {
+			do_throw ();
+		}
+
+		return 0;
+	}
 }
 

@@ -569,6 +569,9 @@ namespace Mono.CSharp {
 		protected virtual void EmitHoistedParameters (EmitContext ec, List<HoistedParameter> hoisted)
 		{
 			foreach (HoistedParameter hp in hoisted) {
+				if (hp == null)
+					continue;
+
 				//
 				// Parameters could be proxied via local fields for value type storey
 				//
@@ -851,6 +854,8 @@ namespace Mono.CSharp {
 			}
 		}
 
+		public bool IsAssigned { get; set; }
+
 		public ParameterReference Parameter {
 			get {
 				return parameter;
@@ -1004,12 +1009,12 @@ namespace Mono.CSharp {
 					return delegate_type;
 
 				ec.Report.Error (835, loc, "Cannot convert `{0}' to an expression tree of non-delegate type `{1}'",
-					GetSignatureForError (), TypeManager.CSharpName (delegate_type));
+					GetSignatureForError (), delegate_type.GetSignatureForError ());
 				return null;
 			}
 
 			ec.Report.Error (1660, loc, "Cannot convert `{0}' to non-delegate type `{1}'",
-				      GetSignatureForError (), TypeManager.CSharpName (delegate_type));
+				      GetSignatureForError (), delegate_type.GetSignatureForError ());
 			return null;
 		}
 
@@ -1021,7 +1026,7 @@ namespace Mono.CSharp {
 			if (!ec.IsInProbingMode)
 				ec.Report.Error (1661, loc,
 					"Cannot convert `{0}' to delegate type `{1}' since there is a parameter mismatch",
-					GetSignatureForError (), TypeManager.CSharpName (delegate_type));
+					GetSignatureForError (), delegate_type.GetSignatureForError ());
 
 			return false;
 		}
@@ -1033,7 +1038,7 @@ namespace Mono.CSharp {
 					return false;
 				
 				ec.Report.Error (1593, loc, "Delegate `{0}' does not take `{1}' arguments",
-					      TypeManager.CSharpName (delegate_type), Parameters.Count.ToString ());
+					      delegate_type.GetSignatureForError (), Parameters.Count.ToString ());
 				return false;
 			}
 
@@ -1073,8 +1078,8 @@ namespace Mono.CSharp {
 					
 					ec.Report.Error (1678, loc, "Parameter `{0}' is declared as type `{1}' but should be `{2}'",
 						      (i+1).ToString (),
-						      TypeManager.CSharpName (Parameters.Types [i]),
-						      TypeManager.CSharpName (invoke_pd.Types [i]));
+						      Parameters.Types [i].GetSignatureForError (),
+						      invoke_pd.Types [i].GetSignatureForError ());
 					error = true;
 				}
 			}
@@ -1232,6 +1237,17 @@ namespace Mono.CSharp {
 					}
 				} else {
 					am = body.Compatible (ec);
+
+					if (body.DirectMethodGroupConversion != null) {
+						var errors_printer = new SessionReportPrinter ();
+						var old = ec.Report.SetPrinter (errors_printer);
+						var expr = new ImplicitDelegateCreation (delegate_type, body.DirectMethodGroupConversion, loc) {
+							AllowSpecialMethodsInvocation = true
+						}.Resolve (ec);
+						ec.Report.SetPrinter (old);
+						if (expr != null && errors_printer.ErrorsCount == 0)
+							am = expr;
+					}
 				}
 			} catch (CompletionResult) {
 				throw;
@@ -1373,7 +1389,7 @@ namespace Mono.CSharp {
 					return null;
 				}
 
-				b = b.ConvertToAsyncTask (ec, ec.CurrentMemberDefinition.Parent.PartialContainer, p, return_type, loc);
+				b = b.ConvertToAsyncTask (ec, ec.CurrentMemberDefinition.Parent.PartialContainer, p, return_type, delegate_type, loc);
 			}
 
 			return CompatibleMethodFactory (return_type ?? InternalType.ErrorType, delegate_type, p, b);
@@ -1576,6 +1592,14 @@ namespace Mono.CSharp {
 			get { return "anonymous method"; }
 		}
 
+		//
+		// Method-group instance for lambdas which can be replaced with
+		// simple method group call
+		//
+		public MethodGroupExpr DirectMethodGroupConversion {
+			get; set;
+		}
+
 		public override bool IsIterator {
 			get {
 				return false;
@@ -1598,7 +1622,9 @@ namespace Mono.CSharp {
 		}
 
 		public override AnonymousMethodStorey Storey {
-			get { return storey; }
+			get {
+				return storey;
+			}
 		}
 
 		#endregion
@@ -1726,6 +1752,7 @@ namespace Mono.CSharp {
 				//
 				method = DoCreateMethodHost (ec);
 				method.Define ();
+				method.PrepareEmit ();
 			}
 
 			bool is_static = (method.ModFlags & Modifiers.STATIC) != 0;
@@ -1852,7 +1879,7 @@ namespace Mono.CSharp {
 
 		public override string GetSignatureForError ()
 		{
-			return TypeManager.CSharpName (type);
+			return type.GetSignatureForError ();
 		}
 	}
 
@@ -2074,6 +2101,7 @@ namespace Mono.CSharp {
 
 			equals.Block = equals_block;
 			equals.Define ();
+			equals.PrepareEmit ();
 			Members.Add (equals);
 
 			//
@@ -2128,6 +2156,7 @@ namespace Mono.CSharp {
 			hashcode_block.AddStatement (new Return (hash_variable, loc));
 			hashcode.Block = hashcode_top;
 			hashcode.Define ();
+			hashcode.PrepareEmit ();
 			Members.Add (hashcode);
 
 			//
@@ -2138,6 +2167,7 @@ namespace Mono.CSharp {
 			tostring_block.AddStatement (new Return (string_concat, loc));
 			tostring.Block = tostring_block;
 			tostring.Define ();
+			tostring.PrepareEmit ();
 			Members.Add (tostring);
 
 			return true;

@@ -1090,7 +1090,7 @@ namespace Mono.CSharp
 
 		public override Location StartLocation {
 			get {
-				return expr.Location;
+				return (mode & Mode.IsPost) != 0 ? expr.Location : loc;
 			}
 		}
 
@@ -1505,10 +1505,10 @@ namespace Mono.CSharp
 		{
 			if (result)
 				ec.Report.Warning (183, 1, loc, "The given expression is always of the provided (`{0}') type",
-					TypeManager.CSharpName (probe_type_expr));
+					probe_type_expr.GetSignatureForError ());
 			else
 				ec.Report.Warning (184, 1, loc, "The given expression is never of the provided (`{0}') type",
-					TypeManager.CSharpName (probe_type_expr));
+					probe_type_expr.GetSignatureForError ());
 
 			return ReducedExpression.Create (new BoolConstant (ec.BuiltinTypes, result, loc), this);
 		}
@@ -1708,7 +1708,7 @@ namespace Mono.CSharp
 				} else {
 					ec.Report.Error (77, loc,
 						"The `as' operator cannot be used with a non-nullable value type `{0}'",
-						TypeManager.CSharpName (type));
+						type.GetSignatureForError ());
 				}
 				return null;
 			}
@@ -1767,7 +1767,7 @@ namespace Mono.CSharp
 			}
 
 			ec.Report.Error (39, loc, "Cannot convert type `{0}' to `{1}' via a built-in conversion",
-				TypeManager.CSharpName (etype), TypeManager.CSharpName (type));
+				etype.GetSignatureForError (), type.GetSignatureForError ());
 
 			return null;
 		}
@@ -1806,7 +1806,7 @@ namespace Mono.CSharp
 				return null;
 
 			if (type.IsStatic) {
-				ec.Report.Error (716, loc, "Cannot convert to static type `{0}'", TypeManager.CSharpName (type));
+				ec.Report.Error (716, loc, "Cannot convert to static type `{0}'", type.GetSignatureForError ());
 				return null;
 			}
 
@@ -2390,6 +2390,12 @@ namespace Mono.CSharp
 			}
 		}
 
+		public override Location StartLocation {
+			get {
+				return left.StartLocation;
+			}
+		}
+
 		#endregion
 
 		/// <summary>
@@ -2484,8 +2490,8 @@ namespace Mono.CSharp
 				return;
 
 			string l, r;
-			l = TypeManager.CSharpName (left.Type);
-			r = TypeManager.CSharpName (right.Type);
+			l = left.Type.GetSignatureForError ();
+			r = right.Type.GetSignatureForError ();
 
 			ec.Report.Error (19, loc, "Operator `{0}' cannot be applied to operands of type `{1}' and `{2}'",
 				oper, l, r);
@@ -2874,9 +2880,10 @@ namespace Mono.CSharp
 
 			// FIXME: consider constants
 
+			var ltype = lcast != null ? lcast.UnderlyingType : rcast.UnderlyingType;
 			ec.Report.Warning (675, 3, loc,
 				"The operator `|' used on the sign-extended type `{0}'. Consider casting to a smaller unsigned type first",
-				TypeManager.CSharpName (lcast != null ? lcast.UnderlyingType : rcast.UnderlyingType));
+				ltype.GetSignatureForError ());
 		}
 
 		public static PredefinedOperator[] CreatePointerOperatorsTable (BuiltinTypes types)
@@ -3163,7 +3170,7 @@ namespace Mono.CSharp
 				// FIXME: resolve right expression as unreachable
 				// right.Resolve (ec);
 
-				ec.Report.Warning (429, 4, loc, "Unreachable expression code detected");
+				ec.Report.Warning (429, 4, right.StartLocation, "Unreachable expression code detected");
 				return left;
 			}
 
@@ -3831,7 +3838,7 @@ namespace Mono.CSharp
 
 				if (best_operator == null) {
 					ec.Report.Error (34, loc, "Operator `{0}' is ambiguous on operands of type `{1}' and `{2}'",
-						OperName (oper), TypeManager.CSharpName (l), TypeManager.CSharpName (r));
+						OperName (oper), l.GetSignatureForError (), r.GetSignatureForError ());
 
 					best_operator = po;
 					break;
@@ -3987,7 +3994,7 @@ namespace Mono.CSharp
 				} catch (OverflowException) {
 					ec.Report.Warning (652, 2, loc,
 						"A comparison between a constant and a variable is useless. The constant is out of the range of the variable type `{0}'",
-						TypeManager.CSharpName (type));
+						type.GetSignatureForError ());
 				}
 			}
 		}
@@ -4588,7 +4595,7 @@ namespace Mono.CSharp
 			if (op_true == null || op_false == null) {
 				ec.Report.Error (218, loc,
 					"The type `{0}' must have operator `true' and operator `false' defined when `{1}' is used as a short circuit operator",
-					TypeManager.CSharpName (type), oper.GetSignatureForError ());
+					type.GetSignatureForError (), oper.GetSignatureForError ());
 				return null;
 			}
 
@@ -5006,7 +5013,7 @@ namespace Mono.CSharp
 				} else {
 					ec.Report.Error (173, true_expr.Location,
 						"Type of conditional expression cannot be determined because there is no implicit conversion between `{0}' and `{1}'",
-						TypeManager.CSharpName (true_type), TypeManager.CSharpName (false_type));
+						true_type.GetSignatureForError (), false_type.GetSignatureForError ());
 					return null;
 				}
 			}			
@@ -5553,6 +5560,9 @@ namespace Mono.CSharp
 
 		void SetAssigned (ResolveContext ec)
 		{
+			if (Parameter.HoistedVariant != null)
+				Parameter.HoistedVariant.IsAssigned = true;
+
 			if (HasOutModifier && ec.DoFlowAnalysis)
 				ec.CurrentBranching.SetAssigned (VariableInfo);
 		}
@@ -5703,6 +5713,40 @@ namespace Mono.CSharp
 		}
 
 		#endregion
+
+		public override MethodGroupExpr CanReduceLambda (AnonymousMethodBody body)
+		{
+			if (MethodGroup == null)
+				return null;
+
+			var candidate = MethodGroup.BestCandidate;
+			if (candidate == null || !(candidate.IsStatic || Exp is This))
+				return null;
+
+			var args_count = arguments == null ? 0 : arguments.Count;
+			if (args_count != body.Parameters.Count)
+				return null;
+
+			var lambda_parameters = body.Block.Parameters.FixedParameters;
+			for (int i = 0; i < args_count; ++i) {
+				var pr = arguments[i].Expr as ParameterReference;
+				if (pr == null)
+					return null;
+
+				if (lambda_parameters[i] != pr.Parameter)
+					return null;
+
+				if ((lambda_parameters[i].ModFlags & Parameter.Modifier.RefOutMask) != (pr.Parameter.ModFlags & Parameter.Modifier.RefOutMask))
+					return null;
+			}
+
+			var emg = MethodGroup as ExtensionMethodGroupExpr;
+			if (emg != null) {
+				return MethodGroupExpr.CreatePredefined (candidate, candidate.DeclaringType, MethodGroup.Location);
+			}
+
+			return MethodGroup;
+		}
 
 		protected override void CloneTo (CloneContext clonectx, Expression t)
 		{
@@ -6258,99 +6302,97 @@ namespace Mono.CSharp
 					arguments.Insert (0, new Argument (reqExpr.Resolve (ec), Argument.AType.DynamicTypeName));
 					ret = new DynamicConstructorBinder (reqExpr, arguments, loc).Resolve (ec);
 				}
+				if (ret != null)
+					return ret;
 			} else {
 				type = RequestedType.ResolveAsType (ec);
 			}
 
-			// Do CSharp style new..
-			if (ret == null) {
+			if (type == null)
+				return null;
 
-				if (type == null)
-					return null;
+			eclass = ExprClass.Value;
 
-				eclass = ExprClass.Value;
+			if (type.IsPointer) {
+				ec.Report.Error (1919, loc, "Unsafe type `{0}' cannot be used in an object creation expression",
+					type.GetSignatureForError ());
+				return null;
+			}
 
-				if (type.IsPointer) {
-					ec.Report.Error (1919, loc, "Unsafe type `{0}' cannot be used in an object creation expression",
-						TypeManager.CSharpName (type));
-					return null;
-				}
+			if (arguments == null) {
+				Constant c = Constantify (type, RequestedType.Location);
+				if (c != null)
+					return ReducedExpression.Create (c, this);
+			}
 
-				if (arguments == null) {
-					Constant c = Constantify (type, RequestedType.Location, ec.FileType);
-					if (c != null)
-						return ReducedExpression.Create (c, this);
-				}
+			if (type.IsDelegate) {
+				return (new NewDelegate (type, arguments, loc)).Resolve (ec);
+			}
 
-				if (type.IsDelegate) {
-					return (new NewDelegate (type, arguments, loc)).Resolve (ec);
-				}
-
-				var tparam = type as TypeParameterSpec;
-				if (tparam != null) {
-					//
-					// Check whether the type of type parameter can be constructed. BaseType can be a struct for method overrides
-					// where type parameter constraint is inflated to struct
-					//
-					if ((tparam.SpecialConstraint & (SpecialConstraint.Struct | SpecialConstraint.Constructor)) == 0 && !TypeSpec.IsValueType (tparam)) {
-						ec.Report.Error (304, loc,
-							"Cannot create an instance of the variable type `{0}' because it does not have the new() constraint",
-							TypeManager.CSharpName (type));
-					}
-
-					if ((arguments != null) && (arguments.Count != 0)) {
-						ec.Report.Error (417, loc,
-							"`{0}': cannot provide arguments when creating an instance of a variable type",
-							TypeManager.CSharpName (type));
-					}
-
-					return this;
-				}
-
-				if (type.IsStatic) {
-					ec.Report.SymbolRelatedToPreviousError (type);
-					ec.Report.Error (712, loc, "Cannot create an instance of the static class `{0}'", TypeManager.CSharpName (type));
-					return null;
-				}
-
-				if (type.IsInterface || type.IsAbstract) {
-					if (!TypeManager.IsGenericType (type)) {
-						RequestedType = CheckComImport (ec);
-						if (RequestedType != null)
-							return RequestedType;
-					}
-					
-					ec.Report.SymbolRelatedToPreviousError (type);
-					ec.Report.Error (144, loc, "Cannot create an instance of the abstract class or interface `{0}'", TypeManager.CSharpName (type));
-					return null;
-				}
-
+			var tparam = type as TypeParameterSpec;
+			if (tparam != null) {
 				//
-				// Any struct always defines parameterless constructor
+				// Check whether the type of type parameter can be constructed. BaseType can be a struct for method overrides
+				// where type parameter constraint is inflated to struct
 				//
-				if (type.IsStruct && arguments == null)
-					return this;
-
-				bool dynamic;
-				if (arguments != null) {
-					arguments.Resolve (ec, out dynamic);
-				} else {
-					dynamic = false;
+				if ((tparam.SpecialConstraint & (SpecialConstraint.Struct | SpecialConstraint.Constructor)) == 0 && !TypeSpec.IsValueType (tparam)) {
+					ec.Report.Error (304, loc,
+						"Cannot create an instance of the variable type `{0}' because it does not have the new() constraint",
+						type.GetSignatureForError ());
 				}
 
-				method = ConstructorLookup (ec, type, ref arguments, loc);
-
-				if (dynamic) {
-					arguments.Insert (0, new Argument (new TypeOf (type, loc).Resolve (ec), Argument.AType.DynamicTypeName));
-					ret = new DynamicConstructorBinder (type, arguments, loc).Resolve (ec);
-				} else {
-					ret = this;
+				if ((arguments != null) && (arguments.Count != 0)) {
+					ec.Report.Error (417, loc,
+						"`{0}': cannot provide arguments when creating an instance of a variable type",
+						type.GetSignatureForError ());
 				}
 
-				// PlayScript: If this is a new AS object, return it cast as a dynamic.
-				if (isAsObject) {
-					ret = new Cast (new TypeExpression (ec.BuiltinTypes.Dynamic, this.Location), ret, this.Location).Resolve (ec);
+				return this;
+			}
+
+			if (type.IsStatic) {
+				ec.Report.SymbolRelatedToPreviousError (type);
+				ec.Report.Error (712, loc, "Cannot create an instance of the static class `{0}'", type.GetSignatureForError ());
+				return null;
+			}
+
+			if (type.IsInterface || type.IsAbstract){
+				if (!TypeManager.IsGenericType (type)) {
+					RequestedType = CheckComImport (ec);
+					if (RequestedType != null)
+						return RequestedType;
 				}
+				
+				ec.Report.SymbolRelatedToPreviousError (type);
+				ec.Report.Error (144, loc, "Cannot create an instance of the abstract class or interface `{0}'", type.GetSignatureForError ());
+				return null;
+			}
+
+			//
+			// Any struct always defines parameterless constructor
+			//
+			if (type.IsStruct && arguments == null)
+				return this;
+
+			bool dynamic;
+			if (arguments != null) {
+				arguments.Resolve (ec, out dynamic);
+			} else {
+				dynamic = false;
+			}
+
+			method = ConstructorLookup (ec, type, ref arguments, loc);
+
+			if (dynamic) {
+				arguments.Insert (0, new Argument (new TypeOf (type, loc).Resolve (ec), Argument.AType.DynamicTypeName));
+				ret = new DynamicConstructorBinder (type, arguments, loc).Resolve (ec);
+			} else {
+				ret = this;
+			}
+
+			// PlayScript: If this is a new AS object, return it cast as a dynamic.
+			if (isAsObject) {
+				ret = new Cast (new TypeExpression (ec.BuiltinTypes.Dynamic, this.Location), ret, this.Location).Resolve (ec);
 			}
 
 			return ret;
@@ -8341,7 +8383,7 @@ namespace Mono.CSharp
 			if (!ec.IsUnsafe) {
 				ec.Report.Error (233, loc,
 					"`{0}' does not have a predefined size, therefore sizeof can only be used in an unsafe context (consider using System.Runtime.InteropServices.Marshal.SizeOf)",
-					TypeManager.CSharpName (type_queried));
+					type_queried.GetSignatureForError ());
 			}
 			
 			type = ec.BuiltinTypes.Int;
@@ -10804,8 +10846,8 @@ namespace Mono.CSharp
 								ec.Report.Error (1922, loc, "A field or property `{0}' cannot be initialized with a collection " +
 									"object initializer because type `{1}' does not implement `{2}' interface",
 									ec.CurrentInitializerVariable.GetSignatureForError (),
-									TypeManager.CSharpName (ec.CurrentInitializerVariable.Type),
-									TypeManager.CSharpName (ec.BuiltinTypes.IEnumerable));
+									ec.CurrentInitializerVariable.Type.GetSignatureForError (),
+									ec.BuiltinTypes.IEnumerable.GetSignatureForError ());
 								return null;
 							}
 						}
@@ -10840,7 +10882,7 @@ namespace Mono.CSharp
 			if (is_collection_initialization) {
 				if (TypeManager.HasElementType (type)) {
 					ec.Report.Error (1925, loc, "Cannot initialize object of type `{0}' with a collection initializer",
-						TypeManager.CSharpName (type));
+						type.GetSignatureForError ());
 				}
 			}
 

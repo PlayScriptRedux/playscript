@@ -34,6 +34,7 @@
 #include <mono/metadata/reflection.h>
 #include <mono/metadata/coree.h>
 #include <mono/utils/mono-io-portability.h>
+#include <mono/utils/atomic.h>
 
 #ifndef HOST_WIN32
 #include <sys/types.h>
@@ -254,10 +255,10 @@ static void
 check_path_env (void)
 {
 	const char* path;
-#ifdef __native_client__
-	path = nacl_mono_path;
-#else
 	path = g_getenv ("MONO_PATH");
+#ifdef __native_client__
+	if (!path)
+		path = nacl_mono_path;
 #endif
 	if (!path || assemblies_path != NULL)
 		return;
