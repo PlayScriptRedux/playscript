@@ -115,7 +115,7 @@ namespace flash.events
 		public virtual void removeEventListener (string type, Delegate listener, bool useCapture = false)
 		{
 			if (_evTarget != null) {
-				removeEventListener(type, listener, useCapture);
+                _evTarget.removeEventListener(type, listener, useCapture);
 			} else {
 				if (_events == null) {
 					return;
