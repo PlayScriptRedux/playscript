@@ -219,19 +219,32 @@ namespace _root {
 				}
 			}
 		}
-		
+
+        public void append(IEnumerable<T> items)
+        {
+            mList.AddRange(items);
+        }
+
+        public void append(System.Collections.IEnumerable items)
+        {
+            foreach (var item in items)
+            {
+                mList.Add((T)items);
+            }
+        }
+
 		public Vector<T> concat(params object[] args) {
 
 			Vector<T> v = new Vector<T>();
 			// add this vector
-			v.mList.AddRange(this);
+			v.append(this);
 
 			// concat all supplied vecots
 			foreach (var o in args)
 			{
 				if (o is IEnumerable<T>)
 				{
-					v.mList.AddRange(o as IEnumerable<T>);
+					v.append(o as IEnumerable<T>);
 				} 
 				else
 				{
@@ -264,12 +277,26 @@ namespace _root {
 		}
  	 	
 		public string join(string sep = ",") {
-			throw new System.NotImplementedException();
-		}
+            var sb = new System.Text.StringBuilder();
+            bool needsSeperator = false;
+            foreach (var item in mList)
+            {
+                if (needsSeperator) {
+                    sb.Append(sep);
+                }
+                sb.Append(item.ToString());
+                needsSeperator = true;
+            }
+            return sb.ToString();
+        }
 
 		public int lastIndexOf(T searchElement, int fromIndex = 0x7fffffff) {
-			throw new System.NotImplementedException();
-		}
+            if (fromIndex == 0x7fffffff) {
+                return mList.LastIndexOf (searchElement);
+            } else {
+                return mList.LastIndexOf (searchElement, fromIndex);
+            }
+        }
 
 		public Vector<T> map(Delegate callback, dynamic thisObject = null) {
 			throw new System.NotImplementedException();
@@ -299,8 +326,10 @@ namespace _root {
 		}
  	 	
 		public T shift() {
-			throw new System.NotImplementedException();
-		}
+            T first = mList[0];
+            mList.RemoveAt(0);
+            return first;
+        }
  	 	
 		public Vector<T> slice(int startIndex = 0, int endIndex = 16777215) {
 			throw new System.NotImplementedException();
