@@ -98,7 +98,14 @@ namespace flash.events
                         // cast callback to dynamic
                         Delegate callback = evList [i].callback;
                         // we perform a dynamic invoke here because the parameter types dont always match exactly
-                        callback.DynamicInvoke(ev);
+                        try {
+                            callback.DynamicInvoke(ev);
+                        } 
+                        catch (Exception error)
+                        {
+                            // if you get an exception here while debugging then make sure that the debugger is setup to catch all exceptions
+                            // this is in the Run/Exceptions... menu in MonoDevelop or Xamarin studio
+                        }
                         dispatched = true;
                     }
                 }
