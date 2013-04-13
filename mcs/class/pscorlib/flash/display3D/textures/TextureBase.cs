@@ -49,7 +49,7 @@ namespace flash.display3D.textures {
 #if PLATFORM_MONOTOUCH
 			GL.GenerateMipmap(mTextureTarget);
 #else
-			throw new System.NotImplementedException();
+            GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.GenerateMipmap, 1);
 #endif
 		}
 
