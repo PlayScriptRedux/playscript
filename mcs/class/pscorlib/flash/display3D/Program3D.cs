@@ -248,7 +248,7 @@ namespace flash.display3D {
 					mSamplerUniforms.Add (uniform);
 				}
 
-				Console.WriteLine ("{0} name:{1} type:{2} size:{3} location:{4}", i, uniform.Name, uniform.Type, uniform.Size, uniform.Location);
+				// Console.WriteLine ("{0} name:{1} type:{2} size:{3} location:{4}", i, uniform.Name, uniform.Type, uniform.Size, uniform.Location);
 			}
 		}
 

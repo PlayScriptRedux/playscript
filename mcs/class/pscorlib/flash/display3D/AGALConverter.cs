@@ -816,7 +816,7 @@ namespace flash.display3D
 			glsl.Append (map.ToGLSL(true));
 			glsl.Append(sb.ToString());
 			glsl.AppendLine("}");
-			System.Console.WriteLine(glsl);
+			// System.Console.WriteLine(glsl);
 			return glsl.ToString();;
 		}
 	}
