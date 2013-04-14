@@ -383,7 +383,12 @@ package flash.display {
 			if (!File.Exists(path))
 			{	
 				path = Path.Combine(NSBundle.MainBundle.ResourcePath, path);
+                if (!File.Exists(path))
+                {   
+                    throw new System.IO.FileNotFoundException("Bitmap does not exist: " + path);
+                }
 			}
+
 
 #if PLATFORM_MONOMAC		
 			// create NSImage from path
@@ -392,6 +397,7 @@ package flash.display {
 			var image:CGImage = src.AsCGImage (ref rect, null, null);
 			var bd:BitmapData = BitmapData.loadFromCGImage(image);
 			image.Dispose();
+            src.Dispose();
 			return bd;
 #else
 			// create CGImage from path
