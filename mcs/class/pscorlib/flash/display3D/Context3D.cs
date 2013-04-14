@@ -88,6 +88,8 @@ namespace flash.display3D {
 		public void configureBackBuffer(int width, int height, int antiAlias, 
 			bool enableDepthAndStencil = true, bool wantsBestResolution = false) {
 
+			GL.Viewport(0,0, width, height);
+
 			// $$TODO allow for resizing of frame buffer here
 			mBackBufferWidth = width;
 			mBackBufferHeight = height;
