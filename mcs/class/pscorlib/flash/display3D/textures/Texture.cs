@@ -72,11 +72,22 @@ namespace flash.display3D.textures {
 			this.dispatchEvent(new Event(Event.TEXTURE_READY)  );
 		}
 		
-		public void uploadFromBitmapData (BitmapData source, uint miplevel = 0)
+		public void uploadFromBitmapData (BitmapData source, uint miplevel = 0, bool generateMipmap = false)
 		{
 			// Bind the texture
 			GL.BindTexture (textureTarget, textureId);
+
+#if PLATFORM_MONOMAC
+            if (generateMipmap) {
+                GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.GenerateMipmap, 1);
+            }
+#endif
+
 			GL.TexImage2D(textureTarget, (int)miplevel, PixelInternalFormat.Rgba, mWidth, mHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte,source.getRawData());
+
+#if PLATFORM_MONOTOUCH
+            GL.GenerateMipmap(textureTarget);
+#endif
 
 			// unbind texture and pixel buffer
 			GL.BindTexture (textureTarget, 0);

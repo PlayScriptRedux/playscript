@@ -47,7 +47,7 @@ namespace flash.display3D.textures
 			throw new System.NotImplementedException();
 		}
 		
-		public void uploadFromBitmapData(BitmapData source, uint side, uint miplevel = 0) {
+		public void uploadFromBitmapData(BitmapData source, uint side, uint miplevel = 0, bool generateMipmap = false) {
 			// bind the texture
 			GL.BindTexture (textureTarget, textureId);
 
@@ -63,8 +63,19 @@ namespace flash.display3D.textures
 			case 5: target = TextureTarget.TextureCubeMapNegativeZ; break;
 			}
 
+ #if PLATFORM_MONOMAC
+			if (generateMipmap) {
+                GL.TexParameter (textureTarget, TextureParameterName.GenerateMipmap, 1);
+			}
+#endif
+
 			// perform upload
 			GL.TexImage2D(target, (int)miplevel, PixelInternalFormat.Rgba, size, size, 0, PixelFormat.Rgba, PixelType.UnsignedByte, source.getRawData());
+
+#if PLATFORM_MONOTOUCH
+			GL.GenerateMipmap(textureTarget);
+#endif
+
 
 			// unbind texture and pixel buffer
 			GL.BindTexture (textureTarget, 0);
