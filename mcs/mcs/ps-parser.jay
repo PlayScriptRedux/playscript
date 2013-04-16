@@ -4265,14 +4265,14 @@ post_decrement_expression
 //	;
 
 new_expression
-	: NEW namespace_or_type_expr
+	: NEW new_type_or_member_access
 	  {
 		$$ = new AsNew ((Expression) $2, GetLocation ($1));
 	  }
 	| NEW builtin_types
 	  {
 		$$ = new AsNew ((Expression) $2, GetLocation ($1));
-	  }	  
+	  }
 	| NEW OPEN_PARENS expression CLOSE_PARENS
 	  {
 		$$ = new AsNew ((Expression) $3, GetLocation ($1));
@@ -4284,6 +4284,28 @@ new_expression
 	    $$ = arrayInit;
 	  }
 	;
+	
+new_type_or_member_access
+	: simple_name_expr
+	| THIS
+	  {
+		$$ = new This (GetLocation ($1));
+	  }
+	| SUPER DOT IDENTIFIER opt_type_argument_list
+	  {
+		var lt = (Tokenizer.LocatedToken) $3;
+		$$ = new MemberAccess (new BaseThis (GetLocation ($1)), lt.Value, (TypeArguments) $4, lt.Location);
+		lbag.AddLocation ($$, GetLocation ($2));
+	  }
+	| new_type_or_member_access DOT IDENTIFIER opt_type_argument_list
+	  {
+	    // member_name
+		var lt = (Tokenizer.LocatedToken) $3;
+		$$ = new MemberAccess ((Expression) $1, lt.Value, (TypeArguments) $4, lt.Location);
+		lbag.AddLocation ($$, GetLocation ($2));
+	  }
+	;
+	
 
 //anonymous_type_expression
 //	: NEW OPEN_BRACE anonymous_type_parameters_opt_comma CLOSE_BRACE
