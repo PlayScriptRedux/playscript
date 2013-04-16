@@ -1077,6 +1077,22 @@ namespace Mono.CSharp {
 
 				return ParseResult.Success;
 
+            // We just ignore this.
+            case "/errorendlocation":
+            case "/highentropyva-":
+            case "/highentropyva+":
+            case "/highentropyva":
+            case "/utf8output":
+                return ParseResult.Success;
+
+            // We just ignore this.
+            case "/preferreduilang":
+                switch (value.ToLowerInvariant())
+                {
+                    default:
+                        return ParseResult.Success;
+                }
+                   
 			case "/helpinternal":
 				OtherFlags ();
 				return ParseResult.Stop;
