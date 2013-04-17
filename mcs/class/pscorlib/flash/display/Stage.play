@@ -109,7 +109,8 @@ package flash.display {
 		}
 
 		public function onResize(width:int, height:int):void {
-			if (width != this.width && height != this.height)  {
+			// handle resize if width or height change
+			if (width != this.width || height != this.height)  {
 				this.width = width;
 				this.height = height;
 				this.stageWidth = width;
