@@ -70,7 +70,10 @@ package flash.geom {
 		}
 
 		public function copyFrom(sourceVector3D:Vector3D):void {
-			throw new System.NotImplementedException();
+			this.x = sourceVector3D.x;
+			this.y = sourceVector3D.y;
+			this.z = sourceVector3D.z;
+			this.w = sourceVector3D.w;
 		}
  	 	
 		public function crossProduct(a:Vector3D):Vector3D {
@@ -90,11 +93,12 @@ package flash.geom {
 		}
 
  	 	public static function distance(pt1:Vector3D, pt2:Vector3D):Number {
-			throw new System.NotImplementedException();
+			var vec:Vector3D = pt1.subtract(pt2);
+			return vec.length;
 		}
  	 	
 		public function dotProduct(a:Vector3D):Number {
-			throw new System.NotImplementedException();
+			return this.x * a.x + this.y * a.y + this.z * a.z; // W??
 		}
  	 	
 		public function equals(toCompare:Vector3D, allFour:Boolean = false):Boolean {
@@ -134,7 +138,10 @@ package flash.geom {
 		}
  	 	
 		public function scaleBy(s:Number):void {
-			throw new System.NotImplementedException();
+			this.x *= s;
+			this.y *= s;
+			this.z *= s;
+			// w ?
 		}
  	 	
 		public function setTo(xa:Number, ya:Number, za:Number):void {
