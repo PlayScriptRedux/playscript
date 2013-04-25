@@ -65,7 +65,7 @@ namespace _root
 
         public new Array concat(params object[] args) 
         {
-            Array v = new Array((uint)args.Length + length);
+            Array v = new Array();
             // add this vector
             v.append (this);
             
