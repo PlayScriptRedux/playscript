@@ -575,7 +575,24 @@ package flash.geom {
 		}
  	 	
 		public function transformVectors(vin:Vector.<Number>, vout:Vector.<Number>):void {
-			throw new System.NotImplementedException();
+
+			var m:double[] = mData;
+
+			var len:int = vin.length;
+			for (var i:int=0; i < len; i+=3) {
+				var x:Number = vin[i + 0];
+				var y:Number = vin[i + 1];
+				var z:Number = vin[i + 2];
+
+				var ox:Number = (x * m[0]) + (y * m[4]) + (z * m[8]) + m[12];
+				var oy:Number = (x * m[1]) + (y * m[5]) + (z * m[9]) + m[13];
+				var oz:Number = (x * m[2]) + (y * m[6]) + (z * m[10]) + m[14];
+
+				// write output
+				vout[i + 0] = ox;
+				vout[i + 1] = oy;
+				vout[i + 2] = oz;
+			}
 		}
  	 	
 		public function transpose():void {
