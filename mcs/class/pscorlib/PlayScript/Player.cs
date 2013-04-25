@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Reflection;
 
 using flash.display;
 
@@ -32,16 +33,57 @@ namespace PlayScript
 			get; set;
 		}
 		
-		public Player(RectangleF bounds, System.Type defaultClass = null)
+		public Player(RectangleF bounds)
 		{
 			Title = "";
 			
 			// construct flash stage
 			mStage = new flash.display.Stage ((int)bounds.Width, (int)bounds.Height);
+		}
 
-			if (defaultClass != null) {
-				LoadClass(defaultClass);
+		// this method returns all classes with the [SWF] attribute
+		// it will also optionally load all assemblies in the application directory
+		public static List<System.Type> GetAllSWFClasses(bool loadAllAssemblies = false)
+		{
+			if (loadAllAssemblies)
+			{
+				// load all assemblies in the application directory
+				// this may need to be done if the assembly is not referenced by the main app
+				string path = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+				foreach (string dll in System.IO.Directory.GetFiles(path, "*.dll"))
+				{
+					Console.WriteLine("Loading assembly {0}", dll);
+					Assembly.LoadFile(dll);
+				}
 			}
+
+			var list = new List<System.Type>();
+			foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+			{
+				foreach (var type in assembly.GetTypes())
+				{
+					if (Attribute.IsDefined(type, typeof(_root.SWFAttribute)))
+				    {
+						list.Add(type);
+					}
+				}
+			}
+			return list;
+		}
+
+		public DisplayObject LoadSWFClassByName(string name, bool loadAllAssemblies = false)
+		{
+			name = name.ToLowerInvariant();
+			foreach (var type in GetAllSWFClasses(loadAllAssemblies))
+			{
+				// this does a simple fuzzy match
+				if (type.Name.ToLowerInvariant().Contains(name))
+				{
+					return LoadClass(type);
+				}
+			}
+			// not found
+			return null;
 		}
 		
 		public DisplayObject LoadClass(System.Type type)

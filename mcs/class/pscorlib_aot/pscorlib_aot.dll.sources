@@ -173,6 +173,7 @@
 ../pscorlib/RegExp.play
 ../pscorlib/SecurityError.play
 ../pscorlib/SyntaxError.play
+../pscorlib/SWFAttribute.cs
 ../pscorlib/TypeError.play
 ../pscorlib/URIError.play
 ../pscorlib/Vector.cs

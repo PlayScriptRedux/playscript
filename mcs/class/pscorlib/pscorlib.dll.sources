@@ -187,6 +187,7 @@
 ./RegExp.play
 ./SecurityError.play
 ./SyntaxError.play
+./SWFAttribute.cs
 ./TypeError.play
 ./URIError.play
 ./Vector.cs
