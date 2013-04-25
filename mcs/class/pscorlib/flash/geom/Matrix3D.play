@@ -562,10 +562,11 @@ package flash.geom {
 			}
 
 			// $$TODO is this the right order?
-			this.appendTranslation(translate.x, translate.y, translate.z);
+			this.appendScale(scale.x, scale.y, scale.z);
 
 			// $$TODO is this the right order?
-			this.appendScale(scale.x, scale.y, scale.z);
+			this.appendTranslation(translate.x, translate.y, translate.z);
+
 			return true;
 		}
  	 	
