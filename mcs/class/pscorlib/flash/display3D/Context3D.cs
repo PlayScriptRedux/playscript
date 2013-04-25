@@ -376,7 +376,7 @@ namespace flash.display3D {
 			else
 			{
 				if (enableErrorChecking) {
-					Console.WriteLine ("warning: vertex program register not found: {0}", firstRegister);
+					Console.WriteLine ("warning: program register not found: {0}", firstRegister);
 				}
 			}
 		}
@@ -401,11 +401,15 @@ namespace flash.display3D {
 				Program3D.Uniform uniform = mProgram.getUniform(isVertex, register);
 				if (uniform == null)
 				{
-					// abort
+					// skip this register
+					register     += 1;
+					numRegisters -= 1;
+					dataIndex    += 4;
+
 					if (enableErrorChecking) {
-						Console.WriteLine ("warning: vertex program register not found: {0}", register);
+						Console.WriteLine ("warning: program register not found: {0}", register);
 					}
-					return;
+					continue;
 				}
 				// convert source data into floating point
 				int tempIndex = 0;

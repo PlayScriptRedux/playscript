@@ -30,6 +30,10 @@ using OpenTK.Graphics.ES20;
 namespace flash.display3D {
 
 	public class Program3D {
+
+		public static bool Verbose = false;
+		
+
 		
 		//
 		// Methods
@@ -101,8 +105,10 @@ namespace flash.display3D {
 			// delete existing shaders
 			deleteShaders ();
 
-			//Console.WriteLine (vertexShaderSource);
-			//Console.WriteLine (fragmentShaderSource);
+			if (Verbose) {
+				Console.WriteLine (vertexShaderSource);
+				Console.WriteLine (fragmentShaderSource);
+			}
 
 			mVertexSource = vertexShaderSource;
 			mFragmentSource = fragmentShaderSource;
@@ -261,7 +267,9 @@ namespace flash.display3D {
 					mSamplerUniforms.Add (uniform);
 				}
 
-				// Console.WriteLine ("{0} name:{1} type:{2} size:{3} location:{4}", i, uniform.Name, uniform.Type, uniform.Size, uniform.Location);
+				if (Verbose) {
+					Console.WriteLine ("{0} name:{1} type:{2} size:{3} location:{4}", i, uniform.Name, uniform.Type, uniform.Size, uniform.Location);
+				}
 			}
 		}
 
