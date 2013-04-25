@@ -142,6 +142,7 @@
     <Compile Include="flash\display3D\textures\RectangleTexture.cs" />
     <Compile Include="flash\display3D\textures\SamplerState.cs" />
     <Compile Include="DeprecatedAttribute.cs" />
+    <Compile Include="PlayScript\Player.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

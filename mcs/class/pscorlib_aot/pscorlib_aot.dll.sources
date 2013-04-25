@@ -1,4 +1,5 @@
 ../pscorlib/PlayScript/Undefined.cs
+../pscorlib/PlayScript/Player.cs
 ../pscorlib/Array.cs
 ../pscorlib/AssemblyInfo.cs
 ../pscorlib/Boolean.cs

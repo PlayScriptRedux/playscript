@@ -1,4 +1,5 @@
 ./PlayScript/Undefined.cs
+./PlayScript/Player.cs
 ./Array.cs
 ./AssemblyInfo.cs
 ./Boolean.cs
