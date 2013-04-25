@@ -45,7 +45,15 @@ package flash.geom {
 		public function ColorTransform(redMultiplier:Number = 1.0, greenMultiplier:Number = 1.0, 
 			blueMultiplier:Number = 1.0, alphaMultiplier:Number = 1.0, redOffset:Number = 0, 
 			greenOffset:Number = 0, blueOffset:Number = 0, alphaOffset:Number = 0) {
-			throw new System.NotImplementedException();
+
+			this.redMultiplier = redMultiplier;
+			this.greenMultiplier = greenMultiplier;
+			this.blueMultiplier = blueMultiplier;
+			this.alphaMultiplier = alphaMultiplier;
+			this.redOffset = redOffset;
+			this.greenOffset = greenOffset;
+			this.blueOffset = blueOffset;
+			this.alphaOffset = alphaOffset;
 		}
 		
 		public function concat(second:ColorTransform):void {
