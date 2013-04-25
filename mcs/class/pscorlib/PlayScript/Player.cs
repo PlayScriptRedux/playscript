@@ -222,9 +222,15 @@ namespace PlayScript
 			foreach (UITouch touch in touches) {
 				var p = touch.LocationInView(touch.View);
 				//Console.WriteLine ("touches-began {0}", p);
-				
+
+				mStage.mouseX = p.X;
+				mStage.mouseY = p.Y;
+
 				var te = new flash.events.TouchEvent(flash.events.TouchEvent.TOUCH_BEGIN, true, false, 0, true, p.X, p.Y, 1.0, 1.0, 1.0 );
 				mStage.dispatchEvent (te);
+
+				var me = new flash.events.MouseEvent(flash.events.MouseEvent.MOUSE_DOWN, true, false, p.X, p.Y, mStage);
+				mStage.dispatchEvent (me);
 			}
 		}
 		
@@ -233,9 +239,15 @@ namespace PlayScript
 			foreach (UITouch touch in touches) {
 				var p = touch.LocationInView(touch.View);
 				//Console.WriteLine ("touches-moved {0}", p);
-				
+
+				mStage.mouseX = p.X;
+				mStage.mouseY = p.Y;
+
 				var te = new flash.events.TouchEvent(flash.events.TouchEvent.TOUCH_MOVE, true, false, 0, true, p.X, p.Y, 1.0, 1.0, 1.0 );
 				mStage.dispatchEvent (te);
+
+				var me = new flash.events.MouseEvent(flash.events.MouseEvent.MOUSE_MOVE, true, false, p.X, p.Y, mStage);
+				mStage.dispatchEvent (me);
 			}
 		}
 		
@@ -244,9 +256,16 @@ namespace PlayScript
 			foreach (UITouch touch in touches) {
 				var p = touch.LocationInView(touch.View);
 				//Console.WriteLine ("touches-ended {0}", p);
-				
+
+				mStage.mouseX = p.X;
+				mStage.mouseY = p.Y;
+
 				var te = new flash.events.TouchEvent(flash.events.TouchEvent.TOUCH_END, true, false, 0, true, p.X, p.Y, 1.0, 1.0, 1.0 );
 				mStage.dispatchEvent (te);
+
+				var me = new flash.events.MouseEvent(flash.events.MouseEvent.MOUSE_UP, true, false, p.X, p.Y, mStage);
+				mStage.dispatchEvent (me);
+
 			}
 		}
 #endif
