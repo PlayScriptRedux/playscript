@@ -32,19 +32,44 @@ namespace _root
 		}
 
 		public static string concat(this string s, params object[] args) {
-			throw new NotImplementedException();
+			foreach (object arg in args)
+			{
+				s += arg.ToString();
+			}
+			return s;
+		}
+
+		private static char objectToChar(object o)
+		{
+			if (o is int) {
+				return (char)(int)o;
+			} else if (o is uint) {
+				return (char)(uint)o;
+			} else if (o is char) {
+				return (char)o;
+			} else {
+				throw new NotImplementedException();
+			}
 		}
 
 		public static string fromCharCode (params object[] charCodes)
 		{
-			var sb = new StringBuilder ();
-			foreach (int obj in charCodes) {
-				sb.Append( (char) obj);
+			if (charCodes.Length == 1)
+			{
+				return new string(objectToChar(charCodes[0]), 1);
 			}
-			return sb.ToString();
+			else
+			{
+				var chars = new char[charCodes.Length];
+				for (int i=0; i < charCodes.Length; i++) {
+					chars[i] = objectToChar(charCodes[i]);
+				}
+				return new string(chars);
+			}
 		}
 
 		public static int indexOf(this string s, string val, double startIndex = 0) {
+			if (s == null) return -1;
 			return s.IndexOf(val, (int)startIndex);
 		}
 						
