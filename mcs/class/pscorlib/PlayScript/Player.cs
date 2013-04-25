@@ -105,6 +105,61 @@ namespace PlayScript
 
 			return displayObject;
 		}
+
+		private static object LoadEmbed(_root.EmbedAttribute embedAttr)
+		{
+			string source = embedAttr.source;
+			var ext = System.IO.Path.GetExtension(source).ToLowerInvariant();
+
+			// remove unneeded prefixes
+			var prefixes = new string[] {"/../", "../"};
+			foreach (var prefix in prefixes) 
+			{
+				if (source.StartsWith(prefix))
+				{
+					source = source.Substring(prefix.Length);
+					break;
+				}
+			}
+
+			// we found an embed
+			if (embedAttr.mimeType == "application/octet-stream")
+			{
+				// it's a byte array
+				return flash.utils.ByteArray.loadFromPath(source);
+			}
+			
+			// handle swfs
+			if (ext == ".swf")
+			{
+				// loading of swf's is not supported, so create a dummy sprite
+				return new flash.display.Sprite();
+			}
+			
+			// else its probably an image
+			return new flash.display.Bitmap(flash.display.BitmapData.loadFromPath(source));
+		}
+
+		public static object LoadEmbed(object baseObject, string fieldName)
+		{
+			var type = baseObject.GetType();
+			var fieldInfo = type.GetField(fieldName);
+
+			foreach (var attr in fieldInfo.GetCustomAttributes(typeof(_root.EmbedAttribute), true))
+			{
+				return LoadEmbed((_root.EmbedAttribute)attr);
+			}
+
+			throw new Exception("Embedded attribute not found on field " + fieldName + " for class " + type.ToString());
+		}
+
+		public static object InvokeStaticMethod(System.Type type, String methodName, _root.Array args)
+		{
+			var method = type.GetMethod(methodName);
+			if (method == null) throw new Exception("Method not found");
+			return method.Invoke(null, args.ToArray());
+		}
+
 			
 		public void OnKeyDown (uint charCode, uint keyCode)
 		{
