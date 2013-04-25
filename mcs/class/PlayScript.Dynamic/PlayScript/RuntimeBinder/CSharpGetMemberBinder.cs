@@ -146,6 +146,17 @@ namespace PlayScript.RuntimeBinder
 				}
 			}
 
+			// try fields
+			var fields = o.GetType ().GetFields();
+			len = fields.Length;
+			for (var pi = 0; pi < len; pi++) {
+				var field = fields[pi];
+				if (field != null && field.IsPublic && !field.IsStatic && field.Name == name) {
+					return (T)field.GetValue(o);
+				}
+			}
+
+
 			throw new Exception("Unable to find member " + name);
 		}
 
