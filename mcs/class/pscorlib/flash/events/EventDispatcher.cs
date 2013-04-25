@@ -99,7 +99,10 @@ namespace flash.events
                         Delegate callback = evList [i].callback;
                         // we perform a dynamic invoke here because the parameter types dont always match exactly
                         try {
+							// set current target for event
+							ev._currentTarget = ev._target = this;
                             callback.DynamicInvoke(ev);
+							ev._currentTarget = ev._target = null;
                         } 
                         catch (Exception error)
                         {

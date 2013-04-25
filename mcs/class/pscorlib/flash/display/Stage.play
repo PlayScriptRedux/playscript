@@ -120,7 +120,6 @@ package flash.display {
 				
 				// dispatch resize event here...
 				var ev:flash.events.Event = new flash.events.Event(flash.events.Event.RESIZE);
-				ev.target = this;
 				this.dispatchEvent(ev);
 			}
 		}
