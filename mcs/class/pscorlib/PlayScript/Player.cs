@@ -16,13 +16,18 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Reflection;
+using System.IO;
 
 using flash.display;
 
-#if PLATFORM_MONOTOUCH
+#if PLATFORM_MONOMAC
+using MonoMac.Foundation;
+using MonoMac.AppKit;
+#elif PLATFORM_MONOTOUCH
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
 #endif
+
 
 namespace PlayScript
 {
@@ -35,6 +40,11 @@ namespace PlayScript
 		
 		public Player(RectangleF bounds)
 		{
+			AddResourceDirectory("");
+			#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH 
+			AddResourceDirectory(NSBundle.MainBundle.ResourcePath);
+			#endif
+
 			Title = "";
 			
 			// construct flash stage
@@ -106,48 +116,40 @@ namespace PlayScript
 			return displayObject;
 		}
 
-		private static object LoadEmbed(_root.EmbedAttribute embedAttr)
+		private static object LoadResource(string path, string mimeType = null)
 		{
-			string source = embedAttr.source;
-			var ext = System.IO.Path.GetExtension(source).ToLowerInvariant();
-
-			// remove unneeded prefixes
-			var prefixes = new string[] {"/../", "../"};
-			foreach (var prefix in prefixes) 
-			{
-				if (source.StartsWith(prefix))
-				{
-					source = source.Substring(prefix.Length);
-					break;
-				}
-			}
-
-			// we found an embed
-			if (embedAttr.mimeType == "application/octet-stream")
-			{
-				// it's a byte array
-				return flash.utils.ByteArray.loadFromPath(source);
-			}
-			
+			var ext = Path.GetExtension(path).ToLowerInvariant();
 			// handle swfs
 			if (ext == ".swf")
 			{
 				// loading of swf's is not supported, so create a dummy sprite
 				return new flash.display.Sprite();
 			}
+
+			// handle byte arrays
+			if (mimeType == "application/octet-stream")
+			{
+				return flash.utils.ByteArray.loadFromPath(path);
+			}
 			
-			// else its probably an image
-			return new flash.display.Bitmap(flash.display.BitmapData.loadFromPath(source));
+			// else its probably an image 
+			// TODO: check extension
+			return new flash.display.Bitmap(flash.display.BitmapData.loadFromPath(path));
 		}
 
 		public static object LoadEmbed(object baseObject, string fieldName)
 		{
 			var type = baseObject.GetType();
 			var fieldInfo = type.GetField(fieldName);
+			if (fieldInfo == null) 
+			{
+				throw new Exception("Field not found " + fieldName + " for class " + type.ToString());
+			}
 
 			foreach (var attr in fieldInfo.GetCustomAttributes(typeof(_root.EmbedAttribute), true))
 			{
-				return LoadEmbed((_root.EmbedAttribute)attr);
+				var embed = attr as _root.EmbedAttribute;
+				return LoadResource(embed.source, embed.mimeType);
 			}
 
 			throw new Exception("Embedded attribute not found on field " + fieldName + " for class " + type.ToString());
@@ -160,7 +162,56 @@ namespace PlayScript
 			return method.Invoke(null, args.ToArray());
 		}
 
-			
+		public static string ResolveResourcePath(string path)
+		{
+			string altPath = TryResolveResourcePath(path);
+			if (altPath == null)
+			{
+				throw new System.IO.FileNotFoundException("File does not exist: " + path + "\nMake sure that it has been added with build action of BundledResource, or add a new search directory with AddResourceDirectory()\n" );
+			}
+			return altPath;
+		}
+
+		public static string TryResolveResourcePath(string path)
+		{
+			if (File.Exists(path))
+			{ 
+				// found file at this location
+				return path;
+			}
+
+			// remove unneeded prefixes
+			var prefixes = new string[] {"/../", "../"};
+			foreach (var prefix in prefixes) 
+			{
+				if (path.StartsWith(prefix))
+				{
+					path = path.Substring(prefix.Length);
+					break;
+				}
+			}
+
+			// try all resource directories 
+			foreach (var dir in sResourceDirectories)
+			{
+				var altPath = Path.Combine(dir, path);
+				if (File.Exists(altPath))
+				{ 
+					// found file at this location
+					return altPath;
+				}
+			}
+
+			return null;
+		}
+
+		public static void AddResourceDirectory(string dir)
+		{
+			if (!sResourceDirectories.Contains(dir)) {
+				sResourceDirectories.Add(dir);
+			}
+		}
+
 		public void OnKeyDown (uint charCode, uint keyCode)
 		{
 			var ke = new flash.events.KeyboardEvent(flash.events.KeyboardEvent.KEY_DOWN, true, false, charCode, keyCode);
@@ -293,6 +344,8 @@ namespace PlayScript
 		}
 		
 		private flash.display.Stage    mStage;
+
+		private static List<string> sResourceDirectories = new List<string>();
 	}
 }
 		

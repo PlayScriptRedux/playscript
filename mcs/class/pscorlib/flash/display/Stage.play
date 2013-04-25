@@ -20,6 +20,12 @@ package flash.display {
 	import flash.events.Event;
 	import flash.media.StageVideo;
 
+	public class StageDisplayState
+	{
+		public const NORMAL:String = "Normal";
+		public const FULL_SCREEN:String = "FullScreen";
+	}
+
 	public class Stage extends DisplayObjectContainer {
 	
 		//
@@ -89,6 +95,8 @@ package flash.display {
  	 	public override property textSnapshot : TextSnapshot { get { return null; } }
 
  	 	public property wmodeGPU : Boolean { get { return false; } }
+
+		public property mouseLock :Boolean {get {return false;} }
 
 		//
 		// Methods

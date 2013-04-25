@@ -372,19 +372,8 @@ package flash.utils {
 		}
 
 		public static function loadFromPath(path:String):ByteArray {
-			
-			#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH 
-			if (!File.Exists(path))
-			{	
-				path = Path.Combine(NSBundle.MainBundle.ResourcePath, path);
-				if (!File.Exists(path))
-				{   
-					throw new System.IO.FileNotFoundException("File does not exist: " + path);
-				}
-			}
-			#endif
-
-			var data:byte[] = System.IO.File.ReadAllBytes(path);
+			var newPath = PlayScript.Player.ResolveResourcePath(path);
+			var data:byte[] = System.IO.File.ReadAllBytes(newPath);
 			var ba:ByteArray = new ByteArray();
 			ba.writeBytes(data);
 			ba.position = 0;
