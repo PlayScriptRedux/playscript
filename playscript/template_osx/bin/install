@@ -1,0 +1,10 @@
+#!/bin/sh
+echo "Installing PlayScript assemblies into the global cache.."
+BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+LIB_DIR="$BIN_DIR/../lib"
+sudo gacutil -i "$LIB_DIR/Mono.PlayScript.dll"
+sudo gacutil -i "$LIB_DIR/PlayScript.Dynamic.dll"
+sudo gacutil -i "$LIB_DIR/pscorlib.dll"
+sudo gacutil -i "$LIB_DIR/PlayScript.Dynamic_aot.dll"
+sudo gacutil -i "$LIB_DIR/pscorlib_aot.dll"
+echo "All assemblies installed."

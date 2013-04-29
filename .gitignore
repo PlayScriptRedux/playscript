@@ -107,6 +107,8 @@ GRTAGS
 GSYMS
 GTAGS
 
+# Playscript
+!playscript/template_osx/bin/
 
 ##############################################################################
 # Mono-specific patterns

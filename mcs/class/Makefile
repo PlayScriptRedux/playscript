@@ -229,6 +229,7 @@ net_4_0_dirs := \
 	System.Data.Services.Client	\
 	System.Data.Services \
 	System.Json.Microsoft \
+	Mono.PlayScript \
 	PlayScript.Dynamic \
 	PlayScript.Dynamic_aot \
 	pscorlib \
