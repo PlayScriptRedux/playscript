@@ -75,16 +75,67 @@ package flash.display {
 		}
 		
 		public function colorTransform(rect:Rectangle, colorTransform:ColorTransform):void {
-			throw new System.NotImplementedException();
+			// only support a full rectangle
+			if (rect != null && !rect.equals(this.rect))
+				throw new System.NotImplementedException();
+
+			var len:int = mData.Length;
+			for (var i:int =0; i < len; i++) {
+				mData[i] = colorTransform.transformColor32(mData[i]);
+			}
 		}
  	 	
 		public function compare(otherBitmapData:BitmapData):Object {
 			throw new System.NotImplementedException();
 		}
 
+		private function convertChannelIndex(channel:uint):uint
+		{
+			switch (channel)
+			{
+			case BitmapDataChannel.RED: return 2;		// i think this is right, but may be 2,1,0,3
+			case BitmapDataChannel.GREEN: return 1;
+			case BitmapDataChannel.BLUE: return 0;
+			case BitmapDataChannel.ALPHA: return 3;
+			default:
+				throw new Error();
+			}
+		}
+
+
 		public function copyChannel(sourceBitmapData:BitmapData, sourceRect:Rectangle, destPoint:Point, 
 			sourceChannel:uint, destChannel:uint):void {
-			throw new System.NotImplementedException();
+
+			// only support a full rectangle
+			if (sourceRect != null && !sourceRect.equals(this.rect))
+				throw new System.NotImplementedException();
+
+			sourceChannel = convertChannelIndex(sourceChannel);
+			destChannel = convertChannelIndex(destChannel);
+
+			var source:uint[] = sourceBitmapData.mData;
+			var dest:uint[] = mData;
+
+			var smask:uint = 0xFF << (destChannel * 8);
+			var dmask:uint = smask ^ 0xFFFFFFFF;
+			var sourceShift:int = (destChannel - sourceChannel) * 8;
+
+			var len:int = source.Length;
+			if (sourceShift >= 0)
+			{
+				// left shift
+				for (var i:int =0; i < len; i++) {
+					dest[i] = (dest[i] & dmask)  | ((source[i] << sourceShift) & smask);
+				}
+			}
+			else
+			{
+				// right shift
+				sourceShift = -sourceShift;
+				for (var i:int =0; i < len; i++) {
+					dest[i] = (dest[i] & dmask)  | ((source[i] >> sourceShift) & smask);
+				}
+			}
 		}
 
 		public function copyPixels(sourceBitmapData:BitmapData, sourceRect:Rectangle, destPoint:Point, 
@@ -378,12 +429,7 @@ package flash.display {
 
 		public static function loadFromPath(path:String):BitmapData
 		{
-#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH 
-		
-			if (!File.Exists(path))
-			{	
-				path = Path.Combine(NSBundle.MainBundle.ResourcePath, path);
-			}
+			path = PlayScript.Player.ResolveResourcePath(path);
 
 #if PLATFORM_MONOMAC		
 			// create NSImage from path
@@ -392,15 +438,14 @@ package flash.display {
 			var image:CGImage = src.AsCGImage (ref rect, null, null);
 			var bd:BitmapData = BitmapData.loadFromCGImage(image);
 			image.Dispose();
+            src.Dispose();
 			return bd;
-#else
+#elif PLATFORM_MONOTOUCH
 			// create CGImage from path
 			var image:CGImage = (new UIImage(path)).CGImage;
 			var bd:BitmapData = BitmapData.loadFromCGImage(image);
 			image.Dispose();
 			return bd;
-#endif
-
 #else
 			throw new System.NotImplementedException();
 #endif

@@ -656,6 +656,9 @@
     <Compile Include="..\pscorlib\flash\display3D\textures\SamplerState.cs">
       <Link>flash\display3D\textures\SamplerState.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\PlayScript\Player.cs">
+      <Link>PlayScript\Player.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monotouch.csproj">

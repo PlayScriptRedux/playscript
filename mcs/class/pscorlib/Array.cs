@@ -58,10 +58,14 @@ namespace _root
             throw new NotImplementedException();
         }
 
+        public new Array slice(int startIndex = 0, int endIndex = 16777215) {
+            throw new System.NotImplementedException();
+        }
+
 
         public new Array concat(params object[] args) 
         {
-            Array v = new Array((uint)args.Length + length);
+            Array v = new Array();
             // add this vector
             v.append (this);
             

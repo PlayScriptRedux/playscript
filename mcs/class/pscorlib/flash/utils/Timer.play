@@ -88,13 +88,13 @@ package flash.utils {
 				}
 
 				// dispatch timer event
-				var e:Event = new Event(TimerEvent.TIMER);
+				var e:Event = new TimerEvent(TimerEvent.TIMER);
 				this.dispatchEvent(e);
 				
 				if (!mRunning)
 				{
 					// dispatch timer complete event
-					var ec:Event = new Event(TimerEvent.TIMER_COMPLETE);
+					var ec:Event = new TimerEvent(TimerEvent.TIMER_COMPLETE);
 					this.dispatchEvent(ec);
 				}
 			}
@@ -136,7 +136,7 @@ package flash.utils {
 			
 			// create timer object
 			var timer:Timer = new Timer(delay, repeat);
-			timer.addEventListener(TimerEvent.TIMER, function(e:Event):void {closure();} );
+			timer.addEventListener(TimerEvent.TIMER, function(e:TimerEvent):void {closure();} );
 			timer.start();
 			
 			// add to dictionary

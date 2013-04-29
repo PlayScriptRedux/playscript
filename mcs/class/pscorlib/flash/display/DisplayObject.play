@@ -15,6 +15,7 @@
 package flash.display {
 	import System.NotImplementedException;
 	import flash.accessibility.AccessibilityProperties;
+    import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.geom.Rectangle;
 	import flash.geom.Point;
@@ -141,9 +142,25 @@ package flash.display {
 			return point.clone();
 			//throw new NotImplementedException();
 		}
+        
+        // this overrides a method in EventDispatcher
+        protected override function getGlobalEventDispatcher(type:String):EventDispatcher
+        {
+            // track enter/exit frame events using global dispatcher
+            if (type == Event.ENTER_FRAME || type == Event.EXIT_FRAME) {
+                return sGlobalEventDispatcher;
+            } else {
+                return null;
+            }
+        }
+
 
 		internal var mParent:DisplayObjectContainer;
-	
+        
+        // DisplayObjects not added to the stage still receive enter/exit frame events so they need to be tracked globally
+        // we keep around this list to track all display objects that listen for enter/exit frame events (and perhaps others)
+        internal static var sGlobalEventDispatcher:EventDispatcher= new EventDispatcher();
+
 	}
 
 }

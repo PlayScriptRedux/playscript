@@ -1563,7 +1563,9 @@ namespace PlayScript.Expando {
 						return valueSlots [cur];
 					cur = linkSlots [cur].Next;
 				}
-				throw new KeyNotFoundException ();
+				// this is not an exceptional condition although we should be returning undefined instead of null
+				return null;
+				//throw new KeyNotFoundException ();
 			}
 			
 			set {
@@ -2065,6 +2067,12 @@ namespace PlayScript.Expando {
 			value = default (object);
 			return false;
 		}
+
+		public bool hasOwnProperty(string key)
+		{
+			object value;
+			return TryGetValue(key, out value);
+		}
 		
 		ICollection<string> IDictionary<string, object>.Keys {
 			get { return Keys; }
@@ -2224,7 +2232,8 @@ namespace PlayScript.Expando {
 		
 		IEnumerator IEnumerable.GetEnumerator ()
 		{
-			return new Enumerator (this);
+			// enumerate over keys only
+			return Keys.GetEnumerator();
 		}
 		
 		IEnumerator<KeyValuePair<string, object>> IEnumerable<KeyValuePair<string, object>>.GetEnumerator ()
@@ -2237,7 +2246,7 @@ namespace PlayScript.Expando {
 			return new ShimEnumerator (this);
 		}
 		
-		public Enumerator GetEnumerator ()
+		public Enumerator GetKVPEnumerator ()
 		{
 			return new Enumerator (this);
 		}
@@ -2248,7 +2257,7 @@ namespace PlayScript.Expando {
 			Enumerator host_enumerator;
 			public ShimEnumerator (ExpandoObject host)
 			{
-				host_enumerator = host.GetEnumerator ();
+				host_enumerator = host.GetKVPEnumerator ();
 			}
 			
 			public void Dispose ()
@@ -2485,7 +2494,7 @@ namespace PlayScript.Expando {
 				
 				internal Enumerator (ExpandoObject host)
 				{
-					host_enumerator = host.GetEnumerator ();
+					host_enumerator = host.GetKVPEnumerator ();
 				}
 				
 				public void Dispose ()
@@ -2600,7 +2609,7 @@ namespace PlayScript.Expando {
 				
 				internal Enumerator (ExpandoObject host)
 				{
-					host_enumerator = host.GetEnumerator ();
+					host_enumerator = host.GetKVPEnumerator ();
 				}
 				
 				public void Dispose ()

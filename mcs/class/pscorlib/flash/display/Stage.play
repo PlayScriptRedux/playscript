@@ -20,6 +20,12 @@ package flash.display {
 	import flash.events.Event;
 	import flash.media.StageVideo;
 
+	public class StageDisplayState
+	{
+		public const NORMAL:String = "Normal";
+		public const FULL_SCREEN:String = "FullScreen";
+	}
+
 	public class Stage extends DisplayObjectContainer {
 	
 		//
@@ -48,13 +54,11 @@ package flash.display {
 
  	 	public property frameRate : Number { get; set; }
 
- 	 	public property fullScreenHeight : uint { get; set; }
+ 	 	public property fullScreenHeight : uint { get; private set; }
 
- 	 	public property fullScreenSourceRect : Rectangle { get; set; }
+ 	 	public property fullScreenSourceRect : Rectangle { get; private set; }
 		
-		public property fullScreenWidth : uint { get; set; }
-
- 	 //	public override property height : Number { get { return 0; } set { } }
+		public property fullScreenWidth : uint { get; private set; }
 
  	 	public override property mouseChildren : Boolean { get { return false; } set { } }
 
@@ -76,11 +80,11 @@ package flash.display {
 
  	 	public property stageFocusRect : Boolean { get; set; }
 
- 	 	public property stageHeight : int { get; set;}
+ 	 	public property stageHeight : int { get; private set;}
 
  	 	public property stageVideos : Vector.<StageVideo> { get { return null; } }
 
- 	 	public property stageWidth : int { get; set; }
+ 	 	public property stageWidth : int { get; private set; }
 
  	 	public property supportedOrientations : Vector.<String> { get { return null; } }
 
@@ -90,15 +94,16 @@ package flash.display {
 
  	 	public override property textSnapshot : TextSnapshot { get { return null; } }
 
- 	 //	public override property width : Number { get { return 0.0; } set { } }
-
  	 	public property wmodeGPU : Boolean { get { return false; } }
+
+		public property mouseLock :Boolean {get {return false;} }
 
 		//
 		// Methods
 		// 
 		
 		public function Stage(width:int, height:int) {
+			mStage = this;
 			this.width = width;
 			this.height = height;
 			this.stageWidth = width;
@@ -110,12 +115,33 @@ package flash.display {
 			var stage3D = new Stage3D(); 
 			mStage3Ds.push( stage3D );
 		}
+
+		public function onResize(width:int, height:int):void {
+			// handle resize if width or height change
+			if (width != this.width || height != this.height)  {
+				this.width = width;
+				this.height = height;
+				this.stageWidth = width;
+				this.stageHeight = height;
+				this.fullScreenWidth = uint(width); 
+				this.fullScreenHeight = uint(height);
+				
+				// dispatch resize event here...
+				var ev:flash.events.Event = new flash.events.Event(flash.events.Event.RESIZE);
+				this.dispatchEvent(ev);
+			}
+		}
 		
 		public function onEnterFrame():void {
-			// dispatch event
-			dispatchEvent (new flash.events.Event (flash.events.Event.ENTER_FRAME));
+			// dispatch event to all display objects that listen for enter frame
+			DisplayObject.sGlobalEventDispatcher.dispatchEvent(new flash.events.Event (flash.events.Event.ENTER_FRAME));
 		}
 
+        public function onExitFrame():void {
+            // dispatch event to all display objects that listen for exit frame
+            DisplayObject.sGlobalEventDispatcher.dispatchEvent(new flash.events.Event (flash.events.Event.EXIT_FRAME));
+        }
+        
 		public override function addChild(child:DisplayObject):DisplayObject {
 			return super.addChild(child);
 		}
@@ -126,14 +152,6 @@ package flash.display {
  	 	
 		public function assignFocus(objectToFocus:InteractiveObject, direction:String):void {
 			throw new System.NotImplementedException();
-		}
- 	 	
-		public override function dispatchEvent(ev:Event):Boolean {
-			return super.dispatchEvent(ev);	
-		}
- 	 	
-		public override function hasEventListener(type:String):Boolean {
-			return super.hasEventListener(type);
 		}
  	 	
 		public function invalidate():void {
@@ -164,11 +182,6 @@ package flash.display {
 			throw new System.NotImplementedException();
 		}
  	 	
-		public override function willTrigger(type:String):Boolean {
-			throw new System.NotImplementedException();
-		//	return false;
-		}
-		
 		private var mStage3Ds:Vector.<Stage3D> = [];
 	}
 

@@ -88,6 +88,8 @@ namespace flash.display3D {
 		public void configureBackBuffer(int width, int height, int antiAlias, 
 			bool enableDepthAndStencil = true, bool wantsBestResolution = false) {
 
+			GL.Viewport(0,0, width, height);
+
 			// $$TODO allow for resizing of frame buffer here
 			mBackBufferWidth = width;
 			mBackBufferHeight = height;
@@ -295,6 +297,7 @@ namespace flash.display3D {
 		{
 			if (program != null) {
 				program.Use();
+				program.SetPositionScale(mPositionScale);
 			} else {
 				// ?? 
 				throw new NotImplementedException();
@@ -373,7 +376,7 @@ namespace flash.display3D {
 			else
 			{
 				if (enableErrorChecking) {
-					Console.WriteLine ("warning: vertex program register not found: {0}", firstRegister);
+					Console.WriteLine ("warning: program register not found: {0}", firstRegister);
 				}
 			}
 		}
@@ -398,11 +401,15 @@ namespace flash.display3D {
 				Program3D.Uniform uniform = mProgram.getUniform(isVertex, register);
 				if (uniform == null)
 				{
-					// abort
+					// skip this register
+					register     += 1;
+					numRegisters -= 1;
+					dataIndex    += 4;
+
 					if (enableErrorChecking) {
-						Console.WriteLine ("warning: vertex program register not found: {0}", register);
+						Console.WriteLine ("warning: program register not found: {0}", register);
 					}
-					return;
+					continue;
 				}
 				// convert source data into floating point
 				int tempIndex = 0;
@@ -449,6 +456,12 @@ namespace flash.display3D {
 			GL.BindFramebuffer (FramebufferTarget.Framebuffer, mDefaultFrameBufferId);
 			// setup viewport for render to backbuffer
 			GL.Viewport(0,0, mBackBufferWidth, mBackBufferHeight);
+
+			// normal scaling
+			mPositionScale[1] = 1.0f;
+			if (mProgram != null) {
+				mProgram.SetPositionScale(mPositionScale);
+			}
 			// clear render to texture
 			mRenderToTexture = null;
 		}
@@ -467,7 +480,6 @@ namespace flash.display3D {
 			GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, texture.textureId, 0);
 #endif
 			// setup viewport for render to texture
-			// $$TODO figure out a way to invert the viewport vertically to account for GL's texture origin
 			GL.Viewport(0,0, texture2D.width, texture2D.height);
 
 			// validate framebuffer status
@@ -475,6 +487,12 @@ namespace flash.display3D {
 			if (code != FramebufferErrorCode.FramebufferComplete)
 			{
 				throw new Exception("FrameBuffer status error:" + code);
+			}
+
+			// invert the output y to flip the texture upside down when rendering
+			mPositionScale[1] = -1.0f;
+			if (mProgram != null) {
+				mProgram.SetPositionScale(mPositionScale);
 			}
 
 			// save texture we're rendering to
@@ -610,6 +628,9 @@ namespace flash.display3D {
 	
 		// current program
 		private Program3D mProgram;
+
+		// this is the post-transform scale applied to all positions coming out of the vertex shader
+		private readonly float[] mPositionScale = new float[4] {1.0f, 1.0f, 1.0f, 1.0f};
 
 		// sampler settings
 		private int 				mSamplerDirty = 0;

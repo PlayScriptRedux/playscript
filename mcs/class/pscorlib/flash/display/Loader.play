@@ -59,7 +59,6 @@ package flash.display {
 		
 			// dispatch complete event
 			var e:Event = new Event(Event.COMPLETE);
-			e.target = this.contentLoaderInfo;
 			this.contentLoaderInfo.dispatchEvent(e);
 		}
  	 	

@@ -22,7 +22,7 @@ namespace flash.events
 		private class EventListener
 		{
 			public string        type;
-			public dynamic       callback;
+            public Delegate      callback;
 			public bool    		 useCapture;
 			public int           priority;
 			public bool          useWeakReference;
@@ -74,9 +74,14 @@ namespace flash.events
 				}
 
 				evList.Insert(i, el);
-
-				// evList.Add (el);
 			}
+
+            // add event to global dispatcher
+            var globalDispatcher = getGlobalEventDispatcher(type);
+            if (globalDispatcher != null) {
+                globalDispatcher.addEventListener(type, listener, useCapture, priority, useWeakReference);
+            }
+
 		}
 
 		public virtual bool dispatchEvent (Event ev)
@@ -85,17 +90,28 @@ namespace flash.events
 				return dispatchEvent(ev);
 			} else {
 				bool dispatched = false;
-				if (_events != null) {
-					List<EventListener> evList = null;
-					if (_events.TryGetValue (ev.type, out evList)) {
-						var l = evList.Count;
-						for (var i = 0; i < l; i++) {
-							var f = evList [i];
-							f.callback(ev);
-							dispatched = true;
-						}
-					}
-				}
+                var evList = getListenersForEventType(ev.type);
+                if (evList != null) {
+                    // we store off the count here in case the callback adds a listener
+                    var l = evList.Count;
+                    for (var i = 0; i < l; i++) {
+                        // cast callback to dynamic
+                        Delegate callback = evList [i].callback;
+                        // we perform a dynamic invoke here because the parameter types dont always match exactly
+                        try {
+							// set current target for event
+							ev._currentTarget = ev._target = this;
+                            callback.DynamicInvoke(ev);
+							ev._currentTarget = ev._target = null;
+                        } 
+                        catch (Exception error)
+                        {
+                            // if you get an exception here while debugging then make sure that the debugger is setup to catch all exceptions
+                            // this is in the Run/Exceptions... menu in MonoDevelop or Xamarin studio
+                        }
+                        dispatched = true;
+                    }
+                }
 				return dispatched;
 			}
 		}
@@ -103,10 +119,12 @@ namespace flash.events
 		public virtual bool hasEventListener (string type)
 		{
 			if (_evTarget != null) {
-				return hasEventListener(type);
+                return hasEventListener(type);
 			} else {
-				if (_events != null) {
-					return _events.ContainsKey (type);
+                var evList = getListenersForEventType(type);
+                if (evList != null) {
+                    // return true if there are event listeners for this event
+					return (evList.Count > 0);
 				}
 				return false;
 			}
@@ -117,22 +135,36 @@ namespace flash.events
 			if (_evTarget != null) {
                 _evTarget.removeEventListener(type, listener, useCapture);
 			} else {
-				if (_events == null) {
-					return;
-				}
-
-				List<EventListener> evList = null;
-				if (_events.TryGetValue (type, out evList)) {
-					dynamic listAct = listener;
-
-					for (int i=0; i < evList.Count; i++) {
-						if ((object)evList[i].callback == (object)listAct) {
-							evList.RemoveAt (i);
-							break;
+                var evList = getListenersForEventType(type);
+                if (evList != null) {
+                    // create a new list here and replace the old one
+                    // this handles the case of removing a listener while inside dispatchEvent()
+                    List<EventListener> newList = null;
+                    foreach (EventListener el in evList) {
+                        if (!el.callback.Equals(listener)) {
+                            if (newList == null) {
+                                newList = new List<EventListener>();
+                                newList.Capacity = (evList.Count - 1);
+                            }
+                            newList.Add(el);
 						}
 					}
+
+                    if (newList != null) {
+                        // replace list
+                        _events[type] = newList;
+                    } else {
+                        // empty list
+                        _events.Remove(type);
+                    }
 				}
 			}
+
+            // remove from global event dispatcher
+            var globalDispatcher = getGlobalEventDispatcher(type);
+            if (globalDispatcher != null) {
+                globalDispatcher.removeEventListener(type, listener, useCapture);
+            }
 		}
 
 		public virtual bool willTrigger (string type)
@@ -143,8 +175,23 @@ namespace flash.events
 				return hasEventListener (type);
 			}
 		}
-
 		#endregion
+
+        // this method is to be overriden in a derived event dispatcher that requires global event tracking (such as display objects)
+        protected virtual EventDispatcher getGlobalEventDispatcher(string type)
+        {
+            return null;
+        }
+
+        private List<EventListener> getListenersForEventType(string type)
+        {
+            List<EventListener> list = null;
+            if (_events != null) {
+                _events.TryGetValue(type, out list);
+            }
+            return list;
+        }
+
 	}
 }
 

@@ -812,11 +812,20 @@ namespace flash.display3D
 			glsl.Append("precision mediump float;\n");
 #endif
 			glsl.Append (map.ToGLSL(false));
+			if (programType == ProgramType.Vertex) {
+				// this is needed for flipping render textures upside down
+				glsl.AppendLine("uniform vec4 vcPositionScale;");
+			}
 			glsl.AppendLine("void main() {");
 			glsl.Append (map.ToGLSL(true));
 			glsl.Append(sb.ToString());
+
+			if (programType == ProgramType.Vertex) {
+				// this is needed for flipping render textures upside down
+				glsl.AppendLine("gl_Position *= vcPositionScale;");
+			}
 			glsl.AppendLine("}");
-			System.Console.WriteLine(glsl);
+			// System.Console.WriteLine(glsl);
 			return glsl.ToString();;
 		}
 	}

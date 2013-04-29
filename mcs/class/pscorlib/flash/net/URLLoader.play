@@ -92,14 +92,12 @@ package flash.net {
 					
 					// io error, file not found
 					de = new Event(Event.COMPLETE);
-					de.target = this;
 					this.dispatchEvent(de);
 				}
 				else
 				{
 					// io error, file not found
 					de = new Event(IOErrorEvent.IO_ERROR);
-					de.target = this;
 					this.dispatchEvent(de);
 				}
 			}

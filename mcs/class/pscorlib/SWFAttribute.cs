@@ -19,11 +19,11 @@ namespace _root
 	[AttributeUsage(AttributeTargets.All, AllowMultiple = false)]
 	public class SWFAttribute : Attribute
 	{
-		public string width { get; set; }
-		public string height { get; set; }
-		public string frameRate { get; set; }
-		public string backgroundColor { get; set; }
-		public string quality {get;set;}
+		public object width { get; set; }
+		public object height { get; set; }
+		public object frameRate { get; set; }
+		public object backgroundColor { get; set; }
+		public object quality {get;set;}
 		
 		public SWFAttribute ()
 		{

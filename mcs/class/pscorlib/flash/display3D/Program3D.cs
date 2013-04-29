@@ -30,6 +30,10 @@ using OpenTK.Graphics.ES20;
 namespace flash.display3D {
 
 	public class Program3D {
+
+		public static bool Verbose = false;
+		
+
 		
 		//
 		// Methods
@@ -101,8 +105,10 @@ namespace flash.display3D {
 			// delete existing shaders
 			deleteShaders ();
 
-			//Console.WriteLine (vertexShaderSource);
-			//Console.WriteLine (fragmentShaderSource);
+			if (Verbose) {
+				Console.WriteLine (vertexShaderSource);
+				Console.WriteLine (fragmentShaderSource);
+			}
 
 			mVertexSource = vertexShaderSource;
 			mFragmentSource = fragmentShaderSource;
@@ -176,6 +182,16 @@ namespace flash.display3D {
 			{
 				GL.Uniform1(sampler.Location, sampler.RegIndex);
 			}
+
+		}
+
+		internal void SetPositionScale(float[] positionScale)
+		{
+			// update position scale
+			if (mPositionScale != null)
+			{
+				GL.Uniform4(mPositionScale.Location, 1, positionScale); 
+			}
 		}
 
 		public class Uniform
@@ -226,7 +242,10 @@ namespace flash.display3D {
 				// add uniform to program list
 				mUniforms.Add(uniform);
 
-				if (uniform.Name.StartsWith("vc"))
+				if (uniform.Name == "vcPositionScale")
+				{
+					mPositionScale = uniform;
+				} else if (uniform.Name.StartsWith("vc"))
 				{
 					// vertex uniform
 					uniform.RegIndex = int.Parse (uniform.Name.Substring(2));
@@ -248,7 +267,9 @@ namespace flash.display3D {
 					mSamplerUniforms.Add (uniform);
 				}
 
-				Console.WriteLine ("{0} name:{1} type:{2} size:{3} location:{4}", i, uniform.Name, uniform.Type, uniform.Size, uniform.Location);
+				if (Verbose) {
+					Console.WriteLine ("{0} name:{1} type:{2} size:{3} location:{4}", i, uniform.Name, uniform.Type, uniform.Size, uniform.Location);
+				}
 			}
 		}
 
@@ -283,6 +304,7 @@ namespace flash.display3D {
 		private List<Uniform>      mSamplerUniforms = new List<Uniform>();
 		private Uniform[]		   mVertexUniformLookup;
 		private Uniform[]		   mFragmentUniformLookup;
+		private Uniform            mPositionScale;
 
 		// sampler state information
 		private SamplerState[]     mSamplerStates = new SamplerState[16];

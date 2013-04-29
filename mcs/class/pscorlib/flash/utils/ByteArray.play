@@ -17,6 +17,15 @@ package flash.utils {
 	import System.IO.*;
 	import System.IO.Compression.*;
 
+	#if PLATFORM_MONOMAC
+	import MonoMac.Foundation.*;
+	import MonoMac.AppKit.*;
+	#elif PLATFORM_MONOTOUCH
+	import MonoTouch.Foundation.*;
+	import MonoTouch.UIKit.*;
+	#endif
+
+
 	public class ByteArray implements IDataInput, IDataOutput {
 
 		enum ByteEndian
@@ -147,9 +156,15 @@ package flash.utils {
 		}
  	 	
 		public function readShort():int {
-			if (mEndian != ByteEndian.Little) throw new NotImplementedException();
-			
-			return mReader.ReadInt16();
+			if (mEndian == ByteEndian.Little)
+			{
+				return mReader.ReadInt16();
+			} 
+			else 
+			{
+				// sign extend unsigned short
+				return (int(readUnsignedShort()) << 16) >> 16;
+			}
 		}
  	 	
 		public function readUnsignedByte():uint {
@@ -173,16 +188,30 @@ package flash.utils {
 		}
  	 	
 		public function readUnsignedShort():uint {
-			if (mEndian != ByteEndian.Little) throw new NotImplementedException();
-			return mReader.ReadUInt16();
+			if (mEndian == ByteEndian.Little)
+			{
+				return mReader.ReadUInt16();
+			} 
+			else 
+			{
+				var d:uint;
+				d = uint(mReader.ReadByte()) << 8;
+				d|= uint(mReader.ReadByte()) << 0;
+				return d;
+			}
 		}
  	 	
 		public function readUTF():String {
-			throw new NotImplementedException();
+			var length:uint = readUnsignedShort();
+			return readUTFBytes(length);
 		}
  	 	
 		public function readUTFBytes(length:uint):String {
-			throw new NotImplementedException();
+			// read bytes out of stream
+			var buffer:byte[] = new byte[length];
+			mStream.Read(buffer, 0, buffer.Length);
+			// decode as UTF8 string
+			return System.Text.Encoding.UTF8.GetString(buffer);
 		}
 
 		public function readAllUTF():String {
@@ -194,10 +223,6 @@ package flash.utils {
 			throw new NotImplementedException();
 		}
 
-		public override function toString():String {
-			throw new System.NotImplementedException();
-		}
- 	 	
 		public function uncompress(algorithm:String = null):void {
 
 			var outStream:MemoryStream = new MemoryStream();
@@ -213,11 +238,7 @@ package flash.utils {
 				var inflater =  new ICSharpCode.SharpZipLib.Zip.Compression.Streams.InflaterInputStream(mStream);
 
 				// copy stream				
-				var data:int;
-				while ( (data=inflater.ReadByte()) >= 0)
-				{
-					outStream.WriteByte( byte(data) );
-				}
+				inflater.CopyTo(outStream);
 			}
 			break;
 
@@ -349,6 +370,16 @@ package flash.utils {
 		public function getRawStream():MemoryStream {
 			return mStream;
 		}
+
+		public static function loadFromPath(path:String):ByteArray {
+			var newPath = PlayScript.Player.ResolveResourcePath(path);
+			var data:byte[] = System.IO.File.ReadAllBytes(newPath);
+			var ba:ByteArray = new ByteArray();
+			ba.writeBytes(data);
+			ba.position = 0;
+			return ba;
+		}
+
 
 		var mEndian:ByteEndian = ByteEndian.Big; // bytearrays are big endian by default
 		var mStream:MemoryStream;

@@ -1,4 +1,5 @@
 ../pscorlib/PlayScript/Undefined.cs
+../pscorlib/PlayScript/Player.cs
 ../pscorlib/Array.cs
 ../pscorlib/AssemblyInfo.cs
 ../pscorlib/Boolean.cs
@@ -172,6 +173,7 @@
 ../pscorlib/RegExp.play
 ../pscorlib/SecurityError.play
 ../pscorlib/SyntaxError.play
+../pscorlib/SWFAttribute.cs
 ../pscorlib/TypeError.play
 ../pscorlib/URIError.play
 ../pscorlib/Vector.cs

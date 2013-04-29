@@ -562,19 +562,42 @@ package flash.geom {
 			}
 
 			// $$TODO is this the right order?
-			this.appendTranslation(translate.x, translate.y, translate.z);
+			this.appendScale(scale.x, scale.y, scale.z);
 
 			// $$TODO is this the right order?
-			this.appendScale(scale.x, scale.y, scale.z);
+			this.appendTranslation(translate.x, translate.y, translate.z);
+
 			return true;
 		}
  	 	
 		public function transformVector(v:Vector3D):Vector3D {
-			throw new System.NotImplementedException();
+			var result:Vector3D = new Vector3D();
+			var m:double[] = mData;
+			result.x = (v.x * m[0]) + (v.y * m[4]) + (v.z * m[8]) + m[12];
+			result.y = (v.x * m[1]) + (v.y * m[5]) + (v.z * m[9]) + m[13];
+			result.z = (v.x * m[2]) + (v.y * m[6]) + (v.z * m[10]) + m[14];
+			return result;
 		}
  	 	
 		public function transformVectors(vin:Vector.<Number>, vout:Vector.<Number>):void {
-			throw new System.NotImplementedException();
+
+			var m:double[] = mData;
+
+			var len:int = vin.length;
+			for (var i:int=0; i < len; i+=3) {
+				var x:Number = vin[i + 0];
+				var y:Number = vin[i + 1];
+				var z:Number = vin[i + 2];
+
+				var ox:Number = (x * m[0]) + (y * m[4]) + (z * m[8]) + m[12];
+				var oy:Number = (x * m[1]) + (y * m[5]) + (z * m[9]) + m[13];
+				var oz:Number = (x * m[2]) + (y * m[6]) + (z * m[10]) + m[14];
+
+				// write output
+				vout[i + 0] = ox;
+				vout[i + 1] = oy;
+				vout[i + 2] = oz;
+			}
 		}
  	 	
 		public function transpose():void {

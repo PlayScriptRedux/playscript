@@ -45,16 +45,45 @@ package flash.geom {
 		public function ColorTransform(redMultiplier:Number = 1.0, greenMultiplier:Number = 1.0, 
 			blueMultiplier:Number = 1.0, alphaMultiplier:Number = 1.0, redOffset:Number = 0, 
 			greenOffset:Number = 0, blueOffset:Number = 0, alphaOffset:Number = 0) {
-			throw new System.NotImplementedException();
+
+			this.redMultiplier = redMultiplier;
+			this.greenMultiplier = greenMultiplier;
+			this.blueMultiplier = blueMultiplier;
+			this.alphaMultiplier = alphaMultiplier;
+			this.redOffset = redOffset;
+			this.greenOffset = greenOffset;
+			this.blueOffset = blueOffset;
+			this.alphaOffset = alphaOffset;
 		}
 		
 		public function concat(second:ColorTransform):void {
 			throw new System.NotImplementedException();
 		}
-		
-		public override function toString():String {
-			throw new System.NotImplementedException();
+
+		public function transformColor32(color:uint):uint {
+			var b:Number = (color >> 0) & 0xFF;
+			var g:Number = (color >> 8) & 0xFF;
+			var r:Number = (color >> 16) & 0xFF;
+			var a:Number = (color >> 24) & 0xFF;
+
+			r = r * redMultiplier + redOffset;
+			g = g * greenMultiplier + greenOffset;
+			b = b * blueMultiplier + blueOffset;
+			a = a * alphaMultiplier + alphaOffset;
+
+			r = Math.max(Math.min(r, 255.0), 0.0);
+			g = Math.max(Math.min(g, 255.0), 0.0);
+			b = Math.max(Math.min(b, 255.0), 0.0);
+			a = Math.max(Math.min(a, 255.0), 0.0);
+
+			var oc:uint;
+			oc =  uint(b) << 0;
+			oc|=  uint(g) << 8;
+			oc|=  uint(r) << 16;
+			oc|=  uint(a) << 24;
+			return oc;
 		}
+		
 	
 	}
 

@@ -259,23 +259,46 @@ namespace PlayScript.RuntimeBinder
 			}
 
 			if (o is ExpandoObject) {
-				object delObj;
 				var expando = (ExpandoObject)o;
-				expando.TryGetValue(name, out delObj);
-				Delegate del = delObj as Delegate;
-				if (del == null) {
-					throw new Exception ("No delegate found with the name '" + name + "'");
+				// special case .hasOwnProperty here
+				if (name == "hasOwnProperty")
+				{
+					info.method = o.GetType().GetMethod("hasOwnProperty");
+					info.args = args;
+					info.del = null;
+					info.generation = 0;
 				}
-				info.method = null;
-				info.del = del;
-				info.generation = expando.Generation;
+				else
+				{
+					object delObj;
+					expando.TryGetValue(name, out delObj);
+					Delegate del = delObj as Delegate;
+					if (del == null) {
+						throw new Exception ("No delegate found with the name '" + name + "'");
+					}
+					info.method = null;
+					info.del = del;
+					info.generation = expando.Generation;
+				}
 			} else {
 				MethodInfo method = null;
-				var methods = o.GetType().GetMethods ();
+				bool isStatic;
+				System.Type otype;
+				if (o is System.Type) {
+					// this is a static method invocation where o is the class
+					isStatic = true;
+					otype = (System.Type)o;
+				} else {
+					// this is a non-static method invocation
+					isStatic = false;
+					otype = o.GetType();
+				}
+
+				MethodInfo[] methods = otype.GetMethods();
 				var len = methods.Length;
 				for (var mi = 0; mi < len; mi++) {
 					var m = methods[mi];
-					if (m.IsPublic && !m.IsStatic && m.Name == name) {
+					if ((m.IsStatic == isStatic) && m.Name == name) {
 						bool matches = true;
 						bool has_defaults = false;
 						var parameters = m.GetParameters();
@@ -284,7 +307,7 @@ namespace PlayScript.RuntimeBinder
 							for (var i = 0; i < par_len; i++) {
 								var p = parameters[i];
 								if (i >= args.Length) {
-									if (p.DefaultValue != null) {
+									if ((p.Attributes & ParameterAttributes.HasDefault) != 0) {
 										has_defaults = true;
 										continue;
 									} else {
