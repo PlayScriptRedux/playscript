@@ -4,7 +4,7 @@
 
 ## What is PlayScript?
 
-PlayScript is an open source Adobe ActionScript compatible compiler and Flash compatible runtime that runs in the Mono .NET environment, targeting mobile devices through the Xamarin Studio MonoTouch and Mono for Android platforms.   With a combination of Adobe FlashBuilder for Web and Xamarin Studio for mobile complex large scale cross-mobile-web projects can be developed with full IDE, source debugging and intellisense support on all platforms, with access to the full native mobile API's on the mobile platform.
+PlayScript is an open source Adobe ActionScript compatible compiler and Flash compatible runtime that runs in the Mono .NET environment, targeting mobile devices through the Xamarin platform.   With a combination of Adobe FlashBuilder for Web and Xamarin Studio for mobile complex large scale cross-mobile-web projects can be developed with full IDE, source debugging and intellisense support on all platforms, with access to the full native mobile API's on the mobile platform.
 
 The PlayScript compiler also targets both C++ and JavaScript (similar to the Haxe compiler) allowing ActionScript code to be run via JavaScript on the Web, or natively on PC and mobile (with some limitations).  (NOTE: Presently the JS and C++ targets are at an experimental stage)
 
