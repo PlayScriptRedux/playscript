@@ -10,7 +10,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>pscorlib_aotmonotouch</RootNamespace>
     <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
-    <AssemblyName>pscorlib_aot-monotouch</AssemblyName>
+    <AssemblyName>pscorlib_monotouch</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>

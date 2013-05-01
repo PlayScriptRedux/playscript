@@ -34,11 +34,12 @@ using System.Security.Permissions;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 // General Information about the assembly
 
 [assembly: AssemblyTitle ("Mono.PlayScript.dll")]
-[assembly: AssemblyDescription ("Mono.PlayScript.dll")]
+[assembly: AssemblyDescription ("Dynamic compiler and AST support for the PlayScript runtime.")]
 [assembly: AssemblyDefaultAlias ("Mono.PlayScript.dll")]
 
 [assembly: AssemblyCompany (Consts.MonoCompany)]
@@ -54,6 +55,8 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDelaySign (true)]
 
 [assembly: AssemblyKeyFile ("../mono.pub")]
+
+[assembly: TargetFramework (".NETFramework,Version=v4.0", FrameworkDisplayName=".NET Framework 4")]
 
 [assembly: ComVisible (false)]
 

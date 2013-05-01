@@ -10,6 +10,7 @@
     <RootNamespace>_root</RootNamespace>
     <AssemblyName>pscorlib_monomac</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <SignAssembly>false</SignAssembly>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>
@@ -262,5 +263,11 @@
   <ItemGroup>
     <None Include="pscorlib.dll.sources" />
     <None Include="Makefile" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net_4_0.csproj">
+      <Project>{0BACBE20-34DD-4E24-8B91-87970E8A23B9}</Project>
+      <Name>PlayScript.Dynamic_aot-net_4_0</Name>
+    </ProjectReference>
   </ItemGroup>
 </Project>

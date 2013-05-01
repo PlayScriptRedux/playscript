@@ -10,7 +10,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>PlayScript.Dynamic_aot</RootNamespace>
     <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
-    <AssemblyName>PlayScript.Dynamic_aot</AssemblyName>
+    <AssemblyName>PlayScript.Dynamic_monotouch</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>
@@ -34,6 +34,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="monotouch" />
+    <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />

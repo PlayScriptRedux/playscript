@@ -8,7 +8,7 @@
     <ProjectGuid>{0BACBE20-34DD-4E24-8B91-87970E8A23B9}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>PlayScript.Dynamic</RootNamespace>
-    <AssemblyName>PlayScript.Dynamic_aot-net_4_0</AssemblyName>
+    <AssemblyName>PlayScript.Dynamic_aot</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
