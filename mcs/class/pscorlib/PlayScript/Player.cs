@@ -266,6 +266,30 @@ namespace PlayScript
 			mStage.dispatchEvent (me);
 		}
 
+		private float mScrollDelta;
+
+		public void OnScrollWheel(PointF p, float delta)
+		{
+			mStage.mouseX = p.X;
+			mStage.mouseY = p.Y;
+
+			// accumulate the deltas here since flash only accepts integer deltas
+			mScrollDelta += delta;
+
+			float thisDelta = (float)Math.Floor(mScrollDelta);
+			if (thisDelta != 0.0f) 
+			{
+				// Console.WriteLine("delta {0}", delta);
+				
+				// dispatch mouse event
+				var me = new flash.events.MouseEvent(flash.events.MouseEvent.MOUSE_WHEEL, true, false, p.X, p.Y, mStage);
+				me.delta = (int)thisDelta;
+				mStage.dispatchEvent (me);
+
+				mScrollDelta -= thisDelta;
+			}
+		}
+
 #if PLATFORM_MONOTOUCH
 		// TODO: at some point we'll have a platform agnostic notion of touches to pass to the player, for now we use UITouch
 		public void OnTouchesBegan (NSSet touches, UIEvent evt)
