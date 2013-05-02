@@ -2406,7 +2406,7 @@ interface_declaration
 		push_current_container (new Interface (current_container, (MemberName) $6, (Modifiers) $2, (Attributes) $1), is_partial);
 		lbag.AddMember (current_container, mod_locations, GetLocation ($4));		
 	  }
-	  opt_class_extends
+	  opt_interface_extends
 	  opt_class_implements
 	  opt_type_parameter_constraints_clauses
 	  {
@@ -5704,6 +5704,20 @@ opt_class_extends
 	  }
 	;
 	
+opt_interface_extends
+	: /* empty */
+	| EXTENDS type_list
+	 {
+		current_type.AddBasesForPart ((List<FullNamedExpression>) $2);
+	 }
+	| EXTENDS type_list error
+	  {
+		Error_SyntaxError (yyToken);
+
+		current_type.AddBasesForPart ((List<FullNamedExpression>) $2);
+	  }
+	;
+		
 opt_class_implements
 	: /* empty */
 	| IMPLEMENTS type_list

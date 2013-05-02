@@ -37,9 +37,6 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Drawing" />
     <Reference Include="ICSharpCode.SharpZipLib" />
-    <Reference Include="test2">
-      <HintPath>..\..\mcs\test2.exe</HintPath>
-    </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -648,6 +645,9 @@
     </Compile>
     <Compile Include="..\pscorlib\flash\display3D\textures\SamplerState.cs">
       <Link>flash\display3D\textures\SamplerState.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\PlayScript\Player.cs">
+      <Link>PlayScript\Player.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

@@ -33,10 +33,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <ProjectReference Include="..\class\Mono.CSharp\Mono.CSharp-net_4_0.csproj">
-      <Project>{4FADEA1C-3DCC-4658-A411-EDEF0CF30884}</Project>
-      <Name>Mono.CSharp-net_4_0</Name>
-    </ProjectReference>
     <ProjectReference Include="..\class\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net_4_0.csproj">
       <Project>{0BACBE20-34DD-4E24-8B91-87970E8A23B9}</Project>
       <Name>PlayScript.Dynamic_aot-net_4_0</Name>
