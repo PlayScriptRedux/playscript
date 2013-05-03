@@ -37,7 +37,7 @@ namespace Mono.PlayScript
 
 					// Is class marked as dynamic?
 					var cl = cont as Class;
-					if (cl.IsAsDynamicClass) {
+					if (cl.IsAsDynamicClass && !(cl.BaseType != null && cl.BaseType.IsAsDynamicClass)) {
 						classes.Add ((Class)cont);
 					}
 				}
