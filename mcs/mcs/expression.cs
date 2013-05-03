@@ -8809,6 +8809,12 @@ namespace Mono.CSharp
 									return new MemberAccess(new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, Location), "Function", Location), Name, Location).Resolve (rc);
 								}
 
+							} else if (expr_type.IsAsDynamicClass) {
+
+								var arguments = new Arguments(1);
+								arguments.Add(new Argument(new StringLiteral(rc.BuiltinTypes, Name, loc)));
+								return new IndexerExpr (null, rc.BuiltinTypes.Object, new ElementAccess(expr, arguments, loc)).Resolve (rc);
+
 							}
 						}
 
@@ -9259,7 +9265,7 @@ namespace Mono.CSharp
 			}
 
 			var indexers = MemberCache.FindMembers (type, MemberCache.IndexerNameAlias, false);
-			if (indexers != null || type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
+			if (indexers != null || type.BuiltinType == BuiltinTypeSpec.Type.Dynamic || type.IsAsDynamicClass) {
 				return new IndexerExpr (indexers, type, this);
 			}
 
@@ -9805,26 +9811,54 @@ namespace Mono.CSharp
 
 			eclass = ExprClass.IndexerAccess;
 
-			bool dynamic;
+			bool dynamic = false;
+			bool has_candidate = false;
 			arguments.Resolve (rc, out dynamic);
+
+			// ActionScript - We never toggle dynamic behavior on arguments.
+			if (rc.FileType == SourceFileType.PlayScript) {
+				dynamic = false;
+			}
 
 			if (indexers == null && InstanceExpression.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
 				dynamic = true;
-			} else {
+			} else if (indexers != null) {
 				var res = new OverloadResolver (indexers, OverloadResolver.Restrictions.None, loc);
 				res.BaseMembersProvider = this;
 				res.InstanceQualifier = this;
 
 				// TODO: Do I need 2 argument sets?
 				best_candidate = res.ResolveMember<IndexerSpec> (rc, ref arguments);
-				if (best_candidate != null)
+				if (best_candidate != null) {
 					type = res.BestCandidateReturnType;
-				else if (!res.BestCandidateIsDynamic)
+					has_candidate = true;
+				} else if (res.BestCandidateIsDynamic) {
+					has_candidate = true;
+				}
+			}
+
+			// If we're an ActionScript dynamic class, call __GetDynamicValue and __SetDynamicValue..
+			if (!dynamic && !has_candidate) {
+				if (InstanceExpression.Type.IsAsDynamicClass) {
+
+					var dynClass = new Cast(new MemberAccess(new SimpleName("PlayScript", loc), "IDynamicClass", loc), InstanceExpression, loc);
+					var getterExpr = new MemberAccess(dynClass, "__GetDynamicValue", loc).Resolve (rc) as MethodGroupExpr;
+					var setterExpr = new MemberAccess(dynClass, "__SetDynamicValue", loc).Resolve (rc) as MethodGroupExpr;
+					if (getterExpr == null || getterExpr.Candidates.Count != 1 || !(getterExpr.Candidates[0] is MethodSpec)
+					    || setterExpr == null || setterExpr.Candidates.Count != 1 || !(setterExpr.Candidates[0] is MethodSpec))
+							return null;
+
+					method_pair_getter = getterExpr.Candidates[0] as MethodSpec;
+					method_pair_setter = setterExpr.Candidates[0] as MethodSpec;
+					type = rc.BuiltinTypes.Dynamic;
+
+				} else {
 					return null;
+				}
 			}
 
 			//
-			// It has dynamic arguments
+			// It has dynamic arguments or instance
 			//
 			if (dynamic) {
 				Arguments args = new Arguments (arguments.Count + 1);

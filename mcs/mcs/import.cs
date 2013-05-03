@@ -1247,6 +1247,10 @@ namespace Mono.CSharp
 			public string DefaultIndexerName;
 			public bool? CLSAttributeValue;
 			public TypeSpec CoClass;
+
+			// ActionScript - Dynamic attribute defined..
+			public bool AsDynamic;
+			public bool AsBindable;
 			
 			public static AttributesBag Read (MemberInfo mi, MetadataImporter importer)
 			{
@@ -1345,6 +1349,31 @@ namespace Mono.CSharp
 							bag.CoClass = importer.ImportType ((MetaType) a.ConstructorArguments[0].Value);
 							continue;
 						}
+
+						// ActionScript Dynamic Attribute
+						if (name == "DynamicClassAttribute") {
+							if (dt.Namespace != "PlayScript")
+								continue;
+							
+							if (bag == null)
+								bag = new AttributesBag ();
+							
+							bag.AsDynamic = true;
+							continue;
+						}
+
+						// ActionScript Bindable Attribute
+						if (name == "BindableAttribute") {
+							if (dt.Namespace != PsConsts.PsRootNamespace)
+								continue;
+							
+							if (bag == null)
+								bag = new AttributesBag ();
+							
+							bag.AsBindable = true;
+							continue;
+						}
+
 					}
 				}
 
@@ -1771,6 +1800,23 @@ namespace Mono.CSharp
 			}
 		}
 
+		bool ITypeDefinition.IsAsDynamicClass {
+			get {
+				if (cattrs == null)
+					ReadAttributes ();
+
+				return cattrs.AsDynamic;
+			}
+		}
+
+		bool ITypeDefinition.IsAsBindableClass {
+			get {
+				if (cattrs == null)
+					ReadAttributes ();
+				
+				return cattrs.AsBindable;
+			}
+		}
 
 		bool ITypeDefinition.IsPartial {
 			get {
@@ -2194,6 +2240,18 @@ namespace Mono.CSharp
 		}
 
 		bool ITypeDefinition.IsComImport {
+			get {
+				return false;
+			}
+		}
+
+		bool ITypeDefinition.IsAsDynamicClass {
+			get {
+				return false;
+			}
+		}
+
+		bool ITypeDefinition.IsAsBindableClass {
 			get {
 				return false;
 			}

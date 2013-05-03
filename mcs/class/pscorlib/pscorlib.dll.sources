@@ -1,6 +1,7 @@
 ./ArgumentError.play
 ./Array.cs
 ./AssemblyInfo.cs
+./BindableAttribute.cs
 ./Boolean.cs
 ./DefinitionError.play
 ./DeprecatedAttribute.cs
@@ -186,6 +187,8 @@
 ./Number.cs
 ./Object.cs
 ./PartialAttribute.cs
+./PlayScript/DynamicClassAttribute.cs
+./PlayScript/IDynamicClass.cs
 ./PlayScript/Player.cs
 ./PlayScript/Undefined.cs
 ./QName.play

@@ -15,7 +15,7 @@
     <DebugType>full</DebugType>
     <Optimize>False</Optimize>
     <OutputPath>bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;PLATFORM_MONOMAC;OPENGL</DefineConstants>
+    <DefineConstants>DEBUG;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
@@ -27,51 +27,149 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
-    <DefineConstants>PLATFORM_MONOMAC</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Dynamic" />
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="Mono.CSharp" />
     <Reference Include="System.Core" />
-    <Reference Include="MonoMac" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="ICSharpCode.SharpZipLib" />
-    <Reference Include="test2">
-      <HintPath>..\..\mcs\test2.exe</HintPath>
+    <Reference Include="mscorlib">
+      <HintPath>..\..\..\..\mono-as3-inst\lib\mono\4.0\mscorlib.dll</HintPath>
     </Reference>
+    <Reference Include="MonoMac" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <Compile Include="..\pscorlib\PlayScript\Undefined.cs">
-      <Link>PlayScript\Undefined.cs</Link>
-    </Compile>
     <Compile Include="..\pscorlib\Array.cs">
       <Link>Array.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\AssemblyInfo.cs">
       <Link>AssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\Boolean.cs">
-      <Link>Boolean.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\EmbedAttribute.cs">
-      <Link>EmbedAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\EventAttribute.cs">
-      <Link>EventAttribute.cs</Link>
-    </Compile>
     <Compile Include="..\pscorlib\Extensions.cs">
       <Link>Extensions.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\FunctionExtensions.cs">
-      <Link>FunctionExtensions.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\functions.cs">
       <Link>functions.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\int.cs">
-      <Link>int.cs</Link>
+    <Compile Include="..\pscorlib\PlayScript\Undefined.cs">
+      <Link>PlayScript\Undefined.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\Expando\BindingRestrictionsEx.cs">
+      <Link>ActionScript\Expando\BindingRestrictionsEx.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\Expando\CacheDict.cs">
+      <Link>ActionScript\Expando\CacheDict.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\Expando\ContractUtils.cs">
+      <Link>ActionScript\Expando\ContractUtils.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\Expando\ExceptionFactory.Generated.cs">
+      <Link>ActionScript\Expando\ExceptionFactory.Generated.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\Expando\ExpandoClass.cs">
+      <Link>ActionScript\Expando\ExpandoClass.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\Expando\ExpandoObject.cs">
+      <Link>ActionScript\Expando\ExpandoObject.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\Expando\TypeExtensions.cs">
+      <Link>ActionScript\Expando\TypeExtensions.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\Expando\TypeUtils.cs">
+      <Link>ActionScript\Expando\TypeUtils.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\RuntimeBinder\Binder.cs">
+      <Link>ActionScript\RuntimeBinder\Binder.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\RuntimeBinder\CSharpArgumentInfo.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpArgumentInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\RuntimeBinder\CSharpArgumentInfoFlags.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpArgumentInfoFlags.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\RuntimeBinder\CSharpBinaryOperationBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpBinaryOperationBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\RuntimeBinder\CSharpBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\RuntimeBinder\CSharpBinderFlags.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpBinderFlags.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\RuntimeBinder\CSharpConvertBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpConvertBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\RuntimeBinder\CSharpGetIndexBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpGetIndexBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\RuntimeBinder\CSharpGetMemberBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpGetMemberBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\RuntimeBinder\CSharpInvokeBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpInvokeBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\RuntimeBinder\CSharpInvokeConstructorBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpInvokeConstructorBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\RuntimeBinder\CSharpInvokeMemberBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpInvokeMemberBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\RuntimeBinder\CSharpIsEventBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpIsEventBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\RuntimeBinder\CSharpSetIndexBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpSetIndexBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\RuntimeBinder\CSharpSetMemberBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpSetMemberBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\RuntimeBinder\CSharpUnaryOperationBinder.cs">
+      <Link>ActionScript\RuntimeBinder\CSharpUnaryOperationBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\RuntimeBinder\DynamicContext.cs">
+      <Link>ActionScript\RuntimeBinder\DynamicContext.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\RuntimeBinder\ErrorPrinter.cs">
+      <Link>ActionScript\RuntimeBinder\ErrorPrinter.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\RuntimeBinder\Extensions.cs">
+      <Link>ActionScript\RuntimeBinder\Extensions.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\RuntimeBinder\RuntimeBinderContext.cs">
+      <Link>ActionScript\RuntimeBinder\RuntimeBinderContext.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\RuntimeBinder\RuntimeBinderException.cs">
+      <Link>ActionScript\RuntimeBinder\RuntimeBinderException.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\RuntimeBinder\RuntimeBinderInternalCompilerException.cs">
+      <Link>ActionScript\RuntimeBinder\RuntimeBinderInternalCompilerException.cs</Link>
+    </Compile>
+    <Compile Include="ActionScript\CallSite.cs" />
+    <Compile Include="ActionScript\CallSiteBinder.cs" />
+    <Compile Include="ActionScript\ExpressionType.cs" />
+    <Compile Include="..\pscorlib\ActionScript\Expando\CollectionDebuggerView.cs">
+      <Link>ActionScript\Expando\CollectionDebuggerView.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ActionScript\Expando\Hashtable.cs">
+      <Link>ActionScript\Expando\Hashtable.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Error.play">
+      <Link>Error.play</Link>
+    </Compile>
+    <Compile Include="System\Runtime\CompilerServices\DynamicAttribute.cs" />
+    <Compile Include="..\pscorlib\flash\events\Event.cs">
+      <Link>flash\events\Event.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\events\EventDispatcher.cs">
+      <Link>flash\events\EventDispatcher.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\events\IEventDispatcher.cs">
+      <Link>flash\events\IEventDispatcher.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\EmbedAttribute.cs">
+      <Link>EmbedAttribute.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Number.cs">
       <Link>Number.cs</Link>
@@ -79,18 +177,48 @@
     <Compile Include="..\pscorlib\String.cs">
       <Link>String.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\VerifyError.play">
+      <Link>VerifyError.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\URIError.play">
+      <Link>URIError.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\TypeError.play">
+      <Link>TypeError.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\SyntaxError.play">
+      <Link>SyntaxError.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\int.cs">
+      <Link>int.cs</Link>
+    </Compile>
     <Compile Include="..\pscorlib\ArgumentError.play">
       <Link>ArgumentError.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\DefinitionError.play">
-      <Link>DefinitionError.play</Link>
+    <Compile Include="..\pscorlib\RangeError.play">
+      <Link>RangeError.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\Dynamic.play">
-      <Link>Dynamic.play</Link>
+    <Compile Include="..\pscorlib\Boolean.cs">
+      <Link>Boolean.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\Error.play">
-      <Link>Error.play</Link>
+    <Compile Include="..\pscorlib\flash\display3D\Context3D.cs">
+      <Link>flash\display3D\Context3D.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\flash\display3D\IndexBuffer3D.cs">
+      <Link>flash\display3D\IndexBuffer3D.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\display3D\VertexBuffer3D.cs">
+      <Link>flash\display3D\VertexBuffer3D.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="PlayScript\" />
+    <Folder Include="System\" />
+    <Folder Include="flash\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="pscorlib_aot.dll.sources" />
+    <None Include="Makefile" />
     <Compile Include="..\pscorlib\functions.play">
       <Link>functions.play</Link>
     </Compile>
@@ -103,32 +231,11 @@
     <Compile Include="..\pscorlib\Namespace.play">
       <Link>Namespace.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\QName.play">
-      <Link>QName.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\RangeError.play">
-      <Link>RangeError.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\ReferenceError.play">
-      <Link>ReferenceError.play</Link>
-    </Compile>
     <Compile Include="..\pscorlib\RegExp.play">
       <Link>RegExp.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\SecurityError.play">
-      <Link>SecurityError.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\SyntaxError.play">
-      <Link>SyntaxError.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\TypeError.play">
-      <Link>TypeError.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\URIError.play">
-      <Link>URIError.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\VerifyError.play">
-      <Link>VerifyError.play</Link>
+    <Compile Include="..\pscorlib\Vector.play">
+      <Link>Vector.play</Link>
     </Compile>
     <Compile Include="..\pscorlib\XML.play">
       <Link>XML.play</Link>
@@ -154,17 +261,11 @@
     <Compile Include="..\pscorlib\flash\display\BitmapData.play">
       <Link>flash\display\BitmapData.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\display\BlendMode.play">
-      <Link>flash\display\BlendMode.play</Link>
-    </Compile>
     <Compile Include="..\pscorlib\flash\display\DisplayObject.play">
       <Link>flash\display\DisplayObject.play</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\display\DisplayObjectContainer.play">
       <Link>flash\display\DisplayObjectContainer.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\display\GradientType.play">
-      <Link>flash\display\GradientType.play</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\display\Graphics.play">
       <Link>flash\display\Graphics.play</Link>
@@ -177,9 +278,6 @@
     </Compile>
     <Compile Include="..\pscorlib\flash\display\InteractiveObject.play">
       <Link>flash\display\InteractiveObject.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\display\InterpolationMethod.play">
-      <Link>flash\display\InterpolationMethod.play</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\display\Loader.play">
       <Link>flash\display\Loader.play</Link>
@@ -214,15 +312,6 @@
     <Compile Include="..\pscorlib\flash\display\ShaderData.play">
       <Link>flash\display\ShaderData.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\display\ShaderJob.play">
-      <Link>flash\display\ShaderJob.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\display\Shape.play">
-      <Link>flash\display\Shape.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\display\SpreadMethod.play">
-      <Link>flash\display\SpreadMethod.play</Link>
-    </Compile>
     <Compile Include="..\pscorlib\flash\display\Sprite.play">
       <Link>flash\display\Sprite.play</Link>
     </Compile>
@@ -231,18 +320,6 @@
     </Compile>
     <Compile Include="..\pscorlib\flash\display\Stage3D.play">
       <Link>flash\display\Stage3D.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\display\StageAlign.play">
-      <Link>flash\display\StageAlign.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\display\StageScaleMode.play">
-      <Link>flash\display\StageScaleMode.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\display3D\AGALConverter.cs">
-      <Link>flash\display3D\AGALConverter.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\display3D\Context3D.cs">
-      <Link>flash\display3D\Context3D.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\display3D\Context3DBlendFactor.play">
       <Link>flash\display3D\Context3DBlendFactor.play</Link>
@@ -274,17 +351,20 @@
     <Compile Include="..\pscorlib\flash\display3D\Context3DVertexBufferFormat.play">
       <Link>flash\display3D\Context3DVertexBufferFormat.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\display3D\IndexBuffer3D.cs">
-      <Link>flash\display3D\IndexBuffer3D.cs</Link>
+    <Compile Include="..\pscorlib\flash\display3D\Program3D.play">
+      <Link>flash\display3D\Program3D.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\display3D\Program3D.cs">
-      <Link>flash\display3D\Program3D.cs</Link>
+    <Compile Include="..\pscorlib\flash\display3D\textures\CubeTexture.play">
+      <Link>flash\display3D\textures\CubeTexture.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\display3D\VertexBuffer3D.cs">
-      <Link>flash\display3D\VertexBuffer3D.cs</Link>
+    <Compile Include="..\pscorlib\flash\display3D\textures\RectangleTexture.play">
+      <Link>flash\display3D\textures\RectangleTexture.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\display3D\textures\Texture.cs">
-      <Link>flash\display3D\textures\Texture.cs</Link>
+    <Compile Include="..\pscorlib\flash\display3D\textures\Texture.play">
+      <Link>flash\display3D\textures\Texture.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\display3D\textures\TextureBase.play">
+      <Link>flash\display3D\textures\TextureBase.play</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\errors\EOFError.play">
       <Link>flash\errors\EOFError.play</Link>
@@ -307,32 +387,11 @@
     <Compile Include="..\pscorlib\flash\events\ErrorEvent.play">
       <Link>flash\events\ErrorEvent.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\events\Event.cs">
-      <Link>flash\events\Event.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\events\EventDispatcher.cs">
-      <Link>flash\events\EventDispatcher.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\events\EventPhase.play">
-      <Link>flash\events\EventPhase.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\events\IEventDispatcher.cs">
-      <Link>flash\events\IEventDispatcher.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\events\IOErrorEvent.play">
-      <Link>flash\events\IOErrorEvent.play</Link>
-    </Compile>
     <Compile Include="..\pscorlib\flash\events\KeyboardEvent.play">
       <Link>flash\events\KeyboardEvent.play</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\events\MouseEvent.play">
       <Link>flash\events\MouseEvent.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\events\ProgressEvent.play">
-      <Link>flash\events\ProgressEvent.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\events\ShaderEvent.play">
-      <Link>flash\events\ShaderEvent.play</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\events\TouchEvent.play">
       <Link>flash\events\TouchEvent.play</Link>
@@ -342,9 +401,6 @@
     </Compile>
     <Compile Include="..\pscorlib\flash\filters\BitmapFilter.play">
       <Link>flash\filters\BitmapFilter.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\filters\ShaderFilter.play">
-      <Link>flash\filters\ShaderFilter.play</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\geom\ColorTransform.play">
       <Link>flash\geom\ColorTransform.play</Link>
@@ -379,6 +435,9 @@
     <Compile Include="..\pscorlib\flash\media\ID3Info.play">
       <Link>flash\media\ID3Info.play</Link>
     </Compile>
+    <Compile Include="..\pscorlib\flash\media\SouncChannel.play">
+      <Link>flash\media\SouncChannel.play</Link>
+    </Compile>
     <Compile Include="..\pscorlib\flash\media\Sound.play">
       <Link>flash\media\Sound.play</Link>
     </Compile>
@@ -391,38 +450,8 @@
     <Compile Include="..\pscorlib\flash\media\StageVideo.play">
       <Link>flash\media\StageVideo.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\net\FileReference.play">
-      <Link>flash\net\FileReference.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\net\URLLoader.play">
-      <Link>flash\net\URLLoader.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\net\URLLoaderDataFormat.play">
-      <Link>flash\net\URLLoaderDataFormat.play</Link>
-    </Compile>
     <Compile Include="..\pscorlib\flash\net\URLRequest.play">
       <Link>flash\net\URLRequest.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\net\URLRequestDefaults.play">
-      <Link>flash\net\URLRequestDefaults.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\net\URLStream.play">
-      <Link>flash\net\URLStream.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\net\URLVariables.play">
-      <Link>flash\net\URLVariables.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\sampler\DeleteObjectSample.play">
-      <Link>flash\sampler\DeleteObjectSample.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\sampler\NewObjectSample.play">
-      <Link>flash\sampler\NewObjectSample.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\sampler\Sample.play">
-      <Link>flash\sampler\Sample.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\sampler\functions.play">
-      <Link>flash\sampler\functions.play</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\system\ApplicationDomain.play">
       <Link>flash\system\ApplicationDomain.play</Link>
@@ -435,9 +464,6 @@
     </Compile>
     <Compile Include="..\pscorlib\flash\system\IMEConversionMode.play">
       <Link>flash\system\IMEConversionMode.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\system\ImageDecodingPolicy.play">
-      <Link>flash\system\ImageDecodingPolicy.play</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\system\JPEGLoaderContext.play">
       <Link>flash\system\JPEGLoaderContext.play</Link>
@@ -535,11 +561,8 @@
     <Compile Include="..\pscorlib\flash\utils\ByteArray.play">
       <Link>flash\utils\ByteArray.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\utils\CompressionAlgorithm.play">
-      <Link>flash\utils\CompressionAlgorithm.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\utils\Dictionary.cs">
-      <Link>flash\utils\Dictionary.cs</Link>
+    <Compile Include="..\pscorlib\flash\utils\Dictionary.play">
+      <Link>flash\utils\Dictionary.play</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\utils\Endian.play">
       <Link>flash\utils\Endian.play</Link>
@@ -556,116 +579,20 @@
     <Compile Include="..\pscorlib\flash\utils\utils_functions.play">
       <Link>flash\utils\utils_functions.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\filesystem\File.play">
-      <Link>flash\filesystem\File.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\desktop\NativeApplication.play">
-      <Link>flash\desktop\NativeApplication.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\SWFAttribute.cs">
-      <Link>SWFAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\display\StageQuality.play">
-      <Link>flash\display\StageQuality.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\Vector.cs">
-      <Link>Vector.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\events\ContextMenuEvent.as">
-      <Link>flash\events\ContextMenuEvent.as</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\events\SecurityErrorEvent.play">
-      <Link>flash\events\SecurityErrorEvent.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\events\NetStatusEvent.play">
-      <Link>flash\events\NetStatusEvent.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\events\AsyncErrorEvent.play">
-      <Link>flash\events\AsyncErrorEvent.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\events\TimerEvent.play">
-      <Link>flash\events\TimerEvent.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\display\CapsStyle.play">
-      <Link>flash\display\CapsStyle.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\display\LineScaleMode.play">
-      <Link>flash\display\LineScaleMode.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\display\BitmapDataChannel.play">
-      <Link>flash\display\BitmapDataChannel.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\display\TriangleCulling.play">
-      <Link>flash\display\TriangleCulling.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\filters\ColorMatrixFilter.play">
-      <Link>flash\filters\ColorMatrixFilter.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\net\navigateToURL.play">
-      <Link>flash\net\navigateToURL.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\net\NetConnection.play">
-      <Link>flash\net\NetConnection.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\net\NetStream.play">
-      <Link>flash\net\NetStream.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\ui\ContextMenu.play">
-      <Link>flash\ui\ContextMenu.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\ui\ContextMenuItem.play">
-      <Link>flash\ui\ContextMenuItem.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\media\Camera.play">
-      <Link>flash\media\Camera.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\media\Video.play">
-      <Link>flash\media\Video.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\media\SoundChannel.play">
-      <Link>flash\media\SoundChannel.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\DeprecatedAttribute.cs">
-      <Link>DeprecatedAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\filters\BlurFilter.play">
-      <Link>flash\filters\BlurFilter.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\Object.cs">
-      <Link>Object.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\display3D\textures\CubeTexture.cs">
-      <Link>flash\display3D\textures\CubeTexture.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\display3D\textures\RectangleTexture.cs">
-      <Link>flash\display3D\textures\RectangleTexture.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\display3D\textures\TextureBase.cs">
-      <Link>flash\display3D\textures\TextureBase.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\display3D\textures\SamplerState.cs">
-      <Link>flash\display3D\textures\SamplerState.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\PlayScript\Player.cs">
-      <Link>PlayScript\Player.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\PlayScript\DynamicClassAttribute.cs">
-      <Link>PlayScript\DynamicClassAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\BindableAttribute.cs">
-      <Link>BindableAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\PlayScript\IDynamicClass.cs">
-      <Link>PlayScript\IDynamicClass.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\IDynamicClass.play">
+    <None Include="..\pscorlib\DefinitionError.play">
+      <Link>DefinitionError.play</Link>
+    </None>
+    <None Include="..\pscorlib\ReferenceError.play">
+      <Link>ReferenceError.play</Link>
+    </None>
+    <None Include="..\pscorlib\SecurityError.play">
+      <Link>SecurityError.play</Link>
+    </None>
+    <None Include="..\pscorlib\Dynamic.play">
+      <Link>Dynamic.play</Link>
+    </None>
+    <None Include="..\pscorlib\IDynamicClass.play">
       <Link>IDynamicClass.play</Link>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net_4_0.csproj">
-      <Project>{0BACBE20-34DD-4E24-8B91-87970E8A23B9}</Project>
-      <Name>PlayScript.Dynamic_aot-net_4_0</Name>
-    </ProjectReference>
+    </None>
   </ItemGroup>
 </Project>

@@ -96,12 +96,22 @@ namespace Mono.CSharp
 				AsLocatedTokens = new Mono.PlayScript.Tokenizer.LocatedToken[15000]
 			};
 
+			bool has_playscript_files = false;
+
 			for (int i = 0; i < sources.Count; ++i) {
 				if (tokenize_only) {
 					tokenize_file (sources[i], module, session);
 				} else {
 					Parse (sources[i], module, session, Report);
 				}
+				if (sources[i].FileType == SourceFileType.PlayScript) {
+					has_playscript_files = true;
+				}
+			}
+
+			// PlayScript needs to add generated code after parsing.
+			if (has_playscript_files) {
+				Mono.PlayScript.CodeGenerator.GenerateCode(module, session, Report);
 			}
 		}
 

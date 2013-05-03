@@ -1660,6 +1660,10 @@ namespace Mono.CSharp {
 		public readonly PredefinedAttribute CallerLineNumberAttribute;
 		public readonly PredefinedAttribute CallerFilePathAttribute;
 
+		// ActionScript attributes
+		public readonly PredefinedAttribute AsDynamicClassAttribute;
+		public readonly PredefinedAttribute AsBindableAttribute;
+
 		public PredefinedAttributes (ModuleContainer module)
 		{
 			ParamArray = new PredefinedAttribute (module, "System", "ParamArrayAttribute");
@@ -1715,6 +1719,10 @@ namespace Mono.CSharp {
 			CallerMemberNameAttribute = new PredefinedAttribute (module, "System.Runtime.CompilerServices", "CallerMemberNameAttribute");
 			CallerLineNumberAttribute = new PredefinedAttribute (module, "System.Runtime.CompilerServices", "CallerLineNumberAttribute");
 			CallerFilePathAttribute = new PredefinedAttribute (module, "System.Runtime.CompilerServices", "CallerFilePathAttribute");
+
+			// ActionScript
+			AsDynamicClassAttribute = new PredefinedAttribute (module, "PlayScript", "DynamicClassAttribute");
+			AsBindableAttribute = new PredefinedAttribute (module, PsConsts.PsRootNamespace, "BindableAttribute");
 
 			// TODO: Should define only attributes which are used for comparison
 			const System.Reflection.BindingFlags all_fields = System.Reflection.BindingFlags.Public |

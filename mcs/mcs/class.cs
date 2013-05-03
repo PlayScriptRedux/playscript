@@ -964,6 +964,44 @@ namespace Mono.CSharp
 			}
 		}
 
+		// Is this an ActionScript dynamic class?
+		public bool IsAsDynamicClass {
+			get {
+				if (base_type != null) {
+					if (base_type.IsAsDynamicClass) 
+						return true;
+				}
+
+				if (OptAttributes == null)
+					return false;
+
+				if (Module.PredefinedAttributes != null) {
+					return OptAttributes.Contains (Module.PredefinedAttributes.AsDynamicClassAttribute);
+				} else {
+					foreach (var attr in OptAttributes.Attrs) {
+						var memAcc = attr.TypeExpression as MemberAccess;
+						if (memAcc != null) {
+							var simpName = memAcc.LeftExpression as SimpleName;
+							if (simpName != null && simpName.Name == "PlayScript" && memAcc.Name == "DynamicClassAttribute") {
+								return true;
+							}
+						}
+					}
+					return false;
+				}
+			}
+		}
+
+		// Is this an actionscript bindable class?
+		public bool IsAsBindableClass {
+			get {
+				if (OptAttributes == null)
+					return false;
+				
+				return OptAttributes.Contains (Module.PredefinedAttributes.AsBindableAttribute);
+			}
+		}
+
 		public virtual void RegisterFieldForInitialization (MemberCore field, FieldInitializer expression)
 		{
 			if (IsPartialPart)
@@ -2785,6 +2823,32 @@ namespace Mono.CSharp
 					allowedMods &= ~(Modifiers.ABSTRACT | Modifiers.NEW);
 					if (!name.Basename.EndsWith("_fn"))
 						allowedMods &= ~Modifiers.STATIC;  // Only function classes can be static in standard AS
+				}
+
+				// Add "Dynamic" attribute for dynamic classes
+				if ((mod & Modifiers.AS_DYNAMIC) != 0) {
+
+					// Check if attribute was already added..
+					bool attribute_exists = false;
+					if (attributes != null) {
+						foreach (var checkAttr in attributes.Attrs) {
+							var memberAcc = checkAttr.TypeExpression as MemberAccess;
+							if (memberAcc != null) {
+								var simpName = memberAcc.LeftExpression as SimpleName;
+								if (simpName != null && simpName.Name == "PlayScript" && memberAcc.Name == "DynamicClassAttribute") {
+									attribute_exists = true;
+									break;
+								}
+							}
+						}
+					}
+
+					// No?  Then add it.
+					if (!attribute_exists) {
+						var attr = new Attribute(null, new MemberAccess(new SimpleName("PlayScript", parent.Location), 
+						                                                "DynamicClassAttribute", parent.Location), null, parent.Location, false);
+						AddAttributes(new Attributes(attr), this);
+					}
 				}
 			}
 			this.ModFlags = ModifiersExtensions.Check (allowedMods, mod, accmods, Location, Report);

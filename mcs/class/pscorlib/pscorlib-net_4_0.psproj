@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>10.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{EDBACFCB-2817-4A2E-8DDF-B24AEFA56352}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>_root</RootNamespace>
+    <AssemblyName>pscorlib</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>True</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>False</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;DYNAMIC_SUPPORT</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>False</ConsolePause>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>none</DebugType>
+    <Optimize>True</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>False</ConsolePause>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Xml" />
+    <Reference Include="ICSharpCode.SharpZipLib" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="PlayScript\Undefined.cs" />
+    <Compile Include="flash\events\Event.cs" />
+    <Compile Include="flash\events\EventDispatcher.cs" />
+    <Compile Include="flash\events\IEventDispatcher.cs" />
+    <Compile Include="Array.cs" />
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="EmbedAttribute.cs" />
+    <Compile Include="Extensions.cs" />
+    <Compile Include="functions.cs" />
+    <Compile Include="int.cs" />
+    <Compile Include="Number.cs" />
+    <Compile Include="String.cs" />
+    <Compile Include="ArgumentError.play" />
+    <Compile Include="DefinitionError.play" />
+    <Compile Include="Error.play" />
+    <Compile Include="functions.play" />
+    <Compile Include="JSON.play" />
+    <Compile Include="Math.play" />
+    <Compile Include="Namespace.play" />
+    <Compile Include="RangeError.play" />
+    <Compile Include="ReferenceError.play" />
+    <Compile Include="RegExp.play" />
+    <Compile Include="SecurityError.play" />
+    <Compile Include="SyntaxError.play" />
+    <Compile Include="TypeError.play" />
+    <Compile Include="URIError.play" />
+    <Compile Include="Vector.play" />
+    <Compile Include="VerifyError.play" />
+    <Compile Include="XML.play" />
+    <Compile Include="XMLList.play" />
+    <Compile Include="Boolean.cs" />
+    <Compile Include="flash\display\Shape.play" />
+    <Compile Include="flash\display\ShaderJob.play" />
+    <Compile Include="flash\display\BlendMode.play" />
+    <Compile Include="flash\net\URLLoader.play" />
+    <Compile Include="flash\net\URLStream.play" />
+    <Compile Include="flash\net\URLRequestDefaults.play" />
+    <Compile Include="flash\net\URLVariables.play" />
+    <Compile Include="flash\events\IOErrorEvent.play" />
+    <Compile Include="flash\events\ProgressEvent.play" />
+    <Compile Include="flash\events\ShaderEvent.play" />
+    <Compile Include="flash\sampler\functions.play" />
+    <Compile Include="QName.play" />
+    <Compile Include="flash\sampler\DeleteObjectSample.play" />
+    <Compile Include="flash\sampler\NewObjectSample.play" />
+    <Compile Include="flash\sampler\Sample.play" />
+    <Compile Include="flash\filters\ShaderFilter.play" />
+    <Compile Include="EventAttribute.cs" />
+    <Compile Include="Dynamic.play" />
+    <Compile Include="IDynamicClass.play" />
+    <Compile Include="flash\events\EventPhase.play" />
+    <Compile Include="FunctionExtensions.cs" />
+    <Compile Include="flash\display\GradientType.play" />
+    <Compile Include="flash\display\SpreadMethod.play" />
+    <Compile Include="flash\display\InterpolationMethod.play" />
+    <Compile Include="flash\system\ImageDecodingPolicy.play" />
+    <Compile Include="flash\net\URLLoaderDataFormat.play" />
+    <Compile Include="flash\utils\CompressionAlgorithm.play" />
+    <Compile Include="flash\display3D\Context3D.cs" />
+    <Compile Include="flash\display3D\IndexBuffer3D.cs" />
+    <Compile Include="flash\display3D\VertexBuffer3D.cs" />
+    <Compile Include="flash\display\StageAlign.play" />
+    <Compile Include="flash\display\StageScaleMode.play" />
+    <Compile Include="flash\utils\Dictionary.cs" />
+    <Compile Include="flash\net\FileReference.play" />
+    <Compile Include="flash\display3D\textures\Texture.cs" />
+    <Compile Include="flash\display3D\Program3D.cs" />
+    <Compile Include="flash\display3D\AGALConverter.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Folder Include="PlayScript\" />
+    <Folder Include="flash\" />
+    <Folder Include="flash\debugger\" />
+    <Folder Include="flash\ext\" />
+    <Folder Include="flash\sampler\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="flash\accessibility\AccessibilityImplementation.play" />
+    <Compile Include="flash\accessibility\AccessibilityProperties.play" />
+    <Compile Include="flash\desktop\IFilePromise.play" />
+    <Compile Include="flash\display\ActionScriptVersion.play" />
+    <Compile Include="flash\display\Bitmap.play" />
+    <Compile Include="flash\display\BitmapData.play" />
+    <Compile Include="flash\display\DisplayObject.play" />
+    <Compile Include="flash\display\DisplayObjectContainer.play" />
+    <Compile Include="flash\display\Graphics.play" />
+    <Compile Include="flash\display\IBitmapDrawable.play" />
+    <Compile Include="flash\display\IGraphicsData.play" />
+    <Compile Include="flash\display\InteractiveObject.play" />
+    <Compile Include="flash\display\Loader.play" />
+    <Compile Include="flash\display\LoaderInfo.play" />
+    <Compile Include="flash\display\MorphShape.play" />
+    <Compile Include="flash\display\MovieClip.play" />
+    <Compile Include="flash\display\NativeMenu.play" />
+    <Compile Include="flash\display\NativeWindow.play" />
+    <Compile Include="flash\display\SWFVersion.play" />
+    <Compile Include="flash\display\Scene.play" />
+    <Compile Include="flash\display\Screen.play" />
+    <Compile Include="flash\display\Shader.play" />
+    <Compile Include="flash\display\ShaderData.play" />
+    <Compile Include="flash\display\Sprite.play" />
+    <Compile Include="flash\display\Stage.play" />
+    <Compile Include="flash\display\Stage3D.play" />
+    <Compile Include="flash\display3D\Context3DBlendFactor.play" />
+    <Compile Include="flash\display3D\Context3DClearMask.play" />
+    <Compile Include="flash\display3D\Context3DCompareMode.play" />
+    <Compile Include="flash\display3D\Context3DProfile.play" />
+    <Compile Include="flash\display3D\Context3DProgramType.play" />
+    <Compile Include="flash\display3D\Context3DRenderMode.play" />
+    <Compile Include="flash\display3D\Context3DStencilAction.play" />
+    <Compile Include="flash\display3D\Context3DTextureFormat.play" />
+    <Compile Include="flash\display3D\Context3DTriangleFace.play" />
+    <Compile Include="flash\display3D\Context3DVertexBufferFormat.play" />
+    <Compile Include="flash\display3D\textures\CubeTexture.play" />
+    <Compile Include="flash\display3D\textures\RectangleTexture.play" />
+    <Compile Include="flash\display3D\textures\TextureBase.play" />
+    <Compile Include="flash\errors\EOFError.play" />
+    <Compile Include="flash\errors\IOError.play" />
+    <Compile Include="flash\errors\IllegalOperationError.play" />
+    <Compile Include="flash\errors\InvalidSWFError.play" />
+    <Compile Include="flash\errors\MemoryError.play" />
+    <Compile Include="flash\errors\StackOverflowError.play" />
+    <Compile Include="flash\events\ErrorEvent.play" />
+    <Compile Include="flash\events\KeyboardEvent.play" />
+    <Compile Include="flash\events\MouseEvent.play" />
+    <Compile Include="flash\events\TouchEvent.play" />
+    <Compile Include="flash\events\UncaughtErrorEvents.play" />
+    <Compile Include="flash\filters\BitmapFilter.play" />
+    <Compile Include="flash\geom\ColorTransform.play" />
+    <Compile Include="flash\geom\Matrix.play" />
+    <Compile Include="flash\geom\Matrix3D.play" />
+    <Compile Include="flash\geom\Orientation3D.play" />
+    <Compile Include="flash\geom\PerspectiveProjection.play" />
+    <Compile Include="flash\geom\Point.play" />
+    <Compile Include="flash\geom\Rectangle.play" />
+    <Compile Include="flash\geom\Transform.play" />
+    <Compile Include="flash\geom\Utils3D.play" />
+    <Compile Include="flash\geom\Vector3D.play" />
+    <Compile Include="flash\media\ID3Info.play" />
+    <Compile Include="flash\media\SouncChannel.play" />
+    <Compile Include="flash\media\Sound.play" />
+    <Compile Include="flash\media\SoundLoaderContext.play" />
+    <Compile Include="flash\media\SoundTransform.play" />
+    <Compile Include="flash\media\StageVideo.play" />
+    <Compile Include="flash\net\URLRequest.play" />
+    <Compile Include="flash\system\ApplicationDomain.play" />
+    <Compile Include="flash\system\Capabilities.play" />
+    <Compile Include="flash\system\IME.play" />
+    <Compile Include="flash\system\IMEConversionMode.play" />
+    <Compile Include="flash\system\JPEGLoaderContext.play" />
+    <Compile Include="flash\system\LoaderContext.play" />
+    <Compile Include="flash\system\Security.play" />
+    <Compile Include="flash\system\SecurityDomain.play" />
+    <Compile Include="flash\system\System.play" />
+    <Compile Include="flash\text\AntiAliasType.play" />
+    <Compile Include="flash\text\CSMSettings.play" />
+    <Compile Include="flash\text\Font.play" />
+    <Compile Include="flash\text\FontStyle.play" />
+    <Compile Include="flash\text\FontType.play" />
+    <Compile Include="flash\text\GridFitType.play" />
+    <Compile Include="flash\text\StaticText.play" />
+    <Compile Include="flash\text\StyleSheet.play" />
+    <Compile Include="flash\text\TextColorType.play" />
+    <Compile Include="flash\text\TextDisplayMode.play" />
+    <Compile Include="flash\text\TextField.play" />
+    <Compile Include="flash\text\TextFieldAutoSize.play" />
+    <Compile Include="flash\text\TextFormat.play" />
+    <Compile Include="flash\text\TextFormatAlign.play" />
+    <Compile Include="flash\text\TextInteractionMode.play" />
+    <Compile Include="flash\text\TextLineMetrics.play" />
+    <Compile Include="flash\text\TextRenderer.play" />
+    <Compile Include="flash\text\TextSnapshot.play" />
+    <Compile Include="flash\ui\KeyLocation.play" />
+    <Compile Include="flash\ui\Keyboard.play" />
+    <Compile Include="flash\ui\KeyboardType.play" />
+    <Compile Include="flash\ui\Mouse.play" />
+    <Compile Include="flash\ui\MouseCursor.play" />
+    <Compile Include="flash\ui\MouseCursorData.play" />
+    <Compile Include="flash\ui\Multitouch.play" />
+    <Compile Include="flash\ui\MultitouchInputMode.play" />
+    <Compile Include="flash\utils\ByteArray.play" />
+    <Compile Include="flash\utils\Endian.play" />
+    <Compile Include="flash\utils\IDataInput.play" />
+    <Compile Include="flash\utils\IDataOutput.play" />
+    <Compile Include="flash\utils\Timer.play" />
+    <Compile Include="flash\utils\utils_functions.play" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="pscorlib.dll.sources" />
+    <None Include="Makefile" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PlayScript.Dynamic\PlayScript.Dynamic-net_4_0.csproj">
+      <Project>{5F7F9AF6-CE83-4F13-A25F-355DB2861D43}</Project>
+      <Name>PlayScript.Dynamic-net_4_0</Name>
+    </ProjectReference>
+  </ItemGroup>
+</Project>

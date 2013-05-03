@@ -422,6 +422,18 @@ namespace Mono.CSharp {
 			}
 		}
 
+		bool ITypeDefinition.IsAsDynamicClass {
+			get {
+				return false;
+			}
+		}
+
+		bool ITypeDefinition.IsAsBindableClass {
+			get {
+				return false;
+			}
+		}
+
 		bool ITypeDefinition.IsPartial {
 			get {
 				return false;

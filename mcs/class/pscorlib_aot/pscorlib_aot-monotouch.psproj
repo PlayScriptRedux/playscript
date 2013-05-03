@@ -5,20 +5,23 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>10.0.0</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{EDBAC91B-2817-479E-8DDF-B24ADDA563A6}</ProjectGuid>
+    <ProjectGuid>{876BFFD1-CEFA-44DD-9243-A50958EF65DD}</ProjectGuid>
+    <ProjectTypeGuids>{6BC8ED88-2882-458C-8E55-DFD12B67127B};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
-    <RootNamespace>_root</RootNamespace>
-    <AssemblyName>pscorlib_aot</AssemblyName>
+    <RootNamespace>pscorlib_aotmonotouch</RootNamespace>
+    <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
+    <AssemblyName>pscorlib_monotouch</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>False</Optimize>
     <OutputPath>bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;PLATFORM_MONOMAC;OPENGL</DefineConstants>
+    <DefineConstants>DEBUG;PLATFORM_MONOTOUCH;OPENGL</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
+    <NoWarn>0414</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -27,19 +30,23 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
-    <DefineConstants>PLATFORM_MONOMAC</DefineConstants>
+    <DefineConstants>PLATFORM_MONOTOUCH;OPENGL</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="Mono.CSharp" />
+    <Reference Include="monotouch" />
     <Reference Include="System.Core" />
-    <Reference Include="MonoMac" />
+    <Reference Include="OpenTK-1.0" />
     <Reference Include="System.Xml" />
-    <Reference Include="System.Drawing" />
-    <Reference Include="ICSharpCode.SharpZipLib" />
-    <Reference Include="test2">
-      <HintPath>..\..\mcs\test2.exe</HintPath>
+    <Reference Include="ICSharpCode.SharpZipLib">
+      <HintPath>..\lib\net_4_5\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\" />
+    <Folder Include="ActionScript\" />
+    <Folder Include="flash\" />
+    <Folder Include="flash\filesystem\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -93,6 +100,9 @@
     </Compile>
     <Compile Include="..\pscorlib\functions.play">
       <Link>functions.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\IDynamicClass.play">
+      <Link>IDynamicClass.play</Link>
     </Compile>
     <Compile Include="..\pscorlib\JSON.play">
       <Link>JSON.play</Link>
@@ -649,23 +659,11 @@
     <Compile Include="..\pscorlib\PlayScript\Player.cs">
       <Link>PlayScript\Player.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\PlayScript\DynamicClassAttribute.cs">
-      <Link>PlayScript\DynamicClassAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\BindableAttribute.cs">
-      <Link>BindableAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\PlayScript\IDynamicClass.cs">
-      <Link>PlayScript\IDynamicClass.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\IDynamicClass.play">
-      <Link>IDynamicClass.play</Link>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net_4_0.csproj">
-      <Project>{0BACBE20-34DD-4E24-8B91-87970E8A23B9}</Project>
-      <Name>PlayScript.Dynamic_aot-net_4_0</Name>
+    <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monotouch.csproj">
+      <Project>{CC73D545-B7C7-4FB4-996A-C76E8B0D5B81}</Project>
+      <Name>PlayScript.Dynamic_aot-monotouch</Name>
     </ProjectReference>
   </ItemGroup>
 </Project>

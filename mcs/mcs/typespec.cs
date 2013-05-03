@@ -35,6 +35,10 @@ namespace Mono.CSharp
 		protected IList<TypeSpec> ifaces;
 		TypeSpec base_type;
 
+		// Are we dynamic, have we checked yet?
+		protected bool isAsDynamicSet;
+		protected bool isAsDynamic;
+
 		Dictionary<TypeSpec[], InflatedTypeSpec> inflated_instances;
 
 		public static readonly TypeSpec[] EmptyTypes = new TypeSpec[0];
@@ -155,6 +159,19 @@ namespace Mono.CSharp
 		public bool IsClass {
 			get {
 				return Kind == MemberKind.Class;
+			}
+		}
+
+		// True if this type is an ActionScript dynamic class.
+		public bool IsAsDynamicClass {
+			get {
+				if (!isAsDynamicSet) {	
+					// We are always dynamic if our builtin type is "dynamic", but we could also be dynamic if we're a
+					// dynamic class.
+					isAsDynamic = this.definition != null && ((ITypeDefinition)this.definition).IsAsDynamicClass;
+					isAsDynamicSet = true;
+				}
+				return isAsDynamic;
 			}
 		}
 
@@ -1380,6 +1397,10 @@ namespace Mono.CSharp
 		int TypeParametersCount { get; }
 		TypeParameterSpec[] TypeParameters { get; }
 
+		// ActionScript : Class types we need to know about.
+		bool IsAsDynamicClass { get; }
+		bool IsAsBindableClass { get; }
+
 		TypeSpec GetAttributeCoClass ();
 		string GetAttributeDefaultMember ();
 		AttributeUsageAttribute GetAttributeUsage (PredefinedAttribute pa);
@@ -1425,6 +1446,18 @@ namespace Mono.CSharp
 		}
 
 		bool ITypeDefinition.IsComImport {
+			get {
+				return false;
+			}
+		}
+
+		bool ITypeDefinition.IsAsDynamicClass {
+			get {
+				return false;
+			}
+		}
+		
+		bool ITypeDefinition.IsAsBindableClass {
 			get {
 				return false;
 			}
@@ -1561,6 +1594,18 @@ namespace Mono.CSharp
 		public TypeSpec Element { get; private set; }
 
 		bool ITypeDefinition.IsComImport {
+			get {
+				return false;
+			}
+		}
+
+		bool ITypeDefinition.IsAsDynamicClass {
+			get {
+				return false;
+			}
+		}
+		
+		bool ITypeDefinition.IsAsBindableClass {
 			get {
 				return false;
 			}

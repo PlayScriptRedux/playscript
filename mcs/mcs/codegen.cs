@@ -239,7 +239,7 @@ namespace Mono.CSharp
 				return false;
 
 			var sf = loc.SourceFile;
-			if (sf.IsHiddenLocation (loc))
+			if (sf == null || sf.IsHiddenLocation (loc))
 				return false;
 
 #if NET_4_0

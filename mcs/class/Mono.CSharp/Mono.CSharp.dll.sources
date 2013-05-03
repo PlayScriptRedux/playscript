@@ -5,6 +5,7 @@
 ../../mcs/async.cs
 ../../mcs/ps-lang.cs
 ../../mcs/ps-tokenizer.cs
+../../mcs/ps-codegen.cs
 ../../mcs/attribute.cs
 ../../mcs/cs-tokenizer.cs
 ../../mcs/cfold.cs

@@ -767,6 +767,9 @@ namespace Mono.CSharp {
 			var si = file.CreateSymbolInfo (symwriter);
 			comp_unit = new CompileUnitEntry (symwriter, si);;
 
+			if (comp_unit == null)
+				return;
+
 			if (include_files != null) {
 				foreach (SourceFile include in include_files.Values) {
 					si = include.CreateSymbolInfo (symwriter);

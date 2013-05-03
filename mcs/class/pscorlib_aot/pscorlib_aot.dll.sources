@@ -1,6 +1,7 @@
 ./AssemblyInfo.cs
 ../pscorlib/ArgumentError.play
 ../pscorlib/Array.cs
+../pscorlib/BindableAttribute.cs
 ../pscorlib/Boolean.cs
 ../pscorlib/DefinitionError.play
 ../pscorlib/DeprecatedAttribute.cs
@@ -186,6 +187,8 @@
 ../pscorlib/Number.cs
 ../pscorlib/Object.cs
 ../pscorlib/PartialAttribute.cs
+../pscorlib/PlayScript/DynamicClassAttribute.cs
+../pscorlib/PlayScript/IDynamicClass.cs
 ../pscorlib/PlayScript/Player.cs
 ../pscorlib/PlayScript/Undefined.cs
 ../pscorlib/QName.play

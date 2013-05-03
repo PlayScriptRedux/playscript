@@ -28,38 +28,40 @@
 
 #if !DYNAMIC_SUPPORT
 
-using System;
-using System.Collections.Generic;
+// APPARENTLY THIS ISN'T NEEDED - BEN
 
-namespace System.Runtime.CompilerServices
-{
-
-	[AttributeUsage (AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.ReturnValue)]
-	public sealed class DynamicAttribute : Attribute
-	{
-		static readonly IList<bool> empty = Array.AsReadOnly (new [] { true });
-		
-		IList<bool> transformFlags;
-
-		public DynamicAttribute ()
-		{
-			transformFlags = empty;
-		}
-
-		public DynamicAttribute (bool[] transformFlags)
-		{
-			if (transformFlags == null)
-				throw new ArgumentNullException ();
-
-			this.transformFlags = transformFlags;
-		}
-
-		public IList<bool> TransformFlags {
-			get {
-				return transformFlags;
-			}
-		}
-	}
-}
+//using System;
+//using System.Collections.Generic;
+//
+//namespace System.Runtime.CompilerServices
+//{
+//
+//	[AttributeUsage (AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter | AttributeTargets.ReturnValue)]
+//	public sealed class DynamicAttribute : Attribute
+//	{
+//		static readonly IList<bool> empty = Array.AsReadOnly (new [] { true });
+//		
+//		IList<bool> transformFlags;
+//
+//		public DynamicAttribute ()
+//		{
+//			transformFlags = empty;
+//		}
+//
+//		public DynamicAttribute (bool[] transformFlags)
+//		{
+//			if (transformFlags == null)
+//				throw new ArgumentNullException ();
+//
+//			this.transformFlags = transformFlags;
+//		}
+//
+//		public IList<bool> TransformFlags {
+//			get {
+//				return transformFlags;
+//			}
+//		}
+//	}
+//}
 
 #endif
