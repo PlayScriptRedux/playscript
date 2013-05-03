@@ -37,9 +37,6 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Drawing" />
     <Reference Include="ICSharpCode.SharpZipLib" />
-    <Reference Include="test2">
-      <HintPath>..\..\mcs\test2.exe</HintPath>
-    </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -660,6 +657,9 @@
     </Compile>
     <Compile Include="..\pscorlib\IDynamicClass.play">
       <Link>IDynamicClass.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\PlayScript\EmbedLoader.cs">
+      <Link>PlayScript\EmbedLoader.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

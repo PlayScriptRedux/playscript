@@ -188,6 +188,7 @@
 ./Object.cs
 ./PartialAttribute.cs
 ./PlayScript/DynamicClassAttribute.cs
+./PlayScript/EmbedLoader.cs
 ./PlayScript/IDynamicClass.cs
 ./PlayScript/Player.cs
 ./PlayScript/Undefined.cs

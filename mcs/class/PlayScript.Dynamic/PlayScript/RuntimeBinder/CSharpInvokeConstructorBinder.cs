@@ -107,7 +107,14 @@ namespace PlayScript.RuntimeBinder
 		private static object InvokeConstructor(Type objType, object[] args)
 		{
 			var constructors = objType.GetConstructors();
-			
+
+			// Handle Embed loaders..
+			if (args.Length == 0 &&
+			    objType.BaseType.Name == "EmbedLoader" && objType.BaseType.Namespace == "PlayScript") {
+				var loaderObj = objType.GetConstructor (Type.EmptyTypes).Invoke (args);
+				return loaderObj.GetType ().GetMethod ("Load").Invoke (loaderObj, null);
+			}
+
 			var arg_len = args.Length;
 			foreach (var c in constructors) {
 				bool matches = true;

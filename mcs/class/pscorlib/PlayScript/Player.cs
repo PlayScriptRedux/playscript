@@ -116,7 +116,7 @@ namespace PlayScript
 			return displayObject;
 		}
 
-		private static object LoadResource(string path, string mimeType = null)
+		public static object LoadResource(string path, string mimeType = null)
 		{
 			var ext = Path.GetExtension(path).ToLowerInvariant();
 			// handle swfs
