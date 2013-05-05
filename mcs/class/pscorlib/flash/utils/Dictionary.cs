@@ -14,10 +14,12 @@
 
 using System;
 using System.Collections.Generic;
+using PlayScript;
 
 namespace flash.utils
 {
-	public class Dictionary : Dictionary<object, object>
+	[DynamicClass]
+	public class Dictionary : Dictionary<object, object>, IDynamicClass
 	{
 		public Dictionary(bool weakKeys = false) 
 			: base()
@@ -55,6 +57,36 @@ namespace flash.utils
 			}
 		}
 
+		#region IDynamicClass implementation
+
+		public dynamic __GetDynamicValue (string name)
+		{
+			return this[name];
+		}
+
+		public void __SetDynamicValue (string name, object value)
+		{
+			this[name] = value;
+		}
+
+		public bool __HasDynamicValue (string name)
+		{
+			return this.ContainsKey(name);
+		}
+
+		public _root.Array __GetDynamicNames ()
+		{
+			var a = new _root.Array();
+			foreach (KeyValuePair<object, object> pair in this) {
+				if (pair.Key is String) {
+					a.push(pair.Key);
+				}
+			}
+
+			return a;
+		}
+
+		#endregion
 	}
 }
 
