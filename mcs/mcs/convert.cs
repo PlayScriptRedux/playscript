@@ -172,7 +172,7 @@ namespace Mono.CSharp {
 				// PlayScript: Call the "Boolean()" static method to convert a dynamic to a bool.  EXPENSIVE, but hey..
 				Arguments args = new Arguments (1);
 				args.Add (new Argument(EmptyCast.Create(expr, opt_ec.BuiltinTypes.Object)));
-				opt_ec.Report.Warning (7164, 1, expr.Location, "Expensive reference conversion to bool");
+//				opt_ec.Report.Warning (7164, 1, expr.Location, "Expensive reference conversion to bool");
 				return new Invocation(new MemberAccess(new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, 
 				            expr.Location), "Boolean_fn", expr.Location), "Boolean", expr.Location), args).Resolve (opt_ec);
 			}
@@ -1458,7 +1458,7 @@ namespace Mono.CSharp {
 					var cast_args = new Arguments(1);
 					cast_args.Add (new Argument(EmptyCast.Create(expr, ec.BuiltinTypes.Object)));
 
-					ec.Report.Warning (7164, 1, expr.Location, "Expensive reference conversion to bool");
+//					ec.Report.Warning (7164, 1, expr.Location, "Expensive reference conversion to bool");
 
 					return new Invocation(new MemberAccess(new MemberAccess(new SimpleName(
 						PsConsts.PsRootNamespace, expr.Location), "Boolean_fn", expr.Location), "Boolean", expr.Location), 

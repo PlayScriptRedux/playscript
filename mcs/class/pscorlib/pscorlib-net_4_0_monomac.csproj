@@ -144,6 +144,10 @@
     <Compile Include="flash\display3D\textures\SamplerState.cs" />
     <Compile Include="DeprecatedAttribute.cs" />
     <Compile Include="PlayScript\Player.cs" />
+    <Compile Include="PlayScript\DynamicClassAttribute.cs" />
+    <Compile Include="PlayScript\EmbedLoader.cs" />
+    <Compile Include="PlayScript\IDynamicClass.cs" />
+    <Compile Include="PlayScript\Support.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

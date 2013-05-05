@@ -637,19 +637,35 @@ namespace Mono.CSharp
 		// Resolve any dynamic params to the type of the target parameters list (for PlayScript only).
 		public bool AsTryResolveDynamicArgs (ResolveContext ec, System.Collections.IEnumerable candidates)
 		{
-			MethodSpec ms = null;
-			foreach (MethodSpec possibleMs in candidates) {
-				if (possibleMs.Parameters.FixedParameters.Length <= args.Count && 
-					possibleMs.Parameters.Count >= args.Count) {
-					if (ms != null) {
-						ms = null;	// Can't be more than one - or we give up and do a dynamic call..
+			AParametersCollection parameters = null;
+
+			foreach (MemberSpec memberSpec in candidates) {
+
+				AParametersCollection possibleParams = null;
+				int fixedArgsLen = 0;
+
+				if (memberSpec is MethodSpec) {
+					MethodSpec methodSpec = memberSpec as MethodSpec;
+					possibleParams = methodSpec.Parameters;
+					fixedArgsLen = possibleParams.FixedParameters.Length;
+					if (methodSpec.IsExtensionMethod)
+						fixedArgsLen--;
+				} else if (memberSpec is IndexerSpec) {
+					IndexerSpec indexerSpec = memberSpec as IndexerSpec;
+					possibleParams = indexerSpec.Parameters;
+					fixedArgsLen = possibleParams.FixedParameters.Length;
+				}
+
+				if (fixedArgsLen == args.Count) {
+					if (parameters != null) {
+						parameters = null;	// Can't be more than one - or we give up and do a dynamic call..
 						break;
 					}
-					ms = possibleMs;
+					parameters = possibleParams;
 				}
 			}
-			if (ms != null) {
-				var parameters = ms.Parameters;
+
+			if (parameters != null) {
 				for (var i = 0; i < args.Count; i++) {
 					var arg = args [i];
 					var paramType = parameters.Types [i];
@@ -664,6 +680,7 @@ namespace Mono.CSharp
 				}
 				return true;
 			}
+
 			return false;
 		}
 	}

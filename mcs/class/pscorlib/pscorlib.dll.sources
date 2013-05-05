@@ -191,6 +191,7 @@
 ./PlayScript/EmbedLoader.cs
 ./PlayScript/IDynamicClass.cs
 ./PlayScript/Player.cs
+./PlayScript/Support.cs
 ./PlayScript/Undefined.cs
 ./QName.play
 ./RangeError.play

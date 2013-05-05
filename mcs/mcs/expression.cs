@@ -484,7 +484,7 @@ namespace Mono.CSharp
 					// PlayScript: Call the "Boolean()" static method to convert a dynamic to a bool.  EXPENSIVE, but hey..
 					Arguments args = new Arguments (1);
 					args.Add (new Argument(EmptyCast.Create(Expr, ec.BuiltinTypes.Object)));
-					ec.Report.Warning (7164, 1, loc, "Expensive reference conversion to bool");
+//					ec.Report.Warning (7164, 1, loc, "Expensive reference conversion to bool");
 					Expr = new Invocation(new MemberAccess(new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, loc), "Boolean_fn", loc), "Boolean", loc), args).Resolve (ec);
 				} else {
 					Arguments args = new Arguments (1);
@@ -9812,13 +9812,7 @@ namespace Mono.CSharp
 			eclass = ExprClass.IndexerAccess;
 
 			bool dynamic = false;
-			bool has_candidate = false;
 			arguments.Resolve (rc, out dynamic);
-
-			// ActionScript - We never toggle dynamic behavior on arguments.
-			if (rc.FileType == SourceFileType.PlayScript) {
-				dynamic = false;
-			}
 
 			if (indexers == null && InstanceExpression.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
 				dynamic = true;
@@ -9827,33 +9821,37 @@ namespace Mono.CSharp
 				res.BaseMembersProvider = this;
 				res.InstanceQualifier = this;
 
+				// If actionscript, try to resolve dynamic args to avoid a dynamic invoke if possible.
+				if (dynamic && rc.FileType == SourceFileType.PlayScript && indexers.Count > 0) {
+					if (arguments.AsTryResolveDynamicArgs(rc, indexers)) {
+						dynamic = false;
+					}
+				}
+
 				// TODO: Do I need 2 argument sets?
 				best_candidate = res.ResolveMember<IndexerSpec> (rc, ref arguments);
 				if (best_candidate != null) {
 					type = res.BestCandidateReturnType;
-					has_candidate = true;
-				} else if (res.BestCandidateIsDynamic) {
-					has_candidate = true;
-				}
-			}
+				} else if (!res.BestCandidateIsDynamic) {
 
-			// If we're an ActionScript dynamic class, call __GetDynamicValue and __SetDynamicValue..
-			if (!dynamic && !has_candidate) {
-				if (InstanceExpression.Type.IsAsDynamicClass) {
-
-					var dynClass = new Cast(new MemberAccess(new SimpleName("PlayScript", loc), "IDynamicClass", loc), InstanceExpression, loc);
-					var getterExpr = new MemberAccess(dynClass, "__GetDynamicValue", loc).Resolve (rc) as MethodGroupExpr;
-					var setterExpr = new MemberAccess(dynClass, "__SetDynamicValue", loc).Resolve (rc) as MethodGroupExpr;
-					if (getterExpr == null || getterExpr.Candidates.Count != 1 || !(getterExpr.Candidates[0] is MethodSpec)
-					    || setterExpr == null || setterExpr.Candidates.Count != 1 || !(setterExpr.Candidates[0] is MethodSpec))
+					// If we're an ActionScript dynamic class, call __GetDynamicValue and __SetDynamicValue..
+					if (InstanceExpression.Type.IsAsDynamicClass) {
+						
+						var dynClass = new Cast(new MemberAccess(new SimpleName("PlayScript", loc), "IDynamicClass", loc), InstanceExpression, loc);
+						var getterExpr = new MemberAccess(dynClass, "__GetDynamicValue", loc).Resolve (rc) as MethodGroupExpr;
+						var setterExpr = new MemberAccess(dynClass, "__SetDynamicValue", loc).Resolve (rc) as MethodGroupExpr;
+						if (getterExpr == null || getterExpr.Candidates.Count != 1 || !(getterExpr.Candidates[0] is MethodSpec)
+						    || setterExpr == null || setterExpr.Candidates.Count != 1 || !(setterExpr.Candidates[0] is MethodSpec))
 							return null;
+						
+						method_pair_getter = getterExpr.Candidates[0] as MethodSpec;
+						method_pair_setter = setterExpr.Candidates[0] as MethodSpec;
+						type = rc.BuiltinTypes.Dynamic;
+						
+					} else {
+						return null;
+					}
 
-					method_pair_getter = getterExpr.Candidates[0] as MethodSpec;
-					method_pair_setter = setterExpr.Candidates[0] as MethodSpec;
-					type = rc.BuiltinTypes.Dynamic;
-
-				} else {
-					return null;
 				}
 			}
 

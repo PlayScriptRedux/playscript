@@ -276,9 +276,23 @@ namespace Mono.CSharp {
 		/// </summary>
 		public abstract string DocCommentHeader { get; }
 
+		/// <summary>
+		/// Gets the type of the file.
+		/// </summary>
+		/// <value>The type of the file.</value>
 		public virtual SourceFileType FileType { 
 			get {
 				return member_name.Location.SourceFile != null ? member_name.Location.SourceFile.FileType : SourceFileType.CSharp;
+			}
+		}
+
+		/// <summary>
+		/// Gets whether this is an extended syntax PlayScript file.
+		/// </summary>
+		/// <value>The type of the file.</value>
+		public virtual bool PsExtended { 
+			get {
+				return member_name.Location.SourceFile != null ? member_name.Location.SourceFile.PsExtended : false;
 			}
 		}
 

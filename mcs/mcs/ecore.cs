@@ -2740,6 +2740,28 @@ namespace Mono.CSharp {
 						return new TypeExpression(rc.BuiltinTypes.Delegate, loc);
 					} else if (name == "Class") {
 						return new TypeExpression(rc.BuiltinTypes.Type, loc);
+					} else if (name == "arguments" && rc is BlockContext) {
+						var paramBlock = rc.CurrentBlock.ParametersBlock;
+						var li = new LocalVariable (paramBlock, "arguments", paramBlock.loc);
+						li.Type = rc.Module.PredefinedTypes.AsArray.Resolve();
+						var decl = new BlockVariableDeclaration(new Mono.CSharp.TypeExpression(rc.Module.PredefinedTypes.AsArray.Resolve(), paramBlock.loc), li);
+						if (rc.PsExtended) { // PlayScript uses a normal array for 'arguments'
+							var initializers = new List<Expression>();
+							foreach (Parameter param in paramBlock.Parameters.FixedParameters) {
+								initializers.Add (new SimpleName(param.Name, paramBlock.loc));
+							}
+							decl.Initializer = new AsArrayInitializer(initializers, paramBlock.loc);
+						} else {			 // ActionScript uses an actionscript Array
+							var arguments = new Arguments(paramBlock.Parameters.FixedParameters.Length);
+							foreach (Parameter param in paramBlock.Parameters.FixedParameters) {
+								arguments.Add (new Argument(new SimpleName(param.Name, paramBlock.loc)));
+							}
+							decl.Initializer = new New(new TypeExpression(rc.Module.PredefinedTypes.AsArray.Resolve(), paramBlock.loc), arguments, paramBlock.loc);
+						}
+						paramBlock.AddLocalName (li);
+						decl.Resolve ((BlockContext)rc);
+						paramBlock.ParametersBlock.TopBlock.AddScopeStatement (decl);
+						return LookupNameExpression (rc, restrictions);
 					}
 				}
 

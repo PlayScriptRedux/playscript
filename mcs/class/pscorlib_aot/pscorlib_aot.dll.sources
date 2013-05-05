@@ -191,6 +191,7 @@
 ../pscorlib/PlayScript/EmbedLoader.cs
 ../pscorlib/PlayScript/IDynamicClass.cs
 ../pscorlib/PlayScript/Player.cs
+../pscorlib/PlayScript/Support.cs
 ../pscorlib/PlayScript/Undefined.cs
 ../pscorlib/QName.play
 ../pscorlib/RangeError.play
