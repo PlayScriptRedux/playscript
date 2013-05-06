@@ -37,18 +37,23 @@ namespace PlayScript
 		{
 			get; set;
 		}
-		
+
 		public Player(RectangleF bounds)
 		{
-			AddResourceDirectory("");
-			#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH 
-			AddResourceDirectory(NSBundle.MainBundle.ResourcePath);
-			#endif
-
+			// clear title
 			Title = "";
 			
 			// construct flash stage
 			mStage = new flash.display.Stage ((int)bounds.Width, (int)bounds.Height);
+		}
+
+		static Player()
+		{
+			// add resource directories in static constructor
+			AddResourceDirectory("");
+			#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH 
+			AddResourceDirectory(NSBundle.MainBundle.ResourcePath);
+			#endif
 		}
 
 		// this method returns all classes with the [SWF] attribute
@@ -181,7 +186,7 @@ namespace PlayScript
 			}
 
 			// remove unneeded prefixes
-			var prefixes = new string[] {"/../", "../"};
+			var prefixes = new string[] {"/../", "../../", "../"};
 			foreach (var prefix in prefixes) 
 			{
 				if (path.StartsWith(prefix))
