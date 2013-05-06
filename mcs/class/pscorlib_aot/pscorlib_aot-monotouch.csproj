@@ -671,6 +671,9 @@
     <Compile Include="..\pscorlib\PlayScript\Support.cs">
       <Link>PlayScript\Support.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\PlayScript\DynamicProperties.cs">
+      <Link>PlayScript\DynamicProperties.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monotouch.csproj">
