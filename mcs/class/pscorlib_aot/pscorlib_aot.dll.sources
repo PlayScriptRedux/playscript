@@ -188,6 +188,7 @@
 ../pscorlib/Object.cs
 ../pscorlib/PartialAttribute.cs
 ../pscorlib/PlayScript/DynamicClassAttribute.cs
+../pscorlib/PlayScript/DynamicProperties.cs
 ../pscorlib/PlayScript/EmbedLoader.cs
 ../pscorlib/PlayScript/IDynamicClass.cs
 ../pscorlib/PlayScript/Player.cs
