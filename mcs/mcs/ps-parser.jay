@@ -673,7 +673,8 @@ package_declaration
 	  	lbag.AddLocation (current_container, GetLocation ($2), GetLocation ($6), GetLocation ($8));
 	  
 	  	if (current_namespace.Parent != null && current_namespace.Parent.Parent == null) { // Is this the top level package?
-			var ns = new NamespaceContainer (new MemberName("__" + file.FileName.Replace(".","_")), current_namespace);
+	  		string private_ns_name = MakePrivateNamespaceName(current_namespace, file);
+			var ns = new NamespaceContainer (new MemberName(private_ns_name), current_namespace);
 			prev_namespace = current_namespace;
 			current_container = private_namespace = current_namespace = ns;
 	    } else {
@@ -8435,6 +8436,24 @@ LocalVariable GetOrCreateLocalVariable(Block block, string name, LocalVariable.F
 	block.AddLocalName (li);
 	
 	return li;
+}
+
+string MakePrivateNamespaceName(NamespaceContainer prev_container, CompilationSourceFile file) 
+{
+	StringBuilder sb = new StringBuilder();
+	if (prev_container != null) {
+		sb.Append(prev_container.NS.Name + ".");
+	}
+	sb.Append("__");
+	string filename = System.IO.Path.GetFileNameWithoutExtension(file.FileName);
+	for (int i = 0; i < filename.Length; i++) {
+		char ch = filename[i];
+		if (char.IsLetter(ch) || ch == '_' || (i > 0 && char.IsDigit(ch))) {
+			sb.Append(ch);
+		}
+	}
+	sb.Append("Private");
+	return sb.ToString();
 }
 
 string GetExpecting ()
