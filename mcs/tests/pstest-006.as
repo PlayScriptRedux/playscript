@@ -41,7 +41,7 @@ package
 			const o:Array = [ 10, 20, 30, 40 ];
 			
 			const cl:Class = Array;
-			const cl2:Class;
+//			const cl2:Class;
 
 		}
 		

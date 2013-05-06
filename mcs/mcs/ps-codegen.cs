@@ -74,33 +74,33 @@ namespace {1} {{
 
 	partial class {2} : PlayScript.IDynamicClass {{
 
-		private Dictionary<string, object> __dynamicDict;
+		private PlayScript.DynamicProperties __dynamicProps;
 
 		dynamic PlayScript.IDynamicClass.__GetDynamicValue(string name) {{
 			object value = null;
-			if (__dynamicDict != null) {{
-				__dynamicDict.TryGetValue(name, out value);
+			if (__dynamicProps != null) {{
+				__dynamicProps.TryGetValue(name, out value);
 			}}
 			return value;
 		}}
 			
 		void PlayScript.IDynamicClass.__SetDynamicValue(string name, object value) {{
-			if (__dynamicDict == null) {{
-				__dynamicDict = new Dictionary<string, object>();
+			if (__dynamicProps == null) {{
+				__dynamicProps = new PlayScript.DynamicProperties();
 			}}
-			__dynamicDict[name] = value;
+			__dynamicProps[name] = value;
 		}}
 			
 		bool PlayScript.IDynamicClass.__HasDynamicValue(string name) {{
-			if (__dynamicDict != null) {{
-				return __dynamicDict.ContainsKey(name);
+			if (__dynamicProps != null) {{
+				return __dynamicProps.ContainsKey(name);
 			}}
 			return false;
 		}}
 
 		_root.Array PlayScript.IDynamicClass.__GetDynamicNames() {{
-			if (__dynamicDict != null) {{
-				return new _root.Array(__dynamicDict.Keys);
+			if (__dynamicProps != null) {{
+				return new _root.Array(__dynamicProps.Keys);
 			}}
 			return new _root.Array();
 		}}

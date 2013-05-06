@@ -1268,7 +1268,10 @@ constant_declarator
 	;		
 
 opt_constant_initializer
-	: /* empty */ { $$ = null; }
+	: /* empty */ 
+	  { 
+		$$ = new ConstInitializer (current_field, new DefaultValueExpression(current_field.TypeExpression, current_field.Location), current_field.Location); 
+	  }
 	| constant_initializer
 	;
 
