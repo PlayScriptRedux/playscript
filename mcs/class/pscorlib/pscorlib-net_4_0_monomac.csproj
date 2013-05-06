@@ -148,6 +148,7 @@
     <Compile Include="PlayScript\EmbedLoader.cs" />
     <Compile Include="PlayScript\IDynamicClass.cs" />
     <Compile Include="PlayScript\Support.cs" />
+    <Compile Include="PlayScript\DynamicProperties.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

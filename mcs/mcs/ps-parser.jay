@@ -8448,14 +8448,21 @@ string MakePrivateNamespaceName(NamespaceContainer prev_container, CompilationSo
 		sb.Append(prev_container.NS.Name + ".");
 	}
 	sb.Append("__");
-	string filename = System.IO.Path.GetFileNameWithoutExtension(file.FileName);
-	for (int i = 0; i < filename.Length; i++) {
-		char ch = filename[i];
-		if (char.IsLetter(ch) || ch == '_' || (i > 0 && char.IsDigit(ch))) {
+	string str = prev_container.NS.Name;
+	for (int i = 0; i < str.Length; i++) {
+		char ch = str[i];
+		if (char.IsLetter(ch) || ch == '_' || char.IsDigit(ch)) {
+			sb.Append(ch);
+		}
+	}	
+	str = System.IO.Path.GetFileNameWithoutExtension(file.FileName);
+	for (int i = 0; i < str.Length; i++) {
+		char ch = str[i];
+		if (char.IsLetter(ch) || ch == '_' || char.IsDigit(ch)) {
 			sb.Append(ch);
 		}
 	}
-	sb.Append("Private");
+	sb.Append("_private");
 	return sb.ToString();
 }
 
