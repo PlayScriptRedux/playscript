@@ -8444,25 +8444,14 @@ LocalVariable GetOrCreateLocalVariable(Block block, string name, LocalVariable.F
 string MakePrivateNamespaceName(NamespaceContainer prev_container, CompilationSourceFile file) 
 {
 	StringBuilder sb = new StringBuilder();
-	if (prev_container != null) {
-		sb.Append(prev_container.NS.Name + ".");
-	}
-	sb.Append("__");
-	string str = prev_container.NS.Name;
-	for (int i = 0; i < str.Length; i++) {
-		char ch = str[i];
-		if (char.IsLetter(ch) || ch == '_' || char.IsDigit(ch)) {
-			sb.Append(ch);
-		}
-	}	
-	str = System.IO.Path.GetFileNameWithoutExtension(file.FileName);
-	for (int i = 0; i < str.Length; i++) {
-		char ch = str[i];
-		if (char.IsLetter(ch) || ch == '_' || char.IsDigit(ch)) {
-			sb.Append(ch);
-		}
-	}
+	sb.Append("_");
+	sb.Append(System.IO.Path.GetFileNameWithoutExtension(file.FileName));
 	sb.Append("_private");
+	for (var i = 0; i < sb.Length; i++) {
+		var ch = sb[i];
+		if (ch != '_' && !char.IsLetterOrDigit(ch))
+			sb[i] = '_';
+	}
 	return sb.ToString();
 }
 
