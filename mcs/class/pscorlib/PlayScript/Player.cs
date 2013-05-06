@@ -123,41 +123,30 @@ namespace PlayScript
 
 		public static object LoadResource(string path, string mimeType = null)
 		{
-			var ext = Path.GetExtension(path).ToLowerInvariant();
-			// handle swfs
-			if (ext == ".swf")
-			{
-				// loading of swf's is not supported, so create a dummy sprite
-				return new flash.display.Sprite();
-			}
-
 			// handle byte arrays
 			if (mimeType == "application/octet-stream")
 			{
+				// load as byte array
 				return flash.utils.ByteArray.loadFromPath(path);
 			}
-			
-			// else its probably an image 
-			// TODO: check extension
-			return new flash.display.Bitmap(flash.display.BitmapData.loadFromPath(path));
-		}
 
-		public static object LoadEmbed(object baseObject, string fieldName)
-		{
-			var type = baseObject.GetType();
-			var fieldInfo = type.GetField(fieldName);
-			if (fieldInfo == null) 
+			var ext = Path.GetExtension(path).ToLowerInvariant();
+			switch (ext)
 			{
-				throw new Exception("Field not found " + fieldName + " for class " + type.ToString());
+				case ".swf":
+					// loading of swf's is not supported, so create a dummy sprite
+					return new flash.display.Sprite();
+				case ".bmp":
+				case ".png":
+				case ".jpg":
+				case ".jpeg":
+				case ".atf":
+				case ".tif":
+					// load as bitmap
+					return new flash.display.Bitmap(flash.display.BitmapData.loadFromPath(path));
+				default:
+					throw new NotImplementedException("Loader for " + ext);
 			}
-
-			foreach (var attr in fieldInfo.GetCustomAttributes(typeof(_root.EmbedAttribute), true))
-			{
-				var embed = attr as _root.EmbedAttribute;
-				return LoadResource(embed.source, embed.mimeType);
-			}
-
-			throw new Exception("Embedded attribute not found on field " + fieldName + " for class " + type.ToString());
 		}
 
 		public static object InvokeStaticMethod(System.Type type, String methodName, _root.Array args)
