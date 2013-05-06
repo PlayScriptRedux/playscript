@@ -271,27 +271,46 @@ namespace PlayScript
 			mStage.dispatchEvent (me);
 		}
 
-		private float mScrollDelta;
-
 		public void OnScrollWheel(PointF p, float delta)
 		{
-			mStage.mouseX = p.X;
-			mStage.mouseY = p.Y;
-
-			// accumulate the deltas here since flash only accepts integer deltas
-			mScrollDelta += delta;
-
-			float thisDelta = (float)Math.Floor(mScrollDelta);
-			if (thisDelta != 0.0f) 
+			if (delta != 0.0f)
 			{
-				// Console.WriteLine("delta {0}", delta);
+				mStage.mouseX = p.X;
+				mStage.mouseY = p.Y;
+
+				// accumulate the deltas here since flash only accepts integer deltas
+				mScrollDelta += delta;
+
+				// Console.WriteLine("OnScrollWheel {0} {1}", delta, mScrollDelta);
+			}
+		}
+
+		private void DispatchScrollWheelEvents()
+		{
+			// determine delta to dispatch
+			// since flash only accepts integer deltas we dispatch incrementally one delta at a time
+			int intDelta = 0;
+			if (mScrollDelta < -5.0)	{
+				intDelta = -5;
+			} else if (mScrollDelta > 5.0)	{
+				intDelta =  5;
+			} else 	if (mScrollDelta < -1.0)	{
+				intDelta = -1;
+			} else 	if (mScrollDelta >  1.0)	{
+				intDelta =  1;
+			}
+
+			if (intDelta != 0)
+			{
+				// Console.WriteLine("dispatch scroll delta {0} {1}", intDelta, mScrollDelta);
 				
-				// dispatch mouse event
-				var me = new flash.events.MouseEvent(flash.events.MouseEvent.MOUSE_WHEEL, true, false, p.X, p.Y, mStage);
-				me.delta = (int)thisDelta;
+				// dispatch mouse wheel event
+				var me = new flash.events.MouseEvent(flash.events.MouseEvent.MOUSE_WHEEL, true, false, mStage.mouseX, mStage.mouseY, mStage);
+				me.delta = intDelta;
 				mStage.dispatchEvent (me);
 
-				mScrollDelta -= thisDelta;
+				// subtract off of accumulated delta
+				mScrollDelta -= (float)intDelta;
 			}
 		}
 
@@ -361,6 +380,10 @@ namespace PlayScript
 		{
 			//GL.ClearColor (1,0,1,0);
 			//GL.Clear (ClearBufferMask.ColorBufferBit);
+
+			// dispatch scroll wheel events 
+			// these are done here because they must be done smoothly and incrementally, spread out over time
+			DispatchScrollWheelEvents();
 			
 			// stage enter frame
 			mStage.onEnterFrame ();
@@ -373,6 +396,7 @@ namespace PlayScript
 		}
 		
 		private flash.display.Stage    mStage;
+		private float mScrollDelta;
 
 		private static List<string> sResourceDirectories = new List<string>();
 	}
