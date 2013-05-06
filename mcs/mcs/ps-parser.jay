@@ -673,8 +673,7 @@ package_declaration
 	  	lbag.AddLocation (current_container, GetLocation ($2), GetLocation ($6), GetLocation ($8));
 	  
 	  	if (current_namespace.Parent != null && current_namespace.Parent.Parent == null) { // Is this the top level package?
-	  		string private_ns_name = MakePrivateNamespaceName(current_namespace, file);
-			var ns = new NamespaceContainer (new MemberName(private_ns_name), current_namespace);
+			var ns = new NamespaceContainer (new MemberName("__" + file.FileName.Replace(".","_").Replace("/","_").Replace("\\", "_").Replace("-", "_")  ), current_namespace);
 			prev_namespace = current_namespace;
 			current_container = private_namespace = current_namespace = ns;
 	    } else {
