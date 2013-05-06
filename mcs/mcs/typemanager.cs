@@ -248,6 +248,8 @@ namespace Mono.CSharp
 		// Actionscript
 		//
 		public readonly PredefinedType AsObject;
+		public readonly PredefinedType AsPlayScriptExpando;
+		public readonly PredefinedType AsDynamicExpando;
 		public readonly PredefinedType AsVector;
 		public readonly PredefinedType AsArray;
 		public readonly PredefinedType AsError;

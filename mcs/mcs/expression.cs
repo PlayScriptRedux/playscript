@@ -6267,24 +6267,24 @@ namespace Mono.CSharp
 			bool isAsObject = false;
 			bool dynamic = false;
 
-			// PlayScript: Make sure a "new Object()" call in as uses an actual object type and not
-			// dynamic.
-			if (ec.FileType == SourceFileType.PlayScript && 
-				RequestedType.Type == ec.BuiltinTypes.Dynamic) {
-				RequestedType = new TypeExpression (ec.Module.PredefinedTypes.AsObject.Resolve (), 
-				                                   RequestedType.Location);
-				isAsObject = true;
-			}
-
 			Expression ret = null;
 
 			// PlayScript can use expression returning a type as a new expression.
 			if (ec.FileType == SourceFileType.PlayScript) {
+
 				var reqExpr = RequestedType.Resolve (ec);
 				if (reqExpr == null)
 					return null;
+
 				if (reqExpr is TypeExpression) {
-					type = ((TypeExpression)reqExpr).ResolveAsType (ec);
+					// PlayScript: Make sure a "new Object()" call in as uses an actual object type and not
+					// dynamic.
+					if (reqExpr.Type == ec.BuiltinTypes.Dynamic) {
+						type = ec.Module.PredefinedTypes.AsObject.Resolve ();
+						isAsObject = true;
+					} else {
+						type = ((TypeExpression)reqExpr).ResolveAsType (ec);
+					}
 				} else if (reqExpr is TypeOf) {
 					type = ((TypeOf)reqExpr).TypeArgument;
 				} else if (reqExpr.Type.BuiltinType == BuiltinTypeSpec.Type.Type ||
@@ -6302,8 +6302,17 @@ namespace Mono.CSharp
 					arguments.Insert (0, new Argument (reqExpr.Resolve (ec), Argument.AType.DynamicTypeName));
 					ret = new DynamicConstructorBinder (reqExpr, arguments, loc).Resolve (ec);
 				}
+
 				if (ret != null)
 					return ret;
+
+				// PlayScript: Make sure a "new Object()" call in as uses an actual object type and not
+				// dynamic.
+				if (type == ec.BuiltinTypes.Dynamic) {
+					type = ec.Module.PredefinedTypes.AsObject.Resolve ();
+					isAsObject = true;
+				}
+
 			} else {
 				type = RequestedType.ResolveAsType (ec);
 			}

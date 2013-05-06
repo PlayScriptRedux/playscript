@@ -44,109 +44,109 @@
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\CallSite.cs">
-      <Link>ActionScript\CallSite.cs</Link>
+      <Link>PlayScript\CallSite.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\CallSiteBinder.cs">
-      <Link>ActionScript\CallSiteBinder.cs</Link>
+      <Link>PlayScript\CallSiteBinder.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\ExpressionType.cs">
-      <Link>ActionScript\ExpressionType.cs</Link>
+      <Link>PlayScript\ExpressionType.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\Expando\BindingRestrictionsEx.cs">
-      <Link>ActionScript\Expando\BindingRestrictionsEx.cs</Link>
+      <Link>PlayScript\Expando\BindingRestrictionsEx.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\Expando\CacheDict.cs">
-      <Link>ActionScript\Expando\CacheDict.cs</Link>
+      <Link>PlayScript\Expando\CacheDict.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\Expando\CollectionDebuggerView.cs">
-      <Link>ActionScript\Expando\CollectionDebuggerView.cs</Link>
+      <Link>PlayScript\Expando\CollectionDebuggerView.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\Expando\ContractUtils.cs">
-      <Link>ActionScript\Expando\ContractUtils.cs</Link>
+      <Link>PlayScript\Expando\ContractUtils.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\Expando\ExceptionFactory.Generated.cs">
-      <Link>ActionScript\Expando\ExceptionFactory.Generated.cs</Link>
+      <Link>PlayScript\Expando\ExceptionFactory.Generated.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\Expando\ExpandoClass.cs">
-      <Link>ActionScript\Expando\ExpandoClass.cs</Link>
+      <Link>PlayScript\Expando\ExpandoClass.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\Expando\ExpandoObject.cs">
-      <Link>ActionScript\Expando\ExpandoObject.cs</Link>
+      <Link>PlayScript\Expando\ExpandoObject.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\Expando\Hashtable.cs">
-      <Link>ActionScript\Expando\Hashtable.cs</Link>
+      <Link>PlayScript\Expando\Hashtable.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\Expando\TypeExtensions.cs">
-      <Link>ActionScript\Expando\TypeExtensions.cs</Link>
+      <Link>PlayScript\Expando\TypeExtensions.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\Expando\TypeUtils.cs">
-      <Link>ActionScript\Expando\TypeUtils.cs</Link>
+      <Link>PlayScript\Expando\TypeUtils.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\Binder.cs">
-      <Link>ActionScript\RuntimeBinder\Binder.cs</Link>
+      <Link>PlayScript\RuntimeBinder\Binder.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpArgumentInfo.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpArgumentInfo.cs</Link>
+      <Link>PlayScript\RuntimeBinder\CSharpArgumentInfo.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpArgumentInfoFlags.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpArgumentInfoFlags.cs</Link>
+      <Link>PlayScript\RuntimeBinder\CSharpArgumentInfoFlags.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpBinaryOperationBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpBinaryOperationBinder.cs</Link>
+      <Link>PlayScript\RuntimeBinder\CSharpBinaryOperationBinder.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpBinder.cs</Link>
+      <Link>PlayScript\RuntimeBinder\CSharpBinder.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpBinderFlags.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpBinderFlags.cs</Link>
+      <Link>PlayScript\RuntimeBinder\CSharpBinderFlags.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpConvertBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpConvertBinder.cs</Link>
+      <Link>PlayScript\RuntimeBinder\CSharpConvertBinder.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpGetIndexBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpGetIndexBinder.cs</Link>
+      <Link>PlayScript\RuntimeBinder\CSharpGetIndexBinder.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpGetMemberBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpGetMemberBinder.cs</Link>
+      <Link>PlayScript\RuntimeBinder\CSharpGetMemberBinder.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpInvokeBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpInvokeBinder.cs</Link>
+      <Link>PlayScript\RuntimeBinder\CSharpInvokeBinder.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpInvokeConstructorBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpInvokeConstructorBinder.cs</Link>
+      <Link>PlayScript\RuntimeBinder\CSharpInvokeConstructorBinder.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpInvokeMemberBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpInvokeMemberBinder.cs</Link>
+      <Link>PlayScript\RuntimeBinder\CSharpInvokeMemberBinder.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpIsEventBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpIsEventBinder.cs</Link>
+      <Link>PlayScript\RuntimeBinder\CSharpIsEventBinder.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpSetIndexBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpSetIndexBinder.cs</Link>
+      <Link>PlayScript\RuntimeBinder\CSharpSetIndexBinder.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpSetMemberBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpSetMemberBinder.cs</Link>
+      <Link>PlayScript\RuntimeBinder\CSharpSetMemberBinder.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpUnaryOperationBinder.cs">
-      <Link>ActionScript\RuntimeBinder\CSharpUnaryOperationBinder.cs</Link>
+      <Link>PlayScript\RuntimeBinder\CSharpUnaryOperationBinder.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\DynamicContext.cs">
-      <Link>ActionScript\RuntimeBinder\DynamicContext.cs</Link>
+      <Link>PlayScript\RuntimeBinder\DynamicContext.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\ErrorPrinter.cs">
-      <Link>ActionScript\RuntimeBinder\ErrorPrinter.cs</Link>
+      <Link>PlayScript\RuntimeBinder\ErrorPrinter.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\Extensions.cs">
-      <Link>ActionScript\RuntimeBinder\Extensions.cs</Link>
+      <Link>PlayScript\RuntimeBinder\Extensions.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\RuntimeBinderContext.cs">
-      <Link>ActionScript\RuntimeBinder\RuntimeBinderContext.cs</Link>
+      <Link>PlayScript\RuntimeBinder\RuntimeBinderContext.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\RuntimeBinderException.cs">
-      <Link>ActionScript\RuntimeBinder\RuntimeBinderException.cs</Link>
+      <Link>PlayScript\RuntimeBinder\RuntimeBinderException.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\RuntimeBinderInternalCompilerException.cs">
-      <Link>ActionScript\RuntimeBinder\RuntimeBinderInternalCompilerException.cs</Link>
+      <Link>PlayScript\RuntimeBinder\RuntimeBinderInternalCompilerException.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\System\Runtime\CompilerServices\DynamicAttribute.cs">
       <Link>System\Runtime\CompilerServices\DynamicAttribute.cs</Link>
