@@ -92,12 +92,6 @@ package {
 	}
 
 	
-	public function loadEmbed(baseObject:Object, fieldName:String):Object
-	{
-		// pass this off to C# code
-		return PlayScript.Player.LoadEmbed(baseObject, fieldName);
-	}
-
 	public function invokeStaticMethod(type:Class, methodName:String, args:Array):Object
 	{
 		// pass this off to C# code
