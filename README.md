@@ -18,7 +18,7 @@ The PlayScript compiler and runtime provides a complete toolset for building and
 
 The PlayScript compiler is implemented as an additional front end to the Mono MCS compiler.   Installing the PlayScript version of the Mono framework allows you to compile, with the MCS compiler all three langauges: C#, ActionScript, and PlayScript simply by adding files with .cs, .as, and .play file extensions to the MCS command line.
 
-Likewise with the Xamarin Studio IDE, pointing the Xamarin Studio ".NET Frameworks" preferences page selection to the PlayScript Mono framework allows you to simply add .as or .play files to any C# project, and compile them directly into your MonoTouch or Mono for Android project.  You can then compile ActionScript or PlayScript code and debug it on the device just as you would any C# code.  ActionScript code can directly call C# code, and vice versa.
+Likewise with the Xamarin Studio IDE, pointing the Xamarin Studio ".NET Frameworks" preferences page selection to the PlayScript Mono framework allows you to simply add .as or .play files to any C# project, and compile them directly into your Xamarin.iOS or Xamarin.Android project.  You can then compile ActionScript or PlayScript code and debug it on the device just as you would any C# code.  ActionScript code can directly call C# code, and vice versa.
 
 # How is the Stage3D Flash Runtime Implemented?
 
@@ -111,7 +111,7 @@ You should now be able to add .as files and .play files to your projects and com
 
 #### Full Platform API's
 
-  * Complete iOS platform API via Xamarin MonoTouch and Mono for Android
+  * Complete iOS platform API via Xamarin.iOS and Xamarin.Android
   * Complete Windows/MacOSX API's.
   * Complete integration with UI builder (iOS), and Android GUI builder via Xamarin Studio.
 
