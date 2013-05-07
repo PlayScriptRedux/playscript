@@ -337,15 +337,32 @@ namespace Mono.CSharp {
 
 		void About ()
 		{
+#if PLAYSCRIPT
 			output.WriteLine (
-				"The Mono C# compiler is Copyright 2001-2011, Novell, Inc.\n\n" +
+				"The PlayScript compiler parts Copyright 2013, Zynga, Inc.\n" + 
+				"Based on Mono MCS Compiler Copyright 2001-2011, Novell, Inc.\n\n" +
 				"The compiler source code is released under the terms of the \n" +
 				"MIT X11 or GNU GPL licenses\n\n" +
+
+				"For more information on PlayScript, visit the project Web site\n" +
+				"   http://www.playscriptlang.com\n\n" +
 
 				"For more information on Mono, visit the project Web site\n" +
 				"   http://www.mono-project.com\n\n" +
 
+				"The compiler was written by Miguel de Icaza, Ravi Pratap, Martin Baulig, Marek Safar, Raja R Harinath, Atushi Enomoto\n" +
+				"The PlayScript/ActionScript compiler was written by Ben Cooley and Icer Addis - Zynga");
+#else
+			output.WriteLine (
+				"The Mono C# compiler is Copyright 2001-2011, Novell, Inc.\n\n" +
+				"The compiler source code is released under the terms of the \n" +
+				"MIT X11 or GNU GPL licenses\n\n" +
+				
+				"For more information on Mono, visit the project Web site\n" +
+				"   http://www.mono-project.com\n\n" +
+				
 				"The compiler was written by Miguel de Icaza, Ravi Pratap, Martin Baulig, Marek Safar, Raja R Harinath, Atushi Enomoto");
+#endif
 		}
 
 		public CompilerSettings ParseArguments (string[] args)
@@ -1531,9 +1548,17 @@ namespace Mono.CSharp {
 		void Usage ()
 		{
 			output.WriteLine (
+#if PLAYSCRIPT
+				"PlayScript compiler, parts Copyright 2013 Zynga, Inc.\n" +
+				"Based on MCS compiler Copyright 2001-2011 Novell, Inc., Copyright 2011-2012 Xamarin, Inc\n" +
+				"playc [options] source-files\n" +
+				"   --about              About the PlayScript compiler\n" +
+
+#else 
 				"Mono C# compiler, Copyright 2001-2011 Novell, Inc., Copyright 2011-2012 Xamarin, Inc\n" +
 				"mcs [options] source-files\n" +
 				"   --about              About the Mono C# compiler\n" +
+#endif
 				"   -addmodule:M1[,Mn]   Adds the module to the generated assembly\n" +
 				"   -checked[+|-]        Sets default aritmetic overflow context\n" +
 				"   -clscheck[+|-]       Disables CLS Compliance verifications\n" +
