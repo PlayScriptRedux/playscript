@@ -4,7 +4,7 @@ SUBDIRS := build jay mcs playc class nunit24 ilasm tools tests errors docs
 
 # Resgen is corlib specific tool
 
-basic_SUBDIRS := build jay mcs class
+basic_SUBDIRS := build jay mcs playc class
 build_SUBDIRS := build class mcs playc class/aot-compiler tools
 net_2_0_SUBDIRS := build class nunit24 ilasm tools tests errors docs
 monodroid_SUBDIRS := build class

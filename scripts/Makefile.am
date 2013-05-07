@@ -37,6 +37,7 @@ bin_SCRIPTS = \
 	peverify			\
 	mcs					\
 	gmcs				\
+	playc				\
 	mono-heapviz		\
 	$(scripts_mono_configuration_crypto)
 
@@ -151,6 +152,7 @@ EXTRA_DIST =			\
 	peverify.in			\
 	update_submodules		\
 	mcs.in				\
+	playc.in			\
 	gmcs.in				\
 	dmcs.in				\
 	mono-test-install	\
@@ -218,6 +220,10 @@ gmcs: gmcs.in Makefile
 
 dmcs: dmcs.in Makefile
 	$(REWRITE_COMMON) $(srcdir)/dmcs.in > $@.tmp
+	mv -f $@.tmp $@
+
+playc: playc.in Makefile
+	$(REWRITE_COMMON) $(srcdir)/playc.in > $@.tmp
 	mv -f $@.tmp $@
 
 mono-service: mono-service.in Makefile
