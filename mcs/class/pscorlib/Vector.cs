@@ -21,7 +21,7 @@ namespace _root {
 
 #if !NEWVECTOR
 
-	public class Vector<T> : IEnumerable<T>
+	public class Vector<T> : IEnumerable<T>, IList<T>
 	{
 		//
 		// Properties
@@ -461,6 +461,61 @@ namespace _root {
 		{
 			return ((System.Collections.IEnumerable)mList).GetEnumerator();
 		}
+		#endregion
+
+		#region IList implementation
+
+		int IList<T>.IndexOf(T item)
+		{
+			return mList.IndexOf(item);
+		}
+
+		void IList<T>.Insert(int index, T item)
+		{
+			mList.Insert(index, item);
+		}
+
+		void IList<T>.RemoveAt(int index)
+		{
+			mList.RemoveAt(index);
+		}
+
+		#endregion
+
+		#region ICollection implementation
+
+		void ICollection<T>.Clear()
+		{
+			mList.Clear();
+		}
+
+		bool ICollection<T>.Contains(T item)
+		{
+			return mList.Contains(item);
+		}
+
+		void ICollection<T>.CopyTo(T[] array, int arrayIndex)
+		{
+			mList.CopyTo(array, arrayIndex);
+		}
+
+		bool ICollection<T>.Remove(T item)
+		{
+			return mList.Remove(item);
+		}
+
+		int ICollection<T>.Count {
+			get {
+				return mList.Count;
+			}
+		}
+
+		bool ICollection<T>.IsReadOnly {
+			get {
+				return false;
+			}
+		}
+
 		#endregion
 
 		private bool    mFixed = false;
