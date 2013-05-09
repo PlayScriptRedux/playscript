@@ -44,7 +44,18 @@ package flash.display {
 		}
  	 	
 		public function load(request:URLRequest, context:LoaderContext = null):void {
-			throw new System.NotImplementedException();
+			// TODO: this code also only does synchronous loading from local paths (need to support async and http)
+			var resource:Object = PlayScript.Player.LoadResource(request.url);
+
+			// set as content
+			mContent = resource as flash.display.DisplayObject;
+			
+			// store content in content loader info (also)
+			this.contentLoaderInfo.content = mContent;
+			
+			// dispatch complete event
+			var e:Event = new Event(Event.COMPLETE);
+			this.contentLoaderInfo.dispatchEvent(e);
 		}
  	 	
 		public function loadBytes(bytes:ByteArray, context:LoaderContext = null):void {
