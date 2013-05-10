@@ -42,6 +42,9 @@
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="ICSharpCode.SharpZipLib" />
+    <Reference Include="System.Json">
+      <HintPath>..\lib\net_4_0\System.Json.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="PlayScript\Undefined.cs" />

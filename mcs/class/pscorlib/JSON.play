@@ -14,10 +14,52 @@
 
 package {
 
+	import System.*;
+	import System.Json.*;
+	import System.Collections.Generic.*;
+
 	public static class JSON {
+
+		private static function ConvertJsonObjectToDynamic(jv:JsonObject):Object {
+			// convert all properties
+			var o:Object = new Object;
+			for each (var key:String in jv.Keys) {
+				var element:Object = ConvertJsonValueToDynamic(jv[key]);
+				o[key] = element;
+			}
+			return o;
+		}
+
+		private static function ConvertJsonArrayToDynamic(jv:JsonArray):Object {
+			var a:Array = new Array();
+			for (var i:int=0; i < jv.Count; i++) {
+				var element:Object = ConvertJsonValueToDynamic(jv[i]);
+				a.push (element);
+			}
+			return a;
+		}
+
+		private static function ConvertJsonValueToDynamic(jv:JsonValue):Object {
+			switch (jv.JsonType)
+			{
+			case JsonType.Object:
+				return ConvertJsonObjectToDynamic(jv as JsonObject);
+			case JsonType.Array:
+				return ConvertJsonArrayToDynamic(jv as JsonArray);
+			case JsonType.Number:
+				return Number(jv);
+			case JsonType.String:
+				return String(jv);
+			default:
+				throw new Error("NotImplemented");
+			}
+		}
 	
 		public static function parse(text:String, reviver:Function = null):Object {
-			throw new System.NotImplementedException();
+			// parse json
+			var jv:JsonValue = System.Json.JsonValue.Parse(text);
+			// convert value into dynamic object here ? 
+			return ConvertJsonValueToDynamic(jv);
 		}
 
 		public static function stringify(value:Object, replacer:* = null, space:* = null):String {
