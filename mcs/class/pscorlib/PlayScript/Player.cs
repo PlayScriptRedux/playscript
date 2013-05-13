@@ -203,7 +203,7 @@ namespace PlayScript
 			}
 
 			// remove unneeded prefixes
-			var prefixes = new string[] {"/../", "../../", "../"};
+			var prefixes = new string[] {"file://", "/../", "../../", "../"};
 			foreach (var prefix in prefixes) 
 			{
 				if (path.StartsWith(prefix))
