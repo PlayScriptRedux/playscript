@@ -74,7 +74,10 @@ namespace _root
 		}
 						
 		public static int lastIndexOf(this string s, string val, double startIndex = 0x7FFFFFFF) {
-			throw new NotImplementedException();
+			if (startIndex == 0x7FFFFFFF) {
+				startIndex = s.Length;
+			}
+			return s.LastIndexOf(val, (int)startIndex);
 		}
 						
 		public static int localeCompare(this string s, string other, params object[] values) {

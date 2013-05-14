@@ -104,10 +104,11 @@ namespace flash.events
                             callback.DynamicInvoke(ev);
 							ev._currentTarget = ev._target = null;
                         } 
-                        catch (Exception)
+                        catch (Exception e)
                         {
                             // if you get an exception here while debugging then make sure that the debugger is setup to catch all exceptions
                             // this is in the Run/Exceptions... menu in MonoDevelop or Xamarin studio
+							Console.Error.WriteLine(e.ToString());
                         }
                         dispatched = true;
                     }

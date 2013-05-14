@@ -40,6 +40,7 @@ package flash.net {
 		//
 
 		public function URLLoader(request:URLRequest = null) {
+			dataFormat = URLLoaderDataFormat.TEXT;
 			mRequest = request;
 		}
 
@@ -57,11 +58,6 @@ package flash.net {
 				mRequest = request;
 			}
 
-			if (dataFormat != URLLoaderDataFormat.BINARY)
-			{
-				throw new System.NotImplementedException();
-			}
-		
 			// load with a delay
 			var timer:Timer = new Timer(1, 1);
 			timer.addEventListener(TimerEvent.TIMER, doLoad);
@@ -72,40 +68,48 @@ package flash.net {
 		{
 			trace("URLLoader: ", mRequest.url);
 
-			var de:Event;
-			var uri = new System.Uri(mRequest.url);
-			if (uri.IsFile)
+			// TODO: determine scheme of url and do something appropriate (http fetch?)
+			// for now we assume everything is a local file and sync load it here
+
+			// handle file loading
+			var path:String = PlayScript.Player.ResolveResourcePath(mRequest.url);
+			if (!File.Exists(path))
 			{
-				// handle file loading
-				var path = uri.LocalPath;
-				if (File.Exists(path))
-				{
-					// file exists. read it
-					var fileData:byte[] = File.ReadAllBytes(path);
-					this.bytesLoaded = fileData.Length;
-					this.bytesTotal  = fileData.Length;
-					
-					var ba:ByteArray = new ByteArray();
-					ba.writeBytes(fileData);
-					ba.position = 0;
-					this.data = ba;
-					
-					// io error, file not found
-					de = new Event(Event.COMPLETE);
-					this.dispatchEvent(de);
-				}
-				else
-				{
-					// io error, file not found
-					de = new Event(IOErrorEvent.IO_ERROR);
-					this.dispatchEvent(de);
-				}
+				// io error, file not found
+				this.dispatchEvent(new Event(IOErrorEvent.IO_ERROR));
+				return;
 			}
-			else
+
+			// file exists. read it
+			var fileData:byte[] = File.ReadAllBytes(path);
+
+			switch (dataFormat)
 			{
-				// unsupported scheme
+			case URLLoaderDataFormat.BINARY:
+			{
+				var ba:ByteArray = new ByteArray();
+				ba.writeBytes(fileData);
+				ba.position = 0;
+				this.data = ba;
+				break;
+			}
+			case URLLoaderDataFormat.TEXT:
+			{
+				var text:String =  System.Text.Encoding.UTF8.GetString(fileData);
+				this.data = text;
+				break;
+			}
+			default:
 				throw new System.NotImplementedException();
 			}
+
+			// update bytes loaded
+			this.bytesLoaded = fileData.Length;
+			this.bytesTotal  = fileData.Length;
+
+			// dispatch complete event
+			var de:Event = new Event(Event.COMPLETE);
+			this.dispatchEvent(de);
 		}
 		
 		private var mRequest:URLRequest;

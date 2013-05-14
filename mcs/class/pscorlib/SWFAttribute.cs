@@ -28,6 +28,39 @@ namespace _root
 		public SWFAttribute ()
 		{
 		}
+
+		private static int? TryParseInt(object o)
+		{
+			if (o != null)	{
+				if (o is int) {
+					return (int)o;
+				} else if (o is string) {
+					int v;
+					if (int.TryParse((string)o, out v)) {
+						return v;
+					}
+				}
+			}
+			return null;
+		}
+
+		public System.Drawing.Size? GetDesiredSize()
+		{
+			// parse attributes
+			int? width = TryParseInt(this.width);
+			int? height = TryParseInt(this.height);
+			if (width.HasValue && height.HasValue) {
+				return new System.Drawing.Size(width.Value, height.Value);
+			} else {
+				return null;
+			}
+		}
+
+		public int? GetDesiredFrameRate()
+		{
+			return TryParseInt(frameRate);
+		}
+
 	}
 }
 

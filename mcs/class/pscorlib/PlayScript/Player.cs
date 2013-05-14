@@ -100,9 +100,26 @@ namespace PlayScript
 			// not found
 			return null;
 		}
+
+		// returns (optional) desired size of object from [SWF] attributes
+		public static System.Drawing.Size? GetSWFDesiredSize(System.Type type)
+		{
+			if (type != null) {
+				foreach (var attr in type.GetCustomAttributes(true)) {
+					var swfAttr = attr as _root.SWFAttribute;
+					if (swfAttr != null) {
+						return swfAttr.GetDesiredSize();
+					}
+				}
+			}
+			return null;
+		}
 		
 		public DisplayObject LoadClass(System.Type type)
 		{
+			// get desired size of object from [SWF] attributes
+			System.Drawing.Size? desiredSize = GetSWFDesiredSize(type);
+
 			// construct instance of type
 			// we set the global stage so that it will be set during this display object's constructor
 			DisplayObjectContainer.globalStage = mStage;
@@ -110,6 +127,17 @@ namespace PlayScript
 			DisplayObjectContainer.globalStage = null;
 
 			if (displayObject != null) {
+
+				// TODO: this size may need to be set before the display object constructor executes
+				if (desiredSize.HasValue) {
+					// resize object to desired size
+					displayObject.width  = desiredSize.Value.Width;
+					displayObject.height = desiredSize.Value.Height;
+				} else {
+					// resize object to size of stage
+					displayObject.width  = mStage.stageWidth;
+					displayObject.height = mStage.stageHeight;
+				}
 
 				// add display object to stage
 				mStage.addChild(displayObject);
@@ -175,7 +203,7 @@ namespace PlayScript
 			}
 
 			// remove unneeded prefixes
-			var prefixes = new string[] {"/../", "../../", "../"};
+			var prefixes = new string[] {"file://", "/../", "../../", "../"};
 			foreach (var prefix in prefixes) 
 			{
 				if (path.StartsWith(prefix))
