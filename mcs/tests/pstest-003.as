@@ -19,6 +19,14 @@ package
 				var qq:int = 100;
 				trace("qq block");
 			}
+			
+			// These are not blocks - they are object literals.
+			
+			var o:Object = {} || {};
+			o ||= {};
+			o = {} ? {} : {};
+		
+			return {};			
 
 			// Test if statement
 
@@ -126,6 +134,12 @@ package
 			default:
 			}
 
+		}
+		
+		public function foo():Object {
+		
+
+		
 		}
 
 	}

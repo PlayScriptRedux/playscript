@@ -3633,9 +3633,14 @@ namespace Mono.PlayScript
 					  current_token == Token.COLON ||
 					  current_token == Token.OPEN_BRACKET ||
 					  current_token == Token.OPEN_BRACKET_EXPR ||
-					  current_token == Token.RETURN) {
+					  current_token == Token.RETURN ||
+					  current_token == Token.OP_OR ||
+					  current_token == Token.LOGICAL_OR_ASSIGN ||
+					  current_token == Token.INTERR ||
+					  current_token == Token.INTERR_NULLABLE) {
 						bool isInit = true;
 						PushPosition();
+						allow_auto_semi = false;
 						next = token ();
 						if (next != Token.CLOSE_BRACE) {
 							if (next != Token.IDENTIFIER && next != Token.LITERAL) {
