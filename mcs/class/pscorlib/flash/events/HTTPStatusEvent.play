@@ -13,18 +13,16 @@
 //      limitations under the License.
 
 package flash.events {
-	
-	public class SecurityErrorEvent extends Event {
-		
-		public function SecurityErrorEvent(type:String, bubbles:Boolean = false, cancelable:Boolean = false) {
+
+	public class HTTPStatusEvent extends Event {
+		public function HTTPStatusEvent(type:String, bubbles:Boolean = false, cancelable:Boolean = false) {
 			super(type, bubbles, cancelable);
 		}
 
-		public property text : String { get; set; }
+		public static const HTTP_STATUS:String = "HttpStatusEvent";
 
-		public static const SECURITY_ERROR:String = "SecurityErrorEvent";
+		public var status:int;
+	};
 
-	}
-	
 }
 

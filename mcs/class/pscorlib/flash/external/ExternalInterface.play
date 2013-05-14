@@ -12,19 +12,14 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-package flash.events {
+package flash.external {
 	
-	public class SecurityErrorEvent extends Event {
+	public static class ExternalInterface {
 		
-		public function SecurityErrorEvent(type:String, bubbles:Boolean = false, cancelable:Boolean = false) {
-			super(type, bubbles, cancelable);
+		public static function call(method:String, ...args):Object{
+			throw new Error("Not Implemented");
 		}
-
-		public property text : String { get; set; }
-
-		public static const SECURITY_ERROR:String = "SecurityErrorEvent";
-
+		
 	}
 	
 }
-

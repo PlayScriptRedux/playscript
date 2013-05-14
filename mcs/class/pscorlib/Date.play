@@ -12,19 +12,18 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-package flash.events {
+package {
 	
-	public class SecurityErrorEvent extends Event {
+	public class Date {
 		
-		public function SecurityErrorEvent(type:String, bubbles:Boolean = false, cancelable:Boolean = false) {
-			super(type, bubbles, cancelable);
-		}
-
-		public property text : String { get; set; }
-
-		public static const SECURITY_ERROR:String = "SecurityErrorEvent";
-
+		//
+		// Properties
+		//
+		
+		public function getHours() : Number { throw new System.NotImplementedException();  }
+		public function getMinutes() : Number { throw new System.NotImplementedException();  }
+		public function getSeconds() : Number { throw new System.NotImplementedException();  }
+		
 	}
 	
 }
-

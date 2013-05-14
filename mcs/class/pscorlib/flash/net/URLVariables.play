@@ -24,6 +24,7 @@ package flash.net {
 		}
  	 	
 		public function decode(source:String):void {
+			throw new System.NotImplementedException();
 		}
  	 	
 		public override function toString():String {
@@ -35,18 +36,23 @@ package flash.net {
 		//
 	
 		public function getDynamicValue(name:String):* {
-			return null;
+			throw new System.NotImplementedException();
 		}
 		
 		public function setDynamicValue(name:String, value:*):void {
+			throw new System.NotImplementedException();
 		}
 	
 		public function hasDynamicValue(name:String):Boolean {
-			return false;
+			throw new System.NotImplementedException();
 		}
 		
 		public function getDynamicNames():Array {
-			return null;
+			throw new System.NotImplementedException();
+		}
+
+		public function Remove(name:String):void {
+			throw new System.NotImplementedException();
 		}
 	
 	}

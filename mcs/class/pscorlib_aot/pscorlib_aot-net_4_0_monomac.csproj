@@ -670,11 +670,28 @@
     <Compile Include="..\pscorlib\PlayScript\DynamicProperties.cs">
       <Link>PlayScript\DynamicProperties.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\flash\external\ExternalInterface.play">
+      <Link>flash\external\ExternalInterface.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Date.play">
+      <Link>Date.play</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net_4_0.csproj">
       <Project>{0BACBE20-34DD-4E24-8B91-87970E8A23B9}</Project>
       <Name>PlayScript.Dynamic_aot-net_4_0</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="flash\external\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\pscorlib\flash\media\SoundMixer.play">
+      <Link>flash\media\SoundMixer.play</Link>
+    </None>
+    <None Include="..\pscorlib\flash\events\UncaughtErrorEvent.play">
+      <Link>flash\events\UncaughtErrorEvent.play</Link>
+    </None>
   </ItemGroup>
 </Project>

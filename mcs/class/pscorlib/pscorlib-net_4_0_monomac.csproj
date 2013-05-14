@@ -152,6 +152,7 @@
     <Compile Include="PlayScript\IDynamicClass.cs" />
     <Compile Include="PlayScript\Support.cs" />
     <Compile Include="PlayScript\DynamicProperties.cs" />
+    <Compile Include="Date.play" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -161,6 +162,7 @@
     <Folder Include="flash\ext\" />
     <Folder Include="flash\sampler\" />
     <Folder Include="flash\filesystem\" />
+    <Folder Include="flash\external\" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="flash\accessibility\AccessibilityImplementation.play" />
@@ -271,5 +273,15 @@
   <ItemGroup>
     <None Include="pscorlib.dll.sources" />
     <None Include="Makefile" />
+    <None Include="flash\external\ExternalInterface.play" />
+    <None Include="flash\events\HTTPStatusEvent.play" />
+    <None Include="flash\events\UncaughtErrorEvent.play" />
+    <None Include="flash\media\SoundMixer.play" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PlayScript.Dynamic\PlayScript.Dynamic-net_4_0.csproj">
+      <Project>{5F7F9AF6-CE83-4F13-A25F-355DB2861D43}</Project>
+      <Name>PlayScript.Dynamic-net_4_0</Name>
+    </ProjectReference>
   </ItemGroup>
 </Project>
