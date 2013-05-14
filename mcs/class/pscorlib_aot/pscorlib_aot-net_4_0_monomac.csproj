@@ -27,7 +27,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
-    <DefineConstants>PLATFORM_MONOMAC</DefineConstants>
+    <DefineConstants>PLATFORM_MONOMAC;OPENGL</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
