@@ -25,6 +25,8 @@ package flash.events {
 
 		public property info : Dictionary { get; set; }
 
+		public const NET_STATUS:String = "NetStatus";
+
 	}
 	
 }

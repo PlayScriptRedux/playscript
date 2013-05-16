@@ -19,6 +19,9 @@ package flash.events {
 		public function AsyncErrorEvent(type:String, bubbles:Boolean = false, cancelable:Boolean = false) {
 			super(type, bubbles, cancelable);
 		}
+
+		public const ASYNC_ERROR:String = "AsyncError";
+
 	}
 	
 }
