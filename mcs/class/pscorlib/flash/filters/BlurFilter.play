@@ -21,8 +21,71 @@ package flash.filters {
 		{
 		}
 
+		public var blurX:Number;
+		public var blurY:Number;
+		public var quality:Number;
+	}
+
+
+	public class BevelFilter extends BitmapFilter
+	{
+		// $$TODO -- these are stubbed out
+		public var blurX:Number;
+		public var blurY:Number;
+		public var strength:Number;
+		public var color:uint;
+		public var alpha:Number;
+		public var quality:Number;
+		public var angle:Number;
+		public var highlightAlpha:Number;
+		public var highlightColor:uint;
+		public var shadowAlpha:Number;
+		public var shadowColor:uint;
+		public var distance:Number;
+	}
+
+	public class GradientBevelFilter extends BitmapFilter
+	{
 		//$$TODO
 	}
+
 	
+	public class DropShadowFilter extends BitmapFilter
+	{
+		// $$TODO -- these are stubbed out
+		public var blurX:Number;
+		public var blurY:Number;
+		public var strength:Number;
+		public var color:uint;
+		public var alpha:Number;
+		public var quality:Number;
+		public var angle:Number;
+		public var highlightAlpha:Number;
+		public var highlightColor:uint;
+		public var shadowAlpha:Number;
+		public var shadowColor:uint;
+		public var distance:Number;
+		public var inner:Boolean;
+		public var knockout:Boolean;
+		public var hideObject:Boolean;
+	}
+	
+	public class GlowFilter extends BitmapFilter
+	{
+		// $$TODO -- these are stubbed out
+		public var blurX:Number;
+		public var blurY:Number;
+		public var strength:Number;
+		public var color:Number;
+		public var alpha:Number;
+		public var quality:Number;
+		//$$TODO
+	}
+
+	public class GradientGlowFilter extends BitmapFilter
+	{
+		//$$TODO
+	}
+
 }
 
