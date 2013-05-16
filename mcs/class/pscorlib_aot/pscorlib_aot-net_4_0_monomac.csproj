@@ -676,6 +676,12 @@
     <Compile Include="..\pscorlib\Date.play">
       <Link>Date.play</Link>
     </Compile>
+    <Compile Include="..\pscorlib\flash\net\URLRequestMethod.play">
+      <Link>flash\net\URLRequestMethod.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\events\HTTPStatusEvent.play">
+      <Link>flash\events\HTTPStatusEvent.play</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net_4_0.csproj">
