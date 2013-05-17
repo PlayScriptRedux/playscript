@@ -15,7 +15,11 @@
 package flash.external {
 	
 	public static class ExternalInterface {
-		
+
+		public static function get available():Boolean {
+			return false;
+		}
+
 		public static function call(method:String, ...args):Object{
 			throw new Error("Not Implemented");
 		}
