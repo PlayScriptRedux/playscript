@@ -8687,6 +8687,17 @@ namespace Mono.CSharp
 			if (ns != null) {
 				var retval = ns.LookupTypeOrNamespace (rc, Name, Arity, LookupMode.Normal, loc);
 
+				// PlayScript - Search for _fn or _ns types for bare functions or namespace classes
+				bool foundFnType = false;
+				if (retval == null && rc.FileType == SourceFileType.PlayScript) {
+					retval = ns.LookupTypeOrNamespace (rc, Name + "_fn", Arity, LookupMode.Normal, loc);
+					if (retval != null) {
+						foundFnType = true;
+					} else {
+						retval = ns.LookupTypeOrNamespace (rc, Name + "_ns", Arity, LookupMode.Normal, loc);
+					}
+				}
+
 				if (retval == null) {
 					ns.Error_NamespaceDoesNotExist (rc, Name, Arity, loc);
 					return null;
@@ -8695,7 +8706,10 @@ namespace Mono.CSharp
 				if (HasTypeArguments)
 					return new GenericTypeExpr (retval.Type, targs, loc);
 
-				return retval;
+				if (!foundFnType)
+					return retval;
+
+				expr = retval;
 			}
 
 			MemberExpr me;
