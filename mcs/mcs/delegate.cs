@@ -105,7 +105,7 @@ namespace Mono.CSharp {
 			TypeArguments typeArgs = null;
 			if (typeParamCount > 0) {
 				var typeArgArray = new FullNamedExpression[typeParamCount];
-				for (var i = 0; i < paramCount; i++) {
+				for (var i = 0; i < typeParamCount; i++) {
 					if (i < paramCount) {
 						var param = parameters.FixedParameters[i] as Parameter;
 						typeArgArray[i] = param.TypeExpression;

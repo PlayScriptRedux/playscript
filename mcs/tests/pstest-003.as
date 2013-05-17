@@ -26,8 +26,6 @@ package
 			o ||= {};
 			o = {} ? {} : {};
 		
-			return {};			
-
 			// Test if statement
 
 			if (b) {
@@ -138,8 +136,11 @@ package
 		
 		public function foo():Object {
 		
-
-		
+			function bar():Exception {
+				return null;
+			}
+			
+			return {};			
 		}
 
 	}
