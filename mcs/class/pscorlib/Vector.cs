@@ -197,6 +197,18 @@ namespace _root {
 			}
 		}
 
+		public T this[string i]
+		{
+			get
+			{
+				throw new System.NotImplementedException();
+			}
+			set
+			{
+				throw new System.NotImplementedException();
+			}
+		}
+
 		public T[] ToArray()
 		{
 			return mList.ToArray();

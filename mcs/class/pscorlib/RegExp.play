@@ -49,7 +49,7 @@ package {
  	 	// Methods
  	 	//
  	 	 	 	
-		public function RegExp(re:String, flags:String) {
+		public function RegExp(re:String, flags:String = null) {
 			var options:RegexOptions = RegexOptions.None;
 			for (var i:int=0; i < flags.length; i++) {
 				switch (flags.charAt(i)) {

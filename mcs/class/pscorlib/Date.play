@@ -19,11 +19,25 @@ package {
 		//
 		// Properties
 		//
+
+		public function Date(a:Object = null)
+		{
+			throw new System.NotImplementedException(); 
+		}
+
+		public function get time():Number { throw new System.NotImplementedException();  }
 		
+		public function getDate() : Number { throw new System.NotImplementedException();  }
+		public function getYear() : Number { throw new System.NotImplementedException();  }
+		public function getFullYear() : Number { throw new System.NotImplementedException();  }
+		public function getMonth() : Number { throw new System.NotImplementedException();  }
+		public function getDay() : Number { throw new System.NotImplementedException();  }
 		public function getHours() : Number { throw new System.NotImplementedException();  }
 		public function getMinutes() : Number { throw new System.NotImplementedException();  }
 		public function getSeconds() : Number { throw new System.NotImplementedException();  }
-		
+		public override function valueOf() : Object { throw new System.NotImplementedException();  }
+
+		public static function UTC(a:Number, b:Number, c:Number) : Number { throw new System.NotImplementedException();  }
 	}
 	
 }

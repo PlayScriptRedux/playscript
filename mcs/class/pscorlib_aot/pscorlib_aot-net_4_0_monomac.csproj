@@ -682,6 +682,15 @@
     <Compile Include="..\pscorlib\flash\events\HTTPStatusEvent.play">
       <Link>flash\events\HTTPStatusEvent.play</Link>
     </Compile>
+    <Compile Include="..\pscorlib\flash\media\SoundMixer.play">
+      <Link>flash\media\SoundMixer.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\events\UncaughtErrorEvent.play">
+      <Link>flash\events\UncaughtErrorEvent.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\utils\Proxy.play">
+      <Link>flash\utils\Proxy.play</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net_4_0.csproj">
@@ -691,13 +700,5 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="flash\external\" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\pscorlib\flash\media\SoundMixer.play">
-      <Link>flash\media\SoundMixer.play</Link>
-    </None>
-    <None Include="..\pscorlib\flash\events\UncaughtErrorEvent.play">
-      <Link>flash\events\UncaughtErrorEvent.play</Link>
-    </None>
   </ItemGroup>
 </Project>

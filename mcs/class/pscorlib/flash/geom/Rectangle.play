@@ -36,9 +36,9 @@ package flash.geom {
  	 	public property x : Number  { get {return mX;} set {mX = value;} }
  	 	public property y : Number { get {return mY;} set {mY = value;} }
 
- 	 	// public property bottomRight : Point { get; set; }
- 	 	// public property size : Point { get; set; }
-	 	// public property topLeft : Point { get; set; }
+		public property bottomRight : Point { get {return new Point(bottom, right);} }
+		public property size : Point {  get {return new Point(width, height);}  }
+		public property topLeft : Point {  get {return new Point(top, left);}  }
 
  	 	//
  	 	// Methods
