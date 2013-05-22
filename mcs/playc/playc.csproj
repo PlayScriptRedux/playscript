@@ -9,9 +9,10 @@
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Mono.CSharp</RootNamespace>
-    <AssemblyName>mcs</AssemblyName>
+    <AssemblyName>playc</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <PlatformTarget>x86</PlatformTarget>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>
@@ -25,7 +26,6 @@
     <Commandlineparameters>/noconfig "/r:/Users/bcooley/projects/playscript-mono-inst/lib/mono/4.0/mscorlib.dll" -nostdlib "/out:/Users/bcooley/projects/playscript-mono/mcs/mcs/test2.exe" "/r:/Users/bcooley/projects/playscript-mono-inst/lib/mono/4.0/System.dll" "/r:/Users/bcooley/projects/playscript-mono/mcs/class/PlayScript.Dynamic_aot/bin/Debug/PlayScript.Dynamic_aot.dll" "/r:/Users/bcooley/projects/playscript-mono/mcs/class/pscorlib_aot/bin/Debug/pscorlib_aot.dll" "/r:/Users/bcooley/projects/playscript-mono-inst/lib/mono/4.0/System.Core.dll" /nologo /warn:4 /debug:full /optimize- /codepage:utf8 "/define:DEBUG"  /t:exe "/Users/bcooley/projects/playscript-mono/mcs/tests/pstest-003.as"</Commandlineparameters>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
     <Optimize>True</Optimize>
     <DefineConstants>TRACE;NET_4_0;STATIC;NO_SYMBOL_WRITER;NO_AUTHENTICODE;PLAYSCRIPT</DefineConstants>
     <ErrorReport>prompt</ErrorReport>

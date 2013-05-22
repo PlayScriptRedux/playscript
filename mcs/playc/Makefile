@@ -15,14 +15,14 @@ EXTRA_DISTFILES = \
 
 PROGRAM_USE_INTERMEDIATE_FILE = true
 PROGRAM = playc.exe
-the_libdir = $(topdir)/class/lib/build/
-LOCAL_MCS_FLAGS += -lib:$(topdir)/class/lib/build -debug
+#the_libdir = $(topdir)/class/lib/build/
+#LOCAL_MCS_FLAGS += -lib:$(topdir)/class/lib/build -debug
 
 LOCAL_MCS_FLAGS += -d:STATIC,NO_SYMBOL_WRITER,NO_AUTHENTICODE,PLAYSCRIPT
 
 PROGRAM_INSTALL_DIR = $(mono_libdir)/mono/4.5
 
-PROGRAM_COMPILE = $(BOOT_COMPILE)
+#PROGRAM_COMPILE = $(BOOT_COMPILE)
 
 BUILT_SOURCES = ../mcs/cs-parser.cs ../mcs/ps-parser.cs
 

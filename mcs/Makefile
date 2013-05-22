@@ -1,11 +1,11 @@
 thisdir := .
 
-SUBDIRS := build jay mcs playc class nunit24 ilasm tools tests errors docs
+SUBDIRS := build jay mcs class playc nunit24 ilasm tools tests errors docs
 
 # Resgen is corlib specific tool
 
-basic_SUBDIRS := build jay mcs playc class
-build_SUBDIRS := build class mcs playc class/aot-compiler tools
+basic_SUBDIRS := build jay mcs class
+build_SUBDIRS := build class mcs class/aot-compiler tools
 net_2_0_SUBDIRS := build class nunit24 ilasm tools tests errors docs
 monodroid_SUBDIRS := build class
 monotouch_SUBDIRS := build class
@@ -13,7 +13,7 @@ monotouch_runtime_SUBDIRS := build class
 mobile_SUBDIRS := build class
 net_3_5_SUBDIRS := build class tools/xbuild
 net_4_0_SUBDIRS := build class
-net_4_5_SUBDIRS := build mcs playc class nunit24 ilasm tools tests errors docs
+net_4_5_SUBDIRS := build mcs class playc nunit24 ilasm tools tests errors docs
 
 # List of test subdirs that should pass 100%
 centum_tests := \
