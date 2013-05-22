@@ -16,7 +16,7 @@ package flash.filters {
 
 	public class ColorMatrixFilter extends BitmapFilter {
 
-		public var matrix:Vector.<Number> = new Vector.<Number>();
+		public var matrix:Array = new Array();
 		//$$TODO
 	}
 
