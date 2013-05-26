@@ -66,6 +66,9 @@ package {
 			throw new System.NotImplementedException();
 		}
 	
+		public static function encode(value:Object):String {
+			throw new System.NotImplementedException();
+		}
 	}
 
 }

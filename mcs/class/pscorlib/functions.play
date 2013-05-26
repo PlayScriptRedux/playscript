@@ -91,6 +91,9 @@ package {
 		throw new System.NotImplementedException();
 	}
 
+	public function objectIsClass(o:Object, type:Class):Boolean {
+		throw new System.NotImplementedException();
+	}
 	
 	public function invokeStaticMethod(type:Class, methodName:String, args:Array):Object
 	{

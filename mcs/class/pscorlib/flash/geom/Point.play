@@ -51,7 +51,7 @@ package flash.geom {
 			this.y = sourcePoint.y;
 		}
  	 	
-		public function distance(pt1:Point, pt2:Point):Number {
+		public static function distance(pt1:Point, pt2:Point):Number {
 			var dx:Number = pt1.x - pt2.x;
 			var dy:Number = pt1.y - pt2.y;
 			return System.Math.Sqrt(dx * dx + dy * dy);

@@ -23,6 +23,10 @@ package flash.external {
 		public static function call(method:String, ...args):Object{
 			throw new Error("Not Implemented");
 		}
+
+		public static function addCallback(method:String, f:Function):void{
+			throw new Error("Not Implemented");
+		}
 		
 	}
 	
