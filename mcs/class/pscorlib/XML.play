@@ -51,7 +51,7 @@ package {
  	 	// Methods
  	 	// 
  	 	
- 	 	public function XML(value:Object) {
+ 	 	public function XML(value:Object = null) {
 			if (value is XmlElement) 
 			{
 				mElement = value as XmlElement;
