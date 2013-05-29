@@ -1,5 +1,7 @@
 package
 {
+	// Test PlayScript specific class, statement extensions.
+
 	public class Test 
 	{
 		public static function Main():void {

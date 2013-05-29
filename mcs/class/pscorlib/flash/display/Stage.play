@@ -182,7 +182,7 @@ package flash.display {
 			throw new System.NotImplementedException();
 		}
  	 	
-		private var mStage3Ds:Vector.<Stage3D> = [];
+		private var mStage3Ds:Vector.<Stage3D> = new <Stage3D> [];
 	}
 
 }

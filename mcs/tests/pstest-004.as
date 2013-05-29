@@ -30,8 +30,18 @@ package
 			
 			// This should work
             resume();
-            function resume():void {}			
-		
+            function resume():void {}
+
+			// Function with variadic argumetns should work
+			var va:Function = function(...args) { trace(arguments); }
+			va();
+
+			// We should be able to use a function in an object literal
+			var objLit:Object = { a:"blah", b:100, c:resume, d:va, "e":foo, "f":bar };
+		}
+
+		public function bar():void {
+			trace("bar");
 		}
 		
 	}

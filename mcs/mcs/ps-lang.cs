@@ -260,7 +260,7 @@ namespace Mono.CSharp
 //			}
 
 			TypeExpression type;
-			if (vectorType != null) {
+			if (vectorType != null) { // For new <Type> [ initializer ] expressions..
 				var elemTypeSpec = vectorType.ResolveAsType(rc);
 				if (elemTypeSpec != null) {
 					type = new TypeExpression(
@@ -268,21 +268,23 @@ namespace Mono.CSharp
 				} else {
 					type = new TypeExpression (rc.Module.PredefinedTypes.AsArray.Resolve(), Location);
 				}
-			} else if (inferredArrayType != null) {
-				type = new TypeExpression (inferredArrayType, Location);
-			} else if (variable != null) {
-				if (variable.TypeExpression is VarExpr) {
-					type = new TypeExpression (rc.Module.PredefinedTypes.AsArray.Resolve(), Location);
-				} else if (variable.Variable.Type == rc.BuiltinTypes.Dynamic) {
-					type = new TypeExpression (rc.Module.PredefinedTypes.AsArray.Resolve(), Location);
+			} else if (rc.PsExtended) {
+				if (inferredArrayType != null) {  // Inferring parameter, variable, expression types
+					type = new TypeExpression (inferredArrayType, Location);
+				} else if (variable != null) {    
+					if (variable.TypeExpression is VarExpr || variable.Variable.Type == rc.BuiltinTypes.Dynamic) {
+						type = new TypeExpression (rc.Module.PredefinedTypes.AsArray.Resolve(), Location);
+					} else {
+						type = new TypeExpression (variable.Variable.Type, variable.Variable.Location);
+					}
+				} else if (assign != null && assign.Target.Type != null) {
+					if (assign.Target.Type == rc.BuiltinTypes.Dynamic) {
+						type = new TypeExpression (rc.Module.PredefinedTypes.AsArray.Resolve(), Location);
+					} else {
+						type = new TypeExpression (assign.Target.Type, assign.Target.Location);
+					}
 				} else {
-					type = new TypeExpression (variable.Variable.Type, variable.Variable.Location);
-				}
-			} else if (assign != null && assign.Target.Type != null) {
-				if (assign.Target.Type == rc.BuiltinTypes.Dynamic) {
 					type = new TypeExpression (rc.Module.PredefinedTypes.AsArray.Resolve(), Location);
-				} else {
-					type = new TypeExpression (assign.Target.Type, assign.Target.Location);
 				}
 			} else {
 				type = new TypeExpression (rc.Module.PredefinedTypes.AsArray.Resolve(), Location);

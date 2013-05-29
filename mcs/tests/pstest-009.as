@@ -31,6 +31,12 @@ package
 			trace(args);
 		}
 	
+		public static function anonVariadic():void {
+
+			// Function with variadic argumetns should work
+			var f:Function = function(...) { trace(arguments); }
+		}
+
 	}
 
 }
