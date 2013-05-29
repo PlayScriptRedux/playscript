@@ -691,6 +691,9 @@
     <Compile Include="..\pscorlib\flash\utils\Proxy.play">
       <Link>flash\utils\Proxy.play</Link>
     </Compile>
+    <Compile Include="..\pscorlib\flash\globalization\Collator.play">
+      <Link>flash\globalization\Collator.play</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net_4_0.csproj">
@@ -700,5 +703,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="flash\external\" />
+    <Folder Include="flash\globalization\" />
   </ItemGroup>
 </Project>
