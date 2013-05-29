@@ -28,6 +28,10 @@ package flash.ui {
 			_customItems = value;
 		}
 
+		public function hideBuiltInItems():void {
+			// empty
+		}
+
 		private var _customItems:Array;
 	}
 }

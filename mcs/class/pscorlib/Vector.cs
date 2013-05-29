@@ -390,8 +390,7 @@ namespace _root {
 			// private uint mOptions;
 		};
 
-
-		public Vector<T> sort(dynamic sortBehavior) {
+		public Vector<T> sort(dynamic sortBehavior = null) {
 
 			if (sortBehavior is Delegate)
 			{
