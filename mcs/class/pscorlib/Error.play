@@ -49,6 +49,11 @@ package {
 		public function toString():String {
 			return this.ToString();
 		}
+
+		public static implicit operator Error(s:String)
+		{
+			return new Error(s);
+		}
 	}
 }
 

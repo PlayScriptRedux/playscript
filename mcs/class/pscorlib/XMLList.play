@@ -37,7 +37,9 @@ package {
 					}
 				}
 			}
-			else {
+			else if (value is String) {
+				mString = String(value);
+			} else {
 				throw new System.NotImplementedException();
 			}
 		}
@@ -132,7 +134,7 @@ package {
 		}
 		
 		public override function toString():String {
-			throw new System.NotImplementedException();
+			return mString;
 		}
 		
 		public function toXMLString():String {
@@ -148,9 +150,27 @@ package {
 		}
 		
 		public static implicit operator String (list:XMLList) {
+			return (list!=null) ? list.mString : null;
+		}
+
+		public static implicit operator int (list:XMLList) {
 			throw new System.NotImplementedException();
 		}
-		
+
+		public static implicit operator uint (list:XMLList) {
+			throw new System.NotImplementedException();
+		}
+
+		public static implicit operator Boolean (list:XMLList) {
+			throw new System.NotImplementedException();
+		}
+
+		public static implicit operator Number (list:XMLList) {
+			throw new System.NotImplementedException();
+		}
+
+
+
 		function IEnumerable.<XML>.GetEnumerator() : IEnumerator.<XML> {
 			return mList.GetEnumerator();
 		}
@@ -161,6 +181,7 @@ package {
 
 
 		var mList:List.<XML> = new List.<XML>();
+		var mString:String;
 	}
 
 }

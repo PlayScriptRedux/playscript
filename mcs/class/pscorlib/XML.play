@@ -88,13 +88,8 @@ package {
 			throw new System.NotImplementedException();
 		}
  	 	
-		/*
 		public function attribute(attributeName:String):XMLList {
-			throw new System.NotImplementedException();
-		}*/
-
-		public function attribute(attributeName:String):String {
-			return mElement.HasAttribute(attributeName) ? mElement.GetAttribute(attributeName) : null;
+			return mElement.HasAttribute(attributeName) ? new XMLList(mElement.GetAttribute(attributeName)) : null;
 		}
 
 		public function attributes():XMLList {
