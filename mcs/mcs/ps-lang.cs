@@ -146,17 +146,24 @@ namespace Mono.CSharp
 //			}
 
 			TypeExpression type;
-			if (inferredObjType != null) {
-				type = new TypeExpression (inferredObjType, Location);
-			} else if (variable != null) {
-				if (variable.TypeExpression is VarExpr) {
-					type = new TypeExpression (rc.BuiltinTypes.Dynamic, Location);
+
+			// If PlayScript extended syntax, attempt to do type inference for object initializer
+			if (rc.PsExtended) {
+				if (inferredObjType != null) {
+					type = new TypeExpression (inferredObjType, Location);
+				} else if (variable != null) {
+					if (variable.TypeExpression is VarExpr) {
+						type = new TypeExpression (rc.BuiltinTypes.Dynamic, Location);
+					} else {
+						type = new TypeExpression (variable.Variable.Type, variable.Variable.Location);
+					}
+				} else if (assign != null && assign.Target.Type != null) {
+					type = new TypeExpression (assign.Target.Type, assign.Target.Location);
 				} else {
-					type = new TypeExpression (variable.Variable.Type, variable.Variable.Location);
+					type = new TypeExpression (rc.BuiltinTypes.Dynamic, Location);
 				}
-			} else if (assign != null && assign.Target.Type != null) {
-				type = new TypeExpression (assign.Target.Type, assign.Target.Location);
 			} else {
+				// ActionScript - Always use dynamic "expando" object.
 				type = new TypeExpression (rc.BuiltinTypes.Dynamic, Location);
 			}
 

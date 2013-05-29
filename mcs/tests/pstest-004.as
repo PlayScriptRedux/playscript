@@ -15,6 +15,8 @@ package
 
 		public function bar():void {
 
+			var neighborCoords:Array = [{x:-1, y:0}, {x:1, y:0}, {x:0, y:-1}, {x:0, y:1}];
+
 			var action3:Function = function():void { trace("action3"); };
 
 			var o:Object = { blah:action, blah2:action2, blah3:action3, blah4:action4 };
