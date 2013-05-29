@@ -62,6 +62,10 @@ namespace _root
             throw new System.NotImplementedException();
         }
 
+		public Array filter(Delegate callback, dynamic thisObject = null) {
+			throw new System.NotImplementedException();
+		}
+
 
         public new Array concat(params object[] args) 
         {
