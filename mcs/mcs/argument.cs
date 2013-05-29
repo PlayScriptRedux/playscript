@@ -367,17 +367,34 @@ namespace Mono.CSharp
 
 				if (arg_type.BuiltinType != BuiltinTypeSpec.Type.Dynamic && arg_type != InternalType.NullLiteral) {
 					MethodGroupExpr mg = a.Expr as MethodGroupExpr;
-					if (mg != null) {
-						rc.Report.Error (1976, a.Expr.Location,
-							"The method group `{0}' cannot be used as an argument of dynamic operation. Consider using parentheses to invoke the method",
-							mg.Name);
-					} else if (arg_type == InternalType.AnonymousMethod) {
-						rc.Report.Error (1977, a.Expr.Location,
-							"An anonymous method or lambda expression cannot be used as an argument of dynamic operation. Consider using a cast");
-					} else if (arg_type.Kind == MemberKind.Void || arg_type == InternalType.Arglist || arg_type.IsPointer) {
-						rc.Report.Error (1978, a.Expr.Location,
-							"An expression of type `{0}' cannot be used as an argument of dynamic operation",
-							arg_type.GetSignatureForError ());
+
+					bool wasConverted = false;
+
+					// In PlayScript, we try to implicity convert to dynamic, which handles conversions of method groups to delegates, and
+					// anon methods to delegates.
+					if (rc.FileType == SourceFileType.PlayScript && (mg != null || arg_type == InternalType.AnonymousMethod)) {
+						var expr = Convert.ImplicitConversion (rc, a.Expr, rc.BuiltinTypes.Dynamic, loc);
+						if (expr != null) {
+							a.Expr = expr;
+							arg_type = rc.BuiltinTypes.Dynamic;
+							wasConverted = true;
+						}
+					}
+
+					// Failed.. check the C# error
+					if (!wasConverted) {
+						if (mg != null) {
+							rc.Report.Error (1976, a.Expr.Location,
+								"The method group `{0}' cannot be used as an argument of dynamic operation. Consider using parentheses to invoke the method",
+								mg.Name);
+						} else if (arg_type == InternalType.AnonymousMethod) {
+							rc.Report.Error (1977, a.Expr.Location,
+								"An anonymous method or lambda expression cannot be used as an argument of dynamic operation. Consider using a cast");
+						} else if (arg_type.Kind == MemberKind.Void || arg_type == InternalType.Arglist || arg_type.IsPointer) {
+							rc.Report.Error (1978, a.Expr.Location,
+								"An expression of type `{0}' cannot be used as an argument of dynamic operation",
+								arg_type.GetSignatureForError ());
+						}
 					}
 
 					info_flags = new Binary (Binary.Operator.BitwiseOr, info_flags,
