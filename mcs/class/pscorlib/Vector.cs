@@ -60,6 +60,18 @@ namespace _root {
  	 		} 
  	 	}
 
+		//
+		// Implicit conversions
+		//
+
+		public static implicit operator Vector<T>(Array a) {
+			return new Vector<T>(a);
+		}
+
+		public static implicit operator Array(Vector<T> v) {
+			return new Array(v);
+		}
+
  	 	//
  	 	// Methods
  	 	//

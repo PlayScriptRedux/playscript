@@ -1,0 +1,16 @@
+package flash.globalization
+{
+	public class Collator
+	{
+		// $$TODO
+
+		public function Collator(code:String)
+		{
+		}
+
+		public function compare(a:String, b:String):Boolean {
+			throw new System.NotImplementedException();
+		}
+	
+	};
+}

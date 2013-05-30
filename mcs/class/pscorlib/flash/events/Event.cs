@@ -126,8 +126,8 @@ namespace flash.events
 		private string _type;
 		private bool _bubbles;
 		private bool _cancelable;
-		internal object _currentTarget;
-		internal object _target;
+		internal dynamic _currentTarget;
+		internal dynamic _target;
 		internal uint _eventPhase;
 
 		public Event (string type, bool bubbles = false, bool cancelable = false)
@@ -144,7 +144,7 @@ namespace flash.events
 		public virtual bool cancelable  { get { return _cancelable; } }
 
 		// [read-only] The object that is actively processing the Event object with an event listener.
-		public virtual object currentTarget  { get { return _currentTarget; } }
+		public virtual dynamic currentTarget  { get { return _currentTarget; } }
 
 		//[read-only] The current phase in the event flow.
 		public virtual uint eventPhase { get { return _eventPhase; } } 
