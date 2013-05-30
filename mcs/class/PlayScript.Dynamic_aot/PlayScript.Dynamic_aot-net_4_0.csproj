@@ -141,6 +141,9 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\RuntimeBinderInternalCompilerException.cs">
       <Link>PlayScript\RuntimeBinder\RuntimeBinderInternalCompilerException.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\ParamsDelegateTypes.cs">
+      <Link>PlayScript\ParamsDelegateTypes.cs</Link>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

@@ -136,24 +136,6 @@ namespace Mono.CSharp {
 			get { return "M:"; }
 		}
 
-		// PlayScript - We need to create an "Array" for our args parameters for ActionScript/PlayScript..
-		protected void AsCreateVarArgsArray ()
-		{
-			if ((Parent.FileType == SourceFileType.PlayScript && !PsExtended) && 
-				parameters != null && parameters.FixedParameters != null && parameters.FixedParameters.Length > 0 && block != null) {
-				var param = parameters.FixedParameters [parameters.FixedParameters.Length - 1] as Parameter;
-				if (param != null && (param.ParameterModifier & Parameter.Modifier.PARAMS) != 0) {
-					string argName = param.Name.Substring (2); // Arg should start with "__" (we added it in the parser).
-					var li = new LocalVariable (block.ParametersBlock.TopBlock, argName, block.loc);
-					var decl = new BlockVariableDeclaration (new Mono.CSharp.TypeExpression(this.Module.PredefinedTypes.AsArray.Resolve(), block.loc), li);
-					var arguments = new Arguments (1);
-					arguments.Add (new Argument(new SimpleName(param.Name, block.loc)));
-					decl.Initializer = new Invocation (new MemberAccess(new MemberAccess(new SimpleName("PlayScript", block.loc), "Support", block.loc), "CreateArgListArray", block.loc), arguments);
-					block.AddLocalName (li);
-					block.ParametersBlock.TopBlock.AddScopeStatement (decl);	
-				}
-			}
-		}
 
 		public override void Emit ()
 		{
@@ -1264,9 +1246,9 @@ namespace Mono.CSharp {
 			}
 
 			// PlayScript - Create a varargs array for this method
-			if (Parent.FileType == SourceFileType.PlayScript && !PsExtended) {
-				AsCreateVarArgsArray ();
-			}
+//			if (Parent.FileType == SourceFileType.PlayScript && !PsExtended && block != null) {
+//				block.ParametersBlock.PsCreateVarArgsArray (Parent.Module);
+//			}
 
 			if (block != null) {
 				if (block.IsIterator) {
@@ -1780,9 +1762,9 @@ namespace Mono.CSharp {
 			Parent.MemberCache.AddMember (spec);
 
 			// PlayScript - Create a varargs array for this method
-			if (Parent.FileType == SourceFileType.PlayScript && !PsExtended) {
-				AsCreateVarArgsArray ();
-			}
+//			if (Parent.FileType == SourceFileType.PlayScript && !PsExtended && block != null) {
+//				block.ParametersBlock.PsCreateVarArgsArray (Parent.Module);
+//			}
 
 			if (block != null) {
 				// It's here only to report an error

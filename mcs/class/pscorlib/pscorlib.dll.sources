@@ -3,6 +3,7 @@
 ./AssemblyInfo.cs
 ./BindableAttribute.cs
 ./Boolean.cs
+./Date.play
 ./DefinitionError.play
 ./DeprecatedAttribute.cs
 ./Dynamic.play
@@ -82,6 +83,7 @@
 ./flash/events/Event.cs
 ./flash/events/EventDispatcher.cs
 ./flash/events/EventPhase.play
+./flash/events/HTTPStatusEvent.play
 ./flash/events/IEventDispatcher.cs
 ./flash/events/IOErrorEvent.play
 ./flash/events/KeyboardEvent.play
@@ -92,7 +94,9 @@
 ./flash/events/ShaderEvent.play
 ./flash/events/TimerEvent.play
 ./flash/events/TouchEvent.play
+./flash/events/UncaughtErrorEvent.play
 ./flash/events/UncaughtErrorEvents.play
+./flash/external/ExternalInterface.play
 ./flash/filesystem/File.play
 ./flash/filters/BitmapFilter.play
 ./flash/filters/BlurFilter.play
@@ -113,6 +117,7 @@
 ./flash/media/Sound.play
 ./flash/media/SoundChannel.play
 ./flash/media/SoundLoaderContext.play
+./flash/media/SoundMixer.play
 ./flash/media/SoundTransform.play
 ./flash/media/StageVideo.play
 ./flash/media/Video.play
@@ -124,6 +129,7 @@
 ./flash/net/URLLoaderDataFormat.play
 ./flash/net/URLRequest.play
 ./flash/net/URLRequestDefaults.play
+./flash/net/URLRequestMethod.play
 ./flash/net/URLStream.play
 ./flash/net/URLVariables.play
 ./flash/sampler/DeleteObjectSample.play
@@ -174,6 +180,7 @@
 ./flash/utils/Endian.play
 ./flash/utils/IDataInput.play
 ./flash/utils/IDataOutput.play
+./flash/utils/Proxy.play
 ./flash/utils/Timer.play
 ./flash/utils/utils_functions.play
 ./FunctionExtensions.cs
@@ -191,6 +198,7 @@
 ./PlayScript/DynamicProperties.cs
 ./PlayScript/EmbedLoader.cs
 ./PlayScript/IDynamicClass.cs
+./PlayScript/ParamsDelegateTypes.cs
 ./PlayScript/Player.cs
 ./PlayScript/Support.cs
 ./PlayScript/Undefined.cs

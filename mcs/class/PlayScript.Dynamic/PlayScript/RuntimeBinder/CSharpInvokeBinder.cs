@@ -88,6 +88,7 @@ namespace PlayScript.RuntimeBinder
 //      limitations under the License.
 
 using System;
+using System.Reflection;
 using PlayScript;
 using System.Collections.Generic;
 
@@ -97,108 +98,470 @@ namespace PlayScript.RuntimeBinder
 	{
 		private static Dictionary<Type, object> delegates = new Dictionary<Type, object>();
 
+		private Delegate _d;
+		private object[] _args;
+		private object[] _params;
+		private object[][] _targetArray;
+		private int[] _targetIndex;
+
 //		readonly CSharpBinderFlags flags;
 //		List<CSharpArgumentInfo> argumentInfo;
 //		Type callingContext;
 
 		public static void Action1 (CallSite site, object o1)
 		{
-			((Delegate)o1).DynamicInvoke(null);
+			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
+			if ((Delegate)o1 != b._d) {
+				b.UpdateInvokeInfo ((Delegate)o1, 1);
+			}
+			b._d.DynamicInvoke (b._args);
 		}
 		
 		public static void Action2 (CallSite site, object o1, object o2)
 		{
-			((Delegate)o1).DynamicInvoke(new [] { o2 });
+			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
+			if ((Delegate)o1 != b._d) {
+				b.UpdateInvokeInfo ((Delegate)o1, 2);
+			}
+			if (b._params != null) {
+				b._targetArray [0] [b._targetIndex[0]] = o2;
+			} else {
+				b._args [0] = o2;
+			}
+			b._d.DynamicInvoke (b._args);
 		}
 		
 		public static void Action3 (CallSite site, object o1, object o2, object o3)
 		{
-			((Delegate)o1).DynamicInvoke(new [] { o2, o3 });
+			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
+			if ((Delegate)o1 != b._d) {
+				b.UpdateInvokeInfo ((Delegate)o1, 3);
+			}
+			if (b._params != null) {
+				b._targetArray [0] [b._targetIndex[0]] = o2;
+				b._targetArray [1] [b._targetIndex[1]] = o3;
+
+			} else {
+				b._args [0] = o2;
+				b._args [1] = o3;
+			}
+			b._d.DynamicInvoke (b._args);
 		}
 		
 		public static void Action4 (CallSite site, object o1, object o2, object o3, object o4)
 		{
-			((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4 });
+			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
+			if ((Delegate)o1 != b._d) {
+				b.UpdateInvokeInfo ((Delegate)o1, 4);
+			}
+			if (b._params != null) {
+				b._targetArray [0] [b._targetIndex[0]] = o2;
+				b._targetArray [1] [b._targetIndex[1]] = o3;
+				b._targetArray [2] [b._targetIndex[2]] = o4;
+
+			} else {
+				b._args [0] = o2;
+				b._args [1] = o3;
+				b._args [2] = o4;
+			}
+			b._d.DynamicInvoke (b._args);
 		}
 		
 		public static void Action5 (CallSite site, object o1, object o2, object o3, object o4, object o5)
 		{
-			((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5 });
+			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
+			if ((Delegate)o1 != b._d) {
+				b.UpdateInvokeInfo ((Delegate)o1, 5);
+			}
+			if (b._params != null) {
+				b._targetArray [0] [b._targetIndex[0]] = o2;
+				b._targetArray [1] [b._targetIndex[1]] = o3;
+				b._targetArray [2] [b._targetIndex[2]] = o4;
+				b._targetArray [3] [b._targetIndex[3]] = o5;
+			} else {
+				b._args [0] = o2;
+				b._args [1] = o3;
+				b._args [2] = o4;
+				b._args [3] = o5;
+			}
+			b._d.DynamicInvoke (b._args);
 		}
 		
 		public static void Action6 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6)
 		{
-			((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5, o6 });
+			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
+			if ((Delegate)o1 != b._d) {
+				b.UpdateInvokeInfo ((Delegate)o1, 6);
+			}
+			if (b._params != null) {
+				b._targetArray [0] [b._targetIndex[0]] = o2;
+				b._targetArray [1] [b._targetIndex[1]] = o3;
+				b._targetArray [2] [b._targetIndex[2]] = o4;
+				b._targetArray [3] [b._targetIndex[3]] = o5;
+				b._targetArray [4] [b._targetIndex[4]] = o6;
+			} else {
+				b._args [0] = o2;
+				b._args [1] = o3;
+				b._args [2] = o4;
+				b._args [3] = o5;
+				b._args [4] = o6;
+			}
+			b._d.DynamicInvoke (b._args);
 		}
 		
 		public static void Action7 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7)
 		{
-			((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5, o6, o7 });
+			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
+			if ((Delegate)o1 != b._d) {
+				b.UpdateInvokeInfo ((Delegate)o1, 7);
+			}
+			if (b._params != null) {
+				b._targetArray [0] [b._targetIndex[0]] = o2;
+				b._targetArray [1] [b._targetIndex[1]] = o3;
+				b._targetArray [2] [b._targetIndex[2]] = o4;
+				b._targetArray [3] [b._targetIndex[3]] = o5;
+				b._targetArray [4] [b._targetIndex[4]] = o6;
+				b._targetArray [5] [b._targetIndex[5]] = o7;
+			} else {
+				b._args [0] = o2;
+				b._args [1] = o3;
+				b._args [2] = o4;
+				b._args [3] = o5;
+				b._args [4] = o6;
+				b._args [5] = o7;
+			}
+			b._d.DynamicInvoke (b._args);
 		}
 		
 		public static void Action8 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8)
 		{
-			((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5, o6, o7, o8 });
+			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
+			if ((Delegate)o1 != b._d) {
+				b.UpdateInvokeInfo ((Delegate)o1, 8);
+			}
+			if (b._params != null) {
+				b._targetArray [0] [b._targetIndex[0]] = o2;
+				b._targetArray [1] [b._targetIndex[1]] = o3;
+				b._targetArray [2] [b._targetIndex[2]] = o4;
+				b._targetArray [3] [b._targetIndex[3]] = o5;
+				b._targetArray [4] [b._targetIndex[4]] = o6;
+				b._targetArray [5] [b._targetIndex[5]] = o7;
+				b._targetArray [6] [b._targetIndex[6]] = o8;
+			} else {
+				b._args [0] = o2;
+				b._args [1] = o3;
+				b._args [2] = o4;
+				b._args [3] = o5;
+				b._args [4] = o6;
+				b._args [5] = o7;
+				b._args [6] = o8;
+			}
+			b._d.DynamicInvoke (b._args);
 		}
 		
 		public static void Action9 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8, object o9)
 		{
-			((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5, o6, o7, o8, o9 });
+			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
+			if ((Delegate)o1 != b._d) {
+				b.UpdateInvokeInfo ((Delegate)o1, 9);
+			}
+			if (b._params != null) {
+				b._targetArray [0] [b._targetIndex[0]] = o2;
+				b._targetArray [1] [b._targetIndex[1]] = o3;
+				b._targetArray [2] [b._targetIndex[2]] = o4;
+				b._targetArray [3] [b._targetIndex[3]] = o5;
+				b._targetArray [4] [b._targetIndex[4]] = o6;
+				b._targetArray [5] [b._targetIndex[5]] = o7;
+				b._targetArray [6] [b._targetIndex[6]] = o8;
+				b._targetArray [7] [b._targetIndex[7]] = o9;
+			} else {
+				b._args [0] = o2;
+				b._args [1] = o3;
+				b._args [2] = o4;
+				b._args [3] = o5;
+				b._args [4] = o6;
+				b._args [5] = o7;
+				b._args [6] = o8;
+				b._args [7] = o9;
+			}
+			b._d.DynamicInvoke (b._args);
 		}
 		
 		public static void Action10 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8, object o9, object o10)
 		{
-			((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5, o6, o7, o8, o10 });
+			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
+			if ((Delegate)o1 != b._d) {
+				b.UpdateInvokeInfo ((Delegate)o1, 10);
+			}
+			if (b._params != null) {
+				b._targetArray [0] [b._targetIndex[0]] = o2;
+				b._targetArray [1] [b._targetIndex[1]] = o3;
+				b._targetArray [2] [b._targetIndex[2]] = o4;
+				b._targetArray [3] [b._targetIndex[3]] = o5;
+				b._targetArray [4] [b._targetIndex[4]] = o6;
+				b._targetArray [5] [b._targetIndex[5]] = o7;
+				b._targetArray [6] [b._targetIndex[6]] = o8;
+				b._targetArray [7] [b._targetIndex[7]] = o9;
+				b._targetArray [8] [b._targetIndex[7]] = o10;
+			} else {
+				b._args [0] = o2;
+				b._args [1] = o3;
+				b._args [2] = o4;
+				b._args [3] = o5;
+				b._args [4] = o6;
+				b._args [5] = o7;
+				b._args [6] = o8;
+				b._args [7] = o9;
+				b._args [8] = o10;
+			}
+			b._d.DynamicInvoke (b._args);
 		}
 
 		public static object Func1 (CallSite site, object o1)
 		{
-			return ((Delegate)o1).DynamicInvoke(null);
+			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
+			if ((Delegate)o1 != b._d) {
+				b.UpdateInvokeInfo ((Delegate)o1, 2);
+			}
+			return b._d.DynamicInvoke (b._args);
 		}
 
 		public static object Func2 (CallSite site, object o1, object o2)
 		{
-			return ((Delegate)o1).DynamicInvoke(new [] { o2 });
+			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
+			if ((Delegate)o1 != b._d) {
+				b.UpdateInvokeInfo ((Delegate)o1, 2);
+			}
+			if (b._params != null) {
+				b._targetArray [0] [b._targetIndex[0]] = o2;
+			} else {
+				b._args [0] = o2;
+			}
+			return b._d.DynamicInvoke (b._args);
 		}
 		
 		public static object Func3 (CallSite site, object o1, object o2, object o3)
 		{
-			return ((Delegate)o1).DynamicInvoke(new [] { o2, o3 });
+			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
+			if ((Delegate)o1 != b._d) {
+				b.UpdateInvokeInfo ((Delegate)o1, 3);
+			}
+			if (b._params != null) {
+				b._targetArray [0] [b._targetIndex[0]] = o2;
+				b._targetArray [1] [b._targetIndex[1]] = o3;
+			} else {
+				b._args [0] = o2;
+				b._args [1] = o3;
+			}
+			return b._d.DynamicInvoke (b._args);
 		}
 		
 		public static object Func4 (CallSite site, object o1, object o2, object o3, object o4)
 		{
-			return ((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4 });
+			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
+			if ((Delegate)o1 != b._d) {
+				b.UpdateInvokeInfo ((Delegate)o1, 4);
+			}
+			if (b._params != null) {
+				b._targetArray [0] [b._targetIndex[0]] = o2;
+				b._targetArray [1] [b._targetIndex[1]] = o3;
+				b._targetArray [2] [b._targetIndex[2]] = o4;
+			} else {
+				b._args [0] = o2;
+				b._args [1] = o3;
+				b._args [2] = o4;
+			}
+			return b._d.DynamicInvoke (b._args);
 		}
 		
 		public static object Func5 (CallSite site, object o1, object o2, object o3, object o4, object o5)
 		{
-			return ((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5 });
+			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
+			if ((Delegate)o1 != b._d) {
+				b.UpdateInvokeInfo ((Delegate)o1, 5);
+			}
+			if (b._params != null) {
+				b._targetArray [0] [b._targetIndex[0]] = o2;
+				b._targetArray [1] [b._targetIndex[1]] = o3;
+				b._targetArray [2] [b._targetIndex[2]] = o4;
+				b._targetArray [3] [b._targetIndex[3]] = o5;
+			} else {
+				b._args [0] = o2;
+				b._args [1] = o3;
+				b._args [2] = o4;
+				b._args [3] = o5;
+			}
+			return b._d.DynamicInvoke (b._args);
 		}
 		
 		public static object Func6 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6)
 		{
-			return ((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5, o6 });
+			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
+			if ((Delegate)o1 != b._d) {
+				b.UpdateInvokeInfo ((Delegate)o1, 6);
+			}
+			if (b._params != null) {
+				b._targetArray [0] [b._targetIndex[0]] = o2;
+				b._targetArray [1] [b._targetIndex[1]] = o3;
+				b._targetArray [2] [b._targetIndex[2]] = o4;
+				b._targetArray [3] [b._targetIndex[3]] = o5;
+				b._targetArray [4] [b._targetIndex[4]] = o6;
+			} else {
+				b._args [0] = o2;
+				b._args [1] = o3;
+				b._args [2] = o4;
+				b._args [3] = o5;
+				b._args [4] = o6;
+			}
+			return b._d.DynamicInvoke (b._args);
 		}
 		
 		public static object Func7 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7)
 		{
-			return ((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5, o6, o7 });
+			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
+			if ((Delegate)o1 != b._d) {
+				b.UpdateInvokeInfo ((Delegate)o1, 7);
+			}
+			if (b._params != null) {
+				b._targetArray [0] [b._targetIndex[0]] = o2;
+				b._targetArray [1] [b._targetIndex[1]] = o3;
+				b._targetArray [2] [b._targetIndex[2]] = o4;
+				b._targetArray [3] [b._targetIndex[3]] = o5;
+				b._targetArray [4] [b._targetIndex[4]] = o6;
+				b._targetArray [5] [b._targetIndex[5]] = o7;
+			} else {
+				b._args [0] = o2;
+				b._args [1] = o3;
+				b._args [2] = o4;
+				b._args [3] = o5;
+				b._args [4] = o6;
+				b._args [5] = o7;
+			}
+			return b._d.DynamicInvoke (b._args);
 		}
 		
 		public static object Func8 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8)
 		{
-			return ((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5, o6, o7, o8});
+			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
+			if ((Delegate)o1 != b._d) {
+				b.UpdateInvokeInfo ((Delegate)o1, 8);
+			}
+			if (b._params != null) {
+				b._targetArray [0] [b._targetIndex[0]] = o2;
+				b._targetArray [1] [b._targetIndex[1]] = o3;
+				b._targetArray [2] [b._targetIndex[2]] = o4;
+				b._targetArray [3] [b._targetIndex[3]] = o5;
+				b._targetArray [4] [b._targetIndex[4]] = o6;
+				b._targetArray [5] [b._targetIndex[5]] = o7;
+				b._targetArray [6] [b._targetIndex[6]] = o8;
+			} else {
+				b._args [0] = o2;
+				b._args [1] = o3;
+				b._args [2] = o4;
+				b._args [3] = o5;
+				b._args [4] = o6;
+				b._args [5] = o7;
+				b._args [6] = o8;
+			}
+			return b._d.DynamicInvoke (b._args);
 		}
 		
 		public static object Func9 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8, object o9)
 		{
-			return ((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5, o6, o7, o8, o9 });
+			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
+			if ((Delegate)o1 != b._d) {
+				b.UpdateInvokeInfo ((Delegate)o1, 9);
+			}
+			if (b._params != null) {
+				b._targetArray [0] [b._targetIndex[0]] = o2;
+				b._targetArray [1] [b._targetIndex[1]] = o3;
+				b._targetArray [2] [b._targetIndex[2]] = o4;
+				b._targetArray [3] [b._targetIndex[3]] = o5;
+				b._targetArray [4] [b._targetIndex[4]] = o6;
+				b._targetArray [5] [b._targetIndex[5]] = o7;
+				b._targetArray [6] [b._targetIndex[6]] = o8;
+				b._targetArray [7] [b._targetIndex[7]] = o9;
+			} else {
+				b._args [0] = o2;
+				b._args [1] = o3;
+				b._args [2] = o4;
+				b._args [3] = o5;
+				b._args [4] = o6;
+				b._args [5] = o7;
+				b._args [6] = o8;
+				b._args [7] = o9;
+			}
+			return b._d.DynamicInvoke (b._args);
 		}
 		
 		public static object Func10 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8, object o9, object o10)
 		{
-			return ((Delegate)o1).DynamicInvoke(new [] { o2, o3, o4, o5, o6, o7, o8, o9, o10 });
+			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
+			if ((Delegate)o1 != b._d) {
+				b.UpdateInvokeInfo ((Delegate)o1, 10);
+			}
+			if (b._params != null) {
+				b._targetArray [0] [b._targetIndex[0]] = o2;
+				b._targetArray [1] [b._targetIndex[1]] = o3;
+				b._targetArray [2] [b._targetIndex[2]] = o4;
+				b._targetArray [3] [b._targetIndex[3]] = o5;
+				b._targetArray [4] [b._targetIndex[4]] = o6;
+				b._targetArray [5] [b._targetIndex[5]] = o7;
+				b._targetArray [6] [b._targetIndex[6]] = o8;
+				b._targetArray [7] [b._targetIndex[7]] = o9;
+				b._targetArray [8] [b._targetIndex[8]] = o10;
+			} else {
+				b._args [0] = o2;
+				b._args [1] = o3;
+				b._args [2] = o4;
+				b._args [3] = o5;
+				b._args [4] = o6;
+				b._args [5] = o7;
+				b._args [6] = o8;
+				b._args [7] = o9;
+				b._args [8] = o10;
+			}
+			return b._d.DynamicInvoke (b._args);
+		}
+
+		public void UpdateInvokeInfo(Delegate d, int callArgs)
+		{
+			int args = callArgs - 1;
+			var t = d.GetType ();
+
+			_d = d;
+
+			// Set up args arrays
+			if (t.Namespace == "PlayScript") {
+				bool isActionP = t.Name.StartsWith ("ActionP");
+				bool isFuncP = t.Name.StartsWith ("FuncP");
+				int argsP = 1;
+				if (isActionP || isFuncP) { 
+					if (t.IsGenericType) {
+						argsP += t.GetGenericArguments ().Length;
+					}
+					if (isFuncP) {
+						argsP--;
+					}
+					_args = new object[argsP];
+					_params = new object[args - (argsP - 1)];
+					_args [argsP - 1] = _params;
+					_targetArray = new object[args][];
+					_targetIndex = new int[args];
+					for (int i = 0; i < args; i++) {
+						if (i < argsP - 1) {
+							_targetArray [i] = _args;
+							_targetIndex [i] = i;
+						} else {
+							_targetArray [i] = _params;
+							_targetIndex [i] = i - (argsP - 1);
+						}
+					}
+				}
+			} else {
+				_args = new object[args];
+				_params = null;
+			}
 		}
 
 		public CSharpInvokeBinder (CSharpBinderFlags flags, Type callingContext, IEnumerable<CSharpArgumentInfo> argumentInfo)

@@ -4678,12 +4678,12 @@ local_function_statement
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;
 		var anonMethod = end_anonymous ((ParametersBlock) $10);
-		var li = new LocalVariable (current_block.ParametersBlock.TopBlock, lt.Value, lt.Location);
+		var li = new LocalVariable (current_block.ParametersBlock, lt.Value, lt.Location);
 		var type = Delegate.CreateDelegateTypeExpression(compiler.BuiltinTypes, anonMethod.AsParameters, anonMethod.AsReturnType, GetLocation($1));
 		var decl = new BlockVariableDeclaration(type, li);
 		decl.Initializer = anonMethod;
 		current_block.AddLocalName (li);
-		current_block.ParametersBlock.TopBlock.AddScopeStatement (decl);	
+		current_block.ParametersBlock.AddScopeStatement (decl);	
 		$$ = new AsLocalFunction(GetLocation($1), lt.Value, anonMethod, decl);
 	  }
 	| ASYNC FUNCTION IDENTIFIER OPEN_PARENS
@@ -4699,12 +4699,12 @@ local_function_statement
 	  {
 	    var lt = (Tokenizer.LocatedToken) $3;
 		var anonMethod = end_anonymous ((ParametersBlock) $11);
-		var li = new LocalVariable (current_block.ParametersBlock.TopBlock, lt.Value, lt.Location);
+		var li = new LocalVariable (current_block.ParametersBlock, lt.Value, lt.Location);
 		var type = Delegate.CreateDelegateTypeExpression(compiler.BuiltinTypes, anonMethod.AsParameters, anonMethod.AsReturnType, GetLocation($1));
 		var decl = new BlockVariableDeclaration(type, li);
 		decl.Initializer = anonMethod;
 		current_block.AddLocalName (li);
-		current_block.ParametersBlock.TopBlock.AddScopeStatement (decl);	
+		current_block.ParametersBlock.AddScopeStatement (decl);	
 		$$ = new AsLocalFunction(GetLocation($1), lt.Value, anonMethod, decl);
 	  }
 	;	

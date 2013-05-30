@@ -2002,7 +2002,7 @@ namespace Mono.CSharp {
 		{
 			// PlayScript local variable hoisting
 			if (loc.SourceFile != null && loc.SourceFile.FileType == SourceFileType.PlayScript && loc.SourceFile.PsExtended == false) {
-				block = block.ParametersBlock.TopBlock;
+				block = block.ParametersBlock;
 			}
 
 			this.block = block;
@@ -3242,6 +3242,24 @@ namespace Mono.CSharp {
 
 		#endregion
 
+		// PlayScript - We need to create an "Array" for our args parameters for ActionScript/PlayScript..
+		private void PsCreateVarArgsArray (BlockContext rc)
+		{
+			if (parameters != null && parameters.FixedParameters != null && parameters.FixedParameters.Length > 0) {
+				var param = parameters.FixedParameters [parameters.FixedParameters.Length - 1] as Parameter;
+				if (param != null && (param.ParameterModifier & Parameter.Modifier.PARAMS) != 0) {
+					string argName = param.Name.Substring (2); // Arg should start with "__" (we added it in the parser).
+					var li = new LocalVariable (this, argName, this.loc);
+					var decl = new BlockVariableDeclaration (new Mono.CSharp.TypeExpression(rc.Module.PredefinedTypes.AsArray.Resolve(), this.loc), li);
+					var arguments = new Arguments (1);
+					arguments.Add (new Argument(new SimpleName(param.Name, this.loc)));
+					decl.Initializer = new Invocation (new MemberAccess(new MemberAccess(new SimpleName("PlayScript", this.loc), "Support", this.loc), "CreateArgListArray", this.loc), arguments);
+					this.AddLocalName (li);
+					this.AddScopeStatement (decl);	
+				}
+			}
+		}
+
 		// <summary>
 		//   Check whether all `out' parameters have been assigned.
 		// </summary>
@@ -3351,6 +3369,11 @@ namespace Mono.CSharp {
 
 			if (rc.HasSet (ResolveContext.Options.ExpressionTreeConversion))
 				flags |= Flags.IsExpressionTree;
+
+			// If ActionScript (not PlayScript), create a var args Array local var that wraps the params varargs for .NET
+			if (rc.FileType == SourceFileType.PlayScript && !rc.PsExtended) {
+				this.PsCreateVarArgsArray (rc);
+			}
 
 			try {
 				ResolveMeta (rc);
@@ -3609,8 +3632,8 @@ namespace Mono.CSharp {
 
 					// If we're ActionScript and two local vars are declared with identical 
 					// declarations, we return the previous declaration var info and discard ours.
-					if (isActionScript && li.TypeExpr != null && existing.TypeExpr != null && 
-					    li.TypeExpr.Equals (existing.TypeExpr)) {
+					if (isActionScript && (li.TypeExpr == existing.TypeExpr || (li.TypeExpr != null && existing.TypeExpr != null && 
+					    li.TypeExpr.Equals (existing.TypeExpr)))) {
 
 						li.Block.ParametersBlock.TopBlock.Report.Warning (7138, 1, li.Location,
 							"Variable is declared more than once.");

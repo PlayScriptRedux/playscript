@@ -70,13 +70,28 @@ namespace Mono.CSharp {
 
 		public static TypeSpec CreateDelegateType (ResolveContext rc, AParametersCollection parameters, TypeSpec returnType, Location loc)
 		{
-			Namespace type_ns = rc.Module.GlobalRootNamespace.GetNamespace ("System", true);
+			Namespace type_ns;
+			string paramsSuffix = "";
+			TypeSpec[] paramTypes = parameters.Types;
+			type_ns = rc.Module.GlobalRootNamespace.GetNamespace ("System", true);
+
+			// Do we have a PARAMS argument as the final argument?  (Only supported in PlayScript)
+			if (rc.FileType == SourceFileType.PlayScript && parameters.FixedParameters.Length > 0 && 
+				(parameters.FixedParameters [parameters.FixedParameters.Length - 1].ModFlags & Parameter.Modifier.PARAMS) != 0) {
+				paramsSuffix = "P";
+				TypeSpec[] newTypes = new TypeSpec[paramTypes.Length - 1];
+				Array.Copy (paramTypes, 0, newTypes, 0, newTypes.Length);
+				paramTypes = newTypes;
+				type_ns = rc.Module.GlobalRootNamespace.GetNamespace ("PlayScript", true);
+			}
+
 			if (type_ns == null) {
 				return null;
 			}
+
 			if (returnType == rc.BuiltinTypes.Void) {
-				var actArgs = parameters.Types;
-				var actionSpec = type_ns.LookupType (rc.Module, "Action", actArgs.Length, LookupMode.Normal, loc).ResolveAsType(rc);
+				var actArgs = paramTypes;
+				var actionSpec = type_ns.LookupType (rc.Module, "Action" + paramsSuffix, actArgs.Length, LookupMode.Normal, loc).ResolveAsType(rc);
 				if (actionSpec == null) {
 					return null;
 				}
@@ -85,10 +100,10 @@ namespace Mono.CSharp {
 				else
 					return actionSpec.MakeGenericType(rc, actArgs);
 			} else {
-				TypeSpec[] funcArgs = new TypeSpec[parameters.Types.Length + 1];
-				parameters.Types.CopyTo(funcArgs, 0);
-				funcArgs[parameters.Types.Length] = returnType;
-				var funcSpec = type_ns.LookupType (rc.Module, "Func", funcArgs.Length, LookupMode.Normal, loc).ResolveAsType(rc);
+				TypeSpec[] funcArgs = new TypeSpec[paramTypes.Length + 1];
+				paramTypes.CopyTo(funcArgs, 0);
+				funcArgs[paramTypes.Length] = returnType;
+				var funcSpec = type_ns.LookupType (rc.Module, "Func" + paramsSuffix, funcArgs.Length, LookupMode.Normal, loc).ResolveAsType(rc);
 				if (funcSpec == null)
 					return null;
 				return funcSpec.MakeGenericType(rc, funcArgs);
@@ -96,12 +111,27 @@ namespace Mono.CSharp {
 		}
 
 		public static FullNamedExpression CreateDelegateTypeExpression (BuiltinTypes builtinTypes, ParametersCompiled parameters, FullNamedExpression retType, Location loc){
+
+			// Setup
 			bool hasParams = parameters != null && parameters.Count > 0;
 			int paramCount = hasParams ? parameters.Count : 0;
+			string ns = "System";
+			string paramSuffix = "";
+
+			// If last parameter is a PARAMS paramter, use the params versions of the delegate types
+			if (hasParams && (parameters.FixedParameters [parameters.FixedParameters.Length - 1].ModFlags & Parameter.Modifier.PARAMS) != 0) {
+				ns = "PlayScript";
+				paramSuffix = "P";
+				paramCount--;
+			}
+
+			// Check if this is Func or Action
 			bool hasRetType = !(retType is TypeExpression && ((TypeExpression)retType).Type == builtinTypes.Void);
 			int typeParamCount = paramCount;
 			if (hasRetType)
 				typeParamCount++;
+
+			// Create arguments list
 			TypeArguments typeArgs = null;
 			if (typeParamCount > 0) {
 				var typeArgArray = new FullNamedExpression[typeParamCount];
@@ -115,10 +145,12 @@ namespace Mono.CSharp {
 				}
 				typeArgs = new TypeArguments (typeArgArray);
 			}
+
+			// Return the expression for the type we want
 			if (!hasRetType) {
-				return new MemberAccess(new SimpleName("System", loc), "Action", typeArgs, loc);
+				return new MemberAccess(new SimpleName(ns, loc), "Action" + paramSuffix, typeArgs, loc);
 			} else {
-				return new MemberAccess(new SimpleName("System", loc), "Func", typeArgs, loc);
+				return new MemberAccess(new SimpleName(ns, loc), "Func" + paramSuffix, typeArgs, loc);
 			}
 		}
 
