@@ -91,7 +91,11 @@ namespace Mono.CSharp {
 
 			if (returnType == rc.BuiltinTypes.Void) {
 				var actArgs = paramTypes;
-				var actionSpec = type_ns.LookupType (rc.Module, "Action" + paramsSuffix, actArgs.Length, LookupMode.Normal, loc).ResolveAsType(rc);
+				var actionType = type_ns.LookupType (rc.Module, "Action" + paramsSuffix, actArgs.Length, LookupMode.Normal, loc);
+				if (actionType == null) {
+					return rc.BuiltinTypes.Delegate;
+				}
+				var actionSpec = actionType.ResolveAsType(rc);
 				if (actionSpec == null) {
 					return null;
 				}
@@ -104,8 +108,9 @@ namespace Mono.CSharp {
 				paramTypes.CopyTo(funcArgs, 0);
 				funcArgs[paramTypes.Length] = returnType;
 				var funcSpec = type_ns.LookupType (rc.Module, "Func" + paramsSuffix, funcArgs.Length, LookupMode.Normal, loc).ResolveAsType(rc);
-				if (funcSpec == null)
-					return null;
+				if (funcSpec == null) {
+					return rc.BuiltinTypes.Delegate;
+				}
 				return funcSpec.MakeGenericType(rc, funcArgs);
 			}
 		}

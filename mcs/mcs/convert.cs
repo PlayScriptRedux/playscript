@@ -1423,7 +1423,32 @@ namespace Mono.CSharp {
 							}
 							var ms = (MethodSpec)mg.Candidates[0];
 							var del_type = Delegate.CreateDelegateTypeFromMethodSpec(ec, ms, loc);
-							return new ImplicitDelegateCreation (del_type, mg, loc).Resolve (ec);
+
+							// If return is "Delegate", we create a var args anonymous method which calls the target method..
+							if (del_type == ec.BuiltinTypes.Delegate) {
+								var objArrayType = new ComposedCast (
+									new TypeExpression(ec.BuiltinTypes.Object, loc),  
+									ComposedTypeSpecifier.CreateArrayDimension (1, loc));
+								var parameters = new ParametersCompiled(new Parameter[] {
+									new ParamsParameter(objArrayType, "args", null, loc) }, false);
+								var dynCall = new AnonymousMethodExpression(expr.Location, parameters, new TypeExpression(ms.ReturnType, loc));
+								var block = new ParametersBlock (ec.CurrentBlock, parameters, expr.Location);
+								dynCall.Block = block;
+								var args = new Arguments (3);
+								args.Add (new Argument(new TypeOf(new TypeExpression(ms.DeclaringType, loc), loc)));
+								args.Add (new Argument(new StringLiteral(ec.BuiltinTypes, ms.Name, loc)));
+								args.Add (new Argument(new SimpleName("args", loc)));
+								var call = new Invocation (new MemberAccess(new MemberAccess(new SimpleName("PlayScript", loc), "Support", loc), "VarArgCall", loc), args);
+								if (ms.ReturnType == ec.BuiltinTypes.Void) {
+									block.AddStatement (new StatementExpression(call));
+								} else {
+									block.AddStatement (new Return(call, loc));
+								}
+								return dynCall.Resolve (ec);
+							} else { 
+								// Otherwise cast to the specific delegate type
+								return new ImplicitDelegateCreation (del_type, mg, loc).Resolve (ec);
+							}
 						}
 					}
 					return null;
