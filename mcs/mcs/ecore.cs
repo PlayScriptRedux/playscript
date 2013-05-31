@@ -1633,8 +1633,13 @@ namespace Mono.CSharp {
 		public override void Emit (EmitContext ec)
 		{
 			base.Emit (ec);
-			
-			ec.Emit (OpCodes.Box, child.Type);
+
+			if (child is NullLiteral) {
+				// Don't box nulls, just load a null instead
+				ec.Emit (OpCodes.Ldnull);
+			} else {
+				ec.Emit (OpCodes.Box, child.Type);
+			}
 		}
 
 		public override void EmitSideEffect (EmitContext ec)
