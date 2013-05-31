@@ -9853,29 +9853,10 @@ namespace Mono.CSharp
 
 				// TODO: Do I need 2 argument sets?
 				best_candidate = res.ResolveMember<IndexerSpec> (rc, ref arguments);
-				if (best_candidate != null) {
+				if (best_candidate != null)
 					type = res.BestCandidateReturnType;
-				} else if (!res.BestCandidateIsDynamic) {
-
-					// If we're an ActionScript dynamic class, call __GetDynamicValue and __SetDynamicValue..
-					if (InstanceExpression.Type.IsAsDynamicClass) {
-						
-						var dynClass = new Cast(new MemberAccess(new SimpleName("PlayScript", loc), "IDynamicClass", loc), InstanceExpression, loc);
-						var getterExpr = new MemberAccess(dynClass, "__GetDynamicValue", loc).Resolve (rc) as MethodGroupExpr;
-						var setterExpr = new MemberAccess(dynClass, "__SetDynamicValue", loc).Resolve (rc) as MethodGroupExpr;
-						if (getterExpr == null || getterExpr.Candidates.Count != 1 || !(getterExpr.Candidates[0] is MethodSpec)
-						    || setterExpr == null || setterExpr.Candidates.Count != 1 || !(setterExpr.Candidates[0] is MethodSpec))
-							return null;
-						
-						method_pair_getter = getterExpr.Candidates[0] as MethodSpec;
-						method_pair_setter = setterExpr.Candidates[0] as MethodSpec;
-						type = rc.BuiltinTypes.Dynamic;
-						
-					} else {
-						return null;
-					}
-
-				}
+				else if (!res.BestCandidateIsDynamic && rc.FileType != SourceFileType.PlayScript)
+					return null;
 			}
 
 			//
@@ -9893,6 +9874,36 @@ namespace Mono.CSharp
 
 				best_candidate = null;
 				return new DynamicIndexBinder (args, loc);
+			} 
+
+			// Failed to find a standard candidate.. potentially try an ActionScript 'dynamic' class method pair..
+			if (best_candidate == null) {
+
+				// If we're an ActionScript dynamic class, call __GetDynamicValue and __SetDynamicValue..
+				if (InstanceExpression.Type.IsAsDynamicClass) {
+
+					var dynClass = new Cast(new MemberAccess(new SimpleName("PlayScript", loc), "IDynamicClass", loc), InstanceExpression, loc);
+					var getterExpr = new MemberAccess(dynClass, "__GetDynamicValue", loc).Resolve (rc) as MethodGroupExpr;
+					var setterExpr = new MemberAccess(dynClass, "__SetDynamicValue", loc).Resolve (rc) as MethodGroupExpr;
+					if (getterExpr == null || getterExpr.Candidates.Count != 1 || !(getterExpr.Candidates[0] is MethodSpec)
+					    || setterExpr == null || setterExpr.Candidates.Count != 1 || !(setterExpr.Candidates[0] is MethodSpec))
+						return null;
+
+					method_pair_getter = getterExpr.Candidates[0] as MethodSpec;
+					method_pair_setter = setterExpr.Candidates[0] as MethodSpec;
+
+					if (method_pair_getter != null || method_pair_setter != null)
+						type = rc.BuiltinTypes.Dynamic;
+					else
+						return null;
+
+				} else {
+
+					// Not a dymamic class.. okay give up
+					return null;
+
+				}
+
 			}
 
 			//

@@ -6569,11 +6569,16 @@ namespace Mono.CSharp {
 				return true;
 			}
 
-			if (!best_candidate.HasGet) {
+			if (best_candidate == null || !best_candidate.HasGet) {
 				if (InstanceExpression != EmptyExpression.Null) {
-					rc.Report.SymbolRelatedToPreviousError (best_candidate);
-					rc.Report.Error (154, loc, "The property or indexer `{0}' cannot be used in this context because it lacks the `get' accessor",
-						best_candidate.GetSignatureForError ());
+					MemberSpec ms = (MemberSpec)best_candidate ?? (MemberSpec)method_pair_setter;
+					if (ms != null) {
+						rc.Report.SymbolRelatedToPreviousError (ms);
+						rc.Report.Error (154, loc, "The property or indexer `{0}' cannot be used in this context because it lacks the `get' accessor",
+						                 ms.GetSignatureForError ());
+					} else if (rc.FileType == SourceFileType.PlayScript) {
+						ReportNoIndexerError (rc);
+					}
 					return false;
 				}
 			} else if (!best_candidate.Get.IsAccessible (rc)) {
@@ -6603,9 +6608,14 @@ namespace Mono.CSharp {
 				return true;
 			}
 
-			if (!best_candidate.HasSet) {
-				rc.Report.Error (200, loc, "Property or indexer `{0}' cannot be assigned to (it is read-only)",
-					GetSignatureForError ());
+			if (best_candidate == null || !best_candidate.HasSet) {
+				MemberSpec ms = (MemberSpec)best_candidate ?? (MemberSpec)method_pair_getter;
+				if (ms != null) {
+					rc.Report.Error (200, loc, "Property or indexer `{0}' cannot be assigned to (it is read-only)",
+						ms.GetSignatureForError ());
+				} else if (rc.FileType == SourceFileType.PlayScript) {
+					ReportNoIndexerError (rc);
+				}
 				return false;
 			}
 
@@ -6625,6 +6635,10 @@ namespace Mono.CSharp {
 
 			setter = CandidateToBaseOverride (rc, best_candidate.Set);
 			return true;
+		}
+
+		private void ReportNoIndexerError(ResolveContext rc) {
+			rc.Report.Error (7163, loc, "Target is not dynamic class Object or Dictionary and there is no user defined accessor");
 		}
 	}
 
