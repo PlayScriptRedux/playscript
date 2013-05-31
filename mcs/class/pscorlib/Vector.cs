@@ -253,7 +253,7 @@ namespace _root {
         {
             foreach (var item in items)
             {
-                mList.Add((T)items);
+                mList.Add((T)item);
             }
         }
 
@@ -462,7 +462,13 @@ namespace _root {
 		}
 
 		public string toString() {
-			throw new System.NotImplementedException();
+			return this.ToString();
+		}
+
+		public override string ToString()
+		{
+//			return string.Format("[Vector: length={0}]", length);
+			return string.Format("Count={0}", length);
 		}
 
 		public uint unshift(params T[] args) {
