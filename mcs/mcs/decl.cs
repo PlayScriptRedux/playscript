@@ -727,10 +727,10 @@ namespace Mono.CSharp {
 			return Parent.LookupNamespaceAlias (name);
 		}
 
-		public virtual FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, Location loc)
+		public virtual FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, bool absolute_ns, Location loc)
 		{
 			if (Parent != null) {
-				return Parent.LookupNamespaceOrType (name, arity, mode, loc);
+				return Parent.LookupNamespaceOrType (name, arity, mode, absolute_ns, loc);
 			} else {
 				return null;
 			}

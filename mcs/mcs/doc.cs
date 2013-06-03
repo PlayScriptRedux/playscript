@@ -296,8 +296,12 @@ namespace Mono.CSharp
 
 		FullNamedExpression ResolveMemberName (IMemberContext context, MemberName mn)
 		{
+			// FIXME: Default namespace lookups to C# resolution semantics (for now).  Need a way to determine if PlayScript absolute
+			// namespace lookups should be used here.
+			bool absolute_ns = false;
+
 			if (mn.Left == null)
-				return context.LookupNamespaceOrType (mn.Name, mn.Arity, LookupMode.Probing, Location.Null);
+				return context.LookupNamespaceOrType (mn.Name, mn.Arity, LookupMode.Probing, absolute_ns, Location.Null);
 
 			var left = ResolveMemberName (context, mn.Left);
 			var ns = left as Namespace;
@@ -703,7 +707,7 @@ namespace Mono.CSharp
 			return null;
 		}
 
-		public FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, Location loc)
+		public FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, bool absolute_ns, Location loc)
 		{
 			if (arity == 0) {
 				var tp = CurrentTypeParameters;
@@ -718,7 +722,7 @@ namespace Mono.CSharp
 				}
 			}
 
-			return host.Parent.LookupNamespaceOrType (name, arity, mode, loc);
+			return host.Parent.LookupNamespaceOrType (name, arity, mode, absolute_ns, loc);
 		}
 
 		public FullNamedExpression LookupNamespaceAlias (string name)

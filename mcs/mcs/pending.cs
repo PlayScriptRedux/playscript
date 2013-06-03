@@ -113,7 +113,7 @@ namespace Mono.CSharp {
 			throw new NotImplementedException ();
 		}
 
-		public FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, Location loc)
+		public FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, bool absolute_ns, Location loc)
 		{
 			throw new NotImplementedException ();
 		}

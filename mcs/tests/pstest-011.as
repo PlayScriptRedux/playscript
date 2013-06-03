@@ -1,6 +1,8 @@
 package
 {
 
+	// Test calls to static methods with instance variables
+
 	public class Foo {
 
 		public static function bar():void {
@@ -11,9 +13,6 @@ package
 		}
 
 	}
-
-
-	// Delegate and closure support.
 
 	public class Test 
 	{

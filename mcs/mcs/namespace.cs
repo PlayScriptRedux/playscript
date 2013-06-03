@@ -1116,21 +1116,26 @@ namespace Mono.CSharp {
 			return null;
 		}
 
-		public override FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, Location loc)
+		public override FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, bool absolute_ns, Location loc)
 		{
 			//
 			// Only simple names (no dots) will be looked up with this function
 			//
 			FullNamedExpression resolved;
 			for (NamespaceContainer container = this; container != null; container = container.Parent) {
-				resolved = container.Lookup (name, arity, mode, loc);
+				resolved = container.Lookup (name, arity, mode, absolute_ns, loc);
 				if (resolved != null || container.MemberName == null)
 					return resolved;
 
 				var container_ns = container.ns.Parent;
 				var mn = container.MemberName.Left;
 				while (mn != null) {
-					resolved = container_ns.LookupTypeOrNamespace (this, name, arity, mode, loc);
+					// If PlayScript/ActionScript we need to avoid lookup up the first identifier in a namespace relatively.  This means we only
+					// do namespace lookup for the first identifier from the global namespace.
+					if (absolute_ns) 
+						resolved = container_ns.LookupType (this, name, arity, mode, loc);
+					else
+						resolved = container_ns.LookupTypeOrNamespace (this, name, arity, mode, loc);
 					if (resolved != null)
 						return resolved;
 
@@ -1206,12 +1211,20 @@ namespace Mono.CSharp {
 			return null;
 		}
 
-		FullNamedExpression Lookup (string name, int arity, LookupMode mode, Location loc)
+		FullNamedExpression Lookup (string name, int arity, LookupMode mode, bool absolute_ns, Location loc)
 		{
 			//
 			// Check whether it's in the namespace.
 			//
-			FullNamedExpression fne = ns.LookupTypeOrNamespace (this, name, arity, mode, loc);
+
+			FullNamedExpression fne;
+
+			// For PlayScript/ActionScript we only search for namespaces for simple names when we're at the top level namespace.  ActionScript does not
+			// use relative package name resolution.
+			if (absolute_ns && this.MemberName != null && this.MemberName.Left != null)
+				fne = ns.LookupType (this, name, arity, mode, loc);
+			else
+				fne = ns.LookupTypeOrNamespace (this, name, arity, mode, loc);
 
 			//
 			// Check aliases. 
@@ -1621,7 +1634,7 @@ namespace Mono.CSharp {
 				return null;
 			}
 
-			public FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, Location loc)
+			public FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, bool absolute_ns, Location loc)
 			{
 				var fne = ns.NS.LookupTypeOrNamespace (ns, name, arity, mode, loc);
 				if (fne != null)
@@ -1646,7 +1659,7 @@ namespace Mono.CSharp {
 				}
 
 				if (ns.Parent != null)
-					return ns.Parent.LookupNamespaceOrType (name, arity, mode, loc);
+					return ns.Parent.LookupNamespaceOrType (name, arity, mode, absolute_ns, loc);
 
 				return null;
 			}

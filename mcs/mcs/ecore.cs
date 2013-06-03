@@ -412,7 +412,7 @@ namespace Mono.CSharp {
 			// a constant, field, property, local variable, or parameter with the same type as the meaning of E as a type-name
 
 			if (left is MemberExpr || left is VariableReference) {
-				var identical_type = rc.LookupNamespaceOrType (name.Name, 0, LookupMode.Probing, loc) as TypeExpr;
+				var identical_type = rc.LookupNamespaceOrType (name.Name, 0, LookupMode.Probing, false, loc) as TypeExpr;
 				if (identical_type != null && identical_type.Type == left.Type)
 					return identical_type;
 			}
@@ -2437,14 +2437,17 @@ namespace Mono.CSharp {
 
 			var report = ctx.Module.Compiler.Report;
 
-			var retval = ctx.LookupNamespaceOrType (Name, Arity, LookupMode.IgnoreAccessibility, loc);
+			// PlayScript - use absolute namespace resolution, not relative
+			bool absolute_ns = loc.SourceFile != null && loc.SourceFile.FileType == SourceFileType.PlayScript;
+
+			var retval = ctx.LookupNamespaceOrType (Name, Arity, LookupMode.IgnoreAccessibility, absolute_ns, loc);
 			if (retval != null) {
 				report.SymbolRelatedToPreviousError (retval.Type);
 				ErrorIsInaccesible (ctx, retval.GetSignatureForError (), loc);
 				return;
 			}
 
-			retval = ctx.LookupNamespaceOrType (Name, -System.Math.Max (1, Arity), LookupMode.Probing, loc);
+			retval = ctx.LookupNamespaceOrType (Name, -System.Math.Max (1, Arity), LookupMode.Probing, absolute_ns, loc);
 			if (retval != null) {
 				Error_TypeArgumentsCannotBeUsed (ctx, retval.Type, Arity, loc);
 				return;
@@ -2471,7 +2474,10 @@ namespace Mono.CSharp {
 
 		public override FullNamedExpression ResolveAsTypeOrNamespace (IMemberContext ec)
 		{
-			FullNamedExpression fne = ec.LookupNamespaceOrType (Name, Arity, LookupMode.Normal, loc);
+			// PlayScript - Use absolute namespace resolution, not relative
+			bool absolute_ns =  loc.SourceFile != null && loc.SourceFile.FileType == SourceFileType.PlayScript;
+
+			FullNamedExpression fne = ec.LookupNamespaceOrType (Name, Arity, LookupMode.Normal, absolute_ns, loc);
 
 			if (fne != null) {
 				if (fne.Type != null && Arity > 0) {
@@ -2513,14 +2519,20 @@ namespace Mono.CSharp {
 
 		public bool IsPossibleTypeOrNamespace (IMemberContext mc)
 		{
-			return mc.LookupNamespaceOrType (Name, Arity, LookupMode.Probing, loc) != null;
+			// PlayScript - Use absolute namespace resolution, not relative
+			bool absolute_ns =  loc.SourceFile != null && loc.SourceFile.FileType == SourceFileType.PlayScript;
+
+			return mc.LookupNamespaceOrType (Name, Arity, LookupMode.Probing, absolute_ns, loc) != null;
 		}
 
 		public Expression LookupPackageLevelFunction (ResolveContext rc)
 		{
 			bool errorMode = false;
 
-			FullNamedExpression fne = rc.LookupNamespaceOrType (Name + "_fn", 0, LookupMode.Normal, loc);
+			// PlayScript - Use absolute namespace resolution, not relative
+			bool absolute_ns =  loc.SourceFile != null && loc.SourceFile.FileType == SourceFileType.PlayScript;
+
+			FullNamedExpression fne = rc.LookupNamespaceOrType (Name + "_fn", 0, LookupMode.Normal, absolute_ns, loc);
 			if (fne == null || fne is Namespace) {
 				return null;
 			}
@@ -2555,12 +2567,16 @@ namespace Mono.CSharp {
 			bool variable_found = false;
 			var name = Name;
 
+			// PlayScript - Set is playscript flag, and toggle absolute_ns lookups
+			bool is_playscript = rc.FileType == SourceFileType.PlayScript;
+			bool absolute_ns = is_playscript;
+
 			while (true) {
 
 				//
 				// PlayScript: Perform member renaming
 				//
-				if (rc.FileType == SourceFileType.PlayScript) {
+				if (is_playscript) {
 					if (name == "toString") {
 						name = "ToString";
 					}
@@ -2575,7 +2591,7 @@ namespace Mono.CSharp {
 					if (current_block.ParametersBlock.TopBlock.GetLocalName (name, current_block.Original, ref variable)) {
 						// In PlayScript we allow unassigned variables.  It's technically bad coding but not much we can do about it.
 						if (!variable.IsDeclared) {
-							if (rc.FileType == SourceFileType.PlayScript && !rc.PsExtended) {
+							if (is_playscript && !rc.PsExtended) {
 								rc.Report.Warning(7156, 1, loc, "Use of local variable before declaration");
 								if (variable is LocalVariable) {
 									var locVar = variable as LocalVariable;
@@ -2685,7 +2701,7 @@ namespace Mono.CSharp {
 				//
 				// Check for "Object" type if PlayScript
 				//
-				if (rc.FileType == SourceFileType.PlayScript && !variable_found) {
+				if (is_playscript && !variable_found) {
 					if (name == "Object") {
 						return new TypeExpression(rc.BuiltinTypes.Dynamic, loc);
 					}
@@ -2708,7 +2724,7 @@ namespace Mono.CSharp {
 				//
 				// Stage 4: If PlayScript, lookup package level functions.
 				//
-				if (rc.FileType == SourceFileType.PlayScript && 
+				if (is_playscript && 
 				    (restrictions & MemberLookupRestrictions.InvocableOnly) != 0 && !variable_found) {
 
 					// Is this a package level function?
@@ -2730,7 +2746,7 @@ namespace Mono.CSharp {
 				//
 				// Stage 5: handle actionscript builtin uppercase names (Not keywords).
 				//
-				if (rc.FileType == SourceFileType.PlayScript && !variable_found) {
+				if (is_playscript && !variable_found) {
 					if (name == "NaN") {
 						return new DoubleLiteral (rc.BuiltinTypes, double.NaN, loc);
 					} else if (name == "Infinity") {
@@ -2799,7 +2815,7 @@ namespace Mono.CSharp {
 						}
 
 						if ((restrictions & MemberLookupRestrictions.InvocableOnly) == 0) {
-							e = rc.LookupNamespaceOrType (name, Arity, LookupMode.IgnoreAccessibility, loc);
+							e = rc.LookupNamespaceOrType (name, Arity, LookupMode.IgnoreAccessibility, absolute_ns, loc);
 							if (e != null) {
 								rc.Report.SymbolRelatedToPreviousError (e.Type);
 								ErrorIsInaccesible (rc, e.GetSignatureForError (), loc);
@@ -2813,7 +2829,7 @@ namespace Mono.CSharp {
 							}
 						}
 
-						e = rc.LookupNamespaceOrType (name, -System.Math.Max (1, Arity), LookupMode.Probing, loc);
+						e = rc.LookupNamespaceOrType (name, -System.Math.Max (1, Arity), LookupMode.Probing, absolute_ns, loc);
 						if (e != null) {
 							if (e.Type.Arity != Arity) {
 								Error_TypeArgumentsCannotBeUsed (rc, e.Type, Arity, loc);
