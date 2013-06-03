@@ -119,7 +119,7 @@ namespace PlayScript.RuntimeBinder
 			return null;
 		}
 
-		public Compiler.FullNamedExpression LookupNamespaceOrType (string name, int arity, Mono.CSharp.LookupMode mode, Mono.CSharp.Location loc)
+		public Compiler.FullNamedExpression LookupNamespaceOrType (string name, int arity, Mono.CSharp.LookupMode mode, bool absolute_ns, Mono.CSharp.Location loc)
 		{
 			throw new NotImplementedException ();
 		}
