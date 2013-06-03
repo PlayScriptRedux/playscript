@@ -3265,7 +3265,7 @@ namespace Mono.CSharp {
 
 							t = t.DeclaringType;
 						} while (t != null);
-					} else {
+					} else if (rc.FileType != SourceFileType.PlayScript) {
 						var runtime_expr = InstanceExpression as RuntimeValueExpression;
 						if (runtime_expr == null || !runtime_expr.IsSuggestionOnly) {
 							rc.Report.Error (176, loc,
