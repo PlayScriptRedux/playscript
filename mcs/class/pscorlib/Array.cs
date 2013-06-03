@@ -15,11 +15,40 @@
 using System;
 using System.Collections.Generic;
 using System.Collections;
+using System.Runtime.Serialization;
+using System.Security.Permissions;
+using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace _root
 {
+	// this class is used to display a custom view of the vector values to the debugger
+	// TODO: we need to make these elements editable 
+	internal class ArrayDebugView
+	{
+		private Array  mArray;
+		
+		// The constructor for the type proxy class must have a 
+		// constructor that takes the target type as a parameter.
+		public ArrayDebugView(Array array)
+		{
+			this.mArray = array;
+		}
+		
+		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+		public object[] Values
+		{
+			get
+			{
+				return mArray.ToArray();
+			}
+		}
+	}
+
     // for now we implement array as a vector of dynamics
     // there may be some subtle differences between array and vector that we need to handle here
+	[DebuggerDisplay("length = {length}")]
+	[DebuggerTypeProxy(typeof(ArrayDebugView))]
     public sealed class Array : Vector<dynamic>
     {
         //

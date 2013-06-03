@@ -1467,11 +1467,11 @@ namespace PlayScript.Expando {
 		public int HashCode;
 		public int Next;
 	}
-	
+
 	[ComVisible(false)]
 	[Serializable]
 	[DebuggerDisplay ("Count={Count}")]
-	[DebuggerTypeProxy (typeof (CollectionDebuggerView<,>))]
+	[DebuggerTypeProxy (typeof (ExpandoDebugView))]
 	public class ExpandoObject : IDictionary<string, object>, IDictionary, ISerializable, IDeserializationCallback
 #if NET_4_5
 		, IReadOnlyDictionary<string, object>
@@ -2636,6 +2636,47 @@ namespace PlayScript.Expando {
 				}
 			}
 		}
+
+		[DebuggerDisplay("{value}", Name = "{key}")]
+		internal class KeyValuePairDebugView
+		{
+			public object key;
+			public object value;
+			
+			public KeyValuePairDebugView(object key, object value)
+			{
+				this.value = value;
+				this.key = key;
+			}
+		}
+
+		internal class ExpandoDebugView
+		{
+			private ExpandoObject expando;
+
+			public ExpandoDebugView(ExpandoObject expando)
+			{
+				this.expando = expando;
+			}
+			
+			[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+			public KeyValuePairDebugView[] Keys
+			{
+				get
+				{
+					var keys = new KeyValuePairDebugView[expando.Count];
+					
+					int i = 0;
+					foreach(string key in expando.Keys)
+					{
+						keys[i] = new KeyValuePairDebugView(key, expando[key]);
+						i++;
+					}
+					return keys;
+				}
+			}
+		}
+
 	}
 }
 

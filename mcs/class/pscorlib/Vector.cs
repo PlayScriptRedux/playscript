@@ -15,12 +15,42 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
+using System.Security.Permissions;
+using System.Runtime.InteropServices;
+using System.Diagnostics;
+
 
 namespace _root {
 
 
 #if !NEWVECTOR
 
+	// this class is used to display a custom view of the vector values to the debugger
+	// TODO: we need to make these elements editable 
+	internal class VectorDebugView<T>
+	{
+		private Vector<T>  mVector;
+		
+		// The constructor for the type proxy class must have a 
+		// constructor that takes the target type as a parameter.
+		public VectorDebugView(Vector<T> vector)
+		{
+			this.mVector = vector;
+		}
+		
+		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+		public T[] Values
+		{
+			get
+			{
+				return mVector.ToArray();
+			}
+		}
+	}
+
+	[DebuggerDisplay("length = {length}")]
+	[DebuggerTypeProxy(typeof(VectorDebugView<>))]
 	public class Vector<T> : IEnumerable<T>, IList<T>
 	{
 		//
@@ -253,7 +283,7 @@ namespace _root {
         {
             foreach (var item in items)
             {
-                mList.Add((T)items);
+                mList.Add((T)item);
             }
         }
 
@@ -462,7 +492,13 @@ namespace _root {
 		}
 
 		public string toString() {
-			throw new System.NotImplementedException();
+			return this.ToString();
+		}
+
+		public override string ToString()
+		{
+//			return string.Format("[Vector: length={0}]", length);
+			return string.Format("Count={0}", length);
 		}
 
 		public uint unshift(params T[] args) {
