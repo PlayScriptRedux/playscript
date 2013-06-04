@@ -54,7 +54,7 @@ The PlayScript and ActionScript compiler front ends are fairly stable at this po
 
 You can download the current PlayScript mono framework binaries here:
 
-[Mac OSX 0.1.2 (Mono 3.0.8)](https://s3.amazonaws.com/playscript/playscript-mono-osx-0.1.2.dmg)
+[Mac OSX 0.1.3 (Mono 3.0.9)](https://s3.amazonaws.com/playscript/playscript-mono-osx-0.1.3.zip)
 
 [Windows Win32 0.1.2 (Mono 3.0.9)](https://s3.amazonaws.com/playscript/playscript-mono-win32-0.1.2.zip)
 
