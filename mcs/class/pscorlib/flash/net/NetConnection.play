@@ -17,7 +17,7 @@ package flash.net
 	public class NetConnection extends flash.events.EventDispatcher {
 
 		public function connect(endpoint:String):void {
-			throw new System.NotImplementedException();
+			trace("warning not implemented: flash.net.NetConnection");
 		}
 	}
 
@@ -25,7 +25,8 @@ package flash.net
 	public class Responder extends flash.events.EventDispatcher {
 
 		public function Responder(onResult:Function, onFailure:Function) {
-			throw new System.NotImplementedException();
+//			throw new System.NotImplementedException();
+			trace("warning not implemented: flash.net.Responder");
 		}
 	}
 }

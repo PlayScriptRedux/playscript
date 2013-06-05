@@ -101,4 +101,16 @@ package {
 		return PlayScript.Player.InvokeStaticMethod(type, methodName, args);
 	}
 
+	public function getStaticProperty(type:Class, propertyName:String):Object
+	{
+		// pass this off to C# code
+		return PlayScript.Player.GetStaticProperty(type, propertyName);
+	}
+
+	public function setStaticProperty(type:Class, propertyName:String, v:Object):void
+	{
+		// pass this off to C# code
+		PlayScript.Player.SetStaticProperty(type, propertyName, v);
+	}
+
 }

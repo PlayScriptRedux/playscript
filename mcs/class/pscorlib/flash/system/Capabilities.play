@@ -68,7 +68,7 @@ package flash.system {
 		
 		public static property pixelAspectRatio : Number { get { return 0.0; } }
 		
-		public static property playerType : String { get { return null; } }
+		public static property playerType : String { get { return "Desktop"; } }
 		
 		public static property screenColor : String { get { return null; } }
 		

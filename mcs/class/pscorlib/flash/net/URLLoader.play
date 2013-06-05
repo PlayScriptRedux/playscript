@@ -27,11 +27,11 @@ package flash.net {
 		// Properties
 		//
 			
-		public property bytesLoaded : uint { get; private set; }
+		public property bytesLoaded : uint { get; set; }
 
-	 	public property bytesTotal : uint { get; private set; }
+	 	public property bytesTotal : uint { get; set; }
 
- 	 	public property data : * { get; private set; }
+ 	 	public property data : * { get; set; }
 
  	 	public property dataFormat : String { get; set; }
  	 	

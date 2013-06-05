@@ -53,6 +53,7 @@ namespace PlayScript
 			AddResourceDirectory("");
 			#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH 
 			AddResourceDirectory(NSBundle.MainBundle.ResourcePath);
+			AddResourceDirectory(NSBundle.MainBundle.ResourcePath + "/src/");
 			#endif
 		}
 
@@ -122,9 +123,11 @@ namespace PlayScript
 
 			// construct instance of type
 			// we set the global stage so that it will be set during this display object's constructor
-			DisplayObjectContainer.globalStage = mStage;
+			DisplayObject.constructorStage = mStage;
+			DisplayObject.constructorLoaderInfo = new LoaderInfo();
 			DisplayObject displayObject = System.Activator.CreateInstance(type) as DisplayObject;
-			DisplayObjectContainer.globalStage = null;
+			DisplayObject.constructorLoaderInfo = null;
+			DisplayObject.constructorStage = null;
 
 			if (displayObject != null) {
 
@@ -182,6 +185,34 @@ namespace PlayScript
 			var method = type.GetMethod(methodName);
 			if (method == null) throw new Exception("Method not found");
 			return method.Invoke(null, args.ToArray());
+		}
+
+		public static object GetStaticProperty(System.Type type, String propertyName)
+		{
+			var property = type.GetProperty(propertyName);
+			if (property != null) {
+				return property.GetValue(null, null);
+			}
+			var field = type.GetField(propertyName);
+			if (field != null) {
+				return field.GetValue(null);
+			}
+			return null;
+		}
+
+		public static void SetStaticProperty(System.Type type, String propertyName, object v)
+		{
+			var property = type.GetProperty(propertyName);
+			if (property != null) {
+				property.SetValue(null, v, null);
+				return;
+			}
+			var field = type.GetField(propertyName);
+			if (field != null) {
+				field.SetValue(null, v);
+				return;
+			}
+			throw new Exception("Property not found: " + propertyName);
 		}
 
 		public static string ResolveResourcePath(string path)

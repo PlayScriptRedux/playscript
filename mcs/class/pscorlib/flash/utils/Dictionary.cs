@@ -57,6 +57,11 @@ namespace flash.utils
 			}
 		}
 
+
+		public bool hasOwnProperty(string name) {
+			return ContainsKey(name);
+		}
+
 		#region IDynamicClass implementation
 
 		public dynamic __GetDynamicValue (string name)
