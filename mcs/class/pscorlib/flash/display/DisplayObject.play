@@ -46,7 +46,7 @@ package flash.display {
 
  	 	public property	height : Number { get; set; }
 
- 	 	public property loaderInfo : LoaderInfo { get { return null; } }
+ 	 	public property loaderInfo : LoaderInfo { get { return mLoaderInfo; } }
  	 	
  	 	public property mask : DisplayObject  { get; set; }
 
@@ -60,7 +60,7 @@ package flash.display {
 
 		public property parent : DisplayObjectContainer { get { return mParent; }  }
 
- 	 	public property root : DisplayObject { get { return null; } }
+ 	 	public property root : DisplayObject { get { return mRoot; } }
 
  	 	public property rotation : Number { get; set; }
 
@@ -98,14 +98,18 @@ package flash.display {
 		// Public Methods
 		// 
 
-		// this global stage sets the stage that this displayobject is attached to at construction time
+		// this constructor stage sets the stage that this displayobject is attached to at construction time
 		// this is necessary because some root display objects must have their stage set before their constructor is invoked 		
-		public static var globalStage:Stage;
+		public static var constructorStage:Stage;
+		public static var constructorLoaderInfo:LoaderInfo;
 		
 		internal var mStage:Stage;
 		
 		public function DisplayObject() {
-			mStage = globalStage;
+			// set global stage and loader info
+			mStage 		= constructorStage;
+			mLoaderInfo = constructorLoaderInfo;
+			mRoot  		= (constructorStage != null) ? this : null;
 		}
 		
 		public function getBounds(targetCoordinateSpace:DisplayObject):Rectangle {
@@ -156,6 +160,9 @@ package flash.display {
 
 
 		internal var mParent:DisplayObjectContainer;
+
+		private readonly var mRoot:DisplayObject;
+		private readonly var mLoaderInfo:LoaderInfo;
         
         // DisplayObjects not added to the stage still receive enter/exit frame events so they need to be tracked globally
         // we keep around this list to track all display objects that listen for enter/exit frame events (and perhaps others)

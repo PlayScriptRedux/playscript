@@ -42,7 +42,8 @@ package {
 		}
 
 		public function getStackTrace():String {
-			throw new System.NotImplementedException();
+			return "";
+//			throw new System.NotImplementedException();
 //			return null;
 		}
 

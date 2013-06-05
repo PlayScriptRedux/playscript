@@ -22,10 +22,13 @@ package {
 
 		public function Date(a:Object = null)
 		{
-			throw new System.NotImplementedException(); 
+			if (a != null)
+				throw new System.NotImplementedException(); 
+
+			mDate = System.DateTime.Now;
 		}
 
-		public function get time():Number { throw new System.NotImplementedException();  }
+		public function get time():Number { return getTime();  }
 		public function get date():Number { throw new System.NotImplementedException();  }
 		public function get fullYear():Number { throw new System.NotImplementedException();  }
 		public function get month():Number { throw new System.NotImplementedException();  }
@@ -39,18 +42,20 @@ package {
 		public function setHours(t:Number) : void { throw new System.NotImplementedException();  }
 		public function setMinutes(t:Number) : void { throw new System.NotImplementedException();  }
 		public function setSeconds(t:Number) : void { throw new System.NotImplementedException();  }
-		public function getTime() : Number { throw new System.NotImplementedException();  }
+		public function getTime() : Number { return mDate.Ticks; }
 		public function getDate() : Number { throw new System.NotImplementedException();  }
 		public function getYear() : Number { throw new System.NotImplementedException();  }
 		public function getFullYear() : Number { throw new System.NotImplementedException();  }
 		public function getMonth() : Number { throw new System.NotImplementedException();  }
 		public function getDay() : Number { throw new System.NotImplementedException();  }
-		public function getHours() : Number { throw new System.NotImplementedException();  }
-		public function getMinutes() : Number { throw new System.NotImplementedException();  }
-		public function getSeconds() : Number { throw new System.NotImplementedException();  }
+		public function getHours() : Number { return mDate.Hour;  }
+		public function getMinutes() : Number { return mDate.Minute;  }
+		public function getSeconds() : Number { return mDate.Second;  }
 		public override function valueOf() : Object { throw new System.NotImplementedException();  }
 
 		public static function UTC(a:Number, b:Number, c:Number) : Number { throw new System.NotImplementedException();  }
+
+		private var mDate:System.DateTime;
 	}
 	
 }
