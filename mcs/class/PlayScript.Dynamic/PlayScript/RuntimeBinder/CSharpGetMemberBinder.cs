@@ -156,6 +156,10 @@ namespace PlayScript.RuntimeBinder
 				}
 			}
 
+			// constructor
+			if (name == "constructor" && typeof(T) is object) {
+				return (T)(object)o.GetType ();
+			}
 
 			throw new Exception("Unable to find member " + name);
 		}
