@@ -421,9 +421,9 @@ namespace Mono.CSharp
 					t = ec.BuiltinTypes.Object;
 
 				// PlayScript AOT mode - Convert all types to object if they are not basic AS types or this is an invocation.
-				if (isPlayScriptAotMode && !IsValidPlayScriptAotType (t, is_invoke)) {	// Always box to Object for invoke argument lists
+				if (isPlayScriptAotMode && !IsValidPlayScriptAotType (t, is_invoke) && !(a.Expr is NullConstant)) {	// Always box to Object for invoke argument lists
 					t = ec.BuiltinTypes.Object;
-					arguments[i] = new Argument(new BoxedCast(a.Expr, ec.BuiltinTypes.Object));
+					arguments [i] = new Argument (new BoxedCast(a.Expr, ec.BuiltinTypes.Object));
 				}
 
 				if (targs_for_instance != null)
