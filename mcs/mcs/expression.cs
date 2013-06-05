@@ -5830,22 +5830,30 @@ namespace Mono.CSharp
 
 					var ct = arguments [0].Expr.Type;
 					var cbt = ct.BuiltinType;
+					if (cbt == BuiltinTypeSpec.Type.Dynamic) {
+						arguments [0].Expr = EmptyCast.Create (arguments[0].Expr, ec.BuiltinTypes.Object).Resolve(ec);
+						dynamic_arg = false;
+						ct = ec.BuiltinTypes.Object;
+						cbt = BuiltinTypeSpec.Type.Object;
+					}
 					switch (castType) {
 					case BuiltinTypeSpec.Type.Int:
-						if (cbt == BuiltinTypeSpec.Type.String)
+						if (cbt == BuiltinTypeSpec.Type.String ||
+						    cbt == BuiltinTypeSpec.Type.Object)
 							atn = new SimpleName ("int", Location);
 						break;
 					case BuiltinTypeSpec.Type.UInt:
-						if (cbt == BuiltinTypeSpec.Type.String)
+						if (cbt == BuiltinTypeSpec.Type.String ||
+						    cbt == BuiltinTypeSpec.Type.Object)
 							atn = new SimpleName ("uint", Location);
 						break;
 					case BuiltinTypeSpec.Type.Double:
-						if (cbt == BuiltinTypeSpec.Type.String)
+						if (cbt == BuiltinTypeSpec.Type.String ||
+						    cbt == BuiltinTypeSpec.Type.Object)
 							atn = new SimpleName ("Number", Location);
 						break;
 					case BuiltinTypeSpec.Type.Bool:
 						if (cbt == BuiltinTypeSpec.Type.String ||
-						    cbt == BuiltinTypeSpec.Type.Dynamic ||
 						    cbt == BuiltinTypeSpec.Type.Object ||
 						    ct.IsClass)
 							atn = new SimpleName ("Boolean", Location);

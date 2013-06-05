@@ -68,6 +68,46 @@ namespace _root
 			return d;
 		}
 
+		public static double Number (object o)
+		{
+			if (o == null) return double.NaN;
+
+			double d;
+
+			TypeCode tc = Type.GetTypeCode(o.GetType());
+			switch (tc) {
+				case TypeCode.Boolean:
+					return (bool)o ? 1 : 0;
+				case TypeCode.SByte:
+					return (sbyte)o;
+				case TypeCode.Byte:
+					return (byte)o;
+				case TypeCode.Int16:
+					return (short)o;
+				case TypeCode.UInt16:
+					return (ushort)o;
+				case TypeCode.Int32:
+					return (int)o;
+				case TypeCode.UInt32:
+					return (uint)o;
+				case TypeCode.Int64:
+					return (long)o;
+				case TypeCode.UInt64:
+					return (ulong)o;
+				case TypeCode.Single:
+					return (float)o;
+				case TypeCode.Double:
+					return (double)o;
+				case TypeCode.Decimal:
+					return (double)(decimal)o;
+				case TypeCode.String:
+					d = double.NaN;
+					double.TryParse((string)o, out d);
+					return d;
+			}
+
+			return double.NaN;
+		}
 	}
 
 	public static class int_fn
@@ -78,6 +118,47 @@ namespace _root
 			int i;
 			int.TryParse(s, out i);
 			return i;
+		}
+
+		public static int @int (object o)
+		{
+			if (o == null) return 0;
+
+			int i;
+
+			TypeCode tc = Type.GetTypeCode(o.GetType());
+			switch (tc) {
+				case TypeCode.Boolean:
+					return (bool)o ? 1 : 0;
+				case TypeCode.SByte:
+					return (sbyte)o;
+				case TypeCode.Byte:
+					return (byte)o;
+				case TypeCode.Int16:
+					return (short)o;
+				case TypeCode.UInt16:
+					return (ushort)o;
+				case TypeCode.Int32:
+					return (int)o;
+				case TypeCode.UInt32:
+					return (int)(uint)o;
+				case TypeCode.Int64:
+					return (int)(long)o;
+				case TypeCode.UInt64:
+					return (int)(ulong)o;
+				case TypeCode.Single:
+					return (int)(float)o;
+				case TypeCode.Double:
+					return (int)(double)o;
+				case TypeCode.Decimal:
+					return (int)(decimal)o;
+				case TypeCode.String:
+					i = 0;
+					int.TryParse((string)o, out i);
+					return i;
+			}
+
+			return 0;
 		}
 		
 	}
@@ -91,6 +172,47 @@ namespace _root
 			uint u;
 			uint.TryParse(s, out u);
 			return u;
+		}
+
+		public static uint @uint (object o)
+		{
+			if (o == null) return 0;
+
+			uint u;
+
+			TypeCode tc = Type.GetTypeCode(o.GetType());
+			switch (tc) {
+				case TypeCode.Boolean:
+					return (bool)o ? 1u : 0u;
+				case TypeCode.SByte:
+					return (uint)(sbyte)o;
+				case TypeCode.Byte:
+					return (byte)o;
+				case TypeCode.Int16:
+					return (uint)(short)o;
+				case TypeCode.UInt16:
+					return (ushort)o;
+				case TypeCode.Int32:
+					return (uint)(int)o;
+				case TypeCode.UInt32:
+					return (uint)o;
+				case TypeCode.Int64:
+					return (uint)(long)o;
+				case TypeCode.UInt64:
+					return (uint)(ulong)o;
+				case TypeCode.Single:
+					return (uint)(float)o;
+				case TypeCode.Double:
+					return (uint)(double)o;
+				case TypeCode.Decimal:
+					return (uint)(decimal)o;
+				case TypeCode.String:
+					u = 0;
+					uint.TryParse((string)o, out u);
+					return u;
+			}
+
+			return 0;
 		}
 
 	}
