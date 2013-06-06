@@ -860,6 +860,7 @@ namespace Mono.PlayScript
 				Token.BITWISE_OR,
 				Token.CARRET,
 				Token.INTERR,
+				Token.IDENTIFIER_CONFIG
 
 			});
 

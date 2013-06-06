@@ -28,7 +28,8 @@ package
 	public class Test 
 	{
 		// Config for class methods should work
-		PLATFORM::IOS {
+		PLATFORM::IOS 
+		{
 			public function foo():void {
 
 			}
@@ -37,7 +38,8 @@ package
 		public static function Main():void {
 
 			// Config block for method statements should work
-			PLATFORM::IOS {
+			PLATFORM::IOS 
+			{
 				trace("boo!");
 			}
 

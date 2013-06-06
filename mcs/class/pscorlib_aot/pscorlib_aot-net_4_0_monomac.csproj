@@ -696,13 +696,13 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="flash\external\" />
+    <Folder Include="flash\globalization\" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net_4_0.csproj">
       <Project>{0BACBE20-34DD-4E24-8B91-87970E8A23B9}</Project>
       <Name>PlayScript.Dynamic_aot-net_4_0</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="flash\external\" />
-    <Folder Include="flash\globalization\" />
   </ItemGroup>
 </Project>

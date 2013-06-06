@@ -5927,11 +5927,19 @@ config_block
 
 opt_block_config
 	: /* empty */
-	| IDENTIFIER DOUBLE_COLON IDENTIFIER
+	| IDENTIFIER DOUBLE_COLON block_config_identifier
 	  {
 	    var lt1 = (Tokenizer.LocatedToken) $1;
 	    var lt2 = (Tokenizer.LocatedToken) $3;
         is_config_enabled = file.IsConditionalDefined (lt1.Value + "_" + lt2.Value);
+	  }
+	;
+
+block_config_identifier
+	: IDENTIFIER 
+	  {
+	  	Lexer.AutoSemiInsertionAfter = 1;
+	  	$$ = $1;	  
 	  }
 	;
 
