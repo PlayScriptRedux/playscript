@@ -14,6 +14,8 @@
 
 package {
 
+	import PlayScript.IDynamicClass;
+
 	// Helper class to enable support for flash dynamic classes.
 	public static class Dynamic {
 	
@@ -22,19 +24,19 @@ package {
 		//
 	
 		public static function getValue(obj:IDynamicClass, name:String):* {
-			return obj.getDynamicValue(name);
+			return obj.__GetDynamicValue(name);
 		}
 		
 		public static function setValue(obj:IDynamicClass, name:String, value:*):void {
-			obj.setDynamicValue(name, value);
+			obj.__SetDynamicValue(name, value);
 		}
 	
 		public static function hasValue(obj:IDynamicClass, name:String):Boolean {
-			return obj.hasDynamicValue(name);
+			return obj.__HasDynamicValue(name);
 		}
 		
 		public static function getNames(obj:IDynamicClass):Array {
-			return obj.getDynamicNames();
+			return obj.__GetDynamicNames();
 		}	
 	
 	}
