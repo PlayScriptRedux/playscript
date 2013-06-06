@@ -16,6 +16,7 @@ package {
 
 	import System.*;
 	import System.Json.*;
+	import System.Collections.*;
 	import System.Collections.Generic.*;
 
 	public static class JSON {
@@ -66,8 +67,60 @@ package {
 			return ConvertJsonValueToDynamic(jv);
 		}
 
-		public static function stringify(value:Object, replacer:* = null, space:* = null):String {
+
+		private static function ConvertDictionaryToJsonObject(dict:IDictionary):JsonObject {
+			var jo:JsonObject = new JsonObject();
+			for each (var key:String in dict.Keys) {
+				jo[key] = ConvertToJsonValue(dict[key]);
+			}
+			return jo;
+		}
+
+		private static function ConvertEnumerableToJsonArray(list:IEnumerable):JsonArray {
+			var ja:JsonArray = new JsonArray();
+			for each (var o:Object in list) {
+				ja.Add(ConvertToJsonValue(o));
+			}
+			return ja;
+		}
+
+		private static function ConvertToJsonValue(value:Object):JsonValue {
+
+			if (value == null) {
+				return null;
+			}
+
+			if (value is String) {
+				return new JsonPrimitive(String(value));
+			}
+			
+			if (value is IDictionary) {
+				return ConvertDictionaryToJsonObject(IDictionary(value));
+			}
+
+			if (value is IEnumerable) {
+				return ConvertEnumerableToJsonArray(IEnumerable(value));
+			}
+
+			if (value is int) {
+				return new JsonPrimitive(int(value));
+			}
+
+			if (value is uint) {
+				return new JsonPrimitive(uint(value));
+			}
+
+			if (value is Number) {
+				return new JsonPrimitive(Number(value));
+			}
+
 			throw new System.NotImplementedException();
+		}
+
+
+		public static function stringify(value:Object, replacer:* = null, space:* = null):String {
+			var jv:JsonValue = ConvertToJsonValue(value);
+			return jv.ToString ();
 		}
 	
 		public static function encode(value:Object):String {
