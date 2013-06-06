@@ -212,6 +212,35 @@ namespace PlayScript.RuntimeBinder
 			}
 		}
 
+		public static bool CastObjectToBool(object a)
+		{
+			if (a is bool) {
+				return (bool)a;
+			} if (a is int) {
+				return ((int)a) != 0;
+			} else if (a is double) {
+				return ((double)a) != 0.0;
+			} else if (a is uint) {
+				return ((uint)a) != 0;
+			} else if (a is string) {
+				return !string.IsNullOrEmpty((string)a);
+			} else {
+				// see if object reference is non-nul
+				return (a != null);
+			}
+		}
+
+		public static bool IsTrueObject (CallSite site, object a)
+		{
+			return CastObjectToBool(a) == true;
+		}
+
+		public static bool IsFalseObject (CallSite site, object a)
+		{
+			return CastObjectToBool(a) == false;
+		}
+
+
 		static CSharpUnaryOperationBinder ()
 		{
 			delegates.Add (ExpressionType.Negate, (Func<CallSite, object, object>)NegateObject);
@@ -225,6 +254,8 @@ namespace PlayScript.RuntimeBinder
 
 			delegates.Add (ExpressionType.OnesComplement, (Func<CallSite, object, object>)BitwiseNotObject);
 
+			delegates.Add (ExpressionType.IsFalse, (Func<CallSite, object, bool>)IsFalseObject);
+			delegates.Add (ExpressionType.IsTrue, (Func<CallSite, object, bool>)IsTrueObject);
 		}
 
 		public CSharpUnaryOperationBinder (ExpressionType operation, CSharpBinderFlags flags, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
