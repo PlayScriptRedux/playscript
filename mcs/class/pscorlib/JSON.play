@@ -40,6 +40,8 @@ package {
 		}
 
 		private static function ConvertJsonValueToDynamic(jv:JsonValue):Object {
+			if (jv == null) return null;
+
 			switch (jv.JsonType)
 			{
 			case JsonType.Object:
@@ -50,6 +52,8 @@ package {
 				return Number(jv);
 			case JsonType.String:
 				return String(jv);
+			case JsonType.Boolean:
+ 				return jv.ToString() == "true"; // ugh, no other way in playscript
 			default:
 				throw new Error("NotImplemented");
 			}

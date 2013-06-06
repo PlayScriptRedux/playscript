@@ -340,7 +340,9 @@ package flash.utils {
 		}
  	 	
 		public function writeUTFBytes(value:String):void {
-			throw new NotImplementedException();
+			// encode as UTF8 string
+			var buffer:byte[] = System.Text.Encoding.UTF8.GetBytes(value);
+			mStream.Write (buffer, 0, buffer.Length);
 		}
 		
 		public function writeBytes(a:byte[]):void {
@@ -378,6 +380,20 @@ package flash.utils {
 			ba.writeBytes(data);
 			ba.position = 0;
 			return ba;
+		}
+
+		public override function toString():String
+		{
+			return this.ToString ();
+		}
+
+		public override function ToString():String
+		{
+			var oldPos:int = mStream.Position;
+			mStream.Position = 0;
+			var str:String = readAllUTF();
+			mStream.Position = oldPos;
+			return str;
 		}
 
 
