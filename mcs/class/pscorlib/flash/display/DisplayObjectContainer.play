@@ -125,6 +125,7 @@ package flash.display {
 			if (child is DisplayObjectContainer) {
 				DisplayObjectContainer(child).setStageRecursive(null);
 			}
+			child.mParent = null;
 			mChildren.splice(index, 1);
 			return child;
 		}
