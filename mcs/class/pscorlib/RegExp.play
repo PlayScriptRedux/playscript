@@ -93,7 +93,7 @@ package {
 		}
  	 	
 		public function test(str:String):Boolean {
-			throw new NotImplementedException();
+			return mRegex.IsMatch(str);
 		}
 		
 		public function replace(str:String, replaceWith:String):String {
