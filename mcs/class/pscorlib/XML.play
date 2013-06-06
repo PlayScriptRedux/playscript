@@ -129,7 +129,7 @@ package {
 		}		
 		
 		public function descendants(name:Object):XMLList {
-			throw new System.NotImplementedException();
+			return new XMLList(mElement.GetElementsByTagName(String(name)));
 		}
 		
 		public function elements():XMLList {
