@@ -23,7 +23,7 @@ package {
 	}
  	 	
 	public function decodeURIComponent(uri:String):String {
-		throw new System.NotImplementedException();	
+		return System.Uri.UnescapeDataString(uri);	
 	}
  	 	
 	public function encodeURI(uri:String):String {

@@ -20,80 +20,80 @@ package flash.system {
 		// Properties
 		//
 	
-		public static property avHardwareDisable : Boolean { get { return false; } }
+		public static property avHardwareDisable : Boolean { get { throw new Error(); } }
 		
-		public static property cpuArchitecture : String { get { return null; } }
+		public static property cpuArchitecture : String { get { throw new Error(); } }
 		
-		public static property hasAccessibility : Boolean { get { return false; } }
+		public static property hasAccessibility : Boolean { get { throw new Error(); } }
 		
-		public static property hasAudio : Boolean { get { return false; } }
+		public static property hasAudio : Boolean { get { throw new Error(); } }
 		
-		public static property hasAudioEncoder : Boolean { get { return false; } }
+		public static property hasAudioEncoder : Boolean { get { throw new Error(); } }
 		
-		public static property hasEmbeddedVideo : Boolean { get { return false; } }
+		public static property hasEmbeddedVideo : Boolean { get { throw new Error(); } }
 		
-		public static property hasIME : Boolean { get { return false; } }
+		public static property hasIME : Boolean { get { throw new Error(); } }
 		
-		public static property hasMP3 : Boolean { get { return false; } }
+		public static property hasMP3 : Boolean { get { throw new Error(); } }
 		
-		public static property hasPrinting : Boolean { get { return false; } }
+		public static property hasPrinting : Boolean { get { throw new Error(); } }
 		
-		public static property hasScreenBroadcast : Boolean { get { return false; } }
+		public static property hasScreenBroadcast : Boolean { get { throw new Error(); } }
 		
-		public static property hasScreenPlayback : Boolean { get { return false; } }
+		public static property hasScreenPlayback : Boolean { get { throw new Error(); } }
 		
-		public static property hasStreamingAudio : Boolean { get { return false; } }
+		public static property hasStreamingAudio : Boolean { get { throw new Error(); } }
 		
-		public static property hasStreamingVideo : Boolean { get { return false; } }
+		public static property hasStreamingVideo : Boolean { get { throw new Error(); } }
 		
-		public static property hasTLS : Boolean { get { return false; } }
+		public static property hasTLS : Boolean { get { throw new Error(); } }
 		
-		public static property hasVideoEncoder : Boolean { get { return false; } }
+		public static property hasVideoEncoder : Boolean { get { throw new Error(); } }
 		
 		public static property isDebugger : Boolean { get { return true; } }
 		
-		public static property isEmbeddedInAcrobat : Boolean { get { return false; } }
+		public static property isEmbeddedInAcrobat : Boolean { get { throw new Error(); } }
 		
-		public static property language : String { get { return null; } }
+		public static property language : String { get { throw new Error(); } }
 		
-		public static property languages : Array { get { return null; } }
+		public static property languages : Array { get { throw new Error(); } }
 		
-		public static property localFileReadDisable : Boolean { get { return false; } }
+		public static property localFileReadDisable : Boolean { get { throw new Error(); } }
 		
 		public static property manufacturer : String { get { return "iOS"; } }
 		
-		public static property maxLevelIDC : String { get { return null; } }
+		public static property maxLevelIDC : String { get { throw new Error(); } }
 		
-		public static property os : String { get { return null; } }
+		public static property os : String { get { throw new Error(); } }
 		
-		public static property pixelAspectRatio : Number { get { return 0.0; } }
+		public static property pixelAspectRatio : Number { get { throw new Error(); } }
 		
 		public static property playerType : String { get { return "Desktop"; } }
 		
-		public static property screenColor : String { get { return null; } }
+		public static property screenColor : String { get { throw new Error(); } }
 		
-		public static property screenDPI : Number { get { return 0.0; } }
+		public static property screenDPI : Number { get { throw new Error(); } }
 		
-		public static property screenResolutionX : Number { get { return 0.0; } }
+		public static property screenResolutionX : Number { get { throw new Error(); } }
 		
-		public static property screenResolutionY : Number { get { return 0.0; } }
+		public static property screenResolutionY : Number { get { throw new Error(); } }
 		
-		public static property serverString : String { get { return null; } }
+		public static property serverString : String { get { throw new Error(); } }
 		
-		public static property supports32BitProcesses : Boolean { get { return false; } }
+		public static property supports32BitProcesses : Boolean { get { throw new Error(); } }
 		
-		public static property supports64BitProcesses : Boolean { get { return false; } }
+		public static property supports64BitProcesses : Boolean { get { throw new Error(); } }
 		
-		public static property touchscreenType : String { get { return null; } }
+		public static property touchscreenType : String { get { throw new Error(); } }
 		
-		public static property version : String { get { return null; } }
+		public static property version : String { get { return "MAC 11,7,700,203"; } }
 
 		//
 		// Methods
 		//
 						
 		public static function hasMultiChannelAudio(type:String):Boolean {
-			return false;
+			throw new Error();
 		}
 	
 	}

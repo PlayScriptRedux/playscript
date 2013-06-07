@@ -112,6 +112,7 @@
 ../pscorlib/flash/geom/Transform.play
 ../pscorlib/flash/geom/Utils3D.play
 ../pscorlib/flash/geom/Vector3D.play
+../pscorlib/flash/globalization/Collator.play
 ../pscorlib/flash/media/Camera.play
 ../pscorlib/flash/media/ID3Info.play
 ../pscorlib/flash/media/Sound.play
@@ -186,7 +187,6 @@
 ../pscorlib/FunctionExtensions.cs
 ../pscorlib/functions.cs
 ../pscorlib/functions.play
-../pscorlib/IDynamicClass.play
 ../pscorlib/int.cs
 ../pscorlib/JSON.play
 ../pscorlib/Math.play

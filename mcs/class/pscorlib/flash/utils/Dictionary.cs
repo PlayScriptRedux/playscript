@@ -15,9 +15,15 @@
 using System;
 using System.Collections.Generic;
 using PlayScript;
+using System.Runtime.Serialization;
+using System.Security.Permissions;
+using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace flash.utils
 {
+	[DebuggerDisplay ("Count={Count}")]
+	[DebuggerTypeProxy (typeof (DictionaryDebugView))]
 	[DynamicClass]
 	public class Dictionary : Dictionary<object, object>, IDynamicClass
 	{
@@ -46,6 +52,9 @@ namespace flash.utils
 			get {
 				// the flash dictionary implementation does not throw if key not found
 				object value;
+				if (key == null) {
+					return null;
+				}
 				if (base.TryGetValue(key, out value)) {
 					return value;
 				} else {
@@ -91,6 +100,48 @@ namespace flash.utils
 			return a;
 		}
 
+		#endregion
+
+		#region DebugView
+		[DebuggerDisplay("{value}", Name = "{key}")]
+		internal class KeyValuePairDebugView
+		{
+			public object key;
+			public object value;
+			
+			public KeyValuePairDebugView(object key, object value)
+			{
+				this.value = value;
+				this.key = key;
+			}
+		}
+		
+		internal class DictionaryDebugView
+		{
+			private Dictionary dict;
+			
+			public DictionaryDebugView(Dictionary expando)
+			{
+				this.dict = expando;
+			}
+			
+			[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+			public KeyValuePairDebugView[] Keys
+			{
+				get
+				{
+					var keys = new KeyValuePairDebugView[dict.Count];
+					
+					int i = 0;
+					foreach(string key in dict.Keys)
+					{
+						keys[i] = new KeyValuePairDebugView(key, dict[key]);
+						i++;
+					}
+					return keys;
+				}
+			}
+		}
 		#endregion
 	}
 }

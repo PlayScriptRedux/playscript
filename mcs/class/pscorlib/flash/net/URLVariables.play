@@ -14,7 +14,7 @@
 
 package flash.net {
 
-	public class URLVariables implements IDynamicClass {
+	public dynamic class URLVariables {
 	
 		//
 		// Methods
@@ -31,29 +31,6 @@ package flash.net {
 			throw new System.NotImplementedException();
 		}
 	
-		//
-		// IDynamicClass Implementation
-		//
-	
-		public function getDynamicValue(name:String):* {
-			throw new System.NotImplementedException();
-		}
-		
-		public function setDynamicValue(name:String, value:*):void {
-			throw new System.NotImplementedException();
-		}
-	
-		public function hasDynamicValue(name:String):Boolean {
-			throw new System.NotImplementedException();
-		}
-		
-		public function getDynamicNames():Array {
-			throw new System.NotImplementedException();
-		}
-
-		public function Remove(name:String):void {
-			throw new System.NotImplementedException();
-		}
 	
 	}
 

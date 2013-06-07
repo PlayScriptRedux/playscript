@@ -161,7 +161,9 @@ namespace PlayScript.RuntimeBinder
 				return (T)(object)o.GetType ();
 			}
 
-			throw new Exception("Unable to find member " + name);
+//			throw new Exception("Unable to find member " + name);
+			// return default value (could return undefined actually)
+			return default(T);
 		}
 
 		static CSharpGetMemberBinder ()

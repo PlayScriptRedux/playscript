@@ -29,22 +29,24 @@ namespace flash.events
 		};
 
 
+		private IEventDispatcher _evRedirect; // this is used for redirecting all event handling, not sure if this is needed
 		private IEventDispatcher _evTarget;
 		private Dictionary<string, List<EventListener>> _events;
 
 		public EventDispatcher() {
+			_evTarget = this;
 		}
 
 		public EventDispatcher (IEventDispatcher target)
 		{
-			_evTarget = target;
+			_evTarget = (target != null) ? target : this;
 		}
 
 		#region IEventDispatcher implementation
 		public virtual void addEventListener (string type, Delegate listener, bool useCapture = false, int priority = 0, bool useWeakReference = false)
 		{
-			if (_evTarget != null) {
-				_evTarget.addEventListener (type, listener, useCapture, priority, useWeakReference);
+			if (_evRedirect != null) {
+				_evRedirect.addEventListener (type, listener, useCapture, priority, useWeakReference);
 			} else {
 
 				if (_events == null) {
@@ -86,8 +88,8 @@ namespace flash.events
 
 		public virtual bool dispatchEvent (Event ev)
 		{
-			if (_evTarget != null) {
-				return dispatchEvent(ev);
+			if (_evRedirect != null) {
+				return _evRedirect.dispatchEvent(ev);
 			} else {
 				bool dispatched = false;
                 var evList = getListenersForEventType(ev.type);
@@ -100,7 +102,7 @@ namespace flash.events
                         // we perform a dynamic invoke here because the parameter types dont always match exactly
                         try {
 							// set current target for event
-							ev._currentTarget = ev._target = this;
+							ev._currentTarget = ev._target = _evTarget;
                             callback.DynamicInvoke(ev);
 							ev._currentTarget = ev._target = null;
                         } 
@@ -119,8 +121,8 @@ namespace flash.events
 
 		public virtual bool hasEventListener (string type)
 		{
-			if (_evTarget != null) {
-                return hasEventListener(type);
+			if (_evRedirect != null) {
+				return _evRedirect.hasEventListener(type);
 			} else {
                 var evList = getListenersForEventType(type);
                 if (evList != null) {
@@ -133,8 +135,8 @@ namespace flash.events
 
 		public virtual void removeEventListener (string type, Delegate listener, bool useCapture = false)
 		{
-			if (_evTarget != null) {
-                _evTarget.removeEventListener(type, listener, useCapture);
+			if (_evRedirect != null) {
+				_evRedirect.removeEventListener(type, listener, useCapture);
 			} else {
                 var evList = getListenersForEventType(type);
                 if (evList != null) {
@@ -170,8 +172,8 @@ namespace flash.events
 
 		public virtual bool willTrigger (string type)
 		{
-			if (_evTarget != null) {
-				return _evTarget.hasEventListener (type);
+			if (_evRedirect != null) {
+				return _evRedirect.hasEventListener (type);
 			} else {
 				return hasEventListener (type);
 			}

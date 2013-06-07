@@ -16,36 +16,13 @@ package flash.display {
 
 	import flash.utils.ByteArray;
 
-	public class ShaderData implements IDynamicClass {
+	public dynamic class ShaderData {
 	
 		//
 		// Methods
 		//
 		
 		public function ShaderData(byteCode:ByteArray) {
-		}
-		
-		//
-		// IDynamicClass Implementation
-		//
-	
-		public function getDynamicValue(name:String):* {
-			throw new System.NotImplementedException();
-//			return null;
-		}
-		
-		public function setDynamicValue(name:String, value:*):void {
-			throw new System.NotImplementedException();
-		}
-	
-		public function hasDynamicValue(name:String):Boolean {
-			throw new System.NotImplementedException();
-//			return false;
-		}
-		
-		public function getDynamicNames():Array {
-			throw new System.NotImplementedException();
-//			return null;
 		}
 		
 	}

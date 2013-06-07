@@ -112,6 +112,7 @@
 ./flash/geom/Transform.play
 ./flash/geom/Utils3D.play
 ./flash/geom/Vector3D.play
+./flash/globalization/Collator.play
 ./flash/media/Camera.play
 ./flash/media/ID3Info.play
 ./flash/media/Sound.play
@@ -186,7 +187,6 @@
 ./FunctionExtensions.cs
 ./functions.cs
 ./functions.play
-./IDynamicClass.play
 ./int.cs
 ./JSON.play
 ./Math.play

@@ -655,9 +655,6 @@
     <Compile Include="..\pscorlib\PlayScript\IDynamicClass.cs">
       <Link>PlayScript\IDynamicClass.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\IDynamicClass.play">
-      <Link>IDynamicClass.play</Link>
-    </Compile>
     <Compile Include="..\pscorlib\PlayScript\EmbedLoader.cs">
       <Link>PlayScript\EmbedLoader.cs</Link>
     </Compile>

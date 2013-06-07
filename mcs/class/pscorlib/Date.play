@@ -37,7 +37,7 @@ package {
 		public function get minutes():Number { throw new System.NotImplementedException();  }
 		public function get seconds():Number { throw new System.NotImplementedException();  }
 
-		public function setTime(t:Number) : void { throw new System.NotImplementedException();  }
+		public function setTime(t:Number) : void { mDate = new System.DateTime(long(t));  }
 		public function setDate(t:Number) : void { throw new System.NotImplementedException();  }
 		public function setHours(t:Number) : void { throw new System.NotImplementedException();  }
 		public function setMinutes(t:Number) : void { throw new System.NotImplementedException();  }

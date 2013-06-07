@@ -1199,6 +1199,8 @@ namespace PlayScript.RuntimeBinder
 				return (int)a == b;
 			} else if (a is double || a is float) {
 				return (double)a == (double)b;
+			} else if (a == null) {
+				return false;
 			} else {
 				ThrowOnInvalidOp (a, EQ);
 				return null;
@@ -1283,22 +1285,12 @@ namespace PlayScript.RuntimeBinder
 
 		public static object EqualsObjBool (CallSite site, object a, bool b)
 		{
-			if (a is bool) {
-				return (bool)a == b;
-			} else {
-				ThrowOnInvalidOp (a, EQ);
-				return null;
-			}
+			return CastObjectToBool(a) == b;
 		}
 		
 		public static object EqualsBoolObj (CallSite site, bool a, object b)
 		{
-			if (b is bool) {
-				return a == (bool)b;
-			} else {
-				ThrowOnInvalidOp (b, EQ);
-				return null;
-			}
+			return a == CastObjectToBool(b);
 		}
 
 		public static object EqualsObjObj (CallSite site, object a, object b)
@@ -1553,8 +1545,7 @@ namespace PlayScript.RuntimeBinder
 			} else if (a is uint) {
 				return AndUIntObj (site, (uint)a, b);
 			} else {
-				ThrowOnInvalidOp (b, AND);
-				return null;
+				return CastObjectToBool(a) && CastObjectToBool(b);
 			}
 		}
 
@@ -1774,6 +1765,24 @@ namespace PlayScript.RuntimeBinder
 			}
 		}
 
+
+		public static bool CastObjectToBool(object a)
+		{
+			if (a is bool) {
+				return (bool)a;
+			} if (a is int) {
+				return ((int)a) != 0;
+			} else if (a is double) {
+				return ((double)a) != 0.0;
+			} else if (a is uint) {
+				return ((uint)a) != 0;
+			} else if (a is string) {
+				return !string.IsNullOrEmpty((string)a);
+			} else {
+				// see if object reference is non-nul
+				return (a != null);
+			}
+		}
 
 
 		static CSharpBinaryOperationBinder ()

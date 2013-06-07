@@ -14,6 +14,7 @@
 
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Security.Permissions;
@@ -51,7 +52,7 @@ namespace _root {
 
 	[DebuggerDisplay("length = {length}")]
 	[DebuggerTypeProxy(typeof(VectorDebugView<>))]
-	public class Vector<T> : IEnumerable<T>, IList<T>
+	public class Vector<T> : IEnumerable<T>, IList<T>, IEnumerable
 	{
 		//
 		// Properties
