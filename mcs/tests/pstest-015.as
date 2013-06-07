@@ -1,47 +1,73 @@
 package
 {
-	// Test config optional compilation
+	import System.Reflection.*;
 
-	// Config block around import should work
-	PLATFORM::IOS {
-		import blah.blah.blah;
+
+	public class Foo {
+
+		public static function a():void {
+			trace("static Foo:a()");
+		}
+
+		public function a():void {
+			trace("Foo:a()");
+		}
+
+		public function get q():int {
+			trace("Foo:q get");
+			return 100;
+		}
+
+		public function set q(value:int):void {
+			trace("Foo:q set");
+		}
+
+		public static function get q():int {
+			trace("static Foo:q get");
+			return 100;
+		}
+
+		public static function set q(value:int):void {
+			trace("static Foo:q set");
+		}
+
+
 	}
 
-	// Config prefix to import should work
-	PLATFORM::IOS
-	import blah.blah;
+	public class Bar {
 
-	// Config prefix for function should work
-	PLATFORM::IOS
-	public function foo():void {
+		public static function b():void {
+			trace("static Bar:b()");
+		}
+
+		public function b():void {
+			trace("Bar:b()");
+		}
 
 	}
 
-	// Config prefix for interfaces should work
-	PLATFORM::IOS
-	public interface IBlah {
-		
-		function boo():void;
-				
-	}
 
 	public class Test 
 	{
-		// Config for class methods should work
-		PLATFORM::IOS 
-		{
-			public function foo():void {
-
-			}
-		}
-
 		public static function Main():void {
+			var f:Foo = new Foo();
+			var b:Bar = new Bar();
 
-			// Config block for method statements should work
-			PLATFORM::IOS 
-			{
-				trace("boo!");
-			}
+			Foo.a ();
+			f.a ();
+			var i:int;
+			i = f.q;
+			f.q = i;
+			i = Foo.q;
+			Foo.q = i;
+
+			var foo_m = f.GetType().GetMethod ("a", BindingFlags.Public | BindingFlags.Instance);
+			foo_m = f.GetType().GetMethod ("a", BindingFlags.Public | BindingFlags.Static);
+
+			Bar.b ();
+			b.b ();
+
+
 
 		}
 	}

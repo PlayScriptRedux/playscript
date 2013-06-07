@@ -6031,7 +6031,7 @@ namespace Mono.CSharp
 
 		protected virtual MethodGroupExpr DoResolveOverload (ResolveContext ec)
 		{
-			return mg.OverloadResolve (ec, ref arguments, null, OverloadResolver.Restrictions.None);
+			return mg.OverloadResolve (ec, ref arguments, null, mg.OverloadRestrictions);
 		}
 
 		public override string GetSignatureForError ()
@@ -8747,6 +8747,15 @@ namespace Mono.CSharp
 				return null;
 			}
 
+			// Add "static/instance" restrictions to lookup.
+			if (rc.FileType == SourceFileType.PlayScript) {
+				if (expr is TypeExpression) {
+					restrictions |= MemberLookupRestrictions.PreferStatic;
+				} else {
+					restrictions |= MemberLookupRestrictions.PreferInstance;
+				}
+			}
+
 			var lookup_arity = Arity;
 			bool errorMode = false;
 			Expression member_lookup;
@@ -8921,6 +8930,13 @@ namespace Mono.CSharp
 				var vr = expr as VariableReference;
 				if (vr != null)
 					vr.VerifyAssigned (rc);
+			}
+
+			// PlayScript - Add additional restrictions to overload resolution to disambiguate static/instance methods with the
+			// same name and params.
+			if (rc.FileType == SourceFileType.PlayScript) {
+				me.OverloadRestrictions = (expr is TypeExpression) ? 
+					OverloadResolver.Restrictions.StaticOnly : OverloadResolver.Restrictions.InstanceOnly;
 			}
 
 			return me;

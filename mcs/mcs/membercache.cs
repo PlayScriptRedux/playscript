@@ -1337,6 +1337,9 @@ namespace Mono.CSharp {
 
 		public bool CheckExistingMembersOverloads (MemberCore member, string name, AParametersCollection parameters)
 		{
+			// Check if we are PlayScript class
+			bool is_playscript = member.Parent.FileType == SourceFileType.PlayScript;
+
 			IList<MemberSpec> entries;
 			if (!member_hash.TryGetValue (name, out entries))
 				return false;
@@ -1356,6 +1359,10 @@ namespace Mono.CSharp {
 
 				// Ignore merged interface members
 				if (member.Parent.PartialContainer != ce.DeclaringType.MemberDefinition)
+					continue;
+
+				// PlayScript - Permit methods of the same name/params/arity where one is static and the other is non-static.
+				if (is_playscript && (member.ModFlags & Modifiers.STATIC) != (ce.Modifiers & Modifiers.STATIC))
 					continue;
 
 				var p_types = pd.Types;
@@ -1495,5 +1502,63 @@ namespace Mono.CSharp {
 
 			return true;
 		}
+
+		// ActionScript/PlayScript - rename a static member to "member__static" if it clashes with a non-static method.
+		public void AsRenameStaticMemberOverloads (MemberCore member, AParametersCollection parameters)
+		{
+//			var name = GetLookupName (member);
+//			var imb = member as InterfaceMemberBase;
+//			if (imb != null && imb.IsExplicitImpl) {
+//				name = imb.GetFullName (name);
+//			}
+//
+//			AsRenameStaticMemberOverloads (member, name, parameters);
+		}
+
+		// ActionScript/PlayScript - rename a static member to "member__static" if it clashes with a non-static method.
+		public void AsRenameStaticMemberOverloads (MemberCore member, string name, AParametersCollection parameters)
+		{
+			IList<MemberSpec> entries;
+			if (!member_hash.TryGetValue (name, out entries))
+				return;
+
+			var Report = member.Compiler.Report;
+
+			int method_param_count = parameters.Count;
+			for (int i = entries.Count - 1; i >= 0; --i) {
+				var ce = entries[i];
+				var pm = ce as IParametersMember;
+				var pd = pm == null ? ParametersCompiled.EmptyReadOnlyParameters : pm.Parameters;
+				if (pd.Count != method_param_count)
+					continue;
+
+				if (ce.Arity != member.MemberName.Arity)
+					continue;
+
+				// Ignore merged interface members
+				if (member.Parent.PartialContainer != ce.DeclaringType.MemberDefinition)
+					continue;
+
+				Method method_a = member as Method;
+				Method method_b = ce.MemberDefinition as Method;
+
+				if ((method_a.ModFlags & Modifiers.STATIC) != (method_b.ModFlags & Modifiers.STATIC)) {
+					Method static_method = (method_a.ModFlags & Modifiers.STATIC) != 0 ? method_a : method_b;
+					static_method.RenameMember (new MemberName(static_method.MemberName.Basename + "__static"));
+					static_method.Parent.AddNameToContainer (static_method, static_method.MemberName.Basename);
+					if (static_method == ce.MemberDefinition) {
+						if (entries.Count == 1) {
+							member_hash.Remove (name);
+						} else {
+							entries.Remove (ce);
+						}
+						AddMember (ce);
+					}
+				}
+
+			}
+		}
+
+
 	}
 }

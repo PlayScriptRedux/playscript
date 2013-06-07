@@ -1673,12 +1673,7 @@ method_header
 		if (parameters != null && parameters.Count > 0)
 			report.Error (7016, GetLocation ($10), "Property getter functions may not have parameters");
 
-		current_property = null;		
-						
-		MemberCore member;
-		if (current_type.DefinedNames.TryGetValue(name.Name, out member)) {
-			current_property = member as Property;
-		}
+		current_property = current_type.LookupNameInContainer (name.Name, modifiers) as Property;
 		
 		if (current_property == null) {
 			current_property = new Property (current_type, type, modifiers, name, (Attributes) $1);
@@ -1734,12 +1729,7 @@ method_header
 		if (void_type.Type != null && void_type.Type.Kind != MemberKind.Void)
 			report.Error (7003, GetLocation ($10), "Property setter function must not be of type void");					
 
-		current_property = null;
-						
-		MemberCore member;
-		if (current_type.DefinedNames.TryGetValue(name.Name, out member)) {
-			current_property = member as Property;
-		}
+		current_property = current_type.LookupNameInContainer (name.Name, modifiers) as Property;
 
 		FullNamedExpression type; 
 		

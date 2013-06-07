@@ -53,6 +53,10 @@ namespace Mono.CSharp
 
 		protected Dictionary<string, MemberCore> defined_names;
 
+		// Playscript "static" and "instance" names
+		protected Dictionary<string, MemberCore> defined_static_names;
+		protected Dictionary<string, MemberCore> defined_instance_names;
+
 		protected bool is_defined;
 
 		public TypeContainer (TypeContainer parent, MemberName name, Attributes attrs, MemberKind kind)
@@ -63,6 +67,8 @@ namespace Mono.CSharp
 				this.Basename = name.Basename;
 
 			defined_names = new Dictionary<string, MemberCore> ();
+			defined_static_names = new Dictionary<string, MemberCore> ();
+			defined_instance_names = new Dictionary<string, MemberCore> ();
 		}
 
 		public override TypeSpec CurrentType {
@@ -74,6 +80,18 @@ namespace Mono.CSharp
 		public Dictionary<string, MemberCore> DefinedNames {
 			get {
 				return defined_names;
+			}
+		}
+
+		public Dictionary<string, MemberCore> DefinedStaticNames {
+			get {
+				return defined_static_names;
+			}
+		}
+
+		public Dictionary<string, MemberCore> DefinedInstanceNames {
+			get {
+				return defined_instance_names;
 			}
 		}
 
@@ -251,8 +269,12 @@ namespace Mono.CSharp
 			// Release cache used by parser only
 			if (Module.Evaluator == null) {
 				defined_names = null;
+				defined_static_names = null;
+				defined_instance_names = null;
 			} else {
 				defined_names.Clear ();
+				defined_static_names.Clear ();
+				defined_instance_names.Clear ();
 			}
 
 			return true;
@@ -805,9 +827,22 @@ namespace Mono.CSharp
 				return;
 
 			MemberCore mc;
-			if (!PartialContainer.defined_names.TryGetValue (name, out mc)) {
-				PartialContainer.defined_names.Add (name, symbol);
-				return;
+
+			if (this.FileType == SourceFileType.PlayScript && symbol is MethodCore || symbol is Property) {
+				if (!PartialContainer.defined_names.TryGetValue (name, out mc)) {
+					PartialContainer.defined_names.Add (name, symbol);
+				}
+				var inst_or_static_names = (symbol.ModFlags & Modifiers.STATIC) != 0 ? 
+					PartialContainer.defined_static_names : PartialContainer.defined_instance_names;
+				if (!inst_or_static_names.TryGetValue (name, out mc)) {
+					inst_or_static_names.Add (name, symbol);
+					return;
+				}
+			} else {
+				if (!PartialContainer.defined_names.TryGetValue (name, out mc)) {
+					PartialContainer.defined_names.Add (name, symbol);
+					return;
+				}
 			}
 
 			if (symbol.EnableOverloadChecks (mc))
@@ -847,6 +882,29 @@ namespace Mono.CSharp
 			if (PartialContainer.defined_names.TryGetValue (name, out mc)) {
 				PartialContainer.defined_names[name] = newsymbol;
 			}
+
+			// Handle static/instance name dictionaries for PlayScript
+			if (this.FileType == SourceFileType.PlayScript) {
+				var inst_or_static_names = (newsymbol.ModFlags & Modifiers.STATIC) != 0 ? 
+					PartialContainer.defined_static_names : PartialContainer.defined_instance_names;
+				if (inst_or_static_names.TryGetValue (name, out mc))
+					inst_or_static_names.Add (name, newsymbol);
+			}
+		}
+
+		public MemberCore LookupNameInContainer(string name, Modifiers modifiers) {
+			MemberCore mc = null;
+			if (this.FileType == SourceFileType.PlayScript) {
+				if ((modifiers & Modifiers.STATIC) != 0) {
+					defined_static_names.TryGetValue (name, out mc);
+				} else {
+					defined_instance_names.TryGetValue (name, out mc);
+				}
+			} else {
+				defined_names.TryGetValue (name, out mc);
+			}
+
+			return mc;
 		}
 
 		public void AddConstructor (Constructor c)
@@ -3516,6 +3574,11 @@ namespace Mono.CSharp
 		protected virtual bool CheckForDuplications ()
 		{
 			return Parent.MemberCache.CheckExistingMembersOverloads (this, ParametersCompiled.EmptyReadOnlyParameters);
+		}
+
+		// ActionScript/PlayScript - We rename any static duplicate methods to "methodName__static"
+		protected virtual void AsRenameStaticDuplications ()
+		{
 		}
 
 		//

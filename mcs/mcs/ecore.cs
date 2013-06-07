@@ -730,7 +730,9 @@ namespace Mono.CSharp {
 			InvocableOnly = 1,
 			ExactArity = 1 << 2,
 			ReadAccess = 1 << 3,
-			AsTypeCast = 1 << 4
+			PreferStatic = 1 << 4,     // Used to filter static/non-static for PlayScript
+			PreferInstance = 1 << 5,   // Used to filter static/non-static for PlayScript
+			AsTypeCast = 1 << 6
 		}
 
 		//
@@ -815,11 +817,22 @@ namespace Mono.CSharp {
 
 				if (non_method != null) {
 					if (ambig_non_method != null && rc != null) {
-						var report = rc.Module.Compiler.Report;
-						report.SymbolRelatedToPreviousError (non_method);
-						report.SymbolRelatedToPreviousError (ambig_non_method);
-						report.Error (229, loc, "Ambiguity between `{0}' and `{1}'",
-							non_method.GetSignatureForError (), ambig_non_method.GetSignatureForError ());
+						// PlayScript - we resolve ambiguity between identically named static/instance methods based on preference passed
+						// from the caller (which checks to see if a TypeName.blah is used).  This allows us to have identically named 
+						// properties/member vars.
+						if ((restrictions & MemberLookupRestrictions.PreferStatic) != 0 && 
+						    		((non_method.Modifiers & Modifiers.STATIC) != (ambig_non_method.Modifiers & Modifiers.STATIC))) {
+							non_method = (non_method.Modifiers & Modifiers.STATIC) != 0 ? non_method : ambig_non_method;
+						} else if ((restrictions & MemberLookupRestrictions.PreferInstance) != 0 && 
+						           	((non_method.Modifiers & Modifiers.STATIC) != (ambig_non_method.Modifiers & Modifiers.STATIC))) {
+							non_method = (non_method.Modifiers & Modifiers.STATIC) == 0 ? non_method : ambig_non_method;
+						} else {
+							var report = rc.Module.Compiler.Report;
+							report.SymbolRelatedToPreviousError (non_method);
+							report.SymbolRelatedToPreviousError (ambig_non_method);
+							report.Error (229, loc, "Ambiguity between `{0}' and `{1}'",
+								non_method.GetSignatureForError (), ambig_non_method.GetSignatureForError ());
+						}
 					}
 
 					if (non_method is MethodSpec)
@@ -3029,6 +3042,12 @@ namespace Mono.CSharp {
 		//
 		public Expression InstanceExpression;
 
+		//
+		// Allow lookup to specify additional overload restrictions (PlayScript needs this to pass the 
+		// StaticOnly/InstanceOnly restrictions).
+		//
+		public OverloadResolver.Restrictions OverloadRestrictions;
+
 		/// <summary>
 		///   The name of this member.
 		/// </summary>
@@ -3907,7 +3926,9 @@ namespace Mono.CSharp {
 			ProbingOnly	= 1 << 1,
 			CovariantDelegate = 1 << 2,
 			NoBaseMembers = 1 << 3,
-			BaseMembersIncluded = 1 << 4
+			BaseMembersIncluded = 1 << 4,
+			StaticOnly = 1 << 5,           // PlayScript - we need to be able to filter by static or instance, as we can have both with the same name.
+			InstanceOnly = 1 << 6
 		}
 
 		public interface IBaseMembersProvider
@@ -5004,6 +5025,14 @@ namespace Mono.CSharp {
 								instance_qualifier != null && !instance_qualifier.CheckProtectedMemberAccess (rc, member)) {
 								continue;
 							}
+
+							// PlayScript - We need to be able to filter by isntance or static.  Playscript can have both with the same name.
+							if ((restrictions & Restrictions.InstanceOnly) != 0 && (member.Modifiers & Modifiers.STATIC) != 0)
+								continue;
+
+							// PlayScript - We need to be able to filter by isntance or static.  Playscript can have both with the same name.
+							if ((restrictions & Restrictions.StaticOnly) != 0 && (member.Modifiers & Modifiers.STATIC) == 0)
+								continue;
 						}
 
 						IParametersMember pm = member as IParametersMember;

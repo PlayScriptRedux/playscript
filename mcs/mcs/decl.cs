@@ -896,6 +896,11 @@ namespace Mono.CSharp {
 		{
 		}
 
+		public void RenameMember(MemberName newName)
+		{
+			member_name = newName;
+		}
+
 		#region IMemberContext Members
 
 		public virtual CompilerContext Compiler {
