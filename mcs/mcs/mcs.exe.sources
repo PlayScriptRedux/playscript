@@ -32,6 +32,7 @@ field.cs
 flowanalysis.cs
 generic.cs
 import.cs
+intrinsics.cs
 iterators.cs
 ikvm.cs
 js-emit.cs

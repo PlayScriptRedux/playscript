@@ -74,7 +74,13 @@ namespace Mono.CSharp
 		///  Whether we are inside an anonymous method.
 		/// </summary>
 		public AnonymousExpression CurrentAnonymousMethod;
-		
+
+
+		// <summary>
+		//  MSIL Intrinsic context information.
+		// </summary>
+		public MsilIntrinsicContext IntrinsicContext;
+
 		readonly IMemberContext member_context;
 
 		readonly SourceMethodBuilder methodSymbols;

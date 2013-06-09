@@ -19,6 +19,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Externalconsole>True</Externalconsole>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -27,12 +28,10 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Externalconsole>True</Externalconsole>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="test2">
-      <HintPath>test2.exe</HintPath>
-    </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -44,10 +43,14 @@
       <Project>{EDBAC91B-2817-479E-8DDF-B24ADDA563A6}</Project>
       <Name>pscorlib_aot-net_4_0_monomac</Name>
     </ProjectReference>
+    <ProjectReference Include="..\class\Mono.Optimization\Mono.Optimization_4_0.csproj">
+      <Project>{4069FC26-5839-4E53-B50C-B7AAF7CD3227}</Project>
+      <Name>Mono.Optimization_4_0</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\tests\pstest-015.as">
-      <Link>pstest-015.as</Link>
+    <Compile Include="..\tests\pstest-000.cs">
+      <Link>pstest-000.cs</Link>
     </Compile>
   </ItemGroup>
 </Project>

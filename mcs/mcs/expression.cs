@@ -5969,7 +5969,13 @@ namespace Mono.CSharp
 			}
 
 			IsSpecialMethodInvocation (ec, method, loc);
-			
+
+			// Check for Mono.Optimization intrinsics.
+			if (mg.BestCandidate != null && mg.BestCandidate.DeclaringType.Name == "Msil" && 
+			    mg.BestCandidate.DeclaringType.MemberDefinition.Namespace == "Mono.Optimization") {
+				return new MsilIntrinsic(expr, arguments, mg).Resolve (ec);
+			}
+
 			eclass = ExprClass.Value;
 			return this;
 		}
