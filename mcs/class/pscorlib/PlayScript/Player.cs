@@ -175,6 +175,9 @@ namespace PlayScript
 				case ".tif":
 					// load as bitmap
 					return new flash.display.Bitmap(flash.display.BitmapData.loadFromPath(path));
+				case ".jxr":
+					Console.Error.WriteLine("warning - jxr loading not supported");
+					return new flash.display.Bitmap(new flash.display.BitmapData(32,32));
 				default:
 					throw new NotImplementedException("Loader for " + ext);
 			}
