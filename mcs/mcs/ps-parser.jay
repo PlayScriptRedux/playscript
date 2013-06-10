@@ -5928,6 +5928,7 @@ config_block
   		  start_block (GetLocation ($2));
   		  $$ = end_block (GetLocation ($5));
   		}
+  		is_config_enabled = true;
 	  }
 	;
 
