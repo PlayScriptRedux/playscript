@@ -8940,8 +8940,8 @@ namespace Mono.CSharp
 
 			// PlayScript - Add additional restrictions to overload resolution to disambiguate static/instance methods with the
 			// same name and params.
-			if (rc.FileType == SourceFileType.PlayScript) {
-				me.OverloadRestrictions = (expr is TypeExpression) ? 
+			if (rc.FileType == SourceFileType.PlayScript && (me is MethodGroupExpr) && ((MethodGroupExpr)me).Candidates.Count > 1) {
+				me.OverloadRestrictions = (expr is TypeExpr) ? 
 					OverloadResolver.Restrictions.StaticOnly : OverloadResolver.Restrictions.InstanceOnly;
 			}
 

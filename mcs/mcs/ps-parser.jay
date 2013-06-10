@@ -4635,7 +4635,7 @@ anonymous_method_expression
 		valid_param_mod = 0;
 		start_anonymous (false, (ParametersCompiled) $4, (TypeExpr) $7, false, GetLocation ($1));
 	  }
-	  block
+	  anon_block
 	  {
 		$$ = end_anonymous ((ParametersBlock) $9);
 	  }
@@ -4648,7 +4648,7 @@ anonymous_method_expression
 		valid_param_mod = 0;
 		start_anonymous (false, (ParametersCompiled) $5, (FullNamedExpression) $8, true, GetLocation ($1));
 	  }
-	  block
+	  anon_block
 	  {
 		$$ = end_anonymous ((ParametersBlock) $10);
 	  }
@@ -5893,6 +5893,22 @@ block
 	;
 	
 //
+// Anon block (has auto-semi insertion after semicolon)
+//      
+anon_block
+	: OPEN_BRACE  
+	  {
+		++lexer.parsing_block;
+		lexer.AutoSemiInsertion = true;
+		start_block (GetLocation ($1));
+	  } 
+	  opt_statement_list anon_block_end
+	  {
+  		$$ = $4;
+	  }
+	;
+	
+//
 // An optional config block is "contained" on the following places:
 //	method_body
 //      
@@ -5947,7 +5963,22 @@ block_end
 		$$ = end_block (lexer.Location);
 	  }
 	;
-
+	
+anon_block_end 
+	: CLOSE_BRACE 
+	  {
+	  	Lexer.AutoSemiInsertion = true;
+ 	  	Lexer.AllowAutoSemiAfterToken(Token.CLOSE_BRACE, true);
+	 	--lexer.parsing_block;
+		$$ = end_block (GetLocation ($1));
+	  }
+	| COMPLETE_COMPLETION
+	  {
+	  	Lexer.AutoSemiInsertion = true;
+	 	--lexer.parsing_block;
+		$$ = end_block (lexer.Location);
+	  }
+	;	
 
 block_prepared
 	: OPEN_BRACE
@@ -8256,7 +8287,7 @@ void start_anonymous (bool isLambda, ParametersCompiled parameters, FullNamedExp
 	oob_stack.Push (current_local_parameters);
 	oob_stack.Push (current_variable);
 	oob_stack.Push (async_block);
-	oob_stack.Push (Lexer.AutoSemiInsertion);
+	oob_stack.Push (Lexer.PrevAutoSemiInsertion);  // Auto semi will always be false after a FUNCTION keyword.. we want to know what it was before that.
 
 	current_local_parameters = parameters;
 	if (isLambda) {

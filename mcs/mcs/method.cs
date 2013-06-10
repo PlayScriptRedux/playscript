@@ -125,11 +125,6 @@ namespace Mono.CSharp {
 			if (!DefineParameters (parameters))
 				return false;
 
-			// If ActionScript/PlayScript - rename any duplicate static methods to "methodName__static"
-			if (Parent.FileType == SourceFileType.PlayScript) {
-				AsRenameStaticDuplications ();
-			}
-
 			return base.CheckBase ();
 		}
 
@@ -612,12 +607,6 @@ namespace Mono.CSharp {
 		protected override bool CheckForDuplications ()
 		{
 			return Parent.MemberCache.CheckExistingMembersOverloads (this, parameters);
-		}
-
-		// ActionScript/PlayScript - We rename any static duplicate methods to "methodName__static"
-		protected override void AsRenameStaticDuplications ()
-		{
-			Parent.MemberCache.AsRenameStaticMemberOverloads (this, parameters);
 		}
 
 		public virtual EmitContext CreateEmitContext (ILGenerator ig, SourceMethodBuilder sourceMethod)

@@ -23,7 +23,10 @@ package
 				for each (var a:Object in args) {
 					trace(a);
 				}
-			};
+			}    // NOTE: <-- No semicolon terminating this statement (compiler should add semicolon)
+
+			// Test anonymous function embedded in an object literal (should not try to insert a semicolon)
+			var o:Object = { f1 : function():void { trace("booyah!"); } }
 
 			var f2:Function = function(...args):int {
 				for each (var a:Object in args) {
@@ -37,7 +40,7 @@ package
 				for each (var a:Object in args) {
 					trace(a);
 				}
-			};
+			}    // NOTE: <-- No semicolon terminating this statement (compiler should add semicolon)
 
 			var f4:Function = function(i:int, s:String, n:Number, ...args):int {
 				trace(""+i+s+n);

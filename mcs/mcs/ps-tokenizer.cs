@@ -203,6 +203,7 @@ namespace Mono.PlayScript
 		int putback_token = -1;
 		int parse_regex_xml = 0;
 		int parse_colon = 0;
+		bool prev_allow_auto_semi = true;
 		bool allow_auto_semi = true;
 		int allow_auto_semi_after = 0;
 		bool has_temp_auto_semi_after_tokens = false;
@@ -363,9 +364,14 @@ namespace Mono.PlayScript
 		public bool AutoSemiInsertion {
 			get { return allow_auto_semi; }
 			set { 
+				prev_allow_auto_semi = allow_auto_semi;
 				allow_auto_semi = value; 
 				allow_auto_semi_after = 0; 
 			}
+		}
+
+		public bool PrevAutoSemiInsertion {
+			get { return prev_allow_auto_semi; }
 		}
 
 		public int AutoSemiInsertionAfter 
@@ -473,6 +479,7 @@ namespace Mono.PlayScript
 			public int parsing_generic_less_than;
 			public int parse_regex_xml;
 			public int parse_colon;
+			public bool prev_allow_auto_semi;
 			public bool allow_auto_semi;
 			public int allow_auto_semi_after;
 			public object val;
@@ -501,6 +508,7 @@ namespace Mono.PlayScript
 				parsing_generic_less_than = t.parsing_generic_less_than;
 				parse_regex_xml = t.parse_regex_xml;
 				parse_colon = t.parse_colon;
+				prev_allow_auto_semi = t.prev_allow_auto_semi;
 				allow_auto_semi = t.allow_auto_semi;
 				allow_auto_semi_after = t.allow_auto_semi_after;
 				prev_token = t.prev_token;
@@ -555,6 +563,7 @@ namespace Mono.PlayScript
 			parse_colon = p.parse_colon;
 			prev_token = p.prev_token;
 			prev_token_line = p.prev_token_line;
+			prev_allow_auto_semi = p.prev_allow_auto_semi;
 			allow_auto_semi = p.allow_auto_semi;
 			allow_auto_semi_after = p.allow_auto_semi_after;
 			current_token = p.current_token;
@@ -803,7 +812,8 @@ namespace Mono.PlayScript
 				Token.BREAK,
 				Token.CONTINUE,
 				Token.RETURN,
-				Token.STAR
+				Token.STAR,
+				Token.OP_GENERICS_GT
 			});
 
 			AddDisallowedNextAutoSemiTokens(new int [] {
@@ -859,9 +869,7 @@ namespace Mono.PlayScript
 				Token.BITWISE_AND,
 				Token.BITWISE_OR,
 				Token.CARRET,
-				Token.INTERR,
-				Token.IDENTIFIER_CONFIG
-
+				Token.INTERR
 			});
 
 			csharp_format_info = NumberFormatInfo.InvariantInfo;
@@ -913,8 +921,7 @@ namespace Mono.PlayScript
 				break;
 			case Token.FUNCTION:
 				parsing_modifiers = false;
-				allow_auto_semi = false;
-				allow_auto_semi_after = 0;
+				this.AutoSemiInsertion = false;
 				bool is_get_set = false;
 				PushPosition();
 				var fn_token = token ();
@@ -944,8 +951,7 @@ namespace Mono.PlayScript
 			case Token.CATCH:
 			case Token.SWITCH:
 			case Token.CASE:
-				allow_auto_semi = false;
-				allow_auto_semi_after = 0;
+				this.AutoSemiInsertion = false;
 				break;
 			case Token.DYNAMIC:
 				if (!handle_dynamic)
@@ -3641,7 +3647,7 @@ namespace Mono.PlayScript
 					  current_token == Token.INTERR_NULLABLE) {
 						bool isInit = true;
 						PushPosition();
-						allow_auto_semi = false;
+						this.AutoSemiInsertion = false;
 						next = token ();
 						if (next != Token.CLOSE_BRACE) {
 							if (next != Token.IDENTIFIER && next != Token.LITERAL) {

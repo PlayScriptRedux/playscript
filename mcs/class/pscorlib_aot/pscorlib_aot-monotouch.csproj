@@ -102,9 +102,6 @@
     <Compile Include="..\pscorlib\functions.play">
       <Link>functions.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\IDynamicClass.play">
-      <Link>IDynamicClass.play</Link>
-    </Compile>
     <Compile Include="..\pscorlib\JSON.play">
       <Link>JSON.play</Link>
     </Compile>

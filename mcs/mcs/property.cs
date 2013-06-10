@@ -1638,12 +1638,6 @@ namespace Mono.CSharp
 			return Parent.MemberCache.CheckExistingMembersOverloads (this, parameters);
 		}
 
-		// ActionScript/PlayScript - We rename any static duplicate methods to "methodName__static"
-		protected override void AsRenameStaticDuplications ()
-		{
-			Parent.MemberCache.AsRenameStaticMemberOverloads (this, parameters);
-		}
-		
 		public override bool Define ()
 		{
 			if (!base.Define ())
