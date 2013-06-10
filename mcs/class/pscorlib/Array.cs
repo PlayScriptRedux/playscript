@@ -19,6 +19,7 @@ using System.Runtime.Serialization;
 using System.Security.Permissions;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using PlayScript;
 
 namespace _root
 {
@@ -47,9 +48,10 @@ namespace _root
 
     // for now we implement array as a vector of dynamics
     // there may be some subtle differences between array and vector that we need to handle here
+	[DynamicClass]
 	[DebuggerDisplay("length = {length}")]
 	[DebuggerTypeProxy(typeof(ArrayDebugView))]
-    public sealed class Array : Vector<dynamic>
+    public sealed class Array : Vector<dynamic>, IDynamicClass
     {
         //
         // Constants
@@ -113,6 +115,29 @@ namespace _root
             return v;
         }
 
+		#region IDynamicClass Implementation
+
+		dynamic IDynamicClass.__GetDynamicValue(string name) 
+		{
+			throw new NotImplementedException ();
+		}
+
+		void IDynamicClass.__SetDynamicValue(string name, object value)
+		{
+			throw new NotImplementedException ();
+		}
+
+		bool IDynamicClass.__HasDynamicValue(string name)
+		{
+			throw new NotImplementedException ();
+		}
+
+		Array IDynamicClass.__GetDynamicNames()
+		{
+			throw new NotImplementedException ();
+		}
+
+		#endregion
 
     }
 }
