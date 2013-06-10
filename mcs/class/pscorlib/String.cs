@@ -70,6 +70,7 @@ namespace _root
 
 		public static int indexOf(this string s, string val, double startIndex = 0) {
 			if (s == null) return -1;
+			if (val == null) return -1;
 			return s.IndexOf(val, (int)startIndex);
 		}
 						
