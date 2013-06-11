@@ -6915,11 +6915,11 @@ namespace Mono.CSharp {
 				if (expr.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
 					statement = new If (
 						new Binary(Binary.Operator.LogicalAnd, 
-							new Binary(Binary.Operator.Inequality, new As(expr.Clone(new CloneContext()), new Mono.CSharp.TypeExpression(ec.BuiltinTypes.Object, loc), loc), new NullLiteral(loc)),
-					        new Binary(Binary.Operator.Inequality, new As(expr.Clone(new CloneContext()), new Mono.CSharp.TypeExpression(ec.BuiltinTypes.Object, loc), loc), new AsUndefinedLiteral(loc))),
+							new Binary(Binary.Operator.Inequality, new As(expr, new Mono.CSharp.TypeExpression(ec.BuiltinTypes.Object, loc), loc), new NullLiteral(loc)),
+					        new Binary(Binary.Operator.Inequality, new As(expr, new Mono.CSharp.TypeExpression(ec.BuiltinTypes.Object, loc), loc), new AsUndefinedLiteral(loc))),
 					           statement, loc);
 				} else {
-					statement = new If (new Binary(Binary.Operator.Inequality, expr.Clone(new CloneContext()), new NullLiteral(loc)), statement, loc);
+					statement = new If (new Binary(Binary.Operator.Inequality, expr, new NullLiteral(loc)), statement, loc);
 				}
 			}
 

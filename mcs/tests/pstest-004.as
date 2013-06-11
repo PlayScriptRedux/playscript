@@ -10,6 +10,11 @@ package
 
 		public static function Main():void {
 		
+			var qq:Array = [ "100", "200" ];
+			
+			var uu:uint = uint(qq[0]);
+			var ii:int = int(qq[1]);
+		
 			var a:Array = null;
 			
 			for each (var i:int in a) {
