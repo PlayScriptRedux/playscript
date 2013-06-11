@@ -602,7 +602,7 @@ namespace flash.display3D
 
 				case 0x12: // dp3
 					sr1.sourceMask = sr2.sourceMask = 7; // adjust source mask for xyz input to dot product
-					sb.AppendFormat("{0} = dot(vec3({1}), vec3({2})); // dp3", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL() ); 
+					sb.AppendFormat("{0} = vec4(dot(vec3({1}), vec3({2}))){3}; // dp3", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL(), dr.GetWriteMask() ); 
 					map.Add(dr, RegisterUsage.Vector4);
 					map.Add(sr1, RegisterUsage.Vector4);
 					map.Add(sr2, RegisterUsage.Vector4);
@@ -610,7 +610,7 @@ namespace flash.display3D
 					
 				case 0x13: // dp4
 					sr1.sourceMask = sr2.sourceMask = 0xF; // adjust source mask for xyzw input to dot product
-					sb.AppendFormat("{0} = dot(vec4({1}), vec4({2})); // dp4", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL() ); 
+					sb.AppendFormat("{0} = vec4(dot(vec4({1}), vec4({2}))){3}; // dp4", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL(), dr.GetWriteMask() ); 
 					map.Add(dr, RegisterUsage.Vector4);
 					map.Add(sr1, RegisterUsage.Vector4);
 					map.Add(sr2, RegisterUsage.Vector4);

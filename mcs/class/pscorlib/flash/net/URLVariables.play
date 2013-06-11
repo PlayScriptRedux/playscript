@@ -14,6 +14,9 @@
 
 package flash.net {
 
+	import PlayScript.IDynamicClass;
+	import System.Web.HttpUtility;
+
 	public dynamic class URLVariables {
 	
 		//
@@ -28,7 +31,18 @@ package flash.net {
 		}
  	 	
 		public override function toString():String {
-			throw new System.NotImplementedException();
+
+			var sb = new System.Text.StringBuilder();
+
+			var dc:IDynamicClass = IDynamicClass(this); 
+			var names:Array = dc.__GetDynamicNames();
+			var delimiter:Boolean = false;
+			for each (var prop:String in names) {
+				if (delimiter)	sb.Append('&');
+				sb.AppendFormat("{0}={1}", prop, HttpUtility.UrlEncode(String(dc.__GetDynamicValue(prop))));
+				delimiter = true;
+			}
+			return sb.ToString();
 		}
 	
 	

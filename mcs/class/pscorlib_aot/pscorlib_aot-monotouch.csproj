@@ -42,6 +42,9 @@
       <HintPath>..\lib\net_4_5\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
     <Reference Include="System.Json" />
+    <Reference Include="System.Web">
+      <HintPath>..\lib\net_4_0\System.Web.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />

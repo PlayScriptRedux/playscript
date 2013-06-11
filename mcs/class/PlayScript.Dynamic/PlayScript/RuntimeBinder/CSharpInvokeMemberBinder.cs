@@ -257,7 +257,7 @@ namespace PlayScript.RuntimeBinder
 
 			var arg_len = args.Length;
 			for (var i = 0; i < arg_len; i++) {
-				info.lastArgTypes[i] = args != null ? args[i].GetType () : null;
+				info.lastArgTypes[i] = (args != null && args[i]!=null) ? args[i].GetType () : null;
 			}
 
 			if (o is ExpandoObject) {
