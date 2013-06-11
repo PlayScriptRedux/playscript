@@ -6275,13 +6275,14 @@ block_variable_declaration
 		current_variable = null;
 		lbag.AddLocation ($$, GetLocation ($4));
 	  }
-	| CONST identifier_inside_body COLON type 
+	| CONST identifier_inside_body COLON type  // TODO: We'll have to use regular variables here, but resolve to const values in resolve phase.
 	  {
 		var lt = (Tokenizer.LocatedToken) $2;
-		var li = GetOrCreateLocalVariable (current_block, lt.Value, LocalVariable.Flags.Constant, null, lt.Location);
-		current_variable = new BlockConstantDeclaration ((FullNamedExpression) $4, li);
+		var li = GetOrCreateLocalVariable (current_block, lt.Value, /*LocalVariable.Flags.Constant*/ 0, null, lt.Location);
+		current_variable =  new BlockVariableDeclaration (new VarExpr (GetLocation($1)), li); // new BlockConstantDeclaration ((FullNamedExpression) $4, li);
 	  }
-	  const_variable_initializer opt_const_declarators stmnt_end_semicolon
+	  opt_local_variable_initializer opt_variable_declarators stmnt_end_semicolon
+	  /* const_variable_initializer opt_const_declarators stmnt_end_semicolon */
 	  {
 		$$ = current_variable;
 		current_variable = null;
@@ -6368,39 +6369,39 @@ variable_declarator
 	  	lbag.AddLocation (d, GetLocation ($1), GetLocation ($5));
 	  }		  
 	;
-	
-const_variable_initializer
-	: /* empty */
-	  {
-		report.Error (145, lexer.Location, "A const field requires a value to be provided");
-	  }
-	| ASSIGN constant_initializer_expr 
-	  {
-		current_variable.Initializer = (Expression) $2;
-	  }
-	;
-	
-opt_const_declarators
-	: /* empty */
-	| const_declarators
-	;
-	
-const_declarators
-	: const_declarator
-	| const_declarators const_declarator
-	;
-	
-const_declarator
-	: COMMA identifier_inside_body ASSIGN constant_initializer_expr
-	  {
-		var lt = (Tokenizer.LocatedToken) $2;	  
-		var li = GetOrCreateLocalVariable (current_block, lt.Value, 
-			LocalVariable.Flags.Constant, current_variable.TypeExpression, lt.Location);
-		var d = new BlockVariableDeclaration.Declarator (li, (Expression) $4);
-		current_variable.AddDeclarator (d);
-	  	lbag.AddLocation (d, GetLocation ($1), GetLocation ($3));
-	  }
-	;
+
+//const_variable_initializer
+//	: /* empty */
+//	  {
+//		report.Error (145, lexer.Location, "A const field requires a value to be provided");
+//	  }
+//	| ASSIGN constant_initializer_expr 
+//	  {
+//		current_variable.Initializer = (Expression) $2;
+//	  }
+//	;
+//	
+//opt_const_declarators
+//	: /* empty */
+//	| const_declarators
+//	;
+//	
+//const_declarators
+//	: const_declarator
+//	| const_declarators const_declarator
+//	;
+//	
+//const_declarator
+//	: COMMA identifier_inside_body ASSIGN constant_initializer_expr
+//	  {
+//		var lt = (Tokenizer.LocatedToken) $2;	  
+//		var li = GetOrCreateLocalVariable (current_block, lt.Value, 
+//			LocalVariable.Flags.Constant, current_variable.TypeExpression, lt.Location);
+//		var d = new BlockVariableDeclaration.Declarator (li, (Expression) $4);
+//		current_variable.AddDeclarator (d);
+//	  	lbag.AddLocation (d, GetLocation ($1), GetLocation ($3));
+//	  }
+//	;
 	
 block_variable_initializer
 	: variable_initializer

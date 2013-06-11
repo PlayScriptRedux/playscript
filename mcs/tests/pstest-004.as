@@ -9,6 +9,18 @@ package
 	{
 
 		public static function Main():void {
+		
+			var a:Array = null;
+			
+			for each (var i:int in a) {
+				trace(i);
+			}
+			
+			var b:Object = null;
+			for each (var j:int in b) {
+				trace(j);
+			}
+		
 			var t:Test = new Test();
 			t.foo ();
 			t.bar ();

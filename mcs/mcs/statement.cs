@@ -6909,6 +6909,20 @@ namespace Mono.CSharp {
 				statement = new CollectionForeach (this, variable, expr);
 			}
 
+			// PlayScript - always check if enumerable var is null before doing loop
+			if (ec.FileType == SourceFileType.PlayScript && expr != null && 
+			    (expr.Type.IsClass || expr.Type.IsInterface || expr.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic)) {
+				if (expr.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
+					statement = new If (
+						new Binary(Binary.Operator.LogicalAnd, 
+							new Binary(Binary.Operator.Inequality, new As(expr.Clone(new CloneContext()), new Mono.CSharp.TypeExpression(ec.BuiltinTypes.Object, loc), loc), new NullLiteral(loc)),
+					        new Binary(Binary.Operator.Inequality, new As(expr.Clone(new CloneContext()), new Mono.CSharp.TypeExpression(ec.BuiltinTypes.Object, loc), loc), new AsUndefinedLiteral(loc))),
+					           statement, loc);
+				} else {
+					statement = new If (new Binary(Binary.Operator.Inequality, expr.Clone(new CloneContext()), new NullLiteral(loc)), statement, loc);
+				}
+			}
+
 			return statement.Resolve (ec);
 		}
 
