@@ -20,7 +20,7 @@ namespace _root {
 	public static class FunctionExtensions {
 
 		public static dynamic apply(this Delegate d, dynamic thisArg, Array argArray) {
-			return d.DynamicInvoke(argArray != null ? argArray.ToArray() : null);
+			return d.DynamicInvoke(argArray != null ? argArray.ToSystemObjectArray() : null);
 		}
 
 		public static dynamic call(this Delegate d, dynamic thisArg, params object[] args) {

@@ -90,8 +90,14 @@ namespace _root
         }
 
         public new Array slice(int startIndex = 0, int endIndex = 16777215) {
-            throw new System.NotImplementedException();
-        }
+			if (endIndex > (int)length) endIndex = (int)length;
+			
+			var result = new Array();
+			for (int i=startIndex; i < endIndex; i++) {
+				result.Add(this[i]);
+			}
+			return result;
+		}
 
 		public Array filter(Delegate callback, dynamic thisObject = null) {
 			throw new System.NotImplementedException();
@@ -114,6 +120,16 @@ namespace _root
             }
             return v;
         }
+
+
+		public object[] ToSystemObjectArray()
+		{
+			var a = new object[length];
+			for (int i=0; i < length; i++) {
+				a[i] = this[i];
+			}
+			return a;
+		}
 
 		#region IDynamicClass Implementation
 
