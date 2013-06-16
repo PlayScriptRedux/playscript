@@ -114,6 +114,10 @@ package {
 				return new JsonPrimitive(Number(value));
 			}
 
+			if (value is Boolean) {
+				return new JsonPrimitive(Boolean(value));
+			}
+
 			throw new System.NotImplementedException();
 		}
 
