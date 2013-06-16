@@ -15,6 +15,7 @@
 package {
 	import System.*;
 	import System.Xml.*;
+	import System.Collections.*;
 
 	public class XML {
 	
@@ -33,8 +34,8 @@ package {
  	 	}
 
  	 	public static property ignoreWhitespace : Boolean { 
- 	 		get { throw new System.NotImplementedException(); } 
- 	 		set { throw new System.NotImplementedException(); } 
+			get;
+			set;
  	 	}
 
  	 	public static property prettyIndent : int { 
@@ -50,7 +51,12 @@ package {
  	 	//
  	 	// Methods
  	 	// 
- 	 	
+
+		public static explicit operator XML(str:String)
+		{
+			return new XML(str);
+		}
+
  	 	public function XML(value:Object = null) {
 			if (value is XmlElement) 
 			{
@@ -63,16 +69,24 @@ package {
 				ba.position = 0;
 				var xmlString:String = ba.readAllUTF();
 
+				mOriginalString = xmlString;
+
 				// parse xml document from string
 				var doc:XmlDocument = new XmlDocument();
 				doc.LoadXml(xmlString);
 				mElement = doc.DocumentElement;
 			} else if (value is String)
 			{
+				mOriginalString = value as String;
+
 				// parse xml document from string
 				var doc:XmlDocument = new XmlDocument();
-				doc.LoadXml(value as String);
+				doc.LoadXml(mOriginalString);
 				mElement = doc.DocumentElement;
+			} else if (value is XMLList) 
+			{
+				var list = value as XMLList;
+				mElement = list[0].mElement;
 			}
 			else
 			{
@@ -97,7 +111,8 @@ package {
 		}
  	 	
 		public function child(propertyName:Object):XMLList {
-			throw new System.NotImplementedException();
+			var list = mElement.SelectSingleNode(String(propertyName));
+			return new XMLList(list);
 		}
  	 	
 		public function childIndex():int {
@@ -105,7 +120,7 @@ package {
 		}
  	 	
 		public function children():XMLList {
-			throw new System.NotImplementedException();
+			return new XMLList(mElement.ChildNodes);
 		}
  	 	
 		public function comments():XMLList {
@@ -125,19 +140,23 @@ package {
 		}
 		
 		public function descendants():XMLList {
-			throw new System.NotImplementedException();
+			var list = mElement.GetElementsByTagName("*");
+			return new XMLList(list);
 		}		
 		
 		public function descendants(name:Object):XMLList {
-			return new XMLList(mElement.GetElementsByTagName(String(name)));
+			var list = mElement.GetElementsByTagName(String(name));
+			return new XMLList(list);
 		}
 		
 		public function elements():XMLList {
-			return new XMLList(mElement.GetElementsByTagName("*"));
+			var list = mElement.ChildNodes;
+			return new XMLList(list);
 		}		
 		
 		public function elements(name:String):XMLList {
-			return new XMLList(mElement.GetElementsByTagName(name));
+			var list = mElement.SelectNodes(name);
+			return new XMLList(list);
 		}
 		
 		public function hasComplexContent():Boolean {
@@ -145,7 +164,8 @@ package {
 		}
 		
 		public function hasOwnProperty(p:String):Boolean {
-			throw new System.NotImplementedException();
+			var list  = mElement.SelectNodes(p);
+			return list.Count > 0;
 		}
 		
 		public function hasSimpleContent():Boolean {
@@ -253,7 +273,8 @@ package {
 		}
 		
 		public function toXMLString():String {
-			throw new System.NotImplementedException();
+			var str:String = mElement.InnerXml;
+			return str;
 		}
 		
 		public override function valueOf():Object {
@@ -261,10 +282,25 @@ package {
 		}
 	
 		public static implicit operator String (xml:XML) {
-			throw new System.NotImplementedException();
+			return xml.toXMLString ();
 		}	
-		
+
+		public indexer this(index:int):XML {
+			get { 
+				return new XML(mElement.ChildNodes[index]);
+			}
+		}
+
+		public indexer this(index:String):XMLList {
+			get { 
+				var list = mElement.SelectNodes(index);
+				return new XMLList(list);
+			}
+		}
+
+
 		var mElement:XmlElement;
+		var mOriginalString:String;
 	}
 
 }

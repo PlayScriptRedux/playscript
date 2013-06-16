@@ -37,7 +37,9 @@ package {
 					}
 				}
 			}
-			else if (value is String) {
+			else if (value is XmlNode) {
+				mList.Add(new XML(value as XmlNode));
+			} else if (value is String) {
 				mString = String(value);
 			} else {
 				throw new System.NotImplementedException();
@@ -45,6 +47,9 @@ package {
 		}
 		
 		public function attribute(attributeName:String):String {
+			if (mList.Count == 0)
+				return null;
+
 			if (mList.Count != 1)
 				throw new System.NotImplementedException();
 			
@@ -60,7 +65,13 @@ package {
 		}
 		
 		public function children():XMLList {
-			throw new System.NotImplementedException();
+			if (mList.Count == 0)
+				return null;
+			
+			if (mList.Count != 1)
+				throw new System.NotImplementedException();
+			
+			return mList[0].children();
 		}
 		
 		public function comments():XMLList {
@@ -84,6 +95,12 @@ package {
 		}
 		
 		public function elements():XMLList {
+			if (mList.Count == 0)
+				return new XMLList(null);
+			
+			if (mList.Count == 1)
+				return mList[0].elements();
+			
 			throw new System.NotImplementedException();
 		}
 		
@@ -91,10 +108,10 @@ package {
 			if (mList.Count == 0)
 				return new XMLList(null);
 
-			if (mList.Count != 1)
-				throw new System.NotImplementedException();
+			if (mList.Count == 1)
+				return mList[0].elements(name);
 
-			return mList[0].elements(name);
+			throw new System.NotImplementedException();
 		}
 		
 		public function hasComplexContent():Boolean {
@@ -110,7 +127,7 @@ package {
 		}
 		
 		public function length():int {
-			throw new System.NotImplementedException();
+			return mList.Count;
 		}
 		
 		public function normalize():XMLList {
@@ -138,7 +155,7 @@ package {
 		}
 		
 		public function toXMLString():String {
-			throw new System.NotImplementedException();
+			return mList[0].toXMLString();
 		}
 		
 		public override function valueOf():Object {
@@ -146,11 +163,23 @@ package {
 		}
 		
 		public indexer this(index:int):XML {
-			get { throw new System.NotImplementedException(); }
+			get { 
+				return mList[index];
+			}
 		}
 		
 		public static implicit operator String (list:XMLList) {
-			return (list!=null) ? list.mString : null;
+			if (list!=null) {
+				if (list.mString != null) { 
+					return list.mString;
+				} else if (list.mList!=null && list.mList.Count > 0) {
+					return list.toXMLString();
+				} else {
+					return null;
+				}
+			} else {
+				return null;
+			}
 		}
 
 		public static implicit operator int (list:XMLList) {
