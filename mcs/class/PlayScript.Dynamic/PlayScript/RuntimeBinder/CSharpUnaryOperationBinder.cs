@@ -224,6 +224,8 @@ namespace PlayScript.RuntimeBinder
 				return ((uint)a) != 0;
 			} else if (a is string) {
 				return !string.IsNullOrEmpty((string)a);
+			} else if (a == PlayScript.Undefined._undefined) {
+				return false;
 			} else {
 				// see if object reference is non-nul
 				return (a != null);

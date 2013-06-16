@@ -155,20 +155,33 @@ namespace PlayScript.RuntimeBinder
 				if (d2 != null) {
 					d2[key] = value;
 				} else {
-					var props = o.GetType ().GetProperties();
-					var len = props.Length;
-					for (var pi = 0; pi < len; pi++) {
-						var prop = props[pi];
-						var propType = prop.PropertyType;
+					var type = o.GetType();
+
+					var prop = type.GetProperty(key);
+					if (prop != null) {
 						var setter = prop.GetSetMethod();
-						if (setter != null && setter.IsPublic && !setter.IsStatic && prop.Name == key) {
+						var propType = prop.PropertyType;
+						if (setter != null && setter.IsPublic && !setter.IsStatic) {
 							if (value is object || value.GetType () == propType) {
-								setter.Invoke (o, new object [] { value } );
+								if (propType != typeof(System.Object) && propType != value.GetType()) {
+									var newValue = System.Convert.ChangeType(value, propType);;
+									setter.Invoke (o, new object [] { newValue } );
+								} else {
+									setter.Invoke (o, new object [] { value } );
+								}
 							} else {
 								setter.Invoke(o, new object [] { Convert.ChangeType(value, propType) } );
 							}
+							return;
 						}
 					}
+
+					var field = type.GetField(key);
+					if (field != null) {
+						field.SetValue(o, value);
+					}
+
+
 				}
 			}
 		}

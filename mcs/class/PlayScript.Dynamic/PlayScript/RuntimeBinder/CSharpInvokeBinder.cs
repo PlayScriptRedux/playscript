@@ -323,7 +323,7 @@ namespace PlayScript.RuntimeBinder
 			if ((Delegate)o1 != b._d) {
 				b.UpdateInvokeInfo ((Delegate)o1, 2);
 			}
-			return b._d.DynamicInvoke (b._args);
+			return b._d.DynamicInvoke (null);
 		}
 
 		public static object Func2 (CallSite site, object o1, object o2)
