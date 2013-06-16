@@ -217,7 +217,7 @@ package flash.text {
 		}
 
 		public function setTextFormat(format:TextFormat, beginIndex:int = -1, endIndex:int = -1):void {
-			throw new NotImplementedException();
+			trace("warning: not implemented setTextFormat");
 		}
 
 

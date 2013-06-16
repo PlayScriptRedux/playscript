@@ -31,19 +31,19 @@ package flash.ui {
  	 	//
  	 	 	 	
 		public static function hide():void {
-			throw new System.NotImplementedException();
+			trace("warning: not implemented Mouse.hide");
 		}
 
 		public static function registerCursor(name:String, cursor:MouseCursorData):void {
-			throw new System.NotImplementedException();
+			trace("warning: not implemented Mouse.registerCursor");
 		}
 
 		public static function show():void {
-			throw new System.NotImplementedException();
+			trace("warning: not implemented Mouse.show");
 		}
 
 		public static function unregisterCursor(name:String):void {
-			throw new System.NotImplementedException();
+			trace("warning: not implemented Mouse.unregisterCursor");
 		}
 	
 	}
