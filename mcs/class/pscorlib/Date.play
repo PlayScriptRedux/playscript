@@ -28,6 +28,8 @@ package {
 			mDate = System.DateTime.Now;
 		}
 
+		private static var mEpoch:System.DateTime = new System.DateTime(1970,1,1,0,0,0);
+
 		public function get time():Number { return getTime();  }
 		public function get date():Number { throw new System.NotImplementedException();  }
 		public function get fullYear():Number { throw new System.NotImplementedException();  }
@@ -37,12 +39,20 @@ package {
 		public function get minutes():Number { throw new System.NotImplementedException();  }
 		public function get seconds():Number { throw new System.NotImplementedException();  }
 
-		public function setTime(t:Number) : void { mDate = new System.DateTime(long(t));  }
+		public function setTime(t:Number) : void 
+		{ 
+			var nanoTicks:long = long(t) * 1000000;
+			mDate = new System.DateTime(nanoTicks + mEpoch.Ticks);  
+		}
 		public function setDate(t:Number) : void { throw new System.NotImplementedException();  }
 		public function setHours(t:Number) : void { throw new System.NotImplementedException();  }
 		public function setMinutes(t:Number) : void { throw new System.NotImplementedException();  }
 		public function setSeconds(t:Number) : void { throw new System.NotImplementedException();  }
-		public function getTime() : Number { return mDate.Ticks; }
+		public function getTime() : Number 
+		{ 
+			var nanoTicks:long = (mDate.Ticks - mEpoch.Ticks);
+			return long(nanoTicks / 1000000);  // to milliseconds
+		}
 		public function getDate() : Number { throw new System.NotImplementedException();  }
 		public function getYear() : Number { throw new System.NotImplementedException();  }
 		public function getFullYear() : Number { throw new System.NotImplementedException();  }
