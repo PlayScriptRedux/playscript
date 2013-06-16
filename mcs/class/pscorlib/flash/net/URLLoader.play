@@ -20,6 +20,7 @@ package flash.net {
 	import flash.events.TimerEvent;
 	import flash.events.IOErrorEvent;
 	import flash.utils.*;
+	import System.Net.*;
 
 	public class URLLoader extends EventDispatcher {
 
@@ -58,15 +59,72 @@ package flash.net {
 				mRequest = request;
 			}
 
-			// load with a delay
-			var timer:Timer = new Timer(1, 1);
-			timer.addEventListener(TimerEvent.TIMER, doLoad);
-			timer.start();
+			var url:String = request.url.ToLowerInvariant();
+
+			if (mRequest.url.StartsWith("http:") || mRequest.url.StartsWith("https:")) {
+				// handle a http load
+				// load with a delay
+				var timer:Timer = new Timer(1, 1);
+				timer.addEventListener(TimerEvent.TIMER, doHttpLoad);
+				timer.start();
+
+			} else {
+				// load with a delay
+				var timer:Timer = new Timer(1, 1);
+				timer.addEventListener(TimerEvent.TIMER, doLocalLoad);
+				timer.start();
+			}
 		}
-		
-		private function doLoad(e:Event):void
+
+		private function doHttpLoad(e:Event):void
 		{
-			trace("URLLoader: ", mRequest.url);
+			trace("URLLoader: http load ", mRequest.url);
+			
+			var wr = WebRequest.Create (mRequest.url);
+			// If required by the server, set the credentials.
+			wr.Credentials = CredentialCache.DefaultCredentials;
+			wr.Method = mRequest.method;
+			
+			if (mRequest.data != null) { 
+				var postData = String(mRequest.data);
+				var post = wr.GetRequestStream();
+				var writer = new StreamWriter(post);
+				writer.Write(postData);
+				writer.Close();
+			}
+			
+			// Get the response.
+			var response = HttpWebResponse(wr.GetResponse ());
+			// Display the status.
+			System.Console.WriteLine (response.StatusDescription);
+			// Get the stream containing content returned by the server.
+			var dataStream = response.GetResponseStream ();
+			// Open the stream using a StreamReader for easy access.
+			var reader = new StreamReader (dataStream);
+			// Read the content.
+			var responseFromServer = reader.ReadToEnd ();
+
+			// update bytes loaded
+			this.bytesLoaded = dataStream.Length;
+			this.bytesTotal  = dataStream.Length;
+
+			// Display the content.
+			System.Console.WriteLine (responseFromServer);
+			// Cleanup the streams and the response.
+			reader.Close ();
+			dataStream.Close ();
+			response.Close ();
+
+			this.data = responseFromServer;
+			
+			// dispatch complete event
+			var de:Event = new Event(Event.COMPLETE);
+			this.dispatchEvent(de);
+		}
+
+		private function doLocalLoad(e:Event):void
+		{
+			trace("URLLoader: local load ", mRequest.url);
 
 			// TODO: determine scheme of url and do something appropriate (http fetch?)
 			// for now we assume everything is a local file and sync load it here

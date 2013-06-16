@@ -19,7 +19,10 @@ package flash.display {
 	import flash.system.LoaderContext;
 	import flash.events.*;
 	import flash.desktop.IFilePromise;
-
+	import flash.utils.Timer;
+	import flash.net.URLLoader;
+	import flash.net.URLLoaderDataFormat;
+	
 	public class Loader extends DisplayObjectContainer {
 	
 		//
@@ -44,9 +47,28 @@ package flash.display {
 		}
  	 	
 		public function load(request:URLRequest, context:LoaderContext = null):void {
-			// TODO: this code also only does synchronous loading from local paths (need to support async and http)
-			var resource:Object = PlayScript.Player.LoadResource(request.url);
 
+			mRequest = request;
+			mContext = context;
+
+//			mUrlLoader = new URLLoader();
+//			mUrlLoader.dataFormat = URLLoaderDataFormat.BINARY;
+//			mUrlLoader.addEventListener(Event.COMPLETE, onLoadComplete);
+//			mUrlLoader.load(request);
+
+			var timer:Timer = new Timer(1, 1);
+			timer.addEventListener(TimerEvent.TIMER, doLoad);
+			timer.start();
+		}
+
+//		private function onLoadComplete(ev:Event):void {
+//			loadBytes ( ByteArray(mUrlLoader.data), mContext);
+//		}
+
+		private function doLoad(ev:TimerEvent):void {
+			// TODO: this code also only does synchronous loading from local paths (need to support async and http)
+			var resource:Object = PlayScript.Player.LoadResource(mRequest.url);
+			
 			// set as content
 			mContent = resource as flash.display.DisplayObject;
 			
@@ -59,11 +81,25 @@ package flash.display {
 		}
  	 	
 		public function loadBytes(bytes:ByteArray, context:LoaderContext = null):void {
-			// note that this code assumes that bytes is a bitmap, but it may not be
-			var bd:BitmapData = BitmapData.loadFromByteArray(bytes);
 
-			// set content as bitmap
-			mContent = new Bitmap(bd);
+			bytes.position = 0;
+			var sig:String = bytes.readUTFBytes(3);
+			bytes.position = 0;
+
+			if (sig == "CWS" || sig == "FWS" ) {
+				trace("warning: swf loading not implemented");
+				// TODO
+				mContent = new Sprite(); 
+
+			} else {
+
+				// note that this code assumes that bytes is a bitmap, but it may not be
+				var bd:BitmapData = BitmapData.loadFromByteArray(bytes);
+
+				// set content as bitmap
+				mContent = new Bitmap(bd);
+			} 
+
 			
 			// store content in content loader info (also)
 			this.contentLoaderInfo.content = mContent;
@@ -85,13 +121,11 @@ package flash.display {
 			throw new System.NotImplementedException();
 		}
 		
-		
-		private function doLoad():void {
-			throw new System.NotImplementedException();		
-		}
-		
 		var mContent:DisplayObject = null;
 		var mLoaderInfo:LoaderInfo = new LoaderInfo();
+		var mRequest:URLRequest = null;
+		var mContext:LoaderContext = null;
+		var mUrlLoader:URLLoader = null;
 	
 	}
 

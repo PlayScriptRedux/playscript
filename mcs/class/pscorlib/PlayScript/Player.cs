@@ -53,7 +53,6 @@ namespace PlayScript
 			AddResourceDirectory("");
 			#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH 
 			AddResourceDirectory(NSBundle.MainBundle.ResourcePath);
-			AddResourceDirectory(NSBundle.MainBundle.ResourcePath + "/src/");
 			#endif
 		}
 
@@ -154,6 +153,11 @@ namespace PlayScript
 
 		public static object LoadResource(string path, string mimeType = null)
 		{
+			if (path.StartsWith("http:") || path.StartsWith("https:")) {
+				// TODO: support loading via http
+				return new flash.display.Bitmap(new flash.display.BitmapData(32,32));
+			}
+
 			// handle byte arrays
 			if (mimeType == "application/octet-stream")
 			{
@@ -176,8 +180,12 @@ namespace PlayScript
 					// load as bitmap
 					return new flash.display.Bitmap(flash.display.BitmapData.loadFromPath(path));
 				case ".jxr":
-					Console.Error.WriteLine("warning - jxr loading not supported");
-					return new flash.display.Bitmap(new flash.display.BitmapData(32,32));
+				{
+					// TODO we dont support jxr loading yet so rename them to png instead
+					// you will have to manually convert your jxr images to png
+					var rename = Path.ChangeExtension(path, ".png");
+					return new flash.display.Bitmap(flash.display.BitmapData.loadFromPath(rename));
+				}
 				default:
 					throw new NotImplementedException("Loader for " + ext);
 			}
