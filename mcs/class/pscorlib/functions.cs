@@ -257,7 +257,7 @@ namespace _root
 			case TypeCode.Empty:
 				return false;
 			case TypeCode.Object:
-				return d != null;
+				return (d != null) && (d != PlayScript.Undefined._undefined);
 			}
 			return false;
 		}
@@ -265,6 +265,8 @@ namespace _root
 		// Inlineable method
 		public static bool Boolean (string s)
 		{
+			if (s == "true") return true; 
+			if (s == "false") return false;
 			throw new System.NotImplementedException();
 		}
 

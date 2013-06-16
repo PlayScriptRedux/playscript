@@ -51,6 +51,8 @@ package {
 	}
  	 	
 	public function parseFloat(str:String):Number {
+		if (str == "undefined") return System.Double.NaN;
+
 		if (!System.String.IsNullOrEmpty(str))
 		{
 			return System.Double.Parse(str);
@@ -83,8 +85,17 @@ package {
 	public function parseInt(str:String, radix:uint = 0):int {
 		if (radix != 0 && radix != 10) 
 			throw new System.NotImplementedException();
-			
-		return System.Int32.Parse(str);	
+
+		if (str.StartsWith("0x")) {
+			// parse hex
+			return System.Convert.ToInt32(str.Substring(2), 16);
+		} else {
+			if (!str.Contains('.')) {
+				return System.Convert.ToInt32(str);
+			} else {
+				return int(System.Convert.ToDouble(str));
+			}
+		}
 	}
  	 	
 	public function unescape(str:String):String {
@@ -92,6 +103,11 @@ package {
 	}
 
 	public function objectIsClass(o:Object, type:Class):Boolean {
+		if (o == null || type == null) return false;
+
+		if (type.IsAssignableFrom(System.Object(o).GetType())) {
+			return true;
+		}
 		throw new System.NotImplementedException();
 	}
 	
