@@ -54,9 +54,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <Compile Include="..\pscorlib\PlayScript\Undefined.cs">
-      <Link>PlayScript\Undefined.cs</Link>
-    </Compile>
     <Compile Include="..\pscorlib\Array.cs">
       <Link>Array.cs</Link>
     </Compile>

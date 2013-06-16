@@ -154,5 +154,8 @@
     <Compile Include="..\PlayScript.Dynamic\AssemblyInfo.cs">
       <Link>AssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\Undefined.cs">
+      <Link>PlayScript\Undefined.cs</Link>
+    </Compile>
   </ItemGroup>
 </Project>
