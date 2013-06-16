@@ -21,11 +21,13 @@ package flash.external {
 		}
 
 		public static function call(method:String, ...args):Object{
+			trace("warning: ExternalInterface.call not implemented");
 			throw new Error("Not Implemented");
 		}
 
 		public static function addCallback(method:String, f:Function):void{
-			throw new Error("Not Implemented");
+			trace("warning: ExternalInterface.addCallback not implemented");
+//			throw new Error("Not Implemented");
 		}
 		
 	}
