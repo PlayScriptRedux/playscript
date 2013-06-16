@@ -52,10 +52,98 @@ namespace _root {
 
 	[DebuggerDisplay("length = {length}")]
 	[DebuggerTypeProxy(typeof(VectorDebugView<>))]
-	public class Vector<T> : IEnumerable<T>, IList<T>, IEnumerable
+	public class Vector<T> : IEnumerable<T>, IList<T>, IList, IEnumerable
 	{
+		#region IList implementation
+
+		int IList.Add(object value)
+		{
+			throw new NotImplementedException();
+		}
+
+		void IList.Clear()
+		{
+			throw new NotImplementedException();
+		}
+
+		bool IList.Contains(object value)
+		{
+			throw new NotImplementedException();
+		}
+
+		int IList.IndexOf(object value)
+		{
+			throw new NotImplementedException();
+		}
+
+		void IList.Insert(int index, object value)
+		{
+			throw new NotImplementedException();
+		}
+
+		void IList.Remove(object value)
+		{
+			throw new NotImplementedException();
+		}
+
+		void IList.RemoveAt(int index)
+		{
+			throw new NotImplementedException();
+		}
+
+		bool IList.IsFixedSize {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		object IList.this[int index] {
+			get {
+				return ((IList<T>)this)[index];
+			}
+			set {
+				((IList<T>)this)[index] = (T)value;
+			}
+		}
+
+		
+		bool IList.IsReadOnly {
+			get {
+				return false;
+			}
+		}
+
+		#endregion
+
+		#region ICollection implementation
+
+		int ICollection.Count {
+			get {
+				return mList.Count;
+			}
+		}
+		void ICollection.CopyTo(System.Array array, int index)
+		{
+			throw new NotImplementedException();
+		}
+
+		bool ICollection.IsSynchronized {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		object ICollection.SyncRoot {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
 		//
 		// Properties
+
 		//
 	
 		public bool @fixed 
@@ -387,7 +475,13 @@ namespace _root {
         }
  	 	
 		public Vector<T> slice(int startIndex = 0, int endIndex = 16777215) {
-			throw new System.NotImplementedException();
+			if (endIndex > mList.Count) endIndex = mList.Count;
+
+			var result = new Vector<T>();
+			for (int i=startIndex; i < endIndex; i++) {
+				result.Add(this[i]);
+			}
+			return result;
 		}
  	 	
 		public bool some(Delegate callback, dynamic thisObject = null) {
@@ -498,8 +592,9 @@ namespace _root {
 
 		public override string ToString()
 		{
+			return this.join(",");
 //			return string.Format("[Vector: length={0}]", length);
-			return string.Format("Count={0}", length);
+//			return string.Format("Count={0}", length);
 		}
 
 		public uint unshift(params T[] args) {
