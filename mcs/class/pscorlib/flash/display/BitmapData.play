@@ -141,6 +141,10 @@ package flash.display {
 		public function copyPixels(sourceBitmapData:BitmapData, sourceRect:Rectangle, destPoint:Point, 
 			alphaBitmapData:BitmapData = null, alphaPoint:Point = null, mergeAlpha:Boolean = false):void {
 
+			if (sourceRect.right > sourceBitmapData.width || sourceRect.bottom > sourceBitmapData.height) {
+				throw new Error("out of bounds copyPixels");
+			}
+
 			if (mergeAlpha || (alphaBitmapData != null)) {
 				throw new System.NotImplementedException();
 			}
