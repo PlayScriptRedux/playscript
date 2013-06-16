@@ -16,6 +16,7 @@ package flash.utils {
 	import System.*;
 	import System.IO.*;
 	import System.IO.Compression.*;
+	import System.Diagnostics.*;
 
 	#if PLATFORM_MONOMAC
 	import MonoMac.Foundation.*;
@@ -26,6 +27,7 @@ package flash.utils {
 	#endif
 
 
+	[DebuggerDisplay("length = {length}")]
 	public class ByteArray implements IDataInput, IDataOutput {
 
 		enum ByteEndian
