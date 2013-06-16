@@ -20,7 +20,7 @@ namespace _root
 	public static class String
 	{
 		public static int get_length(this string s) {
-			return s.Length;
+			return (s!=null) ? s.Length : -1;
 		}
 
 		public static string charAt(this string s, double index = 0) {
@@ -128,13 +128,15 @@ namespace _root
 		}
 
 		public static string slice(this string s, int startIndex, int endIndex) {
+			if (endIndex < 0) return s;
 			return s.Substring(startIndex, endIndex - startIndex);
 		}
 
 		public static Array split (this string s, object delimiter, int limit = 0x7fffffff)
 		{
 			if (limit != 0x7fffffff) {
-				throw new NotImplementedException ();
+				var split = s.Split(new string[] {(string)delimiter}, limit, StringSplitOptions.None);
+				return new Array(split);
 			}
 
 			if (delimiter is RegExp) {
