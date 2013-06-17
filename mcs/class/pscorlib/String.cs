@@ -135,15 +135,29 @@ namespace _root
 		public static Array split (this string s, object delimiter, int limit = 0x7fffffff)
 		{
 			if (limit != 0x7fffffff) {
-				var split = s.Split(new string[] {(string)delimiter}, limit, StringSplitOptions.None);
-				return new Array(split);
+				if (delimiter != "") {
+					var split = s.Split(new string[] {(string)delimiter}, limit, StringSplitOptions.None);
+					return new Array(split);
+				} else {
+					throw new NotImplementedException ();
+				}
 			}
 
 			if (delimiter is RegExp) {
 				var re = delimiter as RegExp;
 				return re.split(s);
 			} else if (delimiter is string) {
-				return new Array( s.Split(new string[] {(string)delimiter}, StringSplitOptions.None ));
+				if (delimiter != "") {
+					var split = s.Split(new string[] {(string)delimiter}, StringSplitOptions.None );
+					return new Array(split);
+				} else {
+					// split everything
+					var split = new string[s.Length];
+					for(int i=0; i < split.Length; i++) {
+						split[i] = s[i].ToString();
+					}
+					return new Array(split);
+				}
 			} else {
 				throw new NotImplementedException ();
 			}
