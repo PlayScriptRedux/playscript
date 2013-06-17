@@ -347,6 +347,7 @@ namespace PlayScript.RuntimeBinder
 					}
 				}
 				if (method == null) {
+//					FindMethod(site, o, args);
 					throw new Exception("No matching method found with the name '" + name + "'"); 
 				}
 				info.method = method;
@@ -367,9 +368,9 @@ namespace PlayScript.RuntimeBinder
 			}
 			args = info.args;
 			if (info.method != null) 
-				info.method.Invoke (o, null);
+				info.method.Invoke (o, args);
 			else 
-				info.del.DynamicInvoke(null);
+				info.del.DynamicInvoke(args);
 		}
 
 		private static void InvokeAction1 (CallSite site, object o, object a1)
@@ -539,9 +540,9 @@ namespace PlayScript.RuntimeBinder
 			}
 			args = info.args;
 			if (info.method != null) 
-				return info.method.Invoke (o, null);
+				return info.method.Invoke (o, args);
 			else 
-				return info.del.DynamicInvoke(null);
+				return info.del.DynamicInvoke(args);
 		}
 
 		private static object InvokeFunc1 (CallSite site, object o, object a1)
@@ -549,7 +550,6 @@ namespace PlayScript.RuntimeBinder
 			var info = site.invokeInfo;
 			object[] args;
 			if (info == null || !info.InvokeMatches (o, a1)) {
-				var new_args = new [] { a1 };
 				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1 });
 				info = site.invokeInfo;
 				args = info.args;

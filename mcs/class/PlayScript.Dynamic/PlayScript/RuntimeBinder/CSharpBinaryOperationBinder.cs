@@ -1345,8 +1345,10 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object NotEqualsIntObj (CallSite site, int a, object b)
 		{
-			if (b is int || b is uint) {
+			if (b is int) {
 				return a != (int)b;
+			} else if (b is uint) {
+				return a != (int)(uint)b;
 			} else if (b is double || b is float) {
 				return (double)a != (double)b;
 			} else {

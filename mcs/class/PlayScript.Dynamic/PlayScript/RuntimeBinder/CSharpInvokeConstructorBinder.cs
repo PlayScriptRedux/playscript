@@ -125,7 +125,7 @@ namespace PlayScript.RuntimeBinder
 					for (var i = 0; i < par_len; i++) {
 						var p = parameters[i];
 						if (i >= args.Length) {
-							if (p.DefaultValue != null) {
+							if (p.IsOptional) {
 								has_defaults = true;
 								continue;
 							} else {

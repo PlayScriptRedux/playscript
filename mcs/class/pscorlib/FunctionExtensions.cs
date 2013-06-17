@@ -20,7 +20,29 @@ namespace _root {
 	public static class FunctionExtensions {
 
 		public static dynamic apply(this Delegate d, dynamic thisArg, Array argArray) {
-			return d.DynamicInvoke(argArray != null ? argArray.ToSystemObjectArray() : null);
+			object[] args = (argArray != null) ? argArray.ToSystemObjectArray() : null;
+			int      argLength = (argArray != null) ? (int)argArray.length : 0;
+
+			var paramList = d.Method.GetParameters();
+			if (paramList.Length > argLength) {
+
+				// rebuild argument list with default values
+				object[] newargs = new object[paramList.Length];
+				for (int i=0; i < newargs.Length; i++) 
+				{
+					if (i < argLength) {
+						newargs[i] = args[i];
+					} else {
+						newargs[i] = paramList[i].DefaultValue;
+					}
+				}
+
+				return d.DynamicInvoke(newargs);
+				
+			}
+			else {
+				return d.DynamicInvoke(args);
+			}
 		}
 
 		public static dynamic call(this Delegate d, dynamic thisArg, params object[] args) {
