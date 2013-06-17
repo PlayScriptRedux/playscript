@@ -14,39 +14,62 @@
 
 using System;
 using System.Reflection;
+using System.Collections;
 
 namespace _root {
 
 	public static class FunctionExtensions {
 
-		public static dynamic apply(this Delegate d, dynamic thisArg, Array argArray) {
-			object[] args = (argArray != null) ? argArray.ToSystemObjectArray() : null;
-			int      argLength = (argArray != null) ? (int)argArray.length : 0;
+		public static object[] BuildArgumentList(MethodInfo methodInfo, IList args)
+		{
+			ParameterInfo[] paramList = methodInfo.GetParameters();
 
-			var paramList = d.Method.GetParameters();
-			if (paramList.Length > argLength) {
+			// build new argument list
+			object[] newargs = new object[paramList.Length];
 
-				// rebuild argument list with default values
-				object[] newargs = new object[paramList.Length];
-				for (int i=0; i < newargs.Length; i++) 
+			// handle parameters we were given
+			int i=0;
+			if (args != null) {
+				for (; i < args.Count; i++)
 				{
-					if (i < argLength) {
-						newargs[i] = args[i];
-					} else {
-						newargs[i] = paramList[i].DefaultValue;
-					}
+					newargs[i] = args[i];
+					
+// TODO make this work, this was an attempt at doing conversion of argument values as needed to match AS3 rules
+//
+//					Type paramType = paramList[i].ParameterType;
+//					object arg = args[i];
+//					if ((arg != null) && (paramType != typeof(System.Object)) && (arg.GetType() != paramType)) {
+//
+//						if (arg != PlayScript.Undefined._undefined) {
+//							// perform conversion of argument
+//							newargs[i] = arg; // Convert.ChangeType(arg, paramType);
+//						} else {
+//							// use default values
+//							newargs[i] = paramList[i].DefaultValue;
+//						}
+//					} else {
+//						newargs[i] = arg;
+//					}
 				}
+			}
 
-				return d.DynamicInvoke(newargs);
-				
+			// add default values
+			for (; i < paramList.Length; i++)
+			{
+				newargs[i] = paramList[i].DefaultValue;
 			}
-			else {
-				return d.DynamicInvoke(args);
-			}
+			return newargs;
+		}
+
+
+		public static dynamic apply(this Delegate d, dynamic thisArg, Array argArray) {
+			object[] newargs = BuildArgumentList(d.Method, argArray);
+			return d.DynamicInvoke(newargs);
 		}
 
 		public static dynamic call(this Delegate d, dynamic thisArg, params object[] args) {
-			return d.DynamicInvoke(args);
+			object[] newargs = BuildArgumentList(d.Method, args);
+			return d.DynamicInvoke(newargs);
 		}
 
 		// this returns the number of arguments to the delegate method
