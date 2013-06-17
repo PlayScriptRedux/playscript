@@ -407,7 +407,7 @@ namespace flash.display3D {
 					dataIndex    += 4;
 
 					if (enableErrorChecking) {
-						Console.WriteLine ("warning: program register not found: {0}", register);
+//						Console.WriteLine ("warning: program register not found: {0}", register);
 					}
 					continue;
 				}

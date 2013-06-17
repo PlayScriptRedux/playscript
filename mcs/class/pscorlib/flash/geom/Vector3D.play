@@ -58,7 +58,7 @@ package flash.geom {
 		}
 
 		public function add(a:Vector3D):Vector3D {
-			throw new System.NotImplementedException();
+			return new Vector3D(x + a.x, y + a.y, z + a.z, w + a.w);
 		}
  	 	
 		public static function angleBetween(a:Vector3D, b:Vector3D):Number {

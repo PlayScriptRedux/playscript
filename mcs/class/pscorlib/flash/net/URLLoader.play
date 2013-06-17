@@ -64,19 +64,15 @@ package flash.net {
 			if (mRequest.url.StartsWith("http:") || mRequest.url.StartsWith("https:")) {
 				// handle a http load
 				// load with a delay
-				var timer:Timer = new Timer(1, 1);
-				timer.addEventListener(TimerEvent.TIMER, doHttpLoad);
-				timer.start();
+				Timer.delayCall (doHttpLoad);
 
 			} else {
 				// load with a delay
-				var timer:Timer = new Timer(1, 1);
-				timer.addEventListener(TimerEvent.TIMER, doLocalLoad);
-				timer.start();
+				Timer.delayCall (doLocalLoad);
 			}
 		}
 
-		private function doHttpLoad(e:Event):void
+		private function doHttpLoad():void
 		{
 			trace("URLLoader: http load ", mRequest.url);
 			
@@ -122,7 +118,7 @@ package flash.net {
 			this.dispatchEvent(de);
 		}
 
-		private function doLocalLoad(e:Event):void
+		private function doLocalLoad():void
 		{
 			trace("URLLoader: local load ", mRequest.url);
 

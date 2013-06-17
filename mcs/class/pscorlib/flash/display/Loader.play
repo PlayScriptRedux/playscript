@@ -40,6 +40,7 @@ package flash.display {
  	 	//
  	 	
 		public function Loader() {
+			mLoaderInfo.loader = this;
 		}
  	 	
 		public function close():void {
@@ -56,16 +57,17 @@ package flash.display {
 //			mUrlLoader.addEventListener(Event.COMPLETE, onLoadComplete);
 //			mUrlLoader.load(request);
 
-			var timer:Timer = new Timer(1, 1);
-			timer.addEventListener(TimerEvent.TIMER, doLoad);
-			timer.start();
+			mLoaderInfo.url = request.url;
+
+
+			Timer.delayCall(doLoad);
 		}
 
 //		private function onLoadComplete(ev:Event):void {
 //			loadBytes ( ByteArray(mUrlLoader.data), mContext);
 //		}
 
-		private function doLoad(ev:TimerEvent):void {
+		private function doLoad():void {
 			// TODO: this code also only does synchronous loading from local paths (need to support async and http)
 			var resource:Object = PlayScript.Player.LoadResource(mRequest.url);
 			
@@ -73,7 +75,7 @@ package flash.display {
 			mContent = resource as flash.display.DisplayObject;
 			
 			// store content in content loader info (also)
-			this.contentLoaderInfo.content = mContent;
+			mLoaderInfo.content = mContent;
 			
 			// dispatch complete event
 			var e:Event = new Event(Event.COMPLETE);

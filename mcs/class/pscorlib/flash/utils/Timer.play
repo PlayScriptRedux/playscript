@@ -126,17 +126,30 @@ package flash.utils {
             sEventTimer.Restart();
             advanceAllTimersWithTimeDelta(elapsedMS);
         }
+
+		public static function delayCall(closure:Function, delay:Number = 0.0):void {
+			if (closure != null) {
+				var timer:Timer = new Timer(delay, 1);
+				timer.addEventListener(TimerEvent.TIMER, function(e:TimerEvent):void {closure();} );
+				timer.start();
+			}
+		}
 		
 		
 		private static function createTimer(closure:Function, delay:Number, arguments:Object[], repeat:int):uint {
-			if (arguments.Length > 0) throw new System.NotImplementedException();
-			
 			// allocate timer id
 			var id:int = sNextTimerId++;
 			
 			// create timer object
 			var timer:Timer = new Timer(delay, repeat);
-			timer.addEventListener(TimerEvent.TIMER, function(e:TimerEvent):void {closure();} );
+			timer.addEventListener(TimerEvent.TIMER, function(e:TimerEvent):void 
+			                       {
+										if (arguments.Length == 0) {
+											closure();
+										} else {
+											closure.DynamicInvoke(arguments);
+										}
+									} );
 			timer.start();
 			
 			// add to dictionary

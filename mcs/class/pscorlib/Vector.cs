@@ -465,7 +465,12 @@ namespace _root {
 		}
 	 	 	
 		public Vector<T> reverse() {
-			throw new System.NotImplementedException();
+			var nv = new Vector<T>();
+			for (int i = (int)(length-1); i >=0; i--)
+			{
+				nv.push(this[i]);
+			}
+			return nv;
 		}
  	 	
 		public T shift() {

@@ -21,51 +21,51 @@ package flash.display {
 
 	public class LoaderInfo extends EventDispatcher {
 	
-		public property actionScriptVersion : uint { get { return 0; } }
+		public property actionScriptVersion : uint { get { throw new System.NotImplementedException();} }
 		
-		public property applicationDomain : ApplicationDomain { get { return null; } }
+		public property applicationDomain : ApplicationDomain { get { throw new System.NotImplementedException(); } }
 
- 	 	public property bytes : ByteArray { get { return null; } }
+		public property bytes : ByteArray { get { throw new System.NotImplementedException(); } }
  	 	
- 	 	public property bytesLoaded : uint { get { return 0; } }
+		public property bytesLoaded : uint { get { throw new System.NotImplementedException(); } }
  	 	
- 	 	public property bytesTotal : uint { get { return 0; } }
+		public property bytesTotal : uint { get { throw new System.NotImplementedException(); } }
  	 	
- 	 	public property childAllowsParent : Boolean { get { return false; } }
+		public property childAllowsParent : Boolean { get { throw new System.NotImplementedException(); } }
  	 	
- 		public property childSandboxBridge : Object { get { return null; } }
+		public property childSandboxBridge : Object { get { throw new System.NotImplementedException(); } }
  		
  	 	public property content : DisplayObject { get; set; }
  	 	
- 	 	public property contentType : String { get { return null; } }
+		public property contentType : String { get { throw new System.NotImplementedException(); } }
  	 	
- 	 	public property frameRate : Number { get { return 0; } }
+		public property frameRate : Number { get { throw new System.NotImplementedException(); } }
  	 	
- 	 	public property height : int { get { return 0; } }
+		public property height : int { get { throw new System.NotImplementedException(); } }
 
- 	 	public property isURLInaccessible : Boolean { get { return false; } }
+		public property isURLInaccessible : Boolean { get { throw new System.NotImplementedException(); } }
  	 	
- 	 	public property loader : Loader { get { return null; } }
+		public property loader : Loader { get; internal set; }
  	 	
- 	 	public property loaderURL : String { get { return null; } }
+		public property loaderURL : String { get { throw new System.NotImplementedException(); } }
  	 	
- 	 	public property parameters : Object { get { return null; } }
+		public property parameters : Object { get { throw new System.NotImplementedException(); } }
  	 	
- 	 	public property parentAllowsChild : Boolean { get { return false; } }
+		public property parentAllowsChild : Boolean { get { throw new System.NotImplementedException(); } }
 
- 	 	public property parentSandboxBridge : Object { get { return null; } }
+		public property parentSandboxBridge : Object { get { throw new System.NotImplementedException(); } }
 
- 	 	public property sameDomain : Boolean { get { return false; } }
+		public property sameDomain : Boolean { get { throw new System.NotImplementedException(); } }
 
- 	 	public property sharedEvents : EventDispatcher { get { return null; } }
+		public property sharedEvents : EventDispatcher { get { throw new System.NotImplementedException(); } }
 
- 	 	public property swfVersion : uint { get { return 0; } }
+		public property swfVersion : uint { get { throw new System.NotImplementedException(); } }
 
- 	 	public property uncaughtErrorEvents : UncaughtErrorEvents { get { return null; } }
+		public property uncaughtErrorEvents : UncaughtErrorEvents { get { throw new System.NotImplementedException(); } }
 
- 	 	public property url : String { get { return null; } }
+		public property url : String { get; internal set; }
 
- 	 	public property width : int { get { return 0; } }
+		public property width : int { get { throw new System.NotImplementedException(); } }
 
  	 	//
  	 	// Methods

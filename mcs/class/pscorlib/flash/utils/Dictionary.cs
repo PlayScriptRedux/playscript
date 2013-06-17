@@ -53,12 +53,12 @@ namespace flash.utils
 				// the flash dictionary implementation does not throw if key not found
 				object value;
 				if (key == null) {
-					return null;
+					return null; // PlayScript.Undefined._undefined;
 				}
 				if (base.TryGetValue(key, out value)) {
 					return value;
 				} else {
-					return null;
+					return null; // PlayScript.Undefined._undefined;
 				}
 			}
 			set {
@@ -69,6 +69,16 @@ namespace flash.utils
 
 		public bool hasOwnProperty(string name) {
 			return ContainsKey(name);
+		}
+
+		public object[] cloneKeyArray() {
+			var keys = new object[Count];
+			int i=0;
+			foreach (var key in Keys)
+			{
+				keys[i++] = key;
+			}
+			return keys;
 		}
 
 		#region IDynamicClass implementation
@@ -133,7 +143,7 @@ namespace flash.utils
 					var keys = new KeyValuePairDebugView[dict.Count];
 					
 					int i = 0;
-					foreach(string key in dict.Keys)
+					foreach(Object key in dict.Keys)
 					{
 						keys[i] = new KeyValuePairDebugView(key, dict[key]);
 						i++;
