@@ -345,6 +345,8 @@ namespace PlayScript.RuntimeBinder
 				return a - (uint)b;
 			} else if (b is double || b is float) {
 				return a - (double)b;
+			} else if (b == null) {
+				return a;
 			} else {
 				ThrowOnInvalidOp (b, SUB);
 				return null;
@@ -885,8 +887,10 @@ namespace PlayScript.RuntimeBinder
 
 		public static object GreaterThanObjInt (CallSite site, object a, int b)
 		{
-			if (a is int || a is uint) {
+			if (a is int) {
 				return (int)a > b;
+			} else if (a is uint) {
+				return (int)(uint)a > b;
 			} else if (a is double || a is float) {
 				return (double)a > (double)b;
 			} else {
@@ -1197,8 +1201,10 @@ namespace PlayScript.RuntimeBinder
 
 		public static object EqualsObjInt (CallSite site, object a, int b)
 		{
-			if (a is int || a is uint) {
+			if (a is int) {
 				return (int)a == b;
+			} else if (a is uint) {
+				return (int)(uint)a == b;
 			} else if (a is double || a is float) {
 				return (double)a == (double)b;
 			} else if (a == null) {
@@ -1215,6 +1221,8 @@ namespace PlayScript.RuntimeBinder
 				return a == (int)b;
 			} else if (b is double || b is float) {
 				return (double)a == (double)b;
+			} else if (b == null) {
+				return false;
 			} else {
 				ThrowOnInvalidOp (b, EQ);
 				return null;
@@ -1235,6 +1243,8 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object EqualsUIntObj (CallSite site, uint a, object b)
 		{
+			if (b == null) return false;
+
 			if (b is int || b is uint) {
 				return a == (uint)b;
 			} else if (b is double || b is float) {
@@ -1279,6 +1289,8 @@ namespace PlayScript.RuntimeBinder
 		{
 			if (b is string) {
 				return String.CompareOrdinal(a, (string)b) == 0;
+			} else if (b == null) {
+				return a == null;
 			} else {
 				ThrowOnInvalidOp (b, EQ);
 				return null;
@@ -1357,6 +1369,8 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object NotEqualsUIntObj (CallSite site, uint a, object b)
 		{
+			if (b == null) return true;
+
 			if (b is int || b is uint) {
 				return a != (uint)b;
 			} else if (b is double || b is float) {
@@ -1412,8 +1426,7 @@ namespace PlayScript.RuntimeBinder
 			if (a is bool) {
 				return (bool)a != b;
 			} else {
-				ThrowOnInvalidOp (a, NEQ);
-				return null;
+				return CastObjectToBool(a) != b;
 			}
 		}
 		
@@ -1422,8 +1435,7 @@ namespace PlayScript.RuntimeBinder
 			if (b is bool) {
 				return a != (bool)b;
 			} else {
-				ThrowOnInvalidOp (b, NEQ);
-				return null;
+				return a != CastObjectToBool(b);
 			}
 		}
 		
@@ -1567,6 +1579,8 @@ namespace PlayScript.RuntimeBinder
 				return (int)a | b;
 			} else if (a is bool) {
 				return ((bool)a ? 1 : 0) | b;
+			} else if (a == null || a == PlayScript.Undefined._undefined) {
+				return b;
 			} else {
 				ThrowOnInvalidOp (a, OR);
 				return null;
@@ -1579,6 +1593,8 @@ namespace PlayScript.RuntimeBinder
 				return a | (int)b;
 			} else if (b is bool) {
 				return a | ((bool)b ? 1 : 0);
+			} else if (b == null || b == PlayScript.Undefined._undefined) {
+				return a;
 			} else {
 				ThrowOnInvalidOp (b, OR);
 				return null;
@@ -1593,6 +1609,8 @@ namespace PlayScript.RuntimeBinder
 				return (uint)a | b;
 			} else if (a is bool) {
 				return (uint)((bool)a ? 1 : 0) | b;
+			} else if (a == null || a == PlayScript.Undefined._undefined) {
+				return b;
 			} else {
 				ThrowOnInvalidOp (a, OR);
 				return null;
@@ -1607,6 +1625,8 @@ namespace PlayScript.RuntimeBinder
 				return a | (uint)b;
 			} else if (b is bool) {
 				return a | (uint)((bool)b ? 1 : 0);
+			} else if (b == null || b == PlayScript.Undefined._undefined) {
+				return a;
 			} else {
 				ThrowOnInvalidOp (b, OR);
 				return null;

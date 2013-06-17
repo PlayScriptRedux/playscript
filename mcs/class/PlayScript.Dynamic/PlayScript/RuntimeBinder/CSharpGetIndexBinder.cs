@@ -168,19 +168,24 @@ namespace PlayScript.RuntimeBinder
 				}
 			}
 
-			var props = o.GetType ().GetProperties();
-			var len = props.Length;
-			for (var pi = 0; pi < len; pi++) {
-				var prop = props[pi];
+			var type = o.GetType();
+
+			var prop = type.GetProperty(key);
+			if (prop != null) {
 				var propType = prop.PropertyType;
 				var getter = prop.GetGetMethod();
-				if (getter != null && getter.IsPublic && !getter.IsStatic && prop.Name == key) {
+				if (getter != null) {
 					if (typeof(T) == typeof(object) || typeof(T) == propType) {
 						return (T)getter.Invoke (o, null);
 					} else {
 						return (T)Convert.ChangeType (getter.Invoke(o, null), typeof(T));
 					}
 				}
+			}
+
+			var field = type.GetField(key);
+			if (field != null) {
+				return (T)field.GetValue(o);
 			}
 
 			ThrowCantIndexError (o);

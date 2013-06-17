@@ -2070,6 +2070,7 @@ namespace PlayScript.Expando {
 
 		public bool hasOwnProperty(string key)
 		{
+			if (key == null) return false;
 			object value;
 			return TryGetValue(key, out value);
 		}
