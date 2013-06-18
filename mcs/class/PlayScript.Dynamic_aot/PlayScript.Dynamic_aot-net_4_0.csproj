@@ -147,6 +147,9 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\Undefined.cs">
       <Link>PlayScript\Undefined.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\Dynamic.cs">
+      <Link>PlayScript\Dynamic.cs</Link>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

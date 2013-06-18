@@ -103,30 +103,32 @@ package {
 	}
 
 	public function objectIsClass(o:Object, type:Class):Boolean {
-		if (o == null || type == null) return false;
-
-		if (type.IsAssignableFrom(System.Object(o).GetType())) {
-			return true;
-		}
-		throw new System.NotImplementedException();
+		return PlayScript.Dynamic.ObjectIsClass(o,type);
 	}
 	
 	public function invokeStaticMethod(type:Class, methodName:String, args:Array):Object
 	{
 		// pass this off to C# code
-		return PlayScript.Player.InvokeStaticMethod(type, methodName, args);
+		return PlayScript.Dynamic.InvokeStaticMethod(type, methodName, args);
 	}
 
 	public function getStaticProperty(type:Class, propertyName:String):Object
 	{
 		// pass this off to C# code
-		return PlayScript.Player.GetStaticProperty(type, propertyName);
+		var v:System.Object;
+		if (PlayScript.Dynamic.GetStaticPropertyOrField(type, propertyName, out v)) {
+			return v;
+		} else {
+			return null;
+		}
 	}
 
 	public function setStaticProperty(type:Class, propertyName:String, v:Object):void
 	{
 		// pass this off to C# code
-		PlayScript.Player.SetStaticProperty(type, propertyName, v);
+		if (!PlayScript.Dynamic.SetStaticPropertyOrField(type, propertyName, v)) {
+			throw new Error("Could not find static property: " + propertyName);
+		}
 	}
 
 }

@@ -3,7 +3,9 @@
 ../PlayScript.Dynamic/PlayScript/ExpressionType.cs
 ../PlayScript.Dynamic/PlayScript/CallSite.cs
 ../PlayScript.Dynamic/PlayScript/CallSiteBinder.cs
+../PlayScript.Dynamic/PlayScript/Dynamic.cs
 ../PlayScript.Dynamic/PlayScript/ParamsDelegateTypes.cs
+../PlayScript.Dynamic/PlayScript/Undefined.cs
 ../PlayScript.Dynamic/PlayScript/Expando/BindingRestrictionsEx.cs
 ../PlayScript.Dynamic/PlayScript/Expando/CacheDict.cs
 ../PlayScript.Dynamic/PlayScript/Expando/CollectionDebuggerView.cs

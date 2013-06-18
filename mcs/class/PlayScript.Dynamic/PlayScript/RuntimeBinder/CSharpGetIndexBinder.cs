@@ -151,7 +151,8 @@ namespace PlayScript.RuntimeBinder
 			ThrowCantIndexError (o);
 			return default(T);
 		}
-		
+
+
 		private static T GetKeyStr<T> (CallSite site, object o, string key)
 		{
 			var d = o as IDictionary<string,T>;
@@ -168,24 +169,9 @@ namespace PlayScript.RuntimeBinder
 				}
 			}
 
-			var type = o.GetType();
-
-			var prop = type.GetProperty(key);
-			if (prop != null) {
-				var propType = prop.PropertyType;
-				var getter = prop.GetGetMethod();
-				if (getter != null) {
-					if (typeof(T) == typeof(object) || typeof(T) == propType) {
-						return (T)getter.Invoke (o, null);
-					} else {
-						return (T)Convert.ChangeType (getter.Invoke(o, null), typeof(T));
-					}
-				}
-			}
-
-			var field = type.GetField(key);
-			if (field != null) {
-				return (T)field.GetValue(o);
+			object value;
+			if (Dynamic.GetPropertyOrField(o, key, out value)) {
+				return (T)value;
 			}
 
 			ThrowCantIndexError (o);

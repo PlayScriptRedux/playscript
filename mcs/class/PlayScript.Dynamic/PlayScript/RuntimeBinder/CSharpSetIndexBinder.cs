@@ -145,6 +145,7 @@ namespace PlayScript.RuntimeBinder
 			}
 		}
 
+
 		private static void SetKeyStr<T> (CallSite site, object o, string key, T value)
 		{
 			var d = o as IDictionary<string,T>;
@@ -155,33 +156,7 @@ namespace PlayScript.RuntimeBinder
 				if (d2 != null) {
 					d2[key] = value;
 				} else {
-					var type = o.GetType();
-
-					var prop = type.GetProperty(key);
-					if (prop != null) {
-						var setter = prop.GetSetMethod();
-						var propType = prop.PropertyType;
-						if (setter != null && setter.IsPublic && !setter.IsStatic) {
-							if (value is object || value.GetType () == propType) {
-								if (propType != typeof(System.Object) && propType != value.GetType()) {
-									var newValue = System.Convert.ChangeType(value, propType);;
-									setter.Invoke (o, new object [] { newValue } );
-								} else {
-									setter.Invoke (o, new object [] { value } );
-								}
-							} else {
-								setter.Invoke(o, new object [] { Convert.ChangeType(value, propType) } );
-							}
-							return;
-						}
-					}
-
-					var field = type.GetField(key);
-					if (field != null) {
-						field.SetValue(o, value);
-					}
-
-
+					Dynamic.SetPropertyOrField(o, key, value);
 				}
 			}
 		}

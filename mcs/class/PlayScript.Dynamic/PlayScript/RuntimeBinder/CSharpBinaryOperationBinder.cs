@@ -1301,12 +1301,12 @@ namespace PlayScript.RuntimeBinder
 
 		public static object EqualsObjBool (CallSite site, object a, bool b)
 		{
-			return CastObjectToBool(a) == b;
+			return Dynamic.CastObjectToBool(a) == b;
 		}
 		
 		public static object EqualsBoolObj (CallSite site, bool a, object b)
 		{
-			return a == CastObjectToBool(b);
+			return a == Dynamic.CastObjectToBool(b);
 		}
 
 		public static object EqualsObjObj (CallSite site, object a, object b)
@@ -1430,7 +1430,7 @@ namespace PlayScript.RuntimeBinder
 			if (a is bool) {
 				return (bool)a != b;
 			} else {
-				return CastObjectToBool(a) != b;
+				return Dynamic.CastObjectToBool(a) != b;
 			}
 		}
 		
@@ -1439,7 +1439,7 @@ namespace PlayScript.RuntimeBinder
 			if (b is bool) {
 				return a != (bool)b;
 			} else {
-				return a != CastObjectToBool(b);
+				return a != Dynamic.CastObjectToBool(b);
 			}
 		}
 		
@@ -1550,7 +1550,7 @@ namespace PlayScript.RuntimeBinder
 			if (a is bool) {
 				return (bool)a && b;
 			} else {
-				return CastObjectToBool(a) && b;
+				return Dynamic.CastObjectToBool(a) && b;
 			}
 		}
 		
@@ -1559,7 +1559,7 @@ namespace PlayScript.RuntimeBinder
 			if (b is bool) {
 				return a && (bool)b;
 			} else {
-				return a && CastObjectToBool(b);
+				return a && Dynamic.CastObjectToBool(b);
 			}
 		}
 		public static object AndObjObj (CallSite site, object a, object b)
@@ -1573,7 +1573,7 @@ namespace PlayScript.RuntimeBinder
 			} else if (a is uint) {
 				return AndUIntObj (site, (uint)a, b);
 			} else {
-				return CastObjectToBool(a) && CastObjectToBool(b);
+				return Dynamic.CastObjectToBool(a) && Dynamic.CastObjectToBool(b);
 			}
 		}
 
@@ -1666,7 +1666,7 @@ namespace PlayScript.RuntimeBinder
 			if (a is bool) {
 				return (bool)a || b;
 			} else {
-				return CastObjectToBool(a) || b;
+				return Dynamic.CastObjectToBool(a) || b;
 			}
 		}
 		
@@ -1675,13 +1675,13 @@ namespace PlayScript.RuntimeBinder
 			if (b is bool) {
 				return a || (bool)b;
 			} else {
-				return a || CastObjectToBool(b);
+				return a || Dynamic.CastObjectToBool(b);
 			}
 		}
 		
 		public static object OrObjObj (CallSite site, object a, object b)
 		{
-			return CastObjectToBool(a) || CastObjectToBool(b);
+			return Dynamic.CastObjectToBool(a) || Dynamic.CastObjectToBool(b);
 		}
 
 		public static object XorObjInt (CallSite site, object a, int b)
@@ -1781,27 +1781,6 @@ namespace PlayScript.RuntimeBinder
 			} else {
 				ThrowOnInvalidOp (b, XOR);
 				return null;
-			}
-		}
-
-
-		public static bool CastObjectToBool(object a)
-		{
-			if (a is bool) {
-				return (bool)a;
-			} if (a is int) {
-				return ((int)a) != 0;
-			} else if (a is double) {
-				return ((double)a) != 0.0;
-			} else if (a is uint) {
-				return ((uint)a) != 0;
-			} else if (a is string) {
-				return !string.IsNullOrEmpty((string)a);
-			} else if (a == PlayScript.Undefined._undefined) {
-				return false;
-			} else {
-				// see if object reference is non-nul
-				return (a != null);
 			}
 		}
 
