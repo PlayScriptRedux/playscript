@@ -134,6 +134,8 @@ namespace _root
 
 		public static Array split (this string s, object delimiter, int limit = 0x7fffffff)
 		{
+			if (s == null) return new Array();
+
 			if (limit != 0x7fffffff) {
 				if (delimiter != "") {
 					var split = s.Split(new string[] {(string)delimiter}, limit, StringSplitOptions.None);

@@ -144,8 +144,8 @@ package flash.geom {
 			var cos:Number = System.Math.Cos(angle);
 			 
 			sTemp.a =  cos;
-			sTemp.b = -sin;
-			sTemp.c =  sin;
+			sTemp.b =  sin;
+			sTemp.c = -sin;
 			sTemp.d =  cos;
 			sTemp.tx = 0;
 			sTemp.ty = 0;

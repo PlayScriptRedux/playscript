@@ -20,6 +20,8 @@ package flash.utils {
 	import System.Linq.*;
 
 	public class Timer extends EventDispatcher {
+
+		private static const MAX_TIMER_DELTA:Number = 1000.0;
 	
 		//
 		// Properties
@@ -76,7 +78,7 @@ package flash.utils {
 			{
 				// subtract delay from accumulated time
 				mCurrentTime -= delay;
-			
+
 				// increment count
 				mCurrentCount++;
 			
@@ -93,6 +95,7 @@ package flash.utils {
 				
 				if (!mRunning)
 				{
+
 					// dispatch timer complete event
 					var ec:Event = new TimerEvent(TimerEvent.TIMER_COMPLETE);
 					this.dispatchEvent(ec);
@@ -122,9 +125,15 @@ package flash.utils {
         // the game can call this if it doesn't want to specify its own delta time 
         public static function advanceAllTimers():void 
         {
-            var elapsedMS:Number = sEventTimer.ElapsedMilliseconds;
+			var deltaTimeMS:Number = sEventTimer.ElapsedMilliseconds;
             sEventTimer.Restart();
-            advanceAllTimersWithTimeDelta(elapsedMS);
+
+			// clamp to maximum timer delta
+			if (deltaTimeMS > MAX_TIMER_DELTA) {
+				deltaTimeMS = MAX_TIMER_DELTA;
+			}
+
+			advanceAllTimersWithTimeDelta(deltaTimeMS);
         }
 
 		public static function delayCall(closure:Function, delay:Number = 0.0):void {

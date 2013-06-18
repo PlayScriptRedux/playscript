@@ -111,7 +111,7 @@ package {
 		}
  	 	
 		public function child(propertyName:Object):XMLList {
-			var list = mElement.SelectSingleNode(String(propertyName));
+			var list = mElement.SelectNodes(String(propertyName));
 			return new XMLList(list);
 		}
  	 	
