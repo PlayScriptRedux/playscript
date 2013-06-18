@@ -28,6 +28,7 @@ package {
 			mDate = System.DateTime.Now;
 		}
 
+		private static var mTickFactor:long = 10 * 1000;
 		private static var mEpoch:System.DateTime = new System.DateTime(1970,1,1,0,0,0);
 
 		public function get time():Number { return getTime();  }
@@ -41,7 +42,7 @@ package {
 
 		public function setTime(t:Number) : void 
 		{ 
-			var nanoTicks:long = long(t) * 1000000;
+			var nanoTicks:long = long(t) * mTickFactor;
 			mDate = new System.DateTime(nanoTicks + mEpoch.Ticks);  
 		}
 		public function setDate(t:Number) : void { throw new System.NotImplementedException();  }
@@ -51,7 +52,7 @@ package {
 		public function getTime() : Number 
 		{ 
 			var nanoTicks:long = (mDate.Ticks - mEpoch.Ticks);
-			return long(nanoTicks / 1000000);  // to milliseconds
+			return long(nanoTicks / mTickFactor);  // to milliseconds
 		}
 		public function getDate() : Number { throw new System.NotImplementedException();  }
 		public function getYear() : Number { throw new System.NotImplementedException();  }
