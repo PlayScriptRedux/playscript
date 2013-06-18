@@ -3181,7 +3181,21 @@ namespace Mono.CSharp
 			// Handle PlayScript binary operators that need to be converted to methods.
 			if (ec.FileType == SourceFileType.PlayScript) {
 				if (ec.Target != Target.JavaScript) {
-					if (oper == Operator.AsRefEquality) {
+					if ((oper == Operator.LogicalOr || oper == Operator.LogicalAnd) && 
+					    (left.Type.BuiltinType != BuiltinTypeSpec.Type.Bool || right.Type.BuiltinType != Mono.CSharp.BuiltinTypeSpec.Type.Bool)) {
+						Expression leftExpr = left;
+						Expression rightExpr = right;
+						if (left.Type != right.Type) {
+							leftExpr = new Cast (new TypeExpression(ec.BuiltinTypes.Dynamic, loc), left, loc);
+							rightExpr = new Cast (new TypeExpression(ec.BuiltinTypes.Dynamic, loc), right, loc);
+						}
+						if (oper == Operator.LogicalOr) {
+							return new Conditional (new Cast(new TypeExpression(ec.BuiltinTypes.Bool, loc), left, loc), leftExpr, rightExpr, loc).Resolve (ec);
+						} else {
+							return new Conditional (new Unary(Unary.Operator.LogicalNot, 
+							       new Cast(new TypeExpression(ec.BuiltinTypes.Bool, loc), left, loc), loc), leftExpr, rightExpr, loc).Resolve (ec);
+						}
+					} else if (oper == Operator.AsRefEquality) {
 						return MakeReferenceEqualsInvocation (ec).Resolve (ec);
 					} else if (oper == Operator.AsRefInequality) {
 						return new Unary(Unary.Operator.LogicalNot, MakeReferenceEqualsInvocation (ec), loc).Resolve (ec);

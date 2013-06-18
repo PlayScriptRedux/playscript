@@ -16,6 +16,7 @@ namespace PlayScript
 			var mi = type.GetMethod (methodName, BindingFlags.Public | BindingFlags.Static);
 			return mi.Invoke (null, argList);
 		}
+
 	}
 }
 

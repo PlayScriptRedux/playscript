@@ -10,6 +10,29 @@ package
 
 		public static function Main():void {
 		
+			var _b1:Boolean = true;
+			var _b2:Boolean = false;
+			var __b:Boolean = _b1 && _b2;
+			
+			var _i1:int = 100;
+			var _i2:int = 200;
+			var __i:int = _i1 && _i2;
+			__i &&= 100;
+			
+			var _u1:uint = 100;
+			var _u2:uint = 200;
+			var __u:uint = _u1 && _u2;
+			__u &&= 200;
+			
+			var _n1:Number = 100.0;
+			var _n2:Number = 200.0;
+			var __n:Number = _n1 && _n2;
+			__n &&= 300;
+
+			var __o:Object = 100.0;
+			__n = __o || 200.0;
+		
+		
 			var qq:Array = [ "100", "200" ];
 			
 			var uu:uint = uint(qq[0]);
