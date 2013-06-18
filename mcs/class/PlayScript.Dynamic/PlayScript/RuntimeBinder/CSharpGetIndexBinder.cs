@@ -170,8 +170,19 @@ namespace PlayScript.RuntimeBinder
 			}
 
 			object value;
-			if (Dynamic.GetPropertyOrField(o, key, out value)) {
-				return (T)value;
+			if (o is System.Type)
+			{
+				// try to get a static member
+				if (Dynamic.GetStaticMember((System.Type)o, key, out value)) {
+					return (T)value;
+				}
+			}
+			else
+			{
+				// get instance member
+				if (Dynamic.GetInstanceMember(o, key, out value)) {
+					return (T)value;
+				}
 			}
 
 			ThrowCantIndexError (o);

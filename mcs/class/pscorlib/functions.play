@@ -116,7 +116,7 @@ package {
 	{
 		// pass this off to C# code
 		var v:System.Object;
-		if (PlayScript.Dynamic.GetStaticPropertyOrField(type, propertyName, out v)) {
+		if (PlayScript.Dynamic.GetStaticMember(type, propertyName, out v)) {
 			return v;
 		} else {
 			return null;
@@ -126,7 +126,7 @@ package {
 	public function setStaticProperty(type:Class, propertyName:String, v:Object):void
 	{
 		// pass this off to C# code
-		if (!PlayScript.Dynamic.SetStaticPropertyOrField(type, propertyName, v)) {
+		if (!PlayScript.Dynamic.SetStaticMember(type, propertyName, v)) {
 			throw new Error("Could not find static property: " + propertyName);
 		}
 	}

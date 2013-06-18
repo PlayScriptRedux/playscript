@@ -156,7 +156,7 @@ namespace PlayScript.RuntimeBinder
 				if (d2 != null) {
 					d2[key] = value;
 				} else {
-					Dynamic.SetPropertyOrField(o, key, value);
+					Dynamic.SetInstanceMember(o, key, value);
 				}
 			}
 		}
