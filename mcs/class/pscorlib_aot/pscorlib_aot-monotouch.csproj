@@ -42,15 +42,15 @@
       <HintPath>..\lib\net_4_5\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
     <Reference Include="System.Json" />
-    <Reference Include="System.Web">
-      <HintPath>..\lib\net_4_0\System.Web.dll</HintPath>
-    </Reference>
+    <Reference Include="System.Web.Services" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />
     <Folder Include="ActionScript\" />
     <Folder Include="flash\" />
     <Folder Include="flash\filesystem\" />
+    <Folder Include="flash\globalization\" />
+    <Folder Include="flash\external\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -674,6 +674,27 @@
     </Compile>
     <Compile Include="..\pscorlib\PlayScript\ParamsDelegateTypes.cs">
       <Link>PlayScript\ParamsDelegateTypes.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\net\URLRequestMethod.play">
+      <Link>flash\net\URLRequestMethod.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\events\HTTPStatusEvent.play">
+      <Link>flash\events\HTTPStatusEvent.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Date.play">
+      <Link>Date.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\globalization\Collator.play">
+      <Link>flash\globalization\Collator.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\external\ExternalInterface.play">
+      <Link>flash\external\ExternalInterface.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\events\UncaughtErrorEvent.play">
+      <Link>flash\events\UncaughtErrorEvent.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\media\SoundMixer.play">
+      <Link>flash\media\SoundMixer.play</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>
