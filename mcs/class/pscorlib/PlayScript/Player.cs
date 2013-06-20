@@ -419,6 +419,53 @@ namespace PlayScript
 			mStage.onExitFrame ();
 		}
 		
+
+		public static string CalculateMD5Hash(string input)
+		{
+			// step 1, calculate MD5 hash from input
+			var md5 = System.Security.Cryptography.MD5.Create();
+			byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes(input);
+			byte[] hash = md5.ComputeHash(inputBytes);
+			
+			// step 2, convert byte array to hex string
+			var sb = new System.Text.StringBuilder();
+			for (int i = 0; i < hash.Length; i++)
+			{
+				sb.Append(hash[i].ToString("X2"));
+			}
+			return sb.ToString();
+		}
+
+		public static bool Offline = false;
+		public static string WebCacheLoadPath = NSBundle.MainBundle.ResourcePath + "/webcache/";
+		public static string WebCacheStorePath = null;
+
+		public static string LoadWebResponseFromCache(string hash)
+		{
+			if (Offline && WebCacheLoadPath != null) {
+				var path = 	WebCacheLoadPath + hash + ".response.txt"; 
+				if (File.Exists(path)) {
+					return System.IO.File.ReadAllText(path);
+				} else {
+					return null;
+				}
+			}
+			return null;
+		}
+
+		public static void StoreWebResponseIntoCache(string hash, string response)
+		{
+			if (WebCacheStorePath != null) {
+				if (!System.IO.Directory.Exists(WebCacheStorePath)) {
+					System.IO.Directory.CreateDirectory(WebCacheStorePath);
+				}
+				var path = 	WebCacheStorePath + hash + ".response.txt"; 
+				System.IO.File.WriteAllText(path, response);
+			}
+		}
+
+
+		private int 					mFrameCount = 0;
 		private flash.display.Stage    mStage;
 		private float mScrollDelta;
 

@@ -60,8 +60,7 @@ package flash.net {
 			}
 
 			var url:String = request.url.ToLowerInvariant();
-
-			if (mRequest.url.StartsWith("http:") || mRequest.url.StartsWith("https:")) {
+			if (url.StartsWith("http:") || url.StartsWith("https:")) {
 				// handle a http load
 				// load with a delay
 				Timer.delayCall (doHttpLoad);
@@ -74,6 +73,29 @@ package flash.net {
 
 		private function doHttpLoad():void
 		{
+			var hash:String = mRequest.generateHash();
+
+			if (PlayScript.Player.Offline) {
+				// see if a cached response exists (for offline mode)
+				var cachedResponse:String = PlayScript.Player.LoadWebResponseFromCache(hash);
+				if (cachedResponse != null) {
+					trace("URLLoader: http cached ", mRequest.url);
+					
+					this.bytesLoaded = cachedResponse.Length;
+					this.bytesTotal  = cachedResponse.Length;
+					this.data = cachedResponse;
+					// dispatch complete event
+					this.dispatchEvent(new Event(Event.COMPLETE));
+					return;
+				} else {
+					// offline and no cached response, return error
+					trace("URLLoader: http offline ", mRequest.url);
+	//				var derror:Event = new Event(IOErrorEvent.IO_ERROR);
+	//				this.dispatchEvent(derror);
+					return;
+				}
+			}
+
 			trace("URLLoader: http load ", mRequest.url);
 			
 			var wr = WebRequest.Create (mRequest.url);
@@ -116,6 +138,8 @@ package flash.net {
 			// dispatch complete event
 			var de:Event = new Event(Event.COMPLETE);
 			this.dispatchEvent(de);
+
+			PlayScript.Player.StoreWebResponseIntoCache(hash, responseFromServer);
 		}
 
 		private function doLocalLoad():void
