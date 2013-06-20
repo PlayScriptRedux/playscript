@@ -90,8 +90,8 @@ package flash.net {
 				} else {
 					// offline and no cached response, return error
 					trace("URLLoader: http offline ", mRequest.url);
-	//				var derror:Event = new Event(IOErrorEvent.IO_ERROR);
-	//				this.dispatchEvent(derror);
+					var derror:Event = new IOErrorEvent(IOErrorEvent.IO_ERROR, false, false, "offline");
+					this.dispatchEvent(derror);
 					return;
 				}
 			}
