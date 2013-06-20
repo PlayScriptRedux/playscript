@@ -47,9 +47,11 @@ namespace flash.display3D.textures {
 
 			// we do this to clear the texture on creation
 			// $$TODO we dont need to allocate a bitmapdata to do this, we should just use a PBO and clear it
-			var clearData = new BitmapData(width, height);
-			uploadFromBitmapData(clearData);
-			clearData.dispose();
+			if (optimizeForRenderToTexture) {
+				var clearData = new BitmapData(width, height);
+				uploadFromBitmapData(clearData);
+				clearData.dispose();
+			}
 		}
 
 		public void uploadCompressedTextureFromByteArray (ByteArray data, uint byteArrayOffset, bool async = false)
