@@ -52,6 +52,7 @@ namespace PlayScript
 			// add resource directories in static constructor
 			AddResourceDirectory("");
 			#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH 
+			AddResourceDirectory(NSBundle.MainBundle.ResourcePath + "/src/");
 			AddResourceDirectory(NSBundle.MainBundle.ResourcePath);
 			#endif
 		}
@@ -338,12 +339,24 @@ namespace PlayScript
 			}
 		}
 
+
 #if PLATFORM_MONOTOUCH
+		private System.Drawing.PointF GetPosition(UITouch touch)
+		{
+			var p = touch.LocationInView(touch.View);
+
+			// convert point to pixels
+			var scale = touch.View.ContentScaleFactor;
+			p.X *= scale;
+			p.Y *= scale;
+			return p;
+		}
+
 		// TODO: at some point we'll have a platform agnostic notion of touches to pass to the player, for now we use UITouch
 		public void OnTouchesBegan (NSSet touches, UIEvent evt)
 		{
 			foreach (UITouch touch in touches) {
-				var p = touch.LocationInView(touch.View);
+				var p = GetPosition(touch);
 				//Console.WriteLine ("touches-began {0}", p);
 
 				mStage.mouseX = p.X;
@@ -360,7 +373,7 @@ namespace PlayScript
 		public void OnTouchesMoved (NSSet touches, UIEvent evt)
 		{
 			foreach (UITouch touch in touches) {
-				var p = touch.LocationInView(touch.View);
+				var p = GetPosition(touch);
 				//Console.WriteLine ("touches-moved {0}", p);
 
 				mStage.mouseX = p.X;
@@ -377,7 +390,8 @@ namespace PlayScript
 		public void OnTouchesEnded (NSSet touches, UIEvent evt)
 		{
 			foreach (UITouch touch in touches) {
-				var p = touch.LocationInView(touch.View);
+				var p = GetPosition(touch);
+
 				//Console.WriteLine ("touches-ended {0}", p);
 
 				mStage.mouseX = p.X;
