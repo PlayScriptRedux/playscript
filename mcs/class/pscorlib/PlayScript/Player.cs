@@ -451,7 +451,11 @@ namespace PlayScript
 		}
 
 		public static bool Offline = false;
+		#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH 
 		public static string WebCacheLoadPath = NSBundle.MainBundle.ResourcePath + "/webcache/";
+		#else
+		public static string WebCacheLoadPath = "./webcache/";
+		#endif
 		public static string WebCacheStorePath = null;
 
 		public static string LoadWebResponseFromCache(string hash)
