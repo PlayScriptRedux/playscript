@@ -25,7 +25,7 @@ using System.Diagnostics;
 namespace _root {
 
 
-#if !NEWVECTOR
+#if false // !NEWVECTOR
 
 	// this class is used to display a custom view of the vector values to the debugger
 	// TODO: we need to make these elements editable 
@@ -678,6 +678,8 @@ namespace _root {
 
 		#endregion
 
+		public List<T> GetInternalList() {return mList;}
+
 		private bool    mFixed = false;
 		private readonly List<T> mList = new List<T>();
 	}
@@ -686,8 +688,121 @@ namespace _root {
 
 	// Optimized vector.
 		
-	public class Vector<T> : IList<T>
+	// this class is used to display a custom view of the vector values to the debugger
+	// TODO: we need to make these elements editable 
+	internal class VectorDebugView<T>
 	{
+		private Vector<T>  mVector;
+		
+		// The constructor for the type proxy class must have a 
+		// constructor that takes the target type as a parameter.
+		public VectorDebugView(Vector<T> vector)
+		{
+			this.mVector = vector;
+		}
+		
+		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+		public T[] Values
+		{
+			get
+			{
+				mVector._TrimCapacity();
+				return mVector._GetInnerArray();
+			}
+		}
+	}
+	
+	[DebuggerDisplay("length = {length}")]
+	[DebuggerTypeProxy(typeof(VectorDebugView<>))]
+	public sealed class Vector<T> : IList<T>, IList
+	{
+		#region IList implementation
+
+		int IList.Add(object value)
+		{
+			throw new NotImplementedException();
+		}
+
+		void IList.Clear()
+		{
+			this.length = 0;
+		}
+
+		bool IList.Contains(object value)
+		{
+			return this.indexOf((T)value) >= 0;
+		}
+
+		int IList.IndexOf(object value)
+		{
+			return this.indexOf((T)value);
+		}
+
+		void IList.Insert(int index, object value)
+		{
+			throw new NotImplementedException();
+		}
+
+		void IList.Remove(object value)
+		{
+			throw new NotImplementedException();
+		}
+
+		void IList.RemoveAt(int index)
+		{
+			throw new NotImplementedException();
+		}
+
+		bool IList.IsFixedSize {
+			get {
+				return @fixed;
+			}
+		}
+
+		bool IList.IsReadOnly {
+			get {
+				return false;
+			}
+		}
+
+		object IList.this[int index] {
+			get {
+				return (object)this[index];
+			}
+			set {
+				this[index] = (T)value;
+			}
+		}
+
+		#endregion
+
+		#region ICollection implementation
+
+		void ICollection.CopyTo(System.Array array, int index)
+		{
+			System.Array.Copy(mArray, 0, array, index, mCount);
+		}
+
+		bool ICollection.IsSynchronized {
+			get {
+				return false;
+			}
+		}
+
+		int ICollection.Count {
+			get {
+				return (int)this.length;
+			}
+		}
+
+		object ICollection.SyncRoot {
+			get {
+				return null;
+			}
+		}
+
+		#endregion
+
 		private const string ERROR_RESIZING_FIXED = "Error resizing fixed vector.";
 
 		private T[] mArray;
@@ -732,9 +847,22 @@ namespace _root {
 		
 		public Vector(Array a)
 		{
-			throw new System.NotImplementedException();
+			mArray = new T[a.length];
+			this.append((IEnumerable)a);
 		}
-		
+
+		public Vector(IList a)
+		{
+			mArray = new T[a.Count];
+			this.append((IEnumerable)a);
+		}
+
+		public Vector(IEnumerable e)
+		{
+			mArray = new T[4];
+			this.append(e);
+		}
+
 		public Vector(uint length = 0, bool @fixed = false)
 		{
 			if (length != 0)
@@ -744,7 +872,7 @@ namespace _root {
 			mCount = length;
 			mFixed = @fixed;
 		}
-		
+
 		public T this[int i]
 		{
 			get {
@@ -752,7 +880,7 @@ namespace _root {
 			}
 			set {
 				if (i >= mCount) {
-					expand(i+1);
+					expand((uint)(i+1));
 				}
 				mArray[i] = value;
 			}
@@ -765,12 +893,22 @@ namespace _root {
 			}
 			set {
 				if (i >= mCount) {
-					expand((int)(i+1));
+					expand((uint)(i+1));
 				}
 				mArray[(int)i] = value;
 			}
 		}
-		
+
+		public T this[string i]
+		{
+			get {
+				throw new NotImplementedException();
+			}
+			set {
+				throw new NotImplementedException();
+			}
+		}
+
 		public T[] ToArray()
 		{
 			T[] ret = new T[mCount];
@@ -781,6 +919,13 @@ namespace _root {
 		public T[] _GetInnerArray()
 		{
 			return mArray;
+		}
+
+		public void _TrimCapacity()
+		{
+			if (mCount < mArray.Length) {
+				mArray = ToArray();
+			}
 		}
 
 		private void EnsureCapacity(uint size)
@@ -804,10 +949,17 @@ namespace _root {
 
 		private void _Insert(int index, T value) 
 		{
+			if (index > mCount) throw new NotImplementedException();
+
 			if (mCount >= mArray.Length)
 				EnsureCapacity(mCount + 1);
-			if (index < (int)mCount)
-				System.Array.Copy (mArray, index, mArray, index + 1, (int)mCount - index);
+			if (index < (int)mCount) {
+			//	System.Array.Copy (mArray, index, mArray, index + 1, (int)mCount - index);
+				for (int i=(int)mCount; i > index; i--)
+				{
+					mArray[i] = mArray[i-1];
+				}
+			}
 			mArray[index] = value;
 			mCount++;
 		}
@@ -821,6 +973,7 @@ namespace _root {
 				mArray[index] = default(T);
 			} else {
 				System.Array.Copy (mArray, index + 1, mArray, index, (int)mCount - index - 1);
+				mArray[mCount - 1] = default(T);
 			}
 			mCount--;
 		}
@@ -837,9 +990,22 @@ namespace _root {
 		public void append(Vector<T> vec)
 		{
 			EnsureCapacity(mCount + vec.mCount);
-			System.Array.Copy (mArray, mCount, vec.mArray, 0, vec.mCount);
+			System.Array.Copy (vec.mArray, 0, mArray, mCount, vec.mCount);
 			mCount += vec.mCount;
 		}
+
+		public void append(IEnumerable items)
+		{
+			if (items is IList) {
+				var list = (items as IList);
+				EnsureCapacity(mCount + (uint)list.Count);
+			}
+			
+			foreach (var item in items) {
+				this.Add ((T)item);
+			}
+		}
+
 
 		public void append(IEnumerable<T> items)
 		{
@@ -853,27 +1019,31 @@ namespace _root {
 			}
 		}
 
-		public Vector<T> concat(params object[] args) 
-		{
-			
-			Vector<T> v = new Vector<T>((uint)args.Length + mCount);
-			// add this vector
-			v.append (this);
+		public void copyTo(Vector<T> dest, int sourceIndex, int destIndex, int count) {
+			System.Array.Copy(this.mArray, sourceIndex, dest.mArray, destIndex, count);
+		}
 
-			// concat all supplied vectors
-			foreach (var o in args) {
-				if (o is Vector<T>) {
-					v.append (o as Vector<T>);
-				} else if (o is IEnumerable<T>) {
-					v.append (o as IEnumerable<T>);
-				} else {
+		public Vector<T> clone() {
+			return new Vector<T>(this);
+		}
+
+		public Vector<T> concat(params object[] args) {
+			Vector<T> v = clone();
+			// concat all supplied vecots
+			foreach (var o in args)
+			{
+				if (o is IEnumerable<T>)
+				{
+					v.append(o as IEnumerable<T>);
+				} 
+				else
+				{
 					throw new System.NotImplementedException();
 				}
 			}
-			
 			return v;
 		}
-		
+
 		public bool every(Delegate callback, dynamic thisObject = null) 
 		{
 			throw new System.NotImplementedException();
@@ -888,54 +1058,30 @@ namespace _root {
 		{
 			throw new System.NotImplementedException();
 		}
-		
-		public int indexOf(T searchElement) 
+
+		public int indexOf(T searchElement)
 		{
-			uint len = mCount;
-			if (len > 0) {
-				switch (Type.GetTypeCode(typeof(T))) {
-				case TypeCode.Object:
-					object obj = searchElement;
-					for (var i = 0; i < len; i++) {
-						if (Object.ReferenceEquals(mArray[i], obj))
-							return i;
-					}
-					break;
-				case TypeCode.Int32:
-					int[] intArry = mArray as int[];
-					int intElem = (int)(object)searchElement;
-					for (var i = 0; i < len; i++) {
-						if (intArry[i] == intElem)
-							return i;
-					}
-					break;
-				case TypeCode.String:
-					string[] strArry = mArray as string[];
-					string strElem = searchElement as string;
-					for (var i = 0; i < len; i++) {
-						if (strArry[i] == strElem)
-							return i;
-					}
-					break;
-				default:
-					for (var i = 0; i < len; i++) {
-						if (mArray[i].Equals(searchElement))
-							return i;
-					}
-					break;
-				}
-			}
-			return -1;
+			return System.Array.IndexOf<T>(mArray, searchElement, 0, (int)mCount);
 		}
 		
 		public int indexOf(T searchElement, int fromIndex) 
 		{
-			throw new System.NotImplementedException();
+			return System.Array.IndexOf<T>(mArray, searchElement, fromIndex, (int)mCount);
 		}
 		
 		public string join(string sep = ",") 
 		{
-			throw new System.NotImplementedException();
+			var sb = new System.Text.StringBuilder();
+			bool needsSeperator = false;
+			foreach (var item in this)
+			{
+				if (needsSeperator) {
+					sb.Append(sep);
+				}
+				sb.Append(item.ToString());
+				needsSeperator = true;
+			}
+			return sb.ToString();
 		}
 		
 		public int lastIndexOf(T searchElement, int fromIndex = 0x7fffffff) 
@@ -984,19 +1130,39 @@ namespace _root {
 		
 		public Vector<T> reverse() 
 		{
-			throw new System.NotImplementedException();
+			var nv = new Vector<T>(length, @fixed);
+			int l = (int)length;
+			for (int i = 0; i < l; i++)
+			{
+				nv[i] = this[l - i - 1];
+			}
+			return nv;
 		}
 		
 		public T shift() 
 		{
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
-			throw new System.NotImplementedException();
+
+			T v = this[0];
+			_RemoveAt(0);
+			return v;
 		}
 		
 		public Vector<T> slice(int startIndex = 0, int endIndex = 16777215) 
 		{
-			throw new System.NotImplementedException();
+			if (startIndex < 0) 
+				throw new InvalidOperationException("splice error");
+
+			if (endIndex > (int)mCount) endIndex = (int)mCount;
+
+			int count = endIndex - startIndex;
+			if (count < 0)
+				throw new InvalidOperationException("splice error");
+				
+			var result = new Vector<T>((uint)count, false);
+			System.Array.Copy(mArray, startIndex, result.mArray, 0, count);
+			return result;
 		}
 		
 		public bool some(Delegate callback, dynamic thisObject = null) 
@@ -1006,7 +1172,7 @@ namespace _root {
 		
 		private class FunctionSorter : System.Collections.Generic.IComparer<T>
 		{
-			public FunctionSorter(dynamic func)
+			public FunctionSorter(object func)
 			{
 				mFunc = func;
 			}
@@ -1043,7 +1209,7 @@ namespace _root {
 			// private uint mOptions;
 		};
 		
-		public Vector<T> sort(dynamic sortBehavior) 
+		public Vector<T> sort(dynamic sortBehavior = null) 
 		{
 			
 			if (sortBehavior is Delegate)
@@ -1063,13 +1229,16 @@ namespace _root {
 				throw new System.NotImplementedException();
 			}
 		}
-		
+#if true
 		public Vector<T> splice(int startIndex, uint deleteCount = 4294967295) 
 		{
 			Vector<T> removed = null;
 
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
+
+			if (startIndex < 0) 
+				throw new InvalidOperationException("splice error");
 
 			// determine number of items to delete
 			int toDelete = (int)mCount - startIndex;
@@ -1103,6 +1272,9 @@ namespace _root {
 
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
+
+			if (startIndex < 0) 
+				throw new InvalidOperationException("splice error");
 
 			// determine number of items to delete
 			int toDelete = (int)mCount - startIndex;
@@ -1148,6 +1320,9 @@ namespace _root {
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
 
+			if (startIndex < 0) 
+				throw new InvalidOperationException("splice error");
+
 			// determine number of items to delete
 			int toDelete = (int)mCount - startIndex;
 			if ((uint)toDelete > deleteCount) 
@@ -1172,6 +1347,9 @@ namespace _root {
 		{
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
+
+			if (startIndex < 0) 
+				throw new InvalidOperationException("splice error");
 
 			// determine number of items to delete
 			int toDelete = (int)mCount - startIndex;
@@ -1205,15 +1383,61 @@ namespace _root {
 				mCount += itemsLen;
 			}
 		}
+#else
+		public Vector<T> splice(int startIndex, uint deleteCount = 4294967295, params T[] items) {
+			Vector<T> removed = null;
+
+			if (startIndex < 0) 
+				throw new InvalidOperationException("splice error");
+
+			
+			// determine number of items to delete
+			uint toDelete = (uint)(this.length - startIndex);
+			if (toDelete > deleteCount) toDelete = deleteCount;
+			
+			if (toDelete > 0)
+			{
+				removed = new Vector<T>();
+				
+				// build list of items we removed
+				for (int i=0; i < toDelete; i++)
+				{
+					removed.push( mArray[startIndex + i] );
+				}
+				
+				// remove items
+				for (int i=0; i < toDelete; i++)
+				{
+					this._RemoveAt(startIndex);
+				}
+			}
+			
+			if (items.Length > 0)
+			{
+				for (int i=0; i < items.Length; i++)
+				{
+					this._Insert((int)(startIndex + i), items[i] );
+				}
+			}
+			
+			return removed;
+		}
+#endif
+
 		
 		public string toLocaleString() 
 		{
 			throw new System.NotImplementedException();
 		}
-		
+
 		public string toString() 
 		{
-			throw new System.NotImplementedException();
+			return this.ToString();
+		}
+		
+		public override string ToString()
+		{
+			return this.join(",");
 		}
 
 		public uint unshift(T item) 
@@ -1378,6 +1602,15 @@ namespace _root {
 		}
 
 		#endregion
+
+		public static implicit operator Vector<T>(Array a) {
+			return new Vector<T>(a);
+		}
+		
+		public static implicit operator Array(Vector<T> v) {
+			return new Array(v);
+		}
+
 	}
 
 #endif
