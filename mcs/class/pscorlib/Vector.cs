@@ -808,6 +808,8 @@ namespace _root {
 		private T[] mArray;
 		private uint mCount;
 		private bool mFixed = false;
+
+		private static T[] sEmptyArray = new T[0];
 		
 		//
 		// Properties
@@ -859,7 +861,7 @@ namespace _root {
 
 		public Vector(IEnumerable e)
 		{
-			mArray = new T[4];
+			mArray = sEmptyArray;
 			this.append(e);
 		}
 
@@ -868,7 +870,7 @@ namespace _root {
 			if (length != 0)
 				mArray = new T[(int)length];
 			else
-				mArray = new T[4];
+				mArray = sEmptyArray;
 			mCount = length;
 			mFixed = @fixed;
 		}
@@ -934,6 +936,7 @@ namespace _root {
 				if (mFixed)
 					throw new InvalidOperationException(ERROR_RESIZING_FIXED);
 				int newSize = mArray.Length * 2;
+				if (newSize == 0) newSize = 4;
 				while (newSize < size)
 					newSize = newSize * 2;
 				T[] newArray = new T[newSize];
