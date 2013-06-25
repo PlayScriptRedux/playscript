@@ -14,7 +14,7 @@
 
 package flash.geom {
 
-	public class Rectangle {
+	public final class Rectangle {
 
 
 		private var mX:Number;

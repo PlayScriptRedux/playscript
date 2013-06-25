@@ -86,6 +86,8 @@ package {
 		if (radix != 0 && radix != 10) 
 			throw new System.NotImplementedException();
 
+		if (str == null) return 0;
+
 		if (str.StartsWith("0x")) {
 			// parse hex
 			return System.Convert.ToInt32(str.Substring(2), 16);

@@ -53,6 +53,15 @@ package flash.net {
 		public function URLRequest(url:String = null) {
 			this.url = url;
 		}
+
+		internal function generateHash():String {
+
+			var str = method + "_" + url;
+			if (data is String) {
+				str += data;
+			}
+			return PlayScript.Player.CalculateMD5Hash(str);
+		}
 	
 	}
 

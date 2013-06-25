@@ -14,7 +14,7 @@
 
 package flash.geom {
 
-	public class Matrix {
+	public final class Matrix {
 	
 		private static var sTemp:Matrix = new Matrix();
 

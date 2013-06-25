@@ -142,7 +142,8 @@ package flash.display {
 			alphaBitmapData:BitmapData = null, alphaPoint:Point = null, mergeAlpha:Boolean = false):void {
 
 			if (sourceRect.right > sourceBitmapData.width || sourceRect.bottom > sourceBitmapData.height) {
-				throw new Error("out of bounds copyPixels");
+				trace("warning: copyPixels out of bounds");
+				return;
 			}
 
 			if (mergeAlpha || (alphaBitmapData != null)) {
@@ -151,6 +152,10 @@ package flash.display {
 									
 			var sourceData:System.UInt32[] = sourceBitmapData.getRawData();
 			var destData:System.UInt32[] = this.getRawData();
+			if (sourceData == null || destData == null) {
+				trace("warning: copyPixels disposed bitmapdata");
+				return;
+			}
 
 			// compute source offset and pitch 
 			var sourcePitch:int = (sourceBitmapData.width * 4);
@@ -393,7 +398,8 @@ package flash.display {
 				context.SetBlendMode (CGBlendMode.Copy);
 				context.DrawImage (new System.Drawing.RectangleF (0, 0, width, height), image);
 			}
-			
+			image.Dispose();
+
 			// allocate new bitmap data and copy into it
 			var bd:BitmapData = new flash.display.BitmapData(width, height, true);
 			System.Buffer.BlockCopy(data, 0, bd.getRawData(), 0, width * height * 4);
@@ -415,13 +421,11 @@ package flash.display {
 			var rect:System.Drawing.RectangleF = System.Drawing.RectangleF.Empty;
 			var image:CGImage = src.AsCGImage (ref rect, null, null);
 			var bd:BitmapData = BitmapData.loadFromCGImage(image);
-			image.Dispose();
 			return bd;
 #else
 			// create CGImage from NSData
 			var image:CGImage = (new UIImage(nsData)).CGImage;
 			var bd:BitmapData = BitmapData.loadFromCGImage(image);
-			image.Dispose();
 			return bd;
 #endif
 
@@ -431,28 +435,30 @@ package flash.display {
 
 		}
 
+//		public static var totalBytesLoaded:int = 0;
+
 		public static function loadFromPath(path:String):BitmapData
 		{
-			path = PlayScript.Player.ResolveResourcePath(path);
-
+			var fullpath = PlayScript.Player.ResolveResourcePath(path);
+			var bd:BitmapData;
 #if PLATFORM_MONOMAC		
 			// create NSImage from path
-			var src:NSImage = new NSImage (path);
+			var src:NSImage = new NSImage (fullpath);
 			var rect:System.Drawing.RectangleF = System.Drawing.RectangleF.Empty;
 			var image:CGImage = src.AsCGImage (ref rect, null, null);
-			var bd:BitmapData = BitmapData.loadFromCGImage(image);
-			image.Dispose();
+			bd = BitmapData.loadFromCGImage(image);
             src.Dispose();
-			return bd;
 #elif PLATFORM_MONOTOUCH
 			// create CGImage from path
-			var image:CGImage = (new UIImage(path)).CGImage;
-			var bd:BitmapData = BitmapData.loadFromCGImage(image);
-			image.Dispose();
-			return bd;
+			var image:CGImage = (new UIImage(fullpath)).CGImage;
+			bd = BitmapData.loadFromCGImage(image);
 #else
 			throw new System.NotImplementedException();
 #endif
+//			var size:int = bd.width * bd.height * 4;
+//			totalBytesLoaded += size;
+//			trace("BitmapData loaded path:" + path + " size:" + size +  " total:" + totalBytesLoaded);
+			return bd;
 		}
 		
 		private var mWidth:int;

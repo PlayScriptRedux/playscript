@@ -52,6 +52,7 @@ namespace PlayScript
 			// add resource directories in static constructor
 			AddResourceDirectory("");
 			#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH 
+			AddResourceDirectory(NSBundle.MainBundle.ResourcePath + "/src/");
 			AddResourceDirectory(NSBundle.MainBundle.ResourcePath);
 			#endif
 		}
@@ -338,12 +339,24 @@ namespace PlayScript
 			}
 		}
 
+
 #if PLATFORM_MONOTOUCH
+		private System.Drawing.PointF GetPosition(UITouch touch)
+		{
+			var p = touch.LocationInView(touch.View);
+
+			// convert point to pixels
+			var scale = touch.View.ContentScaleFactor;
+			p.X *= scale;
+			p.Y *= scale;
+			return p;
+		}
+
 		// TODO: at some point we'll have a platform agnostic notion of touches to pass to the player, for now we use UITouch
 		public void OnTouchesBegan (NSSet touches, UIEvent evt)
 		{
 			foreach (UITouch touch in touches) {
-				var p = touch.LocationInView(touch.View);
+				var p = GetPosition(touch);
 				//Console.WriteLine ("touches-began {0}", p);
 
 				mStage.mouseX = p.X;
@@ -360,7 +373,7 @@ namespace PlayScript
 		public void OnTouchesMoved (NSSet touches, UIEvent evt)
 		{
 			foreach (UITouch touch in touches) {
-				var p = touch.LocationInView(touch.View);
+				var p = GetPosition(touch);
 				//Console.WriteLine ("touches-moved {0}", p);
 
 				mStage.mouseX = p.X;
@@ -377,7 +390,8 @@ namespace PlayScript
 		public void OnTouchesEnded (NSSet touches, UIEvent evt)
 		{
 			foreach (UITouch touch in touches) {
-				var p = touch.LocationInView(touch.View);
+				var p = GetPosition(touch);
+
 				//Console.WriteLine ("touches-ended {0}", p);
 
 				mStage.mouseX = p.X;
@@ -419,6 +433,57 @@ namespace PlayScript
 			mStage.onExitFrame ();
 		}
 		
+
+		public static string CalculateMD5Hash(string input)
+		{
+			// step 1, calculate MD5 hash from input
+			var md5 = System.Security.Cryptography.MD5.Create();
+			byte[] inputBytes = System.Text.Encoding.ASCII.GetBytes(input);
+			byte[] hash = md5.ComputeHash(inputBytes);
+			
+			// step 2, convert byte array to hex string
+			var sb = new System.Text.StringBuilder();
+			for (int i = 0; i < hash.Length; i++)
+			{
+				sb.Append(hash[i].ToString("X2"));
+			}
+			return sb.ToString();
+		}
+
+		public static bool Offline = false;
+		#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH 
+		public static string WebCacheLoadPath = NSBundle.MainBundle.ResourcePath + "/webcache/";
+		#else
+		public static string WebCacheLoadPath = "./webcache/";
+		#endif
+		public static string WebCacheStorePath = null;
+
+		public static string LoadWebResponseFromCache(string hash)
+		{
+			if (Offline && WebCacheLoadPath != null) {
+				var path = 	WebCacheLoadPath + hash + ".response.txt"; 
+				if (File.Exists(path)) {
+					return System.IO.File.ReadAllText(path);
+				} else {
+					return null;
+				}
+			}
+			return null;
+		}
+
+		public static void StoreWebResponseIntoCache(string hash, string response)
+		{
+			if (WebCacheStorePath != null) {
+				if (!System.IO.Directory.Exists(WebCacheStorePath)) {
+					System.IO.Directory.CreateDirectory(WebCacheStorePath);
+				}
+				var path = 	WebCacheStorePath + hash + ".response.txt"; 
+				System.IO.File.WriteAllText(path, response);
+			}
+		}
+
+
+		private int 					mFrameCount = 0;
 		private flash.display.Stage    mStage;
 		private float mScrollDelta;
 

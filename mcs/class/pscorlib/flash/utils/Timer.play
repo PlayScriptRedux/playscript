@@ -77,7 +77,10 @@ package flash.utils {
 			while (mRunning && (mCurrentTime >= delay))
 			{
 				// subtract delay from accumulated time
-				mCurrentTime -= delay;
+//				mCurrentTime -= delay;
+
+				// we clear the accumulated time here to prevent buildup of timer events
+				mCurrentTime = 0;
 
 				// increment count
 				mCurrentCount++;
@@ -88,6 +91,7 @@ package flash.utils {
 					// stop running
 					mRunning = false;
 				}
+
 
 				// dispatch timer event
 				var e:Event = new TimerEvent(TimerEvent.TIMER);
