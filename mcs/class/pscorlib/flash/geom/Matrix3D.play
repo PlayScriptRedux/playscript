@@ -14,7 +14,7 @@
 
 package flash.geom {
 
-	public class Matrix3D {
+	public final class Matrix3D {
 	
 		private static var sTempMatrix:Matrix3D = new Matrix3D();
 		private static var sTempVector:Vector3D = new Vector3D();
