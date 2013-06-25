@@ -117,7 +117,20 @@ namespace Mono.CSharp
 
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue && expr != null)
+					this.expr.Accept (visitor);
+				if (visitor.Continue && stmt != null)
+					this.stmt.Accept (visitor);
+			}
+
+			return ret;
 		}
 	}
 

@@ -32,6 +32,7 @@ field.cs
 flowanalysis.cs
 generic.cs
 import.cs
+inliner.cs
 intrinsics.cs
 iterators.cs
 ikvm.cs

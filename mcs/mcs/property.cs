@@ -779,6 +779,13 @@ namespace Mono.CSharp
 		public override void Accept (StructuralVisitor visitor)
 		{
 			visitor.Visit (this);
+
+			if (visitor.AutoVisit && visitor.Depth >= VisitDepth.MethodBodies) {
+				if (visitor.Continue && Get != null && visitor.Depth >= VisitDepth.MethodBodies)
+					Get.Accept (visitor);
+				if (visitor.Continue && Set != null && visitor.Depth >= VisitDepth.MethodBodies)
+					Set.Accept (visitor);
+			}
 		}
 		
 
@@ -1107,6 +1114,24 @@ namespace Mono.CSharp
 		public override void Accept (StructuralVisitor visitor)
 		{
 			visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return;
+				}
+				if (visitor.Continue && this.initializer != null && visitor.Depth >= VisitDepth.Initializers) {
+					initializer.Accept (visitor);
+				}
+
+				if (visitor.Continue && declarators != null && visitor.Depth >= VisitDepth.Initializers) {
+					foreach (var decl in declarators) {
+						if (visitor.Continue && decl.Initializer != null) {
+							decl.Initializer.Accept (visitor);
+						}
+					}
+				}
+			}
 		}
 
 		public void AddDeclarator (FieldDeclarator declarator)
@@ -1621,6 +1646,17 @@ namespace Mono.CSharp
 		public override void Accept (StructuralVisitor visitor)
 		{
 			visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return;
+				}
+				if (visitor.Continue && Get != null && visitor.Depth >= VisitDepth.MethodBodies)
+					Get.Accept (visitor);
+				if (visitor.Continue && Set != null && visitor.Depth >= VisitDepth.MethodBodies)
+					Set.Accept (visitor);
+			}
 		}
 
 		public override void ApplyAttributeBuilder (Attribute a, MethodSpec ctor, byte[] cdata, PredefinedAttributes pa)

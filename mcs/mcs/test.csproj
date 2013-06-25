@@ -20,6 +20,7 @@
     <WarningLevel>4</WarningLevel>
     <Externalconsole>True</Externalconsole>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <additionalargs>/autoseal</additionalargs>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>

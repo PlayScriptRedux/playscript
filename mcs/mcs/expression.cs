@@ -120,7 +120,18 @@ namespace Mono.CSharp
 		
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue)
+					this.Expr.Accept (visitor);
+			}
+
+			return ret;
 		}
 	}
 	
@@ -826,7 +837,18 @@ namespace Mono.CSharp
 		
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue)
+					this.Expr.Accept (visitor);
+			}
+
+			return ret;
 		}
 
 //		public override bool IsSideEffectFree {
@@ -967,7 +989,18 @@ namespace Mono.CSharp
 
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue)
+					this.Expr.Accept (visitor);
+			}
+
+			return ret;
 		}
 	}
 	
@@ -1373,7 +1406,18 @@ namespace Mono.CSharp
 
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue)
+					this.Expr.Accept (visitor);
+			}
+
+			return ret;
 		}
 
 	}
@@ -1639,7 +1683,18 @@ namespace Mono.CSharp
 		
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue)
+					this.Expr.Accept (visitor);
+			}
+
+			return ret;
 		}
 	}
 
@@ -1774,7 +1829,18 @@ namespace Mono.CSharp
 
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue)
+					this.Expr.Accept (visitor);
+			}
+
+			return ret;
 		}
 	}
 	
@@ -1840,7 +1906,18 @@ namespace Mono.CSharp
 
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue)
+					this.Expr.Accept (visitor);
+			}
+
+			return ret;
 		}
 	}
 
@@ -1959,7 +2036,18 @@ namespace Mono.CSharp
 		
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue)
+					this.Expr.Accept (visitor);
+			}
+
+			return ret;
 		}
 	}
 
@@ -4423,7 +4511,20 @@ namespace Mono.CSharp
 		
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue)
+					this.Left.Accept (visitor);
+				if (visitor.Continue)
+					this.Right.Accept (visitor);
+			}
+
+			return ret;
 		}
 
 	}
@@ -4874,7 +4975,18 @@ namespace Mono.CSharp
 		
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue)
+					this.Expr.Accept (visitor);
+			}
+
+			return ret;
 		}
 	}
 
@@ -6154,7 +6266,22 @@ namespace Mono.CSharp
 
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue) {
+					foreach (var arg in arguments) {
+						if (visitor.Continue)
+							arg.Expr.Accept (visitor);
+					}
+				}
+			}
+
+			return ret;
 		}
 	}
 
@@ -6634,7 +6761,24 @@ namespace Mono.CSharp
 		
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue) {
+					if (arguments != null) {
+						foreach (var arg in arguments) {
+							if (visitor.Continue)
+								arg.Expr.Accept (visitor);
+						}
+					}
+				}
+			}
+
+			return ret;
 		}
 	}
 
@@ -6745,7 +6889,22 @@ namespace Mono.CSharp
 		
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue) {
+					foreach (var elem in elements) {
+						if (visitor.Continue) 
+							elem.Accept (visitor);
+					}
+				}
+			}
+
+			return ret;
 		}
 	}
 
@@ -7477,7 +7636,26 @@ namespace Mono.CSharp
 		
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue) {
+					if (arguments != null) {
+						foreach (var arg in arguments) {
+							if (visitor.Continue)
+								arg.Accept (visitor);
+						}
+					}
+				}
+				if (visitor.Continue)
+					initializers.Accept (visitor);
+			}
+
+			return ret;
 		}
 	}
 	
@@ -7926,7 +8104,24 @@ namespace Mono.CSharp
 
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue) {
+					if (arguments != null) {
+						foreach (var arg in arguments) {
+							if (visitor.Continue)
+								arg.Expr.Accept (visitor);
+						}
+					}
+				}
+			}
+
+			return ret;
 		}
 	}
 
@@ -8042,7 +8237,18 @@ namespace Mono.CSharp
 		
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue)
+					this.Expr.Accept (visitor);
+			}
+
+			return ret;
 		}
 	}
 
@@ -9133,7 +9339,18 @@ namespace Mono.CSharp
 
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue)
+					this.LeftExpression.Accept (visitor);
+			}
+
+			return ret;
 		}
 	}
 
@@ -9205,7 +9422,18 @@ namespace Mono.CSharp
 
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue)
+					this.Expr.Accept (visitor);
+			}
+
+			return ret;
 		}
 	}
 
@@ -9270,7 +9498,18 @@ namespace Mono.CSharp
 
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue)
+					this.Expr.Accept (visitor);
+			}
+
+			return ret;
 		}
 	}
 
@@ -9442,7 +9681,26 @@ namespace Mono.CSharp
 		
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue)
+					this.Expr.Accept (visitor);
+				if (visitor.Continue) {
+					if (Arguments != null) {
+						foreach (var arg in Arguments) {
+							if (visitor.Continue)
+								arg.Expr.Accept (visitor);
+						}
+					}
+				}
+			}
+
+			return ret;
 		}
 	}
 
@@ -11341,7 +11599,24 @@ namespace Mono.CSharp
 		
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue) {
+					if (arguments != null) {
+						foreach (var args in arguments) {
+							if (visitor.Continue)
+								args.Expr.Accept (visitor);
+						}
+					}
+				}
+			}
+
+			return ret;
 		}
 	}
 

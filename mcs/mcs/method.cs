@@ -49,6 +49,8 @@ namespace Mono.CSharp {
 		protected ToplevelBlock block;
 		protected MethodSpec spec;
 
+		protected bool isInlinable;
+
 		public MethodCore (TypeDefinition parent, FullNamedExpression type, Modifiers mod, Modifiers allowed_mod,
 			MemberName name, Attributes attrs, ParametersCompiled parameters)
 			: base (parent, type, mod, allowed_mod, name, attrs)
@@ -136,6 +138,11 @@ namespace Mono.CSharp {
 			get { return "M:"; }
 		}
 
+		public bool IsInlinable {
+			get {
+				return isInlinable;
+			}
+		}
 
 		public override void Emit ()
 		{
@@ -659,6 +666,9 @@ namespace Mono.CSharp {
 
 			Parent.MemberCache.AddMember (this, explicit_name, spec);
 
+			if (Compiler.Settings.Inlining != InliningMode.None)
+				Inliner.DetermineIsInlinable (Compiler, this);
+
 			return true;
 		}
 
@@ -910,6 +920,15 @@ namespace Mono.CSharp {
 		public override void Accept (StructuralVisitor visitor)
 		{
 			visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return;
+				}
+				if (visitor.Continue && visitor.Depth >= VisitDepth.MethodBodies)
+					this.block.Accept (visitor);
+			}
 		}
 
 		public static Method Create (TypeDefinition parent, FullNamedExpression returnType, Modifiers mod,
@@ -1686,6 +1705,11 @@ namespace Mono.CSharp {
 		public override void Accept (StructuralVisitor visitor)
 		{
 			visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Continue && visitor.Depth >= VisitDepth.MethodBodies)
+					this.block.Accept (visitor);
+			}
 		}
 
 		public override void ApplyAttributeBuilder (Attribute a, MethodSpec ctor, byte[] cdata, PredefinedAttributes pa)
@@ -2027,6 +2051,8 @@ namespace Mono.CSharp {
 		Attributes OptAttributes { get; }
 		ToplevelBlock Block { get; set; }
 
+		bool IsInlinable { get; }
+
 		EmitContext CreateEmitContext (ILGenerator ig, SourceMethodBuilder sourceMethod);
 	}
 
@@ -2357,6 +2383,15 @@ namespace Mono.CSharp {
 		public override void Accept (StructuralVisitor visitor)
 		{
 			visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return;
+				}
+				if (visitor.Continue)
+					this.block.Accept (visitor);
+			}
 		}
 
 		public override void ApplyAttributeBuilder (Attribute a, MethodSpec ctor, byte[] cdata, PredefinedAttributes pa)
@@ -2443,6 +2478,7 @@ namespace Mono.CSharp {
 		protected MethodData method_data;
 		protected ToplevelBlock block;
 		protected SecurityType declarative_security;
+		protected bool isInlinable;
 
 		protected readonly string prefix;
 
@@ -2490,6 +2526,12 @@ namespace Mono.CSharp {
 		public bool IsAccessor {
 			get {
 				return true;
+			}
+		}
+
+		public bool IsInlinable {
+			get {
+				return isInlinable;
 			}
 		}
 
@@ -2742,6 +2784,15 @@ namespace Mono.CSharp {
 		public override void Accept (StructuralVisitor visitor)
 		{
 			visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return;
+				}
+				if (visitor.Continue)
+					this.block.Accept (visitor);
+			}
 		}
 
 		public override void ApplyAttributeBuilder (Attribute a, MethodSpec ctor, byte[] cdata, PredefinedAttributes pa)

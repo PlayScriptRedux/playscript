@@ -285,6 +285,17 @@ namespace Mono.CSharp
 		public override void Accept (StructuralVisitor visitor)
 		{
 			visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return;
+				}
+				foreach (var cont in containers) {
+					if (visitor.Continue && visitor.Depth >= VisitDepth.Namespaces)
+						cont.Accept (visitor);
+				}
+			}
 		}
 
 		public void AddAnonymousType (AnonymousTypeClass type)
@@ -402,6 +413,10 @@ namespace Mono.CSharp
 		{
 			DefineContainer ();
 
+			if (Compiler.Settings.AutoSeal) {
+				AutoSealTypes ();
+			}
+
 			ExpandBaseInterfaces ();
 
 			base.Define ();
@@ -421,6 +436,86 @@ namespace Mono.CSharp
 		public void EnableRedefinition ()
 		{
 			is_defined = false;
+		}
+
+		private class AutoSealVisitor : StructuralVisitor 
+		{
+			int pass;
+			HashSet<TypeDefinition> baseTypes = new HashSet<TypeDefinition>(); 
+
+			public AutoSealVisitor() 
+			{
+				AutoVisit = true;
+				Depth = VisitDepth.Members;
+			}
+
+			public int Pass {
+				get {
+					return pass;
+				}
+				set {
+					pass = value;
+				}
+			}
+
+			public override void Visit (Class c)
+			{
+				if (pass == 1) {
+					var basetype = c.BaseType.MemberDefinition as Class;
+					if (basetype != null) {
+						baseTypes.Add (basetype);
+					}
+				} else if (pass == 2) {
+					if (!baseTypes.Contains (c) && (c.ModFlags & Modifiers.ABSTRACT) == 0) {
+						c.ModFlags |= Modifiers.SEALED;
+					} else {
+						this.Skip = true;
+					}
+				}
+			}
+
+			private void SealMethod(MemberCore m)
+			{
+				if (pass == 2) {
+					if (!baseTypes.Contains (m.Parent) && (m.Parent.ModFlags & Modifiers.ABSTRACT) == 0) {
+						if ((m.ModFlags & Modifiers.VIRTUAL) != 0)
+							m.ModFlags &= ~Modifiers.VIRTUAL;
+						else if ((m.ModFlags & Modifiers.OVERRIDE) != 0) 
+							m.ModFlags |= Modifiers.SEALED;
+					}
+				}
+			}
+
+			public override void Visit (Method m)
+			{
+				SealMethod (m);
+			}
+
+			public override void Visit (Property p)
+			{
+				if (p.Get != null)
+					SealMethod (p.Get);
+				if (p.Set != null)
+					SealMethod (p.Set);
+			}
+
+			public override void Visit (Indexer i)
+			{
+				if (i.Get != null)
+					SealMethod (i.Get);
+				if (i.Set != null)
+					SealMethod (i.Set);
+			}
+
+		}
+
+		private void AutoSealTypes ()
+		{
+			var visitor = new AutoSealVisitor ();
+			visitor.Pass = 1;
+			this.Accept (visitor);
+			visitor.Pass = 2;
+			this.Accept (visitor);
 		}
 
 		public override void EmitContainer ()

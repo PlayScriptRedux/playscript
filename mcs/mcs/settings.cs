@@ -56,6 +56,13 @@ namespace Mono.CSharp {
 		IA64
 	}
 
+	public enum InliningMode
+	{
+		None,
+		Explicit,
+		Any
+	}
+
 	public class CompilerSettings
 	{
 		public Target Target;
@@ -169,6 +176,18 @@ namespace Mono.CSharp {
 		List<int> warnings_as_error;
 		List<int> warnings_only;
 		HashSet<int> warning_ignore_table;
+
+		//
+		// Automatically seal any class with no derived classes.  (NOTE: Intended for AOT compilation)
+		//
+
+		public bool AutoSeal;
+
+		//
+		// Inlining mode for source level inliner (none, explicit, any)
+		//
+
+		public InliningMode Inlining = InliningMode.None;
 
 		public CompilerSettings ()
 		{
@@ -774,6 +793,39 @@ namespace Mono.CSharp {
 			case "/incremental+":
 			case "/incremental-":
 				// nothing.
+				return ParseResult.Success;
+
+			case "/inline":
+				if (value.Length == 0) {
+					Error_RequiresArgument (option);
+					return ParseResult.Error;
+				}
+
+				switch (value.ToLowerInvariant ()) {
+					case "none":
+					settings.Inlining = InliningMode.None;
+					break;
+					case "explicit":
+					settings.Inlining = InliningMode.Explicit;
+					break;
+					case "any":
+					settings.Inlining = InliningMode.Any;
+					break;
+					default:
+					report.Error (1672, "Invalid -inline option `{0}'. Valid options are `none', `explicit', `any'",
+					              value);
+					return ParseResult.Error;
+				}
+
+				return ParseResult.Success;
+			
+			case "/autoseal":
+			case "/autoseal+":
+				settings.AutoSeal = true;
+				return ParseResult.Success;
+
+			case "/autoseal-":
+				settings.AutoSeal = false;
 				return ParseResult.Success;
 
 			case "/d":
