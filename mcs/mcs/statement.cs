@@ -2694,7 +2694,10 @@ namespace Mono.CSharp {
 			//
 			if (scope_initializers != null) {
 				for (resolving_init_idx = 0; resolving_init_idx < scope_initializers.Count; ++resolving_init_idx) {
-					scope_initializers[resolving_init_idx.Value].Resolve (ec);
+					var initializer = scope_initializers [resolving_init_idx.Value];
+					ec.Statement = initializer;
+					initializer.Resolve (ec);
+					ec.Statement = null;
 				}
 
 				resolving_init_idx = null;
@@ -2731,13 +2734,19 @@ namespace Mono.CSharp {
 				// assigns a variable and the second one tries to access it.
 				//
 
+				ec.Statement = s;
+
 				if (!s.Resolve (ec)) {
 					ok = false;
 					if (!ec.IsInProbingMode)
 						statements [ix] = new EmptyStatement (s.loc);
 
+					ec.Statement = null;
+
 					continue;
 				}
+
+				ec.Statement = null;
 
 				if (unreachable && !(s is LabeledStatement) && !(s is SwitchLabel) && !(s is Block))
 					statements [ix] = new EmptyStatement (s.loc);

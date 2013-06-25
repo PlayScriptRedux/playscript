@@ -5905,6 +5905,11 @@ namespace Mono.CSharp
 			return CreateExpressionFactoryCall (ec, "Call", args);
 		}
 
+		protected bool IsInvocationStatement (ResolveContext ec)
+		{
+			return (ec.Statement != null && ec.Statement is StatementExpression && ((StatementExpression)ec.Statement).Expr == this);
+		}
+
 		protected override Expression DoResolve (ResolveContext ec)
 		{
 			Expression member_expr;
@@ -6097,9 +6102,19 @@ namespace Mono.CSharp
 			IsSpecialMethodInvocation (ec, method, loc);
 
 			// Check for Mono.Optimization intrinsics.
-			if (mg.BestCandidate != null && mg.BestCandidate.DeclaringType.Name == "Msil" && 
-			    mg.BestCandidate.DeclaringType.MemberDefinition.Namespace == "Mono.Optimization") {
+			if (method != null && mg.BestCandidate.DeclaringType.Name == "Msil" && 
+			    method.DeclaringType.MemberDefinition.Namespace == "Mono.Optimization") {
 				return new MsilIntrinsic(expr, arguments, mg).Resolve (ec);
+			}
+
+			// Attempt to do inlining..
+			if (method != null && ec.Module.Compiler.Settings.Inlining != InliningMode.None && 
+			    (method.MemberDefinition as IMethodData) != null && ((IMethodData)method.MemberDefinition).IsInlinable) {
+				var inliner = new Inliner (this);
+				var inlinedExpr = inliner.TryInline (ec);
+				if (inlinedExpr != this) {
+					return inlinedExpr.Resolve (ec);
+				}
 			}
 
 			eclass = ExprClass.Value;

@@ -7,9 +7,6 @@ namespace Mono.CSharp
 		public Expression Expr;
 		private Expression inlineExpr;
 
-		public Statement Statement;
-		public Statement inlineStmnt;
-
 		private ResolveContext rc;
 		private bool inlineFailed;
 		private Invocation invocation;
@@ -20,15 +17,7 @@ namespace Mono.CSharp
 
 		public Inliner (Expression expr)
 		{
-			this.Statement = null;
 			this.Expr = expr;
-			this.AutoVisit = true;
-		}
-
-		public Inliner (Statement stmnt)
-		{
-			this.Statement = stmnt;
-			this.Expr = ((StatementExpression)stmnt).Expr;
 			this.AutoVisit = true;
 		}
 
@@ -196,33 +185,33 @@ namespace Mono.CSharp
 			return isInlinable;
 		}
 
-		private object TryInline(ResolveContext rc) {
+		public Expression TryInline(ResolveContext rc) {
 			if (!(Expr is Invocation)) {
-				return (object)Statement ?? (object)Expr;
+				return Expr;
 			}
 
 			invocation = (Expr as Invocation);
 			if (invocation.MethodGroup.BestCandidate == null) {
-				return (object)Statement ?? (object)Expr;
+				return Expr;
 			}
 
 			methodSpec = invocation.MethodGroup.BestCandidate;
 			if (!(methodSpec.MemberDefinition is MethodCore)) {
-				return (object)Statement ?? (object)Expr;
+				return Expr;
 			}
 
 			method = methodSpec.MemberDefinition as MemberCore;
 			methodData = method as IMethodData;
 
 			if (methodData.IsInlinable) {
-				return (object)Statement ?? (object)Expr;
+				return Expr;
 			}
 
 			TypeSpec returnType = methodData.ReturnType;
 
 			ToplevelBlock block = methodData.Block;
 			if (block.Parameters.Count > 0 || block.TopBlock.NamesCount > 0 && block.TopBlock.LabelsCount > 0) {
-				return (object)Statement ?? (object)Expr;
+				return Expr;
 			}
 
 			if (returnType != rc.BuiltinTypes.Void && 
@@ -233,35 +222,22 @@ namespace Mono.CSharp
 				foreach (var st in block.Statements) {
 					newBlock.AddStatement (st.Clone (new CloneContext()));
 				}
-				inlineStmnt = newBlock;
+//				inlineExpr = newBlock;
 			}
 
 			this.rc = rc;
 			this.inlineFailed = false;
 
-			object ret;
+			Expression ret;
 
-			if (inlineExpr != null) {
-				inlineExpr.Accept (this);
-				ret = inlineExpr;
-			} else {
-				inlineStmnt.Accept (this);
-				ret = inlineStmnt;
-			}
+			inlineExpr.Accept (this);
+			ret = inlineExpr;
 
 			if (inlineFailed) {
-				return (object)Statement ?? (object)Expr;
+				return Expr;
 			}
 
 			return ret;
-		}
-
-		public Statement TryInlineStatement(ResolveContext rc) {
-			return TryInline (rc) as Statement;
-		}
-
-		public Expression TryInlineExpression(ResolveContext rc) {
-			return TryInline (rc) as Expression;
 		}
 
 	}

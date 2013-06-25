@@ -441,7 +441,7 @@ namespace Mono.CSharp
 		private class AutoSealVisitor : StructuralVisitor 
 		{
 			int pass;
-			HashSet<TypeDefinition> baseTypes = new HashSet<TypeDefinition>(); 
+			HashSet<TypeContainer> baseTypes = new HashSet<TypeContainer>(); 
 
 			public AutoSealVisitor() 
 			{
