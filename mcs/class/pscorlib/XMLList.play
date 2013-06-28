@@ -162,6 +162,10 @@ package {
 			throw new System.NotImplementedException();
 		}
 		
+		public function appendChild(child:XML):void {
+			throw new System.NotImplementedException();
+		}
+
 		public indexer this(index:int):XML {
 			get { 
 				return mList[index];
@@ -197,8 +201,23 @@ package {
 		public static implicit operator Number (list:XMLList) {
 			throw new System.NotImplementedException();
 		}
-
-
+/*
+		public static operator+(leftList:XMLList, rightList:XMLList):XMLList {
+			throw new System.NotImplementedException();
+		}
+*/
+		public static function merge(leftList:XMLList, rightList:XMLList):XMLList {
+			var output:XMLList = new XMLList(null);
+			for each(var item1:XML in leftList)
+			{
+				output.appendChild(item1);
+			}
+			for each(var item2:XML in rightList)
+			{
+				output.appendChild(item2);
+			}
+			return output;
+		}
 
 		function IEnumerable.<XML>.GetEnumerator() : IEnumerator.<XML> {
 			return mList.GetEnumerator();

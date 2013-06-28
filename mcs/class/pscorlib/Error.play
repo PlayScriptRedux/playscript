@@ -21,6 +21,8 @@ package {
 		//
 
 		private var _errorID : int;
+		private var _name : String;
+		private var _message : String;
 
 		//
 		// Properties
@@ -28,9 +30,37 @@ package {
 
 		public property errorID : int { get { return _errorID; } } 
 
-		public property message : String { get { return this.Message; } }
+		public property message : String
+		{
+			get
+			{
+				if (_message)
+				{
+					return _message;
+				}
+				return this.Message;
+			}
+			set
+			{
+				_message = value;
+			}
+		}
 
-		public property name : String { get { return GetType().Name; } }
+		public property name : String
+		{
+			get
+			{
+				if (_name)
+				{
+					return _name;
+				}
+				return GetType().Name;
+			}
+			set
+			{
+				_name = value;
+			}
+		}
 
 		//
 		// Methods

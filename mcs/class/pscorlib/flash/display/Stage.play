@@ -22,8 +22,9 @@ package flash.display {
 
 	public class StageDisplayState
 	{
-		public const NORMAL:String = "Normal";
-		public const FULL_SCREEN:String = "FullScreen";
+		public const NORMAL:String = "normal";
+		public const FULL_SCREEN:String = "fullScreen";
+		public const FULL_SCREEN_INTERACTIVE:String = "fullScreenInteractive";
 	}
 
 	public class Stage extends DisplayObjectContainer {

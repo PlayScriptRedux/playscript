@@ -17,7 +17,7 @@ using System.Collections.Generic;
 
 namespace flash.events
 {
-	public class EventDispatcher : IEventDispatcher
+	public class EventDispatcher : _root.Object, IEventDispatcher
 	{
 		private class EventListener
 		{

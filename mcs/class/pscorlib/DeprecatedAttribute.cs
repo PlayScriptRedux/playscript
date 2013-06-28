@@ -19,7 +19,7 @@ namespace _root
 	[AttributeUsage(AttributeTargets.All, AllowMultiple = true)]
 	public class DeprecatedAttribute : Attribute
 	{
-		public DeprecatedAttribute()
+		public DeprecatedAttribute(string text = "")
 		{
 		}
 

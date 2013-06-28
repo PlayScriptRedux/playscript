@@ -19,6 +19,10 @@ package flash.net
 		public function connect(endpoint:String):void {
 			trace("warning not implemented: flash.net.NetConnection");
 		}
+		
+		public function call(command:String, responder:Responder, ... arguments):void {
+			throw new System.NotImplementedException();
+		}
 	}
 
 

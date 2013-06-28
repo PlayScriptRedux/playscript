@@ -552,7 +552,7 @@ namespace _root {
 			}
 		}
  	 	
-		public Vector<T> splice(int startIndex, uint deleteCount = 4294967295, params T[] items) {
+		public Vector<T> splice(int startIndex = 0, uint deleteCount = 4294967295, params T[] items) {
 			Vector<T> removed = null;
 			
 			// determine number of items to delete

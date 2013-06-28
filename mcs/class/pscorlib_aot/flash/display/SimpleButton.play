@@ -12,17 +12,15 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-package flash.filters {
+package flash.display {
 
-	public class ColorMatrixFilter extends BitmapFilter {
+	public class SimpleButton extends InteractiveObject {
+		public var downState : DisplayObject;
+		public var hitTestState : DisplayObject;
+		public var overState : DisplayObject;
+		public var upState : DisplayObject;
+		public var useHandCursor : Boolean;
 
-		public function ColorMatrixFilter(matrix:Array = null) {
-			throw new System.NotImplementedException();
-		}
-
-		public var matrix:Array = new Array();
-		//$$TODO
 	}
 
 }
-

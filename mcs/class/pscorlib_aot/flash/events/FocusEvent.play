@@ -12,17 +12,19 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-package flash.filters {
+package flash.events {
 
-	public class ColorMatrixFilter extends BitmapFilter {
-
-		public function ColorMatrixFilter(matrix:Array = null) {
+	public class FocusEvent extends Event {
+		public function FocusEvent(type:String, bubbles:Boolean = false, cancelable:Boolean = false, code:String = "", level:String = "")
+		{
+			super(type, bubbles, cancelable);
 			throw new System.NotImplementedException();
 		}
-
-		public var matrix:Array = new Array();
-		//$$TODO
-	}
+		public static const FOCUS_IN : String = "focusIn";
+ 		public static const FOCUS_OUT : String = "focusOut";
+		public static const KEY_FOCUS_CHANGE : String = "keyFocusChange";
+		public static const MOUSE_FOCUS_CHANGE : String = "mouseFocusChange";
+	};
 
 }
 

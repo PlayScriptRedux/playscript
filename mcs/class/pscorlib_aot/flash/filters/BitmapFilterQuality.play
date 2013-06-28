@@ -14,15 +14,10 @@
 
 package flash.filters {
 
-	public class ColorMatrixFilter extends BitmapFilter {
-
-		public function ColorMatrixFilter(matrix:Array = null) {
-			throw new System.NotImplementedException();
-		}
-
-		public var matrix:Array = new Array();
-		//$$TODO
+	public class BitmapFilterQuality {
+		public const HIGH : int = 3;
+ 	 	public const LOW : int = 1;
+ 	 	public const MEDIUM : int = 2;
 	}
 
 }
-

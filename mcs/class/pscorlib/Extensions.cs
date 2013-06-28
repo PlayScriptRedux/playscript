@@ -35,6 +35,12 @@ namespace _root
 			return t.GetProperty(name) != null || t.GetField(name) != null;
 		}
 
+		public static bool Contains(this System.Object o, object v)
+		{
+			throw new NotImplementedException ("");
+			//return o.hasOwnProperty(v);
+		}
+
 		public static string toString(this uint o, int radix = 10) 
 		{
 			return Convert.ToString (o, radix);
@@ -48,7 +54,6 @@ namespace _root
 //		{
 //			return list.Count;
 //		}
-
 	}
 }
 

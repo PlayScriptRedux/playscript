@@ -16,7 +16,10 @@ using System;
 
 namespace flash.events
 {
-	public class Event : System.EventArgs
+	// Note that for interop reasons with C#, we would want Event to inherit from System.EventArgs
+	// However, we need to keep compatibility with AS as much as possible, so for the moment we only
+	// inherit from _root.Object
+	public class Event : _root.Object
 	{
 		// [static] The ACTIVATE constant defines the value of the type property of an activate event object.
 		public const string ACTIVATE = "activate";

@@ -47,6 +47,10 @@ package flash.events {
  	 	public function get text():String {
  	 		return toString();
  	 	}
+ 	 	
+ 	 	public function set text(value:String):void {
+ 	 		throw new System.NotImplementedException();
+ 	 	}
 	
 	}
 

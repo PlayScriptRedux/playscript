@@ -12,46 +12,25 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-using System;
-
-namespace _root
-{
-	public class Object
-	{
-		public virtual string toString()
-		{
-			return base.ToString();
-		}
-
-		public override string ToString ()
-		{
-			return toString ();
-		}
+package flash.events {
+	
+	public class ThrottleEvent extends Event {
 		
-		public virtual bool hasOwnProperty(object v = null)
-		{
-			var t = GetType ();
-			var name = v as string;
-			
-			if (name != null) {
-				return t.GetProperty(name) != null ||
-					t.GetField (name) != null;
-			}
-			
-			return false;
+		public function ThrottleEvent(type:String, bubbles:Boolean = false, cancelable:Boolean = false) {
+			super(type, bubbles, cancelable);
 		}
 
-		// TODO: Add overloads for the variants of in (string, int)
-		public virtual bool Contains(object v)
-		{
-			return hasOwnProperty(v);
-		}
+		public static const THROTTLE:String = "throttle";
 
-		public virtual dynamic valueOf()
-		{
-			return toString();
+		public function get state():String {
+			throw new System.NotImplementedException();
 		}
-
+	}
+	
+	public class ThrottleType {
+		public static const PAUSE : String = "pause";
+ 		public static const RESUME : String = "resume";
+		public static const THROTTLE : String = "throttle";
 	}
 }
 

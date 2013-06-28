@@ -12,17 +12,10 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-package flash.filters {
+package flash.debugger {
 
-	public class ColorMatrixFilter extends BitmapFilter {
-
-		public function ColorMatrixFilter(matrix:Array = null) {
+	public function enterDebugger():void {
 			throw new System.NotImplementedException();
-		}
-
-		public var matrix:Array = new Array();
-		//$$TODO
 	}
 
 }
-
