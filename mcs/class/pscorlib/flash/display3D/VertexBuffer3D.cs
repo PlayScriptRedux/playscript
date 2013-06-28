@@ -38,8 +38,6 @@ namespace flash.display3D
 		{
 			mNumVertices = numVertices;
 			mVertexSize = dataPerVertex;
-			// allocate temporary buffer for conversion
-			mData = new float[numVertices * dataPerVertex];
 			GL.GenBuffers(1, out mId);
 		}
 
@@ -51,35 +49,60 @@ namespace flash.display3D
 			throw new NotImplementedException();
 		}
 
+		public void uploadFromArray(float[] data, int startVertex, int numVertices) 
+		{
+			// System.Console.WriteLine ("VertexBuffer3D.uploadFromVector:");
+			GL.BindBuffer(BufferTarget.ArrayBuffer, mId);
+			
+			int byteStart = startVertex * mVertexSize * sizeof(float);
+			int byteCount = numVertices * mVertexSize * sizeof(float);
+			if (byteStart == 0)
+			{
+				// upload whole array
+				GL.BufferData<float>(BufferTarget.ArrayBuffer, 
+				                     new IntPtr(byteCount), 
+				                     data, 
+				                     mUsage);
+			} 
+			else 
+			{
+				// upload whole array
+				GL.BufferSubData<float>(BufferTarget.ArrayBuffer, 
+				                        new IntPtr(byteStart), 
+				                        new IntPtr(byteCount), 
+				                        data);
+			}
+		}
+
+		public void uploadFromVector(float[] data, int startVertex, int numVertices) 
+		{
+			uploadFromArray(data, startVertex, numVertices);
+		}
+
+		public void uploadFromVector(Vector<float> data, int startVertex, int numVertices) 
+		{
+			uploadFromArray(data._GetInnerArray(), startVertex, numVertices);
+		}
+
 		public void uploadFromVector(Vector<double> data, int startVertex, int numVertices) 
 		{
-			int start = startVertex * mVertexSize;
-			int count = numVertices * mVertexSize;
+			// allocate temporary buffer for conversion
+			if (mData == null) {
+				mData = new float[mNumVertices * mVertexSize];
+			}
 
 			// System.Console.WriteLine ("VertexBuffer3D.uploadFromVector:");
 
 			// convert to floating point
+			int count = numVertices * mVertexSize;
+			var array = data._GetInnerArray();
 			for (int i=0; i < count; i++)
 			{
-				mData[start + i] = (float)data[i];
+				mData[i] = (float)array[i];
 				// System.Console.WriteLine ("{0}: {1}", i, data[i]);
 			}
-		
-			GL.BindBuffer(BufferTarget.ArrayBuffer, mId);
-			
-			// upload whole array
-			int byteCount = mNumVertices * mVertexSize * sizeof(float);
-#if PLATFORM_MONOMAC
-		    GL.BufferData<float>(BufferTarget.ArrayBuffer, 
-		        new IntPtr(byteCount), 
-		        mData, 
-		        BufferUsageHint.StaticDraw);
-#elif PLATFORM_MONOTOUCH
-			GL.BufferData<float>(BufferTarget.ArrayBuffer, 
-			                     new IntPtr(byteCount), 
-			                     mData, 
-			                     BufferUsage.StaticDraw);
-#endif
+
+			uploadFromArray(mData, startVertex, numVertices);
 		}
 		
 		public int stride { 
@@ -92,8 +115,14 @@ namespace flash.display3D
 		
 		private readonly int		mNumVertices;
 		private readonly int		mVertexSize; 		// size in floats
-		private readonly float[]	mData;
+		private float[]				mData;
 		private uint		 		mId;
+#if PLATFORM_MONOMAC
+		private BufferUsageHint     mUsage = BufferUsageHint.DynamicDraw;
+#elif PLATFORM_MONOTOUCH
+		private BufferUsage         mUsage = BufferUsage.DynamicDraw;
+#endif
+		
 
 #else
 

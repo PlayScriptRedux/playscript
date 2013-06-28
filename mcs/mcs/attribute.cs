@@ -1664,6 +1664,9 @@ namespace Mono.CSharp {
 		public readonly PredefinedAttribute AsDynamicClassAttribute;
 		public readonly PredefinedAttribute AsBindableAttribute;
 
+		// Mono.Optimization attributes
+		public readonly PredefinedAttribute InlineAttribute;
+
 		public PredefinedAttributes (ModuleContainer module)
 		{
 			ParamArray = new PredefinedAttribute (module, "System", "ParamArrayAttribute");
@@ -1723,6 +1726,9 @@ namespace Mono.CSharp {
 			// ActionScript
 			AsDynamicClassAttribute = new PredefinedAttribute (module, "PlayScript", "DynamicClassAttribute");
 			AsBindableAttribute = new PredefinedAttribute (module, PsConsts.PsRootNamespace, "BindableAttribute");
+
+			// Mono.Optimization
+			InlineAttribute = new PredefinedAttribute (module, "Mono.Optimization", "InlineAttribute");
 
 			// TODO: Should define only attributes which are used for comparison
 			const System.Reflection.BindingFlags all_fields = System.Reflection.BindingFlags.Public |

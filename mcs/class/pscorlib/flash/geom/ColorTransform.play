@@ -14,7 +14,7 @@
 
 package flash.geom {
 
-	public class ColorTransform {
+	public final class ColorTransform {
 	
 		//
 		// Properties

@@ -426,6 +426,34 @@ namespace Mono.CSharp
 				}
 			}
 		}
+
+		protected void AcceptChildContainers (StructuralVisitor visitor)
+		{
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return;
+				}
+				if (visitor.Continue && containers != null && containers.Count > 0) {
+					foreach (var container in containers) {
+						if (visitor.Continue) {
+							if (container is TypeDefinition && visitor.Depth >= VisitDepth.Types)
+								container.Accept (visitor);
+							else if (container is NamespaceContainer && visitor.Depth >= VisitDepth.Namespaces)
+								container.Accept (visitor);
+						}
+					}
+				}
+			}
+		}
+
+		public override void Accept (StructuralVisitor visitor)
+		{
+			visitor.Visit (this);
+
+			AcceptChildContainers (visitor);
+		}
+
 	}
 
 	public abstract partial class TypeDefinition : TypeContainer, ITypeDefinition
@@ -772,6 +800,21 @@ namespace Mono.CSharp
 		public override void Accept (StructuralVisitor visitor)
 		{
 			visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return;
+				}
+				if (visitor.Continue)
+					AcceptChildContainers (visitor);
+				if (visitor.Continue && members != null && members.Count > 0 && visitor.Depth >= VisitDepth.Members) {
+					foreach (var member in members) {
+						if (visitor.Continue && (visitor.Depth & VisitDepth.Members) != 0)
+							member.Accept (visitor);
+					}
+				}
+			}
 		}
 
 		public void AddMember (MemberCore symbol)
@@ -2916,6 +2959,21 @@ namespace Mono.CSharp
 		public override void Accept (StructuralVisitor visitor)
 		{
 			visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return;
+				}
+				if (visitor.Continue)
+					AcceptChildContainers (visitor);
+				if (visitor.Continue && Members != null && Members.Count > 0 && visitor.Depth >= VisitDepth.Members) {
+					foreach (var member in Members) {
+						if (visitor.Continue)
+							member.Accept (visitor);
+					}
+				}
+			}
 		}
 
 		public override void AddBasesForPart (List<FullNamedExpression> bases)
@@ -3138,6 +3196,21 @@ namespace Mono.CSharp
 		public override void Accept (StructuralVisitor visitor)
 		{
 			visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return;
+				}
+				if (visitor.Continue)
+					AcceptChildContainers (visitor);
+				if (visitor.Continue && Members != null && Members.Count > 0 && visitor.Depth >= VisitDepth.Members) {
+					foreach (var member in Members) {
+						if (visitor.Continue)
+							member.Accept (visitor);
+					}
+				}
+			}
 		}
 
 		public override void ApplyAttributeBuilder (Attribute a, MethodSpec ctor, byte[] cdata, PredefinedAttributes pa)
@@ -3346,6 +3419,21 @@ namespace Mono.CSharp
 		public override void Accept (StructuralVisitor visitor)
 		{
 			visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return;
+				}
+				if (visitor.Continue)
+					AcceptChildContainers (visitor);
+				if (visitor.Continue && Members != null && Members.Count > 0 && visitor.Depth >= VisitDepth.Members) {
+					foreach (var member in Members) {
+						if (visitor.Continue)
+							member.Accept (visitor);
+					}
+				}
+			}
 		}
 
 		public override void ApplyAttributeBuilder (Attribute a, MethodSpec ctor, byte[] cdata, PredefinedAttributes pa)

@@ -204,6 +204,17 @@ namespace Mono.CSharp {
 		public override void Accept (StructuralVisitor visitor)
 		{
 			visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return;
+				}
+				foreach (var member in Members) {
+					if (visitor.Continue)
+						member.Accept (visitor);
+				}
+			}
 		}
 
 		public void AddEnumMember (EnumMember em)

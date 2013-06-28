@@ -14,7 +14,7 @@
 
 package flash.geom {
 
-	public class Vector3D {
+	public final class Vector3D {
 	
 		//
 		// Constants

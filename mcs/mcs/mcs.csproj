@@ -167,6 +167,7 @@
     <Compile Include="ps-tokenizer.cs" />
     <Compile Include="ps-codegen.cs" />
     <Compile Include="intrinsics.cs" />
+    <Compile Include="inliner.cs" />
   </ItemGroup>
   <ItemGroup Label="IKVM.Reflection">
     <Compile Include="..\..\external\ikvm\reflect\*.cs">

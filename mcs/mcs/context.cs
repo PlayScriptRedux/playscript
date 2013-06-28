@@ -374,6 +374,11 @@ namespace Mono.CSharp
 		public readonly IMemberContext MemberContext;
 
 		/// <summary>
+		///   If this is non-null, points to the current statement
+		/// </summary>
+		public Statement Statement;
+
+		/// <summary>
 		///   If this is non-null, points to the current switch statement
 		/// </summary>
 		public Switch Switch;

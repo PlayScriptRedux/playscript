@@ -234,6 +234,7 @@ net_4_0_dirs := \
 	PlayScript.Dynamic_aot \
 	pscorlib \
 	pscorlib_aot \
+	Mono.Optimization \
 	monodoc
 	
 net_4_0_only_dirs := \

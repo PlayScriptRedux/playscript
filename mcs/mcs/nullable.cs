@@ -1221,7 +1221,20 @@ namespace Mono.CSharp.Nullable
 		
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue)
+					left.Accept (visitor);
+				if (visitor.Continue)
+					right.Accept (visitor);
+			}
+
+			return ret;
 		}
 	}
 

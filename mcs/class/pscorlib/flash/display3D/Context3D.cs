@@ -176,9 +176,12 @@ namespace flash.display3D {
 			GL.BindBuffer(BufferTarget.ElementArrayBuffer, indexBuffer.id);
 			GL.DrawElements(BeginMode.Triangles, count, DrawElementsType.UnsignedInt, firstIndex );
 		}
+
+		public static System.Action<Context3D> OnPresent;
  	 	
 		public void present() {
-			GL.Flush();
+			if (OnPresent != null)
+				OnPresent(this);
 		}
  	 	
 

@@ -251,6 +251,8 @@ namespace Mono.CSharp
 
 			protected ParametersCompiled parameters;
 
+			private bool _applyingAttribute;
+
 			public SetMethod (PropertyBase method, Modifiers modifiers, ParametersCompiled parameters, Attributes attrs, Location loc)
 				: base (method, Prefix, modifiers, attrs, loc)
 			{
@@ -264,7 +266,9 @@ namespace Mono.CSharp
 					return;
 				}
 
-				base.ApplyAttributeBuilder (a, ctor, cdata, pa);
+				// NOTE: This is probably a stack overflow in C# as well, but we only see it happening in PlayScript, so disable it there.
+				if (this.Location.SourceFile == null || this.Location.SourceFile.FileType != SourceFileType.PlayScript)
+					base.ApplyAttributeBuilder (a, ctor, cdata, pa);
 			}
 
 			public override ParametersCompiled ParameterInfo {
@@ -779,6 +783,13 @@ namespace Mono.CSharp
 		public override void Accept (StructuralVisitor visitor)
 		{
 			visitor.Visit (this);
+
+			if (visitor.AutoVisit && visitor.Depth >= VisitDepth.MethodBodies) {
+				if (visitor.Continue && Get != null && visitor.Depth >= VisitDepth.MethodBodies)
+					Get.Accept (visitor);
+				if (visitor.Continue && Set != null && visitor.Depth >= VisitDepth.MethodBodies)
+					Set.Accept (visitor);
+			}
 		}
 		
 
@@ -1107,6 +1118,24 @@ namespace Mono.CSharp
 		public override void Accept (StructuralVisitor visitor)
 		{
 			visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return;
+				}
+				if (visitor.Continue && this.initializer != null && visitor.Depth >= VisitDepth.Initializers) {
+					initializer.Accept (visitor);
+				}
+
+				if (visitor.Continue && declarators != null && visitor.Depth >= VisitDepth.Initializers) {
+					foreach (var decl in declarators) {
+						if (visitor.Continue && decl.Initializer != null) {
+							decl.Initializer.Accept (visitor);
+						}
+					}
+				}
+			}
 		}
 
 		public void AddDeclarator (FieldDeclarator declarator)
@@ -1241,7 +1270,9 @@ namespace Mono.CSharp
 					return;
 				}
 
-				base.ApplyAttributeBuilder (a, ctor, cdata, pa);
+				// NOTE: This is probably a stack overflow in C# as well, but we only see it happening in PlayScript, so disable it there.
+				if (this.Location.SourceFile == null || this.Location.SourceFile.FileType != SourceFileType.PlayScript)
+					base.ApplyAttributeBuilder (a, ctor, cdata, pa);
 			}
 
 			public override AttributeTargets AttributeTargets {
@@ -1621,6 +1652,17 @@ namespace Mono.CSharp
 		public override void Accept (StructuralVisitor visitor)
 		{
 			visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return;
+				}
+				if (visitor.Continue && Get != null && visitor.Depth >= VisitDepth.MethodBodies)
+					Get.Accept (visitor);
+				if (visitor.Continue && Set != null && visitor.Depth >= VisitDepth.MethodBodies)
+					Set.Accept (visitor);
+			}
 		}
 
 		public override void ApplyAttributeBuilder (Attribute a, MethodSpec ctor, byte[] cdata, PredefinedAttributes pa)

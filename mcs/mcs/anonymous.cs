@@ -1409,7 +1409,14 @@ namespace Mono.CSharp {
 		
 		public override object Accept (StructuralVisitor visitor)
 		{
-			return visitor.Visit (this);
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Continue)
+					this.Block.Accept (visitor);
+			}
+
+			return ret;
 		}
 	}
 

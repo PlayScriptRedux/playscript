@@ -14,7 +14,7 @@
 
 package flash.geom {
 
-	public class Point {
+	public final class Point {
 
 		//
 		// Properties

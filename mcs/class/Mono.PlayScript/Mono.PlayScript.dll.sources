@@ -31,6 +31,7 @@
 ../../mcs/flowanalysis.cs
 ../../mcs/generic.cs
 ../../mcs/import.cs
+../../mcs/inliner.cs
 ../../mcs/intrinsics.cs
 ../../mcs/iterators.cs
 ../../mcs/js-emit.cs

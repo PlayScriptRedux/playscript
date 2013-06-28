@@ -12,11 +12,31 @@
 
 using System;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace Mono.CSharp
 {
+	public enum VisitDepth
+	{
+		Namespaces 		= 1,	// Namespaces
+		Types 			= 2,	// Types
+		Members 		= 3,	// Member declarations
+		Initializers 	= 4,	// Field, const initializers
+		MethodBodies 	= 5,	// Method,constructor,property bodies
+		All				= 6		// Everything
+	}
+
 	public abstract class StructuralVisitor
 	{
+		// True to automatically visit all children, false to manually implement traversal in visit methods
+		public bool AutoVisit;
+		// True to continue auto traversal, false exits immediately
+		public bool Continue = true;
+		// True to skip children of this element and continue to next element
+		public bool Skip;
+		// Maximum depth for visitor
+		public VisitDepth Depth = VisitDepth.All;
+
 		public virtual void Visit (MemberCore member)
 		{
 			Debug.Fail ("unknown member type: " + member.GetType ());
@@ -38,7 +58,8 @@ namespace Mono.CSharp
 
 		public virtual void Visit (ModuleContainer module)
 		{
-			VisitTypeContainer (module);
+			if (!AutoVisit)
+				VisitTypeContainer (module);
 		}
 
 		public virtual void Visit (UsingNamespace un)
@@ -55,23 +76,27 @@ namespace Mono.CSharp
 
 		public virtual void Visit (NamespaceContainer ns)
 		{
-			VisitTypeContainer (ns);
+			if (!AutoVisit)
+				VisitTypeContainer (ns);
 		}
 
 		public virtual void Visit (Class c)
 		{
-			VisitTypeContainer (c);
+			if (!AutoVisit)
+				VisitTypeContainer (c);
 		}
 
 		public virtual void Visit (Struct s)
 		{
-			VisitTypeContainer (s);
+			if (!AutoVisit)
+				VisitTypeContainer (s);
 		}
 
 
 		public virtual void Visit (Interface i)
 		{
-			VisitTypeContainer (i);
+			if (!AutoVisit)
+				VisitTypeContainer (i);
 		}
 
 		public virtual void Visit (Delegate d)
@@ -80,7 +105,8 @@ namespace Mono.CSharp
 
 		public virtual void Visit (Enum e)
 		{
-			VisitTypeContainer (e);
+			if (!AutoVisit)
+				VisitTypeContainer (e);
 		}
 
 		public virtual void Visit (FixedField f)
