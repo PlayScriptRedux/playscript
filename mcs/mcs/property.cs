@@ -251,6 +251,8 @@ namespace Mono.CSharp
 
 			protected ParametersCompiled parameters;
 
+			private bool _applyingAttribute;
+
 			public SetMethod (PropertyBase method, Modifiers modifiers, ParametersCompiled parameters, Attributes attrs, Location loc)
 				: base (method, Prefix, modifiers, attrs, loc)
 			{
@@ -264,7 +266,9 @@ namespace Mono.CSharp
 					return;
 				}
 
-				base.ApplyAttributeBuilder (a, ctor, cdata, pa);
+				// NOTE: This is probably a stack overflow in C# as well, but we only see it happening in PlayScript, so disable it there.
+				if (this.Location.SourceFile == null || this.Location.SourceFile.FileType != SourceFileType.PlayScript)
+					base.ApplyAttributeBuilder (a, ctor, cdata, pa);
 			}
 
 			public override ParametersCompiled ParameterInfo {
@@ -1266,7 +1270,9 @@ namespace Mono.CSharp
 					return;
 				}
 
-				base.ApplyAttributeBuilder (a, ctor, cdata, pa);
+				// NOTE: This is probably a stack overflow in C# as well, but we only see it happening in PlayScript, so disable it there.
+				if (this.Location.SourceFile == null || this.Location.SourceFile.FileType != SourceFileType.PlayScript)
+					base.ApplyAttributeBuilder (a, ctor, cdata, pa);
 			}
 
 			public override AttributeTargets AttributeTargets {
