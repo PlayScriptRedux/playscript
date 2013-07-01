@@ -12,18 +12,10 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-package flash.media
-{
-	import flash.net.NetStream;
+package fl.controls {
 
-	public class Video extends flash.display.DisplayObject
-	{
-		public function Video(width:int = 320, height:int = 240) {
-			throw new System.NotImplementedException();
-		}
-		
-		public function attachNetStream(netStream:NetStream):void {
-			throw new System.NotImplementedException();
-		}
+	public class TextInput extends fl.core.UIComponent {
+
 	}
+
 }

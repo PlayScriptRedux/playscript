@@ -12,18 +12,18 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-package flash.media
-{
-	import flash.net.NetStream;
+using System;
 
-	public class Video extends flash.display.DisplayObject
+namespace _root
+{
+	[AttributeUsage(AttributeTargets.All, AllowMultiple = false)]
+	public class DefaultPropertyAttribute : Attribute
 	{
-		public function Video(width:int = 320, height:int = 240) {
-			throw new System.NotImplementedException();
+		public DefaultPropertyAttribute(string text = "")
+		{
 		}
-		
-		public function attachNetStream(netStream:NetStream):void {
-			throw new System.NotImplementedException();
-		}
+
+		public string message {get;set;}
 	}
 }
+

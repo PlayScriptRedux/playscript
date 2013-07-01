@@ -98,6 +98,10 @@ namespace _root
 
 		public static string replace (this string s, object pattern, object repl)
 		{
+			if (repl is System.Delegate) {
+				throw new NotSupportedException("Replacing function is not supported.");
+			}
+
 			if (pattern is RegExp) {
 				// pattern is a regexp
 				var re = pattern as RegExp;

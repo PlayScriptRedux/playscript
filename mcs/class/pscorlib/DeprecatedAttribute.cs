@@ -16,7 +16,7 @@ using System;
 
 namespace _root
 {
-	[AttributeUsage(AttributeTargets.All, AllowMultiple = true)]
+	[AttributeUsage(AttributeTargets.All, AllowMultiple = false)]
 	public class DeprecatedAttribute : Attribute
 	{
 		public DeprecatedAttribute(string text = "")

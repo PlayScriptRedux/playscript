@@ -47,10 +47,12 @@ namespace _root
 		}
 	}
 
-	//[DynamicClass]
+	// for now we implement array as a vector of dynamics
+	// there may be some subtle differences between array and vector that we need to handle here
+	[DynamicClass]
 	[DebuggerDisplay("length = {length}")]
 	[DebuggerTypeProxy(typeof(ArrayDebugView))]
-	public sealed class Array : IDynamicClass, IList
+	public sealed class Array : Object, IDynamicClass, IList
 	{
 		#region IList implementation
 		
@@ -265,7 +267,7 @@ namespace _root
 			return AsArray(mList.slice(startIndex, endIndex));
 		}
 		
-		public Array splice(int startIndex, uint deleteCount = 4294967295, params object[] items) {
+		public Array splice(int startIndex = 0, uint deleteCount = 4294967295, params object[] items) {
 			if (items.Length > 0) {
 				return AsArray(mList.splice(startIndex, deleteCount, items));
 			} else {

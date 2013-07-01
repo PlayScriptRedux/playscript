@@ -36,7 +36,9 @@ package {
 		public function get fullYear():Number { throw new System.NotImplementedException();  }
 		public function get month():Number { throw new System.NotImplementedException();  }
 		public function get day():Number { throw new System.NotImplementedException();  }
+		public function get dayUTC(): Number { throw new System.NotImplementedException(); }
 		public function get hours():Number { throw new System.NotImplementedException();  }
+		public function get hoursUTC():Number { throw new System.NotImplementedException();  }
 		public function get minutes():Number { throw new System.NotImplementedException();  }
 		public function get seconds():Number { throw new System.NotImplementedException();  }
 

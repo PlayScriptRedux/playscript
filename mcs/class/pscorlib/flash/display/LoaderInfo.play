@@ -49,7 +49,7 @@ package flash.display {
  	 	
 		public property loaderURL : String { get { throw new System.NotImplementedException(); } }
  	 	
-		public property parameters : Object { get { throw new System.NotImplementedException(); } }
+		public property parameters : Object { get; set; }
  	 	
 		public property parentAllowsChild : Boolean { get { throw new System.NotImplementedException(); } }
 

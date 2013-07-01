@@ -94,6 +94,8 @@ package flash.filters {
 		public var color:Number;
 		public var alpha:Number;
 		public var quality:Number;
+		public var inner:Boolean;
+		public var knockout:Boolean;
 		//$$TODO
 	}
 
