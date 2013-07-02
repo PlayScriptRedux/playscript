@@ -19,6 +19,11 @@ namespace _root
 {
 	public static class String
 	{
+		static String()
+		{
+			PlayScript.Dynamic.RegisterExtensionClass(typeof(string), typeof(_root.String));
+		}
+
 		public static int get_length(this string s) {
 			return (s!=null) ? s.Length : -1;
 		}
