@@ -103,7 +103,8 @@ namespace flash.events
                         try {
 							// set current target for event
 							ev._currentTarget = ev._target = _evTarget;
-                            callback.DynamicInvoke(ev);
+							var args = PlayScript.Dynamic.ConvertArgumentList(callback.Method, new object[] {ev});
+                            callback.DynamicInvoke(args);
 							ev._currentTarget = ev._target = null;
                         } 
                         catch (Exception e)
