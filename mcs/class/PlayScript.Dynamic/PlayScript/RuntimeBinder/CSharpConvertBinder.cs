@@ -185,8 +185,8 @@ namespace PlayScript.RuntimeBinder
 
 		public static string ConvertToString (CallSite site, object o)
 		{
-			if (o == null /*|| o == PlayScript.Undefined.undefined*/) {
-				return "null";
+			if (o == null || o == PlayScript.Undefined._undefined) {
+				return null;
 			} else if  (o is string) {
 				return (string)o;
 			} else {
