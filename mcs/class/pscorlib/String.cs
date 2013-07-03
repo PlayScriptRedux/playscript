@@ -175,6 +175,10 @@ namespace _root
 		}
 
 		public static string substr(this string s, double startIndex = 0, double len = 0x7fffffff) {
+			if (startIndex < 0) {
+				startIndex = s.Length + startIndex;
+				startIndex = (startIndex >= 0) ? startIndex : 0;
+			}
 			if (len == 0x7fffffff) {
 				return s.Substring((int)startIndex);
 			} else {
@@ -184,6 +188,10 @@ namespace _root
 		}
 
 		public static string substring(this string s, double startIndex = 0, double endIndex = 0x7fffffff) {
+			if (startIndex < 0) {
+				startIndex = s.Length + startIndex;
+				startIndex = (startIndex >= 0) ? startIndex : 0;
+			}
 			if (endIndex == 0x7fffffff) {
 				return s.Substring((int)startIndex);
 			} else {
