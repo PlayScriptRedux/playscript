@@ -4412,7 +4412,7 @@ namespace Mono.PlayScript
 
 		void warn_semi_inserted (Location loc) 
 		{
-			Report.Warning (7093, 1, loc, "Semicolon automatically inserted on unterminated line.");
+			Report.Warning (7093, 4, loc, "Semicolon automatically inserted on unterminated line.");
 		}
 
 		void clear_temp_auto_semi_tokens ()
