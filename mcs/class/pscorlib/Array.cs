@@ -163,10 +163,25 @@ namespace _root
 		public Array() {
 		}
 
+		public Array(int size)
+		{
+			mList.expand((uint)size);
+		}
+
+		public Array(uint size)
+		{
+			mList.expand(size);
+		}
+
+		public Array(double size)
+		{
+			mList.expand((uint)size);
+		}
+
 		public Array(object arg1, params object[] args)
 		{
-			if (arg1 is int || arg1 is double) {
-				mList.expand((uint)arg1);
+			if (args.Length == 0 && (arg1 is int || arg1 is uint || arg1 is double)) {
+				mList.expand(Convert.ToUInt32(arg1));
 			} else {
 				mList.push(arg1);
 				for ( var i=0; i < args.Length; i++) {

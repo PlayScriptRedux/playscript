@@ -455,7 +455,7 @@ namespace Mono.CSharp {
 					// We automatically do a typeof(type) in PlayScript for type values..
 					if (ec.FileType == SourceFileType.PlayScript && 
 					  (e is TypeExpr) && (flags & ResolveFlags.VariableOrValue) != 0) {
-						return (new TypeOf(e.Type, e.Location)).Resolve (ec);
+						return Convert.ImplicitConversion (ec, e, ec.BuiltinTypes.Type, e.loc).Resolve (ec);
 					}
 					e.Error_UnexpectedKind (ec, flags, loc);
 					return null;

@@ -1430,6 +1430,9 @@ namespace Mono.CSharp
 		public Expression ProbeType;
 		protected Expression expr;
 		protected TypeSpec probe_type_expr;
+
+		// ActionScript type expressions can be "Type" objects too.
+		protected Expression as_probe_type_expr;
 		
 		public Probe (Expression expr, Expression probe_type, Location l)
 		{
@@ -1451,23 +1454,39 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext ec)
 		{
-			probe_type_expr = ProbeType.ResolveAsType (ec);
-			if (probe_type_expr == null)
-				return null;
+			// NOTE: We need to distinguish between types and expressions which return a Class object.
+			if (ec.FileType == SourceFileType.PlayScript && (this is Is)) {  // Enable for "is" expression only for right now
+				as_probe_type_expr = ProbeType.Resolve (ec);
+				if (as_probe_type_expr is TypeExpression) {
+					as_probe_type_expr = null;
+				} else if (as_probe_type_expr.Type.BuiltinType != BuiltinTypeSpec.Type.Type && 
+				           as_probe_type_expr.Type.BuiltinType != BuiltinTypeSpec.Type.Dynamic) {
+					ec.Report.Error (7345, loc, "The `{0}' operator cannot be applied to an expression which is not a Class type",
+					                 OperatorName);
+				}
+			}
+
+			if (as_probe_type_expr == null) {
+				probe_type_expr = ProbeType.ResolveAsType (ec);
+				if (probe_type_expr == null)
+					return null;
+			}
 
 			expr = expr.Resolve (ec);
 			if (expr == null)
 				return null;
 
-			if (probe_type_expr.IsStatic) {
-				ec.Report.Error (-244, loc, "The `{0}' operator cannot be applied to an operand of a static type",
-					OperatorName);
-			}
-			
-			if (expr.Type.IsPointer || probe_type_expr.IsPointer) {
-				ec.Report.Error (244, loc, "The `{0}' operator cannot be applied to an operand of pointer type",
-					OperatorName);
-				return null;
+			if (probe_type_expr != null) {
+				if (probe_type_expr.IsStatic) {
+					ec.Report.Error (-244, loc, "The `{0}' operator cannot be applied to an operand of a static type",
+						OperatorName);
+				}
+				
+				if (expr.Type.IsPointer || probe_type_expr.IsPointer) {
+					ec.Report.Error (244, loc, "The `{0}' operator cannot be applied to an operand of pointer type",
+						OperatorName);
+					return null;
+				}
 			}
 
 			if (expr.Type == InternalType.AnonymousMethod) {
@@ -1561,6 +1580,15 @@ namespace Mono.CSharp
 		{
 			if (base.DoResolve (ec) == null)
 				return null;
+
+			// Check to see if right side is an expression which returns a Class (Type).  If so, generate
+			// type check code.
+			if (ec.FileType == SourceFileType.PlayScript && as_probe_type_expr != null) {
+				var arguments = new Arguments(2);
+				arguments.Add (new Argument(expr));
+				arguments.Add (new Argument(as_probe_type_expr));
+				return new Invocation (new MemberAccess(new MemberAccess(new SimpleName("PlayScript", this.loc), "Support", this.loc), "IsCheck", this.loc), arguments).Resolve (ec);
+			}
 
 			TypeSpec d = expr.Type;
 			bool d_is_nullable = false;

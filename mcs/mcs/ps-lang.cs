@@ -570,7 +570,11 @@ namespace Mono.CSharp
 				var resolveExpr = Expr.Resolve (ec);
 				if (resolveExpr == null)
 					return null;
-				newExpr = new New(resolveExpr, new Arguments (0), loc);
+				if (resolveExpr is TypeOf) {
+					newExpr = new New (((TypeOf)resolveExpr).TypeExpression, new Arguments (0), loc);
+				} else {
+					newExpr = new New (resolveExpr, new Arguments (0), loc);
+				}
 			}
 
 			return newExpr.Resolve (ec);

@@ -22,8 +22,11 @@ package {
 
 		public function Date(a:Object = null)
 		{
-			if (a != null)
+			if (a is int) {
+				mDate = new System.DateTime(int(a));
+			} else if (a != null) {
 				throw new System.NotImplementedException(); 
+			}
 
 			mDate = System.DateTime.Now;
 		}

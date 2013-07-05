@@ -17,6 +17,14 @@ namespace PlayScript
 			return mi.Invoke (null, argList);
 		}
 
+		// Perform non static "is" check with target type
+		public static bool IsCheck(object value, object type) {
+			if (value == null) {
+				return false;
+			}
+			return ((Type)type).IsAssignableFrom (value.GetType ());
+		}
+
 	}
 }
 

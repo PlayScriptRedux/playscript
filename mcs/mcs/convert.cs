@@ -1473,6 +1473,29 @@ namespace Mono.CSharp {
 				return null;
 			}
 
+			// Auto convert types to type objects..
+			if (ec.FileType == SourceFileType.PlayScript && target_type.BuiltinType == BuiltinTypeSpec.Type.Type && expr is FullNamedExpression) {
+				FullNamedExpression type_expr = (FullNamedExpression)expr;
+				if (expr_type != null) {
+					if (expr_type.MemberDefinition.Namespace == PsConsts.PsRootNamespace) {
+						switch (expr_type.Name) {
+						case "String":
+							type_expr = new TypeExpression (ec.BuiltinTypes.String, type_expr.Location);
+							break;
+						case "Number":
+							type_expr = new TypeExpression (ec.BuiltinTypes.Double, type_expr.Location);
+							break;
+						case "Boolean":
+							type_expr = new TypeExpression (ec.BuiltinTypes.Double, type_expr.Location);
+							break;
+						}
+					} else if (expr_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
+						type_expr = new TypeExpression (ec.Module.PredefinedTypes.AsObject.Resolve(), type_expr.Location);
+					}
+				}
+				return new TypeOf (type_expr, expr.Location).Resolve (ec);
+			}
+
 			if (expr_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
 
 				// Implicitly cast references to bools in PlayScript
@@ -1509,6 +1532,8 @@ namespace Mono.CSharp {
 
 				return null;
 			}
+
+
 
 			if (target_type.IsNullableType)
 				return ImplicitNulableConversion (ec, expr, target_type);

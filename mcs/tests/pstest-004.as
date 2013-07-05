@@ -14,11 +14,13 @@ package
 	{
 	
 		public static function Main():void {
-			var f:Function = function():DisplayObject { return null; };
+			var a:Array = new Array();
+			var cl:Class = Array;
+			trace(a is cl);
 		}
 
-		[inline]
-		public function set texture(texture:Texture):void { _texture = texture; }
+//		[inline]
+//		public function set texture(texture:Texture):void { _texture = texture; }
 
 
 	}
