@@ -213,6 +213,7 @@ namespace PlayScript.RuntimeBinder
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using PlayScript.Expando;
 using System.Reflection;
 
@@ -237,6 +238,136 @@ namespace PlayScript.RuntimeBinder
 //			this.callingContext = callingContext;
 //			this.argumentInfo = new List<CSharpArgumentInfo>(argumentInfo);
 //			this.typeArguments = new List<Type>(typeArguments);
+		}
+
+		private bool ConvertMethodParameters(MethodInfo m, object[] args, out object[] outArgs)
+		{
+			bool has_defaults = false;
+			int paramsIndex = -1;
+			var parameters = m.GetParameters();
+			var args_len = args.Length;
+			var par_len = parameters.Length;
+
+			for (var i = 0; i < par_len; i++) {
+				var p = parameters[i];
+				var paramArrayAttribute = p.GetCustomAttributes(typeof(ParamArrayAttribute), true);
+				if ((paramArrayAttribute != null) && (paramArrayAttribute.Length != 0))
+				{
+					paramsIndex = i;
+					Debug.Assert(paramsIndex == par_len - 1, "Unexpected index for the params parameter");
+					// After a params... There is no need to continue to parse further
+					if (args_len < paramsIndex) {
+						outArgs = null;
+						return false;
+					}
+					break;
+				}
+				if (i >= args.Length) {
+					if ((p.Attributes & ParameterAttributes.HasDefault) != 0) {
+						has_defaults = true;
+						continue;
+					} else {
+						outArgs = null;
+						return false;
+					}
+				} else {
+					var ptype = p.ParameterType;
+					if (args[i] != null) {
+						if (!ptype.IsAssignableFrom(args[i].GetType ())) {
+							outArgs = null;
+							return false;
+						}
+					} else if (!ptype.IsClass || ptype == typeof(string)) { // $$TODO revisit this
+						// argument is null
+						outArgs = null;
+						return false;
+					}
+				}
+			}
+
+			// default values and params are mutually exclusive in C# (they can't both be in the same signature)
+			// So it makes this code a bit simpler
+			if (has_defaults) {
+				var new_args = new object[par_len];
+				for (var j = 0; j < par_len; j++) {
+					if (j < args.Length)
+						new_args[j] = args[j];
+					else
+						new_args[j] = parameters[j].DefaultValue;
+				}
+				outArgs = new_args;
+			} else if (paramsIndex >= 0) {
+				var new_args = new object[par_len];
+				// We reserve the last parameter for special params handling
+				// We verified earlier that there was enough args anyway to fill all the parameters (and optionally the parmsIndex)
+				// Copy all the other parameters normally
+				for (var j = 0; j < paramsIndex; j++) {
+					new_args[j] = args[j];
+				}
+				// Then copy the additional parameters to the last parameter (params) as an array
+				// Array can be empty if we have just enough parameters up to the params one
+				int numberOfAdditionalParameters = args_len - paramsIndex;
+				object[] additionalParameters = new object[numberOfAdditionalParameters];
+				new_args[paramsIndex] = additionalParameters;
+				for (var j = 0 ; j < numberOfAdditionalParameters ; j++) {
+					additionalParameters[j] = args[paramsIndex + j];
+				}
+				System.Diagnostics.Debug.Assert(paramsIndex + numberOfAdditionalParameters == args_len, "Some arguments have not been handled properly");
+				outArgs = new_args;
+
+			} else {
+				outArgs = args;
+			}
+
+			// success
+			return true;
+		}
+
+		private MethodInfo FindMethodForType(CallSite site, System.Type otype, string name, bool isStatic, object[] args, out object[] outArgs)
+		{
+			var methods = otype.GetMethods();
+			var len = methods.Length;
+			for (var mi = 0; mi < len; mi++) {
+				var m = methods[mi];
+				if ((m.IsStatic == isStatic) && m.Name == name) {
+					// attempt to convert method parameters
+					if (ConvertMethodParameters(m, args, out outArgs)) {
+						return m;
+					}
+				}
+			}
+
+			// method not found
+			outArgs = null;
+			return null;
+		}
+
+		private MethodInfo FindExtensionMethodForType(CallSite site, System.Type otype, string name, object o, object[] args, out object[] outArgs)
+		{
+			Type extensionClass = PlayScript.Dynamic.GetExtensionClassForType(otype); 
+
+			if (extensionClass != null) {
+				// add 'this' to arguments
+				var extArgs = new object[args.Length + 1];
+				extArgs[0] = o;
+				Array.Copy(args, 0, extArgs, 1, args.Length);
+
+				var methods = extensionClass.GetMethods();
+				var len = methods.Length;
+				for (var mi = 0; mi < len; mi++) {
+					var m = methods[mi];
+					if (m.Name == name) {
+						// attempt to convert method parameters
+						if (ConvertMethodParameters(m, extArgs, out outArgs)) {
+							return m;
+						}
+					}
+				}
+			}
+
+			// method not found
+			outArgs = null;
+			return null;
 		}
 
 		public void FindMethod (CallSite site, object o, object[] args)
@@ -296,62 +427,20 @@ namespace PlayScript.RuntimeBinder
 					otype = o.GetType();
 				}
 
-				MethodInfo[] methods = otype.GetMethods();
-				var len = methods.Length;
-				for (var mi = 0; mi < len; mi++) {
-					var m = methods[mi];
-					if ((m.IsStatic == isStatic) && m.Name == name) {
-						bool matches = true;
-						bool has_defaults = false;
-						var parameters = m.GetParameters();
-						var par_len = parameters.Length;
-						if (par_len >= arg_len) {
-							for (var i = 0; i < par_len; i++) {
-								var p = parameters[i];
-								if (i >= args.Length) {
-									if ((p.Attributes & ParameterAttributes.HasDefault) != 0) {
-										has_defaults = true;
-										continue;
-									} else {
-										matches = false;
-										break;
-									}
-								} else {
-									var ptype = p.ParameterType;
-									if (args[i] != null) {
-										if (!ptype.IsAssignableFrom(args[i].GetType ())) {
-											matches = false;
-											break;
-										}
-									} else if (!ptype.IsClass || ptype == typeof(string)) {
-										matches = false;
-										break;
-									}
-								}
-							}
-						}
-						if (matches) {
-							if (has_defaults) {
-								var new_args = new object[par_len];
-								for (var j = 0; j < par_len; j++) {
-									if (j < args.Length)
-										new_args[j] = args[j];
-									else
-										new_args[j] = parameters[j].DefaultValue;
-								}
-								args = new_args;
-							}
-							method = m;
-							break;
-						}
+				// find method for type that matches argument list
+				method = FindMethodForType(site, otype, name, isStatic, args, out info.args);
+				if (method == null) {
+
+					if (!isStatic) {
+						// find extension methods
+						method = FindExtensionMethodForType(site, otype, name, o, args, out info.args);
+					}
+
+					if (method == null) {
+						throw new Exception("No matching method found with the name '" + name + "'"); 
 					}
 				}
-				if (method == null) {
-//					FindMethod(site, o, args);
-					throw new Exception("No matching method found with the name '" + name + "'"); 
-				}
 				info.method = method;
-				info.args = args;
 				info.del = null;
 				info.generation = 0;
 			}
@@ -378,7 +467,6 @@ namespace PlayScript.RuntimeBinder
 			var info = site.invokeInfo;
 			object[] args;
 			if (info == null || !info.InvokeMatches (o, a1)) {
-				var new_args = new [] { a1 };
 				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1 });
 				info = site.invokeInfo;
 				args = info.args;
@@ -390,7 +478,6 @@ namespace PlayScript.RuntimeBinder
 				info.method.Invoke (o, args);
 			else 
 				info.del.DynamicInvoke(args);
-			args[0] = null;
 		}
 
 		private static void InvokeAction2 (CallSite site, object o, object a1, object a2)
@@ -409,7 +496,6 @@ namespace PlayScript.RuntimeBinder
 				info.method.Invoke (o, args);
 			else 
 				info.del.DynamicInvoke(null, args);
-			args[0] = args[1] = null;
 		}
 
 		private static void InvokeAction3 (CallSite site, object o, object a1, object a2, object a3)
@@ -428,7 +514,6 @@ namespace PlayScript.RuntimeBinder
 				info.method.Invoke (o, args);
 			else 
 				info.del.DynamicInvoke(null, args);
-			args[0] = args[1] = args[2] = null;
 		}
 
 		private static void InvokeAction4 (CallSite site, object o, object a1, object a2, object a3, object a4)
@@ -447,7 +532,6 @@ namespace PlayScript.RuntimeBinder
 				info.method.Invoke (o, args);
 			else 
 				info.del.DynamicInvoke(null, args);
-			args[0] = args[1] = args[2] = args[3] = null;
 		}
 
 		private static void InvokeAction5 (CallSite site, object o, object a1, object a2, object a3, object a4,
@@ -467,7 +551,6 @@ namespace PlayScript.RuntimeBinder
 				info.method.Invoke (o, args);
 			else 
 				info.del.DynamicInvoke(null, args);
-			args[0] = args[1] = args[2] = args[3] = args[4] = null;
 		}
 		
 		private static void InvokeAction6 (CallSite site, object o, object a1, object a2, object a3, object a4,
@@ -487,7 +570,6 @@ namespace PlayScript.RuntimeBinder
 				info.method.Invoke (o, args);
 			else 
 				info.del.DynamicInvoke(null, args);
-			args[0] = args[1] = args[2] = args[3] = args[4] = args[5] = null;
 		}
 		
 		private static void InvokeAction7 (CallSite site, object o, object a1, object a2, object a3, object a4,
@@ -507,7 +589,6 @@ namespace PlayScript.RuntimeBinder
 				info.method.Invoke (o, args);
 			else 
 				info.del.DynamicInvoke(null, args);
-			args[0] = args[1] = args[2] = args[3] = args[4] = args[5] = args[6] = null;
 		}
 		
 		private static void InvokeAction8 (CallSite site, object o, object a1, object a2, object a3, object a4,
@@ -527,7 +608,6 @@ namespace PlayScript.RuntimeBinder
 				info.method.Invoke (o, args);
 			else 
 				info.del.DynamicInvoke(null, args);
-			args[0] = args[1] = args[2] = args[3] = args[4] = args[5] = args[6] = args[7] = null;
 		}
 
 		private static object InvokeFunc (CallSite site, object o)
@@ -562,7 +642,6 @@ namespace PlayScript.RuntimeBinder
 				ret = info.method.Invoke (o, args);
 			else 
 				ret = info.del.DynamicInvoke(args);
-			args[0] = null;
 			return ret;
 		}
 		
@@ -583,7 +662,6 @@ namespace PlayScript.RuntimeBinder
 				ret = info.method.Invoke (o, args);
 			else 
 				ret = info.del.DynamicInvoke(null, args);
-			args[0] = args[1] = null;
 			return ret;
 		}
 		
@@ -604,7 +682,6 @@ namespace PlayScript.RuntimeBinder
 				ret = info.method.Invoke (o, args);
 			else 
 				ret = info.del.DynamicInvoke(null, args);
-			args[0] = args[1] = args[2] = null;
 			return ret;
 		}
 		
@@ -625,7 +702,6 @@ namespace PlayScript.RuntimeBinder
 				ret = info.method.Invoke (o, args);
 			else 
 				ret = info.del.DynamicInvoke(null, args);
-			args[0] = args[1] = args[2] = args[3] = null;
 			return ret;
 		}
 		
@@ -647,7 +723,6 @@ namespace PlayScript.RuntimeBinder
 				ret = info.method.Invoke (o, args);
 			else 
 				ret = info.del.DynamicInvoke(null, args);
-			args[0] = args[1] = args[2] = args[3] = args[4] = null;
 			return ret;
 		}
 		
@@ -669,7 +744,6 @@ namespace PlayScript.RuntimeBinder
 				ret = info.method.Invoke (o, args);
 			else 
 				ret = info.del.DynamicInvoke(null, args);
-			args[0] = args[1] = args[2] = args[3] = args[4] = args[5] = null;
 			return ret;
 		}
 		
@@ -691,7 +765,6 @@ namespace PlayScript.RuntimeBinder
 				ret = info.method.Invoke (o, args);
 			else 
 				ret = info.del.DynamicInvoke(null, args);
-			args[0] = args[1] = args[2] = args[3] = args[4] = args[5] = args[6] = null;
 			return ret;
 		}
 		
@@ -713,7 +786,6 @@ namespace PlayScript.RuntimeBinder
 				ret = info.method.Invoke (o, args);
 			else 
 				ret = info.del.DynamicInvoke(null, args);
-			args[0] = args[1] = args[2] = args[3] = args[4] = args[5] = args[6] = args[7] = null;
 			return ret;
 		}
 

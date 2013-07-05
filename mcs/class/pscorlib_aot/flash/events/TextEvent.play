@@ -14,7 +14,7 @@
 
 package flash.events {
 
-	public class ErrorEvent extends TextEvent {
+	public class TextEvent extends Event {
 	
 		//
 		// Constants
@@ -25,14 +25,19 @@ package flash.events {
 		//
 		// Properties
 		//
-	
-		public property errorID : int { get { return 0; } }
-	
+ 	 	public function get text():String {
+ 	 		return toString();
+ 	 	}
+ 	 	
+ 	 	public function set text(value:String):void {
+ 	 		throw new System.NotImplementedException();
+ 	 	}
+
 		//
 		// Methods
 		//
 		
-	 	public function ErrorEvent(type:String, bubbles:Boolean = false, cancelable:Boolean = false, text:String = "", id:int = 0) {
+	 	public function TextEvent(type:String, bubbles:Boolean = false, cancelable:Boolean = false, text:String = "", id:int = 0) {
 	 		super(type, bubbles, cancelable);
 	 	}
 	
@@ -43,15 +48,6 @@ package flash.events {
  	 	public override function toString():String {
  	 		return null;
  	 	}
- 	 	
- 	 	public function get text():String {
- 	 		return toString();
- 	 	}
- 	 	
- 	 	public function set text(value:String):void {
- 	 		throw new System.NotImplementedException();
- 	 	}
-	
 	}
 
 }

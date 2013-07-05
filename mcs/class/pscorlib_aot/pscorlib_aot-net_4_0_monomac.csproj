@@ -673,6 +673,7 @@
     </Compile>
     <Compile Include="..\pscorlib\flash\net\URLRequestMethod.play">
       <Link>flash\net\URLRequestMethod.play</Link>
+      <DependentUpon>URLRequestDefaults.play</DependentUpon>
     </Compile>
     <Compile Include="..\pscorlib\flash\events\HTTPStatusEvent.play">
       <Link>flash\events\HTTPStatusEvent.play</Link>
@@ -700,10 +701,37 @@
     <Compile Include="flash\display\PNGEncoderOptions.play" />
     <Compile Include="flash\events\FocusEvent.play" />
     <Compile Include="flash\events\StatusEvent.play" />
+    <Compile Include="fl\controls\LabelButton.play" />
+    <Compile Include="fl\controls\Button.play" />
+    <Compile Include="fl\controls\BaseButton.play" />
+    <Compile Include="fl\core\UIComponent.play" />
+    <Compile Include="fl\controls\TextArea.play" />
+    <Compile Include="fl\controls\CheckBox.play" />
+    <Compile Include="fl\controls\NumericStepper.play" />
+    <Compile Include="fl\controls\ComboBox.play" />
+    <Compile Include="fl\controls\Label.play" />
+    <Compile Include="fl\controls\ScrollBar.play" />
+    <Compile Include="fl\controls\UIScrollBar.play" />
+    <Compile Include="fl\controls\SelectableList.play" />
+    <Compile Include="fl\controls\List.play" />
+    <Compile Include="fl\containers\ScrollPane.play" />
+    <Compile Include="fl\containers\BaseScrollPane.play" />
+    <Compile Include="fl\controls\TextInput.play" />
+    <Compile Include="flash\globalization\DateTimeFormatter.play" />
+    <Compile Include="flash\net\URLRequestHeader.play" />
+    <Compile Include="flash\net\net_functions.play" />
+    <Compile Include="flash\net\SharedObject.play" />
+    <Compile Include="flash\net\SharedObjectFlushStatus.play" />
+    <Compile Include="DefaultPropertyAttribute.cs" />
+    <Compile Include="flash\events\TextEvent.play" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="flash\external\" />
     <Folder Include="flash\globalization\" />
+    <Folder Include="fl\" />
+    <Folder Include="fl\core\" />
+    <Folder Include="fl\controls\" />
+    <Folder Include="fl\containers\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net_4_0.csproj">

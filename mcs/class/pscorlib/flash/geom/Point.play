@@ -76,7 +76,7 @@ package flash.geom {
 			this.y += dy;
 		}
  	 	
- 	 	public function polar(len:Number, angle:Number):Point {
+ 	 	public static function polar(len:Number, angle:Number):Point {
 			throw new System.NotImplementedException();
 		}
  	 	

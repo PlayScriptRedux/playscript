@@ -121,6 +121,8 @@ namespace PlayScript.RuntimeBinder
 				return (int)((uint)o);
 			case TypeCode.Single:
 				return (int)((float)o);
+			case TypeCode.String:
+				return int.Parse((String)o);
 			default:
 				throw new Exception ("Invalid cast to int");
 			}
@@ -140,6 +142,8 @@ namespace PlayScript.RuntimeBinder
 				return (uint)o;
 			case TypeCode.Single:
 				return (uint)((float)o);
+			case TypeCode.String:
+				return uint.Parse((String)o);
 			default:
 				throw new Exception ("Invalid cast to int");
 			}
@@ -159,6 +163,8 @@ namespace PlayScript.RuntimeBinder
 				return (uint)o;
 			case TypeCode.Single:
 				return (float)o;
+			case TypeCode.String:
+				return double.Parse((String)o);
 			default:
 				throw new Exception ("Invalid cast to int");
 			}
@@ -185,8 +191,8 @@ namespace PlayScript.RuntimeBinder
 
 		public static string ConvertToString (CallSite site, object o)
 		{
-			if (o == null /*|| o == PlayScript.Undefined.undefined*/) {
-				return "null";
+			if (o == null || o == PlayScript.Undefined._undefined) {
+				return null;
 			} else if  (o is string) {
 				return (string)o;
 			} else {

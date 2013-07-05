@@ -14,14 +14,14 @@
 
 package flash.events {
 
-	public class UncaughtErrorEvent extends Event {
+	public class UncaughtErrorEvent extends ErrorEvent {
 		
 		public function UncaughtErrorEvent(type:String, bubbles:Boolean = false, cancelable:Boolean = false) {
 			super(type, bubbles, cancelable);
 		}
-		
-		public property text : String { get; set; }
-		
+
+		public property error : * { get { return null; } }
+
 		public static const UNCAUGHT_ERROR:String = "UncaughtErrorEvent";
 		
 	}

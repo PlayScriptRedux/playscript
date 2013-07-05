@@ -13,23 +13,42 @@
 //      limitations under the License.
 
 package flash.external {
-	
+
+	import System.Collections.Generic.*;
+
 	public static class ExternalInterface {
 
+		public static var CallFunc:System.Func.<String, System.Object[], Object> = null;
+
 		public static function get available():Boolean {
-			return false;
+			return (CallFunc != null);
 		}
 
 		public static function call(method:String, ...args):Object{
-			trace("warning: ExternalInterface.call not implemented");
-			throw new Error("Not Implemented");
+			if (CallFunc != null) {
+				return CallFunc(method, args);
+			} else {
+				trace("warning: ExternalInterface.call not registered");
+				return null;
+			}
 		}
 
 		public static function addCallback(method:String, f:Function):void{
-			trace("warning: ExternalInterface.addCallback not implemented");
-//			throw new Error("Not Implemented");
+			sCallbacks[method] = f;
 		}
-		
+
+		public static function externalInvokeCallback(method:String, args:System.Object[]):Object{
+			var f:Function;
+			if (sCallbacks.TryGetValue(method, out f)){
+				return f(args);
+			} else {
+				// callback not registered
+				trace("warning: ExternalInterface.addCallback not registered: ", method);
+				return null;
+			}
+		}
+
+		private static var sCallbacks:Dictionary.<String, Function> = new Dictionary.<String, Function>();
 	}
 	
 }

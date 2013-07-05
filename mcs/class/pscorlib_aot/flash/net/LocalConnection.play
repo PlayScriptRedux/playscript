@@ -15,6 +15,10 @@
 package flash.net {
 
 	public class LocalConnection extends flash.events.EventDispatcher {
+	 	
+		public function send(connectionName:String, methodName:String, ... arguments):void {
+			throw new System.NotImplementedException();
+		}
 	}
 	
 }

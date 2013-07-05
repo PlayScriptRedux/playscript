@@ -19,6 +19,11 @@ namespace _root
 {
 	public static class String
 	{
+		static String()
+		{
+			PlayScript.Dynamic.RegisterExtensionClass(typeof(string), typeof(_root.String));
+		}
+
 		public static int get_length(this string s) {
 			return (s!=null) ? s.Length : -1;
 		}
@@ -98,6 +103,10 @@ namespace _root
 
 		public static string replace (this string s, object pattern, object repl)
 		{
+			if (repl is System.Delegate) {
+				throw new NotSupportedException("Replacing function is not supported.");
+			}
+
 			if (pattern is RegExp) {
 				// pattern is a regexp
 				var re = pattern as RegExp;
@@ -166,6 +175,10 @@ namespace _root
 		}
 
 		public static string substr(this string s, double startIndex = 0, double len = 0x7fffffff) {
+			if (startIndex < 0) {
+				startIndex = s.Length + startIndex;
+				startIndex = (startIndex >= 0) ? startIndex : 0;
+			}
 			if (len == 0x7fffffff) {
 				return s.Substring((int)startIndex);
 			} else {
@@ -175,6 +188,10 @@ namespace _root
 		}
 
 		public static string substring(this string s, double startIndex = 0, double endIndex = 0x7fffffff) {
+			if (startIndex < 0) {
+				startIndex = s.Length + startIndex;
+				startIndex = (startIndex >= 0) ? startIndex : 0;
+			}
 			if (endIndex == 0x7fffffff) {
 				return s.Substring((int)startIndex);
 			} else {

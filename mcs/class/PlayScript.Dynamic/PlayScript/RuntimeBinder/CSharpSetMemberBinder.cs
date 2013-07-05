@@ -100,6 +100,7 @@ namespace PlayScript.RuntimeBinder
 //      limitations under the License.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using PlayScript.Expando;
 
@@ -116,11 +117,29 @@ namespace PlayScript.RuntimeBinder
 
 		public static void SetMember<T> (CallSite site, object o, T value)
 		{
-			var expando = o as ExpandoObject;
-			if (expando != null) {
-				var binder = (CSharpSetMemberBinder)site.Binder;
-				expando[binder.name] = value;
+			string name = ((CSharpSetMemberBinder)site.Binder).name;
+
+			// Try Dictionary<T>
+			var d = o as IDictionary<string,T>;
+			if (d != null) {
+				d[name] = value;
+				return;
 			}
+			
+			// Try IDictionary
+			var d2 = o as IDictionary;
+			if (d2 != null) {
+				d2[name] = value;
+				return;
+			}
+
+			if (PlayScript.Dynamic.SetInstanceMember(o, name, value))
+			{
+				return;
+			}
+
+			// unable to set member, throw or trace?
+//			throw new Exception("Unable to set member: " + name);
 		}
 
 		public CSharpSetMemberBinder (CSharpBinderFlags flags, string name, Type callingContext, IEnumerable<CSharpArgumentInfo> argumentInfo)

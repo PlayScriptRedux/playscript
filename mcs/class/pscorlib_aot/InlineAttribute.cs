@@ -12,18 +12,16 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-package flash.media
-{
-	import flash.net.NetStream;
+using System;
 
-	public class Video extends flash.display.DisplayObject
+namespace _root
+{
+	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, AllowMultiple = false)]
+	public class inlineAttribute : Attribute
 	{
-		public function Video(width:int = 320, height:int = 240) {
-			throw new System.NotImplementedException();
-		}
-		
-		public function attachNetStream(netStream:NetStream):void {
-			throw new System.NotImplementedException();
+		public inlineAttribute()
+		{
 		}
 	}
 }
+

@@ -2,6 +2,7 @@ using System;
 using System.Reflection;
 using System.Collections;
 using System.Linq.Expressions;
+using System.Collections.Generic;
 
 namespace PlayScript
 {
@@ -253,6 +254,22 @@ namespace PlayScript
 				return true;
 			} else {
 				return false;
+			}
+		}
+
+		private static Dictionary<Type, Type>  sExtensions = new Dictionary<Type, Type>();
+		public static void RegisterExtensionClass(System.Type type, System.Type extensionType)
+		{
+			sExtensions[type] = extensionType;
+		} 
+
+		public static Type GetExtensionClassForType(Type type)
+		{
+			Type et;
+			if (sExtensions.TryGetValue(type, out et)) {
+				return et;
+			} else {
+				return null;
 			}
 		}
 		

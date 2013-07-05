@@ -145,7 +145,11 @@ package flash.display {
 		public function swapChildrenAt(index1:int, index2:int):void {
 			throw new System.NotImplementedException();		
 		}
-		
+
+		public function removeChildren():void {
+			throw new System.NotImplementedException();
+		}
+						
 		private var mChildren:Vector.<DisplayObject> = new Vector.<DisplayObject>();
 
 	}

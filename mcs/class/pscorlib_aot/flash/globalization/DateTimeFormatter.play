@@ -12,18 +12,16 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-package flash.media
-{
-	import flash.net.NetStream;
+package flash.globalization {
 
-	public class Video extends flash.display.DisplayObject
-	{
-		public function Video(width:int = 320, height:int = 240) {
+	public final class DateTimeFormatter {
+		public function DateTimeFormatter(requestedLocaleIDName:String, dateStyle:String = "long", timeStyle:String = "long") {
 			throw new System.NotImplementedException();
 		}
 		
-		public function attachNetStream(netStream:NetStream):void {
+		public function format(dateTime:Date):String {
 			throw new System.NotImplementedException();
 		}
 	}
+
 }

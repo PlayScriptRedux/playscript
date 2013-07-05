@@ -696,6 +696,11 @@
     <Compile Include="..\pscorlib\flash\media\SoundMixer.play">
       <Link>flash\media\SoundMixer.play</Link>
     </Compile>
+    <Compile Include="flash\events\FocusEvent.play" />
+    <Compile Include="flash\events\FullScreenEvent.play" />
+    <Compile Include="flash\events\StatusEvent.play" />
+    <Compile Include="flash\events\TextEvent.play" />
+    <Compile Include="flash\events\ThrottleEvent.play" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monotouch.csproj">
