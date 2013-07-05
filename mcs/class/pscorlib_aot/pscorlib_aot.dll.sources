@@ -1,5 +1,4 @@
 ./AssemblyInfo.cs
-./bin/Debug/dynamic.g.cs
 ../pscorlib/ArgumentError.play
 ../pscorlib/Array.cs
 ../pscorlib/BindableAttribute.cs
