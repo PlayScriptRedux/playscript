@@ -220,6 +220,10 @@ namespace _root
 			return s;
 		}
 
+		public static string toString(this string s) {
+			return s;
+		}
+
 	}
 }
 

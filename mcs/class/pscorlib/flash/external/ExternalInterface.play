@@ -28,7 +28,7 @@ package flash.external {
 			if (CallFunc != null) {
 				return CallFunc(method, args);
 			} else {
-				trace("warning: ExternalInterface.call not registered");
+				trace("warning: ExternalInterface.call not registered for method " + method);
 				return null;
 			}
 		}
