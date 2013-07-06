@@ -1081,7 +1081,10 @@ namespace _root {
 				if (needsSeperator) {
 					sb.Append(sep);
 				}
-				sb.Append(item.ToString());
+				if (item != null)
+				{
+					sb.Append(item.ToString());
+				}
 				needsSeperator = true;
 			}
 			return sb.ToString();
