@@ -109,6 +109,10 @@ namespace PlayScript.RuntimeBinder
 
 		public static int ConvertToInt (CallSite site, object o)
 		{
+			if (o == null)
+			{
+				return 0;
+			}
 			var typeCode = Type.GetTypeCode (o.GetType ());
 			switch (typeCode) {
 			case TypeCode.Int32:
@@ -130,6 +134,10 @@ namespace PlayScript.RuntimeBinder
 
 		public static uint ConvertToUInt (CallSite site, object o)
 		{
+			if (o == null)
+			{
+				return 0;
+			}
 			var typeCode = Type.GetTypeCode (o.GetType ());
 			switch (typeCode) {
 			case TypeCode.Int32:
@@ -151,6 +159,10 @@ namespace PlayScript.RuntimeBinder
 
 		public static double ConvertToDouble (CallSite site, object o)
 		{
+			if (o == null)
+			{
+				return 0;
+			}
 			var typeCode = Type.GetTypeCode (o.GetType ());
 			switch (typeCode) {
 			case TypeCode.Int32:
@@ -172,6 +184,10 @@ namespace PlayScript.RuntimeBinder
 
 		public static bool ConvertToBool (CallSite site, object o)
 		{
+			if (o == null)
+			{
+				return false;
+			}
 			var typeCode = Type.GetTypeCode (o.GetType ());
 			switch (typeCode) {
 			case TypeCode.Int32:
