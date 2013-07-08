@@ -26,6 +26,8 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
+// #define USE_NEW_BINDERS
+
 #if DYNAMIC_SUPPORT
 
 using System;
@@ -113,6 +115,7 @@ namespace PlayScript.RuntimeBinder
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
+
 using System;
 using PlayScript;
 using System.Runtime.CompilerServices;
@@ -133,17 +136,29 @@ namespace PlayScript.RuntimeBinder
 
 		public static CallSiteBinder Convert (CSharpBinderFlags flags, Type type, Type context)
 		{
+#if USE_NEW_BINDERS
+			return new PSConvertBinder(type, context, flags);
+#else
 			return new CSharpConvertBinder(type, context, flags);
+#endif
 		}
 		
 		public static CallSiteBinder GetIndex (CSharpBinderFlags flags, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
+#if USE_NEW_BINDERS
+			return new PSGetIndexBinder(context, argumentInfo);
+#else
 			return new CSharpGetIndexBinder(context, argumentInfo);
+#endif
 		}
 		
 		public static CallSiteBinder GetMember (CSharpBinderFlags flags, string name, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
+#if USE_NEW_BINDERS
+			return new PSGetMemberBinder(name, context, argumentInfo);
+#else
 			return new CSharpGetMemberBinder(name, context, argumentInfo);
+#endif
 		}
 		
 		public static CallSiteBinder Invoke (CSharpBinderFlags flags, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
@@ -158,7 +173,11 @@ namespace PlayScript.RuntimeBinder
 
 		public static CallSiteBinder InvokeMember (CSharpBinderFlags flags, string name, IEnumerable<Type> typeArguments, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
+#if USE_NEW_BINDERS
+			return new PSInvokeMemberBinder(flags, name, context, typeArguments, argumentInfo);
+#else
 			return new CSharpInvokeMemberBinder(flags, name, context, typeArguments, argumentInfo);
+#endif
 		}
 
 		public static CallSiteBinder IsEvent (CSharpBinderFlags flags, string name, Type context)
@@ -168,12 +187,20 @@ namespace PlayScript.RuntimeBinder
 		
 		public static CallSiteBinder SetIndex (CSharpBinderFlags flags, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
+#if USE_NEW_BINDERS
+			return new PSSetIndexBinder(flags, context, argumentInfo);
+#else
 			return new CSharpSetIndexBinder(flags, context, argumentInfo);
+#endif
 		}
 		
 		public static CallSiteBinder SetMember (CSharpBinderFlags flags, string name, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
+#if USE_NEW_BINDERS
+			return new PSSetMemberBinder(flags, name, context, argumentInfo);
+#else
 			return new CSharpSetMemberBinder(flags, name, context, argumentInfo);
+#endif
 		}
 		
 		public static CallSiteBinder UnaryOperation (CSharpBinderFlags flags, ExpressionType operation, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)

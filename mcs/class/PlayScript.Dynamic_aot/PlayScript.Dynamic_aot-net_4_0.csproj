@@ -153,6 +153,9 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\PSSetMemberBinder.cs">
       <Link>PlayScript\RuntimeBinder\PSSetMemberBinder.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\PSInvokeMemberBinder.cs">
+      <Link>PlayScript\RuntimeBinder\PSInvokeMemberBinder.cs</Link>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
