@@ -257,6 +257,39 @@ namespace PlayScript
 			}
 		}
 
+		public static bool HasOwnProperty(object o, string name)
+		{
+			if (o == null || o == PlayScript.Undefined._undefined) return false;
+
+			// handle dictionaries
+			var dict = o as IDictionary<string, object>;
+			if (dict != null) {
+				return dict.ContainsKey(name);
+			} 
+
+			var dc = o as IDynamicClass;
+			if (dc != null) {
+				if (dc.__HasDynamicValue(name)) {
+					return true;
+				}
+				// fall through to check all other properties
+			}
+
+			var otype = o.GetType();
+
+			var prop = otype.GetProperty(name);
+			if (prop != null) return true;
+
+			var field = otype.GetField(name);
+			if (field != null) return true;
+
+			var method = otype.GetMethod(name);
+			if (method != null) return true;
+
+			// not found
+			return false;
+		}
+
 		private static Dictionary<Type, Type>  sExtensions = new Dictionary<Type, Type>();
 		public static void RegisterExtensionClass(System.Type type, System.Type extensionType)
 		{

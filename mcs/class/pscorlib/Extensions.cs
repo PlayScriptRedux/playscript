@@ -31,8 +31,7 @@ namespace _root
 
 		public static bool hasOwnProperty(this object o, string name) 
 		{
-			var t = o.GetType ();
-			return t.GetProperty(name) != null || t.GetField(name) != null;
+			return PlayScript.Dynamic.HasOwnProperty(o, name);
 		}
 
 		public static bool Contains(this System.Object o, object v)

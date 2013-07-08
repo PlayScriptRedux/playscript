@@ -18,6 +18,11 @@ namespace _root
 {
 	public class Object
 	{
+		public System.Type constructor
+		{
+			get {return this.GetType();}
+		}
+
 		public virtual string toString()
 		{
 			return base.ToString();
@@ -34,8 +39,7 @@ namespace _root
 			var name = v as string;
 			
 			if (name != null) {
-				return t.GetProperty(name) != null ||
-					t.GetField (name) != null;
+				return PlayScript.Dynamic.HasOwnProperty(this, name);
 			}
 			
 			return false;
