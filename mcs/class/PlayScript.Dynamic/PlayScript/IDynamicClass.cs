@@ -8,6 +8,8 @@ namespace PlayScript
 
 		dynamic __GetDynamicValue(string name);
 
+		bool __TryGetDynamicValue(string name, out object value);
+
 		void __SetDynamicValue(string name, object value);
 		
 		bool __HasDynamicValue(string name);

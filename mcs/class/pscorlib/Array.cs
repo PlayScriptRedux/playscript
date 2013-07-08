@@ -334,7 +334,7 @@ namespace _root
 			return v;
 		}
 		
-		public int indexOf(dynamic searchElement)
+		public int indexOf(object searchElement)
 		{
 			return mList.indexOf(searchElement);
 		}
@@ -365,7 +365,13 @@ namespace _root
 		{
 			throw new NotImplementedException ();
 		}
-		
+
+		bool IDynamicClass.__TryGetDynamicValue(string name, out object value) 
+		{
+			value = null;
+			return false;
+		}
+
 		void IDynamicClass.__SetDynamicValue(string name, object value)
 		{
 			throw new NotImplementedException ();
@@ -373,7 +379,7 @@ namespace _root
 		
 		bool IDynamicClass.__HasDynamicValue(string name)
 		{
-			throw new NotImplementedException ();
+			return false;
 		}
 		
 		IEnumerable IDynamicClass.__GetDynamicNames()

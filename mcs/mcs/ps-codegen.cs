@@ -87,6 +87,15 @@ namespace {1} {{
 			}}
 			return value;
 		}}
+
+		bool PlayScript.IDynamicClass.__TryGetDynamicValue(string name, out object value) {{
+			if (__dynamicProps != null) {{
+				return __dynamicProps.__TryGetDynamicValue(name, out value);
+			}} else {{
+				value = null;
+				return false;
+			}}
+		}}
 			
 		void PlayScript.IDynamicClass.__SetDynamicValue(string name, object value) {{
 			if (__dynamicProps == null) {{

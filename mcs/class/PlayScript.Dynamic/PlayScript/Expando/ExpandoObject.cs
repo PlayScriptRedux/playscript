@@ -2684,6 +2684,10 @@ namespace PlayScript.Expando {
 		{
 			return this[name];
 		}
+		bool IDynamicClass.__TryGetDynamicValue(string name, out object value)
+		{
+			return this.TryGetValue(name, out value);
+		}
 		void IDynamicClass.__SetDynamicValue(string name, object value)
 		{
 			this[name] = value;

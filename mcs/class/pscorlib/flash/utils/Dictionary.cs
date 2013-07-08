@@ -84,31 +84,29 @@ namespace flash.utils
 
 		#region IDynamicClass implementation
 
-		public dynamic __GetDynamicValue (string name)
+		dynamic IDynamicClass.__GetDynamicValue (string name)
 		{
 			return this[name];
 		}
 
-		public void __SetDynamicValue (string name, object value)
+		bool IDynamicClass.__TryGetDynamicValue(string name, out object value) 
+		{
+			return this.TryGetValue(name, out value);
+		}
+
+		void IDynamicClass.__SetDynamicValue (string name, object value)
 		{
 			this[name] = value;
 		}
 
-		public bool __HasDynamicValue (string name)
+		bool IDynamicClass.__HasDynamicValue (string name)
 		{
 			return this.ContainsKey(name);
 		}
 
-		public IEnumerable __GetDynamicNames ()
+		IEnumerable IDynamicClass.__GetDynamicNames ()
 		{
-			var a = new List<string>();
-			foreach (KeyValuePair<object, object> pair in this) {
-				if (pair.Key is string) {
-					a.Add((string)pair.Key);
-				}
-			}
-
-			return a;
+			return this.Keys;
 		}
 
 		#endregion

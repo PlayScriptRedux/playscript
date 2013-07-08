@@ -18,6 +18,11 @@ namespace PlayScript
 			return value;
 		}
 
+		public bool __TryGetDynamicValue(string name, out object value)
+		{
+			return mDictionary.TryGetValue(name, out value);
+		}
+
 		public void __SetDynamicValue(string name, object value)
 		{
 			mDictionary[name] = value;
