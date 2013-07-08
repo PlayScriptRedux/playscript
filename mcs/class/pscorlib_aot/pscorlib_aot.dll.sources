@@ -229,10 +229,7 @@
 ../pscorlib/Number.cs
 ../pscorlib/Object.cs
 ../pscorlib/PartialAttribute.cs
-../pscorlib/PlayScript/DynamicClassAttribute.cs
-../pscorlib/PlayScript/DynamicProperties.cs
 ../pscorlib/PlayScript/EmbedLoader.cs
-../pscorlib/PlayScript/IDynamicClass.cs
 ../pscorlib/PlayScript/ParamsDelegateTypes.cs
 ../pscorlib/PlayScript/Player.cs
 ../pscorlib/PlayScript/Support.cs

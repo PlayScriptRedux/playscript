@@ -35,7 +35,7 @@ package flash.net {
 			var sb = new System.Text.StringBuilder();
 
 			var dc:IDynamicClass = IDynamicClass(this); 
-			var names:Array = dc.__GetDynamicNames();
+			var names:System.Collections.IEnumerable = dc.__GetDynamicNames();
 			var delimiter:Boolean = false;
 			for each (var prop:String in names) {
 				if (delimiter)	sb.Append('&');

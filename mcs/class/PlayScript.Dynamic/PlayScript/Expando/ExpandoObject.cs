@@ -1456,6 +1456,7 @@ using System.Runtime.Serialization;
 using System.Security.Permissions;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using PlayScript;
 
 namespace PlayScript.Expando {
 
@@ -1472,7 +1473,7 @@ namespace PlayScript.Expando {
 	[Serializable]
 	[DebuggerDisplay ("Count={Count}")]
 	[DebuggerTypeProxy (typeof (ExpandoDebugView))]
-	public class ExpandoObject : IDictionary<string, object>, IDictionary, ISerializable, IDeserializationCallback
+	public class ExpandoObject : IDictionary<string, object>, IDictionary, ISerializable, IDeserializationCallback, IDynamicClass
 #if NET_4_5
 		, IReadOnlyDictionary<string, object>
 #endif
@@ -2678,6 +2679,24 @@ namespace PlayScript.Expando {
 			}
 		}
 
+		#region IDynamicClass implementation
+		dynamic IDynamicClass.__GetDynamicValue(string name)
+		{
+			return this[name];
+		}
+		void IDynamicClass.__SetDynamicValue(string name, object value)
+		{
+			this[name] = value;
+		}
+		bool IDynamicClass.__HasDynamicValue(string name)
+		{
+			return this.ContainsKey(name);
+		}
+		IEnumerable IDynamicClass.__GetDynamicNames()
+		{
+			return this.Keys;
+		}
+		#endregion
 	}
 }
 

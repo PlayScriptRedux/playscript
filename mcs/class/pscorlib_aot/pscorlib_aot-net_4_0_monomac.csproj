@@ -644,14 +644,8 @@
     <Compile Include="..\pscorlib\flash\display3D\textures\SamplerState.cs">
       <Link>flash\display3D\textures\SamplerState.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\PlayScript\DynamicClassAttribute.cs">
-      <Link>PlayScript\DynamicClassAttribute.cs</Link>
-    </Compile>
     <Compile Include="..\pscorlib\BindableAttribute.cs">
       <Link>BindableAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\PlayScript\IDynamicClass.cs">
-      <Link>PlayScript\IDynamicClass.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\PlayScript\EmbedLoader.cs">
       <Link>PlayScript\EmbedLoader.cs</Link>
@@ -661,9 +655,6 @@
     </Compile>
     <Compile Include="..\pscorlib\PlayScript\Support.cs">
       <Link>PlayScript\Support.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\PlayScript\DynamicProperties.cs">
-      <Link>PlayScript\DynamicProperties.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\external\ExternalInterface.play">
       <Link>flash\external\ExternalInterface.play</Link>

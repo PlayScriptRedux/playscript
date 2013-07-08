@@ -2,6 +2,9 @@ AssemblyInfo.cs
 ./PlayScript/CallSite.cs
 ./PlayScript/CallSiteBinder.cs
 ./PlayScript/Dynamic.cs
+./PlayScript/DynamicClassAttribute.cs
+./PlayScript/DynamicProperties.cs
+./PlayScript/IDynamicClass.cs
 ./PlayScript/ParamsDelegateTypes.cs
 ./PlayScript/ExpressionType.cs
 ./PlayScript/Undefined.cs

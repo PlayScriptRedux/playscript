@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 
 namespace PlayScript
 {
@@ -11,7 +12,7 @@ namespace PlayScript
 		
 		bool __HasDynamicValue(string name);
 
-		_root.Array __GetDynamicNames();
+		IEnumerable __GetDynamicNames();
 
 	}
 }

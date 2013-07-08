@@ -376,7 +376,7 @@ namespace _root
 			throw new NotImplementedException ();
 		}
 		
-		Array IDynamicClass.__GetDynamicNames()
+		IEnumerable IDynamicClass.__GetDynamicNames()
 		{
 			throw new NotImplementedException ();
 		}

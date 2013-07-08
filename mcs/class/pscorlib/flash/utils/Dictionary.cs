@@ -13,6 +13,7 @@
 //      limitations under the License.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using PlayScript;
 using System.Runtime.Serialization;
@@ -98,12 +99,12 @@ namespace flash.utils
 			return this.ContainsKey(name);
 		}
 
-		public _root.Array __GetDynamicNames ()
+		public IEnumerable __GetDynamicNames ()
 		{
-			var a = new _root.Array();
+			var a = new List<string>();
 			foreach (KeyValuePair<object, object> pair in this) {
-				if (pair.Key is String) {
-					a.push(pair.Key);
+				if (pair.Key is string) {
+					a.Add((string)pair.Key);
 				}
 			}
 

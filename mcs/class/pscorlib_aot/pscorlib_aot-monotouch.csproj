@@ -657,20 +657,11 @@
     <Compile Include="..\pscorlib\PlayScript\Player.cs">
       <Link>PlayScript\Player.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\PlayScript\DynamicClassAttribute.cs">
-      <Link>PlayScript\DynamicClassAttribute.cs</Link>
-    </Compile>
     <Compile Include="..\pscorlib\PlayScript\EmbedLoader.cs">
       <Link>PlayScript\EmbedLoader.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\PlayScript\IDynamicClass.cs">
-      <Link>PlayScript\IDynamicClass.cs</Link>
-    </Compile>
     <Compile Include="..\pscorlib\PlayScript\Support.cs">
       <Link>PlayScript\Support.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\PlayScript\DynamicProperties.cs">
-      <Link>PlayScript\DynamicProperties.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\PlayScript\ParamsDelegateTypes.cs">
       <Link>PlayScript\ParamsDelegateTypes.cs</Link>
@@ -696,11 +687,21 @@
     <Compile Include="..\pscorlib\flash\media\SoundMixer.play">
       <Link>flash\media\SoundMixer.play</Link>
     </Compile>
-    <Compile Include="flash\events\FocusEvent.play" />
-    <Compile Include="flash\events\FullScreenEvent.play" />
-    <Compile Include="flash\events\StatusEvent.play" />
-    <Compile Include="flash\events\TextEvent.play" />
-    <Compile Include="flash\events\ThrottleEvent.play" />
+    <Compile Include="..\pscorlib\flash\events\FocusEvent.play">
+      <Link>flash\events\FocusEvent.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\events\FullScreenEvent.play">
+      <Link>flash\events\FullScreenEvent.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\events\StatusEvent.play">
+      <Link>flash\events\StatusEvent.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\events\TextEvent.play">
+      <Link>flash\events\TextEvent.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\events\ThrottleEvent.play">
+      <Link>flash\events\ThrottleEvent.play</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monotouch.csproj">

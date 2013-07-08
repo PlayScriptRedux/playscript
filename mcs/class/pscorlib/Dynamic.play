@@ -35,7 +35,7 @@ package {
 			return obj.__HasDynamicValue(name);
 		}
 		
-		public static function getNames(obj:IDynamicClass):Array {
+		public static function getNames(obj:IDynamicClass):System.Collections.IEnumerable {
 			return obj.__GetDynamicNames();
 		}	
 	

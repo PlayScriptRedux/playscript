@@ -229,10 +229,7 @@
 ./Number.cs
 ./Object.cs
 ./PartialAttribute.cs
-./PlayScript/DynamicClassAttribute.cs
-./PlayScript/DynamicProperties.cs
 ./PlayScript/EmbedLoader.cs
-./PlayScript/IDynamicClass.cs
 ./PlayScript/ParamsDelegateTypes.cs
 ./PlayScript/Player.cs
 ./PlayScript/Support.cs

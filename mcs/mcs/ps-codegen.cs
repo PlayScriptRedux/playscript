@@ -65,7 +65,6 @@ namespace Mono.PlayScript
 			os.Write (@"
 // Generated dynamic class partial classes
 
-using System.Collections.Generic;
 ");
 
 			foreach (var cl in classes) {
@@ -74,12 +73,17 @@ namespace {1} {{
 
 	partial class {2} : PlayScript.IDynamicClass {{
 
-		private PlayScript.DynamicProperties __dynamicProps;
+		private PlayScript.IDynamicClass __dynamicProps;
+
+		// this method can be used to override the dynamic property implementation of this dynamic class
+		protected void __SetDynamicProperties(PlayScript.IDynamicClass props) {{
+			__dynamicProps = props;
+		}}
 
 		dynamic PlayScript.IDynamicClass.__GetDynamicValue(string name) {{
 			object value = null;
 			if (__dynamicProps != null) {{
-				__dynamicProps.TryGetValue(name, out value);
+				value = __dynamicProps.__GetDynamicValue(name);
 			}}
 			return value;
 		}}
@@ -88,21 +92,21 @@ namespace {1} {{
 			if (__dynamicProps == null) {{
 				__dynamicProps = new PlayScript.DynamicProperties();
 			}}
-			__dynamicProps[name] = value;
+			__dynamicProps.__SetDynamicValue(name, value);
 		}}
 			
 		bool PlayScript.IDynamicClass.__HasDynamicValue(string name) {{
 			if (__dynamicProps != null) {{
-				return __dynamicProps.ContainsKey(name);
+				return __dynamicProps.__HasDynamicValue(name);
 			}}
 			return false;
 		}}
 
-		_root.Array PlayScript.IDynamicClass.__GetDynamicNames() {{
+		System.Collections.IEnumerable PlayScript.IDynamicClass.__GetDynamicNames() {{
 			if (__dynamicProps != null) {{
-				return new _root.Array(__dynamicProps.Keys);
+				return __dynamicProps.__GetDynamicNames();
 			}}
-			return new _root.Array();
+			return null;
 		}}
 	}}
 }}
