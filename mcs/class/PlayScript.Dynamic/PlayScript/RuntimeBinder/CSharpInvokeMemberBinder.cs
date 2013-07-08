@@ -248,6 +248,11 @@ namespace PlayScript.RuntimeBinder
 			var args_len = args.Length;
 			var par_len = parameters.Length;
 
+			if (args_len > par_len) {
+				outArgs = null;
+				return false;
+			}
+
 			for (var i = 0; i < par_len; i++) {
 				var p = parameters[i];
 				var paramArrayAttribute = p.GetCustomAttributes(typeof(ParamArrayAttribute), true);

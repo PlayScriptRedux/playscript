@@ -117,11 +117,12 @@ namespace PlayScript.RuntimeBinder
 
 			var arg_len = args.Length;
 			foreach (var c in constructors) {
-				bool matches = true;
+				bool matches = false;
 				bool has_defaults = false;
 				var parameters = c.GetParameters();
 				var par_len = parameters.Length;
 				if (par_len >= arg_len) {
+					matches = true;
 					for (var i = 0; i < par_len; i++) {
 						var p = parameters[i];
 						if (i >= args.Length) {
