@@ -6474,7 +6474,9 @@ namespace Mono.CSharp
 				if (reqExpr == null)
 					return null;
 
-				if (reqExpr is TypeExpression) {
+				if (reqExpr is GenericTypeExpr) {
+					type = ((GenericTypeExpr)reqExpr).ResolveAsType (ec);
+				} else if (reqExpr is TypeExpression) {
 					// PlayScript: Make sure a "new Object()" call in as uses an actual object type and not
 					// dynamic.
 					if (reqExpr.Type == ec.BuiltinTypes.Dynamic) {
