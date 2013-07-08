@@ -97,15 +97,6 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpBinderFlags.cs">
       <Link>PlayScript\RuntimeBinder\CSharpBinderFlags.cs</Link>
     </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpConvertBinder.cs">
-      <Link>PlayScript\RuntimeBinder\CSharpConvertBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpGetIndexBinder.cs">
-      <Link>PlayScript\RuntimeBinder\CSharpGetIndexBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpGetMemberBinder.cs">
-      <Link>PlayScript\RuntimeBinder\CSharpGetMemberBinder.cs</Link>
-    </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpInvokeBinder.cs">
       <Link>PlayScript\RuntimeBinder\CSharpInvokeBinder.cs</Link>
     </Compile>
@@ -118,32 +109,8 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpIsEventBinder.cs">
       <Link>PlayScript\RuntimeBinder\CSharpIsEventBinder.cs</Link>
     </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpSetIndexBinder.cs">
-      <Link>PlayScript\RuntimeBinder\CSharpSetIndexBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpSetMemberBinder.cs">
-      <Link>PlayScript\RuntimeBinder\CSharpSetMemberBinder.cs</Link>
-    </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpUnaryOperationBinder.cs">
       <Link>PlayScript\RuntimeBinder\CSharpUnaryOperationBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\DynamicContext.cs">
-      <Link>PlayScript\RuntimeBinder\DynamicContext.cs</Link>
-    </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\ErrorPrinter.cs">
-      <Link>PlayScript\RuntimeBinder\ErrorPrinter.cs</Link>
-    </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\Extensions.cs">
-      <Link>PlayScript\RuntimeBinder\Extensions.cs</Link>
-    </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\RuntimeBinderContext.cs">
-      <Link>PlayScript\RuntimeBinder\RuntimeBinderContext.cs</Link>
-    </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\RuntimeBinderException.cs">
-      <Link>PlayScript\RuntimeBinder\RuntimeBinderException.cs</Link>
-    </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\RuntimeBinderInternalCompilerException.cs">
-      <Link>PlayScript\RuntimeBinder\RuntimeBinderInternalCompilerException.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\System\Runtime\CompilerServices\DynamicAttribute.cs">
       <Link>System\Runtime\CompilerServices\DynamicAttribute.cs</Link>
@@ -165,6 +132,36 @@
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\IDynamicClass.cs">
       <Link>PlayScript\IDynamicClass.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\PSConvertBinder.cs">
+      <Link>PlayScript\RuntimeBinder\PSConvertBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\PSGetIndexBinder.cs">
+      <Link>PlayScript\RuntimeBinder\PSGetIndexBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\PSGetMemberBinder.cs">
+      <Link>PlayScript\RuntimeBinder\PSGetMemberBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\PSSetIndexBinder.cs">
+      <Link>PlayScript\RuntimeBinder\PSSetIndexBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\PSSetMemberBinder.cs">
+      <Link>PlayScript\RuntimeBinder\PSSetMemberBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpConvertBinder.cs">
+      <Link>PlayScript\RuntimeBinder\CSharpConvertBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpGetIndexBinder.cs">
+      <Link>PlayScript\RuntimeBinder\CSharpGetIndexBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpGetMemberBinder.cs">
+      <Link>PlayScript\RuntimeBinder\CSharpGetMemberBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpSetIndexBinder.cs">
+      <Link>PlayScript\RuntimeBinder\CSharpSetIndexBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpSetMemberBinder.cs">
+      <Link>PlayScript\RuntimeBinder\CSharpSetMemberBinder.cs</Link>
     </Compile>
   </ItemGroup>
 </Project>

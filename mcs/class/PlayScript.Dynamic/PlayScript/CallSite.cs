@@ -143,8 +143,6 @@ namespace PlayScript
 
 	public class CallSite<T> : CallSite 
 	{
-		private T _target;
-
 		public CallSite ()
 		{
 		}
@@ -154,27 +152,11 @@ namespace PlayScript
 			var cs = new CallSite<T>();
 			cs._delegateType = typeof(T);
 			cs._binder = binder;
+			cs.Target = (T)binder.Bind(cs._delegateType);
 			return cs;
 		}
 
-		public virtual T Update { 
-			get { 
-				_target = (T)_binder.Bind(_delegateType);
-				return _target; 
-			} 
-		}
-
-		public virtual T Target {
-			get {
-				if (_target == null) {
-					return Update;
-				} else {
-					return _target; 
-				}
-			}
-			set { _target = value; }
-		}
+		public T Target;
 	}
 }
-
 #endif

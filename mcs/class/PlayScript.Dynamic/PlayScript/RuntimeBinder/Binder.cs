@@ -122,6 +122,10 @@ namespace PlayScript.RuntimeBinder
 {
 	public static class Binder
 	{
+		public static Func<object, string, Type, object>   OnGetMemberError;
+		public static Action<object, string, object>       OnSetMemberError;
+		public static int 								   MemberResolveCount;
+
 		public static CallSiteBinder BinaryOperation (CSharpBinderFlags flags, ExpressionType operation, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
 			return new CSharpBinaryOperationBinder(operation, flags, context, argumentInfo);
