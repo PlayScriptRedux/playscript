@@ -156,7 +156,7 @@ namespace PlayScript
 		{
 			if (path.StartsWith("http:") || path.StartsWith("https:")) {
 				// TODO: support loading via http
-				return new flash.display.Bitmap(new flash.display.BitmapData(32,32));
+				return new flash.display.Sprite();
 			}
 
 			// handle byte arrays
