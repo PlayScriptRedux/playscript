@@ -78,7 +78,7 @@ namespace PlayScript.RuntimeBinder
 			if (type == otype)
 			{
 				object value = field.GetValue(o);
-				return (T)Convert.ChangeType(value, typeof(T));
+				return PlayScript.Dynamic.ConvertValue<T>(value);
 			}
 			else
 			{
@@ -105,7 +105,7 @@ namespace PlayScript.RuntimeBinder
 			if (type == otype)
 			{
 				object value = propertyGetter.Invoke(o, null);
-				return (T)Convert.ChangeType(value, typeof(T));
+				return PlayScript.Dynamic.ConvertValue<T>(value);
 			}
 			else
 			{
@@ -132,7 +132,7 @@ namespace PlayScript.RuntimeBinder
 			if (type == otype)
 			{
 				object value = field.GetValue(null);
-				return (T)Convert.ChangeType(value, typeof(T));
+				return PlayScript.Dynamic.ConvertValue<T>(value);
 			}
 			else
 			{
@@ -159,7 +159,7 @@ namespace PlayScript.RuntimeBinder
 			if (type == otype)
 			{
 				object value = propertyGetter.Invoke(null, null);
-				return (T)Convert.ChangeType(value, typeof(T));
+				return PlayScript.Dynamic.ConvertValue<T>(value);
 			}
 			else
 			{
@@ -229,19 +229,25 @@ namespace PlayScript.RuntimeBinder
 			}
 		}
 
+		/// <summary>
+		/// This is the most generic method for getting a member's value.
+		/// It will attempt to resolve the member by name and the get its value by invoking the 
+		/// callsite's delegate
+		/// </summary>
 		private static T GetMember<T> (CallSite site, object o)
 		{
-			// resolve as dynamic class
-			var dc = o as IDynamicClass;
-			if (dc != null) 
+			// resolve as dictionary 
+			var dict = o as IDictionary<string, object>;
+			if (dict != null) 
 			{
+				// special case this for expando objects
 				var binder = (PSGetMemberBinder)site.Binder;
 				object value;
-				if (dc.__TryGetDynamicValue(binder.name, out value)) {
-					return (T)value;
+				if (dict.TryGetValue(binder.name, out value)) {
+					return PlayScript.Dynamic.ConvertValue<T>(value);
 				}
 
-				// could not get value from dynamic object, so fall through and try to resolve as field/property
+				// fall through if key not found
 			}
 
 			// cast site
@@ -258,7 +264,10 @@ namespace PlayScript.RuntimeBinder
 			return (target != typeof(object) && !target.IsAssignableFrom(source));
 		}
 
-
+		/// <summary>
+		/// Resolves a member (property, field, method, etc) of a type and selects the appropriate specialized target delegate
+		/// for a callsite. If the type of the object changes, this method needs to be called again.
+		/// </summary>
 		private static void ResolveMember<T> (CallSite<Func<CallSite,object,T>> target, object o)
 		{
 			// update stats

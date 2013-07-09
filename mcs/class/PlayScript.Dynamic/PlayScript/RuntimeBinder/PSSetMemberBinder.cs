@@ -31,7 +31,6 @@ namespace PlayScript.RuntimeBinder
 		System.Type 	type;
 		FieldInfo		field;
 		PropertyInfo	property;
-		System.Type 	convertType;
 
 		public PSSetMemberBinder (CSharpBinderFlags flags, string name, Type callingContext, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
@@ -74,12 +73,8 @@ namespace PlayScript.RuntimeBinder
 			var otype = o.GetType();
 			if (type == otype)
 			{
-				if (value != null && !convertType.IsAssignableFrom(value.GetType())) {
-					object newValue = Convert.ChangeType(value, convertType);
-					field.SetValue(o, newValue);
-				} else {
-					field.SetValue(o, value);
-				}
+				object newValue = PlayScript.Dynamic.ConvertValue(value, field.FieldType);
+				field.SetValue(o, newValue);
 			}
 			else
 			{
@@ -105,12 +100,8 @@ namespace PlayScript.RuntimeBinder
 			var otype = o.GetType();
 			if (type == otype)
 			{
-				if (value != null && !convertType.IsAssignableFrom(value.GetType())) {
-					object newValue = Convert.ChangeType(value, convertType);
-					property.SetValue(o, newValue, null);
-				} else {
-					property.SetValue(o, value, null);
-				}
+				object newValue = PlayScript.Dynamic.ConvertValue(value, property.PropertyType);
+				property.SetValue(o, newValue, null);
 			}
 			else
 			{
@@ -137,12 +128,8 @@ namespace PlayScript.RuntimeBinder
 			var otype = (Type)o;
 			if (type == otype)
 			{
-				if (value != null && !convertType.IsAssignableFrom(value.GetType())) {
-					object newValue = Convert.ChangeType(value, convertType);
-					field.SetValue(o, newValue);
-				} else {
-					field.SetValue(o, value);
-				}
+				object newValue = PlayScript.Dynamic.ConvertValue(value, field.FieldType);
+				field.SetValue(null, newValue);
 			}
 			else
 			{
@@ -168,12 +155,8 @@ namespace PlayScript.RuntimeBinder
 			var otype = (Type)o;
 			if (type == otype)
 			{
-				if (value != null && !convertType.IsAssignableFrom(value.GetType())) {
-					object newValue = Convert.ChangeType(value, convertType);
-					property.SetValue(null, newValue, null);
-				} else {
-					property.SetValue(null, value, null);
-				}
+				object newValue = PlayScript.Dynamic.ConvertValue(value, property.PropertyType);
+				property.SetValue(null, newValue, null);
 			}
 			else
 			{
@@ -204,6 +187,11 @@ namespace PlayScript.RuntimeBinder
 			}
 		}
 
+		/// <summary>
+		/// This is the most generic method for setting a member's value.
+		/// It will attempt to resolve the member by name and the set its value by invoking the 
+		/// callsite's delegate
+		/// </summary>
 		private static void SetMember<T> (CallSite site, object o, T value)
 		{
 			// resolve as dictionary 
@@ -220,7 +208,7 @@ namespace PlayScript.RuntimeBinder
 				var target = site as CallSite< Action<CallSite,object,T> >;
 				// resolve member
 				ResolveMember<T>(target, o);
-				// invoke target delegate
+				// invoke target delegate (this will actually set the member to the value)
 				target.Target(site, o, value);
 			}
 		}
@@ -230,7 +218,11 @@ namespace PlayScript.RuntimeBinder
 			var source = typeof(T);
 			return (target != typeof(object) && !target.IsAssignableFrom(source));
 		}
-		
+
+		/// <summary>
+		/// Resolves a member (property or field) of a type and selects the appropriate specialized target delegate
+		/// for a callsite. If the type of the object changes, this method needs to be called again.
+		/// </summary>
 		private static void ResolveMember<T> (CallSite< Action<CallSite,object,T> > target, object o)
 		{
 			// update stats
@@ -261,7 +253,6 @@ namespace PlayScript.RuntimeBinder
 					// setup binding to property
 					binder.property = property;
 					if (DoesNeedConversion<T>(property.PropertyType)) {
-						binder.convertType = property.PropertyType;
 						if (isStatic) target.Target = binder.ConvertAndSetStaticProperty<T>;
 						         else target.Target = binder.ConvertAndSetProperty<T>;
 					} else {
@@ -281,7 +272,6 @@ namespace PlayScript.RuntimeBinder
 					// setup binding to field
 					binder.field = field;
 					if (DoesNeedConversion<T>(field.FieldType)) {
-						binder.convertType = field.FieldType;
 						if (isStatic) target.Target = binder.ConvertAndSetStaticField<T>;
 						         else target.Target = binder.ConvertAndSetField<T>;
 					} else {

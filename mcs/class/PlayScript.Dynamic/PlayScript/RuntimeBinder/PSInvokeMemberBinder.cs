@@ -118,6 +118,7 @@ namespace PlayScript.RuntimeBinder
 					if (ps[i].IsOptional)
 					{
 						if (defaults == null) {
+							// create defaults array
 							defaults = new object[paramTypes.Length];
 							defaultsIndex = i;
 						}
@@ -126,7 +127,6 @@ namespace PlayScript.RuntimeBinder
 						defaults[i]   = ps[i].DefaultValue;
 					}
 				}
-
 			}
 
 			public bool ConvertArguments(object thisObj, object[] args, int argCount, object[] outArgs)
@@ -143,18 +143,7 @@ namespace PlayScript.RuntimeBinder
 				int i=0;
 				for (; i < argCount; i++)
 				{
-					var targetType = paramTypes[i];
-					object arg = args[i];
-					outArgs[i] = arg;
-					if (arg != null)
-					{
-						Type argType = arg.GetType();
-						if (targetType != null && targetType != argType) {
-							if (!targetType.IsAssignableFrom(argType)) {
-								outArgs[i] = System.Convert.ChangeType(arg, targetType);
-							}
-						} 
-					}
+					outArgs[i] = PlayScript.Dynamic.ConvertValue(args[i], paramTypes[i]);
 				}
 
 				// set defaults
