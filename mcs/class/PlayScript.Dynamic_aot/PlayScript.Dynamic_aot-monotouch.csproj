@@ -169,5 +169,8 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\MethodBinder.cs">
       <Link>PlayScript\MethodBinder.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpBinaryOperationBinder2.cs">
+      <Link>PlayScript\RuntimeBinder\CSharpBinaryOperationBinder2.cs</Link>
+    </Compile>
   </ItemGroup>
 </Project>
