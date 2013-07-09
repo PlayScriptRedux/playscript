@@ -229,6 +229,109 @@ namespace PlayScript.RuntimeBinder
 //		List<Type> typeArguments;
 //		Type callingContext;
 
+		
+		public class InvokeInfo {
+			public WeakReference lastObj;
+			public Type[] lastArgTypes;
+			public Delegate del;
+			public MethodInfo method;
+			public object[] args;
+			public int generation;
+			
+			public bool InvokeMatches(object obj) {
+				if (obj is ExpandoObject && ((ExpandoObject)obj).Generation != generation)
+					return false;
+				return lastObj != null && lastObj.Target == obj;
+			}
+			
+			public bool InvokeMatches(object obj, object a1) {
+				if (obj is ExpandoObject && ((ExpandoObject)obj).Generation != generation)
+					return false;
+				return lastObj != null && lastObj.Target == obj &&
+					((a1 == null && lastArgTypes[0] == null) || (a1.GetType () == lastArgTypes[0]));
+			}
+			
+			public bool InvokeMatches(object obj, object a1, object a2) {
+				if (obj is ExpandoObject && ((ExpandoObject)obj).Generation != generation)
+					return false;
+				return lastObj != null && lastObj.Target == obj &&
+					((a1 == null && lastArgTypes[0] == null) || (a1.GetType () == lastArgTypes[0])) &&
+						((a2 == null && lastArgTypes[1] == null) || (a2.GetType () == lastArgTypes[1]));
+			}
+			
+			public bool InvokeMatches(object obj, object a1, object a2, object a3) {
+				if (obj is ExpandoObject && ((ExpandoObject)obj).Generation != generation)
+					return false;
+				return lastObj != null && lastObj.Target == obj &&
+					((a1 == null && lastArgTypes[0] == null) || (a1.GetType () == lastArgTypes[0])) &&
+						((a2 == null && lastArgTypes[1] == null) || (a2.GetType () == lastArgTypes[1])) &&
+						((a3 == null && lastArgTypes[2] == null) || (a3.GetType () == lastArgTypes[2]));
+			}
+			
+			public bool InvokeMatches(object obj, object a1, object a2, object a3, object a4) {
+				if (obj is ExpandoObject && ((ExpandoObject)obj).Generation != generation)
+					return false;
+				return lastObj != null && lastObj.Target == obj &&
+					((a1 == null && lastArgTypes[0] == null) || (a1.GetType () == lastArgTypes[0])) &&
+						((a2 == null && lastArgTypes[1] == null) || (a2.GetType () == lastArgTypes[1])) &&
+						((a3 == null && lastArgTypes[2] == null) || (a3.GetType () == lastArgTypes[2])) &&
+						((a4 == null && lastArgTypes[3] == null) || (a4.GetType () == lastArgTypes[3]));
+			}
+			
+			public bool InvokeMatches(object obj, object a1, object a2, object a3, object a4, object a5) {
+				if (obj is ExpandoObject && ((ExpandoObject)obj).Generation != generation)
+					return false;
+				return lastObj != null && lastObj.Target == obj &&
+					((a1 == null && lastArgTypes[0] == null) || (a1.GetType () == lastArgTypes[0])) &&
+						((a2 == null && lastArgTypes[1] == null) || (a2.GetType () == lastArgTypes[1])) &&
+						((a3 == null && lastArgTypes[2] == null) || (a3.GetType () == lastArgTypes[2])) &&
+						((a4 == null && lastArgTypes[3] == null) || (a4.GetType () == lastArgTypes[3])) &&
+						((a5 == null && lastArgTypes[4] == null) || (a5.GetType () == lastArgTypes[4]));
+			}
+			
+			public bool InvokeMatches(object obj, object a1, object a2, object a3, object a4, object a5, object a6) {
+				if (obj is ExpandoObject && ((ExpandoObject)obj).Generation != generation)
+					return false;
+				return lastObj != null && lastObj.Target == obj &&
+					((a1 == null && lastArgTypes[0] == null) || (a1.GetType () == lastArgTypes[0])) &&
+						((a2 == null && lastArgTypes[1] == null) || (a2.GetType () == lastArgTypes[1])) &&
+						((a3 == null && lastArgTypes[2] == null) || (a3.GetType () == lastArgTypes[2])) &&
+						((a4 == null && lastArgTypes[3] == null) || (a4.GetType () == lastArgTypes[3])) &&
+						((a5 == null && lastArgTypes[4] == null) || (a5.GetType () == lastArgTypes[4])) &&
+						((a6 == null && lastArgTypes[5] == null) || (a6.GetType () == lastArgTypes[5]));
+			}
+			
+			public bool InvokeMatches(object obj, object a1, object a2, object a3, object a4, object a5, object a6, object a7) {
+				if (obj is ExpandoObject && ((ExpandoObject)obj).Generation != generation)
+					return false;
+				return lastObj != null && lastObj.Target == obj &&
+					((a1 == null && lastArgTypes[0] == null) || (a1.GetType () == lastArgTypes[0])) &&
+						((a2 == null && lastArgTypes[1] == null) || (a2.GetType () == lastArgTypes[1])) &&
+						((a3 == null && lastArgTypes[2] == null) || (a3.GetType () == lastArgTypes[2])) &&
+						((a4 == null && lastArgTypes[3] == null) || (a4.GetType () == lastArgTypes[3])) &&
+						((a5 == null && lastArgTypes[4] == null) || (a5.GetType () == lastArgTypes[4])) &&
+						((a6 == null && lastArgTypes[5] == null) || (a6.GetType () == lastArgTypes[5])) &&
+						((a7 == null && lastArgTypes[6] == null) || (a7.GetType () == lastArgTypes[6]));
+			}
+			
+			public bool InvokeMatches(object obj, object a1, object a2, object a3, object a4, object a5, object a6, object a7, object a8) {
+				if (obj is ExpandoObject && ((ExpandoObject)obj).Generation != generation)
+					return false;
+				return lastObj != null && lastObj.Target == obj &&
+					((a1 == null && lastArgTypes[0] == null) || (a1.GetType () == lastArgTypes[0])) &&
+						((a2 == null && lastArgTypes[1] == null) || (a2.GetType () == lastArgTypes[1])) &&
+						((a3 == null && lastArgTypes[2] == null) || (a3.GetType () == lastArgTypes[2])) &&
+						((a4 == null && lastArgTypes[3] == null) || (a4.GetType () == lastArgTypes[3])) &&
+						((a5 == null && lastArgTypes[4] == null) || (a5.GetType () == lastArgTypes[4])) &&
+						((a6 == null && lastArgTypes[5] == null) || (a6.GetType () == lastArgTypes[5])) &&
+						((a7 == null && lastArgTypes[6] == null) || (a7.GetType () == lastArgTypes[6])) &&
+						((a8 == null && lastArgTypes[7] == null) || (a8.GetType () == lastArgTypes[7]));
+			}
+			
+		}
+		
+		private InvokeInfo invokeInfo;
+
 
 		
 		public CSharpInvokeMemberBinder (CSharpBinderFlags flags, string name, Type callingContext, IEnumerable<Type> typeArguments, IEnumerable<CSharpArgumentInfo> argumentInfo)
@@ -376,14 +479,14 @@ namespace PlayScript.RuntimeBinder
 				throw new NullReferenceException ();
 			}
 
-			CallSite.InvokeInfo info = site.invokeInfo;
+			InvokeInfo info = this.invokeInfo;
 			if (info == null) {
-				info = new CallSite.InvokeInfo();
+				info = new InvokeInfo();
 				info.lastObj = new WeakReference (o);
 				info.lastArgTypes = new Type[args.Length];
-				site.invokeInfo = info;
+				this.invokeInfo = info;
 			} else {
-				site.invokeInfo.lastObj.Target = o;
+				this.invokeInfo.lastObj.Target = o;
 			}
 
 			var arg_len = args.Length;
@@ -449,11 +552,12 @@ namespace PlayScript.RuntimeBinder
 
 		private static void InvokeAction (CallSite site, object o)
 		{
-			var info = site.invokeInfo;
+			var binder = ((CSharpInvokeMemberBinder)site.Binder);
+			var info = binder.invokeInfo;
 			object[] args;
 			if (info == null || !info.InvokeMatches(o)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new object [] {});
-				info = site.invokeInfo;
+				binder.FindMethod (site, o, new object [] {});
+				info = binder.invokeInfo;
 			}
 			args = info.args;
 			if (info.method != null) 
@@ -464,11 +568,12 @@ namespace PlayScript.RuntimeBinder
 
 		private static void InvokeAction1 (CallSite site, object o, object a1)
 		{
-			var info = site.invokeInfo;
+			var binder = ((CSharpInvokeMemberBinder)site.Binder);
+			var info = binder.invokeInfo;
 			object[] args;
 			if (info == null || !info.InvokeMatches (o, a1)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1 });
-				info = site.invokeInfo;
+				binder.FindMethod (site, o, new [] { a1 });
+				info = binder.invokeInfo;
 				args = info.args;
 			} else {
 				args = info.args;
@@ -482,11 +587,12 @@ namespace PlayScript.RuntimeBinder
 
 		private static void InvokeAction2 (CallSite site, object o, object a1, object a2)
 		{
-			var info = site.invokeInfo;
+			var binder = ((CSharpInvokeMemberBinder)site.Binder);
+			var info = binder.invokeInfo;
 			object[] args;
 			if (info == null || !info.InvokeMatches(o, a1, a2)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2 });
-				info = site.invokeInfo;
+				binder.FindMethod (site, o, new [] { a1, a2 });
+				info = binder.invokeInfo;
 				args = info.args;
 			} else {
 				args = info.args;
@@ -500,11 +606,12 @@ namespace PlayScript.RuntimeBinder
 
 		private static void InvokeAction3 (CallSite site, object o, object a1, object a2, object a3)
 		{
-			var info = site.invokeInfo;
+			var binder = ((CSharpInvokeMemberBinder)site.Binder);
+			var info = binder.invokeInfo;
 			object[] args;
 			if (info == null || !info.InvokeMatches(o, a1, a2, a3)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3 });
-				info = site.invokeInfo;
+				binder.FindMethod (site, o, new [] { a1, a2, a3 });
+				info = binder.invokeInfo;
 				args = info.args;
 			} else {
 				args = info.args;
@@ -518,11 +625,12 @@ namespace PlayScript.RuntimeBinder
 
 		private static void InvokeAction4 (CallSite site, object o, object a1, object a2, object a3, object a4)
 		{
-			var info = site.invokeInfo;
+			var binder = ((CSharpInvokeMemberBinder)site.Binder);
+			var info = binder.invokeInfo;
 			object[] args;
 			if (info == null || !info.InvokeMatches(o, a1, a2, a3, a4)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3, a4 });
-				info = site.invokeInfo;
+				binder.FindMethod (site, o, new [] { a1, a2, a3, a4 });
+				info = binder.invokeInfo;
 				args = info.args;
 			} else {
 				args = info.args;
@@ -537,11 +645,12 @@ namespace PlayScript.RuntimeBinder
 		private static void InvokeAction5 (CallSite site, object o, object a1, object a2, object a3, object a4,
 		                            object a5)
 		{
-			var info = site.invokeInfo;
+			var binder = ((CSharpInvokeMemberBinder)site.Binder);
+			var info = binder.invokeInfo;
 			object[] args;
 			if (info == null || !info.InvokeMatches(o, a1, a2, a3, a4, a5)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3, a4, a5 });
-				info = site.invokeInfo;
+				binder.FindMethod (site, o, new [] { a1, a2, a3, a4, a5 });
+				info = binder.invokeInfo;
 				args = info.args;
 			} else {
 				args = info.args;
@@ -556,11 +665,12 @@ namespace PlayScript.RuntimeBinder
 		private static void InvokeAction6 (CallSite site, object o, object a1, object a2, object a3, object a4,
 		                            object a5, object a6)
 		{
-			var info = site.invokeInfo;
+			var binder = ((CSharpInvokeMemberBinder)site.Binder);
+			var info = binder.invokeInfo;
 			object[] args;
 			if (info == null || !info.InvokeMatches(o, a1, a2, a3, a4, a5, a6)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3, a4, a5, a6 });
-				info = site.invokeInfo;
+				binder.FindMethod (site, o, new [] { a1, a2, a3, a4, a5, a6 });
+				info = binder.invokeInfo;
 				args = info.args;
 			} else {
 				args = info.args;
@@ -575,11 +685,12 @@ namespace PlayScript.RuntimeBinder
 		private static void InvokeAction7 (CallSite site, object o, object a1, object a2, object a3, object a4,
 		                            object a5, object a6, object a7)
 		{
-			var info = site.invokeInfo;
+			var binder = ((CSharpInvokeMemberBinder)site.Binder);
+			var info = binder.invokeInfo;
 			object[] args;
 			if (info == null || !info.InvokeMatches(o, a1, a2, a3, a4, a5, a6, a7)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3, a4, a5, a6, a7 });
-				info = site.invokeInfo;
+				binder.FindMethod (site, o, new [] { a1, a2, a3, a4, a5, a6, a7 });
+				info = binder.invokeInfo;
 				args = info.args;
 			} else {
 				args = info.args;
@@ -594,11 +705,12 @@ namespace PlayScript.RuntimeBinder
 		private static void InvokeAction8 (CallSite site, object o, object a1, object a2, object a3, object a4,
 		                            object a5, object a6, object a7, object a8)
 		{
-			var info = site.invokeInfo;
+			var binder = ((CSharpInvokeMemberBinder)site.Binder);
+			var info = binder.invokeInfo;
 			object[] args;
 			if (info == null || !info.InvokeMatches(o, a1, a2, a3, a4, a5, a6, a7, a8)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3, a4, a5, a6, a7, a8 });
-				info = site.invokeInfo;
+				binder.FindMethod (site, o, new [] { a1, a2, a3, a4, a5, a6, a7, a8 });
+				info = binder.invokeInfo;
 				args = info.args;
 			} else {
 				args = info.args;
@@ -612,11 +724,12 @@ namespace PlayScript.RuntimeBinder
 
 		private static object InvokeFunc (CallSite site, object o)
 		{
-			var info = site.invokeInfo;
+			var binder = ((CSharpInvokeMemberBinder)site.Binder);
+			var info = binder.invokeInfo;
 			object[] args;
 			if (info == null || !info.InvokeMatches (o)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new object[] {});
-				info = site.invokeInfo;
+				binder.FindMethod (site, o, new object[] {});
+				info = binder.invokeInfo;
 			}
 			args = info.args;
 			if (info.method != null) 
@@ -627,11 +740,12 @@ namespace PlayScript.RuntimeBinder
 
 		private static object InvokeFunc1 (CallSite site, object o, object a1)
 		{
-			var info = site.invokeInfo;
+			var binder = ((CSharpInvokeMemberBinder)site.Binder);
+			var info = binder.invokeInfo;
 			object[] args;
 			if (info == null || !info.InvokeMatches (o, a1)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1 });
-				info = site.invokeInfo;
+				binder.FindMethod (site, o, new [] { a1 });
+				info = binder.invokeInfo;
 				args = info.args;
 			} else {
 				args = info.args;
@@ -647,11 +761,12 @@ namespace PlayScript.RuntimeBinder
 		
 		private static object InvokeFunc2 (CallSite site, object o, object a1, object a2)
 		{
-			var info = site.invokeInfo;
+			var binder = ((CSharpInvokeMemberBinder)site.Binder);
+			var info = binder.invokeInfo;
 			object[] args;
 			if (info == null || !info.InvokeMatches(o, a1, a2)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2 });
-				info = site.invokeInfo;
+				binder.FindMethod (site, o, new [] { a1, a2 });
+				info = binder.invokeInfo;
 				args = info.args;
 			} else {
 				args = info.args;
@@ -667,11 +782,12 @@ namespace PlayScript.RuntimeBinder
 		
 		private static object InvokeFunc3 (CallSite site, object o, object a1, object a2, object a3)
 		{
-			var info = site.invokeInfo;
+			var binder = ((CSharpInvokeMemberBinder)site.Binder);
+			var info = binder.invokeInfo;
 			object[] args;
 			if (info == null || !info.InvokeMatches(o, a1, a2, a3)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3 });
-				info = site.invokeInfo;
+				binder.FindMethod (site, o, new [] { a1, a2, a3 });
+				info = binder.invokeInfo;
 				args = info.args;
 			} else {
 				args = info.args;
@@ -687,11 +803,12 @@ namespace PlayScript.RuntimeBinder
 		
 		private static object InvokeFunc4 (CallSite site, object o, object a1, object a2, object a3, object a4)
 		{
-			var info = site.invokeInfo;
+			var binder = ((CSharpInvokeMemberBinder)site.Binder);
+			var info = binder.invokeInfo;
 			object[] args;
 			if (info == null || !info.InvokeMatches(o, a1, a2, a3, a4)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3, a4 });
-				info = site.invokeInfo;
+				binder.FindMethod (site, o, new [] { a1, a2, a3, a4 });
+				info = binder.invokeInfo;
 				args = info.args;
 			} else {
 				args = info.args;
@@ -708,11 +825,12 @@ namespace PlayScript.RuntimeBinder
 		private static object InvokeFunc5 (CallSite site, object o, object a1, object a2, object a3, object a4,
 		                                   object a5)
 		{
-			var info = site.invokeInfo;
+			var binder = ((CSharpInvokeMemberBinder)site.Binder);
+			var info = binder.invokeInfo;
 			object[] args;
 			if (info == null || !info.InvokeMatches(o, a1, a2, a3, a4, a5)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3, a4, a5 });
-				info = site.invokeInfo;
+				binder.FindMethod (site, o, new [] { a1, a2, a3, a4, a5 });
+				info = binder.invokeInfo;
 				args = info.args;
 			} else {
 				args = info.args;
@@ -729,11 +847,12 @@ namespace PlayScript.RuntimeBinder
 		private static object InvokeFunc6 (CallSite site, object o, object a1, object a2, object a3, object a4,
 		                                   object a5, object a6)
 		{
-			var info = site.invokeInfo;
+			var binder = ((CSharpInvokeMemberBinder)site.Binder);
+			var info = binder.invokeInfo;
 			object[] args;
 			if (info == null || !info.InvokeMatches(o, a1, a2, a3, a4, a5, a6)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3, a4, a5, a6 });
-				info = site.invokeInfo;
+				binder.FindMethod (site, o, new [] { a1, a2, a3, a4, a5, a6 });
+				info = binder.invokeInfo;
 				args = info.args;
 			} else {
 				args = info.args;
@@ -750,11 +869,12 @@ namespace PlayScript.RuntimeBinder
 		private static object InvokeFunc7 (CallSite site, object o, object a1, object a2, object a3, object a4,
 		                                   object a5, object a6, object a7)
 		{
-			var info = site.invokeInfo;
+			var binder = ((CSharpInvokeMemberBinder)site.Binder);
+			var info = binder.invokeInfo;
 			object[] args;
 			if (info == null || !info.InvokeMatches(o, a1, a2, a3, a4, a5, a6, a7)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3, a4, a5, a6, a7 });
-				info = site.invokeInfo;
+				binder.FindMethod (site, o, new [] { a1, a2, a3, a4, a5, a6, a7 });
+				info = binder.invokeInfo;
 				args = info.args;
 			} else {
 				args = info.args;
@@ -771,11 +891,12 @@ namespace PlayScript.RuntimeBinder
 		private static object InvokeFunc8 (CallSite site, object o, object a1, object a2, object a3, object a4,
 		                                   object a5, object a6, object a7, object a8)
 		{
-			var info = site.invokeInfo;
+			var binder = ((CSharpInvokeMemberBinder)site.Binder);
+			var info = binder.invokeInfo;
 			object[] args;
 			if (info == null || !info.InvokeMatches(o, a1, a2, a3, a4, a5, a6, a7, a8)) {
-				((CSharpInvokeMemberBinder)site.Binder).FindMethod (site, o, new [] { a1, a2, a3, a4, a5, a6, a7, a8 });
-				info = site.invokeInfo;
+				binder.FindMethod (site, o, new [] { a1, a2, a3, a4, a5, a6, a7, a8 });
+				info = binder.invokeInfo;
 				args = info.args;
 			} else {
 				args = info.args;
