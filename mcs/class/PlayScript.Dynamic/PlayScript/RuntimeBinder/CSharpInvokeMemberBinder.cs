@@ -343,98 +343,16 @@ namespace PlayScript.RuntimeBinder
 //			this.typeArguments = new List<Type>(typeArguments);
 		}
 
-		private bool ConvertMethodParameters(MethodInfo m, object[] args, out object[] outArgs)
-		{
-			bool has_defaults = false;
-			int paramsIndex = -1;
-			var parameters = m.GetParameters();
-			var args_len = args.Length;
-			var par_len = parameters.Length;
-
-			for (var i = 0; i < par_len; i++) {
-				var p = parameters[i];
-				var paramArrayAttribute = p.GetCustomAttributes(typeof(ParamArrayAttribute), true);
-				if ((paramArrayAttribute != null) && (paramArrayAttribute.Length != 0))
-				{
-					paramsIndex = i;
-					Debug.Assert(paramsIndex == par_len - 1, "Unexpected index for the params parameter");
-					// After a params... There is no need to continue to parse further
-					if (args_len < paramsIndex) {
-						outArgs = null;
-						return false;
-					}
-					break;
-				}
-				if (i >= args.Length) {
-					if ((p.Attributes & ParameterAttributes.HasDefault) != 0) {
-						has_defaults = true;
-						continue;
-					} else {
-						outArgs = null;
-						return false;
-					}
-				} else {
-					var ptype = p.ParameterType;
-					if (args[i] != null) {
-						if (!ptype.IsAssignableFrom(args[i].GetType ())) {
-							outArgs = null;
-							return false;
-						}
-					} else if (!ptype.IsClass || ptype == typeof(string)) { // $$TODO revisit this
-						// argument is null
-						outArgs = null;
-						return false;
-					}
-				}
-			}
-
-			// default values and params are mutually exclusive in C# (they can't both be in the same signature)
-			// So it makes this code a bit simpler
-			if (has_defaults) {
-				var new_args = new object[par_len];
-				for (var j = 0; j < par_len; j++) {
-					if (j < args.Length)
-						new_args[j] = args[j];
-					else
-						new_args[j] = parameters[j].DefaultValue;
-				}
-				outArgs = new_args;
-			} else if (paramsIndex >= 0) {
-				var new_args = new object[par_len];
-				// We reserve the last parameter for special params handling
-				// We verified earlier that there was enough args anyway to fill all the parameters (and optionally the parmsIndex)
-				// Copy all the other parameters normally
-				for (var j = 0; j < paramsIndex; j++) {
-					new_args[j] = args[j];
-				}
-				// Then copy the additional parameters to the last parameter (params) as an array
-				// Array can be empty if we have just enough parameters up to the params one
-				int numberOfAdditionalParameters = args_len - paramsIndex;
-				object[] additionalParameters = new object[numberOfAdditionalParameters];
-				new_args[paramsIndex] = additionalParameters;
-				for (var j = 0 ; j < numberOfAdditionalParameters ; j++) {
-					additionalParameters[j] = args[paramsIndex + j];
-				}
-				System.Diagnostics.Debug.Assert(paramsIndex + numberOfAdditionalParameters == args_len, "Some arguments have not been handled properly");
-				outArgs = new_args;
-
-			} else {
-				outArgs = args;
-			}
-
-			// success
-			return true;
-		}
-
 		private MethodInfo FindMethodForType(CallSite site, System.Type otype, string name, bool isStatic, object[] args, out object[] outArgs)
 		{
-			var methods = otype.GetMethods();
+			BindingFlags bindingFlags = isStatic ? BindingFlags.Static : BindingFlags.Instance;
+			var methods = otype.GetMethods(BindingFlags.NonPublic | BindingFlags.Public | bindingFlags);
 			var len = methods.Length;
 			for (var mi = 0; mi < len; mi++) {
 				var m = methods[mi];
 				if ((m.IsStatic == isStatic) && m.Name == name) {
 					// attempt to convert method parameters
-					if (ConvertMethodParameters(m, args, out outArgs)) {
+					if (Dynamic.ConvertMethodParameters(m, args, out outArgs)) {
 						return m;
 					}
 				}
@@ -461,7 +379,7 @@ namespace PlayScript.RuntimeBinder
 					var m = methods[mi];
 					if (m.Name == name) {
 						// attempt to convert method parameters
-						if (ConvertMethodParameters(m, extArgs, out outArgs)) {
+						if (Dynamic.ConvertMethodParameters(m, extArgs, out outArgs)) {
 							return m;
 						}
 					}
@@ -540,7 +458,7 @@ namespace PlayScript.RuntimeBinder
 					}
 
 					if (method == null) {
-						throw new Exception("No matching method found with the name '" + name + "'"); 
+						throw new Exception("No matching method found for the type '" + otype.FullName + "' with the name '" + name + "'"); 
 					}
 				}
 				info.method = method;

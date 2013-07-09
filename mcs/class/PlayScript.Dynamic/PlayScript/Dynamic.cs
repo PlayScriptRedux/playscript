@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using System.Collections;
+using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Collections.Generic;
 
@@ -10,26 +11,98 @@ namespace PlayScript
 	{
 		public static object[] ConvertArgumentList(MethodInfo methodInfo, IList args)
 		{
-			ParameterInfo[] paramList = methodInfo.GetParameters();
-			
-			// build new argument list
-			object[] newargs = new object[paramList.Length];
-			
-			// handle parameters we were given
-			int i=0;
-			if (args != null) {
-				for (; i < args.Count; i++)
+			// TODO: Refactor this so we only have one method (and avoid the temporary allocation)
+			object[] convertedArgs;
+			object[] argsToConvert = new object[args.Count];
+			args.CopyTo(argsToConvert, 0);
+			if (ConvertMethodParameters(methodInfo, argsToConvert, out convertedArgs))
+			{
+				return convertedArgs;
+			}
+			return null;
+		}
+
+		public static bool ConvertMethodParameters(MethodInfo m, object[] args, out object[] outArgs)
+		{
+			bool has_defaults = false;
+			int paramsIndex = -1;
+			var parameters = m.GetParameters();
+			var args_len = args.Length;
+			var par_len = parameters.Length;
+
+			for (var i = 0; i < par_len; i++) {
+				var p = parameters[i];
+				var paramArrayAttribute = p.GetCustomAttributes(typeof(ParamArrayAttribute), true);
+				if ((paramArrayAttribute != null) && (paramArrayAttribute.Length != 0))
 				{
-					newargs[i] = ConvertValue(args[i], paramList[i].ParameterType);
+					paramsIndex = i;
+					Debug.Assert(paramsIndex == par_len - 1, "Unexpected index for the params parameter");
+					// After a params... There is no need to continue to parse further
+					if (args_len < paramsIndex) {
+						outArgs = null;
+						return false;
+					}
+					break;
+				}
+				if (i >= args.Length) {
+					if ((p.Attributes & ParameterAttributes.HasDefault) != 0) {
+						has_defaults = true;
+						continue;
+					} else {
+						outArgs = null;
+						return false;
+					}
+				} else {
+					var ptype = p.ParameterType;
+					if (args[i] != null) {
+						if (!ptype.IsAssignableFrom(args[i].GetType ())) {
+							outArgs = null;
+							return false;
+						}
+					} else if (!ptype.IsClass || ptype == typeof(string)) { // $$TODO revisit this
+						// argument is null
+						outArgs = null;
+						return false;
+					}
 				}
 			}
-			
-			// add default values
-			for (; i < paramList.Length; i++)
-			{
-				newargs[i] = paramList[i].DefaultValue;
+
+			// default values and params are mutually exclusive in C# (they can't both be in the same signature)
+			// So it makes this code a bit simpler
+			if (has_defaults) {
+				var new_args = new object[par_len];
+				for (var j = 0; j < par_len; j++) {
+					if (j < args.Length)
+						new_args[j] = args[j];
+					else
+						new_args[j] = parameters[j].DefaultValue;
+				}
+				outArgs = new_args;
+			} else if (paramsIndex >= 0) {
+				var new_args = new object[par_len];
+				// We reserve the last parameter for special params handling
+				// We verified earlier that there was enough args anyway to fill all the parameters (and optionally the parmsIndex)
+				// Copy all the other parameters normally
+				for (var j = 0; j < paramsIndex; j++) {
+					new_args[j] = args[j];
+				}
+				// Then copy the additional parameters to the last parameter (params) as an array
+				// Array can be empty if we have just enough parameters up to the params one
+				int numberOfAdditionalParameters = args_len - paramsIndex;
+				object[] additionalParameters = new object[numberOfAdditionalParameters];
+				new_args[paramsIndex] = additionalParameters;
+				for (var j = 0 ; j < numberOfAdditionalParameters ; j++) {
+					additionalParameters[j] = args[paramsIndex + j];
+				}
+				System.Diagnostics.Debug.Assert(paramsIndex + numberOfAdditionalParameters == args_len, "Some arguments have not been handled properly");
+				outArgs = new_args;
+
+			} else {
+				outArgs = args;
 			}
-			return newargs;
+
+			// success
+			return true;
 		}
 
 		public static MethodInfo FindPropertyGetter(Type type, string propertyName)
