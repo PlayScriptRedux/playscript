@@ -63,6 +63,11 @@ package flash.net {
 			if (url.StartsWith("http:") || url.StartsWith("https:")) {
 				// handle a http load
 				// load with a delay
+				
+				// Replace https: by http:
+				trace("Disable SSL for request " + mRequest.url);
+				mRequest.url = mRequest.url.Replace("https:", "http:");
+
 				Timer.delayCall (doHttpLoad);
 
 			} else {
@@ -101,8 +106,11 @@ package flash.net {
 			var wr = WebRequest.Create (mRequest.url);
 			// If required by the server, set the credentials.
 			wr.Credentials = CredentialCache.DefaultCredentials;
-			wr.Method = mRequest.method;
-			
+			if (mRequest.method != null)
+			{
+				wr.Method = mRequest.method;
+			}
+
 			if (mRequest.data != null) { 
 				var postData = String(mRequest.data);
 				var post = wr.GetRequestStream();
@@ -114,27 +122,63 @@ package flash.net {
 			// Get the response.
 			var response = HttpWebResponse(wr.GetResponse ());
 			// Display the status.
-			System.Console.WriteLine (response.StatusDescription);
+			System.Console.WriteLine ("HttpStatus: " + response.StatusDescription);
 			// Get the stream containing content returned by the server.
 			var dataStream = response.GetResponseStream ();
 			// Open the stream using a StreamReader for easy access.
-			var reader = new StreamReader (dataStream);
+			var encode:System.Text.Encoding;
+			switch (dataFormat)
+			{
+			case URLLoaderDataFormat.BINARY:
+				// Read the stream in ASCII, one byte [0-255] converted to one char
+				// This is a bit inneficient though (see the second conversion), could be improved
+				encode = System.Text.Encoding.GetEncoding("Latin1");
+				break;
+			case URLLoaderDataFormat.TEXT:
+				encode = System.Text.Encoding.GetEncoding("utf-8");
+				break;
+			default:
+				throw new System.NotImplementedException();
+			}
+
+			var reader = new StreamReader(dataStream, encode);
 			// Read the content.
 			var responseFromServer = reader.ReadToEnd ();
 
+			switch (dataFormat)
+			{
+				case URLLoaderDataFormat.BINARY:
+					{
+						// ...Second part of the inneficiency
+						// TODO: Revisit this
+						var ba:ByteArray = new ByteArray();
+						ba.writeBytes(System.Text.Encoding.ASCII.GetBytes(responseFromServer));
+						ba.position = 0;
+						this.data = ba;
+						break;
+					}
+				case URLLoaderDataFormat.TEXT:
+					{
+						this.data = responseFromServer;
+						break;
+					}
+				default:
+					throw new System.NotImplementedException();
+			}
+
 			// update bytes loaded
-			this.bytesLoaded = dataStream.Length;
-			this.bytesTotal  = dataStream.Length;
+			this.bytesLoaded = responseFromServer.Length;
+			this.bytesTotal  = responseFromServer.Length;
 
 			// Display the content.
-			System.Console.WriteLine (responseFromServer);
+			var lengthToDisplay:int = responseFromServer.length >= 500 ? 500 : responseFromServer.length;
+			System.Console.WriteLine(responseFromServer.substring(0, lengthToDisplay));
+
 			// Cleanup the streams and the response.
 			reader.Close ();
 			dataStream.Close ();
 			response.Close ();
 
-			this.data = responseFromServer;
-			
 			// dispatch complete event
 			var de:Event = new Event(Event.COMPLETE);
 			this.dispatchEvent(de);

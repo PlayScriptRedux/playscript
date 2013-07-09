@@ -15,8 +15,12 @@
 package flash.globalization {
 
 	public final class DateTimeFormatter {
+		private var _requestedLocaleIDName:String;
+
+		public property requestedLocaleIDName:String { get { return _requestedLocaleIDName; } }
+
 		public function DateTimeFormatter(requestedLocaleIDName:String, dateStyle:String = "long", timeStyle:String = "long") {
-			throw new System.NotImplementedException();
+			_requestedLocaleIDName = requestedLocaleIDName;
 		}
 		
 		public function format(dateTime:Date):String {

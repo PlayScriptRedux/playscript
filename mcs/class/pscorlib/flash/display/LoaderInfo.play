@@ -31,7 +31,7 @@ package flash.display {
  	 	
 		public property bytesTotal : uint { get { throw new System.NotImplementedException(); } }
  	 	
-		public property childAllowsParent : Boolean { get { throw new System.NotImplementedException(); } }
+		public property childAllowsParent : Boolean { get { return true; } }
  	 	
 		public property childSandboxBridge : Object { get { throw new System.NotImplementedException(); } }
  		

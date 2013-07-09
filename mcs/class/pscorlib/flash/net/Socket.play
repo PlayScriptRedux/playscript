@@ -19,6 +19,8 @@ package flash.net {
 			throw new System.NotImplementedException();
 		}
 
+		public property connected:Boolean { get { throw new System.NotImplementedException(); } }
+
 		public function get bytesAvailable() : uint {
 			throw new System.NotImplementedException();
 		}
