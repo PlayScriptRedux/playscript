@@ -23,7 +23,7 @@ using System.Diagnostics;
 
 namespace flash.utils
 {
-	[DebuggerDisplay ("Count={Count}")]
+	[DebuggerDisplay ("Count = {Count}")]
 	[DebuggerTypeProxy (typeof (DictionaryDebugView))]
 	[DynamicClass]
 	public class Dictionary : Dictionary<object, object>, IDynamicClass

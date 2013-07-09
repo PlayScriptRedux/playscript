@@ -1471,7 +1471,7 @@ namespace PlayScript.Expando {
 
 	[ComVisible(false)]
 	[Serializable]
-	[DebuggerDisplay ("Count={Count}")]
+	[DebuggerDisplay ("Count = {Count}")]
 	[DebuggerTypeProxy (typeof (ExpandoDebugView))]
 	public class ExpandoObject : IDictionary<string, object>, IDictionary, ISerializable, IDeserializationCallback, IDynamicClass
 #if NET_4_5
