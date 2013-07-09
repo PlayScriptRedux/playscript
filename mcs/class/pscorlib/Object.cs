@@ -25,14 +25,9 @@ namespace _root
 
 		public virtual string toString()
 		{
-			return base.ToString();
+			return ToString();
 		}
 
-		public override string ToString ()
-		{
-			return toString ();
-		}
-		
 		public virtual bool hasOwnProperty(object v = null)
 		{
 			var t = GetType ();
