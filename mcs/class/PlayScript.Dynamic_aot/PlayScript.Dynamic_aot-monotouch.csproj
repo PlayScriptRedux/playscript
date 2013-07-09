@@ -166,5 +166,8 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\PSInvokeMemberBinder.cs">
       <Link>PlayScript\RuntimeBinder\PSInvokeMemberBinder.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\MethodBinder.cs">
+      <Link>PlayScript\MethodBinder.cs</Link>
+    </Compile>
   </ItemGroup>
 </Project>

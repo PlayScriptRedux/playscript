@@ -57,111 +57,6 @@ namespace PlayScript.RuntimeBinder
 //			if (typeArguments != null) this.typeArguments = new List<Type>(typeArguments);
 		}
 
-		[Flags]
-		enum InvokeFlags
-		{
-			None = 0,
-			IsOverloaded = (1 << 0),
-			HasDefaults  = (1 << 1),
-			IsVariadic  = (1 << 2),
-			HasConversions  = (1 << 3),
-			ExtensionMethod = (1 << 4)
-		};
-
-		
-		class MethodInvokeInfo
-		{
-			public readonly MethodInfo  		method;
-			public readonly InvokeFlags 		flags;
-			public readonly Type[] 				paramTypes;
-			public readonly int        			paramCount;
-			public readonly object[]    		defaults;
-			public readonly int         		defaultsIndex;
-			public readonly int         		variadicIndex;
-			public MethodInvokeInfo 			next;		// linked list
-			
-			public MethodInvokeInfo(MethodInfo method, bool isExtensionMethod)
-			{
-				this.method = method;
-
-				if (isExtensionMethod)
-				{
-					this.flags |= InvokeFlags.ExtensionMethod;
-				}
-
-				var ps = method.GetParameters();
-				paramCount = ps.Length;
-				paramTypes = new Type[paramCount];
-
-				for (int i=0 ; i < ps.Length; i++)
-				{
-					if (i == (ps.Length -1))
-					{
-					// determine variadic state of this method
-						var paramArrayAttribute = ps[i].GetCustomAttributes(typeof(ParamArrayAttribute), true);
-						if ((paramArrayAttribute != null) && (paramArrayAttribute.Length != 0))
-						{
-							flags |= InvokeFlags.IsVariadic;
-							variadicIndex = i;
-						}
-					}
-
-					// build type array
-					paramTypes[i] = ps[i].ParameterType;
-
-					// dont convert things that target system object
-					if (paramTypes[i] == typeof(System.Object)) {
-						paramTypes[i] = null;
-					}
-
-					// handle default parameters
-					if (ps[i].IsOptional)
-					{
-						if (defaults == null) {
-							// create defaults array
-							defaults = new object[paramTypes.Length];
-							defaultsIndex = i;
-						}
-
-						flags |= InvokeFlags.HasDefaults;
-						defaults[i]   = ps[i].DefaultValue;
-					}
-				}
-			}
-
-			public bool ConvertArguments(object thisObj, object[] args, int argCount, object[] outArgs)
-			{
-				if ((flags & InvokeFlags.ExtensionMethod) != 0) {
-					throw new NotImplementedException("Extension methods not supported yet");
-				}
-
-				if ((flags & InvokeFlags.IsVariadic) != 0) {
-					throw new NotImplementedException("Variadic not supported yet");
-				}
-
-				// convert arguments
-				int i=0;
-				for (; i < argCount; i++)
-				{
-					outArgs[i] = PlayScript.Dynamic.ConvertValue(args[i], paramTypes[i]);
-				}
-
-				// set defaults
-				if (defaults != null) {
-					if (i < defaultsIndex) {
-						throw new NotImplementedException("not enough default parameters! TODO");
-					}
-
-					// set default values
-					for (; i < defaults.Length; i++)
-					{
-						outArgs[i] = defaults[i];
-					}
-				}
-				return true;
-
-			}
-		}
 
 		// information about the current binding
 		private Type              mType;
@@ -169,115 +64,84 @@ namespace PlayScript.RuntimeBinder
 		private object[]   		  mConvertedArgs;
 		private bool 			  mIsStatic;
 		private bool 			  mIsOverloaded;
-		private MethodInvokeInfo  mMethod;
-		private MethodInvokeInfo  mMethodList;
+		private MethodBinder      mMethod;
+		private MethodBinder[]    mMethodList;
 
-		private static MethodInvokeInfo BuildMethodList(System.Type otype, string name)
+
+		private MethodBinder SelectCompatibleMethod(MethodBinder[] list, object thisObj, object[] args, int argCount)
 		{
-			MethodInvokeInfo head = null;
-			MethodInvokeInfo tail = null;
-
-			var types = new Type[2] {otype, PlayScript.Dynamic.GetExtensionClassForType(otype)};
-			// add all methods from types
-			foreach (Type type in types) {
-				if (type != null) {
-					var methods = type.GetMethods();
-					foreach (var method in methods)
-					{
-						if (method.Name == name)
-						{
-							var newInfo = new MethodInvokeInfo(method, (type!=otype));
-							if (tail != null) tail.next = newInfo;
-							if (head == null) head = newInfo;
-						}
-					}
+			// select method based on simple compatibility
+			// TODO: this could change to use a rating system
+			foreach (var method in list) {
+				// is this method compatible?
+				if (method.IsCompatible(thisObj, args, argCount)) {
+					return method;
 				}
 			}
 
-			// return head of list
-			return head;
-		}
-
-		private static MethodInvokeInfo LookupMethodList(System.Type otype, string name)
-		{
-			// TODO: use a cache!
-			return BuildMethodList(otype, name);
-		}
-
-		private static MethodInvokeInfo FindBestMethod(MethodInvokeInfo list, object thisObj, object[] args, int argCount)
-		{
-			// no overloads!
-			throw new NotImplementedException("Overloads are currently not supported");
-		}
-
-		private void ResolveMethod(CallSite site, object o, int argCount)
-		{
-			if (o is System.Type) {
-				// this is a static method invocation where o is the class
-				mIsStatic = true;
-				mType = (System.Type)o;
-			} else {
-				// this is a non-static method invocation
-				mIsStatic = false;
-				mType = o.GetType();
-			}
-
-			// lookup methods for type
-			mMethodList = LookupMethodList(mType, this.name);
-			if (mMethodList == null)
-			{
-				if (o is IDynamicClass) {
-					var func = ((IDynamicClass)o).__GetDynamicValue(name);
-					if (func != null) {
-						throw new NotImplementedException("Functions stored in dynamic objects not supported yet");
-					}
+			// no methods compatible?
+			var dc = thisObj as IDynamicClass;
+			if (dc != null) {
+				var func = dc.__GetDynamicValue(this.name);
+				if (func != null) {
+					throw new NotImplementedException("Delegates cant be invoked from dynamic properties (yet)");
 				}
-
-				throw new Exception("Method not found with name: " + this.name + " for type: " + mType.ToString());
-			} else if (mMethodList.next != null) {
-				this.mIsOverloaded = true;
-				this.mMethod = FindBestMethod(mMethodList, o, mArgs, argCount);
-			} else {
-				// use first method
-				this.mIsOverloaded = false;
-				this.mMethod = this.mMethodList;
 			}
 
-			// resize coverted argument array if necessary
-			if (this.mConvertedArgs == null || this.mConvertedArgs.Length != mMethod.paramCount) {
-				this.mConvertedArgs = new object[mMethod.paramCount];
-			}
+			throw new InvalidOperationException("Could not find suitable method to invoke: " + this.name + " for type: " + mType);
 		}
 
 		private object ResolveAndInvoke(CallSite site, object o, int argCount)
 		{
-			// get type for binding comparison
-			System.Type otype;
-			if (mIsStatic)  {
-				otype = o as Type;
-			} else { 
+			// determine object type
+			Type otype;
+			if (o is Type) {
+				// this is a static method invocation where o is the class
+				otype = (Type)o;
+			} else {
+				// this is a instance method invocation
 				otype = o.GetType();
 			}
 
 			// see if type has changed
 			if (otype != this.mType)
 			{
-				// re-resolve method
-				ResolveMethod(site, o, argCount);
-			}
+				// re-resolve method list if type has changed
+				mType           = otype;
+				mIsStatic       = (o is Type);
+				// get method list for type and method name
+				mMethodList     = MethodBinder.LookupList(mType, this.name, mIsStatic);
+				if (mMethodList.Length == 0)
+				{
+					throw new InvalidOperationException("Could not find suitable method to invoke: " + this.name + " for type: " + mType);
+				}
 
-			// convert arguments
-			if (!mMethod.ConvertArguments(o, mArgs, argCount, mConvertedArgs)) {
-				if (mIsOverloaded) {
-					// uh oh, have to overload? or resolve again?
-					throw new NotImplementedException("Overloads not supported right now");
-				} else {
-					throw new NotImplementedException("Could not convert argumetns");
+				if (mMethodList.Length == 1)
+				{
+					// no overloading
+					mMethod       = mMethodList[0];
+					mIsOverloaded = false;
+				}
+				else
+				{
+					// more than one method
+					mIsOverloaded = true;
 				}
 			}
 
-			// invoke method with converted arguments
-			return mMethod.method.Invoke(o, this.mConvertedArgs);
+			// if there are overloads we resolve the method every time
+			// we could look into a more optimal way of doing this if it becomes a problem
+			if (mIsOverloaded)	{
+				mMethod = SelectCompatibleMethod(mMethodList, o, mArgs, argCount);
+			}
+
+			// convert arguments for method
+			if (mMethod.ConvertArguments(o, mArgs, argCount, ref mConvertedArgs)) {
+				// invoke method with converted arguments
+				return mMethod.Method.Invoke(o, mConvertedArgs);
+			}
+
+			throw new InvalidOperationException("Could not find suitable method to invoke: " + this.name + " for type: " + mType);
 		}
 
 		private static void InvokeAction0 (CallSite site, object o)
