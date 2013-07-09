@@ -88,6 +88,8 @@ namespace flash.events
 
 		public virtual bool dispatchEvent (Event ev)
 		{
+			ev._target = _evTarget;
+
 			if (_evRedirect != null) {
 				return _evRedirect.dispatchEvent(ev);
 			} else {
@@ -102,10 +104,9 @@ namespace flash.events
                         // we perform a dynamic invoke here because the parameter types dont always match exactly
                         try {
 							// set current target for event
-							ev._currentTarget = ev._target = _evTarget;
+							ev._currentTarget = callback.Target;
 							var args = PlayScript.Dynamic.ConvertArgumentList(callback.Method, new object[] {ev});
                             callback.DynamicInvoke(args);
-							ev._currentTarget = ev._target = null;
                         } 
                         catch (Exception e)
                         {
