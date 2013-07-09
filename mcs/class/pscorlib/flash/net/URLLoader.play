@@ -110,6 +110,7 @@ package flash.net {
 			{
 				wr.Method = mRequest.method;
 			}
+			wr.ContentType="application/x-www-form-urlencoded";
 
 			if (mRequest.data != null) { 
 				var postData = String(mRequest.data);
