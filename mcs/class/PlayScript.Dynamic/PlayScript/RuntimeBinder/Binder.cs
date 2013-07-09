@@ -131,7 +131,7 @@ namespace PlayScript.RuntimeBinder
 
 		public static CallSiteBinder BinaryOperation (CSharpBinderFlags flags, ExpressionType operation, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
-			return new CSharpBinaryOperationBinder(operation, flags, context, argumentInfo);
+			return new CSharpBinaryOperationBinder2(operation, flags, context, argumentInfo);
 		}
 
 		public static CallSiteBinder Convert (CSharpBinderFlags flags, Type type, Type context)
