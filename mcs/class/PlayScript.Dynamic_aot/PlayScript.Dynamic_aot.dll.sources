@@ -27,6 +27,7 @@
 ../PlayScript.Dynamic/PlayScript/RuntimeBinder/CSharpArgumentInfoFlags.cs
 ../PlayScript.Dynamic/PlayScript/RuntimeBinder/CSharpSetIndexBinder.cs
 ../PlayScript.Dynamic/PlayScript/RuntimeBinder/CSharpBinaryOperationBinder.cs
+../PlayScript.Dynamic/PlayScript/RuntimeBinder/CSharpBinaryOperationBinder2.cs
 ../PlayScript.Dynamic/PlayScript/RuntimeBinder/CSharpSetMemberBinder.cs
 ../PlayScript.Dynamic/PlayScript/RuntimeBinder/CSharpBinder.cs
 ../PlayScript.Dynamic/PlayScript/RuntimeBinder/CSharpUnaryOperationBinder.cs
