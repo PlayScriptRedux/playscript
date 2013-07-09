@@ -681,41 +681,103 @@
     <Compile Include="..\pscorlib\flash\globalization\Collator.play">
       <Link>flash\globalization\Collator.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\net\Socket.play" />
-    <Compile Include="..\pscorlib\flash\filters\BitmapFilterQuality.play" />
+    <Compile Include="..\pscorlib\flash\net\Socket.play">
+      <Link>flash\net\Socket.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\filters\BitmapFilterQuality.play">
+      <Link>flash\filters\BitmapFilterQuality.play</Link>
+    </Compile>
     <Compile Include="..\pscorlib\flash\Debugger.play" />
-    <Compile Include="..\pscorlib\flash\display\SimpleButton.play" />
-    <Compile Include="..\pscorlib\flash\net\LocalConnection.play" />
-    <Compile Include="..\pscorlib\flash\events\ThrottleEvent.play" />
+    <Compile Include="..\pscorlib\flash\display\SimpleButton.play">
+      <Link>flash\display\SimpleButton.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\net\LocalConnection.play">
+      <Link>flash\net\LocalConnection.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\events\ThrottleEvent.play">
+      <Link>flash\events\ThrottleEvent.play</Link>
+    </Compile>
     <Compile Include="..\pscorlib\InlineAttribute.cs" />
-    <Compile Include="..\pscorlib\flash\events\FullScreenEvent.play" />
-    <Compile Include="..\pscorlib\flash\display\PixelSnapping.play" />
-    <Compile Include="..\pscorlib\flash\display\PNGEncoderOptions.play" />
-    <Compile Include="..\pscorlib\flash\events\FocusEvent.play" />
-    <Compile Include="..\pscorlib\flash\events\StatusEvent.play" />
-    <Compile Include="..\pscorlib\fl\controls\LabelButton.play" />
-    <Compile Include="..\pscorlib\fl\controls\Button.play" />
-    <Compile Include="..\pscorlib\fl\controls\BaseButton.play" />
+    <Compile Include="..\pscorlib\flash\events\FullScreenEvent.play">
+      <Link>flash\events\FullScreenEvent.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\display\PixelSnapping.play">
+      <Link>flash\display\PixelSnapping.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\display\PNGEncoderOptions.play">
+      <Link>flash\display\PNGEncoderOptions.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\events\FocusEvent.play">
+      <Link>flash\events\FocusEvent.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\events\StatusEvent.play">
+      <Link>flash\events\StatusEvent.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\LabelButton.play">
+      <Link>fl\controls\LabelButton.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\Button.play">
+      <Link>fl\controls\Button.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\BaseButton.play">
+      <Link>fl\controls\BaseButton.play</Link>
+    </Compile>
     <Compile Include="..\pscorlib\fl\core\UIComponent.play" />
-    <Compile Include="..\pscorlib\fl\controls\TextArea.play" />
-    <Compile Include="..\pscorlib\fl\controls\CheckBox.play" />
-    <Compile Include="..\pscorlib\fl\controls\NumericStepper.play" />
-    <Compile Include="..\pscorlib\fl\controls\ComboBox.play" />
-    <Compile Include="..\pscorlib\fl\controls\Label.play" />
-    <Compile Include="..\pscorlib\fl\controls\ScrollBar.play" />
-    <Compile Include="..\pscorlib\fl\controls\UIScrollBar.play" />
-    <Compile Include="..\pscorlib\fl\controls\SelectableList.play" />
-    <Compile Include="..\pscorlib\fl\controls\List.play" />
-    <Compile Include="..\pscorlib\fl\containers\ScrollPane.play" />
-    <Compile Include="..\pscorlib\fl\containers\BaseScrollPane.play" />
-    <Compile Include="..\pscorlib\fl\controls\TextInput.play" />
-    <Compile Include="..\pscorlib\flash\globalization\DateTimeFormatter.play" />
-    <Compile Include="..\pscorlib\flash\net\URLRequestHeader.play" />
-    <Compile Include="..\pscorlib\flash\net\net_functions.play" />
-    <Compile Include="..\pscorlib\flash\net\SharedObject.play" />
-    <Compile Include="..\pscorlib\flash\net\SharedObjectFlushStatus.play" />
+    <Compile Include="..\pscorlib\fl\controls\TextArea.play">
+      <Link>fl\controls\TextArea.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\CheckBox.play">
+      <Link>fl\controls\CheckBox.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\NumericStepper.play">
+      <Link>fl\controls\NumericStepper.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\ComboBox.play">
+      <Link>fl\controls\ComboBox.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\Label.play">
+      <Link>fl\controls\Label.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\ScrollBar.play">
+      <Link>fl\controls\ScrollBar.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\UIScrollBar.play">
+      <Link>fl\controls\UIScrollBar.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\SelectableList.play">
+      <Link>fl\controls\SelectableList.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\List.play">
+      <Link>fl\controls\List.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\containers\ScrollPane.play">
+      <Link>fl\containers\ScrollPane.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\containers\BaseScrollPane.play">
+      <Link>fl\containers\BaseScrollPane.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\TextInput.play">
+      <Link>fl\controls\TextInput.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\globalization\DateTimeFormatter.play">
+      <Link>flash\globalization\DateTimeFormatter.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\net\URLRequestHeader.play">
+      <Link>flash\net\URLRequestHeader.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\net\net_functions.play">
+      <Link>flash\net\net_functions.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\net\SharedObject.play">
+      <Link>flash\net\SharedObject.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\net\SharedObjectFlushStatus.play">
+      <Link>flash\net\SharedObjectFlushStatus.play</Link>
+    </Compile>
     <Compile Include="..\pscorlib\DefaultPropertyAttribute.cs" />
-    <Compile Include="..\pscorlib\flash\events\TextEvent.play" />
+    <Compile Include="..\pscorlib\flash\events\TextEvent.play">
+      <Link>flash\events\TextEvent.play</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="flash\external\" />
