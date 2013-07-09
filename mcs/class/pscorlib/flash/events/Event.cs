@@ -162,10 +162,6 @@ namespace flash.events
 			throw new System.NotImplementedException();
 		}
 
-		public virtual string toString() {
-			return null;
-		}
-
 		public virtual void preventDefault()
 		{
 			throw new System.NotImplementedException();
