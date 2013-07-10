@@ -99,9 +99,16 @@ namespace {1} {{
 			
 		void PlayScript.IDynamicClass.__SetDynamicValue(string name, object value) {{
 			if (__dynamicProps == null) {{
-				__dynamicProps = new PlayScript.DynamicProperties();
+				__dynamicProps = new PlayScript.DynamicProperties(this);
 			}}
 			__dynamicProps.__SetDynamicValue(name, value);
+		}}
+
+		bool PlayScript.IDynamicClass.__DeleteDynamicValue(object name) {{
+			if (__dynamicProps != null) {{
+				return __dynamicProps.__DeleteDynamicValue(name);
+			}}
+			return false;
 		}}
 			
 		bool PlayScript.IDynamicClass.__HasDynamicValue(string name) {{

@@ -376,7 +376,10 @@ namespace _root
 		{
 			throw new NotImplementedException ();
 		}
-		
+		bool IDynamicClass.__DeleteDynamicValue(object name)
+		{
+			throw new NotImplementedException ();
+		}
 		bool IDynamicClass.__HasDynamicValue(string name)
 		{
 			return false;

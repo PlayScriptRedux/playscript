@@ -99,6 +99,11 @@ namespace flash.utils
 			this[name] = value;
 		}
 
+		bool IDynamicClass.__DeleteDynamicValue (object name)
+		{
+			return this.Remove(name);
+		}
+
 		bool IDynamicClass.__HasDynamicValue (string name)
 		{
 			return this.ContainsKey(name);

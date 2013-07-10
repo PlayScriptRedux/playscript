@@ -6,7 +6,10 @@ namespace PlayScript
 {
 	public class DynamicProperties : IDynamicClass
 	{
-		public DynamicProperties() {
+		// the parent object is the object that owns these properties
+		// if a lookup fails we should use members of this object instead
+		public DynamicProperties(object parentObject = null) {
+			mParentObject = parentObject;
 		}
 
 		#region IDynamicClass implementation
@@ -27,6 +30,10 @@ namespace PlayScript
 		{
 			mDictionary[name] = value;
 		}
+		public bool __DeleteDynamicValue(object name)
+		{
+			return mDictionary.Remove((string)name);
+		}
 
 		public bool __HasDynamicValue(string name)
 		{
@@ -42,6 +49,7 @@ namespace PlayScript
 
 		#endregion
 
+		private readonly object mParentObject;
 		private readonly Dictionary<string, object> mDictionary = new Dictionary<string, object>();
 	}
 

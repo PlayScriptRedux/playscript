@@ -428,7 +428,15 @@ namespace Mono.CSharp
 					return this;
 				}
 
-				removeExpr = new Invocation (new MemberAccess (expr, "Remove", loc), elem_access.Arguments);
+				if (!expr.Type.IsAsDynamicClass && (expr.Type.BuiltinType != BuiltinTypeSpec.Type.Dynamic))
+				{
+					ec.Report.Error (7021, loc, "delete statement only allowed on dynamic types or dynamic classes");
+					return null;
+				}
+
+				// cast expression to IDynamicClass and invoke __DeleteDynamicValue
+				var dynClass = new Cast(new MemberAccess(new SimpleName("PlayScript", loc), "IDynamicClass", loc), expr, loc);
+				removeExpr = new Invocation (new MemberAccess (dynClass, "__DeleteDynamicValue", loc), elem_access.Arguments);
 				return removeExpr.Resolve (ec);
 
 			} else if (Expr is MemberAccess) {
@@ -445,9 +453,17 @@ namespace Mono.CSharp
 					return null;
 				}
 
+				if (!expr.Type.IsAsDynamicClass && (expr.Type.BuiltinType != BuiltinTypeSpec.Type.Dynamic))
+				{
+					ec.Report.Error (7021, loc, "delete statement only allowed on dynamic types or dynamic classes");
+					return null;
+				}
+
+				// cast expression to IDynamicClass and invoke __DeleteDynamicValue
+				var dynClass = new Cast(new MemberAccess(new SimpleName("PlayScript", loc), "IDynamicClass", loc), expr, loc);
 				var args = new Arguments(1);
 				args.Add (new Argument(new StringLiteral(ec.BuiltinTypes, memb_access.Name, loc)));
-				removeExpr = new Invocation (new MemberAccess (expr, "Remove", loc), args);
+				removeExpr = new Invocation (new MemberAccess (dynClass, "__DeleteDynamicValue", loc), args);
 				return removeExpr.Resolve (ec);
 
 			} else {
