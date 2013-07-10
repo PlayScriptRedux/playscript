@@ -17,11 +17,12 @@ package flash.net
 	public class NetConnection extends flash.events.EventDispatcher {
 
 		public function connect(endpoint:String):void {
-			trace("warning not implemented: flash.net.NetConnection");
+			trace("warning not implemented: flash.net.NetConnection - endPoint: " + endpoint);
 		}
 		
 		public function call(command:String, responder:Responder, ... arguments):void {
-			throw new System.NotImplementedException();
+			trace("warning not implemented: flash.net.NetConnection - command: " + command);
+			//throw new System.NotImplementedException();
 		}
 	}
 

@@ -76,6 +76,16 @@ package flash.net {
 			}
 		}
 
+		// Temporary hack
+		// TODO: Find a better place for this
+		public static function loadLocal(path:String):Object
+		{
+			path = PlayScript.Player.ResolveResourcePath(path);
+
+			var result:String = File.ReadAllText(path);
+			return JSON.parse(result);
+		}
+
 		private function doHttpLoad():void
 		{
 			var hash:String = mRequest.generateHash();
