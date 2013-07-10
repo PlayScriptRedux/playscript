@@ -34,6 +34,17 @@ package flash.utils {
 	}
 	
 	public function getDefinitionByName(name:String):Object {
+		// There are a some types that we have to lookup explictly as we are aliasing them implicitly
+		// Note that as typeof() is not supported in PlayScript, we are using the slow String lookup.
+		switch (name) {
+		case "String":
+			name = "System.String";
+			break;
+		case "Number":
+			name = "System.Double";
+			break;
+		}
+
 		name = name.Replace("::", ".");
 
 		// TODO: We probably should add some caching at some point.
@@ -68,6 +79,7 @@ package flash.utils {
 		}
 
 		// Fixup some specific namespaces
+		// TODO: Improve this
 		if (name.StartsWith("System."))
 		{
 			name = name.Substring("System.".Length);
