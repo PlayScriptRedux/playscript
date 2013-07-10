@@ -24,7 +24,7 @@ namespace PlayScript
 			return null;
 		}
 
-		public static bool ConvertMethodParameters(MethodInfo m, object[] args, out object[] outArgs)
+		public static bool ConvertMethodParameters(MethodBase m, object[] args, out object[] outArgs)
 		{
 			bool has_defaults = false;
 			int paramsIndex = -1;
@@ -34,17 +34,19 @@ namespace PlayScript
 
 			for (var i = 0; i < par_len; i++) {
 				var p = parameters[i];
-				var paramArrayAttribute = p.GetCustomAttributes(typeof(ParamArrayAttribute), true);
-				if ((paramArrayAttribute != null) && (paramArrayAttribute.Length != 0))
-				{
-					paramsIndex = i;
-					Debug.Assert(paramsIndex == par_len - 1, "Unexpected index for the params parameter");
-					// After a params... There is no need to continue to parse further
-					if (args_len < paramsIndex) {
-						outArgs = null;
-						return false;
+				if (i == par_len - 1) {
+					// Only the last parameter can be variadic
+					var paramArrayAttribute = p.GetCustomAttributes(typeof(ParamArrayAttribute), true);
+					if ((paramArrayAttribute != null) && (paramArrayAttribute.Length != 0))
+					{
+						paramsIndex = i;
+						// After a params... There is no need to continue to parse further
+						if (args_len < paramsIndex) {
+							outArgs = null;
+							return false;
+						}
+						break;
 					}
-					break;
 				}
 				if (i >= args.Length) {
 					if ((p.Attributes & ParameterAttributes.HasDefault) != 0) {
@@ -55,14 +57,7 @@ namespace PlayScript
 						return false;
 					}
 				} else {
-					var ptype = p.ParameterType;
-					if (args[i] != null) {
-						if (!ptype.IsAssignableFrom(args[i].GetType ())) {
-							outArgs = null;
-							return false;
-						}
-					} else if (!ptype.IsClass || ptype == typeof(string)) { // $$TODO revisit this
-						// argument is null
+					if (!CanConvertValue(args[i], p.ParameterType)) {
 						outArgs = null;
 						return false;
 					}
@@ -74,8 +69,9 @@ namespace PlayScript
 			if (has_defaults) {
 				var new_args = new object[par_len];
 				for (var j = 0; j < par_len; j++) {
-					if (j < args.Length)
-						new_args[j] = args[j];
+					if (j < args.Length) {
+						new_args[j] = ConvertValue(args[j], parameters[j].ParameterType);
+					}
 					else
 						new_args[j] = parameters[j].DefaultValue;
 				}
@@ -85,8 +81,14 @@ namespace PlayScript
 				// We reserve the last parameter for special params handling
 				// We verified earlier that there was enough args anyway to fill all the parameters (and optionally the parmsIndex)
 				// Copy all the other parameters normally
+				System.Type paramType = parameters[paramsIndex].ParameterType;
+				Debug.Assert(paramType.IsArray, "Unexpected type");				// Because it is variadic the type is actually an array (like string[])
+				Debug.Assert(paramType.BaseType.IsArray, "Unexpected type");		// Its base type is an array too (the generic kind this time - System.Array)
+				paramType = paramType.BaseType.BaseType;							// Get the type we are interested in (string) for each parameters
+				Debug.Assert(paramType != null, "Unexpected type");
+
 				for (var j = 0; j < paramsIndex; j++) {
-					new_args[j] = args[j];
+					new_args[j] = ConvertValue(args[j], paramType);
 				}
 				// Then copy the additional parameters to the last parameter (params) as an array
 				// Array can be empty if we have just enough parameters up to the params one
@@ -99,8 +101,18 @@ namespace PlayScript
 				System.Diagnostics.Debug.Assert(paramsIndex + numberOfAdditionalParameters == args_len, "Some arguments have not been handled properly");
 				outArgs = new_args;
 
-			} else {
+			} else if (par_len == args_len) {
 				outArgs = args;
+				// Let's make sure all the parameters are converted
+				for (var i = 0 ; i < par_len ; i++) {
+					outArgs[i] = ConvertValue(args[i], parameters[i].ParameterType);
+				}
+
+			}
+			else
+			{
+				outArgs = null;
+				return false;
 			}
 
 			// success
@@ -161,7 +173,39 @@ namespace PlayScript
 			if (targetType.IsAssignableFrom(valueType)) {
 				return value;
 			} else {
+				if (targetType == typeof(String)) {
+					return value.ToString();
+				}
 				return System.Convert.ChangeType(value, targetType);
+			}
+		}
+
+		public static bool CanConvertValue(object value, Type targetType)
+		{
+			if (value == null) return true;
+
+			Type valueType = value.GetType();
+			if (targetType == valueType) {
+				return true;
+			}
+
+			if (targetType == typeof(System.Object)) {
+				return true;
+			}
+
+			if (targetType.IsAssignableFrom(valueType)) {
+				return true;
+			} else {
+				if (targetType == typeof(String)) {
+					return true;
+				}
+
+				try {
+					return (System.Convert.ChangeType(value, targetType) != null);
+				}
+				catch {
+					return false;
+				}
 			}
 		}
 
