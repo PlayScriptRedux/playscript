@@ -41,7 +41,8 @@ package flash.text {
  	 	}
 
  	 	public static function registerFont(font:Class):void {
-			throw new System.NotImplementedException(); 	 	
+			trace("warning: registerFont not implemented");
+//			throw new System.NotImplementedException(); 	 	
  	 	}
 	
 	}
