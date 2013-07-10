@@ -140,9 +140,6 @@ namespace PlayScript.RuntimeBinder
 									matches = false;
 									break;
 								}
-							} else if (!ptype.IsClass || ptype == typeof(string)) {
-								matches = false;
-								break;
 							}
 						}
 					}
