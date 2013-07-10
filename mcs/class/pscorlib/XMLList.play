@@ -151,7 +151,7 @@ package {
 		}
 		
 		public override function toString():String {
-			return mString;
+			return (mString != null) ? mString : "";
 		}
 		
 		public function toXMLString():String {

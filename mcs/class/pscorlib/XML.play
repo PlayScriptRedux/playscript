@@ -103,7 +103,7 @@ package {
 		}
  	 	
 		public function attribute(attributeName:String):XMLList {
-			return mElement.HasAttribute(attributeName) ? new XMLList(mElement.GetAttribute(attributeName)) : null;
+			return mElement.HasAttribute(attributeName) ? new XMLList(mElement.GetAttribute(attributeName)) : new XMLList(null);
 		}
 
 		public function attributes():XMLList {
