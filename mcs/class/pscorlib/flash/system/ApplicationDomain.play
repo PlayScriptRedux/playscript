@@ -22,28 +22,33 @@ package flash.system {
 		// Properties
 		//
 	
- 		public static property currentDomain : ApplicationDomain { get { return null; } }
+		public static property currentDomain : ApplicationDomain { get { return sCurrentDomain; } }
 
  	 	public property domainMemory : ByteArray { get; set; }
 
  	 	public static property MIN_DOMAIN_MEMORY_LENGTH : uint { get { return 0; } }
 		
-		public property parentDomain : ApplicationDomain { get { return null; } }
+		public property parentDomain : ApplicationDomain { get; private set; }
 
  	 	//
  	 	// Methods
  	 	//
  	 	 	 	
 		public function ApplicationDomain(parentDomain:ApplicationDomain = null) {
+			this.parentDomain = parentDomain;
 		}
  	 	
 		public function getDefinition(name:String):Object {
+			trace("warning: ApplicationDomain.getDefinition not implemented");
 			return null;
 		}
  	 	
 		public function hasDefinition(name:String):Boolean {
 			return false;
 		}
+
+
+		private static var sCurrentDomain:ApplicationDomain = new ApplicationDomain();
 	
 	}
 

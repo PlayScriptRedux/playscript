@@ -23,7 +23,7 @@ package flash.display {
 	
 		public property actionScriptVersion : uint { get { throw new System.NotImplementedException();} }
 		
-		public property applicationDomain : ApplicationDomain { get { throw new System.NotImplementedException(); } }
+		public property applicationDomain : ApplicationDomain { get { return ApplicationDomain.currentDomain; } }
 
 		public property bytes : ByteArray { get { throw new System.NotImplementedException(); } }
  	 	
