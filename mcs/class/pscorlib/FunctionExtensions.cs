@@ -21,12 +21,12 @@ namespace _root {
 	public static class FunctionExtensions {
 
 
-		public static dynamic apply(this Delegate d, dynamic thisArg, Array argArray) {
+		public static dynamic apply(this Delegate d, object thisArg, Array argArray) {
 			object[] newargs = PlayScript.Dynamic.ConvertArgumentList(d.Method, argArray);
 			return d.DynamicInvoke(newargs);
 		}
 
-		public static dynamic call(this Delegate d, dynamic thisArg, params object[] args) {
+		public static dynamic call(this Delegate d, object thisArg, params object[] args) {
 			object[] newargs = PlayScript.Dynamic.ConvertArgumentList(d.Method, args);
 			return d.DynamicInvoke(newargs);
 		}
