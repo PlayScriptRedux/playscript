@@ -126,57 +126,41 @@ package flash.net {
 			System.Console.WriteLine ("HttpStatus: " + response.StatusDescription);
 			// Get the stream containing content returned by the server.
 			var dataStream = response.GetResponseStream ();
-			// Open the stream using a StreamReader for easy access.
-			var encode:System.Text.Encoding;
-			switch (dataFormat)
-			{
-			case URLLoaderDataFormat.BINARY:
-				// Read the stream in ASCII, one byte [0-255] converted to one char
-				// This is a bit inneficient though (see the second conversion), could be improved
-				encode = System.Text.Encoding.GetEncoding("Latin1");
-				break;
-			case URLLoaderDataFormat.TEXT:
-				encode = System.Text.Encoding.GetEncoding("utf-8");
-				break;
-			default:
-				throw new System.NotImplementedException();
-			}
-
-			var reader = new StreamReader(dataStream, encode);
-			// Read the content.
-			var responseFromServer = reader.ReadToEnd ();
 
 			switch (dataFormat)
 			{
 				case URLLoaderDataFormat.BINARY:
 					{
-						// ...Second part of the inneficiency
-						// TODO: Revisit this
 						var ba:ByteArray = new ByteArray();
-						ba.writeBytes(System.Text.Encoding.ASCII.GetBytes(responseFromServer));
+						dataStream.CopyTo(ba.getRawStream());
 						ba.position = 0;
 						this.data = ba;
+						this.bytesLoaded = ba.length;
+						this.bytesTotal  = ba.length;
 						break;
 					}
 				case URLLoaderDataFormat.TEXT:
 					{
+						var reader = new StreamReader(dataStream, System.Text.UTF8Encoding);
+						// Read the content.
+						var responseFromServer = reader.ReadToEnd ();
+
 						this.data = responseFromServer;
+						this.bytesLoaded = responseFromServer.Length;
+						this.bytesTotal  = responseFromServer.Length;
+						reader.Close ();
+
+						// Display the content.
+						var lengthToDisplay:int = responseFromServer.length >= 500 ? 500 : responseFromServer.length;
+						System.Console.WriteLine(responseFromServer.substring(0, lengthToDisplay));
+						PlayScript.Player.StoreWebResponseIntoCache(hash, responseFromServer);
 						break;
 					}
 				default:
 					throw new System.NotImplementedException();
 			}
 
-			// update bytes loaded
-			this.bytesLoaded = responseFromServer.Length;
-			this.bytesTotal  = responseFromServer.Length;
-
-			// Display the content.
-			var lengthToDisplay:int = responseFromServer.length >= 500 ? 500 : responseFromServer.length;
-			System.Console.WriteLine(responseFromServer.substring(0, lengthToDisplay));
-
 			// Cleanup the streams and the response.
-			reader.Close ();
 			dataStream.Close ();
 			response.Close ();
 
@@ -184,7 +168,6 @@ package flash.net {
 			var de:Event = new Event(Event.COMPLETE);
 			this.dispatchEvent(de);
 
-			PlayScript.Player.StoreWebResponseIntoCache(hash, responseFromServer);
 		}
 
 		private function doLocalLoad():void
@@ -195,9 +178,10 @@ package flash.net {
 			// for now we assume everything is a local file and sync load it here
 
 			// handle file loading
-			var path:String = PlayScript.Player.ResolveResourcePath(mRequest.url);
-			if (!File.Exists(path))
+			var path:String = PlayScript.Player.TryResolveResourcePath(mRequest.url);
+			if (path == null || !File.Exists(path))
 			{
+				trace("URLLoader: could not load ", mRequest.url);
 				// io error, file not found
 				this.dispatchEvent(new Event(IOErrorEvent.IO_ERROR));
 				return;
