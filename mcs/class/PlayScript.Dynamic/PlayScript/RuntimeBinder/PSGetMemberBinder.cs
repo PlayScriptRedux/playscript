@@ -329,15 +329,19 @@ namespace PlayScript.RuntimeBinder
 			}
 
 			// resolve as method
-			var method = binder.type.GetMethod(binder.name);
+			BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Public;
+			if (isStatic) {
+				flags |= BindingFlags.Static;
+			} else {
+				flags |= BindingFlags.Instance;
+			}
+			var method = binder.type.GetMethod(binder.name, flags);
 			if (method != null)
 			{
-				if (method.IsPublic) {
-					binder.method = method;
-					if (isStatic)        target.Target = binder.GetStaticMethod<T>;
-						  else           target.Target = binder.GetMethod<T>;
-					return;
-				}
+				binder.method = method;
+				if (isStatic)        target.Target = binder.GetStaticMethod<T>;
+					  else           target.Target = binder.GetMethod<T>;
+				return;
 			}
 
 			// special case "constructor"
