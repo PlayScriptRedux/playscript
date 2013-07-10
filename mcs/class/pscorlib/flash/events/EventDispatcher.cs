@@ -104,7 +104,7 @@ namespace flash.events
                         // we perform a dynamic invoke here because the parameter types dont always match exactly
                         try {
 							// set current target for event
-							ev._currentTarget = callback.Target;
+							ev._currentTarget = _evTarget;
 							var args = PlayScript.Dynamic.ConvertArgumentList(callback.Method, new object[] {ev});
                             callback.DynamicInvoke(args);
                         } 
