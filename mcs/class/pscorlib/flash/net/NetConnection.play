@@ -16,22 +16,33 @@ package flash.net
 {
 	public class NetConnection extends flash.events.EventDispatcher {
 
+		public static var CallFunc:System.Action.<String, Responder, String, Array>;
+
 		public function connect(endpoint:String):void {
 			trace("warning not implemented: flash.net.NetConnection - endPoint: " + endpoint);
+			mEndPoint = endpoint;
 		}
 		
 		public function call(command:String, responder:Responder, ... arguments):void {
-			trace("warning not implemented: flash.net.NetConnection - command: " + command);
-			//throw new System.NotImplementedException();
+			if (CallFunc != null) {
+				CallFunc(mEndPoint, responder, command, new Array(arguments));
+			} else {
+				trace("warning not implemented: flash.net.NetConnection - command: " + command);
+			}
 		}
+
+		var mEndPoint:String;
 	}
 
 
 	public class Responder extends flash.events.EventDispatcher {
 
+		public var onResult:Function;
+		public var onFailure:Function;
+
 		public function Responder(onResult:Function, onFailure:Function) {
-//			throw new System.NotImplementedException();
-			trace("warning not implemented: flash.net.Responder");
+			this.onResult = onResult;
+			this.onFailure = onFailure;
 		}
 	}
 }
