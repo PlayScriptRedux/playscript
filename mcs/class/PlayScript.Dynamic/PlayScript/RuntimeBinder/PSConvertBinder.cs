@@ -106,7 +106,7 @@ namespace PlayScript.RuntimeBinder
 				return (double)(float)o;
 			} 
 			if (o == null || o == PlayScript.Undefined._undefined) {
-				throw new Exception ("Invalid cast to double");
+				return 0.0;
 			}
 
 			var typeCode = Type.GetTypeCode (o.GetType ());
@@ -124,7 +124,7 @@ namespace PlayScript.RuntimeBinder
 			case TypeCode.String:
 				return double.Parse((String)o);
 			default:
-				throw new Exception ("Invalid cast to int");
+				throw new Exception ("Invalid cast to double");
 			}
 		}
 

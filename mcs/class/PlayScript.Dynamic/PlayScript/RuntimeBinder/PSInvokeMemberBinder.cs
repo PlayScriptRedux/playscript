@@ -44,11 +44,7 @@ namespace PlayScript.RuntimeBinder
 			if (argList != null)
 			{
 				// allocate argument list
-				this.mArgs = new object[argList.Count];
-			}
-			else
-			{
-				this.mArgs = new object[MAX_ARGS];
+				this.mArgs = new object[argList.Count - 1];
 			}
 
 //			this.flags = flags;
@@ -62,25 +58,34 @@ namespace PlayScript.RuntimeBinder
 		private Type              mType;
 		private object[]   		  mArgs;
 		private object[]   		  mConvertedArgs;
-		private bool 			  mIsStatic;
 		private bool 			  mIsOverloaded;
 		private MethodBinder      mMethod;
 		private MethodBinder[]    mMethodList;
 
 
-		private MethodBinder SelectCompatibleMethod(MethodBinder[] list, object thisObj, object[] args, int argCount)
+		private void SelectMethod(object o, int argCount)
 		{
+			// if only one method, then use it
+			if (mMethodList.Length == 1) {
+				mMethod       = mMethodList[0];
+				mIsOverloaded = false;
+				return;
+			}
+
+			mIsOverloaded = true;
+
 			// select method based on simple compatibility
 			// TODO: this could change to use a rating system
-			foreach (var method in list) {
+			foreach (var method in mMethodList) {
 				// is this method compatible?
-				if (method.IsCompatible(thisObj, args, argCount)) {
-					return method;
+				if (method.CheckArguments(mArgs)) {
+					mMethod = method;
+					return;
 				}
 			}
 
 			// no methods compatible?
-			var dc = thisObj as IDynamicClass;
+			var dc = o as IDynamicClass;
 			if (dc != null) {
 				var func = (object)dc.__GetDynamicValue(this.name);
 				if (func != null) {
@@ -95,44 +100,41 @@ namespace PlayScript.RuntimeBinder
 		{
 			// determine object type
 			Type otype;
+			bool isStatic;
 			if (o is Type) {
 				// this is a static method invocation where o is the class
 				otype = (Type)o;
+				isStatic = true;
 			} else {
 				// this is a instance method invocation
 				otype = o.GetType();
+				isStatic = false;
 			}
 
 			// see if type has changed
-			if (otype != this.mType)
+			if (otype != mType)
 			{
 				// re-resolve method list if type has changed
 				mType           = otype;
-				mIsStatic       = (o is Type);
+
 				// get method list for type and method name
-				mMethodList     = MethodBinder.LookupList(mType, this.name, mIsStatic);
-				if (mMethodList.Length == 0)
-				{
-					throw new InvalidOperationException("Could not find suitable method to invoke: " + this.name + " for type: " + mType);
+				BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Public;
+				if (isStatic) {
+					flags|=BindingFlags.Static;
+				} else {
+					flags|=BindingFlags.Instance;
 				}
 
-				if (mMethodList.Length == 1)
-				{
-					// no overloading
-					mMethod       = mMethodList[0];
-					mIsOverloaded = false;
-				}
-				else
-				{
-					// more than one method
-					mIsOverloaded = true;
-				}
+				mMethodList     = MethodBinder.LookupMethodList(mType, this.name, flags, argCount);
+
+				// select new method to use
+				SelectMethod(o, argCount);
 			}
-
-			// if there are overloads we resolve the method every time
-			// we could look into a more optimal way of doing this if it becomes a problem
-			if (mIsOverloaded)	{
-				mMethod = SelectCompatibleMethod(mMethodList, o, mArgs, argCount);
+			else if (mIsOverloaded)	
+			{
+				// if there are overloads we select the method every time
+				// we could look into a more optimal way of doing this if it becomes a problem
+				SelectMethod(o, argCount);
 			}
 
 			// convert arguments for method

@@ -8,6 +8,8 @@ namespace PlayScript
 	{
 		public readonly MethodInfo  		Method;
 		public readonly ParameterInfo[] 	Parameters;
+		public readonly int 				MinArgumentCount;
+		public readonly int 				MaxArgumentCount;
 		public readonly int 				ParameterCount;
 		public readonly bool 				IsExtensionMethod;
 		public readonly bool 				IsVariadic;
@@ -21,7 +23,7 @@ namespace PlayScript
 			// get method parameters
 			this.Parameters = method.GetParameters();
 			this.ParameterCount = this.Parameters.Length;
-			
+
 			// see if this method is variadic
 			if (this.Parameters.Length > 0)
 			{
@@ -35,59 +37,45 @@ namespace PlayScript
 					this.ParameterCount--;
 				}
 			}
+
+			// determine required argument count
+			this.MinArgumentCount = 0;
+			for (int i=0; i < this.ParameterCount; i++) {
+				if (this.Parameters[i].IsOptional) {
+					break;
+				}
+				MinArgumentCount++;
+			}
+			if (this.IsExtensionMethod) {
+				MinArgumentCount--;
+			}
+
+			this.MaxArgumentCount = !this.IsVariadic ? this.ParameterCount : int.MaxValue;
 		}
 
-		public bool IsCompatible(object thisObj, object[] args, int argCount) {
-
-			int i = 0;
-			int argIndex = 0;
-
-			if (this.IsExtensionMethod) {
-				// write 'this' as first argument
-				Type paramType = this.Parameters[i].ParameterType;
-				if (!paramType.IsAssignableFrom(thisObj.GetType())) {
-					return false;
-				}
-				i++;
-			}
-			
-			
-			// process all parameters
-			for (; i < this.ParameterCount; i++)
+		public bool CheckArguments(object[] args) {
+			int startParameter = this.IsExtensionMethod ? 1 : 0;
+			// check required arguments
+			for (int i=0; i < this.MinArgumentCount; i++)
 			{
-				if (argIndex < argCount)
+				object arg = args[i];
+				if (arg != null)
 				{
-					object arg = args[argIndex++];
-					if (arg != null)
-					{
-						Type argType = arg.GetType();
-						Type paramType = this.Parameters[i].ParameterType;
-						if (!paramType.IsAssignableFrom(argType)) {
-							// not compatible
-							return false;
-						}
-					}
-				}
-				else
-				{
-					// no more arguments left? use defaults
-					if (!Parameters[i].IsOptional) {
-						// not enough arguments supplied for method
+					Type argType = arg.GetType();
+					Type paramType = this.Parameters[startParameter + i].ParameterType;
+					if (!paramType.IsAssignableFrom(argType)) {
+						// not compatible
 						return false;
 					}
 				}
 			}
-
-			// compute leftover arguments
-			int extraArgCount = (argCount - argIndex);
-			if ((extraArgCount > 0) && !this.IsVariadic)
-			{
-				// its not okay to have extra arguments if we're not variadic
-				return false;
-			}
-			
-			// compatible!
+			// all arguments are compatible
 			return true;
+		}
+
+		public bool CheckArgumentCount(int argCount) {
+			// ensure argument count is within range
+			return (argCount >= this.MinArgumentCount) && (argCount <= this.MaxArgumentCount);
 		}
 		
 		public bool ConvertArguments(object thisObj, object[] args, int argCount, ref object[] outArgs)
@@ -165,46 +153,39 @@ namespace PlayScript
 		}
 		
 		
-		public static MethodBinder[] BuildList(System.Type otype, string name, bool isStatic)
+		public static MethodBinder[] BuildMethodList(Type type, string name, BindingFlags flags, int argCount)
 		{
-			List<MethodBinder> list = null;
+			var list = new List<MethodBinder>();
 
 			// get methods from main type
-			if (otype != null) {
-				var methods = otype.GetMethods();
-				foreach (var method in methods)
-				{
-					if ((method.Name == name) && (method.IsStatic == isStatic))
-					{
+			if (type != null) {
+				var methods = type.GetMethods(flags);
+				foreach (var method in methods)	{
+					if (method.Name == name) {
 						var newInfo = new MethodBinder(method, false);
-						if (list == null) {
-							list = new List<MethodBinder>();
+						if (newInfo.CheckArgumentCount(argCount)) {
+							list.Add(newInfo);
 						}
-						list.Add(newInfo);
 					}
 				}
 			}
 
-			if (!isStatic) {
+			if ((flags & BindingFlags.Static)==0) {
 				// get extension methods
-				var extType = PlayScript.Dynamic.GetExtensionClassForType(otype);
+				var extType = PlayScript.Dynamic.GetExtensionClassForType(type);
 				if (extType != null) {
-					var methods = extType.GetMethods();
-					foreach (var method in methods)
-					{
-						if (method.Name == name && method.IsStatic)
-						{
+					var methods = extType.GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static);
+					foreach (var method in methods)	{
+						if (method.Name == name) {
 							// determine if this is a valid extension method for this object type
 							var parameters = method.GetParameters();
-							if (parameters.Length > 1)
-							{
+							if (parameters.Length > 0){
 								var thisType = parameters[0].ParameterType;
-								if (thisType.IsAssignableFrom(otype)) {
+								if (thisType.IsAssignableFrom(type)) {
 									var newInfo = new MethodBinder(method, true);
-									if (list == null) {
-										list = new List<MethodBinder>();
+									if (newInfo.CheckArgumentCount(argCount)) {
+										list.Add(newInfo);
 									}
-									list.Add(newInfo);
 								}
 							}
 						}
@@ -213,18 +194,27 @@ namespace PlayScript
 			}
 
 			// return list
-			return (list!=null) ? list.ToArray() : sEmptyList;
-		}
-		
-		public static MethodBinder[] LookupList(System.Type otype, string name, bool isStatic)
-		{
-			// TODO: use a cache!
-			return BuildList(otype, name, isStatic);
+			return list.ToArray();
 		}
 
+
+		public static MethodBinder[] LookupMethodList(Type type, string name, BindingFlags flags, int argCount)
+		{
+			MethodBinder[] list;
+
+			// we cache based on the combination of type, name, flags and argcount
+			var key = Tuple.Create<Type, string, BindingFlags, int>(type, name, flags, argCount);
+
+			// try to get from cache
+			if (!sMethodCache.TryGetValue(key, out list)) {
+				list = BuildMethodList(type, name, flags, argCount);
+				sMethodCache.Add(key, list);
+			}
+			return list;
+		}
+
+		private static readonly Dictionary< Tuple<Type, string, BindingFlags, int>, MethodBinder[] > sMethodCache = new Dictionary< Tuple<Type, string, BindingFlags, int>, MethodBinder[] >();
 		private static readonly object[] 	   sEmptyArray = new object[0];
-		private static readonly MethodBinder[] sEmptyList = new MethodBinder[0];
-		
 	}
 }
 
