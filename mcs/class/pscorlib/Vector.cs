@@ -878,6 +878,10 @@ namespace _root {
 		public T this[int i]
 		{
 			get {
+				if (i >= mCount)
+				{
+					return default(T);
+				}
 				return mArray[i];
 			}
 			set {
