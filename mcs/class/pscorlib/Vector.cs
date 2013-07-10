@@ -1104,7 +1104,10 @@ namespace _root {
 		{
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
-			T val = mArray[mCount - 1]; // Will throw if out of range
+			if (mCount == 0) {
+				return default(T);
+			}
+			T val = mArray[mCount - 1];
 			mCount--;
 			mArray[mCount] = default(T);
 			return val;
