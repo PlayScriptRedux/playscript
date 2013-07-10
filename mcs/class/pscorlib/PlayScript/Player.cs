@@ -187,6 +187,14 @@ namespace PlayScript
 					var rename = Path.ChangeExtension(path, ".png");
 					return new flash.display.Bitmap(flash.display.BitmapData.loadFromPath(rename));
 				}
+
+				case ".json":
+				{
+					var newPath = PlayScript.Player.ResolveResourcePath(path);
+					var jsonText = System.IO.File.ReadAllText(newPath);
+					return _root.JSON.parse(jsonText);
+				}
+
 				default:
 					throw new NotImplementedException("Loader for " + ext);
 			}
