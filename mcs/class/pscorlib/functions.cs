@@ -64,7 +64,9 @@ namespace _root
 		public static double Number (string s)
 		{
 			double d;
-			double.TryParse(s, out d);
+			if (!double.TryParse(s, out d)) {
+				return double.NaN;
+			}
 			return d;
 		}
 

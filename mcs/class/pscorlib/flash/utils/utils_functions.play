@@ -66,6 +66,17 @@ package flash.utils {
 		} else {
 			name = System.Object(value).GetType().FullName;
 		}
+
+		// Fixup some specific namespaces
+		if (name.StartsWith("System."))
+		{
+			name = name.Substring("System.".Length);
+		}
+		else if (name.StartsWith("_root."))
+		{
+			name = name.Substring("_root.".Length);
+		}
+
 		// replace last dot with :: to conform to flash conventions
 		var lastDot:int = name.LastIndexOf('.');
 		if (lastDot >= 0)

@@ -115,49 +115,13 @@ namespace PlayScript.RuntimeBinder
 				return loaderObj.GetType ().GetMethod ("Load").Invoke (loaderObj, null);
 			}
 
-			var arg_len = args.Length;
 			foreach (var c in constructors) {
-				bool matches = false;
-				bool has_defaults = false;
-				var parameters = c.GetParameters();
-				var par_len = parameters.Length;
-				if (par_len >= arg_len) {
-					matches = true;
-					for (var i = 0; i < par_len; i++) {
-						var p = parameters[i];
-						if (i >= args.Length) {
-							if (p.IsOptional) {
-								has_defaults = true;
-								continue;
-							} else {
-								matches = false;
-								break;
-							}
-						} else {
-							var ptype = p.ParameterType;
-							if (args[i] != null) {
-								if (!ptype.IsAssignableFrom(args[i].GetType ())) {
-									matches = false;
-									break;
-								}
-							}
-						}
-					}
-				}
-				if (matches) {
-					if (has_defaults) {
-						var new_args = new object[par_len];
-						for (var j = 0; j < par_len; j++) {
-							if (j < args.Length)
-								new_args[j] = args[j];
-							else
-								new_args[j] = parameters[j].DefaultValue;
-						}
-						args = new_args;
-					}
-					return c.Invoke(args);
+				object[] outArgs;
+				if (PlayScript.Dynamic.ConvertMethodParameters(c, args, out outArgs)) {
+					return c.Invoke(outArgs);
 				}
 			}
+
 			throw new InvalidOperationException("Unable to find matching constructor.");
 		}
 
