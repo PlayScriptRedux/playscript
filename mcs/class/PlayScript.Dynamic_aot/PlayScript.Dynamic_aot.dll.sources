@@ -42,4 +42,5 @@
 ../PlayScript.Dynamic/PlayScript/RuntimeBinder/PSGetMemberBinder.cs
 ../PlayScript.Dynamic/PlayScript/RuntimeBinder/PSSetIndexBinder.cs
 ../PlayScript.Dynamic/PlayScript/RuntimeBinder/PSSetMemberBinder.cs
+../PlayScript.Dynamic/PlayScript/RuntimeBinder/PSInvokeMemberBinder.cs
 ../PlayScript.Dynamic/System/Runtime/CompilerServices/DynamicAttribute.cs
