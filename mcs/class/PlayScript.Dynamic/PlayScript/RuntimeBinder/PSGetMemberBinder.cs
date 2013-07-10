@@ -207,7 +207,7 @@ namespace PlayScript.RuntimeBinder
 		{
 			if (o is IDynamicClass) {
 				var binder = (PSGetMemberBinder)site.Binder;
-				return ((IDynamicClass)o).__GetDynamicValue(binder.name);
+				return (T)(object)((IDynamicClass)o).__GetDynamicValue(binder.name);
 			}
 			else
 			{

@@ -82,7 +82,7 @@ namespace PlayScript.RuntimeBinder
 			// no methods compatible?
 			var dc = thisObj as IDynamicClass;
 			if (dc != null) {
-				var func = dc.__GetDynamicValue(this.name);
+				var func = (object)dc.__GetDynamicValue(this.name);
 				if (func != null) {
 					throw new NotImplementedException("Delegates cant be invoked from dynamic properties (yet)");
 				}

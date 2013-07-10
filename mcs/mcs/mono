@@ -1,2 +1,2 @@
-../../../mono-as3-inst/bin/mono $@
+../../../playscript-mono-inst/bin/mono $@
 

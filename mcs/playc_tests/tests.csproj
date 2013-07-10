@@ -1560,7 +1560,6 @@
     <None Include="as3\Types\Uint\UintVarOperations.as" />
     <None Include="as3\Types\Uint\UintPublicClassMethodArg\UintPublicClass.as" />
     <None Include="as3\Types\Uint\UintVarAsClassProp\UintVarAsClassProp.as" />
-    <None Include="as3\Vector\concat.as" />
     <None Include="as3\Vector\concatWithInitializers.as" />
     <None Include="as3\Vector\constructor.as" />
     <None Include="as3\Vector\every.as" />
@@ -2708,6 +2707,7 @@
     <None Include="ecma3\instanceof\instanceof_002.as" />
     <None Include="ecma3\instanceof\instanceof_003_rt.as" />
     <None Include="ecma3\instanceof\regress_7635_rt.as" />
+    <None Include="as3\Expressions\isOperator\isOper.as" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\class\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net_4_0.csproj">
@@ -2723,11 +2723,10 @@
     <Compile Include="shell.as" />
     <Compile Include="as3\Definitions\Classes\ClassDef\PublicClass\PublicClass.as" />
     <Compile Include="as3\Definitions\Classes\ClassDef\PublicClass.as" />
-    <Compile Include="test.as" />
-    <Compile Include="as3\Expressions\isOperator\isOper.as" />
     <Compile Include="as3\Expressions\isOperator\isOper\TestClassA.as" />
     <Compile Include="as3\Expressions\isOperator\isOper\TestClassB.as" />
     <Compile Include="as3\Expressions\isOperator\isOper\TestClassC.as" />
     <Compile Include="as3\Expressions\isOperator\isOper\TestInterface.as" />
+    <Compile Include="as3\Vector\concat.as" />
   </ItemGroup>
 </Project>

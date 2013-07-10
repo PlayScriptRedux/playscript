@@ -45,12 +45,12 @@ import flash.system.Capabilities;
 
 package {
 
-	public class T {
+	public class Test {
 
 		public static var playerType:String = Capabilities.playerType;
 
-		public static var	completed:Boolean =	false;
-		public static var	testcases:Vector.<TestCase>; 
+		public static var completed:Boolean =	false;
+		public static var testcases:Vector.<TestCase>; 
 		public static var tc:int = 0;
 		//var version; // ISSUE:: need to know why we need to comment this out
 
@@ -62,7 +62,7 @@ package {
 
 		//  constant strings
 
-		public static var	GLOBAL:String = "[object global]";
+		public static var GLOBAL:String = "[object global]";
 		public static var PASSED:String = " PASSED!";
 		public static var FAILED:String = " FAILED! expected: ";
 		public static var PACKAGELIST:String = "{public,$1$private}::";
@@ -104,8 +104,8 @@ package {
 		//  argument.
 
 
-		public static function AddTestCase( description:String, expect:Object, actual:Object ):void {
-		    testcases[tc++] = new TestCase( SECTION, description, expect, actual );
+		public static function AddTestCase( description:String, expect:Object, actual:Object, skip:Boolean = false ):void {
+		    testcases[tc++] = new TestCase( SECTION, description, expect, actual, skip );
 		}
 
 
@@ -155,7 +155,7 @@ package {
 		                            		testcases[tc].actual,
 		                            		testcases[tc].description );
 		        		testcases[tc].reason += checkReason(testcases[tc].passed);
-		    	}
+		    		}
 				}
 			}
 		    stopTest();
@@ -240,6 +240,27 @@ package {
 		//  test has completed.
 
 		public static function stopTest():void {
+		}
+
+		public static function results():int {
+			var totalPassed:int = 0;
+			var totalFailed:int = 0;
+			var totalSkipped:int = 0;
+
+			for each (var testCase:TestCase in testcases) {
+				if (testCase.passed != "true") {
+					totalFailed++;
+				} else {
+					totalPassed++;
+				}
+				if (testCase.skip) {
+					totalSkipped++;
+				}
+			}
+
+			writeLineToLog("Passed: " + totalPassed + " Failed: " + totalFailed + " Skipped: " + totalSkipped + "\n");
+
+			return totalFailed > 0 ? 1 : 0;
 		}
 
 #if DATE_TESTS
@@ -1041,21 +1062,27 @@ public class TestCase {
 	public var description:String;
 	public var expect:*;
 	public var actual:*;
+	public var skip:Boolean;
 	public var passed:String;
 	public var reason:String;
 
-	public function TestCase( n:String, d:String, e:*, a:* ) {
+	public function TestCase( n:String, d:String, e:*, a:*, s:Boolean ) {
 		this.name		 = n;
 		this.description = d;
 		this.expect		 = e;
 		this.actual		 = a;
+		this.skip		 = s;
 		this.passed		 = "";
 		this.reason		 = "";
 		//this.bugnumber	  =	BUGNUMBER;
 
-		this.passed	= T.getTestCaseResult( this.expect, this.actual );
-		if ( T.DEBUG ) {
-			T.writeLineToLog(	"added " + this.description	);
+		if (!skip) {
+			this.passed	= Test.getTestCaseResult( this.expect, this.actual );
+			if ( Test.DEBUG ) {
+				Test.writeLineToLog(	"added " + this.description	);
+			}
+		} else {
+			this.passed = "true";
 		}
 	}
 

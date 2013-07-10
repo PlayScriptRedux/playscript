@@ -345,7 +345,7 @@ namespace PlayScript.RuntimeBinder
 
 		private MethodInfo FindMethodForType(CallSite site, System.Type otype, string name, bool isStatic, object[] args, out object[] outArgs)
 		{
-			BindingFlags bindingFlags = isStatic ? BindingFlags.Static : BindingFlags.Instance;
+			BindingFlags bindingFlags = isStatic ? BindingFlags.Static | BindingFlags.FlattenHierarchy : BindingFlags.Instance;
 			var methods = otype.GetMethods(BindingFlags.NonPublic | BindingFlags.Public | bindingFlags);
 			var len = methods.Length;
 			for (var mi = 0; mi < len; mi++) {
