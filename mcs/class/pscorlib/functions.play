@@ -82,7 +82,7 @@ package {
 		System.Console.WriteLine("{0} {1} {2} {3}", o1, o2, o3, argsStr);
 	}
  	 	
-	public function parseInt(str:String, radix:uint = 0):int {
+	public function parseInt(str:String, radix:uint):int {
 		if (radix != 0 && radix != 10) 
 			throw new System.NotImplementedException();
 
@@ -99,7 +99,12 @@ package {
 			}
 		}
 	}
- 	 	
+
+	public function parseInt(str:String):int {
+		return parseInt(str, 10);
+	}
+
+
 	public function unescape(str:String):String {
 		throw new System.NotImplementedException();
 	}
