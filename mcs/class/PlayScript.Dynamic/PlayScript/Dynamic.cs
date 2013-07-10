@@ -11,6 +11,8 @@ namespace PlayScript
 	{
 		public static object[] ConvertArgumentList(MethodInfo methodInfo, IList args)
 		{
+			if (args == null) return null;
+
 			// TODO: Refactor this so we only have one method (and avoid the temporary allocation)
 			object[] convertedArgs;
 			object[] argsToConvert = new object[args.Count];
