@@ -18,6 +18,11 @@ namespace _root
 {
 	public static class @int
 	{
+		static @int()
+		{
+			PlayScript.Dynamic.RegisterExtensionClass(typeof(int), typeof(_root.@int));
+		}
+
 		//
 		// Methods
 		//
