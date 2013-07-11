@@ -66,8 +66,9 @@ namespace flash.display3D {
 		
 		public void clear(double red = 0.0, double green = 0.0, double blue = 0.0, double alpha = 1.0, 
 		                  double depth = 1.0, uint stencil = 0, uint mask = 0xffffffff) {
+
 			if (mask != 0xffffffff)
-				throw new NotImplementedException();
+				System.Console.WriteLine("Context3D.clear() - Not implemented with mask=" + mask);
 
 			// save old depth mask
 			bool oldDepthWriteMask;
