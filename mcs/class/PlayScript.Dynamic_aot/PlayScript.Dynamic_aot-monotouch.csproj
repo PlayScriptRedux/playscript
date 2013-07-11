@@ -172,5 +172,8 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpBinaryOperationBinder2.cs">
       <Link>PlayScript\RuntimeBinder\CSharpBinaryOperationBinder2.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\PSIsEventBinder.cs">
+      <Link>PlayScript\RuntimeBinder\PSIsEventBinder.cs</Link>
+    </Compile>
   </ItemGroup>
 </Project>

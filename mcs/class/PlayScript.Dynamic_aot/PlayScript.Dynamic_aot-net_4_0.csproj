@@ -162,6 +162,9 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\MethodBinder.cs">
       <Link>PlayScript\MethodBinder.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\PSIsEventBinder.cs">
+      <Link>PlayScript\RuntimeBinder\PSIsEventBinder.cs</Link>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

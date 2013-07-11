@@ -182,7 +182,7 @@ namespace PlayScript.RuntimeBinder
 
 		public static CallSiteBinder IsEvent (CSharpBinderFlags flags, string name, Type context)
 		{
-			throw new NotImplementedException("Dynamic IsEvent");
+			return new PSIsEventBinder(flags, name, context);
 		}
 		
 		public static CallSiteBinder SetIndex (CSharpBinderFlags flags, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
