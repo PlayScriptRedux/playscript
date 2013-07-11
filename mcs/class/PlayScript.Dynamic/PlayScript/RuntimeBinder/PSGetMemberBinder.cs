@@ -205,6 +205,10 @@ namespace PlayScript.RuntimeBinder
 
 		private T GetDynamicValue<T>(CallSite site, object o)
 		{
+			if (o == null) {
+				return default(T);
+			}
+
 			if (o is IDynamicClass) {
 				var binder = (PSGetMemberBinder)site.Binder;
 				return (T)(object)((IDynamicClass)o).__GetDynamicValue(binder.name);
@@ -236,6 +240,10 @@ namespace PlayScript.RuntimeBinder
 		/// </summary>
 		private static T GetMember<T> (CallSite site, object o)
 		{
+			if (o == null) {
+				return default(T);
+			}
+
 			// resolve as dictionary 
 			var dict = o as IDictionary<string, object>;
 			if (dict != null) 
