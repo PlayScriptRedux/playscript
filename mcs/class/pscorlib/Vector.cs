@@ -1221,6 +1221,18 @@ namespace _root {
 			
 			// private uint mOptions;
 		};
+
+		private class DefaultSorter : System.Collections.Generic.IComparer<T>
+		{
+			public int Compare(T x, T y)
+			{
+				// From doc:
+				//	http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/Vector.html#sort%28%29
+				// All elements, regardless of data type, are sorted as if they were strings, so 100 precedes 99, because "1" is a lower string value than "9".
+				// That's going to be slow...
+				return x.ToString().CompareTo(y.ToString());
+			}
+		}
 		
 		public Vector<T> sort(dynamic sortBehavior = null) 
 		{
@@ -1239,7 +1251,10 @@ namespace _root {
 			}
 			else 
 			{
-				throw new System.NotImplementedException();
+				//	http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/Vector.html#sort%28%29
+				var ds = new DefaultSorter();
+				System.Array.Sort (mArray, 0, (int)mCount, ds);
+				return this;
 			}
 		}
 #if true
