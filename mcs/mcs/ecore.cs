@@ -1472,7 +1472,7 @@ namespace Mono.CSharp {
 			return child.GetValueAsLong ();
 		}
 
-		public override Constant ConvertImplicitly (TypeSpec target_type, ResolveContext opt_ec)
+		public override Constant ConvertImplicitly (TypeSpec target_type, ResolveContext opt_ec, bool upconvert_only)
 		{
 			if (type == target_type)
 				return this;
@@ -1481,7 +1481,7 @@ namespace Mono.CSharp {
 			if (!Convert.ImplicitStandardConversionExists (this, target_type, opt_ec))
 				return null;
 
-			return child.ConvertImplicitly (target_type, opt_ec);
+			return child.ConvertImplicitly (target_type, opt_ec, upconvert_only);
 		}
 	}
 
@@ -1595,7 +1595,7 @@ namespace Mono.CSharp {
 			return Child.ConvertExplicitly (in_checked_context, target_type, opt_ec);
 		}
 
-		public override Constant ConvertImplicitly (TypeSpec type, ResolveContext opt_ec)
+		public override Constant ConvertImplicitly (TypeSpec type, ResolveContext opt_ec, bool upconvert_only)
 		{
 			if (this.type == type) {
 				return this;
@@ -2015,9 +2015,9 @@ namespace Mono.CSharp {
 				this.orig_expr = orig_expr;
 			}
 
-			public override Constant ConvertImplicitly (TypeSpec target_type, ResolveContext opt_ec)
+			public override Constant ConvertImplicitly (TypeSpec target_type, ResolveContext opt_ec, bool upconvert_only)
 			{
-				Constant c = base.ConvertImplicitly (target_type, opt_ec);
+				Constant c = base.ConvertImplicitly (target_type, opt_ec, upconvert_only);
 				if (c != null)
 					c = new ReducedConstantExpression (c, orig_expr);
 

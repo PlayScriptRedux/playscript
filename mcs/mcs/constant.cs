@@ -86,12 +86,12 @@ namespace Mono.CSharp {
 			return false;
 		}
 
-		public virtual Constant ConvertImplicitly (TypeSpec type, ResolveContext opt_ec)
+		public virtual Constant ConvertImplicitly (TypeSpec type, ResolveContext opt_ec, bool upconvert_only = false)
 		{
 			if (this.type == type)
 				return this;
 
-			if (Convert.ImplicitNumericConversion (this, type, opt_ec) == null) 
+			if (Convert.ImplicitNumericConversion (this, type, opt_ec, upconvert_only) == null) 
 				return null;
 
 			bool fail;			
@@ -1185,7 +1185,7 @@ namespace Mono.CSharp {
 			return null;
 		}
 
-		public override Constant ConvertImplicitly (TypeSpec type, ResolveContext opt_ec)
+		public override Constant ConvertImplicitly (TypeSpec type, ResolveContext opt_ec, bool upconvert_only)
 		{
 			if (this.type == type)
 				return this;
@@ -1194,7 +1194,7 @@ namespace Mono.CSharp {
 			if (c != null)
 				return c; //.Resolve (rc);
 
-			return base.ConvertImplicitly (type, opt_ec);
+			return base.ConvertImplicitly (type, opt_ec, upconvert_only);
 		}
 
 		/// <summary>
@@ -1482,13 +1482,13 @@ namespace Mono.CSharp {
 			return null;
 		}
 
-		public override Constant ConvertImplicitly (TypeSpec type, ResolveContext opt_ec)
+		public override Constant ConvertImplicitly (TypeSpec type, ResolveContext opt_ec, bool upconvert_only)
 		{
 			if (Value >= 0 && type.BuiltinType == BuiltinTypeSpec.Type.ULong) {
 				return new ULongConstant (type, (ulong) Value, loc);
 			}
 
-			return base.ConvertImplicitly (type, opt_ec);
+			return base.ConvertImplicitly (type, opt_ec, upconvert_only);
 		}
 	}
 
@@ -2171,7 +2171,7 @@ namespace Mono.CSharp {
 			return null;
 		}
 
-		public override Constant ConvertImplicitly (TypeSpec targetType, ResolveContext opt_ec)
+		public override Constant ConvertImplicitly (TypeSpec targetType, ResolveContext opt_ec, bool upconvert_only = false)
 		{
 			return ConvertExplicitly (false, targetType, opt_ec);
 		}

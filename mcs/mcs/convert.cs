@@ -506,14 +506,14 @@ namespace Mono.CSharp {
 		///   expr is the expression to convert, returns a new expression of type
 		///   target_type or null if an implicit conversion is not possible.
 		/// </summary>
-		public static Expression ImplicitNumericConversion (Expression expr, TypeSpec target_type, ResolveContext opt_ec)
+		public static Expression ImplicitNumericConversion (Expression expr, TypeSpec target_type, ResolveContext opt_ec, bool upconvert_only = false)
 		{
-			return ImplicitNumericConversion (expr, expr.Type, target_type, opt_ec);
+			return ImplicitNumericConversion (expr, expr.Type, target_type, opt_ec, upconvert_only);
 		}
 
-		public static bool ImplicitNumericConversionExists (TypeSpec expr_type, TypeSpec target_type, ResolveContext opt_ec)
+		public static bool ImplicitNumericConversionExists (TypeSpec expr_type, TypeSpec target_type, ResolveContext opt_ec, bool upconvert_only = false)
 		{
-			return ImplicitNumericConversion (null, expr_type, target_type, opt_ec) != null;
+			return ImplicitNumericConversion (null, expr_type, target_type, opt_ec, upconvert_only) != null;
 		}
 
 		static Expression ImplicitNumericConversion (Expression expr, TypeSpec expr_type, TypeSpec target_type, ResolveContext opt_ec, bool upconvert_only = false)
@@ -1544,7 +1544,7 @@ namespace Mono.CSharp {
 			Constant c = expr as Constant;
 			if (c != null) {
 				try {
-					c = c.ConvertImplicitly (target_type, ec);
+					c = c.ConvertImplicitly (target_type, ec, upconvert_only);
 				} catch {
 					throw new InternalErrorException ("Conversion error", loc);
 				}
