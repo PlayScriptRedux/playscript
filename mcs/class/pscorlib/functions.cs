@@ -103,9 +103,11 @@ namespace _root
 				case TypeCode.Decimal:
 					return (double)(decimal)o;
 				case TypeCode.String:
-					d = double.NaN;
-					double.TryParse((string)o, out d);
-					return d;
+					if (double.TryParse((string)o, out d))
+					{
+						return d;
+					}
+					return double.NaN;
 			}
 
 			return double.NaN;
