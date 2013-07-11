@@ -46,11 +46,12 @@ namespace PlayScript
 				}
 				MinArgumentCount++;
 			}
+			this.MaxArgumentCount = !this.IsVariadic ? this.ParameterCount : int.MaxValue;
+
 			if (this.IsExtensionMethod) {
 				MinArgumentCount--;
+				MaxArgumentCount--;
 			}
-
-			this.MaxArgumentCount = !this.IsVariadic ? this.ParameterCount : int.MaxValue;
 		}
 
 		public bool CheckArguments(object[] args) {
