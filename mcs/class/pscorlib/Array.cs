@@ -305,6 +305,13 @@ namespace _root
 		
 		// Sorts the elements in an array according to one or more fields in the array.
 		public Array sortOn(object fieldName, object options = null) {
+			if (length == 0) {
+				return this;
+			}
+
+			// Reference doc:
+			// http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/Array.html#sortOn%28%29
+
 			throw new NotImplementedException();
 		}
 		
