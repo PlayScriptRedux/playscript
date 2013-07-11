@@ -142,11 +142,11 @@ namespace PlayScript
 			}
 			else
 			{
-//				if (extraArgCount > 0)
-//				{
-//					// we have too many arguments and this function is not variadic
-//					return false;
-//				}
+				if (extraArgCount > 0)
+				{
+					// we have too many arguments and this function is not variadic
+					return false;
+				}
 			}
 			
 			return true;
