@@ -1063,7 +1063,14 @@ namespace _root {
 		
 		public void forEach(Delegate callback, dynamic thisObject = null) 
 		{
-			throw new System.NotImplementedException();
+			if (thisObject != null)
+			{
+				throw new NotImplementedException();
+			}
+			foreach (var item in this)
+			{
+				callback.DynamicInvoke(item);
+			}
 		}
 
 		public int indexOf(T searchElement)
