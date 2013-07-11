@@ -61,10 +61,13 @@ namespace PlayScript.RuntimeBinder
 		private bool 			  mIsOverloaded;
 		private MethodBinder      mMethod;
 		private MethodBinder[]    mMethodList;
+		private Delegate   	      mDelegate;
 
 
 		private void SelectMethod(object o, int argCount)
 		{
+			mDelegate = null;
+
 			// if only one method, then use it
 			if (mMethodList.Length == 1) {
 				mMethod       = mMethodList[0];
@@ -85,11 +88,15 @@ namespace PlayScript.RuntimeBinder
 			}
 
 			// no methods compatible?
+
+			// try to get method from dynamic class
 			var dc = o as IDynamicClass;
 			if (dc != null) {
-				var func = (object)dc.__GetDynamicValue(this.name);
+				var func = dc.__GetDynamicValue(this.name) as Delegate;
 				if (func != null) {
-					throw new NotImplementedException("Delegates cant be invoked from dynamic properties (yet)");
+					// use function
+					mDelegate = func;
+					return;
 				}
 			}
 
@@ -137,10 +144,21 @@ namespace PlayScript.RuntimeBinder
 				SelectMethod(o, argCount);
 			}
 
-			// convert arguments for method
-			if (mMethod.ConvertArguments(o, mArgs, argCount, ref mConvertedArgs)) {
-				// invoke method with converted arguments
-				return mMethod.Method.Invoke(o, mConvertedArgs);
+			if (mDelegate == null)
+			{
+				// invoke as method
+				// convert arguments for method
+				if (mMethod.ConvertArguments(o, mArgs, argCount, ref mConvertedArgs)) {
+					// invoke method with converted arguments
+					return mMethod.Method.Invoke(o, mConvertedArgs);
+				}
+			}
+			else
+			{
+				// invoke as delegate
+				// convert arguments for delegate and invoke
+				object[] newargs = PlayScript.Dynamic.ConvertArgumentList(mDelegate.Method, mArgs);
+				return mDelegate.DynamicInvoke(newargs);
 			}
 
 			throw new InvalidOperationException("Could not find suitable method to invoke: " + this.name + " for type: " + mType);
