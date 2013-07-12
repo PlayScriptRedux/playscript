@@ -1473,7 +1473,7 @@ namespace PlayScript.Expando {
 	[Serializable]
 	[DebuggerDisplay ("Count = {Count}")]
 	[DebuggerTypeProxy (typeof (ExpandoDebugView))]
-	public class ExpandoObject : IDictionary<string, object>, IDictionary, ISerializable, IDeserializationCallback, IDynamicClass
+	public class ExpandoObject : IDictionary<string, object>, IDictionary, ISerializable, IDeserializationCallback, IDynamicClass, IKeyEnumerable
 #if NET_4_5
 		, IReadOnlyDictionary<string, object>
 #endif
@@ -2234,10 +2234,17 @@ namespace PlayScript.Expando {
 		
 		IEnumerator IEnumerable.GetEnumerator ()
 		{
-			// enumerate over keys only
+			// enumerate over values
+			return Values.GetEnumerator();
+		}
+
+		IEnumerator IKeyEnumerable.GetKeyEnumerator ()
+		{
+			// enumerate over keys
 			return Keys.GetEnumerator();
 		}
-		
+
+
 		IEnumerator<KeyValuePair<string, object>> IEnumerable<KeyValuePair<string, object>>.GetEnumerator ()
 		{
 			return new Enumerator (this);
