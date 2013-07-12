@@ -141,7 +141,9 @@ namespace _root
 		}
 
 		public static string slice(this string s, int startIndex, int endIndex) {
-			if (endIndex < 0) return s;
+			if (endIndex < 0) {
+				endIndex = s.Length + endIndex;
+			}
 			return s.Substring(startIndex, endIndex - startIndex);
 		}
 
