@@ -76,12 +76,15 @@ namespace flash.display3D
 
 			public string ToGLSL (bool useMask = true)
 			{
+				string str;
 				if (type == RegType.Output) {
-					return programType == ProgramType.Vertex ? "gl_Position" : "gl_FragColor";
+					str = programType == ProgramType.Vertex ? "gl_Position" : "gl_FragColor";
 				}
-
-				var str = PrefixFromType (type, programType);
-				str += n.ToString ();
+				else
+				{
+					str = PrefixFromType (type, programType);
+					str += n.ToString ();
+				}
 
 				if (useMask && mask != 0xF) {
 					str += GetWriteMask();
