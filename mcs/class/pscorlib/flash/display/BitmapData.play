@@ -147,7 +147,8 @@ package flash.display {
 			}
 
 			if (mergeAlpha || (alphaBitmapData != null)) {
-				throw new System.NotImplementedException();
+				//throw new System.NotImplementedException();
+				trace("warning: copyPixels alpha merge not implemented.");
 			}
 									
 			var sourceData:System.UInt32[] = sourceBitmapData.getRawData();
@@ -421,6 +422,7 @@ package flash.display {
 			var rect:System.Drawing.RectangleF = System.Drawing.RectangleF.Empty;
 			var image:CGImage = src.AsCGImage (ref rect, null, null);
 			var bd:BitmapData = BitmapData.loadFromCGImage(image);
+			src.Dispose();
 			return bd;
 #else
 			// create CGImage from NSData
