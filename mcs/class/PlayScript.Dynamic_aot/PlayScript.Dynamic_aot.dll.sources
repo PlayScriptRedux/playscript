@@ -7,6 +7,7 @@
 ../PlayScript.Dynamic/PlayScript/DynamicClassAttribute.cs
 ../PlayScript.Dynamic/PlayScript/DynamicProperties.cs
 ../PlayScript.Dynamic/PlayScript/IDynamicClass.cs
+../PlayScript.Dynamic/PlayScript/IKeyEnumerable.cs
 ../PlayScript.Dynamic/PlayScript/MethodBinder.cs
 ../PlayScript.Dynamic/PlayScript/ParamsDelegateTypes.cs
 ../PlayScript.Dynamic/PlayScript/Undefined.cs
@@ -40,6 +41,7 @@
 ../PlayScript.Dynamic/PlayScript/RuntimeBinder/PSConvertBinder.cs
 ../PlayScript.Dynamic/PlayScript/RuntimeBinder/PSGetIndexBinder.cs
 ../PlayScript.Dynamic/PlayScript/RuntimeBinder/PSGetMemberBinder.cs
+../PlayScript.Dynamic/PlayScript/RuntimeBinder/PSIsEventBinder.cs
 ../PlayScript.Dynamic/PlayScript/RuntimeBinder/PSSetIndexBinder.cs
 ../PlayScript.Dynamic/PlayScript/RuntimeBinder/PSSetMemberBinder.cs
 ../PlayScript.Dynamic/PlayScript/RuntimeBinder/PSInvokeMemberBinder.cs

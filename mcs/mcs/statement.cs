@@ -6927,6 +6927,65 @@ namespace Mono.CSharp {
 				return mg;
 			}
 
+			MethodGroupExpr ResolveGetKeyEnumerator (ResolveContext rc)
+			{
+				//
+				// Option 1: Try to match by name GetKeyEnumerator first
+				//
+				var mexpr = Expression.MemberLookup (rc, false, expr.Type,
+				                                     "GetKeyEnumerator", 0, Expression.MemberLookupRestrictions.ExactArity, loc);		// TODO: What if CS0229 ?
+				
+				var mg = mexpr as MethodGroupExpr;
+				if (mg != null) {
+					mg.InstanceExpression = expr;
+					Arguments args = new Arguments (0);
+					mg = mg.OverloadResolve (rc, ref args, this, OverloadResolver.Restrictions.ProbingOnly);
+					
+					// For ambiguous GetEnumerator name warning CS0278 was reported, but Option 2 could still apply
+					if (ambiguous_getenumerator_name)
+						mg = null;
+					
+					if (mg != null && args.Count == 0 && !mg.BestCandidate.IsStatic && mg.BestCandidate.IsPublic) {
+						return mg;
+					}
+				}
+				
+				//
+				// Option 2: Try to match using IKeyEnumerable interfaces
+				//
+				var t = expr.Type;
+				PredefinedMember<MethodSpec> iface_candidate = null;
+				rc.Module.PredefinedTypes.AsIKeyEnumerable.Define();
+
+				var ifaces = t.Interfaces;
+				if (ifaces != null) {
+					foreach (var iface in ifaces) {
+						if (iface == rc.Module.PredefinedTypes.AsIKeyEnumerable.TypeSpec && iface_candidate == null) {
+							iface_candidate = rc.Module.PredefinedMembers.AsIKeyEnumerableGetKeyEnumerator;
+						}
+					}
+				}
+				
+				if (iface_candidate == null) {
+					if (expr.Type != InternalType.ErrorType) {
+						rc.Report.Error (1579, loc,
+						                 "for statement cannot operate on variables of type `{0}' because it does not contain a definition for `{1}' or is inaccessible",
+						                 expr.Type.GetSignatureForError (), "GetKeyEnumerator");
+					}
+					
+					return null;
+				}
+				
+				var method = iface_candidate.Resolve (loc);
+				if (method == null)
+					return null;
+				
+				mg = MethodGroupExpr.CreatePredefined (method, expr.Type, loc);
+				mg.InstanceExpression = expr;
+				return mg;
+			}
+
+
 			MethodGroupExpr ResolveMoveNext (ResolveContext rc, MethodSpec enumerator)
 			{
 				var ms = MemberCache.FindMember (enumerator.ReturnType,
@@ -6985,16 +7044,33 @@ namespace Mono.CSharp {
 			{
 				bool is_dynamic = expr.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic;
 
-				if (is_dynamic) {
-					expr = Convert.ImplicitConversionRequired (ec, expr, ec.BuiltinTypes.IEnumerable, loc);
-				} else if (expr.Type.IsNullableType) {
-					expr = new Nullable.UnwrapCall (expr).Resolve (ec);
+				MethodGroupExpr get_enumerator_mg = null;;
+
+				if (for_each.AsForEachType == AsForEachType.ForEachKey) {
+					// key enumeration
+					if (is_dynamic) {
+						expr = Convert.ImplicitConversionRequired (ec, expr, ec.Module.PredefinedTypes.AsIKeyEnumerable.TypeSpec, loc);
+					} else if (expr.Type.IsNullableType) {
+						expr = new Nullable.UnwrapCall (expr).Resolve (ec);
+					}
+
+					get_enumerator_mg = ResolveGetKeyEnumerator (ec);
+
+				} else	{
+					// value enumeration
+					if (is_dynamic) {
+						expr = Convert.ImplicitConversionRequired (ec, expr, ec.BuiltinTypes.IEnumerable, loc);
+					} else if (expr.Type.IsNullableType) {
+						expr = new Nullable.UnwrapCall (expr).Resolve (ec);
+					}
+
+					get_enumerator_mg = ResolveGetEnumerator (ec);
 				}
 
-				var get_enumerator_mg = ResolveGetEnumerator (ec);
 				if (get_enumerator_mg == null) {
 					return false;
 				}
+
 
 				var get_enumerator = get_enumerator_mg.BestCandidate;
 				enumerator_variable = TemporaryVariableReference.Create (get_enumerator.ReturnType, variable.Block, loc);
@@ -7048,6 +7124,7 @@ namespace Mono.CSharp {
 					if (current_pe == null)
 						return false;
 				}
+
 
 				VarExpr ve = for_each.type as VarExpr;
 

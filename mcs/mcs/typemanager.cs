@@ -260,6 +260,7 @@ namespace Mono.CSharp
 		public readonly PredefinedType AsBinderFlags;
 		public readonly PredefinedType AsRegExp;
 		public readonly PredefinedType AsXml;
+		public readonly PredefinedType AsIKeyEnumerable;
 
 		// PlayScript dynamic binder AOT mode support..
 		private bool checkedAsDynamicMode = false;
@@ -337,6 +338,7 @@ namespace Mono.CSharp
 			AsBinderFlags = new PredefinedType (module, MemberKind.Enum, "PlayScript.RuntimeBinder", "CSharpBinderFlags");
 			AsRegExp = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "RegExp");
 			AsXml = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "XML");
+			AsIKeyEnumerable = new PredefinedType (module, MemberKind.Interface, "PlayScript", "IKeyEnumerable");
 
 			//
 			// Define types which are used for comparison. It does not matter
@@ -471,6 +473,8 @@ namespace Mono.CSharp
 		public readonly PredefinedMember<FieldSpec> StructLayoutCharSet;
 		public readonly PredefinedMember<FieldSpec> StructLayoutSize;
 		public readonly PredefinedMember<MethodSpec> TypeGetTypeFromHandle;
+		public readonly PredefinedMember<MethodSpec> AsIKeyEnumerableGetKeyEnumerator;
+
 
 		public PredefinedMembers (ModuleContainer module)
 		{
@@ -776,6 +780,10 @@ namespace Mono.CSharp
 				MemberFilter.Field ("Size", btypes.Int));
 
 			TypeGetTypeFromHandle = new PredefinedMember<MethodSpec> (module, btypes.Type, "GetTypeFromHandle", btypes.RuntimeTypeHandle);
+
+			AsIKeyEnumerableGetKeyEnumerator = new PredefinedMember<MethodSpec> (module, types.AsIKeyEnumerable,
+			                                                             "GetKeyEnumerator", TypeSpec.EmptyTypes);
+
 		}
 	}
 

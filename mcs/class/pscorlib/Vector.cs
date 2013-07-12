@@ -714,7 +714,7 @@ namespace _root {
 	
 	[DebuggerDisplay("length = {length}")]
 	[DebuggerTypeProxy(typeof(VectorDebugView<>))]
-	public sealed class Vector<T> : IList<T>, IList
+	public sealed class Vector<T> : IList<T>, IList, PlayScript.IKeyEnumerable
 	{
 		#region IList implementation
 
@@ -1634,6 +1634,57 @@ namespace _root {
 		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator ()
 		{
 			return new VectorEnumerator(this);
+		}
+
+		#endregion
+
+
+		#region IKeyEnumerable implementation
+
+		private class VectorKeyEnumerator : IEnumerator
+		{
+			public IList mVector;
+			public int mIndex;
+			
+			public VectorKeyEnumerator(IList vector)
+			{
+				mVector = vector;
+				mIndex = -1;
+			}
+			
+			#region IEnumerator implementation
+			
+			public bool MoveNext ()
+			{
+				mIndex++;
+				return mIndex < mVector.Count;
+			}
+			
+			public void Reset ()
+			{
+				mIndex = -1;
+			}
+			
+			object System.Collections.IEnumerator.Current {
+				get {
+					return mIndex;
+				}
+			}
+			
+			#endregion
+			
+			#region IDisposable implementation
+			
+			public void Dispose ()
+			{
+			}
+			
+			#endregion
+		}
+
+		IEnumerator PlayScript.IKeyEnumerable.GetKeyEnumerator()
+		{
+			return new VectorKeyEnumerator(this);
 		}
 
 		#endregion

@@ -52,8 +52,9 @@ namespace _root
 	[DynamicClass]
 	[DebuggerDisplay("length = {length}")]
 	[DebuggerTypeProxy(typeof(ArrayDebugView))]
-	public sealed class Array : Object, IDynamicClass, IList
+	public sealed class Array : Object, IDynamicClass, IList, IKeyEnumerable
 	{
+
 		#region IList implementation
 		
 		int IList.Add(object value)
@@ -149,6 +150,16 @@ namespace _root
 		}
 		
 		#endregion
+
+		#region IKeyEnumerable implementation
+		
+		IEnumerator IKeyEnumerable.GetKeyEnumerator()
+		{
+			return ((IKeyEnumerable)mList).GetKeyEnumerator();
+		}
+		
+		#endregion
+
 		
 		//
 		// Constants

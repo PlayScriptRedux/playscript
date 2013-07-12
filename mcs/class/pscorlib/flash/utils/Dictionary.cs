@@ -26,7 +26,7 @@ namespace flash.utils
 	[DebuggerDisplay ("Count = {Count}")]
 	[DebuggerTypeProxy (typeof (DictionaryDebugView))]
 	[DynamicClass]
-	public class Dictionary : Dictionary<object, object>, IDynamicClass
+	public class Dictionary : Dictionary<object, object>, IDynamicClass, PlayScript.IKeyEnumerable
 	{
 		public Dictionary(bool weakKeys = false) 
 			: base()
@@ -112,6 +112,15 @@ namespace flash.utils
 		IEnumerable IDynamicClass.__GetDynamicNames ()
 		{
 			return this.Keys;
+		}
+
+		#endregion
+
+		#region IKeyEnumerable implementation
+
+		IEnumerator PlayScript.IKeyEnumerable.GetKeyEnumerator()
+		{
+			return this.Keys.GetEnumerator();
 		}
 
 		#endregion

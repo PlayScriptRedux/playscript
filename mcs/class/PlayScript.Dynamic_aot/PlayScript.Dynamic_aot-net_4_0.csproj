@@ -165,6 +165,9 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\PSIsEventBinder.cs">
       <Link>PlayScript\RuntimeBinder\PSIsEventBinder.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\IKeyEnumerable.cs">
+      <Link>PlayScript\IKeyEnumerable.cs</Link>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

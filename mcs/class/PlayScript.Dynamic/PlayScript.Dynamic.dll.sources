@@ -5,6 +5,7 @@ AssemblyInfo.cs
 ./PlayScript/DynamicClassAttribute.cs
 ./PlayScript/DynamicProperties.cs
 ./PlayScript/IDynamicClass.cs
+./PlayScript/IKeyEnumerable.cs
 ./PlayScript/MethodBinder.cs
 ./PlayScript/ParamsDelegateTypes.cs
 ./PlayScript/ExpressionType.cs

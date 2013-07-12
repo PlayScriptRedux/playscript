@@ -12,11 +12,58 @@ package
 
 	public class Test 
 	{
-	
-		public static function Main():void {
+
 		
+//		public static implicit operator int (list:Class) {
+//			throw new System.NotImplementedException();
+//		}
+
+//		public static implicit operator Test (o:Object) {
+//		{
+//			if ( o is string)
+//			{
+//				return (string)o;
+//			}
+//			return o.ToString();
+//		}
 
 
+
+		public static function Main():void {
+
+
+//			var a:Array = ["a", "b", "c", "d", "e"];
+			var a:flash.utils.Dictionary = new flash.utils.Dictionary;
+			a['a'] = 1;
+			a['b'] = 2;
+
+			for each (var j:Object in a)
+			{
+				trace(j);
+			}
+
+
+			for (var i:Object in a)
+			{
+				trace(i);
+			}
+
+
+
+
+//			var o1:Object = 5;
+//			var o2:String = "abc";
+//			var o3:Texture = new Texture();
+//
+//			var s1:String = String(o1);
+//			var s2:String = String(o2);
+//			var s3:String = String(o3);
+//			trace(s1);
+//			trace(s2);
+//			trace(s3);
+			
+
+			/*
 			var dict = new flash.utils.Dictionary();
 			dict["a"] = 5;
 			dict["b"] = 2;
@@ -32,7 +79,7 @@ package
 
 			var sdobj:Object = sd;
 			delete sdobj["x"];
-
+*/
 //			var str = "abc";
 //			delete str["x"]; // should not compile
 			
