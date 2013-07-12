@@ -26,6 +26,17 @@ namespace _root
 
 	public static class String_fn
 	{
+		public static string CastToString (object o)
+		{
+			if (o is string) {
+				return (string)o;
+			}
+			if (o == null) {
+				return null;
+			}
+			return o.ToString();
+		}
+
 		public static string String (object o)
 		{
 			return o.ToString();

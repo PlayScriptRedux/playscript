@@ -176,7 +176,18 @@ namespace Mono.CSharp {
 				return new Invocation(new MemberAccess(new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, 
 				            expr.Location), "Boolean_fn", expr.Location), "Boolean", expr.Location), args).Resolve (opt_ec);
 			}
-			
+
+			// PlayScript references can always be implicitly cast to string
+			if (expr_type.BuiltinType != BuiltinTypeSpec.Type.String && target_type.BuiltinType == BuiltinTypeSpec.Type.String && opt_ec != null && opt_ec.FileType == SourceFileType.PlayScript && !upconvert_only) {
+				// PlayScript: Call the "Boolean()" static method to convert a dynamic to a bool.  EXPENSIVE, but hey..
+				Arguments args = new Arguments (1);
+				args.Add (new Argument(EmptyCast.Create(expr, opt_ec.BuiltinTypes.Object)));
+				//				opt_ec.Report.Warning (7164, 1, expr.Location, "Expensive reference conversion to bool");
+				return new Invocation(new MemberAccess(new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, 
+				                                                                       expr.Location), "String_fn", expr.Location), "CastToString", expr.Location), args).Resolve (opt_ec);
+			}
+
+
 			if (expr_type.Kind == MemberKind.TypeParameter)
 				return ImplicitTypeParameterConversion (expr, (TypeParameterSpec) expr.Type, target_type);
 
