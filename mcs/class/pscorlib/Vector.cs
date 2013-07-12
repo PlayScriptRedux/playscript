@@ -1188,11 +1188,13 @@ namespace _root {
 			if (startIndex < 0) 
 				throw new InvalidOperationException("splice error");
 
+			if (endIndex < (int)mCount) endIndex = (int)mCount + endIndex;		// If negative, starts from the end
+
 			if (endIndex > (int)mCount) endIndex = (int)mCount;
 
 			int count = endIndex - startIndex;
 			if (count < 0)
-				throw new InvalidOperationException("splice error");
+				count = 0;
 				
 			var result = new Vector<T>((uint)count, false);
 			System.Array.Copy(mArray, startIndex, result.mArray, 0, count);
