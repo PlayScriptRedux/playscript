@@ -172,7 +172,10 @@ namespace _root
 		public const uint UNIQUESORT = 4;
 		
 		private Vector<dynamic> mList = new Vector<dynamic>();
-		
+
+		private PlayScript.IDynamicClass __dynamicProps = null;		// By default it is not created as it is not commonly used (nor a good practice).
+																	// We create it only if there is a dynamic set.
+
 		public Array() {
 		}
 
@@ -219,7 +222,7 @@ namespace _root
 		public dynamic this[int i]
 		{
 			get {
-				return (dynamic)mList[i];
+				return mList[i];
 			}
 			set {
 				mList[i] = value;
@@ -229,20 +232,42 @@ namespace _root
 		public dynamic this[uint i]
 		{
 			get {
-				return (dynamic)mList[i];
+				return mList[i];
 			}
 			set {
 				mList[i] = value;
 			}
 		}
 		
-		public dynamic this[string i]
+		public dynamic this[string name]
 		{
 			get {
-				return mList[i];
+				int index;
+				if (int.TryParse(name, out index))
+				{
+					// If we can convert the string to an index, then it is an indexed access
+					return mList[index];
+				}
+				// Otherwise this is a dynamic property. However we can't use mList[name] as we would lose the undefined information,
+				// it would be replaced bny default(T), so in this case null.
+				if (__dynamicProps != null)
+				{
+					return __dynamicProps.__GetDynamicValue(name);
+				}
+				return PlayScript.Undefined._undefined;
 			}
 			set {
-				mList[i] = value;
+				int index;
+				if (int.TryParse(name, out index))
+				{
+					// If we can convert the string to an index, then it is an indexed access
+					mList[index] = value;
+					return;
+				}
+				if (__dynamicProps == null) {
+					__dynamicProps = new PlayScript.DynamicProperties(this);
+				}
+				__dynamicProps.__SetDynamicValue(name, value);
 			}
 		}
 		
@@ -313,7 +338,147 @@ namespace _root
 			mList.sort(sortBehavior);
 			return this;
 		}
-		
+
+		private class OptionsSorterOn : System.Collections.Generic.IComparer<object>
+		{
+			private string mFieldName;
+			//private uint mOptions;
+			private bool mDescending;
+
+			public OptionsSorterOn(string fieldName, uint options)
+			{
+				mFieldName = fieldName;
+				//mOptions = options;
+				mDescending = ((options & DESCENDING) != 0);
+
+				if ((options & (RETURNINDEXEDARRAY|UNIQUESORT)) != 0)
+				{
+					throw new NotImplementedException();
+				}
+			}
+
+			public int Compare(object x, object y)
+			{
+				if (x == null)
+				{
+					if (y == null)
+					{
+						return 0;
+					}
+					return -1;
+				}
+				else if (y == null)
+				{
+					return 1;
+				}
+
+				// Do the field look up before doing the normal comparison
+				IDynamicClass left = x as IDynamicClass;
+				if (left != null)
+				{
+					x = left.__GetDynamicValue(mFieldName);
+				}
+				else
+				{
+					var field = x.GetType().GetField(mFieldName);	// This could be cached
+					x = field.GetValue(x);
+				}
+
+				IDynamicClass right = x as IDynamicClass;
+				if (right != null)
+				{
+					y = right.__GetDynamicValue(mFieldName);
+				}
+				else
+				{
+					var field = y.GetType().GetField(mFieldName);	// This could be cached
+					y = field.GetValue(y);
+				}
+
+				//$$TODO examine options
+				var xc = x as System.IComparable;
+				int result;
+				if (xc != null)
+				{
+					result = xc.CompareTo(y);
+				}
+				else
+				{
+					throw new System.NotImplementedException();
+				}
+				return mDescending ? -result : result;
+			}
+		};
+
+		private class DefaultSorterOn : System.Collections.Generic.IComparer<object>
+		{
+			private string mFieldName;
+			public DefaultSorterOn(string fieldName)
+			{
+				mFieldName = fieldName;
+			}
+
+			public int Compare(object x, object y)
+			{
+				if (x == null)
+				{
+					if (y == null)
+					{
+						return 0;
+					}
+					return -1;
+				}
+				else if (y == null)
+				{
+					return 1;
+				}
+
+				// Do the field look up before doing the normal comparison
+				IDynamicClass left = x as IDynamicClass;
+				if (left != null)
+				{
+					x = left.__GetDynamicValue(mFieldName);
+				}
+				else
+				{
+					var field = x.GetType().GetField(mFieldName);	// This could be cached
+					x = field.GetValue(x);
+				}
+
+				IDynamicClass right = x as IDynamicClass;
+				if (right != null)
+				{
+					y = right.__GetDynamicValue(mFieldName);
+				}
+				else
+				{
+					var field = y.GetType().GetField(mFieldName);	// This could be cached
+					y = field.GetValue(y);
+				}
+
+				// Second check for null, this time for the field value
+				if (x == null)
+				{
+					if (y == null)
+					{
+						return 0;
+					}
+					return -1;
+				}
+				else if (y == null)
+				{
+					return 1;
+				}
+
+				// From doc:
+				//	http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/Vector.html#sort%28%29
+				// All elements, regardless of data type, are sorted as if they were strings, so 100 precedes 99, because "1" is a lower string value than "9".
+				// That's going to be slow...
+
+				return x.ToString().CompareTo(y.ToString());
+			}
+		}
+
 		// Sorts the elements in an array according to one or more fields in the array.
 		public Array sortOn(object fieldName, object options = null) {
 			if (length == 0) {
@@ -323,7 +488,18 @@ namespace _root
 			// Reference doc:
 			// http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/Array.html#sortOn%28%29
 
-			throw new NotImplementedException();
+			IComparer<object> comparer;
+			if (options is uint)
+			{
+				comparer = new OptionsSorterOn(fieldName.ToString(), (uint)options);
+			}
+			else 
+			{
+				//	http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/Vector.html#sort%28%29
+				comparer = new DefaultSorterOn(fieldName.ToString());
+			}
+			System.Array.Sort (mList._GetInnerArray(), 0, (int)mList.length, comparer);
+			return this;
 		}
 		
 		public Array filter(Delegate callback, dynamic thisObject = null) {
@@ -377,39 +553,60 @@ namespace _root
 		}
 		
 		
-		#region IDynamicClass Implementation
-		
-		dynamic IDynamicClass.__GetDynamicValue(string name) 
-		{
-			throw new NotImplementedException ();
+		#region IDynamicClass implementation
+
+		// this method can be used to override the dynamic property implementation of this dynamic class
+		void __SetDynamicProperties(PlayScript.IDynamicClass props) {
+			__dynamicProps = props;
 		}
 
-		bool IDynamicClass.__TryGetDynamicValue(string name, out object value) 
-		{
-			value = null;
+		dynamic PlayScript.IDynamicClass.__GetDynamicValue (string name) {
+			object value = null;
+			if (__dynamicProps != null) {
+				value = __dynamicProps.__GetDynamicValue(name);
+			}
+			return value;
+		}
+
+		bool PlayScript.IDynamicClass.__TryGetDynamicValue (string name, out object value) {
+			if (__dynamicProps != null) {
+				return __dynamicProps.__TryGetDynamicValue(name, out value);
+			} else {
+				value = null;
+				return false;
+			}
+		}
+
+		void PlayScript.IDynamicClass.__SetDynamicValue (string name, object value) {
+			if (__dynamicProps == null) {
+				__dynamicProps = new PlayScript.DynamicProperties(this);
+			}
+			__dynamicProps.__SetDynamicValue(name, value);
+		}
+
+		bool PlayScript.IDynamicClass.__DeleteDynamicValue (object name) {
+			if (__dynamicProps != null) {
+				return __dynamicProps.__DeleteDynamicValue(name);
+			}
 			return false;
 		}
 
-		void IDynamicClass.__SetDynamicValue(string name, object value)
-		{
-			throw new NotImplementedException ();
-		}
-		bool IDynamicClass.__DeleteDynamicValue(object name)
-		{
-			throw new NotImplementedException ();
-		}
-		bool IDynamicClass.__HasDynamicValue(string name)
-		{
+		bool PlayScript.IDynamicClass.__HasDynamicValue (string name) {
+			if (__dynamicProps != null) {
+				return __dynamicProps.__HasDynamicValue(name);
+			}
 			return false;
 		}
-		
-		IEnumerable IDynamicClass.__GetDynamicNames()
-		{
-			throw new NotImplementedException ();
+
+		IEnumerable PlayScript.IDynamicClass.__GetDynamicNames () {
+			if (__dynamicProps != null) {
+				return __dynamicProps.__GetDynamicNames();
+			}
+			return null;
 		}
-		
+
 		#endregion
-		
+
 	}
 }
 

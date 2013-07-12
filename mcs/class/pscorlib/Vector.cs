@@ -714,7 +714,7 @@ namespace _root {
 	
 	[DebuggerDisplay("length = {length}")]
 	[DebuggerTypeProxy(typeof(VectorDebugView<>))]
-	public sealed class Vector<T> : IList<T>, IList, PlayScript.IKeyEnumerable
+	public sealed class Vector<T> : Object, IList<T>, IList, PlayScript.IDynamicClass, PlayScript.IKeyEnumerable
 	{
 		#region IList implementation
 
@@ -808,6 +808,8 @@ namespace _root {
 		private T[] mArray;
 		private uint mCount;
 		private bool mFixed = false;
+		private PlayScript.IDynamicClass __dynamicProps = null;		// By default it is not created as it is not commonly used (nor a good practice).
+																	// We create it only if there is a dynamic set.
 
 		private static T[] sEmptyArray = new T[0];
 		
@@ -905,13 +907,25 @@ namespace _root {
 			}
 		}
 
-		public T this[string i]
+		public T this[string name]
 		{
 			get {
-				throw new NotImplementedException();
+				if (__dynamicProps != null) {
+					return default(T);				// default(T) as we can't return Undefined
+				}
+				else {
+					dynamic result = __dynamicProps.__GetDynamicValue(name);	// The instance that was set was only of T type (or undefined)
+					if (result == PlayScript.Undefined._undefined)	{
+						return default(T);				// default(T) as we can't return Undefined
+					}
+					return (T)result;
+				}
 			}
 			set {
-				throw new NotImplementedException();
+				if (__dynamicProps == null) {
+					__dynamicProps = new PlayScript.DynamicProperties();	// Create the dynamic propertties only on the first set usage
+				}
+				__dynamicProps.__SetDynamicValue(name, value);					// This will only inject T type instances.
 			}
 		}
 
@@ -1243,27 +1257,24 @@ namespace _root {
 		
 		public Vector<T> sort(dynamic sortBehavior = null) 
 		{
-			
+			IComparer<T> comparer;
 			if (sortBehavior is Delegate)
 			{
-				var fs = new FunctionSorter(sortBehavior);
-				System.Array.Sort (mArray, 0, (int)mCount, fs);
-				return this;
+				comparer = new FunctionSorter(sortBehavior);
 			}
 			else if (sortBehavior is uint)
 			{
-				var os = new OptionsSorter((uint)sortBehavior);
-				System.Array.Sort (mArray, 0, (int)mCount, os);
-				return this;
+				comparer = new OptionsSorter((uint)sortBehavior);
 			}
 			else 
 			{
 				//	http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/Vector.html#sort%28%29
-				var ds = new DefaultSorter();
-				System.Array.Sort (mArray, 0, (int)mCount, ds);
-				return this;
+				comparer = new DefaultSorter();
 			}
+			System.Array.Sort (mArray, 0, (int)mCount, comparer);
+			return this;
 		}
+
 #if true
 		public Vector<T> splice(int startIndex, uint deleteCount = 4294967295) 
 		{
@@ -1465,7 +1476,7 @@ namespace _root {
 			throw new System.NotImplementedException();
 		}
 
-		public string toString() 
+		public override string toString() 
 		{
 			return this.ToString();
 		}
@@ -1685,6 +1696,60 @@ namespace _root {
 		IEnumerator PlayScript.IKeyEnumerable.GetKeyEnumerator()
 		{
 			return new VectorKeyEnumerator(this);
+		}
+
+		#endregion
+
+		#region IDynamicClass implementation
+
+		// this method can be used to override the dynamic property implementation of this dynamic class
+		void __SetDynamicProperties(PlayScript.IDynamicClass props) {
+			__dynamicProps = props;
+		}
+
+		dynamic PlayScript.IDynamicClass.__GetDynamicValue (string name) {
+			object value = null;
+			if (__dynamicProps != null) {
+				value = __dynamicProps.__GetDynamicValue(name);
+			}
+			return value;
+		}
+
+		bool PlayScript.IDynamicClass.__TryGetDynamicValue (string name, out object value) {
+			if (__dynamicProps != null) {
+				return __dynamicProps.__TryGetDynamicValue(name, out value);
+			} else {
+				value = null;
+				return false;
+			}
+		}
+
+		void PlayScript.IDynamicClass.__SetDynamicValue (string name, object value) {
+			if (__dynamicProps == null) {
+				__dynamicProps = new PlayScript.DynamicProperties(this);
+			}
+			__dynamicProps.__SetDynamicValue(name, value);
+		}
+
+		bool PlayScript.IDynamicClass.__DeleteDynamicValue (object name) {
+			if (__dynamicProps != null) {
+				return __dynamicProps.__DeleteDynamicValue(name);
+			}
+			return false;
+		}
+
+		bool PlayScript.IDynamicClass.__HasDynamicValue (string name) {
+			if (__dynamicProps != null) {
+				return __dynamicProps.__HasDynamicValue(name);
+			}
+			return false;
+		}
+
+		IEnumerable PlayScript.IDynamicClass.__GetDynamicNames () {
+			if (__dynamicProps != null) {
+				return __dynamicProps.__GetDynamicNames();
+			}
+			return null;
 		}
 
 		#endregion
