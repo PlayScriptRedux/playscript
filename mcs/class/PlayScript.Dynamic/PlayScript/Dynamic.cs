@@ -77,6 +77,23 @@ namespace PlayScript
 				}
 				outArgs = new_args;
 			} else if (paramsIndex >= 0) {
+				if ((paramsIndex == 0) && (args_len == 1)) {
+					// For variadic, there is a special case that we handle here
+					// In the case where there is only one argument, and it matches the type of the variadic
+					// we assume we receive the variadic array as input directly and no conversion is necessary.
+					// This can happen with all the various level of stacks that we have (would be good to investigate
+					// and cover with unit-tests).
+					//
+					// Note that there could be an issue that the passed parameter happened to be of the variadic type,
+					// but was actually the first parameter of the variadic array. In this case, the behavior will be incorrect.
+					if (parameters[paramsIndex].ParameterType == args[0].GetType()) {
+						// Exact same type, assume that we are done.
+						// This is a good place to put a breakpoint if you think this is an incorrect assumption.
+						outArgs = args;
+						return true;
+					}
+				}
+
 				var new_args = new object[par_len];
 				// We reserve the last parameter for special params handling
 				// We verified earlier that there was enough args anyway to fill all the parameters (and optionally the parmsIndex)

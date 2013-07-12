@@ -91,6 +91,7 @@ using System;
 using System.Reflection;
 using PlayScript;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace PlayScript.RuntimeBinder
 {
@@ -114,7 +115,10 @@ namespace PlayScript.RuntimeBinder
 			if ((Delegate)o1 != b._d) {
 				b.UpdateInvokeInfo ((Delegate)o1, 1);
 			}
-			b._d.DynamicInvoke (b._args);
+			object[] outArgs;
+			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(b._d.Method, b._args, out outArgs);
+			Debug.Assert(canConvert, "Could not convert parameters");
+			b._d.DynamicInvoke (outArgs);
 		}
 		
 		public static void Action2 (CallSite site, object o1, object o2)
@@ -128,7 +132,10 @@ namespace PlayScript.RuntimeBinder
 			} else {
 				b._args [0] = o2;
 			}
-			b._d.DynamicInvoke (b._args);
+			object[] outArgs;
+			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(b._d.Method, b._args, out outArgs);
+			Debug.Assert(canConvert, "Could not convert parameters");
+			b._d.DynamicInvoke (outArgs);
 		}
 		
 		public static void Action3 (CallSite site, object o1, object o2, object o3)
@@ -145,7 +152,10 @@ namespace PlayScript.RuntimeBinder
 				b._args [0] = o2;
 				b._args [1] = o3;
 			}
-			b._d.DynamicInvoke (b._args);
+			object[] outArgs;
+			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(b._d.Method, b._args, out outArgs);
+			Debug.Assert(canConvert, "Could not convert parameters");
+			b._d.DynamicInvoke (outArgs);
 		}
 		
 		public static void Action4 (CallSite site, object o1, object o2, object o3, object o4)
@@ -164,7 +174,10 @@ namespace PlayScript.RuntimeBinder
 				b._args [1] = o3;
 				b._args [2] = o4;
 			}
-			b._d.DynamicInvoke (b._args);
+			object[] outArgs;
+			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(b._d.Method, b._args, out outArgs);
+			Debug.Assert(canConvert, "Could not convert parameters");
+			b._d.DynamicInvoke (outArgs);
 		}
 		
 		public static void Action5 (CallSite site, object o1, object o2, object o3, object o4, object o5)
@@ -184,7 +197,10 @@ namespace PlayScript.RuntimeBinder
 				b._args [2] = o4;
 				b._args [3] = o5;
 			}
-			b._d.DynamicInvoke (b._args);
+			object[] outArgs;
+			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(b._d.Method, b._args, out outArgs);
+			Debug.Assert(canConvert, "Could not convert parameters");
+			b._d.DynamicInvoke (outArgs);
 		}
 		
 		public static void Action6 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6)
@@ -206,7 +222,10 @@ namespace PlayScript.RuntimeBinder
 				b._args [3] = o5;
 				b._args [4] = o6;
 			}
-			b._d.DynamicInvoke (b._args);
+			object[] outArgs;
+			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(b._d.Method, b._args, out outArgs);
+			Debug.Assert(canConvert, "Could not convert parameters");
+			b._d.DynamicInvoke (outArgs);
 		}
 		
 		public static void Action7 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7)
@@ -230,7 +249,10 @@ namespace PlayScript.RuntimeBinder
 				b._args [4] = o6;
 				b._args [5] = o7;
 			}
-			b._d.DynamicInvoke (b._args);
+			object[] outArgs;
+			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(b._d.Method, b._args, out outArgs);
+			Debug.Assert(canConvert, "Could not convert parameters");
+			b._d.DynamicInvoke (outArgs);
 		}
 		
 		public static void Action8 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8)
@@ -256,7 +278,10 @@ namespace PlayScript.RuntimeBinder
 				b._args [5] = o7;
 				b._args [6] = o8;
 			}
-			b._d.DynamicInvoke (b._args);
+			object[] outArgs;
+			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(b._d.Method, b._args, out outArgs);
+			Debug.Assert(canConvert, "Could not convert parameters");
+			b._d.DynamicInvoke (outArgs);
 		}
 		
 		public static void Action9 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8, object o9)
@@ -284,7 +309,10 @@ namespace PlayScript.RuntimeBinder
 				b._args [6] = o8;
 				b._args [7] = o9;
 			}
-			b._d.DynamicInvoke (b._args);
+			object[] outArgs;
+			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(b._d.Method, b._args, out outArgs);
+			Debug.Assert(canConvert, "Could not convert parameters");
+			b._d.DynamicInvoke (outArgs);
 		}
 		
 		public static void Action10 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8, object o9, object o10)
@@ -314,7 +342,10 @@ namespace PlayScript.RuntimeBinder
 				b._args [7] = o9;
 				b._args [8] = o10;
 			}
-			b._d.DynamicInvoke (b._args);
+			object[] outArgs;
+			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(b._d.Method, b._args, out outArgs);
+			Debug.Assert(canConvert, "Could not convert parameters");
+			b._d.DynamicInvoke (outArgs);
 		}
 
 		public static object Func1 (CallSite site, object o1)
@@ -323,7 +354,10 @@ namespace PlayScript.RuntimeBinder
 			if ((Delegate)o1 != b._d) {
 				b.UpdateInvokeInfo ((Delegate)o1, 2);
 			}
-			return b._d.DynamicInvoke (null);
+			object[] outArgs;
+			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(b._d.Method, b._args, out outArgs);
+			Debug.Assert(canConvert, "Could not convert parameters");
+			return b._d.DynamicInvoke (outArgs);
 		}
 
 		public static object Func2 (CallSite site, object o1, object o2)
@@ -337,7 +371,10 @@ namespace PlayScript.RuntimeBinder
 			} else {
 				b._args [0] = o2;
 			}
-			return b._d.DynamicInvoke (b._args);
+			object[] outArgs;
+			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(b._d.Method, b._args, out outArgs);
+			Debug.Assert(canConvert, "Could not convert parameters");
+			return b._d.DynamicInvoke (outArgs);
 		}
 		
 		public static object Func3 (CallSite site, object o1, object o2, object o3)
@@ -353,7 +390,10 @@ namespace PlayScript.RuntimeBinder
 				b._args [0] = o2;
 				b._args [1] = o3;
 			}
-			return b._d.DynamicInvoke (b._args);
+			object[] outArgs;
+			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(b._d.Method, b._args, out outArgs);
+			Debug.Assert(canConvert, "Could not convert parameters");
+			return b._d.DynamicInvoke (outArgs);
 		}
 		
 		public static object Func4 (CallSite site, object o1, object o2, object o3, object o4)
@@ -371,7 +411,10 @@ namespace PlayScript.RuntimeBinder
 				b._args [1] = o3;
 				b._args [2] = o4;
 			}
-			return b._d.DynamicInvoke (b._args);
+			object[] outArgs;
+			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(b._d.Method, b._args, out outArgs);
+			Debug.Assert(canConvert, "Could not convert parameters");
+			return b._d.DynamicInvoke (outArgs);
 		}
 		
 		public static object Func5 (CallSite site, object o1, object o2, object o3, object o4, object o5)
@@ -391,7 +434,10 @@ namespace PlayScript.RuntimeBinder
 				b._args [2] = o4;
 				b._args [3] = o5;
 			}
-			return b._d.DynamicInvoke (b._args);
+			object[] outArgs;
+			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(b._d.Method, b._args, out outArgs);
+			Debug.Assert(canConvert, "Could not convert parameters");
+			return b._d.DynamicInvoke (outArgs);
 		}
 		
 		public static object Func6 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6)
@@ -413,7 +459,10 @@ namespace PlayScript.RuntimeBinder
 				b._args [3] = o5;
 				b._args [4] = o6;
 			}
-			return b._d.DynamicInvoke (b._args);
+			object[] outArgs;
+			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(b._d.Method, b._args, out outArgs);
+			Debug.Assert(canConvert, "Could not convert parameters");
+			return b._d.DynamicInvoke (outArgs);
 		}
 		
 		public static object Func7 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7)
@@ -437,7 +486,10 @@ namespace PlayScript.RuntimeBinder
 				b._args [4] = o6;
 				b._args [5] = o7;
 			}
-			return b._d.DynamicInvoke (b._args);
+			object[] outArgs;
+			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(b._d.Method, b._args, out outArgs);
+			Debug.Assert(canConvert, "Could not convert parameters");
+			return b._d.DynamicInvoke (outArgs);
 		}
 		
 		public static object Func8 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8)
@@ -463,7 +515,10 @@ namespace PlayScript.RuntimeBinder
 				b._args [5] = o7;
 				b._args [6] = o8;
 			}
-			return b._d.DynamicInvoke (b._args);
+			object[] outArgs;
+			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(b._d.Method, b._args, out outArgs);
+			Debug.Assert(canConvert, "Could not convert parameters");
+			return b._d.DynamicInvoke (outArgs);
 		}
 		
 		public static object Func9 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8, object o9)
@@ -491,7 +546,10 @@ namespace PlayScript.RuntimeBinder
 				b._args [6] = o8;
 				b._args [7] = o9;
 			}
-			return b._d.DynamicInvoke (b._args);
+			object[] outArgs;
+			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(b._d.Method, b._args, out outArgs);
+			Debug.Assert(canConvert, "Could not convert parameters");
+			return b._d.DynamicInvoke (outArgs);
 		}
 		
 		public static object Func10 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8, object o9, object o10)
@@ -521,7 +579,10 @@ namespace PlayScript.RuntimeBinder
 				b._args [7] = o9;
 				b._args [8] = o10;
 			}
-			return b._d.DynamicInvoke (b._args);
+			object[] outArgs;
+			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(b._d.Method, b._args, out outArgs);
+			Debug.Assert(canConvert, "Could not convert parameters");
+			return b._d.DynamicInvoke (outArgs);
 		}
 
 		public void UpdateInvokeInfo(Delegate d, int callArgs)
