@@ -43,4 +43,5 @@ AssemblyInfo.cs
 ./PlayScript/RuntimeBinder/CSharpInvokeConstructorBinder.cs
 ./PlayScript/RuntimeBinder/RuntimeBinderInternalCompilerException.cs
 ./PlayScript/RuntimeBinder/PSInvokeMemberBinder.cs
+./PlayScript/RuntimeBinder/PSIsEventBinder.cs
 ./System/Runtime/CompilerServices/DynamicAttribute.cs
