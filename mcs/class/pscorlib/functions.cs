@@ -13,6 +13,8 @@
 //      limitations under the License.
 
 using System;
+using System.Json;
+
 
 namespace _root
 {
@@ -34,6 +36,11 @@ namespace _root
 			if (o == null) {
 				return null;
 			}
+			if (o is JsonValue) {
+				// dont call ToString on a json value else it becomes quoted
+				return (string)(JsonValue)o;
+			}
+
 			return o.ToString();
 		}
 
