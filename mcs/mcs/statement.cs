@@ -7049,6 +7049,7 @@ namespace Mono.CSharp {
 				if (for_each.AsForEachType == AsForEachType.ForEachKey) {
 					// key enumeration
 					if (is_dynamic) {
+						ec.Module.PredefinedTypes.AsIKeyEnumerable.Define();
 						expr = Convert.ImplicitConversionRequired (ec, expr, ec.Module.PredefinedTypes.AsIKeyEnumerable.TypeSpec, loc);
 					} else if (expr.Type.IsNullableType) {
 						expr = new Nullable.UnwrapCall (expr).Resolve (ec);

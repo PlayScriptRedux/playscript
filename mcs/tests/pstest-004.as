@@ -33,17 +33,23 @@ package
 
 
 //			var a:Array = ["a", "b", "c", "d", "e"];
-			var a:flash.utils.Dictionary = new flash.utils.Dictionary;
-			a['a'] = 1;
-			a['b'] = 2;
 
-			for each (var j:Object in a)
+
+//			var a:flash.utils.Dictionary = new flash.utils.Dictionary;
+//			a['a'] = 1;
+//			a['b'] = 2;
+
+
+			var a:Array = ["a", "b", "c", "d", "e"];
+			var o:Object = a;
+
+			for each (var j:Object in o)
 			{
 				trace(j);
 			}
 
 
-			for (var i:Object in a)
+			for (var i:Object in o)
 			{
 				trace(i);
 			}
