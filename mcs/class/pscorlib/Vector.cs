@@ -1205,7 +1205,23 @@ namespace _root {
 		{
 			throw new System.NotImplementedException();
 		}
-		
+
+		private class TypedFunctionSorter : System.Collections.Generic.IComparer<T>
+		{
+			public TypedFunctionSorter(System.Func<T, T,int> comparerDelegate)
+			{
+				mDelegate = comparerDelegate;
+			}
+
+			public int Compare(T x, T y)
+			{
+				return mDelegate.Invoke(x, y);
+			}
+
+			private System.Func<T, T,int> mDelegate;
+		}
+
+
 		private class FunctionSorter : System.Collections.Generic.IComparer<T>
 		{
 			public FunctionSorter(object func)
@@ -1215,7 +1231,7 @@ namespace _root {
 			
 			public int Compare(T x, T y)
 			{
-				return (int)mFunc(x,y);
+				return (int)mFunc(x, y);
 			}
 			
 			private dynamic mFunc;
@@ -1260,7 +1276,14 @@ namespace _root {
 		public Vector<T> sort(dynamic sortBehavior = null) 
 		{
 			IComparer<T> comparer;
-			if (sortBehavior is Delegate)
+			if (sortBehavior is System.Func<T, T,int>)
+			{
+				System.Func<T, T,int> func = (System.Func<T, T,int>)sortBehavior;
+				// By definition, we know that the vector only contains type T,
+				// so if the function passed has the exact expected signature, we use the fast path
+				comparer = new TypedFunctionSorter(func);
+			}
+			else if (sortBehavior is Delegate)
 			{
 				comparer = new FunctionSorter(sortBehavior);
 			}
