@@ -59,8 +59,15 @@ namespace PlayScript.RuntimeBinder
 				return (int)((uint)o);
 			case TypeCode.Single:
 				return (int)((float)o);
-			case TypeCode.String:
-				return int.Parse((String)o);
+			case TypeCode.String: {
+					string s =(string)o;
+					if (s.StartsWith("0x", StringComparison.InvariantCultureIgnoreCase)) {
+						// Hex number - Use Convert.ToInt32() so we don't have to strip "0x" from the string.
+						return Convert.ToInt32(s, 16);
+					} else {
+						return int.Parse(s);
+					}
+				}
 			default:
 				throw new Exception ("Invalid cast to int");
 			}
