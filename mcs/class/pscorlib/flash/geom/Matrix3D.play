@@ -64,7 +64,18 @@ package flash.geom {
 		//
 		
 		public function Matrix3D(v:Vector.<Number> = null) {
-			identity();
+			if (v == null)
+			{
+				identity();
+			}
+			else
+			{
+				var inputLength:int = Math.min(v.length, 16);
+				for (var i:int = 0 ; i < inputLength ; ++i)
+				{
+					mData[i] = v[i];
+				}
+			}
 		}
 
 		// matrix4x4 concatenation
