@@ -1188,7 +1188,7 @@ namespace _root {
 			if (startIndex < 0) 
 				throw new InvalidOperationException("splice error");
 
-			if (endIndex < (int)mCount) endIndex = (int)mCount + endIndex;		// If negative, starts from the end
+			if (endIndex < 0) endIndex = (int)mCount + endIndex;		// If negative, starts from the end
 
 			if (endIndex > (int)mCount) endIndex = (int)mCount;
 
