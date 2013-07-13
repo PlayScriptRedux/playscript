@@ -54,11 +54,23 @@ namespace flash.display3D.textures {
 			}
 		}
 
+		private static int sColor = 0;
+		private static uint[] sColors = new uint[] {0x0000FF, 0x00FF00, 0xFF0000, 0xFF00FF, 0x00FFFF, 0xFFFF00};
+
+		private bool mDidUpload = false;
 		public void uploadCompressedTextureFromByteArray (ByteArray data, uint byteArrayOffset, bool async = false)
 		{
 			// $$TODO 
 			// this is empty for now
 			System.Console.WriteLine("NotImplementedWarning: Texture.uploadCompressedTextureFromByteArray()");
+
+			if (!mDidUpload) {
+				var clearData = new BitmapData(32,32, true, sColors[sColor % sColors.Length]);
+				sColor++; 
+				uploadFromBitmapData(clearData);
+				clearData.dispose();
+				mDidUpload = true;
+			}
 
 			if (async) {
 				// load with a delay
