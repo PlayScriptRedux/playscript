@@ -27,27 +27,20 @@ namespace PlayScript
 		public static bool ConvertMethodParameters(MethodBase m, object[] args, out object[] outArgs)
 		{
 			bool has_defaults = false;
-			int paramsIndex = -1;
 			var parameters = m.GetParameters();
 			var args_len = args.Length;
 			var par_len = parameters.Length;
+			int paramsIndex = -1;
+			int parameterCheckLength = par_len;
+			if (hasVariadicParameter(m)) {
+				paramsIndex = --parameterCheckLength;
+			}
 
-			for (var i = 0; i < par_len; i++) {
+			// Note that this code does not check if the arguments passed for variadic parameters
+			// matches the variadic type (we still convert later though).
+			// This might not be important with PlayScript though (where it is just object[]).
+			for (var i = 0; i < parameterCheckLength; i++) {
 				var p = parameters[i];
-				if (i == par_len - 1) {
-					// Only the last parameter can be variadic
-					var paramArrayAttribute = p.GetCustomAttributes(typeof(ParamArrayAttribute), true);
-					if ((paramArrayAttribute != null) && (paramArrayAttribute.Length != 0))
-					{
-						paramsIndex = i;
-						// After a params... There is no need to continue to parse further
-						if (args_len < paramsIndex) {
-							outArgs = null;
-							return false;
-						}
-						break;
-					}
-				}
 				if (i >= args.Length) {
 					if ((p.Attributes & ParameterAttributes.HasDefault) != 0) {
 						has_defaults = true;
@@ -65,6 +58,7 @@ namespace PlayScript
 			}
 
 			// default values and params are mutually exclusive in C# (they can't both be in the same signature)
+			// TODO: Check that this is actually true... default, then variadic?
 			// So it makes this code a bit simpler
 			if (has_defaults) {
 				var new_args = new object[par_len];
@@ -91,6 +85,11 @@ namespace PlayScript
 						// This is a good place to put a breakpoint if you think this is an incorrect assumption.
 						outArgs = args;
 						return true;
+					}
+				} else {
+					if (args_len < paramsIndex) {
+						outArgs = null;
+						return false;
 					}
 				}
 
@@ -441,8 +440,33 @@ namespace PlayScript
 				return null;
 			}
 		}
-		
 
+		// TODO: Change this to cache more method information (number of non-default parameters for example, this would make ConvertMethodParameters faster)
+		private static Dictionary<MethodBase,bool> sMethodHasVariadicParameter = new Dictionary<MethodBase, bool>();
+		private static bool hasVariadicParameter(MethodBase method)
+		{
+			// Finding variadic parameters is quite expensive, so we cache the result.
+			bool hasVariadicParameter;
+			if (sMethodHasVariadicParameter.TryGetValue(method, out hasVariadicParameter) == false)
+			{
+				hasVariadicParameter = false;
+
+				var parameters = method.GetParameters();
+				int numberOfParameters = parameters.Length;
+				if (numberOfParameters != 0)
+				{
+					var p = parameters[numberOfParameters - 1];		// Variadic parameters are always the last parameter
+
+					var paramArrayAttribute = p.GetCustomAttributes(typeof(ParamArrayAttribute), true);
+					if ((paramArrayAttribute != null) && (paramArrayAttribute.Length != 0))
+					{
+						hasVariadicParameter = true;
+					}
+				}
+				sMethodHasVariadicParameter.Add(method, hasVariadicParameter);
+			}
+			return hasVariadicParameter;
+		}
 	}
 }
 
