@@ -352,7 +352,7 @@ namespace PlayScript.RuntimeBinder
 		{
 			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
 			if ((Delegate)o1 != b._d) {
-				b.UpdateInvokeInfo ((Delegate)o1, 2);
+				b.UpdateInvokeInfo ((Delegate)o1, 1);
 			}
 			object[] outArgs;
 			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(b._d.Method, b._args, out outArgs);
