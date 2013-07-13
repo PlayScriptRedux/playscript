@@ -308,7 +308,7 @@ namespace _root
 		
 		public dynamic shift() {
 			if (mList.length == 0) {
-				return PlayScript.Undefined._undefined;
+				return null;
 			}
 			return mList.shift();
 		}
