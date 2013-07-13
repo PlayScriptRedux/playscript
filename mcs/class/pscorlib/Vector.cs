@@ -1143,7 +1143,7 @@ namespace _root {
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
 			if (mCount >= mArray.Length)
-				EnsureCapacity(mCount + 1);
+				EnsureCapacity((uint)(1.25 * (mCount + 1)));
 			mArray[mCount] = value;
 			mCount++;
 			return mCount;
@@ -1155,7 +1155,7 @@ namespace _root {
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
 			uint len = (uint)args.Length;
 			if (mArray.Length < mCount + 1 + len)
-				EnsureCapacity(mCount + 1 + len);
+				EnsureCapacity((uint)(1.25 * (mCount + len)));
 			mArray[mCount++] = value;
 			for (var i = 0; i < len; i++)
 				mArray[mCount++] = args[i];
@@ -1178,6 +1178,10 @@ namespace _root {
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
 
+			if (mCount == 0)
+			{
+				return default(T);
+			}
 			T v = this[0];
 			_RemoveAt(0);
 			return v;
