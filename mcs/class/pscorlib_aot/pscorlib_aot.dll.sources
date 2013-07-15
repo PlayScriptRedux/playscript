@@ -232,6 +232,7 @@
 ../pscorlib/PlayScript/EmbedLoader.cs
 ../pscorlib/PlayScript/ParamsDelegateTypes.cs
 ../pscorlib/PlayScript/Player.cs
+../pscorlib/PlayScript/Profiler.cs
 ../pscorlib/PlayScript/Support.cs
 ../pscorlib/QName.play
 ../pscorlib/RangeError.play

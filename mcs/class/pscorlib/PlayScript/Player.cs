@@ -432,13 +432,19 @@ namespace PlayScript
 			DispatchScrollWheelEvents();
 			
 			// stage enter frame
+			Profiler.Begin("enterFrame");
 			mStage.onEnterFrame ();
-			
+			Profiler.End("enterFrame");
+
 			// update all timer objects
+			Profiler.Begin("timers");
 			flash.utils.Timer.advanceAllTimers();
-			
+			Profiler.End("timers");
+
 			// stage exit frame
 			mStage.onExitFrame ();
+
+			Profiler.OnFrame();
 		}
 		
 
@@ -491,7 +497,6 @@ namespace PlayScript
 		}
 
 
-		private int 					mFrameCount = 0;
 		private flash.display.Stage    mStage;
 		private float mScrollDelta;
 

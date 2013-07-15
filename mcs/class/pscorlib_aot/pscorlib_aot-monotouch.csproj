@@ -702,6 +702,9 @@
     <Compile Include="..\pscorlib\flash\events\ThrottleEvent.play">
       <Link>flash\events\ThrottleEvent.play</Link>
     </Compile>
+    <Compile Include="..\pscorlib\PlayScript\Profiler.cs">
+      <Link>PlayScript\Profiler.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monotouch.csproj">

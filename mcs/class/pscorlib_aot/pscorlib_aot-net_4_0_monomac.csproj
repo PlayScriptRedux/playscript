@@ -778,6 +778,9 @@
     <Compile Include="..\pscorlib\flash\events\TextEvent.play">
       <Link>flash\events\TextEvent.play</Link>
     </Compile>
+    <Compile Include="..\pscorlib\PlayScript\Profiler.cs">
+      <Link>PlayScript\Profiler.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="flash\external\" />
