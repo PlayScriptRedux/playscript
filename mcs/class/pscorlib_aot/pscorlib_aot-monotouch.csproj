@@ -705,6 +705,57 @@
     <Compile Include="..\pscorlib\PlayScript\Profiler.cs">
       <Link>PlayScript\Profiler.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\flash\net\LocalConnection.play">
+      <Link>flash\net\LocalConnection.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\net\net_functions.play">
+      <Link>flash\net\net_functions.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\net\SharedObject.play">
+      <Link>flash\net\SharedObject.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\net\SharedObjectFlushStatus.play">
+      <Link>flash\net\SharedObjectFlushStatus.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\net\Socket.play">
+      <Link>flash\net\Socket.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\net\URLRequestHeader.play">
+      <Link>flash\net\URLRequestHeader.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\utils\Proxy.play">
+      <Link>flash\utils\Proxy.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\Debugger.play">
+      <Link>flash\Debugger.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\display\PixelSnapping.play">
+      <Link>flash\display\PixelSnapping.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\display\PNGEncoderOptions.play">
+      <Link>flash\display\PNGEncoderOptions.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\display\SimpleButton.play">
+      <Link>flash\display\SimpleButton.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\filters\BitmapFilterQuality.play">
+      <Link>flash\filters\BitmapFilterQuality.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\InlineAttribute.cs">
+      <Link>InlineAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\globalization\DateTimeFormatter.play">
+      <Link>flash\globalization\DateTimeFormatter.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\BindableAttribute.cs">
+      <Link>BindableAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\DefaultPropertyAttribute.cs">
+      <Link>DefaultPropertyAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\PartialAttribute.cs">
+      <Link>PartialAttribute.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monotouch.csproj">
