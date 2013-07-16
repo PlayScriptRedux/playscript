@@ -1895,7 +1895,7 @@ namespace PlayScript.Expando {
 		public bool ContainsKey (string key)
 		{
 			if (key == null)
-				throw new ArgumentNullException ("key");
+				return false;
 			
 			// get first item of linked list corresponding to given key
 			int hashCode = hcp.GetHashCode (key) | HASH_FLAG;
@@ -2120,11 +2120,15 @@ namespace PlayScript.Expando {
 		
 		static string Tostring (object key)
 		{
+			// Optimize for the most common case - strings
+			string keyString = key as string;
+			if (keyString != null) {
+				return keyString;
+			}
 			if (key == null)
 				throw new ArgumentNullException ("key");
-			if (!(key is string))
-				throw new ArgumentException ("not of type: " + typeof (string).ToString (), "key");
-			return (string) key;
+
+			return key.ToString();
 		}
 		
 		static object Toobject (object value)
