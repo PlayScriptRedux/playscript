@@ -21,6 +21,7 @@ namespace _root
 		static @int()
 		{
 			PlayScript.Dynamic.RegisterExtensionClass(typeof(int), typeof(_root.@int));
+			PlayScript.Dynamic.RegisterExtensionClass(typeof(uint), typeof(_root.@uint));
 		}
 
 		//
@@ -55,16 +56,32 @@ namespace _root
 		// Constants
 		//
 			
-		public const int MAX_VALUE  = 2147483647;
-
-		public const int MIN_VALUE = -2147483648;
-
+		public const int MAX_VALUE = System.Int32.MaxValue;
+		public const int MIN_VALUE = System.Int32.MinValue;
 	}
 
 	public static class @uint
 	{
+		static @uint()
+		{
+			PlayScript.Dynamic.RegisterExtensionClass(typeof(uint), typeof(_root.@uint));
+		}
+
 		public const uint MAX_VALUE = System.UInt32.MaxValue;
 		public const uint MIN_VALUE = System.UInt32.MinValue;
+
+		public static string toString(this uint i) {
+			return Convert.ToString(i);
+		}
+
+		public static string toString(this uint i, uint radix) {
+			return Convert.ToString(i, (int)radix);
+		}
+
+		public static uint valueOf(this uint i) {
+			return i;
+		}
+
 	}
 }
 
