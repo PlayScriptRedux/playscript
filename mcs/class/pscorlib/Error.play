@@ -72,9 +72,15 @@ package {
 		}
 
 		public function getStackTrace():String {
-			return "";
-//			throw new System.NotImplementedException();
-//			return null;
+			var stack:System.Diagnostics.StackTrace = new System.Diagnostics.StackTrace(true);
+			var max:int = System.Math.Min(stack.FrameCount, 16);
+			var result:String = "";
+			for (var i:int = 0 ; i < max ; ++i) {
+				var sf:System.Diagnostics.StackFrame = stack.GetFrame(i);
+				result += sf.GetFileName() + "(" + sf.GetFileLineNumber() + ")\n";
+			}
+
+			return result;
 		}
 
 		public function toString():String {
