@@ -52,6 +52,15 @@ package flash.events {
  	 	 	charCodeValue:uint = 0, keyCodeValue:uint = 0, keyLocationValue:uint = 0, ctrlKeyValue:Boolean = false, altKeyValue:Boolean = false, 
  	 		shiftKeyValue:Boolean = false, controlKeyValue:Boolean = false, commandKeyValue:Boolean = false) {
  	 		super(type);
+
+			charCode = charCodeValue;
+			keyCode = keyCodeValue;
+			keyLocation = keyLocationValue;
+			ctrlKey = ctrlKeyValue;
+			altKey = altKeyValue;
+			shiftKey = shiftKeyValue;
+			controlKey = controlKeyValue;
+			commandKey = commandKeyValue;
  	 	}
 
  	 	public override function clone():Event {
