@@ -188,7 +188,7 @@ namespace _root
 			if (len == 0x7fffffff) {
 				return s.Substring((int)startIndex);
 			} else {
-				// TODO: should this throw or be silent if length exceeded?
+				len = Math.min(len, s.Length - startIndex);
 				return s.Substring((int)startIndex, (int)len);
 			}
 		}
