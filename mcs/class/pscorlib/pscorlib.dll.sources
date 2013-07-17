@@ -159,6 +159,7 @@
 ./flash/net/SharedObject.play
 ./flash/net/SharedObjectFlushStatus.play
 ./flash/net/Socket.play
+./flash/net/URLLoader.cs
 ./flash/net/URLLoader.play
 ./flash/net/URLLoaderDataFormat.play
 ./flash/net/URLRequest.play
@@ -216,6 +217,7 @@
 ./flash/utils/IDataInput.play
 ./flash/utils/IDataOutput.play
 ./flash/utils/Proxy.play
+./flash/utils/Timer.cs
 ./flash/utils/Timer.play
 ./flash/utils/utils_functions.play
 ./FunctionExtensions.cs

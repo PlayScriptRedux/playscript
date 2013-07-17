@@ -54,10 +54,8 @@ package flash.net {
 			throw new System.NotImplementedException();
 		}
  	 	
-		public function load(request:URLRequest):void {
-			if (request != null) {
-				mRequest = request;
-			}
+		public function load(request:URLRequest, synchronous:Boolean = false):void {
+			mRequest = request;
 
 			var url:String = request.url.ToLowerInvariant();
 			if (url.StartsWith("http:") || url.StartsWith("https:")) {
@@ -65,32 +63,63 @@ package flash.net {
 				// load with a delay
 				
 				// Replace https: by http:
-				trace("Disable SSL for request " + mRequest.url);
-				mRequest.url = mRequest.url.Replace("https:", "http:");
+				if (mRequest.url.StartsWith("https:"))
+				{
+					trace("Disable SSL for request " + mRequest.url);
+					mRequest.url = mRequest.url.Replace("https:", "http:");
+				}
 
-				Timer.delayCall (doHttpLoad);
+				if (synchronous) {
+					doHttpLoadSynchronous();
+				} else {
+					doHttpLoadAsynchronous();
+				}
 
 			} else {
-				// load with a delay
-				Timer.delayCall (doLocalLoad);
+				if (synchronous) {
+					doLocalLoad();
+				} else {
+					// load with a delay
+					Timer.delayCall (doLocalLoad);
+				}
 			}
 		}
 
 		// Temporary hack
 		// TODO: Find a better place for this
-		public static function loadLocal(path:String):Object
-		{
+		public static function loadLocal(path:String):Object {
 			path = PlayScript.Player.ResolveResourcePath(path);
 
 			var result:String = File.ReadAllText(path);
 			return JSON.parse(result);
 		}
 
-		private function doHttpLoad():void
-		{
+		private function doHttpLoadSynchronous():void {
+			var request:WebRequest = sendRequest();
+			if (request) {
+				var response = HttpWebResponse(request.GetResponse());
+				responseAction(response);
+
+				// Dispatch complete event at the end of the synchronous load
+				dispatchCompleteEvent();
+			}
+		}
+
+		private function doHttpLoadAsynchronous():void {
+			// Note that data might not be sent asynchronously...
+			var request:WebRequest = sendRequest();
+			if (request) {
+				// We are going to wait the response in another thread
+				// And the complete event will be added in a delayed timer, so the event is dispatched in the main thread
+				DoWithResponse(request, responseActionWithDelayedEvent);
+			}
+		}
+
+		private function sendRequest():WebRequest {
 			var hash:String = mRequest.generateHash();
 
 			if (PlayScript.Player.Offline) {
+
 				// see if a cached response exists (for offline mode)
 				var cachedResponse:String = PlayScript.Player.LoadWebResponseFromCache(hash);
 				if (cachedResponse != null) {
@@ -99,48 +128,61 @@ package flash.net {
 					this.bytesLoaded = cachedResponse.Length;
 					this.bytesTotal  = cachedResponse.Length;
 					this.data = cachedResponse;
-					// dispatch complete event
-					this.dispatchEvent(new Event(Event.COMPLETE));
-					return;
+					dispatchCompleteEvent();
+					return null;
 				} else {
 					// offline and no cached response, return error
 					trace("URLLoader: http offline ", mRequest.url);
-					var derror:Event = new IOErrorEvent(IOErrorEvent.IO_ERROR, false, false, "offline");
-					this.dispatchEvent(derror);
-					return;
+					dispatchErrorEvent();
+					return null;
 				}
 			}
 
 			trace("URLLoader: http load ", mRequest.url);
-			
-			var wr = WebRequest.Create (mRequest.url);
-			// If required by the server, set the credentials.
-			wr.Credentials = CredentialCache.DefaultCredentials;
-			if (mRequest.method != null)
-			{
-				wr.Method = mRequest.method;
-			}
-			wr.ContentType="application/x-www-form-urlencoded";
 
-			if (mRequest.data != null) { 
-				var postData = String(mRequest.data);
-				var post = wr.GetRequestStream();
-				var writer = new StreamWriter(post);
-				writer.Write(postData);
-				writer.Close();
+			var method:String = "GET";
+			if (mRequest.method != null) {
+				method = mRequest.method;
 			}
-			
-			// Get the response.
-			var response = HttpWebResponse(wr.GetResponse ());
+
+			var wr:WebRequest;
+			var url:String = mRequest.url;
+			switch(method) {
+				case "GET": {
+					// Pass parameters using query parameters
+					if (mRequest.data) {
+						url += "?" + mRequest.data.toString();
+					}
+					wr = HttpWebRequest.Create(url);
+					wr.Method = method;
+					break;
+				}
+				default:
+					wr = HttpWebRequest.Create(url);
+					wr.Method = method;
+					if (mRequest.data) {
+						var postData = String(mRequest.data);
+						var post = wr.GetRequestStream();
+						var writer = new StreamWriter(post);
+						writer.Write(postData);
+						writer.Close();
+					}
+					break;
+			}
+
+			wr.ContentType="application/x-www-form-urlencoded";
+			wr.Credentials = CredentialCache.DefaultCredentials;
+			return wr;
+		}
+
+		private function responseAction(response:HttpWebResponse):void {
 			// Display the status.
 			System.Console.WriteLine ("HttpStatus: " + response.StatusDescription);
 			// Get the stream containing content returned by the server.
 			var dataStream = response.GetResponseStream ();
 
-			switch (dataFormat)
-			{
-				case URLLoaderDataFormat.BINARY:
-					{
+			switch (dataFormat) {
+				case URLLoaderDataFormat.BINARY: {
 						var ba:ByteArray = new ByteArray();
 						dataStream.CopyTo(ba.getRawStream());
 						ba.position = 0;
@@ -149,8 +191,7 @@ package flash.net {
 						this.bytesTotal  = ba.length;
 						break;
 					}
-				case URLLoaderDataFormat.TEXT:
-					{
+				case URLLoaderDataFormat.TEXT: {
 						var reader = new StreamReader(dataStream, System.Text.UTF8Encoding);
 						// Read the content.
 						var responseFromServer = reader.ReadToEnd ();
@@ -163,6 +204,9 @@ package flash.net {
 						// Display the content.
 						var lengthToDisplay:int = responseFromServer.length >= 500 ? 500 : responseFromServer.length;
 						System.Console.WriteLine(responseFromServer.substring(0, lengthToDisplay));
+
+						var hash:String = mRequest.generateHash();		// We already generated the hash when we sent the request, do it again here
+																		// TODO: Improve this
 						PlayScript.Player.StoreWebResponseIntoCache(hash, responseFromServer);
 						break;
 					}
@@ -173,19 +217,27 @@ package flash.net {
 			// Cleanup the streams and the response.
 			dataStream.Close ();
 			response.Close ();
-
-			// dispatch complete event
-			var de:Event = new Event(Event.COMPLETE);
-			this.dispatchEvent(de);
-
 		}
 
-		private function doLocalLoad():void
-		{
-			trace("URLLoader: local load ", mRequest.url);
+		private function responseActionWithDelayedEvent(response:HttpWebResponse):void {
+			responseAction(response);
+			// By delaying the complete event, we make sure it is going to be dispatched in the main thread
+			Timer.delayCall(dispatchCompleteEvent);
+		}
 
-			// TODO: determine scheme of url and do something appropriate (http fetch?)
-			// for now we assume everything is a local file and sync load it here
+		private function dispatchCompleteEvent():void {
+			// TODO:addEventListener Find a way to make sure this event is dispatched in the main thread
+			var de:Event = new Event(Event.COMPLETE);
+			this.dispatchEvent(de);
+		}
+
+		private function dispatchErrorEvent():void {
+			var derror:Event = new IOErrorEvent(IOErrorEvent.IO_ERROR, false, false, "offline");
+			this.dispatchEvent(derror);
+		}
+
+		private function doLocalLoad():void {
+			trace("URLLoader: local load ", mRequest.url);
 
 			// handle file loading
 			var path:String = PlayScript.Player.TryResolveResourcePath(mRequest.url);
@@ -202,16 +254,14 @@ package flash.net {
 
 			switch (dataFormat)
 			{
-			case URLLoaderDataFormat.BINARY:
-			{
+			case URLLoaderDataFormat.BINARY: {
 				var ba:ByteArray = new ByteArray();
 				ba.writeBytes(fileData);
 				ba.position = 0;
 				this.data = ba;
 				break;
 			}
-			case URLLoaderDataFormat.TEXT:
-			{
+			case URLLoaderDataFormat.TEXT: {
 				var text:String =  System.Text.Encoding.UTF8.GetString(fileData);
 				this.data = text;
 				break;

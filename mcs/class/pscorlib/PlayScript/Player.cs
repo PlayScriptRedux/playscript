@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Reflection;
 using System.IO;
@@ -154,9 +155,40 @@ namespace PlayScript
 
 		public static object LoadResource(string path, string mimeType = null)
 		{
+			var ext = Path.GetExtension(path).ToLowerInvariant();
+
 			if (path.StartsWith("http:") || path.StartsWith("https:")) {
-				// TODO: support loading via http
-				return new flash.display.Sprite();
+				// We probably want to create a lower level at some point, no need to go through all this
+				flash.net.URLRequest urlRequest = new flash.net.URLRequest(path);
+				flash.net.URLLoader urlLoader = new flash.net.URLLoader(urlRequest);
+				urlLoader.dataFormat = flash.net.URLLoaderDataFormat.BINARY;
+				urlLoader.load(urlRequest, true);		// We want the result synchronously before leaving this function
+				if (urlLoader.bytesLoaded == 0) {
+					// If empty, we consider this an error for the moment
+					Console.WriteLine("Add better error handling for Player.LoadResource() - Path: " + path);
+					return new flash.display.Bitmap(new flash.display.BitmapData(32,32));
+				}
+
+				flash.utils.ByteArray dataAsByteArray = urlLoader.data as flash.utils.ByteArray;
+				if (dataAsByteArray == null)
+				{
+					throw new NotImplementedException();	// This case should not actually happen, did we miss something in the URL loader implementation?
+				}
+
+				switch (ext)
+				{
+				case ".bmp":
+					case ".png":
+					case ".jpg":
+					case ".jpeg":
+					case ".atf":
+					case ".tif":
+					// load as bitmap
+					return new flash.display.Bitmap(flash.display.BitmapData.loadFromByteArray(dataAsByteArray));
+
+				default:
+					throw new NotImplementedException("HTTP loader for " + ext);
+				}
 			}
 
 			// handle byte arrays
@@ -166,7 +198,6 @@ namespace PlayScript
 				return flash.utils.ByteArray.loadFromPath(path);
 			}
 
-			var ext = Path.GetExtension(path).ToLowerInvariant();
 			switch (ext)
 			{
 				case ".swf":

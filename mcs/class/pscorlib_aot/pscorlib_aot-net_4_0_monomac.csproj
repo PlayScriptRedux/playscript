@@ -781,6 +781,12 @@
     <Compile Include="..\pscorlib\PlayScript\Profiler.cs">
       <Link>PlayScript\Profiler.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\flash\net\URLLoader.cs">
+      <Link>flash\net\URLLoader.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\utils\Timer.cs">
+      <Link>flash\utils\Timer.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="flash\external\" />

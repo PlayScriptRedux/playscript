@@ -756,6 +756,12 @@
     <Compile Include="..\pscorlib\PartialAttribute.cs">
       <Link>PartialAttribute.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\flash\utils\Timer.cs">
+      <Link>flash\utils\Timer.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\net\URLLoader.cs">
+      <Link>flash\net\URLLoader.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monotouch.csproj">

@@ -159,6 +159,7 @@
 ../pscorlib/flash/net/SharedObject.play
 ../pscorlib/flash/net/SharedObjectFlushStatus.play
 ../pscorlib/flash/net/Socket.play
+../pscorlib/flash/net/URLLoader.cs
 ../pscorlib/flash/net/URLLoader.play
 ../pscorlib/flash/net/URLLoaderDataFormat.play
 ../pscorlib/flash/net/URLRequest.play
@@ -216,6 +217,7 @@
 ../pscorlib/flash/utils/IDataInput.play
 ../pscorlib/flash/utils/IDataOutput.play
 ../pscorlib/flash/utils/Proxy.play
+../pscorlib/flash/utils/Timer.cs
 ../pscorlib/flash/utils/Timer.play
 ../pscorlib/flash/utils/utils_functions.play
 ../pscorlib/FunctionExtensions.cs

@@ -58,7 +58,7 @@ package flash.utils {
 			if (!mRunning)
 			{
 				mRunning = true;
-				sActiveTimerList.Add(this);
+				AddToActiveTimerList(this);
 			}
 		}
  	 	
@@ -112,15 +112,16 @@ package flash.utils {
 		public static function advanceAllTimersWithTimeDelta(deltaTimeMS:Number):void 
 		{
 			// iterate through all timers and advance their time
-			// note that we clone the array here to deal with timers that add timers or timers that must be removed
-			for each (var timer:Timer in sActiveTimerList.ToArray() )
+			// note that we clone the active timers here to deal with timers that add timers or timers that must be removed
+			// (and note that timers can be added from other threads too).
+			for each (var timer:Timer in CloneActiveTimers())
 			{
 				// advance time
 				timer.advanceTime(deltaTimeMS);
 				if (!timer.running)
 				{
 					// remove this timer from the active list 
-					sActiveTimerList.Remove(timer);
+					RemoveFromActiveTimerList(timer);
 				}
 			}
 		}
@@ -207,9 +208,6 @@ package flash.utils {
         
         // stopwatch for advancing all timer events
         private static var sEventTimer : Stopwatch = Stopwatch.StartNew();
-		
-		// list of all active timers that need per-frame processing
-		private static var sActiveTimerList:List.<Timer> = new List.<Timer>();
 		
 		// this is a dictionary of timers by id for use by setInterval/setTimeout
 		private static var sTimerDictionary:Dictionary.<int,Timer> = new Dictionary.<int,Timer>();
