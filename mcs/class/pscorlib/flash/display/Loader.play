@@ -44,7 +44,7 @@ package flash.display {
 		}
  	 	
 		public function close():void {
-			throw new System.NotImplementedException();
+			// throw new System.NotImplementedException();
 		}
  	 	
 		public function load(request:URLRequest, context:LoaderContext = null):void {
@@ -105,7 +105,9 @@ package flash.display {
 			
 			// store content in content loader info (also)
 			this.contentLoaderInfo.content = mContent;
-		
+			this.contentLoaderInfo.bytesLoaded = bytes.length;
+			this.contentLoaderInfo.bytesTotal  = bytes.length;
+
 			// dispatch complete event
 			var e:Event = new Event(Event.COMPLETE);
 			this.contentLoaderInfo.dispatchEvent(e);

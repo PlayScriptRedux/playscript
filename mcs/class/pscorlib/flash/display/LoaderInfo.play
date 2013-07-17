@@ -27,9 +27,9 @@ package flash.display {
 
 		public property bytes : ByteArray { get { throw new System.NotImplementedException(); } }
  	 	
-		public property bytesLoaded : uint { get { throw new System.NotImplementedException(); } }
+		public property bytesLoaded : uint { get; internal set; }
  	 	
-		public property bytesTotal : uint { get { throw new System.NotImplementedException(); } }
+		public property bytesTotal : uint { get; internal set; }
  	 	
 		public property childAllowsParent : Boolean { get { return true; } }
  	 	
