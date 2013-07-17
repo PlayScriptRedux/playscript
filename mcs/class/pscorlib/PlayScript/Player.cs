@@ -126,7 +126,17 @@ namespace PlayScript
 			// we set the global stage so that it will be set during this display object's constructor
 			DisplayObject.constructorStage = mStage;
 			DisplayObject.constructorLoaderInfo = new LoaderInfo();
-			DisplayObject displayObject = System.Activator.CreateInstance(type) as DisplayObject;
+			DisplayObject displayObject = null;
+
+			try {
+				displayObject = System.Activator.CreateInstance(type) as DisplayObject;
+			} catch (Exception e)
+			{
+				Console.WriteLine("CreateInstance {0} Exception: {1}", type, e.ToString());
+				if (e.InnerException != null)
+					Console.WriteLine("InnerException: {0}", e.InnerException.ToString());
+
+			}
 			DisplayObject.constructorLoaderInfo = null;
 			DisplayObject.constructorStage = null;
 
