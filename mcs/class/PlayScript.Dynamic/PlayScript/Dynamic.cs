@@ -99,7 +99,7 @@ namespace PlayScript
 				// Copy all the other parameters normally
 				System.Type paramType = parameters[paramsIndex].ParameterType;
 				Debug.Assert(paramType.IsArray, "Unexpected type");				// Because it is variadic the type is actually an array (like string[])
-				Debug.Assert(paramType.BaseType.IsArray, "Unexpected type");		// Its base type is an array too (the generic kind this time - System.Array)
+//				Debug.Assert(paramType.BaseType.IsArray, "Unexpected type");		// Its base type is an array too (the generic kind this time - System.Array)
 				paramType = paramType.BaseType.BaseType;							// Get the type we are interested in (string) for each parameters
 				Debug.Assert(paramType != null, "Unexpected type");
 
