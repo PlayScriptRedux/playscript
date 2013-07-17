@@ -27,7 +27,6 @@ namespace PlayScript.RuntimeBinder
 	{
 		private static Dictionary<Type, object> delegates = new Dictionary<Type, object>();
 
-		private PSGetMemberBinder     mGetMemberBinder;
 		private CallSite 			  mGetMemberCallSite;
 
 		private static T GetIndex<T> (CallSite site, object o, int index)
@@ -95,20 +94,15 @@ namespace PlayScript.RuntimeBinder
 
 			// fallback on getmemberbinder to do the hard work 
 			var binder = site.Binder as PSGetIndexBinder;
-			return binder.GetMember<T>(o, key);
-		}
 
-		
-		private T GetMember<T>(object o, string key)
-		{
 			// create a get member binder here
-			if (mGetMemberBinder == null) {
-				mGetMemberBinder   = new PSGetMemberBinder(key, null, null);
-				mGetMemberCallSite = CallSite< Func<CallSite, object, T> >.Create(mGetMemberBinder);
+			if (binder.mGetMemberCallSite == null) {
+				var getMemberBinder   = new PSGetMemberBinder(key, null, null);
+				binder.mGetMemberCallSite = CallSite< Func<CallSite, object, T> >.Create(getMemberBinder);
 			}
 			
 			// get member value
-			return mGetMemberBinder.GetValue<T>(mGetMemberCallSite, o, key);			
+			return PSGetMemberBinder.GetValue<T>(binder.mGetMemberCallSite, o, key);			
 		}
 
 		

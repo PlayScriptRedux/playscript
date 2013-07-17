@@ -32,7 +32,6 @@ namespace PlayScript.RuntimeBinder
 		System.Type 	type;
 		FieldInfo		field;
 		PropertyInfo	property;
-		MethodInfo      propertyGetter;
 		MethodInfo      method;
 
 		
@@ -41,196 +40,17 @@ namespace PlayScript.RuntimeBinder
 			this.name = name;
 		}
 
-		public T GetValue<T>(CallSite site, object o, string name )
+		public static T GetValue<T>(CallSite site, object o, string name )
 		{
-			var target = site as CallSite<Func<CallSite,object,T>>;
-			var otype = o.GetType();
-			
-			if (otype != type || this.name != name)
-			{
-				// set target name if it changed 
-				this.name = name;
-				// use the slow member get
-				return GetMember<T>(site, o);
-			}
-			else
-			{
-				return target.Target(site, o);
-			}
-		}
+			var binder = (PSGetMemberBinder)site.Binder;
 
-		private T GetField<T>(CallSite site, object o)
-		{
-			var otype = o.GetType();
-			if (type == otype)
+			if (name != binder.name)
 			{
-				return (T)field.GetValue(o);
-			}
-			else
-			{
-				return GetMember<T>(site, o);
-			}
-		}
-
-		private T GetFieldAndConvert<T>(CallSite site, object o)
-		{
-			var otype = o.GetType();
-			if (type == otype)
-			{
-				object value = field.GetValue(o);
-				return PlayScript.Dynamic.ConvertValue<T>(value);
-			}
-			else
-			{
-				return GetMember<T>(site, o);
-			}
-		}
-
-		private T GetProperty<T>(CallSite site, object o)
-		{
-			var otype = o.GetType();
-			if (type == otype)
-			{
-				return (T)propertyGetter.Invoke(o, null);
-			}
-			else
-			{
-				return GetMember<T>(site, o);
-			}
-		}
-
-		private T GetPropertyAndConvert<T>(CallSite site, object o)
-		{
-			var otype = o.GetType();
-			if (type == otype)
-			{
-				object value = propertyGetter.Invoke(o, null);
-				return PlayScript.Dynamic.ConvertValue<T>(value);
-			}
-			else
-			{
-				return GetMember<T>(site, o);
-			}
-		}
-
-		private T GetStaticField<T>(CallSite site, object o)
-		{
-			var otype = (Type)o;
-			if (type == otype)
-			{
-				return (T)field.GetValue(null);
-			}
-			else
-			{
-				return GetMember<T>(site, o);
-			}
-		}
-		
-		private T GetStaticFieldAndConvert<T>(CallSite site, object o)
-		{
-			var otype = (Type)o;
-			if (type == otype)
-			{
-				object value = field.GetValue(null);
-				return PlayScript.Dynamic.ConvertValue<T>(value);
-			}
-			else
-			{
-				return GetMember<T>(site, o);
-			}
-		}
-		
-		private T GetStaticProperty<T>(CallSite site, object o)
-		{
-			var otype = (Type)o;
-			if (type == otype)
-			{
-				return (T)propertyGetter.Invoke(null, null);
-			}
-			else
-			{
-				return GetMember<T>(site, o);
-			}
-		}
-		
-		private T GetStaticPropertyAndConvert<T>(CallSite site, object o)
-		{
-			var otype = (Type)o;
-			if (type == otype)
-			{
-				object value = propertyGetter.Invoke(null, null);
-				return PlayScript.Dynamic.ConvertValue<T>(value);
-			}
-			else
-			{
-				return GetMember<T>(site, o);
-			}
-		}
-
-		private T GetMethod<T>(CallSite site, object o)
-		{
-			var otype = o.GetType();
-			if (type == otype)
-			{
-				// construct method delegate
-				object value = Delegate.CreateDelegate(PlayScript.Dynamic.GetDelegateTypeForMethod(method), !method.IsStatic ? o : null, method);
-				return (T)value;
-			}
-			else
-			{
-				return GetMember<T>(site, o);
-			}
-		}
-
-		private T GetStaticMethod<T>(CallSite site, object o)
-		{
-			var otype = (Type)o;
-			if (type == otype)
-			{
-				// construct method delegate
-				object value = Delegate.CreateDelegate(PlayScript.Dynamic.GetDelegateTypeForMethod(method), null, method);
-				return (T)value;
-			}
-			else
-			{
-				return GetMember<T>(site, o);
-			}
-		}
-
-
-		private T GetConstructor<T>(CallSite site, object o)
-		{
-			return (T)(object)o.GetType();
-		}
-
-		private T GetDynamicValue<T>(CallSite site, object o)
-		{
-			if (o == null) {
-				return default(T);
+				binder.name = name;
+				binder.type = null;
 			}
 
-			if (o is IDynamicClass) {
-				var binder = (PSGetMemberBinder)site.Binder;
-				return (T)(object)((IDynamicClass)o).__GetDynamicValue(binder.name);
-			}
-			else
-			{
-				return GetMember<T>(site, o);
-			}
-		}
-
-		private T ResolveError<T>(CallSite site, object o)
-		{
-			// invoke callback
-			if (Binder.OnGetMemberError != null)
-			{
-				var value = Binder.OnGetMemberError(o, this.name, typeof(T));
-				return (value is T) ?(T)value : default(T);
-			} 
-			else 
-			{
-				return default(T);
-			}
+			return (T)GetMemberAsObject(site, o);
 		}
 
 		/// <summary>
@@ -244,59 +64,75 @@ namespace PlayScript.RuntimeBinder
 				return default(T);
 			}
 
+			object value = GetMemberAsObject(site, o);
+			return PlayScript.Dynamic.ConvertValue<T>(value);
+		}
+
+		private static object GetMemberAsObject(CallSite site, object o)
+		{
+			var binder = (PSGetMemberBinder)site.Binder;
+
 			// resolve as dictionary 
 			var dict = o as IDictionary<string, object>;
 			if (dict != null) 
 			{
 				// special case this for expando objects
-				var binder = (PSGetMemberBinder)site.Binder;
 				object value;
 				if (dict.TryGetValue(binder.name, out value)) {
-					return PlayScript.Dynamic.ConvertValue<T>(value);
+					return value;
 				}
-
+				
 				// fall through if key not found
 			}
 
-			// cast site
-			var target = site as CallSite<Func<CallSite,object,T>>;
-			// resolve member
-			ResolveMember<T>(target, o);
-			// invoke target delegate
-			return target.Target(site, o);
-		}
-
-		private static bool DoesNeedConversion<T>(Type source)
-		{
-			var target = typeof(T);
-			return (target != typeof(object) && !target.IsAssignableFrom(source));
-		}
-
-		/// <summary>
-		/// Resolves a member (property, field, method, etc) of a type and selects the appropriate specialized target delegate
-		/// for a callsite. If the type of the object changes, this method needs to be called again.
-		/// </summary>
-		private static void ResolveMember<T> (CallSite<Func<CallSite,object,T>> target, object o)
-		{
-			// update stats
-			Binder.MemberResolveCount++;
-
-			var binder = (PSGetMemberBinder)target.Binder;
-
+			
 			// determine if this is a instance member or a static member
 			bool isStatic;
+			Type otype;
 			if (o is System.Type) {
 				// static member
-				binder.type = (System.Type)o;
+				otype = (System.Type)o;
+				o = null;
 				isStatic = true;
 			} else {
 				// instance member
-				binder.type = o.GetType();
+				otype = o.GetType();
 				isStatic = false;
 			}
 
+			if (otype == binder.type)
+			{
+				// use cached resolve
+				if (binder.property != null) {
+					return binder.property.GetValue(o, null);
+				}
+				
+				if (binder.field != null) {
+					return binder.field.GetValue(o);
+				}
+
+				if (binder.method != null) {
+					// construct method delegate
+					return Delegate.CreateDelegate(PlayScript.Dynamic.GetDelegateTypeForMethod(binder.method), o, binder.method);
+				}
+				
+				// resolve as dynamic class
+				var dc = o as IDynamicClass;
+				if (dc != null) 
+				{
+					return dc.__GetDynamicValue(binder.name);
+				}
+				
+				throw new System.InvalidOperationException("Unhandled member type in PSGetMemberBinder");
+			}
+
+			// resolve name
+
+			// increment resolve count
+			Binder.MemberResolveCount++;
+
 			// resolve as property
-			var property = binder.type.GetProperty(binder.name);
+			var property = otype.GetProperty(binder.name);
 			if (property != null)
 			{
 				// found property
@@ -304,35 +140,26 @@ namespace PlayScript.RuntimeBinder
 				if (getter != null && getter.IsPublic && getter.IsStatic == isStatic) 
 				{
 					// setup binding to property
+					binder.type     = otype;
 					binder.property = property;
-					binder.propertyGetter = getter;
-					if (DoesNeedConversion<T>(property.PropertyType)) {
-						if (isStatic) target.Target = binder.GetStaticPropertyAndConvert<T>;
-						      else    target.Target = binder.GetPropertyAndConvert<T>;
-					} else {
-						if (isStatic) target.Target = binder.GetStaticProperty<T>;
-						      else    target.Target = binder.GetProperty<T>;
-					}
-					return;
+					binder.field    = null;
+					binder.method   = null;
+					return property.GetValue(o, null);
 				}
 			}
-				
+			
 			// resolve as field
-			var field = binder.type.GetField(binder.name);
+			var field = otype.GetField(binder.name);
 			if (field != null)
 			{
 				// found field
 				if (field.IsPublic && field.IsStatic == isStatic) {
 					// setup binding to field
-					binder.field = field;
-					if (DoesNeedConversion<T>(field.FieldType)) {
-						if (isStatic) target.Target = binder.GetStaticFieldAndConvert<T>;
-						      else    target.Target = binder.GetFieldAndConvert<T>;
-					} else {
-						if (isStatic) target.Target = binder.GetStaticField<T>;
-						      else    target.Target = binder.GetField<T>;
-					}
-					return;
+					binder.type     = otype;
+					binder.property = null;
+					binder.field    = field;
+					binder.method   = null;
+					return field.GetValue(o);
 				}
 			}
 
@@ -343,32 +170,40 @@ namespace PlayScript.RuntimeBinder
 			} else {
 				flags |= BindingFlags.Instance;
 			}
-			var method = binder.type.GetMethod(binder.name, flags);
+			var method = otype.GetMethod(binder.name, flags);
 			if (method != null)
 			{
-				binder.method = method;
-				if (isStatic)        target.Target = binder.GetStaticMethod<T>;
-					  else           target.Target = binder.GetMethod<T>;
-				return;
+				// setup binding to method
+				binder.type     = otype;
+				binder.property = null;
+				binder.field    = null;
+				binder.method   = method;
+				// construct method delegate
+				return Delegate.CreateDelegate(PlayScript.Dynamic.GetDelegateTypeForMethod(binder.method), o, binder.method);
 			}
 
-			// special case "constructor"
-			if (binder.name == "constructor" && typeof(T) is object) {
-				target.Target = binder.GetConstructor<T>;
-				return;
+			if (o is IDynamicClass)
+			{
+				// dynamic class
+				binder.type     = otype;
+				binder.property = null;
+				binder.field    = null;
+				binder.method   = null;
+				return ((IDynamicClass)o).__GetDynamicValue(binder.name);
 			}
 			
-			// resolve as dynamic class
-			if (o is IDynamicClass) 
+			// could not resolve name as property or field, and is not dynamic class or dictionary
+			// invoke callback
+			if (Binder.OnGetMemberError != null)
 			{
-				target.Target = binder.GetDynamicValue<T>;
-				return;
+				return Binder.OnGetMemberError (o, binder.name, null);
 			}
-
-			// resolve error
-			target.Target = binder.ResolveError<T>;
-			return;
+			else
+			{
+				return null;
+			}
 		}
+
 
 		static PSGetMemberBinder ()
 		{

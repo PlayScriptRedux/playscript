@@ -37,154 +37,17 @@ namespace PlayScript.RuntimeBinder
 			this.name = name;
 		}
 
-		public void SetValue<T>(CallSite site, object o, string name, T value)
+		public static void SetValue<T>(CallSite site, object o, string name, T value)
 		{
-			var target = site as CallSite< Action<CallSite,object,T> >;
-			var otype = o.GetType();
+			var binder = site.Binder as PSSetMemberBinder;
+			// if name has changed then invalidate type
+			if (binder.name != name)
+			{
+				binder.name = name;
+				binder.type = null;
+			}
 
-			if (otype != type || this.name != name)
-			{
-				// set target name if it changed 
-				this.name = name;
-				// use the slow member set
-				SetMember<T>(site, o, value);
-			}
-			else
-			{
-				target.Target(site, o, value);
-			}
-		}
-		
-		private void SetField<T>(CallSite site, object o, T value)
-		{
-			var otype = o.GetType();
-			if (type == otype)
-			{
-				field.SetValue(o, value);
-			}
-			else
-			{
-				SetMember<T>(site, o, value);
-			}
-		}
-		
-		private void ConvertAndSetField<T>(CallSite site, object o, T value)
-		{
-			var otype = o.GetType();
-			if (type == otype)
-			{
-				object newValue = PlayScript.Dynamic.ConvertValue(value, field.FieldType);
-				field.SetValue(o, newValue);
-			}
-			else
-			{
-				SetMember<T>(site, o, value);
-			}
-		}
-		
-		private void SetProperty<T>(CallSite site, object o, T value)
-		{
-			var otype = o.GetType();
-			if (type == otype)
-			{
-				property.SetValue(o, value, null);
-			}
-			else
-			{
-				SetMember<T>(site, o, value);
-			}
-		}
-		
-		private void ConvertAndSetProperty<T>(CallSite site, object o, T value)
-		{
-			var otype = o.GetType();
-			if (type == otype)
-			{
-				object newValue = PlayScript.Dynamic.ConvertValue(value, property.PropertyType);
-				property.SetValue(o, newValue, null);
-			}
-			else
-			{
-				SetMember<T>(site, o, value);
-			}
-		}
-
-
-		private void SetStaticField<T>(CallSite site, object o, T value)
-		{
-			var otype = (Type)o;
-			if (type == otype)
-			{
-				field.SetValue(o, value);
-			}
-			else
-			{
-				SetMember<T>(site, o, value);
-			}
-		}
-		
-		private void ConvertAndSetStaticField<T>(CallSite site, object o, T value)
-		{
-			var otype = (Type)o;
-			if (type == otype)
-			{
-				object newValue = PlayScript.Dynamic.ConvertValue(value, field.FieldType);
-				field.SetValue(null, newValue);
-			}
-			else
-			{
-				SetMember<T>(site, o, value);
-			}
-		}
-		
-		private void SetStaticProperty<T>(CallSite site, object o, T value)
-		{
-			var otype = (Type)o;
-			if (type == otype)
-			{
-				property.SetValue(null, value, null);
-			}
-			else
-			{
-				SetMember<T>(site, o, value);
-			}
-		}
-		
-		private void ConvertAndSetStaticProperty<T>(CallSite site, object o, T value)
-		{
-			var otype = (Type)o;
-			if (type == otype)
-			{
-				object newValue = PlayScript.Dynamic.ConvertValue(value, property.PropertyType);
-				property.SetValue(null, newValue, null);
-			}
-			else
-			{
-				SetMember<T>(site, o, value);
-			}
-		}
-
-		private void SetDynamicValue<T>(CallSite site, object o, T value)
-		{
-			var otype = o.GetType();
-			if (type == otype)
-			{
-				var binder = (PSSetMemberBinder)site.Binder;
-				((IDynamicClass)o).__SetDynamicValue(binder.name, value);
-			}
-			else
-			{
-				SetMember<T>(site, o, value);
-			}
-		}
-		
-		private void ResolveError<T>(CallSite site, object o, T value)
-		{
-			// invoke callback
-			if (Binder.OnSetMemberError != null)
-			{
-				Binder.OnSetMemberError (o, this.name, (object)value);
-			}
+			SetMemberAsObject(site, o, (object)value);
 		}
 
 		/// <summary>
@@ -194,56 +57,70 @@ namespace PlayScript.RuntimeBinder
 		/// </summary>
 		private static void SetMember<T> (CallSite site, object o, T value)
 		{
+			SetMemberAsObject(site, o, (object)value);
+		}
+
+		private static void SetMemberAsObject (CallSite site, object o, object value)
+		{
+			var binder = (PSSetMemberBinder)site.Binder;
+
 			// resolve as dictionary 
 			var dict = o as IDictionary;
 			if (dict != null) 
 			{
 				// special case this since it happens so much in object initialization
-				var binder = (PSSetMemberBinder)site.Binder;
 				dict[binder.name] = value;
+				return;
 			}
-			else
-			{
-				// cast site
-				var target = site as CallSite< Action<CallSite,object,T> >;
-				// resolve member
-				ResolveMember<T>(target, o);
-				// invoke target delegate (this will actually set the member to the value)
-				target.Target(site, o, value);
-			}
-		}
-
-		private static bool DoesNeedConversion<T>(Type target)
-		{
-			var source = typeof(T);
-			return (target != typeof(object) && !target.IsAssignableFrom(source));
-		}
-
-		/// <summary>
-		/// Resolves a member (property or field) of a type and selects the appropriate specialized target delegate
-		/// for a callsite. If the type of the object changes, this method needs to be called again.
-		/// </summary>
-		private static void ResolveMember<T> (CallSite< Action<CallSite,object,T> > target, object o)
-		{
-			// update stats
-			Binder.MemberResolveCount++;
-
-			var binder = (PSSetMemberBinder)target.Binder;
 
 			// determine if this is a instance member or a static member
 			bool isStatic;
+			Type otype;
 			if (o is System.Type) {
 				// static member
-				binder.type = (System.Type)o;
+				otype = (System.Type)o;
+				o = null;
 				isStatic = true;
 			} else {
 				// instance member
-				binder.type = o.GetType();
+				otype = o.GetType();
 				isStatic = false;
 			}
 
+			// see if binding type is the same
+			if (otype == binder.type)
+			{
+				// use cached resolve
+				if (binder.property != null) {
+					object newValue = PlayScript.Dynamic.ConvertValue(value, binder.property.PropertyType);
+					binder.property.SetValue(o, newValue, null);
+					return;
+				}
+
+				if (binder.field != null) {
+					object newValue = PlayScript.Dynamic.ConvertValue(value, binder.field.FieldType);
+					binder.field.SetValue(o, newValue);
+					return;
+				}
+
+				// resolve as dynamic class
+				var dc = o as IDynamicClass;
+				if (dc != null) 
+				{
+					dc.__SetDynamicValue(binder.name, value);
+					return;
+				}
+
+				throw new System.InvalidOperationException("Unhandled member type in PSSetMemberBinder");
+			}
+
+			// resolve name
+
+			// increment resolve count
+			Binder.MemberResolveCount++;
+
 			// resolve as property
-			var property = binder.type.GetProperty(binder.name);
+			var property = otype.GetProperty(binder.name);
 			if (property != null)
 			{
 				// found property
@@ -251,49 +128,50 @@ namespace PlayScript.RuntimeBinder
 				if (setter != null && setter.IsPublic && setter.IsStatic == isStatic) 
 				{
 					// setup binding to property
+					binder.type     = otype;
 					binder.property = property;
-					if (DoesNeedConversion<T>(property.PropertyType)) {
-						if (isStatic) target.Target = binder.ConvertAndSetStaticProperty<T>;
-						         else target.Target = binder.ConvertAndSetProperty<T>;
-					} else {
-						if (isStatic) target.Target = binder.SetStaticProperty<T>;
-						         else target.Target = binder.SetProperty<T>;
-					}
+					binder.field    = null;
+					object newValue = PlayScript.Dynamic.ConvertValue(value, binder.property.PropertyType);
+					binder.property.SetValue(o, newValue, null);
 					return;
 				}
 			}
-				
+			
 			// resolve as field
-			var field = binder.type.GetField(binder.name);
+			var field = otype.GetField(binder.name);
 			if (field != null)
 			{
 				// found field
 				if (field.IsPublic && field.IsStatic == isStatic) {
 					// setup binding to field
-					binder.field = field;
-					if (DoesNeedConversion<T>(field.FieldType)) {
-						if (isStatic) target.Target = binder.ConvertAndSetStaticField<T>;
-						         else target.Target = binder.ConvertAndSetField<T>;
-					} else {
-						if (isStatic) target.Target = binder.SetStaticField<T>;
-						         else target.Target = binder.SetField<T>;
-					}
+					binder.type     = otype;
+					binder.property = null;
+					binder.field    = field;
+					object newValue = PlayScript.Dynamic.ConvertValue(value, binder.field.FieldType);
+					binder.field.SetValue(o, newValue);
 					return;
 				}
 			}
 
-			// resolve as dynamic class
-			if (o is IDynamicClass) 
+			if (o is IDynamicClass)
 			{
-				target.Target = binder.SetDynamicValue<T>;
+				// dynamic class
+				binder.type     = otype;
+				binder.property = null;
+				binder.field    = null;
+				((IDynamicClass)o).__SetDynamicValue(binder.name, value);
 				return;
 			}
 
-			// resolve error
-			target.Target = binder.ResolveError<T>;
-			return;
+			// could not resolve name as property or field, and is not dynamic class or dictionary
+			// invoke callback
+			if (Binder.OnSetMemberError != null)
+			{
+				Binder.OnSetMemberError (o, binder.name, value);
+			}
 		}
-		
+
+
 		static PSSetMemberBinder ()
 		{
 			delegates.Add (typeof(Action<CallSite, object, int>), (Action<CallSite, object, int>)SetMember<int>);

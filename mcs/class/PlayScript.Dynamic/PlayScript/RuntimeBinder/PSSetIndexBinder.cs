@@ -24,7 +24,6 @@ namespace PlayScript.RuntimeBinder
 	{
 		private static Dictionary<Type, object> delegates = new Dictionary<Type, object>();
 
-		private PSSetMemberBinder mSetMemberBinder;
 		private CallSite 	      mSetMemberCallSite;
 
 		private static void SetIndex<T> (CallSite site, object o, int index, T value)
@@ -76,19 +75,15 @@ namespace PlayScript.RuntimeBinder
 
 			// fallback on setmemberbinder to do the hard work 
 			var binder = site.Binder as PSSetIndexBinder;
-			binder.SetMember(o, key, value);
-		}
 
-		private void SetMember<T>(object o, string key, T value)
-		{
 			// create a set member binder here to set
-			if (mSetMemberBinder == null) {
-				mSetMemberBinder   = new PSSetMemberBinder(0, key, null, null);
-				mSetMemberCallSite = CallSite< Action<CallSite, object, T> >.Create(mSetMemberBinder);
+			if (binder.mSetMemberCallSite == null) {
+				var setMemberBinder   = new PSSetMemberBinder(0, key, null, null);
+				binder.mSetMemberCallSite = CallSite< Action<CallSite, object, T> >.Create(setMemberBinder);
 			}
 
 			// set member value
-			mSetMemberBinder.SetValue<T>(mSetMemberCallSite, o, key, value);			
+			PSSetMemberBinder.SetValue<T>(binder.mSetMemberCallSite, o, key, value);			
 		}
 
 
