@@ -1,6 +1,7 @@
 
 ./AssemblyInfo.cs
 ../PlayScript.Dynamic/PlayScript/ExpressionType.cs
+../PlayScript.Dynamic/PlayScript/ExtensionAttribute.cs
 ../PlayScript.Dynamic/PlayScript/CallSite.cs
 ../PlayScript.Dynamic/PlayScript/CallSiteBinder.cs
 ../PlayScript.Dynamic/PlayScript/Dynamic.cs

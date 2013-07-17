@@ -9,6 +9,7 @@ AssemblyInfo.cs
 ./PlayScript/MethodBinder.cs
 ./PlayScript/ParamsDelegateTypes.cs
 ./PlayScript/ExpressionType.cs
+./PlayScript/ExtensionAttribute.cs
 ./PlayScript/Undefined.cs
 ./PlayScript/Expando/BindingRestrictionsEx.cs
 ./PlayScript/Expando/CacheDict.cs

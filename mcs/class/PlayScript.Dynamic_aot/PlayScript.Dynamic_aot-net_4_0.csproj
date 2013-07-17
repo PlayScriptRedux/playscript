@@ -45,6 +45,9 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\ExpressionType.cs">
       <Link>PlayScript\ExpressionType.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\ExtensionAttribute.cs">
+      <Link>PlayScript\ExtensionAttribute.cs</Link>
+    </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\Expando\BindingRestrictionsEx.cs">
       <Link>PlayScript\Expando\BindingRestrictionsEx.cs</Link>
     </Compile>

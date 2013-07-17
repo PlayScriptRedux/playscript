@@ -433,6 +433,10 @@ namespace PlayScript
 
 		public static Type GetExtensionClassForType(Type type)
 		{
+			if (!sExtensionMethodsInitialized) {
+				InitializeExtensionMethods();
+			}
+
 			Type et;
 			if (sExtensions.TryGetValue(type, out et)) {
 				return et;
@@ -467,6 +471,25 @@ namespace PlayScript
 			}
 			return hasVariadicParameter;
 		}
+
+		private static void InitializeExtensionMethods()
+		{
+			foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+			{
+				foreach (var type in assembly.GetTypes())
+				{
+					PlayScript.ExtensionAttribute attribute = Attribute.GetCustomAttribute(type, typeof(PlayScript.ExtensionAttribute)) as PlayScript.ExtensionAttribute;
+					if (attribute != null)
+					{
+						RegisterExtensionClass(attribute.OverloadedType, type);
+					}
+				}
+			}
+
+			sExtensionMethodsInitialized = true;
+		}
+
+		private static bool sExtensionMethodsInitialized = false;
 	}
 }
 

@@ -17,13 +17,9 @@ using System.Text;
 
 namespace _root
 {
+	[PlayScript.Extension(typeof(string))]
 	public static class String
 	{
-		static String()
-		{
-			PlayScript.Dynamic.RegisterExtensionClass(typeof(string), typeof(_root.String));
-		}
-
 		public static int get_length(this string s) {
 			return (s!=null) ? s.Length : -1;
 		}
@@ -152,7 +148,7 @@ namespace _root
 			if (s == null) return new Array();
 
 			if (limit != 0x7fffffff) {
-				if (delimiter != "") {
+				if (delimiter.ToString() != "") {
 					var split = s.Split(new string[] {(string)delimiter}, limit, StringSplitOptions.None);
 					return new Array(split);
 				} else {
@@ -164,7 +160,7 @@ namespace _root
 				var re = delimiter as RegExp;
 				return re.split(s);
 			} else if (delimiter is string) {
-				if (delimiter != "") {
+				if (delimiter.ToString() != "") {
 					var split = s.Split(new string[] {(string)delimiter}, StringSplitOptions.None );
 					return new Array(split);
 				} else {

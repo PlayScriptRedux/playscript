@@ -14,12 +14,8 @@
 
 namespace _root {
 
+	[PlayScript.Extension(typeof(double))]
 	public static class Number {
-	
-		static Number()
-		{
-			PlayScript.Dynamic.RegisterExtensionClass(typeof(double), typeof(_root.Number));
-		}
 
 		//
 		// Extension Methods

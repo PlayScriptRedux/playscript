@@ -149,6 +149,7 @@
     <Compile Include="ActionScript\CallSite.cs" />
     <Compile Include="ActionScript\CallSiteBinder.cs" />
     <Compile Include="ActionScript\ExpressionType.cs" />
+    <Compile Include="ActionScript\ExtensionAttribute.cs" />
     <Compile Include="..\pscorlib\ActionScript\Expando\CollectionDebuggerView.cs">
       <Link>ActionScript\Expando\CollectionDebuggerView.cs</Link>
     </Compile>

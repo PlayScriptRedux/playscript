@@ -16,14 +16,9 @@ using System;
 
 namespace _root
 {
+	[PlayScript.Extension(typeof(int))]
 	public static class @int
 	{
-		static @int()
-		{
-			PlayScript.Dynamic.RegisterExtensionClass(typeof(int), typeof(_root.@int));
-			PlayScript.Dynamic.RegisterExtensionClass(typeof(uint), typeof(_root.@uint));
-		}
-
 		//
 		// Methods
 		//
@@ -60,13 +55,9 @@ namespace _root
 		public const int MIN_VALUE = System.Int32.MinValue;
 	}
 
+	[PlayScript.Extension(typeof(uint))]
 	public static class @uint
 	{
-		static @uint()
-		{
-			PlayScript.Dynamic.RegisterExtensionClass(typeof(uint), typeof(_root.@uint));
-		}
-
 		public const uint MAX_VALUE = System.UInt32.MaxValue;
 		public const uint MIN_VALUE = System.UInt32.MinValue;
 
