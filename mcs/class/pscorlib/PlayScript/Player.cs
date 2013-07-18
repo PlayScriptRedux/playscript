@@ -506,17 +506,17 @@ namespace PlayScript
 		}
 
 		public static bool Offline = false;
+		public static bool SaveToOfflineCache = false;
 		#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH 
-		public static string WebCacheLoadPath = NSBundle.MainBundle.ResourcePath + "/webcache/";
+		public static string WebCachePath = NSBundle.MainBundle.ResourcePath + "/webcache/";
 		#else
-		public static string WebCacheLoadPath = "./webcache/";
+		public static string WebCachePath = "./webcache/";
 		#endif
-		public static string WebCacheStorePath = null;
 
-		public static string LoadWebResponseFromCache(string hash)
+		public static string LoadTextWebResponseFromCache(string hash)
 		{
-			if (Offline && WebCacheLoadPath != null) {
-				var path = 	WebCacheLoadPath + hash + ".response.txt"; 
+			if (Offline && WebCachePath != null) {
+				var path = 	System.IO.Path.Combine(WebCachePath, hash); 
 				if (File.Exists(path)) {
 					return System.IO.File.ReadAllText(path);
 				} else {
@@ -526,14 +526,45 @@ namespace PlayScript
 			return null;
 		}
 
-		public static void StoreWebResponseIntoCache(string hash, string response)
+		public static flash.utils.ByteArray LoadBinaryWebResponseFromCache(string hash)
 		{
-			if (WebCacheStorePath != null) {
-				if (!System.IO.Directory.Exists(WebCacheStorePath)) {
-					System.IO.Directory.CreateDirectory(WebCacheStorePath);
+			if (Offline && WebCachePath != null) {
+				var path = 	System.IO.Path.Combine(WebCachePath, hash); 
+				if (File.Exists(path)) {
+					return flash.utils.ByteArray.loadFromPath(path);
+				} else {
+					return null;
 				}
-				var path = 	WebCacheStorePath + hash + ".response.txt"; 
+			}
+			return null;
+		}
+
+		public static void StoreTextWebResponseIntoCache(string hash, string response)
+		{
+			if (SaveToOfflineCache && WebCachePath != null) {
+				if (!System.IO.Directory.Exists(WebCachePath)) {
+					System.IO.Directory.CreateDirectory(WebCachePath);
+				}
+				var path = 	System.IO.Path.Combine(WebCachePath, hash); 
 				System.IO.File.WriteAllText(path, response);
+			}
+		}
+
+		public static void StoreBinaryWebResponseIntoCache(string hash, flash.utils.ByteArray response)
+		{
+			if (SaveToOfflineCache && WebCachePath != null) {
+				if (!System.IO.Directory.Exists(WebCachePath)) {
+					System.IO.Directory.CreateDirectory(WebCachePath);
+				}
+				var path = 	System.IO.Path.Combine(WebCachePath, hash); 
+
+				// write byte array to disk
+				response.position = 0;
+				using (var fs = new FileStream(path, FileMode.Create))
+				{
+					response.getRawStream().CopyTo(fs);
+				}
+				response.position = 0;
 			}
 		}
 

@@ -69,10 +69,21 @@ package flash.net {
 					mRequest.url = mRequest.url.Replace("https:", "http:");
 				}
 
-				if (synchronous) {
-					doHttpLoadSynchronous();
-				} else {
-					doHttpLoadAsynchronous();
+				if (PlayScript.Player.Offline) {
+					// load from offline cache
+					if (synchronous) {
+						doLoadFromOfflineCache();
+					} else {
+						// this must be done on the 'next' frame
+						Timer.delayCall (doLoadFromOfflineCache);
+					}
+				} else 
+				{
+					if (synchronous) {
+						doHttpLoadSynchronous();
+					} else {
+						doHttpLoadAsynchronous();
+					}
 				}
 
 			} else {
@@ -87,12 +98,6 @@ package flash.net {
 
 		// Temporary hack
 		// TODO: Find a better place for this
-		public static function loadLocal(path:String):Object {
-			path = PlayScript.Player.ResolveResourcePath(path);
-
-			var result:String = File.ReadAllText(path);
-			return JSON.parse(result);
-		}
 
 		private function doHttpLoadSynchronous():void {
 			var request:WebRequest = sendRequest();
@@ -115,29 +120,45 @@ package flash.net {
 			}
 		}
 
-		private function sendRequest():WebRequest {
-			var hash:String = mRequest.generateHash();
+		private function doLoadFromOfflineCache():void {
+			var hash:String = mRequest.getHash();
 
-			if (PlayScript.Player.Offline) {
-
-				// see if a cached response exists (for offline mode)
-				var cachedResponse:String = PlayScript.Player.LoadWebResponseFromCache(hash);
-				if (cachedResponse != null) {
-					trace("URLLoader: http cached ", mRequest.url);
+			switch (dataFormat) 
+			{
+			case URLLoaderDataFormat.BINARY: 
+				var cachedBinaryResponse:ByteArray = PlayScript.Player.LoadBinaryWebResponseFromCache(hash);
+				if (cachedBinaryResponse != null) 
+				{
+					trace("URLLoader: http cached binary ", mRequest.url);
 					
-					this.bytesLoaded = cachedResponse.Length;
-					this.bytesTotal  = cachedResponse.Length;
-					this.data = cachedResponse;
+					this.bytesLoaded = cachedBinaryResponse.length;
+					this.bytesTotal  = cachedBinaryResponse.length;
+					this.data = cachedBinaryResponse;
 					dispatchCompleteEvent();
-					return null;
-				} else {
-					// offline and no cached response, return error
-					trace("URLLoader: http offline ", mRequest.url);
-					dispatchErrorEvent();
-					return null;
-				}
+					return;
+				} 
+				break;
+			case URLLoaderDataFormat.TEXT: 
+				var cachedTextResponse:String = PlayScript.Player.LoadTextWebResponseFromCache(hash);
+				if (cachedTextResponse != null) 
+				{
+					trace("URLLoader: http cached text ", mRequest.url);
+					
+					this.bytesLoaded = cachedTextResponse.Length;
+					this.bytesTotal  = cachedTextResponse.Length;
+					this.data = cachedTextResponse;
+					dispatchCompleteEvent();
+					return;
+				} 
+				break;
 			}
+				
+			// offline and no cached response, return error
+			trace("URLLoader: http offline ", mRequest.url);
+			dispatchErrorEvent();
+		}
 
+		private function sendRequest():WebRequest {
 			trace("URLLoader: http load ", mRequest.url);
 
 			var method:String = "GET";
@@ -176,6 +197,7 @@ package flash.net {
 		}
 
 		private function responseAction(response:HttpWebResponse):void {
+			var hash:String = mRequest.getHash();
 			// Display the status.
 			System.Console.WriteLine ("HttpStatus: " + response.StatusDescription);
 			// Get the stream containing content returned by the server.
@@ -189,6 +211,7 @@ package flash.net {
 						this.data = ba;
 						this.bytesLoaded = ba.length;
 						this.bytesTotal  = ba.length;
+						PlayScript.Player.StoreBinaryWebResponseIntoCache(hash, ba);
 						break;
 					}
 				case URLLoaderDataFormat.TEXT: {
@@ -202,12 +225,10 @@ package flash.net {
 						reader.Close ();
 
 						// Display the content.
-						var lengthToDisplay:int = responseFromServer.length >= 500 ? 500 : responseFromServer.length;
-						System.Console.WriteLine(responseFromServer.substring(0, lengthToDisplay));
+						// var lengthToDisplay:int = responseFromServer.length >= 500 ? 500 : responseFromServer.length;
+						// System.Console.WriteLine(responseFromServer.substring(0, lengthToDisplay));
 
-						var hash:String = mRequest.generateHash();		// We already generated the hash when we sent the request, do it again here
-																		// TODO: Improve this
-						PlayScript.Player.StoreWebResponseIntoCache(hash, responseFromServer);
+						PlayScript.Player.StoreTextWebResponseIntoCache(hash, responseFromServer);
 						break;
 					}
 				default:

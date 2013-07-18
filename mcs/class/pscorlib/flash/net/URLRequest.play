@@ -54,14 +54,26 @@ package flash.net {
 			this.url = url;
 		}
 
-		internal function generateHash():String {
+		private function generateHash():String {
 
 			var str = method + "_" + url;
 			if (data is String) {
 				str += data;
 			}
-			return PlayScript.Player.CalculateMD5Hash(str);
+
+			var filename = System.IO.Path.GetFileName(this.url);
+			return PlayScript.Player.CalculateMD5Hash(str) + "_" + filename;
 		}
+
+		internal function getHash():String {
+			// cache hash here locally
+			if (mHash == null) {
+				mHash = generateHash();
+			}
+			return mHash;
+		}
+
+		private var mHash:String;
 	
 	}
 
