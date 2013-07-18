@@ -113,7 +113,12 @@ package flash.display {
 		}
 		
 		public function getBounds(targetCoordinateSpace:DisplayObject):Rectangle {
-			throw new NotImplementedException();
+			if (targetCoordinateSpace == this) {
+				// if the target coordinate space is the same as this object then just return our dimensions
+				return new Rectangle(0,0,width,height); 
+			} else {
+				throw new NotImplementedException();
+			}
 		}
 		
 		public function getRect(targetCoordinateSpace:DisplayObject):Rectangle {
