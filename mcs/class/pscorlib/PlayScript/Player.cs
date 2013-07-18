@@ -454,6 +454,36 @@ namespace PlayScript
 
 			}
 		}
+
+		public void OnPinchRecognized(UIPinchGestureRecognizer pinchRecognizer)
+		{
+			var tge = new flash.events.TransformGestureEvent(flash.events.TransformGestureEvent.GESTURE_ZOOM, true, false);
+			tge.scaleX = tge.scaleY = pinchRecognizer.Scale;
+
+			switch (pinchRecognizer.State)
+			{
+				case UIGestureRecognizerState.Possible:
+				case UIGestureRecognizerState.Began:
+					tge.phase = "begin";
+					break;
+
+				case UIGestureRecognizerState.Changed:
+					tge.phase = "update";
+					break;
+
+				case UIGestureRecognizerState.Recognized:
+				//case UIGestureRecognizerState.Ended:		// Same as recognized
+					tge.phase = "end";
+					break;
+
+				case UIGestureRecognizerState.Cancelled:
+				case UIGestureRecognizerState.Failed:
+					return;		// In this case, we don't even send the event
+			}
+
+
+			mStage.dispatchEvent(tge);
+		}
 #endif
 		
 		public void OnResize (RectangleF bounds)

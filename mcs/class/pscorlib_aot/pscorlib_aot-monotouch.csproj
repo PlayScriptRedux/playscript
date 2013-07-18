@@ -762,6 +762,12 @@
     <Compile Include="..\pscorlib\flash\net\URLLoader.cs">
       <Link>flash\net\URLLoader.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\flash\events\GestureEvent.play">
+      <Link>flash\events\GestureEvent.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\events\TransformGestureEvent.play">
+      <Link>flash\events\TransformGestureEvent.play</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monotouch.csproj">
