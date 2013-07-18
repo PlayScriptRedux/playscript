@@ -48,6 +48,14 @@ namespace PlayScript
 			mStage = new flash.display.Stage ((int)bounds.Width, (int)bounds.Height);
 		}
 
+		// the main class of the player (will be loaded after player initializes)
+		public static System.Type 	ApplicationClass {get; set;}
+
+		// arguments to the main class (usually form command line)
+		public static string[] 		ApplicationArgs {get; set;}
+
+		public static int           ApplicationLoadDelay {get;set;}
+
 		static Player()
 		{
 			// add resource directories in static constructor
@@ -119,9 +127,6 @@ namespace PlayScript
 		
 		public DisplayObject LoadClass(System.Type type)
 		{
-			// get desired size of object from [SWF] attributes
-			System.Drawing.Size? desiredSize = GetSWFDesiredSize(type);
-
 			// construct instance of type
 			// we set the global stage so that it will be set during this display object's constructor
 			DisplayObject.constructorStage = mStage;
@@ -142,16 +147,9 @@ namespace PlayScript
 
 			if (displayObject != null) {
 
-				// TODO: this size may need to be set before the display object constructor executes
-				if (desiredSize.HasValue) {
-					// resize object to desired size
-					displayObject.width  = desiredSize.Value.Width;
-					displayObject.height = desiredSize.Value.Height;
-				} else {
-					// resize object to size of stage
-					displayObject.width  = mStage.stageWidth;
-					displayObject.height = mStage.stageHeight;
-				}
+				// resize object to size of stage
+				displayObject.width  = mStage.stageWidth;
+				displayObject.height = mStage.stageHeight;
 
 				// add display object to stage
 				mStage.addChild(displayObject);
@@ -486,17 +484,24 @@ namespace PlayScript
 		}
 #endif
 		
-		public void OnResize (RectangleF bounds)
-		{
-			// Reset The Current Viewport
-			//GL.Viewport (0, 0, (int)bounds.Size.Width, (int)bounds.Size.Height);
-			mStage.onResize((int)bounds.Size.Width, (int)bounds.Size.Height);
-		}
-		
-		public void OnFrame()
+		public void OnFrame(RectangleF bounds)
 		{
 			//GL.ClearColor (1,0,1,0);
 			//GL.Clear (ClearBufferMask.ColorBufferBit);
+
+			// resize the stage every frame (this will do nothing unless size really changes)
+			mStage.onResize((int)bounds.Size.Width, (int)bounds.Size.Height);
+
+			// wait until the desired load delay (to fix some resizing issues on OSX)
+			if (!mApplicationLoaded && mFrameCount >= ApplicationLoadDelay)
+			{
+				if (ApplicationClass != null) 
+				{
+					// load the application class
+					LoadClass(ApplicationClass);
+					mApplicationLoaded = true;
+				}
+			}
 
 			// dispatch scroll wheel events 
 			// these are done here because they must be done smoothly and incrementally, spread out over time
@@ -516,6 +521,8 @@ namespace PlayScript
 			mStage.onExitFrame ();
 
 			Profiler.OnFrame();
+
+			mFrameCount++;
 		}
 		
 
@@ -537,11 +544,7 @@ namespace PlayScript
 
 		public static bool Offline = false;
 		public static bool SaveToOfflineCache = false;
-		#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH 
-		public static string WebCachePath = NSBundle.MainBundle.ResourcePath + "/webcache/";
-		#else
-		public static string WebCachePath = "./webcache/";
-		#endif
+		public static string WebCachePath = null;
 
 		public static string LoadTextWebResponseFromCache(string hash)
 		{
@@ -601,6 +604,8 @@ namespace PlayScript
 
 		private flash.display.Stage    mStage;
 		private float mScrollDelta;
+		private int   mFrameCount;
+		private bool  mApplicationLoaded;
 
 		private static List<string> sResourceDirectories = new List<string>();
 	}
