@@ -524,6 +524,29 @@ namespace PlayScript
 
 			mFrameCount++;
 		}
+
+
+		// runs until graphics have been presented through Stage3D
+		public void RunUntilPresent(RectangleF bounds, Action onPresent = null, int maxFrames = 1000)
+		{
+			bool didPresent = false;
+
+			// set context3D callback
+			flash.display3D.Context3D.OnPresent = (context) =>
+			{
+				didPresent = true;
+				if (onPresent != null)
+					onPresent();
+			};
+
+			// loop until a Stage3D present occurred
+			int count = 0; 
+			while (!didPresent && (count < maxFrames))
+			{
+				OnFrame(bounds);
+				count++;
+			}
+		}
 		
 
 		public static string CalculateMD5Hash(string input)
