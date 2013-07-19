@@ -62,6 +62,7 @@ namespace flash.display3D.textures {
 		{
 			// $$TODO 
 			// this is empty for now
+#if PLATFORM_MONOMAC
 			System.Console.WriteLine("NotImplementedWarning: Texture.uploadCompressedTextureFromByteArray()");
 
 			if (!mDidUpload) {
@@ -71,7 +72,23 @@ namespace flash.display3D.textures {
 				clearData.dispose();
 				mDidUpload = true;
 			}
+#endif
 
+#if PLATFORM_MONOTOUCH
+			// Bind the texture
+			GL.BindTexture (textureTarget, textureId);
+
+			if (byteArrayOffset != 0) {
+				throw new NotSupportedException();
+			}
+			OpenTK.Graphics.ES20.PixelInternalFormat pixelFormat = (OpenTK.Graphics.ES20.PixelInternalFormat)0x8C02;
+			GL.CompressedTexImage2D(textureTarget, 0, pixelFormat, mWidth, mHeight, 0, (int)(data.length - byteArrayOffset), data.getRawStream().ToArray());
+
+			GL.GenerateMipmap(textureTarget);
+
+			// unbind texture and pixel buffer
+			GL.BindTexture (textureTarget, 0);
+#endif
 			if (async) {
 				// load with a delay
 				var timer = new flash.utils.Timer(1, 1);
@@ -105,6 +122,8 @@ namespace flash.display3D.textures {
 
 			// unbind texture and pixel buffer
 			GL.BindTexture (textureTarget, 0);
+
+			source.dispose();
 		}
 		
 		public void uploadFromByteArray(ByteArray data, uint byteArrayOffset, uint miplevel = 0) {
