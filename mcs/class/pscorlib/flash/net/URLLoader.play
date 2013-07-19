@@ -262,11 +262,11 @@ package flash.net {
 
 			// handle file loading
 			var path:String = PlayScript.Player.TryResolveResourcePath(mRequest.url);
-			if (path == null || !File.Exists(path))
+			if (path == null)
 			{
 				trace("URLLoader: could not load ", mRequest.url);
 				// io error, file not found
-				this.dispatchEvent(new Event(IOErrorEvent.IO_ERROR));
+				this.dispatchEvent(new IOErrorEvent(IOErrorEvent.IO_ERROR));
 				return;
 			}
 
