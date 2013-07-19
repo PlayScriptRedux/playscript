@@ -20,6 +20,7 @@ using System.Reflection;
 using System.IO;
 
 using flash.display;
+using flash.utils;
 
 #if PLATFORM_MONOMAC
 using MonoMac.Foundation;
@@ -186,11 +187,11 @@ namespace PlayScript
 				switch (ext)
 				{
 				case ".bmp":
-					case ".png":
-					case ".jpg":
-					case ".jpeg":
-					case ".atf":
-					case ".tif":
+				case ".png":
+				case ".jpg":
+				case ".jpeg":
+				case ".atf":
+				case ".tif":
 					// load as bitmap
 					return new flash.display.Bitmap(flash.display.BitmapData.loadFromByteArray(dataAsByteArray));
 
@@ -402,18 +403,22 @@ namespace PlayScript
 		// TODO: at some point we'll have a platform agnostic notion of touches to pass to the player, for now we use UITouch
 		public void OnTouchesBegan (NSSet touches, UIEvent evt)
 		{
+			mMouseDown = true;		// This is used so we can send a MOUSE_UP event 
+
 			foreach (UITouch touch in touches) {
 				var p = GetPosition(touch);
 				//Console.WriteLine ("touches-began {0}", p);
 
-				mStage.mouseX = p.X;
-				mStage.mouseY = p.Y;
-
 				var te = new flash.events.TouchEvent(flash.events.TouchEvent.TOUCH_BEGIN, true, false, 0, true, p.X, p.Y, 1.0, 1.0, 1.0 );
 				mStage.dispatchEvent (te);
 
-				var me = new flash.events.MouseEvent(flash.events.MouseEvent.MOUSE_DOWN, true, false, p.X, p.Y, mStage);
-				mStage.dispatchEvent (me);
+				// Mouse events can be deactivated if a gesture was recognized
+				if (mDeactivateMouseEvents == false) {
+					mStage.mouseX = p.X;
+					mStage.mouseY = p.Y;
+					var me = new flash.events.MouseEvent(flash.events.MouseEvent.MOUSE_DOWN, true, false, p.X, p.Y, mStage);
+					mStage.dispatchEvent (me);
+				}
 			}
 		}
 		
@@ -423,33 +428,46 @@ namespace PlayScript
 				var p = GetPosition(touch);
 				//Console.WriteLine ("touches-moved {0}", p);
 
-				mStage.mouseX = p.X;
-				mStage.mouseY = p.Y;
-
 				var te = new flash.events.TouchEvent(flash.events.TouchEvent.TOUCH_MOVE, true, false, 0, true, p.X, p.Y, 1.0, 1.0, 1.0 );
 				mStage.dispatchEvent (te);
 
-				var me = new flash.events.MouseEvent(flash.events.MouseEvent.MOUSE_MOVE, true, false, p.X, p.Y, mStage);
-				mStage.dispatchEvent (me);
+				// Mouse events can be deactivated if a gesture was recognized
+				if (mDeactivateMouseEvents == false) {
+					mStage.mouseX = p.X;
+					mStage.mouseY = p.Y;
+					var me = new flash.events.MouseEvent(flash.events.MouseEvent.MOUSE_MOVE, true, false, p.X, p.Y, mStage);
+					mStage.dispatchEvent (me);
+				}
 			}
 		}
 		
 		public void OnTouchesEnded (NSSet touches, UIEvent evt)
 		{
+			mMouseDown = false;
+
 			foreach (UITouch touch in touches) {
 				var p = GetPosition(touch);
 
 				//Console.WriteLine ("touches-ended {0}", p);
 
-				mStage.mouseX = p.X;
-				mStage.mouseY = p.Y;
-
 				var te = new flash.events.TouchEvent(flash.events.TouchEvent.TOUCH_END, true, false, 0, true, p.X, p.Y, 1.0, 1.0, 1.0 );
 				mStage.dispatchEvent (te);
 
-				var me = new flash.events.MouseEvent(flash.events.MouseEvent.MOUSE_UP, true, false, p.X, p.Y, mStage);
-				mStage.dispatchEvent (me);
+				// Mouse events can be deactivated if a gesture was recognized
+				if (mDeactivateMouseEvents == false) {
+					mStage.mouseX = p.X;
+					mStage.mouseY = p.Y;
+					// Mouse up events can be deactivated is a gesture was recognized before and we had to already send a mouse up
+					// to avoid having the mouse up at the end of gesture (with the full delta range between the two)
+					if (mSkipNextMouseUp == false) {
+						var me = new flash.events.MouseEvent(flash.events.MouseEvent.MOUSE_UP, true, false, p.X, p.Y, mStage);
+						mStage.dispatchEvent (me);
+					}
+				}
+			}
 
+			if (mDeactivateMouseEvents == false) {
+				mSkipNextMouseUp = false;
 			}
 		}
 
@@ -463,6 +481,13 @@ namespace PlayScript
 				case UIGestureRecognizerState.Possible:
 				case UIGestureRecognizerState.Began:
 					tge.phase = "begin";
+					mDeactivateMouseEvents = true;			// For swipe gestures, we don't want to send any mouse events at the same time
+					if (mMouseDown) {
+						// We were already sending mouse down event, so to close the loop, we are going to send a mouse up event with the last position for completion
+						var me = new flash.events.MouseEvent(flash.events.MouseEvent.MOUSE_UP, true, false, mStage.mouseX, mStage.mouseY, mStage);
+						mStage.dispatchEvent (me);
+						mSkipNextMouseUp = true;
+					}
 					break;
 
 				case UIGestureRecognizerState.Changed:
@@ -472,10 +497,12 @@ namespace PlayScript
 				case UIGestureRecognizerState.Recognized:
 				//case UIGestureRecognizerState.Ended:		// Same as recognized
 					tge.phase = "end";
+					mDeactivateMouseEvents = false;
 					break;
 
 				case UIGestureRecognizerState.Cancelled:
 				case UIGestureRecognizerState.Failed:
+					mDeactivateMouseEvents = false;
 					return;		// In this case, we don't even send the event
 			}
 
@@ -629,6 +656,9 @@ namespace PlayScript
 		private float mScrollDelta;
 		private int   mFrameCount;
 		private bool  mApplicationLoaded;
+		private bool mDeactivateMouseEvents = false;
+		private bool mMouseDown = false;
+		private bool mSkipNextMouseUp = false;
 
 		private static List<string> sResourceDirectories = new List<string>();
 	}
