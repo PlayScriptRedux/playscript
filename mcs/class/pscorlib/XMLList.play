@@ -149,7 +149,11 @@ package {
 		public function text():XMLList {
 			throw new System.NotImplementedException();
 		}
-		
+
+		public override function ToString():String {
+			return this.toString ();
+		}
+
 		public override function toString():String {
 			return (mString != null) ? mString : "";
 		}
