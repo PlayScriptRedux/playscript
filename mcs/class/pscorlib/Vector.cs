@@ -880,7 +880,7 @@ namespace _root {
 		public T this[int i]
 		{
 			get {
-				if (i >= mCount)
+				if ((i >= mCount) || (i < 0))
 				{
 					return default(T);
 				}
@@ -897,6 +897,10 @@ namespace _root {
 		public T this[uint i]
 		{
 			get {
+				if (i >= mCount)
+				{
+					return default(T);
+				}
 				return mArray[(int)i];
 			}
 			set {
