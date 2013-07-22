@@ -46,6 +46,12 @@ namespace flash.display3D {
 
 		public bool enableErrorChecking { get; set; }
 
+
+		/// <summary>
+		/// This method gets invoked whenever Present is called on the context
+		/// </summary>
+		public static System.Action<Context3D> OnPresent;
+
 		//
 		// Methods
 		//
@@ -178,7 +184,6 @@ namespace flash.display3D {
 			GL.DrawElements(BeginMode.Triangles, count, DrawElementsType.UnsignedInt, firstIndex );
 		}
 
-		public static System.Action<Context3D> OnPresent;
  	 	
 		public void present() {
 			if (OnPresent != null)
