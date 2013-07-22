@@ -2403,7 +2403,7 @@ namespace PlayScript.Expando {
 				if (dictionary == null)
 					throw new ObjectDisposedException (null);
 				if (dictionary.generation != stamp)
-					throw new InvalidOperationException ("out of sync");
+					throw new InvalidOperationException ("Enumeration modified during iteration");
 			}
 			
 			void VerifyCurrent ()
