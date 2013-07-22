@@ -58,6 +58,9 @@ namespace flash.display3D.textures {
 		private static uint[] sColors = new uint[] {0x0000FF, 0x00FF00, 0xFF0000, 0xFF00FF, 0x00FFFF, 0xFFFF00};
 
 		private bool mDidUpload = false;
+
+		private static int sMemoryUsedForTextures = 0;
+
 		public void uploadCompressedTextureFromByteArray (ByteArray data, uint byteArrayOffset, bool async = false)
 		{
 			// $$TODO 
@@ -75,6 +78,10 @@ namespace flash.display3D.textures {
 #endif
 
 #if PLATFORM_MONOTOUCH
+			int memUsage = (mWidth * mHeight) / 2;
+			sMemoryUsedForTextures += memUsage;
+			Console.WriteLine("Texture.uploadCompressedTextureFromByteArray() - " + mWidth + "x" + mHeight + " - Mem: " + (memUsage / 1024) + " KB - Total Mem: " + (sMemoryUsedForTextures / 1024) + " KB");
+
 			// Bind the texture
 			GL.BindTexture (textureTarget, textureId);
 
@@ -95,7 +102,6 @@ namespace flash.display3D.textures {
 				timer.addEventListener(TimerEvent.TIMER, (System.Action<Event>)this.OnTextureReady );
 				timer.start();
 			}
-
 		}
 
 		private void OnTextureReady (Event e)
@@ -105,6 +111,10 @@ namespace flash.display3D.textures {
 		
 		public void uploadFromBitmapData (BitmapData source, uint miplevel = 0, bool generateMipmap = false)
 		{
+			int memUsage = (mWidth * mHeight) * 4;
+			sMemoryUsedForTextures += memUsage;
+			Console.WriteLine("Texture.uploadFromBitmapData() - " + mWidth + "x" + mHeight + " - Mem: " + (memUsage / 1024) + " KB - Total Mem: " + (sMemoryUsedForTextures / 1024) + " KB");
+
 			// Bind the texture
 			GL.BindTexture (textureTarget, textureId);
 

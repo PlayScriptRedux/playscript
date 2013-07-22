@@ -388,16 +388,10 @@ package flash.display {
 
 #if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
 
-		private static var sMemoryUsedForLoadFromCGImage:int = 0;
-
 		public static function loadFromCGImage(image:CGImage):BitmapData
 		{
 			var width:int = image.Width;
 			var height:int = image.Height;
-
-			var memUsage:int = (width * height) * 4;
-			sMemoryUsedForLoadFromCGImage += memUsage;
-			trace("Load from CG Image - " + width + "x" + height + " - Mem: " + int(memUsage / 1024) + "KB - Total Mem: " + int(sMemoryUsedForLoadFromCGImage / 1024) + "KB");
 
 			var data = new byte[width * height * 4];
 			using (CGContext context = new CGBitmapContext (data, width, height, 8, 4 * width, image.ColorSpace, CGImageAlphaInfo.PremultipliedLast)) {
