@@ -215,7 +215,7 @@ package flash.net {
 						break;
 					}
 				case URLLoaderDataFormat.TEXT: {
-						var reader = new StreamReader(dataStream, System.Text.UTF8Encoding);
+						var reader = new StreamReader(dataStream, System.Text.Encoding.UTF8);
 						// Read the content.
 						var responseFromServer = reader.ReadToEnd ();
 
