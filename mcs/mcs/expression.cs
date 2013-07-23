@@ -2465,7 +2465,10 @@ namespace Mono.CSharp
 		protected State state;
 		Expression enum_conversion;
 
-		public bool AsCoalesce {get; set;}
+		// this is set to true if logical operations perform coalescing (and only in playscript)
+		// This will convert (a || b) into (a ?? b) and will convert (a && b && c) into (a ? (b ? c : b) : a)
+		// if this is false then normal logical operations will happen (useful inside of an if() or while() boolean expression)
+		public bool AsCoalesceLogicalOps {get; set;}
 
 		public Binary (Operator oper, Expression left, Expression right, bool isCompound)
 			: this (oper, left, right)
@@ -2476,7 +2479,7 @@ namespace Mono.CSharp
 
 		public Binary (Operator oper, Expression left, Expression right)
 		{
-			this.AsCoalesce = true;
+			this.AsCoalesceLogicalOps = true;
 			this.oper = oper;
 			this.left = left;
 			this.right = right;
@@ -3260,13 +3263,13 @@ namespace Mono.CSharp
 				// this prevents a lot of extra operations inside of an if(expr) or while(expr) 
 				// where we dont care about the return value at all and just care about the boolean value
 				// however, x = a || b || c; will still work because its not inside of a boolean expression
-				if (!AsCoalesce && (oper == Operator.LogicalOr || oper == Operator.LogicalAnd)) {
+				if (!AsCoalesceLogicalOps && (oper == Operator.LogicalOr || oper == Operator.LogicalAnd)) {
 					var leftBinary = left as Binary;
 					var rightBinary = right as Binary;
 					if (leftBinary != null) 
-						leftBinary.AsCoalesce =false;
+						leftBinary.AsCoalesceLogicalOps =false;
 					if (rightBinary != null) 
-						rightBinary.AsCoalesce =false;
+						rightBinary.AsCoalesceLogicalOps =false;
 				}
 			}
 
@@ -3292,7 +3295,7 @@ namespace Mono.CSharp
 			// Handle || operator applied to reference types in PlayScript..
 			if (ec.FileType == SourceFileType.PlayScript && oper == Operator.LogicalOr &&
 			    (left.Type.IsClass || left.Type.IsInterface)) {
-				if (AsCoalesce) {
+				if (AsCoalesceLogicalOps) {
 					return new Nullable.NullCoalescingOperator (left, right).Resolve (ec);
 				}
 			}
@@ -3317,7 +3320,7 @@ namespace Mono.CSharp
 			// Handle PlayScript binary operators that need to be converted to methods.
 			if (ec.FileType == SourceFileType.PlayScript) {
 				if (ec.Target != Target.JavaScript) {
-					if (AsCoalesce && (oper == Operator.LogicalOr || oper == Operator.LogicalAnd) && 
+					if (AsCoalesceLogicalOps && (oper == Operator.LogicalOr || oper == Operator.LogicalAnd) && 
 					    (left.Type.BuiltinType != BuiltinTypeSpec.Type.Bool || right.Type.BuiltinType != Mono.CSharp.BuiltinTypeSpec.Type.Bool)) {
 						Expression leftExpr = left;
 						Expression rightExpr = right;
@@ -4985,7 +4988,7 @@ namespace Mono.CSharp
 				// however, x = a || b || c; will still work because its not inside of a boolean expression
 				var exprBinary = expr as Binary;
 				if (exprBinary != null) {
-					exprBinary.AsCoalesce =false;
+					exprBinary.AsCoalesceLogicalOps =false;
 				}
 			}
 
