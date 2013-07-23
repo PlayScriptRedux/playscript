@@ -245,7 +245,23 @@ namespace _root
 		// Not inlinable.. but required to get correct results in flash.
 		public static bool Boolean (object d)
 		{
-			if (d == null) return false;
+			// handle most common cases first
+			if (d == null) {
+				return false;
+			}
+
+			if (d is bool) {
+				return (bool)d;
+			}
+
+			if (d == PlayScript.Undefined._undefined) {
+				return false;
+			}
+
+			if (d is string) {
+				var s = (string)d;
+				return !string.IsNullOrEmpty(s) && s != "0" && s != "false";
+			}
 
 			TypeCode tc = Type.GetTypeCode(d.GetType());
 			switch (tc) {

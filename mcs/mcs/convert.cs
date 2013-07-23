@@ -167,27 +167,6 @@ namespace Mono.CSharp {
 		{
 			TypeSpec expr_type = expr.Type;
 
-			// PlayScript references can always be implicitly cast to bool
-			if (target_type.BuiltinType == BuiltinTypeSpec.Type.Bool && opt_ec != null && opt_ec.FileType == SourceFileType.PlayScript && !upconvert_only) {
-				// PlayScript: Call the "Boolean()" static method to convert a dynamic to a bool.  EXPENSIVE, but hey..
-				Arguments args = new Arguments (1);
-				args.Add (new Argument(EmptyCast.Create(expr, opt_ec.BuiltinTypes.Object)));
-//				opt_ec.Report.Warning (7164, 1, expr.Location, "Expensive reference conversion to bool");
-				return new Invocation(new MemberAccess(new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, 
-				            expr.Location), "Boolean_fn", expr.Location), "Boolean", expr.Location), args).Resolve (opt_ec);
-			}
-
-			// PlayScript references can always be implicitly cast to string
-			if (expr_type.BuiltinType != BuiltinTypeSpec.Type.String && target_type.BuiltinType == BuiltinTypeSpec.Type.String && opt_ec != null && opt_ec.FileType == SourceFileType.PlayScript && !upconvert_only) {
-				// PlayScript: Call the "Boolean()" static method to convert a dynamic to a bool.  EXPENSIVE, but hey..
-				Arguments args = new Arguments (1);
-				args.Add (new Argument(EmptyCast.Create(expr, opt_ec.BuiltinTypes.Object)));
-				//				opt_ec.Report.Warning (7164, 1, expr.Location, "Expensive reference conversion to bool");
-				return new Invocation(new MemberAccess(new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, 
-				                                                                       expr.Location), "String_fn", expr.Location), "CastToString", expr.Location), args).Resolve (opt_ec);
-			}
-
-
 			if (expr_type.Kind == MemberKind.TypeParameter)
 				return ImplicitTypeParameterConversion (expr, (TypeParameterSpec) expr.Type, target_type);
 
@@ -222,11 +201,6 @@ namespace Mono.CSharp {
 
 		public static bool ImplicitReferenceConversionExists (TypeSpec expr_type, TypeSpec target_type, bool refOnlyTypeParameter, ResolveContext opt_ec, bool upconvert_only)
 		{
-			// PlayScript references can always be implicitly cast to bool
-			if (target_type.BuiltinType == BuiltinTypeSpec.Type.Bool && opt_ec != null && opt_ec.FileType == SourceFileType.PlayScript && !upconvert_only) {
-				return true;
-			}
-
 			// It's here only to speed things up
 			if (target_type.IsStruct) {
 				return false;
@@ -395,6 +369,84 @@ namespace Mono.CSharp {
 
 			return false;
 		}
+
+
+		public static Expression ImplicitPlayScriptConversion (Expression expr, TypeSpec target_type, ResolveContext opt_ec, bool upconvert_only)
+		{
+			if (opt_ec == null || opt_ec.FileType != SourceFileType.PlayScript)
+			{
+				// not in a playscript file
+				return null;
+			}
+			
+			TypeSpec expr_type = expr.Type;
+			
+			// PlayScript references can always be implicitly cast to bool
+			if (target_type.BuiltinType == BuiltinTypeSpec.Type.Bool &&  !upconvert_only) {
+				if (expr_type.BuiltinType == BuiltinTypeSpec.Type.Bool) {
+					// already a boolean
+					return expr;
+				}
+
+				if (expr is NullLiteral) {
+					// cast null to false
+					return new BoolConstant(opt_ec.BuiltinTypes, false, expr.Location);
+				}
+				
+				if ((expr_type.IsClass || expr_type.IsInterface) && (expr_type.BuiltinType != BuiltinTypeSpec.Type.String)) {
+					// test against null
+					return new Binary(Binary.Operator.Inequality, expr, new NullLiteral(expr.Location)).Resolve(opt_ec);
+				} else {
+					// PlayScript: Call the "Boolean()" static method to convert a dynamic to a bool.  EXPENSIVE, but hey..
+					Arguments args = new Arguments (1);
+					args.Add (new Argument(EmptyCast.Create(expr, opt_ec.BuiltinTypes.Object)));
+					//				opt_ec.Report.Warning (7164, 1, expr.Location, "Expensive reference conversion to bool");
+					return new Invocation(new MemberAccess(new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, 
+					                                                                       expr.Location), "Boolean_fn", expr.Location), "Boolean", expr.Location), args).Resolve (opt_ec);
+				}
+			}
+			
+			// PlayScript references can always be implicitly cast to string
+			if (expr_type.BuiltinType != BuiltinTypeSpec.Type.String && target_type.BuiltinType == BuiltinTypeSpec.Type.String && !upconvert_only) {
+				if (expr_type.BuiltinType == BuiltinTypeSpec.Type.String) {
+					// already a string
+					return expr;
+				}
+
+				// PlayScript: Call the "CastToString()" static method to convert a dynamic to a string.  EXPENSIVE, but hey..
+				Arguments args = new Arguments (1);
+				args.Add (new Argument(EmptyCast.Create(expr, opt_ec.BuiltinTypes.Object)));
+				//				opt_ec.Report.Warning (7164, 1, expr.Location, "Expensive reference conversion to bool");
+				return new Invocation(new MemberAccess(new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, 
+				                                                                       expr.Location), "String_fn", expr.Location), "CastToString", expr.Location), args).Resolve (opt_ec);
+			}
+			
+			return null;
+		}
+
+		public static bool ImplicitPlayScriptConversionExists (TypeSpec expr_type, TypeSpec target_type, ResolveContext opt_ec, bool upconvert_only)
+		{
+			if (opt_ec == null || opt_ec.FileType != SourceFileType.PlayScript)
+			{
+				// not in a playscript file
+				return false;
+			}
+
+			// PlayScript references can always be implicitly cast to bool
+			if (target_type.BuiltinType == BuiltinTypeSpec.Type.Bool && !upconvert_only) {
+				return true;
+			}
+			
+			// PlayScript references can always be implicitly cast to string
+// disabling this for now, it causes ambiguity with functions that take either String or Object
+//			if (target_type.BuiltinType == BuiltinTypeSpec.Type.String && !upconvert_only) {
+//				return true;
+//			}
+			
+			return false;
+		}
+
+
 
 		public static Expression ImplicitBoxingConversion (Expression expr, TypeSpec expr_type, TypeSpec target_type)
 		{
@@ -854,6 +906,9 @@ namespace Mono.CSharp {
 				return ImplicitNulableConversion (null, expr, target_type) != null;
 
 			if (ImplicitNumericConversion (null, expr_type, target_type, opt_ec, upconvert_only) != null)
+				return true;
+
+			if (ImplicitPlayScriptConversionExists (expr_type, target_type, opt_ec, upconvert_only))
 				return true;
 
 			if (ImplicitReferenceConversionExists (expr_type, target_type, false, opt_ec, upconvert_only))
@@ -1564,6 +1619,10 @@ namespace Mono.CSharp {
 			}
 
 			e = ImplicitNumericConversion (expr, expr_type, target_type, ec, upconvert_only);
+			if (e != null)
+				return e;
+
+			e = ImplicitPlayScriptConversion (expr, target_type, ec, upconvert_only);
 			if (e != null)
 				return e;
 
