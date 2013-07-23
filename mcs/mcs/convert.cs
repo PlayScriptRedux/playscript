@@ -393,7 +393,7 @@ namespace Mono.CSharp {
 					return new BoolConstant(opt_ec.BuiltinTypes, false, expr.Location);
 				}
 				
-				if (expr_type.IsClass || expr_type.IsInterface) {
+				if ((expr_type.IsClass || expr_type.IsInterface) && (expr_type.BuiltinType != BuiltinTypeSpec.Type.String)) {
 					// test against null
 					return new Binary(Binary.Operator.Inequality, expr, new NullLiteral(expr.Location)).Resolve(opt_ec);
 				} else {
