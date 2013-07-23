@@ -3301,15 +3301,24 @@ namespace Mono.CSharp
 					    (left.Type.BuiltinType != BuiltinTypeSpec.Type.Bool || right.Type.BuiltinType != Mono.CSharp.BuiltinTypeSpec.Type.Bool)) {
 						Expression leftExpr = left;
 						Expression rightExpr = right;
+						Expression testExpr = left;
 						if (left.Type != right.Type) {
-							leftExpr = new Cast (new TypeExpression(ec.BuiltinTypes.Dynamic, loc), left, loc);
-							rightExpr = new Cast (new TypeExpression(ec.BuiltinTypes.Dynamic, loc), right, loc);
+							if (right.Type.BuiltinType == BuiltinTypeSpec.Type.Bool) {
+								// if the right side is a bool, then cast the left side to a bool
+								testExpr = leftExpr = Convert.ImplicitConversion(ec, left, ec.BuiltinTypes.Bool, left.Location, false).Resolve(ec);
+							} else if (left.Type.BuiltinType == BuiltinTypeSpec.Type.Bool) {
+								// if the left side is a bool, then cast the right side to a bool
+								rightExpr = Convert.ImplicitConversion(ec, right, ec.BuiltinTypes.Bool, right.Location, false).Resolve(ec);
+							} else {
+								leftExpr = new Cast (new TypeExpression(ec.BuiltinTypes.Dynamic, loc), left, loc);
+								rightExpr = new Cast (new TypeExpression(ec.BuiltinTypes.Dynamic, loc), right, loc);
+							}
 						}
 						if (oper == Operator.LogicalOr) {
-							return new Conditional (new Cast(new TypeExpression(ec.BuiltinTypes.Bool, loc), left, loc), leftExpr, rightExpr, loc).Resolve (ec);
+							return new Conditional (new Cast(new TypeExpression(ec.BuiltinTypes.Bool, loc), testExpr, loc), leftExpr, rightExpr, loc).Resolve (ec);
 						} else {
 							return new Conditional (new Unary(Unary.Operator.LogicalNot, 
-							       new Cast(new TypeExpression(ec.BuiltinTypes.Bool, loc), left, loc), loc), leftExpr, rightExpr, loc).Resolve (ec);
+							       new Cast(new TypeExpression(ec.BuiltinTypes.Bool, loc), testExpr, loc), loc), leftExpr, rightExpr, loc).Resolve (ec);
 						}
 					} else if (oper == Operator.AsRefEquality) {
 						return MakeReferenceEqualsInvocation (ec).Resolve (ec);

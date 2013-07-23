@@ -40,6 +40,12 @@ namespace _root
 			return Convert.ToString (o, radix);
 		}
 
+		public static string toString(this System.Type type) {
+			return (type != null) ? type.ToString() : "";
+		}
+		
+
+
 		//
 		// IList extensions (for arrays, etc).
 		//
