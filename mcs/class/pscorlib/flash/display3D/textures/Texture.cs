@@ -88,10 +88,12 @@ namespace flash.display3D.textures {
 			if (byteArrayOffset != 0) {
 				throw new NotSupportedException();
 			}
-			OpenTK.Graphics.ES20.PixelInternalFormat pixelFormat = (OpenTK.Graphics.ES20.PixelInternalFormat)0x8C02;
-			GL.CompressedTexImage2D(textureTarget, 0, pixelFormat, mWidth, mHeight, 0, (int)(data.length - byteArrayOffset), data.getRawStream().ToArray());
 
-			GL.GenerateMipmap(textureTarget);
+			int dataLength = (int)(data.length - byteArrayOffset) - 4;		// We remove the 4 bytes footer
+																			// TODO: Fix hardcoded value here
+
+			OpenTK.Graphics.ES20.PixelInternalFormat pixelFormat = (OpenTK.Graphics.ES20.PixelInternalFormat)0x8C02;
+			GL.CompressedTexImage2D(textureTarget, 0, pixelFormat, mWidth, mHeight, 0, dataLength, data.getRawStream().ToArray());
 
 			// unbind texture and pixel buffer
 			GL.BindTexture (textureTarget, 0);
