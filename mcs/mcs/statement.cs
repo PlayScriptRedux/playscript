@@ -4724,6 +4724,23 @@ namespace Mono.CSharp {
 			return sl;
 		}
 
+		private List<TypeSpec> GetSwitchCaseTypes(BlockContext ec)
+		{
+			// build type list from all case labels
+			var types = new List<TypeSpec>();
+			foreach (var statement in this.Block.Statements) {
+				if (statement is SwitchLabel) {
+					var caseLabel = statement as SwitchLabel;
+					if (caseLabel.Label != null) {
+						if (!types.Contains(caseLabel.Label.Type)) {
+							types.Add(caseLabel.Label.Type);
+						}
+					}
+				}
+			}
+			return types;
+		}
+
 		public override bool Resolve (BlockContext ec)
 		{
 			Expr = Expr.Resolve (ec);
@@ -4738,6 +4755,35 @@ namespace Mono.CSharp {
 					return false;
 
 				new_expr = SwitchGoverningType (ec, unwrap);
+			}
+
+			if (new_expr == null && ec.FileType == SourceFileType.PlayScript) {
+				// handle implict casting of switch expression
+				// get types of all case labels
+				var caseTypes = GetSwitchCaseTypes(ec); 
+
+				// only handle case where all labels are all the same type
+				if (caseTypes.Count == 1) {
+					// convert expression to case label type
+					new_expr = Convert.ImplicitConversion(ec, Expr, caseTypes[0], Expr.Location, false);
+					if (new_expr == null) {
+						ec.Report.Error (151, loc,
+						                 "A switch expression of type `{0}' cannot be converted to type '{1}'",
+						                 Expr.Type.GetSignatureForError (),
+						                 caseTypes[0].GetSignatureForError()
+						                 );
+					}
+				} else if (caseTypes.Count == 0) {
+					// no case statements (does it matter?)
+					new_expr = new NullLiteral(Expr.Location);
+				} else if (caseTypes.Count > 1) {
+					// multiple case statements, with multiple types
+					ec.Report.Error (151, loc,
+					                 "A switch expression of type `{0}' has multiple types in its case labels, cast it to a specific type first",
+					                 Expr.Type.GetSignatureForError ()
+					                 );
+					return false;
+				}
 			}
 
 			if (new_expr == null) {
