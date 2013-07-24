@@ -30,6 +30,11 @@ package flash.text {
 	import MonoTouch.UIKit.*;
 #endif
 
+	public class TextFieldType {
+		public const DYNAMIC : String = "dynamic";
+		public const INPUT : String = "input";
+	}
+
 	public class TextField extends InteractiveObject {
 	
 		//

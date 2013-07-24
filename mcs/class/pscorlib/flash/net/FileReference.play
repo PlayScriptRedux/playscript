@@ -17,6 +17,10 @@ package flash.net {
 	public class FileReference extends flash.events.EventDispatcher {
 		
 		public property name:String {get; set;}
+
+		public property data:String {get {
+			throw new System.NotImplementedException();
+		}}
 		
 		public function browse(typeFilter:Array = null):Boolean {
 			throw new System.NotImplementedException();
