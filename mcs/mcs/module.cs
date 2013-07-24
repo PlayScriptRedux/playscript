@@ -458,6 +458,17 @@ namespace Mono.CSharp
 				}
 			}
 
+			public override void Visit (MemberCore member)
+			{
+				if (member is TypeContainer) {
+					var tc = member as TypeContainer;
+					foreach (var container in tc.Containers) {
+						container.Accept (this);
+					}
+				}
+//				Debug.Fail ("unknown member type: " + member.GetType ());
+			}
+
 			public override void Visit (Class c)
 			{
 				if (pass == 1) {
@@ -493,18 +504,36 @@ namespace Mono.CSharp
 
 			public override void Visit (Property p)
 			{
-				if (p.Get != null)
-					SealMethod (p.Get);
-				if (p.Set != null)
-					SealMethod (p.Set);
+				if (pass == 2) {
+					if (!baseTypes.Contains (p.Parent)) {
+						if ((p.ModFlags & Modifiers.VIRTUAL) != 0)
+							p.ModFlags &= ~Modifiers.VIRTUAL;
+						else if ((p.ModFlags & Modifiers.OVERRIDE) != 0) 
+							p.ModFlags |= Modifiers.SEALED;
+					}
+
+					if (p.Get != null)
+						SealMethod (p.Get);
+					if (p.Set != null)
+						SealMethod (p.Set);
+				}
 			}
 
 			public override void Visit (Indexer i)
 			{
-				if (i.Get != null)
-					SealMethod (i.Get);
-				if (i.Set != null)
-					SealMethod (i.Set);
+				if (pass == 2) {
+					if (!baseTypes.Contains (i.Parent)) {
+						if ((i.ModFlags & Modifiers.VIRTUAL) != 0)
+							i.ModFlags &= ~Modifiers.VIRTUAL;
+						else if ((i.ModFlags & Modifiers.OVERRIDE) != 0) 
+							i.ModFlags |= Modifiers.SEALED;
+					}
+					
+					if (i.Get != null)
+						SealMethod (i.Get);
+					if (i.Set != null)
+						SealMethod (i.Set);
+				}
 			}
 
 		}

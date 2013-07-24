@@ -9,10 +9,52 @@ package
 
 	public class Texture
 	{
+		public function foo():void {}
+
+		public function get value():int{return 0;}
+
+		public function get value2():int{return 0;}
+
 	}
+
+	public class Texture2 extends Texture
+	{
+		public override function foo():void {}
+		public function inlinable():void {}
+
+		public override function get value():int{return 0;}
+		public function get value_inlinable():int{return 0;}
+	}
+
+
+	public class Texture3 extends Texture
+	{
+		public override function foo():void {}
+		public function inlinable():void {}
+		public function set value_inlinable(val:int):void {}
+	}
+
+
+
+
+
 
 	public class Test 
 	{
+
+		public static function TestSeal():void
+		{
+			var t:Texture = new Texture();
+			var t2:Texture2 = new Texture2();
+			var t3:Texture3 = new Texture3();
+
+			t.foo();
+			t2.foo();
+			t2.inlinable();
+			t3.foo();
+			t3.inlinable();
+		}
+		
 
 		
 //		public static implicit operator int (list:Class) {
@@ -119,6 +161,8 @@ package
 			//var z:Boolean = getNullSprite();
 			//trace(z);
 
+			TestSeal();
+
 			//removeFromQueue("a", "b");
 			/*
 			var dataStream:System.IO.Stream = null; // = new System.IO.FileStream("/tmp/amt3.log", System.IO.FileMode.Open);
@@ -128,7 +172,7 @@ package
 //			ImplicitBooleanCastTest();
 //			ImplicitStringCastTest();
 
-
+/*
 			var s1:String = "1";
 			var s2:String = null;
 			var s3:String = "3";
@@ -139,7 +183,7 @@ package
 
 			var o1:String = s1 || s2 || s3;
 			trace(o1);
-
+*/
 
 
 
