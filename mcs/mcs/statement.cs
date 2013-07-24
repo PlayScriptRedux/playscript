@@ -4732,8 +4732,10 @@ namespace Mono.CSharp {
 				if (statement is SwitchLabel) {
 					var caseLabel = statement as SwitchLabel;
 					if (caseLabel.Label != null) {
-						if (!types.Contains(caseLabel.Label.Type)) {
-							types.Add(caseLabel.Label.Type);
+						// resolve label type
+						var resolved = caseLabel.Label.Resolve(ec);
+						if (!types.Contains(resolved.Type)) {
+							types.Add(resolved.Type);
 						}
 					}
 				}
