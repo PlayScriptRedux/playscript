@@ -1883,6 +1883,8 @@ namespace PlayScript.RuntimeBinder
 			neDict.Add (typeof(Func<CallSite, double, object, object>), (Func<CallSite,double,object,object>)NotEqualsDoubleObj);
 			neDict.Add (typeof(Func<CallSite, object, string, object>), (Func<CallSite,object,string,object>)NotEqualsObjString);
 			neDict.Add (typeof(Func<CallSite, string, object, object>), (Func<CallSite,string,object,object>)NotEqualsStringObj);
+			neDict.Add (typeof(Func<CallSite, bool, object, object>),  (Func<CallSite,bool,object,object>)NotEqualsBoolObj);
+			neDict.Add (typeof(Func<CallSite, object, bool, object>),  (Func<CallSite,object,bool,object>)NotEqualsObjBool);
 			neDict.Add (typeof(Func<CallSite, object, object, object>),  (Func<CallSite,object,object,object>)NotEqualsObjObj);
 			delegates.Add (ExpressionType.NotEqual, neDict);
 
