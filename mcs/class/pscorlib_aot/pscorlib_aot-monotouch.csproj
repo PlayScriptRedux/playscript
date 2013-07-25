@@ -768,6 +768,60 @@
     <Compile Include="..\pscorlib\flash\events\TransformGestureEvent.play">
       <Link>flash\events\TransformGestureEvent.play</Link>
     </Compile>
+    <Compile Include="..\pscorlib\fl\containers\BaseScrollPane.play">
+      <Link>fl\containers\BaseScrollPane.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\containers\ScrollPane.play">
+      <Link>fl\containers\ScrollPane.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\BaseButton.play">
+      <Link>fl\controls\BaseButton.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\Button.play">
+      <Link>fl\controls\Button.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\CheckBox.play">
+      <Link>fl\controls\CheckBox.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\ComboBox.play">
+      <Link>fl\controls\ComboBox.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\Label.play">
+      <Link>fl\controls\Label.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\LabelButton.play">
+      <Link>fl\controls\LabelButton.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\List.play">
+      <Link>fl\controls\List.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\NumericStepper.play">
+      <Link>fl\controls\NumericStepper.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\ScrollBar.play">
+      <Link>fl\controls\ScrollBar.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\SelectableList.play">
+      <Link>fl\controls\SelectableList.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\TextArea.play">
+      <Link>fl\controls\TextArea.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\TextInput.play">
+      <Link>fl\controls\TextInput.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\UIScrollBar.play">
+      <Link>fl\controls\UIScrollBar.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\listClasses\CellRenderer.play">
+      <Link>fl\controls\listClasses\CellRenderer.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\core\UIComponent.play">
+      <Link>fl\core\UIComponent.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\events\ComponentEvent.play">
+      <Link>fl\events\ComponentEvent.play</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monotouch.csproj">

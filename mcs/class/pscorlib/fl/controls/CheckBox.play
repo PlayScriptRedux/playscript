@@ -12,19 +12,11 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-package fl.events {
+package fl.controls {
 
-	import flash.events.Event;
-	
-	public class ComponentEvent extends flash.events.Event {
-
-		public function ComponentEvent(type:String, bubbles:Boolean = false, cancelable:Boolean = false) {
-			super(type, bubbles, cancelable);
-		}
-
-		public const RESIZE:String = "resize";
+	public dynamic class CheckBox extends LabelButton {
 		
 	}
 
-
 }
+

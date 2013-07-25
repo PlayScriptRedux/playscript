@@ -722,7 +722,9 @@
     <Compile Include="..\pscorlib\fl\controls\BaseButton.play">
       <Link>fl\controls\BaseButton.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\fl\core\UIComponent.play" />
+    <Compile Include="..\pscorlib\fl\core\UIComponent.play">
+      <Link>fl\core\UIComponent.play</Link>
+    </Compile>
     <Compile Include="..\pscorlib\fl\controls\TextArea.play">
       <Link>fl\controls\TextArea.play</Link>
     </Compile>
@@ -793,6 +795,12 @@
     <Compile Include="..\pscorlib\flash\events\TransformGestureEvent.play">
       <Link>flash\events\TransformGestureEvent.play</Link>
     </Compile>
+    <Compile Include="..\pscorlib\fl\events\ComponentEvent.play">
+      <Link>fl\events\ComponentEvent.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\listClasses\CellRenderer.play">
+      <Link>fl\controls\listClasses\CellRenderer.play</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="flash\external\" />
@@ -801,6 +809,8 @@
     <Folder Include="fl\core\" />
     <Folder Include="fl\controls\" />
     <Folder Include="fl\containers\" />
+    <Folder Include="fl\events\" />
+    <Folder Include="fl\controls\listClasses\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net_4_0.csproj">

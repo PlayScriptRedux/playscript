@@ -17,9 +17,5 @@ package fl.controls {
 	public dynamic class Label extends fl.core.UIComponent {
 
 	}
-
-	public dynamic class LabelButton extends BaseButton {
-		
-	}
 }
 

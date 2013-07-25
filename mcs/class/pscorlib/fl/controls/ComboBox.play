@@ -18,9 +18,4 @@ package fl.controls {
 		public function get length():int {return 0;}
 	}
 
-	
-	public dynamic class CheckBox extends LabelButton {
-		
-	}
-
 }
