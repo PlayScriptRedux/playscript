@@ -14,8 +14,8 @@
 
 package fl.controls {
 
-	public class ComboBox extends fl.core.UIComponent {
-
+	public dynamic class ComboBox extends fl.core.UIComponent {
+		public function get length():int {return 0;}
 	}
 
 }

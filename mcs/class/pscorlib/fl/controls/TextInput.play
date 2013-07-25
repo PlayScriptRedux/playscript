@@ -14,7 +14,7 @@
 
 package fl.controls {
 
-	public class TextInput extends fl.core.UIComponent {
+	public dynamic class TextInput extends fl.core.UIComponent {
 
 	}
 

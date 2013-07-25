@@ -14,7 +14,7 @@
 
 package fl.controls {
 
-	public class SelectableList extends fl.containers.BaseScrollPane {
+	public dynamic class SelectableList extends fl.containers.BaseScrollPane {
 
 	}
 

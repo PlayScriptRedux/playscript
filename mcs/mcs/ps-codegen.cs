@@ -75,11 +75,6 @@ namespace {1} {{
 
 		private PlayScript.IDynamicClass __dynamicProps;
 
-		// this method can be used to override the dynamic property implementation of this dynamic class
-		protected void __SetDynamicProperties(PlayScript.IDynamicClass props) {{
-			__dynamicProps = props;
-		}}
-
 		dynamic PlayScript.IDynamicClass.__GetDynamicValue(string name) {{
 			object value = null;
 			if (__dynamicProps != null) {{

@@ -14,7 +14,9 @@
 
 package fl.controls {
 
-	public class List extends SelectableList {
+	public dynamic class List extends SelectableList {
+
+		public function get length():int {return 0;}
 
 	}
 

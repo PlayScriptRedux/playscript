@@ -14,7 +14,7 @@
 
 package fl.controls {
 	
-	public class BaseButton extends fl.core.UIComponent {
+	public dynamic class BaseButton extends fl.core.UIComponent {
 		
 	}
 	

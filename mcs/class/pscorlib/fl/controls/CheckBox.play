@@ -14,8 +14,9 @@
 
 package fl.controls {
 
-	public class CheckBox extends LabelButton {
-
+	public dynamic class CheckBox extends LabelButton {
+		
 	}
 
 }
+

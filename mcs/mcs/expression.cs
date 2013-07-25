@@ -6083,14 +6083,17 @@ namespace Mono.CSharp
 
 			// Handle function style casts in PlayScript
 			if (isPlayScript && arguments != null && arguments.Count == 1) {
-				if (member_expr is TypeExpression) {
-					return (new Cast ((TypeExpression)member_expr, Arguments [0].Expr, loc)).Resolve (ec);
-				} else if (member_expr == null && atn != null) {
-					var type_expr = atn.LookupNameExpression (ec, MemberLookupRestrictions.ReadAccess) as TypeExpr;
-					if (type_expr != null) {
-						return (new Cast (type_expr, Arguments [0].Expr, loc)).Resolve (ec);
-					}
+				if (member_expr == null && atn != null) {
+					// if we have no member expression here, then try to resolve again with only ReadAccess
+					member_expr = atn.LookupNameExpression (ec, MemberLookupRestrictions.ReadAccess) as TypeExpr;
 				}
+
+				if (member_expr is TypeExpr) {
+					// perform cast to type expression here using argument 0
+					// note its important to resolve argument 0 or else the cast will fail
+					// this cast supports the Vector.<T>([1,2,3]) syntax with Arguments[0] being an AsArrayInitializer
+					return (new Cast (member_expr, Arguments[0].Expr.Resolve(ec), loc)).Resolve (ec);
+				} 
 			}
 
 			if (member_expr == null)

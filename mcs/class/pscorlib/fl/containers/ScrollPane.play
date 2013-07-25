@@ -14,7 +14,7 @@
 
 package fl.containers {
 
-	public class ScrollPane extends BaseScrollPane {
+	public dynamic class ScrollPane extends BaseScrollPane {
 
 	}
 

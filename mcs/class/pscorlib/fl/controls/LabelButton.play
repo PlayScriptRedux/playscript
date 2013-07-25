@@ -13,9 +13,9 @@
 //      limitations under the License.
 
 package fl.controls {
-
-	public class LabelButton extends BaseButton {
-
+	public dynamic class LabelButton extends fl.core.UIComponent 
+	{
 	}
-
 }
+
+

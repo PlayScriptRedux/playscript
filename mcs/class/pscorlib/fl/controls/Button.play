@@ -14,7 +14,7 @@
 
 package fl.controls {
 	
-	public class Button extends LabelButton {
+	public dynamic class Button extends LabelButton {
 		
 	}
 	

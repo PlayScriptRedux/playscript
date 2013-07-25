@@ -14,7 +14,9 @@
 
 package fl.controls {
 
-	public class ScrollBar extends fl.core.UIComponent {
+	public dynamic class ScrollBar extends fl.core.UIComponent {
+
+		public static var WIDTH:Number = 100;
 
 	}
 

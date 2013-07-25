@@ -41,7 +41,7 @@ package
 
 	public class Test 
 	{
-
+/*
 		public static function TestSeal():void
 		{
 			var t:Texture = new Texture();
@@ -54,7 +54,36 @@ package
 			t3.foo();
 			t3.inlinable();
 		}
-		
+*/
+
+		public static function TestSwitch():void
+		{
+			var obj:Object = "abc";
+			var n:Number = 10.0;
+			switch (n) {
+			case 5.0: trace(5); break;
+			case 10.0: trace(10); break;
+			default:
+				break;
+			}
+
+			switch (obj) {
+			default: 
+				trace(5);
+				break;
+			}
+
+			switch (obj) {
+			case "def": trace(1); break;
+			case "abc": trace(2); break;
+			case "xyz": trace(3); break;
+//			case 1:  break;
+			default: 
+				trace(4);
+				break;
+			}
+
+		}
 
 		
 //		public static implicit operator int (list:Class) {
@@ -161,7 +190,9 @@ package
 			//var z:Boolean = getNullSprite();
 			//trace(z);
 
-			TestSeal();
+//			TestSeal();
+
+			TestSwitch();
 
 			//removeFromQueue("a", "b");
 			/*
