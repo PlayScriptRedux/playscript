@@ -22,6 +22,8 @@ package flash.events {
 			throw new System.NotSupportedException();
 		}
 
+		public var fullScreen:Boolean;
+
  	 	public static const FULL_SCREEN : String = "fullScreen";
 
  	 	public static const FULL_SCREEN_INTERACTIVE_ACCEPTED : String = "fullScreenInteractiveAccepted";

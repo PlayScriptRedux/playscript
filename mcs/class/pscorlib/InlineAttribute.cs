@@ -23,5 +23,24 @@ namespace _root
 		{
 		}
 	}
+
+	// both cases are used [Inline] and [inline]
+	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, AllowMultiple = false)]
+	public class InlineAttribute : Attribute
+	{
+		public InlineAttribute()
+		{
+		}
+	}
+
+	// and INLINE
+	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, AllowMultiple = false)]
+	public class INLINEAttribute : Attribute
+	{
+		public INLINEAttribute()
+		{
+		}
+	}
+
 }
 
