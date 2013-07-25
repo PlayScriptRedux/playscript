@@ -495,7 +495,7 @@ namespace Mono.CSharp
 					}
 					set
 					{
-						Console.WriteLine("[Auto-sealing] Setting method {0} virtual type to {1}.", Member.GetSignatureForError(), value.ToString());
+						//Console.WriteLine("[Auto-sealing] Setting method {0} virtual type to {1}.", Member.GetSignatureForError(), value.ToString());
 						type = value;
 					}
 				}
@@ -586,8 +586,6 @@ namespace Mono.CSharp
 			/// <param name="m">The method to visit.</param>
 			private void VisitMethod(MemberCore m, bool updateModFlags)
 			{
-				//Console.WriteLine("Visit " + m.GetSignatureForError());
-
 				switch (CurrentPass) {
 					case Pass.DiscoverClassesAndMethods:
 						AddMethodToCache(m);
