@@ -182,6 +182,7 @@ namespace Mono.CSharp {
 		//
 
 		public bool AutoSeal;
+		public bool AutoSealVerbosity;
 
 		//
 		// Inlining mode for source level inliner (none, explicit, any)
@@ -828,6 +829,15 @@ namespace Mono.CSharp {
 				settings.AutoSeal = false;
 				return ParseResult.Success;
 
+			case "/autoseal_verbosity":
+			case "/autoseal_verbosity+":
+				settings.AutoSealVerbosity = true;
+				return ParseResult.Success;
+			
+			case "/autoseal_verbosity-":
+				settings.AutoSealVerbosity = false;
+				return ParseResult.Success;
+			
 			case "/d":
 			case "/define": {
 					if (value.Length == 0) {
