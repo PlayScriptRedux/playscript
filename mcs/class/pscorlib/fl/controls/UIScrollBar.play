@@ -14,7 +14,7 @@
 
 package fl.controls {
 
-	public class UIScrollBar extends ScrollBar {
+	public dynamic class UIScrollBar extends ScrollBar {
 
 	}
 

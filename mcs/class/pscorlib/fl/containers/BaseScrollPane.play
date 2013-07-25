@@ -14,7 +14,7 @@
 
 package fl.containers {
 
-	public class BaseScrollPane extends fl.core.UIComponent {
+	public dynamic class BaseScrollPane extends fl.core.UIComponent {
 
 	}
 

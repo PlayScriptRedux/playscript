@@ -14,7 +14,7 @@
 
 package fl.core {
 	
-	public class UIComponent extends flash.display.Sprite {
+	public dynamic class UIComponent extends flash.display.Sprite {
 		
 	}
 	

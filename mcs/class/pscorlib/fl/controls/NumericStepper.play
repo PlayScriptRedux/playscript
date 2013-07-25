@@ -14,7 +14,7 @@
 
 package fl.controls {
 
-	public class NumericStepper extends fl.core.UIComponent {
+	public dynamic class NumericStepper extends fl.core.UIComponent {
 
 	}
 

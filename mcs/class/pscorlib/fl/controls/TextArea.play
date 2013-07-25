@@ -14,7 +14,7 @@
 
 package fl.controls {
 
-	public class TextArea extends fl.core.UIComponent {
+	public dynamic class TextArea extends fl.core.UIComponent {
 
 	}
 
