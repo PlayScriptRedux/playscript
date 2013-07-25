@@ -158,6 +158,11 @@ namespace PlayScript
 		{
 			var list = new List<MethodBinder>();
 
+			// rename toString to ToString for non-playscript objects
+			if (name == "toString" && argCount == 0) {
+				name = "ToString";
+			}
+
 			// get methods from main type
 			if (type != null) {
 				var methods = type.GetMethods(flags);
