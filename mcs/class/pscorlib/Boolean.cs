@@ -16,6 +16,7 @@ using System;
 
 namespace _root
 {
+	[PlayScript.Extension(typeof(bool))]
 	public static class Boolean
 	{
 		public static string toString(this bool b) {
