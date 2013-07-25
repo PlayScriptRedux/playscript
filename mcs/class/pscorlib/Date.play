@@ -67,7 +67,9 @@ package {
 		public function getHours() : Number { return mDate.Hour;  }
 		public function getMinutes() : Number { return mDate.Minute;  }
 		public function getSeconds() : Number { return mDate.Second;  }
-		public override function valueOf() : Object { throw new System.NotImplementedException();  }
+		public override function valueOf() : Object { 
+			return Math.floor(getTime() / 1000.0);
+		}
 
 		public static function UTC(a:Number, b:Number, c:Number) : Number { throw new System.NotImplementedException();  }
 
