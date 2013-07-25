@@ -547,8 +547,6 @@ namespace PlayScript
 			// stage exit frame
 			mStage.onExitFrame ();
 
-			Profiler.OnFrame();
-
 			mFrameCount++;
 		}
 
@@ -573,6 +571,8 @@ namespace PlayScript
 				OnFrame(bounds);
 				count++;
 			}
+
+			Profiler.OnFrame();
 		}
 		
 
