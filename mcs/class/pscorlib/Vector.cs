@@ -1021,6 +1021,9 @@ namespace _root {
 
 		public void append(IEnumerable items)
 		{
+			if (items == null) {
+				return;
+			}
 			if (items is IList) {
 				var list = (items as IList);
 				EnsureCapacity(mCount + (uint)list.Count);
