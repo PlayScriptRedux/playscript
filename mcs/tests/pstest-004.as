@@ -55,7 +55,7 @@ package
 			t3.inlinable();
 		}
 */
-
+		/*
 		public static function TestSwitch():void
 		{
 			var obj:Object = "abc";
@@ -84,7 +84,7 @@ package
 			}
 
 		}
-
+*/
 		
 //		public static implicit operator int (list:Class) {
 //			throw new System.NotImplementedException();
@@ -184,6 +184,15 @@ package
 		}
 #endif
 
+
+		public static function TestForEach():void {
+			var a:Array = [true, false];
+			for each (var tinted:Boolean in a)
+			{
+				trace(tinted);
+			}
+		}
+
 	
 
 		public static function Main():void {
@@ -192,7 +201,9 @@ package
 
 //			TestSeal();
 
-			TestSwitch();
+//			TestSwitch();
+
+			TestForEach();
 
 			//removeFromQueue("a", "b");
 			/*

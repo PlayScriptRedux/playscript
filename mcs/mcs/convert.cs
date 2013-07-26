@@ -392,8 +392,10 @@ namespace Mono.CSharp {
 					// cast null to false
 					return new BoolConstant(opt_ec.BuiltinTypes, false, expr.Location);
 				}
-				
-				if ((expr_type.IsClass || expr_type.IsInterface) && (expr_type.BuiltinType != BuiltinTypeSpec.Type.String)) {
+
+				// if its a class or interface reference then just compare against null, else call the more expensive boolean conversion function
+				// strings and objects still have to go through the more expensive test
+				if ((expr_type.IsClass || expr_type.IsInterface) && (expr_type.BuiltinType != BuiltinTypeSpec.Type.String) && (expr_type.BuiltinType != BuiltinTypeSpec.Type.Object)) {
 					// test against null
 					return new Binary(Binary.Operator.Inequality, expr, new NullLiteral(expr.Location)).Resolve(opt_ec);
 				} else {
