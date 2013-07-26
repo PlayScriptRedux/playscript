@@ -15,7 +15,8 @@
 package flash.debugger {
 
 	public function enterDebugger():void {
-			throw new System.NotImplementedException();
+			//throw new System.NotImplementedException();
+		trace("flash.debugger.enterDebugger() is disabled." );
 	}
 
 }
