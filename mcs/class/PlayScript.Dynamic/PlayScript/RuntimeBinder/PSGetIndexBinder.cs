@@ -31,6 +31,10 @@ namespace PlayScript.RuntimeBinder
 
 		private static T GetIndex<T> (CallSite site, object o, int index)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.GetIndexBinderInvoked;
+			++Stats.CurrentInstance.GetIndexBinder_Int_Invoked;
+#endif
 			var l = o as IList<T>;
 			if (l != null) {
 				return l [index];
@@ -81,9 +85,16 @@ namespace PlayScript.RuntimeBinder
 
 		private static T GetKeyStr<T> (CallSite site, object o, string key)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.GetIndexBinderInvoked;
+			++Stats.CurrentInstance.GetIndexBinder_Key_Invoked;
+#endif
 			// handle dictionaries
 			var dict = o as IDictionary;
 			if (dict != null) {
+#if BINDERS_RUNTIME_STATS
+				++Stats.CurrentInstance.GetIndexBinder_Key_Dictionary_Invoked;
+#endif
 				var ro = dict[key];
 				if (ro is T) {
 					return (T)ro;
@@ -94,6 +105,10 @@ namespace PlayScript.RuntimeBinder
 
 			// fallback on getmemberbinder to do the hard work 
 			var binder = site.Binder as PSGetIndexBinder;
+
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.GetIndexBinder_Key_Property_Invoked;
+#endif
 
 			// create a get member binder here
 			if (binder.mGetMemberCallSite == null) {

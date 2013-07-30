@@ -106,9 +106,6 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpInvokeConstructorBinder.cs">
       <Link>PlayScript\RuntimeBinder\CSharpInvokeConstructorBinder.cs</Link>
     </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpInvokeMemberBinder.cs">
-      <Link>PlayScript\RuntimeBinder\CSharpInvokeMemberBinder.cs</Link>
-    </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpIsEventBinder.cs">
       <Link>PlayScript\RuntimeBinder\CSharpIsEventBinder.cs</Link>
     </Compile>
@@ -151,21 +148,6 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\PSSetMemberBinder.cs">
       <Link>PlayScript\RuntimeBinder\PSSetMemberBinder.cs</Link>
     </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpConvertBinder.cs">
-      <Link>PlayScript\RuntimeBinder\CSharpConvertBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpGetIndexBinder.cs">
-      <Link>PlayScript\RuntimeBinder\CSharpGetIndexBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpGetMemberBinder.cs">
-      <Link>PlayScript\RuntimeBinder\CSharpGetMemberBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpSetIndexBinder.cs">
-      <Link>PlayScript\RuntimeBinder\CSharpSetIndexBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpSetMemberBinder.cs">
-      <Link>PlayScript\RuntimeBinder\CSharpSetMemberBinder.cs</Link>
-    </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\PSInvokeMemberBinder.cs">
       <Link>PlayScript\RuntimeBinder\PSInvokeMemberBinder.cs</Link>
     </Compile>
@@ -180,6 +162,9 @@
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\IKeyEnumerable.cs">
       <Link>PlayScript\IKeyEnumerable.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\Stats.cs">
+      <Link>PlayScript\Stats.cs</Link>
     </Compile>
   </ItemGroup>
 </Project>

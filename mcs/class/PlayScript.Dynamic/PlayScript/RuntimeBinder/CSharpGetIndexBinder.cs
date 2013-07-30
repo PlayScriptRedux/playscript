@@ -108,6 +108,10 @@ namespace PlayScript.RuntimeBinder
 
 		private static T GetIndex<T> (CallSite site, object o, int index)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.GetIndexBinderInvoked;
+			++Stats.CurrentInstance.GetIndexBinder_Int_Invoked;
+#endif
 			var l = o as IList<T>;
 			if (l != null) {
 				return l [index];
@@ -155,6 +159,10 @@ namespace PlayScript.RuntimeBinder
 
 		private static T GetKeyStr<T> (CallSite site, object o, string key)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.GetIndexBinderInvoked;
+			++Stats.CurrentInstance.GetIndexBinder_KeyStr_Invoked;
+#endif
 			var d = o as IDictionary<string,T>;
 			if (d != null) {
 				return d[key];
@@ -191,6 +199,10 @@ namespace PlayScript.RuntimeBinder
 		
 		private static T2 GetKey<T1,T2> (CallSite site, object o, T1 key)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.GetIndexBinderInvoked;
+			++Stats.CurrentInstance.GetIndexBinder_Key_Invoked;
+#endif
 			var d = o as IDictionary<T1,T2>;
 			if (d != null) {
 				return d[key];

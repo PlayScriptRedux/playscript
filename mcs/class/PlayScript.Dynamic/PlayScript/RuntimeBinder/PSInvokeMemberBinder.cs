@@ -166,12 +166,18 @@ namespace PlayScript.RuntimeBinder
 
 		private static void InvokeAction0 (CallSite site, object o)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			binder.ResolveAndInvoke(site, o, 0);
 		}
 
 		private static void InvokeAction1 (CallSite site, object o, object a1)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
@@ -180,6 +186,9 @@ namespace PlayScript.RuntimeBinder
 
 		private static void InvokeAction2 (CallSite site, object o, object a1, object a2)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
@@ -189,6 +198,9 @@ namespace PlayScript.RuntimeBinder
 
 		private static void InvokeAction3 (CallSite site, object o, object a1, object a2, object a3)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
@@ -199,6 +211,9 @@ namespace PlayScript.RuntimeBinder
 
 		private static void InvokeAction4 (CallSite site, object o, object a1, object a2, object a3, object a4)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
@@ -210,6 +225,9 @@ namespace PlayScript.RuntimeBinder
 
 		private static void InvokeAction5 (CallSite site, object o, object a1, object a2, object a3, object a4, object a5)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
@@ -222,6 +240,9 @@ namespace PlayScript.RuntimeBinder
 
 		private static void InvokeAction6 (CallSite site, object o, object a1, object a2, object a3, object a4, object a5, object a6)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
@@ -235,6 +256,9 @@ namespace PlayScript.RuntimeBinder
 
 		private static void InvokeAction7 (CallSite site, object o, object a1, object a2, object a3, object a4, object a5, object a6, object a7)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
@@ -250,6 +274,9 @@ namespace PlayScript.RuntimeBinder
 		
 		private static void InvokeAction8 (CallSite site, object o, object a1, object a2, object a3, object a4, object a5, object a6, object a7, object a8)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
@@ -265,12 +292,18 @@ namespace PlayScript.RuntimeBinder
 
 		private static object InvokeFunc0 (CallSite site, object o)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			return binder.ResolveAndInvoke(site, o, 0);
 		}
 		
 		private static object InvokeFunc1 (CallSite site, object o, object a1)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
@@ -279,6 +312,9 @@ namespace PlayScript.RuntimeBinder
 		
 		private static object InvokeFunc2 (CallSite site, object o, object a1, object a2)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
@@ -288,6 +324,9 @@ namespace PlayScript.RuntimeBinder
 		
 		private static object InvokeFunc3 (CallSite site, object o, object a1, object a2, object a3)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
@@ -298,6 +337,9 @@ namespace PlayScript.RuntimeBinder
 		
 		private static object InvokeFunc4 (CallSite site, object o, object a1, object a2, object a3, object a4)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
@@ -310,6 +352,9 @@ namespace PlayScript.RuntimeBinder
 		
 		private static object InvokeFunc5 (CallSite site, object o, object a1, object a2, object a3, object a4, object a5)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
@@ -322,6 +367,9 @@ namespace PlayScript.RuntimeBinder
 		
 		private static object InvokeFunc6 (CallSite site, object o, object a1, object a2, object a3, object a4, object a5, object a6)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
@@ -335,6 +383,9 @@ namespace PlayScript.RuntimeBinder
 		
 		private static object InvokeFunc7 (CallSite site, object o, object a1, object a2, object a3, object a4, object a5, object a6, object a7)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
@@ -349,6 +400,9 @@ namespace PlayScript.RuntimeBinder
 		
 		private static object InvokeFunc8 (CallSite site, object o, object a1, object a2, object a3, object a4, object a5, object a6, object a7, object a8)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;

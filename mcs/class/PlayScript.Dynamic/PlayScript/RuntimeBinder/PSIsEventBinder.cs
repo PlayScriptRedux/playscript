@@ -36,6 +36,9 @@ namespace PlayScript.RuntimeBinder
 
 		private static bool IsEvent(CallSite site, object o)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.IsEventBinderInvoked;
+#endif
 			// $$TODO
 			return false;
 		}

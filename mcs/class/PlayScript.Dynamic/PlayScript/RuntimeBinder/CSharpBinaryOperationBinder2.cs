@@ -215,6 +215,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object AddObjInt (CallSite site, object a, int b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int)
 			{
 				return (int)a + b;
@@ -228,6 +231,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object AddIntObj (CallSite site, int a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is int)
 			{
 				return a + (int)b;
@@ -241,6 +247,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object AddObjUInt (CallSite site, object a, uint b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is uint)
 			{
 				return (uint)a + b;
@@ -254,6 +263,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object AddUIntObj (CallSite site, uint a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is uint)
 			{
 				return a + (uint)b;
@@ -267,6 +279,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object AddObjDouble (CallSite site, object a, double b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return b;
@@ -276,6 +291,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object AddDoubleObj (CallSite site, double a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -285,6 +303,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object AddStringObj (CallSite site, string a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			return a + b;
 		}
 
@@ -295,6 +316,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object AddObjObj (CallSite site, object a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int) {
 				return AddIntObj (site, (int)a, b);
 			} else if (a is double) {
@@ -313,6 +337,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object SubObjInt (CallSite site, object a, int b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int)
 			{
 				return (int)a - b;
@@ -326,6 +353,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object SubIntObj (CallSite site, int a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is int)
 			{
 				return a - (int)b;
@@ -339,6 +369,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object SubObjUInt (CallSite site, object a, uint b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is uint)
 			{
 				return (uint)a - b;
@@ -352,6 +385,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object SubUIntObj (CallSite site, uint a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is uint)
 			{
 				return a - (uint)b;
@@ -365,6 +401,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object SubObjDouble (CallSite site, object a, double b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return -b;
@@ -374,6 +413,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object SubDoubleObj (CallSite site, double a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -383,6 +425,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object SubObjObj (CallSite site, object a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int) {
 				return SubIntObj (site, (int)a, b);
 			} else if (a is double) {
@@ -399,6 +444,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object MulObjInt (CallSite site, object a, int b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int)
 			{
 				return (int)a * b;
@@ -412,6 +460,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object MulIntObj (CallSite site, int a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is int)
 			{
 				return a * (int)b;
@@ -425,6 +476,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object MulObjUInt (CallSite site, object a, uint b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is uint)
 			{
 				return (uint)a * b;
@@ -438,6 +492,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object MulUIntObj (CallSite site, uint a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is uint)
 			{
 				return a * (uint)b;
@@ -451,6 +508,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object MulObjDouble (CallSite site, object a, double b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (double)0;
@@ -460,6 +520,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object MulDoubleObj (CallSite site, double a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return (double)0;
@@ -469,6 +532,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object MulObjObj (CallSite site, object a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int) {
 				return MulIntObj (site, (int)a, b);
 			} else if (a is double) {
@@ -485,6 +551,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object DivObjInt (CallSite site, object a, int b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int)
 			{
 				return (int)a / b;
@@ -498,6 +567,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object DivIntObj (CallSite site, int a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is int)
 			{
 				return a / (int)b;
@@ -511,6 +583,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object DivObjUInt (CallSite site, object a, uint b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is uint)
 			{
 				return (uint)a / b;
@@ -524,6 +599,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object DivUIntObj (CallSite site, uint a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is uint)
 			{
 				return a / (uint)b;
@@ -537,6 +615,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object DivObjDouble (CallSite site, object a, double b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (double)0;
@@ -546,6 +627,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object DivDoubleObj (CallSite site, double a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return Double.NaN;		// Should probably also use Positive and Negative Infinity
@@ -555,6 +639,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object DivObjObj (CallSite site, object a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int) {
 				return DivIntObj (site, (int)a, b);
 			} else if (a is double) {
@@ -571,6 +658,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object ModObjInt (CallSite site, object a, int b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int)
 			{
 				return (int)a % b;
@@ -584,6 +674,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object ModIntObj (CallSite site, int a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is int)
 			{
 				return a / (int)b;
@@ -597,6 +690,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object ModObjUInt (CallSite site, object a, uint b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is uint)
 			{
 				return (uint)a % b;
@@ -610,6 +706,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object ModUIntObj (CallSite site, uint a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is uint)
 			{
 				return a / (uint)b;
@@ -623,6 +722,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object ModObjDouble (CallSite site, object a, double b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (uint)0;
@@ -632,6 +734,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object ModDoubleObj (CallSite site, double a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return Double.NaN;		// Should probably also use Positive and Negative Infinity
@@ -641,6 +746,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object ModObjObj (CallSite site, object a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int) {
 				return ModIntObj (site, (int)a, b);
 			} else if (a is double) {
@@ -659,6 +767,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object ShiftLeftObjInt (CallSite site, object a, int b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (uint)0;
@@ -668,6 +779,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object ShiftLeftIntObj (CallSite site, int a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -677,6 +791,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object ShiftLeftObjUInt (CallSite site, object a, uint b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (uint)0;
@@ -686,6 +803,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object ShiftLeftUIntObj (CallSite site, uint a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -695,6 +815,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object ShiftLeftObjDouble (CallSite site, object a, double b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (int)0;
@@ -704,6 +827,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object ShiftLeftDoubleObj (CallSite site, double a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -713,6 +839,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object ShiftLeftObjObj (CallSite site, object a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int) {
 				return ShiftLeftIntObj (site, (int)a, b);
 			} else if (a is uint) {
@@ -729,6 +858,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object ShiftRightObjInt (CallSite site, object a, int b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (uint)0;
@@ -738,6 +870,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object ShiftRightIntObj (CallSite site, int a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -747,6 +882,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object ShiftRightObjUInt (CallSite site, object a, uint b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (uint)0;
@@ -756,6 +894,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object ShiftRightUIntObj (CallSite site, uint a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -765,6 +906,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object ShiftRightObjDouble (CallSite site, object a, double b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (int)0;
@@ -774,6 +918,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object ShiftRightDoubleObj (CallSite site, double a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -783,6 +930,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object ShiftRightObjObj (CallSite site, object a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int) {
 				return ShiftRightIntObj (site, (int)a, b);
 			} else if (a is uint) {
@@ -799,6 +949,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object LessThanObjInt (CallSite site, object a, int b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int)
 			{
 				return (int)a < b;
@@ -812,6 +965,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object LessThanIntObj (CallSite site, int a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is int)
 			{
 				return a < (int)b;
@@ -825,6 +981,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object LessThanObjUInt (CallSite site, object a, uint b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is uint)
 			{
 				return (uint)a < b;
@@ -838,6 +997,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object LessThanUIntObj (CallSite site, uint a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is uint)
 			{
 				return a < (uint)b;
@@ -851,6 +1013,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object LessThanObjDouble (CallSite site, object a, double b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return false;
@@ -860,6 +1025,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object LessThanDoubleObj (CallSite site, double a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return false;
@@ -869,6 +1037,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object LessThanObjString (CallSite site, object a, string b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is string) {
 				return String.CompareOrdinal((string)a, b) < 0;
 			} else {
@@ -879,6 +1050,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object LessThanStringObj (CallSite site, string a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is string) {
 				return String.CompareOrdinal(a, (string)b) < 0;
 			} else {
@@ -889,6 +1063,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object LessThanObjObj (CallSite site, object a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int) {
 				return LessThanIntObj (site, (int)a, b);
 			} else if (a is string) {
@@ -907,6 +1084,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object GreaterThanObjInt (CallSite site, object a, int b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int)
 			{
 				return (int)a > b;
@@ -920,6 +1100,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object GreaterThanIntObj (CallSite site, int a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is int)
 			{
 				return a > (int)b;
@@ -933,6 +1116,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object GreaterThanObjUInt (CallSite site, object a, uint b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is uint)
 			{
 				return (uint)a > b;
@@ -946,6 +1132,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object GreaterThanUIntObj (CallSite site, uint a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is uint)
 			{
 				return a > (uint)b;
@@ -959,6 +1148,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object GreaterThanObjDouble (CallSite site, object a, double b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return false;
@@ -968,6 +1160,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object GreaterThanDoubleObj (CallSite site, double a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return false;
@@ -977,6 +1172,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object GreaterThanObjString (CallSite site, object a, string b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is string) {
 				return String.CompareOrdinal((string)a, b) > 0;
 			} else {
@@ -987,6 +1185,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object GreaterThanStringObj (CallSite site, string a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is string) {
 				return String.CompareOrdinal(a, (string)b) > 0;
 			} else {
@@ -997,6 +1198,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object GreaterThanObjObj (CallSite site, object a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int) {
 				return GreaterThanIntObj (site, (int)a, b);
 			} else if (a is string) {
@@ -1015,6 +1219,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object LessThanEqObjInt (CallSite site, object a, int b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int)
 			{
 				return (int)a <= b;
@@ -1028,6 +1235,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object LessThanEqIntObj (CallSite site, int a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is int)
 			{
 				return a <= (int)b;
@@ -1041,6 +1251,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object LessThanEqObjUInt (CallSite site, object a, uint b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is uint)
 			{
 				return (uint)a <= b;
@@ -1054,6 +1267,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object LessThanEqUIntObj (CallSite site, uint a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is uint)
 			{
 				return a <= (uint)b;
@@ -1067,6 +1283,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object LessThanEqObjDouble (CallSite site, object a, double b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return false;
@@ -1076,6 +1295,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object LessThanEqDoubleObj (CallSite site, double a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return false;
@@ -1085,6 +1307,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object LessThanEqObjString (CallSite site, object a, string b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is string) {
 				return String.CompareOrdinal((string)a, b) <= 0;
 			} else {
@@ -1095,6 +1320,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object LessThanEqStringObj (CallSite site, string a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is string) {
 				return String.CompareOrdinal(a, (string)b) <= 0;
 			} else {
@@ -1105,6 +1333,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object LessThanEqObjObj (CallSite site, object a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int) {
 				return LessThanEqIntObj (site, (int)a, b);
 			} else if (a is string) {
@@ -1123,6 +1354,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object GreaterThanEqObjInt (CallSite site, object a, int b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int)
 			{
 				return (int)a >= b;
@@ -1136,6 +1370,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object GreaterThanEqIntObj (CallSite site, int a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is int)
 			{
 				return a >= (int)b;
@@ -1149,6 +1386,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object GreaterThanEqObjUInt (CallSite site, object a, uint b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is uint)
 			{
 				return (uint)a >= b;
@@ -1162,6 +1402,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object GreaterThanEqUIntObj (CallSite site, uint a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is uint)
 			{
 				return a >= (uint)b;
@@ -1175,6 +1418,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object GreaterThanEqObjDouble (CallSite site, object a, double b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return false;
@@ -1184,6 +1430,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object GreaterThanEqDoubleObj (CallSite site, double a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return false;
@@ -1193,6 +1442,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object GreaterThanEqObjString (CallSite site, object a, string b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is string) {
 				return String.CompareOrdinal((string)a, b) >= 0;
 			} else {
@@ -1203,6 +1455,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object GreaterThanEqStringObj (CallSite site, string a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is string) {
 				return String.CompareOrdinal(a, (string)b) >= 0;
 			} else {
@@ -1213,6 +1468,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object GreaterThanEqObjObj (CallSite site, object a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int) {
 				return GreaterThanEqIntObj (site, (int)a, b);
 			} else if (a is string) {
@@ -1231,6 +1489,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object EqualsObjInt (CallSite site, object a, int b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int)
 			{
 				return (int)a == b;
@@ -1244,6 +1505,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object EqualsIntObj (CallSite site, int a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is int)
 			{
 				return a == (int)b;
@@ -1257,6 +1521,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object EqualsObjUInt (CallSite site, object a, uint b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is uint)
 			{
 				return (uint)a == b;
@@ -1270,6 +1537,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object EqualsUIntObj (CallSite site, uint a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is uint)
 			{
 				return a == (uint)b;
@@ -1283,6 +1553,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object EqualsObjDouble (CallSite site, object a, double b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return false;
@@ -1292,6 +1565,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object EqualsDoubleObj (CallSite site, double a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return false;
@@ -1301,6 +1577,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object EqualsObjString (CallSite site, object a, string b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is string) {
 				return String.CompareOrdinal((string)a, b) == 0;
 			} else {
@@ -1311,6 +1590,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object EqualsStringObj (CallSite site, string a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is string) {
 				return String.CompareOrdinal(a, (string)b) == 0;
 			} else if (b == null) {
@@ -1323,16 +1605,25 @@ namespace PlayScript.RuntimeBinder
 
 		public static object EqualsObjBool (CallSite site, object a, bool b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			return Dynamic.CastObjectToBool(a) == b;
 		}
 		
 		public static object EqualsBoolObj (CallSite site, bool a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			return a == Dynamic.CastObjectToBool(b);
 		}
 
 		public static object EqualsObjObj (CallSite site, object a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a == PlayScript.Undefined._undefined) a = null;
 			if (b == PlayScript.Undefined._undefined) b = null;
 
@@ -1359,6 +1650,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object NotEqualsObjInt (CallSite site, object a, int b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int)
 			{
 				return (int)a != b;
@@ -1372,6 +1666,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object NotEqualsIntObj (CallSite site, int a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is int)
 			{
 				return a != (int)b;
@@ -1385,6 +1682,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object NotEqualsObjUInt (CallSite site, object a, uint b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is uint)
 			{
 				return (uint)a != b;
@@ -1398,6 +1698,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object NotEqualsUIntObj (CallSite site, uint a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is uint)
 			{
 				return a != (uint)b;
@@ -1411,6 +1714,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object NotEqualsObjDouble (CallSite site, object a, double b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return true;
@@ -1420,6 +1726,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object NotEqualsDoubleObj (CallSite site, double a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return true;
@@ -1429,6 +1738,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object NotEqualsObjString (CallSite site, object a, string b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is string) {
 				return (string)a != b;
 			} else {
@@ -1439,6 +1751,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object NotEqualsStringObj (CallSite site, string a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is string) {
 				return a != (string)b;
 			} else {
@@ -1449,6 +1764,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object NotEqualsObjBool (CallSite site, object a, bool b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is bool) {
 				return (bool)a != b;
 			} else {
@@ -1458,6 +1776,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object NotEqualsBoolObj (CallSite site, bool a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is bool) {
 				return a != (bool)b;
 			} else {
@@ -1467,6 +1788,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object NotEqualsObjObj (CallSite site, object a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a == PlayScript.Undefined._undefined) a = null;
 			if (b == PlayScript.Undefined._undefined) b = null;
 			
@@ -1501,6 +1825,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object AndObjInt (CallSite site, object a, int b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (int)0;
@@ -1510,6 +1837,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object AndIntObj (CallSite site, int a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return (int)0;
@@ -1519,6 +1849,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object AndObjUInt (CallSite site, object a, uint b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (uint)0;
@@ -1528,6 +1861,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object AndUIntObj (CallSite site, uint a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return (uint)0;
@@ -1537,6 +1873,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object AndObjDouble (CallSite site, object a, double b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (int)0;
@@ -1546,6 +1885,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object AndDoubleObj (CallSite site, double a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return (int)0;
@@ -1555,6 +1897,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object AndObjBool (CallSite site, object a, bool b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is bool) {
 				return (bool)a && b;
 			} else {
@@ -1564,6 +1909,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object AndBoolObj (CallSite site, bool a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is bool) {
 				return a && (bool)b;
 			} else {
@@ -1572,6 +1920,9 @@ namespace PlayScript.RuntimeBinder
 		}
 		public static object AndObjObj (CallSite site, object a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int) {
 				return AndIntObj (site, (int)a, b);
 			} else if (a is double) {
@@ -1589,6 +1940,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object OrObjInt (CallSite site, object a, int b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return b;
@@ -1598,6 +1952,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object OrIntObj (CallSite site, int a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -1607,6 +1964,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object OrObjUInt (CallSite site, object a, uint b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return b;
@@ -1616,6 +1976,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object OrUIntObj (CallSite site, uint a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -1625,6 +1988,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object OrObjDouble (CallSite site, object a, double b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return b;
@@ -1634,6 +2000,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object OrDoubleObj (CallSite site, double a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -1643,6 +2012,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object OrObjBool (CallSite site, object a, bool b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is bool) {
 				return (bool)a || b;
 			} else {
@@ -1652,6 +2024,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object OrBoolObj (CallSite site, bool a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (b is bool) {
 				return a || (bool)b;
 			} else {
@@ -1661,11 +2036,17 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object OrObjObj (CallSite site, object a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			return Dynamic.CastObjectToBool(a) || Dynamic.CastObjectToBool(b);
 		}
 
 		public static object XorObjInt (CallSite site, object a, int b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return b;
@@ -1675,6 +2056,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object XorIntObj (CallSite site, int a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -1684,6 +2068,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object XorObjUInt (CallSite site, object a, uint b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return b;
@@ -1693,6 +2080,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object XorUIntObj (CallSite site, uint a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -1702,6 +2092,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object XorObjDouble (CallSite site, object a, double b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return b;
@@ -1711,6 +2104,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object XorDoubleObj (CallSite site, double a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -1720,16 +2116,25 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object XorObjBool (CallSite site, object a, bool b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			return Dynamic.CastObjectToBool(a) ^ b;
 		}
 		
 		public static object XorBoolObj (CallSite site, bool a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			return a ^ Dynamic.CastObjectToBool(b);
 		}
 		
 		public static object XorObjObj (CallSite site, object a, object b)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+#endif
 			if (a is int) {
 				return XorIntObj (site, (int)a, b);
 			} else if (a is double) {
