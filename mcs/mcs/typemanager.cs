@@ -262,6 +262,12 @@ namespace Mono.CSharp
 		public readonly PredefinedType AsXml;
 		public readonly PredefinedType AsIKeyEnumerable;
 
+		public readonly PredefinedType PsGetMemberCallSite;
+		public readonly PredefinedType PsSetMemberCallSite;
+		public readonly PredefinedType PsSetIndexCallSite;
+		public readonly PredefinedType PsGetIndexCallSite;
+		public readonly PredefinedType PsConverter;
+
 		// PlayScript dynamic binder AOT mode support..
 		private bool checkedAsDynamicMode = false;
 		private bool isAsDynamicMode = false;
@@ -339,6 +345,12 @@ namespace Mono.CSharp
 			AsRegExp = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "RegExp");
 			AsXml = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "XML");
 			AsIKeyEnumerable = new PredefinedType (module, MemberKind.Interface, "PlayScript", "IKeyEnumerable");
+
+			PsGetMemberCallSite = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSGetMemberCallSite");
+			PsSetMemberCallSite = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSSetMemberCallSite");
+			PsGetIndexCallSite  = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSGetIndexCallSite");
+			PsSetIndexCallSite  = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSSetIndexCallSite");
+			PsConverter         = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSConverter");
 
 			//
 			// Define types which are used for comparison. It does not matter

@@ -3,6 +3,7 @@ package
 	import flash.display.DisplayObject;
 	import System.*;
 	import System.Diagnostics.*;
+	import flash.utils.Dictionary;
 
 	public class inlineAttribute extends System.Attribute {
 	}
@@ -15,6 +16,10 @@ package
 
 		public function get value2():int{return 0;}
 
+		public function get valueF():Number{return mValueF;}
+		public function set valueF(v:Number):void {mValueF = v;}
+
+		private var mValueF:Number;
 	}
 
 	public class Texture2 extends Texture
@@ -184,15 +189,123 @@ package
 		}
 #endif
 
+//
+//		public static function TestForEach():void {
+//			var a:Array = [true, false];
+//			for each (var tinted:Boolean in a)
+//			{
+//				trace(tinted);
+//			}
+//		}
 
-		public static function TestForEach():void {
-			var a:Array = [true, false];
-			for each (var tinted:Boolean in a)
-			{
-				trace(tinted);
-			}
+
+		public static function getSize(o:Object):int {
+			return 100;
 		}
 
+		public static function TestConvert():void {
+//			var o:Object = 5.0;
+//			var v:Number = o;
+//			var s:String = o;
+//			trace(o, v, s);
+////
+			/// 
+			/*
+			var t:Texture = new Texture();
+			var ot:Object = t;
+			ot.valueF = 123.0;
+//			var v:Number = ot.valueF;
+//			t.valueF = t.valueF * ot.valueF;
+			trace(ot.valueF);
+
+			t.valueF *= ot.valueF;
+*/
+
+//			var obj:Object = new Object();
+//			obj.summary = 5;
+
+//			obj.summary++;
+
+//			var i:int = obj.summary;
+//			var d:Number = obj.summary;
+//			trace(obj.summary, i, d);
+//			trace(i);
+
+
+//			var array:Array = new Array();
+//			var texture:Texture = null;
+//			array.Add(new Texture());
+//
+//			var t2:Texture = texture || array[0];
+//			trace(t2);
+
+			/*
+			var total:int  = 0;
+			// create summary as dictionary
+			var dict:Dictionary = new Dictionary();
+			var tracked:Array = new Array();
+			for (var o:Object in tracked) {
+				var t:Object = tracked[o];
+			
+				var summary:Object = new Object();
+
+				// get object size
+				var size:int = getSize(o);
+
+				// update summary for object context
+				summary.count++;
+				summary.total += size;
+
+				total += size;
+			}*/
+
+			var summary:Object = new Object();
+
+			// get object size
+			var size:int = getSize(summary);
+
+			// update summary for object context
+			summary.total += size;
+
+
+			trace(summary.total);
+
+		}
+	
+
+
+//		public static function TestIndex():void {
+//
+//			var obj:Object = new Object();
+//			obj["summary"] = 5;
+//
+//			var str:String = "summary";
+//
+//			var s:Object = obj[str];
+//			trace(s);
+//
+//
+//			obj[str] = 10.0;
+//
+//			obj.summary ++;
+//
+//
+//
+//			var i:int = obj.summary;
+//			var d:Number = obj[str];
+//			trace(i, d);
+//		}
+//
+//
+//		private static var mRootObject:Object = new Object();
+//
+//		/** Returns the root symbol name for this asset (the symbol of the root object) if it has one. */
+//		public static function get rootSymbolName():String {
+//			if (mRootObject != null && mRootObject.symbolName != null) {
+//				return mRootObject.symbolName;
+//			}
+//			return null;
+//		}
 	
 
 		public static function Main():void {
@@ -203,7 +316,10 @@ package
 
 //			TestSwitch();
 
-			TestForEach();
+//			TestForEach();
+			//TestIndex();
+
+			TestConvert();
 
 			//removeFromQueue("a", "b");
 			/*

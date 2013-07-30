@@ -184,6 +184,8 @@ namespace Mono.CSharp {
 		public bool AutoSeal;
 		public bool AutoSealVerbosity;
 
+		public bool NewDynamicRuntime;
+
 		//
 		// Inlining mode for source level inliner (none, explicit, any)
 		//
@@ -827,6 +829,15 @@ namespace Mono.CSharp {
 
 			case "/autoseal-":
 				settings.AutoSeal = false;
+				return ParseResult.Success;
+
+			case "/newdynamic":
+			case "/newdynamic+":
+				settings.NewDynamicRuntime = true;
+				return ParseResult.Success;
+
+			case "/newdynamic-":
+				settings.NewDynamicRuntime = false;
 				return ParseResult.Success;
 
 			case "/autoseal_verbosity":
