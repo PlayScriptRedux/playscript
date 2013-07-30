@@ -171,10 +171,26 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\IKeyEnumerable.cs">
       <Link>PlayScript\IKeyEnumerable.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSConverter.cs">
+      <Link>PlayScript\DynamicRuntime\PSConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSGetIndexCallSite.cs">
+      <Link>PlayScript\DynamicRuntime\PSGetIndexCallSite.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSGetMemberCallSite.cs">
+      <Link>PlayScript\DynamicRuntime\PSGetMemberCallSite.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSSetMemberCallSite.cs">
+      <Link>PlayScript\DynamicRuntime\PSSetMemberCallSite.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSSetIndexCallSite.cs">
+      <Link>PlayScript\DynamicRuntime\PSSetIndexCallSite.cs</Link>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Folder Include="System\" />
     <Folder Include="PlayScript\" />
+    <Folder Include="PlayScript\DynamicRuntime\" />
   </ItemGroup>
 </Project>
