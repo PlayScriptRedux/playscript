@@ -166,5 +166,8 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\Stats.cs">
       <Link>PlayScript\Stats.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\Invoker.cs">
+      <Link>PlayScript\Invoker.cs</Link>
+    </Compile>
   </ItemGroup>
 </Project>
