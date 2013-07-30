@@ -818,21 +818,24 @@ namespace Mono.CSharp {
 				if (target is DynamicMemberBinder) {
 					source = new DynamicMemberBinder (ma.Name, binder_flags, args, loc).Resolve (ec);
 
-					// Handles possible event addition/subtraction
-					if (op == Binary.Operator.Addition || op == Binary.Operator.Subtraction) {
-						args = new Arguments (targs.Count + 1);
-						args.AddRange (targs);
-						args.Add (new Argument (right));
-						string method_prefix = op == Binary.Operator.Addition ?
-							Event.AEventAccessor.AddPrefix : Event.AEventAccessor.RemovePrefix;
+					if (ec.FileType != SourceFileType.PlayScript) 
+					{
+						// Handles possible event addition/subtraction
+						if (op == Binary.Operator.Addition || op == Binary.Operator.Subtraction) {
+							args = new Arguments (targs.Count + 1);
+							args.AddRange (targs);
+							args.Add (new Argument (right));
+							string method_prefix = op == Binary.Operator.Addition ?
+								Event.AEventAccessor.AddPrefix : Event.AEventAccessor.RemovePrefix;
 
-						var invoke = DynamicInvocation.CreateSpecialNameInvoke (
-							new MemberAccess (right, method_prefix + ma.Name, loc), args, loc).Resolve (ec);
+							var invoke = DynamicInvocation.CreateSpecialNameInvoke (
+								new MemberAccess (right, method_prefix + ma.Name, loc), args, loc).Resolve (ec);
 
-						args = new Arguments (targs.Count);
-						args.AddRange (targs);
-						source = new DynamicEventCompoundAssign (ma.Name, args,
-							(ExpressionStatement) source, (ExpressionStatement) invoke, loc).Resolve (ec);
+							args = new Arguments (targs.Count);
+							args.AddRange (targs);
+							source = new DynamicEventCompoundAssign (ma.Name, args,
+								(ExpressionStatement) source, (ExpressionStatement) invoke, loc).Resolve (ec);
+						}
 					}
 				} else {
 					source = new DynamicIndexBinder (binder_flags, args, loc).Resolve (ec);
