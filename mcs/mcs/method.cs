@@ -667,7 +667,7 @@ namespace Mono.CSharp {
 			Parent.MemberCache.AddMember (this, explicit_name, spec);
 
 			if (Compiler.Settings.Inlining != InliningMode.None)
-				Inliner.DetermineIsInlinable (Compiler, this);
+				isInlinable = Inliner.DetermineIsInlinable (Compiler, this);
 
 			return true;
 		}

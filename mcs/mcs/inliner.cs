@@ -169,7 +169,7 @@ namespace Mono.CSharp
 
 				bool isExplicit = false;
 
-				if (potentiallyInlinable) {
+				if (potentiallyInlinable && (method.OptAttributes != null)) {
 					isExplicit = method.OptAttributes.Contains (method.Parent.Module.PredefinedAttributes.InlineAttribute);
 					if (compiler.Settings.Inlining == InliningMode.Explicit && isExplicit == false) {
 						potentiallyInlinable = false;
