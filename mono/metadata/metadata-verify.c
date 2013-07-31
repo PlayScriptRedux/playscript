@@ -24,6 +24,7 @@
 #include <mono/metadata/attrdefs.h>
 #include <mono/utils/strenc.h>
 #include <mono/utils/mono-error-internals.h>
+#include <mono/utils/bsearch.h>
 #include <string.h>
 //#include <signal.h>
 #include <ctype.h>
@@ -1069,7 +1070,7 @@ search_sorted_table (VerifyContext *ctx, int table, int column, guint32 coded_to
 	base = tinfo->base;
 
 	VERIFIER_DEBUG ( printf ("looking token %x table %d col %d rsize %d roff %d\n", coded_token, table, column, locator.col_size, locator.col_offset) );
-	res = bsearch (&locator, base, tinfo->rows, tinfo->row_size, token_locator);
+	res = mono_binary_search (&locator, base, tinfo->rows, tinfo->row_size, token_locator);
 	if (!res)
 		return -1;
 
@@ -1096,7 +1097,7 @@ string_cmp (VerifyContext *ctx, const char *str, guint offset)
 static gboolean
 mono_verifier_is_corlib (MonoImage *image)
 {
-	gboolean trusted_location = (mono_security_get_mode () != MONO_SECURITY_MODE_CORE_CLR) ? 
+	gboolean trusted_location = !mono_security_core_clr_enabled () ?
 			TRUE : mono_security_core_clr_is_platform_image (image);
 
 	return trusted_location && image->module_name && !strcmp ("mscorlib.dll", image->module_name);

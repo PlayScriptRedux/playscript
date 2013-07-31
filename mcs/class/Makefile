@@ -148,23 +148,20 @@ mobile_dirs := \
 	Mono.Data.Sqlite	\
 	System.Numerics	\
 	System.Data.Services.Client \
-	System.Reactive.Interfaces \
-	System.Reactive.Core \
-	System.Reactive.Linq \
-	System.Reactive.PlatformServices \
-	System.Reactive.Experimental \
-	System.Reactive.Debugger	\
-	System.Net.Http \
 	System.IO.Compression \
 	System.IO.Compression.FileSystem \
 	System.ComponentModel.DataAnnotations \
-	System.ComponentModel.Composition.4.5
+	System.ComponentModel.Composition.4.5 \
+	System.Net \
+	System.Windows \
+	System.Xml.Serialization \
+	Facades
 
 monodroid_dirs := \
 	Mono.CompilerServices.SymbolWriter	\
 	Mono.CSharp	\
 	Microsoft.CSharp \
-	System.Reactive.Providers
+	System.Net.Http
 
 monotouch_runtime_dirs := \
 	corlib \
@@ -193,8 +190,7 @@ monotouch_runtime_dirs := \
 	System.Web \
 	Mono.Web \
 	System.Web.Services \
-	System.Web	\
-	System.Net.Http
+	System.Web
 
 net_3_5_only_dirs := \
 	Microsoft.Build.Framework	\
@@ -244,6 +240,7 @@ net_4_5_dirs := \
 	System.Threading.Tasks.Dataflow \
 	System.ComponentModel.Composition.4.5 \
 	System.Net.Http	\
+	System.Net.Http.WebRequest \
 	System.Web.Razor \
 	System.Web.WebPages.Deployment \
 	System.Web.WebPages \
@@ -257,7 +254,10 @@ net_4_5_dirs := \
 	EntityFramework.SqlServer	\
 	Mono.CodeContracts \
 	System.IO.Compression \
-	System.IO.Compression.FileSystem
+	System.IO.Compression.FileSystem \
+	System.Windows \
+	System.Xml.Serialization \
+	Facades
 	
 net_2_0_SUBDIRS := $(common_dirs) $(net_2_0_dirs) $(net_2_0_only_dirs) aot-compiler
 monodroid_SUBDIRS := $(mobile_dirs) $(monodroid_dirs)

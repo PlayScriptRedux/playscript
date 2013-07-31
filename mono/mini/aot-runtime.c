@@ -1491,6 +1491,28 @@ check_usable (MonoAssembly *assembly, MonoAotFileInfo *info, char **out_msg)
 	return usable;
 }
 
+/* This returns an interop address */
+static void*
+get_arm_bl_target (guint32 *ins_addr)
+{
+#ifdef TARGET_ARM
+	guint32 ins = *ins_addr;
+	gint32 offset;
+
+	if ((ins >> ARMCOND_SHIFT) == ARMCOND_NV) {
+		/* blx */
+		offset = (((int)(((ins & 0xffffff) << 1) | ((ins >> 24) & 0x1))) << 7) >> 7;
+		return (char*)ins_addr + (offset * 2) + 8 + 1;
+	} else {
+		offset = (((int)ins & 0xffffff) << 8) >> 8;
+		return (char*)ins_addr + (offset * 4) + 8;
+	}
+#else
+	g_assert_not_reached ();
+	return NULL;
+#endif
+}
+
 static void
 load_aot_module (MonoAssembly *assembly, gpointer user_data)
 {
@@ -1505,6 +1527,7 @@ load_aot_module (MonoAssembly *assembly, gpointer user_data)
 	int i, version;
 	guint8 *blob;
 	gboolean do_load_image = TRUE;
+	int align_double, align_int64;
 
 	if (mono_compile_aot)
 		return;
@@ -1519,7 +1542,7 @@ load_aot_module (MonoAssembly *assembly, gpointer user_data)
 	if (assembly->image->dynamic || assembly->ref_only)
 		return;
 
-	if (mono_security_get_mode () == MONO_SECURITY_MODE_CAS)
+	if (mono_security_cas_enabled ())
 		return;
 
 	mono_aot_lock ();
@@ -1595,9 +1618,28 @@ load_aot_module (MonoAssembly *assembly, gpointer user_data)
 		return;
 	}
 
+#if defined (TARGET_ARM) && defined (TARGET_MACH)
+	{
+		MonoType t;
+		int align = 0;
+
+		memset (&t, 0, sizeof (MonoType));
+		t.type = MONO_TYPE_R8;
+		mono_type_size (&t, &align);
+		align_double = align;
+
+		memset (&t, 0, sizeof (MonoType));
+		t.type = MONO_TYPE_I8;
+		align_int64 = align;
+	}
+#else
+	align_double = __alignof__ (double);
+	align_int64 = __alignof__ (gint64);
+#endif
+
 	/* Sanity check */
-	g_assert (info->double_align == __alignof__ (double));
-	g_assert (info->long_align == __alignof__ (gint64));
+	g_assert (info->double_align == align_double);
+	g_assert (info->long_align == align_int64);
 
 	blob = info->blob;
 
@@ -1691,10 +1733,13 @@ load_aot_module (MonoAssembly *assembly, gpointer user_data)
 		/* Compute code_offsets from the method addresses */
 		amodule->code_offsets = g_malloc0 (amodule->info.nmethods * sizeof (gint32));
 		for (i = 0; i < amodule->info.nmethods; ++i) {
-			if (!amodule->method_addresses [i])
+			/* method_addresses () contains a table of branches, since the ios linker can update those correctly */
+			void *addr = get_arm_bl_target ((guint32*)(amodule->method_addresses + i));
+
+			if (addr == amodule->method_addresses)
 				amodule->code_offsets [i] = 0xffffffff;
 			else
-				amodule->code_offsets [i] = (char*)amodule->method_addresses [i] - (char*)amodule->code;
+				amodule->code_offsets [i] = (char*)addr - (char*)amodule->code;
 		}
 	}
 #endif
@@ -2102,14 +2147,10 @@ decode_llvm_mono_eh_frame (MonoAotModule *amodule, MonoDomain *domain,
 
 	/* Header */
 	version = *p;
-	g_assert (version == 1 || version == 2);
+	g_assert (version == 3);
 	p ++;
-	if (version == 2) {
-		func_encoding = *p;
-		p ++;
-	} else {
-		func_encoding = DW_EH_PE_pcrel;
-	}
+	func_encoding = *p;
+	p ++;
 	p = ALIGN_PTR_TO (p, 4);
 
 	fde_count = *(guint32*)p;
@@ -2120,31 +2161,20 @@ decode_llvm_mono_eh_frame (MonoAotModule *amodule, MonoDomain *domain,
 	cie = p + ((fde_count + 1) * 8);
 
 	/* Binary search in the table to find the entry for code */
-	if (func_encoding == DW_EH_PE_absptr) {
-		/*
-		 * Table entries are encoded as DW_EH_PE_absptr, because the ios linker can move functions inside object files to make thumb work,
-		 * so the offsets between two symbols in the text segment are not assembler constant.
-		 */
-		g_assert (sizeof(gpointer) == 4);
-		offset = GPOINTER_TO_INT (code);
-	} else {
-		/* Table entries are encoded as DW_EH_PE_pcrel relative to mono_eh_frame */
-		offset = code - amodule->mono_eh_frame;
-	}
-
+	offset = code - amodule->code;
 	left = 0;
 	right = fde_count;
 	while (TRUE) {
 		pos = (left + right) / 2;
 
-		offset1 = table [(pos * 2)];
+		/* The table contains method index/fde offset pairs */
+		g_assert (table [(pos * 2)] != -1);
+		offset1 = amodule->code_offsets [table [(pos * 2)]];
 		if (pos + 1 == fde_count) {
-			if (func_encoding == DW_EH_PE_absptr)
-				offset2 = GPOINTER_TO_INT (amodule->code_end);
-			else
-				offset2 = amodule->code_end - amodule->code;
+			offset2 = amodule->code_end - amodule->code;
 		} else {
-			offset2 = table [(pos + 1) * 2];
+			g_assert (table [(pos + 1) * 2] != -1);
+			offset2 = amodule->code_offsets [table [(pos + 1) * 2]];
 		}
 
 		if (offset < offset1)
@@ -2155,13 +2185,13 @@ decode_llvm_mono_eh_frame (MonoAotModule *amodule, MonoDomain *domain,
 			break;
 	}
 
-	if (func_encoding == DW_EH_PE_absptr) {
-		code_start = (gpointer)(gsize)table [(pos * 2)];
-		code_end = (gpointer)(gsize)table [(pos * 2) + 2];
+	code_start = amodule->code + amodule->code_offsets [table [(pos * 2)]];
+	if (pos + 1 == fde_count) {
+		/* The +1 entry in the table contains the length of the last method */
+		int len = table [(pos + 1) * 2];
+		code_end = code_start + len;
 	} else {
-		code_start = amodule->mono_eh_frame + table [(pos * 2)];
-		/* This won't overflow because there is +1 entry in the table */
-		code_end = amodule->mono_eh_frame + table [(pos * 2) + 2];
+		code_end = amodule->code + amodule->code_offsets [table [(pos + 1) * 2]];
 	}
 	code_len = code_end - code_start;
 
@@ -2958,6 +2988,9 @@ decode_patch (MonoAotModule *aot_module, MonoMemPool *mp, MonoJumpInfo *ji, guin
 	case MONO_PATCH_INFO_SIGNATURE:
 		ji->data.target = decode_signature (aot_module, p, &p);
 		break;
+	case MONO_PATCH_INFO_TLS_OFFSET:
+		ji->data.target = GINT_TO_POINTER (decode_value (p, &p));
+		break;
 	case MONO_PATCH_INFO_GSHAREDVT_CALL: {
 		MonoJumpInfoGSharedVtCall *info = g_new0 (MonoJumpInfoGSharedVtCall, 1);
 		info->sig = decode_signature (aot_module, p, &p);
@@ -2965,6 +2998,41 @@ decode_patch (MonoAotModule *aot_module, MonoMemPool *mp, MonoJumpInfo *ji, guin
 		info->method = decode_resolve_method_ref (aot_module, p, &p);
 		g_assert (info->method);
 
+		ji->data.target = info;
+		break;
+	}
+	case MONO_PATCH_INFO_GSHAREDVT_METHOD: {
+		MonoGSharedVtMethodInfo *info = g_new0 (MonoGSharedVtMethodInfo, 1);
+		int i, nentries;
+		
+		info->method = decode_resolve_method_ref (aot_module, p, &p);
+		g_assert (info->method);
+		nentries = decode_value (p, &p);
+		info->entries = g_ptr_array_new ();
+		for (i = 0; i < nentries; ++i) {
+			MonoRuntimeGenericContextInfoTemplate *template = g_new0 (MonoRuntimeGenericContextInfoTemplate, 1);
+
+			template->info_type = decode_value (p, &p);
+			switch (mini_rgctx_info_type_to_patch_info_type (template->info_type)) {
+			case MONO_PATCH_INFO_CLASS: {
+				MonoClass *klass = decode_klass_ref (aot_module, p, &p);
+				if (!klass)
+					goto cleanup;
+				template->data = &klass->byval_arg;
+				break;
+			}
+			case MONO_PATCH_INFO_FIELD:
+				template->data = decode_field_info (aot_module, p, &p);
+				if (!template->data)
+					goto cleanup;
+				break;
+			default:
+				g_assert_not_reached ();
+				break;
+			}
+
+			g_ptr_array_add (info->entries, template);
+		}
 		ji->data.target = info;
 		break;
 	}
@@ -3418,7 +3486,8 @@ mono_aot_get_method (MonoDomain *domain, MonoMethod *method)
 	g_assert (klass->inited);
 
 	/* Find method index */
-	if (method->is_inflated && !method->wrapper_type && mono_method_is_generic_sharable_impl_full (method, FALSE, FALSE, FALSE)) {
+	method_index = 0xffffff;
+	if (method->is_inflated && !method->wrapper_type && mono_method_is_generic_sharable_full (method, FALSE, FALSE, FALSE)) {
 		/* 
 		 * For generic methods, we store the fully shared instance in place of the
 		 * original method.
@@ -3522,7 +3591,17 @@ mono_aot_get_method (MonoDomain *domain, MonoMethod *method)
 				return code;
 		}
 
-		if (method_index == 0xffffff && method->is_inflated && mono_method_is_generic_sharable_impl_full (method, FALSE, FALSE, TRUE)) {
+		if (method_index == 0xffffff && method->is_inflated && mono_method_is_generic_sharable_full (method, FALSE, TRUE, FALSE)) {
+			/* Partial sharing */
+			MonoMethod *shared;
+
+			shared = mini_get_shared_method (method);
+			method_index = find_extra_method (shared, &amodule);
+			if (method_index != 0xffffff)
+				method = shared;
+		}
+
+		if (method_index == 0xffffff && method->is_inflated && mono_method_is_generic_sharable_full (method, FALSE, FALSE, TRUE)) {
 			/* gsharedvt */
 			/* Use the all-vt shared method since this is what was AOTed */
 			method_index = find_extra_method (mini_get_shared_method_full (method, TRUE, TRUE), &amodule);
@@ -4347,9 +4426,9 @@ mono_aot_get_unbox_trampoline (MonoMethod *method)
 	guint32 *ut, *ut_end, *entry;
 	int low, high, entry_index;
 
-	if (method->is_inflated && !mono_method_is_generic_sharable_impl_full (method, FALSE, FALSE, FALSE)) {
+	if (method->is_inflated && !mono_method_is_generic_sharable_full (method, FALSE, FALSE, FALSE)) {
 		method_index = find_extra_method (method, &amodule);
-		if (method_index == 0xffffff && mono_method_is_generic_sharable_impl_full (method, FALSE, FALSE, TRUE)) {
+		if (method_index == 0xffffff && mono_method_is_generic_sharable_full (method, FALSE, FALSE, TRUE)) {
 			MonoMethod *shared = mini_get_shared_method_full (method, TRUE, TRUE);
 			method_index = find_extra_method (shared, &amodule);
 		}
@@ -4375,7 +4454,7 @@ mono_aot_get_unbox_trampoline (MonoMethod *method)
 			high = entry_index;
 		} else {
 			if (amodule->info.flags & MONO_AOT_FILE_FLAG_DIRECT_METHOD_ADDRESSES)
-				code = (gpointer)(gsize)entry [1];
+				code = get_arm_bl_target (entry + 1);
 			else
 				code = amodule->code + entry [1];
 			break;

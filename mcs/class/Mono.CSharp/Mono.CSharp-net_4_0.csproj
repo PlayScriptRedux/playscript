@@ -5,7 +5,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{4FADEA1C-3DCC-4658-A411-EDEF0CF30884}</ProjectGuid>
+    <ProjectGuid>{F1E6D92C-D29F-47B0-876F-8C3C06584ABE}</ProjectGuid>
     <OutputType>Library</OutputType>
     <NoWarn>1699</NoWarn>
     <OutputPath>bin\Debug\Mono.CSharp-net_4_0</OutputPath>
@@ -42,6 +42,10 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Compile Include="..\..\build\common\Consts.cs" />
+    <Compile Include="..\..\class\Mono.CompilerServices.SymbolWriter\MonoSymbolFile.cs" />
+    <Compile Include="..\..\class\Mono.CompilerServices.SymbolWriter\MonoSymbolTable.cs" />
+    <Compile Include="..\..\class\Mono.CompilerServices.SymbolWriter\SourceMethodBuilder.cs" />
+    <Compile Include="..\..\class\Mono.Security\Mono.Security.Cryptography\CryptoConvert.cs" />
     <Compile Include="..\..\mcs\anonymous.cs" />
     <Compile Include="..\..\mcs\argument.cs" />
     <Compile Include="..\..\mcs\assembly.cs" />
@@ -136,7 +140,22 @@
   </PostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
-    <Folder Include="Properties\" />
+    <ProjectReference Include="..\corlib\corlib-net_4_0.csproj">
+      <Project>{3874F10B-9AE4-4A7E-873B-42FFDCE80CB7}</Project>
+      <Name>corlib\corlib-net_4_0</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.Core\System.Core-net_4_0.csproj">
+      <Project>{D121EB80-19C6-4313-9BBE-6F66556CE8B7}</Project>
+      <Name>System.Core\System.Core-net_4_0</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System.XML\System.Xml-net_4_0-1.csproj">
+      <Project>{51720A26-B4D9-4B84-8CB5-9CBA57477FBB}</Project>
+      <Name>System.XML\System.Xml-net_4_0-1</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\System\System-net_4_0-2.csproj">
+      <Project>{8260E24F-1471-4320-AB5B-7CC7B68521E3}</Project>
+      <Name>System\System-net_4_0-2</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Xml" />

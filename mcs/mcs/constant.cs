@@ -3,11 +3,11 @@
 //
 // Author:
 //   Miguel de Icaza (miguel@ximian.com)
-//   Marek Safar (marek.safar@seznam.cz)
+//   Marek Safar (marek.safar@gmail.com)
 //
 // Copyright 2001-2003 Ximian, Inc.
 // Copyright 2003-2008 Novell, Inc.
-// Copyright 2011 Xamarin Inc
+// Copyright 2011-2013 Xamarin Inc
 //
 
 using System;
@@ -91,7 +91,7 @@ namespace Mono.CSharp {
 			if (this.type == type)
 				return this;
 
-			if (Convert.ImplicitNumericConversion (this, type, opt_ec, upconvert_only) == null) 
+			if (!Convert.ImplicitNumericConversionExists (this.type, opt_ec, upconvert_only)) 
 				return null;
 
 			bool fail;			

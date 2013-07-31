@@ -32,6 +32,8 @@ monoutils_sources = \
 	mono-math.c  		\
 	mono-mmap.c  		\
 	mono-mmap.h  		\
+	mono-mutex.c  		\
+	mono-mutex.h  		\
 	mono-networkinterfaces.c		\
 	mono-networkinterfaces.h		\
 	mono-proclib.c		\
@@ -101,7 +103,9 @@ monoutils_sources = \
 	linux_magic.h	\
 	mono-memory-model.h	\
 	atomic.h	\
-	atomic.c
+	atomic.c	\
+	bsearch.h	\
+	bsearch.c
 
 arch_sources = 
 

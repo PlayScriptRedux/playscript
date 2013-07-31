@@ -1147,8 +1147,10 @@ mini_usage (void)
 		"    --runtime=VERSION      Use the VERSION runtime, instead of autodetecting\n"
 		"    --optimize=OPT         Turns on or off a specific optimization\n"
 		"                           Use --list-opt to get a list of optimizations\n"
+#ifndef DISABLE_SECURITY
 		"    --security[=mode]      Turns on the unsupported security manager (off by default)\n"
 		"                           mode is one of cas, core-clr, verifiable or validil\n"
+#endif
 		"    --attach=OPTIONS       Pass OPTIONS to the attach agent in the runtime.\n"
 		"                           Currently the only supported option is 'disable'.\n"
 		"    --llvm, --nollvm       Controls whenever the runtime uses LLVM to compile code.\n"
@@ -1269,9 +1271,6 @@ BOOL APIENTRY DllMain (HMODULE module_handle, DWORD reason, LPVOID reserved)
 		if (coree_module_handle)
 			FreeLibrary (coree_module_handle);
 		break;
-	case DLL_THREAD_ATTACH:
-		mono_thread_info_attach (&dummy);
-		break;
 	case DLL_THREAD_DETACH:
 		mono_thread_info_dettach ();
 		break;
@@ -1384,7 +1383,33 @@ mono_set_use_smp (int use_smp)
 	}
 #endif
 }
-	
+
+static void
+switch_gc (char* argv[], const char* target_gc)
+{
+	GString *path;
+
+	if (!strcmp (mono_gc_get_gc_name (), target_gc)) {
+		return;
+	}
+
+	path = g_string_new (argv [0]);
+
+	/*Running mono without any argument*/
+	if (strstr (argv [0], "-sgen"))
+		g_string_truncate (path, path->len - 5);
+	else if (strstr (argv [0], "-boehm"))
+		g_string_truncate (path, path->len - 6);
+
+	g_string_append_c (path, '-');
+	g_string_append (path, target_gc);
+
+#ifdef HAVE_EXECVP
+	execvp (path->str, argv);
+#else
+	fprintf (stderr, "Error: --gc=<NAME> option not supported on this platform.\n");
+#endif
+}
 
 /**
  * mono_main:
@@ -1506,32 +1531,9 @@ mono_main (int argc, char* argv[])
 		} else if (strncmp (argv [i], "-O=", 3) == 0) {
 			opt = parse_optimizations (argv [i] + 3);
 		} else if (strcmp (argv [i], "--gc=sgen") == 0) {
-			if (!strcmp (mono_gc_get_gc_name (), "boehm")) {
-				GString *path = g_string_new (argv [0]);
-				g_string_append (path, "-sgen");
-				argv [0] = path->str;
-#ifdef HAVE_EXECVP
-				execvp (path->str, argv);
-#else
-				fprintf (stderr, "Error: --gc=<NAME> option not supported on this platform.\n");
-#endif
-			}
+			switch_gc (argv, "sgen");
 		} else if (strcmp (argv [i], "--gc=boehm") == 0) {
-			if (!strcmp (mono_gc_get_gc_name (), "sgen")) {
-				char *copy = g_strdup (argv [0]);
-				char *p = strstr (copy, "-sgen");
-				if (p == NULL){
-					fprintf (stderr, "Error, this process is not named mono-sgen and the command line option --boehm was passed");
-					exit (1);
-				}
-				*p = 0;
-				argv [0] = p;
-#ifdef HAVE_EXECVP
-				execvp (p, argv);
-#else
-				fprintf (stderr, "Error: --gc=<NAME> option not supported on this platform.\n");
-#endif
-			}
+			switch_gc (argv, "boehm");
 		} else if (strcmp (argv [i], "--config") == 0) {
 			if (i +1 >= argc){
 				fprintf (stderr, "error: --config requires a filename argument\n");
@@ -1666,28 +1668,51 @@ mono_main (int argc, char* argv[])
 			opt->mdb_optimizations = TRUE;
 			enable_debugging = TRUE;
 		} else if (strcmp (argv [i], "--security") == 0) {
+#ifndef DISABLE_SECURITY
 			mono_verifier_set_mode (MONO_VERIFIER_MODE_VERIFIABLE);
 			mono_security_set_mode (MONO_SECURITY_MODE_CAS);
 			mono_activate_security_manager ();
+#else
+			fprintf (stderr, "error: --security: not compiled with security manager support");
+			return 1;
+#endif
 		} else if (strncmp (argv [i], "--security=", 11) == 0) {
+			/* Note: temporary-smcs-hack, validil, and verifiable need to be
+			   accepted even if DISABLE_SECURITY is defined. */
+
 			if (strcmp (argv [i] + 11, "temporary-smcs-hack") == 0) {
 				mono_security_set_mode (MONO_SECURITY_MODE_SMCS_HACK);
 			} else if (strcmp (argv [i] + 11, "core-clr") == 0) {
+#ifndef DISABLE_SECURITY
 				mono_verifier_set_mode (MONO_VERIFIER_MODE_VERIFIABLE);
 				mono_security_set_mode (MONO_SECURITY_MODE_CORE_CLR);
+#else
+				fprintf (stderr, "error: --security: not compiled with CoreCLR support");
+				return 1;
+#endif
 			} else if (strcmp (argv [i] + 11, "core-clr-test") == 0) {
+#ifndef DISABLE_SECURITY
 				/* fixme should we enable verifiable code here?*/
 				mono_security_set_mode (MONO_SECURITY_MODE_CORE_CLR);
 				mono_security_core_clr_test = TRUE;
-			} else if (strcmp (argv [i] + 11, "cas") == 0){
+#else
+				fprintf (stderr, "error: --security: not compiled with CoreCLR support");
+				return 1;
+#endif
+			} else if (strcmp (argv [i] + 11, "cas") == 0) {
+#ifndef DISABLE_SECURITY
 				mono_verifier_set_mode (MONO_VERIFIER_MODE_VERIFIABLE);
 				mono_security_set_mode (MONO_SECURITY_MODE_CAS);
 				mono_activate_security_manager ();
-			} else  if (strcmp (argv [i] + 11, "validil") == 0) {
+#else
+				fprintf (stderr, "error: --security: not compiled with CAS support");
+				return 1;
+#endif
+			} else if (strcmp (argv [i] + 11, "validil") == 0) {
 				mono_verifier_set_mode (MONO_VERIFIER_MODE_VALID);
-			} else  if (strcmp (argv [i] + 11, "verifiable") == 0) {
+			} else if (strcmp (argv [i] + 11, "verifiable") == 0) {
 				mono_verifier_set_mode (MONO_VERIFIER_MODE_VERIFIABLE);
-			} else  {
+			} else {
 				fprintf (stderr, "error: --security= option has invalid argument (cas, core-clr, verifiable or validil)\n");
 				return 1;
 			}

@@ -1127,7 +1127,12 @@ namespace Mono.CSharp {
 		// will contain types only but it can have numerous values for members
 		// like methods where both return type and all parameters are checked
 		//
-		public List<TypeSpec> GetMissingDependencies ()
+		public List<MissingTypeSpecReference> GetMissingDependencies ()
+		{
+			return GetMissingDependencies (this);
+		}
+
+		public List<MissingTypeSpecReference> GetMissingDependencies (MemberSpec caller)
 		{
 			if ((state & (StateFlags.MissingDependency | StateFlags.MissingDependency_Undetected)) == 0)
 				return null;
@@ -1135,11 +1140,11 @@ namespace Mono.CSharp {
 			state &= ~StateFlags.MissingDependency_Undetected;
 
 			var imported = definition as ImportedDefinition;
-			List<TypeSpec> missing;
+			List<MissingTypeSpecReference> missing;
 			if (imported != null) {
-				missing = ResolveMissingDependencies ();
+				missing = ResolveMissingDependencies (caller);
 			} else if (this is ElementTypeSpec) {
-				missing = ((ElementTypeSpec) this).Element.GetMissingDependencies ();
+				missing = ((ElementTypeSpec) this).Element.GetMissingDependencies (caller);
 			} else {
 				missing = null;
 			}
@@ -1151,7 +1156,7 @@ namespace Mono.CSharp {
 			return missing;
 		}
 
-		public abstract List<TypeSpec> ResolveMissingDependencies ();
+		public abstract List<MissingTypeSpecReference> ResolveMissingDependencies (MemberSpec caller);
 
 		protected virtual bool IsNotCLSCompliant (out bool attrValue)
 		{

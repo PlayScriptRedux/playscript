@@ -677,8 +677,6 @@ merge_argument_class_from_type (MonoType *type, ArgumentClass class1)
 	return class1;
 }
 #ifdef __native_client_codegen__
-const guint kNaClAlignment = kNaClAlignmentAMD64;
-const guint kNaClAlignmentMask = kNaClAlignmentMaskAMD64;
 
 /* Default alignment for Native Client is 32-byte. */
 gint8 nacl_align_byte = -32; /* signed version of 0xe0 */
@@ -3009,7 +3007,8 @@ emit_call_body (MonoCompile *cfg, guint8 *code, guint32 patch_type, gconstpointe
 				jinfo = g_hash_table_lookup (cfg->abs_patches, data);
 			if (jinfo) {
 				if (jinfo->type == MONO_PATCH_INFO_JIT_ICALL_ADDR) {
-					if ((((guint64)data) >> 32) == 0)
+					MonoJitICallInfo *mi = mono_find_jit_icall_by_name (jinfo->data.name);
+					if (mi && (((guint64)mi->func) >> 32) == 0)
 						near_call = TRUE;
 					no_patch = TRUE;
 				} else {
@@ -4819,7 +4818,7 @@ mono_arch_output_basic_block (MonoCompile *cfg, MonoBasicBlock *bb)
 			}
 
 			offset = code - cfg->native_code;
-			mono_add_patch_info (cfg, code - cfg->native_code, MONO_PATCH_INFO_METHOD_JUMP, ins->inst_p0);
+			mono_add_patch_info (cfg, code - cfg->native_code, MONO_PATCH_INFO_METHOD_JUMP, call->method);
 			if (cfg->compile_aot)
 				amd64_mov_reg_membase (code, AMD64_R11, AMD64_RIP, 0, 8);
 			else
@@ -5593,6 +5592,20 @@ mono_arch_output_basic_block (MonoCompile *cfg, MonoBasicBlock *bb)
 			code = mono_amd64_emit_tls_get (code, ins->dreg, ins->inst_offset);
 			break;
 		}
+		case OP_TLS_GET_REG:
+#ifdef TARGET_OSX
+			// FIXME: tls_gs_offset can change too, do these when calculating the tls offset
+			if (ins->dreg != ins->sreg1)
+				amd64_mov_reg_reg (code, ins->dreg, ins->sreg1, sizeof (gpointer));
+			amd64_shift_reg_imm (code, X86_SHL, ins->dreg, 3);
+			if (tls_gs_offset)
+				amd64_alu_reg_imm (code, X86_ADD, ins->dreg, tls_gs_offset);
+			x86_prefix (code, X86_GS_PREFIX);
+			amd64_mov_reg_membase (code, ins->dreg, ins->dreg, 0, sizeof (gpointer));
+#else
+			g_assert_not_reached ();
+#endif
+			break;
 		case OP_MEMORY_BARRIER: {
 			switch (ins->backend.memory_barrier_kind) {
 			case StoreLoadBarrier:

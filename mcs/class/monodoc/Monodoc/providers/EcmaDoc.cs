@@ -426,8 +426,11 @@ namespace Monodoc.Providers
 		public static int GetNodeLevel (Node node)
 		{
 			int i = 0;
-			for (; !node.Element.StartsWith ("root:/", StringComparison.OrdinalIgnoreCase); i++)
+			for (; !node.Element.StartsWith ("root:/", StringComparison.OrdinalIgnoreCase); i++) {
 				node = node.Parent;
+				if (node == null)
+					return i - 1;
+			}
 			return i - 1;
 		}
 
@@ -556,17 +559,15 @@ namespace Monodoc.Providers
 				var fullName = reader.GetAttribute ("FullName");
 				reader.ReadToFollowing ("AssemblyName");
 				var assemblyName = reader.ReadElementString ();
-				reader.ReadToFollowing ("summary");
-				var summary = reader.ReadInnerXml ();
-				reader.ReadToFollowing ("remarks");
-				var remarks = reader.ReadInnerXml ();
+				var summary = reader.ReadToFollowing ("summary") ? XElement.Load (reader.ReadSubtree ()) : new XElement ("summary");
+				var remarks = reader.ReadToFollowing ("remarks") ? XElement.Load (reader.ReadSubtree ()) : new XElement ("remarks");
 
 				return new XElement ("class",
 				                     new XAttribute ("name", name ?? string.Empty),
 				                     new XAttribute ("fullname", fullName ?? string.Empty),
 				                     new XAttribute ("assembly", assemblyName ?? string.Empty),
-				                     new XElement ("summary", new XCData (summary)),
-				                     new XElement ("remarks", new XCData (remarks)));
+				                     summary,
+				                     remarks);
 			}
 		}
 	}

@@ -388,6 +388,17 @@ namespace Mono.CSharp {
 		public CompilerSettings ParseArguments (string[] args)
 		{
 			CompilerSettings settings = new CompilerSettings ();
+			if (!ParseArguments (settings, args))
+				return null;
+
+			return settings;
+		}
+
+		public bool ParseArguments (CompilerSettings settings, string[] args)
+		{
+			if (settings == null)
+				throw new ArgumentNullException ("settings");
+
 			List<string> response_file_list = null;
 			bool parsing_options = true;
 			stop_argument = false;
@@ -407,7 +418,7 @@ namespace Mono.CSharp {
 
 					if (response_file_list.Contains (response_file)) {
 						report.Error (1515, "Response file `{0}' specified multiple times", response_file);
-						return null;
+						return false;
 					}
 
 					response_file_list.Add (response_file);
@@ -415,7 +426,7 @@ namespace Mono.CSharp {
 					extra_args = LoadArgs (response_file);
 					if (extra_args == null) {
 						report.Error (2011, "Unable to open response file: " + response_file);
-						return null;
+						return false;
 					}
 
 					args = AddArgs (args, extra_args);
@@ -437,7 +448,7 @@ namespace Mono.CSharp {
 							continue;
 						case ParseResult.Stop:
 							stop_argument = true;
-							return settings;
+							return true;
 						case ParseResult.UnknownOption:
 							if (UnknownOptionHandler != null) {
 								var ret = UnknownOptionHandler (args, i);
@@ -471,11 +482,11 @@ namespace Mono.CSharp {
 							}
 
 							Error_WrongOption (arg);
-							return null;
+							return false;
 
 						case ParseResult.Stop:
 							stop_argument = true;
-							return settings;
+							return true;
 						}
 					}
 				}
@@ -483,10 +494,7 @@ namespace Mono.CSharp {
 				ProcessSourceFiles (arg, false, settings.SourceFiles);
 			}
 
-			if (report.Errors > 0)
-				return null;
-
-			return settings;
+			return report.Errors == 0;
 		}
 
 		void ProcessSourceFiles (string spec, bool recurse, List<SourceFile> sourceFiles)
@@ -606,7 +614,7 @@ namespace Mono.CSharp {
 		public bool ProcessWarningsList (string text, Action<int> action)
 		{
 			bool valid = true;
-			foreach (string wid in text.Split (numeric_value_separator)) {
+			foreach (string wid in text.Split (numeric_value_separator, StringSplitOptions.RemoveEmptyEntries)) {
 				int id;
 				if (!int.TryParse (wid, NumberStyles.AllowLeadingWhite, CultureInfo.InvariantCulture, out id)) {
 					report.Error (1904, "`{0}' is not a valid warning number", wid);

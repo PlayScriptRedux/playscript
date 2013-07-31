@@ -388,7 +388,6 @@ namespace Mono.CSharp
 
 		public string GetSignatureForMetadata ()
 		{
-#if STATIC
 			if (Parent is TypeDefinition) {
 				return Parent.GetSignatureForMetadata () + "+" + TypeNameParser.Escape (MemberName.Basename);
 			}
@@ -396,9 +395,6 @@ namespace Mono.CSharp
 			var sb = new StringBuilder ();
 			CreateMetadataName (sb);
 			return sb.ToString ();
-#else
-			throw new NotImplementedException ();
-#endif
 		}
 
 		public virtual void RemoveContainer (TypeContainer cont)
@@ -1261,6 +1257,11 @@ namespace Mono.CSharp
 			}
 		}
 
+		public virtual void SetBaseTypes (List<FullNamedExpression> baseTypes)
+		{
+			type_bases = baseTypes;
+		}
+
 		/// <summary>
 		///   This function computes the Base class and also the
 		///   list of interfaces that the class or struct @c implements.
@@ -1379,7 +1380,7 @@ namespace Mono.CSharp
 				}
 
 				bool pair_found = false;
-				for (int ii = i + 1; ii < members.Count; ++ii) {
+				for (int ii = 0; ii < members.Count; ++ii) {
 					var o_b = members[ii] as Operator;
 					if (o_b == null || o_b.OperatorType != matching_type)
 						continue;
@@ -2976,14 +2977,14 @@ namespace Mono.CSharp
 			}
 		}
 
-		public override void AddBasesForPart (List<FullNamedExpression> bases)
+		public override void SetBaseTypes (List<FullNamedExpression> baseTypes)
 		{
 			var pmn = MemberName;
 			if (pmn.Name == "Object" && !pmn.IsGeneric && Parent.MemberName.Name == "System" && Parent.MemberName.Left == null)
 				Report.Error (537, Location,
 					"The class System.Object cannot have a base class or implement an interface.");
 
-			base.AddBasesForPart (bases);
+			base.SetBaseTypes (baseTypes);
 		}
 
 		public override void ApplyAttributeBuilder (Attribute a, MethodSpec ctor, byte[] cdata, PredefinedAttributes pa)
@@ -3775,7 +3776,11 @@ namespace Mono.CSharp
 					Parent.PartialContainer.VerifyImplements (this);
 				}
 
-				ModifiersExtensions.Check (Modifiers.AllowedExplicitImplFlags, explicit_mod_flags, 0, Location, Report);
+				Modifiers allowed_explicit = Modifiers.AllowedExplicitImplFlags;
+				if (this is Method)
+					allowed_explicit |= Modifiers.ASYNC;
+
+				ModifiersExtensions.Check (allowed_explicit, explicit_mod_flags, 0, Location, Report);
 			}
 
 			return base.Define ();

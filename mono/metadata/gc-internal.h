@@ -219,7 +219,7 @@ typedef struct {
 	int alloc_type;
 } AllocatorWrapperInfo;
 
-MonoMethod* mono_gc_get_managed_allocator (MonoVTable *vtable, gboolean for_box) MONO_INTERNAL;
+MonoMethod* mono_gc_get_managed_allocator (MonoClass *klass, gboolean for_box) MONO_INTERNAL;
 MonoMethod* mono_gc_get_managed_array_allocator (MonoClass *klass) MONO_INTERNAL;
 MonoMethod *mono_gc_get_managed_allocator_by_type (int atype) MONO_INTERNAL;
 
@@ -343,6 +343,7 @@ typedef struct _RefQueueEntry RefQueueEntry;
 struct _RefQueueEntry {
 	void *dis_link;
 	guint32 gchandle;
+	MonoDomain *domain;
 	void *user_data;
 	RefQueueEntry *next;
 };

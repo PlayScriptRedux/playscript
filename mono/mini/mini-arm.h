@@ -33,16 +33,14 @@
 #define ARM_ARCHITECTURE "arm"
 #endif
 
-#if defined(ARM_FPU_FPA)
-#define ARM_FP_MODEL "fpa"
-#elif defined(ARM_FPU_VFP)
+#if defined(ARM_FPU_VFP)
 #define ARM_FP_MODEL "vfp"
 #elif defined(ARM_FPU_NONE)
 #define ARM_FP_MODEL "soft-float"
 #elif defined(ARM_FPU_VFP_HARD)
 #define ARM_FP_MODEL "vfp(hardfp-abi)"
 #else
-#error "At least one of ARM_FPU_NONE, ARM_FPU_FPA, ARM_FPU_VFP or ARM_FPU_VFP_HARD must be defined."
+#error "At least one of ARM_FPU_NONE, ARM_FPU_VFP or ARM_FPU_VFP_HARD must be defined."
 #endif
 
 #define MONO_ARCH_ARCHITECTURE ARM_ARCHITECTURE "," ARM_FP_MODEL
@@ -103,15 +101,15 @@
  * reproduceable results for benchmarks */
 #define MONO_ARCH_CODE_ALIGNMENT 32
 
-
 /* Return value marshalling for calls between gsharedvt and normal code */
 typedef enum {
 	GSHAREDVT_RET_NONE = 0,
-	GSHAREDVT_RET_IREGS = 1,
-	GSHAREDVT_RET_I1 = 5,
-	GSHAREDVT_RET_U1 = 6,
-	GSHAREDVT_RET_I2 = 7,
-	GSHAREDVT_RET_U2 = 8
+	GSHAREDVT_RET_IREG = 1,
+	GSHAREDVT_RET_IREGS = 2,
+	GSHAREDVT_RET_I1 = 3,
+	GSHAREDVT_RET_U1 = 4,
+	GSHAREDVT_RET_I2 = 5,
+	GSHAREDVT_RET_U2 = 6
 } GSharedVtRetMarshal;
 
 typedef struct {
@@ -143,13 +141,12 @@ void
 mono_arm_throw_exception_by_token (guint32 type_token, mgreg_t pc, mgreg_t sp, mgreg_t *int_regs, gdouble *fp_regs);
 
 gpointer
-mono_arm_start_gsharedvt_call (GSharedVtCallInfo *info, gpointer *caller, gpointer *callee, gpointer *caller_regs, gpointer *callee_regs, gpointer mrgctx_reg) MONO_INTERNAL;
+mono_arm_start_gsharedvt_call (GSharedVtCallInfo *info, gpointer *caller, gpointer *callee, gpointer mrgctx_reg) MONO_INTERNAL;
 
 typedef enum {
 	MONO_ARM_FPU_NONE = 0,
-	MONO_ARM_FPU_FPA = 1,
-	MONO_ARM_FPU_VFP = 2,
-	MONO_ARM_FPU_VFP_HARD = 3
+	MONO_ARM_FPU_VFP = 1,
+	MONO_ARM_FPU_VFP_HARD = 2
 } MonoArmFPU;
 
 /* keep the size of the structure a multiple of 8 */
@@ -231,6 +228,7 @@ typedef struct MonoCompileArch {
 #define MONO_ARCH_HAVE_SETUP_RESUME_FROM_SIGNAL_HANDLER_CTX 1
 #define MONO_ARCH_GSHAREDVT_SUPPORTED 1
 #define MONO_ARCH_HAVE_GENERAL_RGCTX_LAZY_FETCH_TRAMPOLINE 1
+#define MONO_ARCH_HAVE_OPCODE_NEEDS_EMULATION 1
 
 #if defined(__native_client__)
 #undef MONO_ARCH_SOFT_DEBUG_SUPPORTED

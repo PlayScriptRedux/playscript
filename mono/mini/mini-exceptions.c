@@ -119,6 +119,7 @@ mono_exceptions_init (void)
 	cbs.mono_walk_stack_with_state = mono_walk_stack_with_state;
 	cbs.mono_raise_exception = mono_get_throw_exception ();
 	cbs.mono_raise_exception_with_ctx = mono_raise_exception_with_ctx;
+	cbs.mono_exception_walk_trace = mono_exception_walk_trace;
 	cbs.mono_install_handler_block_guard = mono_install_handler_block_guard;
 	mono_install_eh_callbacks (&cbs);
 }
@@ -355,7 +356,7 @@ mono_find_jit_info_ext (MonoDomain *domain, MonoJitTlsData *jit_tls,
 	gboolean err;
 	gpointer ip = MONO_CONTEXT_GET_IP (ctx);
 	MonoJitInfo *ji;
-	MonoDomain *target_domain;
+	MonoDomain *target_domain = domain;
 
 	if (trace)
 		*trace = NULL;
@@ -1279,10 +1280,10 @@ build_native_trace (void)
  * OUT_FILTER_IDX. Return TRUE if the exception is caught, FALSE otherwise.
  */
 static gboolean
-mono_handle_exception_internal_first_pass (MonoContext *ctx, gpointer obj, gint32 *out_filter_idx, MonoJitInfo **out_ji, MonoObject *non_exception)
+mono_handle_exception_internal_first_pass (MonoContext *ctx, gpointer obj, gint32 *out_filter_idx, MonoJitInfo **out_ji, MonoJitInfo **out_prev_ji, MonoObject *non_exception)
 {
 	MonoDomain *domain = mono_domain_get ();
-	MonoJitInfo *ji;
+	MonoJitInfo *ji = NULL;
 	static int (*call_filter) (MonoContext *, gpointer) = NULL;
 	MonoJitTlsData *jit_tls = mono_native_tls_get_value (mono_jit_tls_id);
 	MonoLMF *lmf = mono_get_lmf ();
@@ -1322,6 +1323,8 @@ mono_handle_exception_internal_first_pass (MonoContext *ctx, gpointer obj, gint3
 		*out_filter_idx = -1;
 	if (out_ji)
 		*out_ji = NULL;
+	if (out_prev_ji)
+		*out_prev_ji = NULL;
 	filter_idx = 0;
 	initial_ctx = *ctx;
 
@@ -1332,6 +1335,9 @@ mono_handle_exception_internal_first_pass (MonoContext *ctx, gpointer obj, gint3
 		gboolean unwind_res = TRUE;
 		
 		StackFrameInfo frame;
+
+		if (out_prev_ji)
+			*out_prev_ji = ji;
 
 		unwind_res = mono_find_jit_info_ext (domain, jit_tls, NULL, ctx, &new_ctx, NULL, &lmf, NULL, &frame);
 		if (unwind_res) {
@@ -1480,7 +1486,7 @@ static gboolean
 mono_handle_exception_internal (MonoContext *ctx, gpointer obj, gboolean resume, MonoJitInfo **out_ji)
 {
 	MonoDomain *domain = mono_domain_get ();
-	MonoJitInfo *ji;
+	MonoJitInfo *ji, *prev_ji;
 	static int (*call_filter) (MonoContext *, gpointer) = NULL;
 	static void (*restore_context) (void *);
 	MonoJitTlsData *jit_tls = mono_native_tls_get_value (mono_jit_tls_id);
@@ -1596,7 +1602,7 @@ mono_handle_exception_internal (MonoContext *ctx, gpointer obj, gboolean resume,
 		mono_profiler_exception_thrown (obj);
 		jit_tls->orig_ex_ctx_set = FALSE;
 
-		res = mono_handle_exception_internal_first_pass (&ctx_cp, obj, &first_filter_idx, &ji, non_exception);
+		res = mono_handle_exception_internal_first_pass (&ctx_cp, obj, &first_filter_idx, &ji, &prev_ji, non_exception);
 
 		if (!res) {
 			if (mini_get_debug_options ()->break_on_exc)
@@ -1613,11 +1619,22 @@ mono_handle_exception_internal (MonoContext *ctx, gpointer obj, gboolean resume,
 			// we are handling a stack overflow
 			mono_unhandled_exception (obj);
 		} else {
-			//
-			// Treat exceptions that are "handled" by mono_runtime_invoke() as unhandled.
-			// See bug #669836.
-			//
-			if (ji && ji->method->wrapper_type == MONO_WRAPPER_RUNTIME_INVOKE)
+			gboolean unhandled = FALSE;
+
+			/*
+			 * The exceptions caught by the mono_runtime_invoke () calls in mono_async_invoke () needs to be treated as
+			 * unhandled (#669836).
+			 * FIXME: The check below is hackish, but its hard to distinguish these runtime invoke calls from others
+			 * in the runtime.
+			 */
+			if (ji && ji->method->wrapper_type == MONO_WRAPPER_RUNTIME_INVOKE) {
+				if (prev_ji) {
+					MonoInternalThread *thread = mono_thread_internal_current ();
+					if (prev_ji->method == thread->async_invoke_method)
+						unhandled = TRUE;
+				}
+			}
+			if (unhandled)
 				mono_debugger_agent_handle_exception (obj, ctx, NULL);
 			else
 				mono_debugger_agent_handle_exception (obj, ctx, &ctx_cp);
@@ -1874,7 +1891,7 @@ mono_debugger_handle_exception (MonoContext *ctx, MonoObject *obj)
 		 * The debugger wants us to stop only if this exception is user-unhandled.
 		 */
 
-		ret = mono_handle_exception_internal_first_pass (&ctx_cp, obj, NULL, &ji, NULL);
+		ret = mono_handle_exception_internal_first_pass (&ctx_cp, obj, NULL, &ji, NULL, NULL);
 		if (ret && (ji != NULL) && (ji->method->wrapper_type == MONO_WRAPPER_RUNTIME_INVOKE)) {
 			/*
 			 * The exception is handled in a runtime-invoke wrapper, that means that it's unhandled
@@ -2002,11 +2019,7 @@ mono_setup_altstack (MonoJitTlsData *tls)
 
 	sa.ss_sp = tls->signal_stack;
 	sa.ss_size = MONO_ARCH_SIGNAL_STACK_SIZE;
-#if __APPLE__
 	sa.ss_flags = 0;
-#else
-	sa.ss_flags = SS_ONSTACK;
-#endif
 	g_assert (sigaltstack (&sa, NULL) == 0);
 
 	mono_gc_register_altstack ((char*)tls->stack_ovf_guard_base + tls->stack_ovf_guard_size, (char*)staddr + stsize - ((char*)tls->stack_ovf_guard_base + tls->stack_ovf_guard_size), tls->signal_stack, tls->signal_stack_size);
@@ -2708,8 +2721,18 @@ mono_invoke_unhandled_exception_hook (MonoObject *exc)
 		
 		if (str)
 			msg = mono_string_to_utf8 (str);
-		else
+		else if (other) {
+			char *original_backtrace = mono_exception_get_managed_backtrace ((MonoException*)exc);
+			char *nested_backtrace = mono_exception_get_managed_backtrace ((MonoException*)other);
+
+			msg = g_strdup_printf ("Nested exception detected.\nOriginal Exception: %s\nNested exception:%s\n",
+				original_backtrace, nested_backtrace);
+
+			g_free (original_backtrace);
+			g_free (nested_backtrace);
+		} else {
 			msg = g_strdup ("Nested exception trying to figure out what went wrong");
+		}
 		mono_runtime_printf_err ("[ERROR] FATAL UNHANDLED EXCEPTION: %s", msg);
 		g_free (msg);
 #if defined(__APPLE__) && defined(__arm__)

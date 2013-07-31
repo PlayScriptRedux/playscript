@@ -92,8 +92,8 @@ namespace Mono.CSharp
 
 			var session = new ParserSession () {
 				UseJayGlobalArrays = true,
-				LocatedTokens = new Tokenizer.LocatedToken[15000],
-				AsLocatedTokens = new Mono.PlayScript.Tokenizer.LocatedToken[15000]
+				LocatedTokens = new LocatedToken[15000],
+				AsLocatedTokens = new Mono.PlayScript.LocatedToken[15000]
 			};
 
 			bool has_playscript_files = false;

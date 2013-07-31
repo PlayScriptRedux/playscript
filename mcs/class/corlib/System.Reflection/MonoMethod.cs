@@ -323,8 +323,8 @@ namespace System.Reflection {
 		}
 
 		static bool ShouldPrintFullName (Type type) {
-			return type.IsClass && (!type.IsPointer ||
- 				(!type.GetElementType ().IsPrimitive && !type.GetElementType ().IsNested));
+			return type.IsGenericType || (type.IsClass && (!type.IsPointer ||
+				(!type.GetElementType ().IsPrimitive && !type.GetElementType ().IsNested)));
 		}
 
 		public override string ToString () {
@@ -464,6 +464,7 @@ namespace System.Reflection {
 #endif
 	}
 	
+	[Serializable()]
 	[StructLayout (LayoutKind.Sequential)]
 	internal class MonoCMethod : ConstructorInfo, ISerializable
 	{

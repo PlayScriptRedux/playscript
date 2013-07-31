@@ -67,7 +67,7 @@
 /* Determine the machine type: */
 # if defined(__native_client__)
 #    define NACL
-#    if !defined(__portable_native_client__)
+#    if !defined(__portable_native_client__) && !defined(__arm__)
 #        define I386
 #        define mach_type_known
 #    else
@@ -1911,12 +1911,12 @@
 #       define OS_TYPE "LINUX"
 #       define LINUX_STACKBOTTOM
 #       define DYNAMIC_LOADING
-	extern int __data_start[];
+	extern int __data_start[] __attribute__((weak));
 #       define DATASTART ((ptr_t)(__data_start))
-    extern int _end[];
-#   define DATAEND (_end)
-#   define CACHE_LINE_SIZE 256
-#   define GETPAGESIZE() 4096
+        extern int _end[] __attribute__((weak));
+#       define DATAEND (_end)
+#       define CACHE_LINE_SIZE 256
+#       define GETPAGESIZE() 4096
 #   endif
 # endif
 
