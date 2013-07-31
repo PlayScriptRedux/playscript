@@ -951,9 +951,9 @@ namespace Mono.CSharp
 			TypeExpression type;
 			isSet |= (flags & CSharpBinderFlags.ValueFromCompoundAssignment) != 0;
 			if (!isSet) {
-				type = new TypeExpression(rc.Module.PredefinedTypes.PsGetIndexCallSite.Resolve(), loc);
+				type = new TypeExpression(rc.Module.PredefinedTypes.PsGetIndex.Resolve(), loc);
 			} else {
-				type = new TypeExpression(rc.Module.PredefinedTypes.PsSetIndexCallSite.Resolve(), loc);
+				type = new TypeExpression(rc.Module.PredefinedTypes.PsSetIndex.Resolve(), loc);
 			}
 
 			var site_args = new Arguments(0);
@@ -1158,9 +1158,9 @@ namespace Mono.CSharp
 			TypeExpression type;
 			isSet |= (flags & CSharpBinderFlags.ValueFromCompoundAssignment) != 0;
 			if (!isSet) {
-				type = new TypeExpression(rc.Module.PredefinedTypes.PsGetMemberCallSite.Resolve(), loc);
+				type = new TypeExpression(rc.Module.PredefinedTypes.PsGetMember.Resolve(), loc);
 			} else {
-				type = new TypeExpression(rc.Module.PredefinedTypes.PsSetMemberCallSite.Resolve(), loc);
+				type = new TypeExpression(rc.Module.PredefinedTypes.PsSetMember.Resolve(), loc);
 			}
 
 			var site_args = new Arguments(1);

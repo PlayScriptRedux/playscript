@@ -24,9 +24,9 @@ using PlayScript;
 
 namespace PlayScript.DynamicRuntime
 {
-	public class PSGetIndexCallSite 
+	public class PSGetIndex 
 	{
-		private PSGetMemberCallSite	  mGetMemberCallSite;
+		private PSGetMember			  mGetMember;
 
 		public T GetIndexAs<T> (object o, int index)
 		{
@@ -94,12 +94,12 @@ namespace PlayScript.DynamicRuntime
 			// fallback on getmemberbinder to do the hard work 
 
 			// create a get member binder here
-			if (mGetMemberCallSite == null) {
-				mGetMemberCallSite = new PSGetMemberCallSite(key);
+			if (mGetMember == null) {
+				mGetMember = new PSGetMember(key);
 			}
 			
 			// get member value
-			return mGetMemberCallSite.GetNamedMember<T>(o, key);			
+			return mGetMember.GetNamedMember<T>(o, key);			
 		}
 
 		
@@ -118,7 +118,7 @@ namespace PlayScript.DynamicRuntime
 			}
 		}
 
-		public PSGetIndexCallSite()
+		public PSGetIndex()
 		{
 		}
 	}

@@ -20,83 +20,87 @@ using PlayScript;
 
 namespace PlayScript.DynamicRuntime
 {
-	public class PSSetIndexCallSite
+	public class PSSetIndex
 	{
-		private PSSetMemberCallSite mSetMemberCallSite;
+		private PSSetMember mSetMember;
 
-		public void SetIndexAs<T> (object o, int index, T value)
+		public T SetIndexAs<T> (object o, int index, T value)
 		{
 			var l = o as IList<T>;
 			if (l != null) {
 				l [index] = value;
-				return;
+				return value;
 			} 
 
 
 			var l2 = o as IList;
 			if (l2 != null) {
 				l2 [index] = value;
-				return;
+				return value;
 			} 
 
 			var d = o as IDictionary<int,T>;
 			if (d != null) {
 				d[index] = value;
-				return;
+				return value;
 			} 
 
 			var d2 = o as IDictionary;
 			if (d2 != null) {
 				d2[index] = value;
-				return;
+				return value;
 			}
+
+			return default(T);
 		}
 
-		public void SetIndexAs<T> (object o, uint index, T value)
+		public T SetIndexAs<T> (object o, uint index, T value)
 		{
-			SetIndexAs<T>(o, (int)index, value);
+			return SetIndexAs<T>(o, (int)index, value);
 		}
 
-		public void SetIndexAs<T> (object o, double index, T value)
+		public T SetIndexAs<T> (object o, double index, T value)
 		{
-			SetIndexAs<T>(o, (int)index, value);
+			return SetIndexAs<T>(o, (int)index, value);
 		}
 
-		public void SetIndexAs<T> (object o, string key, T value)
+		public T SetIndexAs<T> (object o, string key, T value)
 		{
 			// handle dictionaries
 			var dict = o as IDictionary;
 			if (dict != null) {
 				dict[key] = (object)value;
-				return;
+				return value;
 			} 
 
 			// fallback on setmemberbinder to do the hard work 
 			// create a set member binder here to set
-			if (mSetMemberCallSite == null) {
-				mSetMemberCallSite   = new PSSetMemberCallSite(key);
+			if (mSetMember == null) {
+				mSetMember   = new PSSetMember(key);
 			}
 
 			// set member value
-			mSetMemberCallSite.SetNamedMember(o, key, value);			
+			mSetMember.SetNamedMember(o, key, value);	
+			return value;
 		}
 
-		public void SetIndexAs<T> (CallSite site, object o, object key, T value)
+		public T SetIndexAs<T> (object o, object key, T value)
 		{
 			if (key is int) {
-				SetIndexAs<T>(site, o, (int)key, value);
+				SetIndexAs<T>(o, (int)key, value);
 			} else if (key is string) {
-				SetIndexAs<T>(site, o, (string)key, value);
+				SetIndexAs<T>(o, (string)key, value);
 			} else  if (key is uint) {
-				SetIndexAs<T>(site, o, (uint)key, value);
+				SetIndexAs<T>(o, (uint)key, value);
 			} else  if (key is double) {
-				SetIndexAs<T>(site, o, (double)key, value);
+				SetIndexAs<T>(o, (double)key, value);
 			} else {
 				throw new InvalidOperationException("Cannot index object with key of type: " + key.GetType());
 			}
+			return value;
 		}
 
-		public PSSetIndexCallSite ()
+		public PSSetIndex()
 		{
 		}
 	}

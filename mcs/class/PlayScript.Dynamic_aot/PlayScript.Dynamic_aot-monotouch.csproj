@@ -185,17 +185,20 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSConverter.cs">
       <Link>PlayScript\DynamicRuntime\PSConverter.cs</Link>
     </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSGetIndexCallSite.cs">
-      <Link>PlayScript\DynamicRuntime\PSGetIndexCallSite.cs</Link>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSBinaryOperation.cs">
+      <Link>PlayScript\DynamicRuntime\PSBinaryOperation.cs</Link>
     </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSGetMemberCallSite.cs">
-      <Link>PlayScript\DynamicRuntime\PSGetMemberCallSite.cs</Link>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSGetIndex.cs">
+      <Link>PlayScript\DynamicRuntime\PSGetIndex.cs</Link>
     </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSSetIndexCallSite.cs">
-      <Link>PlayScript\DynamicRuntime\PSSetIndexCallSite.cs</Link>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSGetMember.cs">
+      <Link>PlayScript\DynamicRuntime\PSGetMember.cs</Link>
     </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSSetMemberCallSite.cs">
-      <Link>PlayScript\DynamicRuntime\PSSetMemberCallSite.cs</Link>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSSetIndex.cs">
+      <Link>PlayScript\DynamicRuntime\PSSetIndex.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSSetMember.cs">
+      <Link>PlayScript\DynamicRuntime\PSSetMember.cs</Link>
     </Compile>
   </ItemGroup>
 </Project>

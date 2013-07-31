@@ -262,11 +262,12 @@ namespace Mono.CSharp
 		public readonly PredefinedType AsXml;
 		public readonly PredefinedType AsIKeyEnumerable;
 
-		public readonly PredefinedType PsGetMemberCallSite;
-		public readonly PredefinedType PsSetMemberCallSite;
-		public readonly PredefinedType PsSetIndexCallSite;
-		public readonly PredefinedType PsGetIndexCallSite;
+		public readonly PredefinedType PsGetMember;
+		public readonly PredefinedType PsSetMember;
+		public readonly PredefinedType PsSetIndex;
+		public readonly PredefinedType PsGetIndex;
 		public readonly PredefinedType PsConverter;
+		public readonly PredefinedType PsBinaryOperation;
 
 		// PlayScript dynamic binder AOT mode support..
 		private bool checkedAsDynamicMode = false;
@@ -346,11 +347,12 @@ namespace Mono.CSharp
 			AsXml = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "XML");
 			AsIKeyEnumerable = new PredefinedType (module, MemberKind.Interface, "PlayScript", "IKeyEnumerable");
 
-			PsGetMemberCallSite = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSGetMemberCallSite");
-			PsSetMemberCallSite = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSSetMemberCallSite");
-			PsGetIndexCallSite  = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSGetIndexCallSite");
-			PsSetIndexCallSite  = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSSetIndexCallSite");
+			PsGetMember = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSGetMember");
+			PsSetMember = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSSetMember");
+			PsGetIndex  = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSGetIndex");
+			PsSetIndex  = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSSetIndex");
 			PsConverter         = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSConverter");
+			PsBinaryOperation   = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSBinaryOperation");
 
 			//
 			// Define types which are used for comparison. It does not matter

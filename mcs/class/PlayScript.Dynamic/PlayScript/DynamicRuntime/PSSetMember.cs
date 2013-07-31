@@ -22,9 +22,9 @@ using System.Collections;
 
 namespace PlayScript.DynamicRuntime
 {
-	public class PSSetMemberCallSite
+	public class PSSetMember
 	{
-		public PSSetMemberCallSite(string name)
+		public PSSetMember(string name)
 		{
 			mName = name;
 		}
@@ -42,13 +42,14 @@ namespace PlayScript.DynamicRuntime
 		}
 
 
-		public void SetMember<T>(object o, T value)
+		public T SetMember<T>(object o, T value)
 		{
 			// box value as object
 			SetMemberAsObject(o, (object)value, true);
+			return value;
 		}
 
-		public void SetMemberAsObject(object o, object value, bool valueTypeIsConstant)
+		public object SetMemberAsObject(object o, object value, bool valueTypeIsConstant)
 		{
 			// resolve as dictionary 
 			var dict = o as IDictionary;
@@ -56,7 +57,7 @@ namespace PlayScript.DynamicRuntime
 			{
 				// special case this since it happens so much in object initialization
 				dict[mName] = value;
-				return;
+				return value;
 			}
 
 			// determine if this is a instance member or a static member
@@ -91,12 +92,12 @@ namespace PlayScript.DynamicRuntime
 					mPropertySetter.Invoke(o, BindingFlags.SuppressChangeType, null, mArgs, null);
 					//					Exception ex = null;
 					//					mPropertySetter.InternalInvoke(o, mArgs, out ex);
-					return;
+					return newValue;
 				}
 
 				if (mField != null) {
 					mField.SetValue(o, newValue);
-					return;
+					return newValue;
 				}
 
 				// resolve as dynamic class
@@ -104,7 +105,7 @@ namespace PlayScript.DynamicRuntime
 				if (dc != null) 
 				{
 					dc.__SetDynamicValue(mName, newValue);
-					return;
+					return newValue;
 				}
 
 				throw new System.InvalidOperationException("Unhandled member type in PSSetMemberBinder");
@@ -135,7 +136,7 @@ namespace PlayScript.DynamicRuntime
 						mArgs[0] = value;
 					}
 					mPropertySetter.Invoke(o, mArgs);
-					return;
+					return mArgs[0];
 				}
 			}
 
@@ -161,7 +162,7 @@ namespace PlayScript.DynamicRuntime
 					}
 
 					mField.SetValue(o, newValue);
-					return;
+					return newValue;
 				}
 			}
 
@@ -172,8 +173,11 @@ namespace PlayScript.DynamicRuntime
 				mProperty = null;
 				mField    = null;
 				((IDynamicClass)o).__SetDynamicValue(mName, value);
-				return;
+				return value;
 			}		
+
+			// failed
+			return null;
 		}
 
 

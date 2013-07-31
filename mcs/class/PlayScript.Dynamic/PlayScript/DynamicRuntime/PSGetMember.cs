@@ -23,9 +23,9 @@ using System.Collections.Generic;
 
 namespace PlayScript.DynamicRuntime
 {
-	public class PSGetMemberCallSite
+	public class PSGetMember
 	{
-		public PSGetMemberCallSite (string name)
+		public PSGetMember(string name)
 		{
 			mName = name;
 		}
