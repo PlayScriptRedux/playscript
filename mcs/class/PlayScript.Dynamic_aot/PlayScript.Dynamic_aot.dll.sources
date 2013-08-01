@@ -8,6 +8,7 @@
 ../PlayScript.Dynamic/PlayScript/DynamicClassAttribute.cs
 ../PlayScript.Dynamic/PlayScript/DynamicProperties.cs
 ../PlayScript.Dynamic/PlayScript/IDynamicClass.cs
+../PlayScript.Dynamic/PlayScript/Invoker.cs
 ../PlayScript.Dynamic/PlayScript/IKeyEnumerable.cs
 ../PlayScript.Dynamic/PlayScript/Invoker.cs
 ../PlayScript.Dynamic/PlayScript/MethodBinder.cs
