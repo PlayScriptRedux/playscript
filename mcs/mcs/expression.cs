@@ -494,7 +494,7 @@ namespace Mono.CSharp
 				if (ec.FileType == SourceFileType.PlayScript && Oper == Operator.LogicalNot) {
 					// PlayScript: Call the "Boolean()" static method to convert a dynamic to a bool.  EXPENSIVE, but hey..
 					Arguments args = new Arguments (1);
-					args.Add (new Argument(EmptyCast.Create(Expr, ec.BuiltinTypes.Object)));
+					args.Add (new Argument(EmptyCast.RemoveDynamic(ec, Expr)));
 //					ec.Report.Warning (7164, 1, loc, "Expensive reference conversion to bool");
 					Expr = new Invocation(new MemberAccess(new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, loc), "Boolean_fn", loc), "Boolean", loc), args).Resolve (ec);
 				} else {
@@ -3238,10 +3238,10 @@ namespace Mono.CSharp
 		{
 			var lf = left;
 			if (lf.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic)
-				lf = EmptyCast.Create (lf, rc.BuiltinTypes.Object).Resolve (rc);
+				lf = EmptyCast.RemoveDynamic(rc, lf);
 			var rt = right;
 			if (rt.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic)
-				rt = EmptyCast.Create (rt, rc.BuiltinTypes.Object).Resolve (rc);
+				rt = EmptyCast.RemoveDynamic(rc, rt);
 			var args = new Arguments(2);
 			args.Add (new Argument(lf));
 			args.Add (new Argument(rt));
@@ -4518,7 +4518,7 @@ namespace Mono.CSharp
 			// strip dynamic from all arguments
 			for (int i=0; i < args.Count; i++) {
 				if (args[i].Type == rc.BuiltinTypes.Dynamic) {
-					args[i] = new Argument(EmptyCast.Create(args[i].Expr, rc.BuiltinTypes.Object).Resolve(rc));
+					args[i].Expr = EmptyCast.RemoveDynamic(rc, args[i].Expr);
 				}
 			}
 
@@ -5170,7 +5170,7 @@ namespace Mono.CSharp
 				if (ec.FileType == SourceFileType.PlayScript) {
 					// PlayScript: Call the "Boolean()" static method to convert a dynamic to a bool.  EXPENSIVE, but hey..
 					Arguments args = new Arguments (1);
-					args.Add (new Argument(EmptyCast.Create(expr, ec.BuiltinTypes.Object)));
+					args.Add (new Argument(EmptyCast.RemoveDynamic(ec, expr)));
 					expr = new Invocation(new MemberAccess(new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, loc), "Boolean_fn", loc), "Boolean", loc), args).Resolve (ec);
 				} else {
 					Arguments args = new Arguments (1);
@@ -6199,7 +6199,7 @@ namespace Mono.CSharp
 					var ct = arguments [0].Expr.Type;
 					var cbt = ct.BuiltinType;
 					if (cbt == BuiltinTypeSpec.Type.Dynamic) {
-						arguments [0].Expr = EmptyCast.Create (arguments[0].Expr, ec.BuiltinTypes.Object).Resolve(ec);
+						arguments [0].Expr = EmptyCast.RemoveDynamic(ec, arguments[0].Expr);
 						dynamic_arg = false;
 						ct = ec.BuiltinTypes.Object;
 						cbt = BuiltinTypeSpec.Type.Object;

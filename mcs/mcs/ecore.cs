@@ -1294,6 +1294,9 @@ namespace Mono.CSharp {
 		EmptyCast (Expression child, TypeSpec target_type)
 			: base (child, target_type)
 		{
+			if (child.Type == null || child.eclass == ExprClass.Unresolved) {
+				throw new InvalidOperationException("Unresolved type in EmptyCast");
+			}
 		}
 
 		public static Expression Create (Expression child, TypeSpec type)
@@ -1307,6 +1310,19 @@ namespace Mono.CSharp {
 				return new EmptyCast (e.child, type);
 
 			return new EmptyCast (child, type);
+		}
+
+		public static Expression RemoveDynamic(ResolveContext rc, Expression child)
+		{
+			if (child.Type == rc.BuiltinTypes.Dynamic) {
+				if (child.eclass == ExprClass.Unresolved) {
+					// dont really like this, but sometimes its needed
+					return new BoxedCast(child, rc.BuiltinTypes.Object);
+				} else {
+					return EmptyCast.Create(child, rc.BuiltinTypes.Object);
+				}
+			}
+			return child;
 		}
 
 		public override void EmitBranchable (EmitContext ec, Label label, bool on_true)

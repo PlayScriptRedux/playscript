@@ -882,7 +882,7 @@ namespace Mono.CSharp
 			}
 
 			var cast_args = new Arguments(1);
-			cast_args.Add(new Argument(EmptyCast.Create(expr, rc.BuiltinTypes.Object)));
+			cast_args.Add(new Argument(EmptyCast.RemoveDynamic(rc, expr)));
 			return new Invocation(new MemberAccess(new TypeExpression(converter, loc), converterMethod, loc), cast_args);
 		}
 
@@ -1108,7 +1108,7 @@ namespace Mono.CSharp
 						new QualifiedAliasMember(QualifiedAliasMember.GlobalAlias, "PlayScript", loc), "Dynamic", loc), "hasOwnProperty");
 
 					var site_args = new Arguments(2);
-					site_args.Add(new Argument(EmptyCast.Create(Arguments[0].Expr.Resolve(rc), rc.BuiltinTypes.Object)));
+					site_args.Add(new Argument(EmptyCast.RemoveDynamic(rc, Arguments[0].Expr.Resolve(rc))));
 					site_args.Add(Arguments[1]);
 					return new Invocation(ma, site_args).Resolve(rc);
 				}

@@ -655,18 +655,8 @@ namespace Mono.CSharp
 		{
 			for (int i = 0; i < args.Count; ++i) {
 				Argument a = args[i];
-				if (a.ArgType == Argument.AType.Out || a.ArgType == Argument.AType.Ref) {
-					throw new NotImplementedException("Not supported: out or ref for dynamic invocations");
-				}
-				// resolve argument
-				var expr = a.Expr; // .Resolve(rc);
-				if (expr.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
-//					expr = EmptyCast.Create(a.Expr, rc.BuiltinTypes.Object);
-//					expr = new Cast(new TypeExpression(rc.BuiltinTypes.Object, a.Expr.Location), a.Expr, a.Expr.Location).Resolve(rc);
-					expr = new BoxedCast(a.Expr, rc.BuiltinTypes.Object);
-					// store nee argument
-					args[i] = args[i].Clone(expr);
-				}
+				// remove dynamic
+				a.Expr = EmptyCast.RemoveDynamic(rc, a.Expr);
 			}
 		}
 
