@@ -243,7 +243,7 @@ namespace Mono.CSharp {
 //			SetNewDynamicRuntimeEnable(false);
 			SetNewDynamicRuntimeEnable(true);
 //			NewDynamicRuntime_Conditional = true;
-			NewDynamicRuntime_ConvertReturnType = false;
+//			NewDynamicRuntime_ConvertReturnType = false;
 
 			// Default to 1 or mdb files would be platform speficic
 			TabSize = 1;
