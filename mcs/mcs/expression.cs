@@ -1455,7 +1455,7 @@ namespace Mono.CSharp
 		protected override Expression DoResolve (ResolveContext ec)
 		{
 			// NOTE: We need to distinguish between types and expressions which return a Class object.
-			if (ec.FileType == SourceFileType.PlayScript && (this is Is)) {  // Enable for "is" expression only for right now
+			if (ec.FileType == SourceFileType.PlayScript && (this is Is || this is As)) { 
 				as_probe_type_expr = ProbeType.Resolve (ec);
 				if (as_probe_type_expr is TypeExpression) {
 					as_probe_type_expr = null;
@@ -1769,11 +1769,19 @@ namespace Mono.CSharp
 					return null;
 			}
 
+			bool isPlayScript = ec.FileType == SourceFileType.PlayScript;
+
+			if (isPlayScript && as_probe_type_expr != null && !(as_probe_type_expr is TypeExpr)) {
+				var arguments = new Arguments (2);
+				arguments.Add (new Argument (expr));
+				arguments.Add (new Argument (as_probe_type_expr));
+				return new Invocation (new MemberAccess (new MemberAccess (new SimpleName ("PlayScript", loc), "Support", loc), "DynamicAs", loc), arguments).Resolve (ec);
+			}
+
 			type = probe_type_expr;
 			eclass = ExprClass.Value;
 			TypeSpec etype = expr.Type;
 
-			bool isPlayScript = ec.FileType == SourceFileType.PlayScript;
 			bool isRefType = TypeSpec.IsReferenceType (type) || type.IsNullableType;
 
 			// Always "Object" for dynamic type when evaluating PlayScript AS operator (not dynamic CONV call).
