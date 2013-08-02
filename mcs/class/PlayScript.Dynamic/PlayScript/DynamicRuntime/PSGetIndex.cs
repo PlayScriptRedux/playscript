@@ -41,7 +41,7 @@ namespace PlayScript.DynamicRuntime
 				if (ro is T) {
 					return (T)ro;
 				} else {
-					return (T)Convert.ChangeType(ro, typeof(T));
+					return Dynamic.ConvertValue<T>(ro);
 				}
 			}
 
@@ -51,7 +51,7 @@ namespace PlayScript.DynamicRuntime
 				if (ro is T) {
 					return (T)ro;
 				} else {
-					return (T)Convert.ChangeType(ro, typeof(T));
+					return Dynamic.ConvertValue<T>(ro);
 				}
 			}
 
@@ -61,7 +61,7 @@ namespace PlayScript.DynamicRuntime
 				if (ro is T) {
 					return (T)ro;
 				} else {
-					return (T)Convert.ChangeType(ro, typeof(T));
+					return Dynamic.ConvertValue<T>(ro);
 				}
 			}
 
@@ -87,7 +87,7 @@ namespace PlayScript.DynamicRuntime
 				if (ro is T) {
 					return (T)ro;
 				} else {
-					return (T)Convert.ChangeType(ro, typeof(T));
+					return Dynamic.ConvertValue<T>(ro);
 				}
 			} 
 
