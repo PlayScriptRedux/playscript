@@ -218,6 +218,8 @@ namespace Mono.PlayScript
 		bool handle_where = false;
 		bool handle_typeof = false;
 		bool handle_for_in = false;
+		bool eat_block = false;
+		int eat_block_braces = 0;
 		bool lambda_arguments_parsing;
 		List<Location> escaped_identifiers;
 		int parsing_generic_less_than;
@@ -394,6 +396,16 @@ namespace Mono.PlayScript
 
 		public bool RegexXmlParsing {
 			get { return parse_regex_xml > 0; }
+		}
+
+		public bool EatBlock {
+			get { return eat_block; }
+			set { 
+				eat_block = value; 
+				if (eat_block) {
+					eat_block_braces = 0; 
+				}
+			}
 		}
 
 		public XmlCommentState doc_state {
@@ -3600,6 +3612,21 @@ namespace Mono.PlayScript
 			// Decrement allow auto semi counter (allows us to allow semicolon insertion only after next x symbols)
 			if (allow_auto_semi_after > 0)
 				allow_auto_semi_after--;
+
+			// Eat all tokens until we get to final end brace
+			if (eat_block) {
+				eat_block = false;
+				eat_block_braces = 1;
+				do {
+					next = xtoken (parse_token);
+					if (next == Token.OPEN_BRACE || next == Token.OPEN_BRACE_INIT) {
+						eat_block_braces++;
+					} else if (next == Token.CLOSE_BRACE) {
+						eat_block_braces--;
+					}
+				} while (eat_block_braces > 0 && next != Token.EOF);
+				return next;
+			}
 
 			// Whether we have seen comments on the current line
 			bool comments_seen = false;

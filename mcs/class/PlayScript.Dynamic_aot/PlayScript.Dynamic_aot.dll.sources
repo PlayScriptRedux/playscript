@@ -1,5 +1,6 @@
 
 ./AssemblyInfo.cs
+../PlayScript.Dynamic/PlayScript/ActionCreator.cs
 ../PlayScript.Dynamic/PlayScript/ExpressionType.cs
 ../PlayScript.Dynamic/PlayScript/ExtensionAttribute.cs
 ../PlayScript.Dynamic/PlayScript/CallSite.cs
@@ -10,6 +11,7 @@
 ../PlayScript.Dynamic/PlayScript/IDynamicClass.cs
 ../PlayScript.Dynamic/PlayScript/Invoker.cs
 ../PlayScript.Dynamic/PlayScript/IKeyEnumerable.cs
+../PlayScript.Dynamic/PlayScript/Invoker.cs
 ../PlayScript.Dynamic/PlayScript/MethodBinder.cs
 ../PlayScript.Dynamic/PlayScript/ParamsDelegateTypes.cs
 ../PlayScript.Dynamic/PlayScript/Undefined.cs

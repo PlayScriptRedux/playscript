@@ -169,7 +169,7 @@ namespace Mono.CSharp {
 
 		public bool WriteMetadataOnly;
 
-		readonly List<string> conditional_symbols;
+		readonly Dictionary<string,string> conditional_symbols;
 
 		readonly List<SourceFile> source_files;
 
@@ -253,11 +253,11 @@ namespace Mono.CSharp {
 			Modules = new List<string> ();
 			ReferencesLookupPaths = new List<string> ();
 
-			conditional_symbols = new List<string> ();
+			conditional_symbols = new Dictionary<string,string> ();
 			//
 			// Add default mcs define
 			//
-			conditional_symbols.Add ("__MonoCS__");
+			conditional_symbols.Add ("__MonoCS__", "true");
 
 			source_files = new List<SourceFile> ();
 		}
@@ -290,10 +290,10 @@ namespace Mono.CSharp {
 
 		#endregion
 
-		public void AddConditionalSymbol (string symbol)
+		public void AddConditionalSymbol (string symbol, string value = "true")
 		{
-			if (!conditional_symbols.Contains (symbol))
-				conditional_symbols.Add (symbol);
+			if (!conditional_symbols.ContainsKey (symbol))
+				conditional_symbols.Add (symbol, value);
 		}
 
 		public void AddWarningAsError (int id)
@@ -314,7 +314,12 @@ namespace Mono.CSharp {
 
 		public bool IsConditionalSymbolDefined (string symbol)
 		{
-			return conditional_symbols.Contains (symbol);
+			return conditional_symbols.ContainsKey (symbol);
+		}
+
+		public string GetConditionalSymbolValue (string symbol)
+		{
+			return conditional_symbols [symbol];
 		}
 
 		public bool IsWarningAsError (int code)
@@ -898,12 +903,18 @@ namespace Mono.CSharp {
 
 					foreach (string d in value.Split (argument_value_separator)) {
 						string conditional = d.Trim ();
+						string conditionalValue = "true"; // NOTE: This is only ever used by PlayScript!
+						string[] conditionalArgs = conditional.Split (new char[] { '=' });
+						if (conditionalArgs.Length == 2) {
+							conditional = conditionalArgs [0].Trim ();
+							conditionalValue = conditionalArgs [1].Trim ();
+						}
 						if (!Tokenizer.IsValidIdentifier (conditional)) {
 							report.Warning (2029, 1, "Invalid conditional define symbol `{0}'", conditional);
 							continue;
 						}
 
-						settings.AddConditionalSymbol (conditional);
+						settings.AddConditionalSymbol (conditional, conditionalValue);
 					}
 					return ParseResult.Success;
 				}

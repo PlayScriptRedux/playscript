@@ -792,6 +792,17 @@ namespace Mono.CSharp {
 
 			return Compiler.Settings.IsConditionalSymbolDefined (value);
 		}
+
+		public string GetConditionalValue (string value)
+		{
+			if (conditionals != null) {
+				bool res;
+				if (conditionals.TryGetValue (value, out res))
+					return res ? "true" : "false";
+			}
+
+			return Compiler.Settings.GetConditionalSymbolValue (value);
+		}
 	}
 
 
