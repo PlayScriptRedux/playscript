@@ -21,6 +21,7 @@
 ../pscorlib/fl/controls/Label.play
 ../pscorlib/fl/controls/LabelButton.play
 ../pscorlib/fl/controls/List.play
+../pscorlib/fl/controls/listClasses/CellRenderer.play
 ../pscorlib/fl/controls/NumericStepper.play
 ../pscorlib/fl/controls/ScrollBar.play
 ../pscorlib/fl/controls/SelectableList.play
@@ -28,6 +29,7 @@
 ../pscorlib/fl/controls/TextInput.play
 ../pscorlib/fl/controls/UIScrollBar.play
 ../pscorlib/fl/core/UIComponent.play
+../pscorlib/fl/events/ComponentEvent.play
 ../pscorlib/flash/accessibility/AccessibilityImplementation.play
 ../pscorlib/flash/accessibility/AccessibilityProperties.play
 ../pscorlib/flash/Debugger.play
@@ -106,6 +108,7 @@
 ../pscorlib/flash/events/EventPhase.play
 ../pscorlib/flash/events/FocusEvent.play
 ../pscorlib/flash/events/FullScreenEvent.play
+../pscorlib/flash/events/GestureEvent.play
 ../pscorlib/flash/events/HTTPStatusEvent.play
 ../pscorlib/flash/events/IEventDispatcher.cs
 ../pscorlib/flash/events/IOErrorEvent.play
@@ -120,6 +123,7 @@
 ../pscorlib/flash/events/ThrottleEvent.play
 ../pscorlib/flash/events/TimerEvent.play
 ../pscorlib/flash/events/TouchEvent.play
+../pscorlib/flash/events/TransformGestureEvent.play
 ../pscorlib/flash/events/UncaughtErrorEvent.play
 ../pscorlib/flash/events/UncaughtErrorEvents.play
 ../pscorlib/flash/external/ExternalInterface.play

@@ -10,6 +10,7 @@
 ../PlayScript.Dynamic/PlayScript/IDynamicClass.cs
 ../PlayScript.Dynamic/PlayScript/Invoker.cs
 ../PlayScript.Dynamic/PlayScript/IKeyEnumerable.cs
+../PlayScript.Dynamic/PlayScript/Invoker.cs
 ../PlayScript.Dynamic/PlayScript/MethodBinder.cs
 ../PlayScript.Dynamic/PlayScript/ParamsDelegateTypes.cs
 ../PlayScript.Dynamic/PlayScript/Undefined.cs
