@@ -8504,7 +8504,8 @@ string MakePrivateNamespaceName(NamespaceContainer prev_container, CompilationSo
 
 bool IsConfigVarDefined(string configVar) 
 {
-	return file.IsConditionalDefined (configVar.Replace("::","_"));
+	string var_name = configVar.Replace("::", "_");
+	return file.IsConditionalDefined (var_name) && file.GetConditionalValue (var_name) != "false";
 }
 
 string GetExpecting ()

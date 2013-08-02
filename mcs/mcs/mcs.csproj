@@ -22,7 +22,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <Commandlineparameters>/noconfig "/out:/Users/bcooley/projects/playscript-mono/mcs/mcs/test2.exe" "/r:/Users/bcooley/projects/playscript-mono-inst/lib/mono/4.0/System.dll" "/r:/Users/bcooley/projects/playscript-mono/mcs/class/PlayScript.Dynamic_aot/bin/Debug/PlayScript.Dynamic_aot.dll" "/r:/Users/bcooley/projects/playscript-mono/mcs/class/pscorlib_aot/bin/Debug/pscorlib_monomac.dll" "/r:/Users/bcooley/projects/playscript-mono/mcs/class/Mono.Optimization/bin/Debug/Mono.Optimization.dll" "/r:/Users/bcooley/projects/playscript-mono-inst/lib/mono/4.0/System.Core.dll" /nologo /warn:4 /debug:full /optimize- /codepage:utf8 -unsafe "/define:DEBUG"  /t:exe "/Users/bcooley/projects/playscript-dist/playscript-mono/mcs/tests/pstest-000.play"</Commandlineparameters>
+    <Commandlineparameters>/noconfig /define:TEST_STRING='string',TEST_BOOL=false,TEST_INT=100,TEST_NUMBER=123.45 "/out:/Users/bcooley/projects/playscript-mono/mcs/mcs/test2.exe" "/r:/Users/bcooley/projects/playscript-mono-inst/lib/mono/4.0/System.dll" "/r:/Users/bcooley/projects/playscript-mono/mcs/class/PlayScript.Dynamic_aot/bin/Debug/PlayScript.Dynamic_aot.dll" "/r:/Users/bcooley/projects/playscript-mono/mcs/class/pscorlib_aot/bin/Debug/pscorlib_monomac.dll" "/r:/Users/bcooley/projects/playscript-mono/mcs/class/Mono.Optimization/bin/Debug/Mono.Optimization.dll" "/r:/Users/bcooley/projects/playscript-mono-inst/lib/mono/4.0/System.Core.dll" /nologo /warn:4 /debug:full /optimize- /codepage:utf8 -unsafe "/define:DEBUG"  /t:exe "/Users/bcooley/projects/playscript-dist/playscript-mono/mcs/tests/pstest-000.play"</Commandlineparameters>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -208,11 +208,5 @@
   <ItemGroup>
     <None Include="ps-parser.jay" />
     <None Include="options.rsp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="test.csproj">
-      <Project>{B5782FD5-CBC6-4194-BF51-A20D55CEBE78}</Project>
-      <Name>test</Name>
-    </ProjectReference>
   </ItemGroup>
 </Project>

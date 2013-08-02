@@ -8894,6 +8894,40 @@ namespace Mono.CSharp
 				} else if (AccessorType == Accessor.AsE4xDescendant) {
 					return MakeE4xInvocation (rc, "descendants", Name).Resolve (rc);
 				} else if (AccessorType == Accessor.AsE4xNamespace) {
+
+					// In ActionScript, we can interpret a IDENT::IDENT as a CONFIG variable constants like CONFIG::DEBUG instead
+					// of an E4X namespace expression.  To distinguish between the two, we check to see if the left side is a simple
+					// name, and that there is actually a macro defined that matches the name we're checking.
+					if (expr is SimpleName) {
+						string config_id = ((SimpleName)expr).Name + "_" + this.Name;
+						if (rc.Module.Compiler.Settings.IsConditionalSymbolDefined (config_id)) {
+							string value = rc.Module.Compiler.Settings.GetConditionalSymbolValue (config_id);
+							if (value == "true") {
+								return new BoolLiteral (rc.BuiltinTypes, true, this.loc);
+							} else if (value == "false") {
+								return new BoolLiteral (rc.BuiltinTypes, false, this.loc);
+							} else if (value.Length > 0 && char.IsDigit (value [0]) || value [0] == '-') {
+								if (value.IndexOf (".") != -1) {
+									double dbl = 0.0;
+									double.TryParse (value, out dbl);
+									return new DoubleLiteral (rc.BuiltinTypes, dbl, this.loc);
+								} else {
+									int i = 0;
+									int.TryParse (value, out i);
+									return new IntLiteral (rc.BuiltinTypes, i, this.loc);
+								}
+							} else if (value.Length > 0 && (value [0] == '\'' || value [0] == '"')) {
+								string str = value.Substring (1);
+								if (str.Length > 0 && (str [str.Length - 1] == '\'' || str [str.Length - 1] == '"')) {
+									str = str.Substring (0, str.Length - 1);
+								}
+								return new StringLiteral (rc.BuiltinTypes, str, this.loc);
+							} else {
+								return new StringLiteral (rc.BuiltinTypes, value, this.loc);
+							}
+						}
+					}
+
 					return MakeE4xInvocation (rc, "namespace", Name).Resolve (rc);
 				}
 			}
