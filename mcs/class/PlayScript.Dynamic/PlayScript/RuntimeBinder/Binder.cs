@@ -26,8 +26,6 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#define USE_NEW_BINDERS
-
 #if DYNAMIC_SUPPORT
 
 using System;
@@ -127,84 +125,92 @@ namespace PlayScript.RuntimeBinder
 	{
 		public static Func<object, string, Type, object>   OnGetMemberError;
 		public static Action<object, string, object>       OnSetMemberError;
-		public static int 								   MemberResolveCount;
 
 		public static CallSiteBinder BinaryOperation (CSharpBinderFlags flags, ExpressionType operation, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderCreated;
+#endif
 			return new CSharpBinaryOperationBinder2(operation, flags, context, argumentInfo);
 		}
 
 		public static CallSiteBinder Convert (CSharpBinderFlags flags, Type type, Type context)
 		{
-#if USE_NEW_BINDERS
-			return new PSConvertBinder(type, context, flags);
-#else
-			return new CSharpConvertBinder(type, context, flags);
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.ConvertBinderCreated;
 #endif
+			return new PSConvertBinder(type, context, flags);
 		}
 		
 		public static CallSiteBinder GetIndex (CSharpBinderFlags flags, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
-#if USE_NEW_BINDERS
-			return new PSGetIndexBinder(context, argumentInfo);
-#else
-			return new CSharpGetIndexBinder(context, argumentInfo);
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.GetIndexBinderCreated;
 #endif
+			return new PSGetIndexBinder(context, argumentInfo);
 		}
 		
 		public static CallSiteBinder GetMember (CSharpBinderFlags flags, string name, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
-#if USE_NEW_BINDERS
-			return new PSGetMemberBinder(name, context, argumentInfo);
-#else
-			return new CSharpGetMemberBinder(name, context, argumentInfo);
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.GetMemberBinderCreated;
 #endif
+			return new PSGetMemberBinder(name, context, argumentInfo);
 		}
 		
 		public static CallSiteBinder Invoke (CSharpBinderFlags flags, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeBinderCreated;
+#endif
 			return new CSharpInvokeBinder(flags, context, argumentInfo);
 		}
 		
 		public static CallSiteBinder InvokeConstructor (CSharpBinderFlags flags, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeConstructorBinderCreated;
+#endif
 			return new CSharpInvokeConstructorBinder(context, argumentInfo);
 		}
 
 		public static CallSiteBinder InvokeMember (CSharpBinderFlags flags, string name, IEnumerable<Type> typeArguments, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
-#if USE_NEW_BINDERS
-			return new PSInvokeMemberBinder(flags, name, context, typeArguments, argumentInfo);
-#else
-			return new CSharpInvokeMemberBinder(flags, name, context, typeArguments, argumentInfo);
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderCreated;
 #endif
+			return new PSInvokeMemberBinder(flags, name, context, typeArguments, argumentInfo);
 		}
 
 		public static CallSiteBinder IsEvent (CSharpBinderFlags flags, string name, Type context)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.IsEventBinderCreated;
+#endif
 			return new PSIsEventBinder(flags, name, context);
 		}
 		
 		public static CallSiteBinder SetIndex (CSharpBinderFlags flags, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
-#if USE_NEW_BINDERS
-			return new PSSetIndexBinder(flags, context, argumentInfo);
-#else
-			return new CSharpSetIndexBinder(flags, context, argumentInfo);
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.SetIndexBinderCreated;
 #endif
+			return new PSSetIndexBinder(flags, context, argumentInfo);
 		}
 		
 		public static CallSiteBinder SetMember (CSharpBinderFlags flags, string name, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
-#if USE_NEW_BINDERS
-			return new PSSetMemberBinder(flags, name, context, argumentInfo);
-#else
-			return new CSharpSetMemberBinder(flags, name, context, argumentInfo);
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.SetMemberBinderCreated;
 #endif
+			return new PSSetMemberBinder(flags, name, context, argumentInfo);
 		}
 		
 		public static CallSiteBinder UnaryOperation (CSharpBinderFlags flags, ExpressionType operation, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.UnaryOperationBinderCreated;
+#endif
 			return new CSharpUnaryOperationBinder(operation, flags, context, argumentInfo);
 		}
 	}

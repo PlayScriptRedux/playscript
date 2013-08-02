@@ -37,6 +37,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static int ConvertToInt (CallSite site, object o)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.ConvertBinderInvoked;
+#endif
 			if (o is int) {
 				return (int)o;
 			} 
@@ -75,6 +78,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static uint ConvertToUInt (CallSite site, object o)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.ConvertBinderInvoked;
+#endif
 			if (o is uint) {
 				return (uint)o;
 			} 
@@ -106,6 +112,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static double ConvertToDouble (CallSite site, object o)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.ConvertBinderInvoked;
+#endif
 			if (o is double) {
 				return (double)o;
 			} 
@@ -137,6 +146,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static bool ConvertToBool (CallSite site, object o)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.ConvertBinderInvoked;
+#endif
 			if (o is bool) {
 				return (bool)o;
 			} 
@@ -163,6 +175,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static string ConvertToString (CallSite site, object o)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.ConvertBinderInvoked;
+#endif
 			if (o == null || o == PlayScript.Undefined._undefined) {
 				return null;
 			} else if  (o is string) {
@@ -174,6 +189,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object ConvertToObj (CallSite site, object o)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.ConvertBinderInvoked;
+#endif
 			return o;
 		}
 

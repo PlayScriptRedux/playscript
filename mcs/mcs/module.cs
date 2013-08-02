@@ -573,7 +573,7 @@ namespace Mono.CSharp
 							}
 
 							// When we seal here, we get proper compile error, however the class does not seem to be marked as sealed in IL
-							c.ModFlags |= Modifiers.SEALED;
+							//c.ModFlags |= Modifiers.SEALED;
 						}
 						break;
 				}

@@ -140,6 +140,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object NegateObject (CallSite site, object a)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.UnaryOperationBinderInvoked;
+#endif
 			if (a is int) {
 				return -(int)a;
 			} else if (a is double) {
@@ -154,6 +157,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object IncrementObject (CallSite site, object a)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.UnaryOperationBinderInvoked;
+#endif
 			if (a is int) {
 				return (int)a + 1;
 			} else if (a is double) {
@@ -169,6 +175,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object DecrementObject (CallSite site, object a)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.UnaryOperationBinderInvoked;
+#endif
 			if (a is int) {
 				return (int)a - 1;
 			} else if (a is double) {
@@ -183,6 +192,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object LogicalNotObject (CallSite site, object a)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.UnaryOperationBinderInvoked;
+#endif
 			if (a is bool) {
 				return !(bool)a;
 			} if (a is int) {
@@ -198,6 +210,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object BitwiseNotObject (CallSite site, object a)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.UnaryOperationBinderInvoked;
+#endif
 			if (a is bool) {
 				return (bool)a ? 0 : 1;
 			} if (a is int) {
@@ -213,11 +228,17 @@ namespace PlayScript.RuntimeBinder
 		}
 		public static bool IsTrueObject (CallSite site, object a)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.UnaryOperationBinderInvoked;
+#endif
 			return Dynamic.CastObjectToBool(a) == true;
 		}
 
 		public static bool IsFalseObject (CallSite site, object a)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.UnaryOperationBinderInvoked;
+#endif
 			return Dynamic.CastObjectToBool(a) == false;
 		}
 

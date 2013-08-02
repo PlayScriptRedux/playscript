@@ -111,6 +111,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static void Action1 (CallSite site, object o1)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeBinderInvoked;
+#endif
 			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
 			if ((Delegate)o1 != b._d) {
 				b.UpdateInvokeInfo ((Delegate)o1, 1);
@@ -123,6 +126,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static void Action2 (CallSite site, object o1, object o2)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeBinderInvoked;
+#endif
 			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
 			if ((Delegate)o1 != b._d) {
 				b.UpdateInvokeInfo ((Delegate)o1, 2);
@@ -140,6 +146,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static void Action3 (CallSite site, object o1, object o2, object o3)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeBinderInvoked;
+#endif
 			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
 			if ((Delegate)o1 != b._d) {
 				b.UpdateInvokeInfo ((Delegate)o1, 3);
@@ -160,6 +169,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static void Action4 (CallSite site, object o1, object o2, object o3, object o4)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeBinderInvoked;
+#endif
 			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
 			if ((Delegate)o1 != b._d) {
 				b.UpdateInvokeInfo ((Delegate)o1, 4);
@@ -182,6 +194,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static void Action5 (CallSite site, object o1, object o2, object o3, object o4, object o5)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeBinderInvoked;
+#endif
 			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
 			if ((Delegate)o1 != b._d) {
 				b.UpdateInvokeInfo ((Delegate)o1, 5);
@@ -205,6 +220,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static void Action6 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeBinderInvoked;
+#endif
 			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
 			if ((Delegate)o1 != b._d) {
 				b.UpdateInvokeInfo ((Delegate)o1, 6);
@@ -230,6 +248,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static void Action7 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeBinderInvoked;
+#endif
 			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
 			if ((Delegate)o1 != b._d) {
 				b.UpdateInvokeInfo ((Delegate)o1, 7);
@@ -257,6 +278,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static void Action8 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeBinderInvoked;
+#endif
 			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
 			if ((Delegate)o1 != b._d) {
 				b.UpdateInvokeInfo ((Delegate)o1, 8);
@@ -286,6 +310,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static void Action9 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8, object o9)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeBinderInvoked;
+#endif
 			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
 			if ((Delegate)o1 != b._d) {
 				b.UpdateInvokeInfo ((Delegate)o1, 9);
@@ -317,6 +344,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static void Action10 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8, object o9, object o10)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeBinderInvoked;
+#endif
 			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
 			if ((Delegate)o1 != b._d) {
 				b.UpdateInvokeInfo ((Delegate)o1, 10);
@@ -350,6 +380,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object Func1 (CallSite site, object o1)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeBinderInvoked;
+#endif
 			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
 			if ((Delegate)o1 != b._d) {
 				b.UpdateInvokeInfo ((Delegate)o1, 1);
@@ -362,6 +395,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static object Func2 (CallSite site, object o1, object o2)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeBinderInvoked;
+#endif
 			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
 			if ((Delegate)o1 != b._d) {
 				b.UpdateInvokeInfo ((Delegate)o1, 2);
@@ -379,6 +415,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object Func3 (CallSite site, object o1, object o2, object o3)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeBinderInvoked;
+#endif
 			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
 			if ((Delegate)o1 != b._d) {
 				b.UpdateInvokeInfo ((Delegate)o1, 3);
@@ -398,6 +437,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object Func4 (CallSite site, object o1, object o2, object o3, object o4)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeBinderInvoked;
+#endif
 			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
 			if ((Delegate)o1 != b._d) {
 				b.UpdateInvokeInfo ((Delegate)o1, 4);
@@ -419,6 +461,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object Func5 (CallSite site, object o1, object o2, object o3, object o4, object o5)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeBinderInvoked;
+#endif
 			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
 			if ((Delegate)o1 != b._d) {
 				b.UpdateInvokeInfo ((Delegate)o1, 5);
@@ -442,6 +487,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object Func6 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeBinderInvoked;
+#endif
 			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
 			if ((Delegate)o1 != b._d) {
 				b.UpdateInvokeInfo ((Delegate)o1, 6);
@@ -467,6 +515,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object Func7 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeBinderInvoked;
+#endif
 			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
 			if ((Delegate)o1 != b._d) {
 				b.UpdateInvokeInfo ((Delegate)o1, 7);
@@ -494,6 +545,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object Func8 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeBinderInvoked;
+#endif
 			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
 			if ((Delegate)o1 != b._d) {
 				b.UpdateInvokeInfo ((Delegate)o1, 8);
@@ -523,6 +577,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object Func9 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8, object o9)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeBinderInvoked;
+#endif
 			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
 			if ((Delegate)o1 != b._d) {
 				b.UpdateInvokeInfo ((Delegate)o1, 9);
@@ -554,6 +611,9 @@ namespace PlayScript.RuntimeBinder
 		
 		public static object Func10 (CallSite site, object o1, object o2, object o3, object o4, object o5, object o6, object o7, object o8, object o9, object o10)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeBinderInvoked;
+#endif
 			CSharpInvokeBinder b = (CSharpInvokeBinder)site.Binder;
 			if ((Delegate)o1 != b._d) {
 				b.UpdateInvokeInfo ((Delegate)o1, 10);

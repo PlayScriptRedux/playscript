@@ -180,6 +180,9 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSGetIndex.cs">
       <Link>PlayScript\DynamicRuntime\PSGetIndex.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\Invoker.cs">
+      <Link>PlayScript\Invoker.cs</Link>
+    </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSGetMember.cs">
       <Link>PlayScript\DynamicRuntime\PSGetMember.cs</Link>
     </Compile>

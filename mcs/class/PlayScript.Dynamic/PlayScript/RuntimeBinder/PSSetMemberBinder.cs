@@ -57,6 +57,9 @@ namespace PlayScript.RuntimeBinder
 		/// </summary>
 		private static void SetMember<T> (CallSite site, object o, T value)
 		{
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.SetMemberBinderInvoked;
+#endif
 			SetMemberAsObject(site, o, (object)value);
 		}
 
@@ -116,8 +119,9 @@ namespace PlayScript.RuntimeBinder
 
 			// resolve name
 
-			// increment resolve count
-			Binder.MemberResolveCount++;
+#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.SetMemberBinder_Resolve_Invoked;
+#endif
 
 			// resolve as property
 			var property = otype.GetProperty(binder.name);
