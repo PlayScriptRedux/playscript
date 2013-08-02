@@ -3417,6 +3417,17 @@ namespace Mono.CSharp
 				if ((oper & Operator.LogicalMask) != 0) {
 					Expression cond_left, cond_right, expr;
 
+					if (ec.Module.Compiler.Settings.NewDynamicRuntime_LogicalOps && !AsCoalesceLogicalOps) {
+						// in the new runtime we convert each side to boolean for logical operations
+						if (lt.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
+							left = new Cast(new TypeExpression(ec.BuiltinTypes.Bool, loc), left, loc).Resolve(ec);
+						}
+						if (rt.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
+							right = new Cast(new TypeExpression(ec.BuiltinTypes.Bool, loc), right, loc).Resolve(ec);
+						}
+						return DoResolveCore(ec, left, right);
+					}
+
 					args = new Arguments (2);
 
 					if (lt.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
@@ -3440,13 +3451,29 @@ namespace Mono.CSharp
 
 						args.Add (new Argument (left));
 						args.Add (new Argument (right));
-						cond_right = new DynamicExpressionStatement (this, args, loc);
+						if (ec.Module.Compiler.Settings.NewDynamicRuntime_BinaryOps) {
+							// in the new runtime we directly invoke the binary operation
+							// this is faster, more type safe, and also allows us to know the return type of the binary operation
+							cond_right = CreateDynamicBinaryOperation(ec, this.Oper, args, loc);
+						} else 
+						{
+							cond_right = new DynamicExpressionStatement (this, args, loc);
+						}
+
 					} else {
 						LocalVariable temp = LocalVariable.CreateCompilerGenerated (ec.BuiltinTypes.Bool, ec.CurrentBlock, loc);
 
 						args.Add (new Argument (temp.CreateReferenceExpression (ec, loc).Resolve (ec)));
 						args.Add (new Argument (right));
-						right = new DynamicExpressionStatement (this, args, loc);
+
+						if (ec.Module.Compiler.Settings.NewDynamicRuntime_BinaryOps) {
+							// in the new runtime we directly invoke the binary operation
+							// this is faster, more type safe, and also allows us to know the return type of the binary operation
+							right = CreateDynamicBinaryOperation(ec, this.Oper, args, loc);
+						} else 
+						{
+							right = new DynamicExpressionStatement (this, args, loc);
+						}
 
 						//
 						// bool && dynamic => (temp = left) ? temp && right : temp;
@@ -3466,10 +3493,15 @@ namespace Mono.CSharp
 					return new Conditional (expr, cond_left, cond_right, loc).Resolve (ec);
 				}
 
-				args = new Arguments (2);
-				args.Add (new Argument (left));
-				args.Add (new Argument (right));
-				return new DynamicExpressionStatement (this, args, loc).Resolve (ec);
+				args = new Arguments(2);
+				args.Add(new Argument(left));
+				args.Add(new Argument(right));
+				if (ec.Module.Compiler.Settings.NewDynamicRuntime_BinaryOps) {
+					// invoke binary operation function directly here
+					return CreateDynamicBinaryOperation(ec, this.Oper, args, loc);
+				} else {
+					return new DynamicExpressionStatement(this, args, loc).Resolve(ec);
+				}
 			}
 
 			if (ec.Module.Compiler.Settings.Version >= LanguageVersion.ISO_2 &&
@@ -4461,6 +4493,110 @@ namespace Mono.CSharp
 
 			return new Invocation (new MemberAccess (new TypeExpression (ec.Module.PredefinedTypes.GetBinder(ec).TypeSpec, loc), "BinaryOperation", loc), binder_args);
 		}
+
+		public static Expression CreateDynamicBinaryOperation(ResolveContext rc, Operator oper, Arguments args, Location loc)
+		{
+			// strip dynamic from all arguments
+			for (int i=0; i < args.Count; i++) {
+				if (args[i].Type == rc.BuiltinTypes.Dynamic) {
+					args[i] = new Argument(EmptyCast.Create(args[i].Expr, rc.BuiltinTypes.Object).Resolve(rc));
+				}
+			}
+
+			TypeSpec binary = rc.Module.PredefinedTypes.PsBinaryOperation.Resolve();
+
+			// perform numeric or other type conversion
+			string binaryMethod;
+			switch (oper)
+			{
+				case Operator.Multiply:
+					binaryMethod = "Multiply";
+					break;
+				case Operator.Division:
+					binaryMethod = "Division";
+					break;
+				case Operator.Modulus:
+					binaryMethod = "Modulus";
+					break;
+				case Operator.Addition:
+					binaryMethod = "Addition";
+					break;
+				case Operator.Subtraction:
+					binaryMethod = "Subtraction";
+					break;
+				case Operator.LeftShift:
+					binaryMethod = "LeftShift";
+					break;
+				case Operator.RightShift:
+					binaryMethod = "RightShift";
+					break;
+				case Operator.AsURightShift:
+					binaryMethod = "AsURightShift";
+					break;
+				case Operator.LessThan:
+					binaryMethod = "LessThan";
+					break;
+				case Operator.GreaterThan:
+					binaryMethod = "GreaterThan";
+					break;
+				case Operator.LessThanOrEqual:
+					binaryMethod = "LessThanOrEqual";
+					break;
+				case Operator.GreaterThanOrEqual:
+					binaryMethod = "GreaterThanOrEqual";
+					break;
+				case Operator.Equality:
+					binaryMethod = "Equality";
+					break;
+				case Operator.Inequality:
+					binaryMethod = "Inequality";
+					break;
+				case Operator.AsRefEquality:
+					binaryMethod = "AsRefEquality";
+					break;
+				case Operator.AsRefInequality:
+					binaryMethod = "AsRefInequality";
+					break;
+				case Operator.BitwiseAnd:
+					binaryMethod = "BitwiseAnd";
+					break;
+				case Operator.ExclusiveOr:
+					binaryMethod = "ExclusiveOr";
+					break;
+				case Operator.BitwiseOr:
+					binaryMethod = "BitwiseOr";
+					break;
+					// we should never support these
+//				case Operator.LogicalAnd:
+//					binaryMethod = "LogicalAnd";
+//					break;
+//				case Operator.LogicalOr:
+//					binaryMethod = "LogicalOr";
+//					break;
+				case Operator.AsE4xChild:
+					binaryMethod = "AsE4xChild";
+					break;
+				case Operator.AsE4xDescendant:
+					binaryMethod = "AsE4xDescendant";
+					break;
+				case Operator.AsE4xChildAttribute:
+					binaryMethod = "AsE4xChildAttribute";
+					break;
+				case Operator.AsE4xDescendantAttribute:
+					binaryMethod = "AsE4xDescendantAttribute";
+					break;
+				default:
+					throw new InvalidOperationException("Unknown binary operation: " + oper);
+			}
+			var ret = new Invocation(new MemberAccess(new TypeExpression(binary, loc), binaryMethod, loc), args).Resolve(rc);
+
+			if (ret.Type == rc.BuiltinTypes.Object) {
+				// cast object to dynamic for return types
+				ret = new Cast (new TypeExpression (rc.BuiltinTypes.Dynamic, loc), ret, loc).Resolve (rc);
+			} 
+			return ret;
+
+		}
 		
 		public override Expression CreateExpressionTree (ResolveContext ec)
 		{
@@ -5152,6 +5288,20 @@ namespace Mono.CSharp
 			TypeSpec true_type = true_expr.Type;
 			TypeSpec false_type = false_expr.Type;
 			type = true_type;
+
+			if (ec.Module.Compiler.Settings.NewDynamicRuntime_Conditional) {
+				// if either true or false are dynamic then we must cast the other to dynamic
+				if (true_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic || false_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
+					if (false_type.BuiltinType != BuiltinTypeSpec.Type.Dynamic) {
+						false_expr = Convert.ImplicitConversion (ec, false_expr, ec.BuiltinTypes.Dynamic, loc);
+						false_type = false_expr.Type;
+					}
+					if (true_type.BuiltinType != BuiltinTypeSpec.Type.Dynamic) {
+						true_expr = Convert.ImplicitConversion (ec, true_expr, ec.BuiltinTypes.Dynamic, loc);
+						true_type = true_expr.Type;
+					}
+				}
+			}
 
 			//
 			// First, if an implicit conversion exists from true_expr

@@ -184,7 +184,41 @@ namespace Mono.CSharp {
 		public bool AutoSeal;
 		public bool AutoSealVerbosity;
 
-		public bool NewDynamicRuntime;
+		//
+		// Settings controlling the enabling of components of the new dynamic runtime
+		//
+
+		// if true, then static calls to PSBinaryOperation.Addition(a,b) are used instead of binder
+		public bool NewDynamicRuntime_BinaryOps = false;
+		// if true, dynamics are cast to boolean before performing logical operations
+		public bool NewDynamicRuntime_LogicalOps = false;
+		// if true, hasOwnProperty is statically called on dynamics
+		public bool NewDynamicRuntime_HasOwnProperty = false;
+		// if true, conversions use static calls to PSConverter.ConvertToXYZ
+		public bool NewDynamicRuntime_Convert = false;
+		// if true, conversions will be removed around dynamic statements
+		public bool NewDynamicRuntime_ConvertReturnType = false;
+		// if true, new get/set index call sites will be used
+		public bool NewDynamicRuntime_GetSetIndex = false;
+		// if true, new get/set member call sites will be used
+		public bool NewDynamicRuntime_GetSetMember = false;
+		// if true, both the true and false componets of a ?: will be cast to dynamic if either is dynamic
+		public bool NewDynamicRuntime_Conditional = false;
+		// if true, event add/remove binders will be disabled
+		public bool NewDynamicRuntime_EventAddRemove = false;
+
+		public void SetNewDynamicRuntimeEnable(bool value)
+		{
+			NewDynamicRuntime_BinaryOps = value;
+			NewDynamicRuntime_LogicalOps = value;
+			NewDynamicRuntime_HasOwnProperty = value;
+			NewDynamicRuntime_Convert = value;
+			NewDynamicRuntime_ConvertReturnType = value;
+			NewDynamicRuntime_GetSetIndex = value;
+			NewDynamicRuntime_GetSetMember = value;
+			NewDynamicRuntime_Conditional = value;
+			NewDynamicRuntime_EventAddRemove = value;
+		}
 
 		//
 		// Inlining mode for source level inliner (none, explicit, any)
@@ -204,6 +238,12 @@ namespace Mono.CSharp {
 			LoadDefaultReferences = true;
 			StdLibRuntimeVersion = RuntimeVersion.v4;
 			WarningLevel = 4;
+
+			// turn it on by default?
+//			SetNewDynamicRuntimeEnable(false);
+			SetNewDynamicRuntimeEnable(true);
+//			NewDynamicRuntime_Conditional = true;
+			NewDynamicRuntime_ConvertReturnType = false;
 
 			// Default to 1 or mdb files would be platform speficic
 			TabSize = 1;
@@ -833,11 +873,11 @@ namespace Mono.CSharp {
 
 			case "/newdynamic":
 			case "/newdynamic+":
-				settings.NewDynamicRuntime = true;
+				settings.SetNewDynamicRuntimeEnable(true);
 				return ParseResult.Success;
 
 			case "/newdynamic-":
-				settings.NewDynamicRuntime = false;
+				settings.SetNewDynamicRuntimeEnable(false);
 				return ParseResult.Success;
 
 			case "/autoseal_verbosity":

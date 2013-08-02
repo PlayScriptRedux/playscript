@@ -231,8 +231,16 @@ namespace PlayScript
 				return (T)value;
 			}
 
-			if (value is System.Object) {
+			if (value == null) {
+				return default(T);
+			}
+
+			if (typeof(T) == typeof(System.Object)) {
 				return (T)value;
+			}
+
+			if (typeof(T) == typeof(String)) {
+				return (T)(object)value.ToString();
 			}
 
 			return (T)System.Convert.ChangeType(value, typeof(T));
@@ -390,6 +398,19 @@ namespace PlayScript
 			} else {
 				return false;
 			}
+		}
+
+		public static bool hasOwnProperty(object o, object name)
+		{
+			if (name == null) {
+				return false;
+			}
+			// convert name to string if its not already
+			var strName = name as string;
+			if (strName == null) {
+				strName = name.ToString();
+			}
+			return HasOwnProperty(o, strName);
 		}
 
 		public static bool HasOwnProperty(object o, string name)

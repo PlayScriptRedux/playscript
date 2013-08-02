@@ -2142,9 +2142,7 @@ namespace PlayScript.Expando {
 		
 		object IDictionary.this [object key] {
 			get {
-				if (key is string && ContainsKey((string) key))
-					return this [Tostring (key)];
-				return null;
+				return this [Tostring (key)];
 			}
 			set { this [Tostring (key)] = Toobject (value); }
 		}
@@ -2156,19 +2154,12 @@ namespace PlayScript.Expando {
 		
 		bool IDictionary.Contains (object key)
 		{
-			if (key == null)
-				throw new ArgumentNullException ("key");
-			if (key is string)
-				return ContainsKey ((string) key);
-			return false;
+			return ContainsKey(Tostring(key));
 		}
 		
 		void IDictionary.Remove (object key)
 		{
-			if (key == null)
-				throw new ArgumentNullException ("key");
-			if (key is string)
-				Remove ((string) key);
+			Remove (Tostring(key));
 		}
 		
 		bool ICollection.IsSynchronized {

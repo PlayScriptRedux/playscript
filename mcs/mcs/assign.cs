@@ -818,7 +818,7 @@ namespace Mono.CSharp {
 				if (target is DynamicMemberBinder) {
 					source = new DynamicMemberBinder (ma.Name, binder_flags, args, loc).Resolve (ec);
 
-					if (!ec.Module.Compiler.Settings.NewDynamicRuntime || (ec.FileType != SourceFileType.PlayScript)) 
+					if (!ec.Module.Compiler.Settings.NewDynamicRuntime_EventAddRemove || (ec.FileType != SourceFileType.PlayScript)) 
 					{
 						// Handles possible event addition/subtraction
 						if (op == Binary.Operator.Addition || op == Binary.Operator.Subtraction) {

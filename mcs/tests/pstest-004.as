@@ -20,6 +20,14 @@ package
 		public function set valueF(v:Number):void {mValueF = v;}
 
 		private var mValueF:Number;
+
+
+//		public final function get entityDef():Object
+//		{
+//			return _entityDef;
+//		}
+//
+//		private var _entityDef:Object = new Object();
 	}
 
 	public class Texture2 extends Texture
@@ -29,6 +37,13 @@ package
 
 		public override function get value():int{return 0;}
 		public function get value_inlinable():int{return 0;}
+
+//		public function blah():Number {
+//			var offsetY:Number;
+//
+//			offsetY = entityDef.stats.bar_offset_y;
+//			return offsetY;
+//		}
 	}
 
 
@@ -198,10 +213,152 @@ package
 //			}
 //		}
 
+		
+		// Static table initialization
+#if false
+		private var ZigZag:Array = [
+			 0, 1, 5, 6,14,15,27,28,
+			 2, 4, 7,13,16,26,29,42,
+			 3, 8,12,17,25,30,41,43,
+			 9,11,18,24,31,40,44,53,
+			10,19,23,32,39,45,52,54,
+			20,22,33,38,46,51,55,60,
+			21,34,37,47,50,56,59,61,
+			35,36,48,49,57,58,62,63
+		];
+	
+		private var YTable:Array = new Array(64);
+		private var UVTable:Array = new Array(64);
+		private var fdtbl_Y:Array = new Array(64);
+		private var fdtbl_UV:Array = new Array(64);
+
+		public function initQuantTables(sf:int):void
+		{
+			var i:int;
+			var t:Number;
+			var YQT:Array = [
+			                 16, 11, 10, 16, 24, 40, 51, 61,
+			                 12, 12, 14, 19, 26, 58, 60, 55,
+			                 14, 13, 16, 24, 40, 57, 69, 56,
+			                 14, 17, 22, 29, 51, 87, 80, 62,
+			                 18, 22, 37, 56, 68,109,103, 77,
+			                 24, 35, 55, 64, 81,104,113, 92,
+			                 49, 64, 78, 87,103,121,120,101,
+			                 72, 92, 95, 98,112,100,103, 99
+			                 ];
+			for (i = 0; i < 64; i++) {
+				t = Math.floor((YQT[i]*sf+50)/100);
+				if (t < 1) {
+					t = 1;
+				} else if (t > 255) {
+					t = 255;
+				}
+				YTable[ZigZag[i]] = t;
+			}
+			var UVQT:Array = [
+			                  17, 18, 24, 47, 99, 99, 99, 99,
+			                  18, 21, 26, 66, 99, 99, 99, 99,
+			                  24, 26, 56, 99, 99, 99, 99, 99,
+			                  47, 66, 99, 99, 99, 99, 99, 99,
+			                  99, 99, 99, 99, 99, 99, 99, 99,
+			                  99, 99, 99, 99, 99, 99, 99, 99,
+			                  99, 99, 99, 99, 99, 99, 99, 99,
+			                  99, 99, 99, 99, 99, 99, 99, 99
+			                  ];
+			for (i = 0; i < 64; i++) {
+				t = Math.floor((UVQT[i]*sf+50)/100);
+				if (t < 1) {
+					t = 1;
+				} else if (t > 255) {
+					t = 255;
+				}
+				UVTable[ZigZag[i]] = t;
+			}
+			var aasf:Array = [
+			                  1.0, 1.387039845, 1.306562965, 1.175875602,
+			                  1.0, 0.785694958, 0.541196100, 0.275899379
+			                  ];
+			i = 0;
+			for (var row:int = 0; row < 8; row++)
+			{
+				for (var col:int = 0; col < 8; col++)
+				{
+					fdtbl_Y[i]  = (1.0 / (YTable [ZigZag[i]] * aasf[row] * aasf[col] * 8.0));
+					fdtbl_UV[i] = (1.0 / (UVTable[ZigZag[i]] * aasf[row] * aasf[col] * 8.0));
+					i++;
+				}
+			}
+		}
+
+		private var YDC_HT:Array;
+		private var UVDC_HT:Array;
+		private var YAC_HT:Array;
+		private var UVAC_HT:Array;
+#endif
+
 
 		public static function getSize(o:Object):int {
 			return 100;
 		}
+#if false
+
+		public class Virals
+		{
+			/** The name of the viral type */
+			public var name :String;
+
+			/** Global cooldown in hours before any viral of this viral type can be used again */
+			public var cooldown :Number;
+
+			/** Array of possible user-selected cooldowns for this viral type. This overrides cooldown if the user chooses one */
+			public var userCooldowns :Array;
+
+		/** Populate the class from the raw data object */
+		public function fromData(name :String, data :Object):void
+		{
+			this.name = name;
+//
+//			// cooldown may be experiment controlled or may be simple number
+//			cooldown = 0;
+//			if(data.hasOwnProperty('cooldown'))
+//			{
+//				if( !isNaN(Number(data.cooldown)) )
+//				{
+//					cooldown = data.cooldown;
+//				}
+//				else if(data.cooldown.hasOwnProperty('experiment') && data.cooldown.hasOwnProperty('variants'))
+//				{
+					var variant :String = "5";
+					if(data.cooldown.variants.hasOwnProperty(variant))
+					{
+//						cooldown = data.cooldown.variants[variant];
+					}					
+//				}
+//			}
+
+//			userCooldowns = data.userCooldowns;
+		}
+		}
+#endif
+
+		protected static var substituterMap:Object = new Object();
+		protected static var m_locale:String;
+		public static var langcode:String;
+
+		public static function setSubstituter():void{
+			if (substituterMap.hasOwnProperty(m_locale)) {
+//				var cl:Class = substituterMap[this.m_locale];
+//				this.m_substituter = new cl;
+			} else if (substituterMap.hasOwnProperty(langcode)) {
+//				var cl:Class = substituterMap[this.langCode];
+//				this.m_substituter = new cl;
+			} else {
+//				this.m_substituter = new SubstituterSimple();
+			}
+		}
+
+
+		public static var a:Array = null;
 
 		public static function TestConvert():void {
 //			var o:Object = 5.0;
@@ -259,17 +416,85 @@ package
 				total += size;
 			}*/
 
-			var summary:Object = new Object();
+//			var a:int, b:int;
+//			var summary:Object = new Object();
+
+			var obj:Object = new Object();
+			var id:String = "abc";
+			obj[id] = 0;
+			obj[id]++;
+
+//			obj.id = 0;
+//			obj.id++;
+
+			trace(obj.id);
+
+//			var alpha:Number = 0.0;
+//			obj.hello = null;
+//			a = obj.hello;
+
+			/*
+
+			if (obj && obj.hasOwnProperty("renderLayer"))
+			{
+				var layer:int = obj.layer;
+				if(obj.hasOwnProperty("alpha") || layer == 5 || layer == 4)
+				{
+				alpha = obj.hasOwnProperty("alpha") ? obj.alpha : 0.6;
+				}
+			}*/
+			trace(a);
+			/*
+			var a:Object = 5.0;
+			var b:Object = 10.0;
+			var c:Number = a + b;
+			var d:Number = a - b;
+			var e:Number = a / b;
+			var f:Number = a * b;
+			var g:Number = a % b;
+			trace(a,b,c,d,e,f,g);
+*/
+			/*
+
+			var o:Object = 5.0;
+
+			var i:int = 5;
+
+			i += o;
+
+
+			summary.total = summary.total2 = 10;
+			summary.total = summary.total2;
+
+
+
+
+			summary["total"] = summary["total2"] = 10;
+
+//			var size:int = 100;
+//			summary.total = summary.total2 = size;
+
+//			if (summary == null) {
+//				summary.a = "x";
+//			}
 
 			// get object size
-			var size:int = getSize(summary);
+			var size:int = 1000;
+			var factor:Number = 2.0;
+
+			summary["xyz"] = null;
 
 			// update summary for object context
 			summary.total += size;
+//
+			summary.total *= factor;
+//
+			summary.size = size;
 
+			summary.method = getSize;
 
-			trace(summary.total);
-
+		//	trace(summary.total);
+*/
 		}
 	
 
@@ -319,7 +544,13 @@ package
 //			TestForEach();
 			//TestIndex();
 
+			//PlayScript.Dynamic.Test();
+
+//			var v:Virals = new Virals();
+//			v.fromData("a", null);
+
 			TestConvert();
+//			initQuantTables(10);
 
 			//removeFromQueue("a", "b");
 			/*

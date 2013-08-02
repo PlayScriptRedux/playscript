@@ -694,7 +694,7 @@ namespace PlayScript.DynamicRuntime
 			}
 		}
 
-		public static object LessThan(object a, int b)
+		public static bool LessThan(object a, int b)
 		{
 			if (a is int)
 			{
@@ -707,7 +707,7 @@ namespace PlayScript.DynamicRuntime
 			return Convert.ToDouble(a) < (double)b;
 		}
 		
-		public static object LessThan(int a, object b)
+		public static bool LessThan(int a, object b)
 		{
 			if (b is int)
 			{
@@ -720,7 +720,7 @@ namespace PlayScript.DynamicRuntime
 			return a < Convert.ToDouble(b);
 		}
 		
-		public static object LessThan(object a, uint b)
+		public static bool LessThan(object a, uint b)
 		{
 			if (a is uint)
 			{
@@ -733,7 +733,7 @@ namespace PlayScript.DynamicRuntime
 			return Convert.ToDouble(a) < (double)b;
 		}
 		
-		public static object LessThan(uint a, object b)
+		public static bool LessThan(uint a, object b)
 		{
 			if (b is uint)
 			{
@@ -746,7 +746,7 @@ namespace PlayScript.DynamicRuntime
 			return (double)a < Convert.ToDouble(b);
 		}
 
-		public static object LessThan(object a, double b)
+		public static bool LessThan(object a, double b)
 		{
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
@@ -755,7 +755,7 @@ namespace PlayScript.DynamicRuntime
 			return Convert.ToDouble(a) < b;
 		}
 		
-		public static object LessThan(double a, object b)
+		public static bool LessThan(double a, object b)
 		{
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
@@ -764,27 +764,27 @@ namespace PlayScript.DynamicRuntime
 			return a < Convert.ToDouble(b);
 		}
 
-		public static object LessThan(object a, string b)
+		public static bool LessThan(object a, string b)
 		{
 			if (a is string) {
 				return String.CompareOrdinal((string)a, b) < 0;
 			} else {
 				ThrowOnInvalidOp (a, LT);
-				return null;
+				return false;
 			}
 		}
 		
-		public static object LessThan(string a, object b)
+		public static bool LessThan(string a, object b)
 		{
 			if (b is string) {
 				return String.CompareOrdinal(a, (string)b) < 0;
 			} else {
 				ThrowOnInvalidOp (b, LT);
-				return null;
+				return false;
 			}
 		}
 
-		public static object LessThan(object a, object b)
+		public static bool LessThan(object a, object b)
 		{
 			if (a is int) {
 				return LessThan((int)a, b);
@@ -798,11 +798,11 @@ namespace PlayScript.DynamicRuntime
 				return LessThan((uint)a, b);
 			} else {
 				ThrowOnInvalidOp (a, LT);
-				return null;
+				return false;
 			}
 		}
 
-		public static object GreaterThan(object a, int b)
+		public static bool GreaterThan(object a, int b)
 		{
 			if (a is int)
 			{
@@ -815,7 +815,7 @@ namespace PlayScript.DynamicRuntime
 			return Convert.ToDouble(a) > (double)b;
 		}
 		
-		public static object GreaterThan(int a, object b)
+		public static bool GreaterThan(int a, object b)
 		{
 			if (b is int)
 			{
@@ -828,7 +828,7 @@ namespace PlayScript.DynamicRuntime
 			return (double)a > Convert.ToDouble(b);
 		}
 		
-		public static object GreaterThan(object a, uint b)
+		public static bool GreaterThan(object a, uint b)
 		{
 			if (a is uint)
 			{
@@ -841,7 +841,7 @@ namespace PlayScript.DynamicRuntime
 			return Convert.ToDouble(a) > (double)b;
 		}
 		
-		public static object GreaterThan(uint a, object b)
+		public static bool GreaterThan(uint a, object b)
 		{
 			if (b is uint)
 			{
@@ -854,7 +854,7 @@ namespace PlayScript.DynamicRuntime
 			return (double)a > Convert.ToDouble(b);
 		}
 
-		public static object GreaterThan(object a, double b)
+		public static bool GreaterThan(object a, double b)
 		{
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
@@ -863,7 +863,7 @@ namespace PlayScript.DynamicRuntime
 			return Convert.ToDouble(a) > b;
 		}
 		
-		public static object GreaterThan(double a, object b)
+		public static bool GreaterThan(double a, object b)
 		{
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
@@ -872,27 +872,27 @@ namespace PlayScript.DynamicRuntime
 			return a > Convert.ToDouble(b);
 		}
 		
-		public static object GreaterThan(object a, string b)
+		public static bool GreaterThan(object a, string b)
 		{
 			if (a is string) {
 				return String.CompareOrdinal((string)a, b) > 0;
 			} else {
 				ThrowOnInvalidOp (a, GT);
-				return null;
+				return false;
 			}
 		}
 		
-		public static object GreaterThan(string a, object b)
+		public static bool GreaterThan(string a, object b)
 		{
 			if (b is string) {
 				return String.CompareOrdinal(a, (string)b) > 0;
 			} else {
 				ThrowOnInvalidOp (b, GT);
-				return null;
+				return false;
 			}
 		}
 		
-		public static object GreaterThan(object a, object b)
+		public static bool GreaterThan(object a, object b)
 		{
 			if (a is int) {
 				return GreaterThan((int)a, b);
@@ -906,11 +906,11 @@ namespace PlayScript.DynamicRuntime
 				return GreaterThan((uint)a, b);
 			} else {
 				ThrowOnInvalidOp (a, GT);
-				return null;
+				return false;
 			}
 		}
 
-		public static object LessThanOrEqual(object a, int b)
+		public static bool LessThanOrEqual(object a, int b)
 		{
 			if (a is int)
 			{
@@ -923,7 +923,7 @@ namespace PlayScript.DynamicRuntime
 			return Convert.ToDouble(a) <= (double)b;
 		}
 		
-		public static object LessThanOrEqual(int a, object b)
+		public static bool LessThanOrEqual(int a, object b)
 		{
 			if (b is int)
 			{
@@ -936,7 +936,7 @@ namespace PlayScript.DynamicRuntime
 			return (double)a <= Convert.ToDouble(b);
 		}
 		
-		public static object LessThanOrEqual(object a, uint b)
+		public static bool LessThanOrEqual(object a, uint b)
 		{
 			if (a is uint)
 			{
@@ -949,7 +949,7 @@ namespace PlayScript.DynamicRuntime
 			return Convert.ToDouble(a) <= (double)b;
 		}
 		
-		public static object LessThanOrEqual(uint a, object b)
+		public static bool LessThanOrEqual(uint a, object b)
 		{
 			if (b is uint)
 			{
@@ -962,7 +962,7 @@ namespace PlayScript.DynamicRuntime
 			return (double)a <= Convert.ToDouble(b);
 		}
 
-		public static object LessThanOrEqual(object a, double b)
+		public static bool LessThanOrEqual(object a, double b)
 		{
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
@@ -971,7 +971,7 @@ namespace PlayScript.DynamicRuntime
 			return Convert.ToDouble(a) <= (double)b;
 		}
 		
-		public static object LessThanOrEqual(double a, object b)
+		public static bool LessThanOrEqual(double a, object b)
 		{
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
@@ -980,27 +980,27 @@ namespace PlayScript.DynamicRuntime
 			return (double)a <= Convert.ToDouble(b);
 		}
 		
-		public static object LessThanOrEqual(object a, string b)
+		public static bool LessThanOrEqual(object a, string b)
 		{
 			if (a is string) {
 				return String.CompareOrdinal((string)a, b) <= 0;
 			} else {
 				ThrowOnInvalidOp (a, LTE);
-				return null;
+				return false;
 			}
 		}
 		
-		public static object LessThanOrEqual(string a, object b)
+		public static bool LessThanOrEqual(string a, object b)
 		{
 			if (b is string) {
 				return String.CompareOrdinal(a, (string)b) <= 0;
 			} else {
 				ThrowOnInvalidOp (b, LTE);
-				return null;
+				return false;
 			}
 		}
 		
-		public static object LessThanOrEqual(object a, object b)
+		public static bool LessThanOrEqual(object a, object b)
 		{
 			if (a is int) {
 				return LessThanOrEqual((int)a, b);
@@ -1014,11 +1014,11 @@ namespace PlayScript.DynamicRuntime
 				return LessThanOrEqual((uint)a, b);
 			} else {
 				ThrowOnInvalidOp (a, LTE);
-				return null;
+				return false;
 			}
 		}
 		
-		public static object GreaterThanOrEqual(object a, int b)
+		public static bool GreaterThanOrEqual(object a, int b)
 		{
 			if (a is int)
 			{
@@ -1031,7 +1031,7 @@ namespace PlayScript.DynamicRuntime
 			return Convert.ToDouble(a) >= (double)b;
 		}
 		
-		public static object GreaterThanOrEqual(int a, object b)
+		public static bool GreaterThanOrEqual(int a, object b)
 		{
 			if (b is int)
 			{
@@ -1044,7 +1044,7 @@ namespace PlayScript.DynamicRuntime
 			return (double)a >= Convert.ToDouble(b);
 		}
 		
-		public static object GreaterThanOrEqual(object a, uint b)
+		public static bool GreaterThanOrEqual(object a, uint b)
 		{
 			if (a is uint)
 			{
@@ -1057,7 +1057,7 @@ namespace PlayScript.DynamicRuntime
 			return Convert.ToDouble(a) >= (double)b;
 		}
 		
-		public static object GreaterThanOrEqual(uint a, object b)
+		public static bool GreaterThanOrEqual(uint a, object b)
 		{
 			if (b is uint)
 			{
@@ -1070,7 +1070,7 @@ namespace PlayScript.DynamicRuntime
 			return (double)a >= Convert.ToDouble(b);
 		}
 
-		public static object GreaterThanOrEqual(object a, double b)
+		public static bool GreaterThanOrEqual(object a, double b)
 		{
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
@@ -1079,7 +1079,7 @@ namespace PlayScript.DynamicRuntime
 			return Convert.ToDouble(a) >= b;
 		}
 		
-		public static object GreaterThanOrEqual(double a, object b)
+		public static bool GreaterThanOrEqual(double a, object b)
 		{
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
@@ -1088,27 +1088,27 @@ namespace PlayScript.DynamicRuntime
 			return a >= Convert.ToDouble(b);
 		}
 		
-		public static object GreaterThanOrEqual(object a, string b)
+		public static bool GreaterThanOrEqual(object a, string b)
 		{
 			if (a is string) {
 				return String.CompareOrdinal((string)a, b) >= 0;
 			} else {
 				ThrowOnInvalidOp (a, GTE);
-				return null;
+				return false;
 			}
 		}
 		
-		public static object GreaterThanOrEqual(string a, object b)
+		public static bool GreaterThanOrEqual(string a, object b)
 		{
 			if (b is string) {
 				return String.CompareOrdinal(a, (string)b) >= 0;
 			} else {
 				ThrowOnInvalidOp (b, GTE);
-				return null;
+				return false;
 			}
 		}
 		
-		public static object GreaterThanOrEqual(object a, object b)
+		public static bool GreaterThanOrEqual(object a, object b)
 		{
 			if (a is int) {
 				return GreaterThanOrEqual((int)a, b);
@@ -1122,11 +1122,11 @@ namespace PlayScript.DynamicRuntime
 				return GreaterThanOrEqual((uint)a, b);
 			} else {
 				ThrowOnInvalidOp (a, GTE);
-				return null;
+				return false;
 			}
 		}
 
-		public static object Equality(object a, int b)
+		public static bool Equality(object a, int b)
 		{
 			if (a is int)
 			{
@@ -1139,7 +1139,7 @@ namespace PlayScript.DynamicRuntime
 			return Convert.ToDouble(a) == (double)b;	// Should we compare with an epsilon here?
 		}
 		
-		public static object Equality(int a, object b)
+		public static bool Equality(int a, object b)
 		{
 			if (b is int)
 			{
@@ -1152,7 +1152,7 @@ namespace PlayScript.DynamicRuntime
 			return (double)a == Convert.ToDouble(b);	// Should we compare with an epsilon here?
 		}
 
-		public static object Equality(object a, uint b)
+		public static bool Equality(object a, uint b)
 		{
 			if (a is uint)
 			{
@@ -1165,7 +1165,7 @@ namespace PlayScript.DynamicRuntime
 			return Convert.ToDouble(a) == (double)b;	// Should we compare with an epsilon here?
 		}
 		
-		public static object Equality(uint a, object b)
+		public static bool Equality(uint a, object b)
 		{
 			if (b is uint)
 			{
@@ -1178,7 +1178,7 @@ namespace PlayScript.DynamicRuntime
 			return (double)a == Convert.ToDouble(b);	// Should we compare with an epsilon here?
 		}
 		
-		public static object Equality(object a, double b)
+		public static bool Equality(object a, double b)
 		{
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
@@ -1187,7 +1187,7 @@ namespace PlayScript.DynamicRuntime
 			return Convert.ToDouble(a) == b;	// Should we compare with an epsilon here?
 		}
 		
-		public static object Equality(double a, object b)
+		public static bool Equality(double a, object b)
 		{
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
@@ -1196,17 +1196,19 @@ namespace PlayScript.DynamicRuntime
 			return a == Convert.ToDouble(b);	// Should we compare with an epsilon here?
 		}
 		
-		public static object Equality(object a, string b)
+		public static bool Equality(object a, string b)
 		{
 			if (a is string) {
 				return String.CompareOrdinal((string)a, b) == 0;
+			} else if (a == null) {
+				return b == null;
 			} else {
 				ThrowOnInvalidOp (a, EQ);
-				return null;
+				return false;
 			}
 		}
 		
-		public static object Equality(string a, object b)
+		public static bool Equality(string a, object b)
 		{
 			if (b is string) {
 				return String.CompareOrdinal(a, (string)b) == 0;
@@ -1214,21 +1216,21 @@ namespace PlayScript.DynamicRuntime
 				return a == null;
 			} else {
 				ThrowOnInvalidOp (b, EQ);
-				return null;
+				return false;
 			}
 		}
 
-		public static object Equality(object a, bool b)
+		public static bool Equality(object a, bool b)
 		{
 			return Dynamic.CastObjectToBool(a) == b;
 		}
 		
-		public static object Equality(bool a, object b)
+		public static bool Equality(bool a, object b)
 		{
 			return a == Dynamic.CastObjectToBool(b);
 		}
 
-		public static object Equality(object a, object b)
+		public static bool Equality(object a, object b)
 		{
 			if (a == PlayScript.Undefined._undefined) a = null;
 			if (b == PlayScript.Undefined._undefined) b = null;
@@ -1254,7 +1256,7 @@ namespace PlayScript.DynamicRuntime
 			}
 		}
 
-		public static object Inequality(object a, int b)
+		public static bool Inequality(object a, int b)
 		{
 			if (a is int)
 			{
@@ -1267,7 +1269,7 @@ namespace PlayScript.DynamicRuntime
 			return Convert.ToDouble(a) != (double)b;	// Should we compare with an epsilon here?
 		}
 		
-		public static object Inequality(int a, object b)
+		public static bool Inequality(int a, object b)
 		{
 			if (b is int)
 			{
@@ -1280,7 +1282,7 @@ namespace PlayScript.DynamicRuntime
 			return (double)a != Convert.ToDouble(b);	// Should we compare with an epsilon here?
 		}
 		
-		public static object Inequality(object a, uint b)
+		public static bool Inequality(object a, uint b)
 		{
 			if (a is uint)
 			{
@@ -1293,7 +1295,7 @@ namespace PlayScript.DynamicRuntime
 			return Convert.ToDouble(a) != (double)b;	// Should we compare with an epsilon here?
 		}
 		
-		public static object Inequality(uint a, object b)
+		public static bool Inequality(uint a, object b)
 		{
 			if (b is uint)
 			{
@@ -1306,7 +1308,7 @@ namespace PlayScript.DynamicRuntime
 			return (double)a != Convert.ToDouble(b);	// Should we compare with an epsilon here?
 		}
 
-		public static object Inequality(object a, double b)
+		public static bool Inequality(object a, double b)
 		{
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
@@ -1315,7 +1317,7 @@ namespace PlayScript.DynamicRuntime
 			return Convert.ToDouble(a) != b;
 		}
 		
-		public static object Inequality(double a, object b)
+		public static bool Inequality(double a, object b)
 		{
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
@@ -1324,27 +1326,17 @@ namespace PlayScript.DynamicRuntime
 			return a != Convert.ToDouble(b);
 		}
 		
-		public static object Inequality(object a, string b)
+		public static bool Inequality(object a, string b)
 		{
-			if (a is string) {
-				return (string)a != b;
-			} else {
-				ThrowOnInvalidOp (a, NEQ);
-				return null;
-			}
+			return !Equality(a, b);
 		}
 		
-		public static object Inequality(string a, object b)
+		public static bool Inequality(string a, object b)
 		{
-			if (b is string) {
-				return a != (string)b;
-			} else {
-				ThrowOnInvalidOp (b, NEQ);
-				return null;
-			}
+			return !Equality(a, b);
 		}
 
-		public static object Inequality(object a, bool b)
+		public static bool Inequality(object a, bool b)
 		{
 			if (a is bool) {
 				return (bool)a != b;
@@ -1353,7 +1345,7 @@ namespace PlayScript.DynamicRuntime
 			}
 		}
 		
-		public static object Inequality(bool a, object b)
+		public static bool Inequality(bool a, object b)
 		{
 			if (b is bool) {
 				return a != (bool)b;
@@ -1362,7 +1354,7 @@ namespace PlayScript.DynamicRuntime
 			}
 		}
 		
-		public static object Inequality(object a, object b)
+		public static bool Inequality(object a, object b)
 		{
 			if (a == PlayScript.Undefined._undefined) a = null;
 			if (b == PlayScript.Undefined._undefined) b = null;
@@ -1642,17 +1634,6 @@ namespace PlayScript.DynamicRuntime
 				return null;
 			}
 		}
-
-		public static object LogicalAnd(object a, object b)
-		{
-			return Dynamic.CastObjectToBool(a) && Dynamic.CastObjectToBool(b);
-		}
-
-		public static object LogicalOr(object a, object b)
-		{
-			return Dynamic.CastObjectToBool(a) || Dynamic.CastObjectToBool(b);
-		}
-
 	}
 
 }
