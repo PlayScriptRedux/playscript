@@ -174,10 +174,19 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\Invoker.cs">
       <Link>PlayScript\Invoker.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\ActionCreator.cs">
+      <Link>PlayScript\ActionCreator.cs</Link>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Folder Include="System\" />
     <Folder Include="PlayScript\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="PlayScript.Dynamic_aot.dll.sources" />
+    <None Include="..\PlayScript.Dynamic\PlayScript.Dynamic.dll.sources">
+      <Link>PlayScript.Dynamic.dll.sources</Link>
+    </None>
   </ItemGroup>
 </Project>
