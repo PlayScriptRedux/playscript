@@ -4494,6 +4494,25 @@ namespace Mono.CSharp
 			return new Invocation (new MemberAccess (new TypeExpression (ec.Module.PredefinedTypes.GetBinder(ec).TypeSpec, loc), "BinaryOperation", loc), binder_args);
 		}
 
+
+		private static string GetDynamicBinaryTypeName(TypeSpec type)
+		{
+			switch (type.BuiltinType){
+				case BuiltinTypeSpec.Type.Bool:
+					return "Bool";
+				case BuiltinTypeSpec.Type.Int:
+					return "Int";
+				case BuiltinTypeSpec.Type.Double:
+					return "Double";
+				case BuiltinTypeSpec.Type.String:
+					return "String";
+				case BuiltinTypeSpec.Type.UInt:
+					return "UInt";
+				default:
+					return "Obj";
+			}
+		}
+
 		public static Expression CreateDynamicBinaryOperation(ResolveContext rc, Operator oper, Arguments args, Location loc)
 		{
 			// strip dynamic from all arguments
@@ -4588,8 +4607,14 @@ namespace Mono.CSharp
 				default:
 					throw new InvalidOperationException("Unknown binary operation: " + oper);
 			}
-			var ret = new Invocation(new MemberAccess(new TypeExpression(binary, loc), binaryMethod, loc), args).Resolve(rc);
 
+			string leftType = GetDynamicBinaryTypeName(args[0].Type);
+			string rightType = GetDynamicBinaryTypeName(args[1].Type);
+
+			// append to binary method instead of using overloads
+			binaryMethod += leftType + rightType;
+
+			var ret = new Invocation(new MemberAccess(new TypeExpression(binary, loc), binaryMethod, loc), args).Resolve(rc);
 			if (ret.Type == rc.BuiltinTypes.Object) {
 				// cast object to dynamic for return types
 				ret = new Cast (new TypeExpression (rc.BuiltinTypes.Dynamic, loc), ret, loc).Resolve (rc);

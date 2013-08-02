@@ -23,7 +23,26 @@ using System.Collections.Generic;
 
 namespace PlayScript.DynamicRuntime
 {
-	/*
+	public static class PSBinaryOperation
+	{
+		private static string ADD = "add";
+		private static string SUB = "sub";
+		private static string MUL = "mul";
+		private static string DIV = "div";
+		private static string MOD = "mod";
+		private static string SHL = "shl";
+		private static string SHR = "shr";
+		private static string LT = "lt";
+		private static string LTE = "lte";
+		private static string GT = "gt";
+		private static string GTE = "gte";
+		private static string EQ = "eq";
+		private static string NEQ = "ne";
+//		private static string AND = "and";
+//		private static string OR = "or";
+		private static string XOR = "xor";
+
+		/*
 	 * 		public enum Operator {
 			Multiply	= 0 | ArithmeticMask,
 			Division	= 1 | ArithmeticMask,
@@ -73,25 +92,6 @@ namespace PlayScript.DynamicRuntime
 		}
 
 */
-	public static class PSBinaryOperation
-	{
-		private static string ADD = "add";
-		private static string SUB = "sub";
-		private static string MUL = "mul";
-		private static string DIV = "div";
-		private static string MOD = "mod";
-		private static string SHL = "shl";
-		private static string SHR = "shr";
-		private static string LT = "lt";
-		private static string LTE = "lte";
-		private static string GT = "gt";
-		private static string GTE = "gte";
-		private static string EQ = "eq";
-		private static string NEQ = "ne";
-//		private static string AND = "and";
-//		private static string OR = "or";
-		private static string XOR = "xor";
-
 
 		private static void ThrowOnInvalidOp (object o, string op)
 		{
@@ -110,8 +110,11 @@ namespace PlayScript.DynamicRuntime
 		//	2. If null and undefined, assume the value is 0 and apply the operation.
 		//	3. Otherwise convert to Double both operands and apply the operation.
 
-		public static object Addition(object a, int b)
+		public static object AdditionObjInt (object a, int b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is int)
 			{
 				return (int)a + b;
@@ -123,8 +126,11 @@ namespace PlayScript.DynamicRuntime
 			return Convert.ToDouble(a) + (double)b;
 		}
 
-		public static object Addition(int a, object b)
+		public static object AdditionIntObj (int a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is int)
 			{
 				return a + (int)b;
@@ -136,8 +142,11 @@ namespace PlayScript.DynamicRuntime
 			return (double)a + Convert.ToDouble(b);
 		}
 
-		public static object Addition(object a, uint b)
+		public static object AdditionObjUInt (object a, uint b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is uint)
 			{
 				return (uint)a + b;
@@ -148,9 +157,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return Convert.ToDouble(a) + (double)b;
 		}
-		
-		public static object Addition(uint a, object b)
+
+		public static object AdditionUIntObj (uint a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is uint)
 			{
 				return a + (uint)b;
@@ -162,8 +174,15 @@ namespace PlayScript.DynamicRuntime
 			return (double)a + Convert.ToDouble(b);
 		}
 
-		public static object Addition(object a, double b)
+		public static object AdditionObjDouble (object a, double b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
+			if (a is double)
+			{
+				return (double)a + b;
+			}
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return b;
@@ -171,8 +190,15 @@ namespace PlayScript.DynamicRuntime
 			return Convert.ToDouble(a) + b;
 		}
 
-		public static object Addition(double a, object b)
+		public static object AdditionDoubleObj (double a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
+			if (b is double)
+			{
+				return a + (double)b;
+			}
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -180,36 +206,56 @@ namespace PlayScript.DynamicRuntime
 			return a + Convert.ToDouble(b);
 		}
 
-		public static object Addition(string a, object b)
+		public static object AdditionStringObj (string a, object b)
 		{
-			return a + b;
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
+			if ((b == null) || (b == PlayScript.Undefined._undefined))
+			{
+				return a;
+			}
+			return a + b.ToString();
 		}
 
-		public static object Addition(object a, string b)
+		public static object AdditionObjString (object a, string b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
+			if ((a == null) || (a == PlayScript.Undefined._undefined))
+			{
+				return b;
+			}
 			return a.ToString() + b;
 		}
 
-		public static object Addition(object a, object b)
+		public static object AdditionObjObj (object a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is int) {
-				return Addition((int)a, b);
+				return AdditionIntObj ((int)a, b);
 			} else if (a is double) {
-				return Addition((double)a, b);
+				return AdditionDoubleObj ((double)a, b);
 			} else if (a is float) {
-				return Addition((float)a, b);
+				return AdditionDoubleObj ((float)a, b);
 			} else if (a is String) {
-				return Addition((string)a, b);
+				return AdditionStringObj ((string)a, b);
 			} else if (a is uint) {
-				return Addition((uint)a, b);
+				return AdditionUIntObj ((uint)a, b);
 			} else {
 				ThrowOnInvalidOp (a, ADD);
 				return null;
 			}
 		}
 
-		public static object Subtraction(object a, int b)
+		public static object SubtractionObjInt (object a, int b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is int)
 			{
 				return (int)a - b;
@@ -220,9 +266,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return Convert.ToDouble(a) - (double)b;
 		}
-		
-		public static object Subtraction(int a, object b)
+
+		public static object SubtractionIntObj (int a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is int)
 			{
 				return a - (int)b;
@@ -233,9 +282,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return (double)a - Convert.ToDouble(b);
 		}
-		
-		public static object Subtraction(object a, uint b)
+
+		public static object SubtractionObjUInt (object a, uint b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is uint)
 			{
 				return (uint)a - b;
@@ -246,9 +298,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return Convert.ToDouble(a) - (double)b;
 		}
-		
-		public static object Subtraction(uint a, object b)
+
+		public static object SubtractionUIntObj (uint a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is uint)
 			{
 				return a - (uint)b;
@@ -260,17 +315,31 @@ namespace PlayScript.DynamicRuntime
 			return (double)a - Convert.ToDouble(b);
 		}
 
-		public static object Subtraction(object a, double b)
+		public static object SubtractionObjDouble (object a, double b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
+			if (a is double) 
+			{
+				return (double)a - b;
+			}
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return -b;
 			}
 			return Convert.ToDouble(a) - b;
 		}
-		
-		public static object Subtraction(double a, object b)
+
+		public static object SubtractionDoubleObj (double a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
+			if (b is double) 
+			{
+				return a - (double)b;
+			}
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -278,24 +347,30 @@ namespace PlayScript.DynamicRuntime
 			return a - Convert.ToDouble(b);
 		}
 
-		public static object Subtraction(object a, object b)
+		public static object SubtractionObjObj (object a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is int) {
-				return Subtraction((int)a, b);
+				return SubtractionIntObj ((int)a, b);
 			} else if (a is double) {
-				return Subtraction((double)a, b);
+				return SubtractionDoubleObj ((double)a, b);
 			} else if (a is float) {
-				return Subtraction((float)a, b);
+				return SubtractionDoubleObj ((float)a, b);
 			} else if (a is uint) {
-				return Subtraction((uint)a, b);
+				return SubtractionUIntObj ((uint)a, b);
 			} else {
 				ThrowOnInvalidOp (a, SUB);
 				return null;
 			}
 		}
 
-		public static object Multiply(object a, int b)
+		public static object MultiplyObjInt (object a, int b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is int)
 			{
 				return (int)a * b;
@@ -306,9 +381,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return Convert.ToDouble(a) * (double)b;
 		}
-		
-		public static object Multiply(int a, object b)
+
+		public static object MultiplyIntObj (int a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is int)
 			{
 				return a * (int)b;
@@ -319,9 +397,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return (double)a * Convert.ToDouble(b);
 		}
-		
-		public static object Multiply(object a, uint b)
+
+		public static object MultiplyObjUInt (object a, uint b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is uint)
 			{
 				return (uint)a * b;
@@ -332,9 +413,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return Convert.ToDouble(a) * (double)b;
 		}
-		
-		public static object Multiply(uint a, object b)
+
+		public static object MultiplyUIntObj (uint a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is uint)
 			{
 				return a * (uint)b;
@@ -345,18 +429,32 @@ namespace PlayScript.DynamicRuntime
 			}
 			return (double)a * Convert.ToDouble(b);
 		}
-		
-		public static object Multiply(object a, double b)
+
+		public static object MultiplyObjDouble (object a, double b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
+			if (a is double) 
+			{
+				return (double)a * b;
+			}
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (double)0;
 			}
 			return Convert.ToDouble(a) * b;
 		}
-		
-		public static object Multiply(double a, object b)
+
+		public static object MultiplyDoubleObj (double a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
+			if (b is double) 
+			{
+				return a * (double)b;
+			}
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return (double)0;
@@ -364,24 +462,30 @@ namespace PlayScript.DynamicRuntime
 			return a * Convert.ToDouble(b);
 		}
 
-		public static object Multiply(object a, object b)
+		public static object MultiplyObjObj (object a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is int) {
-				return Multiply((int)a, b);
+				return MultiplyIntObj ((int)a, b);
 			} else if (a is double) {
-				return Multiply((double)a, b);
+				return MultiplyDoubleObj ((double)a, b);
 			} else if (a is float) {
-				return Multiply((float)a, b);
+				return MultiplyDoubleObj ((float)a, b);
 			} else if (a is uint) {
-				return Multiply((uint)a, b);
+				return MultiplyUIntObj ((uint)a, b);
 			} else {
 				ThrowOnInvalidOp (a, MUL);
 				return null;
 			}
 		}
 
-		public static object Division(object a, int b)
+		public static object DivisionObjInt (object a, int b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is int)
 			{
 				return (int)a / b;
@@ -392,9 +496,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return Convert.ToDouble(a) / (double)b;
 		}
-		
-		public static object Division(int a, object b)
+
+		public static object DivisionIntObj (int a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is int)
 			{
 				return a / (int)b;
@@ -405,9 +512,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return (double)a / Convert.ToDouble(b);
 		}
-		
-		public static object Division(object a, uint b)
+
+		public static object DivisionObjUInt (object a, uint b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is uint)
 			{
 				return (uint)a / b;
@@ -418,9 +528,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return Convert.ToDouble(a) / (double)b;
 		}
-		
-		public static object Division(uint a, object b)
+
+		public static object DivisionUIntObj (uint a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is uint)
 			{
 				return a / (uint)b;
@@ -431,18 +544,32 @@ namespace PlayScript.DynamicRuntime
 			}
 			return (double)a / Convert.ToDouble(b);
 		}
-		
-		public static object Division(object a, double b)
+
+		public static object DivisionObjDouble (object a, double b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
+			if (a is double) 
+			{
+				return (double)a / b;
+			}
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (double)0;
 			}
 			return Convert.ToDouble(a) / b;
 		}
-		
-		public static object Division(double a, object b)
+
+		public static object DivisionDoubleObj (double a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
+			if (b is double) 
+			{
+				return a / (double)b;
+			}
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return Double.NaN;		// Should probably also use Positive and Negative Infinity
@@ -450,24 +577,30 @@ namespace PlayScript.DynamicRuntime
 			return a / Convert.ToDouble(b);
 		}
 
-		public static object Division(object a, object b)
+		public static object DivisionObjObj (object a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is int) {
-				return Division((int)a, b);
+				return DivisionIntObj ((int)a, b);
 			} else if (a is double) {
-				return Division((double)a, b);
+				return DivisionDoubleObj ((double)a, b);
 			} else if (a is float) {
-				return Division((float)a, b);
+				return DivisionDoubleObj ((float)a, b);
 			} else if (a is uint) {
-				return Division((uint)a, b);
+				return DivisionUIntObj ((uint)a, b);
 			} else {
 				ThrowOnInvalidOp (a, DIV);
 				return null;
 			}
 		}
 
-		public static object Modulus(object a, int b)
+		public static object ModulusObjInt (object a, int b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is int)
 			{
 				return (int)a % b;
@@ -478,9 +611,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return Convert.ToDouble(a) % (double)b;
 		}
-		
-		public static object Modulus(int a, object b)
+
+		public static object ModulusIntObj (int a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is int)
 			{
 				return a / (int)b;
@@ -491,9 +627,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return (double)a % Convert.ToDouble(b);
 		}
-		
-		public static object Modulus(object a, uint b)
+
+		public static object ModulusObjUInt (object a, uint b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is uint)
 			{
 				return (uint)a % b;
@@ -504,9 +643,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return Convert.ToDouble(b) % (double)b;
 		}
-		
-		public static object Modulus(uint a, object b)
+
+		public static object ModulusUIntObj (uint a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is uint)
 			{
 				return a / (uint)b;
@@ -517,18 +659,24 @@ namespace PlayScript.DynamicRuntime
 			}
 			return (double)a % Convert.ToDouble(b);
 		}
-		
-		public static object Modulus(object a, double b)
+
+		public static object ModulusObjDouble (object a, double b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (uint)0;
 			}
 			return Convert.ToDouble(a) % b;
 		}
-		
-		public static object Modulus(double a, object b)
+
+		public static object ModulusDoubleObj (double a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return Double.NaN;		// Should probably also use Positive and Negative Infinity
@@ -536,16 +684,19 @@ namespace PlayScript.DynamicRuntime
 			return a % Convert.ToDouble(b);
 		}
 
-		public static object Modulus(object a, object b)
+		public static object ModulusObjObj (object a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is int) {
-				return Modulus((int)a, b);
+				return ModulusIntObj ((int)a, b);
 			} else if (a is double) {
-				return Modulus((double)a, b);
+				return ModulusDoubleObj ((double)a, b);
 			} else if (a is float) {
-				return Modulus((float)a, b);
+				return ModulusDoubleObj ((float)a, b);
 			} else if (a is uint) {
-				return Modulus((uint)a, b);
+				return ModulusUIntObj ((uint)a, b);
 			} else {
 				ThrowOnInvalidOp (a, MOD);
 				return null;
@@ -554,17 +705,23 @@ namespace PlayScript.DynamicRuntime
 
 		// Shift operations are like logical operations, integer only
 
-		public static object LeftShift(object a, int b)
+		public static object LeftShiftObjInt (object a, int b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (uint)0;
 			}
 			return Convert.ToInt32(a) << b;
 		}
-		
-		public static object LeftShift(int a, object b)
+
+		public static object LeftShiftIntObj (int a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -572,8 +729,11 @@ namespace PlayScript.DynamicRuntime
 			return a << Convert.ToInt32(b);
 		}
 
-		public static object LeftShift(object a, uint b)
+		public static object LeftShiftObjUInt (object a, uint b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (uint)0;
@@ -581,8 +741,11 @@ namespace PlayScript.DynamicRuntime
 			return Convert.ToInt32(a) << (int)b;
 		}
 
-		public static object LeftShift(uint a, object b)
+		public static object LeftShiftUIntObj (uint a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -590,8 +753,11 @@ namespace PlayScript.DynamicRuntime
 			return (int)a << Convert.ToInt32(b);
 		}
 
-		public static object LeftShift(object a, double b)
+		public static object LeftShiftObjDouble (object a, double b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (int)0;
@@ -599,42 +765,60 @@ namespace PlayScript.DynamicRuntime
 			return Convert.ToInt32(a) << (int)b;
 		}
 
-		public static object LeftShift(double a, object b)
+		public static object LeftShiftDoubleObj (double a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
 			}
 			return (int)a << Convert.ToInt32(b);
 		}
-		
-		public static object LeftShift(object a, object b)
+
+		public static object LeftShiftObjObj (object a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is int) {
-				return LeftShift((int)a, b);
+				return LeftShiftIntObj ((int)a, b);
 			} else if (a is uint) {
-				return LeftShift((uint)a, b);
+				return LeftShiftUIntObj ((uint)a, b);
 			} else if (a is double) {
-				return LeftShift((double)a, b);
+				return LeftShiftDoubleObj ((double)a, b);
 			} else if (a is float) {
-				return LeftShift((float)a, b);
+				return LeftShiftDoubleObj ((float)a, b);
 			} else {
 				ThrowOnInvalidOp (a, SHL);
 				return null;
 			}
 		}
 
-		public static object RightShift(object a, int b)
+		public static object RightShiftObjInt (object a, int b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (uint)0;
 			}
+			if (a is int) {
+				return ((int)a) >> (int)b;
+			}
+			if (a is uint) {
+				return ((uint)a) >> (int)b;
+			}
 			return Convert.ToInt32(a) >> b;
 		}
-		
-		public static object RightShift(int a, object b)
+
+		public static object RightShiftIntObj (int a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -642,60 +826,90 @@ namespace PlayScript.DynamicRuntime
 			return a >> Convert.ToInt32(b);
 		}
 
-		public static object RightShift(object a, uint b)
+		public static object RightShiftObjUInt (object a, uint b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (uint)0;
 			}
+			if (a is int) {
+				return ((int)a) >> (int)b;
+			}
+			if (a is uint) {
+				return ((uint)a) >> (int)b;
+			}
 			return Convert.ToInt32(a) >> (int)b;
 		}
 
-		public static object RightShift(uint a, object b)
+		public static object RightShiftUIntObj (uint a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
 			}
-			return (int)a >> Convert.ToInt32(b);
+			return a >> Convert.ToInt32(b);
 		}
 
-		public static object RightShift(object a, double b)
+		public static object RightShiftObjDouble (object a, double b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (int)0;
 			}
+			if (a is int) {
+				return ((int)a) >> (int)b;
+			}
+			if (a is uint) {
+				return ((uint)a) >> (int)b;
+			}
 			return Convert.ToInt32(a) >> (int)b;
 		}
-		
-		public static object RightShift(double a, object b)
+
+		public static object RightShiftDoubleObj (double a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
 			}
 			return (int)a >> Convert.ToInt32(b);
 		}
-		
-		public static object RightShift(object a, object b)
+
+		public static object RightShiftObjObj (object a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is int) {
-				return RightShift((int)a, b);
+				return RightShiftIntObj ((int)a, b);
 			} else if (a is uint) {
-				return RightShift((uint)a, b);
+				return RightShiftUIntObj ((uint)a, b);
 			} else if (a is double) {
-				return RightShift((double)a, b);
+				return RightShiftDoubleObj ((double)a, b);
 			} else if (a is float) {
-				return RightShift((float)a, b);
+				return RightShiftDoubleObj ((float)a, b);
 			} else {
 				ThrowOnInvalidOp (a, SHR);
 				return null;
 			}
 		}
 
-		public static bool LessThan(object a, int b)
+		public static bool LessThanObjInt (object a, int b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is int)
 			{
 				return (int)a < b;
@@ -706,9 +920,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return Convert.ToDouble(a) < (double)b;
 		}
-		
-		public static bool LessThan(int a, object b)
+
+		public static bool LessThanIntObj (int a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is int)
 			{
 				return a < (int)b;
@@ -719,9 +936,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return a < Convert.ToDouble(b);
 		}
-		
-		public static bool LessThan(object a, uint b)
+
+		public static bool LessThanObjUInt (object a, uint b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is uint)
 			{
 				return (uint)a < b;
@@ -732,9 +952,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return Convert.ToDouble(a) < (double)b;
 		}
-		
-		public static bool LessThan(uint a, object b)
+
+		public static bool LessThanUIntObj (uint a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is uint)
 			{
 				return a < (uint)b;
@@ -746,17 +969,31 @@ namespace PlayScript.DynamicRuntime
 			return (double)a < Convert.ToDouble(b);
 		}
 
-		public static bool LessThan(object a, double b)
+		public static bool LessThanObjDouble (object a, double b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
+			if (a is double) 
+			{
+				return (double)a < b;
+			}
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return false;
 			}
 			return Convert.ToDouble(a) < b;
 		}
-		
-		public static bool LessThan(double a, object b)
+
+		public static bool LessThanDoubleObj (double a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
+			if (b is double) 
+			{
+				return a < (double)b;
+			}
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return false;
@@ -764,8 +1001,11 @@ namespace PlayScript.DynamicRuntime
 			return a < Convert.ToDouble(b);
 		}
 
-		public static bool LessThan(object a, string b)
+		public static bool LessThanObjString (object a, string b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is string) {
 				return String.CompareOrdinal((string)a, b) < 0;
 			} else {
@@ -773,9 +1013,12 @@ namespace PlayScript.DynamicRuntime
 				return false;
 			}
 		}
-		
-		public static bool LessThan(string a, object b)
+
+		public static bool LessThanStringObj (string a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is string) {
 				return String.CompareOrdinal(a, (string)b) < 0;
 			} else {
@@ -784,26 +1027,32 @@ namespace PlayScript.DynamicRuntime
 			}
 		}
 
-		public static bool LessThan(object a, object b)
+		public static bool LessThanObjObj (object a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is int) {
-				return LessThan((int)a, b);
+				return LessThanIntObj ((int)a, b);
 			} else if (a is string) {
-				return LessThan((string)a, b);
+				return LessThanStringObj ((string)a, b);
 			} else if (a is double) {
-				return LessThan((double)a, b);
+				return LessThanDoubleObj ((double)a, b);
 			} else if (a is float) {
-				return LessThan((float)a, b);
+				return LessThanDoubleObj ((float)a, b);
 			} else if (a is uint) {
-				return LessThan((uint)a, b);
+				return LessThanUIntObj ((uint)a, b);
 			} else {
 				ThrowOnInvalidOp (a, LT);
 				return false;
 			}
 		}
 
-		public static bool GreaterThan(object a, int b)
+		public static bool GreaterThanObjInt (object a, int b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is int)
 			{
 				return (int)a > b;
@@ -814,9 +1063,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return Convert.ToDouble(a) > (double)b;
 		}
-		
-		public static bool GreaterThan(int a, object b)
+
+		public static bool GreaterThanIntObj (int a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is int)
 			{
 				return a > (int)b;
@@ -827,9 +1079,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return (double)a > Convert.ToDouble(b);
 		}
-		
-		public static bool GreaterThan(object a, uint b)
+
+		public static bool GreaterThanObjUInt (object a, uint b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is uint)
 			{
 				return (uint)a > b;
@@ -840,9 +1095,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return Convert.ToDouble(a) > (double)b;
 		}
-		
-		public static bool GreaterThan(uint a, object b)
+
+		public static bool GreaterThanUIntObj (uint a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is uint)
 			{
 				return a > (uint)b;
@@ -854,26 +1112,43 @@ namespace PlayScript.DynamicRuntime
 			return (double)a > Convert.ToDouble(b);
 		}
 
-		public static bool GreaterThan(object a, double b)
+		public static bool GreaterThanObjDouble (object a, double b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
+			if (a is double) 
+			{
+				return (double)a > b;
+			}
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return false;
 			}
 			return Convert.ToDouble(a) > b;
 		}
-		
-		public static bool GreaterThan(double a, object b)
+
+		public static bool GreaterThanDoubleObj (double a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
+			if (b is double) 
+			{
+				return a > (double)b;
+			}
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return false;
 			}
 			return a > Convert.ToDouble(b);
 		}
-		
-		public static bool GreaterThan(object a, string b)
+
+		public static bool GreaterThanObjString (object a, string b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is string) {
 				return String.CompareOrdinal((string)a, b) > 0;
 			} else {
@@ -881,9 +1156,12 @@ namespace PlayScript.DynamicRuntime
 				return false;
 			}
 		}
-		
-		public static bool GreaterThan(string a, object b)
+
+		public static bool GreaterThanStringObj (string a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is string) {
 				return String.CompareOrdinal(a, (string)b) > 0;
 			} else {
@@ -891,53 +1169,37 @@ namespace PlayScript.DynamicRuntime
 				return false;
 			}
 		}
-		
-		public static bool GreaterThan(object a, object b)
+
+		public static bool GreaterThanObjObj (object a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is int) {
-				return GreaterThan((int)a, b);
+				return GreaterThanIntObj ((int)a, b);
 			} else if (a is string) {
-				return GreaterThan((string)a, b);
+				return GreaterThanStringObj ((string)a, b);
 			} else if (a is double) {
-				return GreaterThan((double)a, b);
+				return GreaterThanDoubleObj ((double)a, b);
 			} else if (a is float) {
-				return GreaterThan((float)a, b);
+				return GreaterThanDoubleObj ((float)a, b);
 			} else if (a is uint) {
-				return GreaterThan((uint)a, b);
+				return GreaterThanUIntObj ((uint)a, b);
 			} else {
 				ThrowOnInvalidOp (a, GT);
 				return false;
 			}
 		}
 
-		public static bool LessThanOrEqual(object a, int b)
+		public static bool LessThanOrEqualObjInt (object a, int b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is int)
 			{
 				return (int)a <= b;
 			}
-			if ((a == null) || (a == PlayScript.Undefined._undefined))
-			{
-				return false;
-			}
-			return Convert.ToDouble(a) <= (double)b;
-		}
-		
-		public static bool LessThanOrEqual(int a, object b)
-		{
-			if (b is int)
-			{
-				return a <= (int)b;
-			}
-			if ((b == null) || (b == PlayScript.Undefined._undefined))
-			{
-				return false;
-			}
-			return (double)a <= Convert.ToDouble(b);
-		}
-		
-		public static bool LessThanOrEqual(object a, uint b)
-		{
 			if (a is uint)
 			{
 				return (uint)a <= b;
@@ -948,9 +1210,44 @@ namespace PlayScript.DynamicRuntime
 			}
 			return Convert.ToDouble(a) <= (double)b;
 		}
-		
-		public static bool LessThanOrEqual(uint a, object b)
+
+		public static bool LessThanOrEqualIntObj (int a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
+			if (b is int)
+			{
+				return a <= (int)b;
+			}
+			if ((b == null) || (b == PlayScript.Undefined._undefined))
+			{
+				return false;
+			}
+			return (double)a <= Convert.ToDouble(b);
+		}
+
+		public static bool LessThanOrEqualObjUInt (object a, uint b)
+		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
+			if (a is uint)
+			{
+				return (uint)a <= b;
+			}
+			if ((a == null) || (a == PlayScript.Undefined._undefined))
+			{
+				return false;
+			}
+			return Convert.ToDouble(a) <= (double)b;
+		}
+
+		public static bool LessThanOrEqualUIntObj (uint a, object b)
+		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is uint)
 			{
 				return a <= (uint)b;
@@ -962,26 +1259,43 @@ namespace PlayScript.DynamicRuntime
 			return (double)a <= Convert.ToDouble(b);
 		}
 
-		public static bool LessThanOrEqual(object a, double b)
+		public static bool LessThanOrEqualObjDouble (object a, double b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
+			if (a is double) 
+			{
+				return (double)a <= b;
+			}
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return false;
 			}
 			return Convert.ToDouble(a) <= (double)b;
 		}
-		
-		public static bool LessThanOrEqual(double a, object b)
+
+		public static bool LessThanOrEqualDoubleObj (double a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
+			if (b is double) 
+			{
+				return a <= (double)b;
+			}
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return false;
 			}
 			return (double)a <= Convert.ToDouble(b);
 		}
-		
-		public static bool LessThanOrEqual(object a, string b)
+
+		public static bool LessThanOrEqualObjString (object a, string b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is string) {
 				return String.CompareOrdinal((string)a, b) <= 0;
 			} else {
@@ -989,9 +1303,12 @@ namespace PlayScript.DynamicRuntime
 				return false;
 			}
 		}
-		
-		public static bool LessThanOrEqual(string a, object b)
+
+		public static bool LessThanOrEqualStringObj (string a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is string) {
 				return String.CompareOrdinal(a, (string)b) <= 0;
 			} else {
@@ -999,27 +1316,33 @@ namespace PlayScript.DynamicRuntime
 				return false;
 			}
 		}
-		
-		public static bool LessThanOrEqual(object a, object b)
+
+		public static bool LessThanOrEqualObjObj (object a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is int) {
-				return LessThanOrEqual((int)a, b);
+				return LessThanOrEqualIntObj ((int)a, b);
 			} else if (a is string) {
-				return LessThanOrEqual((string)a, b);
+				return LessThanOrEqualStringObj ((string)a, b);
 			} else if (a is double) {
-				return LessThanOrEqual((double)a, b);
+				return LessThanOrEqualDoubleObj ((double)a, b);
 			} else if (a is float) {
-				return LessThanOrEqual((float)a, b);
+				return LessThanOrEqualDoubleObj ((float)a, b);
 			} else if (a is uint) {
-				return LessThanOrEqual((uint)a, b);
+				return LessThanOrEqualUIntObj ((uint)a, b);
 			} else {
 				ThrowOnInvalidOp (a, LTE);
 				return false;
 			}
 		}
-		
-		public static bool GreaterThanOrEqual(object a, int b)
+
+		public static bool GreaterThanOrEqualObjInt (object a, int b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is int)
 			{
 				return (int)a >= b;
@@ -1030,9 +1353,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return Convert.ToDouble(a) >= (double)b;
 		}
-		
-		public static bool GreaterThanOrEqual(int a, object b)
+
+		public static bool GreaterThanOrEqualIntObj (int a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is int)
 			{
 				return a >= (int)b;
@@ -1043,9 +1369,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return (double)a >= Convert.ToDouble(b);
 		}
-		
-		public static bool GreaterThanOrEqual(object a, uint b)
+
+		public static bool GreaterThanOrEqualObjUInt (object a, uint b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is uint)
 			{
 				return (uint)a >= b;
@@ -1056,9 +1385,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return Convert.ToDouble(a) >= (double)b;
 		}
-		
-		public static bool GreaterThanOrEqual(uint a, object b)
+
+		public static bool GreaterThanOrEqualUIntObj (uint a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is uint)
 			{
 				return a >= (uint)b;
@@ -1070,26 +1402,35 @@ namespace PlayScript.DynamicRuntime
 			return (double)a >= Convert.ToDouble(b);
 		}
 
-		public static bool GreaterThanOrEqual(object a, double b)
+		public static bool GreaterThanOrEqualObjDouble (object a, double b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return false;
 			}
 			return Convert.ToDouble(a) >= b;
 		}
-		
-		public static bool GreaterThanOrEqual(double a, object b)
+
+		public static bool GreaterThanOrEqualDoubleObj (double a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return false;
 			}
 			return a >= Convert.ToDouble(b);
 		}
-		
-		public static bool GreaterThanOrEqual(object a, string b)
+
+		public static bool GreaterThanOrEqualObjString (object a, string b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is string) {
 				return String.CompareOrdinal((string)a, b) >= 0;
 			} else {
@@ -1097,9 +1438,12 @@ namespace PlayScript.DynamicRuntime
 				return false;
 			}
 		}
-		
-		public static bool GreaterThanOrEqual(string a, object b)
+
+		public static bool GreaterThanOrEqualStringObj (string a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is string) {
 				return String.CompareOrdinal(a, (string)b) >= 0;
 			} else {
@@ -1107,27 +1451,33 @@ namespace PlayScript.DynamicRuntime
 				return false;
 			}
 		}
-		
-		public static bool GreaterThanOrEqual(object a, object b)
+
+		public static bool GreaterThanOrEqualObjObj (object a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is int) {
-				return GreaterThanOrEqual((int)a, b);
+				return GreaterThanOrEqualIntObj ((int)a, b);
 			} else if (a is string) {
-				return GreaterThanOrEqual((string)a, b);
+				return GreaterThanOrEqualStringObj ((string)a, b);
 			} else if (a is double) {
-				return GreaterThanOrEqual((double)a, b);
+				return GreaterThanOrEqualDoubleObj ((double)a, b);
 			} else if (a is float) {
-				return GreaterThanOrEqual((float)a, b);
+				return GreaterThanOrEqualDoubleObj ((float)a, b);
 			} else if (a is uint) {
-				return GreaterThanOrEqual((uint)a, b);
+				return GreaterThanOrEqualUIntObj ((uint)a, b);
 			} else {
 				ThrowOnInvalidOp (a, GTE);
 				return false;
 			}
 		}
 
-		public static bool Equality(object a, int b)
+		public static bool EqualityObjInt (object a, int b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is int)
 			{
 				return (int)a == b;
@@ -1138,9 +1488,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return Convert.ToDouble(a) == (double)b;	// Should we compare with an epsilon here?
 		}
-		
-		public static bool Equality(int a, object b)
+
+		public static bool EqualityIntObj (int a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is int)
 			{
 				return a == (int)b;
@@ -1152,8 +1505,11 @@ namespace PlayScript.DynamicRuntime
 			return (double)a == Convert.ToDouble(b);	// Should we compare with an epsilon here?
 		}
 
-		public static bool Equality(object a, uint b)
+		public static bool EqualityObjUInt (object a, uint b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is uint)
 			{
 				return (uint)a == b;
@@ -1164,9 +1520,12 @@ namespace PlayScript.DynamicRuntime
 			}
 			return Convert.ToDouble(a) == (double)b;	// Should we compare with an epsilon here?
 		}
-		
-		public static bool Equality(uint a, object b)
+
+		public static bool EqualityUIntObj (uint a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is uint)
 			{
 				return a == (uint)b;
@@ -1177,39 +1536,57 @@ namespace PlayScript.DynamicRuntime
 			}
 			return (double)a == Convert.ToDouble(b);	// Should we compare with an epsilon here?
 		}
-		
-		public static bool Equality(object a, double b)
+
+		public static bool EqualityObjDouble (object a, double b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
+			if (a is double) 
+			{
+				return (double)a == b;
+			}
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return false;
 			}
 			return Convert.ToDouble(a) == b;	// Should we compare with an epsilon here?
 		}
-		
-		public static bool Equality(double a, object b)
+
+		public static bool EqualityDoubleObj (double a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
+			if (b is double) 
+			{
+				return a == (double)b;
+			}
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return false;
 			}
 			return a == Convert.ToDouble(b);	// Should we compare with an epsilon here?
 		}
-		
-		public static bool Equality(object a, string b)
+
+		public static bool EqualityObjString (object a, string b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is string) {
 				return String.CompareOrdinal((string)a, b) == 0;
-			} else if (a == null) {
-				return b == null;
 			} else {
 				ThrowOnInvalidOp (a, EQ);
 				return false;
 			}
 		}
-		
-		public static bool Equality(string a, object b)
+
+		public static bool EqualityStringObj (string a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is string) {
 				return String.CompareOrdinal(a, (string)b) == 0;
 			} else if (b == null) {
@@ -1220,33 +1597,42 @@ namespace PlayScript.DynamicRuntime
 			}
 		}
 
-		public static bool Equality(object a, bool b)
+		public static bool EqualityObjBool (object a, bool b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			return Dynamic.CastObjectToBool(a) == b;
 		}
-		
-		public static bool Equality(bool a, object b)
+
+		public static bool EqualityBoolObj (bool a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			return a == Dynamic.CastObjectToBool(b);
 		}
 
-		public static bool Equality(object a, object b)
+		public static bool EqualityObjObj (object a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a == PlayScript.Undefined._undefined) a = null;
 			if (b == PlayScript.Undefined._undefined) b = null;
 
 			if (a is int) {
-				return Equality((int)a, b);
+				return EqualityIntObj ((int)a, b);
 			} else if (a is string) {
-				return Equality((string)a, b);
+				return EqualityStringObj ((string)a, b);
 			} else if (a is double) {
-				return Equality((double)a, b);
+				return EqualityDoubleObj ((double)a, b);
 			} else if (a is float) {
-				return Equality((float)a, b);
+				return EqualityDoubleObj ((float)a, b);
 			} else if (a is bool) {
-				return Equality((bool)a, b);
+				return EqualityBoolObj ((bool)a, b);
 			} else if (a is uint) {
-				return Equality((uint)a, b);
+				return EqualityUIntObj ((uint)a, b);
 			} else if (a == b) {
 				return true;
 			} else if (a == null) {
@@ -1256,129 +1642,59 @@ namespace PlayScript.DynamicRuntime
 			}
 		}
 
-		public static bool Inequality(object a, int b)
+		public static bool InequalityObjInt (object a, int b)
 		{
-			if (a is int)
-			{
-				return (int)a != b;
-			}
-			if ((a == null) || (a == PlayScript.Undefined._undefined))
-			{
-				return true;
-			}
-			return Convert.ToDouble(a) != (double)b;	// Should we compare with an epsilon here?
-		}
-		
-		public static bool Inequality(int a, object b)
-		{
-			if (b is int)
-			{
-				return a != (int)b;
-			}
-			if ((b == null) || (b == PlayScript.Undefined._undefined))
-			{
-				return true;
-			}
-			return (double)a != Convert.ToDouble(b);	// Should we compare with an epsilon here?
-		}
-		
-		public static bool Inequality(object a, uint b)
-		{
-			if (a is uint)
-			{
-				return (uint)a != b;
-			}
-			if ((a == null) || (a == PlayScript.Undefined._undefined))
-			{
-				return true;
-			}
-			return Convert.ToDouble(a) != (double)b;	// Should we compare with an epsilon here?
-		}
-		
-		public static bool Inequality(uint a, object b)
-		{
-			if (b is uint)
-			{
-				return a != (uint)b;
-			}
-			if ((b == null) || (b == PlayScript.Undefined._undefined))
-			{
-				return true;
-			}
-			return (double)a != Convert.ToDouble(b);	// Should we compare with an epsilon here?
+			return !EqualityObjInt(a, b);
 		}
 
-		public static bool Inequality(object a, double b)
+		public static bool InequalityIntObj (int a, object b)
 		{
-			if ((a == null) || (a == PlayScript.Undefined._undefined))
-			{
-				return true;
-			}
-			return Convert.ToDouble(a) != b;
-		}
-		
-		public static bool Inequality(double a, object b)
-		{
-			if ((b == null) || (b == PlayScript.Undefined._undefined))
-			{
-				return true;
-			}
-			return a != Convert.ToDouble(b);
-		}
-		
-		public static bool Inequality(object a, string b)
-		{
-			return !Equality(a, b);
-		}
-		
-		public static bool Inequality(string a, object b)
-		{
-			return !Equality(a, b);
+			return !EqualityIntObj(a, b);
 		}
 
-		public static bool Inequality(object a, bool b)
+		public static bool InequalityObjUInt (object a, uint b)
 		{
-			if (a is bool) {
-				return (bool)a != b;
-			} else {
-				return Dynamic.CastObjectToBool(a) != b;
-			}
+			return !EqualityObjUInt(a, b);
 		}
-		
-		public static bool Inequality(bool a, object b)
+
+		public static bool InequalityUIntObj (uint a, object b)
 		{
-			if (b is bool) {
-				return a != (bool)b;
-			} else {
-				return a != Dynamic.CastObjectToBool(b);
-			}
+			return !EqualityUIntObj(a, b);
 		}
-		
-		public static bool Inequality(object a, object b)
+
+		public static bool InequalityObjDouble (object a, double b)
 		{
-			if (a == PlayScript.Undefined._undefined) a = null;
-			if (b == PlayScript.Undefined._undefined) b = null;
-			
-			if (a is int) {
-				return Inequality((int)a, b);
-			} else if (a is string) {
-				return Inequality((string)a, b);
-			} else if (a is double) {
-				return Inequality((double)a, b);
-			} else if (a is float) {
-				return Inequality((float)a, b);
-			} else if (a is bool) {
-				return Inequality((bool)a, b);
-			} else if (a is uint) {
-				return Inequality((uint)a, b);
-			} else if (a == b) {
-				return false;
-			} else if (a == null) {
-				return b != null;
-			} else {
-				// value comparison
-				return !a.Equals(b);
-			}
+			return !EqualityObjDouble(a, b);
+		}
+
+		public static bool InequalityDoubleObj (double a, object b)
+		{
+			return !EqualityDoubleObj(a, b);
+		}
+
+		public static bool InequalityObjString (object a, string b)
+		{
+			return !EqualityObjString(a, b);
+		}
+
+		public static bool InequalityStringObj (string a, object b)
+		{
+			return !EqualityStringObj(a, b);
+		}
+
+		public static bool InequalityObjBool (object a, bool b)
+		{
+			return !EqualityObjBool(a, b);
+		}
+
+		public static bool InequalityBoolObj (bool a, object b)
+		{
+			return !EqualityBoolObj(a, b);
+		}
+
+		public static bool InequalityObjObj (object a, object b)
+		{
+			return !EqualityObjObj(a, b);
 		}
 
 		// Logical bit operations are all using integer math (should not upconvert to double to improve accuracy)
@@ -1388,247 +1704,340 @@ namespace PlayScript.DynamicRuntime
 		//	2. Convert to Int32 (or UInt32) both operands and apply the operation.
 		// Boolean uses Dynamic.CastObjectToBool() instead of Convert.ToXYZ().
 
-		public static object BitwiseAnd(object a, int b)
+		public static object BitwiseAndObjInt (object a, int b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (int)0;
 			}
 			return Convert.ToInt32(a) & b;
 		}
-		
-		public static object BitwiseAnd(int a, object b)
+
+		public static object BitwiseAndIntObj (int a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return (int)0;
 			}
 			return a & Convert.ToInt32(b);
 		}
-		
-		public static object BitwiseAnd(object a, uint b)
+
+		public static object BitwiseAndObjUInt (object a, uint b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (uint)0;
 			}
 			return Convert.ToUInt32(a) & b;
 		}
-		
-		public static object BitwiseAnd(uint a, object b)
+
+		public static object BitwiseAndUIntObj (uint a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return (uint)0;
 			}
 			return a & Convert.ToUInt32(b);
 		}
-		
-		public static object BitwiseAnd(object a, double b)
+
+		public static object BitwiseAndObjDouble (object a, double b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (int)0;
 			}
 			return Convert.ToInt32(a) & (int)b;
 		}
-		
-		public static object BitwiseAnd(double a, object b)
+
+		public static object BitwiseAndDoubleObj (double a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return (int)0;
 			}
 			return (int)a & Convert.ToInt32(b);
 		}
-		
-		public static object BitwiseAnd(object a, bool b)
+
+		public static object BitwiseAndObjBool (object a, bool b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is bool) {
 				return (bool)a && b;
 			} else {
 				return Dynamic.CastObjectToBool(a) && b;
 			}
 		}
-		
-		public static object BitwiseAnd(bool a, object b)
+
+		public static object BitwiseAndBoolObj (bool a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is bool) {
 				return a && (bool)b;
 			} else {
 				return a && Dynamic.CastObjectToBool(b);
 			}
 		}
-		public static object BitwiseAnd(object a, object b)
+		public static object BitwiseAndObjObj (object a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is int) {
-				return BitwiseAnd((int)a, b);
+				return BitwiseAndIntObj ((int)a, b);
 			} else if (a is double) {
-				return BitwiseAnd((double)a, b);
+				return BitwiseAndDoubleObj ((double)a, b);
 			} else if (a is float) {
-				return BitwiseAnd((float)a, b);
+				return BitwiseAndDoubleObj ((float)a, b);
 			} else if (a is bool) {
-				return BitwiseAnd((bool)a, b);
+				return BitwiseAndBoolObj ((bool)a, b);
 			} else if (a is uint) {
-				return BitwiseAnd((uint)a, b);
+				return BitwiseAndUIntObj ((uint)a, b);
 			} else {
 				return Dynamic.CastObjectToBool(a) && Dynamic.CastObjectToBool(b);
 			}
 		}
 
-		public static object BitwiseOr(object a, int b)
+		public static object BitwiseOrObjInt (object a, int b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return b;
 			}
 			return Convert.ToInt32(a) | b;
 		}
-		
-		public static object BitwiseOr(int a, object b)
+
+		public static object BitwiseOrIntObj (int a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
 			}
 			return a | Convert.ToInt32(b);
 		}
-		
-		public static object BitwiseOr(object a, uint b)
+
+		public static object BitwiseOrObjUInt (object a, uint b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return b;
 			}
 			return Convert.ToUInt32(a) | b;
 		}
-		
-		public static object BitwiseOr(uint a, object b)
+
+		public static object BitwiseOrUIntObj (uint a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
 			}
 			return a | Convert.ToUInt32(b);
 		}
-		
-		public static object BitwiseOr(object a, double b)
+
+		public static object BitwiseOrObjDouble (object a, double b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return b;
 			}
 			return Convert.ToInt32(a) | (int)b;
 		}
-		
-		public static object BitwiseOr(double a, object b)
+
+		public static object BitwiseOrDoubleObj (double a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
 			}
 			return (int)a | Convert.ToInt32(b);
 		}
-		
-		public static object BitwiseOr(object a, bool b)
+
+		public static object BitwiseOrObjBool (object a, bool b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is bool) {
 				return (bool)a || b;
 			} else {
 				return Dynamic.CastObjectToBool(a) || b;
 			}
 		}
-		
-		public static object BitwiseOr(bool a, object b)
+
+		public static object BitwiseOrBoolObj (bool a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (b is bool) {
 				return a || (bool)b;
 			} else {
 				return a || Dynamic.CastObjectToBool(b);
 			}
 		}
-		
-		public static object BitwiseOr(object a, object b)
+
+		public static object BitwiseOrObjObj (object a, object b)
 		{
-			return Dynamic.CastObjectToBool(a) || Dynamic.CastObjectToBool(b);
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
+			if (a is int) {
+				return BitwiseOrIntObj ((int)a, b);
+			} else if (a is double) {
+				return BitwiseOrDoubleObj ((double)a, b);
+			} else if (a is float) {
+				return BitwiseOrDoubleObj ((float)a, b);
+			} else if (a is bool) {
+				return BitwiseOrBoolObj ((bool)a, b);
+			} else if (a is uint) {
+				return BitwiseOrUIntObj ((uint)a, b);
+			} else {
+				return Dynamic.CastObjectToBool(a) || Dynamic.CastObjectToBool(b);
+			}
 		}
 
-		public static object ExclusiveOr(object a, int b)
+		public static object ExclusiveOrObjInt (object a, int b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return b;
 			}
 			return Convert.ToInt32(a) ^ b;
 		}
-		
-		public static object ExclusiveOr(int a, object b)
+
+		public static object ExclusiveOrIntObj (int a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
 			}
 			return a ^ Convert.ToInt32(b);
 		}
-		
-		public static object ExclusiveOr(object a, uint b)
+
+		public static object ExclusiveOrObjUInt (object a, uint b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return b;
 			}
 			return Convert.ToUInt32(a) ^ b;
 		}
-		
-		public static object ExclusiveOr(uint a, object b)
+
+		public static object ExclusiveOrUIntObj (uint a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
 			}
 			return a ^ Convert.ToUInt32(b);
 		}
-		
-		public static object ExclusiveOr(object a, double b)
+
+		public static object ExclusiveOrObjDouble (object a, double b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return b;
 			}
 			return Convert.ToInt32(a) ^ (int)b;
 		}
-		
-		public static object ExclusiveOr(double a, object b)
+
+		public static object ExclusiveOrDoubleObj (double a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
 			}
 			return (int)a ^ Convert.ToInt32(b);
 		}
-		
-		public static object ExclusiveOr(object a, bool b)
+
+		public static object ExclusiveOrObjBool (object a, bool b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			return Dynamic.CastObjectToBool(a) ^ b;
 		}
-		
-		public static object ExclusiveOr(bool a, object b)
+
+		public static object ExclusiveOrBoolObj (bool a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			return a ^ Dynamic.CastObjectToBool(b);
 		}
-		
-		public static object ExclusiveOr(object a, object b)
+
+		public static object ExclusiveOrObjObj (object a, object b)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.BinaryOperationBinderInvoked;
+			#endif
 			if (a is int) {
-				return ExclusiveOr((int)a, b);
+				return ExclusiveOrIntObj ((int)a, b);
 			} else if (a is double) {
-				return ExclusiveOr((double)a, b);
+				return ExclusiveOrDoubleObj ((double)a, b);
 			} else if (a is float) {
-				return ExclusiveOr((float)a, b);
+				return ExclusiveOrDoubleObj ((float)a, b);
 			} else if (a is bool) {
-				return ExclusiveOr((bool)a, b);
+				return ExclusiveOrBoolObj ((bool)a, b);
 			} else if (a is uint) {
-				return ExclusiveOr((uint)a, b);
+				return ExclusiveOrUIntObj ((uint)a, b);
 			} else {
 				ThrowOnInvalidOp (b, XOR);
 				return null;
