@@ -5945,9 +5945,7 @@ config_block
 	      // This block should be included
   		  $$ = $5;
   		} else {
-  		  // This block should not be included.. create an empty block
-  		  start_block (GetLocation ($2));
-  		  $$ = end_block (GetLocation ($5));
+  		  $$ = new EmptyStatement (GetLocation ($2));
   		}
   		is_config_enabled = true;
 	  }
