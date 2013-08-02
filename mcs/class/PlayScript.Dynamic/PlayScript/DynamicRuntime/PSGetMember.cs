@@ -63,6 +63,10 @@ namespace PlayScript.DynamicRuntime
 
 		public object GetMemberAsObject(object o)
 		{
+			if (o == null) {
+				return null;
+			}
+
 			// resolve as dictionary 
 			var dict = o as IDictionary<string, object>;
 			if (dict != null) 
