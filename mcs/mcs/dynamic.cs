@@ -1423,23 +1423,28 @@ namespace Mono.CSharp
 		protected override Expression DoResolve(ResolveContext rc)
 		{
 			if (rc.Module.Compiler.Settings.NewDynamicRuntime_UnaryOps) {
-				this.Arguments.CastDynamicArgs(rc);
-
-				TypeSpec unary = rc.Module.PredefinedTypes.PsUnaryOperation.Resolve();
-				string type = GetDynamicUnaryTypeName(Arguments[0].Type);
-
-				// create unary method name
-				string unaryMethod = this.name + type;
-
-				var ret = new Invocation(new MemberAccess(new TypeExpression(unary, loc), unaryMethod, loc), this.Arguments).Resolve(rc);
-				if (ret.Type == rc.BuiltinTypes.Object) {
-					// cast object to dynamic for return types
-					ret = new Cast (new TypeExpression (rc.BuiltinTypes.Dynamic, loc), ret, loc).Resolve (rc);
-				} 
-				return ret;
+				return CreateDynamicUnaryOperation(rc);
 			}
 
 			return base.DoResolve(rc);
+		}
+
+		private Expression CreateDynamicUnaryOperation(ResolveContext rc)
+		{
+			this.Arguments.CastDynamicArgs(rc);
+
+			TypeSpec unary = rc.Module.PredefinedTypes.PsUnaryOperation.Resolve();
+			string type = GetDynamicUnaryTypeName(Arguments[0].Type);
+
+			// create unary method name
+			string unaryMethod = this.name + type;
+
+			var ret = new Invocation(new MemberAccess(new TypeExpression(unary, loc), unaryMethod, loc), this.Arguments).Resolve(rc);
+			if (ret.Type == rc.BuiltinTypes.Object) {
+				// cast object to dynamic for return types
+				ret = new Cast (new TypeExpression (rc.BuiltinTypes.Dynamic, loc), ret, loc).Resolve (rc);
+			} 
+			return ret;
 		}
 
 
@@ -1475,6 +1480,184 @@ namespace Mono.CSharp
 			return new Invocation (GetBinder ("UnaryOperation", loc), binder_args);
 		}
 	}
+
+	class DynamicBinaryExpression : DynamicExpressionStatement, IDynamicBinder
+	{
+		readonly string          name;
+		readonly Binary.Operator oper;
+
+		public DynamicBinaryExpression (Binary.Operator oper, string name, Arguments args, Location loc)
+			: base (null, args, loc)
+		{
+			this.oper = oper;
+			this.name = name;
+			base.binder = this;
+		}
+
+		protected override Expression DoResolve(ResolveContext rc)
+		{
+			if (rc.Module.Compiler.Settings.NewDynamicRuntime_BinaryOps) {
+				return this.CreateDynamicBinaryOperation(rc);
+			}
+			return base.DoResolve(rc);
+		}
+
+		private static string GetDynamicBinaryTypeName(TypeSpec type)
+		{
+			switch (type.BuiltinType){
+				case BuiltinTypeSpec.Type.Bool:
+					return "Bool";
+				case BuiltinTypeSpec.Type.Int:
+					return "Int";
+				case BuiltinTypeSpec.Type.Double:
+					return "Double";
+				case BuiltinTypeSpec.Type.String:
+					return "String";
+				case BuiltinTypeSpec.Type.UInt:
+					return "UInt";
+				default:
+					return "Obj";
+			}
+		}
+
+		private Expression CreateDynamicBinaryOperation(ResolveContext rc)
+		{
+			// strip dynamic from all arguments
+			Arguments.CastDynamicArgs(rc);
+
+			TypeSpec binary = rc.Module.PredefinedTypes.PsBinaryOperation.Resolve();
+
+			// perform numeric or other type conversion
+			string binaryMethod = null;
+			switch (oper)
+			{
+				case Binary.Operator.Multiply:
+					binaryMethod = "Multiply";
+					break;
+				case Binary.Operator.Division:
+					binaryMethod = "Division";
+					break;
+				case Binary.Operator.Modulus:
+					binaryMethod = "Modulus";
+					break;
+				case Binary.Operator.Addition:
+					binaryMethod = "Addition";
+					break;
+				case Binary.Operator.Subtraction:
+					binaryMethod = "Subtraction";
+					break;
+				case Binary.Operator.LeftShift:
+					binaryMethod = "LeftShift";
+					break;
+				case Binary.Operator.RightShift:
+					binaryMethod = "RightShift";
+					break;
+				case Binary.Operator.AsURightShift:
+					binaryMethod = "AsURightShift";
+					break;
+				case Binary.Operator.LessThan:
+					binaryMethod = "LessThan";
+					break;
+				case Binary.Operator.GreaterThan:
+					binaryMethod = "GreaterThan";
+					break;
+				case Binary.Operator.LessThanOrEqual:
+					binaryMethod = "LessThanOrEqual";
+					break;
+				case Binary.Operator.GreaterThanOrEqual:
+					binaryMethod = "GreaterThanOrEqual";
+					break;
+				case Binary.Operator.Equality:
+					binaryMethod = "Equality";
+					break;
+				case Binary.Operator.Inequality:
+					binaryMethod = "Inequality";
+					break;
+				case Binary.Operator.AsRefEquality:
+					binaryMethod = "AsRefEquality";
+					break;
+				case Binary.Operator.AsRefInequality:
+					binaryMethod = "AsRefInequality";
+					break;
+				case Binary.Operator.BitwiseAnd:
+					binaryMethod = "BitwiseAnd";
+					break;
+				case Binary.Operator.ExclusiveOr:
+					binaryMethod = "ExclusiveOr";
+					break;
+				case Binary.Operator.BitwiseOr:
+					binaryMethod = "BitwiseOr";
+					break;
+					// we should never support these
+//				case Binary.Operator.LogicalAnd:
+//					binaryMethod = "LogicalAnd";
+//					break;
+//				case Binary.Operator.LogicalOr:
+//					binaryMethod = "LogicalOr";
+//					break;
+				case Binary.Operator.AsE4xChild:
+					binaryMethod = "AsE4xChild";
+					break;
+				case Binary.Operator.AsE4xDescendant:
+					binaryMethod = "AsE4xDescendant";
+					break;
+				case Binary.Operator.AsE4xChildAttribute:
+					binaryMethod = "AsE4xChildAttribute";
+					break;
+				case Binary.Operator.AsE4xDescendantAttribute:
+					binaryMethod = "AsE4xDescendantAttribute";
+					break;
+				default:
+					throw new InvalidOperationException("Unknown binary operation: " + oper);
+			}
+
+			string leftType = GetDynamicBinaryTypeName(Arguments[0].Type);
+			string rightType = GetDynamicBinaryTypeName(Arguments[1].Type);
+
+			// append to binary method instead of using overloads
+			binaryMethod += leftType + rightType;
+
+			var ret = new Invocation(new MemberAccess(new TypeExpression(binary, loc), binaryMethod, loc), Arguments).Resolve(rc);
+			if (ret.Type == rc.BuiltinTypes.Object) {
+				// cast object to dynamic for return types
+				ret = new Cast (new TypeExpression (rc.BuiltinTypes.Dynamic, loc), ret, loc).Resolve (rc);
+			} 
+			return ret;
+		}
+
+
+		public Expression CreateCallSiteBinder (ResolveContext ec, Arguments args)
+		{
+			Arguments binder_args = new Arguments (4);
+
+			MemberAccess ns;
+			if (ec.Module.PredefinedTypes.IsPlayScriptAotMode) {
+				ns = new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "PlayScript", loc);
+			} else {
+				ns = new MemberAccess (new MemberAccess (
+					new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "System", loc), "Linq", loc), "Expressions", loc);
+			}
+
+			CSharpBinderFlags flags = 0;
+			if (ec.HasSet (ResolveContext.Options.CheckedScope))
+				flags = CSharpBinderFlags.CheckedContext;
+
+			if ((oper & Binary.Operator.LogicalMask) != 0)
+				flags |= CSharpBinderFlags.BinaryOperationLogical;
+
+			binder_args.Add (new Argument (new EnumConstant (new IntLiteral (ec.BuiltinTypes, (int) flags, loc), ec.Module.PredefinedTypes.GetBinderFlags(ec).Resolve ())));
+			binder_args.Add (new Argument (new MemberAccess (new MemberAccess (ns, "ExpressionType", loc), this.name, loc)));
+			binder_args.Add (new Argument (new TypeOf (ec.CurrentType, loc)));									
+			binder_args.Add (new Argument (new ImplicitlyTypedArrayCreation (args.CreateDynamicBinderArguments (ec), loc)));
+
+			return new Invocation (new MemberAccess (new TypeExpression (ec.Module.PredefinedTypes.GetBinder(ec).TypeSpec, loc), "BinaryOperation", loc), binder_args);
+		}
+	}
+
+
+
+
+
 
 	sealed class DynamicSiteClass : HoistedStoreyClass
 	{

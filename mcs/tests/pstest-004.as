@@ -444,7 +444,7 @@ package
 				}
 			}*/
 			trace(a);
-			/*
+
 			var a:Object = 5.0;
 			var b:Object = 10.0;
 			var c:Number = a + b;
@@ -453,7 +453,7 @@ package
 			var f:Number = a * b;
 			var g:Number = a % b;
 			trace(a,b,c,d,e,f,g);
-*/
+
 			/*
 
 			var o:Object = 5.0;
