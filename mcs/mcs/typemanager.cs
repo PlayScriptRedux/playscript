@@ -268,6 +268,7 @@ namespace Mono.CSharp
 		public readonly PredefinedType PsGetIndex;
 		public readonly PredefinedType PsConverter;
 		public readonly PredefinedType PsBinaryOperation;
+		public readonly PredefinedType PsUnaryOperation;
 
 		// PlayScript dynamic binder AOT mode support..
 		private bool checkedAsDynamicMode = false;
@@ -353,6 +354,7 @@ namespace Mono.CSharp
 			PsSetIndex  = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSSetIndex");
 			PsConverter         = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSConverter");
 			PsBinaryOperation   = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSBinaryOperation");
+			PsUnaryOperation   = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSUnaryOperation");
 
 			//
 			// Define types which are used for comparison. It does not matter

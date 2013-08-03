@@ -1402,6 +1402,47 @@ namespace Mono.CSharp
 			base.binder = this;
 		}
 
+		private static string GetDynamicUnaryTypeName(TypeSpec type)
+		{
+			switch (type.BuiltinType){
+				case BuiltinTypeSpec.Type.Bool:
+					return "Bool";
+				case BuiltinTypeSpec.Type.Int:
+					return "Int";
+				case BuiltinTypeSpec.Type.Double:
+					return "Double";
+				case BuiltinTypeSpec.Type.String:
+					return "String";
+				case BuiltinTypeSpec.Type.UInt:
+					return "UInt";
+				default:
+					return "Object";
+			}
+		}
+
+		protected override Expression DoResolve(ResolveContext rc)
+		{
+			if (rc.Module.Compiler.Settings.NewDynamicRuntime_UnaryOps) {
+				this.Arguments.CastDynamicArgs(rc);
+
+				TypeSpec unary = rc.Module.PredefinedTypes.PsUnaryOperation.Resolve();
+				string type = GetDynamicUnaryTypeName(Arguments[0].Type);
+
+				// create unary method name
+				string unaryMethod = this.name + type;
+
+				var ret = new Invocation(new MemberAccess(new TypeExpression(unary, loc), unaryMethod, loc), this.Arguments).Resolve(rc);
+				if (ret.Type == rc.BuiltinTypes.Object) {
+					// cast object to dynamic for return types
+					ret = new Cast (new TypeExpression (rc.BuiltinTypes.Dynamic, loc), ret, loc).Resolve (rc);
+				} 
+				return ret;
+			}
+
+			return base.DoResolve(rc);
+		}
+
+
 		public static DynamicUnaryConversion CreateIsTrue (ResolveContext rc, Arguments args, Location loc)
 		{
 			return new DynamicUnaryConversion ("IsTrue", args, loc) { type = rc.BuiltinTypes.Bool };

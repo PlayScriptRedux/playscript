@@ -198,6 +198,9 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\Stats.cs">
       <Link>PlayScript\Stats.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSUnaryOperation.cs">
+      <Link>PlayScript\DynamicRuntime\PSUnaryOperation.cs</Link>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

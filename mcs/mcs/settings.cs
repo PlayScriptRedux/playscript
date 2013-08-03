@@ -190,6 +190,8 @@ namespace Mono.CSharp {
 
 		// if true, then static calls to PSBinaryOperation.Addition(a,b) are used instead of binder
 		public bool NewDynamicRuntime_BinaryOps = false;
+		// if true, then static calls to PSUnaryOperation.xyz(a,b) are used instead of binder
+		public bool NewDynamicRuntime_UnaryOps = false;
 		// if true, dynamics are cast to boolean before performing logical operations
 		public bool NewDynamicRuntime_LogicalOps = false;
 		// if true, hasOwnProperty is statically called on dynamics
@@ -210,6 +212,7 @@ namespace Mono.CSharp {
 		public void SetNewDynamicRuntimeEnable(bool value)
 		{
 			NewDynamicRuntime_BinaryOps = value;
+			NewDynamicRuntime_UnaryOps = value;
 			NewDynamicRuntime_LogicalOps = value;
 			NewDynamicRuntime_HasOwnProperty = value;
 			NewDynamicRuntime_Convert = value;

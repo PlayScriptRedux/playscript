@@ -53,6 +53,7 @@
 ../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSGetMember.cs
 ../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSConverter.cs
 ../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSBinaryOperation.cs
+../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSUnaryOperation.cs
 ../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSSetMember.cs
 ../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSGetIndex.cs
 ../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSSetIndex.cs
