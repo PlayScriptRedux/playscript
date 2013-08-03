@@ -26,6 +26,11 @@ namespace PlayScript.DynamicRuntime
 
 		public T SetIndexAs<T> (object o, int index, T value)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.SetIndexBinderInvoked;
+			++Stats.CurrentInstance.SetIndexBinder_Int_Invoked;
+			#endif
+
 			var l = o as IList<T>;
 			if (l != null) {
 				l [index] = value;
@@ -66,14 +71,27 @@ namespace PlayScript.DynamicRuntime
 
 		public T SetIndexAs<T> (object o, string key, T value)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.SetIndexBinderInvoked;
+			++Stats.CurrentInstance.SetIndexBinder_Key_Invoked;
+			#endif
+
 			// handle dictionaries
 			var dict = o as IDictionary;
 			if (dict != null) {
+				#if BINDERS_RUNTIME_STATS
+				++Stats.CurrentInstance.SetIndexBinder_Key_Dictionary_Invoked;
+				#endif
+
 				dict[key] = (object)value;
 				return value;
 			} 
 
 			// fallback on setmemberbinder to do the hard work 
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.SetIndexBinder_Key_Property_Invoked;
+			#endif
+
 			// create a set member binder here to set
 			if (mSetMember == null) {
 				mSetMember   = new PSSetMember(key);

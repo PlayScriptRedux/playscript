@@ -161,7 +161,7 @@ namespace PlayScript.RuntimeBinder
 		{
 #if BINDERS_RUNTIME_STATS
 			++Stats.CurrentInstance.GetIndexBinderInvoked;
-			++Stats.CurrentInstance.GetIndexBinder_KeyStr_Invoked;
+//			++Stats.CurrentInstance.GetIndexBinder_KeyStr_Invoked;
 #endif
 			var d = o as IDictionary<string,T>;
 			if (d != null) {

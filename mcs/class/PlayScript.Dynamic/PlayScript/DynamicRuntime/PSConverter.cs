@@ -27,6 +27,10 @@ namespace PlayScript.DynamicRuntime
 	public static class PSConverter
 	{
 		public static object ConvertToString(object o, Type targetType) {
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.ConvertBinderInvoked;
+			#endif
+
 			if (o is string) {
 				return (string)o;
 			}
@@ -80,6 +84,10 @@ namespace PlayScript.DynamicRuntime
 		
 		public static int ConvertToInt (object o)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.ConvertBinderInvoked;
+			#endif
+
 			if (o is int) {
 				return (int)o;
 			} 
@@ -118,6 +126,10 @@ namespace PlayScript.DynamicRuntime
 
 		public static uint ConvertToUInt (object o)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.ConvertBinderInvoked;
+			#endif
+
 			if (o is uint) {
 				return (uint)o;
 			} 
@@ -149,6 +161,10 @@ namespace PlayScript.DynamicRuntime
 
 		public static double ConvertToDouble (object o)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.ConvertBinderInvoked;
+			#endif
+
 			if (o is double) {
 				return (double)o;
 			} 
@@ -180,6 +196,10 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool ConvertToBool (object o)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.ConvertBinderInvoked;
+			#endif
+
 			if (o is bool) {
 				return (bool)o;
 			} 
@@ -206,6 +226,10 @@ namespace PlayScript.DynamicRuntime
 
 		public static string ConvertToString (object o)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.ConvertBinderInvoked;
+			#endif
+
 			if (o == null || o == PlayScript.Undefined._undefined) {
 				return null;
 			} else if  (o is string) {
@@ -217,6 +241,10 @@ namespace PlayScript.DynamicRuntime
 
 		public static object ConvertToObj (object o)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.ConvertBinderInvoked;
+			#endif
+
 			return o;
 		}
 

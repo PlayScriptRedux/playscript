@@ -14,8 +14,8 @@
 
 
 using System;
+using System.Collections.Generic;
 
-#if BINDERS_RUNTIME_STATS
 namespace PlayScript
 {
 	/// <summary>
@@ -76,6 +76,166 @@ namespace PlayScript
 		public int	Dynamic_ObjectIsClassInvoked;
 		public int	Dynamic_HasOwnPropertyInvoked;
 
+		public void Add(Stats other)
+		{
+			UnaryOperationBinderCreated += other.UnaryOperationBinderCreated;
+			UnaryOperationBinderInvoked += other.UnaryOperationBinderInvoked;
+			BinaryOperationBinderCreated += other.BinaryOperationBinderCreated;
+			BinaryOperationBinderInvoked += other.BinaryOperationBinderInvoked;
+			ConvertBinderCreated += other.ConvertBinderCreated;
+			ConvertBinderInvoked += other.ConvertBinderInvoked;
+			GetIndexBinderCreated += other.GetIndexBinderCreated;
+			GetIndexBinderInvoked += other.GetIndexBinderInvoked;
+			GetIndexBinder_Int_Invoked += other.GetIndexBinder_Int_Invoked;
+			GetIndexBinder_Key_Invoked += other.GetIndexBinder_Key_Invoked;
+			GetIndexBinder_Key_Dictionary_Invoked += other.GetIndexBinder_Key_Dictionary_Invoked;
+			GetIndexBinder_Key_Property_Invoked += other.GetIndexBinder_Key_Property_Invoked;
+			SetIndexBinderCreated += other.SetIndexBinderCreated;
+			SetIndexBinderInvoked += other.SetIndexBinderInvoked;
+			SetIndexBinder_Int_Invoked += other.SetIndexBinder_Int_Invoked;
+			SetIndexBinder_Key_Invoked += other.SetIndexBinder_Key_Invoked;
+			SetIndexBinder_Key_Dictionary_Invoked += other.SetIndexBinder_Key_Dictionary_Invoked;
+			SetIndexBinder_Key_Property_Invoked += other.SetIndexBinder_Key_Property_Invoked;
+			GetMemberBinderCreated += other.GetMemberBinderCreated;
+			GetMemberBinderInvoked += other.GetMemberBinderInvoked;
+			GetMemberBinder_Resolve_Invoked += other.GetMemberBinder_Resolve_Invoked;
+			SetMemberBinderCreated += other.SetMemberBinderCreated;
+			SetMemberBinderInvoked += other.SetMemberBinderInvoked;
+			SetMemberBinder_Resolve_Invoked += other.SetMemberBinder_Resolve_Invoked;
+			InvokeBinderCreated += other.InvokeBinderCreated;
+			InvokeBinderInvoked += other.InvokeBinderInvoked;
+			InvokeConstructorBinderCreated += other.InvokeConstructorBinderCreated;
+			InvokeConstructorBinderInvoked += other.InvokeConstructorBinderInvoked;
+			InvokeMemberBinderCreated += other.InvokeMemberBinderCreated;
+			InvokeMemberBinderInvoked += other.InvokeMemberBinderInvoked;
+			IsEventBinderCreated += other.IsEventBinderCreated;
+			IsEventBinderInvoked += other.IsEventBinderInvoked;
+
+			// Counters for dynamic
+			Dynamic_ConvertMethodParametersInvoked += other.Dynamic_ConvertMethodParametersInvoked;
+			Dynamic_FindPropertyGetterInvoked += other.Dynamic_FindPropertyGetterInvoked;
+			Dynamic_FindPropertySetterInvoked += other.Dynamic_FindPropertySetterInvoked;
+			Dynamic_ConvertValueInvoked += other.Dynamic_ConvertValueInvoked;
+			Dynamic_CanConvertValueInvoked += other.Dynamic_CanConvertValueInvoked;
+			Dynamic_ConvertValueGenericInvoked += other.Dynamic_ConvertValueGenericInvoked;
+			Dynamic_GetDelegateTypeForMethodInvoked += other.Dynamic_GetDelegateTypeForMethodInvoked;
+			Dynamic_GetInstanceMemberInvoked += other.Dynamic_GetInstanceMemberInvoked;
+			Dynamic_SetInstanceMemberInvoked += other.Dynamic_SetInstanceMemberInvoked;
+			Dynamic_GetStaticMemberInvoked += other.Dynamic_GetStaticMemberInvoked;
+			Dynamic_SetStaticMemberInvoked += other.Dynamic_SetStaticMemberInvoked;
+			Dynamic_CastObjectToBoolInvoked += other.Dynamic_CastObjectToBoolInvoked;
+			Dynamic_InvokeStaticInvoked += other.Dynamic_InvokeStaticInvoked;
+			Dynamic_ObjectIsClassInvoked += other.Dynamic_ObjectIsClassInvoked;
+			Dynamic_HasOwnPropertyInvoked += other.Dynamic_HasOwnPropertyInvoked;
+		}
+
+		public void Subtract(Stats other)
+		{
+			UnaryOperationBinderCreated -= other.UnaryOperationBinderCreated;
+			UnaryOperationBinderInvoked -= other.UnaryOperationBinderInvoked;
+			BinaryOperationBinderCreated -= other.BinaryOperationBinderCreated;
+			BinaryOperationBinderInvoked -= other.BinaryOperationBinderInvoked;
+			ConvertBinderCreated -= other.ConvertBinderCreated;
+			ConvertBinderInvoked -= other.ConvertBinderInvoked;
+			GetIndexBinderCreated -= other.GetIndexBinderCreated;
+			GetIndexBinderInvoked -= other.GetIndexBinderInvoked;
+			GetIndexBinder_Int_Invoked -= other.GetIndexBinder_Int_Invoked;
+			GetIndexBinder_Key_Invoked -= other.GetIndexBinder_Key_Invoked;
+			GetIndexBinder_Key_Dictionary_Invoked -= other.GetIndexBinder_Key_Dictionary_Invoked;
+			GetIndexBinder_Key_Property_Invoked -= other.GetIndexBinder_Key_Property_Invoked;
+			SetIndexBinderCreated -= other.SetIndexBinderCreated;
+			SetIndexBinderInvoked -= other.SetIndexBinderInvoked;
+			SetIndexBinder_Int_Invoked -= other.SetIndexBinder_Int_Invoked;
+			SetIndexBinder_Key_Invoked -= other.SetIndexBinder_Key_Invoked;
+			SetIndexBinder_Key_Dictionary_Invoked -= other.SetIndexBinder_Key_Dictionary_Invoked;
+			SetIndexBinder_Key_Property_Invoked -= other.SetIndexBinder_Key_Property_Invoked;
+			GetMemberBinderCreated -= other.GetMemberBinderCreated;
+			GetMemberBinderInvoked -= other.GetMemberBinderInvoked;
+			GetMemberBinder_Resolve_Invoked -= other.GetMemberBinder_Resolve_Invoked;
+			SetMemberBinderCreated -= other.SetMemberBinderCreated;
+			SetMemberBinderInvoked -= other.SetMemberBinderInvoked;
+			SetMemberBinder_Resolve_Invoked -= other.SetMemberBinder_Resolve_Invoked;
+			InvokeBinderCreated -= other.InvokeBinderCreated;
+			InvokeBinderInvoked -= other.InvokeBinderInvoked;
+			InvokeConstructorBinderCreated -= other.InvokeConstructorBinderCreated;
+			InvokeConstructorBinderInvoked -= other.InvokeConstructorBinderInvoked;
+			InvokeMemberBinderCreated -= other.InvokeMemberBinderCreated;
+			InvokeMemberBinderInvoked -= other.InvokeMemberBinderInvoked;
+			IsEventBinderCreated -= other.IsEventBinderCreated;
+			IsEventBinderInvoked -= other.IsEventBinderInvoked;
+
+			// Counters for dynamic
+			Dynamic_ConvertMethodParametersInvoked -= other.Dynamic_ConvertMethodParametersInvoked;
+			Dynamic_FindPropertyGetterInvoked -= other.Dynamic_FindPropertyGetterInvoked;
+			Dynamic_FindPropertySetterInvoked -= other.Dynamic_FindPropertySetterInvoked;
+			Dynamic_ConvertValueInvoked -= other.Dynamic_ConvertValueInvoked;
+			Dynamic_CanConvertValueInvoked -= other.Dynamic_CanConvertValueInvoked;
+			Dynamic_ConvertValueGenericInvoked -= other.Dynamic_ConvertValueGenericInvoked;
+			Dynamic_GetDelegateTypeForMethodInvoked -= other.Dynamic_GetDelegateTypeForMethodInvoked;
+			Dynamic_GetInstanceMemberInvoked -= other.Dynamic_GetInstanceMemberInvoked;
+			Dynamic_SetInstanceMemberInvoked -= other.Dynamic_SetInstanceMemberInvoked;
+			Dynamic_GetStaticMemberInvoked -= other.Dynamic_GetStaticMemberInvoked;
+			Dynamic_SetStaticMemberInvoked -= other.Dynamic_SetStaticMemberInvoked;
+			Dynamic_CastObjectToBoolInvoked -= other.Dynamic_CastObjectToBoolInvoked;
+			Dynamic_InvokeStaticInvoked -= other.Dynamic_InvokeStaticInvoked;
+			Dynamic_ObjectIsClassInvoked -= other.Dynamic_ObjectIsClassInvoked;
+			Dynamic_HasOwnPropertyInvoked -= other.Dynamic_HasOwnPropertyInvoked;
+		}
+
+		public void CopyFrom(Stats other)
+		{
+			UnaryOperationBinderCreated = other.UnaryOperationBinderCreated;
+			UnaryOperationBinderInvoked = other.UnaryOperationBinderInvoked;
+			BinaryOperationBinderCreated = other.BinaryOperationBinderCreated;
+			BinaryOperationBinderInvoked = other.BinaryOperationBinderInvoked;
+			ConvertBinderCreated = other.ConvertBinderCreated;
+			ConvertBinderInvoked = other.ConvertBinderInvoked;
+			GetIndexBinderCreated = other.GetIndexBinderCreated;
+			GetIndexBinderInvoked = other.GetIndexBinderInvoked;
+			GetIndexBinder_Int_Invoked = other.GetIndexBinder_Int_Invoked;
+			GetIndexBinder_Key_Invoked = other.GetIndexBinder_Key_Invoked;
+			GetIndexBinder_Key_Dictionary_Invoked = other.GetIndexBinder_Key_Dictionary_Invoked;
+			GetIndexBinder_Key_Property_Invoked = other.GetIndexBinder_Key_Property_Invoked;
+			SetIndexBinderCreated = other.SetIndexBinderCreated;
+			SetIndexBinderInvoked = other.SetIndexBinderInvoked;
+			SetIndexBinder_Int_Invoked = other.SetIndexBinder_Int_Invoked;
+			SetIndexBinder_Key_Invoked = other.SetIndexBinder_Key_Invoked;
+			SetIndexBinder_Key_Dictionary_Invoked = other.SetIndexBinder_Key_Dictionary_Invoked;
+			SetIndexBinder_Key_Property_Invoked = other.SetIndexBinder_Key_Property_Invoked;
+			GetMemberBinderCreated = other.GetMemberBinderCreated;
+			GetMemberBinderInvoked = other.GetMemberBinderInvoked;
+			GetMemberBinder_Resolve_Invoked = other.GetMemberBinder_Resolve_Invoked;
+			SetMemberBinderCreated = other.SetMemberBinderCreated;
+			SetMemberBinderInvoked = other.SetMemberBinderInvoked;
+			SetMemberBinder_Resolve_Invoked = other.SetMemberBinder_Resolve_Invoked;
+			InvokeBinderCreated = other.InvokeBinderCreated;
+			InvokeBinderInvoked = other.InvokeBinderInvoked;
+			InvokeConstructorBinderCreated = other.InvokeConstructorBinderCreated;
+			InvokeConstructorBinderInvoked = other.InvokeConstructorBinderInvoked;
+			InvokeMemberBinderCreated = other.InvokeMemberBinderCreated;
+			InvokeMemberBinderInvoked = other.InvokeMemberBinderInvoked;
+			IsEventBinderCreated = other.IsEventBinderCreated;
+			IsEventBinderInvoked = other.IsEventBinderInvoked;
+
+			// Counters for dynamic
+			Dynamic_ConvertMethodParametersInvoked = other.Dynamic_ConvertMethodParametersInvoked;
+			Dynamic_FindPropertyGetterInvoked = other.Dynamic_FindPropertyGetterInvoked;
+			Dynamic_FindPropertySetterInvoked = other.Dynamic_FindPropertySetterInvoked;
+			Dynamic_ConvertValueInvoked = other.Dynamic_ConvertValueInvoked;
+			Dynamic_CanConvertValueInvoked = other.Dynamic_CanConvertValueInvoked;
+			Dynamic_ConvertValueGenericInvoked = other.Dynamic_ConvertValueGenericInvoked;
+			Dynamic_GetDelegateTypeForMethodInvoked = other.Dynamic_GetDelegateTypeForMethodInvoked;
+			Dynamic_GetInstanceMemberInvoked = other.Dynamic_GetInstanceMemberInvoked;
+			Dynamic_SetInstanceMemberInvoked = other.Dynamic_SetInstanceMemberInvoked;
+			Dynamic_GetStaticMemberInvoked = other.Dynamic_GetStaticMemberInvoked;
+			Dynamic_SetStaticMemberInvoked = other.Dynamic_SetStaticMemberInvoked;
+			Dynamic_CastObjectToBoolInvoked = other.Dynamic_CastObjectToBoolInvoked;
+			Dynamic_InvokeStaticInvoked = other.Dynamic_InvokeStaticInvoked;
+			Dynamic_ObjectIsClassInvoked = other.Dynamic_ObjectIsClassInvoked;
+			Dynamic_HasOwnPropertyInvoked = other.Dynamic_HasOwnPropertyInvoked;
+		}
+
+
 		public void Reset()
 		{
 			// Counters for binders
@@ -130,11 +290,26 @@ namespace PlayScript
 			Dynamic_HasOwnPropertyInvoked = 0;
 		}
 
+		public Dictionary<string, int> ToDictionary(bool skipZeros)
+		{
+			var d = new Dictionary<string, int>();
+			foreach (var field in this.GetType().GetFields()) {
+				if (field.FieldType == typeof(int)) {
+					int value = (int)field.GetValue(this);
+					if (!skipZeros || value != 0)
+					{
+						d.Add(field.Name, value);
+					}
+				}
+			}
+			return d;
+		}
+
 		public void WriteToConsole()
 		{
-			Console.WriteLine();
-			Console.WriteLine("Stats:");
-			Console.WriteLine("Binders:");
+//			Console.WriteLine();
+//			Console.WriteLine("Stats:");
+//			Console.WriteLine("Binders:");
 			Console.WriteLine("UnaryOperationBinder - Created: {0} - Invoked: {1}", UnaryOperationBinderCreated, UnaryOperationBinderInvoked);
 			Console.WriteLine("BinaryOperationBinder - Created: {0} - Invoked: {1}", BinaryOperationBinderCreated, BinaryOperationBinderInvoked);
 			Console.WriteLine("ConvertBinder - Created: {0} - Invoked: {1}", ConvertBinderCreated, ConvertBinderInvoked);
@@ -175,5 +350,3 @@ namespace PlayScript
 		}
 	}
 }
-
-#endif

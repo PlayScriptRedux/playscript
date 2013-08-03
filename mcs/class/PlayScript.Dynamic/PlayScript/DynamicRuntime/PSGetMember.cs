@@ -48,6 +48,10 @@ namespace PlayScript.DynamicRuntime
 		/// </summary>
 		public T GetMember<T> (object o)
 		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.GetMemberBinderInvoked;
+			#endif
+
 			if (o == null) {
 				return default(T);
 			}
@@ -122,6 +126,9 @@ namespace PlayScript.DynamicRuntime
 			}
 
 			// resolve name
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.GetMemberBinder_Resolve_Invoked;
+			#endif
 
 			// resolve as property
 			var property = otype.GetProperty(mName);
