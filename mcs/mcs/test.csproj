@@ -49,8 +49,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\tests\ps-issue-157.as">
-      <Link>ps-issue-157.as</Link>
+    <Compile Include="..\tests\ps-issue-121.as">
+      <Link>ps-issue-121.as</Link>
     </Compile>
   </ItemGroup>
 </Project>
