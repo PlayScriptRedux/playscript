@@ -25,6 +25,12 @@ package
 			trace(a,b);
 		}
 
+		public function testInvoke2(o:Object):void 
+		{
+			trace(o);
+		}
+
+
 		public function testFunc(a:int):int
 		{
 			return a + 1;
@@ -435,7 +441,8 @@ package
 
 			var t:Texture = new Texture();
 			var o:Object = t;
-			o.testInvoke(5, "abc");
+//			o.testInvoke(5, "abc");
+			o.testInvoke2({a:5, b:6});
 
 			var i:int = o.testFunc(10);
 			trace(i);

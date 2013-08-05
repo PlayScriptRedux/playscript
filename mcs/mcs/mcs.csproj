@@ -24,6 +24,7 @@
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <Commandlineparameters>/newdynamic /noconfig "/r:/Users/iaddis/playscript-install/lib/mono/4.0/mscorlib.dll" -nostdlib "/out:/Users/iaddis/dev/playscript-mono/mcs/mcs/test2.exe" "/r:/Users/iaddis/playscript-install/lib/mono/4.0/System.dll" "/r:/Users/iaddis/dev/playscript-mono/mcs/class/PlayScript.Dynamic_aot/bin/Debug/PlayScript.Dynamic_aot.dll" "/r:/Users/iaddis/dev/playscript-mono/mcs/class/pscorlib_aot/bin/Debug/pscorlib_monomac.dll" "/r:/Users/iaddis/dev/playscript-mono/mcs/class/Mono.Optimization/bin/Debug/Mono.Optimization.dll" "/r:/Users/iaddis/playscript-install/lib/mono/4.0/System.Core.dll" /nologo /warn:4 /debug:full /optimize- /codepage:utf8 -unsafe "/define:DEBUG"  /t:exe "/Users/iaddis/dev/playscript-mono/mcs/tests/pstest-004.as" 
 </Commandlineparameters>
+    <additionalargs>/newdynamic-</additionalargs>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>

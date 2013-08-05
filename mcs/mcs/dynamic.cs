@@ -1122,6 +1122,12 @@ namespace Mono.CSharp
 			return base.DoResolve(rc);
 		}
 
+//		public override bool OverrideReturnType(TypeSpec t) {
+//			this.Type = t;
+//			return true;
+//		}
+
+
 		#region IDynamicCallSite implementation
 
 		public bool UseCallSite(ResolveContext rc, Arguments args)
@@ -1143,12 +1149,39 @@ namespace Mono.CSharp
 				);
 		}
 
+		public TypeArguments CreateTypeArgumentsForInvoke(ResolveContext ec, Arguments args, int startIndex)
+		{
+			var ta = new TypeArguments();
+			for (int i = startIndex; i < args.Count; ++i) {
+				Argument a = args[i];
+				var t = a.Type;
+
+				// Convert any internal type like dynamic or null to object
+				if (t.Kind == MemberKind.InternalCompilerType)
+					t = ec.BuiltinTypes.Object;
+
+//				if ((t.IsClass || t.IsInterface) && (t.BuiltinType != BuiltinTypeSpec.Type.String)) {
+//					t = ec.BuiltinTypes.Object;
+//				}
+
+				ta.Add( new TypeExpression (t, loc) );
+			}
+			return ta;
+		}
+
+
 		public Expression InvokeCallSite(ResolveContext rc, Expression site, Arguments args, TypeSpec returnType, bool isStatement)
 		{
 			string memberName = "Invoke";
 			memberName += isStatement ? "Action" : "Func"; 
 			memberName += (args.Count - 1);
-			return new Invocation(new MemberAccess(site, memberName), args);
+
+			var ta = CreateTypeArgumentsForInvoke(rc, args, 1);
+//			if (!isStatement) {
+//				ta.Add(new TypeExpression(returnType, loc));
+//			}
+
+			return new Invocation(new MemberAccess(site, memberName, ta, loc), args);
 		}
 
 		#endregion
