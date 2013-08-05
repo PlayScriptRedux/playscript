@@ -19,6 +19,17 @@ package
 		public function get valueF():Number{return mValueF;}
 		public function set valueF(v:Number):void {mValueF = v;}
 
+
+		public function testInvoke(a:int, b:String):void 
+		{
+			trace(a,b);
+		}
+
+		public function testFunc(a:int):int
+		{
+			return a + 1;
+		}
+
 		private var mValueF:Number;
 
 
@@ -52,6 +63,8 @@ package
 		public override function foo():void {}
 		public function inlinable():void {}
 		public function set value_inlinable(val:int):void {}
+
+		public function Texture3(a:int) {}
 	}
 
 
@@ -419,15 +432,26 @@ package
 //			var a:int, b:int;
 //			var summary:Object = new Object();
 
-			var obj:Object = new Object();
-			var id:String = "abc";
-			obj[id] = 0;
-			obj[id]++;
+
+			var t:Texture = new Texture();
+			var o:Object = t;
+			o.testInvoke(5, "abc");
+
+			var i:int = o.testFunc(10);
+			trace(i);
+
+
+//			var obj:Object = new Object();
+//			var t3:Texture3 = new Texture3(obj);
+//			trace(t3);
+//			var id:String = "abc";
+//			obj[id] = 0;
+//			obj[id]++;
 
 //			obj.id = 0;
 //			obj.id++;
 
-			trace(obj.id);
+//			trace(obj.id);
 
 //			var alpha:Number = 0.0;
 //			obj.hello = null;
@@ -443,16 +467,16 @@ package
 				alpha = obj.hasOwnProperty("alpha") ? obj.alpha : 0.6;
 				}
 			}*/
-			trace(a);
+//			trace(a);
 
-			var a:Object = 5.0;
-			var b:Object = 10.0;
-			var c:Number = a + b;
-			var d:Number = a - b;
-			var e:Number = a / b;
-			var f:Number = a * b;
-			var g:Number = a % b;
-			trace(a,b,c,d,e,f,g);
+//			var a:Object = 5.0;
+//			var b:Object = 10.0;
+//			var c:Number = a + b;
+//			var d:Number = a - b;
+//			var e:Number = a / b;
+//			var f:Number = a * b;
+//			var g:Number = a % b;
+//			trace(a,b,c,d,e,f,g);
 
 			/*
 

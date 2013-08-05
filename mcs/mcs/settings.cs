@@ -208,6 +208,8 @@ namespace Mono.CSharp {
 		public bool NewDynamicRuntime_Conditional = false;
 		// if true, event add/remove binders will be disabled
 		public bool NewDynamicRuntime_EventAddRemove = false;
+		// if true, invoke member binder
+		public bool NewDynamicRuntime_InvokeMember = false;
 
 		public void SetNewDynamicRuntimeEnable(bool value)
 		{
@@ -221,6 +223,7 @@ namespace Mono.CSharp {
 			NewDynamicRuntime_GetSetMember = value;
 			NewDynamicRuntime_Conditional = value;
 			NewDynamicRuntime_EventAddRemove = value;
+			NewDynamicRuntime_InvokeMember = false; // value; // disable for now 
 		}
 
 		//

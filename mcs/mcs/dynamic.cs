@@ -209,7 +209,7 @@ namespace Mono.CSharp
 	{
 		bool 	   UseCallSite(ResolveContext rc, Arguments args);
 		Expression CreateCallSite(ResolveContext rc, Arguments args, bool isSet);
-		Expression InvokeCallSite(ResolveContext rc, Expression site, Arguments args, TypeSpec returnType);
+		Expression InvokeCallSite(ResolveContext rc, Expression site, Arguments args, TypeSpec returnType, bool isStatement);
 	}
 
 	//
@@ -448,7 +448,7 @@ namespace Mono.CSharp
 				arguments.CastDynamicArgs(bc);
 
 				IDynamicCallSite dynamicCallSite = (IDynamicCallSite)this.binder;
-				Expression target = dynamicCallSite.InvokeCallSite(bc, site_field_expr, arguments, type);
+				Expression target = dynamicCallSite.InvokeCallSite(bc, site_field_expr, arguments, type, isStatement);
 				if (target != null) 
 					target = target.Resolve(bc);
 
@@ -843,7 +843,7 @@ namespace Mono.CSharp
 			return null;
 		}
 
-		public Expression InvokeCallSite(ResolveContext rc, Expression site, Arguments args, TypeSpec returnType)
+		public Expression InvokeCallSite(ResolveContext rc, Expression site, Arguments args, TypeSpec returnType, bool isStatement)
 		{
 			var expr = args[0].Expr;
 			var target_type = type;
@@ -921,6 +921,11 @@ namespace Mono.CSharp
 			base.binder = this;
 		}
 
+		protected override Expression DoResolve(ResolveContext rc)
+		{
+			return base.DoResolve(rc);
+		}
+
 		public Expression CreateCallSiteBinder (ResolveContext ec, Arguments args)
 		{
 			Arguments binder_args = new Arguments (3);
@@ -981,7 +986,7 @@ namespace Mono.CSharp
 				);
 		}
 
-		public override Expression InvokeCallSite(ResolveContext rc, Expression site, Arguments args, TypeSpec returnType)
+		public override Expression InvokeCallSite(ResolveContext rc, Expression site, Arguments args, TypeSpec returnType, bool isStatement)
 		{
 			// get object and index
 			var obj = args[0].Expr;
@@ -1081,7 +1086,7 @@ namespace Mono.CSharp
 		}
 	}
 
-	class DynamicInvocation : DynamicExpressionStatement, IDynamicBinder
+	class DynamicInvocation : DynamicExpressionStatement, IDynamicBinder, IDynamicCallSite
 	{
 		readonly ATypeNameExpression member;
 
@@ -1116,6 +1121,37 @@ namespace Mono.CSharp
 
 			return base.DoResolve(rc);
 		}
+
+		#region IDynamicCallSite implementation
+
+		public bool UseCallSite(ResolveContext rc, Arguments args)
+		{
+			bool is_member_access = member is MemberAccess;
+			return is_member_access && rc.Module.Compiler.Settings.NewDynamicRuntime_InvokeMember;
+		}
+
+		public Expression CreateCallSite(ResolveContext rc, Arguments args, bool isSet)
+		{
+			// construct new PsInvokeMember(name, argCount)
+			var site_args = new Arguments(2);
+			site_args.Add(new Argument(new StringLiteral(rc.BuiltinTypes, member.Name, member.Location)));
+			site_args.Add(new Argument(new IntLiteral(rc.BuiltinTypes, (args.Count - 1), loc)));
+			return new New(
+				new TypeExpression(rc.Module.PredefinedTypes.PsInvokeMember.Resolve(), loc),
+				site_args, 
+				loc
+				);
+		}
+
+		public Expression InvokeCallSite(ResolveContext rc, Expression site, Arguments args, TypeSpec returnType, bool isStatement)
+		{
+			string memberName = "Invoke";
+			memberName += isStatement ? "Action" : "Func"; 
+			memberName += (args.Count - 1);
+			return new Invocation(new MemberAccess(site, memberName), args);
+		}
+
+		#endregion
 
 		public Expression CreateCallSiteBinder (ResolveContext ec, Arguments args)
 		{
@@ -1214,7 +1250,7 @@ namespace Mono.CSharp
 				);
 		}
 
-		public override Expression InvokeCallSite(ResolveContext rc, Expression site, Arguments args, TypeSpec returnType)
+		public override Expression InvokeCallSite(ResolveContext rc, Expression site, Arguments args, TypeSpec returnType, bool isStatement)
 		{
 			var obj = args[0].Expr;
 
@@ -1319,7 +1355,7 @@ namespace Mono.CSharp
 		#region IDynamicCallSite implementation
 		public abstract bool       UseCallSite(ResolveContext rc, Arguments args);
 		public abstract Expression CreateCallSite(ResolveContext rc, Arguments args, bool isSet);
-		public abstract Expression InvokeCallSite(ResolveContext ec, Expression site, Arguments args, TypeSpec returnType);
+		public abstract Expression InvokeCallSite(ResolveContext ec, Expression site, Arguments args, TypeSpec returnType, bool isStatement);
 		#endregion
 
 		protected virtual Arguments CreateSetterArguments (ResolveContext rc, Expression rhs)

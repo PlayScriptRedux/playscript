@@ -210,10 +210,4 @@
     <None Include="ps-parser.jay" />
     <None Include="options.rsp" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="test.csproj">
-      <Project>{B5782FD5-CBC6-4194-BF51-A20D55CEBE78}</Project>
-      <Name>test</Name>
-    </ProjectReference>
-  </ItemGroup>
 </Project>

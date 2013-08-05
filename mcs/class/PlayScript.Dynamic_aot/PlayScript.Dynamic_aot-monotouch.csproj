@@ -194,6 +194,9 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSUnaryOperation.cs">
       <Link>PlayScript\DynamicRuntime\PSUnaryOperation.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSInvokeMember.cs">
+      <Link>PlayScript\DynamicRuntime\PSInvokeMember.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\PlayScript.Dynamic\PlayScript.Dynamic.dll.sources">
