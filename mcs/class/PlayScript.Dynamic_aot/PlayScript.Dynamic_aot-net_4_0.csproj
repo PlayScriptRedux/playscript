@@ -204,6 +204,9 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSInvokeMember.cs">
       <Link>PlayScript\DynamicRuntime\PSInvokeMember.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSInvoke.cs">
+      <Link>PlayScript\DynamicRuntime\PSInvoke.cs</Link>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

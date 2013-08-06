@@ -1166,20 +1166,33 @@ namespace Mono.CSharp
 		public bool UseCallSite(ResolveContext rc, Arguments args)
 		{
 			bool is_member_access = member is MemberAccess;
-			return is_member_access && rc.Module.Compiler.Settings.NewDynamicRuntime_InvokeMember;
+			return (is_member_access && rc.Module.Compiler.Settings.NewDynamicRuntime_InvokeMember) ||
+				   (!is_member_access && rc.Module.Compiler.Settings.NewDynamicRuntime_Invoke);
 		}
 
 		public Expression CreateCallSite(ResolveContext rc, Arguments args, bool isSet)
 		{
-			// construct new PsInvokeMember(name, argCount)
-			var site_args = new Arguments(2);
-			site_args.Add(new Argument(new StringLiteral(rc.BuiltinTypes, member.Name, member.Location)));
-			site_args.Add(new Argument(new IntLiteral(rc.BuiltinTypes, (args.Count - 1), loc)));
-			return new New(
-				new TypeExpression(rc.Module.PredefinedTypes.PsInvokeMember.Resolve(), loc),
-				site_args, 
-				loc
+			bool is_member_access = member is MemberAccess;
+			if (is_member_access) {
+				// construct new PsInvokeMember(name, argCount)
+				var site_args = new Arguments(2);
+				site_args.Add(new Argument(new StringLiteral(rc.BuiltinTypes, member.Name, member.Location)));
+				site_args.Add(new Argument(new IntLiteral(rc.BuiltinTypes, (args.Count - 1), loc)));
+				return new New(
+					new TypeExpression(rc.Module.PredefinedTypes.PsInvokeMember.Resolve(), loc),
+					site_args, 
+					loc
 				);
+			} else {
+				// construct new PsInvoke(argCount)
+				var site_args = new Arguments(1);
+				site_args.Add(new Argument(new IntLiteral(rc.BuiltinTypes, (args.Count - 1), loc)));
+				return new New(
+					new TypeExpression(rc.Module.PredefinedTypes.PsInvoke.Resolve(), loc),
+					site_args, 
+					loc
+					);
+			}
 		}
 
 		public TypeExpression CreateReducedTypeExpression(ResolveContext ec, TypeSpec t)
@@ -1197,20 +1210,28 @@ namespace Mono.CSharp
 
 		public Expression InvokeCallSite(ResolveContext rc, Expression site, Arguments args, TypeSpec returnType, bool isStatement)
 		{
-			string memberName = "Invoke";
-			memberName += isStatement ? "Action" : "Func"; 
-			memberName += (args.Count - 1);
+			bool is_member_access = member is MemberAccess;
+			if (is_member_access) {
+				string memberName = "Invoke";
+				memberName += isStatement ? "Action" : "Func"; 
+				memberName += (args.Count - 1);
 
-			var ta = new TypeArguments();
-			for (int i = 1; i < args.Count; ++i) {
-				ta.Add(CreateReducedTypeExpression(rc, args[i].Type));
+				var ta = new TypeArguments();
+				for (int i = 1; i < args.Count; ++i) {
+					ta.Add(CreateReducedTypeExpression(rc, args[i].Type));
+				}
+
+				if (!isStatement) {
+					ta.Add(CreateReducedTypeExpression(rc, returnType));
+				}
+
+				return new Invocation(new MemberAccess(site, memberName, ta, loc), args);
+			} else {
+				string memberName = "Invoke";
+				memberName += isStatement ? "Action" : "Func"; 
+				memberName += (args.Count - 1);
+				return new Invocation(new MemberAccess(site, memberName), args);
 			}
-
-			if (!isStatement) {
-				ta.Add(CreateReducedTypeExpression(rc, returnType));
-			}
-
-			return new Invocation(new MemberAccess(site, memberName, ta, loc), args);
 		}
 
 		#endregion

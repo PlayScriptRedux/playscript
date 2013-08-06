@@ -70,7 +70,7 @@ package
 		public function inlinable():void {}
 		public function set value_inlinable(val:int):void {}
 
-		public function Texture3(a:int) {}
+		public function Texture3(a:int, b:Number = 5.0) {}
 	}
 
 
@@ -439,18 +439,26 @@ package
 //			var summary:Object = new Object();
 
 
-			var t:Texture = new Texture();
-			var o:Object = t;
-//			o.testInvoke(5, "abc");
-			o.testInvoke2({a:5, b:6});
+//			var t:Texture = new Texture();
+//			var o:Object = t;
+////			o.testInvoke(5, "abc");
+//			o.testInvoke2({a:5, b:6});
+//
+//			var i:int = o.testFunc(10);
+//			trace(i);
 
-			var i:int = o.testFunc(10);
-			trace(i);
+
+			var obj:Object = new Object();
+			var str:String = obj.toString();
+			var str1:String = obj.ToString();
+			var t3:Texture3 = new Texture3(5);
+
+			var f3:Function = t3.testInvoke;
+
+			f3(5, "abc");
 
 
-//			var obj:Object = new Object();
-//			var t3:Texture3 = new Texture3(obj);
-//			trace(t3);
+			trace(t3);
 //			var id:String = "abc";
 //			obj[id] = 0;
 //			obj[id]++;

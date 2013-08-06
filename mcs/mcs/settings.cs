@@ -210,6 +210,8 @@ namespace Mono.CSharp {
 		public bool NewDynamicRuntime_EventAddRemove = false;
 		// if true, PSInvokeMember non-delegate invokes are used
 		public bool NewDynamicRuntime_InvokeMember = false;
+		// if true, PSInvoke non-delegate invokes are used for calling Functions
+		public bool NewDynamicRuntime_Invoke = false;
 		// if true, toString/ToString is statically called on dynamics
 		public bool NewDynamicRuntime_ToString = false;
 		// if true, dynamic Constructor will be resolved at compile time if possible
@@ -228,6 +230,7 @@ namespace Mono.CSharp {
 			NewDynamicRuntime_Conditional = value;
 			NewDynamicRuntime_EventAddRemove = value;
 			NewDynamicRuntime_InvokeMember = value;
+			NewDynamicRuntime_Invoke = value;
 			NewDynamicRuntime_ToString = value;
 			NewDynamicRuntime_Constructor = value;
 		}
@@ -254,8 +257,6 @@ namespace Mono.CSharp {
 			// turn it on by default?
 //			SetNewDynamicRuntimeEnable(false);
 			SetNewDynamicRuntimeEnable(true);
-//			NewDynamicRuntime_Conditional = true;
-//			NewDynamicRuntime_ConvertReturnType = false;
 
 			// Default to 1 or mdb files would be platform speficic
 			TabSize = 1;
