@@ -144,242 +144,16 @@ namespace PlayScript.DynamicRuntime
 			throw new InvalidOperationException("Could not find suitable method to invoke: " + mName + " for type: " + mType);
 		}
 
-#if BOXED_INVOKE
-		public void InvokeAction0 (object o)
+		private TR ResolveAndInvokeAndConvert<TR>(object o)
 		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
-			ResolveAndInvoke(o);
+			object value = ResolveAndInvoke(o);
+			if (value is TR) {
+				return (TR)value;
+			} else {
+				return Dynamic.ConvertValue<TR>(value);
+			}
 		}
 
-		public void InvokeAction1 (object o, object a1)
-		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
-			var args   = mArgs;
-			args[0] = a1;
-			ResolveAndInvoke(o);
-		}
-
-		public void InvokeAction2 (object o, object a1, object a2)
-		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
-			var args   = mArgs;
-			args[0] = a1;
-			args[1] = a2;
-			ResolveAndInvoke(o);
-		}
-
-		public void InvokeAction3 (object o, object a1, object a2, object a3)
-		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
-			var args   = mArgs;
-			args[0] = a1;
-			args[1] = a2;
-			args[2] = a3;
-			ResolveAndInvoke(o);
-		}
-
-		public void InvokeAction4 (object o, object a1, object a2, object a3, object a4)
-		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
-			var args   = mArgs;
-			args[0] = a1;
-			args[1] = a2;
-			args[2] = a3;
-			args[3] = a4;
-			ResolveAndInvoke(o);
-		}
-
-		public void InvokeAction5 (object o, object a1, object a2, object a3, object a4, object a5)
-		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
-			var args   = mArgs;
-			args[0] = a1;
-			args[1] = a2;
-			args[2] = a3;
-			args[3] = a4;
-			args[4] = a5;
-			ResolveAndInvoke(o);
-		}
-
-		public void InvokeAction6 (object o, object a1, object a2, object a3, object a4, object a5, object a6)
-		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
-			var args   = mArgs;
-			args[0] = a1;
-			args[1] = a2;
-			args[2] = a3;
-			args[3] = a4;
-			args[4] = a5;
-			args[5] = a6;
-			ResolveAndInvoke(o);
-		}
-
-		public void InvokeAction7 (object o, object a1, object a2, object a3, object a4, object a5, object a6, object a7)
-		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
-			var args   = mArgs;
-			args[0] = a1;
-			args[1] = a2;
-			args[2] = a3;
-			args[3] = a4;
-			args[4] = a5;
-			args[5] = a6;
-			args[6] = a7;
-			ResolveAndInvoke(o);
-		}
-
-		
-		public void InvokeAction8 (object o, object a1, object a2, object a3, object a4, object a5, object a6, object a7, object a8)
-		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
-			var args   = mArgs;
-			args[0] = a1;
-			args[1] = a2;
-			args[2] = a3;
-			args[3] = a4;
-			args[4] = a5;
-			args[5] = a6;
-			args[6] = a7;
-			args[7] = a8;
-			ResolveAndInvoke(o);
-		}
-
-		public object InvokeFunc0 (object o)
-		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
-			return ResolveAndInvoke(o);
-		}
-		
-		public object InvokeFunc1 (object o, object a1)
-		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
-			var args   = mArgs;
-			args[0] = a1;
-			return ResolveAndInvoke(o);
-		}
-		
-		public object InvokeFunc2 (object o, object a1, object a2)
-		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
-			var args   = mArgs;
-			args[0] = a1;
-			args[1] = a2;
-			return ResolveAndInvoke(o);
-		}
-		
-		public object InvokeFunc3 (object o, object a1, object a2, object a3)
-		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
-			var args   = mArgs;
-			args[0] = a1;
-			args[1] = a2;
-			args[2] = a3;
-			return ResolveAndInvoke(o);
-		}
-		
-		public object InvokeFunc4 (object o, object a1, object a2, object a3, object a4)
-		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
-			var args   = mArgs;
-			args[0] = a1;
-			args[1] = a2;
-			args[2] = a3;
-			args[3] = a4;
-			return ResolveAndInvoke(o);
-		}
-
-		
-		public object InvokeFunc5 (object o, object a1, object a2, object a3, object a4, object a5)
-		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
-			var args   = mArgs;
-			args[0] = a1;
-			args[1] = a2;
-			args[2] = a3;
-			args[3] = a4;
-			args[4] = a5;
-			return ResolveAndInvoke(o);
-		}
-		
-		public object InvokeFunc6 (object o, object a1, object a2, object a3, object a4, object a5, object a6)
-		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
-			var args   = mArgs;
-			args[0] = a1;
-			args[1] = a2;
-			args[2] = a3;
-			args[3] = a4;
-			args[4] = a5;
-			args[5] = a6;
-			return ResolveAndInvoke(o);
-		}
-		
-		public object InvokeFunc7 (object o, object a1, object a2, object a3, object a4, object a5, object a6, object a7)
-		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
-			var args   = mArgs;
-			args[0] = a1;
-			args[1] = a2;
-			args[2] = a3;
-			args[3] = a4;
-			args[4] = a5;
-			args[5] = a6;
-			args[6] = a7;
-			return ResolveAndInvoke(o);
-		}
-		
-		public object InvokeFunc8 (object o, object a1, object a2, object a3, object a4, object a5, object a6, object a7, object a8)
-		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
-			var args   = mArgs;
-			args[0] = a1;
-			args[1] = a2;
-			args[2] = a3;
-			args[3] = a4;
-			args[4] = a5;
-			args[5] = a6;
-			args[6] = a7;
-			args[7] = a8;
-			return ResolveAndInvoke(o);
-		}
-
-#else // BOXED_INVOKE
 
 	public void InvokeAction0 (object o)
 	{
@@ -498,25 +272,25 @@ namespace PlayScript.DynamicRuntime
 		ResolveAndInvoke(o);
 	}
 
-	public object InvokeFunc0(object o)
+	public TR InvokeFunc0<TR>(object o)
 	{
 		#if BINDERS_RUNTIME_STATS
 		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
 		#endif
-		return ResolveAndInvoke(o);
+		return ResolveAndInvokeAndConvert<TR>(o);
 	}
 
-	public object InvokeFunc1<A1> (object o, A1 a1)
+	public TR InvokeFunc1<A1,TR>(object o, A1 a1)
 	{
 		#if BINDERS_RUNTIME_STATS
 		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
 		#endif
 		var args   = mArgs;
 		args[0] = (object)a1;
-		return ResolveAndInvoke(o);
+		return ResolveAndInvokeAndConvert<TR>(o);
 	}
 
-	public object InvokeFunc2<A1,A2> (object o, A1 a1, A2 a2)
+	public TR InvokeFunc2<A1,A2,TR>(object o, A1 a1, A2 a2)
 	{
 		#if BINDERS_RUNTIME_STATS
 		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
@@ -524,10 +298,10 @@ namespace PlayScript.DynamicRuntime
 		var args   = mArgs;
 		args[0] = (object)a1;
 		args[1] = (object)a2;
-		return ResolveAndInvoke(o);
+		return ResolveAndInvokeAndConvert<TR>(o);
 	}
 
-	public object InvokeFunc3<A1,A2,A3> (object o, A1 a1, A2 a2, A3 a3)
+	public TR InvokeFunc3<A1,A2,A3,TR> (object o, A1 a1, A2 a2, A3 a3)
 	{
 		#if BINDERS_RUNTIME_STATS
 		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
@@ -536,10 +310,10 @@ namespace PlayScript.DynamicRuntime
 		args[0] = (object)a1;
 		args[1] = (object)a2;
 		args[2] = (object)a3;
-		return ResolveAndInvoke(o);
+		return ResolveAndInvokeAndConvert<TR>(o);
 	}
 
-	public object InvokeFunc4<A1,A2,A3,A4> (object o, A1 a1, A2 a2, A3 a3, A4 a4)
+	public TR InvokeFunc4<A1,A2,A3,A4,TR> (object o, A1 a1, A2 a2, A3 a3, A4 a4)
 	{
 		#if BINDERS_RUNTIME_STATS
 		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
@@ -549,10 +323,10 @@ namespace PlayScript.DynamicRuntime
 		args[1] = (object)a2;
 		args[2] = (object)a3;
 		args[3] = (object)a4;
-		return ResolveAndInvoke(o);
+		return ResolveAndInvokeAndConvert<TR>(o);
 	}
 
-	public object InvokeFunc5<A1,A2,A3,A4,A5>(object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5)
+	public TR InvokeFunc5<A1,A2,A3,A4,A5,TR>(object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5)
 	{
 		#if BINDERS_RUNTIME_STATS
 		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
@@ -563,10 +337,10 @@ namespace PlayScript.DynamicRuntime
 		args[2] = (object)a3;
 		args[3] = (object)a4;
 		args[4] = (object)a5;
-		return ResolveAndInvoke(o);
+		return ResolveAndInvokeAndConvert<TR>(o);
 	}
 
-	public object InvokeFunc6<A1,A2,A3,A4,A5,A6> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6)
+	public TR InvokeFunc6<A1,A2,A3,A4,A5,A6,TR> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6)
 	{
 		#if BINDERS_RUNTIME_STATS
 		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
@@ -578,10 +352,10 @@ namespace PlayScript.DynamicRuntime
 		args[3] = (object)a4;
 		args[4] = (object)a5;
 		args[5] = (object)a6;
-		return ResolveAndInvoke(o);
+		return ResolveAndInvokeAndConvert<TR>(o);
 	}
 
-	public object InvokeFunc7<A1,A2,A3,A4,A5,A6,A7> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7)
+	public TR InvokeFunc7<A1,A2,A3,A4,A5,A6,A7,TR> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7)
 	{
 		#if BINDERS_RUNTIME_STATS
 		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
@@ -594,11 +368,11 @@ namespace PlayScript.DynamicRuntime
 		args[4] = (object)a5;
 		args[5] = (object)a6;
 		args[6] = (object)a7;
-		return ResolveAndInvoke(o);
+		return ResolveAndInvokeAndConvert<TR>(o);
 	}
 
 
-	public object InvokeFunc8<A1,A2,A3,A4,A5,A6,A7,A8> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8)
+	public TR InvokeFunc8<A1,A2,A3,A4,A5,A6,A7,A8,TR> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8)
 	{
 		#if BINDERS_RUNTIME_STATS
 		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
@@ -612,9 +386,8 @@ namespace PlayScript.DynamicRuntime
 		args[5] = (object)a6;
 		args[6] = (object)a7;
 		args[7] = (object)a8;
-		return ResolveAndInvoke(o);
+		return ResolveAndInvokeAndConvert<TR>(o);
 	}
-#endif
 }
 
 }

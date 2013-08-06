@@ -1111,11 +1111,18 @@ namespace Mono.CSharp
 			return base.DoResolve(rc);
 		}
 
-//		public override bool OverrideReturnType(TypeSpec t) {
-//			this.Type = t;
-//			return true;
-//		}
-
+		public override bool OverrideReturnType(TypeSpec t) {
+			bool is_member_access = member is MemberAccess;
+			if (is_member_access)
+			{
+				this.Type = t;
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
 
 		#region IDynamicCallSite implementation
 
@@ -1138,26 +1145,18 @@ namespace Mono.CSharp
 				);
 		}
 
-		public TypeArguments CreateTypeArgumentsForInvoke(ResolveContext ec, Arguments args, int startIndex)
+		public TypeExpression CreateReducedTypeExpression(ResolveContext ec, TypeSpec t)
 		{
-			var ta = new TypeArguments();
-			for (int i = startIndex; i < args.Count; ++i) {
-				Argument a = args[i];
-				var t = a.Type;
+			// Convert any internal type like dynamic or null to object
+			if (t.Kind == MemberKind.InternalCompilerType)
+				t = ec.BuiltinTypes.Object;
 
-				// Convert any internal type like dynamic or null to object
-				if (t.Kind == MemberKind.InternalCompilerType)
-					t = ec.BuiltinTypes.Object;
-
-//				if ((t.IsClass || t.IsInterface) && (t.BuiltinType != BuiltinTypeSpec.Type.String)) {
-//					t = ec.BuiltinTypes.Object;
-//				}
-
-				ta.Add( new TypeExpression (t, loc) );
+			if ((t.IsClass || t.IsInterface) && (t.BuiltinType != BuiltinTypeSpec.Type.String)) {
+				t = ec.BuiltinTypes.Object;
 			}
-			return ta;
-		}
 
+			return new TypeExpression(t, loc);
+		}
 
 		public Expression InvokeCallSite(ResolveContext rc, Expression site, Arguments args, TypeSpec returnType, bool isStatement)
 		{
@@ -1165,10 +1164,14 @@ namespace Mono.CSharp
 			memberName += isStatement ? "Action" : "Func"; 
 			memberName += (args.Count - 1);
 
-			var ta = CreateTypeArgumentsForInvoke(rc, args, 1);
-//			if (!isStatement) {
-//				ta.Add(new TypeExpression(returnType, loc));
-//			}
+			var ta = new TypeArguments();
+			for (int i = 1; i < args.Count; ++i) {
+				ta.Add(CreateReducedTypeExpression(rc, args[i].Type));
+			}
+
+			if (!isStatement) {
+				ta.Add(CreateReducedTypeExpression(rc, returnType));
+			}
 
 			return new Invocation(new MemberAccess(site, memberName, ta, loc), args);
 		}
