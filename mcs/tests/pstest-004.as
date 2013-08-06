@@ -10,7 +10,6 @@ package
 
 	public class Texture
 	{
-		public function foo():void {}
 
 		public function get value():int{return 0;}
 
@@ -18,6 +17,27 @@ package
 
 		public function get valueF():Number{return mValueF;}
 		public function set valueF(v:Number):void {mValueF = v;}
+
+
+		public function foo():void 
+		{
+			var o:Object = 5;
+			testInvoke3Instance(o);
+			testInvoke3Static(o);
+		}
+
+		
+		public function testInvoke3Instance(a:int, b:String = null):void 
+		{
+			trace(a,b);
+		}
+
+		
+		public static function testInvoke3Static(a:int, b:String = null):void 
+		{
+			trace(a,b);
+		}
+
 
 
 		public function testInvoke(a:int, b:String):void 

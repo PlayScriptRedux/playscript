@@ -703,8 +703,17 @@ namespace Mono.CSharp
 
 
 		// Resolve any dynamic params to the type of the target parameters list (for PlayScript only).
-		public bool AsTryResolveDynamicArgs (ResolveContext ec, System.Collections.IEnumerable candidates)
+		public bool AsTryResolveDynamicArgs (ResolveContext ec, IList<MemberSpec> candidates)
 		{
+			if (candidates.Count == 0) {
+				return false;
+			}
+
+			if (candidates.Count == 1) {
+				// if there's a single candidate, then use it
+				return AsTryResolveDynamicArgs(ec, candidates[0]); 
+			}
+
 			AParametersCollection parameters = null;
 
 			foreach (MemberSpec memberSpec in candidates) {
