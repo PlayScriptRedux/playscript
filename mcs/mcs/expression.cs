@@ -3417,7 +3417,7 @@ namespace Mono.CSharp
 				if ((oper & Operator.LogicalMask) != 0) {
 					Expression cond_left, cond_right, expr;
 
-					if (ec.Module.Compiler.Settings.NewDynamicRuntime_LogicalOps && !AsCoalesceLogicalOps) {
+					if (ec.FileType == SourceFileType.PlayScript && ec.Module.Compiler.Settings.NewDynamicRuntime_LogicalOps && !AsCoalesceLogicalOps) {
 						// in the new runtime we convert each side to boolean for logical operations
 						if (lt.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
 							left = new Cast(new TypeExpression(ec.BuiltinTypes.Bool, loc), left, loc).Resolve(ec);
@@ -5139,7 +5139,7 @@ namespace Mono.CSharp
 			TypeSpec false_type = false_expr.Type;
 			type = true_type;
 
-			if (ec.Module.Compiler.Settings.NewDynamicRuntime_Conditional) {
+			if (ec.FileType == SourceFileType.PlayScript && ec.Module.Compiler.Settings.NewDynamicRuntime_Conditional) {
 				// if either true or false are dynamic then we must cast the other to dynamic
 				if (true_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic || false_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
 					if (false_type.BuiltinType != BuiltinTypeSpec.Type.Dynamic) {

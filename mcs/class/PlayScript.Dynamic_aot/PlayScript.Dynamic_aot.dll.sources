@@ -14,6 +14,7 @@
 ../PlayScript.Dynamic/PlayScript/Invoker.cs
 ../PlayScript.Dynamic/PlayScript/MethodBinder.cs
 ../PlayScript.Dynamic/PlayScript/ParamsDelegateTypes.cs
+../PlayScript.Dynamic/PlayScript/Stats.cs
 ../PlayScript.Dynamic/PlayScript/Undefined.cs
 ../PlayScript.Dynamic/PlayScript/Expando/BindingRestrictionsEx.cs
 ../PlayScript.Dynamic/PlayScript/Expando/CacheDict.cs

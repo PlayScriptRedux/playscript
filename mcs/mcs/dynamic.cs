@@ -305,7 +305,7 @@ namespace Mono.CSharp
 			if (DoResolveCore (rc))
 			{
 				var dc = (binder as IDynamicCallSite);
-				if ((dc != null) && dc.UseCallSite(rc, arguments)) {
+				if (rc.Module.PredefinedTypes.IsPlayScriptAotMode && (dc != null) && dc.UseCallSite(rc, arguments)) {
 					this.useDelegateInvoke = false;
 					arguments.CreateDynamicBinderArguments(rc);
 					binder_expr = dc.CreateCallSite(rc, arguments, false);
@@ -816,7 +816,7 @@ namespace Mono.CSharp
 			// get expresion we're converting
 			var expr = this.Arguments[0].Expr;
 
-			if (rc.Module.Compiler.Settings.NewDynamicRuntime_ConvertReturnType) {
+			if (rc.Module.PredefinedTypes.IsPlayScriptAotMode && rc.Module.Compiler.Settings.NewDynamicRuntime_ConvertReturnType) {
 				var ds = expr as DynamicExpressionStatement;
 				if (ds != null && (ds.Type == rc.BuiltinTypes.Dynamic)) {
 					// force dynamic expression to resolve to our type to avoid this conversion
@@ -827,7 +827,7 @@ namespace Mono.CSharp
 				}
 			}
 
-			if (rc.Module.Compiler.Settings.NewDynamicRuntime_Convert) {
+			if (rc.Module.PredefinedTypes.IsPlayScriptAotMode && rc.Module.Compiler.Settings.NewDynamicRuntime_Convert) {
 				return CreateDynamicConversion(rc, expr.Resolve(rc), this.Type).Resolve(rc);
 			}
 
@@ -1095,7 +1095,7 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve(ResolveContext rc)
 		{
-			if (rc.Module.Compiler.Settings.NewDynamicRuntime_HasOwnProperty) {
+			if (rc.Module.PredefinedTypes.IsPlayScriptAotMode && rc.Module.Compiler.Settings.NewDynamicRuntime_HasOwnProperty) {
 				// special case handling of hasOwnProperty
 				if (this.member != null && this.Arguments != null && this.member.Name == "hasOwnProperty" && Arguments.Count == 2) {
 					var ma = new MemberAccess(new MemberAccess(
@@ -1402,7 +1402,7 @@ namespace Mono.CSharp
 
 				// create setter callsite
 				var dc = (binder as IDynamicCallSite);
-				if ((dc != null) && dc.UseCallSite(rc, setter_args)) {
+				if (rc.Module.PredefinedTypes.IsPlayScriptAotMode && (dc != null) && dc.UseCallSite(rc, setter_args)) {
 					this.useDelegateInvoke = false;
 					setter_args.CreateDynamicBinderArguments(rc);
 					setter = CreateCallSite(rc, setter_args, true);
@@ -1480,7 +1480,7 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve(ResolveContext rc)
 		{
-			if (rc.Module.Compiler.Settings.NewDynamicRuntime_UnaryOps) {
+			if (rc.Module.PredefinedTypes.IsPlayScriptAotMode && rc.Module.Compiler.Settings.NewDynamicRuntime_UnaryOps) {
 				return CreateDynamicUnaryOperation(rc);
 			}
 
@@ -1554,7 +1554,7 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve(ResolveContext rc)
 		{
-			if (rc.Module.Compiler.Settings.NewDynamicRuntime_BinaryOps) {
+			if (rc.Module.PredefinedTypes.IsPlayScriptAotMode && rc.Module.Compiler.Settings.NewDynamicRuntime_BinaryOps) {
 				return this.CreateDynamicBinaryOperation(rc);
 			}
 			return base.DoResolve(rc);
