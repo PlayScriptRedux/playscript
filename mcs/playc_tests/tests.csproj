@@ -2708,6 +2708,7 @@
     <None Include="ecma3\instanceof\instanceof_003_rt.as" />
     <None Include="ecma3\instanceof\regress_7635_rt.as" />
     <None Include="as3\Expressions\isOperator\isOper.as" />
+    <None Include="as3\Vector\concat.as" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\class\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net_4_0.csproj">
@@ -2727,6 +2728,5 @@
     <Compile Include="as3\Expressions\isOperator\isOper\TestClassB.as" />
     <Compile Include="as3\Expressions\isOperator\isOper\TestClassC.as" />
     <Compile Include="as3\Expressions\isOperator\isOper\TestInterface.as" />
-    <Compile Include="as3\Vector\concat.as" />
   </ItemGroup>
 </Project>

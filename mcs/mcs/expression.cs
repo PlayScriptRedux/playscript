@@ -4445,6 +4445,8 @@ namespace Mono.CSharp
 
 		public Expression CreateCallSiteBinder (ResolveContext ec, Arguments args)
 		{
+			Statement.DynamicOps |= DynamicOperation.Binary;
+
 			Arguments binder_args = new Arguments (4);
 
 			MemberAccess ns;

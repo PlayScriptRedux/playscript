@@ -1663,6 +1663,8 @@ namespace Mono.CSharp {
 		// ActionScript attributes
 		public readonly PredefinedAttribute AsDynamicClassAttribute;
 		public readonly PredefinedAttribute AsBindableAttribute;
+		public readonly PredefinedAttribute AsAllowDynamicAttribute;
+		public readonly PredefinedAttribute AsForbidDynamicAttribute;
 
 		// Mono.Optimization attributes
 		public readonly PredefinedAttribute InlineAttribute;
@@ -1726,6 +1728,8 @@ namespace Mono.CSharp {
 			// ActionScript
 			AsDynamicClassAttribute = new PredefinedAttribute (module, "PlayScript", "DynamicClassAttribute");
 			AsBindableAttribute = new PredefinedAttribute (module, PsConsts.PsRootNamespace, "BindableAttribute");
+			AsAllowDynamicAttribute = new PredefinedAttribute (module, PsConsts.PsRootNamespace, "AllowDynamicAttribute");
+			AsForbidDynamicAttribute = new PredefinedAttribute (module, PsConsts.PsRootNamespace, "ForbidDynamicAttribute");
 
 			// Mono.Optimization
 			InlineAttribute = new PredefinedAttribute (module, "Mono.Optimization", "InlineAttribute");
