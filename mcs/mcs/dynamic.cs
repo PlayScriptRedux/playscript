@@ -1106,11 +1106,14 @@ namespace Mono.CSharp
 	{
 		readonly ATypeNameExpression member;
 
+		private bool IsMemberAccess;
+
 		public DynamicInvocation (ATypeNameExpression member, Arguments args, Location loc)
 			: base (null, args, loc)
 		{
 			base.binder = this;
 			this.member = member;
+			this.IsMemberAccess = (member is MemberAccess) || (member is SimpleName);
 		}
 
 		public static DynamicInvocation CreateSpecialNameInvoke (ATypeNameExpression member, Arguments args, Location loc)
@@ -1165,15 +1168,13 @@ namespace Mono.CSharp
 
 		public bool UseCallSite(ResolveContext rc, Arguments args)
 		{
-			bool is_member_access = member is MemberAccess;
-			return (is_member_access && rc.Module.Compiler.Settings.NewDynamicRuntime_InvokeMember) ||
-				   (!is_member_access && rc.Module.Compiler.Settings.NewDynamicRuntime_Invoke);
+			return (IsMemberAccess && rc.Module.Compiler.Settings.NewDynamicRuntime_InvokeMember) ||
+				(!IsMemberAccess && rc.Module.Compiler.Settings.NewDynamicRuntime_Invoke);
 		}
 
 		public Expression CreateCallSite(ResolveContext rc, Arguments args, bool isSet)
 		{
-			bool is_member_access = member is MemberAccess;
-			if (is_member_access) {
+			if (IsMemberAccess) {
 				// construct new PsInvokeMember(name, argCount)
 				var site_args = new Arguments(2);
 				site_args.Add(new Argument(new StringLiteral(rc.BuiltinTypes, member.Name, member.Location)));
@@ -1210,8 +1211,7 @@ namespace Mono.CSharp
 
 		public Expression InvokeCallSite(ResolveContext rc, Expression site, Arguments args, TypeSpec returnType, bool isStatement)
 		{
-			bool is_member_access = member is MemberAccess;
-			if (is_member_access) {
+			if (IsMemberAccess) {
 				string memberName = "Invoke";
 				memberName += isStatement ? "Action" : "Func"; 
 				memberName += (args.Count - 1);
