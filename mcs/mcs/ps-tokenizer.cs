@@ -829,7 +829,7 @@ namespace Mono.PlayScript
 			});
 
 			AddDisallowedNextAutoSemiTokens(new int [] {
-				Token.ADD,
+				Token.PLUS,
 				Token.MINUS,
 				Token.DIV,
 				Token.PERCENT,

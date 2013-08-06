@@ -25,6 +25,17 @@ namespace PlayScript
 			return ((Type)type).IsAssignableFrom (value.GetType ());
 		}
 
+		// Perform non static "as" operation with target type
+		public static dynamic DynamicAs(object value, object type) {
+			if (value == null) {
+				return null;
+			}
+			if (type == null) {
+				throw new InvalidCastException ();
+			}
+			return ((Type)type).IsAssignableFrom (value.GetType ()) ? value : null;
+		}
+
 	}
 }
 

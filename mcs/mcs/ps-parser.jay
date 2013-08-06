@@ -3690,6 +3690,9 @@ primary_expression_or_type
 		var lt = (Tokenizer.LocatedToken) $1;
 	       $$ = new CompletionSimpleName (MemberName.MakeName (lt.Value, null), lt.Location);
 	  }
+	| builtin_types {
+		$$ = $1;
+	  }
 	| member_access
 	;
 
@@ -3806,12 +3809,12 @@ member_access
 		lbag.AddLocation ($$, GetLocation ($2));
 		$$ = ma;
 	  }   
-	| builtin_types DOT IDENTIFIER opt_type_argument_list
-	  {
-		var lt = (Tokenizer.LocatedToken) $3;
-		$$ = new MemberAccess ((Expression) $1, lt.Value, (TypeArguments) $4, lt.Location);
-		lbag.AddLocation ($$, GetLocation ($2));
-	  }
+//	| builtin_types DOT IDENTIFIER opt_type_argument_list
+//	  {
+//		var lt = (Tokenizer.LocatedToken) $3;
+//		$$ = new MemberAccess ((Expression) $1, lt.Value, (TypeArguments) $4, lt.Location);
+//		lbag.AddLocation ($$, GetLocation ($2));
+//	  }
 	| SUPER DOT IDENTIFIER opt_type_argument_list
 	  {
 		var lt = (Tokenizer.LocatedToken) $3;
@@ -3833,14 +3836,14 @@ member_access
 		var lt = (Tokenizer.LocatedToken) $3;
 		$$ = new CompletionMemberAccess ((Expression) $1, lt.Value, lt.Location);
 	  }
-	| builtin_types DOT GENERATE_COMPLETION
-	  {
-		$$ = new CompletionMemberAccess ((Expression) $1, null, lexer.Location);
-	  }
-	| builtin_types DOT IDENTIFIER GENERATE_COMPLETION {
-		var lt = (Tokenizer.LocatedToken) $3;
-		$$ = new CompletionMemberAccess ((Expression) $1, lt.Value, lt.Location);
- 	  }
+//	| builtin_types DOT GENERATE_COMPLETION
+//	  {
+//		$$ = new CompletionMemberAccess ((Expression) $1, null, lexer.Location);
+//	  }
+//	| builtin_types DOT IDENTIFIER GENERATE_COMPLETION {
+//		var lt = (Tokenizer.LocatedToken) $3;
+//		$$ = new CompletionMemberAccess ((Expression) $1, lt.Value, lt.Location);
+ //	  }
 	;
 
 invocation_expression
@@ -3854,11 +3857,11 @@ invocation_expression
  		$$ = initializer;
 		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($2), GetLocation ($4));
 	  }
-	| builtin_types open_parens_any opt_argument_list close_parens
-	  {
-		$$ = new Invocation ((Expression) $1, (Arguments) $3);
-		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
-	  }  
+//	| builtin_types open_parens_any opt_argument_list close_parens
+//	  {
+//		$$ = new Invocation ((Expression) $1, (Arguments) $3);
+//		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
+//	  }  
 	| primary_expression open_parens_any opt_argument_list close_parens
 	  {
 	    var newExpr = $1 as AsNew;
@@ -4133,21 +4136,21 @@ element_access
 		Error_SyntaxError (yyToken);
 		$$ = new ElementAccess ((Expression) $1, null, GetLocation ($2));
 	  }
-	| builtin_types OPEN_BRACKET_EXPR expression_list_arguments CLOSE_BRACKET	
-	  {
-		$$ = new ElementAccess ((Expression) $1, (Arguments) $3, GetLocation ($2));
-		lbag.AddLocation ($$, GetLocation ($4));
-	  }
-	| builtin_types OPEN_BRACKET_EXPR expression_list_arguments error
-	  {
-		Error_SyntaxError (yyToken);
-		$$ = new ElementAccess ((Expression) $1, (Arguments) $3, GetLocation ($2));
-	  }
-	| builtin_types OPEN_BRACKET_EXPR error
-	  {
-		Error_SyntaxError (yyToken);
-		$$ = new ElementAccess ((Expression) $1, null, GetLocation ($2));
-	  }	  
+//	| builtin_types OPEN_BRACKET_EXPR expression_list_arguments CLOSE_BRACKET	
+//	  {
+//		$$ = new ElementAccess ((Expression) $1, (Arguments) $3, GetLocation ($2));
+//		lbag.AddLocation ($$, GetLocation ($4));
+//	  }
+//	| builtin_types OPEN_BRACKET_EXPR expression_list_arguments error
+//	  {
+//		Error_SyntaxError (yyToken);
+//		$$ = new ElementAccess ((Expression) $1, (Arguments) $3, GetLocation ($2));
+//	  }
+//	| builtin_types OPEN_BRACKET_EXPR error
+//	  {
+//		Error_SyntaxError (yyToken);
+//		$$ = new ElementAccess ((Expression) $1, null, GetLocation ($2));
+//	  }	  
 	;
 
 expression_list
@@ -6213,13 +6216,13 @@ variable_type_simple
 //			$$ = expr;
 //		}
 //	  }
-	| builtin_types opt_nullable
-	  {
-		if ($2 == null)
-			$$ = $1;
-		else
-			$$ = new ComposedCast ((FullNamedExpression) $1, (ComposedTypeSpecifier) $2);
-	  }
+//	| builtin_types opt_nullable
+//	  {
+//		if ($2 == null)
+//			$$ = $1;
+//		else
+//			$$ = new ComposedCast ((FullNamedExpression) $1, (ComposedTypeSpecifier) $2);
+//	  }
 //	| builtin_types pointer_stars
 //	  {
 //		$$ = new ComposedCast ((FullNamedExpression) $1, (ComposedTypeSpecifier) $2);
@@ -7907,19 +7910,19 @@ doc_cref
 	  {
 		module.DocumentationBuilder.ParsedParameters = (List<DocumentationParameter>)$2;
 	  }
-	| builtin_types opt_doc_method_sig
-	  {
-		module.DocumentationBuilder.ParsedBuiltinType = (TypeExpression)$1;
-		module.DocumentationBuilder.ParsedParameters = (List<DocumentationParameter>)$2;
-		$$ = null;
-	  }
-	| builtin_types DOT IDENTIFIER opt_doc_method_sig
-	  {
-		module.DocumentationBuilder.ParsedBuiltinType = (TypeExpression)$1;
-		module.DocumentationBuilder.ParsedParameters = (List<DocumentationParameter>)$4;
-		var lt = (Tokenizer.LocatedToken) $3;
-		$$ = new MemberName (lt.Value);
-	  }
+//	| builtin_types opt_doc_method_sig
+//	  {
+//		module.DocumentationBuilder.ParsedBuiltinType = (TypeExpression)$1;
+//		module.DocumentationBuilder.ParsedParameters = (List<DocumentationParameter>)$2;
+//		$$ = null;
+//	  }
+//	| builtin_types DOT IDENTIFIER opt_doc_method_sig
+//	  {
+//		module.DocumentationBuilder.ParsedBuiltinType = (TypeExpression)$1;
+//		module.DocumentationBuilder.ParsedParameters = (List<DocumentationParameter>)$4;
+//		var lt = (Tokenizer.LocatedToken) $3;
+//		$$ = new MemberName (lt.Value);
+//	  }
 	| doc_type_declaration_name DOT THIS
 	  {
 		$$ = new MemberName ((MemberName) $1, MemberCache.IndexerNameAlias, Location.Null);

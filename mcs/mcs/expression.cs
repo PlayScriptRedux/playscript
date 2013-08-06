@@ -1455,7 +1455,7 @@ namespace Mono.CSharp
 		protected override Expression DoResolve (ResolveContext ec)
 		{
 			// NOTE: We need to distinguish between types and expressions which return a Class object.
-			if (ec.FileType == SourceFileType.PlayScript && (this is Is)) {  // Enable for "is" expression only for right now
+			if (ec.FileType == SourceFileType.PlayScript && (this is Is || this is As)) { 
 				as_probe_type_expr = ProbeType.Resolve (ec);
 				if (as_probe_type_expr is TypeExpression) {
 					as_probe_type_expr = null;
@@ -1769,11 +1769,19 @@ namespace Mono.CSharp
 					return null;
 			}
 
+			bool isPlayScript = ec.FileType == SourceFileType.PlayScript;
+
+			if (isPlayScript && as_probe_type_expr != null && !(as_probe_type_expr is TypeExpr)) {
+				var arguments = new Arguments (2);
+				arguments.Add (new Argument (expr));
+				arguments.Add (new Argument (as_probe_type_expr));
+				return new Invocation (new MemberAccess (new MemberAccess (new SimpleName ("PlayScript", loc), "Support", loc), "DynamicAs", loc), arguments).Resolve (ec);
+			}
+
 			type = probe_type_expr;
 			eclass = ExprClass.Value;
 			TypeSpec etype = expr.Type;
 
-			bool isPlayScript = ec.FileType == SourceFileType.PlayScript;
 			bool isRefType = TypeSpec.IsReferenceType (type) || type.IsNullableType;
 
 			// Always "Object" for dynamic type when evaluating PlayScript AS operator (not dynamic CONV call).
@@ -6499,7 +6507,6 @@ namespace Mono.CSharp
 		
 		protected override Expression DoResolve (ResolveContext ec)
 		{
-			bool isAsObject = false;
 			bool dynamic = false;
 
 			Expression ret = null;
@@ -6515,8 +6522,7 @@ namespace Mono.CSharp
 					// PlayScript: Make sure a "new Object()" call in as uses an actual object type and not
 					// dynamic.
 					if (reqExpr.Type == ec.BuiltinTypes.Dynamic) {
-						type = ec.Module.PredefinedTypes.AsObject.Resolve ();
-						isAsObject = true;
+						type = ec.Module.PredefinedTypes.AsExpandoObject.Resolve ();
 					} else {
 						type = ((TypeExpr)reqExpr).ResolveAsType (ec);
 					}
@@ -6544,8 +6550,7 @@ namespace Mono.CSharp
 				// PlayScript: Make sure a "new Object()" call in as uses an actual object type and not
 				// dynamic.
 				if (type == ec.BuiltinTypes.Dynamic) {
-					type = ec.Module.PredefinedTypes.AsObject.Resolve ();
-					isAsObject = true;
+					type = ec.Module.PredefinedTypes.AsExpandoObject.Resolve ();
 				}
 
 			} else {
@@ -6631,11 +6636,6 @@ namespace Mono.CSharp
 				ret = new DynamicConstructorBinder (type, arguments, loc).Resolve (ec);
 			} else {
 				ret = this;
-			}
-
-			// PlayScript: If this is a new AS object, return it cast as a dynamic.
-			if (isAsObject) {
-				ret = new Cast (new TypeExpression (ec.BuiltinTypes.Dynamic, this.Location), ret, this.Location).Resolve (ec);
 			}
 
 			return ret;
@@ -11070,9 +11070,14 @@ namespace Mono.CSharp
 
 			var t = ec.CurrentInitializerVariable.Type;
 			if (t.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
-				Arguments args = new Arguments (1);
-				args.Add (new Argument (ec.CurrentInitializerVariable));
-				target = new DynamicMemberBinder (Name, args, loc);
+				Arguments args = new Arguments(1);
+				args.Add(new Argument(ec.CurrentInitializerVariable));
+				target = new DynamicMemberBinder(Name, args, loc);
+			} else if (ec.FileType == SourceFileType.PlayScript && (t == ec.Module.PredefinedTypes.AsExpandoObject.Resolve())) {
+				// use expando-specific element accessor
+				var arguments = new Arguments(1);
+				arguments.Add(new Argument(new StringLiteral(ec.BuiltinTypes, Name, loc)));
+				target = new ElementAccess(ec.CurrentInitializerVariable, arguments, loc);
 			} else {
 
 				var member = MemberLookup (ec, false, t, Name, 0, MemberLookupRestrictions.ExactArity, loc);
@@ -11122,15 +11127,19 @@ namespace Mono.CSharp
 				type = source.Type;
 				return this;
 			} else if (source is AsArrayInitializer) {
-				var inferArrayType = target.Type ?? ec.Module.PredefinedTypes.AsArray.Resolve();
-				source = ((AsArrayInitializer)source).InferredResolveWithArrayType(ec, inferArrayType);
+				Expression previous = ec.CurrentInitializerVariable;
+				ec.CurrentInitializerVariable = target;
+				source = source.Resolve(ec);
+				ec.CurrentInitializerVariable = previous;
 				if (source == null)
 					return null;
 				eclass = source.eclass;
 				type = source.Type;
 			} else if (source is AsObjectInitializer) {
-				var inferObjType = target.Type ?? ec.Module.PredefinedTypes.AsObject.Resolve(); 
-				source = ((AsObjectInitializer)source).InferredResolveWithObjectType(ec, inferObjType);
+				Expression previous = ec.CurrentInitializerVariable;
+				ec.CurrentInitializerVariable = target;
+				source = source.Resolve(ec);
+				ec.CurrentInitializerVariable = previous;
 				if (source == null)
 					return null;
 				eclass = source.eclass;
@@ -11400,9 +11409,9 @@ namespace Mono.CSharp
 		{
 			NewInitialize new_instance;
 
-			public InitializerTargetExpression (NewInitialize newInstance, TypeSpec castType = null)
+			public InitializerTargetExpression (NewInitialize newInstance)
 			{
-				this.type = castType ?? newInstance.type;
+				this.type = newInstance.type;
 				this.loc = newInstance.loc;
 				this.eclass = newInstance.eclass;
 				this.new_instance = newInstance;
@@ -11503,12 +11512,7 @@ namespace Mono.CSharp
 			}
 
 			Expression previous = ec.CurrentInitializerVariable;
-			// PlayScript: Handle "new Object()" cast to dynamic.
-			if (ec.FileType == SourceFileType.PlayScript && e != this) {
-				ec.CurrentInitializerVariable = new InitializerTargetExpression (this, e.Type);
-			} else {
-				ec.CurrentInitializerVariable = new InitializerTargetExpression (this);
-			}
+			ec.CurrentInitializerVariable = new InitializerTargetExpression (this);
 			initializers.Resolve (ec);
 			ec.CurrentInitializerVariable = previous;
 

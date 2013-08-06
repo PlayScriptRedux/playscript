@@ -359,7 +359,7 @@ namespace Mono.CSharp
 					if (a.Expr is ArrayInitializer) {
 						arg_type = rc.Module.PredefinedTypes.AsArray.Resolve();
 					} else {
-						arg_type = rc.Module.PredefinedTypes.AsObject.Resolve();
+						arg_type = rc.Module.PredefinedTypes.AsExpandoObject.Resolve();
 					}
 				} else {
 					arg_type = a.Expr.Type;

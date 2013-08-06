@@ -333,41 +333,14 @@ namespace Mono.CSharp {
 		{
 			bool ok = true;
 
-			// PlayScript: resolve LValue first if source is an initializer to be able to
-			// infer initializer type correctly.
-			if (ec.FileType == SourceFileType.PlayScript &&
-				(source is AsArrayInitializer || source is AsObjectInitializer)) {
-
-				target = target.ResolveLValue (ec, source);
-
-				if (target == null) {
-					ok = false;
-					source = EmptyExpression.Null;
-				}
-
-				if (source is AsArrayInitializer) {
-					source = ((AsArrayInitializer)source).InferredResolveWithArrayType(ec, target.Type);
-				} else if (source is AsObjectInitializer) {
-					source = ((AsObjectInitializer)source).InferredResolveWithObjectType(ec, target.Type);
-				}
-				
-				if (source == null) {
-					ok = false;
-					source = EmptyExpression.Null;
-				}
-				
-			} else {
-
-				source = source.Resolve (ec);
-							
-				if (source == null) {
-					ok = false;
-					source = EmptyExpression.Null;
-				}
-
-				target = target.ResolveLValue (ec, source);
-
+			source = source.Resolve (ec);
+						
+			if (source == null) {
+				ok = false;
+				source = EmptyExpression.Null;
 			}
+
+			target = target.ResolveLValue (ec, source);
 
 			if (target == null || !ok)
 				return null;
