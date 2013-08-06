@@ -660,6 +660,48 @@ namespace Mono.CSharp
 			}
 		}
 
+		public bool AsTryResolveDynamicArgs (ResolveContext ec, MemberSpec memberSpec)
+		{
+			AParametersCollection parameters = null;
+			int fixedArgsLen = 0;
+
+			if (memberSpec is MethodSpec) {
+				MethodSpec methodSpec = memberSpec as MethodSpec;
+				parameters = methodSpec.Parameters;
+				fixedArgsLen = parameters.FixedParameters.Length;
+				if (methodSpec.IsExtensionMethod)
+					fixedArgsLen--;
+			} else if (memberSpec is IndexerSpec) {
+				IndexerSpec indexerSpec = memberSpec as IndexerSpec;
+				parameters = indexerSpec.Parameters;
+				fixedArgsLen = parameters.FixedParameters.Length;
+			}
+
+			if (parameters == null) {
+				return false;
+			}
+
+			if (fixedArgsLen < args.Count) {
+				// too many arguments
+				return false;
+			}
+
+			for (var i = 0; i < args.Count; i++) {
+				var arg = args [i];
+				var paramType = parameters.Types [i];
+				if (arg.Expr.Type == ec.BuiltinTypes.Dynamic) {
+					var parCastType = paramType.BuiltinType == BuiltinTypeSpec.Type.Dynamic ? ec.BuiltinTypes.Object : paramType;
+					var new_arg = new Argument (new Cast (
+						new TypeExpression (parCastType, arg.Expr.Location), 
+						arg.Expr, arg.Expr.Location), arg.ArgType);
+					new_arg.Resolve (ec);
+					args [i] = new_arg;
+				}
+			}
+			return true;
+		}
+
+
 		// Resolve any dynamic params to the type of the target parameters list (for PlayScript only).
 		public bool AsTryResolveDynamicArgs (ResolveContext ec, System.Collections.IEnumerable candidates)
 		{

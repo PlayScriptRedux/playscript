@@ -208,10 +208,12 @@ namespace Mono.CSharp {
 		public bool NewDynamicRuntime_Conditional = false;
 		// if true, event add/remove binders will be disabled
 		public bool NewDynamicRuntime_EventAddRemove = false;
-		// if true, invoke member binder
+		// if true, PSInvokeMember non-delegate invokes are used
 		public bool NewDynamicRuntime_InvokeMember = false;
 		// if true, toString/ToString is statically called on dynamics
 		public bool NewDynamicRuntime_ToString = false;
+		// if true, dynamic Constructor will be resolved at compile time if possible
+		public bool NewDynamicRuntime_Constructor = false;
 
 		public void SetNewDynamicRuntimeEnable(bool value)
 		{
@@ -227,6 +229,7 @@ namespace Mono.CSharp {
 			NewDynamicRuntime_EventAddRemove = value;
 			NewDynamicRuntime_InvokeMember = value;
 			NewDynamicRuntime_ToString = value;
+			NewDynamicRuntime_Constructor = value;
 		}
 
 		//

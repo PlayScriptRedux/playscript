@@ -915,6 +915,30 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve(ResolveContext rc)
 		{
+			if (rc.Module.PredefinedTypes.IsPlayScriptAotMode && rc.Module.Compiler.Settings.NewDynamicRuntime_Constructor) {
+				if ((this.typeExpr == null) && (this.type != null)) {
+					var ctors = MemberCache.FindMembers (type, Constructor.ConstructorName, true);
+					if (ctors != null) {
+						// if there is one and only one ctor then use it
+						if (ctors.Count == 1) {
+							var first = Arguments[0];
+							Arguments.RemoveAt(0);
+							bool hasDynamic;
+							Arguments.Resolve(rc, out hasDynamic);
+							if (Arguments.AsTryResolveDynamicArgs(rc, ctors[0])) {
+								// use normal new
+								return new New(new TypeExpression(type, loc), Arguments, loc).Resolve(rc);
+							}
+
+							OverloadResolver.Error_ConstructorMismatch (rc, type, Arguments.Count, loc);
+							return null;
+						}
+					}
+				}
+
+				// fall through to normal resolve -- 
+			}
+
 			return base.DoResolve(rc);
 		}
 
