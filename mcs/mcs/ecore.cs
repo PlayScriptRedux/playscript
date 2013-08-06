@@ -4907,24 +4907,6 @@ namespace Mono.CSharp {
 					return -1;
 
 				//
-				// If we're an actionscript file and we have an untyped array initializer as a parameter just
-				// resolve the initializer 
-				if (ec.FileType == SourceFileType.PlayScript) {
-					if (argument.InferArrayInitializer != null) {
-						if (parameter.ImplementsInterface(ec.BuiltinTypes.IEnumerable, false)) {
-							argument.Expr = argument.InferArrayInitializer.InferredResolveWithArrayType (ec, parameter);
-						}
-					} else if (argument.InferObjInitializer != null) {
-						if (parameter == ec.BuiltinTypes.Object || parameter == ec.BuiltinTypes.Dynamic ||
-						  (!BuiltinTypeSpec.IsPrimitiveTypeOrDecimal(parameter) && 
-						    parameter.BuiltinType != BuiltinTypeSpec.Type.String && 
-						    parameter.BuiltinType != BuiltinTypeSpec.Type.Enum)) {
-							argument.Expr = argument.InferObjInitializer.InferredResolveWithObjectType (ec, parameter);
-						}
-					}
-				}
-
-				//
 				// Use implicit conversion in all modes to return same candidates when the expression
 				// is used as argument or delegate conversion
 				//

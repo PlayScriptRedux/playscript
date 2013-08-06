@@ -1547,7 +1547,7 @@ namespace PlayScript.Expando {
 			get { return generation; }
 		}
 		
-		public object this [string key] {
+		public dynamic this [string key] {
 			get {
 				if (key == null)
 					throw new ArgumentNullException ("key");
@@ -2682,7 +2682,7 @@ namespace PlayScript.Expando {
 					int i = 0;
 					foreach(string key in expando.Keys)
 					{
-						keys[i] = new KeyValuePairDebugView(key, expando[key]);
+						keys[i] = new KeyValuePairDebugView(key, (object)expando[key]);
 						i++;
 					}
 					return keys;
