@@ -4464,6 +4464,16 @@ namespace Mono.CSharp {
 			if (specific_at_least_once)
 				return true;
 
+			if (ec.FileType == SourceFileType.PlayScript) {
+				// if one is static and one is not, choose the non static version
+				if (candidate.IsStatic != best.IsStatic) {
+					if (!candidate.IsStatic) {
+						// use the candidate because it is non-static
+						return true;
+					}
+				}
+			}
+
 			return false;
 		}
 
