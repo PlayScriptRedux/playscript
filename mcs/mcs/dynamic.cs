@@ -800,7 +800,7 @@ namespace Mono.CSharp
 		}
 	}
 
-	class DynamicConversion : DynamicExpressionStatement, IDynamicBinder, IDynamicCallSite
+	class DynamicConversion : DynamicExpressionStatement, IDynamicBinder
 	{
 		public DynamicConversion (TypeSpec targetType, CSharpBinderFlags flags, Arguments args, Location loc)
 			: base (null, args, loc)
@@ -813,10 +813,10 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve(ResolveContext rc)
 		{
-			if (rc.Module.Compiler.Settings.NewDynamicRuntime_ConvertReturnType) {
-				// get expresion we're converting
-				var expr = this.Arguments[0].Expr;
+			// get expresion we're converting
+			var expr = this.Arguments[0].Expr;
 
+			if (rc.Module.Compiler.Settings.NewDynamicRuntime_ConvertReturnType) {
 				var ds = expr as DynamicExpressionStatement;
 				if (ds != null && (ds.Type == rc.BuiltinTypes.Dynamic)) {
 					// force dynamic expression to resolve to our type to avoid this conversion
@@ -827,27 +827,16 @@ namespace Mono.CSharp
 				}
 			}
 
+			if (rc.Module.Compiler.Settings.NewDynamicRuntime_Convert) {
+				return CreateDynamicConversion(rc, expr.Resolve(rc), this.Type).Resolve(rc);
+			}
+
 			return base.DoResolve(rc);
 		}
 
 		#region IDynamicCallSite implementation
-
-		public bool UseCallSite(ResolveContext ec, Arguments args)
+		public static Expression CreateDynamicConversion(ResolveContext rc, Expression expr, TypeSpec target_type)
 		{
-			return ec.Module.Compiler.Settings.NewDynamicRuntime_Convert;
-		}
-
-		public Expression CreateCallSite(ResolveContext ec, Arguments args, bool isSet)
-		{
-			// no call site required
-			return null;
-		}
-
-		public Expression InvokeCallSite(ResolveContext rc, Expression site, Arguments args, TypeSpec returnType, bool isStatement)
-		{
-			var expr = args[0].Expr;
-			var target_type = type;
-
 			if ((target_type.IsClass || target_type.IsInterface) && (target_type.BuiltinType != BuiltinTypeSpec.Type.String)){
 				// perform empty cast to reference type
 				return EmptyCast.Create(expr, target_type);
@@ -876,14 +865,14 @@ namespace Mono.CSharp
 					break;
 				default:
 //					throw new InvalidOperationException("Unhandled convert to: " + target_type.GetSignatureForError());
-					return EmptyCast.Create(expr, type);
+					return EmptyCast.Create(expr, target_type);
 //					converterMethod = "ConvertTo" + target_type.Name.ToString();
 //					break;
 			}
 
 			var cast_args = new Arguments(1);
 			cast_args.Add(new Argument(EmptyCast.RemoveDynamic(rc, expr)));
-			return new Invocation(new MemberAccess(new TypeExpression(converter, loc), converterMethod, loc), cast_args);
+			return new Invocation(new MemberAccess(new TypeExpression(converter, expr.Location), converterMethod, expr.Location), cast_args);
 		}
 
 		#endregion
