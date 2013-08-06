@@ -159,6 +159,42 @@ namespace PlayScript.DynamicRuntime
 			}
 		}
 
+		public static float ConvertToFloat (object o)
+		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.ConvertBinderInvoked;
+			#endif
+
+			if (o is float) {
+				return (float)o;
+			} 
+			if (o is double) {
+				return (float)(double)o;
+			} 
+			if (o == null || o == PlayScript.Undefined._undefined) {
+				return 0.0f;
+			}
+
+			var typeCode = Type.GetTypeCode (o.GetType ());
+			switch (typeCode) {
+			case TypeCode.Int32:
+				return (int)o;
+			case TypeCode.Double:
+				return (float)o;
+			case TypeCode.Boolean:
+				return (bool)o ? 1 : 0;
+			case TypeCode.UInt32:
+				return (uint)o;
+			case TypeCode.Single:
+				return (float)o;
+			case TypeCode.String:
+				return float.Parse((String)o);
+			default:
+				throw new Exception ("Invalid cast to float");
+			}
+		}
+
+
 		public static double ConvertToDouble (object o)
 		{
 			#if BINDERS_RUNTIME_STATS

@@ -854,6 +854,9 @@ namespace Mono.CSharp
 				case BuiltinTypeSpec.Type.Double:
 					converterMethod = "ConvertToDouble";
 					break;
+				case BuiltinTypeSpec.Type.Float:
+					converterMethod = "ConvertToFloat";
+					break;
 				case BuiltinTypeSpec.Type.Int:
 					converterMethod = "ConvertToInt";
 					break;
