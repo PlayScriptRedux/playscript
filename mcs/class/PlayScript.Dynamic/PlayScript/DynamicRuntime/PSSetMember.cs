@@ -1,5 +1,5 @@
 //
-// PSSetMemberCallSite.cs
+// PSSetMember.cs
 //
 // Copyright 2013 Zynga Inc.
 //	
