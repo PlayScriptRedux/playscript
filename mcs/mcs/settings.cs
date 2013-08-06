@@ -223,7 +223,7 @@ namespace Mono.CSharp {
 			NewDynamicRuntime_GetSetMember = value;
 			NewDynamicRuntime_Conditional = value;
 			NewDynamicRuntime_EventAddRemove = value;
-			NewDynamicRuntime_InvokeMember = false; // value; // disable for now 
+			NewDynamicRuntime_InvokeMember = value;
 		}
 
 		//
