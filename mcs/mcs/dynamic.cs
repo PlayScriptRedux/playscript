@@ -1111,6 +1111,16 @@ namespace Mono.CSharp
 				}
 			}
 
+			if (rc.Module.PredefinedTypes.IsPlayScriptAotMode && rc.Module.Compiler.Settings.NewDynamicRuntime_ToString) {
+				// special case handling of toString
+				if (this.member != null && this.Arguments != null && (this.member.Name == "toString" || this.member.Name == "ToString") && Arguments.Count == 1) {
+					TypeSpec converter = rc.Module.PredefinedTypes.PsConverter.Resolve();
+					var site_args = new Arguments(1);
+					site_args.Add(new Argument(EmptyCast.RemoveDynamic(rc, Arguments[0].Expr.Resolve(rc))));
+					return new Invocation(new MemberAccess(new TypeExpression(converter, Location), "ConvertToString", Location), site_args).Resolve(rc);
+				}
+			}
+
 			return base.DoResolve(rc);
 		}
 

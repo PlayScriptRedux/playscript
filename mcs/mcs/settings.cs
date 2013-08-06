@@ -210,6 +210,8 @@ namespace Mono.CSharp {
 		public bool NewDynamicRuntime_EventAddRemove = false;
 		// if true, invoke member binder
 		public bool NewDynamicRuntime_InvokeMember = false;
+		// if true, toString/ToString is statically called on dynamics
+		public bool NewDynamicRuntime_ToString = false;
 
 		public void SetNewDynamicRuntimeEnable(bool value)
 		{
@@ -224,6 +226,7 @@ namespace Mono.CSharp {
 			NewDynamicRuntime_Conditional = value;
 			NewDynamicRuntime_EventAddRemove = value;
 			NewDynamicRuntime_InvokeMember = value;
+			NewDynamicRuntime_ToString = value;
 		}
 
 		//
