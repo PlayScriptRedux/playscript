@@ -107,7 +107,7 @@ namespace PlayScript
 				Debug.Assert(paramType != null, "Unexpected type");
 
 				for (var j = 0; j < paramsIndex; j++) {
-					new_args[j] = ConvertValue(args[j], paramType);
+					new_args[j] = ConvertValue(args[j], parameters[j].ParameterType);
 				}
 				// Then copy the additional parameters to the last parameter (params) as an array
 				// Array can be empty if we have just enough parameters up to the params one
