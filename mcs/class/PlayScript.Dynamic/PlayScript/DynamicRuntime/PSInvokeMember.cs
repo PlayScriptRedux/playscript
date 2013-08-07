@@ -33,29 +33,46 @@ namespace PlayScript.DynamicRuntime
 			mArgs   = new object[argCount];
 		}
 
-		// information about the current binding
-		private string 			  mName;
-		private Type              mType;
-		private object[]   		  mArgs;
-		private object[]   		  mConvertedArgs;
-		private bool 			  mIsOverloaded;
-		private MethodBinder      mMethod;
-		private MethodBinder[]    mMethodList;
-		private Delegate   	      mDelegate;
+		enum OverloadState
+		{
+			/// <summary>
+			/// We don't know the overload state, either because this is the first pass through the binder, or we resolved a dynamic value every time.
+			/// </summary>
+			Unknown,
+			/// <summary>
+			/// We did a method resolve, and we found only one method. As long as the type is the same, we don't need to resolve again.
+			/// </summary>
+			NoOverload,
+			/// <summary>
+			/// We did a method resolve, and we found multiple methods. Everytime we are going to use the passed arguments to figure which method to use.
+			/// This is slow but should be rarely used (and it is not used by AS code directly).
+			/// </summary>
+			HasOverload,
+		}
 
+		// information about the current binding
+		private string			mName;
+		private Type			mType;
+		private object[]		mArgs;
+		private object[]		mConvertedArgs;
+		private OverloadState	mOverloadState = OverloadState.Unknown;
+		private MethodBinder	mMethod;
+		private MethodBinder[]	mMethodList;
+
+		private object			mPreviousTarget;		// TODO: Change this to use the exposed MethodInfo from the invoker?
+		private MethodInfo		mPreviousMethodInfo;	// TODO: Change this to use the exposed MethodInfo from the invoker?
+		private InvokerBase		mInvoker;
 
 		private void SelectMethod(object o)
 		{
-			mDelegate = null;
-
 			// if only one method, then use it
 			if (mMethodList.Length == 1) {
-				mMethod       = mMethodList[0];
-				mIsOverloaded = false;
+				mMethod = mMethodList[0];
+				mOverloadState = OverloadState.NoOverload;
 				return;
 			}
 
-			mIsOverloaded = true;
+			mOverloadState = OverloadState.HasOverload;
 
 			// select method based on simple compatibility
 			// TODO: this could change to use a rating system
@@ -67,24 +84,104 @@ namespace PlayScript.DynamicRuntime
 				}
 			}
 
-			// no methods compatible?
+			throw new InvalidOperationException("Could not find suitable method to invoke: " + mName + " for type: " + mType);
+		}
 
-			// try to get method from dynamic class
+		private bool UpdateInvoker(object o)
+		{
+			// We can't cache the delegate related to property (has it could have been changed since last call)
+			// We could workaround this limitation if we did have version number in the dynamic object (and detect if it changed - or changed function - since last call)
 			var dc = o as IDynamicClass;
 			if (dc != null) {
 				var func = dc.__GetDynamicValue(mName) as Delegate;
 				if (func != null) {
-					// use function
-					mDelegate = func;
-					return;
+					// Use function, but let's compare with previous invoker if we can reuse it
+					if ((func.Target != mPreviousTarget) || (func.Method != mPreviousMethodInfo)) {
+						// TODO: In some cases, we might be able to reuse the previous invoker (and just override its delegate)
+						mInvoker = ActionCreator.CreateInvoker(func);	// This is going to use an invoker factory (can be registered by user too for more optimal code).
+						mPreviousTarget = func.Target;
+						mPreviousMethodInfo = func.Method;
+					}
+					return true;			// Because we found a dynamic value as an invoker, we have to invoke later and not resolve it again (either with the fast path or the slow path)
 				}
 			}
 
-			throw new InvalidOperationException("Could not find suitable method to invoke: " + mName + " for type: " + mType);
+			if (o == mPreviousTarget) {
+				// If the object is the same, we directly invoke (no resolve needed in this case)
+				return true;
+			}
+
+			// This is a different target, check if that's the same type, if it is and we have an invoker, we could just retarget the new invoker
+			// Instead of going through the heavier ActionCreator.CreateInvoker() - Same for the dynamic above
+
+			// Not the same target, we don't event check for type to try to reuse the same invoker.
+			// TODO: Add delegate update here if the target is the same type (it means it has the same overload state, method info, etc...)
+			mInvoker = null;
+			mPreviousTarget = null;
+			mPreviousMethodInfo = null;
+			return false;
 		}
 
-		private object ResolveAndInvoke(object o)
+		/// <summary>
+		/// Invokes the method on o (potentially using a previous invoker as a hint).
+		/// 
+		/// Note that this method works if the parameters haven been boxed, return value is also boxed.
+		/// </summary>
+		/// <param name="invoker">The previous invoker as a hint, null if we could not get the invoker during the fast path.</param>
+		/// <param name="o">The target of the invocation.</param>
+		private object ResolveAndInvoke(object o, bool invokeOnly)
 		{
+			// Property and same target, or same type has already been checked earlier (by the fast path)
+			// So here we have a new target type, we have an overloading, or this is the first time
+			// Parameters have been boxed and stored in mArgs already.
+
+			// Note that if we are overloading, we still do a full CreateDelegate work, even if we had the same type, target and method...
+			// This is slow, however it should pretty much never happen in game code.
+
+			if ((mInvoker == null) && (invokeOnly == false))
+			{
+				// It means that we did not get the invoker from the fast path (overloaded - rare - or it is the first time - very common).
+				var dc = o as IDynamicClass;
+				if (dc != null) {
+					var func = dc.__GetDynamicValue(mName) as Delegate;
+					if (func != null) {
+						// Assume that most time, it is due to the first execution, so don't compare with previous version
+						mInvoker = ActionCreator.CreateInvoker(func);	// This is going to use an invoker factory (can be registered by user too for more optimal code).
+						mPreviousMethodInfo = func.Method;
+						mPreviousTarget = o;
+						mMethod = null;
+						invokeOnly = true;
+					}
+				}
+			}
+			if (invokeOnly)
+			{
+				// It is invoke only, so it did not match the calling site parameters (or is coming from the dynamic value), so parameters have to be converted
+
+				// We probably should revisist this so we can do everything from mPreviousMethodInfo.
+				// It would be much more consistent, and we could more easily push the conversion to the invoker.
+				if (mMethod != null)
+				{
+					if (mMethod.ConvertArguments(o, mArgs, mArgs.Length, ref mConvertedArgs) == false)
+					{
+						throw new NotSupportedException("Could not convert parameters for method " + mPreviousMethodInfo.ToString());
+					}
+				}
+				else
+				{
+					// Revisit allocation pattern too for newArgs...
+					object[] newArgs;
+					if (PlayScript.Dynamic.ConvertMethodParameters(mPreviousMethodInfo, mArgs, out newArgs) == false)
+					{
+						throw new NotSupportedException("Could not convert parameters for method " + mPreviousMethodInfo.ToString());
+					}
+					mConvertedArgs = newArgs;
+				}
+				return mInvoker.UnsafeInvokeWith(mConvertedArgs);
+			}
+
+			// If we reached this point, we have to do a new resolve, then invoke
+
 			// determine object type
 			Type otype;
 			bool isStatic;
@@ -102,51 +199,51 @@ namespace PlayScript.DynamicRuntime
 			if (otype != mType)
 			{
 				// re-resolve method list if type has changed
-				mType           = otype;
+				mType = otype;
 
 				// get method list for type and method name
 				BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Public;
 				if (isStatic) {
-					flags|=BindingFlags.Static;
+					flags |= BindingFlags.Static;
 				} else {
-					flags|=BindingFlags.Instance;
+					flags |= BindingFlags.Instance;
 				}
 
-				mMethodList     = MethodBinder.LookupMethodList(mType, mName, flags, mArgs.Length);
+				mMethodList = MethodBinder.LookupMethodList(mType, mName, flags, mArgs.Length);
 
 				// select new method to use
 				SelectMethod(o);
 			}
-			else if (mIsOverloaded)	
+			else if (mOverloadState == OverloadState.HasOverload)	
 			{
 				// if there are overloads we select the method every time
 				// we could look into a more optimal way of doing this if it becomes a problem
 				SelectMethod(o);
 			}
 
-			if (mDelegate == null)
-			{
-				// invoke as method
-				// convert arguments for method
-				if (mMethod.ConvertArguments(o, mArgs, mArgs.Length, ref mConvertedArgs)) {
-					// invoke method with converted arguments
-					return mMethod.Method.Invoke(o, mConvertedArgs);
-				}
-			}
-			else
-			{
-				// invoke as delegate
-				// convert arguments for delegate and invoke
-				object[] newargs = PlayScript.Dynamic.ConvertArgumentList(mDelegate.Method, mArgs);
-				return mDelegate.DynamicInvoke(newargs);
+			// convert the parameters and invoke as methd (as we just selected it)
+			if (mMethod.ConvertArguments(o, mArgs, mArgs.Length, ref mConvertedArgs)) {
+				mInvoker = ActionCreator.CreateInvoker(o, mMethod.Method);
+				mPreviousTarget = o;
+				mPreviousMethodInfo = mMethod.Method;
+				return mInvoker.UnsafeInvokeWith(mConvertedArgs);		// We do a delegate call here instead of a dynamic call
 			}
 
 			throw new InvalidOperationException("Could not find suitable method to invoke: " + mName + " for type: " + mType);
 		}
 
-		private TR ResolveAndInvokeAndConvert<TR>(object o)
+
+		/// <summary>
+		/// Invokes the method on o (potentially using a previous invoker as a hint).
+		/// 
+		/// Note that this method works if the parameters haven been boxed, return value is also boxed.
+		/// </summary>
+		/// <param name="invoker">The previous invoker as a hint, null if we could not get the invoker during the fast path.</param>
+		/// <param name="o">The target of the invocation.</param>
+		/// <typeparam name="TR">The 1st type parameter.</typeparam>
+		private TR ResolveAndInvoke<TR>(object o, bool invokeOnly)
 		{
-			object value = ResolveAndInvoke(o);
+			object value = ResolveAndInvoke(o, invokeOnly);
 			if (value is TR) {
 				return (TR)value;
 			} else {
@@ -154,242 +251,461 @@ namespace PlayScript.DynamicRuntime
 			}
 		}
 
+		public void InvokeAction0 (object o)
+		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			#endif
 
-	public void InvokeAction0 (object o)
-	{
-		#if BINDERS_RUNTIME_STATS
-		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-		#endif
-		ResolveAndInvoke(o);
+			bool invokeOnly = UpdateInvoker(o);
+			ICallerA caller = mInvoker as ICallerA;
+			if (caller != null)
+			{
+				caller.Call();		// Fast path
+				return;
+			}
+
+			ResolveAndInvoke(o, invokeOnly);
+		}
+
+		public void InvokeAction1<A1> (object o, A1 a1)
+		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			#endif
+
+			bool invokeOnly = false;
+			if (mOverloadState != OverloadState.HasOverload)
+			{
+				invokeOnly = UpdateInvoker(o);
+				ICallerA<A1> caller = mInvoker as ICallerA<A1>;
+				if (caller != null)
+				{
+					caller.Call(a1);	// Fast path
+					return;
+				}
+			}
+
+			var args   = mArgs;
+			args[0] = (object)a1;
+			ResolveAndInvoke(o, invokeOnly);
+		}
+
+		public void InvokeAction2<A1,A2> (object o, A1 a1, A2 a2)
+		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			#endif
+
+			bool invokeOnly = false;
+			if (mOverloadState != OverloadState.HasOverload)
+			{
+				invokeOnly = UpdateInvoker(o);
+				ICallerA<A1, A2> caller = mInvoker as ICallerA<A1, A2>;
+				if (caller != null)
+				{
+					caller.Call(a1, a2);	// Fast path
+					return;
+				}
+			}
+
+			var args   = mArgs;
+			args[0] = (object)a1;
+			args[1] = (object)a2;
+			ResolveAndInvoke(o, invokeOnly);
+		}
+
+		public void InvokeAction3<A1,A2,A3> (object o, A1 a1, A2 a2, A3 a3)
+		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			#endif
+
+			bool invokeOnly = false;
+			if (mOverloadState != OverloadState.HasOverload)
+			{
+				invokeOnly = UpdateInvoker(o);
+				ICallerA<A1, A2, A3> caller = mInvoker as ICallerA<A1, A2, A3>;
+				if (caller != null)
+				{
+					caller.Call(a1, a2, a3);	// Fast path
+					return;
+				}
+			}
+
+			var args   = mArgs;
+			args[0] = (object)a1;
+			args[1] = (object)a2;
+			args[2] = (object)a3;
+			ResolveAndInvoke(o, invokeOnly);
+		}
+
+		public void InvokeAction4<A1,A2,A3,A4> (object o, A1 a1, A2 a2, A3 a3, A4 a4)
+		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			#endif
+
+			bool invokeOnly = false;
+			if (mOverloadState != OverloadState.HasOverload)
+			{
+				invokeOnly = UpdateInvoker(o);
+				ICallerA<A1, A2, A3, A4> caller = mInvoker as ICallerA<A1, A2, A3, A4>;
+				if (caller != null)
+				{
+					caller.Call(a1, a2, a3, a4);	// Fast path
+					return;
+				}
+			}
+
+			var args   = mArgs;
+			args[0] = (object)a1;
+			args[1] = (object)a2;
+			args[2] = (object)a3;
+			args[3] = (object)a4;
+			ResolveAndInvoke(o, invokeOnly);
+		}
+
+		public void InvokeAction5<A1,A2,A3,A4,A5>(object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5)
+		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			#endif
+
+			bool invokeOnly = false;
+			if (mOverloadState != OverloadState.HasOverload)
+			{
+				invokeOnly = UpdateInvoker(o);
+				ICallerA<A1, A2, A3, A4, A5> caller = mInvoker as ICallerA<A1, A2, A3, A4, A5>;
+				if (caller != null)
+				{
+					caller.Call(a1, a2, a3, a4, a5);	// Fast path
+					return;
+				}
+			}
+
+			var args   = mArgs;
+			args[0] = (object)a1;
+			args[1] = (object)a2;
+			args[2] = (object)a3;
+			args[3] = (object)a4;
+			args[4] = (object)a5;
+			ResolveAndInvoke(o, invokeOnly);
+		}
+
+		public void InvokeAction6<A1,A2,A3,A4,A5,A6> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6)
+		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			#endif
+
+			bool invokeOnly = false;
+			if (mOverloadState != OverloadState.HasOverload)
+			{
+				invokeOnly = UpdateInvoker(o);
+				ICallerA<A1, A2, A3, A4, A5, A6> caller = mInvoker as ICallerA<A1, A2, A3, A4, A5, A6>;
+				if (caller != null)
+				{
+					caller.Call(a1, a2, a3, a4, a5, a6);	// Fast path
+					return;
+				}
+			}
+
+			var args   = mArgs;
+			args[0] = (object)a1;
+			args[1] = (object)a2;
+			args[2] = (object)a3;
+			args[3] = (object)a4;
+			args[4] = (object)a5;
+			args[5] = (object)a6;
+			ResolveAndInvoke(o, invokeOnly);
+		}
+
+		public void InvokeAction7<A1,A2,A3,A4,A5,A6,A7> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7)
+		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			#endif
+
+			bool invokeOnly = false;
+			if (mOverloadState != OverloadState.HasOverload)
+			{
+				invokeOnly = UpdateInvoker(o);
+				ICallerA<A1, A2, A3, A4, A5, A6, A7> caller = mInvoker as ICallerA<A1, A2, A3, A4, A5, A6, A7>;
+				if (caller != null)
+				{
+					caller.Call(a1, a2, a3, a4, a5, a6, a7);	// Fast path
+					return;
+				}
+			}
+
+			var args   = mArgs;
+			args[0] = (object)a1;
+			args[1] = (object)a2;
+			args[2] = (object)a3;
+			args[3] = (object)a4;
+			args[4] = (object)a5;
+			args[5] = (object)a6;
+			args[6] = (object)a7;
+			ResolveAndInvoke(o, invokeOnly);
+		}
+
+
+		public void InvokeAction8<A1,A2,A3,A4,A5,A6,A7,A8> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8)
+		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			#endif
+
+			bool invokeOnly = false;
+			if (mOverloadState != OverloadState.HasOverload)
+			{
+				invokeOnly = UpdateInvoker(o);
+				ICallerA<A1, A2, A3, A4, A5, A6, A7, A8> caller = mInvoker as ICallerA<A1, A2, A3, A4, A5, A6, A7, A8>;
+				if (caller != null)
+				{
+					caller.Call(a1, a2, a3, a4, a5, a6, a7, a8);	// Fast path
+					return;
+				}
+			}
+
+			var args   = mArgs;
+			args[0] = (object)a1;
+			args[1] = (object)a2;
+			args[2] = (object)a3;
+			args[3] = (object)a4;
+			args[4] = (object)a5;
+			args[5] = (object)a6;
+			args[6] = (object)a7;
+			args[7] = (object)a8;
+			ResolveAndInvoke(o, invokeOnly);
+		}
+
+		public TR InvokeFunc0<TR>(object o)
+		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			#endif
+
+			bool invokeOnly = false;
+			if (mOverloadState != OverloadState.HasOverload)
+			{
+				invokeOnly = UpdateInvoker(o);
+				ICallerF<TR> caller = mInvoker as ICallerF<TR>;
+				if (caller != null)
+				{
+					return caller.Call();	// Fast path
+				}
+			}
+
+			return ResolveAndInvoke<TR>(o, invokeOnly);
+		}
+
+		public TR InvokeFunc1<A1,TR>(object o, A1 a1)
+		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			#endif
+
+			bool invokeOnly = false;
+			if (mOverloadState != OverloadState.HasOverload)
+			{
+				invokeOnly = UpdateInvoker(o);
+				ICallerF<A1, TR> caller = mInvoker as ICallerF<A1, TR>;
+				if (caller != null)
+				{
+					return caller.Call(a1);	// Fast path
+				}
+			}
+
+			var args   = mArgs;
+			args[0] = (object)a1;
+			return ResolveAndInvoke<TR>(o, invokeOnly);
+		}
+
+		public TR InvokeFunc2<A1,A2,TR>(object o, A1 a1, A2 a2)
+		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			#endif
+
+			bool invokeOnly = false;
+			if (mOverloadState != OverloadState.HasOverload)
+			{
+				invokeOnly = UpdateInvoker(o);
+				ICallerF<A1, A2, TR> caller = mInvoker as ICallerF<A1, A2, TR>;
+				if (caller != null)
+				{
+					return caller.Call(a1, a2);	// Fast path
+				}
+			}
+
+			var args   = mArgs;
+			args[0] = (object)a1;
+			args[1] = (object)a2;
+			return ResolveAndInvoke<TR>(o, invokeOnly);
+		}
+
+		public TR InvokeFunc3<A1,A2,A3,TR> (object o, A1 a1, A2 a2, A3 a3)
+		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			#endif
+
+			bool invokeOnly = false;
+			if (mOverloadState != OverloadState.HasOverload)
+			{
+				invokeOnly = UpdateInvoker(o);
+				ICallerF<A1, A2, A3, TR> caller = mInvoker as ICallerF<A1, A2, A3, TR>;
+				if (caller != null)
+				{
+					return caller.Call(a1, a2, a3);	// Fast path
+				}
+			}
+
+			var args   = mArgs;
+			args[0] = (object)a1;
+			args[1] = (object)a2;
+			args[2] = (object)a3;
+			return ResolveAndInvoke<TR>(o, invokeOnly);
+		}
+
+		public TR InvokeFunc4<A1,A2,A3,A4,TR> (object o, A1 a1, A2 a2, A3 a3, A4 a4)
+		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			#endif
+
+			bool invokeOnly = false;
+			if (mOverloadState != OverloadState.HasOverload)
+			{
+				invokeOnly = UpdateInvoker(o);
+				ICallerF<A1, A2, A3, A4, TR> caller = mInvoker as ICallerF<A1, A2, A3, A4, TR>;
+				if (caller != null)
+				{
+					return caller.Call(a1, a2, a3, a4);	// Fast path
+				}
+			}
+
+			var args   = mArgs;
+			args[0] = (object)a1;
+			args[1] = (object)a2;
+			args[2] = (object)a3;
+			args[3] = (object)a4;
+			return ResolveAndInvoke<TR>(o, invokeOnly);
+		}
+
+		public TR InvokeFunc5<A1,A2,A3,A4,A5,TR>(object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5)
+		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			#endif
+
+			bool invokeOnly = false;
+			if (mOverloadState != OverloadState.HasOverload)
+			{
+				invokeOnly = UpdateInvoker(o);
+				ICallerF<A1, A2, A3, A4, A5, TR> caller = mInvoker as ICallerF<A1, A2, A3, A4, A5, TR>;
+				if (caller != null)
+				{
+					return caller.Call(a1, a2, a3, a4, a5);	// Fast path
+				}
+			}
+
+			var args   = mArgs;
+			args[0] = (object)a1;
+			args[1] = (object)a2;
+			args[2] = (object)a3;
+			args[3] = (object)a4;
+			args[4] = (object)a5;
+			return ResolveAndInvoke<TR>(o, invokeOnly);
+		}
+
+		public TR InvokeFunc6<A1,A2,A3,A4,A5,A6,TR> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6)
+		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			#endif
+
+			bool invokeOnly = false;
+			if (mOverloadState != OverloadState.HasOverload)
+			{
+				invokeOnly = UpdateInvoker(o);
+				ICallerF<A1, A2, A3, A4, A5, A6, TR> caller = mInvoker as ICallerF<A1, A2, A3, A4, A5, A6, TR>;
+				if (caller != null)
+				{
+					return caller.Call(a1, a2, a3, a4, a5, a6);	// Fast path
+				}
+			}
+
+			var args   = mArgs;
+			args[0] = (object)a1;
+			args[1] = (object)a2;
+			args[2] = (object)a3;
+			args[3] = (object)a4;
+			args[4] = (object)a5;
+			args[5] = (object)a6;
+			return ResolveAndInvoke<TR>(o, invokeOnly);
+		}
+
+		public TR InvokeFunc7<A1,A2,A3,A4,A5,A6,A7,TR> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7)
+		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			#endif
+
+			bool invokeOnly = false;
+			if (mOverloadState != OverloadState.HasOverload)
+			{
+				invokeOnly = UpdateInvoker(o);
+				ICallerF<A1, A2, A3, A4, A5, A6, A7, TR> caller = mInvoker as ICallerF<A1, A2, A3, A4, A5, A6, A7, TR>;
+				if (caller != null)
+				{
+					return caller.Call(a1, a2, a3, a4, a5, a6, a7);	// Fast path
+				}
+			}
+
+			var args   = mArgs;
+			args[0] = (object)a1;
+			args[1] = (object)a2;
+			args[2] = (object)a3;
+			args[3] = (object)a4;
+			args[4] = (object)a5;
+			args[5] = (object)a6;
+			args[6] = (object)a7;
+			return ResolveAndInvoke<TR>(o, invokeOnly);
+		}
+
+
+		public TR InvokeFunc8<A1,A2,A3,A4,A5,A6,A7,A8,TR> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8)
+		{
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			#endif
+
+			bool invokeOnly = false;
+			if (mOverloadState != OverloadState.HasOverload)
+			{
+				invokeOnly = UpdateInvoker(o);
+				ICallerF<A1, A2, A3, A4, A5, A6, A7, A8, TR> caller = mInvoker as ICallerF<A1, A2, A3, A4, A5, A6, A7, A8, TR>;
+				if (caller != null)
+				{
+					return caller.Call(a1, a2, a3, a4, a5, a6, a7, a8);	// Fast path
+				}
+			}
+
+			var args   = mArgs;
+			args[0] = (object)a1;
+			args[1] = (object)a2;
+			args[2] = (object)a3;
+			args[3] = (object)a4;
+			args[4] = (object)a5;
+			args[5] = (object)a6;
+			args[6] = (object)a7;
+			args[7] = (object)a8;
+			return ResolveAndInvoke<TR>(o, invokeOnly);
+		}
 	}
-
-	public void InvokeAction1<A1> (object o, A1 a1)
-	{
-		#if BINDERS_RUNTIME_STATS
-		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-		#endif
-		var args   = mArgs;
-		args[0] = (object)a1;
-		ResolveAndInvoke(o);
-	}
-
-	public void InvokeAction2<A1,A2> (object o, A1 a1, A2 a2)
-	{
-		#if BINDERS_RUNTIME_STATS
-		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-		#endif
-		var args   = mArgs;
-		args[0] = (object)a1;
-		args[1] = (object)a2;
-		ResolveAndInvoke(o);
-	}
-
-	public void InvokeAction3<A1,A2,A3> (object o, A1 a1, A2 a2, A3 a3)
-	{
-		#if BINDERS_RUNTIME_STATS
-		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-		#endif
-		var args   = mArgs;
-		args[0] = (object)a1;
-		args[1] = (object)a2;
-		args[2] = (object)a3;
-		ResolveAndInvoke(o);
-	}
-
-	public void InvokeAction4<A1,A2,A3,A4> (object o, A1 a1, A2 a2, A3 a3, A4 a4)
-	{
-		#if BINDERS_RUNTIME_STATS
-		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-		#endif
-		var args   = mArgs;
-		args[0] = (object)a1;
-		args[1] = (object)a2;
-		args[2] = (object)a3;
-		args[3] = (object)a4;
-		ResolveAndInvoke(o);
-	}
-
-	public void InvokeAction5<A1,A2,A3,A4,A5>(object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5)
-	{
-		#if BINDERS_RUNTIME_STATS
-		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-		#endif
-		var args   = mArgs;
-		args[0] = (object)a1;
-		args[1] = (object)a2;
-		args[2] = (object)a3;
-		args[3] = (object)a4;
-		args[4] = (object)a5;
-		ResolveAndInvoke(o);
-	}
-
-	public void InvokeAction6<A1,A2,A3,A4,A5,A6> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6)
-	{
-		#if BINDERS_RUNTIME_STATS
-		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-		#endif
-		var args   = mArgs;
-		args[0] = (object)a1;
-		args[1] = (object)a2;
-		args[2] = (object)a3;
-		args[3] = (object)a4;
-		args[4] = (object)a5;
-		args[5] = (object)a6;
-		ResolveAndInvoke(o);
-	}
-
-	public void InvokeAction7<A1,A2,A3,A4,A5,A6,A7> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7)
-	{
-		#if BINDERS_RUNTIME_STATS
-		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-		#endif
-		var args   = mArgs;
-		args[0] = (object)a1;
-		args[1] = (object)a2;
-		args[2] = (object)a3;
-		args[3] = (object)a4;
-		args[4] = (object)a5;
-		args[5] = (object)a6;
-		args[6] = (object)a7;
-		ResolveAndInvoke(o);
-	}
-
-
-	public void InvokeAction8<A1,A2,A3,A4,A5,A6,A7,A8> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8)
-	{
-		#if BINDERS_RUNTIME_STATS
-		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-		#endif
-		var args   = mArgs;
-		args[0] = (object)a1;
-		args[1] = (object)a2;
-		args[2] = (object)a3;
-		args[3] = (object)a4;
-		args[4] = (object)a5;
-		args[5] = (object)a6;
-		args[6] = (object)a7;
-		args[7] = (object)a8;
-		ResolveAndInvoke(o);
-	}
-
-	public TR InvokeFunc0<TR>(object o)
-	{
-		#if BINDERS_RUNTIME_STATS
-		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-		#endif
-		return ResolveAndInvokeAndConvert<TR>(o);
-	}
-
-	public TR InvokeFunc1<A1,TR>(object o, A1 a1)
-	{
-		#if BINDERS_RUNTIME_STATS
-		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-		#endif
-		var args   = mArgs;
-		args[0] = (object)a1;
-		return ResolveAndInvokeAndConvert<TR>(o);
-	}
-
-	public TR InvokeFunc2<A1,A2,TR>(object o, A1 a1, A2 a2)
-	{
-		#if BINDERS_RUNTIME_STATS
-		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-		#endif
-		var args   = mArgs;
-		args[0] = (object)a1;
-		args[1] = (object)a2;
-		return ResolveAndInvokeAndConvert<TR>(o);
-	}
-
-	public TR InvokeFunc3<A1,A2,A3,TR> (object o, A1 a1, A2 a2, A3 a3)
-	{
-		#if BINDERS_RUNTIME_STATS
-		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-		#endif
-		var args   = mArgs;
-		args[0] = (object)a1;
-		args[1] = (object)a2;
-		args[2] = (object)a3;
-		return ResolveAndInvokeAndConvert<TR>(o);
-	}
-
-	public TR InvokeFunc4<A1,A2,A3,A4,TR> (object o, A1 a1, A2 a2, A3 a3, A4 a4)
-	{
-		#if BINDERS_RUNTIME_STATS
-		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-		#endif
-		var args   = mArgs;
-		args[0] = (object)a1;
-		args[1] = (object)a2;
-		args[2] = (object)a3;
-		args[3] = (object)a4;
-		return ResolveAndInvokeAndConvert<TR>(o);
-	}
-
-	public TR InvokeFunc5<A1,A2,A3,A4,A5,TR>(object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5)
-	{
-		#if BINDERS_RUNTIME_STATS
-		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-		#endif
-		var args   = mArgs;
-		args[0] = (object)a1;
-		args[1] = (object)a2;
-		args[2] = (object)a3;
-		args[3] = (object)a4;
-		args[4] = (object)a5;
-		return ResolveAndInvokeAndConvert<TR>(o);
-	}
-
-	public TR InvokeFunc6<A1,A2,A3,A4,A5,A6,TR> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6)
-	{
-		#if BINDERS_RUNTIME_STATS
-		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-		#endif
-		var args   = mArgs;
-		args[0] = (object)a1;
-		args[1] = (object)a2;
-		args[2] = (object)a3;
-		args[3] = (object)a4;
-		args[4] = (object)a5;
-		args[5] = (object)a6;
-		return ResolveAndInvokeAndConvert<TR>(o);
-	}
-
-	public TR InvokeFunc7<A1,A2,A3,A4,A5,A6,A7,TR> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7)
-	{
-		#if BINDERS_RUNTIME_STATS
-		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-		#endif
-		var args   = mArgs;
-		args[0] = (object)a1;
-		args[1] = (object)a2;
-		args[2] = (object)a3;
-		args[3] = (object)a4;
-		args[4] = (object)a5;
-		args[5] = (object)a6;
-		args[6] = (object)a7;
-		return ResolveAndInvokeAndConvert<TR>(o);
-	}
-
-
-	public TR InvokeFunc8<A1,A2,A3,A4,A5,A6,A7,A8,TR> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8)
-	{
-		#if BINDERS_RUNTIME_STATS
-		++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-		#endif
-		var args   = mArgs;
-		args[0] = (object)a1;
-		args[1] = (object)a2;
-		args[2] = (object)a3;
-		args[3] = (object)a4;
-		args[4] = (object)a5;
-		args[5] = (object)a6;
-		args[6] = (object)a7;
-		args[7] = (object)a8;
-		return ResolveAndInvokeAndConvert<TR>(o);
-	}
-}
-
 }
 
 
