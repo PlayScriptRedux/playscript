@@ -38,7 +38,12 @@ namespace PlayScript.DynamicRuntime
 				mType = null;
 			}
 
-			return (T)GetMemberAsObject(o);
+			return GetMember<T>(o);
+		}
+
+		public object GetMemberAsObject(object o)
+		{
+			return GetMember<object>(o);
 		}
 
 		/// <summary>
@@ -56,21 +61,6 @@ namespace PlayScript.DynamicRuntime
 				return default(T);
 			}
 
-			object value = GetMemberAsObject(o);
-
-			if (value is T) {
-				return (T)value;
-			} else {
-				return PlayScript.Dynamic.ConvertValue<T>(value);
-			}
-		}
-
-		public object GetMemberAsObject(object o)
-		{
-			if (o == null) {
-				return null;
-			}
-
 			// resolve as dictionary 
 			var dict = o as IDictionary<string, object>;
 			if (dict != null) 
@@ -78,7 +68,7 @@ namespace PlayScript.DynamicRuntime
 				// special case this for expando objects
 				object value;
 				if (dict.TryGetValue(mName, out value)) {
-					return value;
+					return PlayScript.Dynamic.ConvertValue<T>(value);
 				}
 
 				// fall through if key not found
@@ -103,23 +93,31 @@ namespace PlayScript.DynamicRuntime
 			{
 				// use cached resolve
 				if (mProperty != null) {
-					return mPropertyGetter.Invoke(o, null); 
+					Func<T> func;
+					if (o == mPreviousTarget) {
+						func = (Func<T>)mPreviousFunc;
+					} else {
+						mPreviousFunc = func = ActionCreator.CreatePropertyGetAction<T>(o, mProperty);
+						mPreviousTarget = o;
+					}
+					return func();
 				}
 
 				if (mField != null) {
-					return mField.GetValue(o);
+					return PlayScript.Dynamic.ConvertValue<T>(mField.GetValue(o));
 				}
 
 				if (mMethod != null) {
 					// construct method delegate
-					return Delegate.CreateDelegate(mTargetType, o, mMethod);
+					return PlayScript.Dynamic.ConvertValue<T>(Delegate.CreateDelegate(mTargetType, o, mMethod));
 				}
 
 				// resolve as dynamic class
 				var dc = o as IDynamicClass;
 				if (dc != null) 
 				{
-					return dc.__GetDynamicValue(mName);
+					object result = dc.__GetDynamicValue(mName);
+					return PlayScript.Dynamic.ConvertValue<T>(result);
 				}
 
 				throw new System.InvalidOperationException("Unhandled member type in PSGetMemberBinder");
@@ -145,7 +143,7 @@ namespace PlayScript.DynamicRuntime
 					mField    = null;
 					mMethod   = null;
 					mTargetType = property.PropertyType;
-					return mPropertyGetter.Invoke(o, null); 
+					return PlayScript.Dynamic.ConvertValue<T>(mPropertyGetter.Invoke(o, null));
 				}
 			}
 
@@ -161,7 +159,7 @@ namespace PlayScript.DynamicRuntime
 					mField    = field;
 					mMethod   = null;
 					mTargetType = field.FieldType;
-					return field.GetValue(o);
+					return PlayScript.Dynamic.ConvertValue<T>(field.GetValue(o));
 				}
 			}
 
@@ -183,7 +181,7 @@ namespace PlayScript.DynamicRuntime
 				mTargetType = PlayScript.Dynamic.GetDelegateTypeForMethod(mMethod);
 
 				// construct method delegate
-				return Delegate.CreateDelegate(mTargetType, o, mMethod);
+				return PlayScript.Dynamic.ConvertValue<T>(Delegate.CreateDelegate(mTargetType, o, mMethod));
 			}
 
 			if (o is IDynamicClass)
@@ -193,21 +191,23 @@ namespace PlayScript.DynamicRuntime
 				mProperty = null;
 				mField    = null;
 				mMethod   = null;
-				return ((IDynamicClass)o).__GetDynamicValue(mName);
+				object result = ((IDynamicClass)o).__GetDynamicValue(mName);
+				return PlayScript.Dynamic.ConvertValue<T>(result);
 			}
 
-			return null;
+			return default(T);
 		}
 
 
-		private string 		   mName;
-		private Type 		   mType;
-		private PropertyInfo   mProperty;
-		private FieldInfo      mField;
-		private MethodInfo     mMethod;
-		private MethodInfo     mPropertyGetter;
-		private Type 		   mTargetType;
-
+		private string			mName;
+		private Type			mType;
+		private PropertyInfo	mProperty;
+		private FieldInfo		mField;
+		private MethodInfo		mMethod;
+		private MethodInfo		mPropertyGetter;
+		private Type			mTargetType;
+		private object			mPreviousTarget;
+		private object			mPreviousFunc;
 	};
 }
 #endif

@@ -38,18 +38,15 @@ namespace PlayScript.DynamicRuntime
 				mType = null;
 			}
 
-			SetMemberAsObject(o, (object)value, typeof(T) != typeof(System.Object) );
-		}
-
-
-		public T SetMember<T>(object o, T value)
-		{
-			// box value as object
-			SetMemberAsObject(o, (object)value, true);
-			return value;
+			SetMember<T>(o, value, typeof(T) != typeof(System.Object) );
 		}
 
 		public object SetMemberAsObject(object o, object value, bool valueTypeIsConstant)
+		{
+			return SetMember<object>(o, value, valueTypeIsConstant);
+		}
+
+		public T SetMember<T>(object o, T value, bool valueTypeIsConstant = false)
 		{
 			#if BINDERS_RUNTIME_STATS
 			++Stats.CurrentInstance.SetMemberBinderInvoked;
@@ -81,35 +78,37 @@ namespace PlayScript.DynamicRuntime
 			// see if binding type is the same
 			if (otype == mType)
 			{
-				// perform (optional) value conversion
-				object newValue;
-				if (mValueConverter != null) {
-					newValue = mValueConverter(value, mTargetType);
-				} else {
-					newValue = value;
+				// use cached resolve
+				if (mProperty != null) {
+					Action<T> action;
+					if (o == mPreviousTarget) {
+						action = (Action<T>)mPreviousAction;
+					} else {
+						mPreviousAction = action = ActionCreator.CreatePropertySetAction<T>(o, mProperty);
+						mPreviousTarget = o;
+					}
+					action(value);
+					return value;
 				}
 
 				// use cached resolve
 				if (mProperty != null) {
-					//					mProperty.SetValue(o, newValue);
-					mArgs[0] = newValue;
+					mArgs[0] = value;
 					mPropertySetter.Invoke(o, BindingFlags.SuppressChangeType, null, mArgs, null);
-					//					Exception ex = null;
-					//					mPropertySetter.InternalInvoke(o, mArgs, out ex);
-					return newValue;
+					return value;
 				}
 
 				if (mField != null) {
-					mField.SetValue(o, newValue);
-					return newValue;
+					mField.SetValue(o, value);
+					return value;
 				}
 
 				// resolve as dynamic class
 				var dc = o as IDynamicClass;
 				if (dc != null) 
 				{
-					dc.__SetDynamicValue(mName, newValue);
-					return newValue;
+					dc.__SetDynamicValue(mName, value);
+					return value;
 				}
 
 				throw new System.InvalidOperationException("Unhandled member type in PSSetMemberBinder");
@@ -133,17 +132,10 @@ namespace PlayScript.DynamicRuntime
 					mProperty = property;
 					mPropertySetter = property.GetSetMethod();
 					mField    = null;
-					mTargetType = mProperty.PropertyType;
 
-					// resolve conversion function
-					mValueConverter = PSConverter.GetConversionFunction(value, mTargetType, valueTypeIsConstant);
-					if (mValueConverter != null) {
-						mArgs[0] = mValueConverter(value, mTargetType);
-					} else {
-						mArgs[0] = value;
-					}
+					mArgs[0] = PlayScript.Dynamic.ConvertValue(value, property.PropertyType);
 					mPropertySetter.Invoke(o, mArgs);
-					return mArgs[0];
+					return value;
 				}
 			}
 
@@ -157,19 +149,11 @@ namespace PlayScript.DynamicRuntime
 					mType     = otype;
 					mProperty = null;
 					mField    = field;
-					mTargetType = mField.FieldType;
 
 					// resolve conversion function
-					mValueConverter = PSConverter.GetConversionFunction(value, mTargetType, valueTypeIsConstant);
-					object newValue;
-					if (mValueConverter != null) {
-						newValue = mValueConverter(value, mTargetType);
-					} else {
-						newValue = value;
-					}
-
+					object newValue = PlayScript.Dynamic.ConvertValue(value, mField.FieldType);
 					mField.SetValue(o, newValue);
-					return newValue;
+					return value;
 				}
 			}
 
@@ -184,20 +168,19 @@ namespace PlayScript.DynamicRuntime
 			}		
 
 			// failed
-			return null;
+			return default(T);
 		}
 
 
 
-		private string 		   mName;
-		private Type 		   mType;
-		private PropertyInfo   mProperty;
-		private FieldInfo      mField;
-		private MethodInfo     mPropertySetter;
-		private Func<object, Type, object> mValueConverter;
-		private Type 		   mTargetType;
-		private object[]       mArgs = new object[1];
-
+		private string			mName;
+		private Type			mType;
+		private PropertyInfo	mProperty;
+		private FieldInfo		mField;
+		private MethodInfo		mPropertySetter;
+		private object[]		mArgs = new object[1];
+		object					mPreviousTarget;
+		object					mPreviousAction;
 	};
 }
 #endif
