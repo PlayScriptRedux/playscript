@@ -1474,7 +1474,7 @@ namespace Mono.CSharp
 					}
 					// Resolving to actual concrete types above will cause an Object type to be converted to an Expando.  We
 					// have to reverse this.
-					if (probe_type_expr == ec.Module.PredefinedTypes.AsObject.Resolve()) {
+					if (probe_type_expr == ec.Module.PredefinedTypes.AsExpandoObject.Resolve()) {
 						probe_type_expr = ec.BuiltinTypes.Dynamic;
 					}
 					as_probe_type_expr = null;
