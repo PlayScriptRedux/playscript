@@ -245,23 +245,7 @@ namespace PlayScript
 #if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.Dynamic_ConvertValueGenericInvoked);
 #endif
-			if (value is T) {
-				return (T)value;
-			}
-
-			if (value == null) {
-				return default(T);
-			}
-
-			if (typeof(T) == typeof(System.Object)) {
-				return (T)value;
-			}
-
-			if (typeof(T) == typeof(String)) {
-				return (T)(object)value.ToString();
-			}
-
-			return (T)System.Convert.ChangeType(value, typeof(T));
+			return Convert<T>.FromObject(value);
 		}
 
 		public static Type GetDelegateTypeForMethod(MethodInfo method)

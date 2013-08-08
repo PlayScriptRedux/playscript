@@ -255,6 +255,8 @@ namespace PlayScript
 			*/
 		}
 
+#if false
+		// Conversion is done with a faster path now, however this might be needed if we want to do a dynamic conversion with types not known ahead of times.
 		public static R ConvertSameTypes<P, R>(P value)
 		{
 			Debug.Assert(typeof(P) == typeof(R));
@@ -301,6 +303,7 @@ namespace PlayScript
 				return param;
 			}
 		}
+#endif
 
 		private static InvokerInfo GetInvokerInfo(MethodInfo methodInfo)
 		{
@@ -1425,17 +1428,119 @@ namespace PlayScript
 		static StringBuilder sBuilder = new StringBuilder();		// let's keep one builder around so there is less allocation needed at runtime
 	}
 
+	public interface IConverter<ToT>
+	{
+		ToT ConvertFromObject(object value);
+	}
+
 	public interface IConverter<FromT, ToT>
 	{
 		ToT Convert(FromT value);
 	}
 
-	public class Converter : IConverter<int, int>, IConverter<bool, bool>, IConverter<double, double>
+	/// <summary>
+	/// Class enabling conversion of type T1 to type T2 (using the interface IConverter<T1, T2> on the Converter.Instance.
+	/// 
+	/// Due to the large number of interfaces, it might be better to use different objects to reduce the cost of interface lookup.
+	/// Also, the conversion to string might be overkill as the compiler could generate the toString() IL instead.
+	/// </summary>
+	public class Converter :	IConverter<int, int>, IConverter<int, uint>, IConverter<int, double>, IConverter<int, bool>, IConverter<int, string>,
+								IConverter<uint, int>, IConverter<uint, uint>, IConverter<uint, double>, IConverter<uint, bool>, IConverter<uint, string>,
+								IConverter<double, int>, IConverter<double, uint>, IConverter<double, double>, IConverter<double, bool>, IConverter<double, string>,
+								IConverter<bool, int>,  IConverter<bool, uint>, IConverter<bool, double>, IConverter<bool, bool>, IConverter<bool, string>,
+								IConverter<string, int>, IConverter<string, uint>, IConverter<string, double>, IConverter<string, bool>, IConverter<string, string>,
+								IConverter<int>, IConverter<uint>, IConverter<double>, IConverter<bool>, IConverter<string>, IConverter<object>
 	{
 		public static Converter Instance = new Converter();
+
 		int IConverter<int, int>.Convert(int value)
 		{
 			return value;
+		}
+
+		uint IConverter<int, uint>.Convert(int value)
+		{
+			return (uint)value;
+		}
+
+		double IConverter<int, double>.Convert(int value)
+		{
+			return (double)value;
+		}
+
+		bool IConverter<int, bool>.Convert(int value)
+		{
+			return (value != 0);
+		}
+
+		string IConverter<int, string>.Convert(int value)
+		{
+			return value.ToString();
+		}
+
+		int IConverter<uint, int>.Convert(uint value)
+		{
+			return (int)value;
+		}
+
+		uint IConverter<uint, uint>.Convert(uint value)
+		{
+			return value;
+		}
+
+		double IConverter<uint, double>.Convert(uint value)
+		{
+			return (double)value;
+		}
+
+		bool IConverter<uint, bool>.Convert(uint value)
+		{
+			return (value != 0);
+		}
+
+		string IConverter<uint, string>.Convert(uint value)
+		{
+			return value.ToString();
+		}
+
+		int IConverter<double, int>.Convert(double value)
+		{
+			return (int)value;
+		}
+
+		uint IConverter<double, uint>.Convert(double value)
+		{
+			return (uint)value;
+		}
+
+		double IConverter<double, double>.Convert(double value)
+		{
+			return (double)value;
+		}
+
+		bool IConverter<double, bool>.Convert(double value)
+		{
+			return (value != 0.0);
+		}
+
+		string IConverter<double, string>.Convert(double value)
+		{
+			return value.ToString();
+		}
+
+		int IConverter<bool, int>.Convert(bool value)
+		{
+			return value ? 1 : 0;
+		}
+
+		uint IConverter<bool, uint>.Convert(bool value)
+		{
+			return value ? 1u : 0u;
+		}
+
+		double IConverter<bool, double>.Convert(bool value)
+		{
+			return value ? 1.0 : 0.0;
 		}
 
 		bool IConverter<bool, bool>.Convert(bool value)
@@ -1443,11 +1548,215 @@ namespace PlayScript
 			return value;
 		}
 
-		double IConverter<double, double>.Convert(double value)
+		string IConverter<bool, string>.Convert(bool value)
+		{
+			return value.ToString();
+		}
+
+		int IConverter<string, int>.Convert(string value)
+		{
+			return int.Parse(value);
+		}
+
+		uint IConverter<string, uint>.Convert(string value)
+		{
+			return uint.Parse(value);
+		}
+
+		double IConverter<string, double>.Convert(string value)
+		{
+			return double.Parse(value);
+		}
+
+		bool IConverter<string, bool>.Convert(string value)
+		{
+			return bool.Parse(value);
+		}
+
+		string IConverter<string, string>.Convert(string value)
+		{
+			return value;
+		}
+
+		int IConverter<int>.ConvertFromObject(object value)
+		{
+			if (value is double)
+			{
+				return (int)(double)value;
+			}
+			else if (value is uint)
+			{
+				return (int)(uint)value;
+			}
+			else if (value is string)
+			{
+				return int.Parse((string)value);
+			}
+			else if (value is bool)
+			{
+				return (bool)value ? 1 : 0;
+			}
+			else if (value is int)
+			{
+				// This is the target type, but it should have been tested already earlier
+				// So we test it last (just in case) before we do the slow conversion
+				return (int)value;
+			}
+
+			return Convert.ToInt32(value);
+		}
+
+		uint IConverter<uint>.ConvertFromObject(object value)
+		{
+			if (value is int)
+			{
+				return (uint)(int)value;
+			}
+			else if (value is double)
+			{
+				return (uint)(double)value;
+			}
+			else if (value is string)
+			{
+				return uint.Parse((string)value);
+			}
+			else if (value is bool)
+			{
+				return (bool)value ? 1u : 0u;
+			}
+			else if (value is uint)
+			{
+				// This is the target type, but it should have been tested already earlier
+				// So we test it last (just in case) before we do the slow conversion
+				return (uint)value;
+			}
+			return Convert.ToUInt32(value);
+		}
+
+		double IConverter<double>.ConvertFromObject(object value)
+		{
+			if (value is int)
+			{
+				return (double)(int)value;
+			}
+			else if (value is string)
+			{
+				return double.Parse((string)value);
+			}
+			else if (value is uint)
+			{
+				return (double)(uint)value;
+			}
+			else if (value is bool)
+			{
+				return (bool)value ? 1.0 : 0.0;
+			}
+			else if (value is double)
+			{
+				// This is the target type, but it should have been tested already earlier
+				// So we test it last (just in case) before we do the slow conversion
+				return (double)value;
+			}
+			return Convert.ToDouble(value);
+		}
+
+		bool IConverter<bool>.ConvertFromObject(object value)
+		{
+			if (value is int)
+			{
+				return ((int)value != 0);
+			}
+			else if (value is double)
+			{
+				return ((double)value != 0.0);
+			}
+			else if (value is string)
+			{
+				return bool.Parse((string)value);
+			}
+			else if (value is uint)
+			{
+				return ((uint)value != 0);
+			}
+			else if (value is bool)
+			{
+				// This is the target type, but it should have been tested already earlier
+				// So we test it last (just in case) before we do the slow conversion
+				return (bool)value;
+			}
+			return Convert.ToBoolean(value);
+		}
+
+		string IConverter<string>.ConvertFromObject(object value)
+		{
+			return value.ToString();
+		}
+
+		object IConverter<object>.ConvertFromObject(object value)
 		{
 			return value;
 		}
 	}
 
+	public static class Convert<ToT>
+	{
+		static IConverter<ToT> sInterface;
+
+		static Convert()
+		{
+			// We cache the cast interface for this type, so we don't have to do a full lookup every time.
+			// The hope is that the embedded if test during the static call (to see if static constructor has been called)
+			// is faster than the interface cast.
+			sInterface = Converter.Instance as IConverter<ToT>;
+		}
+
+		public static ToT FromObject(object value)
+		{
+			if (value is ToT) {
+				return (ToT)value;
+			}
+
+			if (value == null) {
+				return default(ToT);
+			}
+
+			// We need to do a conversion
+			if (sInterface != null)
+			{
+				return sInterface.ConvertFromObject(value);
+			}
+			// We could not find a fast converter for this combination of FromT to ToT.
+			// We assume these are various classes and structs (and not primitive types)
+			// We don't have other choice than boxing and cast - for classes it should be pretty quick
+			return (ToT)value;
+		}
+	}
+
+
+	public static class Convert<FromT, ToT>
+	{
+		static IConverter<FromT, ToT> sInterface;
+
+		static Convert()
+		{
+			// We cache the cast interface for this type, so we don't have to do a full lookup every time.
+			// The hope is that the embedded if test during the static call (to see if static constructor has been called)
+			// is faster than the interface cast.
+			sInterface = Converter.Instance as IConverter<FromT, ToT>;
+		}
+
+		public static ToT From(FromT value)
+		{
+			if (sInterface != null)
+			{
+				return sInterface.Convert(value);
+			}
+			// We could not find a fast converter for this combination of FromT to ToT.
+			// We assume these are various classes and structs (and not primitive types)
+			// We don't have other choice than boxing and cast - for classes it should be pretty quick
+			object boxedValue = value;
+			return (ToT)boxedValue;
+		}
+	}
 }
 
