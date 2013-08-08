@@ -56,6 +56,8 @@ namespace PlayScript
 		public int	InvokeConstructorBinderInvoked;
 		public int	InvokeMemberBinderCreated;
 		public int	InvokeMemberBinderInvoked;
+		public int	InvokeMemberBinderInvoked_Fast;
+		public int	InvokeMemberBinderInvoked_Slow;
 		public int	IsEventBinderCreated;
 		public int	IsEventBinderInvoked;
 

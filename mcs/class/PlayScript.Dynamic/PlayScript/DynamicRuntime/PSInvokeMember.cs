@@ -33,7 +33,7 @@ namespace PlayScript.DynamicRuntime
 			mArgs   = new object[argCount];
 		}
 
-		enum OverloadState
+		enum OverloadState : byte
 		{
 			/// <summary>
 			/// We don't know the overload state, either because this is the first pass through the binder, or we resolved a dynamic value every time.
@@ -54,22 +54,19 @@ namespace PlayScript.DynamicRuntime
 		private string			mName;
 		private Type			mType;
 		private object[]		mArgs;
-		private object[]		mConvertedArgs;
 		private OverloadState	mOverloadState = OverloadState.Unknown;
 		private MethodBinder	mMethod;
 		private MethodBinder[]	mMethodList;
 
-		private object			mPreviousTarget;		// TODO: Change this to use the exposed MethodInfo from the invoker?
-		private MethodInfo		mPreviousMethodInfo;	// TODO: Change this to use the exposed MethodInfo from the invoker?
 		private InvokerBase		mInvoker;
 
-		private void SelectMethod(object o)
+		private InvokerBase SelectMethod(object o)
 		{
 			// if only one method, then use it
 			if (mMethodList.Length == 1) {
 				mMethod = mMethodList[0];
 				mOverloadState = OverloadState.NoOverload;
-				return;
+				return InvokerBase.UpdateOrCreate(mInvoker, o, mMethod.Method);
 			}
 
 			mOverloadState = OverloadState.HasOverload;
@@ -80,7 +77,7 @@ namespace PlayScript.DynamicRuntime
 				// is this method compatible?
 				if (method.CheckArguments(mArgs)) {
 					mMethod = method;
-					return;
+					return InvokerBase.UpdateOrCreate(mInvoker, o, mMethod.Method);
 				}
 			}
 
@@ -95,30 +92,19 @@ namespace PlayScript.DynamicRuntime
 			if (dc != null) {
 				var func = dc.__GetDynamicValue(mName) as Delegate;
 				if (func != null) {
-					// Use function, but let's compare with previous invoker if we can reuse it
-					if ((func.Target != mPreviousTarget) || (func.Method != mPreviousMethodInfo)) {
-						// TODO: In some cases, we might be able to reuse the previous invoker (and just override its delegate)
-						mInvoker = ActionCreator.CreateInvoker(func);	// This is going to use an invoker factory (can be registered by user too for more optimal code).
-						mPreviousTarget = func.Target;
-						mPreviousMethodInfo = func.Method;
-					}
+					mInvoker = InvokerBase.UpdateOrCreate(mInvoker, func.Target, func.Method);
 					return true;			// Because we found a dynamic value as an invoker, we have to invoke later and not resolve it again (either with the fast path or the slow path)
 				}
 			}
 
-			if (o == mPreviousTarget) {
-				// If the object is the same, we directly invoke (no resolve needed in this case)
-				return true;
+			if (mInvoker != null)
+			{
+				// Try to update the invoker with the new target, it might actually be the exact same target, so invoker can be re-used.
+				mInvoker = mInvoker.TryUpdate(o);
+				return (mInvoker != null);
 			}
 
-			// This is a different target, check if that's the same type, if it is and we have an invoker, we could just retarget the new invoker
-			// Instead of going through the heavier ActionCreator.CreateInvoker() - Same for the dynamic above
-
-			// Not the same target, we don't event check for type to try to reuse the same invoker.
-			// TODO: Add delegate update here if the target is the same type (it means it has the same overload state, method info, etc...)
-			mInvoker = null;
-			mPreviousTarget = null;
-			mPreviousMethodInfo = null;
+			// No invoker, or could not re-use it 
 			return false;
 		}
 
@@ -147,37 +133,16 @@ namespace PlayScript.DynamicRuntime
 					if (func != null) {
 						// Assume that most time, it is due to the first execution, so don't compare with previous version
 						mInvoker = ActionCreator.CreateInvoker(func);	// This is going to use an invoker factory (can be registered by user too for more optimal code).
-						mPreviousMethodInfo = func.Method;
-						mPreviousTarget = o;
-						mMethod = null;
 						invokeOnly = true;
 					}
 				}
 			}
 			if (invokeOnly)
 			{
-				// It is invoke only, so it did not match the calling site parameters (or is coming from the dynamic value), so parameters have to be converted
-
-				// We probably should revisist this so we can do everything from mPreviousMethodInfo.
-				// It would be much more consistent, and we could more easily push the conversion to the invoker.
-				if (mMethod != null)
-				{
-					if (mMethod.ConvertArguments(o, mArgs, mArgs.Length, ref mConvertedArgs) == false)
-					{
-						throw new NotSupportedException("Could not convert parameters for method " + mPreviousMethodInfo.ToString());
-					}
-				}
-				else
-				{
-					// Revisit allocation pattern too for newArgs...
-					object[] newArgs;
-					if (PlayScript.Dynamic.ConvertMethodParameters(mPreviousMethodInfo, mArgs, out newArgs) == false)
-					{
-						throw new NotSupportedException("Could not convert parameters for method " + mPreviousMethodInfo.ToString());
-					}
-					mConvertedArgs = newArgs;
-				}
-				return mInvoker.UnsafeInvokeWith(mConvertedArgs);
+				#if BINDERS_RUNTIME_STATS
+				++Stats.CurrentInstance.InvokeMemberBinderInvoked_Slow;
+				#endif
+				return mInvoker.SafeInvokeWith(mArgs);
 			}
 
 			// If we reached this point, we have to do a new resolve, then invoke
@@ -211,27 +176,27 @@ namespace PlayScript.DynamicRuntime
 
 				mMethodList = MethodBinder.LookupMethodList(mType, mName, flags, mArgs.Length);
 
-				// select new method to use
-				SelectMethod(o);
+				// select new method to use, this will try to reuse 
+				mInvoker = SelectMethod(o);
 			}
 			else if (mOverloadState == OverloadState.HasOverload)	
 			{
 				// if there are overloads we select the method every time
 				// we could look into a more optimal way of doing this if it becomes a problem
-				SelectMethod(o);
+				mInvoker = SelectMethod(o);
+			}
+			else
+			{
+				// Same instance type, no overload, so should be the same method (or none).
+				// We might be able to update the invoker if only the target changed
+				mInvoker = InvokerBase.UpdateOrCreate(mInvoker, o, mMethod.Method);
 			}
 
-			// convert the parameters and invoke as methd (as we just selected it)
-			if (mMethod.ConvertArguments(o, mArgs, mArgs.Length, ref mConvertedArgs)) {
-				mInvoker = ActionCreator.CreateInvoker(o, mMethod.Method);
-				mPreviousTarget = o;
-				mPreviousMethodInfo = mMethod.Method;
-				return mInvoker.UnsafeInvokeWith(mConvertedArgs);		// We do a delegate call here instead of a dynamic call
-			}
-
-			throw new InvalidOperationException("Could not find suitable method to invoke: " + mName + " for type: " + mType);
+			#if BINDERS_RUNTIME_STATS
+			++Stats.CurrentInstance.InvokeMemberBinderInvoked_Slow;
+			#endif
+			return mInvoker.SafeInvokeWith(mArgs);
 		}
-
 
 		/// <summary>
 		/// Invokes the method on o (potentially using a previous invoker as a hint).
@@ -261,6 +226,9 @@ namespace PlayScript.DynamicRuntime
 			ICallerA caller = mInvoker as ICallerA;
 			if (caller != null)
 			{
+				#if BINDERS_RUNTIME_STATS
+				++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+				#endif
 				caller.Call();		// Fast path
 				return;
 			}
@@ -281,6 +249,9 @@ namespace PlayScript.DynamicRuntime
 				ICallerA<A1> caller = mInvoker as ICallerA<A1>;
 				if (caller != null)
 				{
+					#if BINDERS_RUNTIME_STATS
+					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					#endif
 					caller.Call(a1);	// Fast path
 					return;
 				}
@@ -304,6 +275,9 @@ namespace PlayScript.DynamicRuntime
 				ICallerA<A1, A2> caller = mInvoker as ICallerA<A1, A2>;
 				if (caller != null)
 				{
+					#if BINDERS_RUNTIME_STATS
+					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					#endif
 					caller.Call(a1, a2);	// Fast path
 					return;
 				}
@@ -328,6 +302,9 @@ namespace PlayScript.DynamicRuntime
 				ICallerA<A1, A2, A3> caller = mInvoker as ICallerA<A1, A2, A3>;
 				if (caller != null)
 				{
+					#if BINDERS_RUNTIME_STATS
+					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					#endif
 					caller.Call(a1, a2, a3);	// Fast path
 					return;
 				}
@@ -353,6 +330,9 @@ namespace PlayScript.DynamicRuntime
 				ICallerA<A1, A2, A3, A4> caller = mInvoker as ICallerA<A1, A2, A3, A4>;
 				if (caller != null)
 				{
+					#if BINDERS_RUNTIME_STATS
+					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					#endif
 					caller.Call(a1, a2, a3, a4);	// Fast path
 					return;
 				}
@@ -379,6 +359,9 @@ namespace PlayScript.DynamicRuntime
 				ICallerA<A1, A2, A3, A4, A5> caller = mInvoker as ICallerA<A1, A2, A3, A4, A5>;
 				if (caller != null)
 				{
+					#if BINDERS_RUNTIME_STATS
+					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					#endif
 					caller.Call(a1, a2, a3, a4, a5);	// Fast path
 					return;
 				}
@@ -406,6 +389,9 @@ namespace PlayScript.DynamicRuntime
 				ICallerA<A1, A2, A3, A4, A5, A6> caller = mInvoker as ICallerA<A1, A2, A3, A4, A5, A6>;
 				if (caller != null)
 				{
+					#if BINDERS_RUNTIME_STATS
+					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					#endif
 					caller.Call(a1, a2, a3, a4, a5, a6);	// Fast path
 					return;
 				}
@@ -434,6 +420,9 @@ namespace PlayScript.DynamicRuntime
 				ICallerA<A1, A2, A3, A4, A5, A6, A7> caller = mInvoker as ICallerA<A1, A2, A3, A4, A5, A6, A7>;
 				if (caller != null)
 				{
+					#if BINDERS_RUNTIME_STATS
+					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					#endif
 					caller.Call(a1, a2, a3, a4, a5, a6, a7);	// Fast path
 					return;
 				}
@@ -464,6 +453,9 @@ namespace PlayScript.DynamicRuntime
 				ICallerA<A1, A2, A3, A4, A5, A6, A7, A8> caller = mInvoker as ICallerA<A1, A2, A3, A4, A5, A6, A7, A8>;
 				if (caller != null)
 				{
+					#if BINDERS_RUNTIME_STATS
+					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					#endif
 					caller.Call(a1, a2, a3, a4, a5, a6, a7, a8);	// Fast path
 					return;
 				}
@@ -494,6 +486,9 @@ namespace PlayScript.DynamicRuntime
 				ICallerF<TR> caller = mInvoker as ICallerF<TR>;
 				if (caller != null)
 				{
+					#if BINDERS_RUNTIME_STATS
+					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					#endif
 					return caller.Call();	// Fast path
 				}
 			}
@@ -514,6 +509,9 @@ namespace PlayScript.DynamicRuntime
 				ICallerF<A1, TR> caller = mInvoker as ICallerF<A1, TR>;
 				if (caller != null)
 				{
+					#if BINDERS_RUNTIME_STATS
+					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					#endif
 					return caller.Call(a1);	// Fast path
 				}
 			}
@@ -536,6 +534,9 @@ namespace PlayScript.DynamicRuntime
 				ICallerF<A1, A2, TR> caller = mInvoker as ICallerF<A1, A2, TR>;
 				if (caller != null)
 				{
+					#if BINDERS_RUNTIME_STATS
+					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					#endif
 					return caller.Call(a1, a2);	// Fast path
 				}
 			}
@@ -559,6 +560,9 @@ namespace PlayScript.DynamicRuntime
 				ICallerF<A1, A2, A3, TR> caller = mInvoker as ICallerF<A1, A2, A3, TR>;
 				if (caller != null)
 				{
+					#if BINDERS_RUNTIME_STATS
+					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					#endif
 					return caller.Call(a1, a2, a3);	// Fast path
 				}
 			}
@@ -583,6 +587,9 @@ namespace PlayScript.DynamicRuntime
 				ICallerF<A1, A2, A3, A4, TR> caller = mInvoker as ICallerF<A1, A2, A3, A4, TR>;
 				if (caller != null)
 				{
+					#if BINDERS_RUNTIME_STATS
+					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					#endif
 					return caller.Call(a1, a2, a3, a4);	// Fast path
 				}
 			}
@@ -608,6 +615,9 @@ namespace PlayScript.DynamicRuntime
 				ICallerF<A1, A2, A3, A4, A5, TR> caller = mInvoker as ICallerF<A1, A2, A3, A4, A5, TR>;
 				if (caller != null)
 				{
+					#if BINDERS_RUNTIME_STATS
+					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					#endif
 					return caller.Call(a1, a2, a3, a4, a5);	// Fast path
 				}
 			}
@@ -634,6 +644,9 @@ namespace PlayScript.DynamicRuntime
 				ICallerF<A1, A2, A3, A4, A5, A6, TR> caller = mInvoker as ICallerF<A1, A2, A3, A4, A5, A6, TR>;
 				if (caller != null)
 				{
+					#if BINDERS_RUNTIME_STATS
+					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					#endif
 					return caller.Call(a1, a2, a3, a4, a5, a6);	// Fast path
 				}
 			}
@@ -661,6 +674,9 @@ namespace PlayScript.DynamicRuntime
 				ICallerF<A1, A2, A3, A4, A5, A6, A7, TR> caller = mInvoker as ICallerF<A1, A2, A3, A4, A5, A6, A7, TR>;
 				if (caller != null)
 				{
+					#if BINDERS_RUNTIME_STATS
+					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					#endif
 					return caller.Call(a1, a2, a3, a4, a5, a6, a7);	// Fast path
 				}
 			}
@@ -690,6 +706,9 @@ namespace PlayScript.DynamicRuntime
 				ICallerF<A1, A2, A3, A4, A5, A6, A7, A8, TR> caller = mInvoker as ICallerF<A1, A2, A3, A4, A5, A6, A7, A8, TR>;
 				if (caller != null)
 				{
+					#if BINDERS_RUNTIME_STATS
+					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					#endif
 					return caller.Call(a1, a2, a3, a4, a5, a6, a7, a8);	// Fast path
 				}
 			}

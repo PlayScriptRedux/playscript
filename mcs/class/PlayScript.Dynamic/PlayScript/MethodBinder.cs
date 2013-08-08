@@ -13,57 +13,56 @@ namespace PlayScript
 		public readonly int 				ParameterCount;
 		public readonly bool 				IsExtensionMethod;
 		public readonly bool 				IsVariadic;
-		
-		
+
 		public MethodBinder(MethodInfo method, bool isExtensionMethod)
 		{
-			this.Method = method;
-			this.IsExtensionMethod = isExtensionMethod;
-			
+			Method = method;
+			IsExtensionMethod = isExtensionMethod;
+
 			// get method parameters
-			this.Parameters = method.GetParameters();
-			this.ParameterCount = this.Parameters.Length;
+			Parameters = method.GetParameters();
+			ParameterCount = Parameters.Length;
 
 			// see if this method is variadic
-			if (this.Parameters.Length > 0)
+			if (Parameters.Length > 0)
 			{
-				var lastParameter = this.Parameters[this.Parameters.Length - 1];
+				var lastParameter = Parameters[Parameters.Length - 1];
 				// determine variadic state of this method
 				var paramArrayAttribute = lastParameter.GetCustomAttributes(typeof(ParamArrayAttribute), true);
 				if ((paramArrayAttribute != null) && (paramArrayAttribute.Length != 0))
 				{
 					IsVariadic = true;
 					// we have one less parameter since we are variadic
-					this.ParameterCount--;
+					ParameterCount--;
 				}
 			}
 
 			// determine required argument count
-			this.MinArgumentCount = 0;
-			for (int i=0; i < this.ParameterCount; i++) {
-				if (this.Parameters[i].IsOptional) {
+			MinArgumentCount = 0;
+			for (int i=0; i < ParameterCount; i++) {
+				if (Parameters[i].IsOptional) {
 					break;
 				}
 				MinArgumentCount++;
 			}
-			this.MaxArgumentCount = !this.IsVariadic ? this.ParameterCount : int.MaxValue;
+			MaxArgumentCount = !IsVariadic ? ParameterCount : int.MaxValue;
 
-			if (this.IsExtensionMethod) {
+			if (IsExtensionMethod) {
 				MinArgumentCount--;
 				MaxArgumentCount--;
 			}
 		}
 
 		public bool CheckArguments(object[] args) {
-			int startParameter = this.IsExtensionMethod ? 1 : 0;
+			int startParameter = IsExtensionMethod ? 1 : 0;
 			// check required arguments
-			for (int i=0; i < this.MinArgumentCount; i++)
+			for (int i=0; i < MinArgumentCount; i++)
 			{
 				object arg = args[i];
 				if (arg != null)
 				{
 					Type argType = arg.GetType();
-					Type paramType = this.Parameters[startParameter + i].ParameterType;
+					Type paramType = Parameters[startParameter + i].ParameterType;
 					if (!paramType.IsAssignableFrom(argType)) {
 						// not compatible
 						return false;
@@ -76,9 +75,21 @@ namespace PlayScript
 
 		public bool CheckArgumentCount(int argCount) {
 			// ensure argument count is within range
-			return (argCount >= this.MinArgumentCount) && (argCount <= this.MaxArgumentCount);
+			return (argCount >= MinArgumentCount) && (argCount <= MaxArgumentCount);
 		}
-		
+
+		public static bool ConvertArguments(MethodInfo methodInfo, object thisObj, object[] args, int argCount, ref object[] outArgs)
+		{
+			MethodBinder methodBinder;
+			if (sMethodInfoCache.TryGetValue(methodInfo, out methodBinder) == false)
+			{
+				methodBinder = new MethodBinder(methodInfo, false);		// We assume that if we reached by this code path, it is not an extension method
+																		// TODO: This assumption might need more care
+				sMethodInfoCache.Add(methodInfo, methodBinder);
+			}
+			return methodBinder.ConvertArguments(thisObj, args, argCount, ref outArgs);
+		}
+
 		public bool ConvertArguments(object thisObj, object[] args, int argCount, ref object[] outArgs)
 		{
 			// index in parameters (outArgs)
@@ -87,22 +98,22 @@ namespace PlayScript
 			int argIndex = 0;
 
 			// resize converted argument array if necessary
-			if (outArgs == null || outArgs.Length != this.Parameters.Length) {
-				outArgs = new object[this.Parameters.Length];
+			if (outArgs == null || outArgs.Length != Parameters.Length) {
+				outArgs = new object[Parameters.Length];
 			}
 			
-			if (this.IsExtensionMethod) {
+			if (IsExtensionMethod) {
 				// write 'this' as first argument
 				outArgs[i++] = thisObj;
 			}
 			
 			// process all parameters
-			for (; i < this.ParameterCount; i++)
+			for (; i < ParameterCount; i++)
 			{
 				if (argIndex < argCount)
 				{
 					// write argument to output array (with conversion)
-					outArgs[i] = PlayScript.Dynamic.ConvertValue(args[argIndex], this.Parameters[i].ParameterType);
+					outArgs[i] = PlayScript.Dynamic.ConvertValue(args[argIndex], Parameters[i].ParameterType);
 					argIndex++;
 				}
 				else
@@ -120,7 +131,7 @@ namespace PlayScript
 			// compute remaining arguments
 			int extraArgCount = (argCount - argIndex);
 
-			if (this.IsVariadic)
+			if (IsVariadic)
 			{
 				// setup variadic arguments
 				if (extraArgCount > 0)
@@ -171,6 +182,7 @@ namespace PlayScript
 						var newInfo = new MethodBinder(method, false);
 						if (newInfo.CheckArgumentCount(argCount)) {
 							list.Add(newInfo);
+							sMethodInfoCache[method] = newInfo;
 						}
 					}
 				}
@@ -191,6 +203,7 @@ namespace PlayScript
 									var newInfo = new MethodBinder(method, true);
 									if (newInfo.CheckArgumentCount(argCount)) {
 										list.Add(newInfo);
+										sMethodInfoCache[method] = newInfo;
 									}
 								}
 							}
@@ -221,6 +234,10 @@ namespace PlayScript
 
 		private static readonly Dictionary< Tuple<Type, string, BindingFlags, int>, MethodBinder[] > sMethodCache = new Dictionary< Tuple<Type, string, BindingFlags, int>, MethodBinder[] >();
 		private static readonly object[] 	   sEmptyArray = new object[0];
+
+		// ActionCreator has already a MethodInfo cache, and most time they will match with these
+		// We probably should move this to the ActionCreator and have one shared cache.
+		private static Dictionary<MethodInfo, MethodBinder> sMethodInfoCache = new Dictionary<MethodInfo, MethodBinder>();
 	}
 }
 

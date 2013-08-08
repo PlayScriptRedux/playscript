@@ -145,6 +145,26 @@ namespace PlayScript
 		/// <returns>Return value of the invocation.</returns>
 		/// <param name="args">The arguments for the invocation.</param>
 		public abstract object UnsafeInvokeWith(object[] args);
+
+		public virtual InvokerBase TryUpdate(object target) { return null; }
+		public virtual InvokerBase TryUpdate(object target, MethodInfo methodInfo) { return null; }
+
+		public static InvokerBase UpdateOrCreate(InvokerBase invoker, object target, MethodInfo methodInfo)
+		{
+			if (invoker == null)
+			{
+				// No invoker to begin with, let's create it
+				return ActionCreator.CreateInvoker(target, methodInfo);
+			}
+			invoker = invoker.TryUpdate(target, methodInfo);
+			if (invoker != null)
+			{
+				return invoker;			// We were able to do a fast update of the delegate
+			}
+
+			// We could not update the current one, we have to create it
+			return ActionCreator.CreateInvoker(target, methodInfo);
+		}
 	}
 
 	public class DynamicInvoker : InvokerBase
@@ -152,7 +172,7 @@ namespace PlayScript
 		MethodInfo mMethod;
 		object mTarget;
 		object[] mArguments;
-		Delegate mDelegate;
+		object[] mConvertedArguments;
 
 		public DynamicInvoker(object target, MethodInfo methodInfo)
 		{
@@ -162,7 +182,6 @@ namespace PlayScript
 
 		public DynamicInvoker(Delegate del)
 		{
-			mDelegate = del;
 			mMethod = del.Method;
 			mTarget = del.Target;
 		}
@@ -185,13 +204,34 @@ namespace PlayScript
 
 		public override object SafeInvokeWith(object[] args)
 		{
-			object[] newArgs = PlayScript.Dynamic.ConvertArgumentList(mMethod, args);
-			return mMethod.Invoke(mTarget, newArgs);
+			if (MethodBinder.ConvertArguments(mMethod, mTarget, args, args.Length, ref mConvertedArguments)) {
+				return mMethod.Invoke(mTarget, mConvertedArguments);
+			}
+			throw new InvalidOperationException("Could not convert parameters for method " + mMethod.ToString());
 		}
 
 		public override object UnsafeInvokeWith(object[] args)
 		{
 			return mMethod.Invoke(mTarget, args);
+		}
+
+		public override InvokerBase TryUpdate(object target)
+		{
+			if (mTarget.GetType() == target.GetType())
+			{
+				// We can update the target only if that's the same type, so the method are the same
+				mTarget = target;
+				return this;
+			}
+			return null;
+		}
+
+		public override InvokerBase TryUpdate(object target, MethodInfo methodInfo)
+		{
+			mTarget = target;
+			mMethod = methodInfo;
+			// If methods are different, we will have to reset default parameters
+			return this;
 		}
 	}
 
@@ -206,11 +246,9 @@ namespace PlayScript
 		MethodInfo mMethod;
 		object mTarget;
 		object[] mArguments;
-		Delegate mDelegate;
 
 		public DynamicInvokerVariadic(Delegate del)
 		{
-			mDelegate = del;
 			mMethod = del.Method;
 			mTarget = del.Target;
 		}
@@ -235,8 +273,11 @@ namespace PlayScript
 
 		public override object SafeInvokeWith(object[] args)
 		{
-			object[] newArgs = PlayScript.Dynamic.ConvertArgumentList(mMethod, args);
-			return mMethod.Invoke(mTarget, newArgs);
+			// Because we are in a single thread, and we know that it is a variadic method, we can use a shared temp object[1]
+			if (MethodBinder.ConvertArguments(mMethod, mTarget, args, args.Length, ref sTemp)) {
+				return mMethod.Invoke(mTarget, sTemp);
+			}
+			throw new InvalidOperationException("Could not convert parameters for method " + mMethod.ToString());
 		}
 
 		public override object UnsafeInvokeWith(object[] args)
@@ -244,15 +285,74 @@ namespace PlayScript
 			return mMethod.Invoke(mTarget, args);
 		}
 
+		public override InvokerBase TryUpdate(object target)
+		{
+			if (mTarget.GetType() == target.GetType())
+			{
+				// We can update the target only if that's the same type, so the method are the same
+				mTarget = target;
+				return this;
+			}
+			return null;
+		}
+
+		public override InvokerBase TryUpdate(object target, MethodInfo methodInfo)
+		{
+			mTarget = target;
+			mMethod = methodInfo;
+			// If methods are different, we will have to reset default parameters
+			return this;
+		}
+
 		private static object[] sTemp = new object[1];
 	}
 
-	public abstract class InvokerParamBase : InvokerBase
+	public abstract class InvokerBase<D> : InvokerBase
+		where D : class											// Can't have Delegate as generic constraints
 	{
-		
+		protected D mDelegate;
+
+		public override InvokerBase TryUpdate(object target)
+		{
+			Delegate d = (Delegate)(object)mDelegate;			// Work around the fact that Delegate can't be a generic constraint
+			if (d.Target == target)
+			{
+				return this;
+			}
+			if (d.Target.GetType() == target.GetType())
+			{
+				// We can update the target only if that's the same type, so the method are the same
+				mDelegate = (D)(object)Delegate.CreateDelegate(typeof(D), target, d.Method);
+				return this;
+			}
+			return null;
+		}
+
+		public override InvokerBase TryUpdate(object target, MethodInfo methodInfo)
+		{
+			Delegate d = (Delegate)(object)mDelegate;			// Work around the fact that Delegate can't be a generic constraint
+			if (d.Method == methodInfo)
+			{
+				if (d.Target == target)
+				{
+					return this;
+				}
+				// That's the exact same method, so we are guaranteed that the signature is the same,
+				// It does not matter if target type is the same or not. Also there is no need to reset the default checks.
+				mDelegate = (D)(object)Delegate.CreateDelegate(typeof(D), target, methodInfo);
+				return this;
+			}
+			return null;	// No fast conversion, we have to look at the method signature, and might have to generate a completely new invoker
+		}
 	}
 
-	public abstract class InvokerParamBase<P1> : InvokerBase
+	public abstract class InvokerParamBase<D> : InvokerBase<D>
+		where D : class
+	{
+	}
+
+	public abstract class InvokerParamBase<D, P1> : InvokerBase<D>
+		where D : class
 	{
 		protected P1 mArgument1;
 		protected P1 mDefaultArgument1;
@@ -297,7 +397,8 @@ namespace PlayScript
 		}
 	}
 
-	public abstract class InvokerParamBase<P1,P2> : InvokerBase
+	public abstract class InvokerParamBase<D, P1,P2> : InvokerBase<D>
+		where D : class
 	{
 		protected P1 mArgument1;
 		protected P1 mDefaultArgument1;
@@ -345,7 +446,8 @@ namespace PlayScript
 		}
 	}
 
-	public abstract class InvokerParamBase<P1, P2, P3> : InvokerBase
+	public abstract class InvokerParamBase<D, P1, P2, P3> : InvokerBase<D>
+		where D : class
 	{
 		protected P1 mArgument1;
 		protected P1 mDefaultArgument1;
@@ -396,7 +498,8 @@ namespace PlayScript
 		}
 	}
 
-	public abstract class InvokerParamBase<P1, P2, P3, P4> : InvokerBase
+	public abstract class InvokerParamBase<D, P1, P2, P3, P4> : InvokerBase<D>
+		where D : class
 	{
 		protected P1 mArgument1;
 		protected P1 mDefaultArgument1;
@@ -450,7 +553,8 @@ namespace PlayScript
 		}
 	}
 
-	public abstract class InvokerParamBase<P1, P2, P3, P4, P5> : InvokerBase
+	public abstract class InvokerParamBase<D, P1, P2, P3, P4, P5> : InvokerBase<D>
+		where D : class
 	{
 		protected P1 mArgument1;
 		protected P1 mDefaultArgument1;
@@ -507,7 +611,8 @@ namespace PlayScript
 		}
 	}
 
-	public abstract class InvokerParamBase<P1, P2, P3, P4, P5, P6> : InvokerBase
+	public abstract class InvokerParamBase<D, P1, P2, P3, P4, P5, P6> : InvokerBase<D>
+		where D : class
 	{
 		protected P1 mArgument1;
 		protected P1 mDefaultArgument1;
@@ -567,7 +672,8 @@ namespace PlayScript
 		}
 	}
 
-	public abstract class InvokerParamBase<P1, P2, P3, P4, P5, P6, P7> : InvokerBase
+	public abstract class InvokerParamBase<D, P1, P2, P3, P4, P5, P6, P7> : InvokerBase<D>
+		where D : class
 	{
 		protected P1 mArgument1;
 		protected P1 mDefaultArgument1;
@@ -630,7 +736,8 @@ namespace PlayScript
 		}
 	}
 
-	public abstract class InvokerParamBase<P1, P2, P3, P4, P5, P6, P7, P8> : InvokerBase
+	public abstract class InvokerParamBase<D, P1, P2, P3, P4, P5, P6, P7, P8> : InvokerBase<D>
+		where D : class
 	{
 		protected P1 mArgument1;
 		protected P1 mDefaultArgument1;
@@ -698,18 +805,16 @@ namespace PlayScript
 
 	// List of actions
 
-	public class InvokerA : InvokerParamBase, ICallerA
+	public class InvokerA : InvokerParamBase<Action>, ICallerA
 	{
-		Action mAction;
-
 		public InvokerA(Action action)
 		{
-			mAction = action;
+			mDelegate = action;
 		}
 
 		public InvokerA(object target, MethodInfo methodInfo)
 		{
-			mAction = (Action)Delegate.CreateDelegate(typeof(Action), target, methodInfo);
+			mDelegate = (Action)Delegate.CreateDelegate(typeof(Action), target, methodInfo);
 		}
 
 		public override void SetArguments(object[] arguments)
@@ -721,7 +826,7 @@ namespace PlayScript
 
 		public override object Invoke()
 		{
-			mAction();
+			mDelegate();
 			return null;
 		}
 
@@ -736,7 +841,7 @@ namespace PlayScript
 			{
 				throw new InvalidOperationException();
 			}
-			mAction();
+			mDelegate();
 			return null;
 		}
 
@@ -746,33 +851,31 @@ namespace PlayScript
 			{
 				throw new InvalidOperationException();
 			}
-			mAction();
+			mDelegate();
 			return null;
 		}
 
 		void ICallerA.Call()
 		{
-			mAction();
+			mDelegate();
 		}
 	}
 
-	public class InvokerA<P1> : InvokerParamBase<P1>, ICallerA, ICallerA<P1>
+	public class InvokerA<P1> : InvokerParamBase<Action<P1>, P1>, ICallerA, ICallerA<P1>
 	{
-		Action<P1> mAction;
-
 		public InvokerA(Action<P1> action)
 		{
-			mAction = action;
+			mDelegate = action;
 		}
 
 		public InvokerA(object target, MethodInfo methodInfo)
 		{
-			mAction = (Action<P1>)Delegate.CreateDelegate(typeof(Action<P1>), target, methodInfo);
+			mDelegate = (Action<P1>)Delegate.CreateDelegate(typeof(Action<P1>), target, methodInfo);
 		}
 
 		public InvokerA(Delegate del)
 		{
-			mAction = (Action<P1>)del;
+			mDelegate = (Action<P1>)del;
 		}
 
 		public override void SetArguments(object[] arguments)
@@ -786,51 +889,49 @@ namespace PlayScript
 
 		public override object Invoke()
 		{
-			mAction(mArgument1);
+			mDelegate(mArgument1);
 			return null;
 		}
 
 		public override void InvokeOverrideA1(object a1)
 		{
-			mAction((P1)a1);
+			mDelegate((P1)a1);
 		}
 
 		public override object SafeInvokeWith(object[] args)
 		{
-			mAction((P1)args[0]);
+			mDelegate((P1)args[0]);
 			return null;
 		}
 
 		public override object UnsafeInvokeWith(object[] args)
 		{
-			mAction((P1)args[0]);
+			mDelegate((P1)args[0]);
 			return null;
 		}
 
 		void ICallerA.Call()
 		{
-			CheckDefaultArguments(0, mAction.Method);
-			mAction(mDefaultArgument1);
+			CheckDefaultArguments(0, mDelegate.Method);
+			mDelegate(mDefaultArgument1);
 		}
 
 		void ICallerA<P1>.Call(P1 a1)
 		{
-			mAction(a1);
+			mDelegate(a1);
 		}
 	}
 
-	public class InvokerA<P1, P2> : InvokerParamBase<P1, P2>, ICallerA, ICallerA<P1>, ICallerA<P1, P2>
+	public class InvokerA<P1, P2> : InvokerParamBase<Action<P1, P2>, P1, P2>, ICallerA, ICallerA<P1>, ICallerA<P1, P2>
 	{
-		Action<P1, P2> mAction;
-
 		public InvokerA(Action<P1, P2> action)
 		{
-			mAction = action;
+			mDelegate = action;
 		}
 
 		public InvokerA(object target, MethodInfo methodInfo)
 		{
-			mAction = (Action<P1, P2>)Delegate.CreateDelegate(typeof(Action<P1, P2>), target, methodInfo);
+			mDelegate = (Action<P1, P2>)Delegate.CreateDelegate(typeof(Action<P1, P2>), target, methodInfo);
 		}
 
 		public override void SetArguments(object[] arguments)
@@ -845,57 +946,55 @@ namespace PlayScript
 
 		public override object Invoke()
 		{
-			mAction(mArgument1, mArgument2);
+			mDelegate(mArgument1, mArgument2);
 			return null;
 		}
 
 		public override void InvokeOverrideA1(object a1)
 		{
-			mAction((P1)a1, mArgument2);
+			mDelegate((P1)a1, mArgument2);
 		}
 
 		public override object SafeInvokeWith(object[] args)
 		{
-			mAction((P1)args[0], (P2)args[1]);
+			mDelegate((P1)args[0], (P2)args[1]);
 			return null;
 		}
 
 		public override object UnsafeInvokeWith(object[] args)
 		{
-			mAction((P1)args[0], (P2)args[1]);
+			mDelegate((P1)args[0], (P2)args[1]);
 			return null;
 		}
 
 		void ICallerA.Call()
 		{
-			CheckDefaultArguments(0, mAction.Method);
-			mAction(mDefaultArgument1, mDefaultArgument2);
+			CheckDefaultArguments(0, mDelegate.Method);
+			mDelegate(mDefaultArgument1, mDefaultArgument2);
 		}
 
 		void ICallerA<P1>.Call(P1 a1)
 		{
-			CheckDefaultArguments(1, mAction.Method);
-			mAction(a1, mDefaultArgument2);
+			CheckDefaultArguments(1, mDelegate.Method);
+			mDelegate(a1, mDefaultArgument2);
 		}
 
 		void ICallerA<P1, P2>.Call(P1 a1, P2 a2)
 		{
-			mAction(a1, a2);
+			mDelegate(a1, a2);
 		}
 	}
 
-	public class InvokerA<P1, P2, P3> : InvokerParamBase<P1, P2, P3>, ICallerA, ICallerA<P1>, ICallerA<P1, P2>, ICallerA<P1, P2, P3>
+	public class InvokerA<P1, P2, P3> : InvokerParamBase<Action<P1, P2, P3>, P1, P2, P3>, ICallerA, ICallerA<P1>, ICallerA<P1, P2>, ICallerA<P1, P2, P3>
 	{
-		Action<P1, P2, P3> mAction;
-
 		public InvokerA(Action<P1, P2, P3> action)
 		{
-			mAction = action;
+			mDelegate = action;
 		}
 
 		public InvokerA(object target, MethodInfo methodInfo)
 		{
-			mAction = (Action<P1, P2, P3>)Delegate.CreateDelegate(typeof(Action<P1, P2, P3>), target, methodInfo);
+			mDelegate = (Action<P1, P2, P3>)Delegate.CreateDelegate(typeof(Action<P1, P2, P3>), target, methodInfo);
 		}
 
 		public override void SetArguments(object[] arguments)
@@ -911,63 +1010,61 @@ namespace PlayScript
 
 		public override object Invoke()
 		{
-			mAction(mArgument1, mArgument2, mArgument3);
+			mDelegate(mArgument1, mArgument2, mArgument3);
 			return null;
 		}
 
 		public override void InvokeOverrideA1(object a1)
 		{
-			mAction((P1)a1, mArgument2, mArgument3);
+			mDelegate((P1)a1, mArgument2, mArgument3);
 		}
 
 		public override object SafeInvokeWith(object[] args)
 		{
-			mAction((P1)args[0], (P2)args[1], (P3)args[2]);
+			mDelegate((P1)args[0], (P2)args[1], (P3)args[2]);
 			return null;
 		}
 
 		public override object UnsafeInvokeWith(object[] args)
 		{
-			mAction((P1)args[0], (P2)args[1], (P3)args[2]);
+			mDelegate((P1)args[0], (P2)args[1], (P3)args[2]);
 			return null;
 		}
 
 		void ICallerA.Call()
 		{
-			CheckDefaultArguments(0, mAction.Method);
-			mAction(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3);
+			CheckDefaultArguments(0, mDelegate.Method);
+			mDelegate(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3);
 		}
 
 		void ICallerA<P1>.Call(P1 a1)
 		{
-			CheckDefaultArguments(1, mAction.Method);
-			mAction(a1, mDefaultArgument2, mDefaultArgument3);
+			CheckDefaultArguments(1, mDelegate.Method);
+			mDelegate(a1, mDefaultArgument2, mDefaultArgument3);
 		}
 
 		void ICallerA<P1, P2>.Call(P1 a1, P2 a2)
 		{
-			CheckDefaultArguments(2, mAction.Method);
-			mAction(a1, a2, mDefaultArgument3);
+			CheckDefaultArguments(2, mDelegate.Method);
+			mDelegate(a1, a2, mDefaultArgument3);
 		}
 
 		void ICallerA<P1, P2, P3>.Call(P1 a1, P2 a2, P3 a3)
 		{
-			mAction(a1, a2, a3);
+			mDelegate(a1, a2, a3);
 		}
 	}
 
-	public class InvokerA<P1, P2, P3, P4> : InvokerParamBase<P1, P2, P3, P4>, ICallerA, ICallerA<P1>, ICallerA<P1, P2>, ICallerA<P1, P2, P3>, ICallerA<P1, P2, P3, P4>
+	public class InvokerA<P1, P2, P3, P4> : InvokerParamBase<Action<P1, P2, P3, P4>, P1, P2, P3, P4>, ICallerA, ICallerA<P1>, ICallerA<P1, P2>, ICallerA<P1, P2, P3>, ICallerA<P1, P2, P3, P4>
 	{
-		Action<P1, P2, P3, P4> mAction;
-
 		public InvokerA(Action<P1, P2, P3, P4> action)
 		{
-			mAction = action;
+			mDelegate = action;
 		}
 
 		public InvokerA(object target, MethodInfo methodInfo)
 		{
-			mAction = (Action<P1, P2, P3, P4>)Delegate.CreateDelegate(typeof(Action<P1, P2, P3, P4>), target, methodInfo);
+			mDelegate = (Action<P1, P2, P3, P4>)Delegate.CreateDelegate(typeof(Action<P1, P2, P3, P4>), target, methodInfo);
 		}
 
 		public override void SetArguments(object[] arguments)
@@ -984,69 +1081,67 @@ namespace PlayScript
 
 		public override object Invoke()
 		{
-			mAction(mArgument1, mArgument2, mArgument3, mArgument4);
+			mDelegate(mArgument1, mArgument2, mArgument3, mArgument4);
 			return null;
 		}
 
 		public override void InvokeOverrideA1(object a1)
 		{
-			mAction((P1)a1, mArgument2, mArgument3, mArgument4);
+			mDelegate((P1)a1, mArgument2, mArgument3, mArgument4);
 		}
 
 		public override object SafeInvokeWith(object[] args)
 		{
-			mAction((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3]);
+			mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3]);
 			return null;
 		}
 
 		public override object UnsafeInvokeWith(object[] args)
 		{
-			mAction((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3]);
+			mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3]);
 			return null;
 		}
 
 		void ICallerA.Call()
 		{
-			CheckDefaultArguments(0, mAction.Method);
-			mAction(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4);
+			CheckDefaultArguments(0, mDelegate.Method);
+			mDelegate(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4);
 		}
 
 		void ICallerA<P1>.Call(P1 a1)
 		{
-			CheckDefaultArguments(1, mAction.Method);
-			mAction(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4);
+			CheckDefaultArguments(1, mDelegate.Method);
+			mDelegate(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4);
 		}
 
 		void ICallerA<P1, P2>.Call(P1 a1, P2 a2)
 		{
-			CheckDefaultArguments(2, mAction.Method);
-			mAction(a1, a2, mDefaultArgument3, mDefaultArgument4);
+			CheckDefaultArguments(2, mDelegate.Method);
+			mDelegate(a1, a2, mDefaultArgument3, mDefaultArgument4);
 		}
 
 		void ICallerA<P1, P2, P3>.Call(P1 a1, P2 a2, P3 a3)
 		{
-			CheckDefaultArguments(3, mAction.Method);
-			mAction(a1, a2, a3, mDefaultArgument4);
+			CheckDefaultArguments(3, mDelegate.Method);
+			mDelegate(a1, a2, a3, mDefaultArgument4);
 		}
 
 		void ICallerA<P1, P2, P3, P4>.Call(P1 a1, P2 a2, P3 a3, P4 a4)
 		{
-			mAction(a1, a2, a3, a4);
+			mDelegate(a1, a2, a3, a4);
 		}
 	}
 
-	public class InvokerA<P1, P2, P3, P4, P5> : InvokerParamBase<P1, P2, P3, P4, P5>, ICallerA, ICallerA<P1>, ICallerA<P1, P2>, ICallerA<P1, P2, P3>, ICallerA<P1, P2, P3, P4>, ICallerA<P1, P2, P3, P4, P5>
+	public class InvokerA<P1, P2, P3, P4, P5> : InvokerParamBase<Action<P1, P2, P3, P4, P5>, P1, P2, P3, P4, P5>, ICallerA, ICallerA<P1>, ICallerA<P1, P2>, ICallerA<P1, P2, P3>, ICallerA<P1, P2, P3, P4>, ICallerA<P1, P2, P3, P4, P5>
 	{
-		Action<P1, P2, P3, P4, P5> mAction;
-
 		public InvokerA(Action<P1, P2, P3, P4, P5> action)
 		{
-			mAction = action;
+			mDelegate = action;
 		}
 
 		public InvokerA(object target, MethodInfo methodInfo)
 		{
-			mAction = (Action<P1, P2, P3, P4, P5>)Delegate.CreateDelegate(typeof(Action<P1, P2, P3, P4, P5>), target, methodInfo);
+			mDelegate = (Action<P1, P2, P3, P4, P5>)Delegate.CreateDelegate(typeof(Action<P1, P2, P3, P4, P5>), target, methodInfo);
 		}
 
 		public override void SetArguments(object[] arguments)
@@ -1064,76 +1159,74 @@ namespace PlayScript
 
 		public override object Invoke()
 		{
-			mAction(mArgument1, mArgument2, mArgument3, mArgument4, mArgument5);
+			mDelegate(mArgument1, mArgument2, mArgument3, mArgument4, mArgument5);
 			return null;
 		}
 
 		public override void InvokeOverrideA1(object a1)
 		{
-			mAction((P1)a1, mArgument2, mArgument3, mArgument4, mArgument5);
+			mDelegate((P1)a1, mArgument2, mArgument3, mArgument4, mArgument5);
 		}
 
 		public override object SafeInvokeWith(object[] args)
 		{
-			mAction((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4]);
+			mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4]);
 			return null;
 		}
 
 		public override object UnsafeInvokeWith(object[] args)
 		{
-			mAction((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4]);
+			mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4]);
 			return null;
 		}
 
 		void ICallerA.Call()
 		{
-			CheckDefaultArguments(0, mAction.Method);
-			mAction(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5);
+			CheckDefaultArguments(0, mDelegate.Method);
+			mDelegate(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5);
 		}
 
 		void ICallerA<P1>.Call(P1 a1)
 		{
-			CheckDefaultArguments(1, mAction.Method);
-			mAction(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5);
+			CheckDefaultArguments(1, mDelegate.Method);
+			mDelegate(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5);
 		}
 
 		void ICallerA<P1, P2>.Call(P1 a1, P2 a2)
 		{
-			CheckDefaultArguments(2, mAction.Method);
-			mAction(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5);
+			CheckDefaultArguments(2, mDelegate.Method);
+			mDelegate(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5);
 		}
 
 		void ICallerA<P1, P2, P3>.Call(P1 a1, P2 a2, P3 a3)
 		{
-			CheckDefaultArguments(3, mAction.Method);
-			mAction(a1, a2, a3, mDefaultArgument4, mDefaultArgument5);
+			CheckDefaultArguments(3, mDelegate.Method);
+			mDelegate(a1, a2, a3, mDefaultArgument4, mDefaultArgument5);
 		}
 
 		void ICallerA<P1, P2, P3, P4>.Call(P1 a1, P2 a2, P3 a3, P4 a4)
 		{
-			CheckDefaultArguments(4, mAction.Method);
-			mAction(a1, a2, a3, a4, mDefaultArgument5);
+			CheckDefaultArguments(4, mDelegate.Method);
+			mDelegate(a1, a2, a3, a4, mDefaultArgument5);
 		}
 
 		void ICallerA<P1, P2, P3, P4, P5>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5)
 		{
-			mAction(a1, a2, a3, a4, a5);
+			mDelegate(a1, a2, a3, a4, a5);
 		}
 	}
 
-	public class InvokerA<P1, P2, P3, P4, P5, P6> : InvokerParamBase<P1, P2, P3, P4, P5, P6>, ICallerA, ICallerA<P1>, ICallerA<P1, P2>, ICallerA<P1, P2, P3>,
+	public class InvokerA<P1, P2, P3, P4, P5, P6> : InvokerParamBase<Action<P1, P2, P3, P4, P5, P6>, P1, P2, P3, P4, P5, P6>, ICallerA, ICallerA<P1>, ICallerA<P1, P2>, ICallerA<P1, P2, P3>,
 													ICallerA<P1, P2, P3, P4>, ICallerA<P1, P2, P3, P4, P5>, ICallerA<P1, P2, P3, P4, P5, P6>
 	{
-		Action<P1, P2, P3, P4, P5, P6> mAction;
-
 		public InvokerA(Action<P1, P2, P3, P4, P5, P6> action)
 		{
-			mAction = action;
+			mDelegate = action;
 		}
 
 		public InvokerA(object target, MethodInfo methodInfo)
 		{
-			mAction = (Action<P1, P2, P3, P4, P5, P6>)Delegate.CreateDelegate(typeof(Action<P1, P2, P3, P4, P5, P6>), target, methodInfo);
+			mDelegate = (Action<P1, P2, P3, P4, P5, P6>)Delegate.CreateDelegate(typeof(Action<P1, P2, P3, P4, P5, P6>), target, methodInfo);
 		}
 
 		public override void SetArguments(object[] arguments)
@@ -1152,82 +1245,80 @@ namespace PlayScript
 
 		public override object Invoke()
 		{
-			mAction(mArgument1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6);
+			mDelegate(mArgument1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6);
 			return null;
 		}
 
 		public override void InvokeOverrideA1(object a1)
 		{
-			mAction((P1)a1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6);
+			mDelegate((P1)a1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6);
 		}
 
 		public override object SafeInvokeWith(object[] args)
 		{
-			mAction((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5]);
+			mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5]);
 			return null;
 		}
 
 		public override object UnsafeInvokeWith(object[] args)
 		{
-			mAction((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5]);
+			mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5]);
 			return null;
 		}
 
 		void ICallerA.Call()
 		{
-			CheckDefaultArguments(0, mAction.Method);
-			mAction(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4,mDefaultArgument5, mDefaultArgument6);
+			CheckDefaultArguments(0, mDelegate.Method);
+			mDelegate(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4,mDefaultArgument5, mDefaultArgument6);
 		}
 
 		void ICallerA<P1>.Call(P1 a1)
 		{
-			CheckDefaultArguments(1, mAction.Method);
-			mAction(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6);
+			CheckDefaultArguments(1, mDelegate.Method);
+			mDelegate(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6);
 		}
 
 		void ICallerA<P1, P2>.Call(P1 a1, P2 a2)
 		{
-			CheckDefaultArguments(2, mAction.Method);
-			mAction(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6);
+			CheckDefaultArguments(2, mDelegate.Method);
+			mDelegate(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6);
 		}
 
 		void ICallerA<P1, P2, P3>.Call(P1 a1, P2 a2, P3 a3)
 		{
-			CheckDefaultArguments(3, mAction.Method);
-			mAction(a1, a2, a3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6);
+			CheckDefaultArguments(3, mDelegate.Method);
+			mDelegate(a1, a2, a3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6);
 		}
 
 		void ICallerA<P1, P2, P3, P4>.Call(P1 a1, P2 a2, P3 a3, P4 a4)
 		{
-			CheckDefaultArguments(4, mAction.Method);
-			mAction(a1, a2, a3, a4, mDefaultArgument5, mDefaultArgument6);
+			CheckDefaultArguments(4, mDelegate.Method);
+			mDelegate(a1, a2, a3, a4, mDefaultArgument5, mDefaultArgument6);
 		}
 
 		void ICallerA<P1, P2, P3, P4, P5>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5)
 		{
-			CheckDefaultArguments(5, mAction.Method);
-			mAction(a1, a2, a3, a4, a5, mDefaultArgument6);
+			CheckDefaultArguments(5, mDelegate.Method);
+			mDelegate(a1, a2, a3, a4, a5, mDefaultArgument6);
 		}
 
 		void ICallerA<P1, P2, P3, P4, P5, P6>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6)
 		{
-			mAction(a1, a2, a3, a4, a5, a6);
+			mDelegate(a1, a2, a3, a4, a5, a6);
 		}
 	}
 
-	public class InvokerA<P1, P2, P3, P4, P5, P6, P7> : InvokerParamBase<P1, P2, P3, P4, P5, P6, P7>, ICallerA, ICallerA<P1>, ICallerA<P1, P2>, ICallerA<P1, P2, P3>,
+	public class InvokerA<P1, P2, P3, P4, P5, P6, P7> : InvokerParamBase<Action<P1, P2, P3, P4, P5, P6, P7>, P1, P2, P3, P4, P5, P6, P7>, ICallerA, ICallerA<P1>, ICallerA<P1, P2>, ICallerA<P1, P2, P3>,
 														ICallerA<P1, P2, P3, P4>, ICallerA<P1, P2, P3, P4, P5>, ICallerA<P1, P2, P3, P4, P5, P6>, ICallerA<P1, P2, P3, P4, P5, P6, P7>
 	{
-		Action<P1, P2, P3, P4, P5, P6, P7> mAction;
-
 		public InvokerA(Action<P1, P2, P3, P4, P5, P6, P7> action)
 		{
-			mAction = action;
+			mDelegate = action;
 		}
 
 		public InvokerA(object target, MethodInfo methodInfo)
 		{
-			mAction = (Action<P1, P2, P3, P4, P5, P6, P7>)Delegate.CreateDelegate(typeof(Action<P1, P2, P3, P4, P5, P6, P7>), target, methodInfo);
+			mDelegate = (Action<P1, P2, P3, P4, P5, P6, P7>)Delegate.CreateDelegate(typeof(Action<P1, P2, P3, P4, P5, P6, P7>), target, methodInfo);
 		}
 
 		public override void SetArguments(object[] arguments)
@@ -1247,89 +1338,87 @@ namespace PlayScript
 
 		public override object Invoke()
 		{
-			mAction(mArgument1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6, mArgument7);
+			mDelegate(mArgument1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6, mArgument7);
 			return null;
 		}
 
 		public override void InvokeOverrideA1(object a1)
 		{
-			mAction((P1)a1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6, mArgument7);
+			mDelegate((P1)a1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6, mArgument7);
 		}
 
 		public override object SafeInvokeWith(object[] args)
 		{
-			mAction((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6]);
+			mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6]);
 			return null;
 		}
 
 		public override object UnsafeInvokeWith(object[] args)
 		{
-			mAction((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6]);
+			mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6]);
 			return null;
 		}
 
 		void ICallerA.Call()
 		{
-			CheckDefaultArguments(0, mAction.Method);
-			mAction(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4,mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
+			CheckDefaultArguments(0, mDelegate.Method);
+			mDelegate(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4,mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
 		}
 
 		void ICallerA<P1>.Call(P1 a1)
 		{
-			CheckDefaultArguments(1, mAction.Method);
-			mAction(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
+			CheckDefaultArguments(1, mDelegate.Method);
+			mDelegate(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
 		}
 
 		void ICallerA<P1, P2>.Call(P1 a1, P2 a2)
 		{
-			CheckDefaultArguments(2, mAction.Method);
-			mAction(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
+			CheckDefaultArguments(2, mDelegate.Method);
+			mDelegate(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
 		}
 
 		void ICallerA<P1, P2, P3>.Call(P1 a1, P2 a2, P3 a3)
 		{
-			CheckDefaultArguments(3, mAction.Method);
-			mAction(a1, a2, a3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
+			CheckDefaultArguments(3, mDelegate.Method);
+			mDelegate(a1, a2, a3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
 		}
 
 		void ICallerA<P1, P2, P3, P4>.Call(P1 a1, P2 a2, P3 a3, P4 a4)
 		{
-			CheckDefaultArguments(4, mAction.Method);
-			mAction(a1, a2, a3, a4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
+			CheckDefaultArguments(4, mDelegate.Method);
+			mDelegate(a1, a2, a3, a4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
 		}
 
 		void ICallerA<P1, P2, P3, P4, P5>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5)
 		{
-			CheckDefaultArguments(5, mAction.Method);
-			mAction(a1, a2, a3, a4, a5, mDefaultArgument6, mDefaultArgument7);
+			CheckDefaultArguments(5, mDelegate.Method);
+			mDelegate(a1, a2, a3, a4, a5, mDefaultArgument6, mDefaultArgument7);
 		}
 
 		void ICallerA<P1, P2, P3, P4, P5, P6>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6)
 		{
-			CheckDefaultArguments(6, mAction.Method);
-			mAction(a1, a2, a3, a4, a5, a6, mDefaultArgument7);
+			CheckDefaultArguments(6, mDelegate.Method);
+			mDelegate(a1, a2, a3, a4, a5, a6, mDefaultArgument7);
 		}
 
 		void ICallerA<P1, P2, P3, P4, P5, P6, P7>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6, P7 a7)
 		{
-			mAction(a1, a2, a3, a4, a5, a6, a7);
+			mDelegate(a1, a2, a3, a4, a5, a6, a7);
 		}
 	}
 
-	public class InvokerA<P1, P2, P3, P4, P5, P6, P7, P8> : InvokerParamBase<P1, P2, P3, P4, P5, P6, P7, P8>, ICallerA, ICallerA<P1>, ICallerA<P1, P2>, ICallerA<P1, P2, P3>,
+	public class InvokerA<P1, P2, P3, P4, P5, P6, P7, P8> : InvokerParamBase<Action<P1, P2, P3, P4, P5, P6, P7, P8>, P1, P2, P3, P4, P5, P6, P7, P8>, ICallerA, ICallerA<P1>, ICallerA<P1, P2>, ICallerA<P1, P2, P3>,
 															ICallerA<P1, P2, P3, P4>, ICallerA<P1, P2, P3, P4, P5>, ICallerA<P1, P2, P3, P4, P5, P6>,
 															ICallerA<P1, P2, P3, P4, P5, P6, P7>, ICallerA<P1, P2, P3, P4, P5, P6, P7, P8>
 	{
-		Action<P1, P2, P3, P4, P5, P6, P7, P8> mAction;
-
 		public InvokerA(Action<P1, P2, P3, P4, P5, P6, P7, P8> action)
 		{
-			mAction = action;
+			mDelegate = action;
 		}
 
 		public InvokerA(object target, MethodInfo methodInfo)
 		{
-			mAction = (Action<P1, P2, P3, P4, P5, P6, P7, P8>)Delegate.CreateDelegate(typeof(Action<P1, P2, P3, P4, P5, P6, P7, P8>), target, methodInfo);
+			mDelegate = (Action<P1, P2, P3, P4, P5, P6, P7, P8>)Delegate.CreateDelegate(typeof(Action<P1, P2, P3, P4, P5, P6, P7, P8>), target, methodInfo);
 		}
 
 		public override void SetArguments(object[] arguments)
@@ -1350,78 +1439,78 @@ namespace PlayScript
 
 		public override object Invoke()
 		{
-			mAction(mArgument1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6, mArgument7, mArgument8);
+			mDelegate(mArgument1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6, mArgument7, mArgument8);
 			return null;
 		}
 
 		public override void InvokeOverrideA1(object a1)
 		{
-			mAction((P1)a1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6, mArgument7, mArgument8);
+			mDelegate((P1)a1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6, mArgument7, mArgument8);
 		}
 
 		public override object SafeInvokeWith(object[] args)
 		{
-			mAction((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6], (P8)args[7]);
+			mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6], (P8)args[7]);
 			return null;
 		}
 
 		public override object UnsafeInvokeWith(object[] args)
 		{
-			mAction((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6], (P8)args[7]);
+			mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6], (P8)args[7]);
 			return null;
 		}
 
 		void ICallerA.Call()
 		{
-			CheckDefaultArguments(0, mAction.Method);
-			mAction(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4,mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
+			CheckDefaultArguments(0, mDelegate.Method);
+			mDelegate(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4,mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
 		void ICallerA<P1>.Call(P1 a1)
 		{
-			CheckDefaultArguments(1, mAction.Method);
-			mAction(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
+			CheckDefaultArguments(1, mDelegate.Method);
+			mDelegate(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
 		void ICallerA<P1, P2>.Call(P1 a1, P2 a2)
 		{
-			CheckDefaultArguments(2, mAction.Method);
-			mAction(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
+			CheckDefaultArguments(2, mDelegate.Method);
+			mDelegate(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
 		void ICallerA<P1, P2, P3>.Call(P1 a1, P2 a2, P3 a3)
 		{
-			CheckDefaultArguments(3, mAction.Method);
-			mAction(a1, a2, a3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
+			CheckDefaultArguments(3, mDelegate.Method);
+			mDelegate(a1, a2, a3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
 		void ICallerA<P1, P2, P3, P4>.Call(P1 a1, P2 a2, P3 a3, P4 a4)
 		{
-			CheckDefaultArguments(4, mAction.Method);
-			mAction(a1, a2, a3, a4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
+			CheckDefaultArguments(4, mDelegate.Method);
+			mDelegate(a1, a2, a3, a4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
 		void ICallerA<P1, P2, P3, P4, P5>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5)
 		{
-			CheckDefaultArguments(5, mAction.Method);
-			mAction(a1, a2, a3, a4, a5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
+			CheckDefaultArguments(5, mDelegate.Method);
+			mDelegate(a1, a2, a3, a4, a5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
 		void ICallerA<P1, P2, P3, P4, P5, P6>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6)
 		{
-			CheckDefaultArguments(6, mAction.Method);
-			mAction(a1, a2, a3, a4, a5, a6, mDefaultArgument7, mDefaultArgument8);
+			CheckDefaultArguments(6, mDelegate.Method);
+			mDelegate(a1, a2, a3, a4, a5, a6, mDefaultArgument7, mDefaultArgument8);
 		}
 
 		void ICallerA<P1, P2, P3, P4, P5, P6, P7>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6, P7 a7)
 		{
-			CheckDefaultArguments(7, mAction.Method);
-			mAction(a1, a2, a3, a4, a5, a6, a7, mDefaultArgument8);
+			CheckDefaultArguments(7, mDelegate.Method);
+			mDelegate(a1, a2, a3, a4, a5, a6, a7, mDefaultArgument8);
 		}
 
 		void ICallerA<P1, P2, P3, P4, P5, P6, P7, P8>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6, P7 a7, P8 a8)
 		{
-			mAction(a1, a2, a3, a4, a5, a6, a7, a8);
+			mDelegate(a1, a2, a3, a4, a5, a6, a7, a8);
 		}
 	}
 
@@ -1429,18 +1518,16 @@ namespace PlayScript
 
 	// List of functions
 
-	public class InvokerF<R> : InvokerParamBase, ICallerF<R>, ICallerA
+	public class InvokerF<R> : InvokerParamBase<Func<R>>, ICallerF<R>, ICallerA
 	{
-		Func<R> mFunc;
-
 		public InvokerF(Func<R> func)
 		{
-			mFunc = func;
+			mDelegate = func;
 		}
 
 		public InvokerF(object target, MethodInfo methodInfo)
 		{
-			mFunc = (Func<R>)Delegate.CreateDelegate(typeof(Func<R>), target, methodInfo);
+			mDelegate = (Func<R>)Delegate.CreateDelegate(typeof(Func<R>), target, methodInfo);
 		}
 
 		public override void SetArguments(object[] arguments)
@@ -1452,7 +1539,7 @@ namespace PlayScript
 
 		public override object Invoke()
 		{
-			return mFunc();
+			return mDelegate();
 		}
 
 		public override void InvokeOverrideA1(object a1)
@@ -1466,7 +1553,7 @@ namespace PlayScript
 			{
 				throw new InvalidOperationException();
 			}
-			return mFunc();
+			return mDelegate();
 		}
 
 		public override object UnsafeInvokeWith(object[] args)
@@ -1475,37 +1562,35 @@ namespace PlayScript
 			{
 				throw new InvalidOperationException();
 			}
-			return mFunc();
+			return mDelegate();
 		}
 
 		R ICallerF<R>.Call()
 		{
-			return mFunc();
+			return mDelegate();
 		}
 
 		void ICallerA.Call()
 		{
-			mFunc();
+			mDelegate();
 		}
 	}
 
-	public class InvokerF<P1, R> : InvokerParamBase<P1>, ICallerF<R>, ICallerA, ICallerF<P1, R>, ICallerA<P1>
+	public class InvokerF<P1, R> : InvokerParamBase<Func<P1, R>, P1>, ICallerF<R>, ICallerA, ICallerF<P1, R>, ICallerA<P1>
 	{
-		Func<P1, R> mFunc;
-
 		public InvokerF(Func<P1, R> func)
 		{
-			mFunc = func;
+			mDelegate = func;
 		}
 
 		public InvokerF(object target, MethodInfo methodInfo)
 		{
-			mFunc = (Func<P1, R>)Delegate.CreateDelegate(typeof(Func<P1, R>), target, methodInfo);
+			mDelegate = (Func<P1, R>)Delegate.CreateDelegate(typeof(Func<P1, R>), target, methodInfo);
 		}
 
 		public InvokerF(Delegate del)
 		{
-			mFunc = (Func<P1, R>)del;
+			mDelegate = (Func<P1, R>)del;
 		}
 
 		public override void SetArguments(object[] arguments)
@@ -1519,59 +1604,57 @@ namespace PlayScript
 
 		public override object Invoke()
 		{
-			return mFunc(mArgument1);
+			return mDelegate(mArgument1);
 		}
 
 		public override void InvokeOverrideA1(object a1)
 		{
-			mFunc((P1)a1);
+			mDelegate((P1)a1);
 		}
 
 		public override object SafeInvokeWith(object[] args)
 		{
-			return mFunc((P1)args[0]);
+			return mDelegate((P1)args[0]);
 		}
 
 		public override object UnsafeInvokeWith(object[] args)
 		{
-			return mFunc((P1)args[0]);
+			return mDelegate((P1)args[0]);
 		}
 
 		R ICallerF<R>.Call()
 		{
-			CheckDefaultArguments(0, mFunc.Method);
-			return mFunc(mDefaultArgument1);
+			CheckDefaultArguments(0, mDelegate.Method);
+			return mDelegate(mDefaultArgument1);
 		}
 
 		void ICallerA.Call()
 		{
-			CheckDefaultArguments(0, mFunc.Method);
-			mFunc(mDefaultArgument1);
+			CheckDefaultArguments(0, mDelegate.Method);
+			mDelegate(mDefaultArgument1);
 		}
 
 		R ICallerF<P1, R>.Call(P1 a1)
 		{
-			return mFunc(a1);
+			return mDelegate(a1);
 		}
 
 		void ICallerA<P1>.Call(P1 a1)
 		{
-			mFunc(a1);
+			mDelegate(a1);
 		}
 	}
 
-	public class InvokerF<P1, P2, R> : InvokerParamBase<P1, P2>, ICallerF<R>, ICallerA, ICallerF<P1, R>, ICallerA<P1>, ICallerF<P1, P2, R>, ICallerA<P1, P2>
+	public class InvokerF<P1, P2, R> : InvokerParamBase<Func<P1, P2, R>, P1, P2>, ICallerF<R>, ICallerA, ICallerF<P1, R>, ICallerA<P1>, ICallerF<P1, P2, R>, ICallerA<P1, P2>
 	{
-		Func<P1, P2, R> mFunc;
-
 		public InvokerF(Func<P1, P2, R> action)
 		{
-			mFunc = action;
+			mDelegate = action;
 		}
 
 		public InvokerF(object target, MethodInfo methodInfo)
 		{
-			mFunc = (Func<P1, P2, R>)Delegate.CreateDelegate(typeof(Func<P1, P2, R>), target, methodInfo);
+			mDelegate = (Func<P1, P2, R>)Delegate.CreateDelegate(typeof(Func<P1, P2, R>), target, methodInfo);
 		}
 
 		public override void SetArguments(object[] arguments)
@@ -1586,72 +1669,70 @@ namespace PlayScript
 
 		public override object Invoke()
 		{
-			return mFunc(mArgument1, mArgument2);
+			return mDelegate(mArgument1, mArgument2);
 		}
 
 		public override void InvokeOverrideA1(object a1)
 		{
-			mFunc((P1)a1, mArgument2);
+			mDelegate((P1)a1, mArgument2);
 		}
 
 		public override object SafeInvokeWith(object[] args)
 		{
-			return mFunc((P1)args[0], (P2)args[1]);
+			return mDelegate((P1)args[0], (P2)args[1]);
 		}
 
 		public override object UnsafeInvokeWith(object[] args)
 		{
-			return mFunc((P1)args[0], (P2)args[1]);
+			return mDelegate((P1)args[0], (P2)args[1]);
 		}
 
 		R ICallerF<R>.Call()
 		{
-			CheckDefaultArguments(0, mFunc.Method);
-			return mFunc(mDefaultArgument1, mDefaultArgument2);
+			CheckDefaultArguments(0, mDelegate.Method);
+			return mDelegate(mDefaultArgument1, mDefaultArgument2);
 		}
 
 		void ICallerA.Call()
 		{
-			CheckDefaultArguments(0, mFunc.Method);
-			mFunc(mDefaultArgument1, mDefaultArgument2);
+			CheckDefaultArguments(0, mDelegate.Method);
+			mDelegate(mDefaultArgument1, mDefaultArgument2);
 		}
 
 		R ICallerF<P1, R>.Call(P1 a1)
 		{
-			CheckDefaultArguments(1, mFunc.Method);
-			return mFunc(a1, mDefaultArgument2);
+			CheckDefaultArguments(1, mDelegate.Method);
+			return mDelegate(a1, mDefaultArgument2);
 		}
 
 		void ICallerA<P1>.Call(P1 a1)
 		{
-			CheckDefaultArguments(1, mFunc.Method);
-			mFunc(a1, mDefaultArgument2);
+			CheckDefaultArguments(1, mDelegate.Method);
+			mDelegate(a1, mDefaultArgument2);
 		}
 
 		R ICallerF<P1, P2, R>.Call(P1 a1, P2 a2)
 		{
-			return mFunc(a1, a2);
+			return mDelegate(a1, a2);
 		}
 
 		void ICallerA<P1, P2>.Call(P1 a1, P2 a2)
 		{
-			mFunc(a1, a2);
+			mDelegate(a1, a2);
 		}
 	}
 
-	public class InvokerF<P1, P2, P3, R> : InvokerParamBase<P1, P2, P3>, ICallerF<R>, ICallerA, ICallerF<P1, R>, ICallerA<P1>, ICallerF<P1, P2, R>, ICallerA<P1, P2>,
+	public class InvokerF<P1, P2, P3, R> : InvokerParamBase<Func<P1, P2, P3, R>, P1, P2, P3>, ICallerF<R>, ICallerA, ICallerF<P1, R>, ICallerA<P1>, ICallerF<P1, P2, R>, ICallerA<P1, P2>,
 											ICallerF<P1, P2, P3, R>, ICallerA<P1, P2, P3>
 	{
-		Func<P1, P2, P3, R> mFunc;
-
 		public InvokerF(Func<P1, P2, P3, R> func)
 		{
-			mFunc = func;
+			mDelegate = func;
 		}
 
 		public InvokerF(object target, MethodInfo methodInfo)
 		{
-			mFunc = (Func<P1, P2, P3, R>)Delegate.CreateDelegate(typeof(Func<P1, P2, P3, R>), target, methodInfo);
+			mDelegate = (Func<P1, P2, P3, R>)Delegate.CreateDelegate(typeof(Func<P1, P2, P3, R>), target, methodInfo);
 		}
 
 		public override void SetArguments(object[] arguments)
@@ -1667,84 +1748,82 @@ namespace PlayScript
 
 		public override object Invoke()
 		{
-			return mFunc(mArgument1, mArgument2, mArgument3);
+			return mDelegate(mArgument1, mArgument2, mArgument3);
 		}
 
 		public override void InvokeOverrideA1(object a1)
 		{
-			mFunc((P1)a1, mArgument2, mArgument3);
+			mDelegate((P1)a1, mArgument2, mArgument3);
 		}
 
 		public override object SafeInvokeWith(object[] args)
 		{
-			return mFunc((P1)args[0], (P2)args[1], (P3)args[2]);
+			return mDelegate((P1)args[0], (P2)args[1], (P3)args[2]);
 		}
 
 		public override object UnsafeInvokeWith(object[] args)
 		{
-			return mFunc((P1)args[0], (P2)args[1], (P3)args[2]);
+			return mDelegate((P1)args[0], (P2)args[1], (P3)args[2]);
 		}
 
 		R ICallerF<R>.Call()
 		{
-			CheckDefaultArguments(0, mFunc.Method);
-			return mFunc(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3);
+			CheckDefaultArguments(0, mDelegate.Method);
+			return mDelegate(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3);
 		}
 
 		void ICallerA.Call()
 		{
-			CheckDefaultArguments(0, mFunc.Method);
-			mFunc(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3);
+			CheckDefaultArguments(0, mDelegate.Method);
+			mDelegate(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3);
 		}
 
 		R ICallerF<P1, R>.Call(P1 a1)
 		{
-			CheckDefaultArguments(1, mFunc.Method);
-			return mFunc(a1, mDefaultArgument2, mDefaultArgument3);
+			CheckDefaultArguments(1, mDelegate.Method);
+			return mDelegate(a1, mDefaultArgument2, mDefaultArgument3);
 		}
 
 		void ICallerA<P1>.Call(P1 a1)
 		{
-			CheckDefaultArguments(1, mFunc.Method);
-			mFunc(a1, mDefaultArgument2, mDefaultArgument3);
+			CheckDefaultArguments(1, mDelegate.Method);
+			mDelegate(a1, mDefaultArgument2, mDefaultArgument3);
 		}
 
 		R ICallerF<P1, P2, R>.Call(P1 a1, P2 a2)
 		{
-			CheckDefaultArguments(2, mFunc.Method);
-			return mFunc(a1, a2, mDefaultArgument3);
+			CheckDefaultArguments(2, mDelegate.Method);
+			return mDelegate(a1, a2, mDefaultArgument3);
 		}
 
 		void ICallerA<P1, P2>.Call(P1 a1, P2 a2)
 		{
-			CheckDefaultArguments(2, mFunc.Method);
-			mFunc(a1, a2, mDefaultArgument3);
+			CheckDefaultArguments(2, mDelegate.Method);
+			mDelegate(a1, a2, mDefaultArgument3);
 		}
 
 		R ICallerF<P1, P2, P3, R>.Call(P1 a1, P2 a2, P3 a3)
 		{
-			return mFunc(a1, a2, a3);
+			return mDelegate(a1, a2, a3);
 		}
 
 		void ICallerA<P1, P2, P3>.Call(P1 a1, P2 a2, P3 a3)
 		{
-			mFunc(a1, a2, a3);
+			mDelegate(a1, a2, a3);
 		}
 	}
 
-	public class InvokerF<P1, P2, P3, P4, R> : InvokerParamBase<P1, P2, P3, P4>, ICallerF<R>, ICallerA, ICallerF<P1, R>, ICallerA<P1>, ICallerF<P1, P2, R>, ICallerA<P1, P2>,
+	public class InvokerF<P1, P2, P3, P4, R> : InvokerParamBase<Func<P1, P2, P3, P4, R>, P1, P2, P3, P4>, ICallerF<R>, ICallerA, ICallerF<P1, R>, ICallerA<P1>, ICallerF<P1, P2, R>, ICallerA<P1, P2>,
 												ICallerF<P1, P2, P3, R>, ICallerA<P1, P2, P3>, ICallerF<P1, P2, P3, P4, R>, ICallerA<P1, P2, P3, P4>
 	{
-		Func<P1, P2, P3, P4, R> mFunc;
-
 		public InvokerF(Func<P1, P2, P3, P4, R> func)
 		{
-			mFunc = func;
+			mDelegate = func;
 		}
 
 		public InvokerF(object target, MethodInfo methodInfo)
 		{
-			mFunc = (Func<P1, P2, P3, P4, R>)Delegate.CreateDelegate(typeof(Func<P1, P2, P3, P4, R>), target, methodInfo);
+			mDelegate = (Func<P1, P2, P3, P4, R>)Delegate.CreateDelegate(typeof(Func<P1, P2, P3, P4, R>), target, methodInfo);
 		}
 
 		public override void SetArguments(object[] arguments)
@@ -1761,97 +1840,95 @@ namespace PlayScript
 
 		public override object Invoke()
 		{
-			return mFunc(mArgument1, mArgument2, mArgument3, mArgument4);
+			return mDelegate(mArgument1, mArgument2, mArgument3, mArgument4);
 		}
 
 		public override void InvokeOverrideA1(object a1)
 		{
-			mFunc((P1)a1, mArgument2, mArgument3, mArgument4);
+			mDelegate((P1)a1, mArgument2, mArgument3, mArgument4);
 		}
 
 		public override object SafeInvokeWith(object[] args)
 		{
-			return mFunc((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3]);
+			return mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3]);
 		}
 
 		public override object UnsafeInvokeWith(object[] args)
 		{
-			return mFunc((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3]);
+			return mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3]);
 		}
 
 		R ICallerF<R>.Call()
 		{
-			CheckDefaultArguments(0, mFunc.Method);
-			return mFunc(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4);
+			CheckDefaultArguments(0, mDelegate.Method);
+			return mDelegate(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4);
 		}
 
 		void ICallerA.Call()
 		{
-			CheckDefaultArguments(0, mFunc.Method);
-			mFunc(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4);
+			CheckDefaultArguments(0, mDelegate.Method);
+			mDelegate(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4);
 		}
 
 		R ICallerF<P1, R>.Call(P1 a1)
 		{
-			CheckDefaultArguments(1, mFunc.Method);
-			return mFunc(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4);
+			CheckDefaultArguments(1, mDelegate.Method);
+			return mDelegate(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4);
 		}
 
 		void ICallerA<P1>.Call(P1 a1)
 		{
-			CheckDefaultArguments(1, mFunc.Method);
-			mFunc(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4);
+			CheckDefaultArguments(1, mDelegate.Method);
+			mDelegate(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4);
 		}
 
 		R ICallerF<P1, P2, R>.Call(P1 a1, P2 a2)
 		{
-			CheckDefaultArguments(2, mFunc.Method);
-			return mFunc(a1, a2, mDefaultArgument3, mDefaultArgument4);
+			CheckDefaultArguments(2, mDelegate.Method);
+			return mDelegate(a1, a2, mDefaultArgument3, mDefaultArgument4);
 		}
 
 		void ICallerA<P1, P2>.Call(P1 a1, P2 a2)
 		{
-			CheckDefaultArguments(2, mFunc.Method);
-			mFunc(a1, a2, mDefaultArgument3, mDefaultArgument4);
+			CheckDefaultArguments(2, mDelegate.Method);
+			mDelegate(a1, a2, mDefaultArgument3, mDefaultArgument4);
 		}
 
 		R ICallerF<P1, P2, P3, R>.Call(P1 a1, P2 a2, P3 a3)
 		{
-			CheckDefaultArguments(3, mFunc.Method);
-			return mFunc(a1, a2, a3, mDefaultArgument4);
+			CheckDefaultArguments(3, mDelegate.Method);
+			return mDelegate(a1, a2, a3, mDefaultArgument4);
 		}
 
 		void ICallerA<P1, P2, P3>.Call(P1 a1, P2 a2, P3 a3)
 		{
-			CheckDefaultArguments(3, mFunc.Method);
-			mFunc(a1, a2, a3, mDefaultArgument4);
+			CheckDefaultArguments(3, mDelegate.Method);
+			mDelegate(a1, a2, a3, mDefaultArgument4);
 		}
 
 		R ICallerF<P1, P2, P3, P4, R>.Call(P1 a1, P2 a2, P3 a3, P4 a4)
 		{
-			return mFunc(a1, a2, a3, a4);
+			return mDelegate(a1, a2, a3, a4);
 		}
 
 		void ICallerA<P1, P2, P3, P4>.Call(P1 a1, P2 a2, P3 a3, P4 a4)
 		{
-			mFunc(a1, a2, a3, a4);
+			mDelegate(a1, a2, a3, a4);
 		}
 	}
 
-	public class InvokerF<P1, P2, P3, P4, P5, R> : InvokerParamBase<P1, P2, P3, P4, P5>, ICallerF<R>, ICallerA, ICallerF<P1, R>, ICallerA<P1>, ICallerF<P1, P2, R>, ICallerA<P1, P2>,
+	public class InvokerF<P1, P2, P3, P4, P5, R> : InvokerParamBase<Func<P1, P2, P3, P4, P5, R>, P1, P2, P3, P4, P5>, ICallerF<R>, ICallerA, ICallerF<P1, R>, ICallerA<P1>, ICallerF<P1, P2, R>, ICallerA<P1, P2>,
 													ICallerF<P1, P2, P3, R>, ICallerA<P1, P2, P3>, ICallerF<P1, P2, P3, P4, R>, ICallerA<P1, P2, P3, P4>,
 													ICallerF<P1, P2, P3, P4, P5, R>, ICallerA<P1, P2, P3, P4, P5>
 	{
-		Func<P1, P2, P3, P4, P5, R> mFunc;
-
 		public InvokerF(Func<P1, P2, P3, P4, P5, R> func)
 		{
-			mFunc = func;
+			mDelegate = func;
 		}
 
 		public InvokerF(object target, MethodInfo methodInfo)
 		{
-			mFunc = (Func<P1, P2, P3, P4, P5, R>)Delegate.CreateDelegate(typeof(Func<P1, P2, P3, P4, P5, R>), target, methodInfo);
+			mDelegate = (Func<P1, P2, P3, P4, P5, R>)Delegate.CreateDelegate(typeof(Func<P1, P2, P3, P4, P5, R>), target, methodInfo);
 		}
 
 		public override void SetArguments(object[] arguments)
@@ -1869,109 +1946,107 @@ namespace PlayScript
 
 		public override object Invoke()
 		{
-			return mFunc(mArgument1, mArgument2, mArgument3, mArgument4, mArgument5);
+			return mDelegate(mArgument1, mArgument2, mArgument3, mArgument4, mArgument5);
 		}
 
 		public override void InvokeOverrideA1(object a1)
 		{
-			mFunc((P1)a1, mArgument2, mArgument3, mArgument4, mArgument5);
+			mDelegate((P1)a1, mArgument2, mArgument3, mArgument4, mArgument5);
 		}
 
 		public override object SafeInvokeWith(object[] args)
 		{
-			return mFunc((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4]);
+			return mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4]);
 		}
 
 		public override object UnsafeInvokeWith(object[] args)
 		{
-			return mFunc((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4]);
+			return mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4]);
 		}
 
 		R ICallerF<R>.Call()
 		{
-			CheckDefaultArguments(0, mFunc.Method);
-			return mFunc(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5);
+			CheckDefaultArguments(0, mDelegate.Method);
+			return mDelegate(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5);
 		}
 
 		void ICallerA.Call()
 		{
-			CheckDefaultArguments(0, mFunc.Method);
-			mFunc(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5);
+			CheckDefaultArguments(0, mDelegate.Method);
+			mDelegate(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5);
 		}
 
 		R ICallerF<P1, R>.Call(P1 a1)
 		{
-			CheckDefaultArguments(1, mFunc.Method);
-			return mFunc(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5);
+			CheckDefaultArguments(1, mDelegate.Method);
+			return mDelegate(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5);
 		}
 
 		void ICallerA<P1>.Call(P1 a1)
 		{
-			CheckDefaultArguments(1, mFunc.Method);
-			mFunc(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5);
+			CheckDefaultArguments(1, mDelegate.Method);
+			mDelegate(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5);
 		}
 
 		R ICallerF<P1, P2, R>.Call(P1 a1, P2 a2)
 		{
-			CheckDefaultArguments(2, mFunc.Method);
-			return mFunc(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5);
+			CheckDefaultArguments(2, mDelegate.Method);
+			return mDelegate(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5);
 		}
 
 		void ICallerA<P1, P2>.Call(P1 a1, P2 a2)
 		{
-			CheckDefaultArguments(2, mFunc.Method);
-			mFunc(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5);
+			CheckDefaultArguments(2, mDelegate.Method);
+			mDelegate(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5);
 		}
 
 		R ICallerF<P1, P2, P3, R>.Call(P1 a1, P2 a2, P3 a3)
 		{
-			CheckDefaultArguments(3, mFunc.Method);
-			return mFunc(a1, a2, a3, mDefaultArgument4, mDefaultArgument5);
+			CheckDefaultArguments(3, mDelegate.Method);
+			return mDelegate(a1, a2, a3, mDefaultArgument4, mDefaultArgument5);
 		}
 
 		void ICallerA<P1, P2, P3>.Call(P1 a1, P2 a2, P3 a3)
 		{
-			CheckDefaultArguments(3, mFunc.Method);
-			mFunc(a1, a2, a3, mDefaultArgument4, mDefaultArgument5);
+			CheckDefaultArguments(3, mDelegate.Method);
+			mDelegate(a1, a2, a3, mDefaultArgument4, mDefaultArgument5);
 		}
 
 		R ICallerF<P1, P2, P3, P4, R>.Call(P1 a1, P2 a2, P3 a3, P4 a4)
 		{
-			CheckDefaultArguments(4, mFunc.Method);
-			return mFunc(a1, a2, a3, a4, mDefaultArgument5);
+			CheckDefaultArguments(4, mDelegate.Method);
+			return mDelegate(a1, a2, a3, a4, mDefaultArgument5);
 		}
 
 		void ICallerA<P1, P2, P3, P4>.Call(P1 a1, P2 a2, P3 a3, P4 a4)
 		{
-			CheckDefaultArguments(4, mFunc.Method);
-			mFunc(a1, a2, a3, a4, mDefaultArgument5);
+			CheckDefaultArguments(4, mDelegate.Method);
+			mDelegate(a1, a2, a3, a4, mDefaultArgument5);
 		}
 
 		R ICallerF<P1, P2, P3, P4, P5, R>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5)
 		{
-			return mFunc(a1, a2, a3, a4, a5);
+			return mDelegate(a1, a2, a3, a4, a5);
 		}
 
 		void ICallerA<P1, P2, P3, P4, P5>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5)
 		{
-			mFunc(a1, a2, a3, a4, a5);
+			mDelegate(a1, a2, a3, a4, a5);
 		}
 	}
 
-	public class InvokerF<P1, P2, P3, P4, P5, P6, R> : InvokerParamBase<P1, P2, P3, P4, P5, P6>, ICallerF<R>, ICallerA, ICallerF<P1, R>, ICallerA<P1>, ICallerF<P1, P2, R>, ICallerA<P1, P2>,
+	public class InvokerF<P1, P2, P3, P4, P5, P6, R> : InvokerParamBase<Func<P1, P2, P3, P4, P5, P6, R>, P1, P2, P3, P4, P5, P6>, ICallerF<R>, ICallerA, ICallerF<P1, R>, ICallerA<P1>, ICallerF<P1, P2, R>, ICallerA<P1, P2>,
 														ICallerF<P1, P2, P3, R>, ICallerA<P1, P2, P3>, ICallerF<P1, P2, P3, P4, R>, ICallerA<P1, P2, P3, P4>,
 														ICallerF<P1, P2, P3, P4, P5, R>, ICallerA<P1, P2, P3, P4, P5>, ICallerF<P1, P2, P3, P4, P5, P6, R>, ICallerA<P1, P2, P3, P4, P5, P6>
 	{
-		Func<P1, P2, P3, P4, P5, P6, R> mFunc;
-
 		public InvokerF(Func<P1, P2, P3, P4, P5, P6, R> func)
 		{
-			mFunc = func;
+			mDelegate = func;
 		}
 
 		public InvokerF(object target, MethodInfo methodInfo)
 		{
-			mFunc = (Func<P1, P2, P3, P4, P5, P6, R>)Delegate.CreateDelegate(typeof(Func<P1, P2, P3, P4, P5, P6, R>), target, methodInfo);
+			mDelegate = (Func<P1, P2, P3, P4, P5, P6, R>)Delegate.CreateDelegate(typeof(Func<P1, P2, P3, P4, P5, P6, R>), target, methodInfo);
 		}
 
 		public override void SetArguments(object[] arguments)
@@ -1990,122 +2065,120 @@ namespace PlayScript
 
 		public override object Invoke()
 		{
-			return mFunc(mArgument1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6);
+			return mDelegate(mArgument1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6);
 		}
 
 		public override void InvokeOverrideA1(object a1)
 		{
-			mFunc((P1)a1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6);
+			mDelegate((P1)a1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6);
 		}
 
 		public override object SafeInvokeWith(object[] args)
 		{
-			return mFunc((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5]);
+			return mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5]);
 		}
 
 		public override object UnsafeInvokeWith(object[] args)
 		{
-			return mFunc((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5]);
+			return mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5]);
 		}
 
 		R ICallerF<R>.Call()
 		{
-			CheckDefaultArguments(0, mFunc.Method);
-			return mFunc(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6);
+			CheckDefaultArguments(0, mDelegate.Method);
+			return mDelegate(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6);
 		}
 
 		void ICallerA.Call()
 		{
-			CheckDefaultArguments(0, mFunc.Method);
-			mFunc(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6);
+			CheckDefaultArguments(0, mDelegate.Method);
+			mDelegate(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6);
 		}
 
 		R ICallerF<P1, R>.Call(P1 a1)
 		{
-			CheckDefaultArguments(1, mFunc.Method);
-			return mFunc(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6);
+			CheckDefaultArguments(1, mDelegate.Method);
+			return mDelegate(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6);
 		}
 
 		void ICallerA<P1>.Call(P1 a1)
 		{
-			CheckDefaultArguments(1, mFunc.Method);
-			mFunc(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6);
+			CheckDefaultArguments(1, mDelegate.Method);
+			mDelegate(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6);
 		}
 
 		R ICallerF<P1, P2, R>.Call(P1 a1, P2 a2)
 		{
-			CheckDefaultArguments(2, mFunc.Method);
-			return mFunc(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6);
+			CheckDefaultArguments(2, mDelegate.Method);
+			return mDelegate(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6);
 		}
 
 		void ICallerA<P1, P2>.Call(P1 a1, P2 a2)
 		{
-			CheckDefaultArguments(2, mFunc.Method);
-			mFunc(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6);
+			CheckDefaultArguments(2, mDelegate.Method);
+			mDelegate(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6);
 		}
 
 		R ICallerF<P1, P2, P3, R>.Call(P1 a1, P2 a2, P3 a3)
 		{
-			CheckDefaultArguments(3, mFunc.Method);
-			return mFunc(a1, a2, a3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6);
+			CheckDefaultArguments(3, mDelegate.Method);
+			return mDelegate(a1, a2, a3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6);
 		}
 
 		void ICallerA<P1, P2, P3>.Call(P1 a1, P2 a2, P3 a3)
 		{
-			CheckDefaultArguments(3, mFunc.Method);
-			mFunc(a1, a2, a3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6);
+			CheckDefaultArguments(3, mDelegate.Method);
+			mDelegate(a1, a2, a3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6);
 		}
 
 		R ICallerF<P1, P2, P3, P4, R>.Call(P1 a1, P2 a2, P3 a3, P4 a4)
 		{
-			CheckDefaultArguments(4, mFunc.Method);
-			return mFunc(a1, a2, a3, a4, mDefaultArgument5, mDefaultArgument6);
+			CheckDefaultArguments(4, mDelegate.Method);
+			return mDelegate(a1, a2, a3, a4, mDefaultArgument5, mDefaultArgument6);
 		}
 
 		void ICallerA<P1, P2, P3, P4>.Call(P1 a1, P2 a2, P3 a3, P4 a4)
 		{
-			CheckDefaultArguments(4, mFunc.Method);
-			mFunc(a1, a2, a3, a4, mDefaultArgument5, mDefaultArgument6);
+			CheckDefaultArguments(4, mDelegate.Method);
+			mDelegate(a1, a2, a3, a4, mDefaultArgument5, mDefaultArgument6);
 		}
 
 		R ICallerF<P1, P2, P3, P4, P5, R>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5)
 		{
-			CheckDefaultArguments(5, mFunc.Method);
-			return mFunc(a1, a2, a3, a4, a5, mDefaultArgument6);
+			CheckDefaultArguments(5, mDelegate.Method);
+			return mDelegate(a1, a2, a3, a4, a5, mDefaultArgument6);
 		}
 
 		void ICallerA<P1, P2, P3, P4, P5>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5)
 		{
-			CheckDefaultArguments(5, mFunc.Method);
-			mFunc(a1, a2, a3, a4, a5, mDefaultArgument6);
+			CheckDefaultArguments(5, mDelegate.Method);
+			mDelegate(a1, a2, a3, a4, a5, mDefaultArgument6);
 		}
 
 		R ICallerF<P1, P2, P3, P4, P5, P6, R>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6)
 		{
-			return mFunc(a1, a2, a3, a4, a5, a6);
+			return mDelegate(a1, a2, a3, a4, a5, a6);
 		}
 
 		void ICallerA<P1, P2, P3, P4, P5, P6>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6)
 		{
-			mFunc(a1, a2, a3, a4, a5, a6);
+			mDelegate(a1, a2, a3, a4, a5, a6);
 		}
 	}
 
-	public class InvokerF<P1, P2, P3, P4, P5, P6, P7, R> : InvokerParamBase<P1, P2, P3, P4, P5, P6, P7>, ICallerF<R>, ICallerA, ICallerF<P1, R>, ICallerA<P1>, ICallerF<P1, P2, R>, ICallerA<P1, P2>,
+	public class InvokerF<P1, P2, P3, P4, P5, P6, P7, R> : InvokerParamBase<Func<P1, P2, P3, P4, P5, P6, P7, R>, P1, P2, P3, P4, P5, P6, P7>, ICallerF<R>, ICallerA, ICallerF<P1, R>, ICallerA<P1>, ICallerF<P1, P2, R>, ICallerA<P1, P2>,
 														ICallerF<P1, P2, P3, R>, ICallerA<P1, P2, P3>, ICallerF<P1, P2, P3, P4, R>, ICallerA<P1, P2, P3, P4>,
 														ICallerF<P1, P2, P3, P4, P5, R>, ICallerA<P1, P2, P3, P4, P5>, ICallerF<P1, P2, P3, P4, P5, P6, R>, ICallerA<P1, P2, P3, P4, P5, P6>,
 														ICallerF<P1, P2, P3, P4, P5, P6, P7, R>, ICallerA<P1, P2, P3, P4, P5, P6, P7>
 	{
-		Func<P1, P2, P3, P4, P5, P6, P7, R> mFunc;
-
 		public InvokerF(Func<P1, P2, P3, P4, P5, P6, P7, R> func)
 		{
-			mFunc = func;
+			mDelegate = func;
 		}
 
 		public InvokerF(object target, MethodInfo methodInfo)
 		{
-			mFunc = (Func<P1, P2, P3, P4, P5, P6, P7, R>)Delegate.CreateDelegate(typeof(Func<P1, P2, P3, P4, P5, P6, P7, R>), target, methodInfo);
+			mDelegate = (Func<P1, P2, P3, P4, P5, P6, P7, R>)Delegate.CreateDelegate(typeof(Func<P1, P2, P3, P4, P5, P6, P7, R>), target, methodInfo);
 		}
 
 		public override void SetArguments(object[] arguments)
@@ -2125,135 +2198,133 @@ namespace PlayScript
 
 		public override object Invoke()
 		{
-			return mFunc(mArgument1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6, mArgument7);
+			return mDelegate(mArgument1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6, mArgument7);
 		}
 
 		public override void InvokeOverrideA1(object a1)
 		{
-			mFunc((P1)a1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6, mArgument7);
+			mDelegate((P1)a1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6, mArgument7);
 		}
 
 		public override object SafeInvokeWith(object[] args)
 		{
-			return mFunc((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6]);
+			return mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6]);
 		}
 
 		public override object UnsafeInvokeWith(object[] args)
 		{
-			return mFunc((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6]);
+			return mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6]);
 		}
 
 		R ICallerF<R>.Call()
 		{
-			CheckDefaultArguments(0, mFunc.Method);
-			return mFunc(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
+			CheckDefaultArguments(0, mDelegate.Method);
+			return mDelegate(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
 		}
 
 		void ICallerA.Call()
 		{
-			CheckDefaultArguments(0, mFunc.Method);
-			mFunc(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
+			CheckDefaultArguments(0, mDelegate.Method);
+			mDelegate(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
 		}
 
 		R ICallerF<P1, R>.Call(P1 a1)
 		{
-			CheckDefaultArguments(1, mFunc.Method);
-			return mFunc(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
+			CheckDefaultArguments(1, mDelegate.Method);
+			return mDelegate(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
 		}
 
 		void ICallerA<P1>.Call(P1 a1)
 		{
-			CheckDefaultArguments(1, mFunc.Method);
-			mFunc(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
+			CheckDefaultArguments(1, mDelegate.Method);
+			mDelegate(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
 		}
 
 		R ICallerF<P1, P2, R>.Call(P1 a1, P2 a2)
 		{
-			CheckDefaultArguments(2, mFunc.Method);
-			return mFunc(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
+			CheckDefaultArguments(2, mDelegate.Method);
+			return mDelegate(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
 		}
 
 		void ICallerA<P1, P2>.Call(P1 a1, P2 a2)
 		{
-			CheckDefaultArguments(2, mFunc.Method);
-			mFunc(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
+			CheckDefaultArguments(2, mDelegate.Method);
+			mDelegate(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
 		}
 
 		R ICallerF<P1, P2, P3, R>.Call(P1 a1, P2 a2, P3 a3)
 		{
-			CheckDefaultArguments(3, mFunc.Method);
-			return mFunc(a1, a2, a3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
+			CheckDefaultArguments(3, mDelegate.Method);
+			return mDelegate(a1, a2, a3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
 		}
 
 		void ICallerA<P1, P2, P3>.Call(P1 a1, P2 a2, P3 a3)
 		{
-			CheckDefaultArguments(3, mFunc.Method);
-			mFunc(a1, a2, a3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
+			CheckDefaultArguments(3, mDelegate.Method);
+			mDelegate(a1, a2, a3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
 		}
 
 		R ICallerF<P1, P2, P3, P4, R>.Call(P1 a1, P2 a2, P3 a3, P4 a4)
 		{
-			CheckDefaultArguments(4, mFunc.Method);
-			return mFunc(a1, a2, a3, a4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
+			CheckDefaultArguments(4, mDelegate.Method);
+			return mDelegate(a1, a2, a3, a4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
 		}
 
 		void ICallerA<P1, P2, P3, P4>.Call(P1 a1, P2 a2, P3 a3, P4 a4)
 		{
-			CheckDefaultArguments(4, mFunc.Method);
-			mFunc(a1, a2, a3, a4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
+			CheckDefaultArguments(4, mDelegate.Method);
+			mDelegate(a1, a2, a3, a4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
 		}
 
 		R ICallerF<P1, P2, P3, P4, P5, R>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5)
 		{
-			CheckDefaultArguments(5, mFunc.Method);
-			return mFunc(a1, a2, a3, a4, a5, mDefaultArgument6, mDefaultArgument7);
+			CheckDefaultArguments(5, mDelegate.Method);
+			return mDelegate(a1, a2, a3, a4, a5, mDefaultArgument6, mDefaultArgument7);
 		}
 
 		void ICallerA<P1, P2, P3, P4, P5>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5)
 		{
-			CheckDefaultArguments(5, mFunc.Method);
-			mFunc(a1, a2, a3, a4, a5, mDefaultArgument6, mDefaultArgument7);
+			CheckDefaultArguments(5, mDelegate.Method);
+			mDelegate(a1, a2, a3, a4, a5, mDefaultArgument6, mDefaultArgument7);
 		}
 
 		R ICallerF<P1, P2, P3, P4, P5, P6, R>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6)
 		{
-			CheckDefaultArguments(6, mFunc.Method);
-			return mFunc(a1, a2, a3, a4, a5, a6, mDefaultArgument7);
+			CheckDefaultArguments(6, mDelegate.Method);
+			return mDelegate(a1, a2, a3, a4, a5, a6, mDefaultArgument7);
 		}
 
 		void ICallerA<P1, P2, P3, P4, P5, P6>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6)
 		{
-			CheckDefaultArguments(6, mFunc.Method);
-			mFunc(a1, a2, a3, a4, a5, a6, mDefaultArgument7);
+			CheckDefaultArguments(6, mDelegate.Method);
+			mDelegate(a1, a2, a3, a4, a5, a6, mDefaultArgument7);
 		}
 
 		R ICallerF<P1, P2, P3, P4, P5, P6, P7, R>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6, P7 a7)
 		{
-			return mFunc(a1, a2, a3, a4, a5, a6, a7);
+			return mDelegate(a1, a2, a3, a4, a5, a6, a7);
 		}
 
 		void ICallerA<P1, P2, P3, P4, P5, P6, P7>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6, P7 a7)
 		{
-			mFunc(a1, a2, a3, a4, a5, a6, a7);
+			mDelegate(a1, a2, a3, a4, a5, a6, a7);
 		}
 	}
 
-	public class InvokerF<P1, P2, P3, P4, P5, P6, P7, P8, R> : InvokerParamBase<P1, P2, P3, P4, P5, P6, P7, P8>, ICallerF<R>, ICallerA, ICallerF<P1, R>, ICallerA<P1>, ICallerF<P1, P2, R>, ICallerA<P1, P2>,
+	public class InvokerF<P1, P2, P3, P4, P5, P6, P7, P8, R> : InvokerParamBase<Func<P1, P2, P3, P4, P5, P6, P7, P8, R>, P1, P2, P3, P4, P5, P6, P7, P8>, ICallerF<R>, ICallerA, ICallerF<P1, R>, ICallerA<P1>, ICallerF<P1, P2, R>, ICallerA<P1, P2>,
 																ICallerF<P1, P2, P3, R>, ICallerA<P1, P2, P3>, ICallerF<P1, P2, P3, P4, R>, ICallerA<P1, P2, P3, P4>,
 																ICallerF<P1, P2, P3, P4, P5, R>, ICallerA<P1, P2, P3, P4, P5>, ICallerF<P1, P2, P3, P4, P5, P6, R>, ICallerA<P1, P2, P3, P4, P5, P6>,
 																ICallerF<P1, P2, P3, P4, P5, P6, P7, R>, ICallerA<P1, P2, P3, P4, P5, P6, P7>,
 																ICallerF<P1, P2, P3, P4, P5, P6, P7, P8, R>, ICallerA<P1, P2, P3, P4, P5, P6, P7, P8>
 	{
-		Func<P1, P2, P3, P4, P5, P6, P7, P8, R> mFunc;
-
 		public InvokerF(Func<P1, P2, P3, P4, P5, P6, P7, P8, R> func)
 		{
-			mFunc = func;
+			mDelegate = func;
 		}
 
 		public InvokerF(object target, MethodInfo methodInfo)
 		{
-			mFunc = (Func<P1, P2, P3, P4, P5, P6, P7, P8, R>)Delegate.CreateDelegate(typeof(Func<P1, P2, P3, P4, P5, P6, P7, P8, R>), target, methodInfo);
+			mDelegate = (Func<P1, P2, P3, P4, P5, P6, P7, P8, R>)Delegate.CreateDelegate(typeof(Func<P1, P2, P3, P4, P5, P6, P7, P8, R>), target, methodInfo);
 		}
 
 		public override void SetArguments(object[] arguments)
@@ -2274,128 +2345,128 @@ namespace PlayScript
 
 		public override object Invoke()
 		{
-			return mFunc(mArgument1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6, mArgument7, mArgument8);
+			return mDelegate(mArgument1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6, mArgument7, mArgument8);
 		}
 
 		public override void InvokeOverrideA1(object a1)
 		{
-			mFunc((P1)a1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6, mArgument7, mArgument8);
+			mDelegate((P1)a1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6, mArgument7, mArgument8);
 		}
 
 		public override object SafeInvokeWith(object[] args)
 		{
-			return mFunc((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6], (P8)args[7]);
+			return mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6], (P8)args[7]);
 		}
 
 		public override object UnsafeInvokeWith(object[] args)
 		{
-			return mFunc((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6], (P8)args[7]);
+			return mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6], (P8)args[7]);
 		}
 
 		R ICallerF<R>.Call()
 		{
-			CheckDefaultArguments(0, mFunc.Method);
-			return mFunc(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
+			CheckDefaultArguments(0, mDelegate.Method);
+			return mDelegate(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
 		void ICallerA.Call()
 		{
-			CheckDefaultArguments(0, mFunc.Method);
-			mFunc(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
+			CheckDefaultArguments(0, mDelegate.Method);
+			mDelegate(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
 		R ICallerF<P1, R>.Call(P1 a1)
 		{
-			CheckDefaultArguments(1, mFunc.Method);
-			return mFunc(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
+			CheckDefaultArguments(1, mDelegate.Method);
+			return mDelegate(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
 		void ICallerA<P1>.Call(P1 a1)
 		{
-			CheckDefaultArguments(1, mFunc.Method);
-			mFunc(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
+			CheckDefaultArguments(1, mDelegate.Method);
+			mDelegate(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
 		R ICallerF<P1, P2, R>.Call(P1 a1, P2 a2)
 		{
-			CheckDefaultArguments(2, mFunc.Method);
-			return mFunc(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
+			CheckDefaultArguments(2, mDelegate.Method);
+			return mDelegate(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
 		void ICallerA<P1, P2>.Call(P1 a1, P2 a2)
 		{
-			CheckDefaultArguments(2, mFunc.Method);
-			mFunc(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
+			CheckDefaultArguments(2, mDelegate.Method);
+			mDelegate(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
 		R ICallerF<P1, P2, P3, R>.Call(P1 a1, P2 a2, P3 a3)
 		{
-			CheckDefaultArguments(3, mFunc.Method);
-			return mFunc(a1, a2, a3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
+			CheckDefaultArguments(3, mDelegate.Method);
+			return mDelegate(a1, a2, a3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
 		void ICallerA<P1, P2, P3>.Call(P1 a1, P2 a2, P3 a3)
 		{
-			CheckDefaultArguments(3, mFunc.Method);
-			mFunc(a1, a2, a3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
+			CheckDefaultArguments(3, mDelegate.Method);
+			mDelegate(a1, a2, a3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
 		R ICallerF<P1, P2, P3, P4, R>.Call(P1 a1, P2 a2, P3 a3, P4 a4)
 		{
-			CheckDefaultArguments(4, mFunc.Method);
-			return mFunc(a1, a2, a3, a4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
+			CheckDefaultArguments(4, mDelegate.Method);
+			return mDelegate(a1, a2, a3, a4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
 		void ICallerA<P1, P2, P3, P4>.Call(P1 a1, P2 a2, P3 a3, P4 a4)
 		{
-			CheckDefaultArguments(4, mFunc.Method);
-			mFunc(a1, a2, a3, a4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
+			CheckDefaultArguments(4, mDelegate.Method);
+			mDelegate(a1, a2, a3, a4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
 		R ICallerF<P1, P2, P3, P4, P5, R>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5)
 		{
-			CheckDefaultArguments(5, mFunc.Method);
-			return mFunc(a1, a2, a3, a4, a5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
+			CheckDefaultArguments(5, mDelegate.Method);
+			return mDelegate(a1, a2, a3, a4, a5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
 		void ICallerA<P1, P2, P3, P4, P5>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5)
 		{
-			CheckDefaultArguments(5, mFunc.Method);
-			mFunc(a1, a2, a3, a4, a5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
+			CheckDefaultArguments(5, mDelegate.Method);
+			mDelegate(a1, a2, a3, a4, a5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
 		R ICallerF<P1, P2, P3, P4, P5, P6, R>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6)
 		{
-			CheckDefaultArguments(6, mFunc.Method);
-			return mFunc(a1, a2, a3, a4, a5, a6, mDefaultArgument7, mDefaultArgument8);
+			CheckDefaultArguments(6, mDelegate.Method);
+			return mDelegate(a1, a2, a3, a4, a5, a6, mDefaultArgument7, mDefaultArgument8);
 		}
 
 		void ICallerA<P1, P2, P3, P4, P5, P6>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6)
 		{
-			CheckDefaultArguments(6, mFunc.Method);
-			mFunc(a1, a2, a3, a4, a5, a6, mDefaultArgument7, mDefaultArgument8);
+			CheckDefaultArguments(6, mDelegate.Method);
+			mDelegate(a1, a2, a3, a4, a5, a6, mDefaultArgument7, mDefaultArgument8);
 		}
 
 		R ICallerF<P1, P2, P3, P4, P5, P6, P7, R>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6, P7 a7)
 		{
-			CheckDefaultArguments(7, mFunc.Method);
-			return mFunc(a1, a2, a3, a4, a5, a6, a7, mDefaultArgument8);
+			CheckDefaultArguments(7, mDelegate.Method);
+			return mDelegate(a1, a2, a3, a4, a5, a6, a7, mDefaultArgument8);
 		}
 
 		void ICallerA<P1, P2, P3, P4, P5, P6, P7>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6, P7 a7)
 		{
-			CheckDefaultArguments(7, mFunc.Method);
-			mFunc(a1, a2, a3, a4, a5, a6, a7, mDefaultArgument8);
+			CheckDefaultArguments(7, mDelegate.Method);
+			mDelegate(a1, a2, a3, a4, a5, a6, a7, mDefaultArgument8);
 		}
 
 		R ICallerF<P1, P2, P3, P4, P5, P6, P7, P8, R>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6, P7 a7, P8 a8)
 		{
-			return mFunc(a1, a2, a3, a4, a5, a6, a7, a8);
+			return mDelegate(a1, a2, a3, a4, a5, a6, a7, a8);
 		}
 
 		void ICallerA<P1, P2, P3, P4, P5, P6, P7, P8>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6, P7 a7, P8 a8)
 		{
-			mFunc(a1, a2, a3, a4, a5, a6, a7, a8);
+			mDelegate(a1, a2, a3, a4, a5, a6, a7, a8);
 		}
 	}
 
