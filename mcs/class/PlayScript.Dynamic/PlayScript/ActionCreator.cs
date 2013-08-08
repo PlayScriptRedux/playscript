@@ -67,27 +67,38 @@ namespace PlayScript
 			AddConverterFactory(new ConverterFactory<InvokerThenConverterIntToUint, ConverterThenInvokerIntToUint, ConverterIntToUint, int, uint>());
 			AddConverterFactory(new ConverterFactory<InvokerThenConverterIntToDouble, ConverterThenInvokerIntToDouble, ConverterIntToDouble, int, double>());
 			AddConverterFactory(new ConverterFactory<InvokerThenConverterIntToBool, ConverterThenInvokerIntToBool, ConverterIntToBool, int, bool>());
+			AddConverterFactory(new ConverterFactory<InvokerThenConverterIntToString, ConverterThenInvokerIntToString, ConverterIntToString, int, string>());
 			AddConverterFactory(new ConverterFactoryToFromObject<int>());
 
 			AddConverterFactory(new ConverterFactory<InvokerThenConverterUintToInt, ConverterThenInvokerUintToInt, ConverterUintToInt, uint, int>());
 			AddConverterFactory(new ConverterFactory<InvokerThenConverterUintToDouble, ConverterThenInvokerUintToDouble, ConverterUintToDouble, uint, double>());
 			AddConverterFactory(new ConverterFactory<InvokerThenConverterUintToBool, ConverterThenInvokerUintToBool, ConverterUintToBool, uint, bool>());
+			AddConverterFactory(new ConverterFactory<InvokerThenConverterUintToString, ConverterThenInvokerUintToString, ConverterUintToString, uint, string>());
 			AddConverterFactory(new ConverterFactoryToFromObject<uint>());
 
 			AddConverterFactory(new ConverterFactory<InvokerThenConverterDoubleToInt, ConverterThenInvokerDoubleToInt, ConverterDoubleToInt, double, int>());
 			AddConverterFactory(new ConverterFactory<InvokerThenConverterDoubleToUint, ConverterThenInvokerDoubleToUint, ConverterDoubleToUint, double, uint>());
 			AddConverterFactory(new ConverterFactory<InvokerThenConverterDoubleToBool, ConverterThenInvokerDoubleToBool, ConverterDoubleToBool, double, bool>());
+			AddConverterFactory(new ConverterFactory<InvokerThenConverterDoubleToString, ConverterThenInvokerDoubleToString, ConverterDoubleToString, double, string>());
 			AddConverterFactory(new ConverterFactoryToFromObject<double>());
 
 			AddConverterFactory(new ConverterFactory<InvokerThenConverterBoolToInt, ConverterThenInvokerBoolToInt, ConverterBoolToInt, bool, int>());
 			AddConverterFactory(new ConverterFactory<InvokerThenConverterBoolToUint, ConverterThenInvokerBoolToUint, ConverterBoolToUint, bool, uint>());
 			AddConverterFactory(new ConverterFactory<InvokerThenConverterBoolToDouble, ConverterThenInvokerBoolToDouble, ConverterBoolToDouble, bool, double>());
+			AddConverterFactory(new ConverterFactory<InvokerThenConverterBoolToString, ConverterThenInvokerBoolToString, ConverterBoolToString, bool, string>());
 			AddConverterFactory(new ConverterFactoryToFromObject<bool>());
+
+			AddConverterFactory(new ConverterFactory<InvokerThenConverterStringToInt, ConverterThenInvokerStringToInt, ConverterStringToInt, string, int>());
+			AddConverterFactory(new ConverterFactory<InvokerThenConverterStringToUint, ConverterThenInvokerStringToUint, ConverterStringToUint, string, uint>());
+			AddConverterFactory(new ConverterFactory<InvokerThenConverterStringToDouble, ConverterThenInvokerStringToDouble, ConverterStringToDouble, string, double>());
+			AddConverterFactory(new ConverterFactory<InvokerThenConverterStringToBool, ConverterThenInvokerStringToBool, ConverterStringToBool, string, bool>());
+			AddConverterFactory(new ConverterFactoryToFromObject<string>());
 
 			AddConverterFactory(new ConverterFactory<InvokerThenConverterObjectToInt, ConverterThenInvokerObjectToInt, ConverterObjectToInt, object, int>());
 			AddConverterFactory(new ConverterFactory<InvokerThenConverterObjectToUint, ConverterThenInvokerObjectToUint, ConverterObjectToUint, object, uint>());
 			AddConverterFactory(new ConverterFactory<InvokerThenConverterObjectToDouble, ConverterThenInvokerObjectToDouble, ConverterObjectToDouble, object, double>());
 			AddConverterFactory(new ConverterFactory<InvokerThenConverterObjectToBool, ConverterThenInvokerObjectToBool, ConverterObjectToBool, object, bool>());
+			AddConverterFactory(new ConverterFactory<InvokerThenConverterObjectToString, ConverterThenInvokerObjectToString, ConverterObjectToString, object, string>());
 
 			// For object to object, we actually have to use a special case if FromT and ToT types do not match
 			AddConverterFactory(new ConverterFactoryToFromObject<object>());
@@ -559,6 +570,30 @@ namespace PlayScript
 			}
 		}
 
+		class ConverterThenInvokerIntToString : ConverterThenInvoker<int, string>
+		{
+			public override void ConvertThenInvoke(int value) { mActionTo(value.ToString()); }
+		}
+
+		class InvokerThenConverterIntToString : InvokerThenConverter<int, string>
+		{
+			public override string InvokeThenConvert() { return mFuncFrom().ToString(); }
+		}
+
+		class ConverterIntToString : ParamConverter<int, string>
+		{
+			public override Converter<int, string> GetConverter()
+			{
+				return Convert;
+			}
+
+			public static string Convert(int value)
+			{
+				return value.ToString();
+			}
+		}
+
+
 		class ConverterThenInvokerUintToInt : ConverterThenInvoker<uint, int>
 		{
 			public override void ConvertThenInvoke(uint value)	{ mActionTo((int)value); }
@@ -625,6 +660,29 @@ namespace PlayScript
 			public static bool Convert(uint value)
 			{
 				return (value != 0);
+			}
+		}
+
+		class ConverterThenInvokerUintToString : ConverterThenInvoker<uint, string>
+		{
+			public override void ConvertThenInvoke(uint value) { mActionTo(value.ToString()); }
+		}
+
+		class InvokerThenConverterUintToString : InvokerThenConverter<uint, string>
+		{
+			public override string InvokeThenConvert() { return mFuncFrom().ToString(); }
+		}
+
+		class ConverterUintToString : ParamConverter<uint, string>
+		{
+			public override Converter<uint, string> GetConverter()
+			{
+				return Convert;
+			}
+
+			public static string Convert(uint value)
+			{
+				return value.ToString();
 			}
 		}
 
@@ -697,6 +755,30 @@ namespace PlayScript
 			}
 		}
 
+		class ConverterThenInvokerDoubleToString : ConverterThenInvoker<double, string>
+		{
+			public override void ConvertThenInvoke(double value) { mActionTo(value.ToString()); }
+		}
+
+		class InvokerThenConverterDoubleToString : InvokerThenConverter<double, string>
+		{
+			public override string InvokeThenConvert() { return mFuncFrom().ToString(); }
+		}
+
+		class ConverterDoubleToString : ParamConverter<double, string>
+		{
+			public override Converter<double, string> GetConverter()
+			{
+				return Convert;
+			}
+
+			public static string Convert(double value)
+			{
+				return value.ToString();
+			}
+		}
+
+		// From bool
 		class ConverterThenInvokerBoolToInt : ConverterThenInvoker<bool, int>
 		{
 			public override void ConvertThenInvoke(bool value)	{ mActionTo(value ? 1 : 0); }
@@ -766,6 +848,123 @@ namespace PlayScript
 			}
 		}
 
+		class ConverterThenInvokerBoolToString : ConverterThenInvoker<bool, string>
+		{
+			public override void ConvertThenInvoke(bool value) { mActionTo(value.ToString()); }
+		}
+
+		class InvokerThenConverterBoolToString : InvokerThenConverter<bool, string>
+		{
+			public override string InvokeThenConvert() { return mFuncFrom().ToString(); }
+		}
+
+		class ConverterBoolToString : ParamConverter<bool, string>
+		{
+			public override Converter<bool, string> GetConverter()
+			{
+				return Convert;
+			}
+
+			public static string Convert(bool value)
+			{
+				return value.ToString();
+			}
+		}
+
+		// From string
+		class ConverterThenInvokerStringToInt : ConverterThenInvoker<string, int>
+		{
+			public override void ConvertThenInvoke(string value)	{ mActionTo(int.Parse(value)); }
+		}
+
+		class InvokerThenConverterStringToInt : InvokerThenConverter<string, int>
+		{
+			public override int InvokeThenConvert() { return int.Parse(mFuncFrom()); }
+		}
+
+		class ConverterStringToInt : ParamConverter<string, int>
+		{
+			public override Converter<string, int> GetConverter()
+			{
+				return Convert;
+			}
+
+			public static int Convert(string value)
+			{
+				return int.Parse(value);
+			}
+		}
+
+		class ConverterThenInvokerStringToUint : ConverterThenInvoker<string, uint>
+		{
+			public override void ConvertThenInvoke(string value) { mActionTo(uint.Parse(value)); }
+		}
+
+		class InvokerThenConverterStringToUint : InvokerThenConverter<string, uint>
+		{
+			public override uint InvokeThenConvert() { return uint.Parse(mFuncFrom()); }
+		}
+
+		class ConverterStringToUint : ParamConverter<string, uint>
+		{
+			public override Converter<string, uint> GetConverter()
+			{
+				return Convert;
+			}
+
+			public static uint Convert(string value)
+			{
+				return uint.Parse(value);
+			}
+		}
+
+		class ConverterThenInvokerStringToDouble : ConverterThenInvoker<string, double>
+		{
+			public override void ConvertThenInvoke(string value) { mActionTo(double.Parse(value)); }
+		}
+
+		class InvokerThenConverterStringToDouble : InvokerThenConverter<string, double>
+		{
+			public override double InvokeThenConvert() { return double.Parse(mFuncFrom()); }
+		}
+
+		class ConverterStringToDouble : ParamConverter<string, double>
+		{
+			public override Converter<string, double> GetConverter()
+			{
+				return Convert;
+			}
+
+			public static double Convert(string value)
+			{
+				return double.Parse(value);
+			}
+		}
+
+		class ConverterThenInvokerStringToBool : ConverterThenInvoker<string, bool>
+		{
+			public override void ConvertThenInvoke(string value) { mActionTo(bool.Parse(value)); }
+		}
+
+		class InvokerThenConverterStringToBool : InvokerThenConverter<string, bool>
+		{
+			public override bool InvokeThenConvert() { return bool.Parse(mFuncFrom()); }
+		}
+
+		class ConverterStringToBool : ParamConverter<string, bool>
+		{
+			public override Converter<string, bool> GetConverter()
+			{
+				return Convert;
+			}
+
+			public static bool Convert(string value)
+			{
+				return bool.Parse(value);
+			}
+		}
+
+		// From object
 		class ConverterThenInvokerObjectToInt : ConverterThenInvoker<object, int>
 		{
 			public override void ConvertThenInvoke(object value)
@@ -957,6 +1156,36 @@ namespace PlayScript
 				}
 			}
 		}
+
+		class ConverterThenInvokerObjectToString : ConverterThenInvoker<object, string>
+		{
+			public override void ConvertThenInvoke(object value)
+			{
+				mActionTo(value.ToString());
+			}
+		}
+
+		class InvokerThenConverterObjectToString : InvokerThenConverter<object, string>
+		{
+			public override string InvokeThenConvert()
+			{
+				return mFuncFrom().ToString();
+			}
+		}
+
+		class ConverterObjectToString : ParamConverter<object, string>
+		{
+			public override Converter<object, string> GetConverter()
+			{
+				return Convert;
+			}
+
+			public static string Convert(object value)
+			{
+				return value.ToString();
+			}
+		}
+
 
 		class ConverterFactoryToFromObject<T> : ConverterFactoryBase
 		{
