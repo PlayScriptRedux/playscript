@@ -62,7 +62,7 @@ namespace PlayScript.RuntimeBinder
 		private static T GetMember<T> (CallSite site, object o)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.GetMemberBinderInvoked;
+			Stats.Increment(StatsCounter.GetMemberBinderInvoked);
 #endif
 
 			if (o == null) {
@@ -136,7 +136,7 @@ namespace PlayScript.RuntimeBinder
 			// resolve name
 
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.GetMemberBinder_Resolve_Invoked;
+			Stats.Increment(StatsCounter.GetMemberBinder_Resolve_Invoked);
 #endif
 
 			// resolve as property

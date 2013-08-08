@@ -172,7 +172,7 @@ namespace PlayScript.RuntimeBinder
 		private static object Invoke(PSInvokeMemberBinder binder, object o, int numArgs)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeMemberBinderInvoked);
 #endif
 			// We can't cache the delegate related to property (has it could have been changed since last call)
 			// We could workaround this limitation if we did have version number in the dynamic object (and detect if it changed - or changed function - since last call)

@@ -60,7 +60,7 @@ namespace PlayScript.RuntimeBinder
 		private static void SetMember<T> (CallSite site, object o, T value)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.SetMemberBinderInvoked;
+			Stats.Increment(StatsCounter.SetMemberBinderInvoked);
 #endif
 
 			var binder = (PSSetMemberBinder)site.Binder;
@@ -126,7 +126,7 @@ namespace PlayScript.RuntimeBinder
 			// resolve name
 
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.SetMemberBinder_Resolve_Invoked;
+			Stats.Increment(StatsCounter.SetMemberBinder_Resolve_Invoked);
 #endif
 
 			otype = o.GetType();

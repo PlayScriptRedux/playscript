@@ -54,7 +54,7 @@ namespace PlayScript.DynamicRuntime
 		public T GetMember<T> (object o)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.GetMemberBinderInvoked;
+			Stats.Increment(StatsCounter.GetMemberBinderInvoked);
 			#endif
 
 			if (o == null) {
@@ -125,7 +125,7 @@ namespace PlayScript.DynamicRuntime
 
 			// resolve name
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.GetMemberBinder_Resolve_Invoked;
+			Stats.Increment(StatsCounter.GetMemberBinder_Resolve_Invoked);
 			#endif
 
 			// resolve as property

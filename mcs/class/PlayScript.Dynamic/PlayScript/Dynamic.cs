@@ -27,7 +27,7 @@ namespace PlayScript
 		public static bool ConvertMethodParameters(MethodBase m, object[] args, out object[] outArgs)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.Dynamic_ConvertMethodParametersInvoked;
+			Stats.Increment(StatsCounter.Dynamic_ConvertMethodParametersInvoked);
 #endif
 			bool has_defaults = false;
 			var parameters = m.GetParameters();
@@ -141,7 +141,7 @@ namespace PlayScript
 		public static MethodInfo FindPropertyGetter(Type type, string propertyName)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.Dynamic_FindPropertyGetterInvoked;
+			Stats.Increment(StatsCounter.Dynamic_FindPropertyGetterInvoked);
 #endif
 			do 
 			{
@@ -163,7 +163,7 @@ namespace PlayScript
 		public static MethodInfo FindPropertySetter(Type type, string propertyName)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.Dynamic_FindPropertySetterInvoked;
+			Stats.Increment(StatsCounter.Dynamic_FindPropertySetterInvoked);
 #endif
 			do 
 			{
@@ -185,7 +185,7 @@ namespace PlayScript
 		public static object ConvertValue(object value, Type targetType)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.Dynamic_ConvertValueInvoked;
+			Stats.Increment(StatsCounter.Dynamic_ConvertValueInvoked);
 #endif
 			if (value == null) return null;
 
@@ -211,7 +211,7 @@ namespace PlayScript
 		public static bool CanConvertValue(object value, Type targetType)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.Dynamic_CanConvertValueInvoked;
+			Stats.Increment(StatsCounter.Dynamic_CanConvertValueInvoked);
 #endif
 			if (value == null) return true;
 
@@ -243,7 +243,7 @@ namespace PlayScript
 		public static T ConvertValue<T>(object value)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.Dynamic_ConvertValueGenericInvoked;
+			Stats.Increment(StatsCounter.Dynamic_ConvertValueGenericInvoked);
 #endif
 			if (value is T) {
 				return (T)value;
@@ -267,7 +267,7 @@ namespace PlayScript
 		public static Type GetDelegateTypeForMethod(MethodInfo method)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.Dynamic_GetDelegateTypeForMethodInvoked;
+			Stats.Increment(StatsCounter.Dynamic_GetDelegateTypeForMethodInvoked);
 #endif
 			var plist = method.GetParameters();
 
@@ -293,7 +293,7 @@ namespace PlayScript
 		public static bool GetInstanceMember(object o, string name, out object value)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.Dynamic_GetInstanceMemberInvoked;
+			Stats.Increment(StatsCounter.Dynamic_GetInstanceMemberInvoked);
 #endif
 			var type = o.GetType();
 			
@@ -324,7 +324,7 @@ namespace PlayScript
 		public static bool SetInstanceMember(object o, string name, object value)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.Dynamic_SetInstanceMemberInvoked;
+			Stats.Increment(StatsCounter.Dynamic_SetInstanceMemberInvoked);
 #endif
 			var type = o.GetType();
 			
@@ -349,7 +349,7 @@ namespace PlayScript
 		public static bool GetStaticMember(Type type, string name, out object v)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.Dynamic_GetStaticMemberInvoked;
+			Stats.Increment(StatsCounter.Dynamic_GetStaticMemberInvoked);
 #endif
 			var property = type.GetProperty(name);
 			if (property != null) {
@@ -377,7 +377,7 @@ namespace PlayScript
 		public static bool SetStaticMember(Type type, string name, object v)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.Dynamic_SetStaticMemberInvoked;
+			Stats.Increment(StatsCounter.Dynamic_SetStaticMemberInvoked);
 #endif
 			var property = type.GetProperty(name);
 			if (property != null) {
@@ -396,7 +396,7 @@ namespace PlayScript
 		public static bool CastObjectToBool(object a)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.Dynamic_CastObjectToBoolInvoked;
+			Stats.Increment(StatsCounter.Dynamic_CastObjectToBoolInvoked);
 #endif
 			if (a is bool) {
 				return (bool)a;
@@ -419,7 +419,7 @@ namespace PlayScript
 		public static object InvokeStaticMethod(Type type, string methodName, IList args)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.Dynamic_InvokeStaticInvoked;
+			Stats.Increment(StatsCounter.Dynamic_InvokeStaticInvoked);
 #endif
 			var method = type.GetMethod(methodName);
 			if (method == null) throw new Exception("Method not found");
@@ -431,7 +431,7 @@ namespace PlayScript
 		public static bool ObjectIsClass(object o, Type type)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.Dynamic_ObjectIsClassInvoked;
+			Stats.Increment(StatsCounter.Dynamic_ObjectIsClassInvoked);
 #endif
 			if (o == null || type == null) return false;
 			
@@ -458,7 +458,7 @@ namespace PlayScript
 		public static bool HasOwnProperty(object o, string name)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.Dynamic_HasOwnPropertyInvoked;
+			Stats.Increment(StatsCounter.Dynamic_HasOwnPropertyInvoked);
 #endif
 
 			if (o == null || o == PlayScript.Undefined._undefined) return false;

@@ -129,7 +129,7 @@ namespace PlayScript.RuntimeBinder
 		public static CallSiteBinder BinaryOperation (CSharpBinderFlags flags, ExpressionType operation, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.BinaryOperationBinderCreated;
+			Stats.Increment(StatsCounter.BinaryOperationBinderCreated);
 #endif
 			return new CSharpBinaryOperationBinder2(operation, flags, context, argumentInfo);
 		}
@@ -137,7 +137,7 @@ namespace PlayScript.RuntimeBinder
 		public static CallSiteBinder Convert (CSharpBinderFlags flags, Type type, Type context)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.ConvertBinderCreated;
+			Stats.Increment(StatsCounter.ConvertBinderCreated);
 #endif
 			return new PSConvertBinder(type, context, flags);
 		}
@@ -145,7 +145,7 @@ namespace PlayScript.RuntimeBinder
 		public static CallSiteBinder GetIndex (CSharpBinderFlags flags, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.GetIndexBinderCreated;
+			Stats.Increment(StatsCounter.GetIndexBinderCreated);
 #endif
 			return new PSGetIndexBinder(context, argumentInfo);
 		}
@@ -153,7 +153,7 @@ namespace PlayScript.RuntimeBinder
 		public static CallSiteBinder GetMember (CSharpBinderFlags flags, string name, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.GetMemberBinderCreated;
+			Stats.Increment(StatsCounter.GetMemberBinderCreated);
 #endif
 			return new PSGetMemberBinder(name, context, argumentInfo);
 		}
@@ -161,7 +161,7 @@ namespace PlayScript.RuntimeBinder
 		public static CallSiteBinder Invoke (CSharpBinderFlags flags, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeBinderCreated;
+			Stats.Increment(StatsCounter.InvokeBinderCreated);
 #endif
 			return new CSharpInvokeBinder(flags, context, argumentInfo);
 		}
@@ -169,7 +169,7 @@ namespace PlayScript.RuntimeBinder
 		public static CallSiteBinder InvokeConstructor (CSharpBinderFlags flags, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeConstructorBinderCreated;
+			Stats.Increment(StatsCounter.InvokeConstructorBinderCreated);
 #endif
 			return new CSharpInvokeConstructorBinder(context, argumentInfo);
 		}
@@ -177,7 +177,7 @@ namespace PlayScript.RuntimeBinder
 		public static CallSiteBinder InvokeMember (CSharpBinderFlags flags, string name, IEnumerable<Type> typeArguments, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderCreated;
+			Stats.Increment(StatsCounter.InvokeMemberBinderCreated);
 #endif
 			return new PSInvokeMemberBinder(flags, name, context, typeArguments, argumentInfo);
 		}
@@ -185,7 +185,7 @@ namespace PlayScript.RuntimeBinder
 		public static CallSiteBinder IsEvent (CSharpBinderFlags flags, string name, Type context)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.IsEventBinderCreated;
+			Stats.Increment(StatsCounter.IsEventBinderCreated);
 #endif
 			return new PSIsEventBinder(flags, name, context);
 		}
@@ -193,7 +193,7 @@ namespace PlayScript.RuntimeBinder
 		public static CallSiteBinder SetIndex (CSharpBinderFlags flags, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.SetIndexBinderCreated;
+			Stats.Increment(StatsCounter.SetIndexBinderCreated);
 #endif
 			return new PSSetIndexBinder(flags, context, argumentInfo);
 		}
@@ -201,7 +201,7 @@ namespace PlayScript.RuntimeBinder
 		public static CallSiteBinder SetMember (CSharpBinderFlags flags, string name, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.SetMemberBinderCreated;
+			Stats.Increment(StatsCounter.SetMemberBinderCreated);
 #endif
 			return new PSSetMemberBinder(flags, name, context, argumentInfo);
 		}
@@ -209,7 +209,7 @@ namespace PlayScript.RuntimeBinder
 		public static CallSiteBinder UnaryOperation (CSharpBinderFlags flags, ExpressionType operation, Type context, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.UnaryOperationBinderCreated;
+			Stats.Increment(StatsCounter.UnaryOperationBinderCreated);
 #endif
 			return new CSharpUnaryOperationBinder(operation, flags, context, argumentInfo);
 		}

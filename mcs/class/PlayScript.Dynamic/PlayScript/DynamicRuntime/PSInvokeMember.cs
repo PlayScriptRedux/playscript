@@ -140,7 +140,7 @@ namespace PlayScript.DynamicRuntime
 			if (invokeOnly)
 			{
 				#if BINDERS_RUNTIME_STATS
-				++Stats.CurrentInstance.InvokeMemberBinderInvoked_Slow;
+				Stats.Increment(StatsCounter.InvokeMemberBinderInvoked_Slow);
 				#endif
 				return mInvoker.SafeInvokeWith(mArgs);
 			}
@@ -193,7 +193,7 @@ namespace PlayScript.DynamicRuntime
 			}
 
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked_Slow;
+			Stats.Increment(StatsCounter.InvokeMemberBinderInvoked_Slow);
 			#endif
 			return mInvoker.SafeInvokeWith(mArgs);
 		}
@@ -219,7 +219,7 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction0 (object o)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeMemberBinderInvoked);
 			#endif
 
 			bool invokeOnly = UpdateInvoker(o);
@@ -227,7 +227,7 @@ namespace PlayScript.DynamicRuntime
 			if (caller != null)
 			{
 				#if BINDERS_RUNTIME_STATS
-				++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+				Stats.Increment(StatsCounter.InvokeMemberBinderInvoked_Fast);
 				#endif
 				caller.Call();		// Fast path
 				return;
@@ -239,7 +239,7 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction1<A1> (object o, A1 a1)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeMemberBinderInvoked);
 			#endif
 
 			bool invokeOnly = false;
@@ -250,7 +250,7 @@ namespace PlayScript.DynamicRuntime
 				if (caller != null)
 				{
 					#if BINDERS_RUNTIME_STATS
-					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					Stats.Increment(StatsCounter.InvokeMemberBinderInvoked_Fast);
 					#endif
 					caller.Call(a1);	// Fast path
 					return;
@@ -265,7 +265,7 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction2<A1,A2> (object o, A1 a1, A2 a2)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeMemberBinderInvoked);
 			#endif
 
 			bool invokeOnly = false;
@@ -276,7 +276,7 @@ namespace PlayScript.DynamicRuntime
 				if (caller != null)
 				{
 					#if BINDERS_RUNTIME_STATS
-					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					Stats.Increment(StatsCounter.InvokeMemberBinderInvoked_Fast);
 					#endif
 					caller.Call(a1, a2);	// Fast path
 					return;
@@ -292,7 +292,7 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction3<A1,A2,A3> (object o, A1 a1, A2 a2, A3 a3)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeMemberBinderInvoked);
 			#endif
 
 			bool invokeOnly = false;
@@ -303,7 +303,7 @@ namespace PlayScript.DynamicRuntime
 				if (caller != null)
 				{
 					#if BINDERS_RUNTIME_STATS
-					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					Stats.Increment(StatsCounter.InvokeMemberBinderInvoked_Fast);
 					#endif
 					caller.Call(a1, a2, a3);	// Fast path
 					return;
@@ -320,7 +320,7 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction4<A1,A2,A3,A4> (object o, A1 a1, A2 a2, A3 a3, A4 a4)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeMemberBinderInvoked);
 			#endif
 
 			bool invokeOnly = false;
@@ -331,7 +331,7 @@ namespace PlayScript.DynamicRuntime
 				if (caller != null)
 				{
 					#if BINDERS_RUNTIME_STATS
-					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					Stats.Increment(StatsCounter.InvokeMemberBinderInvoked_Fast);
 					#endif
 					caller.Call(a1, a2, a3, a4);	// Fast path
 					return;
@@ -349,7 +349,7 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction5<A1,A2,A3,A4,A5>(object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeMemberBinderInvoked);
 			#endif
 
 			bool invokeOnly = false;
@@ -360,7 +360,7 @@ namespace PlayScript.DynamicRuntime
 				if (caller != null)
 				{
 					#if BINDERS_RUNTIME_STATS
-					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					Stats.Increment(StatsCounter.InvokeMemberBinderInvoked_Fast);
 					#endif
 					caller.Call(a1, a2, a3, a4, a5);	// Fast path
 					return;
@@ -379,7 +379,7 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction6<A1,A2,A3,A4,A5,A6> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeMemberBinderInvoked);
 			#endif
 
 			bool invokeOnly = false;
@@ -390,7 +390,7 @@ namespace PlayScript.DynamicRuntime
 				if (caller != null)
 				{
 					#if BINDERS_RUNTIME_STATS
-					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					Stats.Increment(StatsCounter.InvokeMemberBinderInvoked_Fast);
 					#endif
 					caller.Call(a1, a2, a3, a4, a5, a6);	// Fast path
 					return;
@@ -410,7 +410,7 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction7<A1,A2,A3,A4,A5,A6,A7> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeMemberBinderInvoked);
 			#endif
 
 			bool invokeOnly = false;
@@ -421,7 +421,7 @@ namespace PlayScript.DynamicRuntime
 				if (caller != null)
 				{
 					#if BINDERS_RUNTIME_STATS
-					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					Stats.Increment(StatsCounter.InvokeMemberBinderInvoked_Fast);
 					#endif
 					caller.Call(a1, a2, a3, a4, a5, a6, a7);	// Fast path
 					return;
@@ -443,7 +443,7 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction8<A1,A2,A3,A4,A5,A6,A7,A8> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeMemberBinderInvoked);
 			#endif
 
 			bool invokeOnly = false;
@@ -454,7 +454,7 @@ namespace PlayScript.DynamicRuntime
 				if (caller != null)
 				{
 					#if BINDERS_RUNTIME_STATS
-					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					Stats.Increment(StatsCounter.InvokeMemberBinderInvoked_Fast);
 					#endif
 					caller.Call(a1, a2, a3, a4, a5, a6, a7, a8);	// Fast path
 					return;
@@ -476,7 +476,7 @@ namespace PlayScript.DynamicRuntime
 		public TR InvokeFunc0<TR>(object o)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeMemberBinderInvoked);
 			#endif
 
 			bool invokeOnly = false;
@@ -487,7 +487,7 @@ namespace PlayScript.DynamicRuntime
 				if (caller != null)
 				{
 					#if BINDERS_RUNTIME_STATS
-					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					Stats.Increment(StatsCounter.InvokeMemberBinderInvoked_Fast);
 					#endif
 					return caller.Call();	// Fast path
 				}
@@ -499,7 +499,7 @@ namespace PlayScript.DynamicRuntime
 		public TR InvokeFunc1<A1,TR>(object o, A1 a1)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeMemberBinderInvoked);
 			#endif
 
 			bool invokeOnly = false;
@@ -510,7 +510,7 @@ namespace PlayScript.DynamicRuntime
 				if (caller != null)
 				{
 					#if BINDERS_RUNTIME_STATS
-					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					Stats.Increment(StatsCounter.InvokeMemberBinderInvoked_Fast);
 					#endif
 					return caller.Call(a1);	// Fast path
 				}
@@ -524,7 +524,7 @@ namespace PlayScript.DynamicRuntime
 		public TR InvokeFunc2<A1,A2,TR>(object o, A1 a1, A2 a2)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeMemberBinderInvoked);
 			#endif
 
 			bool invokeOnly = false;
@@ -535,7 +535,7 @@ namespace PlayScript.DynamicRuntime
 				if (caller != null)
 				{
 					#if BINDERS_RUNTIME_STATS
-					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					Stats.Increment(StatsCounter.InvokeMemberBinderInvoked_Fast);
 					#endif
 					return caller.Call(a1, a2);	// Fast path
 				}
@@ -550,7 +550,7 @@ namespace PlayScript.DynamicRuntime
 		public TR InvokeFunc3<A1,A2,A3,TR> (object o, A1 a1, A2 a2, A3 a3)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeMemberBinderInvoked);
 			#endif
 
 			bool invokeOnly = false;
@@ -561,7 +561,7 @@ namespace PlayScript.DynamicRuntime
 				if (caller != null)
 				{
 					#if BINDERS_RUNTIME_STATS
-					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					Stats.Increment(StatsCounter.InvokeMemberBinderInvoked_Fast);
 					#endif
 					return caller.Call(a1, a2, a3);	// Fast path
 				}
@@ -577,7 +577,7 @@ namespace PlayScript.DynamicRuntime
 		public TR InvokeFunc4<A1,A2,A3,A4,TR> (object o, A1 a1, A2 a2, A3 a3, A4 a4)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeMemberBinderInvoked);
 			#endif
 
 			bool invokeOnly = false;
@@ -588,7 +588,7 @@ namespace PlayScript.DynamicRuntime
 				if (caller != null)
 				{
 					#if BINDERS_RUNTIME_STATS
-					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					Stats.Increment(StatsCounter.InvokeMemberBinderInvoked_Fast);
 					#endif
 					return caller.Call(a1, a2, a3, a4);	// Fast path
 				}
@@ -605,7 +605,7 @@ namespace PlayScript.DynamicRuntime
 		public TR InvokeFunc5<A1,A2,A3,A4,A5,TR>(object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeMemberBinderInvoked);
 			#endif
 
 			bool invokeOnly = false;
@@ -616,7 +616,7 @@ namespace PlayScript.DynamicRuntime
 				if (caller != null)
 				{
 					#if BINDERS_RUNTIME_STATS
-					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					Stats.Increment(StatsCounter.InvokeMemberBinderInvoked_Fast);
 					#endif
 					return caller.Call(a1, a2, a3, a4, a5);	// Fast path
 				}
@@ -634,7 +634,7 @@ namespace PlayScript.DynamicRuntime
 		public TR InvokeFunc6<A1,A2,A3,A4,A5,A6,TR> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeMemberBinderInvoked);
 			#endif
 
 			bool invokeOnly = false;
@@ -645,7 +645,7 @@ namespace PlayScript.DynamicRuntime
 				if (caller != null)
 				{
 					#if BINDERS_RUNTIME_STATS
-					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					Stats.Increment(StatsCounter.InvokeMemberBinderInvoked_Fast);
 					#endif
 					return caller.Call(a1, a2, a3, a4, a5, a6);	// Fast path
 				}
@@ -664,7 +664,7 @@ namespace PlayScript.DynamicRuntime
 		public TR InvokeFunc7<A1,A2,A3,A4,A5,A6,A7,TR> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeMemberBinderInvoked);
 			#endif
 
 			bool invokeOnly = false;
@@ -675,7 +675,7 @@ namespace PlayScript.DynamicRuntime
 				if (caller != null)
 				{
 					#if BINDERS_RUNTIME_STATS
-					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					Stats.Increment(StatsCounter.InvokeMemberBinderInvoked_Fast);
 					#endif
 					return caller.Call(a1, a2, a3, a4, a5, a6, a7);	// Fast path
 				}
@@ -696,7 +696,7 @@ namespace PlayScript.DynamicRuntime
 		public TR InvokeFunc8<A1,A2,A3,A4,A5,A6,A7,A8,TR> (object o, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeMemberBinderInvoked);
 			#endif
 
 			bool invokeOnly = false;
@@ -707,7 +707,7 @@ namespace PlayScript.DynamicRuntime
 				if (caller != null)
 				{
 					#if BINDERS_RUNTIME_STATS
-					++Stats.CurrentInstance.InvokeMemberBinderInvoked_Fast;
+					Stats.Increment(StatsCounter.InvokeMemberBinderInvoked_Fast);
 					#endif
 					return caller.Call(a1, a2, a3, a4, a5, a6, a7, a8);	// Fast path
 				}

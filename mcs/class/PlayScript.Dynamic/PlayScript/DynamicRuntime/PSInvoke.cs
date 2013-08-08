@@ -38,7 +38,7 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction0 (object d)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 #endif
 			
 			if (((Delegate)d) != _d) {
@@ -53,7 +53,7 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction1 (object d, object a1)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 #endif
 			
 			if (((Delegate)d) != _d) {
@@ -73,7 +73,7 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction2 (object d, object a1, object a2)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 #endif
 			
 			if (((Delegate)d) != _d) {
@@ -96,7 +96,7 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction3 (object d, object a1, object a2, object a3)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 #endif
 			
 			if (((Delegate)d) != _d) {
@@ -121,7 +121,7 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction4 (object d, object a1, object a2, object a3, object a4)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 #endif
 			
 			if (((Delegate)d) != _d) {
@@ -147,7 +147,7 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction5 (object d, object a1, object a2, object a3, object a4, object a5)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 #endif
 			
 			if (((Delegate)d) != _d) {
@@ -175,7 +175,7 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction6 (object d, object a1, object a2, object a3, object a4, object a5, object a6)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 #endif
 			
 			if (((Delegate)d) != _d) {
@@ -205,7 +205,7 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction7 (object d, object a1, object a2, object a3, object a4, object a5, object a6, object a7)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 #endif
 			
 			if (((Delegate)d) != _d) {
@@ -237,7 +237,7 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction8 (object d, object a1, object a2, object a3, object a4, object a5, object a6, object a7, object a8)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 #endif
 			
 			if (((Delegate)d) != _d) {
@@ -271,7 +271,7 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction9 (object d, object a1, object a2, object a3, object a4, object a5, object a6, object a7, object a8, object a9)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 #endif
 			
 			if (((Delegate)d) != _d) {
@@ -307,7 +307,7 @@ namespace PlayScript.DynamicRuntime
 		public object InvokeFunc0 (object d)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 			#endif
 
 			if (((Delegate)d) != _d) {
@@ -322,7 +322,7 @@ namespace PlayScript.DynamicRuntime
 		public object InvokeFunc1 (object d, object a1)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 			#endif
 
 			if (((Delegate)d) != _d) {
@@ -342,7 +342,7 @@ namespace PlayScript.DynamicRuntime
 		public object InvokeFunc2 (object d, object a1, object a2)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 			#endif
 
 			if (((Delegate)d) != _d) {
@@ -365,7 +365,7 @@ namespace PlayScript.DynamicRuntime
 		public object InvokeFunc3 (object d, object a1, object a2, object a3)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 			#endif
 
 			if (((Delegate)d) != _d) {
@@ -390,7 +390,7 @@ namespace PlayScript.DynamicRuntime
 		public object InvokeFunc4 (object d, object a1, object a2, object a3, object a4)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 			#endif
 
 			if (((Delegate)d) != _d) {
@@ -416,7 +416,7 @@ namespace PlayScript.DynamicRuntime
 		public object InvokeFunc5 (object d, object a1, object a2, object a3, object a4, object a5)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 			#endif
 
 			if (((Delegate)d) != _d) {
@@ -444,7 +444,7 @@ namespace PlayScript.DynamicRuntime
 		public object InvokeFunc6 (object d, object a1, object a2, object a3, object a4, object a5, object a6)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 			#endif
 
 			if (((Delegate)d) != _d) {
@@ -474,7 +474,7 @@ namespace PlayScript.DynamicRuntime
 		public object InvokeFunc7 (object d, object a1, object a2, object a3, object a4, object a5, object a6, object a7)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 			#endif
 
 			if (((Delegate)d) != _d) {
@@ -506,7 +506,7 @@ namespace PlayScript.DynamicRuntime
 		public object InvokeFunc8 (object d, object a1, object a2, object a3, object a4, object a5, object a6, object a7, object a8)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 			#endif
 
 			if (((Delegate)d) != _d) {
@@ -540,7 +540,7 @@ namespace PlayScript.DynamicRuntime
 		public object InvokeFunc9 (object d, object a1, object a2, object a3, object a4, object a5, object a6, object a7, object a8, object a9)
 		{
 			#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 			#endif
 
 			if (((Delegate)d) != _d) {

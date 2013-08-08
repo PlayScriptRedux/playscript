@@ -32,8 +32,8 @@ namespace PlayScript.RuntimeBinder
 		private static T GetIndex<T> (CallSite site, object o, int index)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.GetIndexBinderInvoked;
-			++Stats.CurrentInstance.GetIndexBinder_Int_Invoked;
+			Stats.Increment(StatsCounter.GetIndexBinderInvoked);
+			Stats.Increment(StatsCounter.GetIndexBinder_Int_Invoked);
 #endif
 			var l = o as IList<T>;
 			if (l != null) {
@@ -86,14 +86,14 @@ namespace PlayScript.RuntimeBinder
 		private static T GetKeyStr<T> (CallSite site, object o, string key)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.GetIndexBinderInvoked;
-			++Stats.CurrentInstance.GetIndexBinder_Key_Invoked;
+			Stats.Increment(StatsCounter.GetIndexBinderInvoked);
+			Stats.Increment(StatsCounter.GetIndexBinder_Key_Invoked);
 #endif
 			// handle dictionaries
 			var dict = o as IDictionary;
 			if (dict != null) {
 #if BINDERS_RUNTIME_STATS
-				++Stats.CurrentInstance.GetIndexBinder_Key_Dictionary_Invoked;
+				Stats.Increment(StatsCounter.GetIndexBinder_Key_Dictionary_Invoked);
 #endif
 				var ro = dict[key];
 				if (ro is T) {
@@ -107,7 +107,7 @@ namespace PlayScript.RuntimeBinder
 			var binder = site.Binder as PSGetIndexBinder;
 
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.GetIndexBinder_Key_Property_Invoked;
+			Stats.Increment(StatsCounter.GetIndexBinder_Key_Property_Invoked);
 #endif
 
 			// create a get member binder here

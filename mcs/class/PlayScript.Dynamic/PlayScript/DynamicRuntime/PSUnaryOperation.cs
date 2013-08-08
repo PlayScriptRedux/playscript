@@ -31,7 +31,7 @@ namespace PlayScript.DynamicRuntime
 		public static object NegateObject (object a)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.UnaryOperationBinderInvoked;
+			Stats.Increment(StatsCounter.UnaryOperationBinderInvoked);
 #endif
 			if (a is int) {
 				return -(int)a;
@@ -48,7 +48,7 @@ namespace PlayScript.DynamicRuntime
 		public static object IncrementObject (object a)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.UnaryOperationBinderInvoked;
+			Stats.Increment(StatsCounter.UnaryOperationBinderInvoked);
 #endif
 			if (a is int) {
 				return (int)a + 1;
@@ -66,7 +66,7 @@ namespace PlayScript.DynamicRuntime
 		public static object DecrementObject (object a)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.UnaryOperationBinderInvoked;
+			Stats.Increment(StatsCounter.UnaryOperationBinderInvoked);
 #endif
 			if (a is int) {
 				return (int)a - 1;
@@ -83,7 +83,7 @@ namespace PlayScript.DynamicRuntime
 		public static bool LogicalNotObject (object a)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.UnaryOperationBinderInvoked;
+			Stats.Increment(StatsCounter.UnaryOperationBinderInvoked);
 #endif
 			if (a is bool) {
 				return !(bool)a;
@@ -101,7 +101,7 @@ namespace PlayScript.DynamicRuntime
 		public static object BitwiseNotObject (object a)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.UnaryOperationBinderInvoked;
+			Stats.Increment(StatsCounter.UnaryOperationBinderInvoked);
 #endif
 			if (a is bool) {
 				return (bool)a ? 0 : 1;
@@ -120,7 +120,7 @@ namespace PlayScript.DynamicRuntime
 		public static bool IsTrueObject (object a)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.UnaryOperationBinderInvoked;
+			Stats.Increment(StatsCounter.UnaryOperationBinderInvoked);
 #endif
 			return Dynamic.CastObjectToBool(a) == true;
 		}
@@ -128,7 +128,7 @@ namespace PlayScript.DynamicRuntime
 		public static bool IsFalseObject (object a)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.UnaryOperationBinderInvoked;
+			Stats.Increment(StatsCounter.UnaryOperationBinderInvoked);
 #endif
 			return Dynamic.CastObjectToBool(a) == false;
 		}
