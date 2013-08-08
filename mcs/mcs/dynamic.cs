@@ -293,13 +293,6 @@ namespace Mono.CSharp
 			return null;
 		}
 
-		public virtual bool OverrideReturnType(TypeSpec t) {
-			if (this.Type == t) {
-				return true;
-			}
-			return false;
-		}
-
 		protected override Expression DoResolve (ResolveContext rc)
 		{
 			if (DoResolveCore (rc))
@@ -461,7 +454,7 @@ namespace Mono.CSharp
 					}
 					else
 					{
-						if (isPlayScriptAotMode && !isStatement && (target.Type != type)) {
+						if (!isStatement && (target.Type != type)) {
 							// PlayScript: If doing an invoke, we have to cast the return type to the type expected by the expression..
 							target = new Cast(new TypeExpression(type, loc), target, loc).Resolve (bc);
 						} 
@@ -817,13 +810,11 @@ namespace Mono.CSharp
 			var expr = this.Arguments[0].Expr;
 
 			if (rc.Module.PredefinedTypes.IsPlayScriptAotMode && rc.Module.Compiler.Settings.NewDynamicRuntime_ConvertReturnType) {
-				var ds = expr as DynamicExpressionStatement;
-				if (ds != null && (ds.Type == rc.BuiltinTypes.Dynamic)) {
-					// force dynamic expression to resolve to our type to avoid this conversion
-					if (ds.OverrideReturnType(this.Type)) {
-						// skip dynamic conversions
-						return expr.Resolve(rc);
-					}
+				// encourage dynamic expression to resolve to our type to avoid this conversion
+				expr = expr.ResolveWithTypeHint(rc, this.Type);
+				if (expr.Type == this.type) {
+					// skip dynamic conversions
+					return expr;
 				}
 			}
 
@@ -1151,17 +1142,12 @@ namespace Mono.CSharp
 			return base.DoResolve(rc);
 		}
 
-		public override bool OverrideReturnType(TypeSpec t) {
-			bool is_member_access = member is MemberAccess;
-			if (is_member_access)
+		protected override Expression DoResolveWithTypeHint(ResolveContext rc, TypeSpec t) {
+			if (IsMemberAccess)
 			{
 				this.Type = t;
-				return true;
 			}
-			else
-			{
-				return false;
-			}
+			return this.Resolve(rc);
 		}
 
 		#region IDynamicCallSite implementation
@@ -1406,10 +1392,9 @@ namespace Mono.CSharp
 			base.binder = this;
 		}
 
-		
-		public override bool OverrideReturnType(TypeSpec t) {
+		protected override Expression DoResolveWithTypeHint(ResolveContext rc, TypeSpec t) {
 			this.Type = t;
-			return true;
+			return this.Resolve(rc);
 		}
 
 		public Expression CreateCallSiteBinder (ResolveContext ec, Arguments args)

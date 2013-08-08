@@ -10,8 +10,59 @@ package
 
 	public class Texture
 	{
+		private var mCount:int = 10;
 
-		public function get value():int{return 0;}
+		public function t0():int {
+			return mCount++;
+		}
+
+		public function t1():int {
+			return mCount++;
+		}
+
+		public function t2():int {
+			return mCount++;
+		}
+
+
+		public function testCoalescing():void {
+
+			var n:int;
+			var n2:int;
+
+			n = t0() && t1();
+			n2 = t0() || t1();
+			trace(n, n2);
+
+			var alpha:Number = 1.0;
+			var obj:Object = new Object();
+
+			var str:String = "abc";
+			str += obj.id;
+
+			obj.texture = new Texture();
+
+			obj.i=5;
+			obj.d=123.4;
+
+			var i:int = obj.i;
+			var d:Number = obj.d;
+			if (obj && obj.hasOwnProperty("renderLayer"))
+			{
+				var layer:int = obj.layer;
+				if(obj.hasOwnProperty("alpha") && !(layer == 5 || layer == 4))
+				{
+					alpha = obj.hasOwnProperty("alpha") ? obj.alpha : 0.6;
+				}
+			}
+			trace(alpha);
+		}
+
+		public function get value():int{
+
+
+			return 0;
+		}
 
 		public function get value2():int{return 0;}
 
