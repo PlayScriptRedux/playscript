@@ -1202,9 +1202,6 @@ namespace Mono.CSharp
 			if (t.Kind == MemberKind.InternalCompilerType)
 				t = ec.BuiltinTypes.Object;
 
-			if ((t.IsClass || t.IsInterface) && (t.BuiltinType != BuiltinTypeSpec.Type.String)) {
-				t = ec.BuiltinTypes.Object;
-			}
 
 			return new TypeExpression(t, loc);
 		}
@@ -1430,7 +1427,7 @@ namespace Mono.CSharp
 
 		protected bool NeedsCastToObject(TypeSpec t)
 		{
-			return (t.BuiltinType == BuiltinTypeSpec.Type.None) || (t.BuiltinType >= BuiltinTypeSpec.Type.Object);
+			return (t == null) || (t.Kind == MemberKind.InternalCompilerType) || (t.BuiltinType == BuiltinTypeSpec.Type.Dynamic);
 		}
 
 		protected abstract Expression CreateCallSiteBinder (ResolveContext ec, Arguments args, bool isSet);
