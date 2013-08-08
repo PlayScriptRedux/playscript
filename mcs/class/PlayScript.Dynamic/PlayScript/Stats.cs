@@ -110,6 +110,8 @@ namespace PlayScript
 			InvokeConstructorBinderInvoked += other.InvokeConstructorBinderInvoked;
 			InvokeMemberBinderCreated += other.InvokeMemberBinderCreated;
 			InvokeMemberBinderInvoked += other.InvokeMemberBinderInvoked;
+			InvokeMemberBinderInvoked_Fast += other.InvokeMemberBinderInvoked_Fast;
+			InvokeMemberBinderInvoked_Slow += other.InvokeMemberBinderInvoked_Slow;
 			IsEventBinderCreated += other.IsEventBinderCreated;
 			IsEventBinderInvoked += other.IsEventBinderInvoked;
 
@@ -163,6 +165,8 @@ namespace PlayScript
 			InvokeConstructorBinderInvoked -= other.InvokeConstructorBinderInvoked;
 			InvokeMemberBinderCreated -= other.InvokeMemberBinderCreated;
 			InvokeMemberBinderInvoked -= other.InvokeMemberBinderInvoked;
+			InvokeMemberBinderInvoked_Fast -= other.InvokeMemberBinderInvoked_Fast;
+			InvokeMemberBinderInvoked_Slow -= other.InvokeMemberBinderInvoked_Slow;
 			IsEventBinderCreated -= other.IsEventBinderCreated;
 			IsEventBinderInvoked -= other.IsEventBinderInvoked;
 
@@ -216,6 +220,8 @@ namespace PlayScript
 			InvokeConstructorBinderInvoked = other.InvokeConstructorBinderInvoked;
 			InvokeMemberBinderCreated = other.InvokeMemberBinderCreated;
 			InvokeMemberBinderInvoked = other.InvokeMemberBinderInvoked;
+			InvokeMemberBinderInvoked_Fast = other.InvokeMemberBinderInvoked_Fast;
+			InvokeMemberBinderInvoked_Slow = other.InvokeMemberBinderInvoked_Slow;
 			IsEventBinderCreated = other.IsEventBinderCreated;
 			IsEventBinderInvoked = other.IsEventBinderInvoked;
 
@@ -271,6 +277,8 @@ namespace PlayScript
 			InvokeConstructorBinderInvoked = 0;
 			InvokeMemberBinderCreated = 0;
 			InvokeMemberBinderInvoked = 0;
+			InvokeMemberBinderInvoked_Fast = 0;
+			InvokeMemberBinderInvoked_Slow = 0;
 			IsEventBinderCreated = 0;
 			IsEventBinderInvoked = 0;
 
