@@ -1223,27 +1223,20 @@ namespace Mono.CSharp
 
 		public Expression InvokeCallSite(ResolveContext rc, Expression site, Arguments args, TypeSpec returnType, bool isStatement)
 		{
-			if (IsMemberAccess) {
-				string memberName = "Invoke";
-				memberName += isStatement ? "Action" : "Func"; 
-				memberName += (args.Count - 1);
+			string memberName = "Invoke";
+			memberName += isStatement ? "Action" : "Func"; 
+			memberName += (args.Count - 1);
 
-				var ta = new TypeArguments();
-				for (int i = 1; i < args.Count; ++i) {
-					ta.Add(CreateReducedTypeExpression(rc, args[i].Type));
-				}
-
-				if (!isStatement) {
-					ta.Add(CreateReducedTypeExpression(rc, returnType));
-				}
-
-				return new Invocation(new MemberAccess(site, memberName, ta, loc), args);
-			} else {
-				string memberName = "Invoke";
-				memberName += isStatement ? "Action" : "Func"; 
-				memberName += (args.Count - 1);
-				return new Invocation(new MemberAccess(site, memberName), args);
+			var ta = new TypeArguments();
+			for (int i = 1; i < args.Count; ++i) {
+				ta.Add(CreateReducedTypeExpression(rc, args[i].Type));
 			}
+
+			if (!isStatement) {
+				ta.Add(CreateReducedTypeExpression(rc, returnType));
+			}
+
+			return new Invocation(new MemberAccess(site, memberName, ta, loc), args);
 		}
 
 		#endregion
