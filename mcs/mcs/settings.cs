@@ -216,6 +216,8 @@ namespace Mono.CSharp {
 		public bool NewDynamicRuntime_ToString = false;
 		// if true, dynamic Constructor will be resolved at compile time if possible
 		public bool NewDynamicRuntime_Constructor = false;
+		// if true, type hints will be used for expression resolving
+		public bool NewDynamicRuntime_TypeHint = false;
 
 		public void SetNewDynamicRuntimeEnable(bool value)
 		{
@@ -233,6 +235,7 @@ namespace Mono.CSharp {
 			NewDynamicRuntime_Invoke = value;
 			NewDynamicRuntime_ToString = value;
 			NewDynamicRuntime_Constructor = value;
+			NewDynamicRuntime_TypeHint = value;
 		}
 
 		//

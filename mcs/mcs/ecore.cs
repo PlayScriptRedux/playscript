@@ -240,6 +240,31 @@ namespace Mono.CSharp {
 			return null;
 		}
 
+		//
+		// This is used to do a resolve but provides a typespec as a 'hint'
+		// The hint is used to coerce the resolving code to produce an expression of that type.
+		// The resolve doesnt necessarily have to respect the hint if it doesnt want to.
+		// This hint is useful to produce the most optimal code generation (for example, if only
+		// a Boolean is required then dont do expensive coalescing)
+		// Expressions should override DoResolveWithTypeHint below
+		//
+		public Expression ResolveWithTypeHint (ResolveContext rc, TypeSpec typeHint)
+		{
+			if ((rc.FileType == SourceFileType.PlayScript) && rc.Module.Compiler.Settings.NewDynamicRuntime_TypeHint && (typeHint != null)) {
+				// resolve with type hint
+				return this.DoResolveWithTypeHint(rc, typeHint);
+			} else {
+				// dont use the type hint
+				return this.Resolve(rc);
+			}
+		}
+
+		protected virtual Expression DoResolveWithTypeHint (ResolveContext rc, TypeSpec typeHint)
+		{
+			// by default most expressions ignore the type hint
+			return this.Resolve(rc);
+		}
+
 		public static void ErrorIsInaccesible (IMemberContext rc, string member, Location loc)
 		{
 			rc.Module.Compiler.Report.Error (122, loc, "`{0}' is inaccessible due to its protection level", member);

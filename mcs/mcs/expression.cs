@@ -103,9 +103,17 @@ namespace Mono.CSharp
 			this.loc = loc;
 		}
 
+		private TypeSpec typeHint;
+		protected override Expression DoResolveWithTypeHint(ResolveContext rc, TypeSpec typeHint)
+		{
+			// store type hint
+			this.typeHint = typeHint;
+			return this.Resolve(rc);
+		}
+
 		protected override Expression DoResolve (ResolveContext ec)
 		{
-			var res = expr.Resolve (ec);
+			var res = expr.ResolveWithTypeHint (ec, typeHint);
 			var constant = res as Constant;
 			if (constant != null && constant.IsLiteral)
 				return Constant.CreateConstantFromValue (res.Type, constant.GetValue (), expr.Location);
@@ -2473,11 +2481,6 @@ namespace Mono.CSharp
 		protected State state;
 		Expression enum_conversion;
 
-		// this is set to true if logical operations perform coalescing (and only in playscript)
-		// This will convert (a || b) into (a ?? b) and will convert (a && b && c) into (a ? (b ? c : b) : a)
-		// if this is false then normal logical operations will happen (useful inside of an if() or while() boolean expression)
-		public bool AsCoalesceLogicalOps {get; set;}
-
 		public Binary (Operator oper, Expression left, Expression right, bool isCompound)
 			: this (oper, left, right)
 		{
@@ -2487,7 +2490,6 @@ namespace Mono.CSharp
 
 		public Binary (Operator oper, Expression left, Expression right)
 		{
-			this.AsCoalesceLogicalOps = true;
 			this.oper = oper;
 			this.left = left;
 			this.right = right;
@@ -3264,20 +3266,23 @@ namespace Mono.CSharp
 			return new Invocation(new MemberAccess(left, "CompareTo", loc), args);
 		}
 
+		private TypeSpec typeHint;
+		protected override Expression DoResolveWithTypeHint(ResolveContext rc, TypeSpec typeHint)
+		{
+			// store type hint
+			this.typeHint = typeHint;
+			return this.Resolve(rc);
+		}
+
 		protected override Expression DoResolve (ResolveContext ec)
 		{
 			if (ec.FileType == SourceFileType.PlayScript) {
-				// propagate the AsCoalese flag on down to other binary operators
 				// this prevents a lot of extra operations inside of an if(expr) or while(expr) 
 				// where we dont care about the return value at all and just care about the boolean value
 				// however, x = a || b || c; will still work because its not inside of a boolean expression
-				if (!AsCoalesceLogicalOps && (oper == Operator.LogicalOr || oper == Operator.LogicalAnd)) {
-					var leftBinary = left as Binary;
-					var rightBinary = right as Binary;
-					if (leftBinary != null) 
-						leftBinary.AsCoalesceLogicalOps =false;
-					if (rightBinary != null) 
-						rightBinary.AsCoalesceLogicalOps =false;
+				if ((oper & Operator.LogicalMask) == 0) {
+					// discard type hint unless we are inside of a logical operator
+					typeHint = null;
 				}
 			}
 
@@ -3295,7 +3300,7 @@ namespace Mono.CSharp
 					return null;
 				}
 			} else
-				left = left.Resolve (ec);
+				left = left.ResolveWithTypeHint (ec, typeHint);
 
 			if (left == null)
 				return null;
@@ -3303,7 +3308,7 @@ namespace Mono.CSharp
 			// Handle || operator applied to reference types in PlayScript..
 			if (ec.FileType == SourceFileType.PlayScript && oper == Operator.LogicalOr &&
 			    (left.Type.IsClass || left.Type.IsInterface)) {
-				if (AsCoalesceLogicalOps) {
+				if (typeHint != ec.BuiltinTypes.Bool) {
 					return new Nullable.NullCoalescingOperator (left, right).Resolve (ec);
 				}
 			}
@@ -3321,14 +3326,14 @@ namespace Mono.CSharp
 				return left;
 			}
 
-			right = right.Resolve (ec);
+			right = right.ResolveWithTypeHint (ec, typeHint);
 			if (right == null)
 				return null;
 
 			// Handle PlayScript binary operators that need to be converted to methods.
 			if (ec.FileType == SourceFileType.PlayScript) {
 				if (ec.Target != Target.JavaScript) {
-					if (AsCoalesceLogicalOps && (oper == Operator.LogicalOr || oper == Operator.LogicalAnd) && 
+					if ((typeHint != ec.BuiltinTypes.Bool) && (oper == Operator.LogicalOr || oper == Operator.LogicalAnd) && 
 					    (left.Type.BuiltinType != BuiltinTypeSpec.Type.Bool || right.Type.BuiltinType != Mono.CSharp.BuiltinTypeSpec.Type.Bool)) {
 						Expression leftExpr = left;
 						Expression rightExpr = right;
@@ -3425,7 +3430,7 @@ namespace Mono.CSharp
 				if ((oper & Operator.LogicalMask) != 0) {
 					Expression cond_left, cond_right, expr;
 
-					if (ec.FileType == SourceFileType.PlayScript && ec.Module.Compiler.Settings.NewDynamicRuntime_LogicalOps && !AsCoalesceLogicalOps) {
+					if (ec.FileType == SourceFileType.PlayScript && ec.Module.Compiler.Settings.NewDynamicRuntime_LogicalOps && (typeHint == ec.BuiltinTypes.Bool)) {
 						// in the new runtime we convert each side to boolean for logical operations
 						if (lt.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
 							left = new Cast(new TypeExpression(ec.BuiltinTypes.Bool, loc), left, loc).Resolve(ec);
@@ -4975,18 +4980,9 @@ namespace Mono.CSharp
 			// that can be implicitly converted to bool or of
 			// a type that implements operator true
 
-			if (ec.FileType == SourceFileType.PlayScript) {
-				// disable coalescing of binary operators
-				// this prevents a lot of extra operations inside of an if(expr) or while(expr) 
-				// where we dont care about the return value at all and just care about the boolean value
-				// however, x = a || b || c; will still work because its not inside of a boolean expression
-				var exprBinary = expr as Binary;
-				if (exprBinary != null) {
-					exprBinary.AsCoalesceLogicalOps =false;
-				}
-			}
+			// resolve with a hint to resolve to a boolean type to avoid unnecessary conversion
+			expr = expr.ResolveWithTypeHint(ec, ec.BuiltinTypes.Bool);
 
-			expr = expr.Resolve (ec);
 			if (expr == null)
 				return null;
 
