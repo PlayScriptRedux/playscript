@@ -50,6 +50,7 @@ namespace Mono.CSharp {
 		protected MethodSpec spec;
 
 		protected bool isInlinable;
+		protected bool? allowDynamic;
 
 		public MethodCore (TypeDefinition parent, FullNamedExpression type, Modifiers mod, Modifiers allowed_mod,
 			MemberName name, Attributes attrs, ParametersCompiled parameters)
@@ -103,6 +104,21 @@ namespace Mono.CSharp {
 				// FIXME: How is `ExplicitThis' used in C#?
 			
 				return cc;
+			}
+		}
+
+		public bool? AllowDynamic {
+			get {
+				if (allowDynamic != null) {
+					return allowDynamic;
+				} else if (Parent != null) {
+					return Parent.AllowDynamic;
+				} else {
+					return true;
+				}
+			}
+			set {
+				allowDynamic = value;
 			}
 		}
 
@@ -628,6 +644,8 @@ namespace Mono.CSharp {
 
 			if (!CheckBase ())
 				return false;
+
+			allowDynamic = CheckAllowDynamic ();
 
 			MemberKind kind;
 			if (this is Operator)

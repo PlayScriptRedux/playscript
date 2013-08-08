@@ -1,4 +1,5 @@
 ./AssemblyInfo.cs
+../pscorlib/AllowDynamicAttribute.cs
 ../pscorlib/ArgumentError.play
 ../pscorlib/Array.cs
 ../pscorlib/BindableAttribute.cs
@@ -224,6 +225,7 @@
 ../pscorlib/flash/utils/Timer.cs
 ../pscorlib/flash/utils/Timer.play
 ../pscorlib/flash/utils/utils_functions.play
+../pscorlib/ForbidDynamicAttribute.cs
 ../pscorlib/FunctionExtensions.cs
 ../pscorlib/functions.cs
 ../pscorlib/functions.play

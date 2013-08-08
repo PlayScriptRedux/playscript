@@ -40,6 +40,22 @@ namespace Mono.CSharp
 		ResultDiscarded = 1 << 8
 	}
 
+	[Flags]
+	public enum DynamicOperation
+	{
+		Binary = 1,
+		Convert = 1 << 1,
+		GetIndex = 1 << 2,
+		GetMember = 1 << 3,
+		Invoke = 1 << 4,
+		InvokeConstructor = 1 << 5,
+		InvokeMember = 1 << 6,
+		IsEvent = 1 << 7,
+		SetIndex = 1 << 8,
+		SetMember = 1 << 9,
+		Unary = 1 << 10
+	}
+
 	//
 	// Type expression with internal dynamic type symbol
 	//
@@ -741,6 +757,8 @@ namespace Mono.CSharp
 
 			public Expression CreateCallSiteBinder (ResolveContext ec, Arguments args)
 			{
+				Statement.DynamicOps |= DynamicOperation.IsEvent;
+
 				type = ec.BuiltinTypes.Bool;
 
 				Arguments binder_args = new Arguments (3);
@@ -873,6 +891,8 @@ namespace Mono.CSharp
 
 		public Expression CreateCallSiteBinder (ResolveContext ec, Arguments args)
 		{
+			Statement.DynamicOps |= DynamicOperation.Convert;
+
 			Arguments binder_args = new Arguments (3);
 
 			flags |= ec.HasSet (ResolveContext.Options.CheckedScope) ? CSharpBinderFlags.CheckedContext : 0;
@@ -935,6 +955,8 @@ namespace Mono.CSharp
 
 		public Expression CreateCallSiteBinder (ResolveContext ec, Arguments args)
 		{
+			Statement.DynamicOps |= DynamicOperation.InvokeConstructor;
+
 			Arguments binder_args = new Arguments (3);
 
 			binder_args.Add (new Argument (new BinderFlags (0, this)));
@@ -1057,6 +1079,13 @@ namespace Mono.CSharp
 			binder_args.Add (new Argument (new ImplicitlyTypedArrayCreation (args.CreateDynamicBinderArguments (ec), loc)));
 
 			isSet |= (flags & CSharpBinderFlags.ValueFromCompoundAssignment) != 0;
+
+			if (isSet) { 
+				Statement.DynamicOps |= DynamicOperation.SetIndex;
+			} else {
+				Statement.DynamicOps |= DynamicOperation.GetIndex;
+			}
+
 			return new Invocation (GetBinder (isSet ? "SetIndex" : "GetIndex", loc), binder_args);
 		}
 
@@ -1221,6 +1250,8 @@ namespace Mono.CSharp
 
 		public Expression CreateCallSiteBinder (ResolveContext ec, Arguments args)
 		{
+			Statement.DynamicOps |= DynamicOperation.Invoke;
+
 			Arguments binder_args = new Arguments (member != null ? 5 : 3);
 			bool is_member_access = member is MemberAccess;
 
@@ -1368,6 +1399,13 @@ namespace Mono.CSharp
 			binder_args.Add (new Argument (new ImplicitlyTypedArrayCreation (args.CreateDynamicBinderArguments (ec), loc)));
 
 			isSet |= (flags & CSharpBinderFlags.ValueFromCompoundAssignment) != 0;
+
+			if (isSet) {
+				Statement.DynamicOps |= DynamicOperation.SetMember;
+			} else {
+				Statement.DynamicOps |= DynamicOperation.GetMember;
+			}
+
 			return new Invocation (GetBinder (isSet ? "SetMember" : "GetMember", loc), binder_args);
 		}
 
@@ -1561,6 +1599,8 @@ namespace Mono.CSharp
 
 		public Expression CreateCallSiteBinder (ResolveContext ec, Arguments args)
 		{
+			Statement.DynamicOps |= DynamicOperation.Unary;
+
 			Arguments binder_args = new Arguments (4);
 
 			MemberAccess ns;

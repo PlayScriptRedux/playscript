@@ -822,6 +822,12 @@
     <Compile Include="..\pscorlib\fl\events\ComponentEvent.play">
       <Link>fl\events\ComponentEvent.play</Link>
     </Compile>
+    <Compile Include="..\pscorlib\AllowDynamicAttribute.cs">
+      <Link>AllowDynamicAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ForbidDynamicAttribute.cs">
+      <Link>ForbidDynamicAttribute.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monotouch.csproj">

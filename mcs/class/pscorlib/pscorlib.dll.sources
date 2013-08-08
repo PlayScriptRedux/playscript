@@ -1,3 +1,4 @@
+./AllowDynamicAttribute.cs
 ./ArgumentError.play
 ./Array.cs
 ./AssemblyInfo.cs
@@ -224,6 +225,7 @@
 ./flash/utils/Timer.cs
 ./flash/utils/Timer.play
 ./flash/utils/utils_functions.play
+./ForbidDynamicAttribute.cs
 ./FunctionExtensions.cs
 ./functions.cs
 ./functions.play

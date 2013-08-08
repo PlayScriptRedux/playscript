@@ -52,14 +52,11 @@ The PlayScript and ActionScript compiler front ends are fairly stable at this po
 
 # How do I install PlayScript?
 
-You can download the current PlayScript mono framework binaries here:
+#### Binaries
 
-[Mac OSX 0.1.3 (Mono 3.0.9)](https://s3.amazonaws.com/playscript/playscript-mono-osx-0.1.3.zip)
+Presently we are iterating very rapidly on the runtime and compiler, and binary releases are out of date almost immediately after they are posted.  
 
-[Windows Win32 0.1.2 (Mono 3.0.9)](https://s3.amazonaws.com/playscript/playscript-mono-win32-0.1.2.zip)
-
-The mono framework folder includes the entire mono SDK, tools, and libraries.  To use the framework, you must install Xamarin Studio, and follow the
-instructions (below) to set the PlayScript mono framework as the default framework.
+We currently recommend that if you wish to use the current alpha versions of the compiler and runtime, you be prepared to build from source and to regularly pull updates from git and rebuild.
 
 #### Building From Source
 

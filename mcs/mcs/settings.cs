@@ -239,6 +239,12 @@ namespace Mono.CSharp {
 		}
 
 		//
+		// Allow dynamic code at the top level of a program.
+		//
+
+		public bool AllowDynamic = true;
+
+		//
 		// Inlining mode for source level inliner (none, explicit, any)
 		//
 
@@ -910,6 +916,10 @@ namespace Mono.CSharp {
 				settings.AutoSealVerbosity = false;
 				return ParseResult.Success;
 			
+			case "/dynamic-":
+				settings.AllowDynamic = false;
+				return ParseResult.Success;
+
 			case "/d":
 			case "/define": {
 					if (value.Length == 0) {

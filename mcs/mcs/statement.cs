@@ -26,7 +26,10 @@ namespace Mono.CSharp {
 	
 	public abstract partial class Statement {
 		public Location loc;
-		
+
+		// The dynamic ops generated during compilation of the current statement
+		public static DynamicOperation DynamicOps;
+
 		/// <summary>
 		///   Resolves the statement, true means that all sub-statements
 		///   did resolve ok.
@@ -2689,6 +2692,8 @@ namespace Mono.CSharp {
 			ec.CurrentBlock = this;
 			ec.StartFlowBranching (this);
 
+			bool allowDynamic = ec.AllowDynamic;
+
 			//
 			// Compiler generated scope statements
 			//
@@ -2697,6 +2702,9 @@ namespace Mono.CSharp {
 					var initializer = scope_initializers [resolving_init_idx.Value];
 					ec.Statement = initializer;
 					initializer.Resolve (ec);
+					if (!allowDynamic && Statement.DynamicOps != 0) 
+						ErrorIllegalDynamic (ec, initializer.loc);
+					Statement.DynamicOps = 0;
 					ec.Statement = null;
 				}
 
@@ -2745,6 +2753,10 @@ namespace Mono.CSharp {
 
 					continue;
 				}
+
+				if (!allowDynamic && Statement.DynamicOps != 0) 
+					ErrorIllegalDynamic (ec, s.loc);
+				Statement.DynamicOps = 0;
 
 				ec.Statement = null;
 
@@ -2801,7 +2813,23 @@ namespace Mono.CSharp {
 
 			return ok;
 		}
-		
+
+		private void ErrorIllegalDynamic(BlockContext ec, Location loc)
+		{
+			System.Text.StringBuilder sb = new System.Text.StringBuilder ();
+			bool first = true;
+			for (uint i = 1u; i <= 1u << 30; i <<= 1) {
+				if (((uint)Statement.DynamicOps & i) != 0u) {
+					if (!first)
+						sb.Append (",");
+					sb.Append (System.Enum.GetName (typeof(DynamicOperation), (int)i));
+					first = false;
+				}
+			}
+
+			ec.Report.Error (7655, loc, "Illegal use of dynamic: '" + sb.ToString () + "'");
+		}
+
 		protected override void DoEmit (EmitContext ec)
 		{
 			for (int ix = 0; ix < statements.Count; ix++){

@@ -4966,11 +4966,11 @@ additive_expression
 	  {
 		$$ = new AsIn ((Expression) $1, (Expression) $3, GetLocation ($2));
 	  }	  
-	| additive_expression AS type
+	| additive_expression AS primary_expression_or_type
 	  {
 		$$ = new As ((Expression) $1, (Expression) $3, GetLocation ($2));
 	  }
-	| additive_expression IS type
+	| additive_expression IS primary_expression_or_type
 	  {
 		$$ = new Is ((Expression) $1, (Expression) $3, GetLocation ($2));
 	  }	  

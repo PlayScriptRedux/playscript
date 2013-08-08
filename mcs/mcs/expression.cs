@@ -1465,16 +1465,25 @@ namespace Mono.CSharp
 			// NOTE: We need to distinguish between types and expressions which return a Class object.
 			if (ec.FileType == SourceFileType.PlayScript && (this is Is || this is As)) { 
 				as_probe_type_expr = ProbeType.Resolve (ec);
-				if (as_probe_type_expr is TypeExpression) {
+				if (as_probe_type_expr is TypeExpr || as_probe_type_expr is TypeOf) {
+					// Convert typeof to actual type if somebody actually wrote "typeof" in the code.
+					if (as_probe_type_expr is TypeOf) {
+						probe_type_expr = ((TypeOf)as_probe_type_expr).TypeExpression.Type;
+					} else {
+						probe_type_expr = as_probe_type_expr.ResolveAsType (ec);
+					}
+					// Resolving to actual concrete types above will cause an Object type to be converted to an Expando.  We
+					// have to reverse this.
+					if (probe_type_expr == ec.Module.PredefinedTypes.AsObject.Resolve()) {
+						probe_type_expr = ec.BuiltinTypes.Dynamic;
+					}
 					as_probe_type_expr = null;
 				} else if (as_probe_type_expr.Type.BuiltinType != BuiltinTypeSpec.Type.Type && 
 				           as_probe_type_expr.Type.BuiltinType != BuiltinTypeSpec.Type.Dynamic) {
 					ec.Report.Error (7345, loc, "The `{0}' operator cannot be applied to an expression which is not a Class type",
 					                 OperatorName);
 				}
-			}
-
-			if (as_probe_type_expr == null) {
+			} else {
 				probe_type_expr = ProbeType.ResolveAsType (ec);
 				if (probe_type_expr == null)
 					return null;

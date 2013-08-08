@@ -343,6 +343,18 @@ namespace Mono.CSharp {
 			visitor.Visit (this);
 		}
 
+		public bool? CheckAllowDynamic ()
+		{
+			if (OptAttributes != null) {
+				if (OptAttributes.Contains (Module.PredefinedAttributes.AsAllowDynamicAttribute)) {
+					return true;
+				} else if (OptAttributes.Contains (Module.PredefinedAttributes.AsForbidDynamicAttribute)) {
+					return false;
+				}
+			}
+			return null;
+		}
+
 		protected bool CheckAbstractAndExtern (bool has_block)
 		{
 			if (Parent.PartialContainer.Kind == MemberKind.Interface)
