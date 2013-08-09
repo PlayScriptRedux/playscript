@@ -53,17 +53,13 @@ namespace PlayScript.DynamicRuntime
 		/// </summary>
 		public T GetMember<T> (object o)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.GetMemberBinderInvoked);
-			#endif
 
 			// resolve as dictionary (this is usually an expando)
 			var dict = o as IDictionary<string, object>;
 			if (dict != null) 
 			{
-				#if BINDERS_RUNTIME_STATS
 				Stats.Increment(StatsCounter.GetMemberBinder_Expando);
-				#endif
 
 				// special case this for expando objects
 				object value;
@@ -133,9 +129,7 @@ namespace PlayScript.DynamicRuntime
 			}
 
 			// resolve name
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.GetMemberBinder_Resolve_Invoked);
-			#endif
 
 			// resolve as property
 			var property = otype.GetProperty(mName);

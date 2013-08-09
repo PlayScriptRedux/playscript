@@ -112,9 +112,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object AdditionObjInt (object a, int b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int)
 			{
 				return (int)a + b;
@@ -128,9 +127,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object AdditionIntObj (int a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is int)
 			{
 				return a + (int)b;
@@ -144,9 +142,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object AdditionObjUInt (object a, uint b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is uint)
 			{
 				return (uint)a + b;
@@ -160,9 +157,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object AdditionUIntObj (uint a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is uint)
 			{
 				return a + (uint)b;
@@ -176,9 +172,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object AdditionObjDouble (object a, double b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is double)
 			{
 				return (double)a + b;
@@ -192,9 +187,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object AdditionDoubleObj (double a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is double)
 			{
 				return a + (double)b;
@@ -208,9 +202,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object AdditionStringObj (string a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -220,9 +213,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object AdditionObjString (object a, string b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return b;
@@ -232,9 +224,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object AdditionObjObj (object a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int) {
 				return AdditionIntObj ((int)a, b);
 			} else if (a is double) {
@@ -253,9 +244,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object SubtractionObjInt (object a, int b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int)
 			{
 				return (int)a - b;
@@ -269,9 +259,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object SubtractionIntObj (int a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is int)
 			{
 				return a - (int)b;
@@ -285,9 +274,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object SubtractionObjUInt (object a, uint b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is uint)
 			{
 				return (uint)a - b;
@@ -301,9 +289,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object SubtractionUIntObj (uint a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is uint)
 			{
 				return a - (uint)b;
@@ -317,9 +304,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object SubtractionObjDouble (object a, double b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is double) 
 			{
 				return (double)a - b;
@@ -333,9 +319,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object SubtractionDoubleObj (double a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is double) 
 			{
 				return a - (double)b;
@@ -349,9 +334,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object SubtractionObjObj (object a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int) {
 				return SubtractionIntObj ((int)a, b);
 			} else if (a is double) {
@@ -368,9 +352,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object MultiplyObjInt (object a, int b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int)
 			{
 				return (int)a * b;
@@ -384,9 +367,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object MultiplyIntObj (int a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is int)
 			{
 				return a * (int)b;
@@ -400,9 +382,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object MultiplyObjUInt (object a, uint b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is uint)
 			{
 				return (uint)a * b;
@@ -416,9 +397,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object MultiplyUIntObj (uint a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is uint)
 			{
 				return a * (uint)b;
@@ -432,9 +412,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object MultiplyObjDouble (object a, double b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is double) 
 			{
 				return (double)a * b;
@@ -448,9 +427,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object MultiplyDoubleObj (double a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is double) 
 			{
 				return a * (double)b;
@@ -464,9 +442,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object MultiplyObjObj (object a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int) {
 				return MultiplyIntObj ((int)a, b);
 			} else if (a is double) {
@@ -483,9 +460,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object DivisionObjInt (object a, int b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int)
 			{
 				return (int)a / b;
@@ -499,9 +475,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object DivisionIntObj (int a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is int)
 			{
 				return a / (int)b;
@@ -515,9 +490,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object DivisionObjUInt (object a, uint b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is uint)
 			{
 				return (uint)a / b;
@@ -531,9 +505,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object DivisionUIntObj (uint a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is uint)
 			{
 				return a / (uint)b;
@@ -547,9 +520,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object DivisionObjDouble (object a, double b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is double) 
 			{
 				return (double)a / b;
@@ -563,9 +535,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object DivisionDoubleObj (double a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is double) 
 			{
 				return a / (double)b;
@@ -579,9 +550,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object DivisionObjObj (object a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int) {
 				return DivisionIntObj ((int)a, b);
 			} else if (a is double) {
@@ -598,9 +568,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object ModulusObjInt (object a, int b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int)
 			{
 				return (int)a % b;
@@ -614,9 +583,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object ModulusIntObj (int a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is int)
 			{
 				return a / (int)b;
@@ -630,9 +598,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object ModulusObjUInt (object a, uint b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is uint)
 			{
 				return (uint)a % b;
@@ -646,9 +613,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object ModulusUIntObj (uint a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is uint)
 			{
 				return a / (uint)b;
@@ -662,9 +628,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object ModulusObjDouble (object a, double b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (uint)0;
@@ -674,9 +639,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object ModulusDoubleObj (double a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return Double.NaN;		// Should probably also use Positive and Negative Infinity
@@ -686,9 +650,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object ModulusObjObj (object a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int) {
 				return ModulusIntObj ((int)a, b);
 			} else if (a is double) {
@@ -707,9 +670,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object LeftShiftObjInt (object a, int b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (uint)0;
@@ -719,9 +681,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object LeftShiftIntObj (int a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -731,9 +692,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object LeftShiftObjUInt (object a, uint b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (uint)0;
@@ -743,9 +703,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object LeftShiftUIntObj (uint a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -755,9 +714,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object LeftShiftObjDouble (object a, double b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (int)0;
@@ -767,9 +725,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object LeftShiftDoubleObj (double a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -779,9 +736,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object LeftShiftObjObj (object a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int) {
 				return LeftShiftIntObj ((int)a, b);
 			} else if (a is uint) {
@@ -798,9 +754,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object RightShiftObjInt (object a, int b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (uint)0;
@@ -816,9 +771,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object RightShiftIntObj (int a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -828,9 +782,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object RightShiftObjUInt (object a, uint b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (uint)0;
@@ -846,9 +799,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object RightShiftUIntObj (uint a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -858,9 +810,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object RightShiftObjDouble (object a, double b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (int)0;
@@ -876,9 +827,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object RightShiftDoubleObj (double a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -888,9 +838,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object RightShiftObjObj (object a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int) {
 				return RightShiftIntObj ((int)a, b);
 			} else if (a is uint) {
@@ -907,9 +856,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool LessThanObjInt (object a, int b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int)
 			{
 				return (int)a < b;
@@ -923,9 +871,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool LessThanIntObj (int a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is int)
 			{
 				return a < (int)b;
@@ -939,9 +886,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool LessThanObjUInt (object a, uint b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is uint)
 			{
 				return (uint)a < b;
@@ -955,9 +901,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool LessThanUIntObj (uint a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is uint)
 			{
 				return a < (uint)b;
@@ -971,9 +916,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool LessThanObjDouble (object a, double b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is double) 
 			{
 				return (double)a < b;
@@ -987,9 +931,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool LessThanDoubleObj (double a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is double) 
 			{
 				return a < (double)b;
@@ -1003,9 +946,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool LessThanObjString (object a, string b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is string) {
 				return String.CompareOrdinal((string)a, b) < 0;
 			} else {
@@ -1016,9 +958,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool LessThanStringObj (string a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is string) {
 				return String.CompareOrdinal(a, (string)b) < 0;
 			} else {
@@ -1029,9 +970,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool LessThanObjObj (object a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int) {
 				return LessThanIntObj ((int)a, b);
 			} else if (a is string) {
@@ -1050,9 +990,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool GreaterThanObjInt (object a, int b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int)
 			{
 				return (int)a > b;
@@ -1066,9 +1005,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool GreaterThanIntObj (int a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is int)
 			{
 				return a > (int)b;
@@ -1082,9 +1020,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool GreaterThanObjUInt (object a, uint b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is uint)
 			{
 				return (uint)a > b;
@@ -1098,9 +1035,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool GreaterThanUIntObj (uint a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is uint)
 			{
 				return a > (uint)b;
@@ -1114,9 +1050,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool GreaterThanObjDouble (object a, double b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is double) 
 			{
 				return (double)a > b;
@@ -1130,9 +1065,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool GreaterThanDoubleObj (double a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is double) 
 			{
 				return a > (double)b;
@@ -1146,9 +1080,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool GreaterThanObjString (object a, string b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is string) {
 				return String.CompareOrdinal((string)a, b) > 0;
 			} else {
@@ -1159,9 +1092,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool GreaterThanStringObj (string a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is string) {
 				return String.CompareOrdinal(a, (string)b) > 0;
 			} else {
@@ -1172,9 +1104,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool GreaterThanObjObj (object a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int) {
 				return GreaterThanIntObj ((int)a, b);
 			} else if (a is string) {
@@ -1193,9 +1124,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool LessThanOrEqualObjInt (object a, int b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int)
 			{
 				return (int)a <= b;
@@ -1213,9 +1143,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool LessThanOrEqualIntObj (int a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is int)
 			{
 				return a <= (int)b;
@@ -1229,9 +1158,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool LessThanOrEqualObjUInt (object a, uint b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is uint)
 			{
 				return (uint)a <= b;
@@ -1245,9 +1173,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool LessThanOrEqualUIntObj (uint a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is uint)
 			{
 				return a <= (uint)b;
@@ -1261,9 +1188,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool LessThanOrEqualObjDouble (object a, double b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is double) 
 			{
 				return (double)a <= b;
@@ -1277,9 +1203,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool LessThanOrEqualDoubleObj (double a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is double) 
 			{
 				return a <= (double)b;
@@ -1293,9 +1218,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool LessThanOrEqualObjString (object a, string b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is string) {
 				return String.CompareOrdinal((string)a, b) <= 0;
 			} else {
@@ -1306,9 +1230,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool LessThanOrEqualStringObj (string a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is string) {
 				return String.CompareOrdinal(a, (string)b) <= 0;
 			} else {
@@ -1319,9 +1242,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool LessThanOrEqualObjObj (object a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int) {
 				return LessThanOrEqualIntObj ((int)a, b);
 			} else if (a is string) {
@@ -1340,9 +1262,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool GreaterThanOrEqualObjInt (object a, int b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int)
 			{
 				return (int)a >= b;
@@ -1356,9 +1277,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool GreaterThanOrEqualIntObj (int a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is int)
 			{
 				return a >= (int)b;
@@ -1372,9 +1292,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool GreaterThanOrEqualObjUInt (object a, uint b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is uint)
 			{
 				return (uint)a >= b;
@@ -1388,9 +1307,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool GreaterThanOrEqualUIntObj (uint a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is uint)
 			{
 				return a >= (uint)b;
@@ -1404,9 +1322,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool GreaterThanOrEqualObjDouble (object a, double b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return false;
@@ -1416,9 +1333,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool GreaterThanOrEqualDoubleObj (double a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return false;
@@ -1428,9 +1344,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool GreaterThanOrEqualObjString (object a, string b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is string) {
 				return String.CompareOrdinal((string)a, b) >= 0;
 			} else {
@@ -1441,9 +1356,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool GreaterThanOrEqualStringObj (string a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is string) {
 				return String.CompareOrdinal(a, (string)b) >= 0;
 			} else {
@@ -1454,9 +1368,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool GreaterThanOrEqualObjObj (object a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int) {
 				return GreaterThanOrEqualIntObj ((int)a, b);
 			} else if (a is string) {
@@ -1475,9 +1388,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool EqualityObjInt (object a, int b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int)
 			{
 				return (int)a == b;
@@ -1491,9 +1403,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool EqualityIntObj (int a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is int)
 			{
 				return a == (int)b;
@@ -1507,9 +1418,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool EqualityObjUInt (object a, uint b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is uint)
 			{
 				return (uint)a == b;
@@ -1523,9 +1433,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool EqualityUIntObj (uint a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is uint)
 			{
 				return a == (uint)b;
@@ -1539,9 +1448,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool EqualityObjDouble (object a, double b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is double) 
 			{
 				return (double)a == b;
@@ -1555,9 +1463,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool EqualityDoubleObj (double a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is double) 
 			{
 				return a == (double)b;
@@ -1571,9 +1478,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool EqualityObjString (object a, string b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is string) {
 				return String.CompareOrdinal((string)a, b) == 0;
 			} else {
@@ -1584,9 +1490,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool EqualityStringObj (string a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is string) {
 				return String.CompareOrdinal(a, (string)b) == 0;
 			} else if (b == null) {
@@ -1599,25 +1504,22 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool EqualityObjBool (object a, bool b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			return Dynamic.CastObjectToBool(a) == b;
 		}
 
 		public static bool EqualityBoolObj (bool a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			return a == Dynamic.CastObjectToBool(b);
 		}
 
 		public static bool EqualityObjObj (object a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a == PlayScript.Undefined._undefined) a = null;
 			if (b == PlayScript.Undefined._undefined) b = null;
 
@@ -1706,9 +1608,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object BitwiseAndObjInt (object a, int b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (int)0;
@@ -1718,9 +1619,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object BitwiseAndIntObj (int a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return (int)0;
@@ -1730,9 +1630,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object BitwiseAndObjUInt (object a, uint b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (uint)0;
@@ -1742,9 +1641,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object BitwiseAndUIntObj (uint a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return (uint)0;
@@ -1754,9 +1652,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object BitwiseAndObjDouble (object a, double b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return (int)0;
@@ -1766,9 +1663,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object BitwiseAndDoubleObj (double a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return (int)0;
@@ -1778,9 +1674,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object BitwiseAndObjBool (object a, bool b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is bool) {
 				return (bool)a && b;
 			} else {
@@ -1790,9 +1685,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object BitwiseAndBoolObj (bool a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is bool) {
 				return a && (bool)b;
 			} else {
@@ -1801,9 +1695,8 @@ namespace PlayScript.DynamicRuntime
 		}
 		public static object BitwiseAndObjObj (object a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int) {
 				return BitwiseAndIntObj ((int)a, b);
 			} else if (a is double) {
@@ -1821,9 +1714,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object BitwiseOrObjInt (object a, int b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return b;
@@ -1833,9 +1725,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object BitwiseOrIntObj (int a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -1845,9 +1736,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object BitwiseOrObjUInt (object a, uint b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return b;
@@ -1857,9 +1747,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object BitwiseOrUIntObj (uint a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -1869,9 +1758,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object BitwiseOrObjDouble (object a, double b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return b;
@@ -1881,9 +1769,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object BitwiseOrDoubleObj (double a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -1893,9 +1780,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object BitwiseOrObjBool (object a, bool b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is bool) {
 				return (bool)a || b;
 			} else {
@@ -1905,9 +1791,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object BitwiseOrBoolObj (bool a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (b is bool) {
 				return a || (bool)b;
 			} else {
@@ -1917,9 +1802,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object BitwiseOrObjObj (object a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int) {
 				return BitwiseOrIntObj ((int)a, b);
 			} else if (a is double) {
@@ -1937,9 +1821,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object ExclusiveOrObjInt (object a, int b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return b;
@@ -1949,9 +1832,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object ExclusiveOrIntObj (int a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -1961,9 +1843,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object ExclusiveOrObjUInt (object a, uint b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return b;
@@ -1973,9 +1854,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object ExclusiveOrUIntObj (uint a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -1985,9 +1865,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object ExclusiveOrObjDouble (object a, double b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((a == null) || (a == PlayScript.Undefined._undefined))
 			{
 				return b;
@@ -1997,9 +1876,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object ExclusiveOrDoubleObj (double a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return a;
@@ -2009,25 +1887,22 @@ namespace PlayScript.DynamicRuntime
 
 		public static object ExclusiveOrObjBool (object a, bool b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			return Dynamic.CastObjectToBool(a) ^ b;
 		}
 
 		public static object ExclusiveOrBoolObj (bool a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			return a ^ Dynamic.CastObjectToBool(b);
 		}
 
 		public static object ExclusiveOrObjObj (object a, object b)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
-			#endif
+
 			if (a is int) {
 				return ExclusiveOrIntObj ((int)a, b);
 			} else if (a is double) {

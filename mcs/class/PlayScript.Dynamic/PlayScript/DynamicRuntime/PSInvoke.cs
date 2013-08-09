@@ -37,9 +37,8 @@ namespace PlayScript.DynamicRuntime
 
 		public void InvokeAction0 (object d)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-#endif
+
 			Action a = d as Action;
 			if (a != null)
 			{
@@ -55,9 +54,7 @@ namespace PlayScript.DynamicRuntime
 		
 		public void InvokeAction1<A1> (object d, A1 a1)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-#endif
 
 			Action<A1> a = d as Action<A1>;
 			if (a != null)
@@ -75,9 +72,7 @@ namespace PlayScript.DynamicRuntime
 		
 		public void InvokeAction2<A1, A2> (object d, A1 a1, A2 a2)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-#endif
 			
 			Action<A1, A2> a = d as Action<A1, A2>;
 			if (a != null)
@@ -96,9 +91,7 @@ namespace PlayScript.DynamicRuntime
 		
 		public void InvokeAction3<A1, A2, A3> (object d, A1 a1, A2 a2, A3 a3)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-#endif
 			
 			Action<A1, A2, A3> a = d as Action<A1, A2, A3>;
 			if (a != null)
@@ -118,9 +111,7 @@ namespace PlayScript.DynamicRuntime
 		
 		public void InvokeAction4<A1, A2, A3, A4> (object d, A1 a1, A2 a2, A3 a3, A4 a4)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-#endif
 
 			Action<A1, A2, A3, A4> a = d as Action<A1, A2, A3, A4>;
 			if (a != null)
@@ -141,9 +132,7 @@ namespace PlayScript.DynamicRuntime
 		
 		public void InvokeAction5<A1, A2, A3, A4, A5> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-#endif
 			
 			Action<A1, A2, A3, A4, A5> a = d as Action<A1, A2, A3, A4, A5>;
 			if (a != null)
@@ -165,9 +154,7 @@ namespace PlayScript.DynamicRuntime
 		
 		public void InvokeAction6<A1, A2, A3, A4, A5, A6> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-#endif
 			
 			Action<A1, A2, A3, A4, A5, A6> a = d as Action<A1, A2, A3, A4, A5, A6>;
 			if (a != null)
@@ -190,9 +177,7 @@ namespace PlayScript.DynamicRuntime
 		
 		public void InvokeAction7<A1, A2, A3, A4, A5, A6, A7> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-#endif
 			
 			Action<A1, A2, A3, A4, A5, A6, A7> a = d as Action<A1, A2, A3, A4, A5, A6, A7>;
 			if (a != null)
@@ -216,9 +201,7 @@ namespace PlayScript.DynamicRuntime
 		
 		public void InvokeAction8<A1, A2, A3, A4, A5, A6, A7, A8> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-#endif
 			
 			Action<A1, A2, A3, A4, A5, A6, A7, A8> a = d as Action<A1, A2, A3, A4, A5, A6, A7, A8>;
 			if (a != null)
@@ -243,9 +226,7 @@ namespace PlayScript.DynamicRuntime
 		
 		public void InvokeAction9<A1, A2, A3, A4, A5, A6, A7, A8, A9> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-#endif
 			
 			Action<A1, A2, A3, A4, A5, A6, A7, A8, A9> a = d as Action<A1, A2, A3, A4, A5, A6, A7, A8, A9>;
 			if (a != null)
@@ -271,9 +252,7 @@ namespace PlayScript.DynamicRuntime
 
 		public TR InvokeFunc0<TR> (object d)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-			#endif
 
 			Func<TR> f = d as Func<TR>;
 			if (f != null)
@@ -289,9 +268,7 @@ namespace PlayScript.DynamicRuntime
 
 		public TR InvokeFunc1<A1, TR> (object d, A1 a1)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-			#endif
 
 			Func<A1, TR> f = d as Func<A1, TR>;
 			if (f != null)
@@ -308,9 +285,7 @@ namespace PlayScript.DynamicRuntime
 
 		public TR InvokeFunc2<A1, A2, TR> (object d, A1 a1, A2 a2)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-			#endif
 
 			Func<A1, A2, TR> f = d as Func<A1, A2, TR>;
 			if (f != null)
@@ -328,9 +303,7 @@ namespace PlayScript.DynamicRuntime
 
 		public TR InvokeFunc3<A1, A2, A3, TR> (object d, A1 a1, A2 a2, A3 a3)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-			#endif
 
 			Func<A1, A2, A3, TR> f = d as Func<A1, A2, A3, TR>;
 			if (f != null)
@@ -349,9 +322,7 @@ namespace PlayScript.DynamicRuntime
 
 		public TR InvokeFunc4<A1, A2, A3, A4, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-			#endif
 
 			Func<A1, A2, A3, A4, TR> f = d as Func<A1, A2, A3, A4, TR>;
 			if (f != null)
@@ -371,9 +342,7 @@ namespace PlayScript.DynamicRuntime
 
 		public TR InvokeFunc5<A1, A2, A3, A4, A5, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-			#endif
 
 			Func<A1, A2, A3, A4, A5, TR> f = d as Func<A1, A2, A3, A4, A5, TR>;
 			if (f != null)
@@ -394,9 +363,7 @@ namespace PlayScript.DynamicRuntime
 
 		public TR InvokeFunc6<A1, A2, A3, A4, A5, A6, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-			#endif
 
 			Func<A1, A2, A3, A4, A5, A6, TR> f = d as Func<A1, A2, A3, A4, A5, A6, TR>;
 			if (f != null)
@@ -418,9 +385,7 @@ namespace PlayScript.DynamicRuntime
 
 		public TR InvokeFunc7<A1, A2, A3, A4, A5, A6, A7, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-			#endif
 
 			Func<A1, A2, A3, A4, A5, A6, A7, TR> f = d as Func<A1, A2, A3, A4, A5, A6, A7, TR>;
 			if (f != null)
@@ -443,9 +408,7 @@ namespace PlayScript.DynamicRuntime
 
 		public TR InvokeFunc8<A1, A2, A3, A4, A5, A6, A7, A8, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-			#endif
 
 			Func<A1, A2, A3, A4, A5, A6, A7, A8, TR> f = d as Func<A1, A2, A3, A4, A5, A6, A7, A8, TR>;
 			if (f != null)
@@ -469,9 +432,7 @@ namespace PlayScript.DynamicRuntime
 
 		public TR InvokeFunc9<A1, A2, A3, A4, A5, A6, A7, A8, A9, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-			#endif
 
 			Func<A1, A2, A3, A4, A5, A6, A7, A8, A9, TR> f = d as Func<A1, A2, A3, A4, A5, A6, A7, A8, A9, TR>;
 			if (f != null)

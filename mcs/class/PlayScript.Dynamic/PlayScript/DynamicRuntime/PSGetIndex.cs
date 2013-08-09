@@ -30,10 +30,8 @@ namespace PlayScript.DynamicRuntime
 
 		public T GetIndexAs<T> (object o, int index)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.GetIndexBinderInvoked);
 			Stats.Increment(StatsCounter.GetIndexBinder_Int_Invoked);
-			#endif
 
 			var l = o as IList<T>;
 			if (l != null) {
@@ -85,17 +83,13 @@ namespace PlayScript.DynamicRuntime
 
 		public T GetIndexAs<T> (object o, string key)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.GetIndexBinderInvoked);
 			Stats.Increment(StatsCounter.GetIndexBinder_Key_Invoked);
-			#endif
 
 			// handle dictionaries
 			var dict = o as IDictionary;
 			if (dict != null) {
-				#if BINDERS_RUNTIME_STATS
 				Stats.Increment(StatsCounter.GetIndexBinder_Key_Dictionary_Invoked);
-				#endif
 
 				var ro = dict[key];
 				if (ro is T) {
@@ -106,9 +100,7 @@ namespace PlayScript.DynamicRuntime
 			} 
 
 			// fallback on getmemberbinder to do the hard work 
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.GetIndexBinder_Key_Property_Invoked);
-			#endif
 
 			// create a get member binder here
 			if (mGetMember == null) {

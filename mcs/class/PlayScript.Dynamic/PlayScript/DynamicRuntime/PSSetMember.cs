@@ -48,9 +48,7 @@ namespace PlayScript.DynamicRuntime
 
 		public T SetMember<T>(object o, T value, bool valueTypeIsConstant = false)
 		{
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.SetMemberBinderInvoked);
-			#endif
 
 			// resolve as dictionary 
 			var dict = o as IDictionary;
@@ -115,9 +113,7 @@ namespace PlayScript.DynamicRuntime
 			}
 
 			// resolve name
-			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.SetMemberBinder_Resolve_Invoked);
-			#endif
 
 			// resolve as property
 			var property = otype.GetProperty(mName);

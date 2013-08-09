@@ -30,9 +30,8 @@ namespace PlayScript.DynamicRuntime
 		
 		public static object NegateObject (object a)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.UnaryOperationBinderInvoked);
-#endif
+
 			if (a is int) {
 				return -(int)a;
 			} else if (a is double) {
@@ -47,9 +46,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object IncrementObject (object a)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.UnaryOperationBinderInvoked);
-#endif
+
 			if (a is int) {
 				return (int)a + 1;
 			} else if (a is double) {
@@ -65,9 +63,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object DecrementObject (object a)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.UnaryOperationBinderInvoked);
-#endif
+
 			if (a is int) {
 				return (int)a - 1;
 			} else if (a is double) {
@@ -82,9 +79,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool LogicalNotObject (object a)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.UnaryOperationBinderInvoked);
-#endif
+
 			if (a is bool) {
 				return !(bool)a;
 			} if (a is int) {
@@ -100,9 +96,8 @@ namespace PlayScript.DynamicRuntime
 
 		public static object BitwiseNotObject (object a)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.UnaryOperationBinderInvoked);
-#endif
+
 			if (a is bool) {
 				return (bool)a ? 0 : 1;
 			} if (a is int) {
@@ -119,17 +114,15 @@ namespace PlayScript.DynamicRuntime
 
 		public static bool IsTrueObject (object a)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.UnaryOperationBinderInvoked);
-#endif
+
 			return Dynamic.CastObjectToBool(a) == true;
 		}
 
 		public static bool IsFalseObject (object a)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.UnaryOperationBinderInvoked);
-#endif
+
 			return Dynamic.CastObjectToBool(a) == false;
 		}
 	}
