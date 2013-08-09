@@ -25,11 +25,11 @@ namespace PlayScript.DynamicRuntime
 {
 	public class PSInvoke 
 	{
-		private Delegate _d;
-		private object[] _args;
-		private object[] _params;
-		private object[][] _targetArray;
-		private int[] _targetIndex;
+		// As we are single threaded, we can actually share the same args array for all callers with the same number of parameters.
+		private static object[] sArgs = new object[9];
+		// We can't do that for the converted arguments are they are different for each call sites (and potentially within the same call site)
+		// Size is adjusted everytime. We could have a pool per size to make GC life easier :)
+		private object[] mConvertedArgs;
 
 		public PSInvoke (int argCount)
 		{
@@ -40,14 +40,17 @@ namespace PlayScript.DynamicRuntime
 #if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 #endif
-			
-			if (((Delegate)d) != _d) {
-				UpdateInvokeInfo ((Delegate)d, 1);
+			Action a = d as Action;
+			if (a != null)
+			{
+				a();
+				return;
 			}
-			object[] outArgs;
-			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
+
+			Delegate del = (Delegate)d;
+			bool canConvert = MethodBinder.ConvertArguments(del.Method, null, sArgs, 0, ref mConvertedArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			_d.DynamicInvoke (outArgs);
+			del.DynamicInvoke (mConvertedArgs);
 		}
 		
 		public void InvokeAction1<A1> (object d, A1 a1)
@@ -55,19 +58,19 @@ namespace PlayScript.DynamicRuntime
 #if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 #endif
-			
-			if (((Delegate)d) != _d) {
-				UpdateInvokeInfo ((Delegate)d, 2);
+
+			Action<A1> a = d as Action<A1>;
+			if (a != null)
+			{
+				a(a1);
+				return;
 			}
-			if (_params != null) {
-				_targetArray [0] [_targetIndex[0]] = a1;
-			} else {
-				_args [0] = a1;
-			}
-			object[] outArgs;
-			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
+
+			Delegate del = (Delegate)d;
+			sArgs [0] = a1;
+			bool canConvert = MethodBinder.ConvertArguments(del.Method, null, sArgs, 1, ref mConvertedArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			_d.DynamicInvoke (outArgs);
+			del.DynamicInvoke (mConvertedArgs);
 		}
 		
 		public void InvokeAction2<A1, A2> (object d, A1 a1, A2 a2)
@@ -76,21 +79,19 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 #endif
 			
-			if (((Delegate)d) != _d) {
-				UpdateInvokeInfo ((Delegate)d, 3);
+			Action<A1, A2> a = d as Action<A1, A2>;
+			if (a != null)
+			{
+				a(a1, a2);
+				return;
 			}
-			if (_params != null) {
-				_targetArray [0] [_targetIndex[0]] = a1;
-				_targetArray [1] [_targetIndex[1]] = a2;
 
-			} else {
-				_args [0] = a1;
-				_args [1] = a2;
-			}
-			object[] outArgs;
-			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
+			Delegate del = (Delegate)d;
+			sArgs [0] = a1;
+			sArgs [1] = a2;
+			bool canConvert = MethodBinder.ConvertArguments(del.Method, null, sArgs, 2, ref mConvertedArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			_d.DynamicInvoke (outArgs);
+			del.DynamicInvoke (mConvertedArgs);
 		}
 		
 		public void InvokeAction3<A1, A2, A3> (object d, A1 a1, A2 a2, A3 a3)
@@ -99,23 +100,20 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 #endif
 			
-			if (((Delegate)d) != _d) {
-				UpdateInvokeInfo ((Delegate)d, 4);
+			Action<A1, A2, A3> a = d as Action<A1, A2, A3>;
+			if (a != null)
+			{
+				a(a1, a2, a3);
+				return;
 			}
-			if (_params != null) {
-				_targetArray [0] [_targetIndex[0]] = a1;
-				_targetArray [1] [_targetIndex[1]] = a2;
-				_targetArray [2] [_targetIndex[2]] = a3;
 
-			} else {
-				_args [0] = a1;
-				_args [1] = a2;
-				_args [2] = a3;
-			}
-			object[] outArgs;
-			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
+			Delegate del = (Delegate)d;
+			sArgs [0] = a1;
+			sArgs [1] = a2;
+			sArgs [2] = a3;
+			bool canConvert = MethodBinder.ConvertArguments(del.Method, null, sArgs, 3, ref mConvertedArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			_d.DynamicInvoke (outArgs);
+			del.DynamicInvoke (mConvertedArgs);
 		}
 		
 		public void InvokeAction4<A1, A2, A3, A4> (object d, A1 a1, A2 a2, A3 a3, A4 a4)
@@ -123,25 +121,22 @@ namespace PlayScript.DynamicRuntime
 #if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 #endif
-			
-			if (((Delegate)d) != _d) {
-				UpdateInvokeInfo ((Delegate)d, 5);
+
+			Action<A1, A2, A3, A4> a = d as Action<A1, A2, A3, A4>;
+			if (a != null)
+			{
+				a(a1, a2, a3, a4);
+				return;
 			}
-			if (_params != null) {
-				_targetArray [0] [_targetIndex[0]] = a1;
-				_targetArray [1] [_targetIndex[1]] = a2;
-				_targetArray [2] [_targetIndex[2]] = a3;
-				_targetArray [3] [_targetIndex[3]] = a4;
-			} else {
-				_args [0] = a1;
-				_args [1] = a2;
-				_args [2] = a3;
-				_args [3] = a4;
-			}
-			object[] outArgs;
-			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
+
+			Delegate del = (Delegate)d;
+			sArgs [0] = a1;
+			sArgs [1] = a2;
+			sArgs [2] = a3;
+			sArgs [3] = a4;
+			bool canConvert = MethodBinder.ConvertArguments(del.Method, null, sArgs, 4, ref mConvertedArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			_d.DynamicInvoke (outArgs);
+			del.DynamicInvoke (mConvertedArgs);
 		}
 		
 		public void InvokeAction5<A1, A2, A3, A4, A5> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5)
@@ -150,26 +145,22 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 #endif
 			
-			if (((Delegate)d) != _d) {
-				UpdateInvokeInfo ((Delegate)d, 6);
+			Action<A1, A2, A3, A4, A5> a = d as Action<A1, A2, A3, A4, A5>;
+			if (a != null)
+			{
+				a(a1, a2, a3, a4, a5);
+				return;
 			}
-			if (_params != null) {
-				_targetArray [0] [_targetIndex[0]] = a1;
-				_targetArray [1] [_targetIndex[1]] = a2;
-				_targetArray [2] [_targetIndex[2]] = a3;
-				_targetArray [3] [_targetIndex[3]] = a4;
-				_targetArray [4] [_targetIndex[4]] = a5;
-			} else {
-				_args [0] = a1;
-				_args [1] = a2;
-				_args [2] = a3;
-				_args [3] = a4;
-				_args [4] = a5;
-			}
-			object[] outArgs;
-			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
+
+			Delegate del = (Delegate)d;
+			sArgs [0] = a1;
+			sArgs [1] = a2;
+			sArgs [2] = a3;
+			sArgs [3] = a4;
+			sArgs [4] = a5;
+			bool canConvert = MethodBinder.ConvertArguments(del.Method, null, sArgs, 5, ref mConvertedArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			_d.DynamicInvoke (outArgs);
+			del.DynamicInvoke (mConvertedArgs);
 		}
 		
 		public void InvokeAction6<A1, A2, A3, A4, A5, A6> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6)
@@ -178,28 +169,23 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 #endif
 			
-			if (((Delegate)d) != _d) {
-				UpdateInvokeInfo ((Delegate)d, 7);
+			Action<A1, A2, A3, A4, A5, A6> a = d as Action<A1, A2, A3, A4, A5, A6>;
+			if (a != null)
+			{
+				a(a1, a2, a3, a4, a5, a6);
+				return;
 			}
-			if (_params != null) {
-				_targetArray [0] [_targetIndex[0]] = a1;
-				_targetArray [1] [_targetIndex[1]] = a2;
-				_targetArray [2] [_targetIndex[2]] = a3;
-				_targetArray [3] [_targetIndex[3]] = a4;
-				_targetArray [4] [_targetIndex[4]] = a5;
-				_targetArray [5] [_targetIndex[5]] = a6;
-			} else {
-				_args [0] = a1;
-				_args [1] = a2;
-				_args [2] = a3;
-				_args [3] = a4;
-				_args [4] = a5;
-				_args [5] = a6;
-			}
-			object[] outArgs;
-			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
+
+			Delegate del = (Delegate)d;
+			sArgs [0] = a1;
+			sArgs [1] = a2;
+			sArgs [2] = a3;
+			sArgs [3] = a4;
+			sArgs [4] = a5;
+			sArgs [5] = a6;
+			bool canConvert = MethodBinder.ConvertArguments(del.Method, null, sArgs, 6, ref mConvertedArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			_d.DynamicInvoke (outArgs);
+			del.DynamicInvoke (mConvertedArgs);
 		}
 		
 		public void InvokeAction7<A1, A2, A3, A4, A5, A6, A7> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7)
@@ -208,30 +194,24 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 #endif
 			
-			if (((Delegate)d) != _d) {
-				UpdateInvokeInfo ((Delegate)d, 8);
+			Action<A1, A2, A3, A4, A5, A6, A7> a = d as Action<A1, A2, A3, A4, A5, A6, A7>;
+			if (a != null)
+			{
+				a(a1, a2, a3, a4, a5, a6, a7);
+				return;
 			}
-			if (_params != null) {
-				_targetArray [0] [_targetIndex[0]] = a1;
-				_targetArray [1] [_targetIndex[1]] = a2;
-				_targetArray [2] [_targetIndex[2]] = a3;
-				_targetArray [3] [_targetIndex[3]] = a4;
-				_targetArray [4] [_targetIndex[4]] = a5;
-				_targetArray [5] [_targetIndex[5]] = a6;
-				_targetArray [6] [_targetIndex[6]] = a7;
-			} else {
-				_args [0] = a1;
-				_args [1] = a2;
-				_args [2] = a3;
-				_args [3] = a4;
-				_args [4] = a5;
-				_args [5] = a6;
-				_args [6] = a7;
-			}
-			object[] outArgs;
-			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
+
+			Delegate del = (Delegate)d;
+			sArgs [0] = a1;
+			sArgs [1] = a2;
+			sArgs [2] = a3;
+			sArgs [3] = a4;
+			sArgs [4] = a5;
+			sArgs [5] = a6;
+			sArgs [6] = a7;
+			bool canConvert = MethodBinder.ConvertArguments(del.Method, null, sArgs, 7, ref mConvertedArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			_d.DynamicInvoke (outArgs);
+			del.DynamicInvoke (mConvertedArgs);
 		}
 		
 		public void InvokeAction8<A1, A2, A3, A4, A5, A6, A7, A8> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8)
@@ -240,32 +220,25 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 #endif
 			
-			if (((Delegate)d) != _d) {
-				UpdateInvokeInfo ((Delegate)d, 9);
+			Action<A1, A2, A3, A4, A5, A6, A7, A8> a = d as Action<A1, A2, A3, A4, A5, A6, A7, A8>;
+			if (a != null)
+			{
+				a(a1, a2, a3, a4, a5, a6, a7, a8);
+				return;
 			}
-			if (_params != null) {
-				_targetArray [0] [_targetIndex[0]] = a1;
-				_targetArray [1] [_targetIndex[1]] = a2;
-				_targetArray [2] [_targetIndex[2]] = a3;
-				_targetArray [3] [_targetIndex[3]] = a4;
-				_targetArray [4] [_targetIndex[4]] = a5;
-				_targetArray [5] [_targetIndex[5]] = a6;
-				_targetArray [6] [_targetIndex[6]] = a7;
-				_targetArray [7] [_targetIndex[7]] = a8;
-			} else {
-				_args [0] = a1;
-				_args [1] = a2;
-				_args [2] = a3;
-				_args [3] = a4;
-				_args [4] = a5;
-				_args [5] = a6;
-				_args [6] = a7;
-				_args [7] = a8;
-			}
-			object[] outArgs;
-			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
+
+			Delegate del = (Delegate)d;
+			sArgs [0] = a1;
+			sArgs [1] = a2;
+			sArgs [2] = a3;
+			sArgs [3] = a4;
+			sArgs [4] = a5;
+			sArgs [5] = a6;
+			sArgs [6] = a7;
+			sArgs [7] = a8;
+			bool canConvert = MethodBinder.ConvertArguments(del.Method, null, sArgs, 8, ref mConvertedArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			_d.DynamicInvoke (outArgs);
+			del.DynamicInvoke (mConvertedArgs);
 		}
 		
 		public void InvokeAction9<A1, A2, A3, A4, A5, A6, A7, A8, A9> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9)
@@ -274,34 +247,26 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 #endif
 			
-			if (((Delegate)d) != _d) {
-				UpdateInvokeInfo ((Delegate)d, 10);
+			Action<A1, A2, A3, A4, A5, A6, A7, A8, A9> a = d as Action<A1, A2, A3, A4, A5, A6, A7, A8, A9>;
+			if (a != null)
+			{
+				a(a1, a2, a3, a4, a5, a6, a7, a8, a9);
+				return;
 			}
-			if (_params != null) {
-				_targetArray [0] [_targetIndex[0]] = a1;
-				_targetArray [1] [_targetIndex[1]] = a2;
-				_targetArray [2] [_targetIndex[2]] = a3;
-				_targetArray [3] [_targetIndex[3]] = a4;
-				_targetArray [4] [_targetIndex[4]] = a5;
-				_targetArray [5] [_targetIndex[5]] = a6;
-				_targetArray [6] [_targetIndex[6]] = a7;
-				_targetArray [7] [_targetIndex[7]] = a8;
-				_targetArray [8] [_targetIndex[8]] = a9;
-			} else {
-				_args [0] = a1;
-				_args [1] = a2;
-				_args [2] = a3;
-				_args [3] = a4;
-				_args [4] = a5;
-				_args [5] = a6;
-				_args [6] = a7;
-				_args [7] = a8;
-				_args [8] = a9;
-			}
-			object[] outArgs;
-			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
+
+			Delegate del = (Delegate)d;
+			sArgs [0] = a1;
+			sArgs [1] = a2;
+			sArgs [2] = a3;
+			sArgs [3] = a4;
+			sArgs [4] = a5;
+			sArgs [5] = a6;
+			sArgs [6] = a7;
+			sArgs [7] = a8;
+			sArgs [8] = a9;
+			bool canConvert = MethodBinder.ConvertArguments(del.Method, null, sArgs, 9, ref mConvertedArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			_d.DynamicInvoke (outArgs);
+			del.DynamicInvoke (mConvertedArgs);
 		}
 
 		public TR InvokeFunc0<TR> (object d)
@@ -310,13 +275,16 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 			#endif
 
-			if (((Delegate)d) != _d) {
-				UpdateInvokeInfo ((Delegate)d, 1);
+			Func<TR> f = d as Func<TR>;
+			if (f != null)
+			{
+				return f();
 			}
-			object[] outArgs;
-			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
+
+			Delegate del = (Delegate)d;
+			bool canConvert = MethodBinder.ConvertArguments(del.Method, null, sArgs, 0, ref mConvertedArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			return (TR)_d.DynamicInvoke (outArgs);
+			return (TR)del.DynamicInvoke (mConvertedArgs);
 		}
 
 		public TR InvokeFunc1<A1, TR> (object d, A1 a1)
@@ -325,18 +293,17 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 			#endif
 
-			if (((Delegate)d) != _d) {
-				UpdateInvokeInfo ((Delegate)d, 2);
+			Func<A1, TR> f = d as Func<A1, TR>;
+			if (f != null)
+			{
+				return f(a1);
 			}
-			if (_params != null) {
-				_targetArray [0] [_targetIndex[0]] = a1;
-			} else {
-				_args [0] = a1;
-			}
-			object[] outArgs;
-			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
+
+			Delegate del = (Delegate)d;
+			sArgs [0] = a1;
+			bool canConvert = MethodBinder.ConvertArguments(del.Method, null, sArgs, 1, ref mConvertedArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			return (TR)_d.DynamicInvoke (outArgs);
+			return (TR)del.DynamicInvoke (mConvertedArgs);
 		}
 
 		public TR InvokeFunc2<A1, A2, TR> (object d, A1 a1, A2 a2)
@@ -345,21 +312,18 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 			#endif
 
-			if (((Delegate)d) != _d) {
-				UpdateInvokeInfo ((Delegate)d, 3);
+			Func<A1, A2, TR> f = d as Func<A1, A2, TR>;
+			if (f != null)
+			{
+				return f(a1, a2);
 			}
-			if (_params != null) {
-				_targetArray [0] [_targetIndex[0]] = a1;
-				_targetArray [1] [_targetIndex[1]] = a2;
 
-			} else {
-				_args [0] = a1;
-				_args [1] = a2;
-			}
-			object[] outArgs;
-			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
+			Delegate del = (Delegate)d;
+			sArgs [0] = a1;
+			sArgs [1] = a2;
+			bool canConvert = MethodBinder.ConvertArguments(del.Method, null, sArgs, 2, ref mConvertedArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			return (TR)_d.DynamicInvoke (outArgs);
+			return (TR)del.DynamicInvoke (mConvertedArgs);
 		}
 
 		public TR InvokeFunc3<A1, A2, A3, TR> (object d, A1 a1, A2 a2, A3 a3)
@@ -368,23 +332,19 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 			#endif
 
-			if (((Delegate)d) != _d) {
-				UpdateInvokeInfo ((Delegate)d, 4);
+			Func<A1, A2, A3, TR> f = d as Func<A1, A2, A3, TR>;
+			if (f != null)
+			{
+				return f(a1, a2, a3);
 			}
-			if (_params != null) {
-				_targetArray [0] [_targetIndex[0]] = a1;
-				_targetArray [1] [_targetIndex[1]] = a2;
-				_targetArray [2] [_targetIndex[2]] = a3;
 
-			} else {
-				_args [0] = a1;
-				_args [1] = a2;
-				_args [2] = a3;
-			}
-			object[] outArgs;
-			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
+			Delegate del = (Delegate)d;
+			sArgs [0] = a1;
+			sArgs [1] = a2;
+			sArgs [2] = a3;
+			bool canConvert = MethodBinder.ConvertArguments(del.Method, null, sArgs, 3, ref mConvertedArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			return (TR)_d.DynamicInvoke (outArgs);
+			return (TR)del.DynamicInvoke (mConvertedArgs);
 		}
 
 		public TR InvokeFunc4<A1, A2, A3, A4, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4)
@@ -393,24 +353,20 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 			#endif
 
-			if (((Delegate)d) != _d) {
-				UpdateInvokeInfo ((Delegate)d, 5);
+			Func<A1, A2, A3, A4, TR> f = d as Func<A1, A2, A3, A4, TR>;
+			if (f != null)
+			{
+				return f(a1, a2, a3, a4);
 			}
-			if (_params != null) {
-				_targetArray [0] [_targetIndex[0]] = a1;
-				_targetArray [1] [_targetIndex[1]] = a2;
-				_targetArray [2] [_targetIndex[2]] = a3;
-				_targetArray [3] [_targetIndex[3]] = a4;
-			} else {
-				_args [0] = a1;
-				_args [1] = a2;
-				_args [2] = a3;
-				_args [3] = a4;
-			}
-			object[] outArgs;
-			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
+
+			Delegate del = (Delegate)d;
+			sArgs [0] = a1;
+			sArgs [1] = a2;
+			sArgs [2] = a3;
+			sArgs [3] = a4;
+			bool canConvert = MethodBinder.ConvertArguments(del.Method, null, sArgs, 4, ref mConvertedArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			return (TR)_d.DynamicInvoke (outArgs);
+			return (TR)del.DynamicInvoke (mConvertedArgs);
 		}
 
 		public TR InvokeFunc5<A1, A2, A3, A4, A5, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5)
@@ -419,26 +375,21 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 			#endif
 
-			if (((Delegate)d) != _d) {
-				UpdateInvokeInfo ((Delegate)d, 6);
+			Func<A1, A2, A3, A4, A5, TR> f = d as Func<A1, A2, A3, A4, A5, TR>;
+			if (f != null)
+			{
+				return f(a1, a2, a3, a4, a5);
 			}
-			if (_params != null) {
-				_targetArray [0] [_targetIndex[0]] = a1;
-				_targetArray [1] [_targetIndex[1]] = a2;
-				_targetArray [2] [_targetIndex[2]] = a3;
-				_targetArray [3] [_targetIndex[3]] = a4;
-				_targetArray [4] [_targetIndex[4]] = a5;
-			} else {
-				_args [0] = a1;
-				_args [1] = a2;
-				_args [2] = a3;
-				_args [3] = a4;
-				_args [4] = a5;
-			}
-			object[] outArgs;
-			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
+
+			Delegate del = (Delegate)d;
+			sArgs [0] = a1;
+			sArgs [1] = a2;
+			sArgs [2] = a3;
+			sArgs [3] = a4;
+			sArgs [4] = a5;
+			bool canConvert = MethodBinder.ConvertArguments(del.Method, null, sArgs, 5, ref mConvertedArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			return (TR)_d.DynamicInvoke (outArgs);
+			return (TR)del.DynamicInvoke (mConvertedArgs);
 		}
 
 		public TR InvokeFunc6<A1, A2, A3, A4, A5, A6, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6)
@@ -447,28 +398,22 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 			#endif
 
-			if (((Delegate)d) != _d) {
-				UpdateInvokeInfo ((Delegate)d, 7);
+			Func<A1, A2, A3, A4, A5, A6, TR> f = d as Func<A1, A2, A3, A4, A5, A6, TR>;
+			if (f != null)
+			{
+				return f(a1, a2, a3, a4, a5, a6);
 			}
-			if (_params != null) {
-				_targetArray [0] [_targetIndex[0]] = a1;
-				_targetArray [1] [_targetIndex[1]] = a2;
-				_targetArray [2] [_targetIndex[2]] = a3;
-				_targetArray [3] [_targetIndex[3]] = a4;
-				_targetArray [4] [_targetIndex[4]] = a5;
-				_targetArray [5] [_targetIndex[5]] = a6;
-			} else {
-				_args [0] = a1;
-				_args [1] = a2;
-				_args [2] = a3;
-				_args [3] = a4;
-				_args [4] = a5;
-				_args [5] = a6;
-			}
-			object[] outArgs;
-			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
+
+			Delegate del = (Delegate)d;
+			sArgs [0] = a1;
+			sArgs [1] = a2;
+			sArgs [2] = a3;
+			sArgs [3] = a4;
+			sArgs [4] = a5;
+			sArgs [5] = a6;
+			bool canConvert = MethodBinder.ConvertArguments(del.Method, null, sArgs, 6, ref mConvertedArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			return (TR)_d.DynamicInvoke (outArgs);
+			return (TR)del.DynamicInvoke (mConvertedArgs);
 		}
 
 		public TR InvokeFunc7<A1, A2, A3, A4, A5, A6, A7, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7)
@@ -477,30 +422,23 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 			#endif
 
-			if (((Delegate)d) != _d) {
-				UpdateInvokeInfo ((Delegate)d, 8);
+			Func<A1, A2, A3, A4, A5, A6, A7, TR> f = d as Func<A1, A2, A3, A4, A5, A6, A7, TR>;
+			if (f != null)
+			{
+				return f(a1, a2, a3, a4, a5, a6, a7);
 			}
-			if (_params != null) {
-				_targetArray [0] [_targetIndex[0]] = a1;
-				_targetArray [1] [_targetIndex[1]] = a2;
-				_targetArray [2] [_targetIndex[2]] = a3;
-				_targetArray [3] [_targetIndex[3]] = a4;
-				_targetArray [4] [_targetIndex[4]] = a5;
-				_targetArray [5] [_targetIndex[5]] = a6;
-				_targetArray [6] [_targetIndex[6]] = a7;
-			} else {
-				_args [0] = a1;
-				_args [1] = a2;
-				_args [2] = a3;
-				_args [3] = a4;
-				_args [4] = a5;
-				_args [5] = a6;
-				_args [6] = a7;
-			}
-			object[] outArgs;
-			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
+
+			Delegate del = (Delegate)d;
+			sArgs [0] = a1;
+			sArgs [1] = a2;
+			sArgs [2] = a3;
+			sArgs [3] = a4;
+			sArgs [4] = a5;
+			sArgs [5] = a6;
+			sArgs [6] = a7;
+			bool canConvert = MethodBinder.ConvertArguments(del.Method, null, sArgs, 7, ref mConvertedArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			return (TR)_d.DynamicInvoke (outArgs);
+			return (TR)del.DynamicInvoke (mConvertedArgs);
 		}
 
 		public TR InvokeFunc8<A1, A2, A3, A4, A5, A6, A7, A8, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8)
@@ -509,32 +447,24 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 			#endif
 
-			if (((Delegate)d) != _d) {
-				UpdateInvokeInfo ((Delegate)d, 9);
+			Func<A1, A2, A3, A4, A5, A6, A7, A8, TR> f = d as Func<A1, A2, A3, A4, A5, A6, A7, A8, TR>;
+			if (f != null)
+			{
+				return f(a1, a2, a3, a4, a5, a6, a7, a8);
 			}
-			if (_params != null) {
-				_targetArray [0] [_targetIndex[0]] = a1;
-				_targetArray [1] [_targetIndex[1]] = a2;
-				_targetArray [2] [_targetIndex[2]] = a3;
-				_targetArray [3] [_targetIndex[3]] = a4;
-				_targetArray [4] [_targetIndex[4]] = a5;
-				_targetArray [5] [_targetIndex[5]] = a6;
-				_targetArray [6] [_targetIndex[6]] = a7;
-				_targetArray [7] [_targetIndex[7]] = a8;
-			} else {
-				_args [0] = a1;
-				_args [1] = a2;
-				_args [2] = a3;
-				_args [3] = a4;
-				_args [4] = a5;
-				_args [5] = a6;
-				_args [6] = a7;
-				_args [7] = a8;
-			}
-			object[] outArgs;
-			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
+
+			Delegate del = (Delegate)d;
+			sArgs [0] = a1;
+			sArgs [1] = a2;
+			sArgs [2] = a3;
+			sArgs [3] = a4;
+			sArgs [4] = a5;
+			sArgs [5] = a6;
+			sArgs [6] = a7;
+			sArgs [7] = a8;
+			bool canConvert = MethodBinder.ConvertArguments(del.Method, null, sArgs, 8, ref mConvertedArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			return (TR)_d.DynamicInvoke (outArgs);
+			return (TR)del.DynamicInvoke (mConvertedArgs);
 		}
 
 		public TR InvokeFunc9<A1, A2, A3, A4, A5, A6, A7, A8, A9, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9)
@@ -543,74 +473,25 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 			#endif
 
-			if (((Delegate)d) != _d) {
-				UpdateInvokeInfo ((Delegate)d, 10);
+			Func<A1, A2, A3, A4, A5, A6, A7, A8, A9, TR> f = d as Func<A1, A2, A3, A4, A5, A6, A7, A8, A9, TR>;
+			if (f != null)
+			{
+				return f(a1, a2, a3, a4, a5, a6, a7, a8, a9);
 			}
-			if (_params != null) {
-				_targetArray [0] [_targetIndex[0]] = a1;
-				_targetArray [1] [_targetIndex[1]] = a2;
-				_targetArray [2] [_targetIndex[2]] = a3;
-				_targetArray [3] [_targetIndex[3]] = a4;
-				_targetArray [4] [_targetIndex[4]] = a5;
-				_targetArray [5] [_targetIndex[5]] = a6;
-				_targetArray [6] [_targetIndex[6]] = a7;
-				_targetArray [7] [_targetIndex[7]] = a8;
-				_targetArray [8] [_targetIndex[8]] = a9;
-			} else {
-				_args [0] = a1;
-				_args [1] = a2;
-				_args [2] = a3;
-				_args [3] = a4;
-				_args [4] = a5;
-				_args [5] = a6;
-				_args [6] = a7;
-				_args [7] = a8;
-				_args [8] = a9;
-			}
-			object[] outArgs;
-			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
+
+			Delegate del = (Delegate)d;
+			sArgs [0] = a1;
+			sArgs [1] = a2;
+			sArgs [2] = a3;
+			sArgs [3] = a4;
+			sArgs [4] = a5;
+			sArgs [5] = a6;
+			sArgs [6] = a7;
+			sArgs [7] = a8;
+			sArgs [8] = a9;
+			bool canConvert = MethodBinder.ConvertArguments(del.Method, null, sArgs, 9, ref mConvertedArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			return (TR)_d.DynamicInvoke (outArgs);
-		}
-
-		public void UpdateInvokeInfo(Delegate d, int callArgs)
-		{
-			int args = callArgs - 1;
-			var t = d.GetType ();
-
-			_d = d;
-
-			// Set up args arrays
-			if (t.Namespace == "PlayScript") {
-				bool isActionP = t.Name.StartsWith ("ActionP");
-				bool isFuncP = t.Name.StartsWith ("FuncP");
-				int argsP = 1;
-				if (isActionP || isFuncP) { 
-					if (t.IsGenericType) {
-						argsP += t.GetGenericArguments ().Length;
-					}
-					if (isFuncP) {
-						argsP--;
-					}
-					_args = new object[argsP];
-					_params = new object[args - (argsP - 1)];
-					_args [argsP - 1] = _params;
-					_targetArray = new object[args][];
-					_targetIndex = new int[args];
-					for (int i = 0; i < args; i++) {
-						if (i < argsP - 1) {
-							_targetArray [i] = _args;
-							_targetIndex [i] = i;
-						} else {
-							_targetArray [i] = _params;
-							_targetIndex [i] = i - (argsP - 1);
-						}
-					}
-				}
-			} else {
-				_args = new object[args];
-				_params = null;
-			}
+			return (TR)del.DynamicInvoke (mConvertedArgs);
 		}
 	}
 
