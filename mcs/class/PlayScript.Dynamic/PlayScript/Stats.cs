@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace PlayScript
 {
@@ -133,7 +134,13 @@ namespace PlayScript
 		// current static stats object
 		public static Stats CurrentInstance = new Stats();
 
-		// increments a specific counter by one
+		/// <summary>
+		/// Increments a specific counter by one.
+		/// 
+		/// Note that this method is conditionally compiled, so there is no need to use #if BINDERS_RUNTIME_STATS around its usage.
+		/// </summary>
+		/// <param name="counter">The stat counter to increment.</param>
+		[Conditional("BINDERS_RUNTIME_STATS")]
 		public static void Increment(StatsCounter counter)
 		{
 			CurrentInstance.Counters[(int)counter]++;
