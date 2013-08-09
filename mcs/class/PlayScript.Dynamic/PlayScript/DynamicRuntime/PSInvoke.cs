@@ -50,7 +50,7 @@ namespace PlayScript.DynamicRuntime
 			_d.DynamicInvoke (outArgs);
 		}
 		
-		public void InvokeAction1 (object d, object a1)
+		public void InvokeAction1<A1> (object d, A1 a1)
 		{
 #if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -70,7 +70,7 @@ namespace PlayScript.DynamicRuntime
 			_d.DynamicInvoke (outArgs);
 		}
 		
-		public void InvokeAction2 (object d, object a1, object a2)
+		public void InvokeAction2<A1, A2> (object d, A1 a1, A2 a2)
 		{
 #if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -93,7 +93,7 @@ namespace PlayScript.DynamicRuntime
 			_d.DynamicInvoke (outArgs);
 		}
 		
-		public void InvokeAction3 (object d, object a1, object a2, object a3)
+		public void InvokeAction3<A1, A2, A3> (object d, A1 a1, A2 a2, A3 a3)
 		{
 #if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -118,7 +118,7 @@ namespace PlayScript.DynamicRuntime
 			_d.DynamicInvoke (outArgs);
 		}
 		
-		public void InvokeAction4 (object d, object a1, object a2, object a3, object a4)
+		public void InvokeAction4<A1, A2, A3, A4> (object d, A1 a1, A2 a2, A3 a3, A4 a4)
 		{
 #if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -144,7 +144,7 @@ namespace PlayScript.DynamicRuntime
 			_d.DynamicInvoke (outArgs);
 		}
 		
-		public void InvokeAction5 (object d, object a1, object a2, object a3, object a4, object a5)
+		public void InvokeAction5<A1, A2, A3, A4, A5> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5)
 		{
 #if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -172,7 +172,7 @@ namespace PlayScript.DynamicRuntime
 			_d.DynamicInvoke (outArgs);
 		}
 		
-		public void InvokeAction6 (object d, object a1, object a2, object a3, object a4, object a5, object a6)
+		public void InvokeAction6<A1, A2, A3, A4, A5, A6> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6)
 		{
 #if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -202,7 +202,7 @@ namespace PlayScript.DynamicRuntime
 			_d.DynamicInvoke (outArgs);
 		}
 		
-		public void InvokeAction7 (object d, object a1, object a2, object a3, object a4, object a5, object a6, object a7)
+		public void InvokeAction7<A1, A2, A3, A4, A5, A6, A7> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7)
 		{
 #if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -234,7 +234,7 @@ namespace PlayScript.DynamicRuntime
 			_d.DynamicInvoke (outArgs);
 		}
 		
-		public void InvokeAction8 (object d, object a1, object a2, object a3, object a4, object a5, object a6, object a7, object a8)
+		public void InvokeAction8<A1, A2, A3, A4, A5, A6, A7, A8> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8)
 		{
 #if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -268,7 +268,7 @@ namespace PlayScript.DynamicRuntime
 			_d.DynamicInvoke (outArgs);
 		}
 		
-		public void InvokeAction9 (object d, object a1, object a2, object a3, object a4, object a5, object a6, object a7, object a8, object a9)
+		public void InvokeAction9<A1, A2, A3, A4, A5, A6, A7, A8, A9> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9)
 		{
 #if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -304,7 +304,7 @@ namespace PlayScript.DynamicRuntime
 			_d.DynamicInvoke (outArgs);
 		}
 
-		public object InvokeFunc0 (object d)
+		public TR InvokeFunc0<TR> (object d)
 		{
 			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -316,10 +316,10 @@ namespace PlayScript.DynamicRuntime
 			object[] outArgs;
 			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			return _d.DynamicInvoke (outArgs);
+			return (TR)_d.DynamicInvoke (outArgs);
 		}
 
-		public object InvokeFunc1 (object d, object a1)
+		public TR InvokeFunc1<A1, TR> (object d, A1 a1)
 		{
 			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -336,10 +336,10 @@ namespace PlayScript.DynamicRuntime
 			object[] outArgs;
 			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			return _d.DynamicInvoke (outArgs);
+			return (TR)_d.DynamicInvoke (outArgs);
 		}
 
-		public object InvokeFunc2 (object d, object a1, object a2)
+		public TR InvokeFunc2<A1, A2, TR> (object d, A1 a1, A2 a2)
 		{
 			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -359,10 +359,10 @@ namespace PlayScript.DynamicRuntime
 			object[] outArgs;
 			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			return _d.DynamicInvoke (outArgs);
+			return (TR)_d.DynamicInvoke (outArgs);
 		}
 
-		public object InvokeFunc3 (object d, object a1, object a2, object a3)
+		public TR InvokeFunc3<A1, A2, A3, TR> (object d, A1 a1, A2 a2, A3 a3)
 		{
 			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -384,10 +384,10 @@ namespace PlayScript.DynamicRuntime
 			object[] outArgs;
 			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			return _d.DynamicInvoke (outArgs);
+			return (TR)_d.DynamicInvoke (outArgs);
 		}
 
-		public object InvokeFunc4 (object d, object a1, object a2, object a3, object a4)
+		public TR InvokeFunc4<A1, A2, A3, A4, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4)
 		{
 			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -410,10 +410,10 @@ namespace PlayScript.DynamicRuntime
 			object[] outArgs;
 			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			return _d.DynamicInvoke (outArgs);
+			return (TR)_d.DynamicInvoke (outArgs);
 		}
 
-		public object InvokeFunc5 (object d, object a1, object a2, object a3, object a4, object a5)
+		public TR InvokeFunc5<A1, A2, A3, A4, A5, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5)
 		{
 			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -438,10 +438,10 @@ namespace PlayScript.DynamicRuntime
 			object[] outArgs;
 			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			return _d.DynamicInvoke (outArgs);
+			return (TR)_d.DynamicInvoke (outArgs);
 		}
 
-		public object InvokeFunc6 (object d, object a1, object a2, object a3, object a4, object a5, object a6)
+		public TR InvokeFunc6<A1, A2, A3, A4, A5, A6, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6)
 		{
 			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -468,10 +468,10 @@ namespace PlayScript.DynamicRuntime
 			object[] outArgs;
 			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			return _d.DynamicInvoke (outArgs);
+			return (TR)_d.DynamicInvoke (outArgs);
 		}
 
-		public object InvokeFunc7 (object d, object a1, object a2, object a3, object a4, object a5, object a6, object a7)
+		public TR InvokeFunc7<A1, A2, A3, A4, A5, A6, A7, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7)
 		{
 			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -500,10 +500,10 @@ namespace PlayScript.DynamicRuntime
 			object[] outArgs;
 			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			return _d.DynamicInvoke (outArgs);
+			return (TR)_d.DynamicInvoke (outArgs);
 		}
 
-		public object InvokeFunc8 (object d, object a1, object a2, object a3, object a4, object a5, object a6, object a7, object a8)
+		public TR InvokeFunc8<A1, A2, A3, A4, A5, A6, A7, A8, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8)
 		{
 			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -534,10 +534,10 @@ namespace PlayScript.DynamicRuntime
 			object[] outArgs;
 			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			return _d.DynamicInvoke (outArgs);
+			return (TR)_d.DynamicInvoke (outArgs);
 		}
 
-		public object InvokeFunc9 (object d, object a1, object a2, object a3, object a4, object a5, object a6, object a7, object a8, object a9)
+		public TR InvokeFunc9<A1, A2, A3, A4, A5, A6, A7, A8, A9, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9)
 		{
 			#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -570,7 +570,7 @@ namespace PlayScript.DynamicRuntime
 			object[] outArgs;
 			bool canConvert = PlayScript.Dynamic.ConvertMethodParameters(_d.Method, _args, out outArgs);
 			Debug.Assert(canConvert, "Could not convert parameters");
-			return _d.DynamicInvoke (outArgs);
+			return (TR)_d.DynamicInvoke (outArgs);
 		}
 
 		public void UpdateInvokeInfo(Delegate d, int callArgs)
