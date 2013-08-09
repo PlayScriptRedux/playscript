@@ -43,6 +43,7 @@ namespace PlayScript
 		GetMemberBinderCreated,
 		GetMemberBinderInvoked,
 		GetMemberBinder_Resolve_Invoked,
+		GetMemberBinder_Expando,
 		SetMemberBinderCreated,
 		SetMemberBinderInvoked,
 		SetMemberBinder_Resolve_Invoked,

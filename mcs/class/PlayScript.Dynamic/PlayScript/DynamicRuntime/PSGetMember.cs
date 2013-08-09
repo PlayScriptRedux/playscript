@@ -57,23 +57,32 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.GetMemberBinderInvoked);
 			#endif
 
-			if (o == null) {
-				return default(T);
-			}
-
-			// resolve as dictionary 
+			// resolve as dictionary (this is usually an expando)
 			var dict = o as IDictionary<string, object>;
 			if (dict != null) 
 			{
+				#if BINDERS_RUNTIME_STATS
+				Stats.Increment(StatsCounter.GetMemberBinder_Expando);
+				#endif
+
 				// special case this for expando objects
 				object value;
 				if (dict.TryGetValue(mName, out value)) {
-					return PlayScript.Dynamic.ConvertValue<T>(value);
+					// fast path empty cast just in case
+					if (value is T) {
+						return (T)value;
+					} else {
+						return PlayScript.Dynamic.ConvertValue<T>(value);
+					}
 				}
 
-				// fall through if key not found
+				// key not found
+				return default(T);
 			}
 
+			if (o == null) {
+				return default(T);
+			}
 
 			// determine if this is a instance member or a static member
 			bool isStatic;
