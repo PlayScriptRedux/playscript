@@ -168,6 +168,7 @@ namespace PlayScript
 		public static MethodBinder[] BuildMethodList(Type type, string name, BindingFlags flags, int argCount)
 		{
 			var list = new List<MethodBinder>();
+			var variadicList = new List<MethodBinder>();
 
 			// rename toString to ToString for non-playscript objects
 			if (name == "toString" && argCount == 0) {
@@ -181,7 +182,11 @@ namespace PlayScript
 					if (method.Name == name) {
 						var newInfo = new MethodBinder(method, false);
 						if (newInfo.CheckArgumentCount(argCount)) {
-							list.Add(newInfo);
+							if (!newInfo.IsVariadic) {
+								list.Add(newInfo);
+							} else {
+								variadicList.Add(newInfo);
+							}
 							sMethodInfoCache[method] = newInfo;
 						}
 					}
@@ -202,13 +207,50 @@ namespace PlayScript
 								if (thisType.IsAssignableFrom(type)) {
 									var newInfo = new MethodBinder(method, true);
 									if (newInfo.CheckArgumentCount(argCount)) {
-										list.Add(newInfo);
+										if (!newInfo.IsVariadic) {
+											list.Add(newInfo);
+										} else {
+											variadicList.Add(newInfo);
+										}
 										sMethodInfoCache[method] = newInfo;
 									}
 								}
 							}
 						}
 					}
+				}
+			}
+
+			// see which variadic methods we want to keep
+			// this is necessary in the case of overloads that have the same arguments but one is variadic and one is not
+			// for example:
+			//       push(o:Object);		
+			//       push(o:Object, ...);
+			// in this case we select the first method when only one argument is supplied
+			foreach (var variadic in variadicList) {
+				bool keepVariadic = true;
+
+				// look at each non-variadic method
+				// if any one matches this variadic method then dont keep it 
+				foreach (var method in list) {
+					if (!method.IsVariadic) {
+						bool sameSignature = true;
+						for (int i=0; i < argCount; i++) {
+							if (variadic.Parameters[i].ParameterType != method.Parameters[i].ParameterType) {
+								sameSignature = false;
+							}
+						}
+						if (sameSignature) {
+							// dont keep this variadic
+							keepVariadic = false;
+							break;
+						}
+					}
+				}
+
+				if (keepVariadic) {
+					// add variadic to main list
+					list.Add(variadic);
 				}
 			}
 
