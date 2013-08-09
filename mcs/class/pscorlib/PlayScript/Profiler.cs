@@ -52,14 +52,14 @@ namespace PlayScript
 
 			// reset all sections
 			foreach (Section section in sSections.Values) {
+				section.TotalTime = new TimeSpan();
 				section.Timer.Reset();
 				section.Stats.Reset();
+				section.History.Clear();
 			}
 
 			// reset all counters
 			sFrameCount = 0;
-			sFrameTotal = 60;
-			sDoReport   = false;
 		}
 
 		public static void OnFrame()
@@ -67,34 +67,58 @@ namespace PlayScript
 			if (!Enabled)
 				return;
 
-			sFrameCount++;
-			if (sFrameCount >= sFrameTotal) {
-				if (sDoReport) {
-					DoReport();
-				} else {
-					PrintTimes(System.Console.Out);
+			// update all sections
+			foreach (Section section in sSections.Values) {
+				section.TotalTime += section.Timer.Elapsed;
+				if (sDoReport) 
+				{
+					section.History.Add(section.Timer.Elapsed);
 				}
+				section.Timer.Reset();
+			}
 
-				Reset();
+			sFrameCount++;
+			if (!sDoReport) {
+				// normal profiling, just print out every so often
+				if ((sPrintFrameCount!=0) && (sFrameCount >= sPrintFrameCount)) {
+					PrintTimes(System.Console.Out);
+					Reset();
+				}
+			} else {
+				// report generation, accumulate a specified number of frames and then print report
+				if (sFrameCount >= sReportFrameCount) {
+					// print out report
+					DoReport();
+					Reset();
+					sDoReport = false;
+				}
+			}
+
+			// check start report countdown
+			if (sReportStartDelay > 0) {
+				if (--sReportStartDelay == 0) {
+					// reset counters
+					Reset();
+
+					// enable the report
+					sDoReport = true;
+
+					// start global timer
+					sReportTime = Stopwatch.StartNew();
+				}
 			}
 		}
 
-		public static void StartSession(string reportName, int frameCount)
+		public static void StartSession(string reportName, int frameCount, int reportStartDelay = 5)
 		{
 			if (!Enabled)
 				return;
 
-			// reset counters
-			Reset();
-
-			// set the number of frames to profile
-			sFrameTotal = frameCount;
-
-			// enable the report
-			sDoReport = true;
 			sReportName = reportName;
+			sReportFrameCount = frameCount;
+			sReportStartDelay = reportStartDelay;
 
-			sReportTime = Stopwatch.StartNew();
+			Console.WriteLine("Starting profiling session: {0} frames:{1}", reportName, frameCount);
 		}
 
 		
@@ -103,7 +127,7 @@ namespace PlayScript
 			var str = "profiler: ";
 			foreach (Section section in sSections.Values) {
 				str += section.Name + ":";
-				str += (section.Timer.Elapsed.TotalMilliseconds / sFrameCount).ToString("0.00");
+				str += (section.TotalTime.TotalMilliseconds / sFrameCount).ToString("0.00");
 				str += " ";
 			}
 			tw.WriteLine(str);
@@ -114,9 +138,30 @@ namespace PlayScript
 			foreach (Section section in sSections.Values) {
 				tw.WriteLine("{0,-12} total:{1,6} average:{2,6}ms",
 				             section.Name,
-				             section.Timer.Elapsed,
-				             (section.Timer.Elapsed.TotalMilliseconds / sFrameCount).ToString("0.00")
+				             section.TotalTime,
+				             (section.TotalTime.TotalMilliseconds / sFrameCount).ToString("0.00")
 				             );
+			}
+		}
+
+		public static void PrintHistory(TextWriter tw)
+		{
+			tw.Write("{0,-4} ", "");
+			foreach (Section section in sSections.Values) 
+			{
+				tw.Write("{0,12} ", section.Name);
+			}
+			tw.WriteLine();
+
+			tw.WriteLine("---------------------------");
+			for (int frame=0; frame < sFrameCount; frame++)
+			{
+				tw.Write("{0,4}:", frame);
+				foreach (Section section in sSections.Values) 
+				{
+					tw.Write("{0,12} ", section.History[frame].TotalMilliseconds.ToString("0.00") );
+				}
+				tw.WriteLine();
 			}
 		}
 
@@ -160,6 +205,9 @@ namespace PlayScript
 			tw.WriteLine("***** Dynamic Runtime Stats ******");
 			PrintStats(tw);
 
+			tw.WriteLine("************ History *************");
+			PrintHistory(tw);
+
 			tw.WriteLine("**********************************");
 		}
 
@@ -195,14 +243,21 @@ namespace PlayScript
 		{
 			public string               Name;
 			public Stopwatch 			Timer = new Stopwatch();
+			public TimeSpan				TotalTime;
+			public List<TimeSpan>		History = new List<TimeSpan>();
 			public Stats 				Stats = new PlayScript.Stats();	
 		};
 
 		private static Dictionary<string, Section> sSections = new Dictionary<string, Section>();
 		private static int sFrameCount  = 0;
-		private static int sFrameTotal  = 60;
 
+		// the frequency to print profiiling info
+		private static int sPrintFrameCount  = 60;
+
+		// report handling
 		private static bool sDoReport = false;
+		private static int  sReportStartDelay = 0;
+		private static int  sReportFrameCount = 0;
 		private static string sReportName;
 		private static Stopwatch sReportTime;
 		#endregion
