@@ -1791,10 +1791,12 @@ namespace _root {
 		#endregion
 
 		public static implicit operator Vector<T>(Array a) {
+			PlayScript.Stats.Increment(PlayScript.StatsCounter.Runtime_CastArrayToVector);
 			return new Vector<T>(a);
 		}
 		
 		public static implicit operator Array(Vector<T> v) {
+			PlayScript.Stats.Increment(PlayScript.StatsCounter.Runtime_CastVectorToArray);
 			return new Array(v);
 		}
 

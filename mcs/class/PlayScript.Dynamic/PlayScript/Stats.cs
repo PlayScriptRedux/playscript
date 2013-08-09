@@ -75,6 +75,10 @@ namespace PlayScript
 		Dynamic_ObjectIsClassInvoked,
 		Dynamic_HasOwnPropertyInvoked,
 
+		// other
+		Runtime_CastArrayToVector,
+		Runtime_CastVectorToArray,
+
 		Total
 	};
 
