@@ -12,6 +12,10 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
+#if DEBUG
+	#define RECREATE_DEFAULT_INVOKER
+#endif
+
 using System;
 using System.Diagnostics;
 using System.Reflection;
@@ -217,6 +221,10 @@ namespace PlayScript
 
 		public override InvokerBase TryUpdate(object target)
 		{
+#if RECREATE_DEFAULT_INVOKER
+			// If we are looking at recreating the default invoker, we never update so we can bubble up the usage info
+			return null;
+#else
 			if (mTarget.GetType() == target.GetType())
 			{
 				// We can update the target only if that's the same type, so the method are the same
@@ -224,14 +232,20 @@ namespace PlayScript
 				return this;
 			}
 			return null;
+#endif
 		}
 
 		public override InvokerBase TryUpdate(object target, MethodInfo methodInfo)
 		{
+#if RECREATE_DEFAULT_INVOKER
+			// If we are looking at recreating the default invoker, we never update so we can bubble up the usage info
+			return null;
+#else
 			mTarget = target;
 			mMethod = methodInfo;
 			// If methods are different, we will have to reset default parameters
 			return this;
+#endif
 		}
 	}
 

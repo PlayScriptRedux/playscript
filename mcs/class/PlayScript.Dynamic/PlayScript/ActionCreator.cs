@@ -13,7 +13,7 @@
 //      limitations under the License.
 
 #if DEBUG
-	//#define RECREATE_DEFAULT_INVOKER
+	#define RECREATE_DEFAULT_INVOKER
 #endif
 
 using System;
@@ -42,7 +42,7 @@ namespace PlayScript
 				Factory = factory;
 			}
 			public InvokerFactoryBase	Factory;
-			public int				Usage;
+			public int					Usage;
 		}
 
 		private static Dictionary<MethodInfo, InvokerInfo> sInvokerInfoByMethodInfo = new Dictionary<MethodInfo, InvokerInfo>();
@@ -53,7 +53,7 @@ namespace PlayScript
 		public static CreateInvokerFactoryFromMethodSignatureDelegate CreateInvokerFactoryFromMethodSignature;
 
 #if RECREATE_DEFAULT_INVOKER
-		public static int RecreateDefaultInvokerEveryNUsages = 1000;		// When using the default invoker, we let the user know so (s)he can find the biggest offenders
+		public static int RecreateDefaultInvokerEveryNUsages = 100;				// When using the default invoker, we let the user know so (s)he can find the biggest offenders
 #endif
 
 		static ActionCreator()
@@ -242,17 +242,6 @@ namespace PlayScript
 			// This code is going to use a function matching the delegate Func<P, R> to do the conversion (as from the types 
 			IConverter<P, R> converter = Converter.Instance as IConverter<P, R>;
 			return converter.Convert(value);
-			/*
-			if (typeof(P) == typeof(R))
-			{
-				// If the types are the same, to workaround lack of cast between P and R, we have to use a generic class - delegate call
-				return SameTypeConverter<P, R>.Convert(value);
-			}
-			else
-			{
-				return ConvertDifferentTypes<P, R>(value);			// Hopefully will be inlined
-			}
-			*/
 		}
 
 #if false
@@ -313,7 +302,7 @@ namespace PlayScript
 			if (sInvokerInfoByMethodInfo.TryGetValue(methodInfo, out invokerInfo))
 			{
 #if RECREATE_DEFAULT_INVOKER
-				if ((invokerInfo.Usage is DefaultInvokerFactory) && (RecreateDefaultInvokerEveryNUsages != 0) && ((invokerInfo.Usage % RecreateDefaultInvokerEveryNUsages) == 0))
+				if ((invokerInfo.Factory is DefaultInvokerFactory) && (RecreateDefaultInvokerEveryNUsages != 0) && ((invokerInfo.Usage % RecreateDefaultInvokerEveryNUsages) == 0))
 				{
 					// If we are using the default -slow- factory, once in a while we are bubbling it up to the user so (s)he can detect the issue
 					// and provide implementation for the biggest offenders.
@@ -334,7 +323,7 @@ namespace PlayScript
 				if (sInvokerInfoByMethodSignature.TryGetValue(methodSignature, out invokerInfo))
 				{
 #if RECREATE_DEFAULT_INVOKER
-					if ((invokerInfo.Usage is DefaultInvokerFactory) && (RecreateDefaultInvokerEveryNUsages != 0) && ((invokerInfo.Usage % RecreateDefaultInvokerEveryNUsages) == 0))
+					if ((invokerInfo.Factory is DefaultInvokerFactory) && (RecreateDefaultInvokerEveryNUsages != 0) && ((invokerInfo.Usage % RecreateDefaultInvokerEveryNUsages) == 0))
 					{
 						// If we are using the default -slow- factory, once in a while we are bubbling it up to the user so (s)he can detect the issue
 						// and provide implementation for the biggest offenders.
@@ -384,8 +373,9 @@ namespace PlayScript
 #else
 			invokerInfo = new InvokerInfo(factory);
 #endif
-			sInvokerInfoByMethodInfo.Add(methodInfo, invokerInfo);
-			sInvokerInfoByMethodSignature.Add(methodSignature, invokerInfo);
+			// We do not use Add() as methodInfo / methodSignature might already be cached if we just re-force the creation of the invoker in RECREATE_DEFAULT_INVOKER mode
+			sInvokerInfoByMethodInfo[methodInfo] = invokerInfo;			
+			sInvokerInfoByMethodSignature[methodSignature] = invokerInfo;
 			return invokerInfo;
 		}
 
