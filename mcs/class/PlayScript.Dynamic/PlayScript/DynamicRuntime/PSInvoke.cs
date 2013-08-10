@@ -42,9 +42,13 @@ namespace PlayScript.DynamicRuntime
 			Action a = d as Action;
 			if (a != null)
 			{
+				Stats.Increment(StatsCounter.InvokeBinderInvoked_Fast);
+
 				a();
 				return;
 			}
+
+			Stats.Increment(StatsCounter.InvokeBinderInvoked_Slow);
 
 			Delegate del = (Delegate)d;
 			bool canConvert = MethodBinder.ConvertArguments(del.Method, null, sArgs, 0, ref mConvertedArgs);
@@ -59,9 +63,13 @@ namespace PlayScript.DynamicRuntime
 			Action<A1> a = d as Action<A1>;
 			if (a != null)
 			{
+				Stats.Increment(StatsCounter.InvokeBinderInvoked_Fast);
+
 				a(a1);
 				return;
 			}
+
+			Stats.Increment(StatsCounter.InvokeBinderInvoked_Slow);
 
 			Delegate del = (Delegate)d;
 			sArgs [0] = a1;
@@ -81,6 +89,8 @@ namespace PlayScript.DynamicRuntime
 				return;
 			}
 
+			Stats.Increment(StatsCounter.InvokeBinderInvoked_Slow);
+
 			Delegate del = (Delegate)d;
 			sArgs [0] = a1;
 			sArgs [1] = a2;
@@ -96,9 +106,13 @@ namespace PlayScript.DynamicRuntime
 			Action<A1, A2, A3> a = d as Action<A1, A2, A3>;
 			if (a != null)
 			{
+				Stats.Increment(StatsCounter.InvokeBinderInvoked_Fast);
+
 				a(a1, a2, a3);
 				return;
 			}
+
+			Stats.Increment(StatsCounter.InvokeBinderInvoked_Slow);
 
 			Delegate del = (Delegate)d;
 			sArgs [0] = a1;
@@ -116,9 +130,13 @@ namespace PlayScript.DynamicRuntime
 			Action<A1, A2, A3, A4> a = d as Action<A1, A2, A3, A4>;
 			if (a != null)
 			{
+				Stats.Increment(StatsCounter.InvokeBinderInvoked_Fast);
+
 				a(a1, a2, a3, a4);
 				return;
 			}
+
+			Stats.Increment(StatsCounter.InvokeBinderInvoked_Slow);
 
 			Delegate del = (Delegate)d;
 			sArgs [0] = a1;
@@ -137,9 +155,13 @@ namespace PlayScript.DynamicRuntime
 			Action<A1, A2, A3, A4, A5> a = d as Action<A1, A2, A3, A4, A5>;
 			if (a != null)
 			{
+				Stats.Increment(StatsCounter.InvokeBinderInvoked_Fast);
+
 				a(a1, a2, a3, a4, a5);
 				return;
 			}
+
+			Stats.Increment(StatsCounter.InvokeBinderInvoked_Slow);
 
 			Delegate del = (Delegate)d;
 			sArgs [0] = a1;
@@ -159,9 +181,13 @@ namespace PlayScript.DynamicRuntime
 			Action<A1, A2, A3, A4, A5, A6> a = d as Action<A1, A2, A3, A4, A5, A6>;
 			if (a != null)
 			{
+				Stats.Increment(StatsCounter.InvokeBinderInvoked_Fast);
+
 				a(a1, a2, a3, a4, a5, a6);
 				return;
 			}
+
+			Stats.Increment(StatsCounter.InvokeBinderInvoked_Slow);
 
 			Delegate del = (Delegate)d;
 			sArgs [0] = a1;
@@ -182,9 +208,13 @@ namespace PlayScript.DynamicRuntime
 			Action<A1, A2, A3, A4, A5, A6, A7> a = d as Action<A1, A2, A3, A4, A5, A6, A7>;
 			if (a != null)
 			{
+				Stats.Increment(StatsCounter.InvokeBinderInvoked_Fast);
+
 				a(a1, a2, a3, a4, a5, a6, a7);
 				return;
 			}
+
+			Stats.Increment(StatsCounter.InvokeBinderInvoked_Slow);
 
 			Delegate del = (Delegate)d;
 			sArgs [0] = a1;
@@ -206,9 +236,13 @@ namespace PlayScript.DynamicRuntime
 			Action<A1, A2, A3, A4, A5, A6, A7, A8> a = d as Action<A1, A2, A3, A4, A5, A6, A7, A8>;
 			if (a != null)
 			{
+				Stats.Increment(StatsCounter.InvokeBinderInvoked_Fast);
+
 				a(a1, a2, a3, a4, a5, a6, a7, a8);
 				return;
 			}
+
+			Stats.Increment(StatsCounter.InvokeBinderInvoked_Slow);
 
 			Delegate del = (Delegate)d;
 			sArgs [0] = a1;
@@ -231,9 +265,13 @@ namespace PlayScript.DynamicRuntime
 			Action<A1, A2, A3, A4, A5, A6, A7, A8, A9> a = d as Action<A1, A2, A3, A4, A5, A6, A7, A8, A9>;
 			if (a != null)
 			{
+				Stats.Increment(StatsCounter.InvokeBinderInvoked_Fast);
+
 				a(a1, a2, a3, a4, a5, a6, a7, a8, a9);
 				return;
 			}
+
+			Stats.Increment(StatsCounter.InvokeBinderInvoked_Slow);
 
 			Delegate del = (Delegate)d;
 			sArgs [0] = a1;
@@ -257,8 +295,12 @@ namespace PlayScript.DynamicRuntime
 			Func<TR> f = d as Func<TR>;
 			if (f != null)
 			{
+				Stats.Increment(StatsCounter.InvokeBinderInvoked_Fast);
+
 				return f();
 			}
+
+			Stats.Increment(StatsCounter.InvokeBinderInvoked_Slow);
 
 			Delegate del = (Delegate)d;
 			bool canConvert = MethodBinder.ConvertArguments(del.Method, null, sArgs, 0, ref mConvertedArgs);
@@ -273,8 +315,12 @@ namespace PlayScript.DynamicRuntime
 			Func<A1, TR> f = d as Func<A1, TR>;
 			if (f != null)
 			{
+				Stats.Increment(StatsCounter.InvokeBinderInvoked_Fast);
+
 				return f(a1);
 			}
+
+			Stats.Increment(StatsCounter.InvokeBinderInvoked_Slow);
 
 			Delegate del = (Delegate)d;
 			sArgs [0] = a1;
@@ -290,8 +336,12 @@ namespace PlayScript.DynamicRuntime
 			Func<A1, A2, TR> f = d as Func<A1, A2, TR>;
 			if (f != null)
 			{
+				Stats.Increment(StatsCounter.InvokeBinderInvoked_Fast);
+
 				return f(a1, a2);
 			}
+
+			Stats.Increment(StatsCounter.InvokeBinderInvoked_Slow);
 
 			Delegate del = (Delegate)d;
 			sArgs [0] = a1;
@@ -308,8 +358,12 @@ namespace PlayScript.DynamicRuntime
 			Func<A1, A2, A3, TR> f = d as Func<A1, A2, A3, TR>;
 			if (f != null)
 			{
+				Stats.Increment(StatsCounter.InvokeBinderInvoked_Fast);
+
 				return f(a1, a2, a3);
 			}
+
+			Stats.Increment(StatsCounter.InvokeBinderInvoked_Slow);
 
 			Delegate del = (Delegate)d;
 			sArgs [0] = a1;
@@ -327,8 +381,12 @@ namespace PlayScript.DynamicRuntime
 			Func<A1, A2, A3, A4, TR> f = d as Func<A1, A2, A3, A4, TR>;
 			if (f != null)
 			{
+				Stats.Increment(StatsCounter.InvokeBinderInvoked_Fast);
+
 				return f(a1, a2, a3, a4);
 			}
+
+			Stats.Increment(StatsCounter.InvokeBinderInvoked_Slow);
 
 			Delegate del = (Delegate)d;
 			sArgs [0] = a1;
@@ -347,8 +405,12 @@ namespace PlayScript.DynamicRuntime
 			Func<A1, A2, A3, A4, A5, TR> f = d as Func<A1, A2, A3, A4, A5, TR>;
 			if (f != null)
 			{
+				Stats.Increment(StatsCounter.InvokeBinderInvoked_Fast);
+
 				return f(a1, a2, a3, a4, a5);
 			}
+
+			Stats.Increment(StatsCounter.InvokeBinderInvoked_Slow);
 
 			Delegate del = (Delegate)d;
 			sArgs [0] = a1;
@@ -368,8 +430,12 @@ namespace PlayScript.DynamicRuntime
 			Func<A1, A2, A3, A4, A5, A6, TR> f = d as Func<A1, A2, A3, A4, A5, A6, TR>;
 			if (f != null)
 			{
+				Stats.Increment(StatsCounter.InvokeBinderInvoked_Fast);
+
 				return f(a1, a2, a3, a4, a5, a6);
 			}
+
+			Stats.Increment(StatsCounter.InvokeBinderInvoked_Slow);
 
 			Delegate del = (Delegate)d;
 			sArgs [0] = a1;
@@ -390,8 +456,12 @@ namespace PlayScript.DynamicRuntime
 			Func<A1, A2, A3, A4, A5, A6, A7, TR> f = d as Func<A1, A2, A3, A4, A5, A6, A7, TR>;
 			if (f != null)
 			{
+				Stats.Increment(StatsCounter.InvokeBinderInvoked_Fast);
+
 				return f(a1, a2, a3, a4, a5, a6, a7);
 			}
+
+			Stats.Increment(StatsCounter.InvokeBinderInvoked_Slow);
 
 			Delegate del = (Delegate)d;
 			sArgs [0] = a1;
@@ -413,8 +483,12 @@ namespace PlayScript.DynamicRuntime
 			Func<A1, A2, A3, A4, A5, A6, A7, A8, TR> f = d as Func<A1, A2, A3, A4, A5, A6, A7, A8, TR>;
 			if (f != null)
 			{
+				Stats.Increment(StatsCounter.InvokeBinderInvoked_Fast);
+
 				return f(a1, a2, a3, a4, a5, a6, a7, a8);
 			}
+
+			Stats.Increment(StatsCounter.InvokeBinderInvoked_Slow);
 
 			Delegate del = (Delegate)d;
 			sArgs [0] = a1;
@@ -437,8 +511,12 @@ namespace PlayScript.DynamicRuntime
 			Func<A1, A2, A3, A4, A5, A6, A7, A8, A9, TR> f = d as Func<A1, A2, A3, A4, A5, A6, A7, A8, A9, TR>;
 			if (f != null)
 			{
+				Stats.Increment(StatsCounter.InvokeBinderInvoked_Fast);
+
 				return f(a1, a2, a3, a4, a5, a6, a7, a8, a9);
 			}
+
+			Stats.Increment(StatsCounter.InvokeBinderInvoked_Slow);
 
 			Delegate del = (Delegate)d;
 			sArgs [0] = a1;

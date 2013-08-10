@@ -50,6 +50,8 @@ namespace PlayScript
 		SetMemberBinder_Resolve_Invoked,
 		InvokeBinderCreated,
 		InvokeBinderInvoked,
+		InvokeBinderInvoked_Fast,
+		InvokeBinderInvoked_Slow,
 		InvokeConstructorBinderCreated,
 		InvokeConstructorBinderInvoked,
 		InvokeMemberBinderCreated,
