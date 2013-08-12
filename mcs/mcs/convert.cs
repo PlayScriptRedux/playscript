@@ -1542,7 +1542,10 @@ namespace Mono.CSharp {
 			}
 
 			// Auto convert types to type objects..
-			if (ec.FileType == SourceFileType.PlayScript && target_type.BuiltinType == BuiltinTypeSpec.Type.Type && expr is FullNamedExpression) {
+			if (ec.FileType == SourceFileType.PlayScript && expr is FullNamedExpression &&
+			    (target_type.BuiltinType == BuiltinTypeSpec.Type.Type ||
+			    target_type.BuiltinType == BuiltinTypeSpec.Type.Object ||
+			    target_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic)) {
 				FullNamedExpression type_expr = (FullNamedExpression)expr;
 				if (expr_type != null) {
 					if (expr_type.MemberDefinition.Namespace == PsConsts.PsRootNamespace) {
@@ -1554,7 +1557,7 @@ namespace Mono.CSharp {
 							type_expr = new TypeExpression (ec.BuiltinTypes.Double, type_expr.Location);
 							break;
 						case "Boolean":
-							type_expr = new TypeExpression (ec.BuiltinTypes.Double, type_expr.Location);
+							type_expr = new TypeExpression (ec.BuiltinTypes.Bool, type_expr.Location);
 							break;
 						}
 					} else if (expr_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {

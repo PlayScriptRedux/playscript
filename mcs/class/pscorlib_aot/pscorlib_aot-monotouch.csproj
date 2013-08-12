@@ -824,6 +824,11 @@
     </Compile>
     <Compile Include="..\pscorlib\flash\media\ios\Sound.cs">
       <Link>flash\media\Sound.cs</Link>
+    <Compile Include="..\pscorlib\AllowDynamicAttribute.cs">
+      <Link>AllowDynamicAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ForbidDynamicAttribute.cs">
+      <Link>ForbidDynamicAttribute.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

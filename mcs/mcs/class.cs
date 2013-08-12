@@ -59,6 +59,9 @@ namespace Mono.CSharp
 
 		protected bool is_defined;
 
+		// Should dynamic code be allowed in this container?
+		protected bool? allow_dynamic;
+
 		public TypeContainer (TypeContainer parent, MemberName name, Attributes attrs, MemberKind kind)
 			: base (parent, name, attrs)
 		{
@@ -107,6 +110,21 @@ namespace Mono.CSharp
 		public IList<TypeContainer> Containers {
 			get {
 				return containers;
+			}
+		}
+
+		public virtual bool? AllowDynamic {
+			get {
+				if (allow_dynamic != null) {
+					return allow_dynamic;
+				} else if (this.Parent != null) {
+					return this.Parent.AllowDynamic;
+				} else {
+					return Compiler.Settings.AllowDynamic;
+				}
+			}
+			set {
+				allow_dynamic = value;
 			}
 		}
 
@@ -1855,6 +1873,8 @@ namespace Mono.CSharp
 
 		protected override void DoDefineContainer ()
 		{
+			allow_dynamic = CheckAllowDynamic ();
+
 			DefineBaseTypes ();
 
 			DoResolveTypeParameters ();

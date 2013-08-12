@@ -1455,18 +1455,27 @@ namespace Mono.CSharp
 		protected override Expression DoResolve (ResolveContext ec)
 		{
 			// NOTE: We need to distinguish between types and expressions which return a Class object.
-			if (ec.FileType == SourceFileType.PlayScript && (this is Is)) {  // Enable for "is" expression only for right now
+			if (ec.FileType == SourceFileType.PlayScript && (this is Is || this is As)) { 
 				as_probe_type_expr = ProbeType.Resolve (ec);
-				if (as_probe_type_expr is TypeExpression) {
+				if (as_probe_type_expr is TypeExpr || as_probe_type_expr is TypeOf) {
+					// Convert typeof to actual type if somebody actually wrote "typeof" in the code.
+					if (as_probe_type_expr is TypeOf) {
+						probe_type_expr = ((TypeOf)as_probe_type_expr).TypeExpression.Type;
+					} else {
+						probe_type_expr = as_probe_type_expr.ResolveAsType (ec);
+					}
+					// Resolving to actual concrete types above will cause an Object type to be converted to an Expando.  We
+					// have to reverse this.
+					if (probe_type_expr == ec.Module.PredefinedTypes.AsObject.Resolve()) {
+						probe_type_expr = ec.BuiltinTypes.Dynamic;
+					}
 					as_probe_type_expr = null;
 				} else if (as_probe_type_expr.Type.BuiltinType != BuiltinTypeSpec.Type.Type && 
 				           as_probe_type_expr.Type.BuiltinType != BuiltinTypeSpec.Type.Dynamic) {
 					ec.Report.Error (7345, loc, "The `{0}' operator cannot be applied to an expression which is not a Class type",
 					                 OperatorName);
 				}
-			}
-
-			if (as_probe_type_expr == null) {
+			} else {
 				probe_type_expr = ProbeType.ResolveAsType (ec);
 				if (probe_type_expr == null)
 					return null;
@@ -1769,11 +1778,19 @@ namespace Mono.CSharp
 					return null;
 			}
 
+			bool isPlayScript = ec.FileType == SourceFileType.PlayScript;
+
+			if (isPlayScript && as_probe_type_expr != null && !(as_probe_type_expr is TypeExpr)) {
+				var arguments = new Arguments (2);
+				arguments.Add (new Argument (expr));
+				arguments.Add (new Argument (as_probe_type_expr));
+				return new Invocation (new MemberAccess (new MemberAccess (new SimpleName ("PlayScript", loc), "Support", loc), "DynamicAs", loc), arguments).Resolve (ec);
+			}
+
 			type = probe_type_expr;
 			eclass = ExprClass.Value;
 			TypeSpec etype = expr.Type;
 
-			bool isPlayScript = ec.FileType == SourceFileType.PlayScript;
 			bool isRefType = TypeSpec.IsReferenceType (type) || type.IsNullableType;
 
 			// Always "Object" for dynamic type when evaluating PlayScript AS operator (not dynamic CONV call).
@@ -4437,6 +4454,8 @@ namespace Mono.CSharp
 
 		public Expression CreateCallSiteBinder (ResolveContext ec, Arguments args)
 		{
+			Statement.DynamicOps |= DynamicOperation.Binary;
+
 			Arguments binder_args = new Arguments (4);
 
 			MemberAccess ns;
@@ -8894,6 +8913,40 @@ namespace Mono.CSharp
 				} else if (AccessorType == Accessor.AsE4xDescendant) {
 					return MakeE4xInvocation (rc, "descendants", Name).Resolve (rc);
 				} else if (AccessorType == Accessor.AsE4xNamespace) {
+
+					// In ActionScript, we can interpret a IDENT::IDENT as a CONFIG variable constants like CONFIG::DEBUG instead
+					// of an E4X namespace expression.  To distinguish between the two, we check to see if the left side is a simple
+					// name, and that there is actually a macro defined that matches the name we're checking.
+					if (expr is SimpleName) {
+						string config_id = ((SimpleName)expr).Name + "_" + this.Name;
+						if (rc.Module.Compiler.Settings.IsConditionalSymbolDefined (config_id)) {
+							string value = rc.Module.Compiler.Settings.GetConditionalSymbolValue (config_id);
+							if (value == "true") {
+								return new BoolLiteral (rc.BuiltinTypes, true, this.loc);
+							} else if (value == "false") {
+								return new BoolLiteral (rc.BuiltinTypes, false, this.loc);
+							} else if (value.Length > 0 && char.IsDigit (value [0]) || value [0] == '-') {
+								if (value.IndexOf (".") != -1) {
+									double dbl = 0.0;
+									double.TryParse (value, out dbl);
+									return new DoubleLiteral (rc.BuiltinTypes, dbl, this.loc);
+								} else {
+									int i = 0;
+									int.TryParse (value, out i);
+									return new IntLiteral (rc.BuiltinTypes, i, this.loc);
+								}
+							} else if (value.Length > 0 && (value [0] == '\'' || value [0] == '"')) {
+								string str = value.Substring (1);
+								if (str.Length > 0 && (str [str.Length - 1] == '\'' || str [str.Length - 1] == '"')) {
+									str = str.Substring (0, str.Length - 1);
+								}
+								return new StringLiteral (rc.BuiltinTypes, str, this.loc);
+							} else {
+								return new StringLiteral (rc.BuiltinTypes, value, this.loc);
+							}
+						}
+					}
+
 					return MakeE4xInvocation (rc, "namespace", Name).Resolve (rc);
 				}
 			}

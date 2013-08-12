@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace flash.events
 {
@@ -21,13 +22,15 @@ namespace flash.events
 	{
 		private class EventListener
 		{
-			public string        type;
-            public Delegate      callback;
-			public bool    		 useCapture;
-			public int           priority;
-			public bool          useWeakReference;
-		};
+			public string		type;
+			public bool			useCapture;
+			public int			priority;
+			public bool			useWeakReference;
+			public PlayScript.InvokerBase	invoker;
 
+			// TODO: We probably can remove this at some point...
+			public Delegate		callback;
+		}
 
 		private IEventDispatcher _evRedirect; // this is used for redirecting all event handling, not sure if this is needed
 		private IEventDispatcher _evTarget;
@@ -42,40 +45,52 @@ namespace flash.events
 			_evTarget = (target != null) ? target : this;
 		}
 
+		public void addEventListener<P1>(string type, Action<P1> listener, bool useCapture = false, int priority = 0, bool useWeakReference = false)
+		{
+			if (_evRedirect != null) {
+				_evRedirect.addEventListener (type, listener, useCapture, priority, useWeakReference);
+			} else {
+				EventListener el = addEventListener(type, useCapture, priority, useWeakReference);
+				el.callback = listener;
+				el.invoker = GetInvoker<P1>(listener);
+				el.invoker.SetArguments(GetInitialParameters(listener.Method));
+			}
+
+			// add event to global dispatcher
+			var globalDispatcher = getGlobalEventDispatcher(type);
+			if (globalDispatcher != null) {
+				globalDispatcher.addEventListener(type, listener, useCapture, priority, useWeakReference);
+			}
+		}
+
+		public void addEventListener<P1, P2>(string type, Action<P1, P2> listener, bool useCapture = false, int priority = 0, bool useWeakReference = false)
+		{
+			if (_evRedirect != null) {
+				_evRedirect.addEventListener (type, listener, useCapture, priority, useWeakReference);
+			} else {
+				EventListener el = addEventListener(type, useCapture, priority, useWeakReference);
+				el.callback = listener;
+				el.invoker = GetInvoker<P1, P2>(listener);
+				el.invoker.SetArguments(GetInitialParameters(listener.Method));
+			}
+
+			// add event to global dispatcher
+			var globalDispatcher = getGlobalEventDispatcher(type);
+			if (globalDispatcher != null) {
+				globalDispatcher.addEventListener(type, listener, useCapture, priority, useWeakReference);
+			}
+		}
+
 		#region IEventDispatcher implementation
 		public virtual void addEventListener (string type, Delegate listener, bool useCapture = false, int priority = 0, bool useWeakReference = false)
 		{
 			if (_evRedirect != null) {
 				_evRedirect.addEventListener (type, listener, useCapture, priority, useWeakReference);
 			} else {
-
-				if (_events == null) {
-					_events = new Dictionary<string, List<EventListener>> ();
-				}
-
-				List<EventListener> evList = null;
-				if (!_events.TryGetValue (type, out evList)) {
-					evList = new List<EventListener> ();
-					_events [type] = evList;
-				}
-
-				// create event listener
-				var el = new EventListener();
-				el.type     = type;
+				EventListener el = addEventListener(type, useCapture, priority, useWeakReference);
 				el.callback = listener;
-				el.useCapture = useCapture;
-				el.priority   = priority;
-				el.useWeakReference =useWeakReference;
-
-				// insert listener in priority order
-				int  i;
-				for (i=0; i < evList.Count; i++) {
-					if (priority > evList[i].priority) {
-						break;
-					}
-				}
-
-				evList.Insert(i, el);
+				el.invoker = GetInvoker(listener);
+				el.invoker.SetArguments(GetInitialParameters(listener.Method));
 			}
 
             // add event to global dispatcher
@@ -83,12 +98,13 @@ namespace flash.events
             if (globalDispatcher != null) {
                 globalDispatcher.addEventListener(type, listener, useCapture, priority, useWeakReference);
             }
-
 		}
 
 		public virtual bool dispatchEvent (Event ev)
 		{
 			ev._target = _evTarget;
+			// set current target for event
+			ev._currentTarget = _evTarget;
 
 			if (_evRedirect != null) {
 				return _evRedirect.dispatchEvent(ev);
@@ -99,23 +115,11 @@ namespace flash.events
                     // we store off the count here in case the callback adds a listener
                     var l = evList.Count;
                     for (var i = 0; i < l; i++) {
-                        // cast callback to dynamic
-                        Delegate callback = evList [i].callback;
-                        // we perform a dynamic invoke here because the parameter types dont always match exactly
-                        try {
-							// set current target for event
-							ev._currentTarget = _evTarget;
-							var args = PlayScript.Dynamic.ConvertArgumentList(callback.Method, new object[] {ev});
-                            callback.DynamicInvoke(args);
-                        } 
-                        catch (Exception e)
-                        {
-                            // if you get an exception here while debugging then make sure that the debugger is setup to catch all exceptions
-                            // this is in the Run/Exceptions... menu in MonoDevelop or Xamarin studio
-							Console.Error.WriteLine(e.ToString());
-                        }
-                        dispatched = true;
+                        // Invoke the method on the listener
+						EventListener listener = evList[i];
+						listener.invoker.InvokeOverrideA1(ev);
                     }
+					dispatched = (l != 0);
                 }
 				return dispatched;
 			}
@@ -197,6 +201,138 @@ namespace flash.events
             return list;
         }
 
+		private static object[] GetInitialParameters(MethodInfo methodInfo)
+		{
+			ParameterInfo[] parameters = methodInfo.GetParameters();
+
+			object[] initializedParameters = new object[parameters.Length];
+
+			// We dispatch only with one parameter, so if there is more than one parameter,
+			// it should be either a default parameter or variadic
+
+			// There are a couple of exceptions though due to AS behavior:
+			//	- First parameter might not inherit from Event, it can be object for some methods
+			//	- Some methods might be variadic and use object[] as parameter
+			//	- Some methods might not even have a parameter, the event itself will simply be discarded
+
+			// Most common case first
+			if (parameters.Length == 1) {
+				// We do not re-use that array as several events could be dispatched within each others and we want to make sure
+				// The event parameter is always set properly
+				return initializedParameters;
+			} else if (parameters.Length == 0) {
+				return null;
+			}
+
+			for (int i = 1 ; i < parameters.Length ; ++i) {
+				ParameterInfo parameter = parameters[i];
+				if ((parameter.Attributes & ParameterAttributes.HasDefault) != 0) {
+					initializedParameters[i] = parameter.DefaultValue;
+				} else {
+					// If that's not default, we expect this to be variadic
+					var paramArrayAttribute = parameter.GetCustomAttributes(typeof(ParamArrayAttribute), true);
+					if ((paramArrayAttribute != null) && (paramArrayAttribute.Length != 0)) {
+						// We can keep this null, we will have to see if it creates some side-effects
+					} else {
+						throw new ArgumentException("Method has more than one non-optional parameter.");
+					}
+				}
+			}
+
+			return initializedParameters;
+		}
+
+		private static bool IsVariadicMethod(MethodInfo methodInfo)
+		{
+			ParameterInfo[] parameters = methodInfo.GetParameters();
+			if (parameters.Length != 1) {
+				return false;
+			}
+			var paramArrayAttribute = parameters[0].GetCustomAttributes(typeof(ParamArrayAttribute), true);
+			if ((paramArrayAttribute != null) && (paramArrayAttribute.Length != 0)) {
+				return true;
+			} else {
+				return false;
+			}
+		}
+
+		private static bool IsEventMethod(MethodInfo methodInfo)
+		{
+			if (methodInfo.ReturnType != typeof(void)) {
+				return false;	// We don't expect return value
+			}
+			ParameterInfo[] parameters = methodInfo.GetParameters();
+			if (parameters.Length != 1) {
+				return false;
+			}
+			if (parameters[0].ParameterType == typeof(Event)) {
+				return true;
+			}
+
+/*			Due to contravariance constraints, we don't support type inheriting from typeof(Event)
+			} else if (parameters[0].ParameterType.IsSubclassOf(typeof(Event))) {
+				return true;
+			}
+*/
+			return false;
+		}
+
+		private static PlayScript.InvokerBase GetInvoker(Delegate listener)
+		{
+			if (IsEventMethod(listener.Method)) {
+				// Create a specialization if the method has only one Event parameter (fast path)
+				// Unfortunately covariant types are not accepted for delegate parameters,
+				// as this would have taken care of 90% of the events invocation
+				return new PlayScript.InvokerA<Event>((Action<Event>)listener);
+			} else if (IsVariadicMethod(listener.Method)) {
+				// Create a spcecialization if the method is variadic only (slow path)
+				return new PlayScript.DynamicInvokerVariadic(listener);
+			} else {
+				// Otherwise the generic case (slow path)
+				return new PlayScript.DynamicInvoker(listener);
+			}
+		}
+
+		private static PlayScript.InvokerBase GetInvoker<P1>(Action<P1> listener)
+		{
+			return new PlayScript.InvokerA<P1>(listener);
+		}
+
+		private static PlayScript.InvokerBase GetInvoker<P1, P2>(Action<P1, P2> listener)
+		{
+			return new PlayScript.InvokerA<P1, P2>(listener);
+		}
+
+		private EventListener addEventListener(string type, bool useCapture, int priority, bool useWeakReference)
+		{
+			if (_events == null) {
+				_events = new Dictionary<string, List<EventListener>> ();
+			}
+
+			List<EventListener> evList = null;
+			if (!_events.TryGetValue (type, out evList)) {
+				evList = new List<EventListener> ();
+				_events [type] = evList;
+			}
+
+			// create event listener
+			var el = new EventListener();
+			el.type     = type;
+			el.useCapture = useCapture;
+			el.priority   = priority;
+			el.useWeakReference = useWeakReference;
+
+			// insert listener in priority order
+			int  i;
+			for (i=0; i < evList.Count; i++) {
+				if (priority > evList[i].priority) {
+					break;
+				}
+			}
+
+			evList.Insert(i, el);
+			return el;
+		}
 	}
 }
 

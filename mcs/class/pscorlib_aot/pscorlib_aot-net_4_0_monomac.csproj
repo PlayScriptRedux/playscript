@@ -801,6 +801,12 @@
     <Compile Include="..\pscorlib\fl\controls\listClasses\CellRenderer.play">
       <Link>fl\controls\listClasses\CellRenderer.play</Link>
     </Compile>
+    <Compile Include="..\pscorlib\AllowDynamicAttribute.cs">
+      <Link>AllowDynamicAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\ForbidDynamicAttribute.cs">
+      <Link>ForbidDynamicAttribute.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="flash\external\" />
