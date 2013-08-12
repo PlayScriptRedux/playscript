@@ -822,6 +822,9 @@
     <Compile Include="..\pscorlib\fl\events\ComponentEvent.play">
       <Link>fl\events\ComponentEvent.play</Link>
     </Compile>
+    <Compile Include="..\pscorlib\flash\media\ios\Sound.cs">
+      <Link>flash\media\Sound.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monotouch.csproj">
