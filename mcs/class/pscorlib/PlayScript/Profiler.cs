@@ -72,6 +72,11 @@ namespace PlayScript
 				section.TotalTime += section.Timer.Elapsed;
 				if (sDoReport) 
 				{
+					// pad with zeros if necessary
+					while (section.History.Count < sFrameCount) {
+						section.History.Add(new TimeSpan());
+					}
+
 					section.History.Add(section.Timer.Elapsed);
 				}
 				section.Timer.Reset();
@@ -136,11 +141,36 @@ namespace PlayScript
 		public static void PrintFullTimes(TextWriter tw)
 		{
 			foreach (Section section in sSections.Values) {
-				tw.WriteLine("{0,-12} total:{1,6} average:{2,6}ms",
+
+				var total = section.TotalTime;
+				var average = total.TotalMilliseconds / sFrameCount;
+
+				// do we have a history?
+				if (section.History.Count > 0) {
+					// get history in milliseconds, sorted
+					var history = section.History.Select(a => a.TotalMilliseconds).OrderBy(a => a).ToList();
+					// get min/max/median
+					var minTime = history.First();
+					var maxTime = history.Last();
+					var medianTime = history[history.Count / 2];
+					
+					tw.WriteLine("{0,-12} total:{1,6} average:{2,6:0.00}ms min:{3,6:0.00}ms max:{4,6:0.00}ms median:{5,6:0.00}ms ",
+					             section.Name,
+					             total,
+					             average,
+					             minTime,
+					             maxTime,
+					             medianTime
+					             );
+
+				} else {
+
+					tw.WriteLine("{0,-12} total:{1,6} average:{2,6:0.00}ms",
 				             section.Name,
-				             section.TotalTime,
-				             (section.TotalTime.TotalMilliseconds / sFrameCount).ToString("0.00")
+				             total,
+				             average
 				             );
+				}
 			}
 		}
 
@@ -150,6 +180,11 @@ namespace PlayScript
 			foreach (Section section in sSections.Values) 
 			{
 				tw.Write("{0,12} ", section.Name);
+
+				// pad history with zeros if necessary
+				while (section.History.Count < sFrameCount) {
+					section.History.Add(new TimeSpan());
+				}
 			}
 			tw.WriteLine();
 
