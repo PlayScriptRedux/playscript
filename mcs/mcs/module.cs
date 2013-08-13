@@ -413,13 +413,13 @@ namespace Mono.CSharp
 		{
 			DefineContainer ();
 
-			ExpandBaseInterfaces ();
-
-			base.Define ();
-
 			if (Compiler.Settings.AutoSeal) {
 				AutoSealTypes ();
 			}
+
+			ExpandBaseInterfaces ();
+
+			base.Define ();
 
 			ApplyAssemblyAttributes ();
 
