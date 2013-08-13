@@ -52,6 +52,11 @@ namespace flash.media {
 					this.dispatchEvent(new IOErrorEvent(IOErrorEvent.IO_ERROR));
 				};
 
+				_player.FinishedPlaying += delegate { 
+					//this.dispatchEvent (new Event (Event.SOUND_COMPLETE));
+					//_player.Dispose(); 
+				};
+
 				this.dispatchEvent(new Event(Event.COMPLETE));
 
 			}
@@ -73,7 +78,7 @@ namespace flash.media {
 			else
                 _player.Play();
 
-			return null;
+			return new SoundChannel();
         }
 
 	}
