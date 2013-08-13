@@ -108,6 +108,8 @@ namespace PlayScript
 			// check start report countdown
 			if (sReportStartDelay > 0) {
 				if (--sReportStartDelay == 0) {
+					System.GC.Collect();
+
 					// reset counters
 					Reset();
 
