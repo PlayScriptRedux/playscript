@@ -29,6 +29,7 @@ namespace PlayScript
 
 			section.Timer.Start();
 			section.Stats.Subtract(PlayScript.Stats.CurrentInstance);
+			section.GCCount -= System.GC.CollectionCount(System.GC.MaxGeneration);
 		}
 		
 		public static void End(string name)
@@ -43,6 +44,7 @@ namespace PlayScript
 
 			section.Timer.Stop();
 			section.Stats.Add(PlayScript.Stats.CurrentInstance);
+			section.GCCount += System.GC.CollectionCount(System.GC.MaxGeneration);
 		}
 
 		public static void Reset()
@@ -74,11 +76,15 @@ namespace PlayScript
 				{
 					// pad with zeros if necessary
 					while (section.History.Count < sFrameCount) {
-						section.History.Add(new TimeSpan());
+						section.History.Add(new SectionHistory());
 					}
 
-					section.History.Add(section.Timer.Elapsed);
+					var history = new SectionHistory();
+					history.Time = section.Timer.Elapsed;
+					history.GCCount = section.GCCount;
+					section.History.Add(history);
 				}
+				section.GCCount = 0;
 				section.Timer.Reset();
 			}
 
@@ -107,6 +113,8 @@ namespace PlayScript
 
 					// enable the report
 					sDoReport = true;
+
+					sReportGCCount = System.GC.CollectionCount(System.GC.MaxGeneration);
 
 					// start global timer
 					sReportTime = Stopwatch.StartNew();
@@ -148,7 +156,7 @@ namespace PlayScript
 				// do we have a history?
 				if (section.History.Count > 0) {
 					// get history in milliseconds, sorted
-					var history = section.History.Select(a => a.TotalMilliseconds).OrderBy(a => a).ToList();
+					var history = section.History.Select(a => a.Time.TotalMilliseconds).OrderBy(a => a).ToList();
 					// get min/max/median
 					var minTime = history.First();
 					var maxTime = history.Last();
@@ -176,14 +184,14 @@ namespace PlayScript
 
 		public static void PrintHistory(TextWriter tw)
 		{
-			tw.Write("{0,-4} ", "");
+			tw.Write("{0,4} ", "");
 			foreach (Section section in sSections.Values) 
 			{
-				tw.Write("{0,12} ", section.Name);
+				tw.Write("{0,12}{1} ", section.Name, ' ');
 
 				// pad history with zeros if necessary
 				while (section.History.Count < sFrameCount) {
-					section.History.Add(new TimeSpan());
+					section.History.Add(new SectionHistory());
 				}
 			}
 			tw.WriteLine();
@@ -192,9 +200,15 @@ namespace PlayScript
 			for (int frame=0; frame < sFrameCount; frame++)
 			{
 				tw.Write("{0,4}:", frame);
+				int gcCount = 0;
 				foreach (Section section in sSections.Values) 
 				{
-					tw.Write("{0,12} ", section.History[frame].TotalMilliseconds.ToString("0.00") );
+					var history = section.History[frame];
+					tw.Write("{0,12:0.00}{1} ", history.Time.TotalMilliseconds, (history.GCCount > 0) ? '*' : ' ' );
+					gcCount += history.GCCount;
+				}
+				if (gcCount > 0) {
+					tw.Write("    <=== GC occurred");
 				}
 				tw.WriteLine();
 			}
@@ -233,6 +247,7 @@ namespace PlayScript
 			tw.WriteLine("Total Frames:  {0}", sFrameCount);
 			tw.WriteLine("Total Time:    {0}", sReportTime.Elapsed);
 			tw.WriteLine("Average FPS:   {0}",  ((double)sFrameCount / sReportTime.Elapsed.TotalSeconds).ToString("0.00") );
+			tw.WriteLine("GC Count:      {0}", sReportGCCount);
 
 			tw.WriteLine("*********** Timing (ms) ***********");
 			PrintFullTimes(tw);
@@ -249,6 +264,9 @@ namespace PlayScript
 		private static void DoReport()
 		{
 			sReportTime.Stop();
+
+			sReportGCCount = System.GC.CollectionCount(System.GC.MaxGeneration) - sReportGCCount;
+
 
 			#if PLATFORM_MONOTOUCH
 			// dump profile to file
@@ -273,14 +291,21 @@ namespace PlayScript
 //			}
 		}
 
+		class SectionHistory
+		{
+			public TimeSpan Time;
+			public int 		GCCount;
+		};
+
 		// info for a single section
 		class Section
 		{
 			public string               Name;
 			public Stopwatch 			Timer = new Stopwatch();
 			public TimeSpan				TotalTime;
-			public List<TimeSpan>		History = new List<TimeSpan>();
+			public List<SectionHistory>	History = new List<SectionHistory>();
 			public Stats 				Stats = new PlayScript.Stats();	
+			public int 					GCCount;
 		};
 
 		private static Dictionary<string, Section> sSections = new Dictionary<string, Section>();
@@ -295,6 +320,7 @@ namespace PlayScript
 		private static int  sReportFrameCount = 0;
 		private static string sReportName;
 		private static Stopwatch sReportTime;
+		private static int  sReportGCCount;
 		#endregion
 
 
