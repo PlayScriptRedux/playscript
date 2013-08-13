@@ -439,10 +439,7 @@ namespace PlayScript
 
 			var dc = o as IDynamicClass;
 			if (dc != null) {
-				if (dc.__HasDynamicValue(name)) {
-					return true;
-				}
-				// fall through to check all other properties
+				return dc.__HasDynamicValue(name);
 			}
 
 			var otype = o.GetType();
