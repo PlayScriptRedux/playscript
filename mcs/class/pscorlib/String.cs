@@ -124,7 +124,7 @@ namespace _root
 				return re.search(s);
 			} else {
 				// pattern is a string or other object
-				return s.IndexOf(pattern.ToString ());
+				return s.IndexOf(pattern.ToString (), StringComparison.Ordinal);
 			}
 		}
 
