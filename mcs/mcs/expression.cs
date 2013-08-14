@@ -3268,9 +3268,10 @@ namespace Mono.CSharp
 		}
 
 		private Expression MakeStringComparison (ResolveContext rc) {
-			var args = new Arguments(1);
+			var args = new Arguments(2);
+			args.Add (new Argument(left));
 			args.Add (new Argument(right));
-			return new Invocation(new MemberAccess(left, "CompareTo", loc), args);
+			return new Invocation(new MemberAccess(new MemberAccess(new SimpleName("System",loc), "String", loc), "CompareOrdinal", loc), args);
 		}
 
 		protected override Expression DoResolve (ResolveContext ec)

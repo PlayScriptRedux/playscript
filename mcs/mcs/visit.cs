@@ -637,5 +637,58 @@ namespace Mono.CSharp
 		{
 			return null;
 		}
+
+		// ActionScript/PlayScript Expressions
+
+		public virtual object Visit (AsObjectInitializer initializer)
+		{
+			return null;
+		}
+
+		public virtual object Visit (AsArrayInitializer initializer)
+		{
+			return null;
+		}
+
+		public virtual object Visit (AsNew newExpression)
+		{
+			return null;
+		}
+
+		public virtual object Visit (AsDelete deleteExpr)
+		{
+			return null;
+		}
+
+		public virtual object Visit (AsTypeOf typeOfExpr)
+		{
+			return null;
+		}
+
+		public virtual object Visit (AsIn inExpr)
+		{
+			return null;
+		}
+
+		public virtual object Visit (AsLocalFunction localFunc)
+		{
+			return null;
+		}
+
+		public virtual object Visit (AsUseNamespaceStatement useNamespace)
+		{
+			return null;
+		}
+
+		public virtual object Visit (AsNonAssignStatementExpression asStmntExpr)
+		{
+			return null;
+		}
+
+		public virtual object Visit (AsXmlQueryExpression xmlQueryExpr)
+		{
+			return null;
+		}
+
 	}
 }

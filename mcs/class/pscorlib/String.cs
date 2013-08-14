@@ -72,14 +72,14 @@ namespace _root
 		public static int indexOf(this string s, string val, double startIndex = 0) {
 			if (s == null) return -1;
 			if (val == null) return -1;
-			return s.IndexOf(val, (int)startIndex);
+			return s.IndexOf(val, (int)startIndex, StringComparison.Ordinal);
 		}
 						
 		public static int lastIndexOf(this string s, string val, double startIndex = 0x7FFFFFFF) {
 			if (startIndex == 0x7FFFFFFF) {
 				startIndex = s.Length;
 			}
-			return s.LastIndexOf(val, (int)startIndex);
+			return s.LastIndexOf(val, (int)startIndex, StringComparison.Ordinal);
 		}
 						
 		public static int localeCompare(this string s, string other, params object[] values) {
@@ -124,7 +124,7 @@ namespace _root
 				return re.search(s);
 			} else {
 				// pattern is a string or other object
-				return s.IndexOf(pattern.ToString ());
+				return s.IndexOf(pattern.ToString (), StringComparison.Ordinal);
 			}
 		}
 
