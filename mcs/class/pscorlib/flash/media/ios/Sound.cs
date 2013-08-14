@@ -29,6 +29,7 @@ namespace flash.media {
 		private static Queue<AVAudioPlayer> _players = new Queue<AVAudioPlayer>(NumberOfPlayers);
 
 		private AVAudioPlayer _player;
+		private SoundChannel _channel;
 
 		private void loadIos(String url)
 		{
@@ -48,12 +49,15 @@ namespace flash.media {
 
 				_player.PrepareToPlay();
 
+				_channel = new SoundChannel();
+				_channel.Player = _player;
+
 				_player.DecoderError += delegate {
 					this.dispatchEvent(new IOErrorEvent(IOErrorEvent.IO_ERROR));
 				};
 
 				_player.FinishedPlaying += delegate { 
-					//this.dispatchEvent (new Event (Event.SOUND_COMPLETE));
+					_channel.dispatchEvent (new Event (Event.SOUND_COMPLETE));
 					//_player.Dispose(); 
 				};
 
@@ -78,7 +82,7 @@ namespace flash.media {
 			else
                 _player.Play();
 
-			return new SoundChannel();
+			return _channel;
         }
 
 	}
