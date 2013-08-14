@@ -107,7 +107,7 @@ namespace PlayScript.RuntimeBinder
 		private static object InvokeConstructor(Type objType, object[] args)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeConstructorBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeConstructorBinderInvoked);
 #endif
 
 			var constructors = objType.GetConstructors();

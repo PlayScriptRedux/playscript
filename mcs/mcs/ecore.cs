@@ -240,6 +240,31 @@ namespace Mono.CSharp {
 			return null;
 		}
 
+		//
+		// This is used to do a resolve but provides a typespec as a 'hint'
+		// The hint is used to coerce the resolving code to produce an expression of that type.
+		// The resolve doesnt necessarily have to respect the hint if it doesnt want to.
+		// This hint is useful to produce the most optimal code generation (for example, if only
+		// a Boolean is required then dont do expensive coalescing)
+		// Expressions should override DoResolveWithTypeHint below
+		//
+		public Expression ResolveWithTypeHint (ResolveContext rc, TypeSpec typeHint)
+		{
+			if ((rc.FileType == SourceFileType.PlayScript) && rc.Module.Compiler.Settings.NewDynamicRuntime_TypeHint && (typeHint != null)) {
+				// resolve with type hint
+				return this.DoResolveWithTypeHint(rc, typeHint);
+			} else {
+				// dont use the type hint
+				return this.Resolve(rc);
+			}
+		}
+
+		protected virtual Expression DoResolveWithTypeHint (ResolveContext rc, TypeSpec typeHint)
+		{
+			// by default most expressions ignore the type hint
+			return this.Resolve(rc);
+		}
+
 		public static void ErrorIsInaccesible (IMemberContext rc, string member, Location loc)
 		{
 			rc.Module.Compiler.Report.Error (122, loc, "`{0}' is inaccessible due to its protection level", member);
@@ -1294,6 +1319,9 @@ namespace Mono.CSharp {
 		EmptyCast (Expression child, TypeSpec target_type)
 			: base (child, target_type)
 		{
+			if (child.Type == null || child.eclass == ExprClass.Unresolved) {
+				throw new InvalidOperationException("Unresolved type in EmptyCast");
+			}
 		}
 
 		public static Expression Create (Expression child, TypeSpec type)
@@ -1307,6 +1335,19 @@ namespace Mono.CSharp {
 				return new EmptyCast (e.child, type);
 
 			return new EmptyCast (child, type);
+		}
+
+		public static Expression RemoveDynamic(ResolveContext rc, Expression child)
+		{
+			if (child.Type == rc.BuiltinTypes.Dynamic) {
+				if (child.eclass == ExprClass.Unresolved) {
+					// dont really like this, but sometimes its needed
+					return new BoxedCast(child, rc.BuiltinTypes.Object);
+				} else {
+					return EmptyCast.Create(child, rc.BuiltinTypes.Object);
+				}
+			}
+			return child;
 		}
 
 		public override void EmitBranchable (EmitContext ec, Label label, bool on_true)
@@ -4448,6 +4489,16 @@ namespace Mono.CSharp {
 			if (specific_at_least_once)
 				return true;
 
+			if (ec.FileType == SourceFileType.PlayScript) {
+				// if one is static and one is not, choose the non static version
+				if (candidate.IsStatic != best.IsStatic) {
+					if (!candidate.IsStatic) {
+						// use the candidate because it is non-static
+						return true;
+					}
+				}
+			}
+
 			return false;
 		}
 
@@ -4905,24 +4956,6 @@ namespace Mono.CSharp {
 			} else {
 				if (argument.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic && (restrictions & Restrictions.CovariantDelegate) == 0)
 					return -1;
-
-				//
-				// If we're an actionscript file and we have an untyped array initializer as a parameter just
-				// resolve the initializer 
-				if (ec.FileType == SourceFileType.PlayScript) {
-					if (argument.InferArrayInitializer != null) {
-						if (parameter.ImplementsInterface(ec.BuiltinTypes.IEnumerable, false)) {
-							argument.Expr = argument.InferArrayInitializer.InferredResolveWithArrayType (ec, parameter);
-						}
-					} else if (argument.InferObjInitializer != null) {
-						if (parameter == ec.BuiltinTypes.Object || parameter == ec.BuiltinTypes.Dynamic ||
-						  (!BuiltinTypeSpec.IsPrimitiveTypeOrDecimal(parameter) && 
-						    parameter.BuiltinType != BuiltinTypeSpec.Type.String && 
-						    parameter.BuiltinType != BuiltinTypeSpec.Type.Enum)) {
-							argument.Expr = argument.InferObjInitializer.InferredResolveWithObjectType (ec, parameter);
-						}
-					}
-				}
 
 				//
 				// Use implicit conversion in all modes to return same candidates when the expression

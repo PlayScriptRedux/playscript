@@ -1,3 +1,6 @@
+//
+// PSConverter.cs
+//
 // Copyright 2013 Zynga Inc.
 //	
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,35 +14,76 @@
 //      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
+
 #if !DYNAMIC_SUPPORT
 
+
 using System;
-using System.Collections.Generic;
-using PlayScript;
+using System.Reflection;
+using System.Collections;
 
-namespace PlayScript.RuntimeBinder
+namespace PlayScript.DynamicRuntime
 {
-
-	class PSConvertBinder : CallSiteBinder
+	public static class PSConverter
 	{
-		private static Dictionary<Type, object> delegates = new Dictionary<Type, object>();
+		public static object ConvertToString(object o, Type targetType) {
+			Stats.Increment(StatsCounter.ConvertBinderInvoked);
 
-		readonly Type type;
-	//	readonly CSharpBinderFlags flags;
-	//	readonly Type context;
-		
-		public PSConvertBinder (Type type, Type context, CSharpBinderFlags flags)
-		{
-			this.type = type;
-	//		this.flags = flags;
-	//		this.context = context;
+			if (o is string) {
+				return (string)o;
+			}
+			if (o == null) {
+				return null;
+			}
+//			if (o is JsonValue) {
+//				// dont call ToString on a json value else it becomes quoted
+//				return (string)(JsonValue)o;
+//			}
+
+			return o.ToString();
 		}
 
-		public static int ConvertToInt (CallSite site, object o)
+		public static Func<object, Type, object> GetConversionFunction(object value, Type targetType, bool valueTypeIsConstant)
 		{
-#if BINDERS_RUNTIME_STATS
+			if (!valueTypeIsConstant) {
+				// must use the slower convert method
+				return Dynamic.ConvertValue;
+			}
+
+			if (value == null) {
+				// no conversion required
+				return null;
+			}
+
+			Type valueType = value.GetType();
+			if (targetType == valueType) {
+				// no conversion required
+				return null;
+			}
+
+			if (targetType == typeof(System.Object)) {
+				// no conversion required
+				return null;
+			}
+
+			if (targetType.IsAssignableFrom(valueType)) {
+				// no conversion required
+				return null;
+			} else {
+				if (targetType == typeof(String)) {
+					// conversion required
+					return ConvertToString;
+				}
+				// conversion required
+				return System.Convert.ChangeType;
+			}
+		}
+
+		
+		public static int ConvertToInt (object o)
+		{
 			Stats.Increment(StatsCounter.ConvertBinderInvoked);
-#endif
+
 			if (o is int) {
 				return (int)o;
 			} 
@@ -76,11 +120,10 @@ namespace PlayScript.RuntimeBinder
 			}
 		}
 
-		public static uint ConvertToUInt (CallSite site, object o)
+		public static uint ConvertToUInt (object o)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.ConvertBinderInvoked);
-#endif
+
 			if (o is uint) {
 				return (uint)o;
 			} 
@@ -110,11 +153,44 @@ namespace PlayScript.RuntimeBinder
 			}
 		}
 
-		public static double ConvertToDouble (CallSite site, object o)
+		public static float ConvertToFloat (object o)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.ConvertBinderInvoked);
-#endif
+
+			if (o is float) {
+				return (float)o;
+			} 
+			if (o is double) {
+				return (float)(double)o;
+			} 
+			if (o == null || o == PlayScript.Undefined._undefined) {
+				return 0.0f;
+			}
+
+			var typeCode = Type.GetTypeCode (o.GetType ());
+			switch (typeCode) {
+			case TypeCode.Int32:
+				return (int)o;
+			case TypeCode.Double:
+				return (float)o;
+			case TypeCode.Boolean:
+				return (bool)o ? 1 : 0;
+			case TypeCode.UInt32:
+				return (uint)o;
+			case TypeCode.Single:
+				return (float)o;
+			case TypeCode.String:
+				return float.Parse((String)o);
+			default:
+				throw new Exception ("Invalid cast to float");
+			}
+		}
+
+
+		public static double ConvertToDouble (object o)
+		{
+			Stats.Increment(StatsCounter.ConvertBinderInvoked);
+
 			if (o is double) {
 				return (double)o;
 			} 
@@ -144,11 +220,10 @@ namespace PlayScript.RuntimeBinder
 			}
 		}
 
-		public static bool ConvertToBool (CallSite site, object o)
+		public static bool ConvertToBool (object o)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.ConvertBinderInvoked);
-#endif
+
 			if (o is bool) {
 				return (bool)o;
 			} 
@@ -173,11 +248,10 @@ namespace PlayScript.RuntimeBinder
 			}
 		}
 
-		public static string ConvertToString (CallSite site, object o)
+		public static string ConvertToString (object o)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.ConvertBinderInvoked);
-#endif
+
 			if (o == null || o == PlayScript.Undefined._undefined) {
 				return null;
 			} else if  (o is string) {
@@ -187,31 +261,11 @@ namespace PlayScript.RuntimeBinder
 			}
 		}
 
-		public static object ConvertToObj (CallSite site, object o)
+		public static object ConvertToObj (object o)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.ConvertBinderInvoked);
-#endif
-			return o;
-		}
 
-		static PSConvertBinder ()
-		{
-			delegates.Add (typeof(Func<CallSite, object, int>), (Func<CallSite, object, int>)ConvertToInt);
-			delegates.Add (typeof(Func<CallSite, object, uint>), (Func<CallSite, object, uint>)ConvertToUInt);
-			delegates.Add (typeof(Func<CallSite, object, double>), (Func<CallSite, object, double>)ConvertToDouble);
-			delegates.Add (typeof(Func<CallSite, object, bool>), (Func<CallSite, object, bool>)ConvertToBool);
-			delegates.Add (typeof(Func<CallSite, object, string>), (Func<CallSite, object, string>)ConvertToString);
-			delegates.Add (typeof(Func<CallSite, object, object>), (Func<CallSite, object, object>)ConvertToObj);
-		}
-		
-		public override object Bind (Type delegateType)
-		{
-			object target;
-			if (delegates.TryGetValue (delegateType, out target)) {
-				return target;
-			}
-			throw new Exception("Unable to bind convert for target " + delegateType.FullName);
+			return o;
 		}
 
 	}

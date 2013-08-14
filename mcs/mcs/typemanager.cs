@@ -247,7 +247,7 @@ namespace Mono.CSharp
 		//
 		// Actionscript
 		//
-		public readonly PredefinedType AsObject;
+		public readonly PredefinedType AsExpandoObject;
 		public readonly PredefinedType AsVector;
 		public readonly PredefinedType AsArray;
 		public readonly PredefinedType AsError;
@@ -261,6 +261,16 @@ namespace Mono.CSharp
 		public readonly PredefinedType AsRegExp;
 		public readonly PredefinedType AsXml;
 		public readonly PredefinedType AsIKeyEnumerable;
+
+		public readonly PredefinedType PsGetMember;
+		public readonly PredefinedType PsSetMember;
+		public readonly PredefinedType PsSetIndex;
+		public readonly PredefinedType PsGetIndex;
+		public readonly PredefinedType PsConverter;
+		public readonly PredefinedType PsBinaryOperation;
+		public readonly PredefinedType PsUnaryOperation;
+		public readonly PredefinedType PsInvokeMember;
+		public readonly PredefinedType PsInvoke;
 
 		// PlayScript dynamic binder AOT mode support..
 		private bool checkedAsDynamicMode = false;
@@ -325,7 +335,7 @@ namespace Mono.CSharp
 			INotifyCompletion = new PredefinedType (module, MemberKind.Interface, "System.Runtime.CompilerServices", "INotifyCompletion");
 			ICriticalNotifyCompletion = new PredefinedType (module, MemberKind.Interface, "System.Runtime.CompilerServices", "ICriticalNotifyCompletion");
 
-			AsObject = new PredefinedType (module, MemberKind.Class, "PlayScript.Expando", "ExpandoObject");
+			AsExpandoObject = new PredefinedType (module, MemberKind.Class, "PlayScript.Expando", "ExpandoObject");
 			AsArray = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "Array");
 			AsVector = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "Vector", 1);
 			AsError = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "Error");
@@ -339,6 +349,16 @@ namespace Mono.CSharp
 			AsRegExp = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "RegExp");
 			AsXml = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "XML");
 			AsIKeyEnumerable = new PredefinedType (module, MemberKind.Interface, "PlayScript", "IKeyEnumerable");
+
+			PsGetMember = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSGetMember");
+			PsSetMember = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSSetMember");
+			PsGetIndex  = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSGetIndex");
+			PsSetIndex  = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSSetIndex");
+			PsConverter         = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSConverter");
+			PsBinaryOperation   = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSBinaryOperation");
+			PsUnaryOperation   = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSUnaryOperation");
+			PsInvokeMember  = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSInvokeMember");
+			PsInvoke  = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSInvoke");
 
 			//
 			// Define types which are used for comparison. It does not matter

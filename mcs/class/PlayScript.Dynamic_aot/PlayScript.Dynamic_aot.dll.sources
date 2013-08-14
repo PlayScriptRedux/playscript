@@ -14,6 +14,7 @@
 ../PlayScript.Dynamic/PlayScript/Invoker.cs
 ../PlayScript.Dynamic/PlayScript/MethodBinder.cs
 ../PlayScript.Dynamic/PlayScript/ParamsDelegateTypes.cs
+../PlayScript.Dynamic/PlayScript/Stats.cs
 ../PlayScript.Dynamic/PlayScript/Undefined.cs
 ../PlayScript.Dynamic/PlayScript/Expando/BindingRestrictionsEx.cs
 ../PlayScript.Dynamic/PlayScript/Expando/CacheDict.cs
@@ -49,5 +50,14 @@
 ../PlayScript.Dynamic/PlayScript/RuntimeBinder/PSSetIndexBinder.cs
 ../PlayScript.Dynamic/PlayScript/RuntimeBinder/PSSetMemberBinder.cs
 ../PlayScript.Dynamic/PlayScript/RuntimeBinder/PSInvokeMemberBinder.cs
-../PlayScript.Dynamic/PlayScript/RuntimeBinder/PSIsEventBinder.cs
 ../PlayScript.Dynamic/System/Runtime/CompilerServices/DynamicAttribute.cs
+../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSGetMember.cs
+../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSConverter.cs
+../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSBinaryOperation.cs
+../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSUnaryOperation.cs
+../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSSetMember.cs
+../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSGetIndex.cs
+../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSSetIndex.cs
+../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSInvokeMember.cs
+../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSInvoke.cs
+

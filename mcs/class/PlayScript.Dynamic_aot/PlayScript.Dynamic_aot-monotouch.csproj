@@ -40,6 +40,7 @@
     <Folder Include="Resources\" />
     <Folder Include="PlayScript\" />
     <Folder Include="System\" />
+    <Folder Include="PlayScript\DynamicRuntime\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -163,6 +164,24 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\IKeyEnumerable.cs">
       <Link>PlayScript\IKeyEnumerable.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSConverter.cs">
+      <Link>PlayScript\DynamicRuntime\PSConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSBinaryOperation.cs">
+      <Link>PlayScript\DynamicRuntime\PSBinaryOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSGetIndex.cs">
+      <Link>PlayScript\DynamicRuntime\PSGetIndex.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSGetMember.cs">
+      <Link>PlayScript\DynamicRuntime\PSGetMember.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSSetIndex.cs">
+      <Link>PlayScript\DynamicRuntime\PSSetIndex.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSSetMember.cs">
+      <Link>PlayScript\DynamicRuntime\PSSetMember.cs</Link>
+    </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\Stats.cs">
       <Link>PlayScript\Stats.cs</Link>
     </Compile>
@@ -171,6 +190,15 @@
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\ActionCreator.cs">
       <Link>PlayScript\ActionCreator.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSUnaryOperation.cs">
+      <Link>PlayScript\DynamicRuntime\PSUnaryOperation.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSInvokeMember.cs">
+      <Link>PlayScript\DynamicRuntime\PSInvokeMember.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSInvoke.cs">
+      <Link>PlayScript\DynamicRuntime\PSInvoke.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

@@ -1561,7 +1561,7 @@ namespace Mono.CSharp {
 							break;
 						}
 					} else if (expr_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
-						type_expr = new TypeExpression (ec.Module.PredefinedTypes.AsObject.Resolve(), type_expr.Location);
+						type_expr = new TypeExpression (ec.Module.PredefinedTypes.AsExpandoObject.Resolve(), type_expr.Location);
 					}
 				}
 				return new TypeOf (type_expr, expr.Location).Resolve (ec);

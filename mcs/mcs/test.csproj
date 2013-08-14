@@ -20,6 +20,7 @@
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ConsolePause>false</ConsolePause>
+    <additionalargs>/define:TEST_STRING='string',TEST_BOOL=false,TEST_INT=100,TEST_NUMBER=123.4</additionalargs>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -32,9 +33,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="test2">
-      <HintPath>test2.exe</HintPath>
-    </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -52,6 +50,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="test.as" />
+    <Compile Include="..\tests\pstest-004.as">
+      <Link>pstest-004.as</Link>
+    </Compile>
   </ItemGroup>
 </Project>
