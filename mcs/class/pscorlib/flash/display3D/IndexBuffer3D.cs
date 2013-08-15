@@ -32,15 +32,24 @@ namespace flash.display3D {
 
 #if OPENGL
 
-		public IndexBuffer3D(Context3D context3D, int numIndices)
+		internal IndexBuffer3D(Context3D context3D, int numIndices, int multiBufferCount, bool isDynamic)
 		{
+			if (multiBufferCount < 1)
+				throw new ArgumentOutOfRangeException("multiBufferCount");
+
 			mNumIndices = numIndices;
-			GL.GenBuffers(1, out mId);
+			mIds = new uint[multiBufferCount];
+			GL.GenBuffers(multiBufferCount, mIds);
+
+			#if PLATFORM_MONOMAC
+			mUsage = isDynamic ? BufferUsageHint.DynamicDraw : BufferUsageHint.StaticDraw;
+			#elif PLATFORM_MONOTOUCH
+			mUsage = isDynamic ? BufferUsage.DynamicDraw : BufferUsage.StaticDraw;
+			#endif
 		}
 
-
 		public void dispose() {
-			GL.DeleteBuffers(1, ref mId);
+			GL.DeleteBuffers(mIds.Length, mIds);
 		}
 		
 		public void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startOffset, int count) {
@@ -48,29 +57,42 @@ namespace flash.display3D {
 		}
 
 		public void uploadFromVector(Vector<uint> data, int startOffset, int count) {
-			GL.BindBuffer(BufferTarget.ElementArrayBuffer, mId);
+			// swap to next buffer
+			mBufferIndex++;
+			if (mBufferIndex >= mIds.Length)
+				mBufferIndex = 0;
+
+			GL.BindBuffer(BufferTarget.ElementArrayBuffer, mIds[mBufferIndex]);
 #if PLATFORM_MONOMAC
 		    GL.BufferData<uint>(BufferTarget.ElementArrayBuffer, 
 		        (IntPtr)(count * sizeof(uint)), 
-		        data.ToArray(), 
-		        BufferUsageHint.StaticDraw);
+		        data._GetInnerArray(), 
+                mUsage);
 #elif PLATFORM_MONOTOUCH
 			GL.BufferData<uint>(BufferTarget.ElementArrayBuffer, 
                 (IntPtr)(count * sizeof(uint)), 
-                data.ToArray(), 
-                BufferUsage.StaticDraw);
+                data._GetInnerArray(), 
+                mUsage);
 #endif
 		}
 		
-		public uint id {get {return mId;}}
-		public int numIndices {get{return mNumIndices;}}
+		public uint 			id 			{get {return mIds[mBufferIndex];}}
+		public int				numIndices 	{get {return mNumIndices;}}
 		
-		private readonly int mNumIndices;
-		private uint 	mId;
+		private readonly int	mNumIndices;
+		private uint[]			mIds;
+		private int 			mBufferIndex;		// buffer index for multibuffering
+
+#if PLATFORM_MONOMAC
+		private BufferUsageHint     mUsage;
+#elif PLATFORM_MONOTOUCH
+		private BufferUsage         mUsage;
+#endif
+
 
 #else
 
-		public IndexBuffer3D(Context3D context3D, int numIndices)
+		public IndexBuffer3D(Context3D context3D, int numIndices, int multiBufferCount = 1)
 		{
 			throw new NotImplementedException();
 		}
