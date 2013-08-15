@@ -2644,8 +2644,8 @@ namespace PlayScript.Expando {
 		[DebuggerDisplay("{value}", Name = "{key}")]
 		internal class KeyValuePairDebugView
 		{
-			public object key;
-			public object value;
+			public object key   {get; set;}
+			public object value {get; set;}
 			
 			public KeyValuePairDebugView(object key, object value)
 			{
