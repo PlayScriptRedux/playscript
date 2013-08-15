@@ -118,6 +118,11 @@ namespace flash.utils
 
 		#region IKeyEnumerable implementation
 
+		public KeyCollection.Enumerator GetKeyEnumerator()
+		{
+			return this.Keys.GetEnumerator();
+		}
+
 		IEnumerator PlayScript.IKeyEnumerable.GetKeyEnumerator()
 		{
 			return this.Keys.GetEnumerator();

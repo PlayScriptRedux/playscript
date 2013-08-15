@@ -953,12 +953,12 @@ namespace _root {
 
 		#region IEnumerable implementation
 
-		private class VectorEnumerator : IEnumerator<T>
+		private class VectorEnumeratorClass : IEnumerator<T>
 		{
-			public Vector<T> mVector;
-			public int mIndex;
+			private readonly Vector<T> mVector;
+			private int mIndex;
 
-			public VectorEnumerator(Vector<T> vector)
+			public VectorEnumeratorClass(Vector<T> vector)
 			{
 				mVector = vector;
 				mIndex = -1;
@@ -1005,18 +1005,58 @@ namespace _root {
 
 		}
 
+		// this is the public struct enumerator, it does not implement IDisposable and doesnt allocate space on the heap
+		public struct VectorEnumeratorStruct
+		{
+			private readonly Vector<T> mVector;
+			private int mIndex;
+
+			public VectorEnumeratorStruct(Vector<T> vector)
+			{
+				mVector = vector;
+				mIndex = -1;
+			}
+
+			#region IEnumerator implementation
+			public bool MoveNext ()
+			{
+				mIndex++;
+				return mIndex < mVector.mCount;
+			}
+
+			public void Reset ()
+			{
+				mIndex = -1;
+			}
+
+			public T Current {
+				get {
+					return mVector.mArray[mIndex];
+				}
+			}
+			#endregion
+		}
+
+		// public get enumerator that returns a faster struct
+		public VectorEnumeratorStruct GetEnumerator ()
+		{
+			return new VectorEnumeratorStruct(this);
+		}
+
+		// private IEnumerable<T> get enumerator that returns a (slower) class on the heap
 		IEnumerator<T> IEnumerable<T>.GetEnumerator ()
 		{
-			return new VectorEnumerator(this);
+			return new VectorEnumeratorClass(this);
 		}
 
 		#endregion
 
 		#region IEnumerable implementation
 
+		// private IEnumerable get enumerator that returns a (slower) class on the heap
 		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator ()
 		{
-			return new VectorEnumerator(this);
+			return new VectorEnumeratorClass(this);
 		}
 
 		#endregion
@@ -1024,12 +1064,12 @@ namespace _root {
 
 		#region IKeyEnumerable implementation
 
-		private class VectorKeyEnumerator : IEnumerator
+		private class VectorKeyEnumeratorClass : IEnumerator
 		{
-			public IList mVector;
-			public int mIndex;
+			private readonly IList mVector;
+			private int mIndex;
 			
-			public VectorKeyEnumerator(IList vector)
+			public VectorKeyEnumeratorClass(IList vector)
 			{
 				mVector = vector;
 				mIndex = -1;
@@ -1065,9 +1105,50 @@ namespace _root {
 			#endregion
 		}
 
+		// this is the public struct enumerator, it does not implement IDisposable and doesnt allocate space on the heap
+		public struct VectorKeyEnumeratorStruct 
+		{
+			private readonly IList mVector;
+			private int mIndex;
+
+			public VectorKeyEnumeratorStruct(IList vector)
+			{
+				mVector = vector;
+				mIndex = -1;
+			}
+
+			#region IEnumerator implementation
+
+			public bool MoveNext ()
+			{
+				mIndex++;
+				return mIndex < mVector.Count;
+			}
+
+			public void Reset ()
+			{
+				mIndex = -1;
+			}
+
+			// unfortunately this has to return object because the for() loop could use a non-int as its variable, causing bad IL
+			public object Current {
+				get {
+					return mIndex;
+				}
+			}
+			#endregion
+		}
+
+		// public get enumerator that returns a faster struct
+		public VectorKeyEnumeratorStruct GetKeyEnumerator()
+		{
+			return new VectorKeyEnumeratorStruct(this);
+		}
+
+		// private IKeyEnumerable get enumerator that returns a (slower) class on the heap
 		IEnumerator PlayScript.IKeyEnumerable.GetKeyEnumerator()
 		{
-			return new VectorKeyEnumerator(this);
+			return new VectorKeyEnumeratorClass(this);
 		}
 
 		#endregion

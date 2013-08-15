@@ -25,6 +25,7 @@ package
 		}
 
 
+
 		public function testCoalescing():void {
 
 			var n:int;
@@ -642,6 +643,66 @@ package
 //			return null;
 //		}
 	
+		public static function testIterator():void {
+			var v:Vector.<int> = new Vector.<int>();
+			v.push (5);
+			v.push (6);
+			v.push (7);
+			v.push (8);
+
+			for (var i2:int in v)
+			{
+				trace (i2);
+			}
+
+
+			for each (var i:int in v)
+			{
+				trace (i);
+			}
+
+
+			var a:Array = new Array();
+			a.push ("5");
+			a.push (65);
+			a.push ("abc");
+			a.push (true);
+
+			for (var j2:int in a)
+			{
+				trace (j2);
+			}
+
+
+			for each (var j:Object in a)
+			{
+				trace (j);
+			}
+
+
+			var o:Object = {a:5, b:6};
+			for (var k0:Object in o)
+			{
+				trace (k0);
+			}
+
+			for each (var j3:Object in o)
+			{
+				trace (j3);
+			}
+
+			var d:Dictionary = new Dictionary();
+			d.a = 5;
+			d.b = 6;
+			for each (var j4:Object in d)
+			{
+				trace (j4);
+			}
+
+
+		}
+
+
 
 		public static function Main():void {
 			//var z:Boolean = getNullSprite();
@@ -659,7 +720,8 @@ package
 //			var v:Virals = new Virals();
 //			v.fromData("a", null);
 
-			TestConvert();
+			testIterator();
+//			TestConvert();
 //			initQuantTables(10);
 
 			//removeFromQueue("a", "b");
