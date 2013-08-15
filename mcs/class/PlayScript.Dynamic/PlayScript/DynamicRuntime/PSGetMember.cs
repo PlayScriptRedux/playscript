@@ -141,6 +141,8 @@ namespace PlayScript.DynamicRuntime
 				{
 					// setup binding to property
 					mType     = otype;
+					mPreviousFunc = null;
+					mPreviousTarget = null;
 					mProperty = property;
 					mPropertyGetter = property.GetGetMethod();
 					mField    = null;
@@ -158,6 +160,8 @@ namespace PlayScript.DynamicRuntime
 				if (field.IsPublic && field.IsStatic == isStatic) {
 					// setup binding to field
 					mType     = otype;
+					mPreviousFunc = null;
+					mPreviousTarget = null;
 					mProperty = null;
 					mField    = field;
 					mMethod   = null;
@@ -178,6 +182,8 @@ namespace PlayScript.DynamicRuntime
 			{
 				// setup binding to method
 				mType     = otype;
+				mPreviousFunc = null;
+				mPreviousTarget = null;
 				mProperty = null;
 				mField    = null;
 				mMethod   = method;
@@ -191,6 +197,8 @@ namespace PlayScript.DynamicRuntime
 			{
 				// dynamic class
 				mType     = otype;
+				mPreviousFunc = null;
+				mPreviousTarget = null;
 				mProperty = null;
 				mField    = null;
 				mMethod   = null;

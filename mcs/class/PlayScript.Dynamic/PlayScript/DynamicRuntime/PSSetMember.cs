@@ -128,6 +128,8 @@ namespace PlayScript.DynamicRuntime
 					mProperty = property;
 					mPropertySetter = property.GetSetMethod();
 					mField    = null;
+					mPreviousAction = null;
+					mPreviousTarget = null;
 
 					mArgs[0] = PlayScript.Dynamic.ConvertValue(value, property.PropertyType);
 					mPropertySetter.Invoke(o, mArgs);
@@ -145,6 +147,8 @@ namespace PlayScript.DynamicRuntime
 					mType     = otype;
 					mProperty = null;
 					mField    = field;
+					mPreviousAction = null;
+					mPreviousTarget = null;
 
 					// resolve conversion function
 					object newValue = PlayScript.Dynamic.ConvertValue(value, mField.FieldType);
@@ -159,6 +163,8 @@ namespace PlayScript.DynamicRuntime
 				mType     = otype;
 				mProperty = null;
 				mField    = null;
+				mPreviousAction = null;
+				mPreviousTarget = null;
 				((IDynamicClass)o).__SetDynamicValue(mName, value);
 				return value;
 			}		
