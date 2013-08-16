@@ -20,6 +20,7 @@ using System.Runtime.Serialization;
 using System.Security.Permissions;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 
 namespace _root {
@@ -824,7 +825,10 @@ namespace _root {
 		}
 		
 		public uint length
-		{ 
+		{
+#if NET_4_5
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
 			get { return mCount; } 
 			set { 
 				if (value == 0) {
@@ -879,34 +883,76 @@ namespace _root {
 
 		public T this[int i]
 		{
+#if NET_4_5
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
 			get {
+#if PERFORMANCE_MODE && DEBUG
+				if ((i >= mCount) || (i < 0))
+				{
+					throw new IndexOutOfRangeException();
+				}
+#elif PERFORMANCE_MODE
+#else
 				if ((i >= mCount) || (i < 0))
 				{
 					return default(T);
 				}
+#endif
 				return mArray[i];
 			}
+#if NET_4_5
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
 			set {
+#if PERFORMANCE_MODE && DEBUG
+				if (i >= mCount) {
+					throw new IndexOutOfRangeException();
+				}
+#elif PERFORMANCE_MODE
+#else
 				if (i >= mCount) {
 					expand((uint)(i+1));
 				}
+#endif
 				mArray[i] = value;
 			}
 		}
 
 		public T this[uint i]
 		{
+#if NET_4_5
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
 			get {
+#if PERFORMANCE_MODE && DEBUG
+				if (i >= mCount)
+				{
+					throw new IndexOutOfRangeException();
+				}
+#elif PERFORMANCE_MODE
+#else
 				if (i >= mCount)
 				{
 					return default(T);
 				}
+#endif
 				return mArray[(int)i];
 			}
+#if NET_4_5
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
 			set {
+#if PERFORMANCE_MODE && DEBUG
+				if (i >= mCount) {
+					throw new IndexOutOfRangeException();
+				}
+#elif PERFORMANCE_MODE
+#else
 				if (i >= mCount) {
 					expand((uint)(i+1));
 				}
+#endif
 				mArray[(int)i] = value;
 			}
 		}
@@ -1144,16 +1190,27 @@ namespace _root {
 			mArray[mCount] = default(T);
 			return val;
 		}
-		
-		public uint push(T value) 
+
+#if NET_4_5
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+#if PERFORMANCE_MODE
+		public void push(T value)
+#else
+		public uint push(T value)
+#endif
 		{
+#if !PERFORMANCE_MODE
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
+#endif
 			if (mCount >= mArray.Length)
 				EnsureCapacity((uint)(1.25 * (mCount + 1)));
 			mArray[mCount] = value;
 			mCount++;
+#if !PERFORMANCE_MODE
 			return mCount;
+#endif
 		}
 		
 		public uint push(T value, params T[] args) 
@@ -1193,8 +1250,12 @@ namespace _root {
 			_RemoveAt(0);
 			return v;
 		}
-		
+
+#if PERFORMANCE_MODE
+		public void slice(int startIndex = 0, int endIndex = 16777215) 
+#else
 		public Vector<T> slice(int startIndex = 0, int endIndex = 16777215) 
+#endif
 		{
 			if (startIndex < 0) 
 				throw new InvalidOperationException("splice error");
@@ -1206,10 +1267,12 @@ namespace _root {
 			int count = endIndex - startIndex;
 			if (count < 0)
 				count = 0;
-				
+
+#if !PERFORMANCE_MODE
 			var result = new Vector<T>((uint)count, false);
 			System.Array.Copy(mArray, startIndex, result.mArray, 0, count);
 			return result;
+#endif
 		}
 		
 		public bool some(Delegate callback, dynamic thisObject = null) 
