@@ -139,16 +139,18 @@ namespace flash.display3D
 
 #else
 
-		public VertexBuffer3D(Context3D context3D, int numVertices, int dataPerVertex, int multiBufferCount = 1))
+		public VertexBuffer3D(Context3D context3D, int numVertices, int dataPerVertex, int multiBufferCount = 1)
 		{
 			throw new NotImplementedException();
 		}
 		
-		public void dispose() {
+		public void dispose() 
+		{
 			throw new NotImplementedException();
 		}
 		
-		public void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startVertex, int numVertices) {
+		public void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startVertex, int numVertices) 
+		{
 			throw new NotImplementedException();
 		}
 		
@@ -157,13 +159,15 @@ namespace flash.display3D
 			throw new NotImplementedException();
 		}
 		
-		public int stride { 
+		public int stride 
+		{ 
 			get {
 				throw new NotImplementedException();
 			}
 		}
 		
-		public uint id {
+		public uint id 
+		{
 			get {
 				throw new NotImplementedException();
 			}

@@ -148,6 +148,8 @@
 ../pscorlib/flash/globalization/DateTimeFormatter.play
 ../pscorlib/flash/media/Camera.play
 ../pscorlib/flash/media/ID3Info.play
+../pscorlib/flash/media/ios/Sound.cs
+../pscorlib/flash/media/ios/SoundChannel.cs
 ../pscorlib/flash/media/Sound.play
 ../pscorlib/flash/media/SoundChannel.play
 ../pscorlib/flash/media/SoundLoaderContext.play
