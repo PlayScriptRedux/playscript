@@ -19,7 +19,9 @@ package flash.media {
 	import flash.utils.ByteArray;
 
 	public class Sound extends EventDispatcher {
-		
+
+		private var _url:String;
+
 		//
 		// Properties
 		//
@@ -36,7 +38,10 @@ package flash.media {
 
  	 	public property length : Number { get { return 0.0; } }
 
- 	 	public property url : String { get { return null; } }
+ 	 	public property url : String { 
+			get { return _url; } 
+			set { _url = value; } 
+        }
 
  	 	//
  	 	// Methods
@@ -53,6 +58,12 @@ package flash.media {
 		}
  	 	
 		public function load(stream:URLRequest, context:SoundLoaderContext = null):void {
+		#if PLATFORM_MONOTOUCH
+			loadIos(stream.url);
+		#else
+			trace("No sound implementation on Mac yet");
+			//throw new System.NotImplementedException();
+		#endif
 		}
  	 	
 		public function loadCompressedDataFromByteArray(bytes:ByteArray, bytesLength:uint):void {
@@ -62,7 +73,13 @@ package flash.media {
 		}
  	 	
 		public function play(startTime:Number = 0, loops:int = 0, sndTransform:SoundTransform = null):SoundChannel {
-			return null;
+		#if PLATFORM_MONOTOUCH
+			return playIos(startTime, loops, sndTransform);
+		#else
+			trace("No sound implementation on Mac yet");
+			//throw new System.NotImplementedException();
+		    return null;
+		#endif
 		}
 	
 	}

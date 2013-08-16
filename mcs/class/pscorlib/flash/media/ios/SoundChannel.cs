@@ -12,37 +12,27 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-package flash.media {
+#if PLATFORM_MONOTOUCH
 
-	import flash.events.EventDispatcher;
+using MonoTouch.AVFoundation;
 
-	public class SoundChannel extends EventDispatcher {
-	
-		//
-		// Properties
-		//
-	
-		public property leftPeak : Number { get { return 0.0; } }
+namespace flash.media {
 
- 	 	public property position : Number { get { return 0.0; } }
+	// We use a partial C# class for platform specific logic
+	partial class SoundChannel {
 
- 	 	public property rightPeak : Number { get { return 0.0; } }
+		private AVAudioPlayer _player;
 
- 	 	public property soundTransform : SoundTransform { get; set; }
+		public AVAudioPlayer Player
+		{
+			set { _player = value; }
+		}
 
- 	 	//
- 	 	// Methods
- 	 	// 
- 	 	
- 	 	public function stop():void {
-		#if PLATFORM_MONOTOUCH
-		    stopIos();
-		#else
-			trace("No sound implementation on Mac yet");
-			//throw new System.NotImplementedException();
-		#endif
- 	 	}
-	
+		private void stopIos()
+		{
+			_player.Stop();
+		}
 	}
 
 }
+#endif

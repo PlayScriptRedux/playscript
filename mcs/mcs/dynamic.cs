@@ -10,6 +10,7 @@
 //
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using SLE = System.Linq.Expressions;
 using Mono.CSharp.JavaScript;
@@ -220,6 +221,13 @@ namespace Mono.CSharp
 		Expression CreateCallSiteBinder (ResolveContext ec, Arguments args);
 	}
 
+	interface IDynamicCallSite
+	{
+		bool 	   UseCallSite(ResolveContext rc, Arguments args);
+		Expression CreateCallSite(ResolveContext rc, Arguments args, bool isSet);
+		Expression InvokeCallSite(ResolveContext rc, Expression site, Arguments args, TypeSpec returnType, bool isStatement);
+	}
+
 	//
 	// Extends standard assignment interface for expressions
 	// supported by dynamic resolver
@@ -275,6 +283,8 @@ namespace Mono.CSharp
 		TypeSpec binder_type;
 		TypeParameters context_mvars;
 
+		protected bool useDelegateInvoke;
+
 		public DynamicExpressionStatement (IDynamicBinder binder, Arguments args, Location loc)
 		{
 			this.binder = binder;
@@ -302,7 +312,17 @@ namespace Mono.CSharp
 		protected override Expression DoResolve (ResolveContext rc)
 		{
 			if (DoResolveCore (rc))
-				binder_expr = binder.CreateCallSiteBinder (rc, arguments);
+			{
+				var dc = (binder as IDynamicCallSite);
+				if (rc.Module.PredefinedTypes.IsPlayScriptAotMode && (dc != null) && dc.UseCallSite(rc, arguments)) {
+					this.useDelegateInvoke = false;
+					arguments.CreateDynamicBinderArguments(rc);
+					binder_expr = dc.CreateCallSite(rc, arguments, false);
+				} else {
+					this.useDelegateInvoke = true;
+					binder_expr = binder.CreateCallSiteBinder (rc, arguments);
+				}
+			}
 
 			return this;
 		}
@@ -369,6 +389,100 @@ namespace Mono.CSharp
 		}
 
 		protected void EmitCall (EmitContext ec, Expression binder, Arguments arguments, bool isStatement)
+		{
+			if (!useDelegateInvoke) {
+				EmitCallWithInvoke(ec, binder, arguments, isStatement);
+			} else {
+				EmitCallWithDelegate(ec, binder, arguments, isStatement);
+			}
+		}
+
+		protected void EmitCallWithInvoke (EmitContext ec, Expression binder, Arguments arguments, bool isStatement)
+		{
+			var module = ec.Module;
+
+			var site_container = ec.CreateDynamicSite ();
+
+			BlockContext bc = new BlockContext (ec.MemberContext, null, ec.BuiltinTypes.Void);
+
+			FieldExpr site_field_expr = null;
+			StatementExpression s = null;
+
+			// create call site
+			var call_site = binder;
+			if (call_site != null) {
+				// resolve call site
+				call_site = call_site.Resolve(bc);
+
+				// create field for call site
+				var site_type_decl = call_site.Type;  
+				var field = site_container.CreateCallSiteField (new TypeExpression(site_type_decl, loc), loc);
+				if (field == null) {
+					throw new InvalidOperationException("Could not create call site field");
+				}
+
+				// ???
+				bool inflate_using_mvar = context_mvars != null && ec.IsAnonymousStoreyMutateRequired;
+
+				// ???
+				TypeSpec gt;
+				if (inflate_using_mvar || context_mvars == null) {
+					gt = site_container.CurrentType;
+				} else {
+					gt = site_container.CurrentType.MakeGenericType (module, context_mvars.Types);
+				}
+
+				// When site container already exists the inflated version has to be
+				// updated manually to contain newly created field
+				if (gt is InflatedTypeSpec && site_container.AnonymousMethodsCounter > 1) {
+					var tparams = gt.MemberDefinition.TypeParametersCount > 0 ? gt.MemberDefinition.TypeParameters : TypeParameterSpec.EmptyTypes;
+					var inflator = new TypeParameterInflator (module, gt, tparams, gt.TypeArguments);
+					gt.MemberCache.AddMember (field.InflateMember (inflator));
+				}
+
+				site_field_expr = new FieldExpr (MemberCache.GetMember (gt, field), loc);
+
+				s = new StatementExpression (new SimpleAssign (site_field_expr, call_site));
+			}
+
+
+
+			using (ec.With (BuilderContext.Options.OmitDebugInfo, true)) {
+				if (s!= null && s.Resolve (bc)) {
+					Statement init = new If (new Binary (Binary.Operator.Equality, site_field_expr, new NullLiteral (loc)), s, loc);
+					init.Emit (ec);
+				}
+
+				// remove dynamics from argument list
+				arguments.CastDynamicArgs(bc);
+
+				IDynamicCallSite dynamicCallSite = (IDynamicCallSite)this.binder;
+				Expression target = dynamicCallSite.InvokeCallSite(bc, site_field_expr, arguments, type, isStatement);
+				if (target != null) 
+					target = target.Resolve(bc);
+
+				if (target != null)
+				{
+					var statement = target as ExpressionStatement;
+					if (isStatement && statement != null)
+					{
+						statement.EmitStatement(ec);
+					}
+					else
+					{
+						if (!isStatement && (target.Type != type)) {
+							// PlayScript: If doing an invoke, we have to cast the return type to the type expected by the expression..
+							target = new Cast(new TypeExpression(type, loc), target, loc).Resolve (bc);
+						} 
+
+						target.Emit(ec);
+					}
+				}
+			}
+
+		}
+
+		protected void EmitCallWithDelegate (EmitContext ec, Expression binder, Arguments arguments, bool isStatement)
 		{
 			//
 			// This method generates all internal infrastructure for a dynamic call. The
@@ -707,6 +821,74 @@ namespace Mono.CSharp
 			base.binder = this;
 		}
 
+
+		protected override Expression DoResolve(ResolveContext rc)
+		{
+			// get expresion we're converting
+			var expr = this.Arguments[0].Expr;
+
+			if (rc.Module.PredefinedTypes.IsPlayScriptAotMode && rc.Module.Compiler.Settings.NewDynamicRuntime_ConvertReturnType) {
+				// encourage dynamic expression to resolve to our type to avoid this conversion
+				expr = expr.ResolveWithTypeHint(rc, this.Type);
+				if (expr.Type == this.type) {
+					// skip dynamic conversions
+					return expr;
+				}
+			}
+
+			if (rc.Module.PredefinedTypes.IsPlayScriptAotMode && rc.Module.Compiler.Settings.NewDynamicRuntime_Convert) {
+				return CreateDynamicConversion(rc, expr.Resolve(rc), this.Type).Resolve(rc);
+			}
+
+			return base.DoResolve(rc);
+		}
+
+		#region IDynamicCallSite implementation
+		public static Expression CreateDynamicConversion(ResolveContext rc, Expression expr, TypeSpec target_type)
+		{
+			if ((target_type.IsClass || target_type.IsInterface) && (target_type.BuiltinType != BuiltinTypeSpec.Type.String)){
+				// perform empty cast to reference type
+				return EmptyCast.Create(expr, target_type);
+			}
+
+			TypeSpec converter = rc.Module.PredefinedTypes.PsConverter.Resolve();
+
+			// perform numeric or other type conversion
+			string converterMethod = null;
+
+			switch (target_type.BuiltinType) {
+				case BuiltinTypeSpec.Type.UInt:
+					converterMethod = "ConvertToUInt";
+					break;
+				case BuiltinTypeSpec.Type.Double:
+					converterMethod = "ConvertToDouble";
+					break;
+				case BuiltinTypeSpec.Type.Float:
+					converterMethod = "ConvertToFloat";
+					break;
+				case BuiltinTypeSpec.Type.Int:
+					converterMethod = "ConvertToInt";
+					break;
+				case BuiltinTypeSpec.Type.String:
+					converterMethod = "ConvertToString";
+					break;
+				case BuiltinTypeSpec.Type.Bool:
+					converterMethod = "ConvertToBool";
+					break;
+				default:
+//					throw new InvalidOperationException("Unhandled convert to: " + target_type.GetSignatureForError());
+					return EmptyCast.Create(expr, target_type);
+//					converterMethod = "ConvertTo" + target_type.Name.ToString();
+//					break;
+			}
+
+			var cast_args = new Arguments(1);
+			cast_args.Add(new Argument(EmptyCast.RemoveDynamic(rc, expr)));
+			return new Invocation(new MemberAccess(new TypeExpression(converter, expr.Location), converterMethod, expr.Location), cast_args);
+		}
+
+		#endregion
+
 		public Expression CreateCallSiteBinder (ResolveContext ec, Arguments args)
 		{
 			Statement.DynamicOps |= DynamicOperation.Convert;
@@ -740,6 +922,35 @@ namespace Mono.CSharp
 			this.type = null;
 			this.typeExpr = typeExpr;
 			base.binder = this;
+		}
+
+		protected override Expression DoResolve(ResolveContext rc)
+		{
+			if (rc.Module.PredefinedTypes.IsPlayScriptAotMode && rc.Module.Compiler.Settings.NewDynamicRuntime_Constructor) {
+				if ((this.typeExpr == null) && (this.type != null)) {
+					var ctors = MemberCache.FindMembers (type, Constructor.ConstructorName, true);
+					if (ctors != null) {
+						// if there is one and only one ctor then use it
+						if (ctors.Count == 1) {
+							var first = Arguments[0];
+							Arguments.RemoveAt(0);
+							bool hasDynamic;
+							Arguments.Resolve(rc, out hasDynamic);
+							if (Arguments.AsTryResolveDynamicArgs(rc, ctors[0])) {
+								// use normal new
+								return new New(new TypeExpression(type, loc), Arguments, loc).Resolve(rc);
+							}
+
+							OverloadResolver.Error_ConstructorMismatch (rc, type, Arguments.Count, loc);
+							return null;
+						}
+					}
+				}
+
+				// fall through to normal resolve -- 
+			}
+
+			return base.DoResolve(rc);
 		}
 
 		public Expression CreateCallSiteBinder (ResolveContext ec, Arguments args)
@@ -779,6 +990,84 @@ namespace Mono.CSharp
 		{
 			can_be_mutator = true;
 			return base.DoResolve (ec);
+		}
+
+		public override bool UseCallSite(ResolveContext ec, Arguments args)
+		{
+			return ec.Module.Compiler.Settings.NewDynamicRuntime_GetSetIndex;
+		}
+
+		public override Expression CreateCallSite(ResolveContext rc, Arguments args, bool isSet)
+		{
+			TypeExpression type;
+			isSet |= (flags & CSharpBinderFlags.ValueFromCompoundAssignment) != 0;
+			if (!isSet) {
+				type = new TypeExpression(rc.Module.PredefinedTypes.PsGetIndex.Resolve(), loc);
+			} else {
+				type = new TypeExpression(rc.Module.PredefinedTypes.PsSetIndex.Resolve(), loc);
+			}
+
+			var site_args = new Arguments(0);
+			return new New(
+				type,
+				site_args, 
+				loc
+				);
+		}
+
+		public override Expression InvokeCallSite(ResolveContext rc, Expression site, Arguments args, TypeSpec returnType, bool isStatement)
+		{
+			// get object and index
+			var obj = args[0].Expr;
+			var index = args[1].Expr;
+
+			bool isSet = IsSetter(site);
+			isSet |= (flags & CSharpBinderFlags.ValueFromCompoundAssignment) != 0;
+			if (!isSet) {
+				if (NeedsCastToObject(returnType)) {
+					var site_args = new Arguments(2);
+					site_args.Add(new Argument(obj));
+					site_args.Add(new Argument(index));
+
+					// get as an object
+					var type_args = new TypeArguments();
+					type_args.Add(new TypeExpression(rc.BuiltinTypes.Object, loc));
+					return new Invocation(new MemberAccess(site, "GetIndexAs", type_args, loc), site_args);
+				} else {
+					var site_args = new Arguments(2);
+					site_args.Add(new Argument(obj));
+					site_args.Add(new Argument(index));
+
+					// get as a T
+					var type_args = new TypeArguments();
+					type_args.Add(new TypeExpression(returnType, loc));
+					return new Invocation(new MemberAccess(site, "GetIndexAs", type_args, loc), site_args);
+				}
+			} else {
+				var setVal = args[2].Expr;
+
+				if (NeedsCastToObject(setVal.Type)) {
+					var site_args = new Arguments(3);
+					site_args.Add(new Argument(obj));
+					site_args.Add(new Argument(index));
+					site_args.Add(new Argument(new Cast(new TypeExpression(rc.BuiltinTypes.Object, loc), setVal, loc)));
+						
+					// set as an object
+					var type_args = new TypeArguments();
+					type_args.Add(new TypeExpression(rc.BuiltinTypes.Object, loc));
+					return new Invocation(new MemberAccess(site, "SetIndexAs", type_args, loc), site_args);
+				} else {
+					var site_args = new Arguments(3);
+					site_args.Add(new Argument(obj));
+					site_args.Add(new Argument(index));
+					site_args.Add(new Argument(setVal));
+
+					// set as a T
+					var type_args = new TypeArguments();
+					type_args.Add(new TypeExpression(setVal.Type, loc));
+					return new Invocation(new MemberAccess(site, "SetIndexAs", type_args, loc), site_args);
+				}
+			}
 		}
 
 		protected override Expression CreateCallSiteBinder (ResolveContext ec, Arguments args, bool isSet)
@@ -833,15 +1122,18 @@ namespace Mono.CSharp
 		}
 	}
 
-	class DynamicInvocation : DynamicExpressionStatement, IDynamicBinder
+	class DynamicInvocation : DynamicExpressionStatement, IDynamicBinder, IDynamicCallSite
 	{
 		readonly ATypeNameExpression member;
+
+		private bool IsMemberAccess;
 
 		public DynamicInvocation (ATypeNameExpression member, Arguments args, Location loc)
 			: base (null, args, loc)
 		{
 			base.binder = this;
 			this.member = member;
+			this.IsMemberAccess = (member is MemberAccess) || (member is SimpleName);
 		}
 
 		public static DynamicInvocation CreateSpecialNameInvoke (ATypeNameExpression member, Arguments args, Location loc)
@@ -850,6 +1142,104 @@ namespace Mono.CSharp
 				flags = CSharpBinderFlags.InvokeSpecialName
 			};
 		}
+
+		protected override Expression DoResolve(ResolveContext rc)
+		{
+			if (rc.Module.PredefinedTypes.IsPlayScriptAotMode && rc.Module.Compiler.Settings.NewDynamicRuntime_HasOwnProperty) {
+				// special case handling of hasOwnProperty
+				if (this.member != null && this.Arguments != null && this.member.Name == "hasOwnProperty" && Arguments.Count == 2) {
+					var ma = new MemberAccess(new MemberAccess(
+						new QualifiedAliasMember(QualifiedAliasMember.GlobalAlias, "PlayScript", loc), "Dynamic", loc), "hasOwnProperty");
+
+					var site_args = new Arguments(2);
+					site_args.Add(new Argument(EmptyCast.RemoveDynamic(rc, Arguments[0].Expr.Resolve(rc))));
+					site_args.Add(Arguments[1]);
+					return new Invocation(ma, site_args).Resolve(rc);
+				}
+			}
+
+			if (rc.Module.PredefinedTypes.IsPlayScriptAotMode && rc.Module.Compiler.Settings.NewDynamicRuntime_ToString) {
+				// special case handling of toString
+				if (this.member != null && this.Arguments != null && (this.member.Name == "toString" || this.member.Name == "ToString") && Arguments.Count == 1) {
+					TypeSpec converter = rc.Module.PredefinedTypes.PsConverter.Resolve();
+					var site_args = new Arguments(1);
+					site_args.Add(new Argument(EmptyCast.RemoveDynamic(rc, Arguments[0].Expr.Resolve(rc))));
+					return new Invocation(new MemberAccess(new TypeExpression(converter, Location), "ConvertToString", Location), site_args).Resolve(rc);
+				}
+			}
+
+			return base.DoResolve(rc);
+		}
+
+		protected override Expression DoResolveWithTypeHint(ResolveContext rc, TypeSpec t) {
+			if (IsMemberAccess)
+			{
+				this.Type = t;
+			}
+			return this.Resolve(rc);
+		}
+
+		#region IDynamicCallSite implementation
+
+		public bool UseCallSite(ResolveContext rc, Arguments args)
+		{
+			return (IsMemberAccess && rc.Module.Compiler.Settings.NewDynamicRuntime_InvokeMember) ||
+				(!IsMemberAccess && rc.Module.Compiler.Settings.NewDynamicRuntime_Invoke);
+		}
+
+		public Expression CreateCallSite(ResolveContext rc, Arguments args, bool isSet)
+		{
+			if (IsMemberAccess) {
+				// construct new PsInvokeMember(name, argCount)
+				var site_args = new Arguments(2);
+				site_args.Add(new Argument(new StringLiteral(rc.BuiltinTypes, member.Name, member.Location)));
+				site_args.Add(new Argument(new IntLiteral(rc.BuiltinTypes, (args.Count - 1), loc)));
+				return new New(
+					new TypeExpression(rc.Module.PredefinedTypes.PsInvokeMember.Resolve(), loc),
+					site_args, 
+					loc
+				);
+			} else {
+				// construct new PsInvoke(argCount)
+				var site_args = new Arguments(1);
+				site_args.Add(new Argument(new IntLiteral(rc.BuiltinTypes, (args.Count - 1), loc)));
+				return new New(
+					new TypeExpression(rc.Module.PredefinedTypes.PsInvoke.Resolve(), loc),
+					site_args, 
+					loc
+					);
+			}
+		}
+
+		public TypeExpression CreateReducedTypeExpression(ResolveContext ec, TypeSpec t)
+		{
+			// Convert any internal type like dynamic or null to object
+			if (t.Kind == MemberKind.InternalCompilerType)
+				t = ec.BuiltinTypes.Object;
+
+
+			return new TypeExpression(t, loc);
+		}
+
+		public Expression InvokeCallSite(ResolveContext rc, Expression site, Arguments args, TypeSpec returnType, bool isStatement)
+		{
+			string memberName = "Invoke";
+			memberName += isStatement ? "Action" : "Func"; 
+			memberName += (args.Count - 1);
+
+			var ta = new TypeArguments();
+			for (int i = 1; i < args.Count; ++i) {
+				ta.Add(CreateReducedTypeExpression(rc, args[i].Type));
+			}
+
+			if (!isStatement) {
+				ta.Add(CreateReducedTypeExpression(rc, returnType));
+			}
+
+			return new Invocation(new MemberAccess(site, memberName, ta, loc), args);
+		}
+
+		#endregion
 
 		public Expression CreateCallSiteBinder (ResolveContext ec, Arguments args)
 		{
@@ -924,6 +1314,74 @@ namespace Mono.CSharp
 			base.flags = flags;
 		}
 
+		#region IDynamicCallSite implementation
+
+		public override bool UseCallSite(ResolveContext ec, Arguments args)
+		{
+			return ec.Module.Compiler.Settings.NewDynamicRuntime_GetSetMember;
+		}
+
+		public override Expression CreateCallSite(ResolveContext rc, Arguments args, bool isSet)
+		{
+			TypeExpression type;
+			isSet |= (flags & CSharpBinderFlags.ValueFromCompoundAssignment) != 0;
+			if (!isSet) {
+				type = new TypeExpression(rc.Module.PredefinedTypes.PsGetMember.Resolve(), loc);
+			} else {
+				type = new TypeExpression(rc.Module.PredefinedTypes.PsSetMember.Resolve(), loc);
+			}
+
+			var site_args = new Arguments(1);
+			site_args.Add(new Argument(new StringLiteral(rc.BuiltinTypes, this.name, loc)));
+			return new New(
+				type,
+				site_args, 
+				loc
+				);
+		}
+
+		public override Expression InvokeCallSite(ResolveContext rc, Expression site, Arguments args, TypeSpec returnType, bool isStatement)
+		{
+			var obj = args[0].Expr;
+
+			bool isSet = IsSetter(site);
+			isSet |= (flags & CSharpBinderFlags.ValueFromCompoundAssignment) != 0;
+			if (!isSet) {
+				if (NeedsCastToObject(returnType)) {
+					var site_args = new Arguments(1);
+					site_args.Add(new Argument(obj));
+					return new Invocation(new MemberAccess(site, "GetMemberAsObject"), site_args);
+				} else {
+					var site_args = new Arguments(1);
+					site_args.Add(new Argument(obj));
+
+					var type_args = new TypeArguments();
+					type_args.Add(new TypeExpression(returnType, loc));
+					return new Invocation(new MemberAccess(site, "GetMember", type_args, loc), site_args);
+				}
+			} else {
+				var setVal = args[1].Expr;
+
+				if (NeedsCastToObject(setVal.Type)) {
+					var site_args = new Arguments(3);
+					site_args.Add(new Argument(obj));
+					site_args.Add(new Argument(new Cast(new TypeExpression(rc.BuiltinTypes.Object, loc), setVal, loc)));
+					site_args.Add(new Argument(new BoolLiteral(rc.BuiltinTypes, false, loc)));
+					return new Invocation(new MemberAccess(site, "SetMemberAsObject"), site_args);
+				} else {
+					var site_args = new Arguments(2);
+					site_args.Add(new Argument(obj));
+					site_args.Add(new Argument(setVal));
+
+					var type_args = new TypeArguments();
+					type_args.Add(new TypeExpression(setVal.Type, loc));
+					return new Invocation(new MemberAccess(site, "SetMember", type_args, loc), site_args);
+				}
+			}
+		}
+
+		#endregion
+
 		protected override Expression CreateCallSiteBinder (ResolveContext ec, Arguments args, bool isSet)
 		{
 			Arguments binder_args = new Arguments (4);
@@ -954,7 +1412,7 @@ namespace Mono.CSharp
 	//
 	// Any member binder which can be source and target of assignment
 	//
-	abstract class DynamicMemberAssignable : DynamicExpressionStatement, IDynamicBinder, IAssignMethod
+	abstract class DynamicMemberAssignable : DynamicExpressionStatement, IDynamicBinder, IDynamicCallSite, IAssignMethod
 	{
 		Expression setter;
 		Arguments setter_args;
@@ -965,6 +1423,11 @@ namespace Mono.CSharp
 			base.binder = this;
 		}
 
+		protected override Expression DoResolveWithTypeHint(ResolveContext rc, TypeSpec t) {
+			this.Type = t;
+			return this.Resolve(rc);
+		}
+
 		public Expression CreateCallSiteBinder (ResolveContext ec, Arguments args)
 		{
 			//
@@ -973,7 +1436,23 @@ namespace Mono.CSharp
 			return CreateCallSiteBinder (ec, args, false);
 		}
 
+		protected bool IsSetter(Expression expr)
+		{
+			return expr.Type.Name.Contains("Set") && !expr.Type.Name.Contains("Get");
+		}
+
+		protected bool NeedsCastToObject(TypeSpec t)
+		{
+			return (t == null) || (t.Kind == MemberKind.InternalCompilerType) || (t.BuiltinType == BuiltinTypeSpec.Type.Dynamic);
+		}
+
 		protected abstract Expression CreateCallSiteBinder (ResolveContext ec, Arguments args, bool isSet);
+
+		#region IDynamicCallSite implementation
+		public abstract bool       UseCallSite(ResolveContext rc, Arguments args);
+		public abstract Expression CreateCallSite(ResolveContext rc, Arguments args, bool isSet);
+		public abstract Expression InvokeCallSite(ResolveContext ec, Expression site, Arguments args, TypeSpec returnType, bool isStatement);
+		#endregion
 
 		protected virtual Arguments CreateSetterArguments (ResolveContext rc, Expression rhs)
 		{
@@ -994,7 +1473,17 @@ namespace Mono.CSharp
 
 			if (DoResolveCore (rc) && res_right_side != null) {
 				setter_args = CreateSetterArguments (rc, res_right_side);
-				setter = CreateCallSiteBinder (rc, setter_args, true);
+
+				// create setter callsite
+				var dc = (binder as IDynamicCallSite);
+				if (rc.Module.PredefinedTypes.IsPlayScriptAotMode && (dc != null) && dc.UseCallSite(rc, setter_args)) {
+					this.useDelegateInvoke = false;
+					setter_args.CreateDynamicBinderArguments(rc);
+					setter = CreateCallSite(rc, setter_args, true);
+				} else {
+					this.useDelegateInvoke = true;
+					setter = CreateCallSiteBinder (rc, setter_args, true);
+				}
 			}
 
 			eclass = ExprClass.Variable;
@@ -1045,6 +1534,52 @@ namespace Mono.CSharp
 			base.binder = this;
 		}
 
+		private static string GetDynamicUnaryTypeName(TypeSpec type)
+		{
+			switch (type.BuiltinType){
+				case BuiltinTypeSpec.Type.Bool:
+					return "Bool";
+				case BuiltinTypeSpec.Type.Int:
+					return "Int";
+				case BuiltinTypeSpec.Type.Double:
+					return "Double";
+				case BuiltinTypeSpec.Type.String:
+					return "String";
+				case BuiltinTypeSpec.Type.UInt:
+					return "UInt";
+				default:
+					return "Object";
+			}
+		}
+
+		protected override Expression DoResolve(ResolveContext rc)
+		{
+			if (rc.Module.PredefinedTypes.IsPlayScriptAotMode && rc.Module.Compiler.Settings.NewDynamicRuntime_UnaryOps) {
+				return CreateDynamicUnaryOperation(rc);
+			}
+
+			return base.DoResolve(rc);
+		}
+
+		private Expression CreateDynamicUnaryOperation(ResolveContext rc)
+		{
+			this.Arguments.CastDynamicArgs(rc);
+
+			TypeSpec unary = rc.Module.PredefinedTypes.PsUnaryOperation.Resolve();
+			string type = GetDynamicUnaryTypeName(Arguments[0].Type);
+
+			// create unary method name
+			string unaryMethod = this.name + type;
+
+			var ret = new Invocation(new MemberAccess(new TypeExpression(unary, loc), unaryMethod, loc), this.Arguments).Resolve(rc);
+			if (ret.Type == rc.BuiltinTypes.Object) {
+				// cast object to dynamic for return types
+				ret = new Cast (new TypeExpression (rc.BuiltinTypes.Dynamic, loc), ret, loc).Resolve (rc);
+			} 
+			return ret;
+		}
+
+
 		public static DynamicUnaryConversion CreateIsTrue (ResolveContext rc, Arguments args, Location loc)
 		{
 			return new DynamicUnaryConversion ("IsTrue", args, loc) { type = rc.BuiltinTypes.Bool };
@@ -1079,6 +1614,184 @@ namespace Mono.CSharp
 			return new Invocation (GetBinder ("UnaryOperation", loc), binder_args);
 		}
 	}
+
+	class DynamicBinaryExpression : DynamicExpressionStatement, IDynamicBinder
+	{
+		readonly string          name;
+		readonly Binary.Operator oper;
+
+		public DynamicBinaryExpression (Binary.Operator oper, string name, Arguments args, Location loc)
+			: base (null, args, loc)
+		{
+			this.oper = oper;
+			this.name = name;
+			base.binder = this;
+		}
+
+		protected override Expression DoResolve(ResolveContext rc)
+		{
+			if (rc.Module.PredefinedTypes.IsPlayScriptAotMode && rc.Module.Compiler.Settings.NewDynamicRuntime_BinaryOps) {
+				return this.CreateDynamicBinaryOperation(rc);
+			}
+			return base.DoResolve(rc);
+		}
+
+		private static string GetDynamicBinaryTypeName(TypeSpec type)
+		{
+			switch (type.BuiltinType){
+				case BuiltinTypeSpec.Type.Bool:
+					return "Bool";
+				case BuiltinTypeSpec.Type.Int:
+					return "Int";
+				case BuiltinTypeSpec.Type.Double:
+					return "Double";
+				case BuiltinTypeSpec.Type.String:
+					return "String";
+				case BuiltinTypeSpec.Type.UInt:
+					return "UInt";
+				default:
+					return "Obj";
+			}
+		}
+
+		private Expression CreateDynamicBinaryOperation(ResolveContext rc)
+		{
+			// strip dynamic from all arguments
+			Arguments.CastDynamicArgs(rc);
+
+			TypeSpec binary = rc.Module.PredefinedTypes.PsBinaryOperation.Resolve();
+
+			// perform numeric or other type conversion
+			string binaryMethod = null;
+			switch (oper)
+			{
+				case Binary.Operator.Multiply:
+					binaryMethod = "Multiply";
+					break;
+				case Binary.Operator.Division:
+					binaryMethod = "Division";
+					break;
+				case Binary.Operator.Modulus:
+					binaryMethod = "Modulus";
+					break;
+				case Binary.Operator.Addition:
+					binaryMethod = "Addition";
+					break;
+				case Binary.Operator.Subtraction:
+					binaryMethod = "Subtraction";
+					break;
+				case Binary.Operator.LeftShift:
+					binaryMethod = "LeftShift";
+					break;
+				case Binary.Operator.RightShift:
+					binaryMethod = "RightShift";
+					break;
+				case Binary.Operator.AsURightShift:
+					binaryMethod = "AsURightShift";
+					break;
+				case Binary.Operator.LessThan:
+					binaryMethod = "LessThan";
+					break;
+				case Binary.Operator.GreaterThan:
+					binaryMethod = "GreaterThan";
+					break;
+				case Binary.Operator.LessThanOrEqual:
+					binaryMethod = "LessThanOrEqual";
+					break;
+				case Binary.Operator.GreaterThanOrEqual:
+					binaryMethod = "GreaterThanOrEqual";
+					break;
+				case Binary.Operator.Equality:
+					binaryMethod = "Equality";
+					break;
+				case Binary.Operator.Inequality:
+					binaryMethod = "Inequality";
+					break;
+				case Binary.Operator.AsRefEquality:
+					binaryMethod = "AsRefEquality";
+					break;
+				case Binary.Operator.AsRefInequality:
+					binaryMethod = "AsRefInequality";
+					break;
+				case Binary.Operator.BitwiseAnd:
+					binaryMethod = "BitwiseAnd";
+					break;
+				case Binary.Operator.ExclusiveOr:
+					binaryMethod = "ExclusiveOr";
+					break;
+				case Binary.Operator.BitwiseOr:
+					binaryMethod = "BitwiseOr";
+					break;
+					// we should never support these
+//				case Binary.Operator.LogicalAnd:
+//					binaryMethod = "LogicalAnd";
+//					break;
+//				case Binary.Operator.LogicalOr:
+//					binaryMethod = "LogicalOr";
+//					break;
+				case Binary.Operator.AsE4xChild:
+					binaryMethod = "AsE4xChild";
+					break;
+				case Binary.Operator.AsE4xDescendant:
+					binaryMethod = "AsE4xDescendant";
+					break;
+				case Binary.Operator.AsE4xChildAttribute:
+					binaryMethod = "AsE4xChildAttribute";
+					break;
+				case Binary.Operator.AsE4xDescendantAttribute:
+					binaryMethod = "AsE4xDescendantAttribute";
+					break;
+				default:
+					throw new InvalidOperationException("Unknown binary operation: " + oper);
+			}
+
+			string leftType = GetDynamicBinaryTypeName(Arguments[0].Type);
+			string rightType = GetDynamicBinaryTypeName(Arguments[1].Type);
+
+			// append to binary method instead of using overloads
+			binaryMethod += leftType + rightType;
+
+			var ret = new Invocation(new MemberAccess(new TypeExpression(binary, loc), binaryMethod, loc), Arguments).Resolve(rc);
+			if (ret.Type == rc.BuiltinTypes.Object) {
+				// cast object to dynamic for return types
+				ret = new Cast (new TypeExpression (rc.BuiltinTypes.Dynamic, loc), ret, loc).Resolve (rc);
+			} 
+			return ret;
+		}
+
+
+		public Expression CreateCallSiteBinder (ResolveContext ec, Arguments args)
+		{
+			Arguments binder_args = new Arguments (4);
+
+			MemberAccess ns;
+			if (ec.Module.PredefinedTypes.IsPlayScriptAotMode) {
+				ns = new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "PlayScript", loc);
+			} else {
+				ns = new MemberAccess (new MemberAccess (
+					new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "System", loc), "Linq", loc), "Expressions", loc);
+			}
+
+			CSharpBinderFlags flags = 0;
+			if (ec.HasSet (ResolveContext.Options.CheckedScope))
+				flags = CSharpBinderFlags.CheckedContext;
+
+			if ((oper & Binary.Operator.LogicalMask) != 0)
+				flags |= CSharpBinderFlags.BinaryOperationLogical;
+
+			binder_args.Add (new Argument (new EnumConstant (new IntLiteral (ec.BuiltinTypes, (int) flags, loc), ec.Module.PredefinedTypes.GetBinderFlags(ec).Resolve ())));
+			binder_args.Add (new Argument (new MemberAccess (new MemberAccess (ns, "ExpressionType", loc), this.name, loc)));
+			binder_args.Add (new Argument (new TypeOf (ec.CurrentType, loc)));									
+			binder_args.Add (new Argument (new ImplicitlyTypedArrayCreation (args.CreateDynamicBinderArguments (ec), loc)));
+
+			return new Invocation (new MemberAccess (new TypeExpression (ec.Module.PredefinedTypes.GetBinder(ec).TypeSpec, loc), "BinaryOperation", loc), binder_args);
+		}
+	}
+
+
+
+
+
 
 	sealed class DynamicSiteClass : HoistedStoreyClass
 	{

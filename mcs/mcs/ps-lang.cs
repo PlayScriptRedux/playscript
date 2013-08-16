@@ -54,7 +54,6 @@ namespace Mono.CSharp
 		List<Expression> elements;
 		BlockVariableDeclaration variable;
 		Assign assign;
-		TypeSpec inferredObjType;
 
 		public AsObjectInitializer (List<Expression> init, Location loc)
 		{
@@ -145,38 +144,11 @@ namespace Mono.CSharp
 //				return this;
 //			}
 
-			TypeExpression type;
-
-			// If PlayScript extended syntax, attempt to do type inference for object initializer
-			if (rc.PsExtended) {
-				if (inferredObjType != null) {
-					type = new TypeExpression (inferredObjType, Location);
-				} else if (variable != null) {
-					if (variable.TypeExpression is VarExpr) {
-						type = new TypeExpression (rc.BuiltinTypes.Dynamic, Location);
-					} else {
-						type = new TypeExpression (variable.Variable.Type, variable.Variable.Location);
-					}
-				} else if (assign != null && assign.Target.Type != null) {
-					type = new TypeExpression (assign.Target.Type, assign.Target.Location);
-				} else {
-					type = new TypeExpression (rc.BuiltinTypes.Dynamic, Location);
-				}
-			} else {
-				// ActionScript - Always use dynamic "expando" object.
-				type = new TypeExpression (rc.BuiltinTypes.Dynamic, Location);
-			}
+			// ActionScript - Always use dynamic "expando" object.
+			TypeExpression type = new TypeExpression (rc.Module.PredefinedTypes.AsExpandoObject.Resolve(), Location);
 
 			return new NewInitialize (type, null, 
 				new CollectionOrObjectInitializers(elements, Location), Location).Resolve (rc);
-		}
-
-		public Expression InferredResolveWithObjectType(ResolveContext rc, TypeSpec objType) 
-		{
-			if (objType.Name == "ExpandoObject")
-				objType = rc.BuiltinTypes.Dynamic;
-			inferredObjType = objType;
-			return Resolve (rc);
 		}
 
 		public override void Emit (EmitContext ec)
@@ -230,7 +202,6 @@ namespace Mono.CSharp
 	public partial class AsArrayInitializer : ArrayInitializer
 	{
 		Assign assign;
-		TypeSpec inferredArrayType;
 		FullNamedExpression vectorType;
 
 		public AsArrayInitializer (List<Expression> init, Location loc)
@@ -290,24 +261,6 @@ namespace Mono.CSharp
 				} else {
 					type = new TypeExpression (rc.Module.PredefinedTypes.AsArray.Resolve(), Location);
 				}
-			} else if (rc.PsExtended) {
-				if (inferredArrayType != null) {  // Inferring parameter, variable, expression types
-					type = new TypeExpression (inferredArrayType, Location);
-				} else if (variable != null) {    
-					if (variable.TypeExpression is VarExpr || variable.Variable.Type == rc.BuiltinTypes.Dynamic) {
-						type = new TypeExpression (rc.Module.PredefinedTypes.AsArray.Resolve(), Location);
-					} else {
-						type = new TypeExpression (variable.Variable.Type, variable.Variable.Location);
-					}
-				} else if (assign != null && assign.Target.Type != null) {
-					if (assign.Target.Type == rc.BuiltinTypes.Dynamic) {
-						type = new TypeExpression (rc.Module.PredefinedTypes.AsArray.Resolve(), Location);
-					} else {
-						type = new TypeExpression (assign.Target.Type, assign.Target.Location);
-					}
-				} else {
-					type = new TypeExpression (rc.Module.PredefinedTypes.AsArray.Resolve(), Location);
-				}
 			} else {
 				type = new TypeExpression (rc.Module.PredefinedTypes.AsArray.Resolve(), Location);
 			}
@@ -324,12 +277,6 @@ namespace Mono.CSharp
 				return new NewInitialize (type, null, 
 					new CollectionOrObjectInitializers(initElems, Location), Location).Resolve (rc);
 			}
-		}
-
-		public Expression InferredResolveWithArrayType(ResolveContext rc, TypeSpec arrayType) 
-		{
-			inferredArrayType = arrayType;
-			return Resolve (rc);
 		}
 
 		public override void EmitJs (JsEmitContext jec)

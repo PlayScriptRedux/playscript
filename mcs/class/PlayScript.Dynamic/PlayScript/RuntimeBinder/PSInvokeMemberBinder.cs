@@ -55,14 +55,19 @@ namespace PlayScript.RuntimeBinder
 
 
 		// information about the current binding
-		private Type              mType;
-		private object[]   		  mArgs;
-		private object[]   		  mConvertedArgs;
-		private bool 			  mIsOverloaded;
-		private MethodBinder      mMethod;
-		private MethodBinder[]    mMethodList;
-		private Delegate   	      mDelegate;
+		private Type			mType;
+		private object[]		mArgs;
+		private object[]		mConvertedArgs;
+		private bool			mIsOverloaded;
+		private MethodBinder	mMethod;
+		private MethodBinder[]	mMethodList;
+		private Delegate		mDelegate;
 
+#if true
+		private object			mPreviousTarget;
+		private Delegate		mPreviousDelegate;
+		private InvokerBase		mInvoker;
+#endif
 
 		private void SelectMethod(object o, int argCount)
 		{
@@ -103,7 +108,7 @@ namespace PlayScript.RuntimeBinder
 			throw new InvalidOperationException("Could not find suitable method to invoke: " + this.name + " for type: " + mType);
 		}
 
-		private object ResolveAndInvoke(CallSite site, object o, int argCount)
+		private object ResolveAndInvoke(object o, int argCount)
 		{
 			// determine object type
 			Type otype;
@@ -164,70 +169,91 @@ namespace PlayScript.RuntimeBinder
 			throw new InvalidOperationException("Could not find suitable method to invoke: " + this.name + " for type: " + mType);
 		}
 
-		private static void InvokeAction0 (CallSite site, object o)
+		private static object Invoke(PSInvokeMemberBinder binder, object o, int numArgs)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
+			Stats.Increment(StatsCounter.InvokeMemberBinderInvoked);
 #endif
-			var binder = (PSInvokeMemberBinder)site.Binder;
-			binder.ResolveAndInvoke(site, o, 0);
+			// We can't cache the delegate related to property (has it could have been changed since last call)
+			// We could workaround this limitation if we did have version number in the dynamic object (and detect if it changed - or changed function - since last call)
+			var dc = o as IDynamicClass;
+			if (dc != null) {
+				var func = dc.__GetDynamicValue(binder.name) as Delegate;
+				if (func != null) {
+					// Use function, but let's compare with previous invoker if we can reuse it
+					Delegate previousDelegate = binder.mPreviousDelegate;
+					if ((previousDelegate == null) || (func.Target != previousDelegate.Target) || (func.Method != previousDelegate.Method)) {
+						binder.mPreviousDelegate = func;
+						binder.mInvoker = ActionCreator.CreateInvoker(func);	// This is going to use an invoker factory (can be registered by user too for more optimal code).
+					}
+					return binder.mInvoker.SafeInvokeWith(binder.mArgs);			// Now invoke, there is no parameters here
+				}
+			}
+
+			if (o == binder.mPreviousTarget) {
+				// If the object is the same, we directly invoke (no conversion needed in this case)
+				return binder.mInvoker.SafeInvokeWith(binder.mArgs);
+			}
+
+			// Otherwise we have to find the corresponding method
+			object result = binder.ResolveAndInvoke(o, numArgs);
+
+			if (binder.mDelegate != null)
+				binder.mInvoker = ActionCreator.CreateInvoker(binder.mDelegate);
+			else
+				binder.mInvoker = ActionCreator.CreateInvoker(o, binder.mMethod.Method);
+			binder.mPreviousTarget = o;
+
+			return result;
 		}
 
-		private static void InvokeAction1 (CallSite site, object o, object a1)
+
+		private static void InvokeAction0 (CallSite site, object o)
 		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
+			var binder = (PSInvokeMemberBinder)site.Binder;
+			Invoke(binder, o, 0);
+		}
+
+		private static void InvokeAction1<P1> (CallSite site, P1 o, object a1)
+		{
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
-			binder.ResolveAndInvoke(site, o, 1);
+			Invoke(binder, o, 1);
 		}
 
 		private static void InvokeAction2 (CallSite site, object o, object a1, object a2)
 		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
 			args[1] = a2;
-			binder.ResolveAndInvoke(site, o, 2);
+			Invoke(binder, o, 2);
 		}
 
 		private static void InvokeAction3 (CallSite site, object o, object a1, object a2, object a3)
 		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
 			args[1] = a2;
 			args[2] = a3;
-			binder.ResolveAndInvoke(site, o, 3);
+			Invoke(binder, o, 3);
 		}
 
 		private static void InvokeAction4 (CallSite site, object o, object a1, object a2, object a3, object a4)
 		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
 			args[1] = a2;
 			args[2] = a3;
 			args[3] = a4;
-			binder.ResolveAndInvoke(site, o, 4);
+			Invoke(binder, o, 4);
 		}
 
 		private static void InvokeAction5 (CallSite site, object o, object a1, object a2, object a3, object a4, object a5)
 		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
@@ -235,14 +261,11 @@ namespace PlayScript.RuntimeBinder
 			args[2] = a3;
 			args[3] = a4;
 			args[4] = a5;
-			binder.ResolveAndInvoke(site, o, 5);
+			Invoke(binder, o, 5);
 		}
 
 		private static void InvokeAction6 (CallSite site, object o, object a1, object a2, object a3, object a4, object a5, object a6)
 		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
@@ -251,14 +274,11 @@ namespace PlayScript.RuntimeBinder
 			args[3] = a4;
 			args[4] = a5;
 			args[5] = a6;
-			binder.ResolveAndInvoke(site, o, 6);
+			Invoke(binder, o, 6);
 		}
 
 		private static void InvokeAction7 (CallSite site, object o, object a1, object a2, object a3, object a4, object a5, object a6, object a7)
 		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
@@ -268,15 +288,12 @@ namespace PlayScript.RuntimeBinder
 			args[4] = a5;
 			args[5] = a6;
 			args[6] = a7;
-			binder.ResolveAndInvoke(site, o, 7);
+			Invoke(binder, o, 7);
 		}
 
 		
 		private static void InvokeAction8 (CallSite site, object o, object a1, object a2, object a3, object a4, object a5, object a6, object a7, object a8)
 		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
@@ -287,74 +304,56 @@ namespace PlayScript.RuntimeBinder
 			args[5] = a6;
 			args[6] = a7;
 			args[7] = a8;
-			binder.ResolveAndInvoke(site, o, 8);
+			Invoke(binder, o, 8);
 		}
 
 		private static object InvokeFunc0 (CallSite site, object o)
 		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
-			return binder.ResolveAndInvoke(site, o, 0);
+			return Invoke(binder, o, 0);
 		}
 		
 		private static object InvokeFunc1 (CallSite site, object o, object a1)
 		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
-			return binder.ResolveAndInvoke(site, o, 1);
+			return Invoke(binder, o, 1);
 		}
 		
 		private static object InvokeFunc2 (CallSite site, object o, object a1, object a2)
 		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
 			args[1] = a2;
-			return binder.ResolveAndInvoke(site, o, 2);
+			return Invoke(binder, o, 2);
 		}
 		
 		private static object InvokeFunc3 (CallSite site, object o, object a1, object a2, object a3)
 		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
 			args[1] = a2;
 			args[2] = a3;
-			return binder.ResolveAndInvoke(site, o, 3);
+			return Invoke(binder, o, 3);
 		}
 		
 		private static object InvokeFunc4 (CallSite site, object o, object a1, object a2, object a3, object a4)
 		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
 			args[1] = a2;
 			args[2] = a3;
 			args[3] = a4;
-			return binder.ResolveAndInvoke(site, o, 4);
+			return Invoke(binder, o, 4);
 		}
 
 		
 		private static object InvokeFunc5 (CallSite site, object o, object a1, object a2, object a3, object a4, object a5)
 		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
@@ -362,14 +361,11 @@ namespace PlayScript.RuntimeBinder
 			args[2] = a3;
 			args[3] = a4;
 			args[4] = a5;
-			return binder.ResolveAndInvoke(site, o, 5);
+			return Invoke(binder, o, 5);
 		}
 		
 		private static object InvokeFunc6 (CallSite site, object o, object a1, object a2, object a3, object a4, object a5, object a6)
 		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
@@ -378,14 +374,11 @@ namespace PlayScript.RuntimeBinder
 			args[3] = a4;
 			args[4] = a5;
 			args[5] = a6;
-			return binder.ResolveAndInvoke(site, o, 6);
+			return Invoke(binder, o, 6);
 		}
 		
 		private static object InvokeFunc7 (CallSite site, object o, object a1, object a2, object a3, object a4, object a5, object a6, object a7)
 		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
@@ -395,14 +388,11 @@ namespace PlayScript.RuntimeBinder
 			args[4] = a5;
 			args[5] = a6;
 			args[6] = a7;
-			return binder.ResolveAndInvoke(site, o, 7);
+			return Invoke(binder, o, 7);
 		}
 		
 		private static object InvokeFunc8 (CallSite site, object o, object a1, object a2, object a3, object a4, object a5, object a6, object a7, object a8)
 		{
-#if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.InvokeMemberBinderInvoked;
-#endif
 			var binder = (PSInvokeMemberBinder)site.Binder;
 			var args   = binder.mArgs;
 			args[0] = a1;
@@ -413,7 +403,7 @@ namespace PlayScript.RuntimeBinder
 			args[5] = a6;
 			args[6] = a7;
 			args[7] = a8;
-			return binder.ResolveAndInvoke(site, o, 8);
+			return Invoke(binder, o, 8);
 		}
 
 

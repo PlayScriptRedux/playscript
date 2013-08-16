@@ -822,11 +822,17 @@
     <Compile Include="..\pscorlib\fl\events\ComponentEvent.play">
       <Link>fl\events\ComponentEvent.play</Link>
     </Compile>
+    <Compile Include="..\pscorlib\flash\media\ios\Sound.cs">
+      <Link>flash\media\SoundIos.cs</Link>
+    </Compile>
     <Compile Include="..\pscorlib\AllowDynamicAttribute.cs">
       <Link>AllowDynamicAttribute.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\ForbidDynamicAttribute.cs">
       <Link>ForbidDynamicAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\media\ios\SoundChannel.cs">
+      <Link>flash\media\SoundChannelIos.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

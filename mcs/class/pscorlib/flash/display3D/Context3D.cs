@@ -149,8 +149,8 @@ namespace flash.display3D {
 			return new CubeTexture(this, size, format, optimizeForRenderToTexture, streamingLevels);
 		}
 
- 	 	public IndexBuffer3D createIndexBuffer(int numIndices) {
- 	 		return new IndexBuffer3D(this, numIndices);
+		public IndexBuffer3D createIndexBuffer(int numIndices, int multiBufferCount = 1, bool isDynamic = true) {
+ 	 		return new IndexBuffer3D(this, numIndices, multiBufferCount, isDynamic);
  	 	}
  	 	
 		public Program3D createProgram() {
@@ -162,8 +162,8 @@ namespace flash.display3D {
 			return new Texture(this, width, height, format, optimizeForRenderToTexture, streamingLevels);
 		}
 
- 	 	public VertexBuffer3D createVertexBuffer(int numVertices, int data32PerVertex) {
- 	 		return new VertexBuffer3D(this, numVertices, data32PerVertex);
+		public VertexBuffer3D createVertexBuffer(int numVertices, int data32PerVertex, int multiBufferCount = 1, bool isDynamic = true) {
+ 	 		return new VertexBuffer3D(this, numVertices, data32PerVertex, multiBufferCount, isDynamic);
  	 	}
  	 	
 		public void dispose() {

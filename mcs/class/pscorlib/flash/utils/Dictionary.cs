@@ -118,6 +118,11 @@ namespace flash.utils
 
 		#region IKeyEnumerable implementation
 
+		public KeyCollection.Enumerator GetKeyEnumerator()
+		{
+			return this.Keys.GetEnumerator();
+		}
+
 		IEnumerator PlayScript.IKeyEnumerable.GetKeyEnumerator()
 		{
 			return this.Keys.GetEnumerator();
@@ -129,8 +134,8 @@ namespace flash.utils
 		[DebuggerDisplay("{value}", Name = "{key}")]
 		internal class KeyValuePairDebugView
 		{
-			public object key;
-			public object value;
+			public object key   {get; set;}
+			public object value {get; set;}
 			
 			public KeyValuePairDebugView(object key, object value)
 			{

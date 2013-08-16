@@ -33,8 +33,9 @@ namespace PlayScript.RuntimeBinder
 		FieldInfo		field;
 		PropertyInfo	property;
 		MethodInfo      method;
+		object			previousTarget;
+		object			previousFunc;
 
-		
 		public PSGetMemberBinder (string name, Type callingContext, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
 			this.name = name;
@@ -50,7 +51,7 @@ namespace PlayScript.RuntimeBinder
 				binder.type = null;
 			}
 
-			return (T)GetMemberAsObject(site, o);
+			return GetMember<T>(site, o);
 		}
 
 		/// <summary>
@@ -61,19 +62,13 @@ namespace PlayScript.RuntimeBinder
 		private static T GetMember<T> (CallSite site, object o)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.GetMemberBinderInvoked;
+			Stats.Increment(StatsCounter.GetMemberBinderInvoked);
 #endif
 
 			if (o == null) {
 				return default(T);
 			}
 
-			object value = GetMemberAsObject(site, o);
-			return PlayScript.Dynamic.ConvertValue<T>(value);
-		}
-
-		private static object GetMemberAsObject(CallSite site, object o)
-		{
 			var binder = (PSGetMemberBinder)site.Binder;
 
 			// resolve as dictionary 
@@ -83,7 +78,7 @@ namespace PlayScript.RuntimeBinder
 				// special case this for expando objects
 				object value;
 				if (dict.TryGetValue(binder.name, out value)) {
-					return value;
+					return PlayScript.Dynamic.ConvertValue<T>(value);
 				}
 				
 				// fall through if key not found
@@ -108,23 +103,31 @@ namespace PlayScript.RuntimeBinder
 			{
 				// use cached resolve
 				if (binder.property != null) {
-					return binder.property.GetValue(o, null);
+					Func<T> func;
+					if (o == binder.previousTarget) {
+						func = (Func<T>)binder.previousFunc;
+					} else {
+						binder.previousFunc = func = ActionCreator.CreatePropertyGetAction<T>(o, binder.property);
+						binder.previousTarget = o;
+					}
+					return func();
 				}
 				
 				if (binder.field != null) {
-					return binder.field.GetValue(o);
+					return PlayScript.Dynamic.ConvertValue<T>(binder.field.GetValue(o));
 				}
 
 				if (binder.method != null) {
 					// construct method delegate
-					return Delegate.CreateDelegate(PlayScript.Dynamic.GetDelegateTypeForMethod(binder.method), o, binder.method);
+					return PlayScript.Dynamic.ConvertValue<T>(Delegate.CreateDelegate(PlayScript.Dynamic.GetDelegateTypeForMethod(binder.method), o, binder.method));
 				}
 				
 				// resolve as dynamic class
 				var dc = o as IDynamicClass;
 				if (dc != null) 
 				{
-					return dc.__GetDynamicValue(binder.name);
+					object result = dc.__GetDynamicValue(binder.name);
+					return PlayScript.Dynamic.ConvertValue<T>(result);
 				}
 				
 				throw new System.InvalidOperationException("Unhandled member type in PSGetMemberBinder");
@@ -133,7 +136,7 @@ namespace PlayScript.RuntimeBinder
 			// resolve name
 
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.GetMemberBinder_Resolve_Invoked;
+			Stats.Increment(StatsCounter.GetMemberBinder_Resolve_Invoked);
 #endif
 
 			// resolve as property
@@ -149,7 +152,7 @@ namespace PlayScript.RuntimeBinder
 					binder.property = property;
 					binder.field    = null;
 					binder.method   = null;
-					return property.GetValue(o, null);
+					return PlayScript.Dynamic.ConvertValue<T>(property.GetValue(o, null));
 				}
 			}
 			
@@ -164,7 +167,7 @@ namespace PlayScript.RuntimeBinder
 					binder.property = null;
 					binder.field    = field;
 					binder.method   = null;
-					return field.GetValue(o);
+					return PlayScript.Dynamic.ConvertValue<T>(field.GetValue(o));
 				}
 			}
 
@@ -184,7 +187,7 @@ namespace PlayScript.RuntimeBinder
 				binder.field    = null;
 				binder.method   = method;
 				// construct method delegate
-				return Delegate.CreateDelegate(PlayScript.Dynamic.GetDelegateTypeForMethod(binder.method), o, binder.method);
+				return PlayScript.Dynamic.ConvertValue<T>(Delegate.CreateDelegate(PlayScript.Dynamic.GetDelegateTypeForMethod(binder.method), o, binder.method));
 			}
 
 			if (o is IDynamicClass)
@@ -194,18 +197,19 @@ namespace PlayScript.RuntimeBinder
 				binder.property = null;
 				binder.field    = null;
 				binder.method   = null;
-				return ((IDynamicClass)o).__GetDynamicValue(binder.name);
+				object result = ((IDynamicClass)o).__GetDynamicValue(binder.name);
+				return PlayScript.Dynamic.ConvertValue<T>(result);
 			}
 			
 			// could not resolve name as property or field, and is not dynamic class or dictionary
 			// invoke callback
 			if (Binder.OnGetMemberError != null)
 			{
-				return Binder.OnGetMemberError (o, binder.name, null);
+				return PlayScript.Dynamic.ConvertValue<T>(Binder.OnGetMemberError (o, binder.name, null));
 			}
 			else
 			{
-				return null;
+				return default(T);
 			}
 		}
 

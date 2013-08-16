@@ -12,6 +12,7 @@ AssemblyInfo.cs
 ./PlayScript/ParamsDelegateTypes.cs
 ./PlayScript/ExpressionType.cs
 ./PlayScript/ExtensionAttribute.cs
+./PlayScript/Stats.cs
 ./PlayScript/Undefined.cs
 ./PlayScript/Expando/BindingRestrictionsEx.cs
 ./PlayScript/Expando/CacheDict.cs
@@ -48,3 +49,13 @@ AssemblyInfo.cs
 ./PlayScript/RuntimeBinder/PSInvokeMemberBinder.cs
 ./PlayScript/RuntimeBinder/PSIsEventBinder.cs
 ./System/Runtime/CompilerServices/DynamicAttribute.cs
+./PlayScript/DynamicRuntime/PSGetMember.cs
+./PlayScript/DynamicRuntime/PSConverter.cs
+./PlayScript/DynamicRuntime/PSBinaryOperation.cs
+./PlayScript/DynamicRuntime/PSUnaryOperation.cs
+./PlayScript/DynamicRuntime/PSSetMember.cs
+./PlayScript/DynamicRuntime/PSGetIndex.cs
+./PlayScript/DynamicRuntime/PSSetIndex.cs
+./PlayScript/DynamicRuntime/PSInvokeMember.cs
+./PlayScript/DynamicRuntime/PSInvoke.cs
+
