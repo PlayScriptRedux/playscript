@@ -93,7 +93,7 @@ namespace flash.display3D.textures {
 																			// TODO: Fix hardcoded value here
 
 			OpenTK.Graphics.ES20.PixelInternalFormat pixelFormat = (OpenTK.Graphics.ES20.PixelInternalFormat)0x8C02;
-			GL.CompressedTexImage2D(textureTarget, 0, pixelFormat, mWidth, mHeight, 0, dataLength, data.getRawStream().ToArray());
+			GL.CompressedTexImage2D(textureTarget, 0, pixelFormat, mWidth, mHeight, 0, dataLength, data.getRawArray());
 
 			// unbind texture and pixel buffer
 			GL.BindTexture (textureTarget, 0);
