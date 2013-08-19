@@ -5119,6 +5119,9 @@ namespace Mono.CSharp
 		{
 			expr = expr.Resolve (ec);
 
+			if (true_expr == null || false_expr == null || expr == null)
+				return null;
+
 			//
 			// Unreachable code needs different resolve path. For instance for await
 			// expression to not generate unreachable resumable statement
@@ -5144,9 +5147,6 @@ namespace Mono.CSharp
 				true_expr = true_expr.Resolve (ec);
 				false_expr = false_expr.Resolve (ec);
 			}
-
-			if (true_expr == null || false_expr == null || expr == null)
-				return null;
 
 			eclass = ExprClass.Value;
 			TypeSpec true_type = true_expr.Type;
