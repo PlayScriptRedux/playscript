@@ -15,6 +15,13 @@ namespace PlayScript
 	{
 		public static bool Enabled = true;
 
+		static Profiler()
+		{
+			// do this to ensure that frame is the first section
+			Begin("frame");
+			End("frame");
+		}
+
 		public static void Begin(string name)
 		{
 			if (!Enabled)
@@ -25,6 +32,8 @@ namespace PlayScript
 				section = new Section();
 				section.Name = name;
 				sSections[name] = section;
+				// keep ordered list of sections
+				sSectionList.Add(section);
 			}
 
 			section.Timer.Start();
@@ -53,7 +62,7 @@ namespace PlayScript
 				return;
 
 			// reset all sections
-			foreach (Section section in sSections.Values) {
+			foreach (Section section in sSectionList) {
 				section.TotalTime = new TimeSpan();
 				section.Timer.Reset();
 				section.Stats.Reset();
@@ -69,8 +78,10 @@ namespace PlayScript
 			if (!Enabled)
 				return;
 
+			Profiler.End("frame");
+
 			// update all sections
-			foreach (Section section in sSections.Values) {
+			foreach (Section section in sSectionList) {
 				section.TotalTime += section.Timer.Elapsed;
 				if (sDoReport) 
 				{
@@ -99,7 +110,7 @@ namespace PlayScript
 				// report generation, accumulate a specified number of frames and then print report
 				if (sFrameCount >= sReportFrameCount) {
 					// print out report
-					DoReport();
+					OnEndReport();
 					Reset();
 					sDoReport = false;
 				}
@@ -108,20 +119,20 @@ namespace PlayScript
 			// check start report countdown
 			if (sReportStartDelay > 0) {
 				if (--sReportStartDelay == 0) {
-					System.GC.Collect();
-
-					// reset counters
-					Reset();
-
-					// enable the report
-					sDoReport = true;
-
-					sReportGCCount = System.GC.CollectionCount(System.GC.MaxGeneration);
-
-					// start global timer
-					sReportTime = Stopwatch.StartNew();
+					OnStartReport();
 				}
 			}
+
+			Profiler.Begin("frame");
+		}
+
+		/// <summary>
+		/// This should be invoked when a loading milestone has occurred
+		/// </summary>
+		public static void LoadMilestone(string name)
+		{
+			// store load complete time
+			sLoadMilestones[name] = sGlobalTimer.Elapsed;
 		}
 
 		public static void StartSession(string reportName, int frameCount, int reportStartDelay = 5)
@@ -133,14 +144,14 @@ namespace PlayScript
 			sReportFrameCount = frameCount;
 			sReportStartDelay = reportStartDelay;
 
-			Console.WriteLine("Starting profiling session: {0} frames:{1}", reportName, frameCount);
+			Console.WriteLine("Starting profiling session: {0} frames:{1} frameDelay:", reportName, frameCount, reportStartDelay);
 		}
 
 		
 		public static void PrintTimes(TextWriter tw)
 		{
 			var str = "profiler: ";
-			foreach (Section section in sSections.Values) {
+			foreach (Section section in sSectionList) {
 				str += section.Name + ":";
 				str += (section.TotalTime.TotalMilliseconds / sFrameCount).ToString("0.00");
 				str += " ";
@@ -150,7 +161,7 @@ namespace PlayScript
 
 		public static void PrintFullTimes(TextWriter tw)
 		{
-			foreach (Section section in sSections.Values) {
+			foreach (Section section in sSectionList) {
 
 				var total = section.TotalTime;
 				var average = total.TotalMilliseconds / sFrameCount;
@@ -187,7 +198,7 @@ namespace PlayScript
 		public static void PrintHistory(TextWriter tw)
 		{
 			tw.Write("{0,4} ", "");
-			foreach (Section section in sSections.Values) 
+			foreach (Section section in sSectionList) 
 			{
 				tw.Write("{0,12}{1} ", section.Name, ' ');
 
@@ -203,7 +214,7 @@ namespace PlayScript
 			{
 				tw.Write("{0,4}:", frame);
 				int gcCount = 0;
-				foreach (Section section in sSections.Values) 
+				foreach (Section section in sSectionList) 
 				{
 					var history = section.History[frame];
 					tw.Write("{0,12:0.00}{1} ", history.Time.TotalMilliseconds, (history.GCCount > 0) ? '*' : ' ' );
@@ -218,7 +229,7 @@ namespace PlayScript
 
 		public static void PrintStats(TextWriter tw)
 		{
-			foreach (Section section in sSections.Values) {
+			foreach (Section section in sSectionList) {
 				var dict = section.Stats.ToDictionary(true);
 				if (dict.Count > 0) {
 					tw.WriteLine("---------- {0} ----------", section.Name);
@@ -229,6 +240,79 @@ namespace PlayScript
 					foreach (var entry in list) {
 						tw.WriteLine(" {0}: {1}", entry.Key, entry.Value);
 					}
+				}
+			}
+		}
+
+		public static void PrintLoading(TextWriter tw)
+		{
+			tw.WriteLine("Offline Mode:  {0}", PlayScript.Player.Offline);
+			foreach (var milestone in sLoadMilestones) {
+				tw.WriteLine(" {0,-20} {1}", milestone.Key, milestone.Value);
+			}
+		}
+
+
+		private static void PrintHistogram(TextWriter tw, double bucketSize, List<double> history, double minRange, double maxRange, double splitThreshold)
+		{
+			var counts = new List<int>();
+			foreach (var time in history) {
+				if (time >= minRange && time <= maxRange) {
+					// find bucket
+					int i = (int)Math.Floor( (time - minRange) / bucketSize);
+
+					// resize counts
+					while (i >= counts.Count)
+						counts.Add(0);
+
+					// increment histogram
+					counts[i]++;
+				}
+			}
+
+			// print
+			double startTime = minRange;
+			double endTime = startTime + bucketSize;
+			for (int i=0; i < counts.Count; i++) {
+				if (counts[i] > 0)
+				{
+					double percent = (counts[i] * 100.0 / history.Count);
+					if ((percent <= splitThreshold) || (bucketSize <= 0.1))
+					{
+						// print counts for this range
+						tw.WriteLine("{0,4}ms->{1,4}ms {2,5} {3,5:0.0}% {4}", 
+						             startTime, endTime, counts[i], percent, new string('=', (int)Math.Ceiling(percent) ) );
+					}
+					else
+					{
+						// split histogram here if this range has too many data points
+						PrintHistogram(tw, bucketSize / 10, history, startTime, endTime, splitThreshold);
+					}
+				}
+
+				// next range
+				startTime += bucketSize;
+				endTime   += bucketSize;
+			}
+		}
+
+		public static void PrintHistograms(TextWriter tw)
+		{
+			foreach (var section in sSectionList)
+			{
+				var history = section.History.Select(h => h.Time.TotalMilliseconds).OrderBy(h=>h).ToList();
+				if (history.Count == 0)
+					continue;
+
+				tw.WriteLine(" --- {0} ---", section.Name);
+
+				if (section.Name == "frame") {
+					// hardcode this for "frame"
+					double mid = 17 * 2;
+					PrintHistogram(tw,  1.0, history, 0.0, mid, 100.0);
+					PrintHistogram(tw, 10.0, history, mid, double.MaxValue, 40.0);
+				} else {
+					PrintHistogram(tw, 10.0, history, 0.0, double.MaxValue, 40.0);
 				}
 			}
 		}
@@ -246,6 +330,11 @@ namespace PlayScript
 			tw.WriteLine("Screen Size:   {0}", UIScreen.MainScreen.Bounds);
 			tw.WriteLine("Screen Scale:  {0}", UIScreen.MainScreen.Scale);
 			#endif
+			tw.WriteLine("************* Loading *************");
+			PrintLoading(tw);
+
+			tw.WriteLine("************* Session *************");
+
 			tw.WriteLine("Total Frames:  {0}", sFrameCount);
 			tw.WriteLine("Total Time:    {0}", sReportTime.Elapsed);
 			tw.WriteLine("Average FPS:   {0}",  ((double)sFrameCount / sReportTime.Elapsed.TotalSeconds).ToString("0.00") );
@@ -253,6 +342,9 @@ namespace PlayScript
 
 			tw.WriteLine("*********** Timing (ms) ***********");
 			PrintFullTimes(tw);
+
+			tw.WriteLine("*********** Histogram ************");
+			PrintHistograms(tw);
 
 			tw.WriteLine("***** Dynamic Runtime Stats ******");
 			PrintStats(tw);
@@ -263,12 +355,34 @@ namespace PlayScript
 			tw.WriteLine("**********************************");
 		}
 
-		private static void DoReport()
+		/// <summary>
+		/// This is called when a profiling report is started
+		/// </summary>
+		private static void OnStartReport()
+		{
+			// garbage collect so that it does not impact our session
+			System.GC.Collect();
+
+			// reset counters
+			Reset();
+
+			// enable the report
+			sDoReport = true;
+
+			sReportGCCount = System.GC.CollectionCount(System.GC.MaxGeneration);
+
+			// start global timer
+			sReportTime = Stopwatch.StartNew();
+		}
+
+		/// <summary>
+		/// This is called when a profilng report is ended
+		/// </summary>
+		private static void OnEndReport()
 		{
 			sReportTime.Stop();
 
 			sReportGCCount = System.GC.CollectionCount(System.GC.MaxGeneration) - sReportGCCount;
-
 
 			#if PLATFORM_MONOTOUCH
 			// dump profile to file
@@ -310,7 +424,12 @@ namespace PlayScript
 			public int 					GCCount;
 		};
 
+		private static Stopwatch sGlobalTimer = Stopwatch.StartNew();
+		private static Dictionary<string, TimeSpan> sLoadMilestones = new Dictionary<string, TimeSpan>();
+
 		private static Dictionary<string, Section> sSections = new Dictionary<string, Section>();
+		// ordered list of sections
+		private static List<Section> sSectionList = new List<Section>();
 		private static int sFrameCount  = 0;
 
 		// the frequency to print profiiling info
