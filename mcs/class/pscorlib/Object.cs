@@ -23,9 +23,23 @@ namespace _root
 			get {return this.GetType();}
 		}
 
+		/// <summary>
+		/// This is the standard AS3 toString method. This is override-able by AS3 objects.
+		/// The standard .NET ToString() will call this.
+		/// </summary>
 		public virtual string toString()
 		{
-			return ToString();
+			return string.Format("[object {0}]", this.GetType().Name);
+		}
+
+		/// <summary>
+		/// This is the standard .NET ToString method which will be called in most cases by code wanting to convert this
+		/// object into a string (debugger, printing, convert binders, etc). The final and default behaviour is to call
+		/// the AS3 toString method which should be overridden in derived AS3 types.
+		/// </summary>
+		public sealed override string ToString()
+		{
+			return toString();
 		}
 
 		public virtual bool hasOwnProperty(object v = null)

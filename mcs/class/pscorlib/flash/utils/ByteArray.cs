@@ -527,11 +527,6 @@ namespace flash.utils {
 
 		public override string toString()
 		{
-			return this.ToString ();
-		}
-
-		public override string ToString()
-		{
 			// encode entire byte array as a UTF8 string
 			return System.Text.Encoding.UTF8.GetString(mData, 0, mLength);
 		}

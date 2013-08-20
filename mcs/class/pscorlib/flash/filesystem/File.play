@@ -116,7 +116,7 @@ package flash.filesystem {
  	 		return a;
  	 	}
  	 	
- 	 	public override function ToString():String
+ 	 	public override function toString():String
  	 	{
  	 		return mPath;
  	 	}

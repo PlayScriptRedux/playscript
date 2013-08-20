@@ -30,7 +30,7 @@ package flash.net {
 			throw new System.NotImplementedException();
 		}
 
-		public override function ToString():String {
+		public override function toString():String {
 
 			var sb = new System.Text.StringBuilder();
 

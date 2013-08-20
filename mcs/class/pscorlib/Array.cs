@@ -549,7 +549,7 @@ namespace _root
 			return mList.indexOf(searchElement);
 		}
 		
-		public override string ToString()
+		public override string toString()
 		{
 			return this.join(",");
 		}
