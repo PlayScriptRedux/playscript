@@ -61,10 +61,16 @@ package {
 		}
 	
 		public static function parse(text:String, reviver:Function = null):Object {
-			// parse json
-			var jv:JsonValue = System.Json.JsonValue.Parse(text);
-			// convert value into dynamic object here ? 
-			return ConvertJsonValueToDynamic(jv);
+			try
+			{
+				// parse json
+				var jv:JsonValue = System.Json.JsonValue.Parse(text);
+				// convert value into dynamic object here ? 
+				return ConvertJsonValueToDynamic(jv);
+			} catch (e:Exception)
+			{
+				throw new Error(e.Message);
+			}
 		}
 
 
@@ -123,8 +129,14 @@ package {
 
 
 		public static function stringify(value:Object, replacer:* = null, space:* = null):String {
-			var jv:JsonValue = ConvertToJsonValue(value);
-			return jv.ToString ();
+			try
+			{
+				var jv:JsonValue = ConvertToJsonValue(value);
+				return jv.ToString ();
+			} catch (e:Exception)
+			{
+				throw new Error(e.Message);
+			}
 		}
 	
 		public static function encode(value:Object):String {

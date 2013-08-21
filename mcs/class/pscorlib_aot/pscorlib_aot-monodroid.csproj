@@ -5,44 +5,46 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>10.0.0</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{876BFFD1-CEFA-44DD-9243-A50958EF65DD}</ProjectGuid>
-    <ProjectTypeGuids>{6BC8ED88-2882-458C-8E55-DFD12B67127B};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <ProjectGuid>{B5CEE056-4092-477A-82B8-6494EA651287}</ProjectGuid>
+    <ProjectTypeGuids>{EFBA0AD7-5A72-4C68-AF49-83D382785DCF};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
-    <RootNamespace>pscorlib_aotmonotouch</RootNamespace>
-    <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
-    <AssemblyName>pscorlib_monotouch</AssemblyName>
+    <RootNamespace>pscorlib_aotmonodroid</RootNamespace>
+    <AndroidResgenClass>Resource</AndroidResgenClass>
+    <MonoAndroidResourcePrefix>Resources</MonoAndroidResourcePrefix>
+    <MonoAndroidAssetsPrefix>Assets</MonoAndroidAssetsPrefix>
+    <AssemblyName>pscorlib_monodroid</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>True</DebugSymbols>
+    <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>False</Optimize>
+    <Optimize>false</Optimize>
     <OutputPath>bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;PLATFORM_MONOTOUCH;OPENGL</DefineConstants>
+    <DefineConstants>DEBUG;PLATFORM_MONODROID;OPENGL</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <ConsolePause>False</ConsolePause>
-    <NoWarn>0414</NoWarn>
+    <AndroidLinkMode>None</AndroidLinkMode>
+    <ConsolePause>false</ConsolePause>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>none</DebugType>
-    <Optimize>True</Optimize>
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
     <OutputPath>bin\Release</OutputPath>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <ConsolePause>False</ConsolePause>
-    <DefineConstants>PLATFORM_MONOTOUCH;OPENGL</DefineConstants>
+    <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
+    <ConsolePause>false</ConsolePause>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="monotouch" />
     <Reference Include="System.Core" />
-    <Reference Include="OpenTK-1.0" />
     <Reference Include="System.Xml" />
     <Reference Include="ICSharpCode.SharpZipLib">
       <HintPath>..\lib\net_4_5\ICSharpCode.SharpZipLib.dll</HintPath>
     </Reference>
     <Reference Include="System.Json" />
     <Reference Include="System.Web.Services" />
+    <Reference Include="Mono.Android" />
+    <Reference Include="OpenTK-1.0" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Resources\" />
@@ -52,7 +54,7 @@
     <Folder Include="flash\globalization\" />
     <Folder Include="flash\external\" />
   </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>
     <Compile Include="..\pscorlib\Array.cs">
       <Link>Array.cs</Link>
@@ -540,6 +542,9 @@
     <Compile Include="..\pscorlib\flash\ui\MultitouchInputMode.play">
       <Link>flash\ui\MultitouchInputMode.play</Link>
     </Compile>
+    <Compile Include="..\pscorlib\flash\utils\ByteArray.play">
+      <Link>flash\utils\ByteArray.play</Link>
+    </Compile>
     <Compile Include="..\pscorlib\flash\utils\CompressionAlgorithm.play">
       <Link>flash\utils\CompressionAlgorithm.play</Link>
     </Compile>
@@ -831,17 +836,11 @@
     <Compile Include="..\pscorlib\flash\media\ios\SoundChannel.cs">
       <Link>flash\media\SoundChannelIos.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\DotNetError.play">
-      <Link>DotNetError.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\utils\ByteArray.cs">
-      <Link>flash\utils\ByteArray.cs</Link>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monotouch.csproj">
-      <Project>{CC73D545-B7C7-4FB4-996A-C76E8B0D5B81}</Project>
-      <Name>PlayScript.Dynamic_aot-monotouch</Name>
+    <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monodroid.csproj">
+      <Project>{4973150C-B48B-4A3B-987F-230517E1DF86}</Project>
+      <Name>PlayScript.Dynamic_aot-monodroid</Name>
     </ProjectReference>
   </ItemGroup>
 </Project>

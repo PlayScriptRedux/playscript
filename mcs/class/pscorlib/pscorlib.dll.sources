@@ -218,7 +218,7 @@
 ./flash/ui/MouseCursorData.play
 ./flash/ui/Multitouch.play
 ./flash/ui/MultitouchInputMode.play
-./flash/utils/ByteArray.play
+./flash/utils/ByteArray.cs
 ./flash/utils/CompressionAlgorithm.play
 ./flash/utils/Dictionary.cs
 ./flash/utils/Endian.play

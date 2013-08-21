@@ -916,11 +916,6 @@ namespace _root {
 			return this.ToString();
 		}
 		
-		public override string ToString()
-		{
-			return this.join(",");
-		}
-
 		public uint unshift(T item) 
 		{
 			if (mFixed)

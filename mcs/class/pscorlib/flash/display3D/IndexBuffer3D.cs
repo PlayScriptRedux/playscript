@@ -20,6 +20,10 @@ using _root;
 using MonoMac.OpenGL;
 #elif PLATFORM_MONOTOUCH
 using OpenTK.Graphics.ES20;
+#elif PLATFORM_MONODROID
+using OpenTK.Graphics.ES20;
+using BufferTarget = OpenTK.Graphics.ES20.All;
+using BufferUsage = OpenTK.Graphics.ES20.All;
 #endif
 
 namespace flash.display3D {
@@ -43,7 +47,7 @@ namespace flash.display3D {
 
 			#if PLATFORM_MONOMAC
 			mUsage = isDynamic ? BufferUsageHint.DynamicDraw : BufferUsageHint.StaticDraw;
-			#elif PLATFORM_MONOTOUCH
+			#elif PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			mUsage = isDynamic ? BufferUsage.DynamicDraw : BufferUsage.StaticDraw;
 			#endif
 		}
@@ -54,6 +58,26 @@ namespace flash.display3D {
 		
 		public void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startOffset, int count) {
 			throw new NotImplementedException();
+		}
+
+		public void uploadFromArray(uint[] data, int startOffset, int count) {
+			// swap to next buffer
+			mBufferIndex++;
+			if (mBufferIndex >= mIds.Length)
+				mBufferIndex = 0;
+
+			GL.BindBuffer(BufferTarget.ElementArrayBuffer, mIds[mBufferIndex]);
+			#if PLATFORM_MONOMAC
+			GL.BufferData<uint>(BufferTarget.ElementArrayBuffer, 
+			                    (IntPtr)(count * sizeof(uint)), 
+			                    data, 
+			                    mUsage);
+			#elif PLATFORM_MONOTOUCH
+			GL.BufferData<uint>(BufferTarget.ElementArrayBuffer, 
+			                    (IntPtr)(count * sizeof(uint)), 
+			                    data, 
+			                    mUsage);
+			#endif
 		}
 
 		public void uploadFromVector(Vector<uint> data, int startOffset, int count) {
@@ -68,7 +92,7 @@ namespace flash.display3D {
 		        (IntPtr)(count * sizeof(uint)), 
 		        data._GetInnerArray(), 
                 mUsage);
-#elif PLATFORM_MONOTOUCH
+#elif PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			GL.BufferData<uint>(BufferTarget.ElementArrayBuffer, 
                 (IntPtr)(count * sizeof(uint)), 
                 data._GetInnerArray(), 
@@ -85,7 +109,7 @@ namespace flash.display3D {
 
 #if PLATFORM_MONOMAC
 		private BufferUsageHint     mUsage;
-#elif PLATFORM_MONOTOUCH
+#elif PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 		private BufferUsage         mUsage;
 #endif
 

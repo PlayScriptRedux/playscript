@@ -20,6 +20,10 @@ using _root;
 using MonoMac.OpenGL;
 #elif PLATFORM_MONOTOUCH
 using OpenTK.Graphics.ES20;
+#elif PLATFORM_MONODROID
+using OpenTK.Graphics.ES20;
+using BufferTarget = OpenTK.Graphics.ES20.All;
+using BufferUsage = OpenTK.Graphics.ES20.All;
 #endif
 
 
@@ -46,7 +50,7 @@ namespace flash.display3D
 
 			#if PLATFORM_MONOMAC
 			mUsage = isDynamic ? BufferUsageHint.DynamicDraw : BufferUsageHint.StaticDraw;
-			#elif PLATFORM_MONOTOUCH
+			#elif PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			mUsage = isDynamic ? BufferUsage.DynamicDraw : BufferUsage.StaticDraw;
 			#endif
 		}
@@ -133,7 +137,7 @@ namespace flash.display3D
 
 		#if PLATFORM_MONOMAC
 		private BufferUsageHint     mUsage;
-		#elif PLATFORM_MONOTOUCH
+		#elif PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 		private BufferUsage         mUsage;
 		#endif
 

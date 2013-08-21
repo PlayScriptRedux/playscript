@@ -870,8 +870,8 @@ namespace Mono.PlayScript
 				Token.OP_USHIFT_RIGHT_ASSIGN,
 				Token.OP_EQ,
 				Token.OP_NE,
-				Token.OP_REF_EQ,
-				Token.OP_REF_NE,
+				Token.OP_STRICT_EQ,
+				Token.OP_STRICT_NE,
 				Token.OP_LT,
 				Token.OP_GT,
 				Token.OP_GE,
@@ -3898,7 +3898,7 @@ namespace Mono.PlayScript
 						get_char ();
 						if (peek_char () == '=') {
 							get_char ();
-							return Token.OP_REF_NE;
+							return Token.OP_STRICT_NE;
 						}
 						return Token.OP_NE;
 					}
@@ -3913,7 +3913,7 @@ namespace Mono.PlayScript
 						d = peek_char ();
 						if (d == '=') {
 							get_char ();
-							return Token.OP_REF_EQ;
+							return Token.OP_STRICT_EQ;
 						}
 						return Token.OP_EQ;
 					}

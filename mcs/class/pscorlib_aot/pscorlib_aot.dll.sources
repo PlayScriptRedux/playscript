@@ -218,7 +218,7 @@
 ../pscorlib/flash/ui/MouseCursorData.play
 ../pscorlib/flash/ui/Multitouch.play
 ../pscorlib/flash/ui/MultitouchInputMode.play
-../pscorlib/flash/utils/ByteArray.play
+../pscorlib/flash/utils/ByteArray.cs
 ../pscorlib/flash/utils/CompressionAlgorithm.play
 ../pscorlib/flash/utils/Dictionary.cs
 ../pscorlib/flash/utils/Endian.play
