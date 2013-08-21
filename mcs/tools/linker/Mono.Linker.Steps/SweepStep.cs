@@ -123,7 +123,6 @@ namespace Mono.Linker.Steps {
 				if (Annotations.IsMarked (nested)) {
 					SweepType (nested);
 				} else {
-					System.Console.WriteLine ("Removing Type: " + type.NestedTypes[i].FullName);
 					type.NestedTypes.RemoveAt (i--);
 				}
 			}
@@ -132,10 +131,8 @@ namespace Mono.Linker.Steps {
 		void SweepCollection (IList list)
 		{
 			for (int i = 0; i < list.Count; i++)
-				if (!Annotations.IsMarked ((IMetadataTokenProvider)list [i])) {
-					System.Console.WriteLine ("Removing: " + list [i].ToString ());
+				if (!Annotations.IsMarked ((IMetadataTokenProvider) list [i]))
 					list.RemoveAt (i--);
-				}
 		}
 
 		static bool AreSameReference (AssemblyNameReference a, AssemblyNameReference b)
