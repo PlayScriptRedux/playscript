@@ -2648,14 +2648,6 @@ namespace Mono.CSharp
 		//
 		string GetOperatorExpressionTypeName ()
 		{
-			return GetOperatorExpressionTypeName (oper);
-		}
-
-		//
-		// Converts operator to System.Linq.Expressions.ExpressionType enum name
-		//
-		string GetOperatorExpressionTypeName (Operator oper)
-		{
 			switch (oper) {
 			case Operator.Addition:
 				return IsCompound ? "AddAssign" : "Add";
@@ -3350,19 +3342,16 @@ namespace Mono.CSharp
 							       new Cast(new TypeExpression(ec.BuiltinTypes.Bool, loc), left, loc), loc), leftExpr, rightExpr, loc).Resolve (ec);
 						}
 					} else if (oper == Operator.AsStrictEquality || oper == Operator.AsStrictInequality) {
+						// The rules for strict equality are somewhat complicated, so we let the
+						// dynamic runtime handle it.
 						var args = new Arguments(2);
 						args.Add (new Argument (left));
 						args.Add (new Argument (right));
-						Expression expr = new DynamicBinaryExpression (Operator.AsStrictEquality, this.GetOperatorExpressionTypeName (Operator.AsStrictEquality), args, loc);
-						if (oper == Operator.AsStrictInequality) {
-							expr = new Unary (Unary.Operator.LogicalNot, expr, loc);
-						}
-						return expr.Resolve (ec);
+						return new DynamicBinaryExpression (oper, this.GetOperatorExpressionTypeName (), args, loc).Resolve (ec);
 					} else if (left.Type == ec.Module.PredefinedTypes.AsUndefined.TypeSpec ||
 					           right.Type == ec.Module.PredefinedTypes.AsUndefined.TypeSpec) {
-						// Note: It's important this check comes after the check for the strict
-						// inequality operator, since we don't actually implement strict inequality
-						// operators. Instead we negate the result of the strict equality operator.
+						// The undefined keyword has special behavior, so we let the dynamic
+						// runtime handle it.
 						var args = new Arguments(2);
 						args.Add (new Argument (left));
 						args.Add (new Argument (right));
