@@ -56,6 +56,26 @@ namespace flash.display3D {
 			throw new NotImplementedException();
 		}
 
+		public void uploadFromArray(uint[] data, int startOffset, int count) {
+			// swap to next buffer
+			mBufferIndex++;
+			if (mBufferIndex >= mIds.Length)
+				mBufferIndex = 0;
+
+			GL.BindBuffer(BufferTarget.ElementArrayBuffer, mIds[mBufferIndex]);
+			#if PLATFORM_MONOMAC
+			GL.BufferData<uint>(BufferTarget.ElementArrayBuffer, 
+			                    (IntPtr)(count * sizeof(uint)), 
+			                    data, 
+			                    mUsage);
+			#elif PLATFORM_MONOTOUCH
+			GL.BufferData<uint>(BufferTarget.ElementArrayBuffer, 
+			                    (IntPtr)(count * sizeof(uint)), 
+			                    data, 
+			                    mUsage);
+			#endif
+		}
+
 		public void uploadFromVector(Vector<uint> data, int startOffset, int count) {
 			// swap to next buffer
 			mBufferIndex++;
