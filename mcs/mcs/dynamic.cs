@@ -1707,11 +1707,11 @@ namespace Mono.CSharp
 				case Binary.Operator.Inequality:
 					binaryMethod = "Inequality";
 					break;
-				case Binary.Operator.AsRefEquality:
-					binaryMethod = "AsRefEquality";
+				case Binary.Operator.AsStrictEquality:
+					binaryMethod = "AsStrictEquality";
 					break;
-				case Binary.Operator.AsRefInequality:
-					binaryMethod = "AsRefInequality";
+				case Binary.Operator.AsStrictInequality:
+					binaryMethod = "AsStrictInequality";
 					break;
 				case Binary.Operator.BitwiseAnd:
 					binaryMethod = "BitwiseAnd";

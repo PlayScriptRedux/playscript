@@ -2446,8 +2446,8 @@ namespace Mono.CSharp
 			GreaterThanOrEqual	= 11 | ComparisonMask | RelationalMask,
 			Equality	= 12 | ComparisonMask | EqualityMask,
 			Inequality	= 13 | ComparisonMask | EqualityMask,
-			AsRefEquality = 14 | ComparisonMask | EqualityMask,
-			AsRefInequality = 15 | ComparisonMask | EqualityMask,
+			AsStrictEquality = 14 | ComparisonMask | EqualityMask,
+			AsStrictInequality = 15 | ComparisonMask | EqualityMask,
 
 			BitwiseAnd	= 16 | BitwiseMask,
 			ExclusiveOr	= 17 | BitwiseMask,
@@ -2585,13 +2585,13 @@ namespace Mono.CSharp
 			case Operator.Equality:
 				s = "==";
 				break;
-			case Operator.AsRefEquality:
+			case Operator.AsStrictEquality:
 				s = "===";
 				break;
 			case Operator.Inequality:
 				s = "!=";
 				break;
-			case Operator.AsRefInequality:
+			case Operator.AsStrictInequality:
 				s = "!==";
 				break;
 			case Operator.BitwiseAnd:
@@ -2648,6 +2648,14 @@ namespace Mono.CSharp
 		//
 		string GetOperatorExpressionTypeName ()
 		{
+			return GetOperatorExpressionTypeName (oper);
+		}
+
+		//
+		// Converts operator to System.Linq.Expressions.ExpressionType enum name
+		//
+		string GetOperatorExpressionTypeName (Operator oper)
+		{
 			switch (oper) {
 			case Operator.Addition:
 				return IsCompound ? "AddAssign" : "Add";
@@ -2661,16 +2669,16 @@ namespace Mono.CSharp
 				return IsCompound ? "ExclusiveOrAssign" : "ExclusiveOr";
 			case Operator.Equality:
 				return "Equal";
-			case Operator.AsRefEquality:
-				return "ReferenceEqual";
+			case Operator.AsStrictEquality:
+				return "StrictEqual";
 			case Operator.GreaterThan:
 				return "GreaterThan";
 			case Operator.GreaterThanOrEqual:
 				return "GreaterThanOrEqual";
 			case Operator.Inequality:
 				return "NotEqual";
-			case Operator.AsRefInequality:
-				return "ReferenceNotEqual";
+			case Operator.AsStrictInequality:
+				return "StrictNotEqual";
 			case Operator.LeftShift:
 				return IsCompound ? "LeftShiftAssign" : "LeftShift";
 			case Operator.LessThan:
@@ -3253,22 +3261,6 @@ namespace Mono.CSharp
 			return true;
 		}
 
-		private Expression MakeReferenceEqualsInvocation (ResolveContext rc) 
-		{
-			var lf = left;
-			if (lf.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic)
-				lf = EmptyCast.RemoveDynamic(rc, lf);
-			var rt = right;
-			if (rt.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic)
-				rt = EmptyCast.RemoveDynamic(rc, rt);
-			var args = new Arguments(2);
-			args.Add (new Argument(lf));
-			args.Add (new Argument(rt));
-			return new Invocation(
-				new MemberAccess(new MemberAccess(new SimpleName("System", loc), "Object", loc), 
-			  	"ReferenceEquals", loc), args);
-		}
-
 		private Expression MakeStringComparison (ResolveContext rc) {
 			var args = new Arguments(2);
 			args.Add (new Argument(left));
@@ -3357,10 +3349,24 @@ namespace Mono.CSharp
 							return new Conditional (new Unary(Unary.Operator.LogicalNot, 
 							       new Cast(new TypeExpression(ec.BuiltinTypes.Bool, loc), left, loc), loc), leftExpr, rightExpr, loc).Resolve (ec);
 						}
-					} else if (oper == Operator.AsRefEquality) {
-						return MakeReferenceEqualsInvocation (ec).Resolve (ec);
-					} else if (oper == Operator.AsRefInequality) {
-						return new Unary(Unary.Operator.LogicalNot, MakeReferenceEqualsInvocation (ec), loc).Resolve (ec);
+					} else if (oper == Operator.AsStrictEquality || oper == Operator.AsStrictInequality) {
+						var args = new Arguments(2);
+						args.Add (new Argument (left));
+						args.Add (new Argument (right));
+						Expression expr = new DynamicBinaryExpression (Operator.AsStrictEquality, this.GetOperatorExpressionTypeName (Operator.AsStrictEquality), args, loc);
+						if (oper == Operator.AsStrictInequality) {
+							expr = new Unary (Unary.Operator.LogicalNot, expr, loc);
+						}
+						return expr.Resolve (ec);
+					} else if (left.Type == ec.Module.PredefinedTypes.AsUndefined.TypeSpec ||
+					           right.Type == ec.Module.PredefinedTypes.AsUndefined.TypeSpec) {
+						// Note: It's important this check comes after the check for the strict
+						// inequality operator, since we don't actually implement strict inequality
+						// operators. Instead we negate the result of the strict equality operator.
+						var args = new Arguments(2);
+						args.Add (new Argument (left));
+						args.Add (new Argument (right));
+						return new DynamicBinaryExpression (oper, this.GetOperatorExpressionTypeName (), args, loc).Resolve (ec);
 					} else if (oper == Operator.AsURightShift) {
 						var bi_type = left.Type.BuiltinType;
 						if (bi_type == BuiltinTypeSpec.Type.SByte) {

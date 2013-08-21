@@ -348,9 +348,9 @@ namespace Mono.PlayScript
 %token OP_LE
 %token OP_GE
 %token OP_EQ
-%token OP_REF_EQ
+%token OP_STRICT_EQ
 %token OP_NE
-%token OP_REF_NE
+%token OP_STRICT_NE
 %token OP_AND
 %token OP_OR
 %token OP_MULT_ASSIGN
@@ -5112,14 +5112,14 @@ equality_expression
 		$$ = new Binary (Binary.Operator.Inequality, (Expression) $1, (Expression) $3);
 		lbag.AddLocation ($$, GetLocation ($2));
 	  }
-	| equality_expression OP_REF_EQ relational_expression
+	| equality_expression OP_STRICT_EQ relational_expression
 	  {
-		$$ = new Binary (Binary.Operator.AsRefEquality, (Expression) $1, (Expression) $3);
+		$$ = new Binary (Binary.Operator.AsStrictEquality, (Expression) $1, (Expression) $3);
 		lbag.AddLocation ($$, GetLocation ($2));
 	  }
-	| equality_expression OP_REF_NE relational_expression
+	| equality_expression OP_STRICT_NE relational_expression
 	  {
-		$$ = new Binary (Binary.Operator.AsRefInequality, (Expression) $1, (Expression) $3);
+		$$ = new Binary (Binary.Operator.AsStrictInequality, (Expression) $1, (Expression) $3);
 		lbag.AddLocation ($$, GetLocation ($2));
 	  }
 	; 
@@ -8660,7 +8660,7 @@ string GetSymbolName (int token)
 		return ">=";
 	case Token.OP_EQ:
 		return "==";
-	case Token.OP_REF_EQ:
+	case Token.OP_STRICT_EQ:
 		return "===";
 	case Token.OP_NE:
 		return "!=";
