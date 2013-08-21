@@ -16,6 +16,10 @@ namespace PlayScript
 
 		public MethodBinder(MethodInfo method, bool isExtensionMethod)
 		{
+			if (method.Name == "splice") {
+				int i = 100;
+			}
+
 			Method = method;
 			IsExtensionMethod = isExtensionMethod;
 
@@ -29,7 +33,7 @@ namespace PlayScript
 				var lastParameter = Parameters[Parameters.Length - 1];
 				// determine variadic state of this method
 				var paramArrayAttribute = lastParameter.GetCustomAttributes(typeof(ParamArrayAttribute), true);
-				if ((paramArrayAttribute != null) && (paramArrayAttribute.Length != 0))
+				if (lastParameter.ParameterType == typeof(object[]))
 				{
 					IsVariadic = true;
 					// we have one less parameter since we are variadic

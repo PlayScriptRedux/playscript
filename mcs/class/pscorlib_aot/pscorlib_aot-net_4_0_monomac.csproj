@@ -807,6 +807,9 @@
     <Compile Include="..\pscorlib\ForbidDynamicAttribute.cs">
       <Link>ForbidDynamicAttribute.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\DotNetError.play">
+      <Link>DotNetError.play</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="flash\external\" />

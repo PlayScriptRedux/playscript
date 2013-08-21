@@ -15,7 +15,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;BINDERS_RUNTIME_STATS</DefineConstants>
+    <DefineConstants>DEBUG;BINDERS_RUNTIME_STATS;LOG_TYPES</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
@@ -31,6 +31,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
@@ -207,6 +208,9 @@
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSInvoke.cs">
       <Link>PlayScript\DynamicRuntime\PSInvoke.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\TypeLogger.cs">
+      <Link>PlayScript\DynamicRuntime\TypeLogger.cs</Link>
     </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

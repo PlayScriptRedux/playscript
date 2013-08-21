@@ -8,6 +8,7 @@
 ../pscorlib/DefaultPropertyAttribute.cs
 ../pscorlib/DefinitionError.play
 ../pscorlib/DeprecatedAttribute.cs
+../pscorlib/DotNetError.play
 ../pscorlib/Dynamic.play
 ../pscorlib/EmbedAttribute.cs
 ../pscorlib/Error.play

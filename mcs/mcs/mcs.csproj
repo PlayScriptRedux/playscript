@@ -22,8 +22,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <Commandlineparameters>/noconfig "/r:/Developer/MonoTouch/usr/lib/mono/2.1/mscorlib.dll" -nostdlib "/out:/Users/bcooley/projects/playscript-base/PlayScript.Tests/PlayScript.Tests.Performance/bin/Release/PlayScript.Tests.Performance.dll" "/r:/Developer/MonoTouch/usr/lib/mono/2.1/System.dll" "/r:/Developer/MonoTouch/usr/lib/mono/2.1/System.Xml.dll" "/r:/Developer/MonoTouch/usr/lib/mono/2.1/System.Core.dll" "/r:/Developer/MonoTouch/usr/lib/mono/2.1/monotouch.dll" "/r:/Users/bcooley/projects/playscript-mono/mcs/class/PlayScript.Dynamic_aot/bin/Release/PlayScript.Dynamic_monotouch.dll" "/r:/Users/bcooley/projects/playscript-mono/mcs/class/pscorlib_aot/bin/Release/pscorlib_monotouch.dll" "/r:/Developer/MonoTouch/usr/lib/mono/2.1/System.Core.dll" /nologo /warn:4 /optimize+ /codepage:utf8 -unsafe "/define:CONFIG_PLAYSCRIPT_ONLY;__MOBILE__;__IOS__"  /t:library "/Users/bcooley/projects/playscript-base/PlayScript.Tests/PlayScript.Tests.Performance/src/DummySprite.as" "/Users/bcooley/projects/playscript-base/PlayScript.Tests/PlayScript.Tests.Performance/src/log.as" "/Users/bcooley/projects/playscript-base/PlayScript.Tests/PlayScript.Tests.Performance/src/CsPerfTest.cs" "/Users/bcooley/projects/playscript-base/PlayScript.Tests/PlayScript.Tests.Performance/src/Vector2.cs" "/Users/bcooley/projects/playscript-base/PlayScript.Tests/PlayScript.Tests.Performance/src/PsPerfTest.play" "/Users/bcooley/projects/playscript-base/PlayScript.Tests/PlayScript.Tests.Performance/src/PlayScriptPerf.as" "/Users/bcooley/projects/playscript-base/PlayScript.Tests/PlayScript.Tests.Performance/src/BasicPerfTests.as" "/Users/bcooley/projects/playscript-base/PlayScript.Tests/PlayScript.Tests.Performance/src/ByteArrayPerfTests.as" "/Users/bcooley/projects/playscript-base/PlayScript.Tests/PlayScript.Tests.Performance/src/CollectionPerfTests.as" "/Users/bcooley/projects/playscript-base/PlayScript.Tests/PlayScript.Tests.Performance/src/DoubleVsFloatPerfTests.as" "/Users/bcooley/projects/playscript-base/PlayScript.Tests/PlayScript.Tests.Performance/src/DynamicPerfTests.as" "/Users/bcooley/projects/playscript-base/PlayScript.Tests/PlayScript.Tests.Performance/src/JsonPerfTests.as" "/Users/bcooley/projects/playscript-base/PlayScript.Tests/PlayScript.Tests.Performance/src/logResult.as" "/Users/bcooley/projects/playscript-base/PlayScript.Tests/PlayScript.Tests.Performance/src/StringPerfTests.as" "/Users/bcooley/projects/playscript-base/PlayScript.Tests/PlayScript.Tests.Performance/src/XmlPerfTests.as" 
-</Commandlineparameters>
+    <Commandlineparameters>/noconfig "/r:/Users/bcooley/projects/playscript-mono-inst/lib/mono/4.0/mscorlib.dll" -nostdlib "/out:/Users/bcooley/projects/playscript-mono/mcs/mcs/test2.exe" "/r:/Users/bcooley/projects/playscript-mono-inst/lib/mono/4.0/System.dll" "/r:/Users/bcooley/projects/playscript-mono/mcs/class/PlayScript.Dynamic_aot/bin/Debug/PlayScript.Dynamic_aot.dll" "/r:/Users/bcooley/projects/playscript-mono/mcs/class/pscorlib_aot/bin/Debug/pscorlib_monomac.dll" "/r:/Users/bcooley/projects/playscript-mono/mcs/class/Mono.Optimization/bin/Debug/Mono.Optimization.dll" "/r:/Users/bcooley/projects/playscript-mono-inst/lib/mono/4.0/System.Core.dll" /nologo /warn:4 /debug:full /optimize- /codepage:utf8 -unsafe "/define:DEBUG"  /t:exe "/Users/bcooley/projects/playscript-mono/mcs/mcs/test.as"</Commandlineparameters>
     <additionalargs>/newdynamic-</additionalargs>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -210,11 +209,5 @@
   <ItemGroup>
     <None Include="ps-parser.jay" />
     <None Include="options.rsp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="test.csproj">
-      <Project>{B5782FD5-CBC6-4194-BF51-A20D55CEBE78}</Project>
-      <Name>test</Name>
-    </ProjectReference>
   </ItemGroup>
 </Project>

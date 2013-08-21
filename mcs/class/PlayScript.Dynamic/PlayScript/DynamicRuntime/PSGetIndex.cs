@@ -24,7 +24,7 @@ using PlayScript;
 
 namespace PlayScript.DynamicRuntime
 {
-	public class PSGetIndex 
+	public class PSGetIndex
 	{
 		private PSGetMember			  mGetMember;
 

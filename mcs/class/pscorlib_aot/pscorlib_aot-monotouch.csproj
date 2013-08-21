@@ -834,6 +834,9 @@
     <Compile Include="..\pscorlib\flash\media\ios\SoundChannel.cs">
       <Link>flash\media\SoundChannelIos.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\DotNetError.play">
+      <Link>DotNetError.play</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monotouch.csproj">
