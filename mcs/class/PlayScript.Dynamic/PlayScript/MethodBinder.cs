@@ -16,10 +16,6 @@ namespace PlayScript
 
 		public MethodBinder(MethodInfo method, bool isExtensionMethod)
 		{
-			if (method.Name == "splice") {
-				int i = 100;
-			}
-
 			Method = method;
 			IsExtensionMethod = isExtensionMethod;
 
