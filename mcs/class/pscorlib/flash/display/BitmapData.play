@@ -23,7 +23,7 @@ package flash.display {
 	import flash.text.TextFormatAlign;
 	import System.IO.*;
 	import System.Reflection.*;
-	
+
 #if PLATFORM_MONOMAC
 	import MonoMac.CoreGraphics.*;
 	import MonoMac.Foundation.*;
@@ -32,6 +32,12 @@ package flash.display {
 	import MonoTouch.Foundation.*;
 	import MonoTouch.CoreGraphics.*;
 	import MonoTouch.UIKit.*;
+#elif PLATFORM_MONODROID
+	import Android.Graphics.BitmapFactory;
+	import Android.Graphics.Color;
+	import Android.App.Application;
+	import Java.Nio.ByteBuffer;
+	import Java.IO.ByteArrayOutputStream;
 #endif
 
 	public class BitmapData implements IBitmapDrawable {
@@ -455,9 +461,33 @@ package flash.display {
 			// create CGImage from path
 			var image:CGImage = (new UIImage(fullpath)).CGImage;
 			bd = BitmapData.loadFromCGImage(image);
+#elif PLATFORM_MONODROID
+			var stream:Stream = Application.Context.Assets.Open(path);
+			var bitmap:Android.Graphics.Bitmap = BitmapFactory.DecodeStream(stream);
+
+			var buffer = new int[ bitmap.Width * bitmap.Height ];
+			bitmap.GetPixels(buffer, 0, bitmap.Width, 0, 0, bitmap.Height, bitmap.Width);
+
+			// allocate new bitmap data and copy into it
+            var width:int = bitmap.Width;
+			var height:int = bitmap.Height;
+			var data = new uint[ bitmap.Width * bitmap.Height ];
+			for ( var i:int = 0; i < buffer.Length; i++ )
+			{
+				var alpha:int = Color.GetAlphaComponent( buffer[i] );
+				var red:int = Color.GetRedComponent( buffer[i] );
+				var green:int = Color.GetGreenComponent( buffer[i] );
+				var blue:int = Color.GetBlueComponent( buffer[i] );
+
+				data[i] = (alpha << 24) + (blue << 16) + (green << 8) + red;
+			}
+
+			bd = new flash.display.BitmapData(width, height, true);
+			bd.mData = data;
 #else
 			throw new System.NotImplementedException();
 #endif
+
 //			var size:int = bd.width * bd.height * 4;
 //			totalBytesLoaded += size;
 //			trace("BitmapData loaded path:" + path + " size:" + size +  " total:" + totalBytesLoaded);

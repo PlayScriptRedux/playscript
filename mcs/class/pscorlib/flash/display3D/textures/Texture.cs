@@ -24,6 +24,12 @@ namespace flash.display3D.textures {
 	using MonoMac.OpenGL;
 #elif PLATFORM_MONOTOUCH
 	using OpenTK.Graphics.ES20;
+#elif PLATFORM_MONODROID
+	using OpenTK.Graphics.ES20;
+	using TextureTarget = OpenTK.Graphics.ES20.All;
+	using PixelInternalFormat = OpenTK.Graphics.ES20.All;
+	using PixelFormat = OpenTK.Graphics.ES20.All;
+	using PixelType = OpenTK.Graphics.ES20.All;
 #endif
 
 	public class Texture : TextureBase {
@@ -125,10 +131,13 @@ namespace flash.display3D.textures {
                 GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.GenerateMipmap, 1);
             }
 #endif
-
+#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
 			GL.TexImage2D(textureTarget, (int)miplevel, PixelInternalFormat.Rgba, mWidth, mHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte,source.getRawData());
+#elif PLATFORM_MONODROID
+			GL.TexImage2D<uint>(textureTarget, (int)miplevel, (int) PixelInternalFormat.Rgba, mWidth, mHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte, source.getRawData());
+#endif
 
-#if PLATFORM_MONOTOUCH
+#if PLATFORM_MONOTOUCH || PLATFORM_MONODROID
             GL.GenerateMipmap(textureTarget);
 #endif
 

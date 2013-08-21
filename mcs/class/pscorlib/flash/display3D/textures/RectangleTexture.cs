@@ -21,6 +21,9 @@ namespace flash.display3D.textures {
 	using MonoMac.OpenGL;
 	#elif PLATFORM_MONOTOUCH
 	using OpenTK.Graphics.ES20;
+	#elif PLATFORM_MONODROID
+	using OpenTK.Graphics.ES20;
+	using TextureTarget = OpenTK.Graphics.ES20.All;
 	#endif
 
 	public class RectangleTexture : TextureBase {

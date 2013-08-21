@@ -24,6 +24,8 @@ using flash.utils;
 using MonoMac.OpenGL;
 #elif PLATFORM_MONOTOUCH
 using OpenTK.Graphics.ES20;
+#elif PLATFORM_MONODROID
+using OpenTK.Graphics.ES20;
 #endif
 
 namespace flash.display3D
@@ -223,7 +225,11 @@ namespace flash.display3D
 				{
 					// disable
 				case 0:	
+#if PLATFORM_MONODROID
+
+#elif PLATFORM_MONOTOUCH
 					state.MinFilter = (f!=0) ? TextureMinFilter.Linear : TextureMinFilter.Nearest;		
+#endif
 					break;
 					// nearest
 				case 1:	
@@ -806,13 +812,14 @@ namespace flash.display3D
 			var glslVersion = 120;
 #elif PLATFORM_MONOTOUCH
 			var glslVersion = 100; // Actually this is glsl 1.20 but in gles it's 1.0
+#elif PLATFORM_MONODROID
+			var glslVersion = 100;
 #endif
-
 			// combine parts into final progam
 			var glsl = new StringBuilder();
 			glsl.AppendFormat("// AGAL {0} shader\n", (programType == ProgramType.Vertex) ? "vertex" : "fragment");
 			glsl.AppendFormat("#version {0}\n", glslVersion);
-#if PLATFORM_MONOTOUCH
+#if PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			// Required to set the default precision of vectors
 			glsl.Append("precision mediump float;\n");
 #endif
