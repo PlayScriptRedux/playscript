@@ -60,8 +60,8 @@ namespace PlayScript.DynamicRuntime
 			GreaterThanOrEqual	= 11 | ComparisonMask | RelationalMask,
 			Equality	= 12 | ComparisonMask | EqualityMask,
 			Inequality	= 13 | ComparisonMask | EqualityMask,
-			AsRefEquality = 14 | ComparisonMask | EqualityMask,
-			AsRefInequality = 15 | ComparisonMask | EqualityMask,
+			AsStrictEquality = 14 | ComparisonMask | EqualityMask,
+			AsStrictInequality = 15 | ComparisonMask | EqualityMask,
 
 			BitwiseAnd	= 16 | BitwiseMask,
 			ExclusiveOr	= 17 | BitwiseMask,
@@ -1597,6 +1597,254 @@ namespace PlayScript.DynamicRuntime
 		public static bool InequalityObjObj (object a, object b)
 		{
 			return !EqualityObjObj(a, b);
+		}
+
+		public static bool AsStrictEqualityObjInt (object a, int b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityIntObj (int a, object b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityObjUInt (object a, uint b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityUIntObj (uint a, object b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityObjDouble (object a, double b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityDoubleObj (double a, object b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityObjString (object a, string b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityStringObj (string a, object b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityObjBool (object a, bool b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityBoolObj (bool a, object b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityObjObj (object a, object b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return System.Object.ReferenceEquals (a, b);
+		}
+
+		public static bool AsStrictEqualityDoubleDouble (double a, double b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return a == b;
+		}
+
+		public static bool AsStrictEqualityDoubleInt (double a, int b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return a == (double)b;
+		}
+
+		public static bool AsStrictEqualityIntDouble (int a, double b)
+		{
+			return (double)a == b;
+		}
+
+		public static bool AsStrictEqualityDoubleUInt (double a, uint b)
+		{
+			return a == (double)b;
+		}
+
+		public static bool AsStrictEqualityUIntDouble (uint a, double b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return (double)a == b;
+		}
+
+		public static bool AsStrictEqualityDoubleString (string a, double b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityStringDouble (string a, double b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityIntUInt (int a, uint b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return a == b;
+		}
+
+		public static bool AsStrictEqualityIntInt (int a, int b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return a == b;
+		}
+
+		public static bool AsStrictEqualityIntString (int a, string b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityStringInt (string a, int b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityUIntInt (uint a, int b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return a == b;
+		}
+
+		public static bool AsStrictEqualityBoolBool (bool a, bool b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return a == b;
+		}
+
+		public static bool AsStrictEqualityBoolString (bool a, string b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityStringBool (string a, bool b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityBoolInt (bool a, int b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityIntBool (int a, bool b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityBoolUInt (bool a, uint b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityUIntBool (uint a, bool b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityBoolDouble (bool a, double b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityDoubleBool (double a, bool b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityUIntUInt (uint a, uint b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return a == b;
+		}
+
+		public static bool AsStrictEqualityUIntString (uint a, string b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityStringUInt (string a, uint b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return false;
+		}
+
+		public static bool AsStrictEqualityStringString (string a, string b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			return a == b;
 		}
 
 		// Logical bit operations are all using integer math (should not upconvert to double to improve accuracy)
