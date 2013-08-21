@@ -318,6 +318,61 @@ namespace PlayScript
 		}
 
 		#region Private
+		private static double GetFpsFromMs(double value)
+		{
+			return (value <= 0.0) ? double.NaN : (1000.0 / value);
+		}
+
+		private static void PrintAverageClamped(TextWriter tw, string key, double minimumClampedValue)
+		{
+			Section section;
+			if (sSections.TryGetValue(key, out section) == false)
+			{
+				return;
+			}
+			double sum = 0;
+			for (int frame=0; frame < sFrameCount; frame++)
+			{
+				var history = section.History[frame];
+				double milliseconds = Math.Max(history.Time.TotalMilliseconds, minimumClampedValue);
+				sum += milliseconds;
+			}
+			sum /= sFrameCount;
+			tw.WriteLine("Avg (clamp):  {0,6:0.00}ms - {1, 12:0.0} fps", sum, GetFpsFromMs(sum));
+		}
+
+		private static void PrintPercentile(TextWriter tw, string key, int percentile)
+		{
+			Section section;
+			if (sSections.TryGetValue(key, out section) == false)
+			{
+				return;
+			}
+			List<double> history = section.History.Select(a => a.Time.TotalMilliseconds).OrderBy(a => a).ToList();
+			int index = (history.Count * percentile) / 100;
+			double pTime = history[index];
+			tw.WriteLine("{0, 2}p:          {1,6:0.00}ms - {2, 12:0.0} fps", percentile, pTime, GetFpsFromMs(pTime));
+		}
+
+		private static void PrintPercentageOfFrames(TextWriter tw, string key, string text, Func<double, bool> func)
+		{
+			Section section;
+			if (sSections.TryGetValue(key, out section) == false)
+			{
+				return;
+			}
+			int matchingFrames = 0;
+			for (int frame = 0 ; frame < sFrameCount ; frame++)
+			{
+				var history = section.History[frame];
+				if (func(history.Time.TotalMilliseconds))
+				{
+					matchingFrames++;
+				}
+			}
+			tw.WriteLine("{0}: {1:0.0}%", text, (double)(100.0 * matchingFrames) / (double)sFrameCount);
+		}
+
 		private static void PrintReport(TextWriter tw)
 		{
 			tw.WriteLine("******** Profiling report *********");
@@ -337,7 +392,19 @@ namespace PlayScript
 
 			tw.WriteLine("Total Frames:  {0}", sFrameCount);
 			tw.WriteLine("Total Time:    {0}", sReportTime.Elapsed);
-			tw.WriteLine("Average FPS:   {0}",  ((double)sFrameCount / sReportTime.Elapsed.TotalSeconds).ToString("0.00") );
+			double fastFrame = 16.666666;
+			double slowFrame = 66.666666;
+			#if PLATFORM_MONOTOUCH
+			if (UIDevice.CurrentDevice.Model == "iPhone")
+			{
+				fastFrame = 33.3333333;
+				slowFrame = 100;
+			}
+			#endif
+			PrintAverageClamped(tw, "frame", fastFrame);
+			PrintPercentile(tw, "frame", 95);
+			PrintPercentageOfFrames(tw, "frame", "% Fast Frames", a => (a <= fastFrame));
+			PrintPercentageOfFrames(tw, "frame", "% Slow frames", a => (a >= slowFrame));
 			tw.WriteLine("GC Count:      {0}", sReportGCCount);
 
 			tw.WriteLine("*********** Timing (ms) ***********");
