@@ -6051,6 +6051,9 @@ namespace Mono.CSharp {
 		FullNamedExpression type_expr;
 		CompilerAssign assign;
 		TypeSpec type;
+
+		// The PlayScript error variable (if we're converting from Exception to Error).
+		LocalVariable psErrorLi;
 		
 		public Catch (Block block, Location loc)
 		{
@@ -6124,6 +6127,9 @@ namespace Mono.CSharp {
 				ec.Emit (OpCodes.Pop);
 			}
 
+			if (psErrorLi != null)
+				psErrorLi.CreateBuilder (ec);
+
 			Block.Emit (ec);
 		}
 
@@ -6138,6 +6144,23 @@ namespace Mono.CSharp {
 					if (type.BuiltinType != BuiltinTypeSpec.Type.Exception && !TypeSpec.IsBaseClass (type, ec.BuiltinTypes.Exception, false)) {
 						ec.Report.Error (155, loc, "The type caught or thrown must be derived from System.Exception");
 					} else if (li != null) {
+
+						// For PlayScript catch (e:Error) { convert to catch (Exception __e), then convert to Error in catch block..
+						if (ec.FileType == SourceFileType.PlayScript && type == ec.Module.PredefinedTypes.AsError.Resolve ()) {
+
+							// Save old error var so we can use it below
+							psErrorLi = li;
+							psErrorLi.Type = type;
+							psErrorLi.PrepareForFlowAnalysis (ec);
+
+							// Switch to "Exception"
+							type = ec.BuiltinTypes.Exception;
+							li = new LocalVariable (block, "__" + this.Variable.Name , Location.Null);
+							li.TypeExpr = new TypeExpression(ec.BuiltinTypes.Exception, Location.Null);
+							li.Type = ec.BuiltinTypes.Exception;
+							block.AddLocalName (li);
+						}
+
 						li.Type = type;
 						li.PrepareForFlowAnalysis (ec);
 
@@ -6151,6 +6174,19 @@ namespace Mono.CSharp {
 						//
 						assign = new CompilerAssign (new LocalVariableReference (li, Location.Null), source, Location.Null);
 						Block.AddScopeStatement (new StatementExpression (assign, Location.Null));
+
+						// Convert to PlayScript/ActionScript Error type if needed
+						
+						// PlayScript - Generate the code "err = __err as Error ?? new DotNetError(_err)"
+						if (psErrorLi != null) {
+							var newArgs = new Arguments (1);
+							newArgs.Add (new Argument (new LocalVariableReference (li, Location.Null)));
+							var asExpr = new As (new LocalVariableReference (li, Location.Null), new TypeExpression (ec.Module.PredefinedTypes.AsError.Resolve (), Location.Null), Location.Null);
+							var newExpr = new New (new TypeExpression (ec.Module.PredefinedTypes.AsDotNetError.Resolve (), Location.Null), newArgs, Location.Null);
+							var errAssign = new SimpleAssign (psErrorLi.CreateReferenceExpression(ec, Location.Null), 
+							                                    new Nullable.NullCoalescingOperator (asExpr, newExpr), Location.Null);
+							block.AddScopeStatement (new StatementExpression(errAssign, Location.Null));
+						}
 					}
 				}
 

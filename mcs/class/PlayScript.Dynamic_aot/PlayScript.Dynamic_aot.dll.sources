@@ -60,4 +60,4 @@
 ../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSSetIndex.cs
 ../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSInvokeMember.cs
 ../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSInvoke.cs
-
+../PlayScript.Dynamic/PlayScript/DynamicRuntime/TypeLogger.cs

@@ -804,6 +804,9 @@
     <Compile Include="..\pscorlib\ForbidDynamicAttribute.cs">
       <Link>ForbidDynamicAttribute.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\DotNetError.play">
+      <Link>DotNetError.play</Link>
+    </Compile>
     <Compile Include="..\pscorlib\flash\utils\ByteArray.cs">
       <Link>flash\utils\ByteArray.cs</Link>
     </Compile>

@@ -831,6 +831,9 @@
     <Compile Include="..\pscorlib\flash\media\ios\SoundChannel.cs">
       <Link>flash\media\SoundChannelIos.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\DotNetError.play">
+      <Link>DotNetError.play</Link>
+    </Compile>
     <Compile Include="..\pscorlib\flash\utils\ByteArray.cs">
       <Link>flash\utils\ByteArray.cs</Link>
     </Compile>

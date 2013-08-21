@@ -23,7 +23,7 @@ using System.Diagnostics;
 
 namespace PlayScript.DynamicRuntime
 {
-	public class PSInvoke 
+	public class PSInvoke
 	{
 		// As we are single threaded, we can actually share the same args array for all callers with the same number of parameters.
 		private static object[] sArgs = new object[9];
@@ -38,6 +38,8 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction0 (object d)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
+
+			TypeLogger.LogType(d);
 
 			Action a = d as Action;
 			if (a != null)
@@ -60,6 +62,8 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
+			TypeLogger.LogType(d);
+
 			Action<A1> a = d as Action<A1>;
 			if (a != null)
 			{
@@ -81,7 +85,9 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction2<A1, A2> (object d, A1 a1, A2 a2)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-			
+
+			TypeLogger.LogType(d);
+
 			Action<A1, A2> a = d as Action<A1, A2>;
 			if (a != null)
 			{
@@ -102,7 +108,9 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction3<A1, A2, A3> (object d, A1 a1, A2 a2, A3 a3)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-			
+
+			TypeLogger.LogType(d);
+
 			Action<A1, A2, A3> a = d as Action<A1, A2, A3>;
 			if (a != null)
 			{
@@ -126,6 +134,8 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction4<A1, A2, A3, A4> (object d, A1 a1, A2 a2, A3 a3, A4 a4)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
+
+			TypeLogger.LogType(d);
 
 			Action<A1, A2, A3, A4> a = d as Action<A1, A2, A3, A4>;
 			if (a != null)
@@ -151,7 +161,9 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction5<A1, A2, A3, A4, A5> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-			
+
+			TypeLogger.LogType(d);
+
 			Action<A1, A2, A3, A4, A5> a = d as Action<A1, A2, A3, A4, A5>;
 			if (a != null)
 			{
@@ -177,7 +189,9 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction6<A1, A2, A3, A4, A5, A6> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-			
+
+			TypeLogger.LogType(d);
+
 			Action<A1, A2, A3, A4, A5, A6> a = d as Action<A1, A2, A3, A4, A5, A6>;
 			if (a != null)
 			{
@@ -204,7 +218,9 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction7<A1, A2, A3, A4, A5, A6, A7> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-			
+
+			TypeLogger.LogType(d);
+
 			Action<A1, A2, A3, A4, A5, A6, A7> a = d as Action<A1, A2, A3, A4, A5, A6, A7>;
 			if (a != null)
 			{
@@ -232,7 +248,9 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction8<A1, A2, A3, A4, A5, A6, A7, A8> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-			
+
+			TypeLogger.LogType(d);
+
 			Action<A1, A2, A3, A4, A5, A6, A7, A8> a = d as Action<A1, A2, A3, A4, A5, A6, A7, A8>;
 			if (a != null)
 			{
@@ -261,7 +279,9 @@ namespace PlayScript.DynamicRuntime
 		public void InvokeAction9<A1, A2, A3, A4, A5, A6, A7, A8, A9> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
-			
+
+			TypeLogger.LogType(d);
+
 			Action<A1, A2, A3, A4, A5, A6, A7, A8, A9> a = d as Action<A1, A2, A3, A4, A5, A6, A7, A8, A9>;
 			if (a != null)
 			{
@@ -292,6 +312,8 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
+			TypeLogger.LogType(d);
+
 			Func<TR> f = d as Func<TR>;
 			if (f != null)
 			{
@@ -311,6 +333,8 @@ namespace PlayScript.DynamicRuntime
 		public TR InvokeFunc1<A1, TR> (object d, A1 a1)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
+
+			TypeLogger.LogType(d);
 
 			Func<A1, TR> f = d as Func<A1, TR>;
 			if (f != null)
@@ -333,6 +357,8 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
+			TypeLogger.LogType(d);
+
 			Func<A1, A2, TR> f = d as Func<A1, A2, TR>;
 			if (f != null)
 			{
@@ -354,6 +380,8 @@ namespace PlayScript.DynamicRuntime
 		public TR InvokeFunc3<A1, A2, A3, TR> (object d, A1 a1, A2 a2, A3 a3)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
+
+			TypeLogger.LogType(d);
 
 			Func<A1, A2, A3, TR> f = d as Func<A1, A2, A3, TR>;
 			if (f != null)
@@ -378,6 +406,8 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
+			TypeLogger.LogType(d);
+
 			Func<A1, A2, A3, A4, TR> f = d as Func<A1, A2, A3, A4, TR>;
 			if (f != null)
 			{
@@ -401,6 +431,8 @@ namespace PlayScript.DynamicRuntime
 		public TR InvokeFunc5<A1, A2, A3, A4, A5, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
+
+			TypeLogger.LogType(d);
 
 			Func<A1, A2, A3, A4, A5, TR> f = d as Func<A1, A2, A3, A4, A5, TR>;
 			if (f != null)
@@ -427,6 +459,8 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
+			TypeLogger.LogType(d);
+
 			Func<A1, A2, A3, A4, A5, A6, TR> f = d as Func<A1, A2, A3, A4, A5, A6, TR>;
 			if (f != null)
 			{
@@ -452,6 +486,8 @@ namespace PlayScript.DynamicRuntime
 		public TR InvokeFunc7<A1, A2, A3, A4, A5, A6, A7, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
+
+			TypeLogger.LogType(d);
 
 			Func<A1, A2, A3, A4, A5, A6, A7, TR> f = d as Func<A1, A2, A3, A4, A5, A6, A7, TR>;
 			if (f != null)
@@ -480,6 +516,8 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
+			TypeLogger.LogType(d);
+
 			Func<A1, A2, A3, A4, A5, A6, A7, A8, TR> f = d as Func<A1, A2, A3, A4, A5, A6, A7, A8, TR>;
 			if (f != null)
 			{
@@ -507,6 +545,8 @@ namespace PlayScript.DynamicRuntime
 		public TR InvokeFunc9<A1, A2, A3, A4, A5, A6, A7, A8, A9, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
+
+			TypeLogger.LogType(d);
 
 			Func<A1, A2, A3, A4, A5, A6, A7, A8, A9, TR> f = d as Func<A1, A2, A3, A4, A5, A6, A7, A8, A9, TR>;
 			if (f != null)

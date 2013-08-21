@@ -8,6 +8,7 @@
 ./DefaultPropertyAttribute.cs
 ./DefinitionError.play
 ./DeprecatedAttribute.cs
+./DotNetError.play
 ./Dynamic.play
 ./EmbedAttribute.cs
 ./Error.play
@@ -148,6 +149,8 @@
 ./flash/globalization/DateTimeFormatter.play
 ./flash/media/Camera.play
 ./flash/media/ID3Info.play
+./flash/media/ios/Sound.cs
+./flash/media/ios/SoundChannel.cs
 ./flash/media/Sound.play
 ./flash/media/SoundChannel.play
 ./flash/media/SoundLoaderContext.play

@@ -261,6 +261,7 @@ namespace Mono.CSharp
 		public readonly PredefinedType AsRegExp;
 		public readonly PredefinedType AsXml;
 		public readonly PredefinedType AsIKeyEnumerable;
+		public readonly PredefinedType AsDotNetError;
 
 		public readonly PredefinedType PsGetMember;
 		public readonly PredefinedType PsSetMember;
@@ -349,6 +350,7 @@ namespace Mono.CSharp
 			AsRegExp = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "RegExp");
 			AsXml = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "XML");
 			AsIKeyEnumerable = new PredefinedType (module, MemberKind.Interface, "PlayScript", "IKeyEnumerable");
+			AsDotNetError = new PredefinedType (module, MemberKind.Class, PsConsts.PsRootNamespace, "DotNetError");
 
 			PsGetMember = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSGetMember");
 			PsSetMember = new PredefinedType (module, MemberKind.Class, "PlayScript.DynamicRuntime", "PSSetMember");

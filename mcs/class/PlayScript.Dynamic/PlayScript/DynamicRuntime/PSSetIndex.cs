@@ -29,6 +29,8 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.SetIndexBinderInvoked);
 			Stats.Increment(StatsCounter.SetIndexBinder_Int_Invoked);
 
+			TypeLogger.LogType(o);
+
 			var l = o as IList<T>;
 			if (l != null) {
 				l [index] = value;

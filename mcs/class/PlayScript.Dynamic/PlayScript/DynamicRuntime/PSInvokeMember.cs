@@ -193,6 +193,8 @@ namespace PlayScript.DynamicRuntime
 
 			Stats.Increment(StatsCounter.InvokeMemberBinderInvoked_Slow);
 
+			TypeLogger.LogType(o);
+
 			return mInvoker.SafeInvokeWith(mArgs);
 		}
 

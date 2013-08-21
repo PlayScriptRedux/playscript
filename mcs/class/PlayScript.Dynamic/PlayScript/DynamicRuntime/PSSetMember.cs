@@ -50,6 +50,8 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.SetMemberBinderInvoked);
 
+			TypeLogger.LogType(o);
+
 			// resolve as dictionary 
 			var dict = o as IDictionary;
 			if (dict != null) 

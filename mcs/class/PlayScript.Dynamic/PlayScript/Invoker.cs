@@ -180,12 +180,16 @@ namespace PlayScript
 
 		public DynamicInvoker(object target, MethodInfo methodInfo)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(mTarget);
+
 			mMethod = methodInfo;
 			mTarget = target;
 		}
 
 		public DynamicInvoker(Delegate del)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(del.Target);
+
 			mMethod = del.Method;
 			mTarget = del.Target;
 		}
@@ -197,17 +201,23 @@ namespace PlayScript
 
 		public override object Invoke()
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(mTarget);
+
 			return mMethod.Invoke(mTarget, mArguments);
 		}
 
 		public override void InvokeOverrideA1(object a1)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(mTarget);
+
 			mArguments[0] = a1;
 			mMethod.Invoke(mTarget, mArguments);
 		}
 
 		public override object SafeInvokeWith(object[] args)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(mTarget);
+
 			if (MethodBinder.ConvertArguments(mMethod, mTarget, args, args.Length, ref mConvertedArguments)) {
 				return mMethod.Invoke(mTarget, mConvertedArguments);
 			}
@@ -265,6 +275,8 @@ namespace PlayScript
 		{
 			mMethod = del.Method;
 			mTarget = del.Target;
+
+			PlayScript.DynamicRuntime.TypeLogger.LogType(mTarget);
 		}
 
 		public override void SetArguments(object[] arguments)
@@ -274,11 +286,15 @@ namespace PlayScript
 
 		public override object Invoke()
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(mTarget);
+
 			return mMethod.Invoke(mTarget, mArguments);
 		}
 
 		public override void InvokeOverrideA1(object a1)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(mTarget);
+
 			sTemp[0] = a1;			// Not thread safe. Not an issue with reentrancy though.
 			mArguments[0] = sTemp;
 			// TODO: This is variadic, so probably a fixed signature, see if we can convert this to a delegate invoke instead of a dynamic invoke
@@ -287,6 +303,8 @@ namespace PlayScript
 
 		public override object SafeInvokeWith(object[] args)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(mTarget);
+
 			// Because we are in a single thread, and we know that it is a variadic method, we can use a shared temp object[1]
 			if (MethodBinder.ConvertArguments(mMethod, mTarget, args, args.Length, ref sTemp)) {
 				return mMethod.Invoke(mTarget, sTemp);
@@ -296,6 +314,8 @@ namespace PlayScript
 
 		public override object UnsafeInvokeWith(object[] args)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(mTarget);
+
 			return mMethod.Invoke(mTarget, args);
 		}
 
@@ -328,6 +348,8 @@ namespace PlayScript
 
 		public override InvokerBase TryUpdate(object target)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(target);
+
 			Delegate d = (Delegate)(object)mDelegate;			// Work around the fact that Delegate can't be a generic constraint
 			if (d.Target == target)
 			{
@@ -344,6 +366,8 @@ namespace PlayScript
 
 		public override InvokerBase TryUpdate(object target, MethodInfo methodInfo)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(target);
+
 			Delegate d = (Delegate)(object)mDelegate;			// Work around the fact that Delegate can't be a generic constraint
 			if (d.Method == methodInfo)
 			{
@@ -823,11 +847,15 @@ namespace PlayScript
 	{
 		public InvokerA(Action action)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(action.Target);
+
 			mDelegate = action;
 		}
 
 		public InvokerA(object target, MethodInfo methodInfo)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(target);
+
 			mDelegate = (Action)Delegate.CreateDelegate(typeof(Action), target, methodInfo);
 		}
 
@@ -879,16 +907,23 @@ namespace PlayScript
 	{
 		public InvokerA(Action<P1> action)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(action.Target);
+			PlayScript.DynamicRuntime.TypeLogger.LogType(action);
+
 			mDelegate = action;
 		}
 
 		public InvokerA(object target, MethodInfo methodInfo)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(target);
+
 			mDelegate = (Action<P1>)Delegate.CreateDelegate(typeof(Action<P1>), target, methodInfo);
 		}
 
 		public InvokerA(Delegate del)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(del.Target);
+
 			mDelegate = (Action<P1>)del;
 		}
 
@@ -940,11 +975,15 @@ namespace PlayScript
 	{
 		public InvokerA(Action<P1, P2> action)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(action.Target);
+
 			mDelegate = action;
 		}
 
 		public InvokerA(object target, MethodInfo methodInfo)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(target);
+
 			mDelegate = (Action<P1, P2>)Delegate.CreateDelegate(typeof(Action<P1, P2>), target, methodInfo);
 		}
 
@@ -1003,11 +1042,15 @@ namespace PlayScript
 	{
 		public InvokerA(Action<P1, P2, P3> action)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(action.Target);
+
 			mDelegate = action;
 		}
 
 		public InvokerA(object target, MethodInfo methodInfo)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(target);
+
 			mDelegate = (Action<P1, P2, P3>)Delegate.CreateDelegate(typeof(Action<P1, P2, P3>), target, methodInfo);
 		}
 
@@ -1073,11 +1116,15 @@ namespace PlayScript
 	{
 		public InvokerA(Action<P1, P2, P3, P4> action)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(action.Target);
+
 			mDelegate = action;
 		}
 
 		public InvokerA(object target, MethodInfo methodInfo)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(target);
+
 			mDelegate = (Action<P1, P2, P3, P4>)Delegate.CreateDelegate(typeof(Action<P1, P2, P3, P4>), target, methodInfo);
 		}
 
@@ -1150,11 +1197,15 @@ namespace PlayScript
 	{
 		public InvokerA(Action<P1, P2, P3, P4, P5> action)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(action.Target);
+
 			mDelegate = action;
 		}
 
 		public InvokerA(object target, MethodInfo methodInfo)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(target);
+
 			mDelegate = (Action<P1, P2, P3, P4, P5>)Delegate.CreateDelegate(typeof(Action<P1, P2, P3, P4, P5>), target, methodInfo);
 		}
 
@@ -1235,11 +1286,15 @@ namespace PlayScript
 	{
 		public InvokerA(Action<P1, P2, P3, P4, P5, P6> action)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(action.Target);
+
 			mDelegate = action;
 		}
 
 		public InvokerA(object target, MethodInfo methodInfo)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(target);
+
 			mDelegate = (Action<P1, P2, P3, P4, P5, P6>)Delegate.CreateDelegate(typeof(Action<P1, P2, P3, P4, P5, P6>), target, methodInfo);
 		}
 
@@ -1327,11 +1382,15 @@ namespace PlayScript
 	{
 		public InvokerA(Action<P1, P2, P3, P4, P5, P6, P7> action)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(action.Target);
+
 			mDelegate = action;
 		}
 
 		public InvokerA(object target, MethodInfo methodInfo)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(target);
+
 			mDelegate = (Action<P1, P2, P3, P4, P5, P6, P7>)Delegate.CreateDelegate(typeof(Action<P1, P2, P3, P4, P5, P6, P7>), target, methodInfo);
 		}
 
@@ -1427,11 +1486,15 @@ namespace PlayScript
 	{
 		public InvokerA(Action<P1, P2, P3, P4, P5, P6, P7, P8> action)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(action.Target);
+
 			mDelegate = action;
 		}
 
 		public InvokerA(object target, MethodInfo methodInfo)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(target);
+
 			mDelegate = (Action<P1, P2, P3, P4, P5, P6, P7, P8>)Delegate.CreateDelegate(typeof(Action<P1, P2, P3, P4, P5, P6, P7, P8>), target, methodInfo);
 		}
 
@@ -1536,11 +1599,15 @@ namespace PlayScript
 	{
 		public InvokerF(Func<R> func)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(func.Target);
+
 			mDelegate = func;
 		}
 
 		public InvokerF(object target, MethodInfo methodInfo)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(target);
+
 			mDelegate = (Func<R>)Delegate.CreateDelegate(typeof(Func<R>), target, methodInfo);
 		}
 
@@ -1594,11 +1661,15 @@ namespace PlayScript
 	{
 		public InvokerF(Func<P1, R> func)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(func.Target);
+
 			mDelegate = func;
 		}
 
 		public InvokerF(object target, MethodInfo methodInfo)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(target);
+
 			mDelegate = (Func<P1, R>)Delegate.CreateDelegate(typeof(Func<P1, R>), target, methodInfo);
 		}
 
@@ -1661,13 +1732,17 @@ namespace PlayScript
 
 	public class InvokerF<P1, P2, R> : InvokerParamBase<Func<P1, P2, R>, P1, P2>, ICallerF<R>, ICallerA, ICallerF<P1, R>, ICallerA<P1>, ICallerF<P1, P2, R>, ICallerA<P1, P2>
 	{
-		public InvokerF(Func<P1, P2, R> action)
+		public InvokerF(Func<P1, P2, R> func)
 		{
-			mDelegate = action;
+			PlayScript.DynamicRuntime.TypeLogger.LogType(func.Target);
+
+			mDelegate = func;
 		}
 
 		public InvokerF(object target, MethodInfo methodInfo)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(target);
+
 			mDelegate = (Func<P1, P2, R>)Delegate.CreateDelegate(typeof(Func<P1, P2, R>), target, methodInfo);
 		}
 
@@ -1741,11 +1816,15 @@ namespace PlayScript
 	{
 		public InvokerF(Func<P1, P2, P3, R> func)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(func.Target);
+
 			mDelegate = func;
 		}
 
 		public InvokerF(object target, MethodInfo methodInfo)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(target);
+
 			mDelegate = (Func<P1, P2, P3, R>)Delegate.CreateDelegate(typeof(Func<P1, P2, P3, R>), target, methodInfo);
 		}
 
@@ -1832,11 +1911,15 @@ namespace PlayScript
 	{
 		public InvokerF(Func<P1, P2, P3, P4, R> func)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(func.Target);
+
 			mDelegate = func;
 		}
 
 		public InvokerF(object target, MethodInfo methodInfo)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(target);
+
 			mDelegate = (Func<P1, P2, P3, P4, R>)Delegate.CreateDelegate(typeof(Func<P1, P2, P3, P4, R>), target, methodInfo);
 		}
 
@@ -1937,11 +2020,15 @@ namespace PlayScript
 	{
 		public InvokerF(Func<P1, P2, P3, P4, P5, R> func)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(func.Target);
+
 			mDelegate = func;
 		}
 
 		public InvokerF(object target, MethodInfo methodInfo)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(target);
+
 			mDelegate = (Func<P1, P2, P3, P4, P5, R>)Delegate.CreateDelegate(typeof(Func<P1, P2, P3, P4, P5, R>), target, methodInfo);
 		}
 
@@ -2055,11 +2142,15 @@ namespace PlayScript
 	{
 		public InvokerF(Func<P1, P2, P3, P4, P5, P6, R> func)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(func.Target);
+
 			mDelegate = func;
 		}
 
 		public InvokerF(object target, MethodInfo methodInfo)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(target);
+
 			mDelegate = (Func<P1, P2, P3, P4, P5, P6, R>)Delegate.CreateDelegate(typeof(Func<P1, P2, P3, P4, P5, P6, R>), target, methodInfo);
 		}
 
@@ -2187,11 +2278,15 @@ namespace PlayScript
 	{
 		public InvokerF(Func<P1, P2, P3, P4, P5, P6, P7, R> func)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(func.Target);
+
 			mDelegate = func;
 		}
 
 		public InvokerF(object target, MethodInfo methodInfo)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(target.GetType());
+
 			mDelegate = (Func<P1, P2, P3, P4, P5, P6, P7, R>)Delegate.CreateDelegate(typeof(Func<P1, P2, P3, P4, P5, P6, P7, R>), target, methodInfo);
 		}
 
@@ -2333,11 +2428,15 @@ namespace PlayScript
 	{
 		public InvokerF(Func<P1, P2, P3, P4, P5, P6, P7, P8, R> func)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(func.Target);
+
 			mDelegate = func;
 		}
 
 		public InvokerF(object target, MethodInfo methodInfo)
 		{
+			PlayScript.DynamicRuntime.TypeLogger.LogType(target);
+
 			mDelegate = (Func<P1, P2, P3, P4, P5, P6, P7, P8, R>)Delegate.CreateDelegate(typeof(Func<P1, P2, P3, P4, P5, P6, P7, P8, R>), target, methodInfo);
 		}
 

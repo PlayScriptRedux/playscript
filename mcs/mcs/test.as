@@ -1,30 +1,30 @@
 package {
 
-	public class Foo {
-
-	}
-
-
 	public class Test {
 
+		public static function throwException():void {
+			throw new System.Exception("Blah blah");
+		}
+
+		public static function throwError():void {
+			throw new Error("Blah blah");
+		}
 
 		public static function Main():void {
 
-			var o:Object = "blah";
-			var s:Foo = o as Foo;
-			var q:Foo = o as o;
-			var b:Boolean = o is String;
+			trace("Testing error handling!");
 
-			o = s as Object;
-
-			if (o is String) {
-				trace("Blah");
+			try { 
+				throwException();
+			} catch (e1:Error) {
+				trace(e1.message);
 			}
 
-			if (o is Foo) {
-				trace("blah!");
+			try {
+				throwError();
+			} catch (e2:Error) {
+				trace(e2.message);
 			}
-
 		}
 	}
 

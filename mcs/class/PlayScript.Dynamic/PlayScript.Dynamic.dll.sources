@@ -58,4 +58,4 @@ AssemblyInfo.cs
 ./PlayScript/DynamicRuntime/PSSetIndex.cs
 ./PlayScript/DynamicRuntime/PSInvokeMember.cs
 ./PlayScript/DynamicRuntime/PSInvoke.cs
-
+./PlayScript/DynamicRuntime/TypeLogger.cs

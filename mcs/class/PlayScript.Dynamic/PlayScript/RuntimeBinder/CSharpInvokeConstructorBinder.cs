@@ -110,6 +110,8 @@ namespace PlayScript.RuntimeBinder
 			Stats.Increment(StatsCounter.InvokeConstructorBinderInvoked);
 #endif
 
+			PlayScript.DynamicRuntime.TypeLogger.LogType(objType);
+
 			var constructors = objType.GetConstructors();
 
 			// Handle Embed loaders..
