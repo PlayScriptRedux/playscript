@@ -165,6 +165,30 @@ namespace flash.display3D {
 		public VertexBuffer3D createVertexBuffer(int numVertices, int data32PerVertex, int multiBufferCount = 1, bool isDynamic = true) {
  	 		return new VertexBuffer3D(this, numVertices, data32PerVertex, multiBufferCount, isDynamic);
  	 	}
+
+		public int createVertexArray() {
+#if PLATFORM_MONOTOUCH
+			int id;
+			GL.Oes.GenVertexArrays(1, out id);
+			return id;
+#else
+			// not supported
+			return -1;
+#endif
+		}
+
+		public void bindVertexArray(int id) {
+#if PLATFORM_MONOTOUCH
+			GL.Oes.BindVertexArray(id);
+#endif
+		}
+
+		public void disposeVertexArray(int id) {
+#if PLATFORM_MONOTOUCH
+			GL.Oes.DeleteVertexArrays(1, ref id);
+#endif
+		}
+
  	 	
 		public void dispose() {
 			throw new NotImplementedException();
