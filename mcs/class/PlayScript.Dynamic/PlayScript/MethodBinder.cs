@@ -33,7 +33,7 @@ namespace PlayScript
 				var lastParameter = Parameters[Parameters.Length - 1];
 				// determine variadic state of this method
 				var paramArrayAttribute = lastParameter.GetCustomAttributes(typeof(ParamArrayAttribute), true);
-				if (lastParameter.ParameterType == typeof(object[]))
+				if ((paramArrayAttribute != null) && (paramArrayAttribute.Length != 0))
 				{
 					IsVariadic = true;
 					// we have one less parameter since we are variadic
