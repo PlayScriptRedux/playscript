@@ -1748,6 +1748,13 @@ namespace Mono.CSharp
 			string leftType = GetDynamicBinaryTypeName(Arguments[0].Type);
 			string rightType = GetDynamicBinaryTypeName(Arguments[1].Type);
 
+			// for strict equality checks, just use a single method and check
+			// types at runtime
+			if (oper == Binary.Operator.AsStrictEquality ||
+				oper == Binary.Operator.AsStrictInequality) {
+				leftType = rightType = "Obj";
+			}
+
 			// append to binary method instead of using overloads
 			binaryMethod += leftType + rightType;
 
