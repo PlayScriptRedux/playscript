@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using System.Runtime.InteropServices;
 
 #if PLATFORM_MONOTOUCH
 using MonoTouch.Foundation;
@@ -11,6 +12,131 @@ using MonoTouch.UIKit;
 
 namespace PlayScript
 {
+	#if PLATFORM_MONOTOUCH
+	// Somehow MonoTouch does not give access to the HardwareProperty
+	// Code from this: http://stackoverflow.com/questions/10889695/how-do-i-get-the-ios-device-and-version-in-monotouch
+	public class IOSDeviceHardware
+	{
+		public const string HardwareProperty = "hw.machine";
+
+		public enum IOSHardware {
+			iPhone,
+			iPhone3G,
+			iPhone3GS,
+			iPhone4,
+			iPhone4RevA,
+			iPhone4CDMA,
+			iPhone4S,
+			iPhone5GSM,
+			iPhone5CDMAGSM,
+			iPodTouch1G,
+			iPodTouch2G,
+			iPodTouch3G,
+			iPodTouch4G,
+			iPodTouch5G,
+			iPad,
+			iPad3G,
+			iPad2,
+			iPad2GSM,
+			iPad2CDMA,
+			iPad2RevA,
+			iPadMini,
+			iPadMiniGSM,
+			iPadMiniCDMAGSM,
+			iPad3,
+			iPad3CDMA,
+			iPad3GSM,
+			iPad4,
+			iPad4GSM,
+			iPad4CDMAGSM,
+			iPhoneSimulator,
+			iPhoneRetinaSimulator,
+			iPadSimulator,
+			iPadRetinaSimulator,
+			Unknown
+		}
+
+		[DllImport(MonoTouch.Constants.SystemLibrary)]
+		static internal extern int sysctlbyname([MarshalAs(UnmanagedType.LPStr)] string property, IntPtr output, IntPtr oldLen, IntPtr newp, uint newlen);
+
+		public static IOSHardware Version {
+			get {
+				var pLen = Marshal.AllocHGlobal(sizeof(int));
+				sysctlbyname(IOSDeviceHardware.HardwareProperty, IntPtr.Zero, pLen, IntPtr.Zero, 0);
+
+				var length = Marshal.ReadInt32(pLen);
+
+				if (length == 0) {
+					Marshal.FreeHGlobal(pLen);
+
+					return IOSHardware.Unknown;
+				}
+
+				var pStr = Marshal.AllocHGlobal(length);
+				sysctlbyname(IOSDeviceHardware.HardwareProperty, pStr, pLen, IntPtr.Zero, 0);
+
+				var hardwareStr = Marshal.PtrToStringAnsi(pStr);
+
+				Marshal.FreeHGlobal(pLen);
+				Marshal.FreeHGlobal(pStr);
+
+				if (hardwareStr == "iPhone1,1") return IOSHardware.iPhone;
+				if (hardwareStr == "iPhone1,2") return IOSHardware.iPhone3G;
+				if (hardwareStr == "iPhone2,1") return IOSHardware.iPhone3GS;
+				if (hardwareStr == "iPhone3,1") return IOSHardware.iPhone4;
+				if (hardwareStr == "iPhone3,2") return IOSHardware.iPhone4RevA;
+				if (hardwareStr == "iPhone3,3") return IOSHardware.iPhone4CDMA;
+				if (hardwareStr == "iPhone4,1") return IOSHardware.iPhone4S;
+				if (hardwareStr == "iPhone5,1") return IOSHardware.iPhone5GSM;
+				if (hardwareStr == "iPhone5,2") return IOSHardware.iPhone5CDMAGSM;
+
+				if (hardwareStr == "iPad1,1") return IOSHardware.iPad;
+				if (hardwareStr == "iPad1,2") return IOSHardware.iPad3G;
+				if (hardwareStr == "iPad2,1") return IOSHardware.iPad2;
+				if (hardwareStr == "iPad2,2") return IOSHardware.iPad2GSM;
+				if (hardwareStr == "iPad2,3") return IOSHardware.iPad2CDMA;
+				if (hardwareStr == "iPad2,4") return IOSHardware.iPad2RevA;
+				if (hardwareStr == "iPad2,5") return IOSHardware.iPadMini;
+				if (hardwareStr == "iPad2,6") return IOSHardware.iPadMiniGSM;
+				if (hardwareStr == "iPad2,7") return IOSHardware.iPadMiniCDMAGSM;
+				if (hardwareStr == "iPad3,1") return IOSHardware.iPad3;
+				if (hardwareStr == "iPad3,2") return IOSHardware.iPad3CDMA;
+				if (hardwareStr == "iPad3,3") return IOSHardware.iPad3GSM;
+				if (hardwareStr == "iPad3,4") return IOSHardware.iPad4;
+				if (hardwareStr == "iPad3,5") return IOSHardware.iPad4GSM;
+				if (hardwareStr == "iPad3,6") return IOSHardware.iPad4CDMAGSM;
+
+				if (hardwareStr == "iPod1,1") return IOSHardware.iPodTouch1G;
+				if (hardwareStr == "iPod2,1") return IOSHardware.iPodTouch2G;
+				if (hardwareStr == "iPod3,1") return IOSHardware.iPodTouch3G;
+				if (hardwareStr == "iPod4,1") return IOSHardware.iPodTouch4G;
+				if (hardwareStr == "iPod5,1") return IOSHardware.iPodTouch5G;
+
+				if (hardwareStr == "i386" || hardwareStr=="x86_64")
+				{
+					if (UIDevice.CurrentDevice.Model.Contains("iPhone"))
+					{
+						if(UIScreen.MainScreen.Scale > 1.5f)
+							return IOSHardware.iPhoneRetinaSimulator;
+						else
+							return IOSHardware.iPhoneSimulator;
+					}
+					else
+					{
+						if(UIScreen.MainScreen.Scale > 1.5f)
+							return IOSHardware.iPadRetinaSimulator;
+						else
+							return IOSHardware.iPadSimulator;
+					}
+				}
+
+				return IOSHardware.Unknown;
+			}
+		}
+	}
+
+	#endif
+
 	public static class Profiler
 	{
 		public static bool Enabled = true;
@@ -338,7 +464,7 @@ namespace PlayScript
 				sum += milliseconds;
 			}
 			sum /= sFrameCount;
-			tw.WriteLine("Avg (clamp):  {0,6:0.00}ms - {1, 12:0.0} fps", sum, GetFpsFromMs(sum));
+			tw.WriteLine("Avg (clamped):{0,6:0.00}ms - {1, 12:0.0} fps        Clamped at {2:0.00}ms", sum, GetFpsFromMs(sum), minimumClampedValue);
 		}
 
 		private static void PrintPercentile(TextWriter tw, string key, int percentile)
@@ -354,7 +480,7 @@ namespace PlayScript
 			tw.WriteLine("{0, 2}p:          {1,6:0.00}ms - {2, 12:0.0} fps", percentile, pTime, GetFpsFromMs(pTime));
 		}
 
-		private static void PrintPercentageOfFrames(TextWriter tw, string key, string text, Func<double, bool> func)
+		private static void PrintPercentageOfFrames(TextWriter tw, string key, string text, Func<double, bool> func, string additionalText)
 		{
 			Section section;
 			if (sSections.TryGetValue(key, out section) == false)
@@ -370,7 +496,7 @@ namespace PlayScript
 					matchingFrames++;
 				}
 			}
-			tw.WriteLine("{0}: {1:0.0}%", text, (double)(100.0 * matchingFrames) / (double)sFrameCount);
+			tw.WriteLine("{0}: {1,4:0.0}%                             {2}", text, (double)(100.0 * matchingFrames) / (double)sFrameCount, additionalText);
 		}
 
 		private static void PrintReport(TextWriter tw)
@@ -380,7 +506,7 @@ namespace PlayScript
 
 			#if PLATFORM_MONOTOUCH
 			tw.WriteLine("Device:        {0}", UIDevice.CurrentDevice.Name);
-			tw.WriteLine("Model:         {0}", UIDevice.CurrentDevice.Model);
+			tw.WriteLine("Model:         {0}", IOSDeviceHardware.Version.ToString());
 			tw.WriteLine("SystemVersion: {0}", UIDevice.CurrentDevice.SystemVersion);
 			tw.WriteLine("Screen Size:   {0}", UIScreen.MainScreen.Bounds);
 			tw.WriteLine("Screen Scale:  {0}", UIScreen.MainScreen.Scale);
@@ -392,19 +518,11 @@ namespace PlayScript
 
 			tw.WriteLine("Total Frames:  {0}", sFrameCount);
 			tw.WriteLine("Total Time:    {0}", sReportTime.Elapsed);
-			double fastFrame = 16.666666;
-			double slowFrame = 66.666666;
-			#if PLATFORM_MONOTOUCH
-			if (UIDevice.CurrentDevice.Model == "iPhone")
-			{
-				fastFrame = 33.3333333;
-				slowFrame = 100;
-			}
-			#endif
-			PrintAverageClamped(tw, "frame", fastFrame);
+			PerformanceFrameData performanceFrameData = GetPerformanceFrameData();
+			PrintAverageClamped(tw, "frame", performanceFrameData.FastFrame);
 			PrintPercentile(tw, "frame", 95);
-			PrintPercentageOfFrames(tw, "frame", "% Fast Frames", a => (a <= fastFrame));
-			PrintPercentageOfFrames(tw, "frame", "% Slow frames", a => (a >= slowFrame));
+			PrintPercentageOfFrames(tw, "frame", "% Fast Frames", a => (a <= performanceFrameData.FastFrame), string.Format("Lower than {0:0.00}ms", performanceFrameData.FastFrame));
+			PrintPercentageOfFrames(tw, "frame", "% Slow frames", a => (a >= performanceFrameData.SlowFrame), string.Format("Higher than {0:0.00}ms", performanceFrameData.SlowFrame));
 			tw.WriteLine("GC Count:      {0}", sReportGCCount);
 
 			tw.WriteLine("*********** Timing (ms) ***********");
@@ -474,6 +592,32 @@ namespace PlayScript
 //			}
 		}
 
+		private static PerformanceFrameData GetPerformanceFrameData()
+		{
+			#if PLATFORM_MONOTOUCH
+			switch (IOSDeviceHardware.Version)
+			{
+				case IOSDeviceHardware.IOSHardware.iPhone:
+				case IOSDeviceHardware.IOSHardware.iPhone3G:
+				case IOSDeviceHardware.IOSHardware.iPhone3GS:
+				case IOSDeviceHardware.IOSHardware.iPhone4:
+				case IOSDeviceHardware.IOSHardware.iPhone4RevA:
+				case IOSDeviceHardware.IOSHardware.iPhone4CDMA:
+				case IOSDeviceHardware.IOSHardware.iPodTouch1G:
+				case IOSDeviceHardware.IOSHardware.iPodTouch2G:
+				case IOSDeviceHardware.IOSHardware.iPodTouch3G:
+				case IOSDeviceHardware.IOSHardware.iPodTouch4G:
+				case IOSDeviceHardware.IOSHardware.iPad:
+				case IOSDeviceHardware.IOSHardware.iPad3G:
+					return sSlowPerformanceFrameData;
+				default:
+					return sDefaultPerformanceFrameData;
+			}
+			#else
+			return sDefaultPerformanceFrameData;
+			#endif
+		}
+
 		class SectionHistory
 		{
 			public TimeSpan Time;
@@ -511,7 +655,19 @@ namespace PlayScript
 		private static int  sReportGCCount;
 		#endregion
 
+		class PerformanceFrameData
+		{
+			public PerformanceFrameData(double fastFrame, double slowFrame)
+			{
+				FastFrame = fastFrame;
+				SlowFrame = slowFrame;
+			}
+			public double	FastFrame;
+			public double	SlowFrame;
+		}
 
+		private static PerformanceFrameData sDefaultPerformanceFrameData = new PerformanceFrameData(fastFrame: 1000.0/60.0, slowFrame: 1000.0/15.0);
+		private static PerformanceFrameData sSlowPerformanceFrameData = new PerformanceFrameData(fastFrame: 1000.0/30.0, slowFrame: 1000.0/10.0);
 	}
 }
 
