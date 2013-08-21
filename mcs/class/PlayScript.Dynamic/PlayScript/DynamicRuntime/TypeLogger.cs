@@ -15,28 +15,34 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-#if !DYNAMIC_SUPPORT
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using System.Diagnostics;
 
 using PlayScript;
 
 namespace PlayScript.DynamicRuntime
 {
-	#if LOG_TYPES
-
 	public static class TypeLogger
 	{
 
 		public static Dictionary<Assembly,HashSet<Type>> TypesUsed = new Dictionary<Assembly,HashSet<Type>>();
 		public static int log_count = 0;
 
-		public static void LogType(Type type) 
+		[Conditional("LOG_TYPES")]
+		public static void LogType(object o) 
 		{
+			if (o == null)
+				return;
+
+			Type type = o as Type;
+			if (type == null) {
+				type = o.GetType ();
+			}
+
 			if (Type.GetTypeCode (type) != TypeCode.Object) 
 				return;
 
@@ -102,9 +108,5 @@ namespace PlayScript.DynamicRuntime
 
 	}
 
-	#endif
-
 }
-
-#endif
 

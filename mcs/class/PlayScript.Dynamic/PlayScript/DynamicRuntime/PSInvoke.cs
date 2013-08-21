@@ -39,10 +39,7 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
-			#if LOG_TYPES
-			if (d != null)
-				TypeLogger.LogType(d.GetType());
-			#endif
+			TypeLogger.LogType(d);
 
 			Action a = d as Action;
 			if (a != null)
@@ -65,10 +62,7 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
-			#if LOG_TYPES
-			if (d != null)
-				TypeLogger.LogType(d.GetType());
-			#endif
+			TypeLogger.LogType(d);
 
 			Action<A1> a = d as Action<A1>;
 			if (a != null)
@@ -92,10 +86,7 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
-			#if LOG_TYPES
-			if (d != null)
-				TypeLogger.LogType(d.GetType());
-			#endif
+			TypeLogger.LogType(d);
 
 			Action<A1, A2> a = d as Action<A1, A2>;
 			if (a != null)
@@ -118,10 +109,7 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
-			#if LOG_TYPES
-			if (d != null)
-				TypeLogger.LogType(d.GetType());
-			#endif
+			TypeLogger.LogType(d);
 
 			Action<A1, A2, A3> a = d as Action<A1, A2, A3>;
 			if (a != null)
@@ -147,10 +135,7 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
-			#if LOG_TYPES
-			if (d != null)
-				TypeLogger.LogType(d.GetType());
-			#endif
+			TypeLogger.LogType(d);
 
 			Action<A1, A2, A3, A4> a = d as Action<A1, A2, A3, A4>;
 			if (a != null)
@@ -177,10 +162,7 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
-			#if LOG_TYPES
-			if (d != null)
-				TypeLogger.LogType(d.GetType());
-			#endif
+			TypeLogger.LogType(d);
 
 			Action<A1, A2, A3, A4, A5> a = d as Action<A1, A2, A3, A4, A5>;
 			if (a != null)
@@ -208,10 +190,7 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
-			#if LOG_TYPES
-			if (d != null)
-				TypeLogger.LogType(d.GetType());
-			#endif
+			TypeLogger.LogType(d);
 
 			Action<A1, A2, A3, A4, A5, A6> a = d as Action<A1, A2, A3, A4, A5, A6>;
 			if (a != null)
@@ -240,10 +219,7 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
-			#if LOG_TYPES
-			if (d != null)
-				TypeLogger.LogType(d.GetType());
-			#endif
+			TypeLogger.LogType(d);
 
 			Action<A1, A2, A3, A4, A5, A6, A7> a = d as Action<A1, A2, A3, A4, A5, A6, A7>;
 			if (a != null)
@@ -273,10 +249,7 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
-			#if LOG_TYPES
-			if (d != null)
-				TypeLogger.LogType(d.GetType());
-			#endif
+			TypeLogger.LogType(d);
 
 			Action<A1, A2, A3, A4, A5, A6, A7, A8> a = d as Action<A1, A2, A3, A4, A5, A6, A7, A8>;
 			if (a != null)
@@ -307,10 +280,7 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
-			#if LOG_TYPES
-			if (d != null)
-				TypeLogger.LogType(d.GetType());
-			#endif
+			TypeLogger.LogType(d);
 
 			Action<A1, A2, A3, A4, A5, A6, A7, A8, A9> a = d as Action<A1, A2, A3, A4, A5, A6, A7, A8, A9>;
 			if (a != null)
@@ -342,10 +312,7 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
-			#if LOG_TYPES
-			if (d != null)
-				TypeLogger.LogType(d.GetType());
-			#endif
+			TypeLogger.LogType(d);
 
 			Func<TR> f = d as Func<TR>;
 			if (f != null)
@@ -367,10 +334,7 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
-			#if LOG_TYPES
-			if (d != null)
-				TypeLogger.LogType(d.GetType());
-			#endif
+			TypeLogger.LogType(d);
 
 			Func<A1, TR> f = d as Func<A1, TR>;
 			if (f != null)
@@ -393,10 +357,7 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
-			#if LOG_TYPES
-			if (d != null)
-				TypeLogger.LogType(d.GetType());
-			#endif
+			TypeLogger.LogType(d);
 
 			Func<A1, A2, TR> f = d as Func<A1, A2, TR>;
 			if (f != null)
@@ -420,10 +381,7 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
-			#if LOG_TYPES
-			if (d != null)
-				TypeLogger.LogType(d.GetType());
-			#endif
+			TypeLogger.LogType(d);
 
 			Func<A1, A2, A3, TR> f = d as Func<A1, A2, A3, TR>;
 			if (f != null)
@@ -448,10 +406,7 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
-			#if LOG_TYPES
-			if (d != null)
-				TypeLogger.LogType(d.GetType());
-			#endif
+			TypeLogger.LogType(d);
 
 			Func<A1, A2, A3, A4, TR> f = d as Func<A1, A2, A3, A4, TR>;
 			if (f != null)
@@ -477,10 +432,7 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
-			#if LOG_TYPES
-			if (d != null)
-				TypeLogger.LogType(d.GetType());
-			#endif
+			TypeLogger.LogType(d);
 
 			Func<A1, A2, A3, A4, A5, TR> f = d as Func<A1, A2, A3, A4, A5, TR>;
 			if (f != null)
@@ -507,10 +459,7 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
-			#if LOG_TYPES
-			if (d != null)
-				TypeLogger.LogType(d.GetType());
-			#endif
+			TypeLogger.LogType(d);
 
 			Func<A1, A2, A3, A4, A5, A6, TR> f = d as Func<A1, A2, A3, A4, A5, A6, TR>;
 			if (f != null)
@@ -538,10 +487,7 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
-			#if LOG_TYPES
-			if (d != null)
-				TypeLogger.LogType(d.GetType());
-			#endif
+			TypeLogger.LogType(d);
 
 			Func<A1, A2, A3, A4, A5, A6, A7, TR> f = d as Func<A1, A2, A3, A4, A5, A6, A7, TR>;
 			if (f != null)
@@ -570,10 +516,7 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
-			#if LOG_TYPES
-			if (d != null)
-				TypeLogger.LogType(d.GetType());
-			#endif
+			TypeLogger.LogType(d);
 
 			Func<A1, A2, A3, A4, A5, A6, A7, A8, TR> f = d as Func<A1, A2, A3, A4, A5, A6, A7, A8, TR>;
 			if (f != null)
@@ -603,10 +546,7 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
 
-			#if LOG_TYPES
-			if (d != null)
-				TypeLogger.LogType(d.GetType());
-			#endif
+			TypeLogger.LogType(d);
 
 			Func<A1, A2, A3, A4, A5, A6, A7, A8, A9, TR> f = d as Func<A1, A2, A3, A4, A5, A6, A7, A8, A9, TR>;
 			if (f != null)
