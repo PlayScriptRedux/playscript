@@ -3348,8 +3348,8 @@ namespace Mono.CSharp
 						args.Add (new Argument (left));
 						args.Add (new Argument (right));
 						return new DynamicBinaryExpression (oper, this.GetOperatorExpressionTypeName (), args, loc).Resolve (ec);
-					} else if (left.Type == ec.Module.PredefinedTypes.AsUndefined.TypeSpec ||
-					           right.Type == ec.Module.PredefinedTypes.AsUndefined.TypeSpec) {
+					} else if (left.Type == ec.Module.PredefinedTypes.AsUndefined.Resolve () ||
+					           right.Type == ec.Module.PredefinedTypes.AsUndefined.Resolve ()) {
 						// The undefined keyword has special behavior, so we let the dynamic
 						// runtime handle it.
 						var args = new Arguments(2);
