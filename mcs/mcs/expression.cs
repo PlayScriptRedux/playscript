@@ -3358,6 +3358,15 @@ namespace Mono.CSharp
 							expr = new Unary (Unary.Operator.LogicalNot, expr, loc);
 						}
 						return expr.Resolve (ec);
+					} else if (left.Type == ec.Module.PredefinedTypes.AsUndefined.TypeSpec ||
+					           right.Type == ec.Module.PredefinedTypes.AsUndefined.TypeSpec) {
+						// Note: It's important this check comes after the check for the strict
+						// inequality operator, since we don't actually implement strict inequality
+						// operators. Instead we negate the result of the strict equality operator.
+						var args = new Arguments(2);
+						args.Add (new Argument (left));
+						args.Add (new Argument (right));
+						return new DynamicBinaryExpression (oper, this.GetOperatorExpressionTypeName (), args, loc).Resolve (ec);
 					} else if (oper == Operator.AsURightShift) {
 						var bi_type = left.Type.BuiltinType;
 						if (bi_type == BuiltinTypeSpec.Type.SByte) {
