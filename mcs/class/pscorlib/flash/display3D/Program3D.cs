@@ -24,6 +24,12 @@ using System.Collections.Generic;
 using MonoMac.OpenGL;
 #elif PLATFORM_MONOTOUCH
 using OpenTK.Graphics.ES20;
+#elif PLATFORM_MONODROID
+using OpenTK.Graphics.ES20;
+using ProgramParameter = OpenTK.Graphics.ES20.All;
+using ShaderType = OpenTK.Graphics.ES20.All;
+using ActiveUniformType = OpenTK.Graphics.ES20.All;
+using ShaderParameter = OpenTK.Graphics.ES20.All;
 #endif
 
 
@@ -117,9 +123,16 @@ namespace flash.display3D {
 			mVertexShaderId = GL.CreateShader (ShaderType.VertexShader);
 			GL.ShaderSource (mVertexShaderId, vertexShaderSource);
 			GL.CompileShader (mVertexShaderId);
-			var vertexInfoLog = GL.GetShaderInfoLog (mVertexShaderId);
-			if (!string.IsNullOrEmpty (vertexInfoLog)) {
-				Console.Write ("vertex: {0}", vertexInfoLog);
+
+			int shaderCompiled = 0;
+			GL.GetShader (mVertexShaderId, ShaderParameter.CompileStatus, out shaderCompiled);
+
+			if ( All.True != (All) shaderCompiled ) {
+				var vertexInfoLog = GL.GetShaderInfoLog (mVertexShaderId);
+				if (!string.IsNullOrEmpty (vertexInfoLog)) {
+					Console.Write ("vertex: {0}", vertexInfoLog);
+				}
+
 				throw new Exception("Error compiling vertex shader: " + vertexInfoLog);
 			}
 
@@ -127,12 +140,19 @@ namespace flash.display3D {
 			mFragmentShaderId = GL.CreateShader (ShaderType.FragmentShader);
 			GL.ShaderSource (mFragmentShaderId, fragmentShaderSource);
 			GL.CompileShader (mFragmentShaderId);
-			var fragmentInfoLog = GL.GetShaderInfoLog (mFragmentShaderId);
-			if (!string.IsNullOrEmpty (fragmentInfoLog)) {
-				Console.Write ("fragment: {0}", fragmentInfoLog);
+
+			int fragmentCompiled = 0;
+			GL.GetShader (mVertexShaderId, ShaderParameter.CompileStatus, out fragmentCompiled);
+
+			if (All.True != (All) fragmentCompiled) {
+				var fragmentInfoLog = GL.GetShaderInfoLog (mFragmentShaderId);
+				if (!string.IsNullOrEmpty (fragmentInfoLog)) {
+					Console.Write ("fragment: {0}", fragmentInfoLog);
+				}
+
 				throw new Exception("Error compiling fragment shader: " + fragmentInfoLog);
 			}
-			
+
 			// create program
 			mProgramId = GL.CreateProgram ();
 			GL.AttachShader (mProgramId, mVertexShaderId);
@@ -221,9 +241,16 @@ namespace flash.display3D {
 
 				int length;
 				var name = new StringBuilder(1024);
+
 				GL.GetActiveUniform(mProgramId, i, name.MaxCapacity, out length, out uniform.Size, out uniform.Type, name);
 				uniform.Name 	 = name.ToString();
+
+#if PLATFORM_MONOTOUCH || PLATFORM_MONOMAC
 				uniform.Location = GL.GetUniformLocation (mProgramId, uniform.Name );
+#elif PLATFORM_MONODROID
+				uniform.Location = GL.GetUniformLocation (mProgramId, name);
+#endif
+				//
 
 				// determine register count for uniform
 				switch (uniform.Type)

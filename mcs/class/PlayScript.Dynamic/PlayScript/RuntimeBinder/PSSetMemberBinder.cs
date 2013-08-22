@@ -31,6 +31,8 @@ namespace PlayScript.RuntimeBinder
 		System.Type 	type;
 		FieldInfo		field;
 		PropertyInfo	property;
+		object			previousTarget;
+		object			previousAction;
 
 		public PSSetMemberBinder (CSharpBinderFlags flags, string name, Type callingContext, IEnumerable<CSharpArgumentInfo> argumentInfo)
 		{
@@ -47,7 +49,7 @@ namespace PlayScript.RuntimeBinder
 				binder.type = null;
 			}
 
-			SetMemberAsObject(site, o, (object)value);
+			SetMember<T>(site, o, value);
 		}
 
 		/// <summary>
@@ -58,13 +60,9 @@ namespace PlayScript.RuntimeBinder
 		private static void SetMember<T> (CallSite site, object o, T value)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.SetMemberBinderInvoked;
+			Stats.Increment(StatsCounter.SetMemberBinderInvoked);
 #endif
-			SetMemberAsObject(site, o, (object)value);
-		}
 
-		private static void SetMemberAsObject (CallSite site, object o, object value)
-		{
 			var binder = (PSSetMemberBinder)site.Binder;
 
 			// resolve as dictionary 
@@ -79,6 +77,7 @@ namespace PlayScript.RuntimeBinder
 			// determine if this is a instance member or a static member
 			bool isStatic;
 			Type otype;
+
 			if (o is System.Type) {
 				// static member
 				otype = (System.Type)o;
@@ -86,6 +85,7 @@ namespace PlayScript.RuntimeBinder
 				isStatic = true;
 			} else {
 				// instance member
+
 				otype = o.GetType();
 				isStatic = false;
 			}
@@ -95,8 +95,14 @@ namespace PlayScript.RuntimeBinder
 			{
 				// use cached resolve
 				if (binder.property != null) {
-					object newValue = PlayScript.Dynamic.ConvertValue(value, binder.property.PropertyType);
-					binder.property.SetValue(o, newValue, null);
+					Action<T> action;
+					if (o == binder.previousTarget) {
+						action = (Action<T>)binder.previousAction;
+					} else {
+						binder.previousAction = action = ActionCreator.CreatePropertySetAction<T>(o, binder.property);
+						binder.previousTarget = o;
+					}
+					action(value);
 					return;
 				}
 
@@ -120,8 +126,11 @@ namespace PlayScript.RuntimeBinder
 			// resolve name
 
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.SetMemberBinder_Resolve_Invoked;
+			Stats.Increment(StatsCounter.SetMemberBinder_Resolve_Invoked);
 #endif
+
+			otype = o.GetType();
+			isStatic = false;
 
 			// resolve as property
 			var property = otype.GetProperty(binder.name);
@@ -174,7 +183,6 @@ namespace PlayScript.RuntimeBinder
 				Binder.OnSetMemberError (o, binder.name, value);
 			}
 		}
-
 
 		static PSSetMemberBinder ()
 		{

@@ -229,7 +229,7 @@ namespace Mono.CSharp.Cpp
 					
 					// PlayScript binary operators
 				case Binary.Operator.AsURightShift: return 5;
-				case Binary.Operator.AsRefEquality: return 7;
+				case Binary.Operator.AsStrictEquality: return 7;
 				}
 			}
 			

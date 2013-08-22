@@ -24,6 +24,26 @@ namespace flash.display3D {
 	using MonoTouch.UIKit;
 	using OpenTK.Graphics;
 	using OpenTK.Graphics.ES20;
+#elif PLATFORM_MONODROID
+	using OpenTK.Graphics;
+	using OpenTK.Graphics.ES20;
+	using GetPName = OpenTK.Graphics.ES20.All;
+	using BufferTarget = OpenTK.Graphics.ES20.All;
+	using BeginMode = OpenTK.Graphics.ES20.All;
+	using DrawElementsType = OpenTK.Graphics.ES20.All;
+	using BlendingFactorSrc = OpenTK.Graphics.ES20.All;
+	using BlendingFactorDest = OpenTK.Graphics.ES20.All;
+	using EnableCap = OpenTK.Graphics.ES20.All;
+	using CullFaceMode = OpenTK.Graphics.ES20.All;
+	using TextureUnit = OpenTK.Graphics.ES20.All;
+	using TextureParameterName = OpenTK.Graphics.ES20.All;
+	using VertexAttribPointerType = OpenTK.Graphics.ES20.All;
+	using FramebufferTarget = OpenTK.Graphics.ES20.All;
+	using FramebufferErrorCode = OpenTK.Graphics.ES20.All;
+	using DepthFunction = OpenTK.Graphics.ES20.All;
+	using TextureTarget = OpenTK.Graphics.ES20.All;
+	using FramebufferAttachment = OpenTK.Graphics.ES20.All;
+	using ActiveUniformType = OpenTK.Graphics.ES20.All;
 #endif
 
 	using System;
@@ -149,8 +169,8 @@ namespace flash.display3D {
 			return new CubeTexture(this, size, format, optimizeForRenderToTexture, streamingLevels);
 		}
 
- 	 	public IndexBuffer3D createIndexBuffer(int numIndices) {
- 	 		return new IndexBuffer3D(this, numIndices);
+		public IndexBuffer3D createIndexBuffer(int numIndices, int multiBufferCount = 1, bool isDynamic = true) {
+ 	 		return new IndexBuffer3D(this, numIndices, multiBufferCount, isDynamic);
  	 	}
  	 	
 		public Program3D createProgram() {
@@ -162,9 +182,33 @@ namespace flash.display3D {
 			return new Texture(this, width, height, format, optimizeForRenderToTexture, streamingLevels);
 		}
 
- 	 	public VertexBuffer3D createVertexBuffer(int numVertices, int data32PerVertex) {
- 	 		return new VertexBuffer3D(this, numVertices, data32PerVertex);
+		public VertexBuffer3D createVertexBuffer(int numVertices, int data32PerVertex, int multiBufferCount = 1, bool isDynamic = true) {
+ 	 		return new VertexBuffer3D(this, numVertices, data32PerVertex, multiBufferCount, isDynamic);
  	 	}
+
+		public int createVertexArray() {
+#if PLATFORM_MONOTOUCH
+			int id;
+			GL.Oes.GenVertexArrays(1, out id);
+			return id;
+#else
+			// not supported
+			return -1;
+#endif
+		}
+
+		public void bindVertexArray(int id) {
+#if PLATFORM_MONOTOUCH
+			GL.Oes.BindVertexArray(id);
+#endif
+		}
+
+		public void disposeVertexArray(int id) {
+#if PLATFORM_MONOTOUCH
+			GL.Oes.DeleteVertexArrays(1, ref id);
+#endif
+		}
+
  	 	
 		public void dispose() {
 			throw new NotImplementedException();
@@ -181,7 +225,8 @@ namespace flash.display3D {
 
 			int count = (numTriangles == -1) ? indexBuffer.numIndices : (numTriangles * 3);
 			GL.BindBuffer(BufferTarget.ElementArrayBuffer, indexBuffer.id);
-			GL.DrawElements(BeginMode.Triangles, count, DrawElementsType.UnsignedInt, firstIndex );
+
+			GL.DrawElements(BeginMode.Triangles, count, DrawElementsType.UnsignedInt, new IntPtr(firstIndex));	
 		}
 
  	 	
@@ -485,7 +530,7 @@ namespace flash.display3D {
 			GL.BindFramebuffer(FramebufferTarget.Framebuffer, mTextureFrameBufferId);
 #if PLATFORM_MONOTOUCH
 			GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferSlot.ColorAttachment0, TextureTarget.Texture2D, texture.textureId, 0);
-#else
+#elif PLATFORM_MONOMAC || PLATFORM_MONODROID
 			GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, texture.textureId, 0);
 #endif
 			// setup viewport for render to texture
@@ -552,7 +597,7 @@ namespace flash.display3D {
 			GL.EnableVertexAttribArray (index);
 			GL.BindBuffer (BufferTarget.ArrayBuffer, buffer.id);
 
-			int byteOffset = (bufferOffset * 4); // buffer offset is in 32-bit words
+			IntPtr byteOffset = new IntPtr(bufferOffset * 4); // buffer offset is in 32-bit words
 
 			// set attribute pointer within vertex buffer
 			switch (format) {
@@ -594,12 +639,14 @@ namespace flash.display3D {
 					TextureBase texture = mSamplerTextures[sampler];
 					if (texture != null) {
 						// bind texture 
-						GL.BindTexture (texture.textureTarget, texture.textureId);
+						var target = texture.textureTarget;
+
+						GL.BindTexture( target, texture.textureId);
 
 						// get sampler state from program
 						SamplerState state = mProgram.getSamplerState(sampler);
 						if (state != null) {
-							var target = texture.textureTarget;
+
 							GL.TexParameter (target, TextureParameterName.TextureMinFilter, (int)state.MinFilter);
 							GL.TexParameter (target, TextureParameterName.TextureMagFilter, (int)state.MagFilter);
 							GL.TexParameter (target, TextureParameterName.TextureWrapS, (int)state.WrapModeS);

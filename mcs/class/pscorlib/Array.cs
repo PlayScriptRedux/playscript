@@ -141,6 +141,19 @@ namespace _root
 		}
 		
 		#endregion
+
+		// public get enumerator that returns a faster struct
+		public Vector<dynamic>.VectorEnumeratorStruct GetEnumerator()
+		{
+			return mList.GetEnumerator();
+		}
+
+		// public get key enumerator that returns a faster struct
+		public Vector<dynamic>.VectorKeyEnumeratorStruct GetKeyEnumerator()
+		{
+			return mList.GetKeyEnumerator();
+		}
+
 		
 		#region IEnumerable implementation
 		
@@ -536,7 +549,7 @@ namespace _root
 			return mList.indexOf(searchElement);
 		}
 		
-		public override string ToString()
+		public override string toString()
 		{
 			return this.join(",");
 		}

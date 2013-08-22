@@ -1,3 +1,4 @@
+./AllowDynamicAttribute.cs
 ./ArgumentError.play
 ./Array.cs
 ./AssemblyInfo.cs
@@ -7,6 +8,7 @@
 ./DefaultPropertyAttribute.cs
 ./DefinitionError.play
 ./DeprecatedAttribute.cs
+./DotNetError.play
 ./Dynamic.play
 ./EmbedAttribute.cs
 ./Error.play
@@ -21,6 +23,7 @@
 ./fl/controls/Label.play
 ./fl/controls/LabelButton.play
 ./fl/controls/List.play
+./fl/controls/listClasses/CellRenderer.play
 ./fl/controls/NumericStepper.play
 ./fl/controls/ScrollBar.play
 ./fl/controls/SelectableList.play
@@ -28,6 +31,7 @@
 ./fl/controls/TextInput.play
 ./fl/controls/UIScrollBar.play
 ./fl/core/UIComponent.play
+./fl/events/ComponentEvent.play
 ./flash/accessibility/AccessibilityImplementation.play
 ./flash/accessibility/AccessibilityProperties.play
 ./flash/Debugger.play
@@ -106,6 +110,7 @@
 ./flash/events/EventPhase.play
 ./flash/events/FocusEvent.play
 ./flash/events/FullScreenEvent.play
+./flash/events/GestureEvent.play
 ./flash/events/HTTPStatusEvent.play
 ./flash/events/IEventDispatcher.cs
 ./flash/events/IOErrorEvent.play
@@ -120,6 +125,7 @@
 ./flash/events/ThrottleEvent.play
 ./flash/events/TimerEvent.play
 ./flash/events/TouchEvent.play
+./flash/events/TransformGestureEvent.play
 ./flash/events/UncaughtErrorEvent.play
 ./flash/events/UncaughtErrorEvents.play
 ./flash/external/ExternalInterface.play
@@ -143,6 +149,8 @@
 ./flash/globalization/DateTimeFormatter.play
 ./flash/media/Camera.play
 ./flash/media/ID3Info.play
+./flash/media/ios/Sound.cs
+./flash/media/ios/SoundChannel.cs
 ./flash/media/Sound.play
 ./flash/media/SoundChannel.play
 ./flash/media/SoundLoaderContext.play
@@ -210,7 +218,7 @@
 ./flash/ui/MouseCursorData.play
 ./flash/ui/Multitouch.play
 ./flash/ui/MultitouchInputMode.play
-./flash/utils/ByteArray.play
+./flash/utils/ByteArray.cs
 ./flash/utils/CompressionAlgorithm.play
 ./flash/utils/Dictionary.cs
 ./flash/utils/Endian.play
@@ -220,6 +228,7 @@
 ./flash/utils/Timer.cs
 ./flash/utils/Timer.play
 ./flash/utils/utils_functions.play
+./ForbidDynamicAttribute.cs
 ./FunctionExtensions.cs
 ./functions.cs
 ./functions.play

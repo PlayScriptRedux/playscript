@@ -1,0 +1,52 @@
+package
+{
+	import com.adobe.test.Assert;
+
+	public class conversions
+	{
+		static function NumberToInt():int
+		{
+			var d:Number = 4;
+			var i:int;
+			
+			i = d;
+			Assert.expectEq("compare Number to int", 4, i);
+
+			d = uint.MaxValue;
+			i = d;
+			Assert.expectEq("compare Number uint.MaxValue -> int", -1, i);
+
+			d = int.MinValue;
+			i = d;
+			Assert.expectEq("compare Number int.MinValue-> int", -2147483648, i);
+
+			d = NaN;
+			i = d;
+			// TODO: Mono bug https://bugzilla.xamarin.com/show_bug.cgi?id=13927
+			//if (i != 0)
+			//	return 4;
+
+			return 0;
+		}
+		
+		static function IntToUInt ():int
+		{
+			var i:int = -1;
+			var u:uint = i;
+			Assert.expectEq("compare -int -> uint", 4294967295, u);
+			
+			i = u - 1;
+			Assert.expectEq("compare compare max uint-1 -> int", -2, i);
+			
+			return 0;
+		}
+	
+		public static function Main():int
+		{
+			IntToUInt ();
+			NumberToInt ();
+			
+			return 0;
+		}
+	}
+}

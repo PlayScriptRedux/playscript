@@ -65,7 +65,7 @@ package flash.net {
 				// Replace https: by http:
 				if (mRequest.url.StartsWith("https:"))
 				{
-					trace("Disable SSL for request " + mRequest.url);
+//					trace("Disable SSL for request " + mRequest.url);
 					mRequest.url = mRequest.url.Replace("https:", "http:");
 				}
 
@@ -198,37 +198,34 @@ package flash.net {
 
 		private function responseAction(response:HttpWebResponse):void {
 			var hash:String = mRequest.getHash();
-			// Display the status.
-			System.Console.WriteLine ("HttpStatus: " + response.StatusDescription);
+
+			if (response.StatusCode != HttpStatusCode.OK) {
+				// Display the status.
+				trace("URLLoader: http load ", response.StatusDescription, mRequest.url);
+			}
+
 			// Get the stream containing content returned by the server.
 			var dataStream = response.GetResponseStream ();
 
+			// read response into byte array
+			var ba:ByteArray = new ByteArray();
+			ba.setCapacity(response.ContentLength);
+			ba.readFromStream(dataStream);
+			ba.position = 0;
+			this.bytesLoaded = ba.length;
+			this.bytesTotal  = ba.length;
+
 			switch (dataFormat) {
 				case URLLoaderDataFormat.BINARY: {
-						var ba:ByteArray = new ByteArray();
-						dataStream.CopyTo(ba.getRawStream());
-						ba.position = 0;
 						this.data = ba;
-						this.bytesLoaded = ba.length;
-						this.bytesTotal  = ba.length;
 						PlayScript.Player.StoreBinaryWebResponseIntoCache(hash, ba);
 						break;
 					}
 				case URLLoaderDataFormat.TEXT: {
-						var reader = new StreamReader(dataStream, System.Text.Encoding.UTF8);
-						// Read the content.
-						var responseFromServer = reader.ReadToEnd ();
-
-						this.data = responseFromServer;
-						this.bytesLoaded = responseFromServer.Length;
-						this.bytesTotal  = responseFromServer.Length;
-						reader.Close ();
-
-						// Display the content.
-						// var lengthToDisplay:int = responseFromServer.length >= 500 ? 500 : responseFromServer.length;
-						// System.Console.WriteLine(responseFromServer.substring(0, lengthToDisplay));
-
-						PlayScript.Player.StoreTextWebResponseIntoCache(hash, responseFromServer);
+						// convert to string
+						var text = ba.toString();
+						this.data = text;
+						PlayScript.Player.StoreTextWebResponseIntoCache(hash, text);
 						break;
 					}
 				default:
@@ -238,6 +235,7 @@ package flash.net {
 			// Cleanup the streams and the response.
 			dataStream.Close ();
 			response.Close ();
+			trace("URLLoader: http load complete length:", this.bytesLoaded, mRequest.url);
 		}
 
 		private function responseActionWithDelayedEvent(response:HttpWebResponse):void {
@@ -276,9 +274,7 @@ package flash.net {
 			switch (dataFormat)
 			{
 			case URLLoaderDataFormat.BINARY: {
-				var ba:ByteArray = new ByteArray();
-				ba.writeBytes(fileData);
-				ba.position = 0;
+				var ba:ByteArray = ByteArray.fromArray(fileData);
 				this.data = ba;
 				break;
 			}

@@ -66,8 +66,7 @@ package {
 				var ba:flash.utils.ByteArray = value as flash.utils.ByteArray;
 
 				// read string from byte array
-				ba.position = 0;
-				var xmlString:String = ba.readAllUTF();
+				var xmlString:String = ba.toString();
 
 				mOriginalString = xmlString;
 

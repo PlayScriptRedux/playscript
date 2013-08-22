@@ -141,7 +141,7 @@ namespace PlayScript.RuntimeBinder
 		public static object NegateObject (CallSite site, object a)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.UnaryOperationBinderInvoked;
+			Stats.Increment(StatsCounter.UnaryOperationBinderInvoked);
 #endif
 			if (a is int) {
 				return -(int)a;
@@ -158,7 +158,7 @@ namespace PlayScript.RuntimeBinder
 		public static object IncrementObject (CallSite site, object a)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.UnaryOperationBinderInvoked;
+			Stats.Increment(StatsCounter.UnaryOperationBinderInvoked);
 #endif
 			if (a is int) {
 				return (int)a + 1;
@@ -176,7 +176,7 @@ namespace PlayScript.RuntimeBinder
 		public static object DecrementObject (CallSite site, object a)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.UnaryOperationBinderInvoked;
+			Stats.Increment(StatsCounter.UnaryOperationBinderInvoked);
 #endif
 			if (a is int) {
 				return (int)a - 1;
@@ -193,7 +193,7 @@ namespace PlayScript.RuntimeBinder
 		public static object LogicalNotObject (CallSite site, object a)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.UnaryOperationBinderInvoked;
+			Stats.Increment(StatsCounter.UnaryOperationBinderInvoked);
 #endif
 			if (a is bool) {
 				return !(bool)a;
@@ -211,7 +211,7 @@ namespace PlayScript.RuntimeBinder
 		public static object BitwiseNotObject (CallSite site, object a)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.UnaryOperationBinderInvoked;
+			Stats.Increment(StatsCounter.UnaryOperationBinderInvoked);
 #endif
 			if (a is bool) {
 				return (bool)a ? 0 : 1;
@@ -229,7 +229,7 @@ namespace PlayScript.RuntimeBinder
 		public static bool IsTrueObject (CallSite site, object a)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.UnaryOperationBinderInvoked;
+			Stats.Increment(StatsCounter.UnaryOperationBinderInvoked);
 #endif
 			return Dynamic.CastObjectToBool(a) == true;
 		}
@@ -237,7 +237,7 @@ namespace PlayScript.RuntimeBinder
 		public static bool IsFalseObject (CallSite site, object a)
 		{
 #if BINDERS_RUNTIME_STATS
-			++Stats.CurrentInstance.UnaryOperationBinderInvoked;
+			Stats.Increment(StatsCounter.UnaryOperationBinderInvoked);
 #endif
 			return Dynamic.CastObjectToBool(a) == false;
 		}

@@ -25,6 +25,12 @@ namespace flash.display3D.textures
 	using MonoMac.OpenGL;
 	#elif PLATFORM_MONOTOUCH
 	using OpenTK.Graphics.ES20;
+	#elif PLATFORM_MONODROID
+	using OpenTK.Graphics.ES20;
+	using TextureTarget = OpenTK.Graphics.ES20.All;
+	using PixelInternalFormat = OpenTK.Graphics.ES20.All;
+	using PixelFormat = OpenTK.Graphics.ES20.All;
+	using PixelType = OpenTK.Graphics.ES20.All;
 	#endif
 
 
@@ -49,8 +55,11 @@ namespace flash.display3D.textures
 		
 		public void uploadFromBitmapData(BitmapData source, uint side, uint miplevel = 0, bool generateMipmap = false) {
 			// bind the texture
+#if PLATFORM_MONOMONO || PLATFORM_MONOMAC
 			GL.BindTexture (textureTarget, textureId);
-
+#elif PLATFORM_MONODROID
+			GL.BindTexture((All) textureTarget, textureId);
+#endif
 			// determine which side of the cubmap to upload
 			TextureTarget target;
 			switch (side)
@@ -70,7 +79,11 @@ namespace flash.display3D.textures
 #endif
 
 			// perform upload
+#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
 			GL.TexImage2D(target, (int)miplevel, PixelInternalFormat.Rgba, size, size, 0, PixelFormat.Rgba, PixelType.UnsignedByte, source.getRawData());
+#elif PLATFORM_MONODROID
+			GL.TexImage2D<uint>(target, (int)miplevel, (int) PixelInternalFormat.Rgba, size, size, 0, PixelFormat.Rgba, PixelType.UnsignedByte, source.getRawData());
+#endif
 
 #if PLATFORM_MONOTOUCH
 			GL.GenerateMipmap(textureTarget);

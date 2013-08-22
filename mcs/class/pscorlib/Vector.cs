@@ -20,674 +20,11 @@ using System.Runtime.Serialization;
 using System.Security.Permissions;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 
 namespace _root {
 
-
-#if false // !NEWVECTOR
-
-	// this class is used to display a custom view of the vector values to the debugger
-	// TODO: we need to make these elements editable 
-	internal class VectorDebugView<T>
-	{
-		private Vector<T>  mVector;
-		
-		// The constructor for the type proxy class must have a 
-		// constructor that takes the target type as a parameter.
-		public VectorDebugView(Vector<T> vector)
-		{
-			this.mVector = vector;
-		}
-		
-		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-		public T[] Values
-		{
-			get
-			{
-				return mVector.ToArray();
-			}
-		}
-	}
-
-	[DebuggerDisplay("length = {length}")]
-	[DebuggerTypeProxy(typeof(VectorDebugView<>))]
-	public class Vector<T> : IEnumerable<T>, IList<T>, IList, IEnumerable
-	{
-		#region IList implementation
-
-		int IList.Add(object value)
-		{
-			throw new NotImplementedException();
-		}
-
-		void IList.Clear()
-		{
-			throw new NotImplementedException();
-		}
-
-		bool IList.Contains(object value)
-		{
-			throw new NotImplementedException();
-		}
-
-		int IList.IndexOf(object value)
-		{
-			throw new NotImplementedException();
-		}
-
-		void IList.Insert(int index, object value)
-		{
-			throw new NotImplementedException();
-		}
-
-		void IList.Remove(object value)
-		{
-			throw new NotImplementedException();
-		}
-
-		void IList.RemoveAt(int index)
-		{
-			throw new NotImplementedException();
-		}
-
-		bool IList.IsFixedSize {
-			get {
-				throw new NotImplementedException();
-			}
-		}
-
-		object IList.this[int index] {
-			get {
-				return ((IList<T>)this)[index];
-			}
-			set {
-				((IList<T>)this)[index] = (T)value;
-			}
-		}
-
-		
-		bool IList.IsReadOnly {
-			get {
-				return false;
-			}
-		}
-
-		#endregion
-
-		#region ICollection implementation
-
-		int ICollection.Count {
-			get {
-				return mList.Count;
-			}
-		}
-		void ICollection.CopyTo(System.Array array, int index)
-		{
-			throw new NotImplementedException();
-		}
-
-		bool ICollection.IsSynchronized {
-			get {
-				throw new NotImplementedException();
-			}
-		}
-
-		object ICollection.SyncRoot {
-			get {
-				throw new NotImplementedException();
-			}
-		}
-
-		#endregion
-
-		//
-		// Properties
-
-		//
-	
-		public bool @fixed 
-		{ 
-			get { return mFixed; } 
-			set { mFixed = value;} 
-		}
-
- 	 	public uint length
- 	 	{ 
- 	 		get { return (uint)mList.Count; } 
- 	 		set 
- 	 		{ 
- 	 			if (value == 0) {
- 	 				mList.Clear();
- 	 			} else {
-					if (mList.Count < value)
-					{
-						// grow array
-						while (mList.Count < value)
-						{
-							mList.Add(default(T));
-						}
-					} else if (mList.Count > value)
-					{
-						// shrink array
-						mList.RemoveRange((int)value, (int)(mList.Count - value) );
-					}
-
-					if (mList.Count != value)
-						throw new System.InvalidOperationException("there is a bug here");
- 	 			}
- 	 		} 
- 	 	}
-
-		//
-		// Implicit conversions
-		//
-
-		public static implicit operator Vector<T>(Array a) {
-			return new Vector<T>(a);
-		}
-
-		public static implicit operator Array(Vector<T> v) {
-			return new Array(v);
-		}
-
- 	 	//
- 	 	// Methods
- 	 	//
-
-		public Vector() {
-		}
- 	 	 	 	
-		public Vector(Vector<T> v) {
-			this.mList.AddRange(v);
- 	 	}
-
-		public Vector(Array a) {
-			foreach (T item in a)
-				this.mList.Add (item);
-		}
-
-		public Vector(uint length)
-		{
-			expand((int)length);
-		}
-
-		public Vector(uint length, bool @fixed = false)
-		{
-			expand((int)length);
-			mFixed = @fixed;
-		}
-
-
-		public Vector(object o1)
-		{
-			this.mList.Add ((T)o1);
-		}
-
-		public Vector(T o1, T o2)
-		{
-			this.mList.Add (o1);
-			this.mList.Add (o2);
-		}
-
-		public Vector(T o1, T o2, T o3)
-		{
-			this.mList.Add (o1);
-			this.mList.Add (o2);
-			this.mList.Add (o3);
-		}
-
-		public Vector(T o1, T o2, T o3, T o4)
-		{
-			this.mList.Add (o1);
-			this.mList.Add (o2);
-			this.mList.Add (o3);
-			this.mList.Add (o4);
-		}
-
-		public Vector(T o1, T o2, T o3, T o4, T o5)
-		{
-			this.mList.Add (o1);
-			this.mList.Add (o2);
-			this.mList.Add (o3);
-			this.mList.Add (o4);
-			this.mList.Add (o5);
-		}
-
-		public Vector(T o1, T o2, T o3, T o4, T o5, T o6)
-		{
-			this.mList.Add (o1);
-			this.mList.Add (o2);
-			this.mList.Add (o3);
-			this.mList.Add (o4);
-			this.mList.Add (o5);
-			this.mList.Add (o6);
-		}
-
-		public Vector(T o1, T o2, T o3, T o4, T o5, T o6, T o7)
-		{
-			this.mList.Add (o1);
-			this.mList.Add (o2);
-			this.mList.Add (o3);
-			this.mList.Add (o4);
-			this.mList.Add (o5);
-			this.mList.Add (o6);
-			this.mList.Add (o7);
-		}
-
-		public Vector(T o1, T o2, T o3, T o4, T o5, T o6, T o7, T o8)
-		{
-			this.mList.Add (o1);
-			this.mList.Add (o2);
-			this.mList.Add (o3);
-			this.mList.Add (o4);
-			this.mList.Add (o5);
-			this.mList.Add (o6);
-			this.mList.Add (o7);
-			this.mList.Add (o8);
-		}
-
-		public Vector(T o1, T o2, T o3, T o4, T o5, T o6, T o7, T o8, params T[] args)
-		{
-			this.mList.Add (o1);
-			this.mList.Add (o2);
-			this.mList.Add (o3);
-			this.mList.Add (o4);
-			this.mList.Add (o5);
-			this.mList.Add (o6);
-			this.mList.Add (o7);
-			this.mList.Add (o8);
-			this.mList.AddRange (args);
-		}
-
-		public T this[int i]
-		{
-			get
-			{
-				return mList[i];
-			}
-			set
-			{
-				// auto expand vector
-				expand(i + 1);
-				mList[i] = value;
-			}
-		}
-
-		public T this[uint i]
-		{
-			get
-			{
-				return mList[(int)i];
-			}
-			set
-			{
-				// auto expand vector
-				expand( (int)(i + 1));
-				mList[(int)i] = value;
-			}
-		}
-
-		public T this[string i]
-		{
-			get
-			{
-				throw new System.NotImplementedException();
-			}
-			set
-			{
-				throw new System.NotImplementedException();
-			}
-		}
-
-		public T[] ToArray()
-		{
-			return mList.ToArray();
-		}
-
-		public void Add(T value) {
-			mList.Add(value);
-		}
-
-
-		// optionally expands the vector to accomodate the new size
-		// if the vector is big enough then nothing is done
-		public void expand(int newSize) {
-			if (mList.Count < newSize)
-			{
-				mList.Capacity = newSize;
-				while (mList.Count < newSize)
-				{
-					mList.Add(default(T));
-				}
-			}
-		}
-
-        public void append(IEnumerable<T> items)
-        {
-            mList.AddRange(items);
-        }
-
-        public void append(System.Collections.IEnumerable items)
-        {
-            foreach (var item in items)
-            {
-                mList.Add((T)item);
-            }
-        }
-
-		public Vector<T> concat(params object[] args) {
-
-			Vector<T> v = new Vector<T>();
-			// add this vector
-			v.append(this);
-
-			// concat all supplied vecots
-			foreach (var o in args)
-			{
-				if (o is IEnumerable<T>)
-				{
-					v.append(o as IEnumerable<T>);
-				} 
-				else
-				{
-					throw new System.NotImplementedException();
-				}
-
-			}
-
-			return v;
-		}
-
-		public bool every(Delegate callback, dynamic thisObject = null) {
-			throw new System.NotImplementedException();
-		}
-
-		public Vector<T> filter(Delegate callback, dynamic thisObject = null) {
-			throw new System.NotImplementedException();
- 	 	}
-
-		public void forEach(Delegate callback, dynamic thisObject = null) {
-			throw new System.NotImplementedException();
-		}
-
-		public int indexOf(T searchElement) {
-			return mList.IndexOf(searchElement);
-		}
-
-		public int indexOf(T searchElement, int fromIndex) {
-			throw new System.NotImplementedException();
-		}
- 	 	
-		public string join(string sep = ",") {
-            var sb = new System.Text.StringBuilder();
-            bool needsSeperator = false;
-            foreach (var item in mList)
-            {
-                if (needsSeperator) {
-                    sb.Append(sep);
-                }
-                sb.Append(item.ToString());
-                needsSeperator = true;
-            }
-            return sb.ToString();
-        }
-
-		public int lastIndexOf(T searchElement, int fromIndex = 0x7fffffff) {
-            if (fromIndex == 0x7fffffff) {
-                return mList.LastIndexOf (searchElement);
-            } else {
-                return mList.LastIndexOf (searchElement, fromIndex);
-            }
-        }
-
-		public Vector<T> map(Delegate callback, dynamic thisObject = null) {
-			throw new System.NotImplementedException();
-		}
- 	 	
-		public T pop() {
-			var v = mList[ mList.Count - 1];
-			mList.RemoveAt(mList.Count - 1);
-			return v;
-		}
-
-		public uint push(T value) {
-			mList.Add(value);
-			return length;
-		}
-  
-		public uint push(T value, params T[] args) {
-			push(value);
-			foreach(var e in args) {
-				push(e);
-			}
-			return length;
-		}
-	 	 	
-		public Vector<T> reverse() {
-			var nv = new Vector<T>();
-			for (int i = (int)(length-1); i >=0; i--)
-			{
-				nv.push(this[i]);
-			}
-			return nv;
-		}
- 	 	
-		public T shift() {
-            T first = mList[0];
-            mList.RemoveAt(0);
-            return first;
-        }
- 	 	
-		public Vector<T> slice(int startIndex = 0, int endIndex = 16777215) {
-			if (endIndex > mList.Count) endIndex = mList.Count;
-
-			var result = new Vector<T>();
-			for (int i=startIndex; i < endIndex; i++) {
-				result.Add(this[i]);
-			}
-			return result;
-		}
- 	 	
-		public bool some(Delegate callback, dynamic thisObject = null) {
-			throw new System.NotImplementedException();
-		}
-
-		private class FunctionSorter : System.Collections.Generic.IComparer<T>
-		{
-			public FunctionSorter(dynamic func)
-			{
-				mFunc = func;
-			}
-
-			public int Compare(T x, T y)
-			{
-				return (int)mFunc(x,y);
-			}
-			
-			private dynamic mFunc;
-		};
-
-		private class OptionsSorter : System.Collections.Generic.IComparer<T>
-		{
-			public OptionsSorter(uint options)
-			{
-				// mOptions = options;
-			}
-			
-			public int Compare(T x, T y)
-			{
-				//$$TODO examine options
-				var xc = x as System.IComparable<T>;
-				if (xc != null)
-				{
-					return xc.CompareTo(y);
-				}
-				else
-				{
-					throw new System.NotImplementedException();
-				}
-			}
-			
-			// private uint mOptions;
-		};
-
-		public Vector<T> sort(dynamic sortBehavior = null) {
-
-			if (sortBehavior is Delegate)
-			{
-				var fs = new FunctionSorter(sortBehavior);
-			 	mList.Sort(fs);
-				return this;
-			}
-			else if (sortBehavior is uint)
-			{
-				var os = new OptionsSorter((uint)sortBehavior);
-				mList.Sort(os);
-				return this;
-			}
-			else 
-			{
-				throw new System.NotImplementedException();
-			}
-		}
- 	 	
-		public Vector<T> splice(int startIndex = 0, uint deleteCount = 4294967295, params T[] items) {
-			Vector<T> removed = null;
-			
-			// determine number of items to delete
-			uint toDelete = (uint)(this.length - startIndex);
-			if (toDelete > deleteCount) toDelete = deleteCount;
-
-			if (toDelete > 0)
-			{
-				removed = new Vector<T>();
-				
-				// build list of items we removed
-				for (int i=0; i < toDelete; i++)
-				{
-					removed.push( mList[startIndex + i] );
-				}
-			
-				// remove items
-				mList.RemoveRange((int)startIndex, (int)toDelete);
-			}
-			
-			if (items.Length > 0)
-			{
-				// insert range doesnt work when converting an object[] to dynamic[]
-				// this.InsertRange(startIndex, items);
-
-				for (int i=0; i < items.Length; i++)
-				{
-					mList.Insert((int)(startIndex + i), items[i] );
-				}
-			}
-			
-			return removed;
-		}
- 	 	
-		public string toLocaleString() {
-			throw new System.NotImplementedException();
-		}
-
-		public string toString() {
-			return this.ToString();
-		}
-
-		public override string ToString()
-		{
-			return this.join(",");
-//			return string.Format("[Vector: length={0}]", length);
-//			return string.Format("Count={0}", length);
-		}
-
-		public uint unshift(params T[] args) {
-			for (int i=0; i < args.Length; i++)
-			{
-				mList.Insert(i, args[i] );
-			}
-			return this.length;
-		}
-
-		#region IEnumerable implementation
-		public IEnumerator<T> GetEnumerator ()
-		{
-			return mList.GetEnumerator();
-		}
-		#endregion
-		#region IEnumerable implementation
-		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator ()
-		{
-			return ((System.Collections.IEnumerable)mList).GetEnumerator();
-		}
-		#endregion
-
-		#region IList implementation
-
-		int IList<T>.IndexOf(T item)
-		{
-			return mList.IndexOf(item);
-		}
-
-		void IList<T>.Insert(int index, T item)
-		{
-			mList.Insert(index, item);
-		}
-
-		void IList<T>.RemoveAt(int index)
-		{
-			mList.RemoveAt(index);
-		}
-
-		#endregion
-
-		#region ICollection implementation
-
-		void ICollection<T>.Clear()
-		{
-			mList.Clear();
-		}
-
-		bool ICollection<T>.Contains(T item)
-		{
-			return mList.Contains(item);
-		}
-
-		void ICollection<T>.CopyTo(T[] array, int arrayIndex)
-		{
-			mList.CopyTo(array, arrayIndex);
-		}
-
-		bool ICollection<T>.Remove(T item)
-		{
-			return mList.Remove(item);
-		}
-
-		int ICollection<T>.Count {
-			get {
-				return mList.Count;
-			}
-		}
-
-		bool ICollection<T>.IsReadOnly {
-			get {
-				return false;
-			}
-		}
-
-		#endregion
-
-		public List<T> GetInternalList() {return mList;}
-
-		private bool    mFixed = false;
-		private readonly List<T> mList = new List<T>();
-	}
-
-#else
-
-	// Optimized vector.
-		
 	// this class is used to display a custom view of the vector values to the debugger
 	// TODO: we need to make these elements editable 
 	internal class VectorDebugView<T>
@@ -824,7 +161,10 @@ namespace _root {
 		}
 		
 		public uint length
-		{ 
+		{
+#if NET_4_5
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
 			get { return mCount; } 
 			set { 
 				if (value == 0) {
@@ -879,34 +219,76 @@ namespace _root {
 
 		public T this[int i]
 		{
+#if NET_4_5
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
 			get {
+#if PERFORMANCE_MODE && DEBUG
+				if ((i >= mCount) || (i < 0))
+				{
+					throw new IndexOutOfRangeException();
+				}
+#elif PERFORMANCE_MODE
+#else
 				if ((i >= mCount) || (i < 0))
 				{
 					return default(T);
 				}
+#endif
 				return mArray[i];
 			}
+#if NET_4_5
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
 			set {
+#if PERFORMANCE_MODE && DEBUG
+				if (i >= mCount) {
+					throw new IndexOutOfRangeException();
+				}
+#elif PERFORMANCE_MODE
+#else
 				if (i >= mCount) {
 					expand((uint)(i+1));
 				}
+#endif
 				mArray[i] = value;
 			}
 		}
 
 		public T this[uint i]
 		{
+#if NET_4_5
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
 			get {
+#if PERFORMANCE_MODE && DEBUG
+				if (i >= mCount)
+				{
+					throw new IndexOutOfRangeException();
+				}
+#elif PERFORMANCE_MODE
+#else
 				if (i >= mCount)
 				{
 					return default(T);
 				}
+#endif
 				return mArray[(int)i];
 			}
+#if NET_4_5
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
 			set {
+#if PERFORMANCE_MODE && DEBUG
+				if (i >= mCount) {
+					throw new IndexOutOfRangeException();
+				}
+#elif PERFORMANCE_MODE
+#else
 				if (i >= mCount) {
 					expand((uint)(i+1));
 				}
+#endif
 				mArray[(int)i] = value;
 			}
 		}
@@ -1144,16 +526,27 @@ namespace _root {
 			mArray[mCount] = default(T);
 			return val;
 		}
-		
-		public uint push(T value) 
+
+#if NET_4_5
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+#if PERFORMANCE_MODE
+		public void push(T value)
+#else
+		public uint push(T value)
+#endif
 		{
+#if !PERFORMANCE_MODE
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
+#endif
 			if (mCount >= mArray.Length)
 				EnsureCapacity((uint)(1.25 * (mCount + 1)));
 			mArray[mCount] = value;
 			mCount++;
+#if !PERFORMANCE_MODE
 			return mCount;
+#endif
 		}
 		
 		public uint push(T value, params T[] args) 
@@ -1193,8 +586,12 @@ namespace _root {
 			_RemoveAt(0);
 			return v;
 		}
-		
+
+#if PERFORMANCE_MODE
+		public void slice(int startIndex = 0, int endIndex = 16777215) 
+#else
 		public Vector<T> slice(int startIndex = 0, int endIndex = 16777215) 
+#endif
 		{
 			if (startIndex < 0) 
 				throw new InvalidOperationException("splice error");
@@ -1206,10 +603,12 @@ namespace _root {
 			int count = endIndex - startIndex;
 			if (count < 0)
 				count = 0;
-				
+
+#if !PERFORMANCE_MODE
 			var result = new Vector<T>((uint)count, false);
 			System.Array.Copy(mArray, startIndex, result.mArray, 0, count);
 			return result;
+#endif
 		}
 		
 		public bool some(Delegate callback, dynamic thisObject = null) 
@@ -1517,11 +916,6 @@ namespace _root {
 			return this.ToString();
 		}
 		
-		public override string ToString()
-		{
-			return this.join(",");
-		}
-
 		public uint unshift(T item) 
 		{
 			if (mFixed)
@@ -1617,12 +1011,12 @@ namespace _root {
 
 		#region IEnumerable implementation
 
-		private class VectorEnumerator : IEnumerator<T>
+		private class VectorEnumeratorClass : IEnumerator<T>
 		{
-			public Vector<T> mVector;
-			public int mIndex;
+			private readonly Vector<T> mVector;
+			private int mIndex;
 
-			public VectorEnumerator(Vector<T> vector)
+			public VectorEnumeratorClass(Vector<T> vector)
 			{
 				mVector = vector;
 				mIndex = -1;
@@ -1669,18 +1063,58 @@ namespace _root {
 
 		}
 
+		// this is the public struct enumerator, it does not implement IDisposable and doesnt allocate space on the heap
+		public struct VectorEnumeratorStruct
+		{
+			private readonly Vector<T> mVector;
+			private int mIndex;
+
+			public VectorEnumeratorStruct(Vector<T> vector)
+			{
+				mVector = vector;
+				mIndex = -1;
+			}
+
+			#region IEnumerator implementation
+			public bool MoveNext ()
+			{
+				mIndex++;
+				return mIndex < mVector.mCount;
+			}
+
+			public void Reset ()
+			{
+				mIndex = -1;
+			}
+
+			public T Current {
+				get {
+					return mVector.mArray[mIndex];
+				}
+			}
+			#endregion
+		}
+
+		// public get enumerator that returns a faster struct
+		public VectorEnumeratorStruct GetEnumerator ()
+		{
+			return new VectorEnumeratorStruct(this);
+		}
+
+		// private IEnumerable<T> get enumerator that returns a (slower) class on the heap
 		IEnumerator<T> IEnumerable<T>.GetEnumerator ()
 		{
-			return new VectorEnumerator(this);
+			return new VectorEnumeratorClass(this);
 		}
 
 		#endregion
 
 		#region IEnumerable implementation
 
+		// private IEnumerable get enumerator that returns a (slower) class on the heap
 		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator ()
 		{
-			return new VectorEnumerator(this);
+			return new VectorEnumeratorClass(this);
 		}
 
 		#endregion
@@ -1688,12 +1122,12 @@ namespace _root {
 
 		#region IKeyEnumerable implementation
 
-		private class VectorKeyEnumerator : IEnumerator
+		private class VectorKeyEnumeratorClass : IEnumerator
 		{
-			public IList mVector;
-			public int mIndex;
+			private readonly IList mVector;
+			private int mIndex;
 			
-			public VectorKeyEnumerator(IList vector)
+			public VectorKeyEnumeratorClass(IList vector)
 			{
 				mVector = vector;
 				mIndex = -1;
@@ -1729,9 +1163,50 @@ namespace _root {
 			#endregion
 		}
 
+		// this is the public struct enumerator, it does not implement IDisposable and doesnt allocate space on the heap
+		public struct VectorKeyEnumeratorStruct 
+		{
+			private readonly IList mVector;
+			private int mIndex;
+
+			public VectorKeyEnumeratorStruct(IList vector)
+			{
+				mVector = vector;
+				mIndex = -1;
+			}
+
+			#region IEnumerator implementation
+
+			public bool MoveNext ()
+			{
+				mIndex++;
+				return mIndex < mVector.Count;
+			}
+
+			public void Reset ()
+			{
+				mIndex = -1;
+			}
+
+			// unfortunately this has to return object because the for() loop could use a non-int as its variable, causing bad IL
+			public object Current {
+				get {
+					return mIndex;
+				}
+			}
+			#endregion
+		}
+
+		// public get enumerator that returns a faster struct
+		public VectorKeyEnumeratorStruct GetKeyEnumerator()
+		{
+			return new VectorKeyEnumeratorStruct(this);
+		}
+
+		// private IKeyEnumerable get enumerator that returns a (slower) class on the heap
 		IEnumerator PlayScript.IKeyEnumerable.GetKeyEnumerator()
 		{
-			return new VectorKeyEnumerator(this);
+			return new VectorKeyEnumeratorClass(this);
 		}
 
 		#endregion
@@ -1791,16 +1266,15 @@ namespace _root {
 		#endregion
 
 		public static implicit operator Vector<T>(Array a) {
+			PlayScript.Stats.Increment(PlayScript.StatsCounter.Runtime_CastArrayToVector);
 			return new Vector<T>(a);
 		}
 		
 		public static implicit operator Array(Vector<T> v) {
+			PlayScript.Stats.Increment(PlayScript.StatsCounter.Runtime_CastVectorToArray);
 			return new Array(v);
 		}
 
 	}
-
-#endif
-
 }
 

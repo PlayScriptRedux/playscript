@@ -424,6 +424,8 @@ namespace Mono.CSharp
 
 			base.Define ();
 
+			ApplyAssemblyAttributes ();
+
 			HasTypesFullyDefined = true;
 
 			return true;
@@ -439,6 +441,27 @@ namespace Mono.CSharp
 		public void EnableRedefinition ()
 		{
 			is_defined = false;
+		}
+
+		private void ApplyAssemblyAttributes ()
+		{
+			if (OptAttributes != null) {
+				foreach (Attribute a in OptAttributes.Attrs) {
+					// cannot rely on any resolve-based members before you call Resolve
+					if (a.ExplicitTarget != "assembly")
+						continue;
+
+					if ((a.Name == "AllowDynamic" || a.Name == "ForbidDynamic") && a.NamedArguments != null && 
+					    a.NamedArguments.Count == 1 && a.NamedArguments[0].Expr is StringLiteral) {
+						string nsName = (a.NamedArguments [0].Expr as StringLiteral).GetValue() as string;
+						Namespace ns = GlobalRootNamespace.GetNamespace (nsName, false);
+						if (ns != null) {
+							ns.AllowDynamic = (a.Name == "AllowDynamic");
+						}
+					}
+				}
+			}
+
 		}
 
 		private class AutoSealVisitor : StructuralVisitor 

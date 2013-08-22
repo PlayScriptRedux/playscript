@@ -218,6 +218,8 @@ namespace Mono.PlayScript
 		bool handle_where = false;
 		bool handle_typeof = false;
 		bool handle_for_in = false;
+		bool eat_block = false;
+		int eat_block_braces = 0;
 		bool lambda_arguments_parsing;
 		List<Location> escaped_identifiers;
 		int parsing_generic_less_than;
@@ -394,6 +396,16 @@ namespace Mono.PlayScript
 
 		public bool RegexXmlParsing {
 			get { return parse_regex_xml > 0; }
+		}
+
+		public bool EatBlock {
+			get { return eat_block; }
+			set { 
+				eat_block = value; 
+				if (eat_block) {
+					eat_block_braces = 0; 
+				}
+			}
 		}
 
 		public XmlCommentState doc_state {
@@ -817,7 +829,7 @@ namespace Mono.PlayScript
 			});
 
 			AddDisallowedNextAutoSemiTokens(new int [] {
-				Token.ADD,
+				Token.PLUS,
 				Token.MINUS,
 				Token.DIV,
 				Token.PERCENT,
@@ -858,8 +870,8 @@ namespace Mono.PlayScript
 				Token.OP_USHIFT_RIGHT_ASSIGN,
 				Token.OP_EQ,
 				Token.OP_NE,
-				Token.OP_REF_EQ,
-				Token.OP_REF_NE,
+				Token.OP_STRICT_EQ,
+				Token.OP_STRICT_NE,
 				Token.OP_LT,
 				Token.OP_GT,
 				Token.OP_GE,
@@ -3601,6 +3613,21 @@ namespace Mono.PlayScript
 			if (allow_auto_semi_after > 0)
 				allow_auto_semi_after--;
 
+			// Eat all tokens until we get to final end brace
+			if (eat_block) {
+				eat_block = false;
+				eat_block_braces = 1;
+				do {
+					next = xtoken (parse_token);
+					if (next == Token.OPEN_BRACE || next == Token.OPEN_BRACE_INIT) {
+						eat_block_braces++;
+					} else if (next == Token.CLOSE_BRACE) {
+						eat_block_braces--;
+					}
+				} while (eat_block_braces > 0 && next != Token.EOF);
+				return next;
+			}
+
 			// Whether we have seen comments on the current line
 			bool comments_seen = false;
 			while ((c = get_char ()) != -1) {
@@ -3871,7 +3898,7 @@ namespace Mono.PlayScript
 						get_char ();
 						if (peek_char () == '=') {
 							get_char ();
-							return Token.OP_REF_NE;
+							return Token.OP_STRICT_NE;
 						}
 						return Token.OP_NE;
 					}
@@ -3886,7 +3913,7 @@ namespace Mono.PlayScript
 						d = peek_char ();
 						if (d == '=') {
 							get_char ();
-							return Token.OP_REF_EQ;
+							return Token.OP_STRICT_EQ;
 						}
 						return Token.OP_EQ;
 					}

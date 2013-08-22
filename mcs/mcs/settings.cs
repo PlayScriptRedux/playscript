@@ -169,7 +169,7 @@ namespace Mono.CSharp {
 
 		public bool WriteMetadataOnly;
 
-		readonly List<string> conditional_symbols;
+		readonly Dictionary<string,string> conditional_symbols;
 
 		readonly List<SourceFile> source_files;
 
@@ -183,6 +183,66 @@ namespace Mono.CSharp {
 
 		public bool AutoSeal;
 		public bool AutoSealVerbosity;
+
+		//
+		// Settings controlling the enabling of components of the new dynamic runtime
+		//
+
+		// if true, then static calls to PSBinaryOperation.Addition(a,b) are used instead of binder
+		public bool NewDynamicRuntime_BinaryOps = false;
+		// if true, then static calls to PSUnaryOperation.xyz(a,b) are used instead of binder
+		public bool NewDynamicRuntime_UnaryOps = false;
+		// if true, dynamics are cast to boolean before performing logical operations
+		public bool NewDynamicRuntime_LogicalOps = false;
+		// if true, hasOwnProperty is statically called on dynamics
+		public bool NewDynamicRuntime_HasOwnProperty = false;
+		// if true, conversions use static calls to PSConverter.ConvertToXYZ
+		public bool NewDynamicRuntime_Convert = false;
+		// if true, conversions will be removed around dynamic statements
+		public bool NewDynamicRuntime_ConvertReturnType = false;
+		// if true, new get/set index call sites will be used
+		public bool NewDynamicRuntime_GetSetIndex = false;
+		// if true, new get/set member call sites will be used
+		public bool NewDynamicRuntime_GetSetMember = false;
+		// if true, both the true and false componets of a ?: will be cast to dynamic if either is dynamic
+		public bool NewDynamicRuntime_Conditional = false;
+		// if true, event add/remove binders will be disabled
+		public bool NewDynamicRuntime_EventAddRemove = false;
+		// if true, PSInvokeMember non-delegate invokes are used
+		public bool NewDynamicRuntime_InvokeMember = false;
+		// if true, PSInvoke non-delegate invokes are used for calling Functions
+		public bool NewDynamicRuntime_Invoke = false;
+		// if true, toString/ToString is statically called on dynamics
+		public bool NewDynamicRuntime_ToString = false;
+		// if true, dynamic Constructor will be resolved at compile time if possible
+		public bool NewDynamicRuntime_Constructor = false;
+		// if true, type hints will be used for expression resolving
+		public bool NewDynamicRuntime_TypeHint = false;
+
+		public void SetNewDynamicRuntimeEnable(bool value)
+		{
+			NewDynamicRuntime_BinaryOps = value;
+			NewDynamicRuntime_UnaryOps = value;
+			NewDynamicRuntime_LogicalOps = value;
+			NewDynamicRuntime_HasOwnProperty = value;
+			NewDynamicRuntime_Convert = value;
+			NewDynamicRuntime_ConvertReturnType = value;
+			NewDynamicRuntime_GetSetIndex = value;
+			NewDynamicRuntime_GetSetMember = value;
+			NewDynamicRuntime_Conditional = value;
+			NewDynamicRuntime_EventAddRemove = value;
+			NewDynamicRuntime_InvokeMember = value;
+			NewDynamicRuntime_Invoke = value;
+			NewDynamicRuntime_ToString = value;
+			NewDynamicRuntime_Constructor = value;
+			NewDynamicRuntime_TypeHint = value;
+		}
+
+		//
+		// Allow dynamic code at the top level of a program.
+		//
+
+		public bool AllowDynamic = true;
 
 		//
 		// Inlining mode for source level inliner (none, explicit, any)
@@ -203,6 +263,10 @@ namespace Mono.CSharp {
 			StdLibRuntimeVersion = RuntimeVersion.v4;
 			WarningLevel = 4;
 
+			// turn it on by default?
+//			SetNewDynamicRuntimeEnable(false);
+			SetNewDynamicRuntimeEnable(true);
+
 			// Default to 1 or mdb files would be platform speficic
 			TabSize = 1;
 
@@ -211,11 +275,11 @@ namespace Mono.CSharp {
 			Modules = new List<string> ();
 			ReferencesLookupPaths = new List<string> ();
 
-			conditional_symbols = new List<string> ();
+			conditional_symbols = new Dictionary<string,string> ();
 			//
 			// Add default mcs define
 			//
-			conditional_symbols.Add ("__MonoCS__");
+			conditional_symbols.Add ("__MonoCS__", "true");
 
 			source_files = new List<SourceFile> ();
 		}
@@ -248,10 +312,10 @@ namespace Mono.CSharp {
 
 		#endregion
 
-		public void AddConditionalSymbol (string symbol)
+		public void AddConditionalSymbol (string symbol, string value = "true")
 		{
-			if (!conditional_symbols.Contains (symbol))
-				conditional_symbols.Add (symbol);
+			if (!conditional_symbols.ContainsKey (symbol))
+				conditional_symbols.Add (symbol, value);
 		}
 
 		public void AddWarningAsError (int id)
@@ -272,7 +336,12 @@ namespace Mono.CSharp {
 
 		public bool IsConditionalSymbolDefined (string symbol)
 		{
-			return conditional_symbols.Contains (symbol);
+			return conditional_symbols.ContainsKey (symbol);
+		}
+
+		public string GetConditionalSymbolValue (string symbol)
+		{
+			return conditional_symbols [symbol];
 		}
 
 		public bool IsWarningAsError (int code)
@@ -837,6 +906,15 @@ namespace Mono.CSharp {
 				settings.AutoSeal = false;
 				return ParseResult.Success;
 
+			case "/newdynamic":
+			case "/newdynamic+":
+				settings.SetNewDynamicRuntimeEnable(true);
+				return ParseResult.Success;
+
+			case "/newdynamic-":
+				settings.SetNewDynamicRuntimeEnable(false);
+				return ParseResult.Success;
+
 			case "/autoseal_verbosity":
 			case "/autoseal_verbosity+":
 				settings.AutoSealVerbosity = true;
@@ -846,6 +924,10 @@ namespace Mono.CSharp {
 				settings.AutoSealVerbosity = false;
 				return ParseResult.Success;
 			
+			case "/dynamic-":
+				settings.AllowDynamic = false;
+				return ParseResult.Success;
+
 			case "/d":
 			case "/define": {
 					if (value.Length == 0) {
@@ -855,12 +937,18 @@ namespace Mono.CSharp {
 
 					foreach (string d in value.Split (argument_value_separator)) {
 						string conditional = d.Trim ();
+						string conditionalValue = "true"; // NOTE: This is only ever used by PlayScript!
+						string[] conditionalArgs = conditional.Split (new char[] { '=' });
+						if (conditionalArgs.Length == 2) {
+							conditional = conditionalArgs [0].Trim ();
+							conditionalValue = conditionalArgs [1].Trim ();
+						}
 						if (!Tokenizer.IsValidIdentifier (conditional)) {
 							report.Warning (2029, 1, "Invalid conditional define symbol `{0}'", conditional);
 							continue;
 						}
 
-						settings.AddConditionalSymbol (conditional);
+						settings.AddConditionalSymbol (conditional, conditionalValue);
 					}
 					return ParseResult.Success;
 				}

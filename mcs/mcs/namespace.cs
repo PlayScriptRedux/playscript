@@ -133,6 +133,8 @@ namespace Mono.CSharp {
 
 		public readonly MemberName MemberName;
 
+		protected bool? allow_dynamic;
+
 		/// <summary>
 		///   Constructor Takes the current namespace and the
 		///   name.  This is bootstrapped with parent == null
@@ -193,6 +195,25 @@ namespace Mono.CSharp {
 		/// </summary>
 		public Namespace Parent {
 			get { return parent; }
+		}
+
+		/// <summary>
+		/// Gets or sets whether dynamic code is allowed in this namespace.  If null, the default value set in CompilerSettings should be used.
+		/// </summary>
+		/// <value>The allow dynamic value.</value>
+		public bool? AllowDynamic {
+			get {
+				if (allow_dynamic != null) {
+					return allow_dynamic;
+				} else if (this.Parent != null) {
+					return this.Parent.AllowDynamic;
+				} else {
+					return null;
+				}
+			}
+			set {
+				allow_dynamic = value;
+			}
 		}
 
 		#endregion
@@ -783,6 +804,17 @@ namespace Mono.CSharp {
 
 			return Compiler.Settings.IsConditionalSymbolDefined (value);
 		}
+
+		public string GetConditionalValue (string value)
+		{
+			if (conditionals != null) {
+				bool res;
+				if (conditionals.TryGetValue (value, out res))
+					return res ? "true" : "false";
+			}
+
+			return Compiler.Settings.GetConditionalSymbolValue (value);
+		}
 	}
 
 
@@ -872,6 +904,20 @@ namespace Mono.CSharp {
 		public override SourceFileType FileType {
 			get {
 				return compSourceFile != null ? compSourceFile.SourceFile.FileType : SourceFileType.CSharp;
+			}
+		}
+
+		public override bool? AllowDynamic {
+			get {
+				bool? allowed = ns.AllowDynamic;
+				if (allowed != null) {
+					return allowed;
+				} else {
+					return Compiler.Settings.AllowDynamic;
+				}
+			}
+			set {
+				ns.AllowDynamic = value;
 			}
 		}
 

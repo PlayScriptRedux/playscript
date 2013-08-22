@@ -333,41 +333,14 @@ namespace Mono.CSharp {
 		{
 			bool ok = true;
 
-			// PlayScript: resolve LValue first if source is an initializer to be able to
-			// infer initializer type correctly.
-			if (ec.FileType == SourceFileType.PlayScript &&
-				(source is AsArrayInitializer || source is AsObjectInitializer)) {
-
-				target = target.ResolveLValue (ec, source);
-
-				if (target == null) {
-					ok = false;
-					source = EmptyExpression.Null;
-				}
-
-				if (source is AsArrayInitializer) {
-					source = ((AsArrayInitializer)source).InferredResolveWithArrayType(ec, target.Type);
-				} else if (source is AsObjectInitializer) {
-					source = ((AsObjectInitializer)source).InferredResolveWithObjectType(ec, target.Type);
-				}
-				
-				if (source == null) {
-					ok = false;
-					source = EmptyExpression.Null;
-				}
-				
-			} else {
-
-				source = source.Resolve (ec);
-							
-				if (source == null) {
-					ok = false;
-					source = EmptyExpression.Null;
-				}
-
-				target = target.ResolveLValue (ec, source);
-
+			source = source.Resolve (ec);
+						
+			if (source == null) {
+				ok = false;
+				source = EmptyExpression.Null;
 			}
+
+			target = target.ResolveLValue (ec, source);
 
 			if (target == null || !ok)
 				return null;
@@ -818,21 +791,24 @@ namespace Mono.CSharp {
 				if (target is DynamicMemberBinder) {
 					source = new DynamicMemberBinder (ma.Name, binder_flags, args, loc).Resolve (ec);
 
-					// Handles possible event addition/subtraction
-					if (op == Binary.Operator.Addition || op == Binary.Operator.Subtraction) {
-						args = new Arguments (targs.Count + 1);
-						args.AddRange (targs);
-						args.Add (new Argument (right));
-						string method_prefix = op == Binary.Operator.Addition ?
-							Event.AEventAccessor.AddPrefix : Event.AEventAccessor.RemovePrefix;
+					if (!ec.Module.Compiler.Settings.NewDynamicRuntime_EventAddRemove || (ec.FileType != SourceFileType.PlayScript)) 
+					{
+						// Handles possible event addition/subtraction
+						if (op == Binary.Operator.Addition || op == Binary.Operator.Subtraction) {
+							args = new Arguments (targs.Count + 1);
+							args.AddRange (targs);
+							args.Add (new Argument (right));
+							string method_prefix = op == Binary.Operator.Addition ?
+								Event.AEventAccessor.AddPrefix : Event.AEventAccessor.RemovePrefix;
 
-						var invoke = DynamicInvocation.CreateSpecialNameInvoke (
-							new MemberAccess (right, method_prefix + ma.Name, loc), args, loc).Resolve (ec);
+							var invoke = DynamicInvocation.CreateSpecialNameInvoke (
+								new MemberAccess (right, method_prefix + ma.Name, loc), args, loc).Resolve (ec);
 
-						args = new Arguments (targs.Count);
-						args.AddRange (targs);
-						source = new DynamicEventCompoundAssign (ma.Name, args,
-							(ExpressionStatement) source, (ExpressionStatement) invoke, loc).Resolve (ec);
+							args = new Arguments (targs.Count);
+							args.AddRange (targs);
+							source = new DynamicEventCompoundAssign (ma.Name, args,
+								(ExpressionStatement) source, (ExpressionStatement) invoke, loc).Resolve (ec);
+						}
 					}
 				} else {
 					source = new DynamicIndexBinder (binder_flags, args, loc).Resolve (ec);

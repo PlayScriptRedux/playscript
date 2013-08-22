@@ -35,6 +35,12 @@ package flash.media {
  	 	// 
  	 	
  	 	public function stop():void {
+		#if PLATFORM_MONOTOUCH
+		    stopIos();
+		#else
+			trace("No sound implementation on Mac yet");
+			//throw new System.NotImplementedException();
+		#endif
  	 	}
 	
 	}

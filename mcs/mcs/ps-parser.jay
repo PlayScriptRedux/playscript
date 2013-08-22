@@ -348,9 +348,9 @@ namespace Mono.PlayScript
 %token OP_LE
 %token OP_GE
 %token OP_EQ
-%token OP_REF_EQ
+%token OP_STRICT_EQ
 %token OP_NE
-%token OP_REF_NE
+%token OP_STRICT_NE
 %token OP_AND
 %token OP_OR
 %token OP_MULT_ASSIGN
@@ -515,19 +515,20 @@ config_package_directive
 	: IDENTIFIER_CONFIG 
 	  {
 		var lt = (Tokenizer.LocatedToken) $1;
-	    is_config_enabled = file.IsConditionalDefined (lt.Value.Replace("::","_"));	  
+	    is_config_enabled = IsConfigVarDefined(lt.Value); 	  
 	  } 
 	  no_config_package_directive
 	  {
 	  	is_config_enabled = true;
 	  	$$ = $3;
 	  }
-	| IDENTIFIER_CONFIG 
+	| IDENTIFIER_CONFIG OPEN_BRACE
 	  {
 		var lt = (Tokenizer.LocatedToken) $1;
-	    is_config_enabled = file.IsConditionalDefined (lt.Value.Replace("::","_"));	  
+		is_config_enabled = IsConfigVarDefined(lt.Value);
+	    Lexer.EatBlock = !is_config_enabled;	  
 	  } 
-	  OPEN_BRACE opt_package_directives CLOSE_BRACE
+	  opt_package_directives CLOSE_BRACE
 	  {
 	  	is_config_enabled = true;
 	  	$$ = $4;
@@ -804,19 +805,20 @@ config_package_statement
 	: IDENTIFIER_CONFIG 
 	  {
 		var lt = (Tokenizer.LocatedToken) $1;
-	    is_config_enabled = file.IsConditionalDefined (lt.Value.Replace("::","_"));	 	  
+	    is_config_enabled = IsConfigVarDefined(lt.Value);	 	  
 	  }
 	  no_config_package_statement
 	  {
 	    is_config_enabled = true;
 	    $$ = $3;
 	  }
-	| IDENTIFIER_CONFIG 
+	| IDENTIFIER_CONFIG OPEN_BRACE 
 	  {
 		var lt = (Tokenizer.LocatedToken) $1;
-	    is_config_enabled = file.IsConditionalDefined (lt.Value.Replace("::","_"));	  
-	  } 
-	  OPEN_BRACE opt_package_statements CLOSE_BRACE
+	    is_config_enabled = IsConfigVarDefined(lt.Value);	  
+	  	Lexer.EatBlock = !is_config_enabled;
+	  }
+	  opt_package_statements CLOSE_BRACE
 	  {
 	  	is_config_enabled = true;
 	  	$$ = $4;
@@ -1134,7 +1136,7 @@ config_member_declaration
 	: IDENTIFIER_CONFIG
 	  {
 		var lt = (Tokenizer.LocatedToken) $1;
-	    is_config_enabled = file.IsConditionalDefined (lt.Value.Replace("::","_"));	  
+	    is_config_enabled = IsConfigVarDefined(lt.Value);	  
 	  }
 	  class_member_declaration
 	  {
@@ -1145,12 +1147,13 @@ config_member_declaration
 	  
 
 member_config_block
-	: IDENTIFIER_CONFIG 
+	: IDENTIFIER_CONFIG OPEN_BRACE
 	  {
 		var lt = (Tokenizer.LocatedToken) $1;
-	    is_config_enabled = file.IsConditionalDefined (lt.Value.Replace("::","_"));	  
+		is_config_enabled = IsConfigVarDefined(lt.Value);
+	    Lexer.EatBlock = !is_config_enabled;	  
 	  } 
-	  OPEN_BRACE opt_class_member_declarations CLOSE_BRACE
+	  opt_class_member_declarations CLOSE_BRACE
 	  {
 	  	is_config_enabled = true;
 	  	$$ = $4;
@@ -1193,6 +1196,7 @@ struct_declaration
 		if (doc_support)
 			Lexer.doc_state = XmlCommentState.Allowed;
 		lexer.DynamicParsing = false;
+		Lexer.EatBlock = !is_config_enabled;		
 	  }
 	  opt_class_member_declarations CLOSE_BRACE
 	  {
@@ -1203,6 +1207,7 @@ struct_declaration
 	  }
 	  opt_semicolon
 	  {
+	  	is_config_enabled = true;
 		lbag.AppendToMember (current_container, GetLocation ($12), GetLocation ($15), GetLocation ($17));
 		$$ = pop_current_class ();
 	  }
@@ -1483,7 +1488,6 @@ method_declaration
 			if (is_config_enabled) {
 				current_type.AddMember (m);
 			}
-			is_config_enabled = true;
 		}
 		
 		Constructor c = $1 as Constructor;
@@ -1491,7 +1495,6 @@ method_declaration
 			if (is_config_enabled) {
 				current_type.AddConstructor (c);
 			}
-			is_config_enabled = true;
 			current_constructor = c;
 		}
 		
@@ -1561,6 +1564,8 @@ method_declaration
 			pop_current_class();
 			is_package_function = false;
 		}
+	
+		is_config_enabled = true;
 	
 		if (doc_support)
 			Lexer.doc_state = XmlCommentState.Allowed;
@@ -1680,7 +1685,6 @@ method_header
 			if (is_config_enabled) {
 				current_type.AddMember (current_property);
 			}
-			is_config_enabled = true;
 			modifiers = (Modifiers) 0;
 		} else {
 //			if (!type.Equals(current_property.TypeExpression)) {
@@ -1704,7 +1708,9 @@ method_header
 		
 		current_property.Get = new Property.GetMethod (current_property,
 			modifiers & Modifiers.AccessibilityMask, (Attributes) $1, GetLocation ($3));
-	  
+
+		is_config_enabled = true;
+					
 		lbag.AddMember (current_property, mod_locations, GetLocation ($10));
 		current_local_parameters = current_property.Get.ParameterInfo;
 		$$ = current_property.Get;
@@ -1745,7 +1751,6 @@ method_header
 			if (is_config_enabled) {
 				current_type.AddMember (current_property);
 			}
-			is_config_enabled = true;
 			modifiers = (Modifiers) 0;			
 		} else {
 //			if (!type.Equals(current_property.TypeExpression)) {
@@ -1767,6 +1772,8 @@ method_header
 		current_property.Set = new Property.SetMethod (current_property, 
 			modifiers & Modifiers.AccessibilityMask, (ParametersCompiled) $7, (Attributes) $1, GetLocation ($3));
 	  
+		is_config_enabled = true;
+				  
 		lbag.AddMember (current_property, mod_locations, GetLocation ($10));
 		current_local_parameters = parameters;
 		$$ = current_property.Set;
@@ -2189,7 +2196,7 @@ property_declaration
 		if (is_config_enabled) {
 			current_type.AddMember (current_property);
 		}
-		is_config_enabled = true;
+
 		lbag.AddMember (current_property, mod_locations, GetLocation ($8));
 		
 		lexer.PropertyParsing = true;
@@ -2204,6 +2211,8 @@ property_declaration
 	  CLOSE_BRACE
 	  {
   		CheckIsPlayScript("property", GetLocation($3)); 	
+  		  
+		is_config_enabled = true;  		  
   		  
 		lbag.AppendToMember (current_property, GetLocation ($12));
 		current_property = null;
@@ -2236,7 +2245,6 @@ indexer_declaration
 		if (is_config_enabled) {
 	  		current_type.AddIndexer (indexer);
 	  	}
-	  	is_config_enabled = true;
 		lbag.AddMember (current_property, mod_locations, GetLocation ($5), GetLocation ($8));
   		
 		if (type.Type != null && type.Type.Kind == MemberKind.Void)
@@ -2252,6 +2260,7 @@ indexer_declaration
 		}
 
 		lexer.PropertyParsing = true;
+		Lexer.EatBlock = !is_config_enabled;
 	  }
 	  accessor_declarations 
 	  {
@@ -2266,7 +2275,9 @@ indexer_declaration
 	  
 		if (doc_support)
 			current_property.DocComment = ConsumeStoredComment ();
-			
+
+	  	is_config_enabled = true;
+						
 		lbag.AppendToMember (current_property, GetLocation ($12));
 		current_property = null;		
 	  }
@@ -2430,6 +2441,7 @@ interface_declaration
 	  OPEN_BRACE
 	  {
 	    Lexer.AutoSemiInsertion = true;
+	    Lexer.EatBlock = !is_config_enabled;
 	  }
 	  opt_interface_member_declarations CLOSE_BRACE
 	  {
@@ -2439,6 +2451,7 @@ interface_declaration
 	  }
 	  opt_semicolon 
 	  {
+  	  	is_config_enabled = true;
 	    lbag.AppendToMember (current_container, GetLocation ($12), GetLocation ($15));
 		$$ = pop_current_class ();
 	  }
@@ -3095,6 +3108,8 @@ enum_declaration
 		}
 		
 		push_current_container (new Enum (current_container, (FullNamedExpression) $5, (Modifiers) $2, name, (Attributes) $1), null);
+		
+		Lexer.EatBlock = !is_config_enabled;
 	  }
 	  opt_enum_member_declarations
 	  {
@@ -3113,6 +3128,8 @@ enum_declaration
 
 //			if (doc_support)
 //				em.DocComment = ev.DocComment;
+
+	  	is_config_enabled = true;
 
 		lbag.AddMember (current_container, mod_locations, GetLocation ($3), GetLocation ($7), GetLocation ($11));
 		$$ = pop_current_class ();
@@ -3673,6 +3690,9 @@ primary_expression_or_type
 		var lt = (Tokenizer.LocatedToken) $1;
 	       $$ = new CompletionSimpleName (MemberName.MakeName (lt.Value, null), lt.Location);
 	  }
+	| builtin_types {
+		$$ = $1;
+	  }
 	| member_access
 	;
 
@@ -3789,12 +3809,12 @@ member_access
 		lbag.AddLocation ($$, GetLocation ($2));
 		$$ = ma;
 	  }   
-	| builtin_types DOT IDENTIFIER opt_type_argument_list
-	  {
-		var lt = (Tokenizer.LocatedToken) $3;
-		$$ = new MemberAccess ((Expression) $1, lt.Value, (TypeArguments) $4, lt.Location);
-		lbag.AddLocation ($$, GetLocation ($2));
-	  }
+//	| builtin_types DOT IDENTIFIER opt_type_argument_list
+//	  {
+//		var lt = (Tokenizer.LocatedToken) $3;
+//		$$ = new MemberAccess ((Expression) $1, lt.Value, (TypeArguments) $4, lt.Location);
+//		lbag.AddLocation ($$, GetLocation ($2));
+//	  }
 	| SUPER DOT IDENTIFIER opt_type_argument_list
 	  {
 		var lt = (Tokenizer.LocatedToken) $3;
@@ -3816,14 +3836,14 @@ member_access
 		var lt = (Tokenizer.LocatedToken) $3;
 		$$ = new CompletionMemberAccess ((Expression) $1, lt.Value, lt.Location);
 	  }
-	| builtin_types DOT GENERATE_COMPLETION
-	  {
-		$$ = new CompletionMemberAccess ((Expression) $1, null, lexer.Location);
-	  }
-	| builtin_types DOT IDENTIFIER GENERATE_COMPLETION {
-		var lt = (Tokenizer.LocatedToken) $3;
-		$$ = new CompletionMemberAccess ((Expression) $1, lt.Value, lt.Location);
- 	  }
+//	| builtin_types DOT GENERATE_COMPLETION
+//	  {
+//		$$ = new CompletionMemberAccess ((Expression) $1, null, lexer.Location);
+//	  }
+//	| builtin_types DOT IDENTIFIER GENERATE_COMPLETION {
+//		var lt = (Tokenizer.LocatedToken) $3;
+//		$$ = new CompletionMemberAccess ((Expression) $1, lt.Value, lt.Location);
+ //	  }
 	;
 
 invocation_expression
@@ -3837,11 +3857,11 @@ invocation_expression
  		$$ = initializer;
 		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($2), GetLocation ($4));
 	  }
-	| builtin_types open_parens_any opt_argument_list close_parens
-	  {
-		$$ = new Invocation ((Expression) $1, (Arguments) $3);
-		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
-	  }  
+//	| builtin_types open_parens_any opt_argument_list close_parens
+//	  {
+//		$$ = new Invocation ((Expression) $1, (Arguments) $3);
+//		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
+//	  }  
 	| primary_expression open_parens_any opt_argument_list close_parens
 	  {
 	    var newExpr = $1 as AsNew;
@@ -4116,21 +4136,21 @@ element_access
 		Error_SyntaxError (yyToken);
 		$$ = new ElementAccess ((Expression) $1, null, GetLocation ($2));
 	  }
-	| builtin_types OPEN_BRACKET_EXPR expression_list_arguments CLOSE_BRACKET	
-	  {
-		$$ = new ElementAccess ((Expression) $1, (Arguments) $3, GetLocation ($2));
-		lbag.AddLocation ($$, GetLocation ($4));
-	  }
-	| builtin_types OPEN_BRACKET_EXPR expression_list_arguments error
-	  {
-		Error_SyntaxError (yyToken);
-		$$ = new ElementAccess ((Expression) $1, (Arguments) $3, GetLocation ($2));
-	  }
-	| builtin_types OPEN_BRACKET_EXPR error
-	  {
-		Error_SyntaxError (yyToken);
-		$$ = new ElementAccess ((Expression) $1, null, GetLocation ($2));
-	  }	  
+//	| builtin_types OPEN_BRACKET_EXPR expression_list_arguments CLOSE_BRACKET	
+//	  {
+//		$$ = new ElementAccess ((Expression) $1, (Arguments) $3, GetLocation ($2));
+//		lbag.AddLocation ($$, GetLocation ($4));
+//	  }
+//	| builtin_types OPEN_BRACKET_EXPR expression_list_arguments error
+//	  {
+//		Error_SyntaxError (yyToken);
+//		$$ = new ElementAccess ((Expression) $1, (Arguments) $3, GetLocation ($2));
+//	  }
+//	| builtin_types OPEN_BRACKET_EXPR error
+//	  {
+//		Error_SyntaxError (yyToken);
+//		$$ = new ElementAccess ((Expression) $1, null, GetLocation ($2));
+//	  }	  
 	;
 
 expression_list
@@ -4946,11 +4966,11 @@ additive_expression
 	  {
 		$$ = new AsIn ((Expression) $1, (Expression) $3, GetLocation ($2));
 	  }	  
-	| additive_expression AS type
+	| additive_expression AS primary_expression_or_type
 	  {
 		$$ = new As ((Expression) $1, (Expression) $3, GetLocation ($2));
 	  }
-	| additive_expression IS type
+	| additive_expression IS primary_expression_or_type
 	  {
 		$$ = new Is ((Expression) $1, (Expression) $3, GetLocation ($2));
 	  }	  
@@ -5092,14 +5112,14 @@ equality_expression
 		$$ = new Binary (Binary.Operator.Inequality, (Expression) $1, (Expression) $3);
 		lbag.AddLocation ($$, GetLocation ($2));
 	  }
-	| equality_expression OP_REF_EQ relational_expression
+	| equality_expression OP_STRICT_EQ relational_expression
 	  {
-		$$ = new Binary (Binary.Operator.AsRefEquality, (Expression) $1, (Expression) $3);
+		$$ = new Binary (Binary.Operator.AsStrictEquality, (Expression) $1, (Expression) $3);
 		lbag.AddLocation ($$, GetLocation ($2));
 	  }
-	| equality_expression OP_REF_NE relational_expression
+	| equality_expression OP_STRICT_NE relational_expression
 	  {
-		$$ = new Binary (Binary.Operator.AsRefInequality, (Expression) $1, (Expression) $3);
+		$$ = new Binary (Binary.Operator.AsStrictInequality, (Expression) $1, (Expression) $3);
 		lbag.AddLocation ($$, GetLocation ($2));
 	  }
 	; 
@@ -5546,7 +5566,8 @@ class_declaration
 	  }
 	  OPEN_BRACE
 	  {
-		lexer.AutoSemiInsertion = true;		
+		lexer.AutoSemiInsertion = true;
+		Lexer.EatBlock = !is_config_enabled;
 	  }
 	  opt_class_member_declarations CLOSE_BRACE
 	  {
@@ -5557,6 +5578,7 @@ class_declaration
 	  }
 	  opt_semicolon 
 	  {
+	  	is_config_enabled = true;
 		lbag.AppendToMember (current_container, GetLocation ($12), GetLocation ($15), GetLocation ($17));
 		$$ = pop_current_class ();
 	  }
@@ -5885,6 +5907,7 @@ block
 		++lexer.parsing_block;
 		lexer.AutoSemiInsertion = true;
 		start_block (GetLocation ($1));
+		Lexer.EatBlock = !is_config_enabled;		
 	  } 
 	  opt_statement_list block_end
 	  {
@@ -5917,6 +5940,7 @@ config_block
 	  {
 		++lexer.parsing_block;
 		start_block (GetLocation ($2));
+		Lexer.EatBlock = !is_config_enabled;
 	  } 
 	  opt_statement_list block_end
 	  {
@@ -5924,9 +5948,7 @@ config_block
 	      // This block should be included
   		  $$ = $5;
   		} else {
-  		  // This block should not be included.. create an empty block
-  		  start_block (GetLocation ($2));
-  		  $$ = end_block (GetLocation ($5));
+  		  $$ = new EmptyStatement (GetLocation ($2));
   		}
   		is_config_enabled = true;
 	  }
@@ -5938,7 +5960,7 @@ opt_block_config
 	  {
 	    var lt1 = (Tokenizer.LocatedToken) $1;
 	    var lt2 = (Tokenizer.LocatedToken) $3;
-        is_config_enabled = file.IsConditionalDefined (lt1.Value + "_" + lt2.Value);
+        is_config_enabled = IsConfigVarDefined (lt1.Value + "::" + lt2.Value);
 	  }
 	;
 
@@ -6194,13 +6216,13 @@ variable_type_simple
 //			$$ = expr;
 //		}
 //	  }
-	| builtin_types opt_nullable
-	  {
-		if ($2 == null)
-			$$ = $1;
-		else
-			$$ = new ComposedCast ((FullNamedExpression) $1, (ComposedTypeSpecifier) $2);
-	  }
+//	| builtin_types opt_nullable
+//	  {
+//		if ($2 == null)
+//			$$ = $1;
+//		else
+//			$$ = new ComposedCast ((FullNamedExpression) $1, (ComposedTypeSpecifier) $2);
+//	  }
 //	| builtin_types pointer_stars
 //	  {
 //		$$ = new ComposedCast ((FullNamedExpression) $1, (ComposedTypeSpecifier) $2);
@@ -7888,19 +7910,19 @@ doc_cref
 	  {
 		module.DocumentationBuilder.ParsedParameters = (List<DocumentationParameter>)$2;
 	  }
-	| builtin_types opt_doc_method_sig
-	  {
-		module.DocumentationBuilder.ParsedBuiltinType = (TypeExpression)$1;
-		module.DocumentationBuilder.ParsedParameters = (List<DocumentationParameter>)$2;
-		$$ = null;
-	  }
-	| builtin_types DOT IDENTIFIER opt_doc_method_sig
-	  {
-		module.DocumentationBuilder.ParsedBuiltinType = (TypeExpression)$1;
-		module.DocumentationBuilder.ParsedParameters = (List<DocumentationParameter>)$4;
-		var lt = (Tokenizer.LocatedToken) $3;
-		$$ = new MemberName (lt.Value);
-	  }
+//	| builtin_types opt_doc_method_sig
+//	  {
+//		module.DocumentationBuilder.ParsedBuiltinType = (TypeExpression)$1;
+//		module.DocumentationBuilder.ParsedParameters = (List<DocumentationParameter>)$2;
+//		$$ = null;
+//	  }
+//	| builtin_types DOT IDENTIFIER opt_doc_method_sig
+//	  {
+//		module.DocumentationBuilder.ParsedBuiltinType = (TypeExpression)$1;
+//		module.DocumentationBuilder.ParsedParameters = (List<DocumentationParameter>)$4;
+//		var lt = (Tokenizer.LocatedToken) $3;
+//		$$ = new MemberName (lt.Value);
+//	  }
 	| doc_type_declaration_name DOT THIS
 	  {
 		$$ = new MemberName ((MemberName) $1, MemberCache.IndexerNameAlias, Location.Null);
@@ -8082,8 +8104,6 @@ void push_current_container (TypeDefinition tc, object partial_token)
 		else
 			current_container.AddTypeContainer (tc);
 	}
-	
-	is_config_enabled = true;
 		
 	++lexer.parsing_declaration;
 	current_container = tc;
@@ -8485,6 +8505,12 @@ string MakePrivateNamespaceName(NamespaceContainer prev_container, CompilationSo
 	return sb.ToString();
 }
 
+bool IsConfigVarDefined(string configVar) 
+{
+	string var_name = configVar.Replace("::", "_");
+	return file.IsConditionalDefined (var_name) && file.GetConditionalValue (var_name) != "false";
+}
+
 string GetExpecting ()
 {
 	int [] tokens = yyExpectingTokens (yyExpectingState);
@@ -8634,7 +8660,7 @@ string GetSymbolName (int token)
 		return ">=";
 	case Token.OP_EQ:
 		return "==";
-	case Token.OP_REF_EQ:
+	case Token.OP_STRICT_EQ:
 		return "===";
 	case Token.OP_NE:
 		return "!=";

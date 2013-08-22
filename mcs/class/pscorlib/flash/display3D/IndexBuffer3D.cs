@@ -18,8 +18,13 @@ using _root;
 
 #if PLATFORM_MONOMAC
 using MonoMac.OpenGL;
+using BufferUsage = MonoMac.OpenGL.BufferUsageHint;
 #elif PLATFORM_MONOTOUCH
 using OpenTK.Graphics.ES20;
+#elif PLATFORM_MONODROID
+using OpenTK.Graphics.ES20;
+using BufferTarget = OpenTK.Graphics.ES20.All;
+using BufferUsage = OpenTK.Graphics.ES20.All;
 #endif
 
 namespace flash.display3D {
@@ -32,45 +37,55 @@ namespace flash.display3D {
 
 #if OPENGL
 
-		public IndexBuffer3D(Context3D context3D, int numIndices)
+		internal IndexBuffer3D(Context3D context3D, int numIndices, int multiBufferCount, bool isDynamic)
 		{
+			if (multiBufferCount < 1)
+				throw new ArgumentOutOfRangeException("multiBufferCount");
+
 			mNumIndices = numIndices;
-			GL.GenBuffers(1, out mId);
+			mIds = new uint[multiBufferCount];
+			GL.GenBuffers(multiBufferCount, mIds);
+
+			mUsage = isDynamic ? BufferUsage.DynamicDraw : BufferUsage.StaticDraw;
 		}
 
-
 		public void dispose() {
-			GL.DeleteBuffers(1, ref mId);
+			GL.DeleteBuffers(mIds.Length, mIds);
 		}
 		
 		public void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startOffset, int count) {
 			throw new NotImplementedException();
 		}
 
-		public void uploadFromVector(Vector<uint> data, int startOffset, int count) {
-			GL.BindBuffer(BufferTarget.ElementArrayBuffer, mId);
-#if PLATFORM_MONOMAC
-		    GL.BufferData<uint>(BufferTarget.ElementArrayBuffer, 
-		        (IntPtr)(count * sizeof(uint)), 
-		        data.ToArray(), 
-		        BufferUsageHint.StaticDraw);
-#elif PLATFORM_MONOTOUCH
+		public void uploadFromArray(uint[] data, int startOffset, int count) {
+			// swap to next buffer
+			mBufferIndex++;
+			if (mBufferIndex >= mIds.Length)
+				mBufferIndex = 0;
+
+			GL.BindBuffer(BufferTarget.ElementArrayBuffer, mIds[mBufferIndex]);
 			GL.BufferData<uint>(BufferTarget.ElementArrayBuffer, 
-                (IntPtr)(count * sizeof(uint)), 
-                data.ToArray(), 
-                BufferUsage.StaticDraw);
-#endif
+			                    new IntPtr(count * sizeof(uint)), 
+			                    data, 
+			                    mUsage);
+		}
+
+		public void uploadFromVector(Vector<uint> data, int startOffset, int count) {
+			uploadFromArray(data._GetInnerArray(), startOffset, count);
 		}
 		
-		public uint id {get {return mId;}}
-		public int numIndices {get{return mNumIndices;}}
+		public uint 			id 			{get {return mIds[mBufferIndex];}}
+		public int				numIndices 	{get {return mNumIndices;}}
 		
-		private readonly int mNumIndices;
-		private uint 	mId;
+		private readonly int	mNumIndices;
+		private uint[]			mIds;
+		private int 			mBufferIndex;		// buffer index for multibuffering
+		private BufferUsage     mUsage;
+
 
 #else
 
-		public IndexBuffer3D(Context3D context3D, int numIndices)
+		public IndexBuffer3D(Context3D context3D, int numIndices, int multiBufferCount = 1)
 		{
 			throw new NotImplementedException();
 		}

@@ -18,6 +18,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Reflection;
 using System.IO;
+using System.Linq;
 
 using flash.display;
 using flash.utils;
@@ -28,6 +29,8 @@ using MonoMac.AppKit;
 #elif PLATFORM_MONOTOUCH
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
+#elif PLATFORM_MONODROID
+using Android.App;
 #endif
 
 
@@ -61,9 +64,11 @@ namespace PlayScript
 		{
 			// add resource directories in static constructor
 			AddResourceDirectory("");
-			#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH 
+			#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
 			AddResourceDirectory(NSBundle.MainBundle.ResourcePath + "/src/");
 			AddResourceDirectory(NSBundle.MainBundle.ResourcePath);
+			#elif PLATFORM_MONODROID
+			AddResourceDirectory("file:///android_asset");
 			#endif
 		}
 
@@ -252,6 +257,10 @@ namespace PlayScript
 
 		public static string TryResolveResourcePath(string path)
 		{
+#if PLATFORM_MONODROID
+			string[] assetLists = Application.Context.Assets.List ("");
+			return assetLists.Any (path.Equals) ? path : null;		
+#else
 			if (File.Exists(path))
 			{ 
 				// found file at this location
@@ -281,6 +290,7 @@ namespace PlayScript
 			}
 
 			return null;
+#endif
 		}
 
 		public static void AddResourceDirectory(string dir)

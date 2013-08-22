@@ -1,4 +1,5 @@
 ./AssemblyInfo.cs
+../pscorlib/AllowDynamicAttribute.cs
 ../pscorlib/ArgumentError.play
 ../pscorlib/Array.cs
 ../pscorlib/BindableAttribute.cs
@@ -7,6 +8,7 @@
 ../pscorlib/DefaultPropertyAttribute.cs
 ../pscorlib/DefinitionError.play
 ../pscorlib/DeprecatedAttribute.cs
+../pscorlib/DotNetError.play
 ../pscorlib/Dynamic.play
 ../pscorlib/EmbedAttribute.cs
 ../pscorlib/Error.play
@@ -21,6 +23,7 @@
 ../pscorlib/fl/controls/Label.play
 ../pscorlib/fl/controls/LabelButton.play
 ../pscorlib/fl/controls/List.play
+../pscorlib/fl/controls/listClasses/CellRenderer.play
 ../pscorlib/fl/controls/NumericStepper.play
 ../pscorlib/fl/controls/ScrollBar.play
 ../pscorlib/fl/controls/SelectableList.play
@@ -28,6 +31,7 @@
 ../pscorlib/fl/controls/TextInput.play
 ../pscorlib/fl/controls/UIScrollBar.play
 ../pscorlib/fl/core/UIComponent.play
+../pscorlib/fl/events/ComponentEvent.play
 ../pscorlib/flash/accessibility/AccessibilityImplementation.play
 ../pscorlib/flash/accessibility/AccessibilityProperties.play
 ../pscorlib/flash/Debugger.play
@@ -106,6 +110,7 @@
 ../pscorlib/flash/events/EventPhase.play
 ../pscorlib/flash/events/FocusEvent.play
 ../pscorlib/flash/events/FullScreenEvent.play
+../pscorlib/flash/events/GestureEvent.play
 ../pscorlib/flash/events/HTTPStatusEvent.play
 ../pscorlib/flash/events/IEventDispatcher.cs
 ../pscorlib/flash/events/IOErrorEvent.play
@@ -120,6 +125,7 @@
 ../pscorlib/flash/events/ThrottleEvent.play
 ../pscorlib/flash/events/TimerEvent.play
 ../pscorlib/flash/events/TouchEvent.play
+../pscorlib/flash/events/TransformGestureEvent.play
 ../pscorlib/flash/events/UncaughtErrorEvent.play
 ../pscorlib/flash/events/UncaughtErrorEvents.play
 ../pscorlib/flash/external/ExternalInterface.play
@@ -143,6 +149,8 @@
 ../pscorlib/flash/globalization/DateTimeFormatter.play
 ../pscorlib/flash/media/Camera.play
 ../pscorlib/flash/media/ID3Info.play
+../pscorlib/flash/media/ios/Sound.cs
+../pscorlib/flash/media/ios/SoundChannel.cs
 ../pscorlib/flash/media/Sound.play
 ../pscorlib/flash/media/SoundChannel.play
 ../pscorlib/flash/media/SoundLoaderContext.play
@@ -210,7 +218,7 @@
 ../pscorlib/flash/ui/MouseCursorData.play
 ../pscorlib/flash/ui/Multitouch.play
 ../pscorlib/flash/ui/MultitouchInputMode.play
-../pscorlib/flash/utils/ByteArray.play
+../pscorlib/flash/utils/ByteArray.cs
 ../pscorlib/flash/utils/CompressionAlgorithm.play
 ../pscorlib/flash/utils/Dictionary.cs
 ../pscorlib/flash/utils/Endian.play
@@ -220,6 +228,7 @@
 ../pscorlib/flash/utils/Timer.cs
 ../pscorlib/flash/utils/Timer.play
 ../pscorlib/flash/utils/utils_functions.play
+../pscorlib/ForbidDynamicAttribute.cs
 ../pscorlib/FunctionExtensions.cs
 ../pscorlib/functions.cs
 ../pscorlib/functions.play

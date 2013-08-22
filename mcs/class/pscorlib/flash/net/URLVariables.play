@@ -29,7 +29,7 @@ package flash.net {
 		public function decode(source:String):void {
 			throw new System.NotImplementedException();
 		}
- 	 	
+
 		public override function toString():String {
 
 			var sb = new System.Text.StringBuilder();

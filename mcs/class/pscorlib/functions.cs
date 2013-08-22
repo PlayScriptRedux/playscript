@@ -299,15 +299,6 @@ namespace _root
 			}
 			return false;
 		}
-
-		// Inlineable method
-		public static bool Boolean (string s)
-		{
-			if (s == "true") return true; 
-			if (s == "false") return false;
-			throw new System.NotImplementedException();
-		}
-
 	}
 
 	public static class _typeof_fn

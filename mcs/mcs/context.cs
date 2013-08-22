@@ -320,7 +320,9 @@ namespace Mono.CSharp
 
 			InvokeSpecialName = 1 << 26,
 
-			PsExtended = 1 << 27
+			PsExtended = 1 << 27,
+
+			PsDynamicDisabled = 1 << 28
 		}
 
 		// utility helper for CheckExpr, UnCheckExpr, Checked and Unchecked statements
@@ -415,6 +417,23 @@ namespace Mono.CSharp
 				fileType = SourceFileType.CSharp;
 			}
 
+			//
+			// Set dynamic enabled state
+			//
+			if (memberCore is MethodCore) {
+				if (!(((MethodCore)mc).AllowDynamic ?? true))
+					flags |= Options.PsDynamicDisabled;
+			} else if (memberCore is TypeDefinition) {
+				if (!(((TypeDefinition)mc).AllowDynamic ?? true))
+					flags |= Options.PsDynamicDisabled;
+			} else if (memberCore != null && memberCore.Parent != null) {
+				if (!(memberCore.Parent.AllowDynamic ?? true))
+					flags |= Options.PsDynamicDisabled;
+			} else {
+				if (!Module.Compiler.Settings.AllowDynamic)
+					flags |= Options.PsDynamicDisabled;
+			}
+
 		}
 
 		public ResolveContext (IMemberContext mc, Options options)
@@ -490,6 +509,12 @@ namespace Mono.CSharp
 		public bool IsUnsafe {
 			get {
 				return HasSet (Options.UnsafeScope) || MemberContext.IsUnsafe;
+			}
+		}
+
+		public bool AllowDynamic {
+			get {
+				return (flags & Options.PsDynamicDisabled) == 0;
 			}
 		}
 

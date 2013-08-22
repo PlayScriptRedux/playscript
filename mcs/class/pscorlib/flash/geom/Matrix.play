@@ -172,7 +172,7 @@ package flash.geom {
 			this.ty = ty;
 		}
  	 	
-		public override function ToString():String {
+		public override function toString():String {
 			return System.String.Format("[{0} {1} {2} {3} {4} {5}]", a,b,c,d,tx,ty);
 		}
  	 	 

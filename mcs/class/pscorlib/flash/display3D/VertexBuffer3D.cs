@@ -18,8 +18,13 @@ using _root;
 
 #if PLATFORM_MONOMAC
 using MonoMac.OpenGL;
+using BufferUsage = MonoMac.OpenGL.BufferUsageHint;
 #elif PLATFORM_MONOTOUCH
 using OpenTK.Graphics.ES20;
+#elif PLATFORM_MONODROID
+using OpenTK.Graphics.ES20;
+using BufferTarget = OpenTK.Graphics.ES20.All;
+using BufferUsage = OpenTK.Graphics.ES20.All;
 #endif
 
 
@@ -34,15 +39,21 @@ namespace flash.display3D
 
 #if OPENGL
 
-		public VertexBuffer3D(Context3D context3D, int numVertices, int dataPerVertex)
+		internal VertexBuffer3D(Context3D context3D, int numVertices, int dataPerVertex, int multiBufferCount, bool isDynamic)
 		{
+			if (multiBufferCount < 1)
+				throw new ArgumentOutOfRangeException("multiBufferCount");
+
 			mNumVertices = numVertices;
 			mVertexSize = dataPerVertex;
-			GL.GenBuffers(1, out mId);
+			mIds = new uint[multiBufferCount];
+			GL.GenBuffers(mIds.Length, mIds);
+
+			mUsage = isDynamic ? BufferUsage.DynamicDraw : BufferUsage.StaticDraw;
 		}
 
 		public void dispose() {
-			GL.DeleteBuffers(1, ref mId);
+			GL.DeleteBuffers(mIds.Length, mIds);
 		}
 		
 		public void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startVertex, int numVertices) {
@@ -51,8 +62,13 @@ namespace flash.display3D
 
 		public void uploadFromArray(float[] data, int startVertex, int numVertices) 
 		{
-			// System.Console.WriteLine ("VertexBuffer3D.uploadFromVector:");
-			GL.BindBuffer(BufferTarget.ArrayBuffer, mId);
+
+			// swap to next buffer
+			mBufferIndex++;
+			if (mBufferIndex >= mIds.Length)
+				mBufferIndex = 0;
+
+			GL.BindBuffer(BufferTarget.ArrayBuffer, mIds[mBufferIndex]);
 			
 			int byteStart = startVertex * mVertexSize * sizeof(float);
 			int byteCount = numVertices * mVertexSize * sizeof(float);
@@ -91,15 +107,12 @@ namespace flash.display3D
 				mData = new float[mNumVertices * mVertexSize];
 			}
 
-			// System.Console.WriteLine ("VertexBuffer3D.uploadFromVector:");
-
 			// convert to floating point
 			int count = numVertices * mVertexSize;
 			var array = data._GetInnerArray();
 			for (int i=0; i < count; i++)
 			{
 				mData[i] = (float)array[i];
-				// System.Console.WriteLine ("{0}: {1}", i, data[i]);
 			}
 
 			uploadFromArray(mData, startVertex, numVertices);
@@ -110,32 +123,30 @@ namespace flash.display3D
 		}
 		
 		public uint id {
-			get {return mId;}
+			get {return mIds[mBufferIndex];}
 		}
 		
 		private readonly int		mNumVertices;
 		private readonly int		mVertexSize; 		// size in floats
 		private float[]				mData;
-		private uint		 		mId;
-#if PLATFORM_MONOMAC
-		private BufferUsageHint     mUsage = BufferUsageHint.DynamicDraw;
-#elif PLATFORM_MONOTOUCH
-		private BufferUsage         mUsage = BufferUsage.DynamicDraw;
-#endif
-		
+		private uint[]		 		mIds;
+		private int 				mBufferIndex;		// buffer index for multibuffering
+		private BufferUsage         mUsage;
 
 #else
 
-		public VertexBuffer3D(Context3D context3D, int numVertices, int dataPerVertex)
+		public VertexBuffer3D(Context3D context3D, int numVertices, int dataPerVertex, int multiBufferCount = 1)
 		{
 			throw new NotImplementedException();
 		}
 		
-		public void dispose() {
+		public void dispose() 
+		{
 			throw new NotImplementedException();
 		}
 		
-		public void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startVertex, int numVertices) {
+		public void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startVertex, int numVertices) 
+		{
 			throw new NotImplementedException();
 		}
 		
@@ -144,13 +155,15 @@ namespace flash.display3D
 			throw new NotImplementedException();
 		}
 		
-		public int stride { 
+		public int stride 
+		{ 
 			get {
 				throw new NotImplementedException();
 			}
 		}
 		
-		public uint id {
+		public uint id 
+		{
 			get {
 				throw new NotImplementedException();
 			}
