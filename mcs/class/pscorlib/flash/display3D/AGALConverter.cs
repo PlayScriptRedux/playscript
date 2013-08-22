@@ -225,9 +225,7 @@ namespace flash.display3D
 				{
 					// disable
 				case 0:	
-#if PLATFORM_MONODROID
-
-#elif PLATFORM_MONOTOUCH
+#if !PLATFORM_MONODROID
 					state.MinFilter = (f!=0) ? TextureMinFilter.Linear : TextureMinFilter.Nearest;		
 #endif
 					break;

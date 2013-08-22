@@ -43,6 +43,7 @@ namespace flash.display3D {
 	using DepthFunction = OpenTK.Graphics.ES20.All;
 	using TextureTarget = OpenTK.Graphics.ES20.All;
 	using FramebufferAttachment = OpenTK.Graphics.ES20.All;
+	using ActiveUniformType = OpenTK.Graphics.ES20.All;
 #endif
 
 	using System;
@@ -225,12 +226,7 @@ namespace flash.display3D {
 			int count = (numTriangles == -1) ? indexBuffer.numIndices : (numTriangles * 3);
 			GL.BindBuffer(BufferTarget.ElementArrayBuffer, indexBuffer.id);
 
-#if PLATFORM_MONOTOUCH
-			GL.DrawElements(BeginMode.Triangles, count, DrawElementsType.UnsignedInt, firstIndex);
-#elif PLATFORM_MONODROID
-			//GL.DrawArrays(BeginMode.Triangles, firstIndex, count);
 			GL.DrawElements(BeginMode.Triangles, count, DrawElementsType.UnsignedInt, new IntPtr(firstIndex));	
-#endif
 		}
 
  	 	
@@ -486,7 +482,6 @@ namespace flash.display3D {
 				// set uniforms based on type
 				switch (uniform.Type)
 				{
-#if PLATFORM_MONOTOUCH || PLATFORM_MONOMAC
 				case ActiveUniformType.FloatMat2:
 					GL.UniformMatrix2(uniform.Location, uniform.Size, false, mTemp);
 					break;
@@ -496,17 +491,6 @@ namespace flash.display3D {
 				case ActiveUniformType.FloatMat4:
 					GL.UniformMatrix4(uniform.Location, uniform.Size, false, mTemp);
 					break;
-#elif PLATFORM_MONODROID
-				case All.FloatMat2:
-					GL.UniformMatrix2(uniform.Location, uniform.Size, false, mTemp);
-					break;
-				case All.FloatMat3:
-					GL.UniformMatrix3(uniform.Location, uniform.Size, false, mTemp);
-					break;
-				case All.FloatMat4:
-					GL.UniformMatrix4(uniform.Location, uniform.Size, false, mTemp);
-					break;
-#endif
 				default:
 					GL.Uniform4(uniform.Location, uniform.Size, mTemp);
 					break;
@@ -613,37 +597,21 @@ namespace flash.display3D {
 			GL.EnableVertexAttribArray (index);
 			GL.BindBuffer (BufferTarget.ArrayBuffer, buffer.id);
 
-			int byteOffset = (bufferOffset * 4); // buffer offset is in 32-bit words
+			IntPtr byteOffset = new IntPtr(bufferOffset * 4); // buffer offset is in 32-bit words
 
 			// set attribute pointer within vertex buffer
 			switch (format) {
 			case "float4":
-#if PLATFORM_MONOTOUCH || PLATFORM_MONOMAC
 				GL.VertexAttribPointer(index, 4, VertexAttribPointerType.Float, false, buffer.stride, byteOffset);
-#elif PLATFORM_MONODROID
-				GL.VertexAttribPointer(index, 4, VertexAttribPointerType.Float, false, buffer.stride, new IntPtr(byteOffset));
-#endif
 				break;
 			case "float3":
-#if PLATFORM_MONOTOUCH || PLATFORM_MONOMAC
 				GL.VertexAttribPointer(index, 3, VertexAttribPointerType.Float, false, buffer.stride, byteOffset);
-#elif PLATFORM_MONODROID
-				GL.VertexAttribPointer(index, 3, VertexAttribPointerType.Float, false, buffer.stride,  new IntPtr(byteOffset));
-#endif
 				break;
 			case "float2":
-#if PLATFORM_MONOTOUCH || PLATFORM_MONOMAC
 				GL.VertexAttribPointer(index, 2, VertexAttribPointerType.Float, false, buffer.stride, byteOffset);
-#elif PLATFORM_MONODROID
-				GL.VertexAttribPointer(index, 2, VertexAttribPointerType.Float, false, buffer.stride,  new IntPtr(byteOffset));
-#endif
 				break;
 			case "float1":
-#if PLATFORM_MONOTOUCH || PLATFORM_MONOMAC
 				GL.VertexAttribPointer(index, 1, VertexAttribPointerType.Float, false, buffer.stride, byteOffset);
-#elif PLATFORM_MONODROID
-				GL.VertexAttribPointer(index, 1, VertexAttribPointerType.Float, false, buffer.stride,  new IntPtr(byteOffset));
-#endif
 				break;
 			default:
 				throw new NotImplementedException();
@@ -671,21 +639,13 @@ namespace flash.display3D {
 					TextureBase texture = mSamplerTextures[sampler];
 					if (texture != null) {
 						// bind texture 
+						var target = texture.textureTarget;
 
-#if PLATFORM_MONOTOUCH || PLATFORM_MONOMAC
-						GL.BindTexture( texture.textureTarget, texture.textureId);
-#elif PLATFORM_MONODROID
-						GL.BindTexture( (All) texture.textureTarget, texture.textureId );
-#endif
+						GL.BindTexture( target, texture.textureId);
 
 						// get sampler state from program
 						SamplerState state = mProgram.getSamplerState(sampler);
 						if (state != null) {
-#if PLATFORM_MONOTOUCH || PLATFORM_MONOMAC
-							var target = texture.textureTarget;
-#elif PLATFORM_MONODROID
-							All target = (All) texture.textureTarget;
-#endif
 
 							GL.TexParameter (target, TextureParameterName.TextureMinFilter, (int)state.MinFilter);
 							GL.TexParameter (target, TextureParameterName.TextureMagFilter, (int)state.MagFilter);

@@ -18,6 +18,7 @@ using _root;
 
 #if PLATFORM_MONOMAC
 using MonoMac.OpenGL;
+using BufferUsage = MonoMac.OpenGL.BufferUsageHint;
 #elif PLATFORM_MONOTOUCH
 using OpenTK.Graphics.ES20;
 #elif PLATFORM_MONODROID
@@ -48,11 +49,7 @@ namespace flash.display3D
 			mIds = new uint[multiBufferCount];
 			GL.GenBuffers(mIds.Length, mIds);
 
-			#if PLATFORM_MONOMAC
-			mUsage = isDynamic ? BufferUsageHint.DynamicDraw : BufferUsageHint.StaticDraw;
-			#elif PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			mUsage = isDynamic ? BufferUsage.DynamicDraw : BufferUsage.StaticDraw;
-			#endif
 		}
 
 		public void dispose() {
@@ -134,12 +131,7 @@ namespace flash.display3D
 		private float[]				mData;
 		private uint[]		 		mIds;
 		private int 				mBufferIndex;		// buffer index for multibuffering
-
-		#if PLATFORM_MONOMAC
-		private BufferUsageHint     mUsage;
-		#elif PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 		private BufferUsage         mUsage;
-		#endif
 
 #else
 

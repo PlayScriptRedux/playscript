@@ -248,9 +248,7 @@ namespace flash.display3D {
 #if PLATFORM_MONOTOUCH || PLATFORM_MONOMAC
 				uniform.Location = GL.GetUniformLocation (mProgramId, uniform.Name );
 #elif PLATFORM_MONODROID
-				StringBuilder sb = new StringBuilder ();
-				sb.Append (uniform.Name);
-				uniform.Location = GL.GetUniformLocation (mProgramId, sb);
+				uniform.Location = GL.GetUniformLocation (mProgramId, name);
 #endif
 				//
 
