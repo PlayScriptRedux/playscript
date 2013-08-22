@@ -68,11 +68,40 @@ MCS_OPTS		+= /unsafe
 MCS_OPTS		+= /define:DEBUG
 MCS_OPTS		+= /t:exe
 
-ALL_TEST_FILES	:= $(shell find tests -name '*.as')
-BAD_TEST_FILES	:=
-TEST_FILES		:= $(filter-out $(BAD_TEST_FILES),$(ALL_TEST_FILES))
+ALL_AS_TEST_FILES	:= $(shell find tests -name '*.as')
+BAD_AS_TEST_FILES	:= 
+AS_TEST_FILES		:= $(filter-out $(BAD_AS_TEST_FILES),$(ALL_AS_TEST_FILES))
+AS_TEST_FILE_NAMES	:= $(AS_TEST_FILES:%.as=%)
 
-TEST_FILE_NAMES	:= $(TEST_FILES:%.as=%)
+ALL_PS_TEST_FILES	:= $(shell find tests -name '*.play')
+BAD_PS_TEST_FILES	:= tests/test-ps-004.play
+BAD_PS_TEST_FILES	+= tests/test-ps-006.play
+BAD_PS_TEST_FILES	+= tests/test-ps-015.play
+BAD_PS_TEST_FILES	+= tests/test-ps-016.play
+BAD_PS_TEST_FILES	+= tests/test-ps-017.play
+BAD_PS_TEST_FILES	+= tests/test-ps-018.play
+BAD_PS_TEST_FILES	+= tests/test-ps-019.play
+BAD_PS_TEST_FILES	+= tests/test-ps-020.play
+BAD_PS_TEST_FILES	+= tests/test-ps-021.play
+BAD_PS_TEST_FILES	+= tests/test-ps-022.play
+BAD_PS_TEST_FILES	+= tests/test-ps-023.play
+BAD_PS_TEST_FILES	+= tests/test-ps-024.play
+BAD_PS_TEST_FILES	+= tests/test-ps-025.play
+BAD_PS_TEST_FILES	+= tests/test-ps-026.play
+BAD_PS_TEST_FILES	+= tests/test-ps-027.play
+BAD_PS_TEST_FILES	+= tests/test-ps-029.play
+BAD_PS_TEST_FILES	+= tests/test-ps-030.play
+BAD_PS_TEST_FILES	+= tests/test-ps-033.play
+BAD_PS_TEST_FILES	+= tests/test-ps-034.play
+BAD_PS_TEST_FILES	+= tests/test-ps-036.play
+BAD_PS_TEST_FILES	+= tests/test-ps-037.play
+BAD_PS_TEST_FILES	+= tests/test-ps-038.play
+BAD_PS_TEST_FILES	+= tests/test-ps-039.play
+BAD_PS_TEST_FILES	+= tests/test-ps-040.play
+PS_TEST_FILES		:= $(filter-out $(BAD_PS_TEST_FILES),$(ALL_PS_TEST_FILES))
+PS_TEST_FILE_NAMES	:= $(PS_TEST_FILES:%.play=%)
+
+ALL_TEST_FILE_NAMES	:= $(AS_TEST_FILE_NAMES) $(PS_TEST_FILE_NAMES)
 
 .PHONY: test  # build, but don't run, all tests
 test:
@@ -81,27 +110,28 @@ test:
 
 # define_compile_test
 #
-# Define a target to compile an individual .as test file
+# Define a target to compile an individual test file
 #
 # $(1) name of the test
+# $(2) extension (as or play)
 #
 define define_compile_test
 
 test: $(DESTDIR)/$(1).exe
-$(DESTDIR)/$(1).exe: $(1).as $(MCS_LIBS) $(MCS) $(MONO_WRAPPER)
+$(DESTDIR)/$(1).exe: $(1).$(2) $(MCS_LIBS) $(MCS) $(MONO_WRAPPER)
 $(DESTDIR)/$(1).exe: $(MCS_LIB_NAMES:%=$(DESTDIR)/$(dir $(1))%)
 $(DESTDIR)/$(1).exe:
 	@mkdir -p $$(dir $$@)
 	rm -f $$@
 	$(MONO_WRAPPER) $(MCS) \
 $(MCS_OPTS:%=\${\n}		%) \${\n}		/out:$$@ \
-		$(1).as Assert.as Utils.as print.as
+		$(1).$(2) Assert.as Utils.as print.as
 	test -e $$@
 
 endef
 
-$(foreach test,$(TEST_FILE_NAMES),$(eval $(call define_compile_test,$(test))))
-
+$(foreach test,$(AS_TEST_FILE_NAMES),$(eval $(call define_compile_test,$(test),as)))
+$(foreach test,$(PS_TEST_FILE_NAMES),$(eval $(call define_compile_test,$(test),play)))
 
 # define_copy_libs
 #
@@ -117,7 +147,7 @@ $(MCS_LIB_NAMES:%=$(DESTDIR)/$(1)%): $(DESTDIR)/$(1)%: $(PS_LIB)/%
 
 endef
 
-$(foreach folder,$(sort $(dir $(TEST_FILE_NAMES))),$(eval $(call define_copy_libs,$(folder))))
+$(foreach folder,$(sort $(dir $(ALL_TEST_FILE_NAMES))),$(eval $(call define_copy_libs,$(folder))))
 
 # define_run_test
 #
@@ -134,7 +164,7 @@ run-$(1):
 	mono $(DESTDIR)/$(1).exe
 endef
 
-$(foreach test,$(TEST_FILE_NAMES),$(eval $(call define_run_test,$(test))))
+$(foreach test,$(ALL_TEST_FILE_NAMES),$(eval $(call define_run_test,$(test))))
 
 #
 # The 'help' target is designed so any PHONY target listed with an line '#'
