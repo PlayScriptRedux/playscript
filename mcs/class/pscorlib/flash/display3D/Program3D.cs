@@ -37,7 +37,7 @@ namespace flash.display3D {
 
 	public class Program3D {
 
-		public static bool Verbose = true;
+		public static bool Verbose = false;
 		
 
 		
