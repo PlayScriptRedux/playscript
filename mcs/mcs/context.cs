@@ -322,7 +322,9 @@ namespace Mono.CSharp
 
 			PsExtended = 1 << 27,
 
-			PsDynamicDisabled = 1 << 28
+			PsDynamicDisabled = 1 << 28,
+
+			HasNoReturnType = 1 << 29,
 		}
 
 		// utility helper for CheckExpr, UnCheckExpr, Checked and Unchecked statements
@@ -434,6 +436,13 @@ namespace Mono.CSharp
 					flags |= Options.PsDynamicDisabled;
 			}
 
+			//
+			// Handle missing return type
+			//
+			if (memberCore is Method) {
+				if (((Method)memberCore).HasNoReturnType)
+					flags |= Options.HasNoReturnType;
+			}
 		}
 
 		public ResolveContext (IMemberContext mc, Options options)
@@ -527,6 +536,12 @@ namespace Mono.CSharp
 		public bool IsVariableCapturingRequired {
 			get {
 				return !IsInProbingMode && (CurrentBranching == null || !CurrentBranching.CurrentUsageVector.IsUnreachable);
+			}
+		}
+
+		public bool HasNoReturnType {
+			get {
+				return (flags & Options.HasNoReturnType) != 0;
 			}
 		}
 

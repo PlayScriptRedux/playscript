@@ -1661,18 +1661,7 @@ method_header
 		
 		} else {
 
-			if (current_container.Kind == MemberKind.Class && name.ExplicitInterface == null &&
-				(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
-					modifiers |= Modifiers.VIRTUAL;
-
-			var ret_type = $9 as FullNamedExpression;
-			
-			if (ret_type == null) {
-				report.Error (7012, GetLocation($8), "Method must specify a return type.");
-				ret_type = new TypeExpression (compiler.BuiltinTypes.Void, GetLocation ($8));
-			}
-
-			var method = Method.Create (current_type, ret_type, modifiers,
+			var method = AsMethod.Create (current_type, (FullNamedExpression) $9, modifiers,
 					     name, current_local_parameters, (Attributes) $1);
 
 			if ($11 != null)
@@ -1837,8 +1826,8 @@ method_header
 		if (name.ExplicitInterface == null && (modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
 			modifiers |= Modifiers.VIRTUAL;
 			
-		var method = Method.Create (current_type, new TypeExpression (compiler.BuiltinTypes.Void, GetLocation ($12)),
-				     modifiers, name, current_local_parameters, (Attributes) $1);
+		var method = AsMethod.Create (current_type, new TypeExpression (compiler.BuiltinTypes.Void, GetLocation ($12)),
+									  modifiers, name, current_local_parameters, (Attributes) $1);
 
 		if ($14 != null)
 			method.SetConstraints ((List<Constraints>) $14);
@@ -1859,8 +1848,8 @@ method_header
 		report.Error (1585, name.Location, 
 			"Member modifier `{0}' must precede the member type and name", ModifiersExtensions.Name ((Modifiers) $4));
 
-		var method = Method.Create (current_type, (FullNamedExpression) $1,
-					    0, name, (ParametersCompiled) $7, (Attributes) $1);
+		var method = AsMethod.Create (current_type, (FullNamedExpression) $1,
+									  0, name, (ParametersCompiled) $7, (Attributes) $1);
 
 		current_local_parameters = (ParametersCompiled) $7;
 
@@ -1878,8 +1867,8 @@ method_header
 		current_local_parameters = ParametersCompiled.Undefined;
 
 		MemberName name = (MemberName) $4;
-		var method = Method.Create (current_type, new TypeExpression (compiler.BuiltinTypes.Void, GetLocation ($4)), (Modifiers) $2,
-									name, current_local_parameters, (Attributes) $1);
+		var method = AsMethod.Create (current_type, new TypeExpression (compiler.BuiltinTypes.Void, GetLocation ($4)), (Modifiers) $2,
+									  name, current_local_parameters, (Attributes) $1);
 
 		if (doc_support)
 			method.DocComment = Lexer.consume_doc_comment ();
