@@ -35,7 +35,12 @@ package flash.display {
 #elif PLATFORM_MONODROID
 	import Android.Graphics.BitmapFactory;
 	import Android.Graphics.Color;
+	import Android.Graphics.Canvas;
+	import Android.Graphics.Paint;
+	import Android.Graphics.PaintFlags;
 	import Android.App.Application;
+	import Android.Graphics.Typeface;
+	import Android.Graphics.TypefaceStyle;
 	import Java.Nio.ByteBuffer;
 	import Java.IO.ByteArrayOutputStream;
 #endif
@@ -248,7 +253,70 @@ package flash.display {
 				System.Buffer.BlockCopy(data, 0, mData, 0, data.Length);
 			}
 			else
+
+#elif PLATFORM_MONODROID
+
+			if ( source is flash.text.TextField )
+			{
+				var tf:flash.text.TextField = source as flash.text.TextField;
+				var format:flash.text.TextFormat = tf.defaultTextFormat;
+
+				// $$TODO figure out how to get rid of this extra data copy
+				var data = new byte[width * height * 4];
+				System.Buffer.BlockCopy(mData, 0, data, 0, data.Length);
+
+				//var bitmap:Android.Graphics.Bitmap = BitmapFactory.DecodeByteArray(data, 0, data.Length);
+				//var canvas:Canvas = new Canvas(bitmap);
+				var config:Android.Graphics.Bitmap.Config = Android.Graphics.Bitmap.Config.Argb8888;
+				var bitmap:Android.Graphics.Bitmap = Android.Graphics.Bitmap.CreateBitmap(width, height, config);
+
+				var canvas:Canvas = new Canvas(bitmap);
+				var x:Number = matrix.tx;
+				var y:Number = matrix.ty;
+
+				// align text
+				switch (format.align)
+				{
+					case TextFormatAlign.LEFT:
+					// no adjustment required
+					break;
+					case TextFormatAlign.CENTER:
+					// center x
+					x += width / 2;
+					x -= tf.textWidth / 2;
+					break;
+					case TextFormatAlign.RIGHT:
+					// right justify x
+					x += width;
+					x -= tf.textWidth;
+					break;
+					default:
+					throw new System.NotImplementedException();
+				}
+
+				var paint:Paint = new Paint(PaintFlags.AntiAlias);
+				paint.Color = Color.Black;
+				paint.TextSize = float(Number(format.size));
+
+				var typeface = Typeface.Create(format.font, TypefaceStyle.Normal);
+				paint.SetTypeface(typeface);
+
+				canvas.DrawText(tf.text, float(x), float(y), paint);
+
+				mData = new uint[ bitmap.Width * bitmap.Height ];
+				var buffer = new int[ bitmap.Width * bitmap.Height ];
+				bitmap.GetPixels(buffer, 0, width, 0, 0, width, height);			
+
+				for (var i:int = 0; i < buffer.Length; i++)
+				{
+
+					mData[i] = uint(buffer[i]);
+				}
+			}
+
+			else
 #endif
+
 			{
 				trace("NotImplementedWarning: BitmapData.draw()");
 			}
@@ -420,24 +488,46 @@ package flash.display {
 		{
 #if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH 
 
-			// get NSData from byte array
-			var nsData:NSData = NSData.FromStream(byteArray.getRawStream());
+				// get NSData from byte array
+				var nsData:NSData = NSData.FromStream(byteArray.getRawStream());
 
-#if PLATFORM_MONOMAC		
-			// create NSImage from NSData
-			var src:NSImage = new NSImage(nsData);
-			var rect:System.Drawing.RectangleF = System.Drawing.RectangleF.Empty;
-			var image:CGImage = src.AsCGImage (ref rect, null, null);
-			var bd:BitmapData = BitmapData.loadFromCGImage(image);
-			src.Dispose();
-			return bd;
-#else
-			// create CGImage from NSData
-			var image:CGImage = (new UIImage(nsData)).CGImage;
-			var bd:BitmapData = BitmapData.loadFromCGImage(image);
-			return bd;
-#endif
+	#if PLATFORM_MONOMAC		
+				// create NSImage from NSData
+				var src:NSImage = new NSImage(nsData);
+				var rect:System.Drawing.RectangleF = System.Drawing.RectangleF.Empty;
+				var image:CGImage = src.AsCGImage (ref rect, null, null);
+				var bd:BitmapData = BitmapData.loadFromCGImage(image);
+				src.Dispose();
+				return bd;
+	#elif PLATFORM_MONOTOUCH
+				// create CGImage from NSData
+				var image:CGImage = (new UIImage(nsData)).CGImage;
+				var bd:BitmapData = BitmapData.loadFromCGImage(image);
+				return bd;
+	#endif
 
+#elif PLATFORM_MONODROID
+			var bitmap:Android.Graphics.Bitmap = BitmapFactory.DecodeByteArray(byteArray.getRawArray(), 0, byteArray.length);
+			var buffer = new int[ bitmap.Width * bitmap.Height ];
+			bitmap.GetPixels(buffer, 0, bitmap.Width, 0, 0, bitmap.Width, bitmap.Height);
+
+			// allocate new bitmap data and copy into it
+			var width:int = bitmap.Width;
+			var height:int = bitmap.Height;
+			var data = new uint[ bitmap.Width * bitmap.Height ];
+			for ( var i:int = 0; i < buffer.Length; i++ )
+			{
+				var alpha:int = Color.GetAlphaComponent( buffer[i] );
+				var red:int = Color.GetRedComponent( buffer[i] );
+				var green:int = Color.GetGreenComponent( buffer[i] );
+				var blue:int = Color.GetBlueComponent( buffer[i] );
+
+				data[i] = (alpha << 24) + (blue << 16) + (green << 8) + red;
+			}
+
+			var bd:BitmapData = new flash.display.BitmapData(width, height, true);
+			bd.mData = data;
+			return bd;
 #else
 			throw new System.NotImplementedException();
 #endif
@@ -462,28 +552,12 @@ package flash.display {
 			var image:CGImage = (new UIImage(fullpath)).CGImage;
 			bd = BitmapData.loadFromCGImage(image);
 #elif PLATFORM_MONODROID
-			var stream:Stream = Application.Context.Assets.Open(path);
-			var bitmap:Android.Graphics.Bitmap = BitmapFactory.DecodeStream(stream);
+			var stream:Stream = Application.Context.Assets.Open(fullpath);
+			var memStream:MemoryStream = new MemoryStream();
+			stream.CopyTo(memStream);
+			var data:byte[] = memStream.ToArray();
 
-			var buffer = new int[ bitmap.Width * bitmap.Height ];
-			bitmap.GetPixels(buffer, 0, bitmap.Width, 0, 0, bitmap.Height, bitmap.Width);
-
-			// allocate new bitmap data and copy into it
-            var width:int = bitmap.Width;
-			var height:int = bitmap.Height;
-			var data = new uint[ bitmap.Width * bitmap.Height ];
-			for ( var i:int = 0; i < buffer.Length; i++ )
-			{
-				var alpha:int = Color.GetAlphaComponent( buffer[i] );
-				var red:int = Color.GetRedComponent( buffer[i] );
-				var green:int = Color.GetGreenComponent( buffer[i] );
-				var blue:int = Color.GetBlueComponent( buffer[i] );
-
-				data[i] = (alpha << 24) + (blue << 16) + (green << 8) + red;
-			}
-
-			bd = new flash.display.BitmapData(width, height, true);
-			bd.mData = data;
+			bd = BitmapData.loadFromByteArray( ByteArray.fromArray(data) );
 #else
 			throw new System.NotImplementedException();
 #endif

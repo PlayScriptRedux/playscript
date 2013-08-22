@@ -257,10 +257,6 @@ namespace PlayScript
 
 		public static string TryResolveResourcePath(string path)
 		{
-#if PLATFORM_MONODROID
-			string[] assetLists = Application.Context.Assets.List ("");
-			return assetLists.Any (path.Equals) ? path : null;		
-#else
 			if (File.Exists(path))
 			{ 
 				// found file at this location
@@ -277,6 +273,18 @@ namespace PlayScript
 					break;
 				}
 			}
+
+#if PLATFORM_MONODROID
+			try {
+				Application.Context.Assets.Open(path);
+			} catch (IOException e)
+			{
+				Console.WriteLine("File does not exists for " + path + " " + e.Message);
+				return null;
+			}
+
+			return path;
+#else
 
 			// try all resource directories 
 			foreach (var dir in sResourceDirectories)
