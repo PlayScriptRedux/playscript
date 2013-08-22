@@ -1,5 +1,7 @@
 package
 {
+	import com.adobe.test.Assert;
+
 	public class conversions
 	{
 		static function NumberToInt():int
@@ -8,18 +10,15 @@ package
 			var i:int;
 			
 			i = d;
-			if (i != 4)
-				return 1;
+			Assert.expectEq("i == 4", true, i == 4);
 
 			d = uint.MaxValue;
 			i = d;
-			if (i != -1)
-				return 2;
+			Assert.expectEq("i == -1", true, i == -1);
 
 			d = int.MinValue;
 			i = d;
-			if (i != -2147483648)
-				return 3;
+			Assert.expectEq("i == -2147483648", true, i == -2147483648);
 
 			d = NaN;
 			i = d;
@@ -34,13 +33,11 @@ package
 		{
 			var i:int = -1;
 			var u:uint = i;
-			if (u != 4294967295)
-				return 1;
-				
+			Assert.expectEq("u == 4294967295", true, u == 4294967295);
+			
 			i = u - 1;
-			if (i != -2)
-				return 2;
-
+			Assert.expectEq("i == -2", true, i == -2);
+			
 			return 0;
 		}
 	
@@ -48,13 +45,11 @@ package
 		{
 			var res:int;
 			res = IntToUInt ();
-			if (res != 0)
-				return res + 10;
-				
+			Assert.expectEq("res == 0", true, res == 0);
+			
 			res = NumberToInt ();
-			if (res != 0)
-				return res + 20;
-				
+			Assert.expectEq("res == 0", true, res == 0);
+			
 			return 0;
 		}
 	}
