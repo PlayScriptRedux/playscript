@@ -88,7 +88,11 @@ namespace flash.display3D {
 
 		// this is the default sampler state
 		public static readonly SamplerState DefaultSamplerState = new SamplerState(
+#if PLATFORM_MONODROID
+												(TextureMinFilter)All.Linear, 
+#else
 												TextureMinFilter.Linear, 
+#endif
 												TextureMagFilter.Linear,
 												TextureWrapMode.Repeat,
 												TextureWrapMode.Repeat).Intern();

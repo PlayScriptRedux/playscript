@@ -23,6 +23,7 @@ namespace flash.display3D.textures {
 	#elif PLATFORM_MONODROID
 	using OpenTK.Graphics.ES20;
 	using TextureTarget = OpenTK.Graphics.ES20.All;
+	using TextureParameterName = OpenTK.Graphics.ES20.All;
 	#endif
 
 	public abstract class TextureBase : EventDispatcher {
