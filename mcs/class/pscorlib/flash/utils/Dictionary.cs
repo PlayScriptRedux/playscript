@@ -131,26 +131,48 @@ namespace flash.utils
 		#endregion
 
 		#region DebugView
-		[DebuggerDisplay("{value}", Name = "{key}")]
+		[DebuggerDisplay("{value}", Name = "{key}", Type = "{ValueTypeName}")]
 		internal class KeyValuePairDebugView
 		{
-			public object key   {get; set;}
-			public object value {get; set;}
-			
-			public KeyValuePairDebugView(object key, object value)
+			public object key   {get { return _key; }}
+			public object value 
 			{
-				this.value = value;
-				this.key = key;
+				get { return _dict[_key];}
+				set { _dict[_key] = value;}
 			}
+
+			public KeyValuePairDebugView(Dictionary expando, object key)
+			{
+				_dict = expando;
+				_key = key;
+			}
+
+			[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+			public string ValueTypeName
+			{
+				get {
+					var v = value;
+					if (v != null) {
+						return v.GetType().Name;
+					} else {
+						return "";
+					}
+				}
+			}
+
+			[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+			private readonly Dictionary    _dict;
+			[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+			private readonly object        _key;
 		}
 		
 		internal class DictionaryDebugView
 		{
-			private Dictionary dict;
+			private Dictionary _dict;
 			
-			public DictionaryDebugView(Dictionary expando)
+			public DictionaryDebugView(Dictionary dict)
 			{
-				this.dict = expando;
+				_dict = dict;
 			}
 			
 			[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
@@ -158,12 +180,12 @@ namespace flash.utils
 			{
 				get
 				{
-					var keys = new KeyValuePairDebugView[dict.Count];
+					var keys = new KeyValuePairDebugView[_dict.Count];
 					
 					int i = 0;
-					foreach(Object key in dict.Keys)
+					foreach(Object key in _dict.Keys)
 					{
-						keys[i] = new KeyValuePairDebugView(key, dict[key]);
+						keys[i] = new KeyValuePairDebugView(_dict, key);
 						i++;
 					}
 					return keys;

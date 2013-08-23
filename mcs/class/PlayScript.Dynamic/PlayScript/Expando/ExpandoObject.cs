@@ -2641,17 +2641,39 @@ namespace PlayScript.Expando {
 			}
 		}
 
-		[DebuggerDisplay("{value}", Name = "{key}")]
+		[DebuggerDisplay("{value}", Name = "{key}", Type = "{ValueTypeName}")]
 		internal class KeyValuePairDebugView
 		{
-			public object key   {get; set;}
-			public object value {get; set;}
-			
-			public KeyValuePairDebugView(object key, object value)
+			public string key   {get { return _key; }}
+			public object value 
 			{
-				this.value = value;
-				this.key = key;
+				get { return _expando[_key];}
+				set { _expando[_key] = value;}
 			}
+			
+			public KeyValuePairDebugView(ExpandoObject expando, string key)
+			{
+				_expando = expando;
+				_key = key;
+			}
+
+			[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+			public string ValueTypeName
+			{
+				get {
+					var v = value;
+					if (v != null) {
+						return v.GetType().Name;
+					} else {
+						return "";
+					}
+				}
+			}
+
+			[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+			private readonly ExpandoObject _expando;
+			[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+			private readonly string        _key;
 		}
 
 		internal class ExpandoDebugView
@@ -2673,7 +2695,7 @@ namespace PlayScript.Expando {
 					int i = 0;
 					foreach(string key in expando.Keys)
 					{
-						keys[i] = new KeyValuePairDebugView(key, (object)expando[key]);
+						keys[i] = new KeyValuePairDebugView(expando, key);
 						i++;
 					}
 					return keys;
