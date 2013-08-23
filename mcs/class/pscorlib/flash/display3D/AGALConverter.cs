@@ -734,6 +734,8 @@ namespace flash.display3D
 					break;
 
 				case 0x27: // kill /  discard
+					// ensure we have a full source mask since there is no destination register
+					sr1.sourceMask = 0xF;
 					sb.AppendFormat("if (any(lessThan({0}, vec4(0)))) discard;", sr1.ToGLSL() ); 
 					map.Add(sr1, RegisterUsage.Vector4);
 					break;
