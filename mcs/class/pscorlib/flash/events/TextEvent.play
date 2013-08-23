@@ -21,6 +21,10 @@ package flash.events {
 		//
 		
 		public static const ERROR : String = "error";
+
+		public static const LINK : String = "link";
+		public static const TEXT_INPUT : String = "text_input";
+
 	
 		//
 		// Properties
