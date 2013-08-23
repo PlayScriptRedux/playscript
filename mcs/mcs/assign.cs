@@ -508,7 +508,7 @@ namespace Mono.CSharp {
 
 		protected override Expression ResolveConversions (ResolveContext ec)
 		{
-			source = EmptyCast.Create (source, target.Type);
+			source = EmptyCast.Create (source, target.Type, ec);
 			return this;
 		}
 	}

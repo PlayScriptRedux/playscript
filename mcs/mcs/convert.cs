@@ -185,7 +185,7 @@ namespace Mono.CSharp {
 				if (!explicit_cast)
 					return expr;
 
-				return EmptyCast.Create (expr, target_type);
+				return EmptyCast.Create (expr, target_type, opt_ec);
 			}
 
 			return null;
@@ -401,7 +401,7 @@ namespace Mono.CSharp {
 				} else {
 					// PlayScript: Call the "Boolean()" static method to convert a dynamic to a bool.  EXPENSIVE, but hey..
 					Arguments args = new Arguments (1);
-					args.Add (new Argument(EmptyCast.Create(expr, opt_ec.BuiltinTypes.Object)));
+					args.Add (new Argument(EmptyCast.Create(expr, opt_ec.BuiltinTypes.Object, opt_ec)));
 					//				opt_ec.Report.Warning (7164, 1, expr.Location, "Expensive reference conversion to bool");
 					return new Invocation(new MemberAccess(new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, 
 					                                                                       expr.Location), "Boolean_fn", expr.Location), "Boolean", expr.Location), args).Resolve (opt_ec);
@@ -417,7 +417,7 @@ namespace Mono.CSharp {
 
 				// PlayScript: Call the "CastToString()" static method to convert a dynamic to a string.  EXPENSIVE, but hey..
 				Arguments args = new Arguments (1);
-				args.Add (new Argument(EmptyCast.Create(expr, opt_ec.BuiltinTypes.Object)));
+				args.Add (new Argument(EmptyCast.Create(expr, opt_ec.BuiltinTypes.Object, opt_ec)));
 				//				opt_ec.Report.Warning (7164, 1, expr.Location, "Expensive reference conversion to bool");
 				return new Invocation(new MemberAccess(new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, 
 				                                                                       expr.Location), "String_fn", expr.Location), "CastToString", expr.Location), args).Resolve (opt_ec);
@@ -617,7 +617,7 @@ namespace Mono.CSharp {
 				case BuiltinTypeSpec.Type.UInt:
 				case BuiltinTypeSpec.Type.Short:
 				case BuiltinTypeSpec.Type.UShort:
-					return expr == null ? EmptyExpression.Null : EmptyCast.Create (expr, target_type);
+					return expr == null ? EmptyExpression.Null : EmptyCast.Create (expr, target_type, opt_ec);
 				case BuiltinTypeSpec.Type.ULong:
 					return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U8);
 				case BuiltinTypeSpec.Type.Long:
@@ -640,7 +640,7 @@ namespace Mono.CSharp {
 				//
 				switch (target_type.BuiltinType) {
 				case BuiltinTypeSpec.Type.Int:
-					return expr == null ? EmptyExpression.Null : EmptyCast.Create (expr, target_type);
+					return expr == null ? EmptyExpression.Null : EmptyCast.Create (expr, target_type, opt_ec);
 				case BuiltinTypeSpec.Type.Long:
 					return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_I8);
 				case BuiltinTypeSpec.Type.Double:
@@ -662,7 +662,7 @@ namespace Mono.CSharp {
 				switch (target_type.BuiltinType) {
 				case BuiltinTypeSpec.Type.Int:
 				case BuiltinTypeSpec.Type.UInt:
-					return expr == null ? EmptyExpression.Null : EmptyCast.Create (expr, target_type);
+					return expr == null ? EmptyExpression.Null : EmptyCast.Create (expr, target_type, opt_ec);
 				case BuiltinTypeSpec.Type.ULong:
 					return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U8);
 				case BuiltinTypeSpec.Type.Long:
@@ -797,7 +797,7 @@ namespace Mono.CSharp {
 				case BuiltinTypeSpec.Type.UShort:
 				case BuiltinTypeSpec.Type.Int:
 				case BuiltinTypeSpec.Type.UInt:
-					return expr == null ? EmptyExpression.Null : EmptyCast.Create (expr, target_type);
+					return expr == null ? EmptyExpression.Null : EmptyCast.Create (expr, target_type, opt_ec);
 				case BuiltinTypeSpec.Type.ULong:
 					return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U8);
 				case BuiltinTypeSpec.Type.Long:
@@ -1599,7 +1599,7 @@ namespace Mono.CSharp {
 				    ec.Target != Target.JavaScript) {
 
 					var cast_args = new Arguments(1);
-					cast_args.Add (new Argument(EmptyCast.Create(expr, ec.BuiltinTypes.Object)));
+					cast_args.Add (new Argument(EmptyCast.Create(expr, ec.BuiltinTypes.Object, ec)));
 
 //					ec.Report.Warning (7164, 1, expr.Location, "Expensive reference conversion to bool");
 
@@ -1612,7 +1612,7 @@ namespace Mono.CSharp {
 				case MemberKind.ArrayType:
 				case MemberKind.Class:
 					if (target_type.BuiltinType == BuiltinTypeSpec.Type.Object)
-						return EmptyCast.Create (expr, target_type);
+						return EmptyCast.Create (expr, target_type, ec);
 
 					goto case MemberKind.Struct;
 				case MemberKind.Struct:
@@ -1689,7 +1689,7 @@ namespace Mono.CSharp {
 							return expr;
 
 						if (target_pc.Element.Kind == MemberKind.Void)
-							return EmptyCast.Create (expr, target_type);
+							return EmptyCast.Create (expr, target_type, ec);
 
 						//return null;
 					}
@@ -1721,7 +1721,7 @@ namespace Mono.CSharp {
 			// dynamic erasure conversion on value types
 			//
 			if (expr_type.IsStruct && TypeSpecComparer.IsEqual (expr_type, target_type))
-				return expr_type == target_type ? expr : EmptyCast.Create (expr, target_type);
+				return expr_type == target_type ? expr : EmptyCast.Create (expr, target_type, ec);
 
 			return null;
 		}
@@ -2016,7 +2016,7 @@ namespace Mono.CSharp {
 
 				// One of the built-in conversions that belonged in the class library
 				case BuiltinTypeSpec.Type.IntPtr:
-					return new OperatorCast (EmptyCast.Create (expr, rc.BuiltinTypes.Long), target_type, true);
+					return new OperatorCast (EmptyCast.Create (expr, rc.BuiltinTypes.Long, rc), target_type, true);
 
 				// PlayScript explicit casts..
 				case BuiltinTypeSpec.Type.Bool:
@@ -2128,18 +2128,18 @@ namespace Mono.CSharp {
 				case BuiltinTypeSpec.Type.Short:
 					return new ConvCast (new OperatorCast (expr, expr.Type, rc.BuiltinTypes.UInt, true), target_type, ConvCast.Mode.U4_I2);
 				case BuiltinTypeSpec.Type.Int:
-					return EmptyCast.Create (new OperatorCast (expr, expr.Type, rc.BuiltinTypes.UInt, true), target_type);
+					return EmptyCast.Create (new OperatorCast (expr, expr.Type, rc.BuiltinTypes.UInt, true), target_type, rc);
 				case BuiltinTypeSpec.Type.UInt:
 					return new OperatorCast (expr, expr.Type, target_type, true);
 				case BuiltinTypeSpec.Type.Long:
-					return EmptyCast.Create (new OperatorCast (expr, expr.Type, rc.BuiltinTypes.ULong, true), target_type);
+					return EmptyCast.Create (new OperatorCast (expr, expr.Type, rc.BuiltinTypes.ULong, true), target_type, rc);
 				}
 				break;
 			case BuiltinTypeSpec.Type.IntPtr:
 				if (target_type.BuiltinType == BuiltinTypeSpec.Type.UInt)
-					return EmptyCast.Create (new OperatorCast (expr, expr.Type, rc.BuiltinTypes.Int, true), target_type);
+					return EmptyCast.Create (new OperatorCast (expr, expr.Type, rc.BuiltinTypes.Int, true), target_type, rc);
 				if (target_type.BuiltinType == BuiltinTypeSpec.Type.ULong)
-					return EmptyCast.Create (new OperatorCast (expr, expr.Type, rc.BuiltinTypes.Long, true), target_type);
+					return EmptyCast.Create (new OperatorCast (expr, expr.Type, rc.BuiltinTypes.Long, true), target_type, rc);
 				
 				break;
 			case BuiltinTypeSpec.Type.Decimal:
@@ -2379,7 +2379,7 @@ namespace Mono.CSharp {
 
 			if (expr_type.IsEnum) {
 				TypeSpec real_target = target_type.IsEnum ? EnumSpec.GetUnderlyingType (target_type) : target_type;
-				Expression underlying = EmptyCast.Create (expr, EnumSpec.GetUnderlyingType (expr_type));
+				Expression underlying = EmptyCast.Create (expr, EnumSpec.GetUnderlyingType (expr_type), ec);
 				if (underlying.Type == real_target)
 					ne = underlying;
 
@@ -2395,7 +2395,7 @@ namespace Mono.CSharp {
 				if (ne == null && (real_target.BuiltinType == BuiltinTypeSpec.Type.IntPtr || real_target.BuiltinType == BuiltinTypeSpec.Type.UIntPtr))
 					ne = ExplicitUserConversion (ec, underlying, real_target, loc);
 
-				return ne != null ? EmptyCast.Create (ne, target_type) : null;
+				return ne != null ? EmptyCast.Create (ne, target_type, ec) : null;
 			}
 
 			if (target_type.IsEnum) {
@@ -2408,7 +2408,7 @@ namespace Mono.CSharp {
 				TypeSpec real_target = target_type.IsEnum ? EnumSpec.GetUnderlyingType (target_type) : target_type;
 
 				if (expr_type == real_target)
-					return EmptyCast.Create (expr, target_type);
+					return EmptyCast.Create (expr, target_type, ec);
 
 				Constant c = expr as Constant;
 				if (c != null) {
@@ -2418,11 +2418,11 @@ namespace Mono.CSharp {
 				} else {
 					ne = ImplicitNumericConversion (expr, real_target, ec);
 					if (ne != null)
-						return EmptyCast.Create (ne, target_type);
+						return EmptyCast.Create (ne, target_type, ec);
 
 					ne = ExplicitNumericConversion (ec, expr, real_target);
 					if (ne != null)
-						return EmptyCast.Create (ne, target_type);
+						return EmptyCast.Create (ne, target_type, ec);
 
 					//
 					// LAMESPEC: IntPtr and UIntPtr conversion to any Enum is allowed
@@ -2451,7 +2451,7 @@ namespace Mono.CSharp {
 			}
 
 			if (ec.IsUnsafe){
-				ne = ExplicitUnsafe (expr, target_type);
+				ne = ExplicitUnsafe (expr, target_type, ec);
 				if (ne != null)
 					return ne;
 			}
@@ -2459,13 +2459,13 @@ namespace Mono.CSharp {
 			return null;
 		}
 
-		public static Expression ExplicitUnsafe (Expression expr, TypeSpec target_type)
+		public static Expression ExplicitUnsafe (Expression expr, TypeSpec target_type, ResolveContext rc)
 		{
 			TypeSpec expr_type = expr.Type;
 
 			if (target_type.IsPointer){
 				if (expr_type.IsPointer)
-					return EmptyCast.Create (expr, target_type);
+					return EmptyCast.Create (expr, target_type, rc);
 
 				switch (expr_type.BuiltinType) {
 				case BuiltinTypeSpec.Type.SByte:
@@ -2532,7 +2532,7 @@ namespace Mono.CSharp {
 				return ne;
 
 			if (ec.IsUnsafe && expr.Type.IsPointer && target_type.IsPointer && ((PointerContainer)expr.Type).Element.Kind == MemberKind.Void)
-				return EmptyCast.Create (expr, target_type);
+				return EmptyCast.Create (expr, target_type, ec);
 
 			expr.Error_ValueCannotBeConverted (ec, target_type, true);
 			return null;
@@ -2590,7 +2590,7 @@ namespace Mono.CSharp {
 				e = Nullable.Unwrap.Create (expr, false);			
 				e = ExplicitConversionCore (ec, e, target_type, loc);
 				if (e != null)
-					return EmptyCast.Create (e, target_type);
+					return EmptyCast.Create (e, target_type, ec);
 			}
 			
 			e = ExplicitUserConversion (ec, expr, target_type, loc);

@@ -225,10 +225,10 @@ namespace Mono.CSharp
 		//
 		// C# 4.0
 		//
-		private readonly PredefinedType Binder;
+		public readonly PredefinedType Binder;
 		public readonly PredefinedType CallSite;
 		public readonly PredefinedType CallSiteGeneric;
-		private readonly PredefinedType BinderFlags;
+		public readonly PredefinedType BinderFlags;
 
 		//
 		// C# 5.0

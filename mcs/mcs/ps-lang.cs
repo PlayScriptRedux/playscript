@@ -52,7 +52,7 @@ namespace Mono.CSharp
 	public partial class AsObjectInitializer : Expression
 	{
 		List<Expression> elements;
-		BlockVariableDeclaration variable;
+		BlockVariable variable;
 		Assign assign;
 
 		public AsObjectInitializer (List<Expression> init, Location loc)
@@ -89,7 +89,7 @@ namespace Mono.CSharp
 			}
 		}
 
-		public BlockVariableDeclaration VariableDeclaration {
+		public BlockVariable VariableDeclaration {
 			get {
 				return variable;
 			}
@@ -1053,9 +1053,9 @@ namespace Mono.CSharp
 		
 		public string Name;
 		public AnonymousMethodExpression MethodExpr;
-		public BlockVariableDeclaration VarDecl;
+		public BlockVariable VarDecl;
 
-		public AsLocalFunction (Location loc, string name, AnonymousMethodExpression methodExpr, BlockVariableDeclaration varDecl)
+		public AsLocalFunction (Location loc, string name, AnonymousMethodExpression methodExpr, BlockVariable varDecl)
 		{
 			this.loc = loc;
 			this.Name = name;
@@ -1074,7 +1074,7 @@ namespace Mono.CSharp
 
 			target.Name = Name;
 			target.MethodExpr = MethodExpr.Clone (clonectx) as AnonymousMethodExpression;
-			target.VarDecl = VarDecl.Clone (clonectx) as BlockVariableDeclaration;
+			target.VarDecl = VarDecl.Clone (clonectx) as BlockVariable;
 		}
 
 		protected override void DoEmit (EmitContext ec)

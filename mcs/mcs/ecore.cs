@@ -1398,7 +1398,7 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public static Expression Create (Expression child, TypeSpec type)
+		public static Expression Create (Expression child, TypeSpec type, ResolveContext opt_ec)
 		{
 			Constant c = child as Constant;
 			if (c != null) {
@@ -1410,7 +1410,7 @@ namespace Mono.CSharp {
 					if (c.Type == type)
 						return c;
 
-					var res = c.ConvertImplicitly (type);
+					var res = c.ConvertImplicitly (type, opt_ec, false);
 					if (res != null)
 						return res;
 				}
@@ -1430,7 +1430,7 @@ namespace Mono.CSharp {
 					// dont really like this, but sometimes its needed
 					return new BoxedCast(child, rc.BuiltinTypes.Object);
 				} else {
-					return EmptyCast.Create(child, rc.BuiltinTypes.Object);
+					return EmptyCast.Create(child, rc.BuiltinTypes.Object, rc);
 				}
 			}
 			return child;
@@ -2903,7 +2903,7 @@ namespace Mono.CSharp {
 						var paramBlock = rc.CurrentBlock.ParametersBlock;
 						var li = new LocalVariable (paramBlock, "arguments", paramBlock.loc);
 						li.Type = rc.Module.PredefinedTypes.AsArray.Resolve();
-						var decl = new BlockVariableDeclaration(new Mono.CSharp.TypeExpression(rc.Module.PredefinedTypes.AsArray.Resolve(), paramBlock.loc), li);
+						var decl = new BlockVariable(new Mono.CSharp.TypeExpression(rc.Module.PredefinedTypes.AsArray.Resolve(), paramBlock.loc), li);
 						if (rc.PsExtended) { // PlayScript uses a normal array for 'arguments'
 							var initializers = new List<Expression>();
 							foreach (Parameter param in paramBlock.Parameters.FixedParameters) {

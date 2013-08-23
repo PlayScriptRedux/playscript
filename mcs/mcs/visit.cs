@@ -162,7 +162,7 @@ namespace Mono.CSharp
 			return null;
 		}
 		
-		public virtual object Visit (BlockVariable blockVariableDeclaration)
+		public virtual object Visit (BlockVariable blockVariable)
 		{
 			return null;
 		}

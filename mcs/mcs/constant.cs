@@ -91,7 +91,7 @@ namespace Mono.CSharp {
 			if (this.type == type)
 				return this;
 
-			if (!Convert.ImplicitNumericConversionExists (this.type, opt_ec, upconvert_only)) 
+			if (!Convert.ImplicitNumericConversionExists (this.type, type, opt_ec, upconvert_only)) 
 				return null;
 
 			bool fail;			

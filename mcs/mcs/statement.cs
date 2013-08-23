@@ -1790,7 +1790,7 @@ namespace Mono.CSharp {
 		}
 	}
 
-	public class BlockVariable : Statement
+	public partial class BlockVariable : Statement
 	{
 		Expression initializer;
 		protected FullNamedExpression type_expr;
@@ -1928,7 +1928,7 @@ namespace Mono.CSharp {
 
 		private static TypeSpec ResolveVariableType(LocalVariable li, Expression type_expr, 
 		                                     Expression initializer, out Expression resolvedInitializer, 
-		                                     List<Declarator> declarators, Location loc, BlockContext bc) 
+		                                     List<BlockVariableDeclarator> declarators, Location loc, BlockContext bc) 
 		{
 			TypeSpec type = null;
 
@@ -3505,7 +3505,7 @@ namespace Mono.CSharp {
 				if (param != null && (param.ParameterModifier & Parameter.Modifier.PARAMS) != 0) {
 					string argName = param.Name.Substring (2); // Arg should start with "__" (we added it in the parser).
 					var li = new LocalVariable (this, argName, this.loc);
-					var decl = new BlockVariableDeclaration (new Mono.CSharp.TypeExpression(rc.Module.PredefinedTypes.AsArray.Resolve(), this.loc), li);
+					var decl = new BlockVariable (new Mono.CSharp.TypeExpression(rc.Module.PredefinedTypes.AsArray.Resolve(), this.loc), li);
 					var arguments = new Arguments (1);
 					arguments.Add (new Argument(new SimpleName(param.Name, this.loc)));
 					decl.Initializer = new Invocation (new MemberAccess(new MemberAccess(new SimpleName("PlayScript", this.loc), "Support", this.loc), "CreateArgListArray", this.loc), arguments);
@@ -7310,7 +7310,7 @@ namespace Mono.CSharp {
 				} else {
 					if (is_dynamic) {
 						// Explicit cast of dynamic collection elements has to be done at runtime
-						current_pe = EmptyCast.Create (current_pe, ec.BuiltinTypes.Dynamic);
+						current_pe = EmptyCast.Create (current_pe, ec.BuiltinTypes.Dynamic, ec);
 					}
 
 					variable.Type = for_each.type.ResolveAsType (ec);

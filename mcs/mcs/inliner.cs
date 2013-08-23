@@ -82,7 +82,7 @@ namespace Mono.CSharp
 				return null;
 			}
 
-			public override object Visit (Mono.CSharp.BlockVariableDeclaration s) 
+			public override object Visit (Mono.CSharp.BlockVariable s) 
 			{
 				statements++;
 				return null;
