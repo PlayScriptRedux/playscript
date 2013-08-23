@@ -37,6 +37,8 @@ namespace flash.display3D {
 
 	public class Program3D {
 
+		public const int MaxUniforms = 512;
+
 		public static bool Verbose = false;
 		
 
@@ -81,13 +83,17 @@ namespace flash.display3D {
 		public void upload(ByteArray vertexProgram, ByteArray fragmentProgram) {
 
 			// create array to hold sampler states
-			var samplerStates = new SamplerState[16];
+			var samplerStates = new SamplerState[Context3D.MaxSamplers];
 
 			// convert shaders from AGAL to GLSL
 			var glslVertex = AGALConverter.ConvertToGLSL(vertexProgram, null);
 			var glslFragment = AGALConverter.ConvertToGLSL(fragmentProgram, samplerStates);
 			// upload as GLSL
-			uploadFromGLSL(glslVertex, glslFragment, samplerStates);
+			uploadFromGLSL(glslVertex, glslFragment);
+			// set sampler states from agal
+			for (int i=0; i < samplerStates.Length; i++) {
+				setSamplerState(i, samplerStates[i]);
+			}
 		}
 
 		private string loadShaderSource (string filePath)
@@ -106,7 +112,7 @@ namespace flash.display3D {
 			uploadFromGLSL(vertexShaderSource, fragmentShaderSource);
 		}
 
-		public void uploadFromGLSL (string vertexShaderSource, string fragmentShaderSource, SamplerState[] samplerStates = null)
+		public void uploadFromGLSL (string vertexShaderSource, string fragmentShaderSource)
 		{
 			// delete existing shaders
 			deleteShaders ();
@@ -159,7 +165,7 @@ namespace flash.display3D {
 			GL.AttachShader (mProgramId, mFragmentShaderId);
 
 			// bind all attribute locations
-			for (int i=0; i < 16; i++) {
+			for (int i=0; i < Context3D.MaxAttributes; i++) {
 				var name = "va" + i;
 				if (vertexShaderSource.Contains(" " + name)) {
 					GL.BindAttribLocation (mProgramId, i, name);
@@ -176,13 +182,6 @@ namespace flash.display3D {
 
 			// build uniform list
 			buildUniformList();
-
-			// process sampler states
-			for (int i=0; i < mSamplerStates.Length; i++) {
-				// copy over sampler state from provided array
-				mSamplerStates[i] = (samplerStates!=null) ? samplerStates[i] : null;
-			}
-
 		}
 
 
@@ -230,8 +229,8 @@ namespace flash.display3D {
 		{
 			// clear internal lists
 			mUniforms.Clear();
-			mVertexUniformLookup  = new Uniform[512];
-			mFragmentUniformLookup = new Uniform[512];
+			mVertexUniformLookup  = new Uniform[MaxUniforms];
+			mFragmentUniformLookup = new Uniform[MaxUniforms];
 			mSamplerUniforms.Clear();
 			mSamplerUsageMask = 0;
 
@@ -327,6 +326,12 @@ namespace flash.display3D {
 			return mSamplerStates[sampler];
 		}
 
+		// sets the sampler state for a sampler when this program is used
+		public void setSamplerState(int sampler, SamplerState state)
+		{
+			mSamplerStates[sampler] = state;
+		}
+
 		public int samplerUsageMask {
 			get {return mSamplerUsageMask;}
 		}
@@ -346,8 +351,8 @@ namespace flash.display3D {
 		private Uniform            mPositionScale;
 
 		// sampler state information
-		private SamplerState[]     mSamplerStates = new SamplerState[16];
-		private int				   mSamplerUsageMask = 0; 				
+		private SamplerState[]     mSamplerStates = new SamplerState[Context3D.MaxSamplers];
+		private int				   mSamplerUsageMask = 0; 	
 
 #else
 

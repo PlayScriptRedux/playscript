@@ -51,6 +51,8 @@ namespace flash.display3D.textures {
 		{
 			// prevent redundant setting of sampler state
 			if (!state.Equals(mSamplerState)) {
+				// set texture
+				GL.BindTexture(mTextureTarget, mTextureId);
 				// apply state to texture
 				GL.TexParameter (mTextureTarget, TextureParameterName.TextureMinFilter, (int)state.MinFilter);
 				GL.TexParameter (mTextureTarget, TextureParameterName.TextureMagFilter, (int)state.MagFilter);

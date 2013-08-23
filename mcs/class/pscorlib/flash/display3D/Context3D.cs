@@ -57,7 +57,21 @@ namespace flash.display3D {
 	using _root;
 	
 	public class Context3D : EventDispatcher {
-	
+
+		//
+		// Constants
+		//
+
+		public const int MaxSamplers = 16;
+		public const int MaxAttributes = 16;
+
+		// this is the default sampler state
+		public static readonly SamplerState DefaultSamplerState = new SamplerState(
+																		TextureMinFilter.Linear, 
+																		TextureMagFilter.Linear,
+																		TextureWrapMode.Repeat,
+																		TextureWrapMode.Repeat).Intern();
+
 		//
 		// Properties
 		//
@@ -553,6 +567,11 @@ namespace flash.display3D {
 			mRenderToTexture = texture;
 		}
 
+		public void setSamplerStateAt(int sampler, string wrap, string filter, string mipfilter)
+		{
+			throw new System.NotImplementedException();
+		}
+
 
 		public void setScissorRectangle (Rectangle rectangle)
 		{
@@ -643,11 +662,15 @@ namespace flash.display3D {
 
 						GL.BindTexture( target, texture.textureId);
 
+						// TODO: support sampler state overrides through setSamplerAt(...)
 						// get sampler state from program
 						SamplerState state = mProgram.getSamplerState(sampler);
 						if (state != null) {
 							// apply sampler state to texture
 							texture.setSamplerState(state);
+						} else {
+							// use default state if program has none
+							texture.setSamplerState(Context3D.DefaultSamplerState);
 						}
 					} else {
 						// texture is null so unbind texture
@@ -678,7 +701,7 @@ namespace flash.display3D {
 
 		// sampler settings
 		private int 				mSamplerDirty = 0;
-		private TextureBase[]		mSamplerTextures = new TextureBase[16];
+		private TextureBase[]		mSamplerTextures = new TextureBase[Context3D.MaxSamplers];
 
 		// settings for backbuffer
 		private int  mDefaultFrameBufferId;
