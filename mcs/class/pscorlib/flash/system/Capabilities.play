@@ -60,7 +60,15 @@ package flash.system {
 		
 		public static property localFileReadDisable : Boolean { get { throw new Error(); } }
 		
-		public static property manufacturer : String { get { return "iOS"; } }
+		public static property manufacturer : String { 
+			get { 
+#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH 
+				return "iOS";
+#elif PLATFORM_MONODROID
+				return Android.OS.Build.Manufacturer;
+#endif			
+			} 
+		}
 		
 		public static property maxLevelIDC : String { get { throw new Error(); } }
 		

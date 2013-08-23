@@ -70,7 +70,7 @@ package flash.filesystem {
  	 	public property isFile : Boolean {
 			get{
 #if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
- 	 			return System.IO.File.Exists(mPath);
+				return System.IO.File.Exists(mPath);
 #elif PLATFORM_MONODROID
 				return isFileDroid();
 #endif
