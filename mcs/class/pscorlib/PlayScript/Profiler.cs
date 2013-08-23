@@ -5,9 +5,16 @@ using System.Linq;
 using System.IO;
 using System.Runtime.InteropServices;
 
-#if PLATFORM_MONOTOUCH
+#if PLATFORM_MONOMAC
+using MonoMac.OpenGL;
+#elif PLATFORM_MONOTOUCH
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
+using OpenTK.Graphics;
+using OpenTK.Graphics.ES20;
+#elif PLATFORM_MONODROID
+using OpenTK.Graphics;
+using OpenTK.Graphics.ES20;
 #endif
 
 namespace PlayScript
@@ -140,6 +147,7 @@ namespace PlayScript
 	public static class Profiler
 	{
 		public static bool Enabled = true;
+		public static bool ProfileGPU = false;
 
 		static Profiler()
 		{
@@ -205,6 +213,13 @@ namespace PlayScript
 				return;
 
 			Profiler.End("frame");
+
+			if (ProfileGPU) {
+				// this stalls and waits for the gpu to finish 
+				PlayScript.Profiler.Begin("gpu");
+				GL.Finish();
+				PlayScript.Profiler.End("gpu");
+			}
 
 			// update all sections
 			foreach (Section section in sSectionList) {
