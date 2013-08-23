@@ -65,13 +65,6 @@ namespace flash.display3D {
 		public const int MaxSamplers = 16;
 		public const int MaxAttributes = 16;
 
-		// this is the default sampler state
-		public static readonly SamplerState DefaultSamplerState = new SamplerState(
-																		TextureMinFilter.Linear, 
-																		TextureMagFilter.Linear,
-																		TextureWrapMode.Repeat,
-																		TextureWrapMode.Repeat).Intern();
-
 		//
 		// Properties
 		//
@@ -92,7 +85,15 @@ namespace flash.display3D {
 
 
 #if OPENGL
-		
+
+		// this is the default sampler state
+		public static readonly SamplerState DefaultSamplerState = new SamplerState(
+												TextureMinFilter.Linear, 
+												TextureMagFilter.Linear,
+												TextureWrapMode.Repeat,
+												TextureWrapMode.Repeat).Intern();
+
+
 		public Context3D(Stage3D stage3D)
 		{
 			mStage3D = stage3D;
