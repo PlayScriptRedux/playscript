@@ -646,20 +646,8 @@ namespace flash.display3D {
 						// get sampler state from program
 						SamplerState state = mProgram.getSamplerState(sampler);
 						if (state != null) {
-
-							GL.TexParameter (target, TextureParameterName.TextureMinFilter, (int)state.MinFilter);
-							GL.TexParameter (target, TextureParameterName.TextureMagFilter, (int)state.MagFilter);
-							GL.TexParameter (target, TextureParameterName.TextureWrapS, (int)state.WrapModeS);
-							GL.TexParameter (target, TextureParameterName.TextureWrapT, (int)state.WrapModeT);
-							if (state.LodBias != 0.0) {
-								throw new NotImplementedException("Lod bias setting not supported yet");
-							}
-						}
-						else
-						{
-							if (enableErrorChecking) {
-								Console.WriteLine("warning: no sampler state found for sampler {0}", sampler);
-							}
+							// apply sampler state to texture
+							texture.setSamplerState(state);
 						}
 					} else {
 						// texture is null so unbind texture

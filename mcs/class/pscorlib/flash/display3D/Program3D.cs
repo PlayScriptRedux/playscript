@@ -178,15 +178,9 @@ namespace flash.display3D {
 			buildUniformList();
 
 			// process sampler states
-			mSamplerUsageMask = 0;
 			for (int i=0; i < mSamplerStates.Length; i++) {
 				// copy over sampler state from provided array
 				mSamplerStates[i] = (samplerStates!=null) ? samplerStates[i] : null;
-
-				// set sampler usage mask
-				if (mSamplerStates[i] != null) {
-					mSamplerUsageMask |= (1 << i);
-				}
 			}
 
 		}
@@ -200,7 +194,15 @@ namespace flash.display3D {
 			// update texture units for all sampler uniforms
 			foreach (var sampler in mSamplerUniforms)
 			{
-				GL.Uniform1(sampler.Location, sampler.RegIndex);
+				if (sampler.RegCount == 1) {
+					// single sampler
+					GL.Uniform1(sampler.Location, sampler.RegIndex);
+				} else {
+					// sampler array?
+					for (int i=0; i < sampler.RegCount; i++) {
+						GL.Uniform1(sampler.Location + i, sampler.RegIndex + i);
+					}
+				}
 			}
 
 		}
@@ -231,6 +233,7 @@ namespace flash.display3D {
 			mVertexUniformLookup  = new Uniform[512];
 			mFragmentUniformLookup = new Uniform[512];
 			mSamplerUniforms.Clear();
+			mSamplerUsageMask = 0;
 
 			int numActive = 0;
 			GL.GetProgram(mProgramId, ProgramParameter.ActiveUniforms, out numActive);
@@ -250,7 +253,11 @@ namespace flash.display3D {
 #elif PLATFORM_MONODROID
 				uniform.Location = GL.GetUniformLocation (mProgramId, name);
 #endif
-				//
+				// remove array [x] from names
+				int indexBracket = uniform.Name.IndexOf('[');
+				if (indexBracket >= 0) {
+					uniform.Name = uniform.Name.Substring(0, indexBracket);
+				}
 
 				// determine register count for uniform
 				switch (uniform.Type)
@@ -292,6 +299,11 @@ namespace flash.display3D {
 					uniform.RegIndex = int.Parse (uniform.Name.Substring(7));
 					// add to list of sampler uniforms
 					mSamplerUniforms.Add (uniform);
+
+					// set sampler usage mask for this sampler uniform
+					for (int reg=0; reg < uniform.RegCount; reg++) {
+						mSamplerUsageMask |= (1 << (uniform.RegIndex + reg));
+					}
 				}
 
 				if (Verbose) {

@@ -15,6 +15,7 @@
 namespace flash.display3D.textures {
 	
 	using System;
+	using System.Collections.Generic;
 
 #if PLATFORM_MONOMAC
 	using MonoMac.OpenGL;
@@ -31,12 +32,47 @@ namespace flash.display3D.textures {
 	public class SamplerState : IEquatable<SamplerState>
 	{
 #if OPENGL
-		public TextureMinFilter		MinFilter;
-		public TextureMagFilter		MagFilter;
-		public TextureWrapMode		WrapModeS;
-		public TextureWrapMode		WrapModeT;
-		public float				LodBias;
-		public float 				MaxAniso;
+		public readonly TextureMinFilter	MinFilter;
+		public readonly TextureMagFilter	MagFilter;
+		public readonly TextureWrapMode		WrapModeS;
+		public readonly TextureWrapMode		WrapModeT;
+		public readonly float				LodBias;
+		public readonly float 				MaxAniso;
+
+		public SamplerState(TextureMinFilter minFilter, TextureMagFilter magFilter, TextureWrapMode wrapModeS, TextureWrapMode wrapModeT, 
+		                    float lodBias = 0.0f, float maxAniso = 0.0f)
+		{
+			this.MinFilter = minFilter;
+			this.MagFilter = magFilter;
+			this.WrapModeS = wrapModeS;
+			this.WrapModeT = wrapModeT;
+			this.LodBias   = lodBias;
+			this.MaxAniso  = maxAniso;
+		}
+
+
+		/// <summary>
+		/// Interns this sampler state. 
+		/// Interning will return an object of the same value but makes equality testing faster since 
+		/// it is a reference comparison only.
+		/// </summary>
+		public SamplerState Intern()
+		{
+			if (mIsInterned) return this;
+
+			// find intern'd object that equals this
+			// TODO: use hash or dictionary
+			foreach (var intern in sInterns) {
+				if (intern.Equals(this)) {
+					return intern;
+				}
+			}
+
+			// intern this object
+			sInterns.Add(this);
+			mIsInterned = true;
+			return this;
+		}
 		
 		public override string ToString ()
 		{
@@ -47,6 +83,14 @@ namespace flash.display3D.textures {
 		#region IEquatable implementation
 		public bool Equals (SamplerState other)
 		{
+			// handle reference equality
+			if (this == other)
+				return true;
+
+			// handle null case
+			if (other == null)
+				return false;
+
 			return this.MinFilter == other.MinFilter &&
 				this.MagFilter == other.MagFilter &&
 					this.WrapModeS == other.WrapModeS &&
@@ -55,6 +99,10 @@ namespace flash.display3D.textures {
 					MaxAniso == other.MaxAniso;
 		}
 		#endregion
+
+		private bool 				mIsInterned = false;
+
+		private static List<SamplerState> sInterns = new List<SamplerState>();
 
 #else
 		#region IEquatable implementation
