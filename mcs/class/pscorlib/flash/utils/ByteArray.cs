@@ -376,7 +376,7 @@ namespace flash.utils {
 		public void writeFloat(double value) {
 			checkWriteLength(4);
 			// this seems slow
-			byte[] b = BitConverter.GetBytes( value );
+			byte[] b = BitConverter.GetBytes( (float)value );
 			if ((mEndian == ByteEndian.Little) && (BitConverter.IsLittleEndian))
 			{
 				internalWriteByte( b[0] );
