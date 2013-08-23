@@ -214,12 +214,14 @@ namespace PlayScript
 
 			Profiler.End("frame");
 
+#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			if (ProfileGPU) {
 				// this stalls and waits for the gpu to finish 
 				PlayScript.Profiler.Begin("gpu");
 				GL.Finish();
 				PlayScript.Profiler.End("gpu");
 			}
+#endif
 
 			// update all sections
 			foreach (Section section in sSectionList) {
