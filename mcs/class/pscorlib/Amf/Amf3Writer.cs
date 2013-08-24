@@ -32,7 +32,6 @@ namespace Amf
     public class Amf3Writer
     {
 		private static readonly Amf.DataConverter conv = Amf.DataConverter.BigEndian;
-        private static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         public Stream Stream { get; private set; }
 
@@ -109,13 +108,13 @@ namespace Amf
                 return;
             }
 
-            if (obj is DateTime) {
-                Write((DateTime)obj);
-                return;
-            }
+			if (obj is _root.Date) {
+				Write((_root.Date)obj);
+				return;
+			}
 
-            if (obj is Amf3Array) {
-                Write((Amf3Array)obj);
+            if (obj is _root.Array) {
+				Write((_root.Array)obj);
                 return;
             }
 
@@ -180,13 +179,13 @@ namespace Amf
             TypelessWrite(str);
         }
 
-        public void Write(DateTime date)
+        public void Write(_root.Date date)
         {
             Write(Amf3TypeCode.Date);
             TypelessWrite(date);
         }
 
-        public void Write(Amf3Array array)
+        public void Write(_root.Array array)
         {
             Write(Amf3TypeCode.Array);
             TypelessWrite(array);
@@ -268,48 +267,40 @@ namespace Amf
             stringTable[str] = stringTable.Count;
         }
 
-        public void TypelessWrite(DateTime date)
+        public void TypelessWrite(_root.Date date)
         {
-            // Date objects can be sent by reference in AMF, but since
-            // DateTime is a value type, we can't look up other instances by
-            // reference.  To be safe, we'll send each inline and throw the
-            // boxed instance on the object table to fill its spot.
             TypelessWrite(1);
 
-            date = date.ToUniversalTime();
-
-            double ticks = date.Ticks - Epoch.Ticks;
-
-            // Convert ticks to ms from 100 nanoseconds
-            ticks /= 10000;
+			double ticks = date.getTime();
 
             TypelessWrite(ticks);
 
             objectTable[date] = objectTable.Count;
         }
 
-        private void WriteDictionary(IDictionary<string, object> dict)
+		private void WriteDynamicClass(PlayScript.IDynamicClass dc)
         {
-            foreach (KeyValuePair<string, object> i in dict) {
-                TypelessWrite(i.Key);
-                Write(i.Value);
+            foreach (string key in dc.__GetDynamicNames()) {
+                TypelessWrite(key);
+                Write(dc.__GetDynamicValue(key));
             }
 
             TypelessWrite("");
         }
 
-        public void TypelessWrite(Amf3Array array)
+        public void TypelessWrite(_root.Array array)
         {
             if (CheckObjectTable(array))
                 return;
 
             objectTable[array] = objectTable.Count;
 
-            TypelessWrite((array.DenseArray.Count << 1) | 1);
+            TypelessWrite((array.length << 1) | 1);
 
-            WriteDictionary(array.AssociativeArray);
+			var dc = (PlayScript.IDynamicClass)array;
+            WriteDynamicClass(dc);
 
-            foreach (object i in array.DenseArray) {
+            foreach (object i in array) {
                 Write(i);
             }
         }
@@ -330,32 +321,37 @@ namespace Amf
             }
         }
 
+		public void TypelessWrite(Amf3ClassDef classDef)
+		{
+			int index;
+			if (classDefTable.TryGetValue(classDef, out index)) {
+				TypelessWrite((index << 2) | 1);
+			} else {
+				classDefTable[classDef] = classDefTable.Count;
+
+				Amf3Object.Flags flags = Amf3Object.Flags.Inline | Amf3Object.Flags.InlineClassDef;
+
+				if (classDef.Externalizable)
+					flags |= Amf3Object.Flags.Externalizable;
+				if (classDef.Dynamic)
+					flags |= Amf3Object.Flags.Dynamic;
+
+				TypelessWrite((int)flags | (classDef.Properties.Count << 4));
+
+				TypelessWrite(classDef.Name);
+
+				foreach (string i in classDef.Properties) {
+					TypelessWrite(i);
+				}
+			}
+		}
+
         public void TypelessWrite(Amf3Object obj)
         {
             if (CheckObjectTable(obj))
                 return;
 
-            int index;
-            if (classDefTable.TryGetValue(obj.ClassDef, out index)) {
-                TypelessWrite((index << 2) | 1);
-            } else {
-                classDefTable[obj.ClassDef] = classDefTable.Count;
-
-                Amf3Object.Flags flags = Amf3Object.Flags.Inline | Amf3Object.Flags.InlineClassDef;
-
-                if (obj.ClassDef.Externalizable)
-                    flags |= Amf3Object.Flags.Externalizable;
-                if (obj.ClassDef.Dynamic)
-                    flags |= Amf3Object.Flags.Dynamic;
-
-                TypelessWrite((int)flags | (obj.ClassDef.Properties.Count << 4));
-
-                TypelessWrite(obj.ClassDef.Name);
-
-                foreach (string i in obj.ClassDef.Properties) {
-                    TypelessWrite(i);
-                }
-            }
+			TypelessWrite(obj.ClassDef);
 
             objectTable[obj] = objectTable.Count;
 
