@@ -24,6 +24,7 @@
     <WarningLevel>4</WarningLevel>
     <AndroidLinkMode>None</AndroidLinkMode>
     <ConsolePause>false</ConsolePause>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>full</DebugType>
@@ -33,6 +34,7 @@
     <WarningLevel>4</WarningLevel>
     <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
     <ConsolePause>false</ConsolePause>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -835,6 +837,39 @@
     </Compile>
     <Compile Include="..\pscorlib\flash\utils\ByteArray.cs">
       <Link>flash\utils\ByteArray.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Array.cs">
+      <Link>Amf\Amf3Array.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3ClassDef.cs">
+      <Link>Amf\Amf3ClassDef.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Object.cs">
+      <Link>Amf\Amf3Object.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Parser.cs">
+      <Link>Amf\Amf3Parser.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3TypeCode.cs">
+      <Link>Amf\Amf3TypeCode.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Wrapper.cs">
+      <Link>Amf\Amf3Wrapper.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Writer.cs">
+      <Link>Amf\Amf3Writer.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\DataConverter.cs">
+      <Link>Amf\DataConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\IAmf3Serializable.cs">
+      <Link>Amf\IAmf3Serializable.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\ReferenceEqualityComparer.cs">
+      <Link>Amf\ReferenceEqualityComparer.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Rocks.cs">
+      <Link>Amf\Rocks.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>
