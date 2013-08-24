@@ -38,6 +38,11 @@ namespace Amf
         Array = 9,
         Object = 10,
         Xml = 11,
-        ByteArray = 12
+        ByteArray = 12,
+		VectorInt = 13,
+		VectorUInt = 14,
+		VectorDouble = 15,
+		VectorObject = 16,
+		Dictionary = 17
     }
 }

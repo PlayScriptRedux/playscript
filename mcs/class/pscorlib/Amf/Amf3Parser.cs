@@ -24,15 +24,16 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using _root;
 
 namespace Amf
 {
     public class Amf3Parser
     {
 		private static readonly Amf.DataConverter conv = Amf.DataConverter.BigEndian;
-        private static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         private Stream stream;
+		private readonly byte[] tempData = new byte[8];
 
         private List<string> stringTable = new List<string>();
         private List<object> objectTable = new List<object>();
@@ -83,9 +84,24 @@ namespace Amf
 
             case Amf3TypeCode.Object:
                 return ReadAmf3Object();
-            }
 
-            throw new InvalidOperationException("Cannot parse type " + type.ToString());
+			case Amf3TypeCode.ByteArray:
+				return ReadByteArray();
+
+			case Amf3TypeCode.VectorInt:
+				return ReadVectorInt();
+
+			case Amf3TypeCode.VectorUInt:
+				return ReadVectorUInt();
+
+			case Amf3TypeCode.VectorDouble:
+				return ReadVectorDouble();
+
+			case Amf3TypeCode.VectorObject:
+			case Amf3TypeCode.Dictionary:
+			default:
+				throw new NotImplementedException("Cannot parse type " + type.ToString());
+            }
         }
 
         public int ReadInteger()
@@ -118,9 +134,22 @@ namespace Amf
             return integer;
         }
 
+		public int ReadInt32()
+		{
+			stream.Read(tempData, 0, sizeof(Int32));
+			return conv.GetInt32(tempData, 0);
+		}
+
+		public uint ReadUInt32()
+		{
+			stream.Read(tempData, 0, sizeof(UInt32));
+			return conv.GetUInt32(tempData, 0);
+		}
+
         public double ReadNumber()
         {
-            return conv.GetDouble(stream.Read(8), 0);
+			stream.Read(tempData, 0, sizeof(double));
+            return conv.GetDouble(tempData, 0);
         }
 
         private static T GetTableEntry<T>(IList<T> table, int index)
@@ -151,54 +180,137 @@ namespace Amf
             return str;
         }
 
-        public DateTime ReadDate()
+        public _root.Date ReadDate()
         {
             int num = ReadInteger();
 
             if ((num & 1) == 0) {
-                return (DateTime)GetTableEntry(objectTable, num >> 1);
+				return (_root.Date)GetTableEntry(objectTable, num >> 1);
             }
 
             double val = ReadNumber();
 
-            // Ticks are 100 nanoseconds (conversion is 1000000 / 100)
-            long ticks = checked(Epoch.Ticks + ((long)val * 10000));
-
-            DateTime date = new DateTime(ticks, DateTimeKind.Utc);
+			var date = new _root.Date();
+			date.setTime(val);
 
             objectTable.Add(date);
-
             return date;
         }
 
-        public Amf3Array ReadArray()
+        public _root.Array ReadArray()
         {
             int num = ReadInteger();
 
             if ((num & 1) == 0) {
-                return (Amf3Array)GetTableEntry(objectTable, num >> 1);
+				return (_root.Array)GetTableEntry(objectTable, num >> 1);
             }
 
             num >>= 1;
 
-            Amf3Array array = new Amf3Array();
+			var array = new _root.Array(num);
 
             objectTable.Add(array);
 
             string key = ReadString();
             while (key != "") {
                 object value = ReadNextObject();
-                array.AssociativeArray[key] = value;
+				array[key] = value;
 
                 key = ReadString();
             }
 
-            while (num-- > 0) {
-                array.DenseArray.Add(ReadNextObject());
+			for (int i=0; i < num; i++) {
+                array[i] = ReadNextObject();
             }
 
             return array;
         }
+
+		public Vector<double> ReadVectorDouble()
+		{
+			int num = ReadInteger();
+
+			if ((num & 1) == 0) {
+				return (Vector<double>)GetTableEntry(objectTable, num >> 1);
+			}
+
+			num >>= 1;
+			bool isFixed = stream.ReadByteOrThrow() != 0;
+			var vector = new Vector<double>((uint)num, isFixed);
+
+			objectTable.Add(vector);
+
+			// read all values
+			for (int i=0; i < num; i++) {
+				vector[i] = ReadNumber();
+			}
+
+			return vector;
+		}
+
+		public Vector<int> ReadVectorInt()
+		{
+			int num = ReadInteger();
+
+			if ((num & 1) == 0) {
+				return (Vector<int>)GetTableEntry(objectTable, num >> 1);
+			}
+
+			num >>= 1;
+			bool isFixed = stream.ReadByteOrThrow() != 0;
+			var vector = new Vector<int>((uint)num, isFixed);
+
+			objectTable.Add(vector);
+
+			// read all values
+			for (int i=0; i < num; i++) {
+				vector[i] = ReadInt32();
+			}
+
+			return vector;
+		}
+
+		public Vector<uint> ReadVectorUInt()
+		{
+			int num = ReadInteger();
+
+			if ((num & 1) == 0) {
+				return (Vector<uint>)GetTableEntry(objectTable, num >> 1);
+			}
+
+			num >>= 1;
+			bool isFixed = stream.ReadByteOrThrow() != 0;
+			var vector = new Vector<uint>((uint)num, isFixed);
+
+			objectTable.Add(vector);
+
+			// read all values
+			for (int i=0; i < num; i++) {
+				vector[i] = ReadUInt32();
+			}
+
+			return vector;
+		}
+
+		public flash.utils.ByteArray ReadByteArray()
+		{
+			int num = ReadInteger();
+
+			if ((num & 1) == 0) {
+				return (flash.utils.ByteArray)GetTableEntry(objectTable, num >> 1);
+			}
+
+			num >>= 1;
+
+			// read all data into byte array
+			byte[] data = new byte[num];
+			stream.ReadFully(data, 0, num);
+
+			var array = flash.utils.ByteArray.fromArray(data);
+			objectTable.Add(array);
+			return array;
+		}
+
 
         public Amf3Object ReadAmf3Object()
         {
