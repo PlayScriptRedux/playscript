@@ -23,6 +23,8 @@ package flash.filesystem {
 	import MonoMac.AppKit.*;
 #elif PLATFORM_MONOTOUCH
 	import MonoTouch.Foundation.*;
+#elif PLATFORM_MONODROID
+	import Android.App.*;
 #endif
 
 	public class File {
@@ -39,6 +41,8 @@ package flash.filesystem {
 					var appPath = NSBundle.MainBundle.ResourcePath + "/demo/assets";
 #elif PLATFORM_MONOTOUCH
 					var appPath = NSBundle.MainBundle.ResourcePath + "/demo/assets";
+#elif PLATFORM_MONODROID
+					var appPath = "";
 #else
 					var appPath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
 #endif
@@ -51,21 +55,68 @@ package flash.filesystem {
  	 	
  	 	public property exists : Boolean {
  	 		get {
+#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
  	 			return System.IO.File.Exists(mPath) || System.IO.Directory.Exists(mPath);
+#elif PLATFORM_MONODROID
+				return isFileDroid() || isDirectoryDroid() ;
+#endif
  	 		}
  	 	}
- 	 	
+
  	 	public property isHidden : Boolean {
  	 		get {return false;}
  	 	}
 
  	 	public property isFile : Boolean {
- 	 		get {return System.IO.File.Exists(mPath);}
+			get{
+#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
+				return System.IO.File.Exists(mPath);
+#elif PLATFORM_MONODROID
+				return isFileDroid();
+#endif
+			}
  	 	}
 
+#if PLATFORM_MONODROID
+		private function isFileDroid() : Boolean {
+			try
+			{
+				Application.Context.Assets.Open(mPath);
+				return true;
+			} catch (e:Exception)
+			{
+				return false;
+			}
+		}
+#endif
+
  	 	public property isDirectory : Boolean {
- 	 		get {return System.IO.Directory.Exists(mPath);}
+ 	 		get {
+#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
+				return System.IO.Directory.Exists(mPath);
+#elif PLATFORM_MONODROID
+				return isDirectoryDroid();
+#endif
+			}
  	 	}
+
+#if PLATFORM_MONODROID
+		private function isDirectoryDroid() : Boolean {
+			try
+			{
+				var list:String[] = Application.Context.Assets.List(mPath);
+				if ( list.Length == 0 )
+				{
+					return false;
+				}
+
+				return true;
+			} catch (e:Exception)
+			{
+				return false;
+			}
+		}
+#endif
  	 	
  	 	public function File(path:String)
  	 	{
@@ -81,27 +132,46 @@ package flash.filesystem {
  	 	}
  
  	 	public property url : String {
- 	 		get {return "file://" + mPath;}
+ 	 		get {
+#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
+				return "file://" + mPath;
+#elif PLATFORM_MONODROID
+				return mPath;
+#endif
+			}
  	 	}
  	 	
  	 	public property extension : String {
  	 		get 
  	 		{
+#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
  	 			var ext:String = System.IO.Path.GetExtension(mPath);
  	 			if (ext.StartsWith(".")) {
  	 				return ext.Substring(1);
  	 			} else {
  	 				return ext;
  	 			}
+#elif PLATFORM_MONODROID
+				var lastDot:int = mPath.LastIndexOf(".");
+				return mPath.Substring(lastDot + 1);
+#endif
  	 		}
  	 	}
 
  	 	public property name : String {
- 	 		get {return System.IO.Path.GetFileName(mPath);}
+ 	 		get {
+#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
+				return System.IO.Path.GetFileName(mPath);
+#elif PLATFORM_MONODROID
+				var lastSlash:int = mPath.LastIndexOf("/");
+				return mPath.Substring(lastSlash + 1);
+#endif
+			}
  	 	}
  	 	
  	 	public function getDirectoryListing():_root.Array
  	 	{
+#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
  	 		var a:_root.Array = [];
  	 		for each (var name:String in System.IO.Directory.GetDirectories(mPath))
  	 		{
@@ -114,8 +184,33 @@ package flash.filesystem {
  	 		}
  	 		
  	 		return a;
+#elif PLATFORM_MONODROID
+			return getDirectoryListingDroid(mPath);
+#endif
  	 	}
  	 	
+#if PLATFORM_MONODROID
+		private function getDirectoryListingDroid(path:String):_root.Array
+		{
+			var a:_root.Array = [];
+			var list:String[] = Application.Context.Assets.List(path);
+
+			if (list.Length > 0) 
+			{
+				for each (var name:String in list)
+				{
+					a = a.concat(getDirectoryListingDroid(path + "/" + name));
+				}
+			}
+			else
+			{
+				a.push(new File(path));
+			}
+
+			return a;
+		}
+#endif
+
  	 	public override function toString():String
  	 	{
  	 		return mPath;

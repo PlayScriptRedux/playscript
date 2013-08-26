@@ -28,6 +28,13 @@ package flash.text {
 	import MonoTouch.Foundation.*;
 	import MonoTouch.CoreGraphics.*;
 	import MonoTouch.UIKit.*;
+#elif PLATFORM_MONODROID
+	import Android.Graphics.Paint;
+	import Android.Graphics.PaintFlags;
+	import Android.Graphics.Typeface;
+	import Android.Graphics.TypefaceStyle;
+	import Android.Graphics.Rect;
+	import Android.Graphics.Color;
 #endif
 
 	public class TextFieldType {
@@ -242,6 +249,33 @@ package flash.text {
 					var size:System.Drawing.SizeF = (new NSString(text)).StringSize(font, float(width), UILineBreakMode.WordWrap); 
 					mTextWidth  = size.Width;
 					mTextHeight = size.Height;
+				}
+				else
+				{
+					// 
+					mTextWidth = mTextHeight = 0.0;
+				}
+#elif PLATFORM_MONODROID
+				var format:flash.text.TextFormat = defaultTextFormat;
+
+				var typeface:Typeface = Typeface.Create(format.font, TypefaceStyle.Normal);
+
+				if (typeface != null)
+				{
+					// $$TODO handle wordwrap and single line
+					if (!wordWrap || !multiline) 
+						throw new System.NotImplementedException();
+
+					var paint:Paint = new Paint(PaintFlags.AntiAlias);
+					paint.Color = Color.Black;
+					paint.TextSize = float(Number(format.size));
+					paint.SetTypeface( typeface );
+
+					var bounds:Rect = new Rect();
+					paint.GetTextBounds(text, 0, 1, bounds);
+
+					mTextWidth  = bounds.Width();
+					mTextHeight = bounds.Height();
 				}
 				else
 				{
