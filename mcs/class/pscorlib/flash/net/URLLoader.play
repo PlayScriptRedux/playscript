@@ -280,6 +280,8 @@ package flash.net {
 			var src:Stream = Application.Context.Assets.Open(path);
 			src.CopyTo(dest);
 			var fileData:byte[] = dest.ToArray();
+#else
+			var fileData:byte[] = new byte[0];
 #endif
 
 			switch (dataFormat)

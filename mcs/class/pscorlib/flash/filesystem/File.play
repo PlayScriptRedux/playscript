@@ -59,6 +59,8 @@ package flash.filesystem {
  	 			return System.IO.File.Exists(mPath) || System.IO.Directory.Exists(mPath);
 #elif PLATFORM_MONODROID
 				return isFileDroid() || isDirectoryDroid() ;
+#else
+				return false;
 #endif
  	 		}
  	 	}
@@ -73,6 +75,8 @@ package flash.filesystem {
 				return System.IO.File.Exists(mPath);
 #elif PLATFORM_MONODROID
 				return isFileDroid();
+#else
+				return false;
 #endif
 			}
  	 	}
@@ -96,6 +100,8 @@ package flash.filesystem {
 				return System.IO.Directory.Exists(mPath);
 #elif PLATFORM_MONODROID
 				return isDirectoryDroid();
+#else
+				return false;
 #endif
 			}
  	 	}
@@ -137,6 +143,8 @@ package flash.filesystem {
 				return "file://" + mPath;
 #elif PLATFORM_MONODROID
 				return mPath;
+#else
+				return null;
 #endif
 			}
  	 	}
@@ -154,6 +162,8 @@ package flash.filesystem {
 #elif PLATFORM_MONODROID
 				var lastDot:int = mPath.LastIndexOf(".");
 				return mPath.Substring(lastDot + 1);
+#else
+				return null;
 #endif
  	 		}
  	 	}
@@ -165,6 +175,8 @@ package flash.filesystem {
 #elif PLATFORM_MONODROID
 				var lastSlash:int = mPath.LastIndexOf("/");
 				return mPath.Substring(lastSlash + 1);
+#else
+				return null;
 #endif
 			}
  	 	}
@@ -186,6 +198,8 @@ package flash.filesystem {
  	 		return a;
 #elif PLATFORM_MONODROID
 			return getDirectoryListingDroid(mPath);
+#else
+			return null;
 #endif
  	 	}
  	 	
