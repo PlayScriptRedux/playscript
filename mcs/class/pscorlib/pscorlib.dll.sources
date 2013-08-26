@@ -1,4 +1,14 @@
 ./AllowDynamicAttribute.cs
+./Amf/Amf3ClassDef.cs
+./Amf/Amf3Object.cs
+./Amf/Amf3Parser.cs
+./Amf/Amf3String.cs
+./Amf/Amf3TypeCode.cs
+./Amf/Amf3Writer.cs
+./Amf/DataConverter.cs
+./Amf/IAmf3Serializable.cs
+./Amf/ReferenceEqualityComparer.cs
+./Amf/Rocks.cs
 ./ArgumentError.play
 ./Array.cs
 ./AssemblyInfo.cs

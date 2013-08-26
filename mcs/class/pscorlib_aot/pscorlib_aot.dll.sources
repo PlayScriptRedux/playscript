@@ -1,5 +1,15 @@
 ./AssemblyInfo.cs
 ../pscorlib/AllowDynamicAttribute.cs
+../pscorlib/Amf/Amf3ClassDef.cs
+../pscorlib/Amf/Amf3Object.cs
+../pscorlib/Amf/Amf3Parser.cs
+../pscorlib/Amf/Amf3String.cs
+../pscorlib/Amf/Amf3TypeCode.cs
+../pscorlib/Amf/Amf3Writer.cs
+../pscorlib/Amf/DataConverter.cs
+../pscorlib/Amf/IAmf3Serializable.cs
+../pscorlib/Amf/ReferenceEqualityComparer.cs
+../pscorlib/Amf/Rocks.cs
 ../pscorlib/ArgumentError.play
 ../pscorlib/Array.cs
 ../pscorlib/BindableAttribute.cs
