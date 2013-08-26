@@ -812,9 +812,6 @@
     <Compile Include="..\pscorlib\flash\utils\ByteArray.cs">
       <Link>flash\utils\ByteArray.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\Amf\Amf3Array.cs">
-      <Link>Amf\Amf3Array.cs</Link>
-    </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3ClassDef.cs">
       <Link>Amf\Amf3ClassDef.cs</Link>
     </Compile>
@@ -826,9 +823,6 @@
     </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3TypeCode.cs">
       <Link>Amf\Amf3TypeCode.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\Amf\Amf3Wrapper.cs">
-      <Link>Amf\Amf3Wrapper.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3Writer.cs">
       <Link>Amf\Amf3Writer.cs</Link>
@@ -844,6 +838,9 @@
     </Compile>
     <Compile Include="..\pscorlib\Amf\Rocks.cs">
       <Link>Amf\Rocks.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3String.cs">
+      <Link>Amf\Amf3String.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

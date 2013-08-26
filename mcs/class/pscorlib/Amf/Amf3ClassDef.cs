@@ -84,5 +84,10 @@ namespace Amf
 
             return true;
         }
+
+		// the last writer to write this object
+		internal Amf3Writer				mWriter;
+		// the id associated with this object
+		internal int 					mId;
     }
 }

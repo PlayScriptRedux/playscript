@@ -39,6 +39,7 @@ namespace Amf
 
         private Dictionary<object, int> objectTable =
             new Dictionary<object, int>(new ReferenceEqualityComparer<object>());
+		private int 					objectTableIndex = 0;
 
         private Dictionary<Amf3ClassDef, int> classDefTable =
             new Dictionary<Amf3ClassDef, int>();
@@ -64,6 +65,16 @@ namespace Amf
 
             return false;
         }
+
+		private void StoreObject(object obj)
+		{
+			if (obj != null) {
+				// store index for this object
+				objectTable[obj] = objectTableIndex;
+			}
+			// increment object index
+			objectTableIndex++;
+		}
 
         private void Write(Amf3TypeCode type)
         {
@@ -107,6 +118,11 @@ namespace Amf
                 Write((string)obj);
                 return;
             }
+
+			if (obj is Amf3String) {
+				Write((Amf3String)obj);
+				return;
+			}
 
 			if (obj is _root.Date) {
 				Write((_root.Date)obj);
@@ -179,6 +195,12 @@ namespace Amf
             TypelessWrite(str);
         }
 
+		public void Write(Amf3String str)
+		{
+			Write(Amf3TypeCode.String);
+			TypelessWrite(str);
+		}
+
         public void Write(_root.Date date)
         {
             Write(Amf3TypeCode.Date);
@@ -246,6 +268,46 @@ namespace Amf
             Stream.Write(conv.GetBytes(number));
         }
 
+		public void TypelessWrite(Amf3String str)
+		{
+			// has this string been written before with this writer?
+			if (str.mWriter == this) {
+				// write string id reference
+				TypelessWrite(str.mId << 1);
+				return;
+			}
+
+			// special case empty strings
+			if (string.IsNullOrEmpty(str.Value)) {
+				TypelessWrite(1);
+				return;
+			}
+
+			// lookup string by value
+			int index;
+			if (stringTable.TryGetValue(str.Value, out index)) {
+				// cache id within string object
+				str.mWriter = this;
+				str.mId     = index;
+				// write string id reference
+				TypelessWrite(index << 1);
+				return;
+			}
+
+			// write UTF8 bytes of string
+			byte[] bytes = str.Bytes;
+			TypelessWrite((bytes.Length << 1) | 1);
+			Stream.Write(bytes);
+
+			// cache id within string object
+			str.mWriter = this;
+			str.mId     = stringTable.Count;
+
+			// store string value in string table
+			stringTable[str.Value] = str.mId;
+		}
+
+
         public void TypelessWrite(string str)
         {
             if (string.IsNullOrEmpty(str)) {
@@ -272,10 +334,9 @@ namespace Amf
             TypelessWrite(1);
 
 			double ticks = date.getTime();
-
             TypelessWrite(ticks);
 
-            objectTable[date] = objectTable.Count;
+			StoreObject(date);
         }
 
 		private void WriteDynamicClass(PlayScript.IDynamicClass dc)
@@ -293,7 +354,7 @@ namespace Amf
             if (CheckObjectTable(array))
                 return;
 
-            objectTable[array] = objectTable.Count;
+			StoreObject(array);
 
             TypelessWrite((array.length << 1) | 1);
 
@@ -310,7 +371,7 @@ namespace Amf
             if (CheckObjectTable(list))
                 return;
 
-            objectTable[list] = objectTable.Count;
+			StoreObject(list);
 
             TypelessWrite((list.Count << 1) | 1);
 
@@ -323,11 +384,27 @@ namespace Amf
 
 		public void TypelessWrite(Amf3ClassDef classDef)
 		{
+			// have we written this class before with this writer?
+			if (classDef.mWriter == this) {
+				// use the cached id in the class definition
+				TypelessWrite((classDef.mId << 2) | 1);
+				return;
+			}
+
 			int index;
 			if (classDefTable.TryGetValue(classDef, out index)) {
+				// store class id inside of class def for this writer
+				classDef.mWriter = this;
+				classDef.mId     = index;
+
 				TypelessWrite((index << 2) | 1);
 			} else {
-				classDefTable[classDef] = classDefTable.Count;
+				// store class id inside of class def for this writer
+				classDef.mWriter = this;
+				classDef.mId     = classDefTable.Count;
+
+				// store class reference in lookup table
+				classDefTable[classDef] = classDef.mId;
 
 				Amf3Object.Flags flags = Amf3Object.Flags.Inline | Amf3Object.Flags.InlineClassDef;
 
@@ -353,7 +430,7 @@ namespace Amf
 
 			TypelessWrite(obj.ClassDef);
 
-            objectTable[obj] = objectTable.Count;
+			StoreObject(obj);
 
             if (obj.ClassDef.Externalizable) {
                 Write(obj["inner"]);
@@ -378,5 +455,12 @@ namespace Amf
                 TypelessWrite("");
             }
         }
+
+		public void WriteObjectHeader(Amf3ClassDef classDef)
+		{
+			Write(Amf3TypeCode.Object);
+			TypelessWrite(classDef);
+			StoreObject(null);
+		}
     }
 }

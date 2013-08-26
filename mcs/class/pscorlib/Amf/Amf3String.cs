@@ -1,4 +1,4 @@
-// Amf3Array.cs
+// Amf3String.cs
 //
 // Copyright (c) 2009 Chris Howie
 //
@@ -21,38 +21,44 @@
 // THE SOFTWARE.
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Amf
 {
-    public class Amf3Array
+	/// <summary>
+	/// This class wraps a string that can be serialized via the AMF writer.
+	/// Using this class is more efficient than a plain string when the same string is written multiple times.
+	/// The string id reference is cached in here, avoiding a dictionary lookup.
+	/// The string is pre-converted to UTF8.
+	/// </summary>
+	public class Amf3String : IAmf3Serializable
     {
-        private List<object> denseArray;
-        private Dictionary<string, object> associativeArray = new Dictionary<string, object>();
+		public string Value 	{ get { return mValue; } }
+		public byte[] Bytes     { get { return mBytes; } }
 
-        public IList<object> DenseArray {
-            get { return denseArray; }
-        }
-
-        public IDictionary<string, object> AssociativeArray {
-            get { return associativeArray; }
-        }
-
-        public Amf3Array() {
-            denseArray = new List<object>();
-            associativeArray = new Dictionary<string, object>();
-        }
-
-        public Amf3Array(IEnumerable denseArray) : this()
+        public Amf3String(string value)
         {
-            this.denseArray.AddRange(denseArray.Cast<object>());
+			mValue = value;
+			mBytes = System.Text.Encoding.UTF8.GetBytes(value);
         }
 
-        public Amf3Array(IEnumerable<object> denseArray) : this()
-        {
-            this.denseArray.AddRange(denseArray);
-        }
+		public override string ToString()
+		{
+			return mValue;
+		}
+
+		#region IAmf3Serializable implementation
+		void IAmf3Serializable.Serialize(Amf3Writer writer)
+		{
+			writer.Write(this);
+		}
+		#endregion
+
+		private readonly string 		mValue;
+		private readonly byte[]			mBytes;
+
+		// the last writer to write this object
+		internal Amf3Writer				mWriter;
+		// the id associated with this object
+		internal int 					mId;
     }
 }
