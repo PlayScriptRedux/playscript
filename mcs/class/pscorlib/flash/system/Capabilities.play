@@ -66,6 +66,8 @@ package flash.system {
 				return "iOS";
 #elif PLATFORM_MONODROID
 				return Android.OS.Build.Manufacturer;
+#else
+				return null;
 #endif			
 			} 
 		}
