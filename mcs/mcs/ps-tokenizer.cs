@@ -4016,7 +4016,10 @@ namespace Mono.PlayScript
 							}
 						}
 
-						ReadToEndOfLine ();
+						while ((d = get_char ()) != -1 && d != '\n' && d != UnicodeLS && d != UnicodePS);
+
+						if (d == '\n' || d == UnicodeLS || d == UnicodePS)
+							putback (d);
 
 						any_token_seen |= tokens_seen;
 						tokens_seen = false;

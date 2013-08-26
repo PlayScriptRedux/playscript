@@ -7033,6 +7033,7 @@ throw_statement
 	  }
 	| THROW expression error
 	  {
+	    Lexer.AutoSemiInsertion = true;	  
 		Error_SyntaxError (yyToken);
 		$$ = new Throw ((Expression) $2, GetLocation ($1));
 	  }

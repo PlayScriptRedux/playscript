@@ -3045,7 +3045,6 @@ namespace Mono.CSharp
 
 					primitives_only = BuiltinTypeSpec.IsPrimitiveType (l) && BuiltinTypeSpec.IsPrimitiveType (r);
 				}
-				
 			} else {
 				// Pointers
 				if (l.IsPointer || r.IsPointer)
@@ -3081,7 +3080,7 @@ namespace Mono.CSharp
 						left = ConvertEnumOperandToUnderlyingType (rc, left);
 						right = ConvertEnumOperandToUnderlyingType (rc, right);
 						return expr;
-				}
+					}
 				} else if ((oper == Operator.Addition || oper == Operator.Subtraction)) {
 					if (IsEnumOrNullableEnum (l) || IsEnumOrNullableEnum (r)) {
 						//
@@ -3420,32 +3419,37 @@ namespace Mono.CSharp
 		//
 		bool DoBinaryOperatorPromotion (ResolveContext rc)
 		{
+			// PlayScript will promote any arguments t
+			bool isPlayScript = rc.FileType == SourceFileType.PlayScript;
+
 			TypeSpec ltype = left.Type;
 			if (ltype.IsNullableType) {
 				ltype = Nullable.NullableInfo.GetUnderlyingType (ltype);
 			}
 
 			//
-			// This is numeric promotion code only
+			// This is numeric promotion code only (NOTE: PlayScript "does" handle bool below)
 			//
-			if (rc.FileType == SourceFileType.PlayScript || ltype.BuiltinType == BuiltinTypeSpec.Type.Bool) {
-				if (rc.FileType == SourceFileType.PlayScript && !ltype.BuiltinType == BuiltinTypeSpec.Type.Bool) {
-					rc.Report.Error (7777, "Wierd numeric promotion only check returning true for playscript!");
-				}
+			if (!isPlayScript && ltype.BuiltinType == BuiltinTypeSpec.Type.Bool)
 				return true;
-			}
 
 			TypeSpec rtype = right.Type;
 			if (rtype.IsNullableType) {
 				rtype = Nullable.NullableInfo.GetUnderlyingType (rtype);
-				}
+			}
 
 			var lb = ltype.BuiltinType;
 			var rb = rtype.BuiltinType;
 			TypeSpec type;
 			Expression expr;
 
-			if (lb == BuiltinTypeSpec.Type.Decimal || rb == BuiltinTypeSpec.Type.Decimal) {
+			if (isPlayScript && (lb == BuiltinTypeSpec.Type.Bool || rb == BuiltinTypeSpec.Type.Bool) &&
+			    (Oper == Operator.LogicalAnd || Oper == Operator.LogicalOr || 
+			     Oper == Operator.Equality || Oper == Operator.Inequality || 
+			     Oper == Operator.AsStrictEquality || Oper == Operator.AsStrictInequality)) {
+				// PlayScript - Convert left/right operands to bool if logical op
+				type = rc.BuiltinTypes.Bool;
+			} else if (lb == BuiltinTypeSpec.Type.Decimal || rb == BuiltinTypeSpec.Type.Decimal) {
 				type = rc.BuiltinTypes.Decimal;
 			} else if (lb == BuiltinTypeSpec.Type.Double || rb == BuiltinTypeSpec.Type.Double) {
 				type = rc.BuiltinTypes.Double;
@@ -3464,10 +3468,10 @@ namespace Mono.CSharp
 					if (expr == null)
 						return false;
 					right = expr;
-			}
+				}
 
 			} else if (lb == BuiltinTypeSpec.Type.Long || rb == BuiltinTypeSpec.Type.Long) {
-					type = rc.BuiltinTypes.Long;
+				type = rc.BuiltinTypes.Long;
 			} else if (lb == BuiltinTypeSpec.Type.UInt || rb == BuiltinTypeSpec.Type.UInt) {
 				type = rc.BuiltinTypes.UInt;
 
@@ -3482,7 +3486,7 @@ namespace Mono.CSharp
 					}
 			} else {
 				type = rc.BuiltinTypes.Int;
-				}
+			}
 
 			if (ltype != type) {
 				expr = PromoteExpression (rc, left, type);
@@ -3495,7 +3499,7 @@ namespace Mono.CSharp
 			if (rtype != type) {
 				expr = PromoteExpression (rc, right, type);
 				if (expr == null)
-				return false;
+					return false;
 
 				right = expr;
 			}
@@ -4223,85 +4227,85 @@ namespace Mono.CSharp
 
 			if (!primitives_only) {
 
-			//
-			// a, Both operands are reference-type values or the value null
-			// b, One operand is a value of type T where T is a type-parameter and
-			// the other operand is the value null. Furthermore T does not have the
-			// value type constraint
-			//
-			// LAMESPEC: Very confusing details in the specification, basically any
-			// reference like type-parameter is allowed
-			//
-			var tparam_l = l as TypeParameterSpec;
-			var tparam_r = r as TypeParameterSpec;
-			if (tparam_l != null) {
-					if (right is NullLiteral) {
-						if (tparam_l.GetEffectiveBase ().BuiltinType == BuiltinTypeSpec.Type.ValueType)
-							return null;
+				//
+				// a, Both operands are reference-type values or the value null
+				// b, One operand is a value of type T where T is a type-parameter and
+				// the other operand is the value null. Furthermore T does not have the
+				// value type constraint
+				//
+				// LAMESPEC: Very confusing details in the specification, basically any
+				// reference like type-parameter is allowed
+				//
+				var tparam_l = l as TypeParameterSpec;
+				var tparam_r = r as TypeParameterSpec;
+				if (tparam_l != null) {
+						if (right is NullLiteral) {
+							if (tparam_l.GetEffectiveBase ().BuiltinType == BuiltinTypeSpec.Type.ValueType)
+								return null;
 
-					left = new BoxedCast (left, ec.BuiltinTypes.Object);
-					return this;
+						left = new BoxedCast (left, ec.BuiltinTypes.Object);
+						return this;
+					}
+
+					if (!tparam_l.IsReferenceType)
+						return null;
+
+					l = tparam_l.GetEffectiveBase ();
+					left = new BoxedCast (left, l);
+				} else if (left is NullLiteral && tparam_r == null) {
+						if (TypeSpec.IsReferenceType (r))
+							return this;
+
+						if (r.Kind == MemberKind.InternalCompilerType)
+						return null;
 				}
 
-				if (!tparam_l.IsReferenceType)
-					return null;
+				if (tparam_r != null) {
+						if (left is NullLiteral) {
+							if (tparam_r.GetEffectiveBase ().BuiltinType == BuiltinTypeSpec.Type.ValueType)
+								return null;
 
-				l = tparam_l.GetEffectiveBase ();
-				left = new BoxedCast (left, l);
-			} else if (left is NullLiteral && tparam_r == null) {
-					if (TypeSpec.IsReferenceType (r))
+						right = new BoxedCast (right, ec.BuiltinTypes.Object);
 						return this;
+					}
 
-					if (r.Kind == MemberKind.InternalCompilerType)
-					return null;
-			}
+					if (!tparam_r.IsReferenceType)
+						return null;
 
-			if (tparam_r != null) {
-					if (left is NullLiteral) {
-						if (tparam_r.GetEffectiveBase ().BuiltinType == BuiltinTypeSpec.Type.ValueType)
-							return null;
+					r = tparam_r.GetEffectiveBase ();
+					right = new BoxedCast (right, r);
+				} else if (right is NullLiteral) {
+						if (TypeSpec.IsReferenceType (l))
+							return this;
 
-					right = new BoxedCast (right, ec.BuiltinTypes.Object);
-					return this;
+						if (l.Kind == MemberKind.InternalCompilerType)
+						return null;
 				}
 
-				if (!tparam_r.IsReferenceType)
-					return null;
+				//
+				// LAMESPEC: method groups can be compared when they convert to other side delegate
+				//
+				if (l.IsDelegate) {
+					if (right.eclass == ExprClass.MethodGroup) {
+						result = Convert.ImplicitConversion (ec, right, l, loc);
+						if (result == null)
+							return null;
 
-				r = tparam_r.GetEffectiveBase ();
-				right = new BoxedCast (right, r);
-			} else if (right is NullLiteral) {
-					if (TypeSpec.IsReferenceType (l))
-						return this;
-
-					if (l.Kind == MemberKind.InternalCompilerType)
-					return null;
-			}
-
-			//
-			// LAMESPEC: method groups can be compared when they convert to other side delegate
-			//
-			if (l.IsDelegate) {
-				if (right.eclass == ExprClass.MethodGroup) {
-					result = Convert.ImplicitConversion (ec, right, l, loc);
+						right = result;
+						r = l;
+					} else if (r.IsDelegate && l != r) {
+						return null;
+					}
+				} else if (left.eclass == ExprClass.MethodGroup && r.IsDelegate) {
+					result = Convert.ImplicitConversionRequired (ec, left, r, loc);
 					if (result == null)
 						return null;
 
-					right = result;
-					r = l;
-				} else if (r.IsDelegate && l != r) {
-					return null;
+					left = result;
+					l = r;
+				} else {
+					no_arg_conv = l == r && !l.IsStruct;
 				}
-			} else if (left.eclass == ExprClass.MethodGroup && r.IsDelegate) {
-				result = Convert.ImplicitConversionRequired (ec, left, r, loc);
-				if (result == null)
-					return null;
-
-				left = result;
-				l = r;
-			} else {
-				no_arg_conv = l == r && !l.IsStruct;
-			}
 			}
 
 			//

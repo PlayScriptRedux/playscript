@@ -1,31 +1,23 @@
-package {
+package org.computus.model
+{
 
-	public class Test {
+	public class Timekeeper
+	{
+		public var m_direction:uint;
 
-		public static function throwException():void {
-			throw new System.Exception("Blah blah");
-		}
+		public static function Main():void
+		{
+			var a:Array = new Array();
 
-		public static function throwError():void {
-			throw new Error("Blah blah");
-		}
-
-		public static function Main():void {
-
-			trace("Testing error handling!");
-
-			try { 
-				throwException();
-			} catch (e1:Error) {
-				trace(e1.message);
+			if (false != a) {
+				trace("foo");
 			}
 
-			try {
-				throwError();
-			} catch (e2:Error) {
-				trace(e2.message);
+			var closestDirection:int = 0;
+
+			if (closestDirection != Number.MAX_VALUE && closestDirection != m_direction) {
+				trace("bar");
 			}
 		}
 	}
-
 }
