@@ -137,6 +137,72 @@ namespace Telemetry
 
 			public static Amf3ClassDef ClassDef = new Amf3ClassDef(".region", new string[] { "xmin", "xmax", "ymin", "ymax", "name", "symbolname", "modified" }, false, false);
 		}
+
+		// this class is used for object alloc tracking through ".memory.newObject"
+		public class Memory_objectAllocation : IAmf3Serializable 
+		{
+			public int time;
+			public int id;
+			public int size;
+			public uint[] allocstack;
+			public string type;
+
+			#region IAmf3Serializable implementation
+			public void Serialize(Amf3Writer writer)
+			{
+				writer.WriteObjectHeader(ClassDef);
+				writer.Write(time);
+				writer.Write(id);
+				writer.Write(size);
+				writer.Write(allocstack);
+				writer.Write(type);
+			}
+			#endregion
+
+			public static Amf3ClassDef ClassDef = new Amf3ClassDef("Memory_objectAllocation", new string[] { "time", "id", "size", "allocstack", "type"}, false, false);
+		}
+
+		// this class is used for object alloc tracking through ".memory.deleteObject"
+		public class Memory_deallocation : IAmf3Serializable 
+		{
+			public int time;
+			public int id;
+
+			#region IAmf3Serializable implementation
+			public void Serialize(Amf3Writer writer)
+			{
+				writer.WriteObjectHeader(ClassDef);
+				writer.Write(time);
+				writer.Write(id);
+			}
+			#endregion
+
+			public static Amf3ClassDef ClassDef = new Amf3ClassDef("Memory_deallocation", new string[] { "time", "id"}, false, false);
+		}
+
+
+		// this class is used for sampler data through ".sampler.sample"
+		public class Sampler_sampler : IAmf3Serializable 
+		{
+			public int time;
+			public int numticks;
+			public uint[] ticktimes;
+			public uint[] callstack;
+
+			#region IAmf3Serializable implementation
+			public void Serialize(Amf3Writer writer)
+			{
+				writer.WriteObjectHeader(ClassDef);
+				writer.Write(time);
+				writer.Write(numticks);
+				writer.Write(ticktimes);
+				writer.Write(callstack);
+			}
+			#endregion
+
+			public static Amf3ClassDef ClassDef = new Amf3ClassDef("Sampler_sampler", new string[] { "time", "numticks", "ticktimes", "callstack"}, false, false);
+		}
+
 	}
 }
 
