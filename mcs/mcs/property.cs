@@ -251,8 +251,6 @@ namespace Mono.CSharp
 
 			protected ParametersCompiled parameters;
 
-			private bool _applyingAttribute;
-
 			public SetMethod (PropertyBase method, Modifiers modifiers, ParametersCompiled parameters, Attributes attrs, Location loc)
 				: base (method, Prefix, modifiers, attrs, loc)
 			{
