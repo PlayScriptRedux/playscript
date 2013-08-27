@@ -1356,15 +1356,23 @@ constant_initializer_expr
 field_declaration
 	: opt_attributes
 	  opt_modifiers
-	  VAR IDENTIFIER COLON member_type
+	  VAR IDENTIFIER opt_member_type
 	  {
 	  	lexer.parsing_generic_declaration = false;
 
-		FullNamedExpression type = (FullNamedExpression) $6;
+	  	var lt = (LocatedToken) $4;
+	  	if ($5 == null) {
+		  	if (settings.PsStrictMode)
+				report.Error (7012, lt.Location, "Field `{0}' has no type declaration.", lt.Value);
+			else
+				report.Warning (1009, 1, lt.Location, "Field `{0}' has no type declaration.", lt.Value);
+			$5 = new UntypedTypeExpression (GetLocation ($4));
+		}
+
+		FullNamedExpression type = (FullNamedExpression) $5;
 		if (type.Type != null && type.Type.Kind == MemberKind.Void)
-			report.Error (670, GetLocation ($6), "Fields cannot have void type");
-			
-		var lt = (LocatedToken) $4;
+			report.Error (670, GetLocation ($5), "Fields cannot have void type");
+		
 		current_field = new Field (current_type, type, (Modifiers) $2, new MemberName (lt.Value, lt.Location), (Attributes) $1);
 		if (is_config_enabled) {
 			current_type.AddField (current_field);
@@ -1375,13 +1383,13 @@ field_declaration
 	  opt_field_initializer
 	  opt_field_declarators
 	  SEMICOLON
-	  { 
+	  {
 		if (doc_support) {
 			current_field.DocComment = Lexer.consume_doc_comment ();
 			Lexer.doc_state = XmlCommentState.Allowed;
 		}
-			
-		lbag.AddMember (current_field, mod_locations, GetLocation ($10));
+		
+		lbag.AddMember (current_field, mod_locations, GetLocation ($9));
 		$$ = current_field;
 		current_field = null;
 	  }
@@ -1456,22 +1464,36 @@ field_declarators
 	;
 	
 field_declarator
-	: COMMA IDENTIFIER COLON member_type
+	: COMMA IDENTIFIER opt_member_type
 	  {
 		var lt = (LocatedToken) $2;
-	  	$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), null, (FullNamedExpression) $4);
+		if ($3 == null) {
+		  	if (settings.PsStrictMode)
+				report.Error (7012, lt.Location, "Field `{0}' has no type declaration.", lt.Value);
+			else
+				report.Warning (1009, 1, lt.Location, "Field `{0}' has no type declaration.", lt.Value);
+			$3 = new UntypedTypeExpression (GetLocation ($2));
+		}
+	  	$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), null, (FullNamedExpression) $3);
 	  	lbag.AddLocation ($$, GetLocation ($1));
 	  }
-	| COMMA IDENTIFIER COLON member_type ASSIGN
+	| COMMA IDENTIFIER opt_member_type ASSIGN
 	  {
 		++lexer.parsing_block;
 	  }
 	  variable_initializer
 	  {
 		--lexer.parsing_block;
-		var lt = (LocatedToken) $2;	  
-	  	$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), (Expression) $7, (FullNamedExpression) $4);
-	  	lbag.AddLocation ($$, GetLocation ($1), GetLocation ($5));
+		var lt = (LocatedToken) $2;
+		if ($3 == null) {
+		  	if (settings.PsStrictMode)
+				report.Error (7012, lt.Location, "Field `{0}' has no type declaration.", lt.Value);
+			else
+				report.Warning (1009, 1, lt.Location, "Field `{0}' has no type declaration.", lt.Value);
+			$3 = new UntypedTypeExpression (GetLocation ($2));
+		}
+	  	$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), (Expression) $6, (FullNamedExpression) $3);
+	  	lbag.AddLocation ($$, GetLocation ($1), GetLocation ($4));
 	  }
 	;	
 
