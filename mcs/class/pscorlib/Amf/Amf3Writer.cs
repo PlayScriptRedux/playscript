@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using _root;
 
 namespace Amf
 {
@@ -43,6 +44,8 @@ namespace Amf
 
         private Dictionary<Amf3ClassDef, int> classDefTable =
             new Dictionary<Amf3ClassDef, int>();
+
+		private readonly byte[] tempData = new byte[8];
 
         private const int amfIntMaxValue = int.MaxValue >> 3;
         private const int amfIntMinValue = int.MinValue >> 3;
@@ -119,11 +122,6 @@ namespace Amf
                 return;
             }
 
-			if (obj is Amf3String) {
-				Write((Amf3String)obj);
-				return;
-			}
-
 			if (obj is _root.Date) {
 				Write((_root.Date)obj);
 				return;
@@ -134,15 +132,40 @@ namespace Amf
                 return;
             }
 
-            if (obj is IList) {
-                Write((IList)obj);
-                return;
-            }
+			if (obj is flash.utils.ByteArray) {
+				Write((flash.utils.ByteArray)obj);
+				return;
+			}
 
-            if (obj is Amf3Object) {
-                Write((Amf3Object)obj);
-                return;
-            }
+			if (obj is Vector<uint>) {
+				Write((Vector<uint>)obj);
+				return;
+			}
+
+			if (obj is Vector<int>) {
+				Write((Vector<int>)obj);
+				return;
+			}
+
+			if (obj is Vector<double>) {
+				Write((Vector<double>)obj);
+				return;
+			}
+
+			if (obj is uint[]) {
+				Write((uint[])obj);
+				return;
+			}
+
+			if (obj is int[]) {
+				Write((int[])obj);
+				return;
+			}
+
+			if (obj is double[]) {
+				Write((double[])obj);
+				return;
+			}
 
             throw new ArgumentException("Cannot serialize object of type " + obj.GetType().FullName);
         }
@@ -213,11 +236,47 @@ namespace Amf
             TypelessWrite(array);
         }
 
-        public void Write(IList list)
-        {
-            Write(Amf3TypeCode.Array);
-            TypelessWrite(list);
-        }
+		public void Write(flash.utils.ByteArray byteArray)
+		{
+			Write(Amf3TypeCode.ByteArray);
+			TypelessWrite(byteArray);
+		}
+
+		public void Write(Vector<int> vector)
+		{
+			Write(Amf3TypeCode.VectorInt);
+			TypelessWrite(vector);
+		}
+
+		public void Write(Vector<uint> vector)
+		{
+			Write(Amf3TypeCode.VectorUInt);
+			TypelessWrite(vector);
+		}
+
+		public void Write(Vector<double> vector)
+		{
+			Write(Amf3TypeCode.VectorDouble);
+			TypelessWrite(vector);
+		}
+
+		public void Write(int[] vector)
+		{
+			Write(Amf3TypeCode.VectorInt);
+			TypelessWrite(vector);
+		}
+
+		public void Write(uint[] vector)
+		{
+			Write(Amf3TypeCode.VectorUInt);
+			TypelessWrite(vector);
+		}
+
+		public void Write(double[] vector)
+		{
+			Write(Amf3TypeCode.VectorDouble);
+			TypelessWrite(vector);
+		}
 
         public void Write(Amf3Object obj)
         {
@@ -265,7 +324,8 @@ namespace Amf
 
         public void TypelessWrite(double number)
         {
-            Stream.Write(conv.GetBytes(number));
+			conv.PutBytes(tempData, 0, number);
+            Stream.Write(tempData, 0, sizeof(double));
         }
 
 		public void TypelessWrite(Amf3String str)
@@ -366,21 +426,115 @@ namespace Amf
             }
         }
 
-        public void TypelessWrite(IList list)
-        {
-            if (CheckObjectTable(list))
-                return;
+		public void TypelessWrite(flash.utils.ByteArray byteArray)
+		{
+			if (CheckObjectTable(byteArray))
+				return;
 
-			StoreObject(list);
+			StoreObject(byteArray);
 
-            TypelessWrite((list.Count << 1) | 1);
+			// write byte array length
+			TypelessWrite((byteArray.length << 1) | 1);
 
-            TypelessWrite(""); // Empty associative array
+			// write bytes of byte array
+			Stream.Write(byteArray.getRawArray(), 0, (int)byteArray.length);
+		}
 
-            foreach (object i in list) {
-                Write(i);
-            }
-        }
+		private bool WriteVectorHeader(object vector, uint length, bool isFixed)
+		{
+			if (CheckObjectTable(vector))
+				return true;
+
+			StoreObject(vector);
+
+			TypelessWrite((length << 1) | 1);
+			Stream.WriteByte(isFixed ? (byte)1 : (byte)0); 
+			return false;
+		}
+
+		public void TypelessWrite(Vector<uint> vector)
+		{
+			// write vector header
+			if (WriteVectorHeader(vector, vector.length, vector.@fixed))
+				return;
+
+			// write vector data
+			int length = (int)vector.length;
+			for (int i=0; i < length; i++) {
+				conv.PutBytes(tempData, 0, vector[i]);
+				Stream.Write(tempData, 0, sizeof(uint));
+			}
+		}
+
+		public void TypelessWrite(Vector<int> vector)
+		{
+			// write vector header
+			if (WriteVectorHeader(vector, vector.length, vector.@fixed))
+				return;
+
+			// write vector data
+			int length = (int)vector.length;
+			for (int i=0; i < length; i++) {
+				conv.PutBytes(tempData, 0, vector[i]);
+				Stream.Write(tempData, 0, sizeof(int));
+			}
+		}
+
+		public void TypelessWrite(Vector<double> vector)
+		{
+			// write vector header
+			if (WriteVectorHeader(vector, vector.length, vector.@fixed))
+				return;
+
+			// write vector data
+			int length = (int)vector.length;
+			for (int i=0; i < length; i++) {
+				conv.PutBytes(tempData, 0, vector[i]);
+				Stream.Write(tempData, 0, sizeof(double));
+			}
+		}
+
+		public void TypelessWrite(uint[] vector)
+		{
+			// write vector header
+			if (WriteVectorHeader(vector, (uint)vector.Length, true))
+				return;
+
+			// write vector data
+			int length = vector.Length;
+			for (int i=0; i < length; i++) {
+				conv.PutBytes(tempData, 0, vector[i]);
+				Stream.Write(tempData, 0, sizeof(uint));
+			}
+		}
+
+		public void TypelessWrite(int[] vector)
+		{
+			// write vector header
+			if (WriteVectorHeader(vector, (uint)vector.Length, true))
+				return;
+
+			// write vector data
+			int length = vector.Length;
+			for (int i=0; i < length; i++) {
+				conv.PutBytes(tempData, 0, vector[i]);
+				Stream.Write(tempData, 0, sizeof(int));
+			}
+		}
+
+		public void TypelessWrite(double[] vector)
+		{
+			// write vector header
+			if (WriteVectorHeader(vector, (uint)vector.Length, true))
+				return;
+
+			// write vector data
+			int length = vector.Length;
+			for (int i=0; i < length; i++) {
+				conv.PutBytes(tempData, 0, vector[i]);
+				Stream.Write(tempData, 0, sizeof(double));
+			}
+		}
 
 		public void TypelessWrite(Amf3ClassDef classDef)
 		{

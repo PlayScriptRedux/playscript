@@ -25,7 +25,7 @@ using System.Collections.Generic;
 
 namespace Amf
 {
-    public class Amf3Object
+    public class Amf3Object : IAmf3Serializable
     {
         public Amf3ClassDef ClassDef { get; private set; }
 
@@ -63,5 +63,12 @@ namespace Amf
             Externalizable = 4,
             Dynamic = 8
         }
+
+		#region IAmf3Serializable implementation
+		public void Serialize(Amf3Writer writer)
+		{
+			writer.Write(this);
+		}
+		#endregion
     }
 }
