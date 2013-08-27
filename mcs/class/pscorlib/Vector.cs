@@ -913,7 +913,7 @@ namespace _root {
 
 		public override string toString() 
 		{
-			return this.ToString();
+			return this.join(",");
 		}
 		
 		public uint unshift(T item) 

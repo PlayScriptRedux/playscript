@@ -116,13 +116,26 @@ namespace flash.events
                     var l = evList.Count;
                     for (var i = 0; i < l; i++) {
                         // Invoke the method on the listener
-//						var spanBegin = Telemetry.Session.BeginSpan();
 						EventListener listener = evList[i];
-						listener.invoker.InvokeOverrideA1(ev);
-//						Telemetry.Session.EndSpanValue(".as.event", spanBegin, ev.type);
+						try
+						{
+							listener.invoker.InvokeOverrideA1(ev);
+						}
+						catch (Exception e)
+						{
+							// If you have an exception here, big chance that you did not turn on exception catching in Xamarin
+							// Or that Xamarin is being naughty with you, and removed exceptions catching every few days behind your back.
+							if (e.InnerException != null)
+							{
+								throw e.InnerException;
+							}
+							else
+							{
+								throw e;
+							}
+						}
                     }
 					dispatched = (l != 0);
-
                 }
 				return dispatched;
 			}

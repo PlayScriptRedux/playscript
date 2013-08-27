@@ -480,7 +480,7 @@ namespace PlayScript
 				sum += milliseconds;
 			}
 			sum /= sFrameCount;
-			tw.WriteLine("Avg (clamped):{0,6:0.00}ms - {1, 12:0.0} fps        Clamped at {2:0.00}ms", sum, GetFpsFromMs(sum), minimumClampedValue);
+			tw.WriteLine("Avg (clamped):{0,6:0.00}ms - {1, 12:0.0} fps        min {2:0.00}ms", sum, GetFpsFromMs(sum), minimumClampedValue);
 		}
 
 		private static void PrintPercentile(TextWriter tw, string key, int percentile)
@@ -537,8 +537,8 @@ namespace PlayScript
 			PerformanceFrameData performanceFrameData = GetPerformanceFrameData();
 			PrintAverageClamped(tw, "frame", performanceFrameData.FastFrame);
 			PrintPercentile(tw, "frame", 95);
-			PrintPercentageOfFrames(tw, "frame", "% Fast Frames", a => (a <= performanceFrameData.FastFrame), string.Format("Lower than {0:0.00}ms", performanceFrameData.FastFrame));
-			PrintPercentageOfFrames(tw, "frame", "% Slow frames", a => (a >= performanceFrameData.SlowFrame), string.Format("Higher than {0:0.00}ms", performanceFrameData.SlowFrame));
+			PrintPercentageOfFrames(tw, "frame", "% Fast Frames", a => (a <= performanceFrameData.FastFrame), string.Format("<={0:0.00}ms", performanceFrameData.FastFrame));
+			PrintPercentageOfFrames(tw, "frame", "% Slow frames", a => (a >= performanceFrameData.SlowFrame), string.Format(">={0:0.00}ms", performanceFrameData.SlowFrame));
 			tw.WriteLine("GC Count:      {0}", sReportGCCount);
 
 			tw.WriteLine("*********** Timing (ms) ***********");

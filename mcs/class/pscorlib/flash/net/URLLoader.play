@@ -22,6 +22,10 @@ package flash.net {
 	import flash.utils.*;
 	import System.Net.*;
 
+#if PLATFORM_MONODROID
+	import Android.App.*;
+#endif
+
 	public class URLLoader extends EventDispatcher {
 
 		//
@@ -268,8 +272,17 @@ package flash.net {
 				return;
 			}
 
+#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
 			// file exists. read it
 			var fileData:byte[] = File.ReadAllBytes(path);
+#elif PLATFORM_MONODROID 
+			var dest:MemoryStream = new MemoryStream();
+			var src:Stream = Application.Context.Assets.Open(path);
+			src.CopyTo(dest);
+			var fileData:byte[] = dest.ToArray();
+#else
+			var fileData:byte[] = new byte[0];
+#endif
 
 			switch (dataFormat)
 			{

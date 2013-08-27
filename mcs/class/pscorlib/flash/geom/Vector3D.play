@@ -89,7 +89,10 @@ package flash.geom {
 		}
  	 	
 		public function decrementBy(a:Vector3D):void {
-			throw new System.NotImplementedException();
+			this.x -= a.x;
+			this.y -= a.y;
+			this.z -= a.z;
+			this.w -= a.w;
 		}
 
  	 	public static function distance(pt1:Vector3D, pt2:Vector3D):Number {
@@ -106,8 +109,10 @@ package flash.geom {
 		}
  	 	
 		public function incrementBy(a:Vector3D):void {
-			throw new System.NotImplementedException();
-
+			this.x += a.x;
+			this.y += a.y;
+			this.z += a.z;
+			this.w += a.w;
 		}
  	 	
 		public function nearEquals(toCompare:Vector3D, tolerance:Number, allFour:Boolean = false):Boolean {
@@ -115,7 +120,10 @@ package flash.geom {
 		}
  	 	
 		public function negate():void {
-			throw new System.NotImplementedException();
+			this.x = -this.x;
+			this.y = -this.y;
+			this.z = -this.z;
+			this.w = -this.w;
 		}
  	 	
 		public function normalize():Number {
@@ -155,6 +163,7 @@ package flash.geom {
 			o.x = this.x - a.x;
 			o.y = this.y - a.y;
 			o.z = this.z - a.z;
+			//w?
 			return o;
 		}
  	 	
