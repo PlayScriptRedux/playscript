@@ -17,6 +17,7 @@ namespace flash.utils {
 	using System.IO;
 	using System.IO.Compression;
 	using System.Diagnostics;
+	using System.Text;
 
 	[DebuggerDisplay("length = {length}")]
 	public class ByteArray : _root.Object, IDataInput, IDataOutput {
@@ -180,8 +181,13 @@ namespace flash.utils {
 			return (int)mData[mPosition++];
 		}
  	 	
-		public void readBytes(ByteArray bytes, uint offset = 0, uint length = 0) {
-			throw new NotImplementedException();
+		public void readBytes(ByteArray bytes, uint offset = 0, uint len = 0) {
+			uint pos = position;//need to save the position in case we are reading bytes into ourself.
+			uint oldpos = bytes.position;
+			bytes.position = offset;
+			bytes.writeBytes (this, pos, len);
+			bytes.position = oldpos;
+			position = (len == 0) ? length : (pos + len);
 		}
 
 		public void readBytes(byte[] dest, int offset, int length) {
@@ -227,7 +233,21 @@ namespace flash.utils {
 		}
  	 	
 		public string readMultiByte(uint length, string charSet) {
-			throw new NotImplementedException();
+			checkReadLength((int)length);
+			string str;
+
+			if(charSet.Length>0)
+			{
+				Encoding encoding = Encoding.GetEncoding(charSet);
+				str = encoding.GetString(mData,mPosition, (int)length);
+			}
+			else 
+			{
+				str = System.Text.Encoding.UTF8.GetString(mData, mPosition, (int)length);
+			}
+				// Decode byte sequence
+			mPosition += (int)length;
+			return str;		
 		}
  	 	
 		public dynamic readObject() {
@@ -302,7 +322,7 @@ namespace flash.utils {
 		}
 
 		public void  uncompress(string algorithm = null) {
-
+			position = 0;
 			var inStream = getRawStream();
 			var outStream = new MemoryStream();
 
@@ -313,6 +333,7 @@ namespace flash.utils {
 			{
 				// create inflater
 				var inflater =  new ICSharpCode.SharpZipLib.Zip.Compression.Streams.InflaterInputStream(inStream);
+				inStream.Position = 0;
 
 				// copy stream				
 				inflater.CopyTo(outStream);
@@ -338,7 +359,9 @@ namespace flash.utils {
 			this.length = 0;
 			this.length = (uint)outStream.Length;
 			// read from stream
+			outStream.Position = 0;
 			outStream.Read(mData, 0, (int)this.length);
+			position = 0;
 		}
  	
 		public void writeBoolean(bool value) {
@@ -354,8 +377,8 @@ namespace flash.utils {
 			internalWriteByte((byte)value);
 		}
  	 	
-		public void writeBytes(ByteArray bytes, uint offset = 0, uint length = 0) {
-			throw new NotImplementedException();
+		public void writeBytes(ByteArray bytes, uint offset = 0, uint len = 0) { 
+			writeBytes (bytes.getRawArray(), (int)offset, (int)((len == 0) ? bytes.length - offset : len));
 		}
  	 	
 		public void writeDouble(double value) {
