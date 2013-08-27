@@ -52,7 +52,7 @@ namespace Mono.CSharp
 
 		public override TypeSpec ResolveAsType (IMemberContext mc)
 		{
-			return mc.Module.Compiler.BuiltinTypes.Object;
+			return mc.Module.Compiler.BuiltinTypes.Dynamic;
 		}
 	}
 
