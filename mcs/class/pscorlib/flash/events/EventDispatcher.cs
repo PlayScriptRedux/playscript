@@ -116,10 +116,13 @@ namespace flash.events
                     var l = evList.Count;
                     for (var i = 0; i < l; i++) {
                         // Invoke the method on the listener
+//						var spanBegin = Telemetry.Session.BeginSpan();
 						EventListener listener = evList[i];
 						listener.invoker.InvokeOverrideA1(ev);
+//						Telemetry.Session.EndSpanValue(".as.event", spanBegin, ev.type);
                     }
 					dispatched = (l != 0);
+
                 }
 				return dispatched;
 			}

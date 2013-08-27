@@ -868,6 +868,21 @@
     <Compile Include="..\pscorlib\Amf\Amf3String.cs">
       <Link>Amf\Amf3String.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\Telemetry\Protocol.cs">
+      <Link>Telemetry\Protocol.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\Session.cs">
+      <Link>Telemetry\Session.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\Span.cs">
+      <Link>Telemetry\Span.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\Value.cs">
+      <Link>Telemetry\Value.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\Parser.cs">
+      <Link>Telemetry\Parser.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monodroid.csproj">

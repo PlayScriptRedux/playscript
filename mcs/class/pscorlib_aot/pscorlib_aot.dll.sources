@@ -263,6 +263,11 @@
 ../pscorlib/String.cs
 ../pscorlib/SWFAttribute.cs
 ../pscorlib/SyntaxError.play
+../pscorlib/Telemetry/Parser.cs
+../pscorlib/Telemetry/Protocol.cs
+../pscorlib/Telemetry/Session.cs
+../pscorlib/Telemetry/Span.cs
+../pscorlib/Telemetry/Value.cs
 ../pscorlib/TypeError.play
 ../pscorlib/URIError.play
 ../pscorlib/Vector.cs

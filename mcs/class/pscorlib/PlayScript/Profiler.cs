@@ -149,14 +149,7 @@ namespace PlayScript
 		public static bool Enabled = true;
 		public static bool ProfileGPU = false;
 
-		static Profiler()
-		{
-			// do this to ensure that frame is the first section
-			Begin("frame");
-			End("frame");
-		}
-
-		public static void Begin(string name)
+		public static void Begin(string name, bool useTelemetry = true)
 		{
 			if (!Enabled)
 				return;
@@ -165,14 +158,18 @@ namespace PlayScript
 			if (!sSections.TryGetValue(name, out section)) {
 				section = new Section();
 				section.Name = name;
+				if (useTelemetry)
+					section.Span = new Telemetry.Span(name);
 				sSections[name] = section;
 				// keep ordered list of sections
 				sSectionList.Add(section);
 			}
 
-			section.Timer.Start();
 			section.Stats.Subtract(PlayScript.Stats.CurrentInstance);
 			section.GCCount -= System.GC.CollectionCount(System.GC.MaxGeneration);
+			if (section.Span != null)
+				section.Span.Begin();
+			section.Timer.Start();
 		}
 		
 		public static void End(string name)
@@ -186,6 +183,8 @@ namespace PlayScript
 			}
 
 			section.Timer.Stop();
+			if (section.Span != null)
+				section.Span.End();
 			section.Stats.Add(PlayScript.Stats.CurrentInstance);
 			section.GCCount += System.GC.CollectionCount(System.GC.MaxGeneration);
 		}
@@ -217,7 +216,7 @@ namespace PlayScript
 #if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			if (ProfileGPU) {
 				// this stalls and waits for the gpu to finish 
-				PlayScript.Profiler.Begin("gpu");
+				PlayScript.Profiler.Begin("gpu", false);
 				GL.Finish();
 				PlayScript.Profiler.End("gpu");
 			}
@@ -266,7 +265,7 @@ namespace PlayScript
 				}
 			}
 
-			Profiler.Begin("frame");
+			Profiler.Begin("frame", false);
 		}
 
 		/// <summary>
@@ -650,6 +649,7 @@ namespace PlayScript
 			public List<SectionHistory>	History = new List<SectionHistory>();
 			public Stats 				Stats = new PlayScript.Stats();	
 			public int 					GCCount;
+			public Telemetry.Span		Span;
 		};
 
 		private static Stopwatch sGlobalTimer = Stopwatch.StartNew();

@@ -50,6 +50,8 @@ namespace PlayScript
 			
 			// construct flash stage
 			mStage = new flash.display.Stage ((int)bounds.Width, (int)bounds.Height);
+
+			Telemetry.Session.Connect();
 		}
 
 		// the main class of the player (will be loaded after player initializes)
@@ -520,7 +522,7 @@ namespace PlayScript
 			mStage.dispatchEvent(tge);
 		}
 #endif
-		
+
 		public void OnFrame(RectangleF bounds)
 		{
 			//GL.ClearColor (1,0,1,0);
@@ -545,17 +547,23 @@ namespace PlayScript
 			DispatchScrollWheelEvents();
 			
 			// stage enter frame
+			mSpanPlayerEnterFrame.Begin();
 			Profiler.Begin("enterFrame");
 			mStage.onEnterFrame ();
 			Profiler.End("enterFrame");
+			mSpanPlayerEnterFrame.End();
 
 			// update all timer objects
+			mSpanPlayerTimer.Begin();
 			Profiler.Begin("timers");
 			flash.utils.Timer.advanceAllTimers();
 			Profiler.End("timers");
+			mSpanPlayerTimer.End();
 
 			// stage exit frame
-			mStage.onExitFrame ();
+			mSpanPlayerExitFrame.Begin();
+			mStage.onExitFrame();
+			mSpanPlayerExitFrame.End();
 
 			mFrameCount++;
 		}
@@ -564,6 +572,8 @@ namespace PlayScript
 		// runs until graphics have been presented through Stage3D
 		public void RunUntilPresent(RectangleF bounds, Action onPresent = null, int maxFrames = 1000)
 		{
+			Telemetry.Session.OnBeginFrame();
+
 			bool didPresent = false;
 
 			// set context3D callback
@@ -583,6 +593,8 @@ namespace PlayScript
 			}
 
 			Profiler.OnFrame();
+
+			Telemetry.Session.OnEndFrame();
 		}
 		
 
@@ -671,6 +683,10 @@ namespace PlayScript
 		private bool mSkipNextMouseUp = false;
 
 		private static List<string> sResourceDirectories = new List<string>();
+
+		private readonly Telemetry.Span mSpanPlayerEnterFrame = new Telemetry.Span(".player.enterframe");
+		private readonly Telemetry.Span mSpanPlayerExitFrame = new Telemetry.Span(".player.exitframe");
+		private readonly Telemetry.Span mSpanPlayerTimer = new Telemetry.Span(".player.timer");
 	}
 }
 		
