@@ -3,7 +3,7 @@ package org.computus.model
 
 	public class Timekeeper
 	{
-		public var m_direction:uint;
+		public static var m_direction:uint;
 
 		public static function Main():void
 		{

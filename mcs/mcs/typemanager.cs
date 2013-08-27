@@ -67,8 +67,9 @@ namespace Mono.CSharp
 
 		// Predefined operators tables
 		public readonly Binary.PredefinedOperator[] OperatorsBinaryStandard;
-		public readonly Binary.PredefinedOperator[] AsOperatorsBinaryStandard; // PlayScript - Include BOOL conversions for logical ops
+		public readonly Binary.PredefinedOperator[] AsOperatorsBinaryStandard; // PlayScript - Include additional implicit conversion matches
 		public readonly Binary.PredefinedOperator[] OperatorsBinaryEquality;
+		public readonly Binary.PredefinedOperator[] AsOperatorsBinaryEquality;  // PlayScript - Include additional implicit conversion matches
 		public readonly Binary.PredefinedOperator[] OperatorsBinaryUnsafe;
 		public readonly TypeSpec[][] OperatorsUnary;
 		public readonly TypeSpec[] OperatorsUnaryMutator;
@@ -123,6 +124,7 @@ namespace Mono.CSharp
 			OperatorsBinaryStandard = Binary.CreateStandardOperatorsTable (this);
 			AsOperatorsBinaryStandard = Binary.CreateAsStandardOperatorsTable (this);
 			OperatorsBinaryEquality = Binary.CreateEqualityOperatorsTable (this);
+			AsOperatorsBinaryEquality = Binary.CreateAsEqualityOperatorsTable (this);
 			OperatorsBinaryUnsafe = Binary.CreatePointerOperatorsTable (this);
 			OperatorsUnary = Unary.CreatePredefinedOperatorsTable (this);
 			OperatorsUnaryMutator = UnaryMutator.CreatePredefinedOperatorsTable (this);

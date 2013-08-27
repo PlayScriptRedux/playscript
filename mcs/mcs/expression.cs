@@ -2109,6 +2109,23 @@ namespace Mono.CSharp
 	/// </summary>
 	public partial class Binary : Expression, IDynamicBinder
 	{
+		//
+		// Control how implitic conversions are handled on operators for ActionScript/PlayScript.  In C# only valid up numeric
+		// implicit conversions are allowed, and so the operator matching algorithm for Binary operators works such that the lowest matching
+		// implicit conversion type is returned when finding a matching predefined operator.   In AS however BOTH up and down conversions are
+		// allowed, which causes the matching algorithm for Binary to fail as ALL of the potential matches actually succeed (due to implicit 
+		// conversions to any type).  To fix this we specifically turn on/off up/down conversions for specific ActionScript predefined operator 
+		// types so that the matching algorithm can match first for the best non-any conversion operators, and only fall back on downcasting when
+		// all other matches fail.
+		//
+		[Flags]
+		public enum AsOperatorConversions
+		{
+			ConvertArgsToRetType = 1,			// Force left/right args to be implicitly converted to return type (regarless of input type)
+			LeftConvertAny     	 = 2,			// Allow both up and down conversions on left argument (the default is C# up conversions only)
+			RightConvertAny    	 = 4			// Allow both up and down conversions on right argument (the default is C# up conversions only)
+		};
+
 		public class PredefinedOperator
 		{
 			protected readonly TypeSpec left;
@@ -2117,34 +2134,34 @@ namespace Mono.CSharp
 			protected readonly TypeSpec right_unwrap;
 			public readonly Operator OperatorsMask;
 			public TypeSpec ReturnType;
-			public bool ImplicitConv;
+			public AsOperatorConversions AsConversions;
 
 			public PredefinedOperator (TypeSpec ltype, TypeSpec rtype, Operator op_mask)
-				: this (ltype, rtype, op_mask, ltype, false)
+				: this (ltype, rtype, op_mask, ltype, 0)
 			{
 			}
 
 			public PredefinedOperator (TypeSpec type, Operator op_mask, TypeSpec return_type)
-				: this (type, type, op_mask, return_type, false)
+				: this (type, type, op_mask, return_type, 0)
 			{
 			}
 
-			public PredefinedOperator (TypeSpec type, Operator op_mask, TypeSpec return_type, bool implicit_conv)
-				: this (type, type, op_mask, return_type, implicit_conv)
+			public PredefinedOperator (TypeSpec type, Operator op_mask, TypeSpec return_type, AsOperatorConversions as_conv)
+				: this (type, type, op_mask, return_type, as_conv)
 			{
 			}
 
 			public PredefinedOperator (TypeSpec type, Operator op_mask)
-				: this (type, type, op_mask, type, false)
+				: this (type, type, op_mask, type, 0)
 			{
 			}
 
 			public PredefinedOperator (TypeSpec ltype, TypeSpec rtype, Operator op_mask, TypeSpec return_type)
-				: this (ltype, rtype, op_mask, return_type, false)
+				: this (ltype, rtype, op_mask, return_type, 0)
 			{
 			}
 
-			public PredefinedOperator (TypeSpec ltype, TypeSpec rtype, Operator op_mask, TypeSpec return_type, bool implicit_conv)
+			public PredefinedOperator (TypeSpec ltype, TypeSpec rtype, Operator op_mask, TypeSpec return_type, AsOperatorConversions as_conv)
 			{
 				if ((op_mask & Operator.ValuesOnlyMask) != 0)
 					throw new InternalErrorException ("Only masked values can be used");
@@ -2161,7 +2178,7 @@ namespace Mono.CSharp
 				this.right = rtype;
 				this.OperatorsMask = op_mask;
 				this.ReturnType = return_type;
-				this.ImplicitConv = implicit_conv;
+				this.AsConversions = as_conv;
 			}
 
 			public bool IsLifted {
@@ -2177,8 +2194,9 @@ namespace Mono.CSharp
 				var left_expr = b.left;
 				var right_expr = b.right;
 
-				var left_type = ImplicitConv ? ReturnType : left;
-				var right_type = ImplicitConv ? ReturnType : right;
+				// Force conversion to return type..
+				var left_type = ((AsConversions & AsOperatorConversions.ConvertArgsToRetType) != 0) ? ReturnType : left;
+				var right_type = ((AsConversions & AsOperatorConversions.ConvertArgsToRetType) != 0) ? ReturnType : right;
 
 				b.type = ReturnType;
 
@@ -2347,10 +2365,13 @@ namespace Mono.CSharp
 				if (left == lexpr.Type && right == rexpr.Type)
 					return true;
 
-				bool upconvert_only = (OperatorsMask & Binary.Operator.LogicalMask) == 0;
-				bool right_upconvert_only = upconvert_only && (OperatorsMask & Binary.Operator.ShiftMask) == 0;
+				// PlayScript/ActionScript - We need to turn on/off ActionScripts "convert to any" behavior or matching for the best
+				// argument conversions will not work.  We turn this behavior on for logical and certain other operator combinations.
+				// These flags are only ever set in PlayScript, and implicit conversions to any type only work in PlayScript.
+				bool left_upconvert_only = (AsConversions & AsOperatorConversions.LeftConvertAny) == 0;
+				bool right_upconvert_only = (AsConversions & AsOperatorConversions.RightConvertAny) == 0;
 
-				return Convert.ImplicitConversionExists (ec, lexpr, left, upconvert_only) &&
+				return Convert.ImplicitConversionExists (ec, lexpr, left, left_upconvert_only) &&
 					Convert.ImplicitConversionExists (ec, rexpr, right, right_upconvert_only);
 			}
 
@@ -3100,14 +3121,14 @@ namespace Mono.CSharp
 						}
 					} else if (l.IsDelegate || r.IsDelegate) {
 						//
-				// Delegates
+						// Delegates
 						//
 						expr = ResolveOperatorDelegate (rc, l, r);
 
-					// TODO: Can this be ambiguous
-					if (expr != null)
-						return expr;
-				}
+						// TODO: Can this be ambiguous
+						if (expr != null)
+							return expr;
+					}
 				}
 			}
 
@@ -3295,22 +3316,25 @@ namespace Mono.CSharp
 				new PredefinedOperator (types.Double, Operator.ComparisonMask, bool_type),
 				new PredefinedOperator (types.Decimal, Operator.ComparisonMask, bool_type),
 
-				new PredefinedOperator (types.Int, Operator.LogicalMask, bool_type, true),
-				new PredefinedOperator (types.UInt, Operator.LogicalMask, bool_type, true),
-				new PredefinedOperator (types.Long, Operator.LogicalMask, bool_type, true),
-				new PredefinedOperator (types.ULong, Operator.LogicalMask, bool_type, true),
-				new PredefinedOperator (types.Float, Operator.LogicalMask, bool_type, true),
-				new PredefinedOperator (types.Double, Operator.LogicalMask, bool_type, true),
-				new PredefinedOperator (types.Decimal, Operator.LogicalMask, bool_type, true),
+				// PlayScript/ActionScript allows logical operators where left/right arguments are numeric types (these don't exist in C#)
+				new PredefinedOperator (types.Int, Operator.LogicalMask, bool_type, AsOperatorConversions.ConvertArgsToRetType | AsOperatorConversions.LeftConvertAny | AsOperatorConversions.RightConvertAny),
+				new PredefinedOperator (types.UInt, Operator.LogicalMask, bool_type, AsOperatorConversions.ConvertArgsToRetType | AsOperatorConversions.LeftConvertAny | AsOperatorConversions.RightConvertAny),
+				new PredefinedOperator (types.Long, Operator.LogicalMask, bool_type, AsOperatorConversions.ConvertArgsToRetType | AsOperatorConversions.LeftConvertAny | AsOperatorConversions.RightConvertAny),
+				new PredefinedOperator (types.ULong, Operator.LogicalMask, bool_type, AsOperatorConversions.ConvertArgsToRetType | AsOperatorConversions.LeftConvertAny | AsOperatorConversions.RightConvertAny),
+				new PredefinedOperator (types.Float, Operator.LogicalMask, bool_type, AsOperatorConversions.ConvertArgsToRetType | AsOperatorConversions.LeftConvertAny | AsOperatorConversions.RightConvertAny),
+				new PredefinedOperator (types.Double, Operator.LogicalMask, bool_type, AsOperatorConversions.ConvertArgsToRetType | AsOperatorConversions.LeftConvertAny | AsOperatorConversions.RightConvertAny),
+				new PredefinedOperator (types.Decimal, Operator.LogicalMask, bool_type, AsOperatorConversions.ConvertArgsToRetType | AsOperatorConversions.LeftConvertAny | AsOperatorConversions.RightConvertAny),
 
 				new PredefinedStringOperator (types.String, Operator.AdditionMask, types.String),
 				// Remaining string operators are in lifted tables
 
-				new PredefinedOperator (bool_type, Operator.BitwiseMask | Operator.LogicalMask | Operator.EqualityMask, bool_type),
+				// PlayScript/ActionScript bitwise, logical, and equality arguments can always be converted to bool (allow any up/down conversions)
+				new PredefinedOperator (bool_type, Operator.BitwiseMask | Operator.LogicalMask | Operator.EqualityMask, bool_type, AsOperatorConversions.LeftConvertAny | AsOperatorConversions.RightConvertAny),
 
-				new PredefinedOperator (types.UInt, types.Int, Operator.ShiftMask),
-				new PredefinedOperator (types.Long, types.Int, Operator.ShiftMask),
-				new PredefinedOperator (types.ULong, types.Int, Operator.ShiftMask)
+				// PlayScript/ActionScript right args for shift operators can be up/down converted to the proper target type (allow any right conversions)
+				new PredefinedOperator (types.UInt, types.Int, Operator.ShiftMask, types.UInt, AsOperatorConversions.RightConvertAny),
+				new PredefinedOperator (types.Long, types.Int, Operator.ShiftMask, types.Long, AsOperatorConversions.RightConvertAny),
+				new PredefinedOperator (types.ULong, types.Int, Operator.ShiftMask, types.ULong, AsOperatorConversions.RightConvertAny)
 			};
 
 		}
@@ -3381,6 +3405,17 @@ namespace Mono.CSharp
 				new PredefinedOperator (types.Float, Operator.EqualityMask, bool_type),
 				new PredefinedOperator (types.Double, Operator.EqualityMask, bool_type),
 				new PredefinedOperator (types.Decimal, Operator.EqualityMask, bool_type),
+			};
+		}
+
+		public static PredefinedOperator[] CreateAsEqualityOperatorsTable (BuiltinTypes types)
+		{
+			TypeSpec bool_type = types.Bool;
+
+			// We only have one operator in this table as we use the Standard equality table first
+			return new[] {
+				// ActionScript/PlayScript - If all else fails, try bool args where one side can be implicity converted to bool
+				new PredefinedOperator (bool_type, Operator.EqualityMask, bool_type, AsOperatorConversions.LeftConvertAny | AsOperatorConversions.RightConvertAny),
 			};
 		}
 
@@ -4334,6 +4369,7 @@ namespace Mono.CSharp
 				if (result != null)
 					return result;
 
+	
 				//
 				// The == and != operators permit one operand to be a value of a nullable
 				// type and the other to be the null literal, even if no predefined or user-defined
@@ -4344,6 +4380,15 @@ namespace Mono.CSharp
 					lifted.Left = left;
 					lifted.Right = right;
 					return lifted.Resolve (ec);
+				}
+
+				//
+				// PlayScript - Try equality with any PlayScript/ActionSCript implicit conversions
+				//
+				if (ec.FileType == SourceFileType.PlayScript) {
+					result = ResolveOperatorPredefined (ec, ec.BuiltinTypes.AsOperatorsBinaryEquality, no_arg_conv);
+					if (result != null)
+						return result;
 				}
 			}
 
