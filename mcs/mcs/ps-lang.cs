@@ -1370,10 +1370,8 @@ namespace Mono.CSharp
 
 			var m = new AsMethod (parent, rt, mod, name, parameters, attrs);
 
-			if (returnType == null) {
+			if (returnType == null)
 				m.HasNoReturnType = true;
-				m.Report.Warning (1009, 1, m.Location, "Method `{0}' return type has no type declaration", m.GetSignatureForError ());
-			}
 
 			return m;
 		}

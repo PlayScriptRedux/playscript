@@ -1660,6 +1660,13 @@ method_header
 			$$ = c;
 		
 		} else {
+			var ret_type = $9 as FullNamedExpression;
+			if (ret_type == null) {
+				if (settings.PsStrictMode)
+					report.Error (7012, GetLocation($8), "Method must specify a return type.");
+				else
+					report.Warning (1009, 1, GetLocation($8), "Method return type has no type declaration.");
+			}
 
 			var method = AsMethod.Create (current_type, (FullNamedExpression) $9, modifiers,
 					     name, current_local_parameters, (Attributes) $1);
