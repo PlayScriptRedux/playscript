@@ -9,8 +9,10 @@ namespace Telemetry
 {
 	public static class Session
 	{
-		public const long Frequency = 1000000;
-		public const int MinTimeSpan = 5;
+		public const long 	Frequency = 1000000;
+		public const int 	MinTimeSpan = 5;
+		public const string Version = "3,2";
+		public const int 	Meta = 293228;
 
 		public static bool Connected
 		{
@@ -175,7 +177,7 @@ namespace Telemetry
 			WriteValue(sNameTrace, trace);
 		}
 
-		public static void WriteSWFStats(string name, int width, int height, int frameRate, int version)
+		public static void WriteSWFStats(string name, int width, int height, int frameRate, int version, int size)
 		{
 			WriteValue(".swf.name", name);
 			WriteValue(".swf.rate", (int)(Frequency / frameRate));
@@ -183,21 +185,27 @@ namespace Telemetry
 			WriteValue(".swf.width", width);
 			WriteValue(".swf.height", height);
 			WriteValue(".swf.playerversion", version);
+			WriteValue(".swf.size", size);
 		}
 		
 		private static void OnBeginSession()
 		{
 			var appName = PlayScript.Player.ApplicationClass.Name;
-			WriteValue(".tlm.version", "3,1");
-			WriteValue(".tlm.meta", 14940);
+			var swfVersion = 21;
+			var swfSize = 4 * 1024 * 1024;
+
+			// write telemetry version
+			WriteValue(".tlm.version", Session.Version);
+			WriteValue(".tlm.meta", Session.Meta);
 
 			// write player info
-			WriteValue(".player.version", "11,4,402,285");
+			WriteValue(".player.version", "11,8,800,94");
+			WriteValue(".player.airversion", "3.8.0.910");
 			WriteValue(".player.type", "Air");
 			WriteValue(".player.debugger", true); 
 			WriteValue(".player.global.date", new _root.Date().getTime());
 			WriteValue(".player.instance", 0);
-			WriteValue(".player.scriptplayerversion", 17);
+			WriteValue(".player.scriptplayerversion", swfVersion);
 
 			// write platform info
 			WriteValue(".platform.capabilities", "&M=Adobe%20Macintosh&R=1680x1050&COL=color&AR=1.0&OS=Mac%20OS%2010.7.4&ARCH=x86&L=en&PR32=t&PR64=t&LS=en;ja;fr;de;es;it;pt;pt-PT;nl;sv;nb;da;fi;ru;pl;zh-Hans;zh-Hant;ko;ar;cs;hu;tr");
@@ -209,22 +217,31 @@ namespace Telemetry
 			WriteValue(".platform.gpu.shadinglanguageversion", "OpenGL ES GLSL ES 1.0");
 			WriteValue(".platform.3d.driverinfo", "OpenGL Vendor=Imagination Technologies Version=OpenGL ES 2.0 IMGSGX535-63.24 Renderer=PowerVR SGX 535 GLSL=OpenGL ES GLSL ES 1.0");
 
-			WriteValue(".mem.total", 1028);
-			WriteValue(".mem.used", 164);
-			WriteValue(".mem.managed", 100);
-			WriteValue(".mem.managed.used", 18);
-			WriteValue(".tlm.category.disable", "3D");
-			WriteValue(".tlm.category.disable", "sampler");
+			// write memory stats
+			WriteValue(".mem.total", 8 * 1024);
+			WriteValue(".mem.used", 4 * 1024);
+			WriteValue(".mem.managed", 0);
+			WriteValue(".mem.managed.used", 0);
+			WriteValue(".mem.telemetry.overhead", 0);
+
+			// write telemetry categories
+			WriteValue(".tlm.category.enable",  "3D");
+			WriteValue(".tlm.category.enable",  "sampler");
 			WriteValue(".tlm.category.disable", "displayobjects");
-			WriteValue(".tlm.category.disable", "alloctraces");
+			WriteValue(".tlm.category.enable",  "alloctraces");
 			WriteValue(".tlm.category.disable", "allalloctraces");
-//			WriteValue(".network.loadmovie", "app:/" + appName );
+			WriteValue(".tlm.category.enable",  "customMetrics");
+
+			WriteValue(".network.loadmovie", "app:/" + appName );
 			WriteValue(".rend.display.mode", "auto");
 
 			// SWF startup timestamp
 			WriteTime(".swf.start");
-			WriteSWFStats(appName, 800, 600, 60, 17);
+			WriteSWFStats(appName, 800, 600, 60, swfVersion, swfSize);
 			WriteMemoryStats();
+
+			// start detailed metrics
+			WriteValue(".tlm.detailedMetrics.start", true);
 
 			Flush();
 		}
@@ -258,25 +275,36 @@ namespace Telemetry
 			// end .exit
 			sSpanExit.End();
 
-//			sSpanTlmDoPlay.Begin();
-// 	add any additional telemetry processing here which will be counted as "overhead"
-//			sSpanTlmDoPlay.End();
+			// 	add any additional telemetry processing here which will be counted as "overhead"
+			sSpanTlmDoPlay.Begin();
+			sSpanTlmDoPlay.End();
 
 			Flush();
+		}
+
+		public static void OnResize(int width, int height)
+		{
+			var rect = new Telemetry.Protocol.Rect();
+			rect.xmin = 0;
+			rect.ymin = 0;
+			rect.xmax = width;
+			rect.ymax = height;
+			WriteValue(".player.view.resize", rect);
 		}
 
 		public static void WriteMemoryStats()
 		{
 			// memory stats
 			// TODO: figure these out
-			WriteValue(".mem.total", 8120);
-			WriteValue(".mem.used", 8000);
-			WriteValue(".mem.managed", 1024);
+			WriteValue(".mem.total", 8 * 1024);
+			WriteValue(".mem.used", 4 * 1024);
+			WriteValue(".mem.managed", 0);
 			WriteValue(".mem.managed.used", 0);
 			WriteValue(".mem.bitmap", 0);
 			WriteValue(".mem.bitmap.display", 0);
 			WriteValue(".mem.script", 0);
-			WriteValue(".mem.network", 63);
+			WriteValue(".mem.network.shared", 0);
+			WriteValue(".mem.telemetry.overhead", 0);
 		}
 
 		public static bool Connect(string host = "localhost", int port = 7934, int bufferSize = 256 * 1024)
