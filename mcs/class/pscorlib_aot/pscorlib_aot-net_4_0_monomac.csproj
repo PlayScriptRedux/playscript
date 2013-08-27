@@ -857,6 +857,9 @@
     <Compile Include="..\pscorlib\Telemetry\Parser.cs">
       <Link>Telemetry\Parser.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\Telemetry\SessionStream.cs">
+      <Link>Telemetry\SessionStream.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="flash\external\" />

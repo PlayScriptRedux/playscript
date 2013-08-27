@@ -39,7 +39,8 @@ package flash.net {
 			var delimiter:Boolean = false;
 			for each (var prop:String in names) {
 				if (delimiter)	sb.Append('&');
-				sb.AppendFormat("{0}={1}", HttpUtility.UrlEncode(prop), HttpUtility.UrlEncode(String(dc.__GetDynamicValue(prop))));
+				var value:Object = dc.__GetDynamicValue(prop);
+				sb.AppendFormat("{0}={1}", System.Uri.EscapeDataString(prop), System.Uri.EscapeDataString(String(value)));
 				delimiter = true;
 			}
 			return sb.ToString();

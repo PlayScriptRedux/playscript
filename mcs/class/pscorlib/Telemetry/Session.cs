@@ -11,6 +11,10 @@ namespace Telemetry
 	{
 		public const long 	Frequency = 1000000;
 		public const int 	MinTimeSpan = 5;
+//		public const string Version = "3,0";
+//		public const int 	Meta = 1483553;
+//		public const string Version = "3,1";
+//		public const int 	Meta = 14940;
 		public const string Version = "3,2";
 		public const int 	Meta = 293228;
 
@@ -39,6 +43,8 @@ namespace Telemetry
 			sOutput.Write(name);
 			sOutput.Write(span);
 			sOutput.Write(delta);
+
+			sStream.FlushBoundary();
 		}
 
 		public static void EndSpan(string name, long beginTime)
@@ -56,6 +62,8 @@ namespace Telemetry
 			sOutput.Write(name);
 			sOutput.Write(span);
 			sOutput.Write(delta);
+
+			sStream.FlushBoundary();
 		}
 
 		public static void EndSpanValue(Amf3String name, long beginTime, object value)
@@ -74,6 +82,8 @@ namespace Telemetry
 			sOutput.Write(span);
 			sOutput.Write(delta);
 			sOutput.Write(value);
+
+			sStream.FlushBoundary();
 		}
 
 		public static void EndSpanValue(string name, long beginTime, object value)
@@ -92,6 +102,8 @@ namespace Telemetry
 			sOutput.Write(span);
 			sOutput.Write(delta);
 			sOutput.Write(value);
+
+			sStream.FlushBoundary();
 		}
 
 		public static void WriteTime(Amf3String name)
@@ -104,6 +116,8 @@ namespace Telemetry
 			sOutput.WriteObjectHeader(Protocol.Time.ClassDef);
 			sOutput.Write(name);
 			sOutput.Write(delta);
+
+			sStream.FlushBoundary();
 		}
 
 		public static void WriteTime(string name)
@@ -116,6 +130,8 @@ namespace Telemetry
 			sOutput.WriteObjectHeader(Protocol.Time.ClassDef);
 			sOutput.Write(name);
 			sOutput.Write(delta);
+
+			sStream.FlushBoundary();
 		}
 
 		public static void WriteValue(Amf3String name, int value)
@@ -125,6 +141,8 @@ namespace Telemetry
 			sOutput.WriteObjectHeader(Protocol.Value.ClassDef);
 			sOutput.Write(name);
 			sOutput.Write(value);
+
+			sStream.FlushBoundary();
 		}
 
 		public static void WriteValue(string name, int value)
@@ -134,6 +152,8 @@ namespace Telemetry
 			sOutput.WriteObjectHeader(Protocol.Value.ClassDef);
 			sOutput.Write(name);
 			sOutput.Write(value);
+
+			sStream.FlushBoundary();
 		}
 
 		public static void WriteValue(Amf3String name, string value)
@@ -143,6 +163,8 @@ namespace Telemetry
 			sOutput.WriteObjectHeader(Protocol.Value.ClassDef);
 			sOutput.Write(name);
 			sOutput.Write(value);
+
+			sStream.FlushBoundary();
 		}
 
 		public static void WriteValue(string name, string value)
@@ -152,6 +174,8 @@ namespace Telemetry
 			sOutput.WriteObjectHeader(Protocol.Value.ClassDef);
 			sOutput.Write(name);
 			sOutput.Write(value);
+
+			sStream.FlushBoundary();
 		}
 
 		public static void WriteValue(Amf3String name, object value)
@@ -161,6 +185,8 @@ namespace Telemetry
 			sOutput.WriteObjectHeader(Protocol.Value.ClassDef);
 			sOutput.Write(name);
 			sOutput.Write(value);
+
+			sStream.FlushBoundary();
 		}
 
 		public static void WriteValue(string name, object value)
@@ -170,6 +196,8 @@ namespace Telemetry
 			sOutput.WriteObjectHeader(Protocol.Value.ClassDef);
 			sOutput.Write(name);
 			sOutput.Write(value);
+
+			sStream.FlushBoundary();
 		}
 
 		public static void WriteTrace(string trace)
@@ -202,14 +230,16 @@ namespace Telemetry
 			WriteValue(".player.version", "11,8,800,94");
 			WriteValue(".player.airversion", "3.8.0.910");
 			WriteValue(".player.type", "Air");
-			WriteValue(".player.debugger", true); 
+			WriteValue(".player.debugger", flash.system.Capabilities.isDebugger); 
 			WriteValue(".player.global.date", new _root.Date().getTime());
 			WriteValue(".player.instance", 0);
 			WriteValue(".player.scriptplayerversion", swfVersion);
 
 			// write platform info
-			WriteValue(".platform.capabilities", "&M=Adobe%20Macintosh&R=1680x1050&COL=color&AR=1.0&OS=Mac%20OS%2010.7.4&ARCH=x86&L=en&PR32=t&PR64=t&LS=en;ja;fr;de;es;it;pt;pt-PT;nl;sv;nb;da;fi;ru;pl;zh-Hans;zh-Hant;ko;ar;cs;hu;tr");
+			WriteValue(".platform.capabilities", flash.system.Capabilities.serverString);
 			WriteValue(".platform.cpucount", 4);
+
+			// write gpu info (this is faked)
 			WriteValue(".platform.gpu.kind", "opengles2");
 			WriteValue(".platform.gpu.vendor", "Imagination Technologies");
 			WriteValue(".platform.gpu.renderer", "PowerVR SGX 535");
@@ -225,22 +255,29 @@ namespace Telemetry
 			WriteValue(".mem.telemetry.overhead", 0);
 
 			// write telemetry categories
-			WriteValue(".tlm.category.enable",  "3D");
-			WriteValue(".tlm.category.enable",  "sampler");
-			WriteValue(".tlm.category.disable", "displayobjects");
-			WriteValue(".tlm.category.enable",  "alloctraces");
-			WriteValue(".tlm.category.disable", "allalloctraces");
-			WriteValue(".tlm.category.enable",  "customMetrics");
+			WriteValue(".tlm.category.disable",  "3D");
+			WriteValue(".tlm.category.disable",  "sampler");
+			WriteValue(".tlm.category.disable",  "displayobjects");
+			WriteValue(".tlm.category.disable",  "alloctraces");
+			WriteValue(".tlm.category.disable",  "allalloctraces");
+			WriteValue(".tlm.category.enable",   "customMetrics");
 
 			WriteValue(".network.loadmovie", "app:/" + appName );
 			WriteValue(".rend.display.mode", "auto");
 
 			// SWF startup timestamp
 			WriteTime(".swf.start");
+
+			// write swf stats
 			WriteSWFStats(appName, 800, 600, 60, swfVersion, swfSize);
+
+			// write memory stats
 			WriteMemoryStats();
 
 			// start detailed metrics
+			WriteValue(".tlm.category.start", "customMetrics");
+
+			// enable 'advanced telemetry'
 			WriteValue(".tlm.detailedMetrics.start", true);
 
 			Flush();
@@ -248,6 +285,8 @@ namespace Telemetry
 
 		private static void OnEndSession()
 		{
+			if (!Connected)	return;
+
 			WriteValue(".tlm.date", new _root.Date().getTime());
 			WriteValue(".tlm.optimize.exit3DStandbyModeTime", 0);
 			WriteValue(".tlm.optimize.selectionEnd", false);
@@ -260,6 +299,8 @@ namespace Telemetry
 
 		public static void OnBeginFrame()
 		{
+			if (!Connected)	return;
+
 			// emit a timecode for '.enter'
 			WriteTime(sNameEnter);
 
@@ -272,18 +313,22 @@ namespace Telemetry
 
 		public static void OnEndFrame()
 		{
+			if (!Connected)	return;
+
 			// end .exit
 			sSpanExit.End();
 
 			// 	add any additional telemetry processing here which will be counted as "overhead"
-			sSpanTlmDoPlay.Begin();
-			sSpanTlmDoPlay.End();
+//			sSpanTlmDoPlay.Begin();
+//			sSpanTlmDoPlay.End();
 
 			Flush();
 		}
 
 		public static void OnResize(int width, int height)
 		{
+			if (!Connected)	return;
+
 			var rect = new Telemetry.Protocol.Rect();
 			rect.xmin = 0;
 			rect.ymin = 0;
@@ -294,6 +339,8 @@ namespace Telemetry
 
 		public static void WriteMemoryStats()
 		{
+			if (!Connected)	return;
+
 			// memory stats
 			// TODO: figure these out
 			WriteValue(".mem.total", 8 * 1024);
@@ -307,54 +354,76 @@ namespace Telemetry
 			WriteValue(".mem.telemetry.overhead", 0);
 		}
 
-		public static bool Connect(string host = "localhost", int port = 7934, int bufferSize = 256 * 1024)
+		public static bool Connect(string host = "localhost", int port = 7934, string outputFilePath = null)
 		{
-			if (sOutput != null) {
+			if (Connected) {
 				// already connected...
 				return true;
 			}
 
-			try
-			{
-				// attempt connection
-				sClient  = new TcpClient(host, port);
-				sBuffer  = new BufferedStream(sClient.GetStream(), bufferSize);
-				sOutput  = new Amf3Writer(sBuffer);
+			// create stream for session
+			sStream  = new SessionStream(256 * 1024, int.MaxValue);
 
-				// start session
-				OnBeginSession();
-
-				return true;
+			if (host != null) {
+				Console.WriteLine("Telemetry: connecting to {0}:{1}...", host, port);
+				try
+				{
+					// add network connection
+					var client = new TcpClient(host, port);
+					// disable send coalescing
+					client.NoDelay = true;
+					sStream.AddStream(client.GetStream());
+					Console.WriteLine("Telemetry: connected!");
+				}
+				catch 
+				{
+					Console.WriteLine("Telemetry: connection failed");
+				}
 			}
-			catch 
-			{
-				// error connecting to telemetry server
-				// if you get here in the debugger then just continue
-				sClient = null;
-				sBuffer = null;
-				sOutput = null;
+
+			if (outputFilePath != null) {
+				try
+				{
+					// add file output
+					var fs = File.Open(outputFilePath, FileMode.Create);
+					sStream.AddStream(fs);
+					Console.WriteLine("Telemetry: writing to file {0}", outputFilePath);
+				}
+				catch
+				{
+					Console.WriteLine("Telemetry: could not open file for writing: {0}", outputFilePath);
+				}
+			}
+
+			if (sStream.StreamCount == 0) {
+				// no active streams
+				sStream.Close();
+				sStream = null;
 				return false;
-			}
+			} 
+
+			// create AMF writer
+			sOutput = new Amf3Writer(sStream);
+
+			// start session
+			OnBeginSession();
+			return true;
 		}
 
 		public static void Disconnect()
 		{
 			OnEndSession();
 
-			if (sBuffer!=null)
-				sBuffer.Close();
-			if (sClient != null)
-				sClient.Close();
+			if (sStream!=null)
+				sStream.Close();
 
-			sClient = null;
-			sBuffer = null;
 			sOutput = null;
 		}
 
 		public static void Flush()
 		{
-			if (sBuffer != null) {
-				sBuffer.Flush();
+			if (sStream != null) {
+				sStream.Flush();
 			}
 		}
 
@@ -402,8 +471,7 @@ namespace Telemetry
 		}
 
 
-		private static TcpClient 	  sClient;
-		private static BufferedStream sBuffer;
+		private static SessionStream  sStream;
 		private static Amf3Writer 	  sOutput;
 
 		private static long 		  sLastMarkerTime = Stopwatch.GetTimestamp();
@@ -414,7 +482,7 @@ namespace Telemetry
 		private static readonly Amf3String     sNameEnter  = new Amf3String(".enter");
 //		private static readonly Span 		   sSpanAsActions = new Span(".as.actions");
 		private static readonly Span 		   sSpanExit      = new Span(".exit");
-		private static readonly Span 		   sSpanTlmDoPlay = new Span(".tlm.doplay");
+//		private static readonly Span 		   sSpanTlmDoPlay = new Span(".tlm.doplay");
 		#endregion
 	}
 }

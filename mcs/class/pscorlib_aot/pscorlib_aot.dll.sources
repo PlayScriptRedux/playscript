@@ -266,6 +266,7 @@
 ../pscorlib/Telemetry/Parser.cs
 ../pscorlib/Telemetry/Protocol.cs
 ../pscorlib/Telemetry/Session.cs
+../pscorlib/Telemetry/SessionStream.cs
 ../pscorlib/Telemetry/Span.cs
 ../pscorlib/Telemetry/Value.cs
 ../pscorlib/TypeError.play
