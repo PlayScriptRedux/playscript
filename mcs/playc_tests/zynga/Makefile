@@ -77,6 +77,7 @@ AS_TEST_FILE_NAMES	:= $(AS_TEST_FILES:%.as=%)
 ALL_PS_TEST_FILES	:= $(shell find tests -name '*.play')
 BAD_PS_TEST_FILES	:= tests/test-ps-004.play
 BAD_PS_TEST_FILES	+= tests/test-ps-006.play
+BAD_PS_TEST_FILES	+= tests/test-ps-010.play
 BAD_PS_TEST_FILES	+= tests/test-ps-015.play
 BAD_PS_TEST_FILES	+= tests/test-ps-016.play
 BAD_PS_TEST_FILES	+= tests/test-ps-017.play

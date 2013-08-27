@@ -57,7 +57,14 @@ namespace flash.display3D {
 	using _root;
 	
 	public class Context3D : EventDispatcher {
-	
+
+		//
+		// Constants
+		//
+
+		public const int MaxSamplers = 16;
+		public const int MaxAttributes = 16;
+
 		//
 		// Properties
 		//
@@ -78,7 +85,19 @@ namespace flash.display3D {
 
 
 #if OPENGL
-		
+
+		// this is the default sampler state
+		public static readonly SamplerState DefaultSamplerState = new SamplerState(
+#if PLATFORM_MONODROID
+												(TextureMinFilter)All.Linear, 
+#else
+												TextureMinFilter.Linear, 
+#endif
+												TextureMagFilter.Linear,
+												TextureWrapMode.Repeat,
+												TextureWrapMode.Repeat).Intern();
+
+
 		public Context3D(Stage3D stage3D)
 		{
 			mStage3D = stage3D;
@@ -229,8 +248,23 @@ namespace flash.display3D {
 			GL.DrawElements(BeginMode.Triangles, count, DrawElementsType.UnsignedInt, new IntPtr(firstIndex));	
 		}
 
+
+		public void discardDepthBuffer()
+		{
+			#if PLATFORM_MONOTOUCH
+			// discard depth buffer at the end of the frame
+			// this is a hint to GL to not keep the data around
+			All discard = (All)FramebufferSlot.DepthAttachment;
+			GL.BindFramebuffer(FramebufferTarget.Framebuffer, mDefaultFrameBufferId);
+			GL.Ext.DiscardFramebuffer((All)FramebufferTarget.Framebuffer, 1, ref discard);
+			#endif
+		}
  	 	
 		public void present() {
+
+			// discard depth buffer at the end of the frame
+			discardDepthBuffer();
+
 			if (OnPresent != null)
 				OnPresent(this);
 		}
@@ -553,6 +587,11 @@ namespace flash.display3D {
 			mRenderToTexture = texture;
 		}
 
+		public void setSamplerStateAt(int sampler, string wrap, string filter, string mipfilter)
+		{
+			throw new System.NotImplementedException();
+		}
+
 
 		public void setScissorRectangle (Rectangle rectangle)
 		{
@@ -643,23 +682,15 @@ namespace flash.display3D {
 
 						GL.BindTexture( target, texture.textureId);
 
+						// TODO: support sampler state overrides through setSamplerAt(...)
 						// get sampler state from program
 						SamplerState state = mProgram.getSamplerState(sampler);
 						if (state != null) {
-
-							GL.TexParameter (target, TextureParameterName.TextureMinFilter, (int)state.MinFilter);
-							GL.TexParameter (target, TextureParameterName.TextureMagFilter, (int)state.MagFilter);
-							GL.TexParameter (target, TextureParameterName.TextureWrapS, (int)state.WrapModeS);
-							GL.TexParameter (target, TextureParameterName.TextureWrapT, (int)state.WrapModeT);
-							if (state.LodBias != 0.0) {
-								throw new NotImplementedException("Lod bias setting not supported yet");
-							}
-						}
-						else
-						{
-							if (enableErrorChecking) {
-								Console.WriteLine("warning: no sampler state found for sampler {0}", sampler);
-							}
+							// apply sampler state to texture
+							texture.setSamplerState(state);
+						} else {
+							// use default state if program has none
+							texture.setSamplerState(Context3D.DefaultSamplerState);
 						}
 					} else {
 						// texture is null so unbind texture
@@ -690,7 +721,7 @@ namespace flash.display3D {
 
 		// sampler settings
 		private int 				mSamplerDirty = 0;
-		private TextureBase[]		mSamplerTextures = new TextureBase[16];
+		private TextureBase[]		mSamplerTextures = new TextureBase[Context3D.MaxSamplers];
 
 		// settings for backbuffer
 		private int  mDefaultFrameBufferId;
