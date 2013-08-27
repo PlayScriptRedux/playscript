@@ -53,8 +53,24 @@ namespace flash.display3D {
 			GL.DeleteBuffers(mIds.Length, mIds);
 		}
 		
-		public void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startOffset, int count) {
-			throw new NotImplementedException();
+		unsafe public void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startOffset, int count) 
+		{
+			//System.Console.WriteLine ("IndexBuffer3D.uploadFromByteArray:");
+			int byteStart = byteArrayOffset;
+			int countTotal = (count+startOffset); //ignore the startOffset
+			byte[] dataBytes = data.getRawArray();
+			
+			fixed (byte* dataBytesPtr = &dataBytes[byteStart])
+			{
+				//second allocation ... horrible
+				short *shortArray = (short*) dataBytesPtr;
+				uint[] dataInts = new uint[countTotal* sizeof(uint)];
+				for(int i=0;i<countTotal;i++)
+				{
+					dataInts[i] = (uint)shortArray[i];
+				}
+				uploadFromArray(dataInts,startOffset,countTotal);
+			}
 		}
 
 		public void uploadFromArray(uint[] data, int startOffset, int count) {

@@ -11,6 +11,7 @@
     <RootNamespace>pscorlib_aotmonotouch</RootNamespace>
     <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
     <AssemblyName>pscorlib_monotouch</AssemblyName>
+    <additionalargs>/unsafe</additionalargs>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>
@@ -22,6 +23,7 @@
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
     <NoWarn>0414</NoWarn>
+    <additionalargs>/unsafe</additionalargs>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -31,6 +33,7 @@
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
     <DefineConstants>PLATFORM_MONOTOUCH;OPENGL</DefineConstants>
+    <additionalargs>/unsafe</additionalargs>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />

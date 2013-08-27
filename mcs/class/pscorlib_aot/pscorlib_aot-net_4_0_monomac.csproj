@@ -9,6 +9,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>_root</RootNamespace>
     <AssemblyName>pscorlib_monomac</AssemblyName>
+    <additionalargs>/unsafe</additionalargs>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>
@@ -19,6 +20,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
+    <additionalargs>/unsafe</additionalargs>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -28,6 +30,7 @@
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
     <DefineConstants>PLATFORM_MONOMAC;OPENGL</DefineConstants>
+    <additionalargs>/unsafe</additionalargs>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />

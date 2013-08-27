@@ -56,8 +56,23 @@ namespace flash.display3D
 			GL.DeleteBuffers(mIds.Length, mIds);
 		}
 		
-		public void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startVertex, int numVertices) {
-			throw new NotImplementedException();
+		unsafe public void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startVertex, int numVertices)
+		{
+			int byteStart = byteArrayOffset;// + startVertex * mVertexSize * sizeof(float);
+			int countTotal =(startVertex+numVertices) * mVertexSize; 
+			byte[] dataBytes = data.getRawArray();
+			fixed (byte* dataBytesPtr = &dataBytes[byteStart])
+			{
+				//copy float* to float[], this is really a waste of time !!!
+				float *fArray = (float*) dataBytesPtr;
+				float[] dataFloat = new float[countTotal* sizeof(float)];
+				for(int i=0;i<countTotal;i++)
+				{
+					dataFloat[i] = fArray[i];
+				}
+
+				uploadFromArray(dataFloat,startVertex,numVertices);
+			}
 		}
 
 		public void uploadFromArray(float[] data, int startVertex, int numVertices) 
