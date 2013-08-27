@@ -1,23 +1,17 @@
-package org.computus.model
+package
 {
-
-	public class Timekeeper
+	public class Foo
 	{
-		public static var m_direction:uint;
+		public var a:Foo, b:Test;
+	}
 
+	public class Test
+	{
 		public static function Main():void
 		{
-			var a:Array = new Array();
-
-			if (false != a) {
-				trace("foo");
-			}
-
-			var closestDirection:int = 0;
-
-			if (closestDirection != Number.MAX_VALUE && closestDirection != m_direction) {
-				trace("bar");
-			}
+			var f:Foo = new Foo();
+			f.a = new Foo();
+			f.b = new Test();
 		}
 	}
 }

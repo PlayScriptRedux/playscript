@@ -67,7 +67,6 @@ namespace Mono.CSharp
 		public virtual FullNamedExpression GetFieldTypeExpression (FieldBase field)
 		{
 			return new TypeExpression (field.MemberType, Name.Location); 
-
 		}
 	}
 
@@ -697,7 +696,7 @@ namespace Mono.CSharp
 
 			if (declarators != null) {
 				foreach (var d in declarators) {
-					var f = new Field (Parent, d.GetFieldTypeExpression (this), ModFlags, new MemberName (d.Name.Value, d.Name.Location), OptAttributes);
+					var f = new Field (Parent, d.TypeExpression ?? d.GetFieldTypeExpression (this), ModFlags, new MemberName (d.Name.Value, d.Name.Location), OptAttributes);
 					if (d.Initializer != null)
 						f.initializer = d.Initializer;
 
