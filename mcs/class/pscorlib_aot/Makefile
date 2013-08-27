@@ -5,7 +5,7 @@ LIBRARY = pscorlib_aot.dll
 LIBRARY_SNK = ../mono.snk
 LIBRARY_PACKAGE = none
 
-LIB_MCS_FLAGS = -keyfile:$(LIBRARY_SNK) -r:System.dll -r:System.Core.dll -r:System.Drawing.dll -r:PlayScript.Dynamic_aot.dll -r:System.Xml.dll -r:ICSharpCode.SharpZipLib.dll -r:System.Json.dll -r:System.Web.dll
+LIB_MCS_FLAGS = -unsafe+ -keyfile:$(LIBRARY_SNK) -r:System.dll -r:System.Core.dll -r:System.Drawing.dll -r:PlayScript.Dynamic_aot.dll -r:System.Xml.dll -r:ICSharpCode.SharpZipLib.dll -r:System.Json.dll -r:System.Web.dll
 
 NO_TEST = yes
 
