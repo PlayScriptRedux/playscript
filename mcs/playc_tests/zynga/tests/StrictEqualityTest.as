@@ -39,6 +39,8 @@ package
 			var obj3:Object = new Object();
 			var obj4:Object = new Object();
 			Assert.expectEq("obj3 !== obj4", true, obj3 !== obj4);
+			Assert.expectEq("\"5.5\" == 5.5", true, "5.5" == 5.5);
+			Assert.expectEq("\"5.5\" !== 5.5", true, "5.5" !== 5.5);
 			return 0;
 		}
 	}
