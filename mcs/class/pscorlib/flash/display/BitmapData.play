@@ -207,7 +207,10 @@ package flash.display {
 				var format:flash.text.TextFormat = tf.defaultTextFormat;
 
 				// $$TODO figure out how to get rid of this extra data copy
-				var data = new byte[width * height * 4];
+				var sizeToDraw = (width * height)<<2;
+				if(sizeToDraw==0)
+					return;
+				var data = new byte[sizeToDraw];
 				System.Buffer.BlockCopy(mData, 0, data, 0, data.Length);
 
 				using (CGBitmapContext context = new CGBitmapContext(data, width, height, 8, 4 * width, 
@@ -333,7 +336,31 @@ package flash.display {
 		}
  	 	
 		public function fillRect(rect:Rectangle, color:uint):void {
-			throw new System.NotImplementedException();
+			var xmin:int = rect.left;
+			if(xmin<0) xmin=0;
+			if(xmin>=mWidth) xmin=mWidth-1;
+			var xmax:int = rect.left + rect.width;
+			if(xmax<0) xmax=0;
+			if(xmax>mWidth) xmax=mWidth;
+			var ymin:int = rect.top;
+			if(ymin<0) ymin=0;
+			if(ymin>=mHeight) ymin=mHeight-1;
+			var ymax:int = rect.top + rect.height;
+			if(ymax<0) ymax=0;
+			if(ymax>mHeight) ymax=mHeight;
+			xmax -=xmin;
+			
+			var dest:uint[] = mData;
+
+			// fill bitmap rectangle
+			for (var y:int=ymin;y<ymax;y++)
+			{
+				var adr:int = y*mWidth+xmin;
+				for (var x:int=0;x<xmax;x++)
+				{
+					dest[adr+x] = color;
+				}
+			}
 		}
  	 	
 		public function floodFill(x:int, y:int, color:uint):void {
