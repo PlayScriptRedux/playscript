@@ -1244,16 +1244,34 @@ struct_declaration
 		Error_SyntaxError (yyToken);
 	  }
 	;
-	
+
+opt_member_type
+	: /* empty */
+	  {
+	  	$$ = null;
+	  }
+	| COLON member_type
+	  {
+		$$ = $2;
+	  }
+	;
+
 constant_declaration
 	: opt_attributes 
 	  opt_modifiers
-	  CONST IDENTIFIER COLON type
+	  CONST IDENTIFIER opt_member_type
 	  {
 		var lt = (LocatedToken) $4;
+		if ($5 == null) {
+		  	if (settings.PsStrictMode)
+				report.Error (7012, lt.Location, "Constant `{0}' has no type declaration.", lt.Value);
+			else
+				report.Warning (1009, 1, lt.Location, "Constant `{0}' has no type declaration.", lt.Value);
+			$5 = new UntypedTypeExpression (GetLocation ($4));
+		}
 		var mod = (Modifiers) $2;
 		mod &= ~Modifiers.STATIC;
-		current_field = new Const (current_type, (FullNamedExpression) $6, mod, new MemberName (lt.Value, lt.Location), (Attributes) $1);
+		current_field = new Const (current_type, (FullNamedExpression) $5, mod, new MemberName (lt.Value, lt.Location), (Attributes) $1);
 		if (is_config_enabled) {
 			current_type.AddMember (current_field);
 		}
@@ -1268,8 +1286,8 @@ constant_declaration
 			Lexer.doc_state = XmlCommentState.Allowed;
 		}
 		
-		current_field.Initializer = (ConstInitializer) $8;
-		lbag.AddMember (current_field, mod_locations, GetLocation ($3), GetLocation ($10));
+		current_field.Initializer = (ConstInitializer) $7;
+		lbag.AddMember (current_field, mod_locations, GetLocation ($3), GetLocation ($9));
 		current_field = null;
 	  }
 	;
@@ -1291,13 +1309,20 @@ constant_declarators
 	;
 	
 constant_declarator
-	: COMMA IDENTIFIER COLON member_type opt_constant_initializer
+	: COMMA IDENTIFIER opt_member_type opt_constant_initializer
 	  {
 		var lt = (LocatedToken) $2;
-	  	$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), (ConstInitializer) $5, (FullNamedExpression) $4);
+		if ($3 == null) {
+		  	if (settings.PsStrictMode)
+				report.Error (7012, lt.Location, "Constant `{0}' has no type declaration.", lt.Value);
+			else
+				report.Warning (1009, 1, lt.Location, "Constant `{0}' has no type declaration.", lt.Value);
+			$3 = new UntypedTypeExpression (GetLocation ($2));
+		}
+	  	$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), (ConstInitializer) $4, (FullNamedExpression) $3);
 	  	lbag.AddLocation ($$, GetLocation ($1));
 	  }
-	;		
+	;	
 
 opt_constant_initializer
 	: /* empty */ 
@@ -1663,9 +1688,9 @@ method_header
 			var ret_type = $9 as FullNamedExpression;
 			if (ret_type == null) {
 				if (settings.PsStrictMode)
-					report.Error (7012, GetLocation($8), "Method must specify a return type.");
+					report.Error (7012, GetLocation($8), "Method `{0}' must specify a return type.", name.Name);
 				else
-					report.Warning (1009, 1, GetLocation($8), "Method return type has no type declaration.");
+					report.Warning (1009, 1, GetLocation($8), "Method `{0}' return type has no type declaration.", name.Name);
 			}
 
 			var method = AsMethod.Create (current_type, (FullNamedExpression) $9, modifiers,
