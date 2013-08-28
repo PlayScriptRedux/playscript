@@ -9,28 +9,47 @@ namespace Telemetry
 {
 	public static class Session
 	{
-		public const long 	Frequency = 1000000;
+		// global enable flag for telemetry, if this is false no connections or recordings will be made
+		public static bool 	 Enabled = true;
+
+		// default hostname used for starting network sessions if none is provided to Connect()
+		public static string DefaultHostName = "localhost";
+
+		// default prot used for starting sessions
+		public static int 	 DefaultPort = 7934;
+
+		// frequency for all timing values (microseconds)
+		public const int 	Frequency = 1000000;
+
+		// minimum span length that can be written (any spans shorter than this will be discarded)
 		public const int 	MinTimeSpan = 5;
-//		public const string Version = "3,0";
-//		public const int 	Meta = 1483553;
-//		public const string Version = "3,1";
-//		public const int 	Meta = 14940;
+
+		// telemetry version
 		public const string Version = "3,2";
+
+		// telemetry meta (?)
 		public const int 	Meta = 293228;
 
+		// returns the time in frequency (microseconds)
+		public static int GetTime()
+		{
+			return ((int)Stopwatch.GetTimestamp()) / sDivisor;
+		}
+
+		// returns true if a session is active
 		public static bool Connected
 		{
 			get { return (sOutput != null);}
 		}
 
-		public static long BeginSpan()
+		public static int BeginSpan()
 		{
-			return Stopwatch.GetTimestamp();
+			return GetTime();
 		}
 
-		public static void EndSpan(Amf3String name, long beginTime)
+		public static void EndSpan(Amf3String name, int beginTime)
 		{
-			if (sOutput == null) return;
+			if (!Connected) return;
 
 			// compute delta and span
 			int span;
@@ -43,13 +62,11 @@ namespace Telemetry
 			sOutput.Write(name);
 			sOutput.Write(span);
 			sOutput.Write(delta);
-
-			sStream.FlushBoundary();
 		}
 
-		public static void EndSpan(string name, long beginTime)
+		public static void EndSpan(string name, int beginTime)
 		{
-			if (sOutput == null) return;
+			if (!Connected) return;
 
 			// compute delta and span
 			int span;
@@ -62,13 +79,11 @@ namespace Telemetry
 			sOutput.Write(name);
 			sOutput.Write(span);
 			sOutput.Write(delta);
-
-			sStream.FlushBoundary();
 		}
 
-		public static void EndSpanValue(Amf3String name, long beginTime, object value)
+		public static void EndSpanValue(Amf3String name, int beginTime, object value)
 		{
-			if (sOutput == null) return;
+			if (!Connected) return;
 
 			// compute delta and span
 			int span;
@@ -82,13 +97,11 @@ namespace Telemetry
 			sOutput.Write(span);
 			sOutput.Write(delta);
 			sOutput.Write(value);
-
-			sStream.FlushBoundary();
 		}
 
-		public static void EndSpanValue(string name, long beginTime, object value)
+		public static void EndSpanValue(string name, int beginTime, object value)
 		{
-			if (sOutput == null) return;
+			if (!Connected) return;
 
 			// compute delta and span
 			int span;
@@ -102,13 +115,11 @@ namespace Telemetry
 			sOutput.Write(span);
 			sOutput.Write(delta);
 			sOutput.Write(value);
-
-			sStream.FlushBoundary();
 		}
 
 		public static void WriteTime(Amf3String name)
 		{
-			if (sOutput == null) return;
+			if (!Connected) return;
 
 			// compute delta
 			int delta = TimeDelta();
@@ -116,13 +127,11 @@ namespace Telemetry
 			sOutput.WriteObjectHeader(Protocol.Time.ClassDef);
 			sOutput.Write(name);
 			sOutput.Write(delta);
-
-			sStream.FlushBoundary();
 		}
 
 		public static void WriteTime(string name)
 		{
-			if (sOutput == null) return;
+			if (!Connected) return;
 
 			// compute delta
 			int delta = TimeDelta();
@@ -130,83 +139,73 @@ namespace Telemetry
 			sOutput.WriteObjectHeader(Protocol.Time.ClassDef);
 			sOutput.Write(name);
 			sOutput.Write(delta);
-
-			sStream.FlushBoundary();
 		}
 
 		public static void WriteValue(Amf3String name, int value)
 		{
-			if (sOutput == null) return;
+			if (!Connected) return;
 
 			sOutput.WriteObjectHeader(Protocol.Value.ClassDef);
 			sOutput.Write(name);
 			sOutput.Write(value);
-
-			sStream.FlushBoundary();
 		}
 
 		public static void WriteValue(string name, int value)
 		{
-			if (sOutput == null) return;
+			if (!Connected) return;
 
 			sOutput.WriteObjectHeader(Protocol.Value.ClassDef);
 			sOutput.Write(name);
 			sOutput.Write(value);
-
-			sStream.FlushBoundary();
 		}
 
 		public static void WriteValue(Amf3String name, string value)
 		{
-			if (sOutput == null) return;
+			if (!Connected) return;
 
 			sOutput.WriteObjectHeader(Protocol.Value.ClassDef);
 			sOutput.Write(name);
 			sOutput.Write(value);
-
-			sStream.FlushBoundary();
 		}
 
 		public static void WriteValue(string name, string value)
 		{
-			if (sOutput == null) return;
+			if (!Connected) return;
 
 			sOutput.WriteObjectHeader(Protocol.Value.ClassDef);
 			sOutput.Write(name);
 			sOutput.Write(value);
-
-			sStream.FlushBoundary();
 		}
 
 		public static void WriteValue(Amf3String name, object value)
 		{
-			if (sOutput == null) return;
+			if (!Connected) return;
 
 			sOutput.WriteObjectHeader(Protocol.Value.ClassDef);
 			sOutput.Write(name);
 			sOutput.Write(value);
-
-			sStream.FlushBoundary();
 		}
 
 		public static void WriteValue(string name, object value)
 		{
-			if (sOutput == null) return;
+			if (!Connected) return;
 
 			sOutput.WriteObjectHeader(Protocol.Value.ClassDef);
 			sOutput.Write(name);
 			sOutput.Write(value);
-
-			sStream.FlushBoundary();
 		}
 
 		public static void WriteTrace(string trace)
 		{
+			if (!Connected) return;
+
 			WriteValue(sNameTrace, trace);
 		}
 
 		public static void WriteSWFStats(string name, int width, int height, int frameRate, int version, int size)
 		{
+			if (!Connected) return;
+
 			WriteValue(".swf.name", name);
 			WriteValue(".swf.rate", (int)(Frequency / frameRate));
 			WriteValue(".swf.vm", 3);
@@ -216,8 +215,14 @@ namespace Telemetry
 			WriteValue(".swf.size", size);
 		}
 		
-		private static void OnBeginSession()
+		private static void BeginSession(Stream stream)
 		{
+			// create AMF writer from stream
+			sOutput = new Amf3Writer(stream);
+
+			// reset time marker
+			TimeDelta();
+
 			var appName = PlayScript.Player.ApplicationClass.Name;
 			var swfVersion = 21;
 			var swfSize = 4 * 1024 * 1024;
@@ -228,7 +233,7 @@ namespace Telemetry
 
 			// write player info
 			WriteValue(".player.version", "11,8,800,94");
-			WriteValue(".player.airversion", "3.8.0.910");
+//			WriteValue(".player.airversion", "3.8.0.910");
 			WriteValue(".player.type", "Air");
 			WriteValue(".player.debugger", flash.system.Capabilities.isDebugger); 
 			WriteValue(".player.global.date", new _root.Date().getTime());
@@ -283,7 +288,7 @@ namespace Telemetry
 			Flush();
 		}
 
-		private static void OnEndSession()
+		private static void EndSession()
 		{
 			if (!Connected)	return;
 
@@ -295,28 +300,37 @@ namespace Telemetry
 			WriteValue(".tlm.optimize.threeDStandbyModeHasExited", false);
 
 			Flush();
+
+			// close session stream
+			if (sOutput!= null && (sOutput.Stream != sRecording)) {
+				sOutput.Stream.Close();
+			}
+
+			sOutput = null;
 		}
 
 		public static void OnBeginFrame()
 		{
-			if (!Connected)	return;
+			if (!Connected) return;
 
 			// emit a timecode for '.enter'
 			WriteTime(sNameEnter);
 
-			// begin a .exit span
-			sSpanExit.Begin();
-
 			// swf frame must be written here
 			WriteValue(sNameSwfFrame, 0);
+
+			// begin a .exit span
+			sSpanExit.Begin();
 		}
 
 		public static void OnEndFrame()
 		{
-			if (!Connected)	return;
+			if (!Connected) return;
 
 			// end .exit
-			sSpanExit.End();
+			if (sSpanExit.IsInSpan) {
+				sSpanExit.End();
+			}
 
 			// 	add any additional telemetry processing here which will be counted as "overhead"
 //			sSpanTlmDoPlay.Begin();
@@ -354,77 +368,178 @@ namespace Telemetry
 			WriteValue(".mem.telemetry.overhead", 0);
 		}
 
-		public static bool Connect(string host = "localhost", int port = 7934, string outputFilePath = null)
+		// starts a telemetry session and writes telemetry data over the network
+		public static bool Connect()
 		{
+			return Connect(DefaultHostName, DefaultPort);
+		}
+
+		// starts a telemetry session and writes telemetry data over the network
+		public static bool Connect(string hostname, int port)
+		{
+			if (!Enabled) {
+				// telemetry is not enabled
+				Console.WriteLine("Telemetry: did not connect, telemetry not enabled");
+				return false;
+			}
+
 			if (Connected) {
 				// already connected...
+				Console.WriteLine("Telemetry: already connected, disconnect first");
 				return true;
 			}
 
-			// create stream for session
-			sStream  = new SessionStream(256 * 1024, int.MaxValue);
-
-			if (host != null) {
-				Console.WriteLine("Telemetry: connecting to {0}:{1}...", host, port);
-				try
-				{
-					// add network connection
-					var client = new TcpClient(host, port);
-					// disable send coalescing
-					client.NoDelay = true;
-					sStream.AddStream(client.GetStream());
-					Console.WriteLine("Telemetry: connected!");
-				}
-				catch 
-				{
-					Console.WriteLine("Telemetry: connection failed");
-				}
+			Console.WriteLine("Telemetry: connecting to {0}:{1}...", hostname, port);
+			try
+			{
+				// open network connection
+				var client = new TcpClient(hostname, port);
+				var buffered = new BufferedStream(client.GetStream());
+				// begin session
+				BeginSession(buffered);
+				Console.WriteLine("Telemetry: connected!");
+				return true;
 			}
-
-			if (outputFilePath != null) {
-				try
-				{
-					// add file output
-					var fs = File.Open(outputFilePath, FileMode.Create);
-					sStream.AddStream(fs);
-					Console.WriteLine("Telemetry: writing to file {0}", outputFilePath);
-				}
-				catch
-				{
-					Console.WriteLine("Telemetry: could not open file for writing: {0}", outputFilePath);
-				}
-			}
-
-			if (sStream.StreamCount == 0) {
-				// no active streams
-				sStream.Close();
-				sStream = null;
+			catch 
+			{
+				Console.WriteLine("Telemetry: connection failed");
 				return false;
-			} 
+			}
+		}
 
-			// create AMF writer
-			sOutput = new Amf3Writer(sStream);
+		// starts a telemetry session and writes telemetry data to a file
+		public static bool ConnectToFile(string outputFilePath)
+		{
+			if (!Enabled) {
+				// telemetry is not enabled
+				Console.WriteLine("Telemetry: could not write to file, telemetry not enabled");
+				return false;
+			}
+
+			if (Connected) {
+				// already connected...
+				Console.WriteLine("Telemetry: already connected, disconnect first");
+				return true;
+			}
+
+			try
+			{
+				// open file stream
+				var fs = File.Open(outputFilePath, FileMode.Create);
+				var buffered = new BufferedStream(fs);
+				// begin session
+				BeginSession(buffered);
+				Console.WriteLine("Telemetry: writing to file {0}", outputFilePath);
+				return true;
+			}
+			catch
+			{
+				Console.WriteLine("Telemetry: could not open file for writing: {0}", outputFilePath);
+				return false;
+			}
+		}
+
+		// disconnects the current session
+		public static void Disconnect()
+		{
+			if (!Connected) {
+				return ;
+			}
+
+			EndSession();
+		}
+
+		// begins recording telemetry data to a growable memory buffer
+		public static bool StartRecording(int bufferCapacity = 256 * 1024)
+		{
+			if (!Enabled) {
+				// telemetry is not enabled
+				Console.WriteLine("Telemetry: did record, telemetry not enabled");
+				return false;
+			}
+
+			if (Connected) {
+				// already connected...
+				Console.WriteLine("Telemetry: could not record, already connected");
+				return false;
+			}
+
+			// record to a new memory stream
+			sRecording = new MemoryStream(bufferCapacity);
+
+			Console.WriteLine("Telemetry: began recording to memory buffer");
 
 			// start session
-			OnBeginSession();
+			BeginSession(sRecording);
 			return true;
 		}
 
-		public static void Disconnect()
+		// ends a recording session and returns memory stream containing the data
+		public static MemoryStream EndRecording()
 		{
-			OnEndSession();
+			var recording = sRecording;
+			if (recording != null) {
+				// stop recording
+				EndSession();
 
-			if (sStream!=null)
-				sStream.Close();
-
-			sOutput = null;
+				sRecording = null;
+				Console.WriteLine("Telemetry: end recording");
+			}
+			// return recording
+			return recording;
 		}
 
+		// sends a recording (stored in a stream) over the network
+		public static void SendRecordingOverNetwork(Stream stream)
+		{
+			SendRecordingOverNetwork(stream, DefaultHostName, DefaultPort);
+		}
+
+		// sends a recording (stored in a stream) over the network
+		public static void SendRecordingOverNetwork(Stream stream, string hostname, int port)
+		{
+			try {
+				Console.WriteLine("Telemetry: network sending {0} bytes to {1}:{2}", stream.Length, hostname, port);
+				using (var client = new TcpClient(hostname, port)) {
+					using (var ns = client.GetStream()) {
+						stream.Position = 0;
+						stream.CopyTo(ns);
+					}
+				}
+				Console.WriteLine("Telemetry: network send completed!");
+			} catch {
+				Console.WriteLine("Telemetry: network send failed");
+			}
+		}
+
+		// saves a recording (stored in a stream) to a file
+		public static void SaveRecordingToFile(Stream stream, string outputFilePath)
+		{
+			try {
+				Console.WriteLine("Telemetry: writing {0} bytes to file {1}", stream.Length, outputFilePath);
+				using (var fs = File.Open(outputFilePath, FileMode.Create)) {
+					stream.Position = 0;
+					stream.CopyTo(fs);
+				}
+				Console.WriteLine("Telemetry: file write completed!");
+			} catch {
+				Console.WriteLine("Telemetry: file write failed");
+			}		
+		}
+
+		// flushes all accumulated data to the output stream (over the network or to a file)
 		public static void Flush()
 		{
-			if (sStream != null) {
-				sStream.Flush();
+			if (sOutput != null) {
+				// flush output stream
+				sOutput.Stream.Flush();
 			}
+		}
+
+		public static void LoadConfig()
+		{
+			// TODO: load configuration from telemetry.cfg or some other source
+
 		}
 
 		#region Private
@@ -433,10 +548,10 @@ namespace Telemetry
 		private static int TimeDelta()
 		{
 			// get current ticks
-			long time = Stopwatch.GetTimestamp();
+			int time = GetTime();
 
 			// get delta since our last marker
-			int delta = ((int)(time - sLastMarkerTime)) / sDivisor;
+			int delta = time - sLastMarkerTime;
 
 			// update marker
 			sLastMarkerTime = time;
@@ -447,16 +562,16 @@ namespace Telemetry
 
 		// computes the delta time since the last marker and updates the marker position
 		// spanLength will contain the time since beginTime (in microseconds)
-		private static int TimeDelta(long beginTime, out int spanLength)
+		private static int TimeDelta(int beginTime, out int spanLength)
 		{
 			// get current ticks
-			long time = Stopwatch.GetTimestamp();
+			int time = GetTime();
 
 			// get delta since our last marker
-			int delta = ((int)(time - sLastMarkerTime)) / sDivisor;
+			int delta = time - sLastMarkerTime;
 
 			// get span length (elapsed time since begin)
-			spanLength = ((int)(time - beginTime)) / sDivisor;
+			spanLength = time - beginTime;
 
 			// skip spans that are too short
 			if (spanLength < MinTimeSpan) {
@@ -470,11 +585,10 @@ namespace Telemetry
 			return delta;
 		}
 
-
-		private static SessionStream  sStream;
 		private static Amf3Writer 	  sOutput;
+		private static MemoryStream   sRecording;
 
-		private static long 		  sLastMarkerTime = Stopwatch.GetTimestamp();
+		private static int  		  sLastMarkerTime;
 		private static int  		  sDivisor = (int)(Stopwatch.Frequency / Frequency);
 
 		private static readonly Amf3String     sNameTrace   = new Amf3String(".trace");

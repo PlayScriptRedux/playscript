@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 
 #if PLATFORM_MONOMAC
 using MonoMac.OpenGL;
+using MonoMac.Foundation;
 #elif PLATFORM_MONOTOUCH
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
@@ -561,6 +562,9 @@ namespace PlayScript
 		/// </summary>
 		private static void OnStartReport()
 		{
+			// begin a telemetry session
+			Telemetry.Session.StartRecording();
+
 			// garbage collect so that it does not impact our session
 			System.GC.Collect();
 
@@ -576,6 +580,19 @@ namespace PlayScript
 			sReportTime = Stopwatch.StartNew();
 		}
 
+		private static string  GetProfileLogDir()
+		{
+			#if PLATFORM_MONOTOUCH || PLATFORM_MONOMAC
+			// dump profile to file
+			var dirs = NSSearchPath.GetDirectories(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomain.User, true);
+			if (dirs.Length > 0) {
+				return dirs[0];
+			} 
+			#endif
+			return null;
+		}
+
+
 		/// <summary>
 		/// This is called when a profilng report is ended
 		/// </summary>
@@ -585,27 +602,31 @@ namespace PlayScript
 
 			sReportGCCount = System.GC.CollectionCount(System.GC.MaxGeneration) - sReportGCCount;
 
-			#if PLATFORM_MONOTOUCH
-			// dump profile to file
-			var dirs = NSSearchPath.GetDirectories(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomain.User, true);
-			if (dirs.Length > 0) {
-				string id = DateTime.Now.ToString("u").Replace(' ', '-');
-				var path = Path.Combine(dirs[0], "profile-" + id + ".log");
+			var recording = Telemetry.Session.EndRecording();
+			if (recording != null) {
+				// send telemetry data over network
+				Telemetry.Session.SendRecordingOverNetwork(recording);
+			}
+
+			var profileLogDir = GetProfileLogDir();
+			if (profileLogDir != null) {
+				string id = DateTime.Now.ToString("u").Replace(' ', '-').Replace(':', '-');
+				var path = Path.Combine(profileLogDir, "profile-" + id + ".log");
 				Console.WriteLine("Writing profiling report to: {0}", path);
 				using (var sw = new StreamWriter(path)) {
 					PrintReport(sw);
 				}
+
+				if (recording != null)	{
+					// write telemetry data to file
+					var telemetryPath = Path.Combine(profileLogDir, "telemetry-" + id + ".flm");
+					Telemetry.Session.SaveRecordingToFile(recording, telemetryPath);
+//					Telemetry.Parser.ParseFile(telemetryPath, telemetryPath + ".txt");
+				}
 			}
-			#endif
 
 			// print to console 
 			PrintReport(System.Console.Out);
-
-			// pause forever
-//			Console.WriteLine("Pausing...");
-//			for (;;) {
-//				System.Threading.Thread.Sleep(1000);
-//			}
 		}
 
 		private static PerformanceFrameData GetPerformanceFrameData()

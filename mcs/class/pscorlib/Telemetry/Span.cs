@@ -12,7 +12,8 @@ namespace Telemetry
 	/// </summary>
 	public sealed class Span
 	{
-		public string Name {get {return mName.Value;}}
+		public string Name 		{get {return mName.Value;}}
+		public bool   IsInSpan  {get {return mIsInSpan;} }
 
 		public Span(Amf3String name)
 		{
@@ -61,7 +62,7 @@ namespace Telemetry
 		private bool 				mIsInSpan;
 
 		// time that span begun
-		private long 				mBeginTime;
+		private int 				mBeginTime;
 
 		// span name (as amf-ready string)
 		private readonly Amf3String mName;

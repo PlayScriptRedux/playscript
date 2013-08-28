@@ -41,6 +41,9 @@ namespace Telemetry
 		{
 			Amf3Parser parser = new Amf3Parser(stream);
 
+			int time = 0;
+			int enterTime = 0;
+
 			while (stream.Position < stream.Length ) {
 				var o =	parser.ReadNextObject();
 				if (o == null)
@@ -50,31 +53,57 @@ namespace Telemetry
 				switch (amfObj.ClassDef.Name)
 				{
 					case ".value":
-						output.WriteLine("WriteValue({0}, {1});", 
-						             Format(amfObj.Properties["name"]), 
-						             Format(amfObj.Properties["value"])
-						             );
-						break;
+						{
+							output.WriteLine("WriteValue({0}, {1});", 
+							                Format(amfObj.Properties["name"]), 
+							                Format(amfObj.Properties["value"])
+							);
+							break;
+						}
 					case ".span":
-						output.WriteLine("WriteSpan({0}, {1}, {2});", 
-						             Format(amfObj.Properties["name"]), 
-						             amfObj.Properties["span"],
-						             amfObj.Properties["delta"]
-						             );
-						break;
+						{
+							time += (int)amfObj.Properties["delta"];
+							output.WriteLine("WriteSpan({0}, {1}, {2});", 
+							                Format(amfObj.Properties["name"]), 
+							                amfObj.Properties["span"],
+							                amfObj.Properties["delta"]
+							);
+
+							// handle end of frame
+							string name = (string)amfObj.Properties["name"];
+							if (name == ".exit") {
+								int span = (int)amfObj.Properties["span"];
+								int deltas = time - enterTime;
+								output.WriteLine("// frame deltas:{0} span:{1} diff:{2}", deltas, span, deltas - span);
+							}
+
+							break;
+						}
 					case ".spanValue":
-						output.WriteLine("WriteSpanValue({0}, {1}, {2}, {3});", 
-						             Format(amfObj.Properties["name"]), 
-						             amfObj.Properties["span"],
-						             amfObj.Properties["delta"],
-						             Format(amfObj.Properties["value"])
-						             );
-						break;
+						{
+							time += (int)amfObj.Properties["delta"];
+							output.WriteLine("WriteSpanValue({0}, {1}, {2}, {3});", 
+							                Format(amfObj.Properties["name"]), 
+							                amfObj.Properties["span"],
+							                amfObj.Properties["delta"],
+							                Format(amfObj.Properties["value"])
+							);
+							break;
+						}
 					case ".time":
-						output.WriteLine("WriteTime({0}, {1});", 
-						             Format(amfObj.Properties["name"]), 
-						             amfObj.Properties["delta"]
-						             );
+						{
+							time += (int)amfObj.Properties["delta"];
+							output.WriteLine("WriteTime({0}, {1});", 
+							                Format(amfObj.Properties["name"]), 
+							                amfObj.Properties["delta"]
+							);
+
+							// handle start of frame
+							string name = (string)amfObj.Properties["name"];
+							if (name == ".enter") {
+								enterTime = time;
+							}
+						}
 						break;
 					default:
 						output.WriteLine(Format(o));

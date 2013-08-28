@@ -885,9 +885,6 @@
     <Compile Include="..\pscorlib\Telemetry\Parser.cs">
       <Link>Telemetry\Parser.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\Telemetry\SessionStream.cs">
-      <Link>Telemetry\SessionStream.cs</Link>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monotouch.csproj">

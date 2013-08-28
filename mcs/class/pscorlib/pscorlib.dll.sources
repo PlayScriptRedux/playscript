@@ -266,7 +266,6 @@
 ./Telemetry/Parser.cs
 ./Telemetry/Protocol.cs
 ./Telemetry/Session.cs
-./Telemetry/SessionStream.cs
 ./Telemetry/Span.cs
 ./Telemetry/Value.cs
 ./TypeError.play
