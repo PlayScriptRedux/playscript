@@ -25,7 +25,7 @@ namespace Telemetry
 		public const int 	Frequency = 1000000;
 
 		// minimum span length that can be written (any spans shorter than this will be discarded)
-		public const int 	MinTimeSpan = 5;
+		public const int 	MinTimeSpan = 5000;
 
 		// telemetry version
 		public const string Version = "3,2";
@@ -45,160 +45,71 @@ namespace Telemetry
 			return Stopwatch.GetTimestamp();
 		}
 
-		public static void EndSpan(Amf3String name, long beginTime)
+		public static void EndSpan(object name, long beginTime)
 		{
 			if (!Connected) return;
 
-			// compute delta and span
-			int span;
-			int delta = TimeDelta(beginTime, out span);
-			if (delta < 0)
+			// get current time (in nano-seconds)
+			long time = Stopwatch.GetTimestamp();
+
+			// get span length (in nano-seconds)
+			long span = (time - beginTime);
+
+			// skip spans that are too short
+			if (span < MinTimeSpan) {
 				return;
+			}
 
-			// write span
-			sOutput.WriteObjectHeader(Protocol.Span.ClassDef);
-			sOutput.Write(name);
-			sOutput.Write(span);
-			sOutput.Write(delta);
+			// write entry
+			AddEntry(time, span, name, null);
 		}
 
-		public static void EndSpan(string name, long beginTime)
+		public static void EndSpanValue(object name, long beginTime, object value)
 		{
 			if (!Connected) return;
 
-			// compute delta and span
-			int span;
-			int delta = TimeDelta(beginTime, out span);
-			if (delta < 0)
+			// get current time (in nano-seconds)
+			long time = Stopwatch.GetTimestamp();
+
+			// get span length (in nano-seconds)
+			long span = (time - beginTime);
+
+			// skip spans that are too short
+			if (span < MinTimeSpan) {
 				return;
+			}
 
-			// write span
-			sOutput.WriteObjectHeader(Protocol.Span.ClassDef);
-			sOutput.Write(name);
-			sOutput.Write(span);
-			sOutput.Write(delta);
+			// write entry
+			AddEntry(time, span, name, value);
 		}
 
-		public static void EndSpanValue(Amf3String name, long beginTime, object value)
+		public static void WriteTime(object name)
 		{
 			if (!Connected) return;
 
-			// compute delta and span
-			int span;
-			int delta = TimeDelta(beginTime, out span);
-			if (delta < 0)
-				return;
+			// get current time (in nano-seconds)
+			long time = Stopwatch.GetTimestamp();
 
-			// write span
-			sOutput.WriteObjectHeader(Protocol.SpanValue.ClassDef);
-			sOutput.Write(name);
-			sOutput.Write(span);
-			sOutput.Write(delta);
-			sOutput.Write(value);
+			// write entry
+			AddEntry(time, LogTime, name, null);
 		}
 
-		public static void EndSpanValue(string name, long beginTime, object value)
+		public static void WriteValue(object name, object value)
 		{
 			if (!Connected) return;
 
-			// compute delta and span
-			int span;
-			int delta = TimeDelta(beginTime, out span);
-			if (delta < 0)
-				return;
-
-			// write span
-			sOutput.WriteObjectHeader(Protocol.SpanValue.ClassDef);
-			sOutput.Write(name);
-			sOutput.Write(span);
-			sOutput.Write(delta);
-			sOutput.Write(value);
-		}
-
-		public static void WriteTime(Amf3String name)
-		{
-			if (!Connected) return;
-
-			// compute delta
-			int delta = TimeDelta();
-
-			sOutput.WriteObjectHeader(Protocol.Time.ClassDef);
-			sOutput.Write(name);
-			sOutput.Write(delta);
-		}
-
-		public static void WriteTime(string name)
-		{
-			if (!Connected) return;
-
-			// compute delta
-			int delta = TimeDelta();
-
-			sOutput.WriteObjectHeader(Protocol.Time.ClassDef);
-			sOutput.Write(name);
-			sOutput.Write(delta);
-		}
-
-		public static void WriteValue(Amf3String name, int value)
-		{
-			if (!Connected) return;
-
-			sOutput.WriteObjectHeader(Protocol.Value.ClassDef);
-			sOutput.Write(name);
-			sOutput.Write(value);
-		}
-
-		public static void WriteValue(string name, int value)
-		{
-			if (!Connected) return;
-
-			sOutput.WriteObjectHeader(Protocol.Value.ClassDef);
-			sOutput.Write(name);
-			sOutput.Write(value);
-		}
-
-		public static void WriteValue(Amf3String name, string value)
-		{
-			if (!Connected) return;
-
-			sOutput.WriteObjectHeader(Protocol.Value.ClassDef);
-			sOutput.Write(name);
-			sOutput.Write(value);
-		}
-
-		public static void WriteValue(string name, string value)
-		{
-			if (!Connected) return;
-
-			sOutput.WriteObjectHeader(Protocol.Value.ClassDef);
-			sOutput.Write(name);
-			sOutput.Write(value);
-		}
-
-		public static void WriteValue(Amf3String name, object value)
-		{
-			if (!Connected) return;
-
-			sOutput.WriteObjectHeader(Protocol.Value.ClassDef);
-			sOutput.Write(name);
-			sOutput.Write(value);
-		}
-
-		public static void WriteValue(string name, object value)
-		{
-			if (!Connected) return;
-
-			sOutput.WriteObjectHeader(Protocol.Value.ClassDef);
-			sOutput.Write(name);
-			sOutput.Write(value);
+			// write entry
+			AddEntry(0, LogValue, name, value);
 		}
 
 		public static void WriteTrace(string trace)
 		{
 			if (!Connected) return;
 
-			WriteValue(sNameTrace, trace);
+			long time = Stopwatch.GetTimestamp();
+			AddEntry(time, 0, sNameTrace, trace);
 		}
+
 
 		public static void WriteSWFStats(string name, int width, int height, int frameRate, int version, int size)
 		{
@@ -219,7 +130,7 @@ namespace Telemetry
 			sOutput = new Amf3Writer(stream);
 
 			// reset time marker
-			TimeDelta();
+			ResetLog();
 
 			var appName = PlayScript.Player.ApplicationClass.Name;
 			var swfVersion = 21;
@@ -342,9 +253,6 @@ namespace Telemetry
 			}
 
 			sSpanTlmDoPlay.Begin();
-
-			// 	add any additional telemetry processing here which will be counted as "overhead"
-
 			Flush();
 			sSpanTlmDoPlay.End();
 		}
@@ -552,8 +460,20 @@ namespace Telemetry
 		public static void Flush()
 		{
 			if (sOutput != null) {
-				// flush output stream
-				sOutput.Stream.Flush();
+
+				try
+				{
+					// flush log to AMF output
+					FlushLog(sOutput);
+
+					// flush output stream
+					sOutput.Stream.Flush();
+				}
+				catch 
+				{
+					// error writing to socket?
+					sOutput = null;
+				}
 			}
 		}
 
@@ -614,55 +534,112 @@ namespace Telemetry
 		}
 
 		#region Private
-
-		// computes the delta time since the last marker and updates the marker position
-		private static int TimeDelta()
+		struct LogEntry
 		{
-			// get current time in microseconds
-			// TODO: this is a slow 64-bit division on ARM
-			int time = (int)(Stopwatch.GetTimestamp() / sDivisor);
+			public long 	Time;		// time of entry (in nano-seconds)
+			public long 	Span;		// span length (in nano-seconds) for Span and SpanValue 
+			public object 	Name;		// string or Amf3String
+			public object	Value;		// non-null if SpanValue or Value
+		};
 
-			// get delta since our last marker
-			int delta = time - sLastMarkerTime;
+		private const long LogValue = -2;
+		private const long LogTime = -1;
 
-			// update marker
-			sLastMarkerTime = time;
+		private static void WriteLogEntry(ref LogEntry entry, ref int timeBase, Amf3Writer output)
+		{
+			if (entry.Span == LogValue) {
+				// emit Value
+				output.WriteObjectHeader(Protocol.Value.ClassDef);
+				output.Write(entry.Name);
+				output.Write(entry.Value);
+			} else 	if (entry.Span == LogTime) {
+				// emit Time
+				// NOTE: this requires a 64-bit division on ARM
+				int time  = (int)(entry.Time / sDivisor);
+				int delta = time - timeBase; 
+				timeBase = time;
 
-			// return delta
-			return delta;
+				output.WriteObjectHeader(Protocol.Time.ClassDef);
+				output.Write(entry.Name);
+				output.Write(delta);
+			} else {
+				// emit Span or SpanValue
+				// convert times to microseconds for output
+				// NOTE: this requires a 64-bit division on ARM
+				int time      = (int)(entry.Time / sDivisor);
+				int beginTime = (int)((entry.Time - entry.Span) / sDivisor);
+
+				// compute span and delta in microseconds
+				// this must be done this exact way to preserve rounding errors across spans
+				// if not, the server may produce an error if a span exceeds its expected length
+				int span  = time - beginTime;
+				int delta = time - timeBase; 
+				timeBase = time;
+
+				if (entry.Value == null) {
+					output.WriteObjectHeader(Protocol.Span.ClassDef);
+					output.Write(entry.Name);
+					output.Write(span);
+					output.Write(delta);
+				} else {
+					output.WriteObjectHeader(Protocol.SpanValue.ClassDef);
+					output.Write(entry.Name);
+					output.Write(span);
+					output.Write(delta);
+					output.Write(entry.Value);
+				}
+			}
 		}
 
-		// computes the delta time since the last marker and updates the marker position
-		// spanLength will contain the time since beginTime (in microseconds)
-		private static int TimeDelta(long beginTime, out int spanLength)
+		private static void FlushLog(Amf3Writer output)
 		{
-			// get current time in microseconds
-			// TODO: this is a slow 64-bit division on ARM
-			int time = (int)(Stopwatch.GetTimestamp() / sDivisor);
+			// write all log entries
+			for (int i=0; i < sLogCount; i++) {
+				WriteLogEntry(ref sLog[i], ref sLogTimeBase, output);
+			}
+			// clear log
+			sLogCount = 0;
+		}
 
-			// get delta since our last marker
-			int delta = time - sLastMarkerTime;
+		private static void ResetLog()
+		{
+			// reset log
+			sLogCount    = 0;
+			// reset timebase
+			sLogTimeBase = (int)(Stopwatch.GetTimestamp() / sDivisor);
+		}
 
-			// get span length (in microseconds)
-			// TODO: this is a slow 64-bit division on ARM
-			spanLength = time - (int)(beginTime / sDivisor);
-
-			// skip spans that are too short
-			if (spanLength < MinTimeSpan) {
-				return -1;
+		private static void AddEntry(long time, long span, object name, object value)
+		{
+			if (sLog == null) {
+				// create log
+				sLog = new LogEntry[4 * 1024];
 			}
 
-			// update marker
-			sLastMarkerTime = time;
+			if (sLogCount >= sLog.Length) {
+				// grow geometrically
+				int newLength = sLog.Length * 2;
+				var newLog = new LogEntry[newLength];
+				Array.Copy(sLog, newLog, sLog.Length);
+				sLog = newLog;
+			}
 
-			// return delta
-			return delta;
+			// add entry to log
+			int i = sLogCount++;
+			sLog[i].Time = time;
+			sLog[i].Span = span;
+			sLog[i].Name = name;
+			sLog[i].Value = value;
 		}
+
+		// fast intermediate log used for storing data within a frame as array of packed structs
+		// this gets flushed to the active AMF stream each frame
+		private static LogEntry[]	  sLog;
+		private static int 			  sLogCount = 0;
+		private static int 			  sLogTimeBase;
 
 		private static Amf3Writer 	  sOutput;
 		private static MemoryStream   sRecording;
-
-		private static int  		  sLastMarkerTime;
 		private static int  		  sDivisor = (int)(Stopwatch.Frequency / Frequency);
 
 		private static readonly Amf3String     sNameTrace   = new Amf3String(".trace");
