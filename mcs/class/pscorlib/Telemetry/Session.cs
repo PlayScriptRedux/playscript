@@ -503,7 +503,18 @@ namespace Telemetry
 				using (var client = new TcpClient(hostname, port)) {
 					using (var ns = client.GetStream()) {
 						stream.Position = 0;
-						stream.CopyTo(ns);
+
+						var buffer = new byte[16 * 1024];
+						int count;
+						// read from input stream
+						while ( (count=stream.Read(buffer, 0, buffer.Length)) > 0)
+						{
+							// write to network stream
+							ns.Write(buffer, 0, count);
+							ns.Flush();
+							// we can't feed data too fast or else the server will ignore it 
+							System.Threading.Thread.Sleep(250);
+						}
 					}
 				}
 				Console.WriteLine("Telemetry: network send completed!");
