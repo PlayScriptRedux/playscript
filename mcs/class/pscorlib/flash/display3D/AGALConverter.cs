@@ -205,16 +205,19 @@ namespace flash.display3D
 
 			public textures.SamplerState ToSamplerState()
 			{
-				var state = new textures.SamplerState();
+				TextureMagFilter magFilter;
+				TextureMinFilter minFilter;
+				TextureWrapMode  wrapModeS;
+				TextureWrapMode  wrapModeT;
 
 				// translate mag filter
 				switch (f)
 				{
 				case 0:	
-					state.MagFilter = TextureMagFilter.Nearest;		
+					magFilter = TextureMagFilter.Nearest;		
 					break;
 				case 1:	
-					state.MagFilter = TextureMagFilter.Linear;		
+					magFilter = TextureMagFilter.Linear;		
 					break;
 				default:
 					throw new NotImplementedException();
@@ -226,16 +229,19 @@ namespace flash.display3D
 					// disable
 				case 0:	
 #if !PLATFORM_MONODROID
-					state.MinFilter = (f!=0) ? TextureMinFilter.Linear : TextureMinFilter.Nearest;		
+					minFilter = (f!=0) ? TextureMinFilter.Linear : TextureMinFilter.Nearest;	
+#else
+					// TODO: figure out the right value for this
+					minFilter = (TextureMinFilter)((f!=0) ? TextureMagFilter.Linear : TextureMagFilter.Nearest);
 #endif
 					break;
 					// nearest
 				case 1:	
-					state.MinFilter = (f!=0) ? TextureMinFilter.NearestMipmapLinear : TextureMinFilter.NearestMipmapNearest;		
+					minFilter = (f!=0) ? TextureMinFilter.NearestMipmapLinear : TextureMinFilter.NearestMipmapNearest;		
 					break;
 					// linear
 				case 2:	
-					state.MinFilter = (f!=0) ? TextureMinFilter.LinearMipmapLinear : TextureMinFilter.LinearMipmapNearest;		
+					minFilter = (f!=0) ? TextureMinFilter.LinearMipmapLinear : TextureMinFilter.LinearMipmapNearest;		
 					break;
 				default:
 					throw new NotImplementedException();
@@ -245,22 +251,23 @@ namespace flash.display3D
 				switch (w)
 				{
 				case 0:
-					state.WrapModeS = TextureWrapMode.ClampToEdge;
-					state.WrapModeT = TextureWrapMode.ClampToEdge;
+					wrapModeS = TextureWrapMode.ClampToEdge;
+					wrapModeT = TextureWrapMode.ClampToEdge;
 					break;
 				case 1:
-					state.WrapModeS = TextureWrapMode.Repeat;
-					state.WrapModeT = TextureWrapMode.Repeat;
+					wrapModeS = TextureWrapMode.Repeat;
+					wrapModeT = TextureWrapMode.Repeat;
 					break;
 				default:
 					throw new NotImplementedException();
 				}
 
 				// translate lod bias, sign extend and /8
-				state.LodBias = ((float)((b << 24) >> 24)) / 8.0f;
+				float lodBias = ((float)((b << 24) >> 24)) / 8.0f;
 
-				state.MaxAniso = 0.0f;
-				return state;
+				float maxAniso = 0.0f;
+				// create sampler state and intern to allow for faster equality comparisons
+				return new textures.SamplerState(minFilter, magFilter, wrapModeS, wrapModeT, lodBias, maxAniso).Intern();
 			}
 		};
 
@@ -452,6 +459,11 @@ namespace flash.display3D
 			agal.position = 0;
 
 			int magic = agal.readByte ();
+			if (magic == 0xB0) {
+				// use embedded GLSL shader instead
+				return agal.readUTF();
+			}
+
 			if (magic != 0xA0) {
 				throw new InvalidOperationException ("Magic value must be 0xA0, may not be AGAL");
 			}
@@ -734,6 +746,8 @@ namespace flash.display3D
 					break;
 
 				case 0x27: // kill /  discard
+					// ensure we have a full source mask since there is no destination register
+					sr1.sourceMask = 0xF;
 					sb.AppendFormat("if (any(lessThan({0}, vec4(0)))) discard;", sr1.ToGLSL() ); 
 					map.Add(sr1, RegisterUsage.Vector4);
 					break;

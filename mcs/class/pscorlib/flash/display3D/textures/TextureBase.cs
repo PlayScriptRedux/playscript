@@ -23,6 +23,7 @@ namespace flash.display3D.textures {
 	#elif PLATFORM_MONODROID
 	using OpenTK.Graphics.ES20;
 	using TextureTarget = OpenTK.Graphics.ES20.All;
+	using TextureParameterName = OpenTK.Graphics.ES20.All;
 	#endif
 
 	public abstract class TextureBase : EventDispatcher {
@@ -45,8 +46,30 @@ namespace flash.display3D.textures {
 		public int	 		 textureId 		{get {return mTextureId;}}
 		public TextureTarget textureTarget 	{get {return mTextureTarget;}}
 
+		// sets the sampler state associated with this texture
+		// due to the way GL works, sampler states are parameters of texture objects
+		public void setSamplerState(SamplerState state)
+		{
+			// prevent redundant setting of sampler state
+			if (!state.Equals(mSamplerState)) {
+				// set texture
+				GL.BindTexture(mTextureTarget, mTextureId);
+				// apply state to texture
+				GL.TexParameter (mTextureTarget, TextureParameterName.TextureMinFilter, (int)state.MinFilter);
+				GL.TexParameter (mTextureTarget, TextureParameterName.TextureMagFilter, (int)state.MagFilter);
+				GL.TexParameter (mTextureTarget, TextureParameterName.TextureWrapS, (int)state.WrapModeS);
+				GL.TexParameter (mTextureTarget, TextureParameterName.TextureWrapT, (int)state.WrapModeT);
+				if (state.LodBias != 0.0) {
+					throw new System.NotImplementedException("Lod bias setting not supported yet");
+				}
+
+				mSamplerState = state;
+			}
+		}
+
 		private readonly int 		   mTextureId;
 		private readonly TextureTarget mTextureTarget;
+		private SamplerState		   mSamplerState;
 
 		#else
 		

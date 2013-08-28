@@ -19,6 +19,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -28,6 +29,7 @@
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
     <DefineConstants>PLATFORM_MONOMAC;OPENGL</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -809,6 +811,36 @@
     </Compile>
     <Compile Include="..\pscorlib\flash\utils\ByteArray.cs">
       <Link>flash\utils\ByteArray.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3ClassDef.cs">
+      <Link>Amf\Amf3ClassDef.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Object.cs">
+      <Link>Amf\Amf3Object.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Parser.cs">
+      <Link>Amf\Amf3Parser.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3TypeCode.cs">
+      <Link>Amf\Amf3TypeCode.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Writer.cs">
+      <Link>Amf\Amf3Writer.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\DataConverter.cs">
+      <Link>Amf\DataConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\IAmf3Serializable.cs">
+      <Link>Amf\IAmf3Serializable.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\ReferenceEqualityComparer.cs">
+      <Link>Amf\ReferenceEqualityComparer.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Rocks.cs">
+      <Link>Amf\Rocks.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3String.cs">
+      <Link>Amf\Amf3String.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

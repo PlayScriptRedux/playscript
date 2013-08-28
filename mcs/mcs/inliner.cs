@@ -7,7 +7,6 @@ namespace Mono.CSharp
 		public Expression Expr;
 		private Expression inlineExpr;
 
-		private ResolveContext rc;
 		private bool inlineFailed;
 		private Invocation invocation;
 		private MethodSpec methodSpec;
@@ -225,7 +224,6 @@ namespace Mono.CSharp
 //				inlineExpr = newBlock;
 			}
 
-			this.rc = rc;
 			this.inlineFailed = false;
 
 			Expression ret;

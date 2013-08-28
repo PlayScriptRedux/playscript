@@ -5,9 +5,16 @@ using System.Linq;
 using System.IO;
 using System.Runtime.InteropServices;
 
-#if PLATFORM_MONOTOUCH
+#if PLATFORM_MONOMAC
+using MonoMac.OpenGL;
+#elif PLATFORM_MONOTOUCH
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
+using OpenTK.Graphics;
+using OpenTK.Graphics.ES20;
+#elif PLATFORM_MONODROID
+using OpenTK.Graphics;
+using OpenTK.Graphics.ES20;
 #endif
 
 namespace PlayScript
@@ -140,6 +147,7 @@ namespace PlayScript
 	public static class Profiler
 	{
 		public static bool Enabled = true;
+		public static bool ProfileGPU = false;
 
 		static Profiler()
 		{
@@ -205,6 +213,15 @@ namespace PlayScript
 				return;
 
 			Profiler.End("frame");
+
+#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
+			if (ProfileGPU) {
+				// this stalls and waits for the gpu to finish 
+				PlayScript.Profiler.Begin("gpu");
+				GL.Finish();
+				PlayScript.Profiler.End("gpu");
+			}
+#endif
 
 			// update all sections
 			foreach (Section section in sSectionList) {
@@ -464,7 +481,7 @@ namespace PlayScript
 				sum += milliseconds;
 			}
 			sum /= sFrameCount;
-			tw.WriteLine("Avg (clamped):{0,6:0.00}ms - {1, 12:0.0} fps        Clamped at {2:0.00}ms", sum, GetFpsFromMs(sum), minimumClampedValue);
+			tw.WriteLine("Avg (clamped):{0,6:0.00}ms - {1, 12:0.0} fps        min {2:0.00}ms", sum, GetFpsFromMs(sum), minimumClampedValue);
 		}
 
 		private static void PrintPercentile(TextWriter tw, string key, int percentile)
@@ -521,8 +538,8 @@ namespace PlayScript
 			PerformanceFrameData performanceFrameData = GetPerformanceFrameData();
 			PrintAverageClamped(tw, "frame", performanceFrameData.FastFrame);
 			PrintPercentile(tw, "frame", 95);
-			PrintPercentageOfFrames(tw, "frame", "% Fast Frames", a => (a <= performanceFrameData.FastFrame), string.Format("Lower than {0:0.00}ms", performanceFrameData.FastFrame));
-			PrintPercentageOfFrames(tw, "frame", "% Slow frames", a => (a >= performanceFrameData.SlowFrame), string.Format("Higher than {0:0.00}ms", performanceFrameData.SlowFrame));
+			PrintPercentageOfFrames(tw, "frame", "% Fast Frames", a => (a <= performanceFrameData.FastFrame), string.Format("<={0:0.00}ms", performanceFrameData.FastFrame));
+			PrintPercentageOfFrames(tw, "frame", "% Slow frames", a => (a >= performanceFrameData.SlowFrame), string.Format(">={0:0.00}ms", performanceFrameData.SlowFrame));
 			tw.WriteLine("GC Count:      {0}", sReportGCCount);
 
 			tw.WriteLine("*********** Timing (ms) ***********");

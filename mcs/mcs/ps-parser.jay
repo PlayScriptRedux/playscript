@@ -1244,16 +1244,34 @@ struct_declaration
 		Error_SyntaxError (yyToken);
 	  }
 	;
-	
+
+opt_member_type
+	: /* empty */
+	  {
+	  	$$ = null;
+	  }
+	| COLON member_type
+	  {
+		$$ = $2;
+	  }
+	;
+
 constant_declaration
 	: opt_attributes 
 	  opt_modifiers
-	  CONST IDENTIFIER COLON type
+	  CONST IDENTIFIER opt_member_type
 	  {
 		var lt = (LocatedToken) $4;
+		if ($5 == null) {
+		  	if (settings.PsStrictMode)
+				report.Error (7012, lt.Location, "Constant `{0}' has no type declaration.", lt.Value);
+			else
+				report.Warning (1009, 1, lt.Location, "Constant `{0}' has no type declaration.", lt.Value);
+			$5 = new UntypedTypeExpression (GetLocation ($4));
+		}
 		var mod = (Modifiers) $2;
 		mod &= ~Modifiers.STATIC;
-		current_field = new Const (current_type, (FullNamedExpression) $6, mod, new MemberName (lt.Value, lt.Location), (Attributes) $1);
+		current_field = new Const (current_type, (FullNamedExpression) $5, mod, new MemberName (lt.Value, lt.Location), (Attributes) $1);
 		if (is_config_enabled) {
 			current_type.AddMember (current_field);
 		}
@@ -1268,8 +1286,8 @@ constant_declaration
 			Lexer.doc_state = XmlCommentState.Allowed;
 		}
 		
-		current_field.Initializer = (ConstInitializer) $8;
-		lbag.AddMember (current_field, mod_locations, GetLocation ($3), GetLocation ($10));
+		current_field.Initializer = (ConstInitializer) $7;
+		lbag.AddMember (current_field, mod_locations, GetLocation ($3), GetLocation ($9));
 		current_field = null;
 	  }
 	;
@@ -1291,13 +1309,20 @@ constant_declarators
 	;
 	
 constant_declarator
-	: COMMA IDENTIFIER COLON member_type opt_constant_initializer
+	: COMMA IDENTIFIER opt_member_type opt_constant_initializer
 	  {
 		var lt = (LocatedToken) $2;
-	  	$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), (ConstInitializer) $5, (FullNamedExpression) $4);
+		if ($3 == null) {
+		  	if (settings.PsStrictMode)
+				report.Error (7012, lt.Location, "Constant `{0}' has no type declaration.", lt.Value);
+			else
+				report.Warning (1009, 1, lt.Location, "Constant `{0}' has no type declaration.", lt.Value);
+			$3 = new UntypedTypeExpression (GetLocation ($2));
+		}
+	  	$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), (ConstInitializer) $4, (FullNamedExpression) $3);
 	  	lbag.AddLocation ($$, GetLocation ($1));
 	  }
-	;		
+	;	
 
 opt_constant_initializer
 	: /* empty */ 
@@ -1331,15 +1356,23 @@ constant_initializer_expr
 field_declaration
 	: opt_attributes
 	  opt_modifiers
-	  VAR IDENTIFIER COLON member_type
+	  VAR IDENTIFIER opt_member_type
 	  {
 	  	lexer.parsing_generic_declaration = false;
 
-		FullNamedExpression type = (FullNamedExpression) $6;
+	  	var lt = (LocatedToken) $4;
+	  	if ($5 == null) {
+		  	if (settings.PsStrictMode)
+				report.Error (7012, lt.Location, "Field `{0}' has no type declaration.", lt.Value);
+			else
+				report.Warning (1009, 1, lt.Location, "Field `{0}' has no type declaration.", lt.Value);
+			$5 = new UntypedTypeExpression (GetLocation ($4));
+		}
+
+		FullNamedExpression type = (FullNamedExpression) $5;
 		if (type.Type != null && type.Type.Kind == MemberKind.Void)
-			report.Error (670, GetLocation ($6), "Fields cannot have void type");
-			
-		var lt = (LocatedToken) $4;
+			report.Error (670, GetLocation ($5), "Fields cannot have void type");
+		
 		current_field = new Field (current_type, type, (Modifiers) $2, new MemberName (lt.Value, lt.Location), (Attributes) $1);
 		if (is_config_enabled) {
 			current_type.AddField (current_field);
@@ -1350,13 +1383,13 @@ field_declaration
 	  opt_field_initializer
 	  opt_field_declarators
 	  SEMICOLON
-	  { 
+	  {
 		if (doc_support) {
 			current_field.DocComment = Lexer.consume_doc_comment ();
 			Lexer.doc_state = XmlCommentState.Allowed;
 		}
-			
-		lbag.AddMember (current_field, mod_locations, GetLocation ($10));
+		
+		lbag.AddMember (current_field, mod_locations, GetLocation ($9));
 		$$ = current_field;
 		current_field = null;
 	  }
@@ -1431,22 +1464,36 @@ field_declarators
 	;
 	
 field_declarator
-	: COMMA IDENTIFIER COLON member_type
+	: COMMA IDENTIFIER opt_member_type
 	  {
 		var lt = (LocatedToken) $2;
-	  	$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), null, (FullNamedExpression) $4);
+		if ($3 == null) {
+		  	if (settings.PsStrictMode)
+				report.Error (7012, lt.Location, "Field `{0}' has no type declaration.", lt.Value);
+			else
+				report.Warning (1009, 1, lt.Location, "Field `{0}' has no type declaration.", lt.Value);
+			$3 = new UntypedTypeExpression (GetLocation ($2));
+		}
+	  	$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), null, (FullNamedExpression) $3);
 	  	lbag.AddLocation ($$, GetLocation ($1));
 	  }
-	| COMMA IDENTIFIER COLON member_type ASSIGN
+	| COMMA IDENTIFIER opt_member_type ASSIGN
 	  {
 		++lexer.parsing_block;
 	  }
 	  variable_initializer
 	  {
 		--lexer.parsing_block;
-		var lt = (LocatedToken) $2;	  
-	  	$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), (Expression) $7, (FullNamedExpression) $4);
-	  	lbag.AddLocation ($$, GetLocation ($1), GetLocation ($5));
+		var lt = (LocatedToken) $2;
+		if ($3 == null) {
+		  	if (settings.PsStrictMode)
+				report.Error (7012, lt.Location, "Field `{0}' has no type declaration.", lt.Value);
+			else
+				report.Warning (1009, 1, lt.Location, "Field `{0}' has no type declaration.", lt.Value);
+			$3 = new UntypedTypeExpression (GetLocation ($2));
+		}
+	  	$$ = new FieldDeclarator (new SimpleMemberName (lt.Value, lt.Location), (Expression) $6, (FullNamedExpression) $3);
+	  	lbag.AddLocation ($$, GetLocation ($1), GetLocation ($4));
 	  }
 	;	
 
@@ -1660,19 +1707,15 @@ method_header
 			$$ = c;
 		
 		} else {
-
-			if (current_container.Kind == MemberKind.Class && name.ExplicitInterface == null &&
-				(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
-					modifiers |= Modifiers.VIRTUAL;
-
 			var ret_type = $9 as FullNamedExpression;
-			
 			if (ret_type == null) {
-				report.Error (7012, GetLocation($8), "Method must specify a return type.");
-				ret_type = new TypeExpression (compiler.BuiltinTypes.Void, GetLocation ($8));
+				if (settings.PsStrictMode)
+					report.Error (7012, GetLocation($8), "Method `{0}' must specify a return type.", name.Name);
+				else
+					report.Warning (1009, 1, GetLocation($8), "Method `{0}' return type has no type declaration.", name.Name);
 			}
 
-			var method = Method.Create (current_type, ret_type, modifiers,
+			var method = AsMethod.Create (current_type, (FullNamedExpression) $9, modifiers,
 					     name, current_local_parameters, (Attributes) $1);
 
 			if ($11 != null)
@@ -1692,19 +1735,27 @@ method_header
 	  {
 		valid_param_mod = ParameterModifierType.All;
 	  }
-	  opt_formal_parameter_list CLOSE_PARENS method_colon member_type
+	  opt_formal_parameter_list CLOSE_PARENS opt_method_return_type
 	  {
-		var type = (FullNamedExpression) $10;
+		var type = (FullNamedExpression) $9;
 		var name = (MemberName) $4;
 		var modifiers = (Modifiers) $2;
 		var parameters = (ParametersCompiled) $7;		
 		
+		if (type == null) {
+			if (settings.PsStrictMode)
+				report.Error (7012, name.Location, "Property getter `{0}' must specify a return type.", name.Name);
+			else
+				report.Warning (1009, 1, name.Location, "Property getter `{0}' return type has no type declaration.", name.Name);
+			type = new UntypedTypeExpression (name.Location);
+		}
+
 		if (current_container.Kind == MemberKind.Class && name.ExplicitInterface == null &&
 			(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
 				modifiers |= Modifiers.VIRTUAL;
 
 		if (parameters != null && parameters.Count > 0)
-			report.Error (7016, GetLocation ($10), "Property getter functions may not have parameters");
+			report.Error (7016, GetLocation ($9), "Property getter functions may not have parameters");
 
 		current_property = current_type.LookupNameInContainer (name.Name, modifiers) as Property;
 		
@@ -1715,9 +1766,6 @@ method_header
 			}
 			modifiers = (Modifiers) 0;
 		} else {
-//			if (!type.Equals(current_property.TypeExpression)) {
-//				report.Error (7002, GetLocation ($10), "Type of property getter and setter must match", current_property.GetSignatureForError ());
-//			}
 			if (current_property.Set != null && ModifiersExtensions.IsRestrictedModifier (current_property.ModFlags & Modifiers.AccessibilityMask, modifiers & Modifiers.AccessibilityMask)) {
 				current_property.Set.ModFlags |= current_property.ModFlags & Modifiers.AccessibilityMask;
 				current_property.ModFlags = (current_property.ModFlags & ~Modifiers.AccessibilityMask) | (modifiers & Modifiers.AccessibilityMask);
@@ -1728,18 +1776,18 @@ method_header
 		}
 		
 		if (type.Type != null && type.Type.Kind == MemberKind.Void)
-			report.Error (547, GetLocation ($10), "`{0}': property or indexer cannot have void type", current_property.GetSignatureForError ());					
-			
+			report.Error (547, GetLocation ($9), "`{0}': property or indexer cannot have void type", current_property.GetSignatureForError ());					
+		
 		if (current_property.Get != null) {
-			report.Error (1007, GetLocation ($3), "Property accessor already defined");
+			report.Error (1007, GetLocation ($3), "Property getter already defined");
 		}
 		
 		current_property.Get = new Property.GetMethod (current_property,
 			modifiers & Modifiers.AccessibilityMask, (Attributes) $1, GetLocation ($3));
 
 		is_config_enabled = true;
-					
-		lbag.AddMember (current_property, mod_locations, GetLocation ($10));
+
+		lbag.AddMember (current_property, mod_locations, GetLocation ($9));
 		current_local_parameters = current_property.Get.ParameterInfo;
 		$$ = current_property.Get;
 	  }
@@ -1749,19 +1797,27 @@ method_header
 	  {
 		valid_param_mod = ParameterModifierType.All;
 	  }
-	  opt_formal_parameter_list CLOSE_PARENS method_colon member_type
+	  opt_formal_parameter_list CLOSE_PARENS opt_method_return_type
 	  {
-		var void_type = (FullNamedExpression) $10;
+		var void_type = (FullNamedExpression) $9;
 		var name = (MemberName) $4;
 		var modifiers = (Modifiers) $2;
 		var parameters = (ParametersCompiled) $7;
 		
+		if (void_type == null) {
+			if (settings.PsStrictMode)
+				report.Error (7012, name.Location, "Property setter `{0}' must specify a return type.", name.Name);
+			else
+				report.Warning (1009, 1, name.Location, "Property setter `{0}' return type has no type declaration.", name.Name);
+			void_type = new TypeExpression (compiler.BuiltinTypes.Void, name.Location);
+		}
+
 		if (current_container.Kind == MemberKind.Class && name.ExplicitInterface == null &&
 			(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
 				modifiers |= Modifiers.VIRTUAL;
 		
 		if (void_type.Type != null && void_type.Type.Kind != MemberKind.Void)
-			report.Error (7003, GetLocation ($10), "Property setter function must not be of type void");					
+			report.Error (7003, GetLocation ($9), "Property setter function must be of type void");					
 
 		current_property = current_type.LookupNameInContainer (name.Name, modifiers) as Property;
 
@@ -1773,7 +1829,7 @@ method_header
 		} else {
 			type = ((Parameter)parameters.FixedParameters[0]).TypeExpression;	
 		}
-				
+		
 		if (current_property == null) {
 			current_property = new Property (current_type, type, modifiers, name, (Attributes) $1);
 			if (is_config_enabled) {
@@ -1781,9 +1837,6 @@ method_header
 			}
 			modifiers = (Modifiers) 0;			
 		} else {
-//			if (!type.Equals(current_property.TypeExpression)) {
-//				report.Error (7002, GetLocation ($10), "Type of property getter and setter must match", current_property.GetSignatureForError ());
-//			}
 			if (current_property.Get != null && ModifiersExtensions.IsRestrictedModifier (current_property.ModFlags & Modifiers.AccessibilityMask, modifiers & Modifiers.AccessibilityMask)) {
 				current_property.Get.ModFlags |= current_property.ModFlags & Modifiers.AccessibilityMask;
 				current_property.ModFlags = (current_property.ModFlags & ~Modifiers.AccessibilityMask) | (modifiers & Modifiers.AccessibilityMask);
@@ -1794,7 +1847,7 @@ method_header
 		}
 		
 		if (current_property.Set != null) {
-			report.Error (1007, GetLocation ($3), "Property accessor already defined");
+			report.Error (1007, GetLocation ($3), "Property setter already defined");
 		}
 		
 		current_property.Set = new Property.SetMethod (current_property, 
@@ -1802,7 +1855,7 @@ method_header
 	  
 		is_config_enabled = true;
 				  
-		lbag.AddMember (current_property, mod_locations, GetLocation ($10));
+		lbag.AddMember (current_property, mod_locations, GetLocation ($9));
 		current_local_parameters = parameters;
 		$$ = current_property.Set;
 	  }
@@ -1837,8 +1890,8 @@ method_header
 		if (name.ExplicitInterface == null && (modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
 			modifiers |= Modifiers.VIRTUAL;
 			
-		var method = Method.Create (current_type, new TypeExpression (compiler.BuiltinTypes.Void, GetLocation ($12)),
-				     modifiers, name, current_local_parameters, (Attributes) $1);
+		var method = AsMethod.Create (current_type, new TypeExpression (compiler.BuiltinTypes.Void, GetLocation ($12)),
+									  modifiers, name, current_local_parameters, (Attributes) $1);
 
 		if ($14 != null)
 			method.SetConstraints ((List<Constraints>) $14);
@@ -1859,8 +1912,8 @@ method_header
 		report.Error (1585, name.Location, 
 			"Member modifier `{0}' must precede the member type and name", ModifiersExtensions.Name ((Modifiers) $4));
 
-		var method = Method.Create (current_type, (FullNamedExpression) $1,
-					    0, name, (ParametersCompiled) $7, (Attributes) $1);
+		var method = AsMethod.Create (current_type, (FullNamedExpression) $1,
+									  0, name, (ParametersCompiled) $7, (Attributes) $1);
 
 		current_local_parameters = (ParametersCompiled) $7;
 
@@ -1878,8 +1931,8 @@ method_header
 		current_local_parameters = ParametersCompiled.Undefined;
 
 		MemberName name = (MemberName) $4;
-		var method = Method.Create (current_type, new TypeExpression (compiler.BuiltinTypes.Void, GetLocation ($4)), (Modifiers) $2,
-									name, current_local_parameters, (Attributes) $1);
+		var method = AsMethod.Create (current_type, new TypeExpression (compiler.BuiltinTypes.Void, GetLocation ($4)), (Modifiers) $2,
+									  name, current_local_parameters, (Attributes) $1);
 
 		if (doc_support)
 			method.DocComment = Lexer.consume_doc_comment ();
@@ -2338,7 +2391,7 @@ get_accessor_declaration
 		}
 	  
 		if (current_property.Get != null) {
-			report.Error (1007, GetLocation ($3), "Property accessor already defined");
+			report.Error (1007, GetLocation ($3), "Property getter already defined");
 		}
 		
 		if (current_property is Indexer) {
@@ -2381,7 +2434,7 @@ set_accessor_declaration
 		}
 		
 		if (current_property.Set != null) {
-			report.Error (1007, GetLocation ($3), "Property accessor already defined");
+			report.Error (1007, GetLocation ($3), "Property getter already defined");
 		}
 	  
 		if (current_property is Indexer) {

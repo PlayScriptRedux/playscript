@@ -43,6 +43,48 @@ namespace Mono.CSharp
 	// Expressions
 	//
 
+	public class UntypedTypeExpression : TypeExpr
+	{
+		public UntypedTypeExpression (Location loc)
+		{
+			this.loc = loc;
+		}
+
+		public override TypeSpec ResolveAsType (IMemberContext mc)
+		{
+			return mc.Module.Compiler.BuiltinTypes.Dynamic;
+		}
+	}
+
+	public class UntypedBlockVariable : BlockVariable
+	{
+		public UntypedBlockVariable (LocalVariable li)
+			: base (li)
+		{
+		}
+
+		public new FullNamedExpression TypeExpression {
+			get {
+				return type_expr;
+			}
+			set {
+				type_expr = value;
+			}
+		}
+
+		public override bool Resolve (BlockContext bc)
+		{
+			if (type_expr == null) {
+				if (Initializer == null)
+					type_expr = new UntypedTypeExpression (loc);
+				else
+					type_expr = new VarExpr (loc);
+			}
+
+			return base.Resolve (bc);
+		}
+	}
+
 	//
 	// ActionScript: Object initializers implement standard JSON style object
 	// initializer syntax in the form { ident : expr [ , ... ] } or { "literal" : expr [, ... ]}
@@ -1303,5 +1345,73 @@ namespace Mono.CSharp
 		
 	}
 
+	public class AsMethod : Method
+	{
+		const Modifiers AllowedModifiers =
+			Modifiers.STATIC |
+			Modifiers.PUBLIC |
+			Modifiers.PROTECTED |
+			Modifiers.INTERNAL |
+			Modifiers.PRIVATE |
+			Modifiers.OVERRIDE |
+			Modifiers.VIRTUAL | // virtual should be no-op but we extend AS here to have better metadata
+			Modifiers.SEALED; // TODO: FINAL
 
+		private AsMethod (TypeDefinition parent, FullNamedExpression return_type, Modifiers mod,
+		                MemberName name, ParametersCompiled parameters, Attributes attrs)
+			: base (parent, return_type, mod, AllowedModifiers, name, parameters, attrs)
+		{
+		}
+
+		public static new Method Create (TypeDefinition parent, FullNamedExpression returnType, Modifiers mod,
+		                                 MemberName name, ParametersCompiled parameters, Attributes attrs)
+		{
+			var rt = returnType ?? new UntypedTypeExpression (name.Location);
+
+			var m = new AsMethod (parent, rt, mod, name, parameters, attrs);
+
+			if (returnType == null)
+				m.HasNoReturnType = true;
+
+			return m;
+		}
+
+		protected override bool CheckOverrideAgainstBase (MemberSpec base_member)
+		{
+			bool ok = true;
+
+			if ((base_member.Modifiers & (Modifiers.ABSTRACT | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0) {
+				ModFlags &= ~Modifiers.OVERRIDE;
+				ModFlags |= Modifiers.VIRTUAL;
+			}
+
+			if ((base_member.Modifiers & Modifiers.SEALED) != 0) {
+				Report.SymbolRelatedToPreviousError (base_member);
+				Report.Error (1025, Location, "`{0}': Cannot redefine a final method", GetSignatureForError ());
+				ok = false;
+			}
+
+			var base_member_type = ((IInterfaceMemberSpec) base_member).MemberType;
+			if (!TypeSpecComparer.Override.IsEqual (MemberType, base_member_type)) {
+				Report.SymbolRelatedToPreviousError (base_member);
+
+				// TODO: Add all not matching incompatibilites as PS1023
+				Report.Error (1023, Location, "`{0}': Incompatible override: Return type must be `{1}' to match overridden member `{2}'",
+				              GetSignatureForError (), base_member_type.GetSignatureForError (), base_member.GetSignatureForError ());
+				ok = false;
+			}
+
+			return ok;
+		}
+
+		protected override void Error_OverrideWithoutBase (MemberSpec candidate)
+		{
+			if (candidate == null) {
+				Report.Error (1020, Location, "`{0}': Method marked override must override another method", GetSignatureForError ());
+				return;
+			}
+
+			base.Error_OverrideWithoutBase (candidate);
+		}
+	}
 }

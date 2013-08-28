@@ -245,6 +245,12 @@ namespace Mono.CSharp {
 		public bool AllowDynamic = true;
 
 		//
+		// Whether to enable PlayScript strict mode. Defaults to true.
+		//
+
+		public bool PsStrictMode = true;
+
+		//
 		// Inlining mode for source level inliner (none, explicit, any)
 		//
 
@@ -1153,6 +1159,14 @@ namespace Mono.CSharp {
 
 			case "/unsafe-":
 				settings.Unsafe = false;
+				return ParseResult.Success;
+
+			case "/psstrict-":
+				settings.PsStrictMode = false;
+				return ParseResult.Success;
+
+			case "/psstrict+":
+				settings.PsStrictMode = true;
 				return ParseResult.Success;
 
 			case "/warnaserror":
