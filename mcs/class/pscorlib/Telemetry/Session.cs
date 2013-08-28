@@ -34,41 +34,18 @@ namespace Telemetry
 		public const int 	Meta = 293228;
 
 
-		// returns the time in frequency (microseconds)
-		public static int GetTime()
-		{
-			return ((int)Stopwatch.GetTimestamp()) / sDivisor;
-		}
-
 		// returns true if a session is active
 		public static bool Connected
 		{
 			get { return (sOutput != null);}
 		}
 
-		public static int BeginSpan()
+		public static long BeginSpan()
 		{
-			return GetTime();
+			return Stopwatch.GetTimestamp();
 		}
 
-		public static void EndSpan(Amf3String name, int beginTime)
-		{
-			if (!Connected) return;
-
-			// compute delta and span
-			int span;
-			int delta = TimeDelta(beginTime, out span);
-			if (delta < 0)
-				return;
-
-			// write span
-			sOutput.WriteObjectHeader(Protocol.Span.ClassDef);
-			sOutput.Write(name);
-			sOutput.Write(span);
-			sOutput.Write(delta);
-		}
-
-		public static void EndSpan(string name, int beginTime)
+		public static void EndSpan(Amf3String name, long beginTime)
 		{
 			if (!Connected) return;
 
@@ -85,7 +62,24 @@ namespace Telemetry
 			sOutput.Write(delta);
 		}
 
-		public static void EndSpanValue(Amf3String name, int beginTime, object value)
+		public static void EndSpan(string name, long beginTime)
+		{
+			if (!Connected) return;
+
+			// compute delta and span
+			int span;
+			int delta = TimeDelta(beginTime, out span);
+			if (delta < 0)
+				return;
+
+			// write span
+			sOutput.WriteObjectHeader(Protocol.Span.ClassDef);
+			sOutput.Write(name);
+			sOutput.Write(span);
+			sOutput.Write(delta);
+		}
+
+		public static void EndSpanValue(Amf3String name, long beginTime, object value)
 		{
 			if (!Connected) return;
 
@@ -103,7 +97,7 @@ namespace Telemetry
 			sOutput.Write(value);
 		}
 
-		public static void EndSpanValue(string name, int beginTime, object value)
+		public static void EndSpanValue(string name, long beginTime, object value)
 		{
 			if (!Connected) return;
 
@@ -624,8 +618,9 @@ namespace Telemetry
 		// computes the delta time since the last marker and updates the marker position
 		private static int TimeDelta()
 		{
-			// get current ticks
-			int time = GetTime();
+			// get current time in microseconds
+			// TODO: this is a slow 64-bit division on ARM
+			int time = (int)(Stopwatch.GetTimestamp() / sDivisor);
 
 			// get delta since our last marker
 			int delta = time - sLastMarkerTime;
@@ -639,16 +634,18 @@ namespace Telemetry
 
 		// computes the delta time since the last marker and updates the marker position
 		// spanLength will contain the time since beginTime (in microseconds)
-		private static int TimeDelta(int beginTime, out int spanLength)
+		private static int TimeDelta(long beginTime, out int spanLength)
 		{
-			// get current ticks
-			int time = GetTime();
+			// get current time in microseconds
+			// TODO: this is a slow 64-bit division on ARM
+			int time = (int)(Stopwatch.GetTimestamp() / sDivisor);
 
 			// get delta since our last marker
 			int delta = time - sLastMarkerTime;
 
-			// get span length (elapsed time since begin)
-			spanLength = time - beginTime;
+			// get span length (in microseconds)
+			// TODO: this is a slow 64-bit division on ARM
+			spanLength = time - (int)(beginTime / sDivisor);
 
 			// skip spans that are too short
 			if (spanLength < MinTimeSpan) {

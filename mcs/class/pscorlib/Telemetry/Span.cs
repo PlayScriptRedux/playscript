@@ -68,7 +68,7 @@ namespace Telemetry
 		private bool 				mIsInSpan;
 
 		// time that span begun
-		private int 				mBeginTime;
+		private long 				mBeginTime;
 
 		// span name (as amf-ready string)
 		private readonly Amf3String mName;
