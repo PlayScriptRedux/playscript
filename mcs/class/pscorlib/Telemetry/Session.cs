@@ -238,7 +238,7 @@ namespace Telemetry
 			// write player info
 			WriteValue(".player.version", "11,8,800,94");
 //			WriteValue(".player.airversion", "3.8.0.910");
-			WriteValue(".player.type", "Air");
+			WriteValue(".player.type", "PlayScript");
 			WriteValue(".player.debugger", flash.system.Capabilities.isDebugger); 
 			WriteValue(".player.global.date", new _root.Date().getTime());
 			WriteValue(".player.instance", 0);
@@ -347,11 +347,12 @@ namespace Telemetry
 				sSpanExit.End();
 			}
 
+			sSpanTlmDoPlay.Begin();
+
 			// 	add any additional telemetry processing here which will be counted as "overhead"
-//			sSpanTlmDoPlay.Begin();
-//			sSpanTlmDoPlay.End();
 
 			Flush();
+			sSpanTlmDoPlay.End();
 		}
 
 		public static void OnResize(int width, int height)
@@ -670,9 +671,8 @@ namespace Telemetry
 		private static readonly Amf3String     sNameTrace   = new Amf3String(".trace");
 		private static readonly Amf3String     sNameSwfFrame  = new Amf3String(".swf.frame");
 		private static readonly Amf3String     sNameEnter  = new Amf3String(".enter");
-//		private static readonly Span 		   sSpanAsActions = new Span(".as.actions");
 		private static readonly Span 		   sSpanExit      = new Span(".exit");
-//		private static readonly Span 		   sSpanTlmDoPlay = new Span(".tlm.doplay");
+		private static readonly Span 		   sSpanTlmDoPlay = new Span(".tlm.doplay");
 		#endregion
 	}
 }

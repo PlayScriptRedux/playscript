@@ -50,6 +50,9 @@ namespace PlayScript
 			
 			// construct flash stage
 			mStage = new flash.display.Stage ((int)bounds.Width, (int)bounds.Height);
+
+			// initialize telemetry
+			Telemetry.Session.Init();
 		}
 
 		// the main class of the player (will be loaded after player initializes)

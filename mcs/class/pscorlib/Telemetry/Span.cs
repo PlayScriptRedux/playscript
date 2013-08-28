@@ -54,7 +54,13 @@ namespace Telemetry
 		// ends a span with a value
 		public void EndValue(object value)
 		{
+			if (!mIsInSpan)
+				throw new InvalidOperationException("Span EndValue() called without Begin()");
+
 			Session.EndSpanValue(mName, mBeginTime, value);
+			
+			// clear span flag
+			mIsInSpan = false;
 		}
 
 		#region Private
