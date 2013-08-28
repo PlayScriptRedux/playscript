@@ -244,9 +244,18 @@ namespace Telemetry
 			WriteValue(".player.instance", 0);
 			WriteValue(".player.scriptplayerversion", swfVersion);
 
-			// write platform info
-			WriteValue(".platform.capabilities", flash.system.Capabilities.serverString);
+#if PLATFORM_MONOMAC
+			// write platform info (this is faked)
+			WriteValue(".platform.capabilities", "&M=Adobe%20Macintosh&R=1920x1200&COL=color&AR=1.0&OS=Mac%20OS%2010.7.4&ARCH=x86&L=en&PR32=t&PR64=t&LS=en;ja;fr;de;es;it;pt;pt-PT;nl;sv;nb;da;fi;ru;pl;zh-Hans;zh-Hant;ko;ar;cs;hu;tr");
 			WriteValue(".platform.cpucount", 4);
+
+			// write gpu info (this is faked)
+			WriteValue(".platform.gpu.kind", "opengl");
+
+#else
+			// write platform info (this is faked)
+			WriteValue(".platform.capabilities", "&M=Adobe iOS&R=640x960&COL=color&AR=1&OS=iPhone OS 6.1 iPhone5,1&ARCH=ARM&L=en&IME=false&PR32=true&PR64=false&LS=en;fr;de;ja;nl;it;es;pt;pt-PT;da;fi;nb;sv;ko;zh-Hans;zh-Hant;ru;pl;tr;uk;ar;hr;cs;el;he;ro;sk;th;id;ms;en-GB;ca;hu;vi");
+			WriteValue(".platform.cpucount", 2);
 
 			// write gpu info (this is faked)
 			WriteValue(".platform.gpu.kind", "opengles2");
@@ -255,6 +264,8 @@ namespace Telemetry
 			WriteValue(".platform.gpu.version", "OpenGL ES 2.0 IMGSGX535-63.24");
 			WriteValue(".platform.gpu.shadinglanguageversion", "OpenGL ES GLSL ES 1.0");
 			WriteValue(".platform.3d.driverinfo", "OpenGL Vendor=Imagination Technologies Version=OpenGL ES 2.0 IMGSGX535-63.24 Renderer=PowerVR SGX 535 GLSL=OpenGL ES GLSL ES 1.0");
+#endif
+
 
 			// write memory stats
 			WriteValue(".mem.total", 8 * 1024);
