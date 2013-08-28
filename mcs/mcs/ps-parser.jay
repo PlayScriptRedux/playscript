@@ -1735,19 +1735,27 @@ method_header
 	  {
 		valid_param_mod = ParameterModifierType.All;
 	  }
-	  opt_formal_parameter_list CLOSE_PARENS method_colon member_type
+	  opt_formal_parameter_list CLOSE_PARENS opt_method_return_type
 	  {
-		var type = (FullNamedExpression) $10;
+		var type = (FullNamedExpression) $9;
 		var name = (MemberName) $4;
 		var modifiers = (Modifiers) $2;
 		var parameters = (ParametersCompiled) $7;		
 		
+		if (type == null) {
+			if (settings.PsStrictMode)
+				report.Error (7012, name.Location, "Property getter `{0}' must specify a return type.", name.Name);
+			else
+				report.Warning (1009, 1, name.Location, "Property getter `{0}' return type has no type declaration.", name.Name);
+			type = new UntypedTypeExpression (name.Location);
+		}
+
 		if (current_container.Kind == MemberKind.Class && name.ExplicitInterface == null &&
 			(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
 				modifiers |= Modifiers.VIRTUAL;
 
 		if (parameters != null && parameters.Count > 0)
-			report.Error (7016, GetLocation ($10), "Property getter functions may not have parameters");
+			report.Error (7016, GetLocation ($9), "Property getter functions may not have parameters");
 
 		current_property = current_type.LookupNameInContainer (name.Name, modifiers) as Property;
 		
@@ -1758,9 +1766,6 @@ method_header
 			}
 			modifiers = (Modifiers) 0;
 		} else {
-//			if (!type.Equals(current_property.TypeExpression)) {
-//				report.Error (7002, GetLocation ($10), "Type of property getter and setter must match", current_property.GetSignatureForError ());
-//			}
 			if (current_property.Set != null && ModifiersExtensions.IsRestrictedModifier (current_property.ModFlags & Modifiers.AccessibilityMask, modifiers & Modifiers.AccessibilityMask)) {
 				current_property.Set.ModFlags |= current_property.ModFlags & Modifiers.AccessibilityMask;
 				current_property.ModFlags = (current_property.ModFlags & ~Modifiers.AccessibilityMask) | (modifiers & Modifiers.AccessibilityMask);
@@ -1771,18 +1776,18 @@ method_header
 		}
 		
 		if (type.Type != null && type.Type.Kind == MemberKind.Void)
-			report.Error (547, GetLocation ($10), "`{0}': property or indexer cannot have void type", current_property.GetSignatureForError ());					
-			
+			report.Error (547, GetLocation ($9), "`{0}': property or indexer cannot have void type", current_property.GetSignatureForError ());					
+		
 		if (current_property.Get != null) {
-			report.Error (1007, GetLocation ($3), "Property accessor already defined");
+			report.Error (1007, GetLocation ($3), "Property getter already defined");
 		}
 		
 		current_property.Get = new Property.GetMethod (current_property,
 			modifiers & Modifiers.AccessibilityMask, (Attributes) $1, GetLocation ($3));
 
 		is_config_enabled = true;
-					
-		lbag.AddMember (current_property, mod_locations, GetLocation ($10));
+
+		lbag.AddMember (current_property, mod_locations, GetLocation ($9));
 		current_local_parameters = current_property.Get.ParameterInfo;
 		$$ = current_property.Get;
 	  }
@@ -1792,19 +1797,27 @@ method_header
 	  {
 		valid_param_mod = ParameterModifierType.All;
 	  }
-	  opt_formal_parameter_list CLOSE_PARENS method_colon member_type
+	  opt_formal_parameter_list CLOSE_PARENS opt_method_return_type
 	  {
-		var void_type = (FullNamedExpression) $10;
+		var void_type = (FullNamedExpression) $9;
 		var name = (MemberName) $4;
 		var modifiers = (Modifiers) $2;
 		var parameters = (ParametersCompiled) $7;
 		
+		if (void_type == null) {
+			if (settings.PsStrictMode)
+				report.Error (7012, name.Location, "Property setter `{0}' must specify a return type.", name.Name);
+			else
+				report.Warning (1009, 1, name.Location, "Property setter `{0}' return type has no type declaration.", name.Name);
+			void_type = new TypeExpression (compiler.BuiltinTypes.Void, name.Location);
+		}
+
 		if (current_container.Kind == MemberKind.Class && name.ExplicitInterface == null &&
 			(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
 				modifiers |= Modifiers.VIRTUAL;
 		
 		if (void_type.Type != null && void_type.Type.Kind != MemberKind.Void)
-			report.Error (7003, GetLocation ($10), "Property setter function must not be of type void");					
+			report.Error (7003, GetLocation ($9), "Property setter function must be of type void");					
 
 		current_property = current_type.LookupNameInContainer (name.Name, modifiers) as Property;
 
@@ -1816,7 +1829,7 @@ method_header
 		} else {
 			type = ((Parameter)parameters.FixedParameters[0]).TypeExpression;	
 		}
-				
+		
 		if (current_property == null) {
 			current_property = new Property (current_type, type, modifiers, name, (Attributes) $1);
 			if (is_config_enabled) {
@@ -1824,9 +1837,6 @@ method_header
 			}
 			modifiers = (Modifiers) 0;			
 		} else {
-//			if (!type.Equals(current_property.TypeExpression)) {
-//				report.Error (7002, GetLocation ($10), "Type of property getter and setter must match", current_property.GetSignatureForError ());
-//			}
 			if (current_property.Get != null && ModifiersExtensions.IsRestrictedModifier (current_property.ModFlags & Modifiers.AccessibilityMask, modifiers & Modifiers.AccessibilityMask)) {
 				current_property.Get.ModFlags |= current_property.ModFlags & Modifiers.AccessibilityMask;
 				current_property.ModFlags = (current_property.ModFlags & ~Modifiers.AccessibilityMask) | (modifiers & Modifiers.AccessibilityMask);
@@ -1837,7 +1847,7 @@ method_header
 		}
 		
 		if (current_property.Set != null) {
-			report.Error (1007, GetLocation ($3), "Property accessor already defined");
+			report.Error (1007, GetLocation ($3), "Property setter already defined");
 		}
 		
 		current_property.Set = new Property.SetMethod (current_property, 
@@ -1845,7 +1855,7 @@ method_header
 	  
 		is_config_enabled = true;
 				  
-		lbag.AddMember (current_property, mod_locations, GetLocation ($10));
+		lbag.AddMember (current_property, mod_locations, GetLocation ($9));
 		current_local_parameters = parameters;
 		$$ = current_property.Set;
 	  }
@@ -2381,7 +2391,7 @@ get_accessor_declaration
 		}
 	  
 		if (current_property.Get != null) {
-			report.Error (1007, GetLocation ($3), "Property accessor already defined");
+			report.Error (1007, GetLocation ($3), "Property getter already defined");
 		}
 		
 		if (current_property is Indexer) {
@@ -2424,7 +2434,7 @@ set_accessor_declaration
 		}
 		
 		if (current_property.Set != null) {
-			report.Error (1007, GetLocation ($3), "Property accessor already defined");
+			report.Error (1007, GetLocation ($3), "Property getter already defined");
 		}
 	  
 		if (current_property is Indexer) {

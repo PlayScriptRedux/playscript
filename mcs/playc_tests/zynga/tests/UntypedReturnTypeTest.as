@@ -2,6 +2,27 @@ package
 {
 	public class UntypedReturnTypeTest
 	{
+		static var sClassName:String = "UntypedReturnTypeTest";
+		
+		public static function get ClassName()
+		{
+			return sClassName;
+		}
+		
+		public static function set ClassName(className:Object)
+		{
+			sClassName = className;
+		}
+	
+		public function get SomeProperty()
+		{
+			return null;
+		}
+		
+		public function set SomeProperty(property:Object)
+		{
+		}
+		
 		public static function F1 ()
 		{
 			var x = 2;
@@ -44,7 +65,13 @@ package
 				return 5;
 			if (F4 (1) !== 1)
 				return 6;
-				
+			
+			if (ClassName !== "UntypedReturnTypeTest")
+				return 7;
+			ClassName = "blah";
+            if (ClassName !== "blah")
+                return 8;
+			
 			trace ("ok");
 			return 0;
 		}
