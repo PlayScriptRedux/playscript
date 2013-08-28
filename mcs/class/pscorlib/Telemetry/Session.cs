@@ -15,8 +15,11 @@ namespace Telemetry
 		// default hostname used for starting network sessions if none is provided to Connect()
 		public static string DefaultHostName = "localhost";
 
-		// default prot used for starting sessions
+		// default port used for starting sessions
 		public static int 	 DefaultPort = 7934;
+
+		// configuration file name
+		public const string  ConfigFileName = "telemetry.cfg";
 
 		// frequency for all timing values (microseconds)
 		public const int 	Frequency = 1000000;
@@ -29,6 +32,7 @@ namespace Telemetry
 
 		// telemetry meta (?)
 		public const int 	Meta = 293228;
+
 
 		// returns the time in frequency (microseconds)
 		public static int GetTime()
@@ -547,10 +551,60 @@ namespace Telemetry
 			}
 		}
 
-		public static void LoadConfig()
+		public static bool LoadConfig(string configPath)
 		{
-			// TODO: load configuration from telemetry.cfg or some other source
+			try {
+				string path = PlayScript.Player.TryResolveResourcePath(configPath);
+				if (path == null) {
+					// config not found
+					return false;
+				}
 
+				// read all config lines
+				var lines = File.ReadAllLines(path);
+				foreach (var line in lines) {
+					var split = line.Split(new char[] {'='}, 2);
+					if (split.Length == 2) {
+						var name = split[0].Trim();
+						var value = split[1].Trim();
+						switch (name) {
+							case "TelemetryAddress":
+								{
+									var split2 = value.Split(new char[] {':'}, 2);
+									// get hostname
+									DefaultHostName = split2[0];
+									if (split2.Length >= 2) {
+										// get port
+										int.TryParse(split2[1], out DefaultPort);
+									}
+									break;
+								}
+
+							case "SamplerEnabled":
+							case "Stage3DCapture":
+							case "DisplayObjectCapture":
+								break;
+							default:
+								break;
+						}
+					}
+				}
+				// 
+				return true;
+			} catch {
+				// exception
+				return false;
+			}
+		}
+
+		// the session init loads the telemetry configuration and connects
+		public static void Init()
+		{
+			// load configuration
+			if (LoadConfig(ConfigFileName)) {
+				// if we have configuration, then connect
+				Connect();
+			}
 		}
 
 		#region Private

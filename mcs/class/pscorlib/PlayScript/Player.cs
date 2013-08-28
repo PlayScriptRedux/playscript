@@ -50,9 +50,6 @@ namespace PlayScript
 			
 			// construct flash stage
 			mStage = new flash.display.Stage ((int)bounds.Width, (int)bounds.Height);
-
-//			Telemetry.Session.DefaultHostName = "10.101.44.121";
-//			Telemetry.Session.Connect();
 		}
 
 		// the main class of the player (will be loaded after player initializes)
