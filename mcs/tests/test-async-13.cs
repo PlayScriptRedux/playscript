@@ -353,15 +353,6 @@ class Tester : Base
 		return 0;
 	}
 
-	async Task<bool> BinaryTest_6 ()
-	{
-		var t = Task.Delay (1);
-		if (t == await Task.WhenAny(new [] { t }))
-			return true;
-
-		return false;
-	}
-
 	async Task<int> CallTest_1 ()
 	{
 		return Call (
