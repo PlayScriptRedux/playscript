@@ -114,10 +114,11 @@ namespace flash.display3D.textures {
 				throw new NotImplementedException("ATF Cube maps are not supported");
 			}
 
-			AtfFormat format = (AtfFormat)(tdata & 0x7f);	
-			if (format != AtfFormat.Block) {
-				throw new NotImplementedException("Only ATF block compressed textures are supported");
-			}
+//			Removing ATF format limitation to allow for multiple format support.
+//			AtfFormat format = (AtfFormat)(tdata & 0x7f);	
+//			if (format != AtfFormat.Block) {
+//				throw new NotImplementedException("Only ATF block compressed textures are supported");
+//			}
 
 			// get dimensions
 			int width =  (1 << (int)data.readUnsignedByte());
