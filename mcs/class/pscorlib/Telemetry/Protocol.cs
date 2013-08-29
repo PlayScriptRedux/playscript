@@ -144,7 +144,7 @@ namespace Telemetry
 			public int time;
 			public int id;
 			public int size;
-			public uint[] allocstack;
+			public int stackid;
 			public string type;
 
 			#region IAmf3Serializable implementation
@@ -154,12 +154,12 @@ namespace Telemetry
 				writer.Write(time);
 				writer.Write(id);
 				writer.Write(size);
-				writer.Write(allocstack);
+				writer.Write(stackid);
 				writer.Write(type);
 			}
 			#endregion
 
-			public static Amf3ClassDef ClassDef = new Amf3ClassDef("Memory_objectAllocation", new string[] { "time", "id", "size", "allocstack", "type"}, false, false);
+			public static Amf3ClassDef ClassDef = new Amf3ClassDef(".memory.objectAllocation", new string[] { "time", "id", "size", "stackid", "type"}, false, false);
 		}
 
 		// this class is used for object alloc tracking through ".memory.deleteObject"
@@ -177,7 +177,7 @@ namespace Telemetry
 			}
 			#endregion
 
-			public static Amf3ClassDef ClassDef = new Amf3ClassDef("Memory_deallocation", new string[] { "time", "id"}, false, false);
+			public static Amf3ClassDef ClassDef = new Amf3ClassDef(".memory.deallocation", new string[] { "time", "id"}, false, false);
 		}
 
 

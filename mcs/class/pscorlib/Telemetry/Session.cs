@@ -110,6 +110,20 @@ namespace Telemetry
 			AddEntry(time, 0, sNameTrace, trace);
 		}
 
+		public static void WriteObjectAlloc(int id, int size, string type)
+		{
+			if (!Connected) return;
+
+			long time = Stopwatch.GetTimestamp();
+
+			var alloc = new Protocol.Memory_objectAllocation();
+			alloc.id = id;
+			alloc.size = size;
+			alloc.stackid = 0; // TODO: get stack information
+			alloc.time = ToMicroSeconds(time - sStartupTime);
+			alloc.type = type; 
+			WriteValue(".memory.newObject", alloc);
+		}
 
 		public static void WriteSWFStats(string name, int width, int height, int frameRate, int version, int size)
 		{
@@ -128,6 +142,7 @@ namespace Telemetry
 		{
 			// create AMF writer from stream
 			sOutput = new Amf3Writer(stream);
+			sOutput.TrackArrayReferences = false;
 
 			// reset time marker
 			ResetLog();
@@ -183,7 +198,7 @@ namespace Telemetry
 			WriteValue(".tlm.category.disable",  "3D");
 			WriteValue(".tlm.category.disable",  "sampler");
 			WriteValue(".tlm.category.disable",  "displayobjects");
-			WriteValue(".tlm.category.disable",  "alloctraces");
+			WriteValue(".tlm.category.enable",   "alloctraces");
 			WriteValue(".tlm.category.disable",  "allalloctraces");
 			WriteValue(".tlm.category.enable",   "customMetrics");
 
@@ -200,6 +215,7 @@ namespace Telemetry
 			WriteMemoryStats();
 
 			// start detailed metrics
+			WriteValue(".tlm.category.start", "alloctraces");
 			WriteValue(".tlm.category.start", "customMetrics");
 
 			// enable 'advanced telemetry'
@@ -545,6 +561,12 @@ namespace Telemetry
 		private const long LogValue = -2;
 		private const long LogTime = -1;
 
+		private static int ToMicroSeconds(long ticks)
+		{
+			// NOTE: this requires a 64-bit division on ARM
+			return (int)(ticks / sDivisor);
+		}
+
 		private static void WriteLogEntry(ref LogEntry entry, ref int timeBase, Amf3Writer output)
 		{
 			if (entry.Span == LogValue) {
@@ -554,8 +576,7 @@ namespace Telemetry
 				output.Write(entry.Value);
 			} else 	if (entry.Span == LogTime) {
 				// emit Time
-				// NOTE: this requires a 64-bit division on ARM
-				int time  = (int)(entry.Time / sDivisor);
+				int time = ToMicroSeconds(entry.Time);
 				int delta = time - timeBase; 
 				timeBase = time;
 
@@ -565,9 +586,8 @@ namespace Telemetry
 			} else {
 				// emit Span or SpanValue
 				// convert times to microseconds for output
-				// NOTE: this requires a 64-bit division on ARM
-				int time      = (int)(entry.Time / sDivisor);
-				int beginTime = (int)((entry.Time - entry.Span) / sDivisor);
+				int time      = ToMicroSeconds(entry.Time);
+				int beginTime = ToMicroSeconds(entry.Time - entry.Span);
 
 				// compute span and delta in microseconds
 				// this must be done this exact way to preserve rounding errors across spans
@@ -641,6 +661,7 @@ namespace Telemetry
 		private static Amf3Writer 	  sOutput;
 		private static MemoryStream   sRecording;
 		private static int  		  sDivisor = (int)(Stopwatch.Frequency / Frequency);
+		private static long			  sStartupTime = Stopwatch.GetTimestamp();
 
 		private static readonly Amf3String     sNameTrace   = new Amf3String(".trace");
 		private static readonly Amf3String     sNameSwfFrame  = new Amf3String(".swf.frame");
