@@ -91,7 +91,7 @@ namespace flash.display3D.textures {
 			return value;
 		}
 
-		private void uploadATFTextureFromByteArray (ByteArray data, uint byteArrayOffset)
+		private unsafe void uploadATFTextureFromByteArray (ByteArray data, uint byteArrayOffset)
 		{
 			data.position = byteArrayOffset;
 
@@ -104,7 +104,7 @@ namespace flash.display3D.textures {
 			// read atf length
 			uint length = readUInt24(data);
 			if ((byteArrayOffset + length) > data.length) {
-				throw new System.IO.InvalidDataException("ATF length exceeds byte array length");
+				throw new InvalidDataException("ATF length exceeds byte array length");
 			}
 
 			// get format
@@ -122,6 +122,10 @@ namespace flash.display3D.textures {
 			// get dimensions
 			int width =  (1 << (int)data.readUnsignedByte());
 			int height = (1 << (int)data.readUnsignedByte());
+
+			if (width != mWidth || height != mHeight) {
+				throw new InvalidDataException("ATF Width and height dont match");
+			}
 
 			// get mipmap count
 			int mipCount = (int)data.readUnsignedByte();
@@ -143,8 +147,13 @@ namespace flash.display3D.textures {
 						// handle PVRTC on iOS
 						if (gpuFormat == 1) {
 							OpenTK.Graphics.ES20.PixelInternalFormat pixelFormat = (OpenTK.Graphics.ES20.PixelInternalFormat)0x8C02;
-							byte[] array = data.getRawArray();
-							GL.CompressedTexImage2D(textureTarget, level, pixelFormat, width, height, 0, (int)blockLength, ref array[data.position]);
+
+							fixed(byte *ptr = data.getRawArray()) 
+							{
+								// upload from data position
+								var address = new IntPtr(ptr + data.position);
+								GL.CompressedTexImage2D(textureTarget, level, pixelFormat, width, height, 0, (int)blockLength, address);
+							}
 						}
 #endif
 						// TODO handle other formats/platforms
