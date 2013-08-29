@@ -150,7 +150,8 @@ namespace PlayScript
 		public static bool Enabled = true;
 		public static bool ProfileGPU = false;
 
-		public static void Begin(string name, bool useTelemetry = true)
+		// if telemetryName is provided then it will be used for the name sent to telemetry when this section is entered
+		public static void Begin(string name, string telemetryName = null)
 		{
 			if (!Enabled)
 				return;
@@ -159,8 +160,13 @@ namespace PlayScript
 			if (!sSections.TryGetValue(name, out section)) {
 				section = new Section();
 				section.Name = name;
-				if (useTelemetry)
+				if (telemetryName != null) {
+					// use provided telemetry name
+					section.Span = new Telemetry.Span(telemetryName);
+				} else if (name != "swap" && name != "frame") {
+					// use section name for telemetry data
 					section.Span = new Telemetry.Span(name);
+				}
 				sSections[name] = section;
 				// keep ordered list of sections
 				sSectionList.Add(section);
@@ -217,7 +223,7 @@ namespace PlayScript
 #if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			if (ProfileGPU) {
 				// this stalls and waits for the gpu to finish 
-				PlayScript.Profiler.Begin("gpu", false);
+				PlayScript.Profiler.Begin("gpu", ".gpu.time");
 				GL.Finish();
 				PlayScript.Profiler.End("gpu");
 			}
@@ -266,7 +272,7 @@ namespace PlayScript
 				}
 			}
 
-			Profiler.Begin("frame", false);
+			Profiler.Begin("frame");
 		}
 
 		/// <summary>
