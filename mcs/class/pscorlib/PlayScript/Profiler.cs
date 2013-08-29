@@ -223,7 +223,7 @@ namespace PlayScript
 #if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			if (ProfileGPU) {
 				// this stalls and waits for the gpu to finish 
-				PlayScript.Profiler.Begin("gpu", ".gpu.time");
+				PlayScript.Profiler.Begin("gpu", ".rend.gl.swap");
 				GL.Finish();
 				PlayScript.Profiler.End("gpu");
 			}
