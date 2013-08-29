@@ -15,6 +15,7 @@
 namespace flash.display3D.textures {
 	
 	using System;
+	using System.IO;
 	using flash.utils;
 	using flash.display;
 	using flash.display3D;
@@ -67,6 +68,94 @@ namespace flash.display3D.textures {
 
 		private static int sMemoryUsedForTextures = 0;
 
+		enum AtfType 
+		{
+			NORMAL = 0,
+			CUBE_MAP = 1
+		}
+
+		enum AtfFormat
+		{
+			RGB888 = 0,
+			RGBA8888 = 1,
+			Compressed = 2,
+			Block = 5
+		}
+
+		private static uint readUInt24(ByteArray data)
+		{
+			uint value;
+			value  = (data.readUnsignedByte() << 16);
+			value |= (data.readUnsignedByte() << 8);
+			value |=  data.readUnsignedByte();
+			return value;
+		}
+
+		private void uploadATFTextureFromByteArray (ByteArray data, uint byteArrayOffset)
+		{
+			data.position = byteArrayOffset;
+
+			// read atf signature
+			string signature = data.readUTFBytes(3);
+			if (signature != "ATF") {
+				throw new InvalidDataException("ATF signature not found");
+			}
+
+			// read atf length
+			uint length = readUInt24(data);
+			if ((byteArrayOffset + length) > data.length) {
+				throw new System.IO.InvalidDataException("ATF length exceeds byte array length");
+			}
+
+			// get format
+			uint tdata = data.readUnsignedByte( );
+			AtfType type = (AtfType)(tdata >> 7); 	
+			if (type != AtfType.NORMAL) {
+				throw new NotImplementedException("ATF Cube maps are not supported");
+			}
+
+			AtfFormat format = (AtfFormat)(tdata & 0x7f);	
+			if (format != AtfFormat.Block) {
+				throw new NotImplementedException("Only ATF block compressed textures are supported");
+			}
+
+			// get dimensions
+			int width =  (1 << (int)data.readUnsignedByte());
+			int height = (1 << (int)data.readUnsignedByte());
+
+			// get mipmap count
+			int mipCount = (int)data.readUnsignedByte();
+
+			// read all mipmap levels
+			for (int level=0; level < mipCount; level++)
+			{
+				// read all gpu formats
+				for (int gpuFormat=0; gpuFormat < 3; gpuFormat++)
+				{
+					// read block length
+					uint blockLength = readUInt24(data);
+					if ((data.position + blockLength) > data.length) {
+						throw new System.IO.InvalidDataException("Block length exceeds ATF file length");
+					}
+
+					if (blockLength > 0) {
+#if PLATFORM_MONOTOUCH
+						// handle PVRTC on iOS
+						if (gpuFormat == 1) {
+							OpenTK.Graphics.ES20.PixelInternalFormat pixelFormat = (OpenTK.Graphics.ES20.PixelInternalFormat)0x8C02;
+							byte[] array = data.getRawArray();
+							GL.CompressedTexImage2D(textureTarget, level, pixelFormat, width, height, 0, (int)blockLength, ref array[data.position]);
+						}
+#endif
+						// TODO handle other formats/platforms
+					}
+
+					// next block data
+					data.position += blockLength;
+				}
+			}
+		}
+
 		public void uploadCompressedTextureFromByteArray (ByteArray data, uint byteArrayOffset, bool async = false)
 		{
 			// $$TODO 
@@ -82,6 +171,20 @@ namespace flash.display3D.textures {
 				mDidUpload = true;
 			}
 #endif
+
+			// see if this is an ATF container
+			data.position = byteArrayOffset;
+			string signature = data.readUTFBytes(3);
+			data.position = byteArrayOffset;
+			if (signature == "ATF")
+			{
+				// Bind the texture
+				GL.BindTexture (textureTarget, textureId);
+				uploadATFTextureFromByteArray(data, byteArrayOffset);
+				GL.BindTexture (textureTarget, 0);
+				return;
+			}
+
 
 #if PLATFORM_MONOTOUCH
 			int memUsage = (mWidth * mHeight) / 2;
