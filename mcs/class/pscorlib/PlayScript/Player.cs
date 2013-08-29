@@ -567,7 +567,7 @@ namespace PlayScript
 			Profiler.End("timers");
 
 			// process loader queue
-			Profiler.Begin("load", ".player.load");
+			Profiler.Begin("load", ".network.dourlrequests");
 			flash.net.URLLoader.processQueue(maxTimeMs);
 			Profiler.End("load");
 
