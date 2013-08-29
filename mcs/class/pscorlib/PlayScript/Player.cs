@@ -533,7 +533,7 @@ namespace PlayScript
 		}
 #endif
 
-		public void OnFrame(RectangleF bounds)
+		public void OnFrame(RectangleF bounds, double maxTimeMs = 100.0)
 		{
 			//GL.ClearColor (1,0,1,0);
 			//GL.Clear (ClearBufferMask.ColorBufferBit);
@@ -566,6 +566,10 @@ namespace PlayScript
 			flash.utils.Timer.advanceAllTimers();
 			Profiler.End("timers");
 
+			// process loader queue
+			Profiler.Begin("load", ".player.load");
+			flash.net.URLLoader.processQueue(maxTimeMs);
+			Profiler.End("load");
 
 			// stage exit frame
 			Profiler.Begin("exitFrame", ".player.exitframe");
@@ -577,7 +581,7 @@ namespace PlayScript
 
 
 		// runs until graphics have been presented through Stage3D
-		public void RunUntilPresent(RectangleF bounds, Action onPresent = null, int maxFrames = 1000)
+		public void RunUntilPresent(RectangleF bounds, Action onPresent = null, double maxTimeMs = 100.0)
 		{
 			Telemetry.Session.OnBeginFrame();
 
@@ -592,11 +596,15 @@ namespace PlayScript
 			};
 
 			// loop until a Stage3D present occurred
-			int count = 0; 
-			while (!didPresent && (count < maxFrames))
+			var timer = Stopwatch.StartNew();
+			while (!didPresent)
 			{
 				OnFrame(bounds);
-				count++;
+
+				// dont let us run too long waiting for a present
+				if (timer.ElapsedMilliseconds > maxTimeMs) {
+					break;
+				}
 			}
 
 			Telemetry.Session.OnEndFrame();
