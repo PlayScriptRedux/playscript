@@ -930,10 +930,10 @@ namespace Mono.CSharp
 			args.Add (new Argument (expr));
 
 			if (objExpRes.Type == ec.BuiltinTypes.Dynamic) {
-				// If dynamic, cast to IDictionary<string,object> and call ContainsKey
-				var dictExpr = new TypeExpression(ec.Module.PredefinedTypes.IDictionaryGeneric.Resolve().MakeGenericType(ec, 
-				                      new [] { ec.BuiltinTypes.String, ec.BuiltinTypes.Object }), loc);
-				return new Invocation (new MemberAccess (new Cast(dictExpr, objExpr, loc), "ContainsKey", loc), args).Resolve (ec);
+				var inArgs = new Arguments (2);
+				inArgs.Add (new Argument (objExpr));
+				inArgs.Add (new Argument (expr));
+				return new Invocation (new MemberAccess (new MemberAccess (new SimpleName ("PlayScript", loc), "Support", loc), "DynamicIn", loc), inArgs).Resolve (ec);
 			} else {
 				string containsMethodName = "Contains";
 	
