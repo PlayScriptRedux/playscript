@@ -36,6 +36,8 @@ namespace Amf
 
         public Stream Stream { get; private set; }
 
+		public bool TrackArrayReferences { get; set; }
+
         private Dictionary<string, int> stringTable = new Dictionary<string, int>();
 
         private Dictionary<object, int> objectTable =
@@ -56,6 +58,9 @@ namespace Amf
                 throw new ArgumentNullException("stream");
 
             Stream = stream;
+
+			// track array references by default
+			TrackArrayReferences = true;
         }
 
         private bool CheckObjectTable(object obj)
@@ -91,36 +96,42 @@ namespace Amf
                 return;
             }
 
-            if (obj is IAmf3Serializable) {
-                ((IAmf3Serializable)obj).Serialize(this);
+			var serializable = obj as IAmf3Serializable;
+			if (serializable != null) {
+				serializable.Serialize(this);
                 return;
             }
+
+			var str = obj as string;
+			if (str != null) {
+				Write(str);
+				return;
+			}
 
             if (obj is bool) {
                 Write((bool)obj);
                 return;
             }
 
-            if (obj is float ||
-                    obj is double) {
-                Write(Convert.ToDouble(obj));
+            if (obj is double) {
+                Write((double)obj);
                 return;
             }
 
-            if (obj is int ||
-                    obj is byte ||
-                    obj is sbyte ||
-                    obj is short ||
-                    obj is ushort ||
-                    obj is uint) {
-                Write(Convert.ToInt32(obj));
+			if (obj is float) {
+				Write((double)(float)obj);
+				return;
+			}
+
+            if (obj is int) {
+                Write((int)obj);
                 return;
             }
 
-            if (obj is string) {
-                Write((string)obj);
-                return;
-            }
+			if (obj is uint) {
+				Write((int)(uint)obj);
+				return;
+			}
 
 			if (obj is _root.Date) {
 				Write((_root.Date)obj);
@@ -164,6 +175,16 @@ namespace Amf
 
 			if (obj is double[]) {
 				Write((double[])obj);
+				return;
+			}
+
+			if (obj is int ||
+			    obj is byte ||
+			    obj is sbyte ||
+			    obj is short ||
+			    obj is ushort ||
+			    obj is uint) {
+				Write(Convert.ToInt32(obj));
 				return;
 			}
 
@@ -322,6 +343,11 @@ namespace Amf
             Stream.WriteByte((byte)(integer & 0x7f));
         }
 
+		public void TypelessWrite(uint integer)
+		{
+			TypelessWrite((int)integer);
+		}
+
         public void TypelessWrite(double number)
         {
 			conv.PutBytes(tempData, 0, number);
@@ -411,10 +437,14 @@ namespace Amf
 
         public void TypelessWrite(_root.Array array)
         {
-            if (CheckObjectTable(array))
-                return;
+			if (TrackArrayReferences) {
+				if (CheckObjectTable(array))
+					return;
 
-			StoreObject(array);
+				StoreObject(array);
+			} else {
+				StoreObject(null);
+			}
 
             TypelessWrite((array.length << 1) | 1);
 
@@ -428,10 +458,14 @@ namespace Amf
 
 		public void TypelessWrite(flash.utils.ByteArray byteArray)
 		{
-			if (CheckObjectTable(byteArray))
-				return;
+			if (TrackArrayReferences) {
+				if (CheckObjectTable(byteArray))
+					return;
 
-			StoreObject(byteArray);
+				StoreObject(byteArray);
+			} else {
+				StoreObject(null);
+			}
 
 			// write byte array length
 			TypelessWrite((byteArray.length << 1) | 1);
@@ -442,10 +476,14 @@ namespace Amf
 
 		private bool WriteVectorHeader(object vector, uint length, bool isFixed)
 		{
-			if (CheckObjectTable(vector))
-				return true;
+			if (TrackArrayReferences) {
+				if (CheckObjectTable(vector))
+					return true;
 
-			StoreObject(vector);
+				StoreObject(vector);
+			} else {
+				StoreObject(null);
+			}
 
 			TypelessWrite((length << 1) | 1);
 			Stream.WriteByte(isFixed ? (byte)1 : (byte)0); 
