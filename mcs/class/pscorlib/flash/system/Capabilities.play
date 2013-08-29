@@ -88,7 +88,24 @@ package flash.system {
 		
 		public static property screenResolutionY : Number { get { throw new Error(); } }
 		
-		public static property serverString : String { get { throw new Error(); } }
+		public static property serverString : String { 
+			get { 
+//				var caps = new flash.net.URLVariables();
+//				caps["M"] = "Adobe Macintosh";
+//				caps["R"] = "1680x1050";
+//				caps["COL"] = "color";
+//				caps["OS"] = "Mac OS 10.7.4";
+//				caps["ARCH"] = "x86";
+//				caps["AR"] = "1.0";
+//				caps["L"] = "en";
+//				caps["PR32"] = "t";
+//				caps["PR64"] = "t";
+//				caps["LS"] = "en;ja;fr;de;es;it;pt;pt-PT;nl;sv;nb;da;fi;ru;pl;zh-Hans;zh-Hant;ko;ar;cs;hu;tr";
+
+				// TODO: compose this using URL Variables
+				return "&M=Adobe%20Macintosh&R=1920x1200&COL=color&AR=1.0&OS=Mac%20OS%2010.7.4&ARCH=x86&L=en&PR32=t&PR64=t&LS=en;ja;fr;de;es;it;pt;pt-PT;nl;sv;nb;da;fi;ru;pl;zh-Hans;zh-Hant;ko;ar;cs;hu;tr";
+			} 
+		}
 		
 		public static property supports32BitProcesses : Boolean { get { throw new Error(); } }
 		

@@ -130,6 +130,8 @@ package flash.display {
 				// dispatch resize event here...
 				var ev:flash.events.Event = new flash.events.Event(flash.events.Event.RESIZE);
 				this.dispatchEvent(ev);
+
+				Telemetry.Session.OnResize(width, height);
 			}
 		}
 		

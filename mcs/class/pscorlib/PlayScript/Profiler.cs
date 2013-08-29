@@ -7,6 +7,7 @@ using System.Runtime.InteropServices;
 
 #if PLATFORM_MONOMAC
 using MonoMac.OpenGL;
+using MonoMac.Foundation;
 #elif PLATFORM_MONOTOUCH
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
@@ -149,14 +150,8 @@ namespace PlayScript
 		public static bool Enabled = true;
 		public static bool ProfileGPU = false;
 
-		static Profiler()
-		{
-			// do this to ensure that frame is the first section
-			Begin("frame");
-			End("frame");
-		}
-
-		public static void Begin(string name)
+		// if telemetryName is provided then it will be used for the name sent to telemetry when this section is entered
+		public static void Begin(string name, string telemetryName = null)
 		{
 			if (!Enabled)
 				return;
@@ -165,14 +160,23 @@ namespace PlayScript
 			if (!sSections.TryGetValue(name, out section)) {
 				section = new Section();
 				section.Name = name;
+				if (telemetryName != null) {
+					// use provided telemetry name
+					section.Span = new Telemetry.Span(telemetryName);
+				} else if (name != "swap" && name != "frame") {
+					// use section name for telemetry data
+					section.Span = new Telemetry.Span(name);
+				}
 				sSections[name] = section;
 				// keep ordered list of sections
 				sSectionList.Add(section);
 			}
 
-			section.Timer.Start();
 			section.Stats.Subtract(PlayScript.Stats.CurrentInstance);
 			section.GCCount -= System.GC.CollectionCount(System.GC.MaxGeneration);
+			if (section.Span != null)
+				section.Span.Begin();
+			section.Timer.Start();
 		}
 		
 		public static void End(string name)
@@ -186,6 +190,8 @@ namespace PlayScript
 			}
 
 			section.Timer.Stop();
+			if (section.Span != null)
+				section.Span.End();
 			section.Stats.Add(PlayScript.Stats.CurrentInstance);
 			section.GCCount += System.GC.CollectionCount(System.GC.MaxGeneration);
 		}
@@ -217,7 +223,7 @@ namespace PlayScript
 #if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			if (ProfileGPU) {
 				// this stalls and waits for the gpu to finish 
-				PlayScript.Profiler.Begin("gpu");
+				PlayScript.Profiler.Begin("gpu", ".gpu.time");
 				GL.Finish();
 				PlayScript.Profiler.End("gpu");
 			}
@@ -562,6 +568,9 @@ namespace PlayScript
 		/// </summary>
 		private static void OnStartReport()
 		{
+			// begin a telemetry session
+			Telemetry.Session.StartRecording();
+
 			// garbage collect so that it does not impact our session
 			System.GC.Collect();
 
@@ -577,6 +586,19 @@ namespace PlayScript
 			sReportTime = Stopwatch.StartNew();
 		}
 
+		private static string  GetProfileLogDir()
+		{
+			#if PLATFORM_MONOTOUCH || PLATFORM_MONOMAC
+			// dump profile to file
+			var dirs = NSSearchPath.GetDirectories(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomain.User, true);
+			if (dirs.Length > 0) {
+				return dirs[0];
+			} 
+			#endif
+			return null;
+		}
+
+
 		/// <summary>
 		/// This is called when a profilng report is ended
 		/// </summary>
@@ -586,27 +608,31 @@ namespace PlayScript
 
 			sReportGCCount = System.GC.CollectionCount(System.GC.MaxGeneration) - sReportGCCount;
 
-			#if PLATFORM_MONOTOUCH
-			// dump profile to file
-			var dirs = NSSearchPath.GetDirectories(NSSearchPathDirectory.DocumentDirectory, NSSearchPathDomain.User, true);
-			if (dirs.Length > 0) {
-				string id = DateTime.Now.ToString("u").Replace(' ', '-');
-				var path = Path.Combine(dirs[0], "profile-" + id + ".log");
+			var recording = Telemetry.Session.EndRecording();
+			if (recording != null) {
+				// send telemetry data over network
+				Telemetry.Session.SendRecordingOverNetwork(recording);
+			}
+
+			var profileLogDir = GetProfileLogDir();
+			if (profileLogDir != null) {
+				string id = DateTime.Now.ToString("u").Replace(' ', '-').Replace(':', '-');
+				var path = Path.Combine(profileLogDir, "profile-" + id + ".log");
 				Console.WriteLine("Writing profiling report to: {0}", path);
 				using (var sw = new StreamWriter(path)) {
 					PrintReport(sw);
 				}
+
+				if (recording != null)	{
+					// write telemetry data to file
+					var telemetryPath = Path.Combine(profileLogDir, "telemetry-" + id + ".flm");
+					Telemetry.Session.SaveRecordingToFile(recording, telemetryPath);
+//					Telemetry.Parser.ParseFile(telemetryPath, telemetryPath + ".txt");
+				}
 			}
-			#endif
 
 			// print to console 
 			PrintReport(System.Console.Out);
-
-			// pause forever
-//			Console.WriteLine("Pausing...");
-//			for (;;) {
-//				System.Threading.Thread.Sleep(1000);
-//			}
 		}
 
 		private static PerformanceFrameData GetPerformanceFrameData()
@@ -650,6 +676,7 @@ namespace PlayScript
 			public List<SectionHistory>	History = new List<SectionHistory>();
 			public Stats 				Stats = new PlayScript.Stats();	
 			public int 					GCCount;
+			public Telemetry.Span		Span;
 		};
 
 		private static Stopwatch sGlobalTimer = Stopwatch.StartNew();
