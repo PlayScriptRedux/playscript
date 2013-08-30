@@ -31,6 +31,9 @@ namespace flash.display3D.textures {
 	using PixelInternalFormat = OpenTK.Graphics.ES20.All;
 	using PixelFormat = OpenTK.Graphics.ES20.All;
 	using PixelType = OpenTK.Graphics.ES20.All;
+	using TextureParameterName = OpenTK.Graphics.ES20.All;
+	using Android.Opengl;
+	using Java.Nio;
 #endif
 
 	public class Texture : TextureBase {
@@ -168,8 +171,6 @@ namespace flash.display3D.textures {
 
 		public void uploadCompressedTextureFromByteArray (ByteArray data, uint byteArrayOffset, bool async = false)
 		{
-			// $$TODO 
-			// this is empty for now
 #if PLATFORM_MONOMAC
 			System.Console.WriteLine("NotImplementedWarning: Texture.uploadCompressedTextureFromByteArray()");
 
@@ -196,7 +197,7 @@ namespace flash.display3D.textures {
 			}
 
 
-#if PLATFORM_MONOTOUCH
+#elif PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			int memUsage = (mWidth * mHeight) / 2;
 			sMemoryUsedForTextures += memUsage;
 			Console.WriteLine("Texture.uploadCompressedTextureFromByteArray() - " + mWidth + "x" + mHeight + " - Mem: " + (memUsage / 1024) + " KB - Total Mem: " + (sMemoryUsedForTextures / 1024) + " KB");
@@ -208,15 +209,26 @@ namespace flash.display3D.textures {
 				throw new NotSupportedException();
 			}
 
+	#if PLATFORM_MONOTOUCH
 			int dataLength = (int)(data.length - byteArrayOffset) - 4;		// We remove the 4 bytes footer
-																			// TODO: Fix hardcoded value here
-
+	
+			// TODO: Fix hardcoded value here
 			OpenTK.Graphics.ES20.PixelInternalFormat pixelFormat = (OpenTK.Graphics.ES20.PixelInternalFormat)0x8C02;
+
 			GL.CompressedTexImage2D(textureTarget, 0, pixelFormat, mWidth, mHeight, 0, dataLength, data.getRawArray());
+	#elif PLATFORM_MONODROID		
+			data.position = 16; // skip the header
+			int dataLength = ((int)data.length) - 16;
+
+			GL.CompressedTexImage2D<byte>(textureTarget, 0, All.Etc1Rgb8Oes, mWidth, mHeight, 0, dataLength, data.getRawArray());
+	#endif
+			All error = GL.GetError();
+			Console.WriteLine("GL.CompressedTexImage2D width:{1}, height:{2} return error: {0}", error, mWidth, mHeight);
 
 			// unbind texture and pixel buffer
 			GL.BindTexture (textureTarget, 0);
 #endif
+
 			if (async) {
 				// load with a delay
 				var timer = new flash.utils.Timer(1, 1);
@@ -241,7 +253,7 @@ namespace flash.display3D.textures {
 
 #if PLATFORM_MONOMAC
             if (generateMipmap) {
-                GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.GenerateMipmap, 1);
+                GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.GenerateMipmapHint, 1);
             }
 #endif
 #if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH

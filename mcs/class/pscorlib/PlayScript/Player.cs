@@ -237,6 +237,17 @@ namespace PlayScript
 				{
 					var newPath = PlayScript.Player.ResolveResourcePath(path);
 					var jsonText = System.IO.File.ReadAllText(newPath);
+#elif PLATFORM_MONODROID
+					var jsonText = "";
+					Stream stream = Application.Context.Assets.Open(path);
+					using (StreamReader sr = new System.IO.StreamReader(stream))
+					{
+						jsonText = sr.ReadToEnd();
+						sr.Close();
+					}
+#else
+					var jsonText = "";
+#endif
 					return _root.JSON.parse(jsonText);
 				}
 
@@ -634,11 +645,25 @@ namespace PlayScript
 		{
 			if (Offline && WebCachePath != null) {
 				var path = 	System.IO.Path.Combine(WebCachePath, hash); 
+
+#if PLATFORM_MONOTOUCH || PLATFORM_MONOMAC
 				if (File.Exists(path)) {
 					return System.IO.File.ReadAllText(path);
 				} else {
 					return null;
 				}
+#elif PLATFORM_MONODROID
+				var jsonText = "";
+				Stream stream = Application.Context.Assets.Open(path);
+				using (StreamReader sr = new System.IO.StreamReader(stream))
+				{
+					jsonText = sr.ReadToEnd();
+					sr.Close();
+				}
+				return jsonText;
+#else
+				return null;
+#endif
 			}
 			return null;
 		}
@@ -647,11 +672,19 @@ namespace PlayScript
 		{
 			if (Offline && WebCachePath != null) {
 				var path = 	System.IO.Path.Combine(WebCachePath, hash); 
+
+#if PLATFORM_MONOTOUCH || PLATFORM_MONOMAC
 				if (File.Exists(path)) {
 					return flash.utils.ByteArray.loadFromPath(path);
 				} else {
 					return null;
 				}
+#elif PLATFORM_MONODROID
+				Stream stream = Application.Context.Assets.Open(path);
+				flash.utils.ByteArray data = new flash.utils.ByteArray();
+				data.readFromStream( stream );
+				return data;
+#endif
 			}
 			return null;
 		}
