@@ -32,6 +32,17 @@ namespace Telemetry
 				}
 				sb.AppendFormat("]");
 				return sb.ToString();
+			} else if (o is _root.Vector<int>){
+				var a = o as _root.Vector<int>;
+				return "(int)[" + o.ToString() + "]";
+			} else if (o is _root.Vector<uint>){
+				var a = o as _root.Vector<uint>;
+				return "(uint)[" + o.ToString() + "]";
+			} else if (o is _root.Vector<double>){
+				var a = o as _root.Vector<double>;
+				return "(number)[" + o.ToString() + "]";
+			} else if (o is double){
+				return "(number)" + o.ToString();
 			} else {
 				return o.ToString();
 			}
@@ -48,6 +59,8 @@ namespace Telemetry
 				var o =	parser.ReadNextObject();
 				if (o == null)
 					break;
+
+				output.Write("{0:D8}: ", time);
 
 				var amfObj = (Amf3Object)o;
 				switch (amfObj.ClassDef.Name)
