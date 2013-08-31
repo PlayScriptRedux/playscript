@@ -235,6 +235,8 @@ namespace PlayScript
 
 				case ".json":
 				{
+					
+#if PLATFORM_MONOTOUCH || PLATFORM_MONOMAC
 					var newPath = PlayScript.Player.ResolveResourcePath(path);
 					var jsonText = System.IO.File.ReadAllText(newPath);
 #elif PLATFORM_MONODROID

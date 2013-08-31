@@ -368,7 +368,12 @@ package flash.net {
 					return;
 
 				// invoke action
-				action();
+				try {
+					action();
+				}
+				catch 
+				{
+				}
 
 				// abort loop if time has exceeded
 				if (sw.ElapsedMilliseconds > maxTimeMs)

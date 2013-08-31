@@ -143,23 +143,39 @@ namespace flash.display3D.textures {
 					// read block length
 					uint blockLength = readUInt24(data);
 					if ((data.position + blockLength) > data.length) {
-						throw new System.IO.InvalidDataException("Block length exceeds ATF file length");
+						Console.WriteLine("Block length exceeds ATF file length");
+						return;
+						//throw new System.IO.InvalidDataException("Block length exceeds ATF file length");
 					}
 
 					if (blockLength > 0) {
-#if PLATFORM_MONOTOUCH
-						// handle PVRTC on iOS
+						// handle PVRTC on iOS						
 						if (gpuFormat == 1) {
+							#if PLATFORM_MONOMONO
 							OpenTK.Graphics.ES20.PixelInternalFormat pixelFormat = (OpenTK.Graphics.ES20.PixelInternalFormat)0x8C02;
-
 							fixed(byte *ptr = data.getRawArray()) 
 							{
 								// upload from data position
 								var address = new IntPtr(ptr + data.position);
-								GL.CompressedTexImage2D(textureTarget, level, pixelFormat, width, height, 0, (int)blockLength, address);
+								GL.CompressedTexImage2D(textureTarget, level, pixelFormat, width, height, 0, (int)blockLength, address);							
 							}
+							#endif
+						} 
+						else if (gpuFormat == 2) {
+							#if PLATFORM_MONODROID
+							blockLength = blockLength/2;
+							fixed(byte *ptr = data.getRawArray()) 
+							{
+								var address = new IntPtr(ptr + data.position);
+								GL.CompressedTexImage2D(textureTarget, level, All.Etc1Rgb8Oes, width, height, 0, (int)blockLength, address);
+								All error = GL.GetError ();
+								Console.WriteLine ("Error: {0}", error);
+							}
+
+							data.position = data.position + blockLength;
+							#endif
 						}
-#endif
+
 						// TODO handle other formats/platforms
 					}
 
@@ -197,7 +213,7 @@ namespace flash.display3D.textures {
 			}
 
 
-#elif PLATFORM_MONOTOUCH || PLATFORM_MONODROID
+#if PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			int memUsage = (mWidth * mHeight) / 2;
 			sMemoryUsedForTextures += memUsage;
 			Console.WriteLine("Texture.uploadCompressedTextureFromByteArray() - " + mWidth + "x" + mHeight + " - Mem: " + (memUsage / 1024) + " KB - Total Mem: " + (sMemoryUsedForTextures / 1024) + " KB");
