@@ -6,6 +6,8 @@ package
 	{
 		public static function Main():void
 		{
+			Method1();
+
 			var d:* = new Dictionary();
 			d["a"] = {};
 			d["b"] = {};
@@ -19,6 +21,15 @@ package
 				trace("Yay!");
 			}
 
+		}
+
+		[Inline]
+		static function Method1():int {
+			// ... Aggressive inlining.
+			return "one".Length + "two".Length + "three".Length +
+				"four".Length + "five".Length + "six".Length +
+					"seven".Length + "eight".Length + "nine".Length +
+					"ten".Length;
 		}
 	}
 }

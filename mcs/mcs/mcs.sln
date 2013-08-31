@@ -5,11 +5,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mcs", "mcs.csproj", "{D4A01
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "test", "test.csproj", "{B5782FD5-CBC6-4194-BF51-A20D55CEBE78}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlayScript.Dynamic_aot-net_4_0", "..\class\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net_4_0.csproj", "{0BACBE20-34DD-4E24-8B91-87970E8A23B9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlayScript.Dynamic_aot-net", "..\class\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net.csproj", "{0BACBE20-34DD-4E24-8B91-87970E8A23B9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pscorlib_aot-net_4_0_monomac", "..\class\pscorlib_aot\pscorlib_aot-net_4_0_monomac.csproj", "{EDBAC91B-2817-479E-8DDF-B24ADDA563A6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pscorlib_aot-net_monomac", "..\class\pscorlib_aot\pscorlib_aot-net_monomac.csproj", "{EDBAC91B-2817-479E-8DDF-B24ADDA563A6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mono.Optimization_4_0", "..\class\Mono.Optimization\Mono.Optimization_4_0.csproj", "{4069FC26-5839-4E53-B50C-B7AAF7CD3227}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mono.Optimization", "..\class\Mono.Optimization\Mono.Optimization.csproj", "{4069FC26-5839-4E53-B50C-B7AAF7CD3227}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

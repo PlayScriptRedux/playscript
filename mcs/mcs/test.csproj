@@ -9,6 +9,7 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>test</RootNamespace>
     <AssemblyName>test2</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>
@@ -36,17 +37,17 @@
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <ProjectReference Include="..\class\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net_4_0.csproj">
+    <ProjectReference Include="..\class\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net.csproj">
       <Project>{0BACBE20-34DD-4E24-8B91-87970E8A23B9}</Project>
-      <Name>PlayScript.Dynamic_aot-net_4_0</Name>
+      <Name>PlayScript.Dynamic_aot-net</Name>
     </ProjectReference>
-    <ProjectReference Include="..\class\pscorlib_aot\pscorlib_aot-net_4_0_monomac.csproj">
+    <ProjectReference Include="..\class\pscorlib_aot\pscorlib_aot-net_monomac.csproj">
       <Project>{EDBAC91B-2817-479E-8DDF-B24ADDA563A6}</Project>
-      <Name>pscorlib_aot-net_4_0_monomac</Name>
+      <Name>pscorlib_aot-net_monomac</Name>
     </ProjectReference>
-    <ProjectReference Include="..\class\Mono.Optimization\Mono.Optimization_4_0.csproj">
+    <ProjectReference Include="..\class\Mono.Optimization\Mono.Optimization.csproj">
       <Project>{4069FC26-5839-4E53-B50C-B7AAF7CD3227}</Project>
-      <Name>Mono.Optimization_4_0</Name>
+      <Name>Mono.Optimization</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

@@ -684,10 +684,53 @@ namespace Mono.CSharp {
 
 			Parent.MemberCache.AddMember (this, explicit_name, spec);
 
+			ApplyAggressiveInlining ();
+
 			if (Compiler.Settings.Inlining != InliningMode.None)
 				isInlinable = Inliner.DetermineIsInlinable (Compiler, this);
 
 			return true;
+		}
+
+		/// <summary>
+		/// Checks for inline attribute and converts it to MethodImplAttribute(MethodImplOptions.AggressiveInlining)
+		/// if parsing a PlayScript file.
+		/// </summary>
+		public void ApplyAggressiveInlining ()
+		{
+			if ((this.FileType != SourceFileType.PlayScript) || (this.OptAttributes == null)) {
+				return;
+			}
+
+			bool hasInlineAttribute = false;
+
+			foreach (var attr in this.OptAttributes.Attrs) {
+				if (String.Compare (attr.Name, "inline", StringComparison.OrdinalIgnoreCase) == 0) {
+					hasInlineAttribute = true;
+					break;
+				}
+			}
+
+			if (hasInlineAttribute) {
+				var system = new SimpleName ("System", Location.Null);
+				var runtime = new MemberAccess (system, "Runtime", Location.Null);
+				var compilerServices = new MemberAccess (runtime, "CompilerServices", Location.Null);
+				var methodImplOptions = new MemberAccess (compilerServices, "MethodImplOptions", Location.Null);
+
+				var args = new Arguments (0);
+				var aggressiveInlinning = new MemberAccess (methodImplOptions, "AggressiveInlining", Location.Null);
+				args.Add (new Argument (aggressiveInlinning));
+
+				var argsArray = new Arguments[2];
+				argsArray [0] = args;
+				argsArray [1] = null;
+
+				var methodImplAttribute = new MemberAccess (compilerServices, "MethodImplAttribute", Location.Null);
+				var inlineAttribute = new Attribute (null, methodImplAttribute, argsArray, Location.Null, false);
+				inlineAttribute.AttachTo (this, this);
+
+				this.OptAttributes.AddAttribute (inlineAttribute);
+			}
 		}
 
 		protected override void DoMemberTypeIndependentChecks ()
