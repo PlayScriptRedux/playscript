@@ -12,6 +12,14 @@ namespace Telemetry
 		// global enable flag for telemetry, if this is false no connections or recordings will be made
 		public static bool 	 Enabled = true;
 
+		// categories enable flags 
+		public static bool   CategoryEnabled3D = false;
+		public static bool   CategoryEnabledSampler = false;
+		public static bool   CategoryEnabledAllocTraces = false;
+		public static bool   CategoryEnabledAllAllocTraces = false;
+		public static bool   CategoryEnabledDisplayObjects = false;
+		public static bool   CategoryEnabledCustomMetrics = true;
+
 		// default hostname used for starting network sessions if none is provided to Connect()
 		public static string DefaultHostName = "localhost";
 
@@ -31,7 +39,7 @@ namespace Telemetry
 		public const string Version = "3,2";
 
 		// telemetry meta (?)
-		public const int 	Meta = 293228;
+		public const double Meta = 135549;
 
 
 		// returns true if a session is active
@@ -113,14 +121,15 @@ namespace Telemetry
 		public static void WriteObjectAlloc(int id, int size, string type)
 		{
 			if (!Connected) return;
+			if (!CategoryEnabledAllocTraces) return;
 
 			long time = Stopwatch.GetTimestamp();
 
 			var alloc = new Protocol.Memory_objectAllocation();
 			alloc.id = id;
 			alloc.size = size;
-			alloc.stackid = 0; // TODO: get stack information
-			alloc.time = ToMicroSeconds(time - sStartupTime);
+			alloc.stackid = (sMethodMap != null) ? sMethodMap.GetStackId() : 0; 
+			alloc.time = ToMicroSeconds(time - sLogStartTime);
 			alloc.type = type; 
 			WriteValue(".memory.newObject", alloc);
 		}
@@ -137,19 +146,29 @@ namespace Telemetry
 			WriteValue(".swf.playerversion", version);
 			WriteValue(".swf.size", size);
 		}
+
+		private static void WriteCategoryEnabled(string category, bool enabled)
+		{
+			WriteValue(enabled ? ".tlm.category.enable" : ".tlm.category.disable", category);
+		}
 		
 		private static void BeginSession(Stream stream)
 		{
+			// get application name
+			var assembly = System.Reflection.Assembly.GetEntryAssembly(); 
+			var appName = assembly.GetName().Name;
+			var swfVersion = 21;
+			var swfSize = 4 * 1024 * 1024;
+
 			// create AMF writer from stream
 			sOutput = new Amf3Writer(stream);
 			sOutput.TrackArrayReferences = false;
 
-			// reset time marker
-			ResetLog();
+			// create method map
+			sMethodMap = new MethodMap();
 
-			var appName = PlayScript.Player.ApplicationClass.Name;
-			var swfVersion = 21;
-			var swfSize = 4 * 1024 * 1024;
+			// reset log
+			ResetLog();
 
 			// write telemetry version
 			WriteValue(".tlm.version", Session.Version);
@@ -195,12 +214,12 @@ namespace Telemetry
 			WriteValue(".mem.telemetry.overhead", 0);
 
 			// write telemetry categories
-			WriteValue(".tlm.category.disable",  "3D");
-			WriteValue(".tlm.category.disable",  "sampler");
-			WriteValue(".tlm.category.disable",  "displayobjects");
-			WriteValue(".tlm.category.enable",   "alloctraces");
-			WriteValue(".tlm.category.disable",  "allalloctraces");
-			WriteValue(".tlm.category.enable",   "customMetrics");
+			WriteCategoryEnabled("3D", CategoryEnabled3D);
+			WriteCategoryEnabled("sampler", CategoryEnabledSampler);
+			WriteCategoryEnabled("displayobjects", CategoryEnabledDisplayObjects);
+			WriteCategoryEnabled("alloctraces", CategoryEnabledAllocTraces);
+			WriteCategoryEnabled("allalloctraces", CategoryEnabledAllAllocTraces);
+			WriteCategoryEnabled("customMetrics", CategoryEnabledCustomMetrics);
 
 			WriteValue(".network.loadmovie", "app:/" + appName );
 			WriteValue(".rend.display.mode", "auto");
@@ -214,9 +233,20 @@ namespace Telemetry
 			// write memory stats
 			WriteMemoryStats();
 
-			// start detailed metrics
-			WriteValue(".tlm.category.start", "alloctraces");
-			WriteValue(".tlm.category.start", "customMetrics");
+			// start categories
+			if (CategoryEnabledAllocTraces) {
+				WriteValue(".tlm.category.start", "alloctraces");
+			}
+
+			if (CategoryEnabledCustomMetrics) {
+				WriteValue(".tlm.category.start", "customMetrics");
+			}
+
+			if (CategoryEnabledSampler) {
+				WriteValue(".tlm.category.start", "sampler");
+				// start sampler
+				sSampler = new Sampler(sLogStartTime, sDivisor, 1, 8);
+			}
 
 			// enable 'advanced telemetry'
 			WriteValue(".tlm.detailedMetrics.start", true);
@@ -227,6 +257,12 @@ namespace Telemetry
 		private static void EndSession()
 		{
 			if (!Connected)	return;
+
+			// stop sampler
+			if (sSampler != null) {
+				sSampler.Dispose();
+				sSampler = null;
+			}
 
 			WriteValue(".tlm.date", new _root.Date().getTime());
 			WriteValue(".tlm.optimize.exit3DStandbyModeTime", 0);
@@ -479,7 +515,18 @@ namespace Telemetry
 
 				try
 				{
-					// flush log to AMF output
+					FlushLog(sOutput);
+
+					if (sSampler != null) {
+						// write sampler data
+						sSampler.Write(sOutput, sMethodMap);
+					}
+
+					if (sMethodMap != null) {
+						// write method map 
+						sMethodMap.Write(sOutput);
+					}
+
 					FlushLog(sOutput);
 
 					// flush output stream
@@ -625,8 +672,10 @@ namespace Telemetry
 		{
 			// reset log
 			sLogCount    = 0;
+			// reset start time
+			sLogStartTime = Stopwatch.GetTimestamp();
 			// reset timebase
-			sLogTimeBase = (int)(Stopwatch.GetTimestamp() / sDivisor);
+			sLogTimeBase = (int)(sLogStartTime / sDivisor);
 		}
 
 		private static void AddEntry(long time, long span, object name, object value)
@@ -661,7 +710,13 @@ namespace Telemetry
 		private static Amf3Writer 	  sOutput;
 		private static MemoryStream   sRecording;
 		private static int  		  sDivisor = (int)(Stopwatch.Frequency / Frequency);
-		private static long			  sStartupTime = Stopwatch.GetTimestamp();
+		private static long			  sLogStartTime = Stopwatch.GetTimestamp();
+
+		// sampler for profiling 
+		private static Sampler 		  sSampler = null;
+
+		// method map for translating addresses to symbols to ids
+		private static MethodMap 	  sMethodMap = null;
 
 		private static readonly Amf3String     sNameTrace   = new Amf3String(".trace");
 		private static readonly Amf3String     sNameSwfFrame  = new Amf3String(".swf.frame");
