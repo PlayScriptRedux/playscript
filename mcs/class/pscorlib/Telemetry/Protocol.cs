@@ -186,7 +186,7 @@ namespace Telemetry
 		{
 			public int time;
 			public int numticks;
-			public double[] ticktimes;
+			public _root.Vector<double> ticktimes;
 			public uint[] callstack;
 
 			#region IAmf3Serializable implementation

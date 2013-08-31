@@ -40,7 +40,6 @@ namespace Telemetry
 
 		public Sampler(long timeBase, int divisor, int samplerRate, int maxCallstackDepth, int bufferLength = 8192)
 		{
-			mArchitecture = GetArchitecture();
 			mTimeBase     = timeBase;
 			mDivisor      = divisor;
 			mSamplerRate  = samplerRate;
@@ -53,14 +52,37 @@ namespace Telemetry
 			// save target thread id
 			mTargetThread = mach_thread_self();
 
+			// setup architecture specific settings
+			var arch = GetArchitecture();
+			switch (arch)
+			{
+			case Architecture.ARM:
+				mThreadStateLength = 17;
+				mThreadStateFlavor = 1;
+				mRegisterPC = 15;
+				mRegisterBP = 7;
+				break;
+
+			case Architecture.x86:
+				mThreadStateLength = 32;
+				mThreadStateFlavor = 1;
+				mRegisterPC = 10;
+				mRegisterBP = 6;
+				break;
+
+			default:
+				Console.WriteLine("Telemetry: Architecture not supported for sampling");
+				return;
+			}
+
+
 			// start sampler thread
 			mSamplerThread = new Thread(SamplerThreadFunc);
 			mSamplerThread.Start ();
-
 			Console.WriteLine("Telemetry: Sampler started rate: {0} ms", samplerRate);
 		}
 
-		#region IDisposable implementation
+		// stops sampling and cleans up
 		public void Dispose()
 		{
 			if (mSamplerThread == null) {
@@ -71,7 +93,6 @@ namespace Telemetry
 				Console.WriteLine("Telemetry: Sampler stopped.");
 			}
 		}
-		#endregion
 
 		// returns accumulated sampler data in a buffer
 		// format:
@@ -99,44 +120,80 @@ namespace Telemetry
 			}
 		}
 
+		// compares two callstacks in their raw form
+		private static bool ArrayEquals(IntPtr[] data, int indexA, int indexB, int count)
+		{
+			for (int i=0; i < count; i++) {
+				if (data[indexA++] != data[indexB++]) {
+					return false;
+				}
+			}
+			return true;
+		}
+
 		// write sampler data to AMF 
-		public void Write(MethodMap methodMap)
+		public void Write(MethodMap methodMap, bool combineSamples = true)
 		{
 			// get accumulated sampler data
 			IntPtr[] data = GetSamplerData();
 
-			// allocate AMF sample to write to
-			var sample = new Protocol.Sampler_sample();
+			// AMF serializable sample to write to
+			Protocol.Sampler_sample sample = null;
+
+			int lastCallStackIndex = 0;
+			int lastCallStackCount = 0;
 
 			// process all samples
+			// this code is tricky because it tries to combine consecutive samples with the exact same callstack
 			int sampleCount = 0;
 			int index = 0;
-			double[] ticktimes = new double[1];
 			for (;;) {
 				// get length of callstack
 				int count = data[index++].ToInt32();
 				if (count == 0)
 					break;
 
-				// get time in microseconds since startup
+				// get sample time
 				int time = data[index++].ToInt32();
 
-				// lookup callstack from method map
-				uint[] callstack = methodMap.GetCallStack(data, index, count);
-				index += count;
+				// compare the last callstack with this one
+				// if they are equal, the samples can be combined
+				// else we have to start a new sample
+				if (!combineSamples || (lastCallStackCount != count) || !ArrayEquals(data, index, lastCallStackIndex, count)) {
+					// call stack is different... 
 
-				// only one tick at a time for now
-				ticktimes[0] = (double)time;
+					if (sample == null) {
+						// allocate a new sample
+						sample = new Protocol.Sampler_sample();
+						sample.ticktimes = new _root.Vector<double>();
+					} else {
+						// write last sample to log
+						Session.WriteValueImmediate(sNameSamplerSample, sample);
+					}
 
-				// build sampler
+					// reset sample for new callstack
+					sample.numticks         = 0;
+					sample.ticktimes.length = 0;
+					sample.callstack        = methodMap.GetCallStack(data, index, count);
+
+					// save last callstack position
+					lastCallStackIndex = index;
+					lastCallStackCount = count;
+				} 
+
+				// add tick to sample
+				sample.numticks++;
 				sample.time      = time;
-				sample.numticks  = 1;
-				sample.callstack = callstack;
-				sample.ticktimes = ticktimes;
+				sample.ticktimes.push((double)time);
 
-				// write sample to log
-				Session.WriteValueImmediate(sNameSamplerSample, sample);
+				// advance to next sample
+				index += count;
 				sampleCount++;
+			}
+
+			if (sample != null) {
+				// write last sample to log
+				Session.WriteValueImmediate(sNameSamplerSample, sample);
 			}
 
 			if (sampleCount > 0) {
@@ -161,6 +218,7 @@ namespace Telemetry
 		[DllImport ("__Internal", EntryPoint="thread_get_state")]
 		extern static int thread_get_state (IntPtr thread, int flavor, IntPtr[] state, ref int stateCount);
 
+		// this walks a callstack starting with the provided frame pointer and program counter
 		private static unsafe int BacktraceCallStack(IntPtr pc, IntPtr bp, IntPtr[] callStack)
 		{
 			int i = 0;
@@ -195,93 +253,110 @@ namespace Telemetry
 			return i;
 		}
 
-		private void SamplerThreadFunc()
+		// this captures a single sample from the target thread and writes information to the mData log
+		private bool CaptureSample(IntPtr[] state, IntPtr[] callStack)
 		{
-			int threadStateFlavor;
-			int threadStateLength;
-			int	registerPC;
-			int	registerBP;
+			int count = 0;
+			long time = 0;
 
-			switch (mArchitecture)
-			{
-			case Architecture.ARM:
-				// ARM
-				threadStateLength = 17;
-				threadStateFlavor = 1;
-				registerPC = 15;
-				registerBP = 7;
-				break;
-
-			case Architecture.x86:
-				// x86
-				threadStateLength = 32;
-				threadStateFlavor = 1;
-				registerPC = 10;
-				registerBP = 6;
-				break;
-
-			default:
-				return;
+			// suspend thread
+			if (thread_suspend(mTargetThread) != 0) {
+				// could not suspend thread
+				return false;
 			}
 
-			// wait before doing any work
-			Thread.Sleep(250);
-
-			var state = new IntPtr[threadStateLength];
-			var callStack = new IntPtr[mMaxCallstackDepth];
-			while (mRunSampler)
-			{
-				int count = 0;
-
-				// suspend thread
-				thread_suspend(mTargetThread);
-
+			try {
 				// compute time since we started sampling
-				long timelong = Stopwatch.GetTimestamp() - mTimeBase;
-				int time = (int)(timelong / mDivisor);
+				time = (Stopwatch.GetTimestamp() - mTimeBase);
 
 				// get thread state
 				int stateCount = state.Length;
-				int result = thread_get_state (mTargetThread, threadStateFlavor, state, ref stateCount);
-				if (result == 0) {
-					// get pc from thread state
-					IntPtr pc = state [registerPC];
-					// get frame pointer from thread state
-					IntPtr bp = state [registerBP];
-					// trace callstack for suspended thread
-					count = BacktraceCallStack (pc, bp, callStack);
+				int result = thread_get_state(mTargetThread, mThreadStateFlavor, state, ref stateCount);
+				if (result != 0) {
+					// could not get thread state
+					return false;
 				}
 
-				// resume thread
-				thread_resume (mTargetThread);
+				// get pc from thread state
+				IntPtr pc = state[mRegisterPC];
+				// get frame pointer from thread state
+				IntPtr bp = state[mRegisterBP];
+				// trace callstack for suspended thread
+				count = BacktraceCallStack(pc, bp, callStack);
+				if (count == 0) {
+					// no callstack data found
+					return false;
+				}
+			} finally {
+				// resume thread always
+				thread_resume(mTargetThread);
+			}
 
-				// did we get any callstack data?
-				if (count > 0)
-				{
-					lock (mSyncRoot)
-					{
-						// write callstack to log
-						int length = 2 + count;
-						if ((mDataCount + length + 1) < mData.Length) {
-						
-							// write count
-							mData[mDataCount++] = (IntPtr)count;
+			// lock for writing to internal data log
+			// TODO: we could use a lockless queue but this is only called ~16 times per frame
+			lock (mSyncRoot)
+			{
+				// ensure we have enough space
+				int length = 2 + count;
+				if ((mDataCount + length + 1) >= mData.Length) {
+					// buffer is full? no one is polling us?
+					return false;
+				}
 
-							// write time
-							mData[mDataCount++] = (IntPtr)time;
+				// write sample to log
 
-							// copy call stack data
-							Array.Copy(callStack, 0, mData, mDataCount, count);
-							mDataCount += count;
+				// write count
+				mData[mDataCount++] = (IntPtr)count;
 
-							// null terminate
-							mData[mDataCount] = (IntPtr)0;
-						}
+				// write time converted to desired resolution
+				mData[mDataCount++] = (IntPtr)(int)(time / mDivisor);
+
+				// copy call stack data
+				Array.Copy(callStack, 0, mData, mDataCount, count);
+				mDataCount += count;
+
+				// null terminate
+				mData[mDataCount] = (IntPtr)0;
+			}
+
+			// success
+			return true;
+		}
+
+		private void SamplerThreadFunc()
+		{
+			// wait before doing any work
+			Thread.Sleep(250);
+
+			// allocate buffers here so they can be reused by capture code
+			var state = new IntPtr[mThreadStateLength];
+			var callStack = new IntPtr[mMaxCallstackDepth];
+
+			int errorCount = 0;
+			while (mRunSampler)
+			{
+				try {
+					// capture a sample
+					if (CaptureSample(state, callStack)) {
+						// success, clear error count
+						errorCount = 0;
+					} else {
+						// error capturing
+						errorCount++;
 					}
 				}
+				catch {
+					// there was an exception while capturing
+					errorCount++;
+				}
 
-				// sleep 
-				Thread.Sleep(mSamplerRate);
+				if (errorCount == 0) {
+					// sleep for sample period
+					Thread.Sleep(mSamplerRate);
+				} else {
+					// we had errors, so back off
+					Thread.Sleep(1000);
+				}
 			}
 		}
 
@@ -300,12 +375,17 @@ namespace Telemetry
 		private IntPtr[]		 	  mReadData;
 
 		// settings
-		private readonly Architecture mArchitecture;
 		private readonly IntPtr 	  mTargetThread;
 		private readonly int     	  mSamplerRate;
 		private readonly long 		  mTimeBase;
 		private readonly int 		  mDivisor;
 		private readonly int 		  mMaxCallstackDepth;
+
+		// arch specific settings
+		private readonly int 		  mThreadStateFlavor;
+		private readonly int 		  mThreadStateLength;
+		private readonly int 		  mRegisterPC;
+		private readonly int 		  mRegisterBP;
 
 		private static readonly Amf3String     sNameSamplerSample  = new Amf3String(".sampler.sample");
 		#endregion

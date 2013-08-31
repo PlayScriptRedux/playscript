@@ -14,7 +14,7 @@ namespace Telemetry
 
 		// categories enable flags 
 		public static bool   CategoryEnabled3D = false;
-		public static bool   CategoryEnabledSampler = true;
+		public static bool   CategoryEnabledSampler = false;
 		public static bool   CategoryEnabledTrace = true;
 		public static bool   CategoryEnabledAllocTraces = false;
 		public static bool   CategoryEnabledAllAllocTraces = false;
@@ -249,39 +249,54 @@ namespace Telemetry
 
 			if (CategoryEnabledSampler) {
 				WriteValue(".tlm.category.start", "sampler");
-				// start sampler
-				sSampler = new Sampler(sLog.StartTime, sLog.Divisor, 1, 8);
 			}
 
 			// enable 'advanced telemetry'
 			WriteValue(".tlm.detailedMetrics.start", true);
 
 			Flush();
+
+			if (CategoryEnabledSampler) {
+				// start sampler
+				sSampler = new Sampler(sLog.StartTime, sLog.Divisor, 1, 8);
+			}
 		}
 
 		private static void EndSession()
 		{
-			if (!Connected)	return;
+			try
+			{
+				if (Connected) {
+					WriteValue(".tlm.date", new _root.Date().getTime());
+					WriteValue(".tlm.optimize.exit3DStandbyModeTime", 0);
+					WriteValue(".tlm.optimize.selectionEnd", false);
+					WriteValue(".tlm.optimize.selectionStart", false);
+					WriteValue(".tlm.optimize.startedIn3DStandbyMode", false);
+					WriteValue(".tlm.optimize.threeDStandbyModeHasExited", false);
 
-			// stop sampler
-			if (sSampler != null) {
-				sSampler.Dispose();
-				sSampler = null;
+					Flush();
+				}
+			} catch {
 			}
 
-			WriteValue(".tlm.date", new _root.Date().getTime());
-			WriteValue(".tlm.optimize.exit3DStandbyModeTime", 0);
-			WriteValue(".tlm.optimize.selectionEnd", false);
-			WriteValue(".tlm.optimize.selectionStart", false);
-			WriteValue(".tlm.optimize.startedIn3DStandbyMode", false);
-			WriteValue(".tlm.optimize.threeDStandbyModeHasExited", false);
+			try
+			{
+				// stop sampler
+				if (sSampler != null) {
+					sSampler.Dispose();
+					sSampler = null;
+				}
+			} catch {
+			}
 
-			Flush();
-
-			// close log
-			if (sLog != null) {
-				sLog.Close();
-				sLog = null;
+			try
+			{
+				// close log
+				if (sLog != null) {
+					sLog.Close();
+					sLog = null;
+				}
+			} catch {
 			}
 		}
 
@@ -534,8 +549,10 @@ namespace Telemetry
 				}
 				catch 
 				{
-					// error writing to log?
+					// error writing to log? connection closed?
 					sLog = null;
+
+					EndSession();
 				}
 			}
 		}
