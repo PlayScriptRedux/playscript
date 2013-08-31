@@ -863,6 +863,9 @@
     <Compile Include="..\pscorlib\Telemetry\MethodMap.cs">
       <Link>Telemetry\MethodMap.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\Telemetry\Log.cs">
+      <Link>Telemetry\Log.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="flash\external\" />

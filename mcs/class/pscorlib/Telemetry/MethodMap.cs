@@ -56,19 +56,30 @@ namespace Telemetry
 			return id;
 		}
 
-		public int GetStackId()
+		// resolves a whole callstack to an array of method ids
+		public uint[] GetCallStack(IntPtr[] data, int offset, int count)
+		{
+			// lookup address to method ids
+			uint[] callstack = new uint[count];
+			for (int i=0; i < count; i++) {
+				callstack[i] = GetMethodId(data[offset++], true );
+			}
+			return callstack;
+		}
+
+		public int GetCallStackId()
 		{
 			//TODO: this should get a stack id for the current stack frame
 			return 0;
 		}
 
-		public void Write(Amf3Writer output)
+		public void Write(Log log)
 		{
 			// write method name byte array if we have data in it
 			if (mMethodNames.length > 0) {
-				output.WriteObjectHeader(Protocol.Value.ClassDef);
-				output.Write(sNameSamplerMethodNameMap);
-				output.Write(mMethodNames);
+				// write sampler method names
+				var writer = log.WriteValueHeader(sNameSamplerMethodNameMap);
+				writer.Write(mMethodNames);
 				mMethodNames.clear();
 			}
 		}

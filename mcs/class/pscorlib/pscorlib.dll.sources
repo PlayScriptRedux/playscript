@@ -263,6 +263,7 @@
 ./String.cs
 ./SWFAttribute.cs
 ./SyntaxError.play
+./Telemetry/Log.cs
 ./Telemetry/MethodMap.cs
 ./Telemetry/Parser.cs
 ./Telemetry/Protocol.cs

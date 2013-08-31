@@ -14,6 +14,7 @@ namespace Telemetry
 {
 	public sealed class Sampler : IDisposable
 	{
+		// TODO: this should be moved to a central place (player capabilities?)
 		enum Architecture
 		{
 			Unknown,
@@ -21,6 +22,7 @@ namespace Telemetry
 			ARM
 		};
 
+		// TODO: this should be moved to a central place (player capabilities?)
 		static Architecture GetArchitecture()
 		{
 			#if PLATFORM_MONOMAC
@@ -98,9 +100,9 @@ namespace Telemetry
 		}
 
 		// write sampler data to AMF 
-		public void Write(Amf3Writer output, MethodMap methodMap)
+		public void Write(Log log, MethodMap methodMap)
 		{
-			// get sampler data
+			// get accumulated sampler data
 			IntPtr[] data = GetSamplerData();
 
 			// process all samples
@@ -120,18 +122,14 @@ namespace Telemetry
 				int numticks = 1;
 				ticktimes[0] = (double)time;
 
-				// lookup address to method ids
-				uint[] callstack = new uint[count];
-				for (int i=0; i < count; i++) {
-					callstack[i] = methodMap.GetMethodId(data[index++], true );
-				}
+				// lookup callstack from method map
+				uint[] callstack = methodMap.GetCallStack(data, index, count);
+				index += count;
 
-				// write sample as value
-				output.WriteObjectHeader(Protocol.Value.ClassDef);
-				output.Write(sNameSamplerSample);
-
+				// write sample as value 
+				var output = log.WriteValueHeader(sNameSamplerSample);
 				output.WriteObjectHeader(Protocol.Sampler_sample.ClassDef);
-				output.Write(time + 4);
+				output.Write(time);
 				output.Write(numticks);
 				output.Write(ticktimes);
 				output.Write(callstack);

@@ -14,7 +14,8 @@ namespace Telemetry
 
 		// categories enable flags 
 		public static bool   CategoryEnabled3D = false;
-		public static bool   CategoryEnabledSampler = false;
+		public static bool   CategoryEnabledSampler = true;
+		public static bool   CategoryEnabledTrace = true;
 		public static bool   CategoryEnabledAllocTraces = false;
 		public static bool   CategoryEnabledAllAllocTraces = false;
 		public static bool   CategoryEnabledDisplayObjects = false;
@@ -45,7 +46,7 @@ namespace Telemetry
 		// returns true if a session is active
 		public static bool Connected
 		{
-			get { return (sOutput != null);}
+			get { return (sLog != null);}
 		}
 
 		public static long BeginSpan()
@@ -69,7 +70,7 @@ namespace Telemetry
 			}
 
 			// write entry
-			AddEntry(time, span, name, null);
+			sLog.AddEntry(time, span, name, null);
 		}
 
 		public static void EndSpanValue(object name, long beginTime, object value)
@@ -88,7 +89,7 @@ namespace Telemetry
 			}
 
 			// write entry
-			AddEntry(time, span, name, value);
+			sLog.AddEntry(time, span, name, value);
 		}
 
 		public static void WriteTime(object name)
@@ -99,7 +100,7 @@ namespace Telemetry
 			long time = Stopwatch.GetTimestamp();
 
 			// write entry
-			AddEntry(time, LogTime, name, null);
+			sLog.AddEntry(time, Log.EntryTime, name, null);
 		}
 
 		public static void WriteValue(object name, object value)
@@ -107,15 +108,16 @@ namespace Telemetry
 			if (!Connected) return;
 
 			// write entry
-			AddEntry(0, LogValue, name, value);
+			sLog.AddEntry(0, Log.EntryValue, name, value);
 		}
 
 		public static void WriteTrace(string trace)
 		{
 			if (!Connected) return;
+			if (!CategoryEnabledTrace) return;
 
 			long time = Stopwatch.GetTimestamp();
-			AddEntry(time, 0, sNameTrace, trace);
+			sLog.AddEntry(time, 0, sNameTrace, trace);
 		}
 
 		public static void WriteObjectAlloc(int id, int size, string type)
@@ -123,13 +125,11 @@ namespace Telemetry
 			if (!Connected) return;
 			if (!CategoryEnabledAllocTraces) return;
 
-			long time = Stopwatch.GetTimestamp();
-
 			var alloc = new Protocol.Memory_objectAllocation();
 			alloc.id = id;
 			alloc.size = size;
-			alloc.stackid = (sMethodMap != null) ? sMethodMap.GetStackId() : 0; 
-			alloc.time = ToMicroSeconds(time - sLogStartTime);
+			alloc.stackid = sMethodMap.GetCallStackId(); 
+			alloc.time = sLog.GetTime();
 			alloc.type = type; 
 			WriteValue(".memory.newObject", alloc);
 		}
@@ -152,7 +152,7 @@ namespace Telemetry
 			WriteValue(enabled ? ".tlm.category.enable" : ".tlm.category.disable", category);
 		}
 		
-		private static void BeginSession(Stream stream)
+		private static void BeginSession(Stream stream, bool autoCloseStream = true)
 		{
 			// get application name
 			var assembly = System.Reflection.Assembly.GetEntryAssembly(); 
@@ -161,14 +161,10 @@ namespace Telemetry
 			var swfSize = 4 * 1024 * 1024;
 
 			// create AMF writer from stream
-			sOutput = new Amf3Writer(stream);
-			sOutput.TrackArrayReferences = false;
+			sLog = new Log(stream, autoCloseStream);
 
 			// create method map
 			sMethodMap = new MethodMap();
-
-			// reset log
-			ResetLog();
 
 			// write telemetry version
 			WriteValue(".tlm.version", Session.Version);
@@ -245,7 +241,7 @@ namespace Telemetry
 			if (CategoryEnabledSampler) {
 				WriteValue(".tlm.category.start", "sampler");
 				// start sampler
-				sSampler = new Sampler(sLogStartTime, sDivisor, 1, 8);
+				sSampler = new Sampler(sLog.StartTime, sLog.Divisor, 1, 8);
 			}
 
 			// enable 'advanced telemetry'
@@ -273,12 +269,11 @@ namespace Telemetry
 
 			Flush();
 
-			// close session stream
-			if (sOutput!= null && (sOutput.Stream != sRecording)) {
-				sOutput.Stream.Close();
+			// close log
+			if (sLog != null) {
+				sLog.Close();
+				sLog = null;
 			}
-
-			sOutput = null;
 		}
 
 		public static void OnBeginFrame()
@@ -439,8 +434,8 @@ namespace Telemetry
 
 			Console.WriteLine("Telemetry: began recording to memory buffer");
 
-			// start session
-			BeginSession(sRecording);
+			// start session (dont auto-close recording stream)
+			BeginSession(sRecording, false);
 			return true;
 		}
 
@@ -511,31 +506,27 @@ namespace Telemetry
 		// flushes all accumulated data to the output stream (over the network or to a file)
 		public static void Flush()
 		{
-			if (sOutput != null) {
+			if (sLog != null) {
 
 				try
 				{
-					FlushLog(sOutput);
-
 					if (sSampler != null) {
 						// write sampler data
-						sSampler.Write(sOutput, sMethodMap);
+						sSampler.Write(sLog, sMethodMap);
 					}
 
 					if (sMethodMap != null) {
 						// write method map 
-						sMethodMap.Write(sOutput);
+						sMethodMap.Write(sLog);
 					}
 
-					FlushLog(sOutput);
-
-					// flush output stream
-					sOutput.Stream.Flush();
+					// flush output stream (to network or file)
+					sLog.Flush();
 				}
 				catch 
 				{
-					// error writing to socket?
-					sOutput = null;
+					// error writing to log?
+					sLog = null;
 				}
 			}
 		}
@@ -597,120 +588,12 @@ namespace Telemetry
 		}
 
 		#region Private
-		struct LogEntry
-		{
-			public long 	Time;		// time of entry (in nano-seconds)
-			public long 	Span;		// span length (in nano-seconds) for Span and SpanValue 
-			public object 	Name;		// string or Amf3String
-			public object	Value;		// non-null if SpanValue or Value
-		};
 
-		private const long LogValue = -2;
-		private const long LogTime = -1;
+		// telemetry log
+		private static Log		 	  sLog;
 
-		private static int ToMicroSeconds(long ticks)
-		{
-			// NOTE: this requires a 64-bit division on ARM
-			return (int)(ticks / sDivisor);
-		}
-
-		private static void WriteLogEntry(ref LogEntry entry, ref int timeBase, Amf3Writer output)
-		{
-			if (entry.Span == LogValue) {
-				// emit Value
-				output.WriteObjectHeader(Protocol.Value.ClassDef);
-				output.Write(entry.Name);
-				output.Write(entry.Value);
-			} else 	if (entry.Span == LogTime) {
-				// emit Time
-				int time = ToMicroSeconds(entry.Time);
-				int delta = time - timeBase; 
-				timeBase = time;
-
-				output.WriteObjectHeader(Protocol.Time.ClassDef);
-				output.Write(entry.Name);
-				output.Write(delta);
-			} else {
-				// emit Span or SpanValue
-				// convert times to microseconds for output
-				int time      = ToMicroSeconds(entry.Time);
-				int beginTime = ToMicroSeconds(entry.Time - entry.Span);
-
-				// compute span and delta in microseconds
-				// this must be done this exact way to preserve rounding errors across spans
-				// if not, the server may produce an error if a span exceeds its expected length
-				int span  = time - beginTime;
-				int delta = time - timeBase; 
-				timeBase = time;
-
-				if (entry.Value == null) {
-					output.WriteObjectHeader(Protocol.Span.ClassDef);
-					output.Write(entry.Name);
-					output.Write(span);
-					output.Write(delta);
-				} else {
-					output.WriteObjectHeader(Protocol.SpanValue.ClassDef);
-					output.Write(entry.Name);
-					output.Write(span);
-					output.Write(delta);
-					output.Write(entry.Value);
-				}
-			}
-		}
-
-		private static void FlushLog(Amf3Writer output)
-		{
-			// write all log entries
-			for (int i=0; i < sLogCount; i++) {
-				WriteLogEntry(ref sLog[i], ref sLogTimeBase, output);
-			}
-			// clear log
-			sLogCount = 0;
-		}
-
-		private static void ResetLog()
-		{
-			// reset log
-			sLogCount    = 0;
-			// reset start time
-			sLogStartTime = Stopwatch.GetTimestamp();
-			// reset timebase
-			sLogTimeBase = (int)(sLogStartTime / sDivisor);
-		}
-
-		private static void AddEntry(long time, long span, object name, object value)
-		{
-			if (sLog == null) {
-				// create log
-				sLog = new LogEntry[4 * 1024];
-			}
-
-			if (sLogCount >= sLog.Length) {
-				// grow geometrically
-				int newLength = sLog.Length * 2;
-				var newLog = new LogEntry[newLength];
-				Array.Copy(sLog, newLog, sLog.Length);
-				sLog = newLog;
-			}
-
-			// add entry to log
-			int i = sLogCount++;
-			sLog[i].Time = time;
-			sLog[i].Span = span;
-			sLog[i].Name = name;
-			sLog[i].Value = value;
-		}
-
-		// fast intermediate log used for storing data within a frame as array of packed structs
-		// this gets flushed to the active AMF stream each frame
-		private static LogEntry[]	  sLog;
-		private static int 			  sLogCount = 0;
-		private static int 			  sLogTimeBase;
-
-		private static Amf3Writer 	  sOutput;
+		// current recording (to memory)
 		private static MemoryStream   sRecording;
-		private static int  		  sDivisor = (int)(Stopwatch.Frequency / Frequency);
-		private static long			  sLogStartTime = Stopwatch.GetTimestamp();
 
 		// sampler for profiling 
 		private static Sampler 		  sSampler = null;
