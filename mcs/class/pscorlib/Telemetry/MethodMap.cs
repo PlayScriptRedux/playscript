@@ -73,13 +73,12 @@ namespace Telemetry
 			return 0;
 		}
 
-		public void Write(Log log)
+		public void Write()
 		{
 			// write method name byte array if we have data in it
 			if (mMethodNames.length > 0) {
 				// write sampler method names
-				var writer = log.WriteValueHeader(sNameSamplerMethodNameMap);
-				writer.Write(mMethodNames);
+				Session.WriteValueImmediate(sNameSamplerMethodNameMap, mMethodNames);
 				mMethodNames.clear();
 			}
 		}

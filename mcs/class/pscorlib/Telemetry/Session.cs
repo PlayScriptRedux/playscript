@@ -111,6 +111,15 @@ namespace Telemetry
 			sLog.AddEntry(0, Log.EntryValue, name, value);
 		}
 
+		// this forces the value object to be serialized now so it can be reused
+		public static void WriteValueImmediate(object name, object value)
+		{
+			if (!Connected) return;
+
+			// write value to log
+			sLog.WriteValueImmediate(name, value);
+		}
+
 		public static void WriteTrace(string trace)
 		{
 			if (!Connected) return;
@@ -512,12 +521,12 @@ namespace Telemetry
 				{
 					if (sSampler != null) {
 						// write sampler data
-						sSampler.Write(sLog, sMethodMap);
+						sSampler.Write(sMethodMap);
 					}
 
 					if (sMethodMap != null) {
 						// write method map 
-						sMethodMap.Write(sLog);
+						sMethodMap.Write();
 					}
 
 					// flush output stream (to network or file)

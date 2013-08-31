@@ -100,10 +100,13 @@ namespace Telemetry
 		}
 
 		// write sampler data to AMF 
-		public void Write(Log log, MethodMap methodMap)
+		public void Write(MethodMap methodMap)
 		{
 			// get accumulated sampler data
 			IntPtr[] data = GetSamplerData();
+
+			// allocate AMF sample to write to
+			var sample = new Protocol.Sampler_sample();
 
 			// process all samples
 			int sampleCount = 0;
@@ -118,21 +121,21 @@ namespace Telemetry
 				// get time in microseconds since startup
 				int time = data[index++].ToInt32();
 
-				// only one tick at a time for now
-				int numticks = 1;
-				ticktimes[0] = (double)time;
-
 				// lookup callstack from method map
 				uint[] callstack = methodMap.GetCallStack(data, index, count);
 				index += count;
 
-				// write sample as value 
-				var output = log.WriteValueHeader(sNameSamplerSample);
-				output.WriteObjectHeader(Protocol.Sampler_sample.ClassDef);
-				output.Write(time);
-				output.Write(numticks);
-				output.Write(ticktimes);
-				output.Write(callstack);
+				// only one tick at a time for now
+				ticktimes[0] = (double)time;
+
+				// build sampler
+				sample.time      = time;
+				sample.numticks  = 1;
+				sample.callstack = callstack;
+				sample.ticktimes = ticktimes;
+
+				// write sample to log
+				Session.WriteValueImmediate(sNameSamplerSample, sample);
 				sampleCount++;
 			}
 

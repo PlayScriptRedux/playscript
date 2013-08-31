@@ -72,8 +72,9 @@ namespace Telemetry
 			mLog[i].Value = value;
 		}
 
-		// writes a value header and returns an Amf3Writer that can be used to write the value data
-		public Amf3Writer WriteValueHeader(object name)
+		// writes a value to the log immediately, flushing any pending entries if needed
+		// the value object is free to be reused after writing via this method
+		public void WriteValueImmediate(object name, object value)
 		{
 			// flush all entries before writing
 			FlushEntries();
@@ -81,7 +82,7 @@ namespace Telemetry
 			// write header
 			mOutput.WriteObjectHeader(Protocol.Value.ClassDef);
 			mOutput.Write(name);
-			return mOutput;
+			mOutput.Write(value);
 		}
 
 		public void Flush()
