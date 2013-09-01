@@ -192,6 +192,11 @@ namespace flash.display3D.textures {
 				GL.BindTexture (textureTarget, textureId);
 				uploadATFTextureFromByteArray(data, byteArrayOffset);
 				GL.BindTexture (textureTarget, 0);
+
+				if (async) {
+					dispatchDelayedTextureReady();
+				}
+
 				return;
 			}
 
@@ -218,11 +223,15 @@ namespace flash.display3D.textures {
 			GL.BindTexture (textureTarget, 0);
 #endif
 			if (async) {
-				// load with a delay
-				var timer = new flash.utils.Timer(1, 1);
-				timer.addEventListener(TimerEvent.TIMER, (System.Action<Event>)this.OnTextureReady );
-				timer.start();
+				dispatchDelayedTextureReady();
 			}
+		}
+
+		private void dispatchDelayedTextureReady() {
+			// load with a delay
+			var timer = new flash.utils.Timer(1, 1);
+			timer.addEventListener(TimerEvent.TIMER, (System.Action<Event>)this.OnTextureReady );
+			timer.start();
 		}
 
 		private void OnTextureReady (Event e)
