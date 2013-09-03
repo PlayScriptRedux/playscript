@@ -2,7 +2,7 @@ package
 {
 	import com.adobe.test.Assert;
 
-	public class StrictEqualityTest
+	public class EqualityTest
 	{
 		public static function Main():int
 		{
