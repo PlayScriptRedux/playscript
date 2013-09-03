@@ -188,7 +188,7 @@ namespace Mono.CSharp {
 		}
 
 		//
-		// When the same attribute is attached to multiple fiels
+		// When the same attribute is attached to multiple fields
 		// we use @target field as a list of targets. The attribute
 		// has to be resolved only once but emitted for each target.
 		//
