@@ -2071,11 +2071,17 @@ fixed_parameter
 	: opt_attributes
 	  opt_parameter_modifier
 	  IDENTIFIER
-	  COLON
-	  parameter_type
+	  opt_parameter_type
 	  {
 		var lt = (LocatedToken) $3;
-		$$ = new Parameter ((FullNamedExpression) $5, lt.Value, (Parameter.Modifier) $2, (Attributes) $1, lt.Location);
+		if ($4 == null) {
+			if (settings.PsStrictMode)
+				report.Error (7012, lt.Location, "Parameter `{0}' has no type declaration.", lt.Value);
+			else
+				report.Warning (1009, 1, lt.Location, "Parameter `{0}' has no type declaration.", lt.Value);
+			$4 = new UntypedTypeExpression (lt.Location);
+		}
+		$$ = new Parameter ((FullNamedExpression) $4, lt.Value, (Parameter.Modifier) $2, (Attributes) $1, lt.Location);
 	  }
 	| attribute_sections error
 	  {
@@ -2097,8 +2103,7 @@ fixed_parameter
 	| opt_attributes
 	  opt_parameter_modifier
 	  IDENTIFIER
-	  COLON
-	  parameter_type
+	  opt_parameter_type
 	  ASSIGN
 	  {
 	  	++lexer.parsing_block;
@@ -2131,14 +2136,21 @@ fixed_parameter
 		}
 		
 		if ((valid_param_mod & ParameterModifierType.DefaultValue) == 0)
-			report.Error (1065, GetLocation ($6), "Optional parameter is not valid in this context");
+			report.Error (1065, GetLocation ($5), "Optional parameter is not valid in this context");
 		
 		var lt = (LocatedToken) $3;
-		$$ = new Parameter ((FullNamedExpression) $5, lt.Value, mod, (Attributes) $1, lt.Location);
-		lbag.AddLocation ($$, GetLocation ($6));
+		if ($4 == null) {
+			if (settings.PsStrictMode)
+				report.Error (7012, lt.Location, "Parameter `{0}' has no type declaration.", lt.Value);
+			else
+				report.Warning (1009, 1, lt.Location, "Parameter `{0}' has no type declaration.", lt.Value);
+			$4 = new UntypedTypeExpression (lt.Location);
+		}
+		$$ = new Parameter ((FullNamedExpression) $4, lt.Value, mod, (Attributes) $1, lt.Location);
+		lbag.AddLocation ($$, GetLocation ($5));
 		
-		if ($8 != null)
-			((Parameter) $$).DefaultValue = new DefaultParameterValueExpression ((Expression) $8);
+		if ($7 != null)
+			((Parameter) $$).DefaultValue = new DefaultParameterValueExpression ((Expression) $7);
 	  }
 	;
 
@@ -3617,7 +3629,18 @@ simple_type
 		$$ = new TypeExpression (compiler.BuiltinTypes.Void, GetLocation ($1));
 	  }	
 	;
-	
+
+opt_parameter_type
+	: /* empty */
+	  {
+		$$ = null;
+	  }
+	| COLON parameter_type
+	  {
+		$$ = $2;
+	  }
+	;
+
 parameter_type
 	: type_expression_or_array
 	| VOID
