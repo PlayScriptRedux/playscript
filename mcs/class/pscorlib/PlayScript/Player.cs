@@ -499,49 +499,27 @@ namespace PlayScript
 			mSpanPlayerTouch.End();
 		}
 
-#if PLATFORM_MONOTOUCH
-
-		public void OnPinchRecognized(UIPinchGestureRecognizer pinchRecognizer)
+		public void OnPinchRecognized(flash.events.TransformGestureEvent tge)
 		{
 			mSpanPlayerGesture.Begin();
-			var tge = new flash.events.TransformGestureEvent(flash.events.TransformGestureEvent.GESTURE_ZOOM, true, false);
-			tge.scaleX = tge.scaleY = pinchRecognizer.Scale;
 
-			switch (pinchRecognizer.State)
-			{
-				case UIGestureRecognizerState.Possible:
-				case UIGestureRecognizerState.Began:
-					tge.phase = "begin";
-					mDeactivateMouseEvents = true;			// For swipe gestures, we don't want to send any mouse events at the same time
-					if (mMouseDown) {
-						// We were already sending mouse down event, so to close the loop, we are going to send a mouse up event with the last position for completion
-						var me = new flash.events.MouseEvent(flash.events.MouseEvent.MOUSE_UP, true, false, mStage.mouseX, mStage.mouseY, mStage);
-						mStage.dispatchEvent (me);
-						mSkipNextMouseUp = true;
-					}
-					break;
-
-				case UIGestureRecognizerState.Changed:
-					tge.phase = "update";
-					break;
-
-				case UIGestureRecognizerState.Recognized:
-				//case UIGestureRecognizerState.Ended:		// Same as recognized
-					tge.phase = "end";
-					mDeactivateMouseEvents = false;
-					break;
-
-				case UIGestureRecognizerState.Cancelled:
-				case UIGestureRecognizerState.Failed:
-					mDeactivateMouseEvents = false;
-					return;		// In this case, we don't even send the event
+			if (tge.phase == "begin") {
+				mDeactivateMouseEvents = true;
+				if (mMouseDown) {
+					// We were already sending mouse down event, so to close the loop, we are going to send a mouse up event with the last position for completion
+					var me = new flash.events.MouseEvent (flash.events.MouseEvent.MOUSE_UP, true, false, mStage.mouseX, mStage.mouseY, mStage);
+					mStage.dispatchEvent (me);
+					mSkipNextMouseUp = true;
+				}
+			} else if (tge.phase == "end") {
+				mDeactivateMouseEvents = false;
+			} else {
+				mDeactivateMouseEvents = false;
 			}
 
-
 			mStage.dispatchEvent(tge);
-			mSpanPlayerGesture.End();
+			mSpanPlayerGesture.End ();
 		}
-#endif
 
 		public void OnFrame(RectangleF bounds, double maxTimeMs = 100.0)
 		{

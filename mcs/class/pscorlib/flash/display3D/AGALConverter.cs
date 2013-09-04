@@ -781,13 +781,24 @@ namespace flash.display3D
 						int mask = dr.mask;
 
 						dr.mask = mask & 7;
-						sb.AppendFormat("{0} = texture2D({2}, {1}).rgb; // tex", dr.ToGLSL(), sr1.ToGLSL(), sampler.ToGLSL() ); 
-											
-						dr.mask = 8;
-						sb.AppendLine();
-						sb.Append("\t");
-						sb.AppendFormat("{0} = texture2D({2}_alpha, {1}).r; // tex ", dr.ToGLSL(), sr1.ToGLSL(), sampler.ToGLSL() ); 
-						map.Add(sampler, RegisterUsage.Sampler2DAlpha);
+						if (dr.mask != 0)
+						{
+							sb.AppendFormat("{0} = texture2D({2}, {1}).rgb; // tex", dr.ToGLSL(), sr1.ToGLSL(), sampler.ToGLSL() ); 
+
+						}
+
+						dr.mask = mask & 8;
+						if ( dr.mask != 0 )
+						{
+							sb.AppendLine();
+							sb.Append("\t");
+							sb.AppendFormat("{0} = texture2D({2}_alpha, {1}).r; // tex ", dr.ToGLSL(), sr1.ToGLSL(), sampler.ToGLSL() ); 
+							map.Add(sampler, RegisterUsage.Sampler2DAlpha);
+						}
+						else {
+							map.Add(sampler, RegisterUsage.Sampler2D);
+						}
+						
 #endif
 						break;
 					case 1: // cube texture
