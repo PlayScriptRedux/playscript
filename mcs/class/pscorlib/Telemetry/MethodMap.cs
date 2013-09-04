@@ -8,6 +8,10 @@ namespace Telemetry
 	// method map for translating addresses to symbols to unique ids
 	internal class MethodMap
 	{
+		// this bit is set on all method ids that are the top of stack
+		// this means that callstacks should not extend beyond this point
+		const uint TopOfStackFlag = ((uint)1 << 31);
+
 		public MethodMap(SymbolTable symbols)
 		{
 			// set symbol table
@@ -29,12 +33,14 @@ namespace Telemetry
 			return mUnknownMethodId;
 		}
 
-		public uint GetMethodId(Address addr, bool storeInAddressCache = true)
+		public uint GetMethodId(Address addr, out bool isTopOfStack, bool storeInAddressCache = true)
 		{
 			// first try address lookup, incase this address has been seen before
 			uint methodId;
 			if (mAddressToMethodId.TryGetValue(addr, out methodId)) {
-				return methodId;
+				// set terminal boolean
+				isTopOfStack = (methodId & TopOfStackFlag) != 0;
+				return methodId & ~TopOfStackFlag;
 			}
 
 			// get symbol index from symbol table
@@ -65,7 +71,9 @@ namespace Telemetry
 				// add to address lookup for next time
 				mAddressToMethodId.Add(addr, methodId);
 			}
-			return methodId;
+			// set terminal boolean
+			isTopOfStack = (methodId & TopOfStackFlag) != 0;
+			return methodId & ~TopOfStackFlag;
 		}
 
 		public int GetCallStackId()
@@ -102,17 +110,18 @@ namespace Telemetry
 				name = name.Substring(1);
 			}
 
+			// this is set to true for 'top of stack' methods
+			bool isTopOfStack = false;
+
 #if PLATFORM_MONOMAC
 			// handle top of stack
 			if (name == "NSApplicationMain") {
-				// return 0 to terminate stack trace here
-				return 0;
+				isTopOfStack = true;
 			}
 #elif PLATFORM_MONOTOUCH
 			// handle top of stack
-			if (name == "UIApplicationMain" || name.StartsWith("PlayScript_Player_OnFrame_")) {
-				// return 0 to terminate stack trace here
-				return 0;
+			if (name == "UIApplicationMain" || name.StartsWith("PlayScript_Application_")) {
+				isTopOfStack = true;
 			}
 #endif
 
@@ -148,7 +157,13 @@ namespace Telemetry
 			string methodName = imageName + "::" + className + "/" + name;
 
 			// allocate method id from method name
-			return AllocMethodId(methodName);
+			uint methodId = AllocMethodId(methodName);
+
+			if (isTopOfStack) {
+				// set flag on method id
+				methodId |= TopOfStackFlag;
+			}
+			return methodId;
 		}
 
 

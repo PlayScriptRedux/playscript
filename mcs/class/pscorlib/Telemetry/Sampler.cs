@@ -174,20 +174,21 @@ namespace Telemetry
 					if (sample.numticks > 0) {
 						// write last sample to log
 						Session.WriteValueImmediate(sNameSamplerSample, sample);
+						// reset sample for new callstack
+						sample.numticks         = 0;
+						sample.ticktimes.length = 0;
 					}
-
-					// reset sample for new callstack
-					sample.numticks         = 0;
-					sample.ticktimes.length = 0;
 
 					// translate callstack to method ids
 					var callstack = sample.callstack;
 					callstack.length = 0;
 					for (int i=0; i < count; i++) {
-						uint methodId = methodMap.GetMethodId(data[index + i], true );
-						if (methodId != 0) {
-							callstack.push(methodId);
-						} else {
+						bool topOfStack;
+						uint methodId = methodMap.GetMethodId(data[index + i], out topOfStack, true );
+						// add method id
+						callstack.push(methodId);
+						// abort callstack if we are at a "top of stack" method
+						if (topOfStack) {
 							break;
 						}
 					}
@@ -210,6 +211,9 @@ namespace Telemetry
 			if (sample.numticks > 0) {
 				// write last sample to log
 				Session.WriteValueImmediate(sNameSamplerSample, sample);
+				// reset sample for new callstack
+				sample.numticks         = 0;
+				sample.ticktimes.length = 0;
 			}
 
 			if (sampleCount > 0) {

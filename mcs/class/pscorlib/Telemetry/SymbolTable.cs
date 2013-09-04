@@ -394,8 +394,7 @@ namespace Telemetry
 		// the address of each symbol, sorted
 		private Address[]						mSymbolAddressTable;
 		// the identifier for each symbol
-		//  if negative, then it is the negated method map id 
-		//  if positive, then it is the (image index << ImageIndexShift) | (symbol index);
+		//  it is the (image index << ImageIndexShift) | (symbol index);
 		private int[]							mSymbolIdTable;
 		#endregion
 	}
