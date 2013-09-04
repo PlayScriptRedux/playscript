@@ -42,7 +42,7 @@ namespace Mono.CSharp
 	//
 	// Expressions
 	//
-
+	
 	public class UntypedTypeExpression : TypeExpr
 	{
 		public UntypedTypeExpression (Location loc)
@@ -82,6 +82,19 @@ namespace Mono.CSharp
 			}
 
 			return base.Resolve (bc);
+		}
+	}
+
+	public class UntypedExceptionExpression : UntypedTypeExpression
+	{
+		public UntypedExceptionExpression (Location loc)
+			: base(loc)
+		{
+		}
+
+		public override TypeSpec ResolveAsType (IMemberContext mc)
+		{
+			return mc.Module.Compiler.BuiltinTypes.Exception;
 		}
 	}
 

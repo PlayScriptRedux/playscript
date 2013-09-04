@@ -7241,33 +7241,35 @@ catch_clauses
 	  }
 	;
 
-opt_identifier
-	: /* empty */
-	| identifier_inside_body
-	;
-
 catch_clause 
 	: CATCH block
 	  {
 		$$ = new Catch ((Block) $2, GetLocation ($1));
 	  }
-	| CATCH open_parens_any IDENTIFIER COLON type CLOSE_PARENS
+	| CATCH open_parens_any IDENTIFIER opt_type CLOSE_PARENS
 	  {
 		start_block (GetLocation ($2));
-		var c = new Catch (current_block, GetLocation ($1));
-		c.TypeExpression = (FullNamedExpression) $5;
-
 		var lt = (LocatedToken) $3;
+		if ($4 == null) {
+			if (settings.PsStrictMode)
+				report.Error (7012, lt.Location, "Variable `{0}' has no type declaration.", lt.Value);
+			else
+				report.Warning (1009, 1, lt.Location, "Variable `{0}' has no type declaration.", lt.Value);
+			$4 = new UntypedExceptionExpression (lt.Location);
+		}
+
+		var c = new Catch (current_block, GetLocation ($1));
+		c.TypeExpression = (FullNamedExpression) $4;
 		c.Variable = new LocalVariable (current_block, lt.Value, lt.Location);
 		c.Variable.TypeExpr = c.TypeExpression;
 		current_block.AddLocalName (c.Variable);
 		
-		lbag.AddLocation (c, GetLocation ($2), GetLocation ($6));
+		lbag.AddLocation (c, GetLocation ($2), GetLocation ($5));
 		$$ = c;
 	  }
 	  block_prepared
 	  {
-		$$ = $7;
+		$$ = $6;
 	  }
 	| CATCH open_parens_any error
 	  {
@@ -7279,24 +7281,6 @@ catch_clause
 		}
 		
 		$$ = new Catch (null, GetLocation ($1));
-	  }
-	| CATCH open_parens_any type opt_identifier CLOSE_PARENS error
-	  {
-		Error_SyntaxError (yyToken);
-
-		// Required otherwise missing block could not be detected because
-		// start_block is run early
-		var c = new Catch (null, GetLocation ($1));
-		c.TypeExpression = (FullNamedExpression) $3;
-
-		if ($4 != null) {
-			var lt = (LocatedToken) $4;
-			c.Variable = new LocalVariable (current_block, lt.Value, lt.Location);
-		}
-
-		lbag.AddLocation (c, GetLocation ($2), GetLocation ($5));
-
-		$$ = c;
 	  }
 	;
 

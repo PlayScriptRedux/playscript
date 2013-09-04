@@ -1,6 +1,7 @@
 package
 {
 	import com.adobe.test.Assert;
+	import flash.utils.getQualifiedClassName;
 	
 	public class UntypedVariableTest
 	{
@@ -43,6 +44,15 @@ package
 			for each (var char in chars)
 			{
 				trace(char);
+			}
+
+			try
+			{
+				throw new Error("blah");
+			}
+			catch (e)
+			{
+				trace(flash.utils.getQualifiedClassName(e));
 			}
 		}
 	}
