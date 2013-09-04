@@ -894,6 +894,7 @@
     </Compile>
     <Compile Include="..\pscorlib\Telemetry\SymbolTable.cs">
       <Link>Telemetry\SymbolTable.cs</Link>
+    </Compile>
     <Compile Include="..\pscorlib\DotNetError.play">
       <Link>DotNetError.play</Link>
     </Compile>
