@@ -38,12 +38,13 @@ namespace Telemetry
 			#endif
 		}
 
-		public Sampler(long timeBase, int divisor, int samplerRate, int maxCallstackDepth, int bufferLength = 8192)
+		public Sampler(long timeBase, int divisor, int samplerRate, int maxCallstackDepth, int startDelay, int bufferLength = 8192)
 		{
 			mTimeBase     = timeBase;
 			mDivisor      = divisor;
 			mSamplerRate  = samplerRate;
 			mMaxCallstackDepth = maxCallstackDepth;
+			mStartDelay   = startDelay;
 
 			// allocate buffers
 			mReadData  =  new IntPtr[bufferLength];
@@ -82,9 +83,9 @@ namespace Telemetry
 				return;
 			}
 
-
 			// start sampler thread
 			mSamplerThread = new Thread(SamplerThreadFunc);
+			mSamplerThread.Priority = ThreadPriority.Highest;
 			mSamplerThread.Start ();
 			Console.WriteLine("Telemetry: Sampler started rate: {0} ms", samplerRate);
 		}
@@ -340,7 +341,7 @@ namespace Telemetry
 		private void SamplerThreadFunc()
 		{
 			// wait before doing any work
-			Thread.Sleep(250);
+			Thread.Sleep(mStartDelay);
 
 			// allocate buffers here so they can be reused by capture code
 			var state = new IntPtr[mThreadStateLength];
@@ -403,6 +404,9 @@ namespace Telemetry
 		private readonly int 		  mThreadStateLength;
 		private readonly int 		  mRegisterPC;
 		private readonly int 		  mRegisterBP;
+
+		// start delay in milliseconds
+		private readonly int    	  mStartDelay;
 
 		private static readonly Amf3String     sNameSamplerSample  = new Amf3String(".sampler.sample");
 		#endregion

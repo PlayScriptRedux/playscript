@@ -22,6 +22,14 @@ namespace Telemetry
 		public static bool   CategoryEnabledDisplayObjects = false;
 		public static bool   CategoryEnabledCustomMetrics = true;
 
+		// sampling rate (in milliseconds)
+		public static int	 SamplerRate = 1;
+		// maximum callstack length to capture
+		public static int    SamplerMaxCallStackDepth = 256;
+		// sampler start delay
+		// unfortunately there is some thread contention during startup (GC?) that needs this workaround for now
+		public static int    SamplerStartDelay = 0;
+
 		// default hostname used for starting network sessions if none is provided to Connect()
 		public static string DefaultHostName = "localhost";
 
@@ -263,7 +271,7 @@ namespace Telemetry
 
 			if (CategoryEnabledSampler) {
 				// start sampler
-				sSampler = new Sampler(sLog.StartTime, sLog.Divisor, 1, 256);
+				sSampler = new Sampler(sLog.StartTime, sLog.Divisor, SamplerRate, SamplerMaxCallStackDepth, SamplerStartDelay);
 			}
 		}
 
