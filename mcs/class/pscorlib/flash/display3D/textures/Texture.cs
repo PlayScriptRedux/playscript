@@ -143,15 +143,13 @@ namespace flash.display3D.textures {
 					// read block length
 					uint blockLength = readUInt24(data);
 					if ((data.position + blockLength) > data.length) {
-						Console.WriteLine("Block length exceeds ATF file length");
-						return;
-						//throw new System.IO.InvalidDataException("Block length exceeds ATF file length");
+						throw new System.IO.InvalidDataException("Block length exceeds ATF file length");
 					}
 
 					if (blockLength > 0) {
 						// handle PVRTC on iOS						
 						if (gpuFormat == 1) {
-							#if PLATFORM_MONOMONO
+							#if PLATFORM_MONOTOUCH
 							OpenTK.Graphics.ES20.PixelInternalFormat pixelFormat = (OpenTK.Graphics.ES20.PixelInternalFormat)0x8C02;
 							fixed(byte *ptr = data.getRawArray()) 
 							{
@@ -231,21 +229,19 @@ namespace flash.display3D.textures {
 				throw new NotSupportedException();
 			}
 
-	#if PLATFORM_MONOTOUCH
+		#if PLATFORM_MONOTOUCH
 			int dataLength = (int)(data.length - byteArrayOffset) - 4;		// We remove the 4 bytes footer
 	
 			// TODO: Fix hardcoded value here
 			OpenTK.Graphics.ES20.PixelInternalFormat pixelFormat = (OpenTK.Graphics.ES20.PixelInternalFormat)0x8C02;
 
 			GL.CompressedTexImage2D(textureTarget, 0, pixelFormat, mWidth, mHeight, 0, dataLength, data.getRawArray());
-	#elif PLATFORM_MONODROID		
+		#elif PLATFORM_MONODROID		
 			data.position = 16; // skip the header
 			int dataLength = ((int)data.length) - 16;
 
 			GL.CompressedTexImage2D<byte>(textureTarget, 0, All.Etc1Rgb8Oes, mWidth, mHeight, 0, dataLength, data.getRawArray());
-	#endif
-			All error = GL.GetError();
-			Console.WriteLine("GL.CompressedTexImage2D width:{1}, height:{2} return error: {0}", error, mWidth, mHeight);
+		#endif
 
 			// unbind texture and pixel buffer
 			GL.BindTexture (textureTarget, 0);
@@ -275,7 +271,7 @@ namespace flash.display3D.textures {
 
 #if PLATFORM_MONOMAC
             if (generateMipmap) {
-                GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.GenerateMipmapHint, 1);
+                GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.GenerateMipmap, 1);
             }
 #endif
 #if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
