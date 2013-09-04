@@ -163,16 +163,22 @@ namespace flash.display3D.textures {
 						} 
 						else if (gpuFormat == 2) {
 							#if PLATFORM_MONODROID
-							blockLength = blockLength/2;
+
+							int textureLength = width * height / 2;
 							fixed(byte *ptr = data.getRawArray()) 
 							{
 								var address = new IntPtr(ptr + data.position);
-								GL.CompressedTexImage2D(textureTarget, level, All.Etc1Rgb8Oes, width, height, 0, (int)blockLength, address);
-								All error = GL.GetError ();
-								Console.WriteLine ("Error: {0}", error);
+								GL.CompressedTexImage2D(textureTarget, level, All.Etc1Rgb8Oes, width, height, 0, (int)textureLength, address);
+								if (textureLength < blockLength)
+								{
+									mAlphaTexture = new Texture(mContext, mWidth, mHeight, mFormat, mOptimizeForRenderToTexture, mStreamingLevels);
+									var alphaAddress = new IntPtr(ptr + data.position + textureLength);
+
+									GL.BindTexture (mAlphaTexture.textureTarget, mAlphaTexture.textureId);
+									GL.CompressedTexImage2D(mAlphaTexture.textureTarget, level, All.Etc1Rgb8Oes, width, height, 0, textureLength, alphaAddress);
+								}
 							}
 
-							data.position = data.position + blockLength;
 							#endif
 						}
 

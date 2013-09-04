@@ -290,7 +290,7 @@ namespace PlayScript
 #if PLATFORM_MONODROID
 			try {
 				Application.Context.Assets.Open(path);
-			} catch (IOException e)
+			} catch (Java.IO.FileNotFoundException e)
 			{
 				Console.WriteLine("File does not exists for " + path + " " + e.Message);
 				return null;
@@ -655,8 +655,14 @@ namespace PlayScript
 					return null;
 				}
 #elif PLATFORM_MONODROID
+				Stream stream;
+				try{
+					stream = Application.Context.Assets.Open(path);
+				} catch {
+					return null;
+				}
+
 				var jsonText = "";
-				Stream stream = Application.Context.Assets.Open(path);
 				using (StreamReader sr = new System.IO.StreamReader(stream))
 				{
 					jsonText = sr.ReadToEnd();

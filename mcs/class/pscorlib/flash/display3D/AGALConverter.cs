@@ -279,6 +279,7 @@ namespace flash.display3D
 			Vector4,
 			Matrix44,
 			Sampler2D,
+			Sampler2DAlpha,
 			SamplerCube
 		};
 
@@ -422,8 +423,19 @@ namespace flash.display3D
 						break;
 					}
 
-					sb.Append(entry.name);
-					sb.AppendLine(";");
+					if (entry.usage == RegisterUsage.Sampler2DAlpha) {
+						sb.Append ("sampler2D ");
+						sb.Append (entry.name);
+						sb.AppendLine (";");
+
+						sb.Append ("uniform ");
+						sb.Append ("sampler2D ");
+						sb.Append (entry.name + "_alpha");
+						sb.AppendLine (";");
+					} else {
+						sb.Append (entry.name);
+						sb.AppendLine (";");
+					}
 				}
 				return sb.ToString();
 			}
@@ -760,9 +772,23 @@ namespace flash.display3D
 					switch (sampler.d)
 					{
 					case 0: // 2d texture
+#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
 						sr1.sourceMask = 0x3;
 						sb.AppendFormat("{0} = texture2D({2}, {1}); // tex", dr.ToGLSL(), sr1.ToGLSL(), sampler.ToGLSL() ); 
 						map.Add(sampler, RegisterUsage.Sampler2D);
+#elif PLATFORM_MONODROID
+						sr1.sourceMask = 0x3;
+						int mask = dr.mask;
+
+						dr.mask = mask & 7;
+						sb.AppendFormat("{0} = texture2D({2}, {1}).rgb; // tex", dr.ToGLSL(), sr1.ToGLSL(), sampler.ToGLSL() ); 
+											
+						dr.mask = 8;
+						sb.AppendLine();
+						sb.Append("\t");
+						sb.AppendFormat("{0} = texture2D({2}_alpha, {1}).r; // tex ", dr.ToGLSL(), sr1.ToGLSL(), sampler.ToGLSL() ); 
+						map.Add(sampler, RegisterUsage.Sampler2DAlpha);
+#endif
 						break;
 					case 1: // cube texture
 						sr1.sourceMask = 0x7;
