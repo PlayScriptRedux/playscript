@@ -248,23 +248,7 @@ namespace flash.display3D {
 			GL.DrawElements(BeginMode.Triangles, count, DrawElementsType.UnsignedInt, new IntPtr(firstIndex));	
 		}
 
-
-		public void discardDepthBuffer()
-		{
-			#if PLATFORM_MONOTOUCH
-			// discard depth buffer at the end of the frame
-			// this is a hint to GL to not keep the data around
-			All discard = (All)FramebufferSlot.DepthAttachment;
-			GL.BindFramebuffer(FramebufferTarget.Framebuffer, mDefaultFrameBufferId);
-			GL.Ext.DiscardFramebuffer((All)FramebufferTarget.Framebuffer, 1, ref discard);
-			#endif
-		}
- 	 	
 		public void present() {
-
-			// discard depth buffer at the end of the frame
-			discardDepthBuffer();
-
 			if (OnPresent != null)
 				OnPresent(this);
 		}
