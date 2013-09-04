@@ -187,7 +187,7 @@ namespace Telemetry
 			public int time;
 			public int numticks;
 			public _root.Vector<double> ticktimes;
-			public uint[] callstack;
+			public _root.Vector<uint>  callstack;
 
 			#region IAmf3Serializable implementation
 			public void Serialize(Amf3Writer writer)

@@ -19,7 +19,11 @@ namespace Telemetry
 		public uint GetUnknownMethodId()
 		{
 			if (mUnknownMethodId == 0) {
-				mUnknownMethodId = AllocMethodId("app/unknown");
+#if PLATFORM_MONOTOUCH
+				mUnknownMethodId = AllocMethodId("$/<unknown>");
+#else
+				mUnknownMethodId = AllocMethodId("$/<jit>");
+#endif
 			}
 			return mUnknownMethodId;
 		}
@@ -40,16 +44,11 @@ namespace Telemetry
 					// haven't seen this symbol before
 					// get name of symbol
 					string name;
+					int imageIndex;
 					string imageName;
-					if (mSymbols.GetSymbolName(symbolIndex, out name, out imageName)) {
-						// construct full method name from symbol info
-						if (name[0] == '_') {
-							name = name.Substring(1);
-						}
-						// construct method name
-						string methodName = imageName + "/" + name;
-						// allocate method id from method name
-						methodId = AllocMethodId(methodName);
+					if (mSymbols.GetSymbolName(symbolIndex, out name, out imageIndex, out imageName)) {
+						// construct method from symbol info
+						methodId = CreateMethodId(name, imageIndex, imageName);
 					} else {
 						methodId = GetUnknownMethodId();
 					}
@@ -66,18 +65,6 @@ namespace Telemetry
 				mAddressToMethodId.Add(addr, methodId);
 			}
 			return methodId;
-		}
-
-
-		// resolves a whole callstack to an array of method ids
-		public uint[] GetCallStack(IntPtr[] data, int offset, int count)
-		{
-			// lookup address to method ids
-			uint[] callstack = new uint[count];
-			for (int i=0; i < count; i++) {
-				callstack[i] = GetMethodId(data[offset++], true );
-			}
-			return callstack;
 		}
 
 		public int GetCallStackId()
@@ -106,6 +93,63 @@ namespace Telemetry
 			mMethodNames.writeByte(0);
 			return id;
 		}
+
+		private uint CreateMethodId(string name, int imageIndex, string imageName)
+		{
+			// construct full method name from symbol info
+			if (name[0] == '_') {
+				name = name.Substring(1);
+			}
+
+#if PLATFORM_MONOMAC
+			// handle top of stack
+			if (name == "NSApplicationMain") {
+				// return 0 to terminate stack trace here
+				return 0;
+			}
+#elif PLATFORM_MONOTOUCH
+			// handle top of stack
+			if (name == "UIApplicationMain" || name.StartsWith("PlayScript_Player_OnFrame_")) {
+				// return 0 to terminate stack trace here
+				return 0;
+			}
+#endif
+
+			if (imageIndex > 0) {
+				// classify as a built-in library
+				imageName = "flash." + imageName;
+			}
+
+			// class is global by default
+			string className = "$";
+
+			// handle obj-c symbols
+			if ((name[0] == '-'  || name[0] == '+') && name[1] == '[') {
+				int spaceIndex = name.IndexOf(' ');
+				int endIndex = name.LastIndexOf(']');
+				if (spaceIndex > 0) {
+					className = name.Substring(2, spaceIndex - 2);
+					if (endIndex > 0) {
+						name = name.Substring(spaceIndex + 1, endIndex - spaceIndex - 1);
+					} else {
+						name = name.Substring(spaceIndex + 1);
+					}
+				}
+			} else {
+				int index = name.IndexOf("__");
+				if (index > 0) {
+					className = name.Substring(0, index);
+					name = name.Substring(index + 2);
+				}
+			}
+
+			// construct method name
+			string methodName = imageName + "::" + className + "/" + name;
+
+			// allocate method id from method name
+			return AllocMethodId(methodName);
+		}
+
 
 		// symbol table to use
 		private readonly 							SymbolTable 		    mSymbols;

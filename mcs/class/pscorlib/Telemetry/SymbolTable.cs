@@ -39,8 +39,9 @@ namespace Telemetry
 			return FindSymbolFromAddress(addr);
 		}
 
-		public bool GetSymbolName(int symbolIndex, out string name, out string imageName)
+		public bool GetSymbolName(int symbolIndex, out string name, out int imageIndex, out string imageName)
 		{
+			imageIndex = 0;
 			name = imageName = null;
 			// check symbol range
 			if (symbolIndex < 0 || symbolIndex >= mSymbolCount) {
@@ -49,7 +50,7 @@ namespace Telemetry
 
 			int symbolId = mSymbolIdTable[symbolIndex];
 			// decompose symbol id into imageindex and symbolindex
-			int imageIndex = (symbolId >> ImageIndexShift);
+			imageIndex = (symbolId >> ImageIndexShift);
 			int imageSymbolIndex = symbolId & ((1 << ImageIndexShift) - 1);
 			// get symbol name
 			name = mImages[imageIndex].GetSymbolName(imageSymbolIndex);

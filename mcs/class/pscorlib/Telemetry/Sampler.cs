@@ -49,6 +49,13 @@ namespace Telemetry
 			mReadData  =  new IntPtr[bufferLength];
 			mData      =  new IntPtr[bufferLength];
 
+			// allocate reusable sample class
+			mSample = new Protocol.Sampler_sample();
+			mSample.ticktimes = new _root.Vector<double>();
+			mSample.callstack = new _root.Vector<uint>();
+			mSample.callstack.length = (uint)maxCallstackDepth;
+			mSample.callstack.length = 0;
+
 			// save target thread id
 			mTargetThread = mach_thread_self();
 
@@ -138,7 +145,7 @@ namespace Telemetry
 			IntPtr[] data = GetSamplerData();
 
 			// AMF serializable sample to write to
-			Protocol.Sampler_sample sample = null;
+			Protocol.Sampler_sample sample = mSample;
 
 			int lastCallStackIndex = 0;
 			int lastCallStackCount = 0;
@@ -162,11 +169,7 @@ namespace Telemetry
 				if (!combineSamples || (lastCallStackCount != count) || !ArrayEquals(data, index, lastCallStackIndex, count)) {
 					// call stack is different... 
 
-					if (sample == null) {
-						// allocate a new sample
-						sample = new Protocol.Sampler_sample();
-						sample.ticktimes = new _root.Vector<double>();
-					} else {
+					if (sample.numticks > 0) {
 						// write last sample to log
 						Session.WriteValueImmediate(sNameSamplerSample, sample);
 					}
@@ -174,7 +177,18 @@ namespace Telemetry
 					// reset sample for new callstack
 					sample.numticks         = 0;
 					sample.ticktimes.length = 0;
-					sample.callstack        = methodMap.GetCallStack(data, index, count);
+
+					// translate callstack to method ids
+					var callstack = sample.callstack;
+					callstack.length = 0;
+					for (int i=0; i < count; i++) {
+						uint methodId = methodMap.GetMethodId(data[index + i], true );
+						if (methodId != 0) {
+							callstack.push(methodId);
+						} else {
+							break;
+						}
+					}
 
 					// save last callstack position
 					lastCallStackIndex = index;
@@ -191,7 +205,7 @@ namespace Telemetry
 				sampleCount++;
 			}
 
-			if (sample != null) {
+			if (sample.numticks > 0) {
 				// write last sample to log
 				Session.WriteValueImmediate(sNameSamplerSample, sample);
 			}
@@ -373,6 +387,9 @@ namespace Telemetry
 
 		// this buffer is provided to the caller for reading
 		private IntPtr[]		 	  mReadData;
+
+		// reusable AMF sample
+		private readonly Protocol.Sampler_sample mSample = new Protocol.Sampler_sample();
 
 		// settings
 		private readonly IntPtr 	  mTargetThread;
