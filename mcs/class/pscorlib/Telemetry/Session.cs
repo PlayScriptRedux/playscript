@@ -14,7 +14,7 @@ namespace Telemetry
 
 		// categories enable flags 
 		public static bool   CategoryEnabled3D = false;
-		public static bool   CategoryEnabledSampler = true;
+		public static bool   CategoryEnabledSampler = false;
 		public static bool   CategoryEnabledTrace = true;
 		public static bool   CategoryEnabledAllocTraces = false;
 		public static bool   CategoryEnabledAllAllocTraces = false;
