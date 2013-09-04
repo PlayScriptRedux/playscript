@@ -14,6 +14,7 @@ namespace Telemetry
 
 		// categories enable flags 
 		public static bool   CategoryEnabled3D = false;
+		public static bool   CategoryEnabledCPU = false;
 		public static bool   CategoryEnabledSampler = false;
 		public static bool   CategoryEnabledTrace = true;
 		public static bool   CategoryEnabledAllocTraces = false;
@@ -554,7 +555,35 @@ namespace Telemetry
 			}
 		}
 
-		public static bool LoadConfig(string configPath)
+		public static bool LoadRemoteConfig()
+		{
+			return LoadRemoteConfig(DefaultHostName, DefaultPort);
+		}
+
+		public static bool LoadRemoteConfig(string hostname, int port)
+		{
+			try {
+				Console.WriteLine("Telemetry: fetching remote config from {0}:{1}", hostname, port);
+				using (var client = new TcpClient(hostname, port)) {
+					using (var ns = client.GetStream()) {
+						// write config request
+						ns.Write(System.Text.Encoding.UTF8.GetBytes("*MC1*"));
+						using (var sr = new StreamReader(ns)) {
+							string configText = sr.ReadToEnd();
+							Console.WriteLine("Telemetry: fetch remote config completed!");
+							ParseConfig(configText);
+							return true;
+						}
+					}
+				}
+			} catch {
+				Console.WriteLine("Telemetry: fetch remote config failed");
+				return false;
+			}
+
+		}
+
+		public static bool LoadLocalConfig(string configPath)
 		{
 			try {
 				string path = PlayScript.Player.TryResolveResourcePath(configPath);
@@ -564,35 +593,8 @@ namespace Telemetry
 				}
 
 				// read all config lines
-				var lines = File.ReadAllLines(path);
-				foreach (var line in lines) {
-					var split = line.Split(new char[] {'='}, 2);
-					if (split.Length == 2) {
-						var name = split[0].Trim();
-						var value = split[1].Trim();
-						switch (name) {
-							case "TelemetryAddress":
-								{
-									var split2 = value.Split(new char[] {':'}, 2);
-									// get hostname
-									DefaultHostName = split2[0];
-									if (split2.Length >= 2) {
-										// get port
-										int.TryParse(split2[1], out DefaultPort);
-									}
-									break;
-								}
-
-							case "SamplerEnabled":
-							case "Stage3DCapture":
-							case "DisplayObjectCapture":
-								break;
-							default:
-								break;
-						}
-					}
-				}
-				// 
+				var configText = File.ReadAllText(path);
+				ParseConfig(configText);
 				return true;
 			} catch {
 				// exception
@@ -604,13 +606,70 @@ namespace Telemetry
 		public static void Init()
 		{
 			// load configuration
-			if (LoadConfig(ConfigFileName)) {
-				// if we have configuration, then connect
-				Connect();
+			if (LoadLocalConfig(ConfigFileName)) {
+				if (LoadRemoteConfig()) {
+					// if we have configuration, then connect
+					Connect();
+				}
 			}
 		}
 
 		#region Private
+		private static bool ParseConfigBool(string value)
+		{
+			// get everything before comma
+			int comma = value.IndexOf(',');
+			if (comma >= 0) {
+				value = value.Substring(0, comma);
+			}
+
+			value = value.ToLowerInvariant();
+			return value == "true" || value == "1" || value == "on";
+		}
+
+		private static bool ParseConfig(string configText)
+		{
+			var lines = configText.Split('\n');
+			foreach (var line in lines) {
+				var split = line.Split(new char[] {'='}, 2);
+				if (split.Length == 2) {
+					var name = split[0].Trim();
+					var value = split[1].Trim();
+					switch (name) {
+					case "TelemetryAddress":
+						{
+							var split2 = value.Split(new char[] {':'}, 2);
+							// get hostname
+							DefaultHostName = split2[0];
+							if (split2.Length >= 2) {
+								// get port
+								int.TryParse(split2[1], out DefaultPort);
+							}
+							break;
+						}
+					case "SamplerEnabled":
+						CategoryEnabledSampler = ParseConfigBool(value);
+						break;
+					case "Stage3DCapture":
+						CategoryEnabled3D = ParseConfigBool(value);
+						break;
+					case "DisplayObjectCapture":
+						CategoryEnabledDisplayObjects = ParseConfigBool(value);
+						break;
+					case "ScriptObjectAllocationTraces":
+						CategoryEnabledAllocTraces = ParseConfigBool(value);
+						break;
+					case "CPUCapture":
+						CategoryEnabledCPU = ParseConfigBool(value);
+						break;
+					default:
+						break;
+					}
+				}
+			}
+			return true;
+		}
+
 
 		// telemetry log
 		private static Log		 	  sLog;
