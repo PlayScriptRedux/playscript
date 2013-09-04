@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Amf;
+using Address = System.UInt32;
 
 namespace Telemetry
 {
@@ -28,7 +29,7 @@ namespace Telemetry
 			return mUnknownMethodId;
 		}
 
-		public uint GetMethodId(IntPtr addr, bool storeInAddressCache = true)
+		public uint GetMethodId(Address addr, bool storeInAddressCache = true)
 		{
 			// first try address lookup, incase this address has been seen before
 			uint methodId;
@@ -154,7 +155,7 @@ namespace Telemetry
 		// symbol table to use
 		private readonly 							SymbolTable 		    mSymbols;
 		// map from address to method id
-		private readonly Dictionary<IntPtr, uint>	mAddressToMethodId = new Dictionary<IntPtr, uint>();
+		private readonly Dictionary<Address, uint>	mAddressToMethodId = new Dictionary<Address, uint>();
 		// map from symbol index to method id
 		private readonly Dictionary<int, uint>		mSymbolIndexToMethodId = new Dictionary<int, uint>();
 		// new method names that need to be sent

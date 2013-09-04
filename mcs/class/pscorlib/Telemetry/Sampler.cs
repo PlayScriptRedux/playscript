@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Runtime.InteropServices;
 using Amf;
+using Address = System.UInt32;
 
 #if PLATFORM_MONOTOUCH
 using MonoTouch.Foundation;
@@ -47,8 +48,8 @@ namespace Telemetry
 			mStartDelay   = startDelay;
 
 			// allocate buffers
-			mReadData  =  new IntPtr[bufferLength];
-			mData      =  new IntPtr[bufferLength];
+			mReadData  =  new Address[bufferLength];
+			mData      =  new Address[bufferLength];
 
 			// allocate reusable sample class
 			mSample = new Protocol.Sampler_sample();
@@ -110,7 +111,7 @@ namespace Telemetry
 		//          .....
 		//    <call-stack-addrN> 
 		//   (repeat until zero-length callstack)
-		public IntPtr[] GetSamplerData()
+		public Address[] GetSamplerData()
 		{
 			lock (mSyncRoot) {
 				// swap data with last data
@@ -120,7 +121,7 @@ namespace Telemetry
 				mData      = readData;
 
 				// reset count
-				mData[0]   = (IntPtr)0;
+				mData[0]   = (Address)0;
 				mDataCount = 0;
 
 				// return data to be read
@@ -129,7 +130,7 @@ namespace Telemetry
 		}
 
 		// compares two callstacks in their raw form
-		private static bool ArrayEquals(IntPtr[] data, int indexA, int indexB, int count)
+		private static bool ArrayEquals(Address[] data, int indexA, int indexB, int count)
 		{
 			for (int i=0; i < count; i++) {
 				if (data[indexA++] != data[indexB++]) {
@@ -143,7 +144,7 @@ namespace Telemetry
 		public void Write(MethodMap methodMap, bool combineSamples = true)
 		{
 			// get accumulated sampler data
-			IntPtr[] data = GetSamplerData();
+			Address[] data = GetSamplerData();
 
 			// AMF serializable sample to write to
 			Protocol.Sampler_sample sample = mSample;
@@ -157,12 +158,12 @@ namespace Telemetry
 			int index = 0;
 			for (;;) {
 				// get length of callstack
-				int count = data[index++].ToInt32();
+				int count = (int)data[index++];
 				if (count == 0)
 					break;
 
 				// get sample time
-				int time = data[index++].ToInt32();
+				int time = (int)data[index++];
 
 				// compare the last callstack with this one
 				// if they are equal, the samples can be combined
@@ -234,12 +235,12 @@ namespace Telemetry
 		extern static int thread_get_state (IntPtr thread, int flavor, IntPtr[] state, ref int stateCount);
 
 		// this walks a callstack starting with the provided frame pointer and program counter
-		private static unsafe int BacktraceCallStack(IntPtr pc, IntPtr bp, IntPtr[] callStack)
+		private static unsafe int BacktraceCallStack(IntPtr pc, IntPtr bp, Address[] callStack)
 		{
 			int i = 0;
 
 			// write pc to buffer
-			callStack[i++] = pc;
+			callStack[i++] = (Address)pc;
 
 			// get pointer to top stack frame
 			IntPtr *frame = (IntPtr *)bp.ToPointer();
@@ -259,7 +260,7 @@ namespace Telemetry
 				}
 
 				// write caller address to buffer
-				callStack[i++] = frame[1];
+				callStack[i++] = (Address)frame[1];
 
 				// go to previous frame
 				frame = previous;
@@ -269,7 +270,7 @@ namespace Telemetry
 		}
 
 		// this captures a single sample from the target thread and writes information to the mData log
-		private bool CaptureSample(IntPtr[] state, IntPtr[] callStack)
+		private bool CaptureSample(IntPtr[] state, Address[] callStack)
 		{
 			int count = 0;
 			long time = 0;
@@ -321,17 +322,17 @@ namespace Telemetry
 				// write sample to log
 
 				// write count
-				mData[mDataCount++] = (IntPtr)count;
+				mData[mDataCount++] = (Address)count;
 
 				// write time converted to desired resolution
-				mData[mDataCount++] = (IntPtr)(int)(time / mDivisor);
+				mData[mDataCount++] = (Address)(int)(time / mDivisor);
 
 				// copy call stack data
 				Array.Copy(callStack, 0, mData, mDataCount, count);
 				mDataCount += count;
 
 				// null terminate
-				mData[mDataCount] = (IntPtr)0;
+				mData[mDataCount] = (Address)0;
 			}
 
 			// success
@@ -345,7 +346,7 @@ namespace Telemetry
 
 			// allocate buffers here so they can be reused by capture code
 			var state = new IntPtr[mThreadStateLength];
-			var callStack = new IntPtr[mMaxCallstackDepth];
+			var callStack = new Address[mMaxCallstackDepth];
 
 			int errorCount = 0;
 			while (mRunSampler)
@@ -384,10 +385,10 @@ namespace Telemetry
 
 		// sampler data
 		private int 				  mDataCount;
-		private IntPtr[]		 	  mData;
+		private Address[]		 	  mData;
 
 		// this buffer is provided to the caller for reading
-		private IntPtr[]		 	  mReadData;
+		private Address[]		 	  mReadData;
 
 		// reusable AMF sample
 		private readonly Protocol.Sampler_sample mSample = new Protocol.Sampler_sample();

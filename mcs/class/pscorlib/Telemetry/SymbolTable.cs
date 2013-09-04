@@ -34,7 +34,7 @@ namespace Telemetry
 			mSymbolIdTable = null;
 		}
 
-		public int GetSymbolIndexFromAddress(IntPtr addr)
+		public int GetSymbolIndexFromAddress(Address addr)
 		{
 			return FindSymbolFromAddress(addr);
 		}
@@ -377,7 +377,7 @@ namespace Telemetry
 			return -1;
 		}
 
-		private int FindSymbolFromAddress(IntPtr address)
+		private int FindSymbolFromAddress(Address address)
 		{
 			if (mSymbolAddressTable == null) {
 				// lookup table hasnt been built
