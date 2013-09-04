@@ -284,10 +284,12 @@ package flash.net {
 			// file exists. read it
 			var fileData:byte[] = File.ReadAllBytes(path);
 #elif PLATFORM_MONODROID 
+			var src:Stream;
+			src = Application.Context.Assets.Open(path);
 			var dest:MemoryStream = new MemoryStream();
-			var src:Stream = Application.Context.Assets.Open(path);
 			src.CopyTo(dest);
 			var fileData:byte[] = dest.ToArray();
+
 #else
 			var fileData:byte[] = new byte[0];
 #endif
@@ -369,7 +371,7 @@ package flash.net {
 
 				// invoke action
 				action();
-
+				
 				// abort loop if time has exceeded
 				if (sw.ElapsedMilliseconds > maxTimeMs)
 					return;

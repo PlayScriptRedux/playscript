@@ -235,8 +235,21 @@ namespace PlayScript
 
 				case ".json":
 				{
+					
+#if PLATFORM_MONOTOUCH || PLATFORM_MONOMAC
 					var newPath = PlayScript.Player.ResolveResourcePath(path);
 					var jsonText = System.IO.File.ReadAllText(newPath);
+#elif PLATFORM_MONODROID
+					var jsonText = "";
+					Stream stream = Application.Context.Assets.Open(path);
+					using (StreamReader sr = new System.IO.StreamReader(stream))
+					{
+						jsonText = sr.ReadToEnd();
+						sr.Close();
+					}
+#else
+					var jsonText = "";
+#endif
 					return _root.JSON.parse(jsonText);
 				}
 
@@ -277,7 +290,7 @@ namespace PlayScript
 #if PLATFORM_MONODROID
 			try {
 				Application.Context.Assets.Open(path);
-			} catch (IOException e)
+			} catch (Java.IO.FileNotFoundException e)
 			{
 				Console.WriteLine("File does not exists for " + path + " " + e.Message);
 				return null;
@@ -486,8 +499,30 @@ namespace PlayScript
 			mSpanPlayerTouch.End();
 		}
 
-#if PLATFORM_MONOTOUCH
+		public void OnPinchRecognized(flash.events.TransformGestureEvent tge)
+		{
+			mSpanPlayerGesture.Begin();
 
+			if (tge.phase == "begin") {
+				mDeactivateMouseEvents = true;
+				if (mMouseDown) {
+					// We were already sending mouse down event, so to close the loop, we are going to send a mouse up event with the last position for completion
+					var me = new flash.events.MouseEvent (flash.events.MouseEvent.MOUSE_UP, true, false, mStage.mouseX, mStage.mouseY, mStage);
+					mStage.dispatchEvent (me);
+					mSkipNextMouseUp = true;
+				}
+			} else if (tge.phase == "end") {
+				mDeactivateMouseEvents = false;
+			} else {
+				mDeactivateMouseEvents = false;
+			}
+
+			mStage.dispatchEvent(tge);
+			mSpanPlayerGesture.End ();
+		}
+
+		#if PLATFORM_MONOTOUCH
+		// Remove this method after refactor the rest of the project
 		public void OnPinchRecognized(UIPinchGestureRecognizer pinchRecognizer)
 		{
 			mSpanPlayerGesture.Begin();
@@ -498,37 +533,37 @@ namespace PlayScript
 			{
 				case UIGestureRecognizerState.Possible:
 				case UIGestureRecognizerState.Began:
-					tge.phase = "begin";
-					mDeactivateMouseEvents = true;			// For swipe gestures, we don't want to send any mouse events at the same time
-					if (mMouseDown) {
-						// We were already sending mouse down event, so to close the loop, we are going to send a mouse up event with the last position for completion
-						var me = new flash.events.MouseEvent(flash.events.MouseEvent.MOUSE_UP, true, false, mStage.mouseX, mStage.mouseY, mStage);
-						mStage.dispatchEvent (me);
-						mSkipNextMouseUp = true;
-					}
-					break;
+				tge.phase = "begin";
+				mDeactivateMouseEvents = true;			// For swipe gestures, we don't want to send any mouse events at the same time
+				if (mMouseDown) {
+					// We were already sending mouse down event, so to close the loop, we are going to send a mouse up event with the last position for completion
+					var me = new flash.events.MouseEvent(flash.events.MouseEvent.MOUSE_UP, true, false, mStage.mouseX, mStage.mouseY, mStage);
+					mStage.dispatchEvent (me);
+					mSkipNextMouseUp = true;
+				}
+				break;
 
 				case UIGestureRecognizerState.Changed:
-					tge.phase = "update";
-					break;
+				tge.phase = "update";
+				break;
 
 				case UIGestureRecognizerState.Recognized:
 				//case UIGestureRecognizerState.Ended:		// Same as recognized
-					tge.phase = "end";
-					mDeactivateMouseEvents = false;
-					break;
+				tge.phase = "end";
+				mDeactivateMouseEvents = false;
+				break;
 
 				case UIGestureRecognizerState.Cancelled:
 				case UIGestureRecognizerState.Failed:
-					mDeactivateMouseEvents = false;
-					return;		// In this case, we don't even send the event
+				mDeactivateMouseEvents = false;
+				return;		// In this case, we don't even send the event
 			}
 
 
 			mStage.dispatchEvent(tge);
 			mSpanPlayerGesture.End();
 		}
-#endif
+		#endif
 
 		public void OnFrame(RectangleF bounds, double maxTimeMs = 100.0)
 		{
@@ -634,11 +669,31 @@ namespace PlayScript
 		{
 			if (Offline && WebCachePath != null) {
 				var path = 	System.IO.Path.Combine(WebCachePath, hash); 
+
+#if PLATFORM_MONOTOUCH || PLATFORM_MONOMAC
 				if (File.Exists(path)) {
 					return System.IO.File.ReadAllText(path);
 				} else {
 					return null;
 				}
+#elif PLATFORM_MONODROID
+				Stream stream;
+				try{
+					stream = Application.Context.Assets.Open(path);
+				} catch {
+					return null;
+				}
+
+				var jsonText = "";
+				using (StreamReader sr = new System.IO.StreamReader(stream))
+				{
+					jsonText = sr.ReadToEnd();
+					sr.Close();
+				}
+				return jsonText;
+#else
+				return null;
+#endif
 			}
 			return null;
 		}
@@ -647,11 +702,19 @@ namespace PlayScript
 		{
 			if (Offline && WebCachePath != null) {
 				var path = 	System.IO.Path.Combine(WebCachePath, hash); 
+
+#if PLATFORM_MONOTOUCH || PLATFORM_MONOMAC
 				if (File.Exists(path)) {
 					return flash.utils.ByteArray.loadFromPath(path);
 				} else {
 					return null;
 				}
+#elif PLATFORM_MONODROID
+				Stream stream = Application.Context.Assets.Open(path);
+				flash.utils.ByteArray data = new flash.utils.ByteArray();
+				data.readFromStream( stream );
+				return data;
+#endif
 			}
 			return null;
 		}
