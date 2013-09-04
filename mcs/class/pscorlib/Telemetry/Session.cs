@@ -39,9 +39,6 @@ namespace Telemetry
 		// telemetry version
 		public const string Version = "3,2";
 
-		// telemetry meta (?)
-		public const double Meta = 135549;
-
 
 		// returns true if a session is active
 		public static bool Connected
@@ -183,7 +180,8 @@ namespace Telemetry
 
 			// write telemetry version
 			WriteValue(".tlm.version", Session.Version);
-			WriteValue(".tlm.meta", Session.Meta);
+			WriteValue(".tlm.meta", (double)0.0);
+			WriteValue(".tlm.date", new _root.Date().getTime());
 
 			// write player info
 			WriteValue(".player.version", "11,8,800,94");
@@ -273,13 +271,6 @@ namespace Telemetry
 			try
 			{
 				if (Connected) {
-					WriteValue(".tlm.date", new _root.Date().getTime());
-					WriteValue(".tlm.optimize.exit3DStandbyModeTime", 0);
-					WriteValue(".tlm.optimize.selectionEnd", false);
-					WriteValue(".tlm.optimize.selectionStart", false);
-					WriteValue(".tlm.optimize.startedIn3DStandbyMode", false);
-					WriteValue(".tlm.optimize.threeDStandbyModeHasExited", false);
-
 					Flush();
 				}
 			} catch {
@@ -327,11 +318,11 @@ namespace Telemetry
 			// end .exit
 			if (sSpanExit.IsInSpan) {
 				sSpanExit.End();
-			}
 
-			sSpanTlmDoPlay.Begin();
-			Flush();
-			sSpanTlmDoPlay.End();
+				sSpanTlmDoPlay.Begin();
+				Flush();
+				sSpanTlmDoPlay.End();
+			}
 		}
 
 		public static void OnResize(int width, int height)
