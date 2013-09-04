@@ -43,7 +43,7 @@ namespace Telemetry
 		public const int 	Frequency = 1000000;
 
 		// minimum span length that can be written (any spans shorter than this will be discarded)
-		public const int 	MinTimeSpan = 5000;
+		public const int 	MinTimeSpan = 500;
 
 		// telemetry version
 		public const string Version = "3,2";
@@ -164,6 +164,8 @@ namespace Telemetry
 
 		private static void WriteCategoryEnabled(string category, bool enabled)
 		{
+			if (!Connected) return;
+
 			WriteValue(enabled ? ".tlm.category.enable" : ".tlm.category.disable", category);
 		}
 		
@@ -493,6 +495,12 @@ namespace Telemetry
 		// sends a recording (stored in a stream) over the network
 		public static void SendRecordingOverNetwork(Stream stream, string hostname, int port)
 		{
+			if (!Enabled) {
+				// telemetry is not enabled
+				Console.WriteLine("Telemetry: did send recording, telemetry not enabled");
+				return;
+			}
+
 			try {
 				Console.WriteLine("Telemetry: network sending {0} bytes to {1}:{2}", stream.Length, hostname, port);
 				using (var client = new TcpClient(hostname, port)) {
@@ -521,6 +529,12 @@ namespace Telemetry
 		// saves a recording (stored in a stream) to a file
 		public static void SaveRecordingToFile(Stream stream, string outputFilePath)
 		{
+			if (!Enabled) {
+				// telemetry is not enabled
+				Console.WriteLine("Telemetry: did save recording, telemetry not enabled");
+				return;
+			}
+
 			try {
 				Console.WriteLine("Telemetry: writing {0} bytes to file {1}", stream.Length, outputFilePath);
 				using (var fs = File.Open(outputFilePath, FileMode.Create)) {
@@ -565,11 +579,14 @@ namespace Telemetry
 
 		public static bool LoadRemoteConfig()
 		{
+			if (!Enabled) return false;
 			return LoadRemoteConfig(DefaultHostName, DefaultPort);
 		}
 
 		public static bool LoadRemoteConfig(string hostname, int port)
 		{
+			if (!Enabled) return false;
+
 			try {
 				Console.WriteLine("Telemetry: fetching remote config from {0}:{1}", hostname, port);
 				using (var client = new TcpClient(hostname, port)) {
@@ -593,6 +610,8 @@ namespace Telemetry
 
 		public static bool LoadLocalConfig(string configPath)
 		{
+			if (!Enabled) return false;
+
 			try {
 				string path = PlayScript.Player.TryResolveResourcePath(configPath);
 				if (path == null) {
@@ -613,6 +632,8 @@ namespace Telemetry
 		// the session init loads the telemetry configuration and connects
 		public static void Init()
 		{
+			if (!Enabled) return;
+
 			// load configuration
 			if (LoadLocalConfig(ConfigFileName)) {
 				if (LoadRemoteConfig()) {
