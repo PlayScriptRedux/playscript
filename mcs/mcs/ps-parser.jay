@@ -1707,6 +1707,10 @@ method_header
 			$$ = c;
 		
 		} else {
+			if (current_container.Kind == MemberKind.Class && name.ExplicitInterface == null &&
+				(modifiers & (Modifiers.NEW | Modifiers.SEALED | Modifiers.STATIC | Modifiers.PRIVATE | Modifiers.VIRTUAL | Modifiers.OVERRIDE)) == 0)
+					modifiers |= Modifiers.VIRTUAL;
+
 			var ret_type = $9 as FullNamedExpression;
 			if (ret_type == null) {
 				if (settings.PsStrictMode)
