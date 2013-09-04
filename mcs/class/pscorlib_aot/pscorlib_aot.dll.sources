@@ -270,6 +270,7 @@
 ../pscorlib/Telemetry/Sampler.cs
 ../pscorlib/Telemetry/Session.cs
 ../pscorlib/Telemetry/Span.cs
+../pscorlib/Telemetry/SymbolTable.cs
 ../pscorlib/Telemetry/Value.cs
 ../pscorlib/TypeError.play
 ../pscorlib/URIError.play

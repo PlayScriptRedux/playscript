@@ -892,6 +892,9 @@
     <Compile Include="..\pscorlib\Telemetry\Log.cs">
       <Link>Telemetry\Log.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\Telemetry\SymbolTable.cs">
+      <Link>Telemetry\SymbolTable.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monodroid.csproj">

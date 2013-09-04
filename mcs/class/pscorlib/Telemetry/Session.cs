@@ -14,7 +14,7 @@ namespace Telemetry
 
 		// categories enable flags 
 		public static bool   CategoryEnabled3D = false;
-		public static bool   CategoryEnabledSampler = false;
+		public static bool   CategoryEnabledSampler = true;
 		public static bool   CategoryEnabledTrace = true;
 		public static bool   CategoryEnabledAllocTraces = false;
 		public static bool   CategoryEnabledAllAllocTraces = false;
@@ -137,7 +137,7 @@ namespace Telemetry
 			var alloc = new Protocol.Memory_objectAllocation();
 			alloc.id = id;
 			alloc.size = size;
-			alloc.stackid = sMethodMap.GetCallStackId(); 
+			alloc.stackid = (sMethodMap!=null) ? sMethodMap.GetCallStackId() : 0;  
 			alloc.time = sLog.GetTime();
 			alloc.type = type; 
 			WriteValue(".memory.newObject", alloc);
@@ -169,11 +169,17 @@ namespace Telemetry
 			var swfVersion = 21;
 			var swfSize = 4 * 1024 * 1024;
 
+			if (CategoryEnabledSampler || CategoryEnabledAllocTraces) {
+				if (sSymbols == null) {
+					// allocate symbol table for method map
+					sSymbols = new SymbolTable();
+				}
+				// create method map if we need it
+				sMethodMap = new MethodMap(sSymbols);
+			}
+
 			// create AMF writer from stream
 			sLog = new Log(stream, autoCloseStream);
-
-			// create method map
-			sMethodMap = new MethodMap();
 
 			// write telemetry version
 			WriteValue(".tlm.version", Session.Version);
@@ -258,7 +264,7 @@ namespace Telemetry
 
 			if (CategoryEnabledSampler) {
 				// start sampler
-				sSampler = new Sampler(sLog.StartTime, sLog.Divisor, 1, 8);
+				sSampler = new Sampler(sLog.StartTime, sLog.Divisor, 1, 256);
 			}
 		}
 
@@ -534,7 +540,7 @@ namespace Telemetry
 
 				try
 				{
-					if (sSampler != null) {
+					if ((sSampler != null) && (sMethodMap!=null)) {
 						// write sampler data
 						sSampler.Write(sMethodMap);
 					}
@@ -626,6 +632,9 @@ namespace Telemetry
 
 		// method map for translating addresses to symbols to ids
 		private static MethodMap 	  sMethodMap = null;
+
+		// symbol table (for use by method map)
+		private static SymbolTable 	  sSymbols = null;
 
 		private static readonly Amf3String     sNameTrace   = new Amf3String(".trace");
 		private static readonly Amf3String     sNameSwfFrame  = new Amf3String(".swf.frame");

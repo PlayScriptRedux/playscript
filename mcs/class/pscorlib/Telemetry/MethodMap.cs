@@ -1,8 +1,5 @@
 using System;
-using System.Diagnostics;
 using System.Collections.Generic;
-using System.Threading;
-using System.Runtime.InteropServices;
 using Amf;
 
 namespace Telemetry
@@ -10,51 +7,67 @@ namespace Telemetry
 	// method map for translating addresses to symbols to unique ids
 	public class MethodMap
 	{
-		// retrieves method id from provided code address
-		public uint GetMethodId(IntPtr addr, bool storeInCache = true)
+		public MethodMap(SymbolTable symbols)
 		{
-			uint id;
-			// lookup method id from address first
-			if (mAddrToId.TryGetValue(addr, out id)) {
-				return id;
-			}
+			// set symbol table
+			mSymbols = symbols;
 
-			// lookup symbol using dladdr
-			var symbol = new Dl_info();
-			dladdr(addr, ref symbol);
-
-			// get address of symbol name
-			IntPtr namePtr = symbol.dli_sname;
-			// lookup method id from symbol name
-			if (!mNameToId.TryGetValue(namePtr, out id)) {
-
-				// not found, allocate a new id
-				id = (uint)(mNameToId.Count+1);
-
-				// get symbol name as string
-				var name = Marshal.PtrToStringAnsi(namePtr);
-				if (name == null) {
-					name = "<null>";
-				}
-
-				// construct name with class
-				name = "app/" + name;
-
-				// write method name
-				mMethodNames.writeUTFBytes(name);
-				mMethodNames.writeByte(0);
-
-				// add symbol name to method id
-				mNameToId.Add(namePtr, id);
-			}
-
-			if (storeInCache) {
-				// keep address to method id mapping
-				// we shouldn't do this from leaf functions, only from callsites
-				mAddrToId.Add(addr, id);
-			}
-			return id;
+			// this must be method 1
+			AllocMethodId("global$init");
 		}
+
+		public uint GetUnknownMethodId()
+		{
+			if (mUnknownMethodId == 0) {
+				mUnknownMethodId = AllocMethodId("app/unknown");
+			}
+			return mUnknownMethodId;
+		}
+
+		public uint GetMethodId(IntPtr addr, bool storeInAddressCache = true)
+		{
+			// first try address lookup, incase this address has been seen before
+			uint methodId;
+			if (mAddressToMethodId.TryGetValue(addr, out methodId)) {
+				return methodId;
+			}
+
+			// get symbol index from symbol table
+			int symbolIndex = mSymbols.GetSymbolIndexFromAddress(addr);
+			if (symbolIndex >= 0) {
+				// lookup method id from symbol index
+				if (!mSymbolIndexToMethodId.TryGetValue(symbolIndex, out methodId)) {
+					// haven't seen this symbol before
+					// get name of symbol
+					string name;
+					string imageName;
+					if (mSymbols.GetSymbolName(symbolIndex, out name, out imageName)) {
+						// construct full method name from symbol info
+						if (name[0] == '_') {
+							name = name.Substring(1);
+						}
+						// construct method name
+						string methodName = imageName + "/" + name;
+						// allocate method id from method name
+						methodId = AllocMethodId(methodName);
+					} else {
+						methodId = GetUnknownMethodId();
+					}
+
+					// store method id in our table for this symbol
+					mSymbolIndexToMethodId.Add(symbolIndex, methodId);
+				}
+			} else {
+				methodId = GetUnknownMethodId();
+			}
+
+			if (storeInAddressCache) {
+				// add to address lookup for next time
+				mAddressToMethodId.Add(addr, methodId);
+			}
+			return methodId;
+		}
+
 
 		// resolves a whole callstack to an array of method ids
 		public uint[] GetCallStack(IntPtr[] data, int offset, int count)
@@ -83,26 +96,29 @@ namespace Telemetry
 			}
 		}
 
-		#region External
-		struct Dl_info
-		{
-			public IntPtr            dli_fname;     /* Pathname of shared object */
-			public IntPtr            dli_fbase;     /* Base address of shared object */
-			public IntPtr            dli_sname;     /* Name of nearest symbol */
-			public IntPtr            dli_saddr;     /* Address of nearest symbol */
-		};
-
-		[DllImport ("__Internal", EntryPoint="dladdr")]
-		extern static int dladdr(IntPtr addr, ref Dl_info info);
-		#endregion
-
 		#region Private
-		// address to method id
-		private readonly Dictionary<IntPtr, uint> mAddrToId = new Dictionary<IntPtr, uint>();
-		// method name to method id
-		private readonly Dictionary<IntPtr, uint> mNameToId = new Dictionary<IntPtr, uint>();
+		private uint AllocMethodId(string name)
+		{
+			// allocate method id
+			uint id = mNextMethodId++;
+			// write method name to method name byte array we send to the server
+			mMethodNames.writeUTFBytes(name);
+			mMethodNames.writeByte(0);
+			return id;
+		}
+
+		// symbol table to use
+		private readonly 							SymbolTable 		    mSymbols;
+		// map from address to method id
+		private readonly Dictionary<IntPtr, uint>	mAddressToMethodId = new Dictionary<IntPtr, uint>();
+		// map from symbol index to method id
+		private readonly Dictionary<int, uint>		mSymbolIndexToMethodId = new Dictionary<int, uint>();
 		// new method names that need to be sent
-		private readonly flash.utils.ByteArray    mMethodNames = new flash.utils.ByteArray();
+		private readonly flash.utils.ByteArray		mMethodNames = new flash.utils.ByteArray();
+		// next method id to allocate
+		private uint								mNextMethodId = 1;
+		// special method id for unknown methods
+		private uint								mUnknownMethodId = 0;
 
 		private static readonly Amf3String sNameSamplerMethodNameMap = new Amf3String(".sampler.methodNameMap");
 		#endregion
