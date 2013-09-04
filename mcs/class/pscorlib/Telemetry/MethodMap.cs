@@ -5,7 +5,7 @@ using Amf;
 namespace Telemetry
 {
 	// method map for translating addresses to symbols to unique ids
-	public class MethodMap
+	internal class MethodMap
 	{
 		public MethodMap(SymbolTable symbols)
 		{

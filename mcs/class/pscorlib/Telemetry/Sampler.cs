@@ -12,7 +12,7 @@ using MonoTouch.UIKit;
 
 namespace Telemetry
 {
-	public sealed class Sampler : IDisposable
+	internal sealed class Sampler : IDisposable
 	{
 		// TODO: this should be moved to a central place (player capabilities?)
 		enum Architecture

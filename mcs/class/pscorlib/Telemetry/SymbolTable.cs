@@ -14,7 +14,7 @@ using Address = System.UInt32;
 namespace Telemetry
 {
 	// method map for translating addresses to symbols to unique ids
-	public class SymbolTable
+	internal class SymbolTable
 	{
 		public SymbolTable()
 		{

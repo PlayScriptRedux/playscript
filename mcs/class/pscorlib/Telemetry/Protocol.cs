@@ -6,7 +6,7 @@ using Amf;
 
 namespace Telemetry
 {
-	public static class Protocol
+	internal static class Protocol
 	{
 		//
 		// These are the telemetry classes that are serialized to and from AMF

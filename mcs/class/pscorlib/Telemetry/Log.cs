@@ -7,7 +7,7 @@ using Amf;
 namespace Telemetry
 {
 	// class for efficiently logging telemetry events and writing them to AMF stream
-	public class Log
+	internal class Log
 	{
 		public const long EntryValue = -2;
 		public const long EntryTime = -1;
