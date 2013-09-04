@@ -255,7 +255,6 @@ namespace flash.utils {
 			Stream stream = getRawStream();
 			Amf3Parser amfparser = new Amf3Parser(stream);
 			object obj = amfparser.ReadNextObject();
-			position = amfparser.StreamPosition();
 			return obj;
 		}
  	 	

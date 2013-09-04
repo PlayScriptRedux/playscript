@@ -104,11 +104,6 @@ namespace Amf
             }
         }
 
-		public uint StreamPosition()
-		{
-			return (uint) stream.Position;
-		}
-
         public int ReadInteger()
         {
             int integer = 0;
