@@ -6934,10 +6934,17 @@ opt_for_initializer
 	;
 
 for_initializer
-	: VAR identifier_inside_body COLON type
+	: VAR identifier_inside_body opt_type
 	  {
 		var lt = (LocatedToken) $2;
-		var type = (FullNamedExpression) $4;
+		var type = (FullNamedExpression) $3;
+		if (type == null) {
+			if (settings.PsStrictMode)
+				report.Error (7012, lt.Location, "Variable `{0}' has no type declaration.", lt.Value);
+			else
+				report.Warning (1009, 1, lt.Location, "Variable `{0}' has no type declaration.", lt.Value);
+			type = new UntypedTypeExpression (GetLocation ($2));
+		}
 		var li = GetOrCreateLocalVariable (current_block, lt.Value, 0, type, lt.Location);
 		current_variable = new BlockVariable (type, li);
 	  }
@@ -6949,6 +6956,17 @@ for_initializer
 	| expression_list
 	  {
 		
+	  }
+	;
+
+opt_type
+	: /* empty */
+	  {
+		$$ = null;
+	  }
+	| COLON type
+	  {
+		$$ = $2;
 	  }
 	;
 

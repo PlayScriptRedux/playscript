@@ -33,7 +33,17 @@ package
 			// TODO: warning CS0252: Possible unintended reference comparison. Consider casting the left side expression to type `string' to get value comparison
 			Assert.expectEq("z == 10", true, z == 10);
 			Assert.expectEq("z === 10", true, z === 10);
+
+			for (var i = 0; i < 3; i++)
+			{
+				trace(i);
+			}
+
+			var chars = ["a", "b", 3, 4, null];
+			for each (var char in chars)
+			{
+				trace(char);
+			}
 		}
 	}
 }
-
