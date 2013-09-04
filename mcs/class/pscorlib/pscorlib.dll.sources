@@ -270,6 +270,7 @@
 ./Telemetry/Sampler.cs
 ./Telemetry/Session.cs
 ./Telemetry/Span.cs
+./Telemetry/SymbolTable.cs
 ./Telemetry/Value.cs
 ./TypeError.play
 ./URIError.play
