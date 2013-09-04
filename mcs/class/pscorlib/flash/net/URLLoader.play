@@ -48,11 +48,6 @@ package flash.net {
 			dataFormat = URLLoaderDataFormat.TEXT;
 			mRequest = request;
 		}
-
-
-		public override function addEventListener(type:String, listener:Function, useCapture:Boolean = false, priority:int = 0, useWeakReference:Boolean = false):void {
-			super.addEventListener(type, listener, useCapture, priority, useWeakReference);
-		}
  	 	
 		public function close():void {
 			throw new System.NotImplementedException();
@@ -60,6 +55,14 @@ package flash.net {
  	 	
 		public function load(request:URLRequest, synchronous:Boolean = false):void {
 			mRequest = request;
+
+			// get next request id for this load
+			mId = sNextRequestId++;
+
+			// send data to telemetry
+			Telemetry.Session.WriteTime(".network.request.time");
+			sTelemetryRequestUrl.WriteValue(request.url);
+			sTelemetryRequestId.WriteValue(mId);
 
 			var url:String = request.url.ToLowerInvariant();
 			if (url.StartsWith("http:") || url.StartsWith("https:")) {
@@ -79,7 +82,7 @@ package flash.net {
 						doLoadFromOfflineCache();
 					} else {
 						// this must be done on the 'next' frame
-						Timer.delayCall (doLoadFromOfflineCache);
+						enqueueAction(doLoadFromOfflineCache);
 					}
 				} else 
 				{
@@ -95,7 +98,7 @@ package flash.net {
 					doLocalLoad();
 				} else {
 					// load with a delay
-					Timer.delayCall (doLocalLoad);
+					enqueueAction(doLocalLoad);
 				}
 			}
 		}
@@ -126,6 +129,7 @@ package flash.net {
 
 		private function doLoadFromOfflineCache():void {
 			var hash:String = mRequest.getHash();
+			var span = Telemetry.Session.BeginSpan();
 
 			switch (dataFormat) 
 			{
@@ -139,6 +143,7 @@ package flash.net {
 					this.bytesTotal  = cachedBinaryResponse.length;
 					this.data = cachedBinaryResponse;
 					dispatchCompleteEvent();
+					Telemetry.Session.EndSpanValue(".network.loadfile", span, mRequest.url);
 					return;
 				} 
 				break;
@@ -152,6 +157,7 @@ package flash.net {
 					this.bytesTotal  = cachedTextResponse.Length;
 					this.data = cachedTextResponse;
 					dispatchCompleteEvent();
+					Telemetry.Session.EndSpanValue(".network.loadfile", span, mRequest.url);
 					return;
 				} 
 				break;
@@ -245,7 +251,7 @@ package flash.net {
 		private function responseActionWithDelayedEvent(response:HttpWebResponse):void {
 			responseAction(response);
 			// By delaying the complete event, we make sure it is going to be dispatched in the main thread
-			Timer.delayCall(dispatchCompleteEvent);
+			enqueueAction(dispatchCompleteEvent);
 		}
 
 		private function dispatchCompleteEvent():void {
@@ -261,6 +267,8 @@ package flash.net {
 
 		private function doLocalLoad():void {
 			trace("URLLoader: local load ", mRequest.url);
+
+			var span = Telemetry.Session.BeginSpan();
 
 			// handle file loading
 			var path:String = PlayScript.Player.TryResolveResourcePath(mRequest.url);
@@ -307,9 +315,77 @@ package flash.net {
 			// dispatch complete event
 			var de:Event = new Event(Event.COMPLETE);
 			this.dispatchEvent(de);
+			Telemetry.Session.EndSpanValue(".network.loadfile", span, mRequest.url);
 		}
-		
+
+
+		// enqueues a loader action to be executed on the next frame
+		// this function is thread safe
+		public static function enqueueAction(action:System.Action):void {
+			if (action == null) return;
+
+			System.Threading.Monitor.Enter(sQueue);
+			try
+			{
+				sQueue.push(action);
+			}
+			finally
+			{
+				System.Threading.Monitor.Exit(sQueue);
+			}
+		}
+
+
+		// dequeues a loader action
+		// this function is thread safe
+		public static function dequeueAction():System.Action {
+			System.Threading.Monitor.Enter(sQueue);
+			try
+			{
+				if (sQueue.length > 0) {
+					return sQueue.shift();
+				} else {
+					return null;
+				}
+			}
+			finally
+			{
+				System.Threading.Monitor.Exit(sQueue);
+			}
+		}
+
+		// this processes all items in the loader queue
+		// it will execute up until the max time in milliseconds provided
+		// this is called by the Player once per frame
+		public static function processQueue(maxTimeMs:Number):void {
+			var sw:System.Diagnostics.Stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+			for (;;)
+			{
+				// dequeue action
+				var action:System.Action = dequeueAction();
+				if (action == null)
+					return;
+
+				// invoke action
+				action();
+
+				// abort loop if time has exceeded
+				if (sw.ElapsedMilliseconds > maxTimeMs)
+					return;
+			}
+		}
+
+		// request for this loader
 		private var mRequest:URLRequest;
+		// unique request id
+		private var mId:int;
+
+		// url loader queue (to be processed each frame)
+		private static var sQueue:Vector.<System.Action> = new Vector.<System.Action>();
+		private static var sNextRequestId:int = 1;
+		private static var sTelemetryRequestUrl:Telemetry.Value = new Telemetry.Value(".network.requesturl");
+		private static var sTelemetryRequestId:Telemetry.Value = new Telemetry.Value(".network.request.id");
 	}
 
 }

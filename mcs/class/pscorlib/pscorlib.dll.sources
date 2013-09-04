@@ -263,6 +263,11 @@
 ./String.cs
 ./SWFAttribute.cs
 ./SyntaxError.play
+./Telemetry/Parser.cs
+./Telemetry/Protocol.cs
+./Telemetry/Session.cs
+./Telemetry/Span.cs
+./Telemetry/Value.cs
 ./TypeError.play
 ./URIError.play
 ./Vector.cs

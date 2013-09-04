@@ -310,14 +310,18 @@ namespace PlayScript
 
 		public void OnKeyDown (uint charCode, uint keyCode)
 		{
+			mSpanPlayerKeyDown.Begin();
 			var ke = new flash.events.KeyboardEvent(flash.events.KeyboardEvent.KEY_DOWN, true, false, charCode, keyCode);
 			mStage.dispatchEvent (ke);
+			mSpanPlayerKeyDown.End();
 		}
 		
 		public void OnKeyUp (uint charCode, uint keyCode)
 		{
+			mSpanPlayerKeyUp.Begin();
 			var ke = new flash.events.KeyboardEvent(flash.events.KeyboardEvent.KEY_UP, true, false, charCode, keyCode);
 			mStage.dispatchEvent (ke);
+			mSpanPlayerKeyUp.End();
 		}
 		
 		public void OnMouseDown (PointF p, uint buttonMask)
@@ -326,12 +330,16 @@ namespace PlayScript
 			mStage.mouseY = p.Y;
 			
 			// dispatch touch event
+			mSpanPlayerTouch.Begin();
 			var te = new flash.events.TouchEvent(flash.events.TouchEvent.TOUCH_BEGIN, true, false, 0, true, p.X, p.Y, 1.0, 1.0, 1.0 );
 			mStage.dispatchEvent (te);
-			
+			mSpanPlayerTouch.End();
+
 			// dispatch mouse event
+			mSpanPlayerMouseDown.Begin();
 			var me = new flash.events.MouseEvent(flash.events.MouseEvent.MOUSE_DOWN, true, false, p.X, p.Y, mStage);
 			mStage.dispatchEvent (me);
+			mSpanPlayerMouseDown.End();
 		}
 		
 		public void OnMouseUp (PointF p, uint buttonMask)
@@ -340,12 +348,16 @@ namespace PlayScript
 			mStage.mouseY = p.Y;
 			
 			// dispatch touch event
+			mSpanPlayerTouch.Begin();
 			var te = new flash.events.TouchEvent(flash.events.TouchEvent.TOUCH_END, true, false, 0, true, p.X, p.Y, 1.0, 1.0, 1.0 );
 			mStage.dispatchEvent (te);
-			
+			mSpanPlayerTouch.End();
+
 			// dispatch mouse event
+			mSpanPlayerMouseUp.Begin();
 			var me = new flash.events.MouseEvent(flash.events.MouseEvent.MOUSE_UP, true, false, p.X, p.Y, mStage);
 			mStage.dispatchEvent (me);
+			mSpanPlayerMouseUp.End();
 		}
 		
 		public void OnMouseMoved(PointF p, uint buttonMask)
@@ -354,12 +366,16 @@ namespace PlayScript
 			mStage.mouseY = p.Y;
 			
 			// dispatch touch event
+			mSpanPlayerTouch.Begin();
 			var te = new flash.events.TouchEvent(flash.events.TouchEvent.TOUCH_MOVE, true, false, 0, true, p.X, p.Y, 1.0, 1.0, 1.0 );
 			mStage.dispatchEvent (te);
-			
+			mSpanPlayerTouch.End();
+
 			// dispatch mouse event
+			mSpanPlayerMouseMove.Begin();
 			var me = new flash.events.MouseEvent(flash.events.MouseEvent.MOUSE_MOVE, true, false, p.X, p.Y, mStage);
 			mStage.dispatchEvent (me);
+			mSpanPlayerMouseMove.End();
 		}
 
 		public void OnScrollWheel(PointF p, float delta)
@@ -396,9 +412,11 @@ namespace PlayScript
 				// Console.WriteLine("dispatch scroll delta {0} {1}", intDelta, mScrollDelta);
 				
 				// dispatch mouse wheel event
+				mSpanPlayerMouseMove.Begin();
 				var me = new flash.events.MouseEvent(flash.events.MouseEvent.MOUSE_WHEEL, true, false, mStage.mouseX, mStage.mouseY, mStage);
 				me.delta = intDelta;
 				mStage.dispatchEvent (me);
+				mSpanPlayerMouseMove.End();
 
 				// subtract off of accumulated delta
 				mScrollDelta -= (float)intDelta;
@@ -407,6 +425,7 @@ namespace PlayScript
 
 		public void OnTouchesBegan(List<flash.events.TouchEvent> touches)
 		{
+			mSpanPlayerTouch.Begin();
 			foreach (flash.events.TouchEvent touch in touches) {
 				mStage.dispatchEvent (touch);
 
@@ -418,10 +437,12 @@ namespace PlayScript
 					mStage.dispatchEvent (me);
 				}
 			}
+			mSpanPlayerTouch.End();
 		}
 
 		public void OnTouchesMoved (List<flash.events.TouchEvent> touches)
 		{
+			mSpanPlayerTouch.Begin();
 			foreach (flash.events.TouchEvent touch in touches) {
 
 				mStage.dispatchEvent (touch);
@@ -434,10 +455,12 @@ namespace PlayScript
 					mStage.dispatchEvent (me);
 				}
 			}
+			mSpanPlayerTouch.End();
 		}
 
 		public void OnTouchesEnded (List<flash.events.TouchEvent> touches)
 		{
+			mSpanPlayerTouch.Begin();
 			mMouseDown = false;
 
 			foreach (flash.events.TouchEvent touch in touches) {
@@ -460,12 +483,14 @@ namespace PlayScript
 			if (mDeactivateMouseEvents == false) {
 				mSkipNextMouseUp = false;
 			}
+			mSpanPlayerTouch.End();
 		}
 
 #if PLATFORM_MONOTOUCH
 
 		public void OnPinchRecognized(UIPinchGestureRecognizer pinchRecognizer)
 		{
+			mSpanPlayerGesture.Begin();
 			var tge = new flash.events.TransformGestureEvent(flash.events.TransformGestureEvent.GESTURE_ZOOM, true, false);
 			tge.scaleX = tge.scaleY = pinchRecognizer.Scale;
 
@@ -501,10 +526,11 @@ namespace PlayScript
 
 
 			mStage.dispatchEvent(tge);
+			mSpanPlayerGesture.End();
 		}
 #endif
-		
-		public void OnFrame(RectangleF bounds)
+
+		public void OnFrame(RectangleF bounds, double maxTimeMs = 100.0)
 		{
 			//GL.ClearColor (1,0,1,0);
 			//GL.Clear (ClearBufferMask.ColorBufferBit);
@@ -526,27 +552,36 @@ namespace PlayScript
 			// dispatch scroll wheel events 
 			// these are done here because they must be done smoothly and incrementally, spread out over time
 			DispatchScrollWheelEvents();
-			
+
 			// stage enter frame
-			Profiler.Begin("enterFrame");
+			Profiler.Begin("enterFrame", ".player.enterframe");
 			mStage.onEnterFrame ();
 			Profiler.End("enterFrame");
 
 			// update all timer objects
-			Profiler.Begin("timers");
+			Profiler.Begin("timers", ".player.timer");
 			flash.utils.Timer.advanceAllTimers();
 			Profiler.End("timers");
 
+			// process loader queue
+			Profiler.Begin("load", ".network.dourlrequests");
+			flash.net.URLLoader.processQueue(maxTimeMs);
+			Profiler.End("load");
+
 			// stage exit frame
-			mStage.onExitFrame ();
+			Profiler.Begin("exitFrame", ".player.exitframe");
+			mStage.onExitFrame();
+			Profiler.End("exitFrame");
 
 			mFrameCount++;
 		}
 
 
 		// runs until graphics have been presented through Stage3D
-		public void RunUntilPresent(RectangleF bounds, Action onPresent = null, int maxFrames = 1000)
+		public void RunUntilPresent(RectangleF bounds, Action onPresent = null, double maxTimeMs = 100.0)
 		{
+			Telemetry.Session.OnBeginFrame();
+
 			bool didPresent = false;
 
 			// set context3D callback
@@ -558,12 +593,18 @@ namespace PlayScript
 			};
 
 			// loop until a Stage3D present occurred
-			int count = 0; 
-			while (!didPresent && (count < maxFrames))
+			var timer = Stopwatch.StartNew();
+			while (!didPresent)
 			{
 				OnFrame(bounds);
-				count++;
+
+				// dont let us run too long waiting for a present
+				if (timer.ElapsedMilliseconds > maxTimeMs) {
+					break;
+				}
 			}
+
+			Telemetry.Session.OnEndFrame();
 
 			Profiler.OnFrame();
 		}
@@ -654,6 +695,14 @@ namespace PlayScript
 		private bool mSkipNextMouseUp = false;
 
 		private static List<string> sResourceDirectories = new List<string>();
+
+		private readonly Telemetry.Span mSpanPlayerKeyDown = new Telemetry.Span(".player.key.down");
+		private readonly Telemetry.Span mSpanPlayerKeyUp = new Telemetry.Span(".player.key.up");
+		private readonly Telemetry.Span mSpanPlayerMouseDown = new Telemetry.Span(".player.mouse.down");
+		private readonly Telemetry.Span mSpanPlayerMouseUp = new Telemetry.Span(".player.mouse.up");
+		private readonly Telemetry.Span mSpanPlayerMouseMove = new Telemetry.Span(".player.mouse.move");
+		private readonly Telemetry.Span mSpanPlayerTouch = new Telemetry.Span(".player.touch");
+		private readonly Telemetry.Span mSpanPlayerGesture = new Telemetry.Span(".player.gesture");
 	}
 }
 		

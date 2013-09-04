@@ -1,17 +1,24 @@
 package
 {
-	public class Foo
-	{
-		public var a:Foo, b:Test;
-	}
+	import flash.utils.Dictionary;
 
 	public class Test
 	{
 		public static function Main():void
 		{
-			var f:Foo = new Foo();
-			f.a = new Foo();
-			f.b = new Test();
+			var d:* = new Dictionary();
+			d["a"] = {};
+			d["b"] = {};
+			d["c"] = {};
+			d["d"] = [];
+
+
+			var blah:String = "a";
+			var b:Boolean = (blah in d);
+			if (b) {
+				trace("Yay!");
+			}
+
 		}
 	}
 }

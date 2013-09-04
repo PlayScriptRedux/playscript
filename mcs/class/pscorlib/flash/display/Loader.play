@@ -59,8 +59,8 @@ package flash.display {
 
 			mLoaderInfo.url = request.url;
 
-
-			Timer.delayCall(doLoad);
+			// enqueue action to occur on next frame
+			URLLoader.enqueueAction(doLoad);
 		}
 
 //		private function onLoadComplete(ev:Event):void {
@@ -68,6 +68,9 @@ package flash.display {
 //		}
 
 		private function doLoad():void {
+
+			var span = Telemetry.Session.BeginSpan();
+
 			// TODO: this code also only does synchronous loading from local paths (need to support async and http)
 			var resource:Object = PlayScript.Player.LoadResource(mRequest.url);
 			
@@ -80,6 +83,8 @@ package flash.display {
 			// dispatch complete event
 			var e:Event = new Event(Event.COMPLETE);
 			this.contentLoaderInfo.dispatchEvent(e);
+
+			Telemetry.Session.EndSpanValue(".network.loadfile", span, mRequest.url);
 		}
  	 	
 		public function loadBytes(bytes:ByteArray, context:LoaderContext = null):void {

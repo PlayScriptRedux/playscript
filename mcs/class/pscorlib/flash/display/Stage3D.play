@@ -37,6 +37,9 @@ package flash.display {
  	 	
  	 	public property viewPort : Rectangle {get; set;}
 
+		// set to true to allow discard instruction to be emitted
+		public static var allowDiscard:Boolean = true;
+
 		//
 		// Methods
 		//

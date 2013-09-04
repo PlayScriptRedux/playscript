@@ -62,24 +62,28 @@ package {
 	}
 
 	public static function trace(o:System.Object):void {
-//		System.Diagnostics.Debug.WriteLine(o);
-		System.Console.WriteLine(o);
+		var str = (o!=null) ? o.ToString() : "";
+		System.Console.WriteLine(str);
+		Telemetry.Session.WriteTrace(str);
 	}
 		
 	public static function trace(o1:System.Object, o2:System.Object):void {
-//		System.Diagnostics.Debug.WriteLine("{0}{1}", o1, o2);
-		System.Console.WriteLine("{0} {1}", o1, o2);
+		var str = System.String.Format("{0} {1}", o1, o2);
+		System.Console.WriteLine(str);
+		Telemetry.Session.WriteTrace(str);
 	}
 
 	public static function trace(o1:System.Object, o2:System.Object, o3:System.Object):void {
-//		System.Diagnostics.Debug.WriteLine("{0}{1}{2}", o1, o2, o3);
-		System.Console.WriteLine("{0} {1} {2}", o1, o2, o3);
+		var str = System.String.Format("{0} {1} {2}", o1, o2, o3);
+		System.Console.WriteLine(str);
+		Telemetry.Session.WriteTrace(str);
 	}
 
 	public static function trace(o1:System.Object, o2:System.Object, o3:System.Object, ...args):void {
 		var argsStr = System.String.Concat(args);
-//		System.Diagnostics.Debug.WriteLine("{0}{1}{2}{3}", o1, o2, o3, argsStr);
-		System.Console.WriteLine("{0} {1} {2} {3}", o1, o2, o3, argsStr);
+		var str = System.String.Format("{0} {1} {2} {3}", o1, o2, o3, argsStr);
+		System.Console.WriteLine(str);
+		Telemetry.Session.WriteTrace(str);
 	}
  	 	
 	public function parseInt(str:String, radix:uint):int {

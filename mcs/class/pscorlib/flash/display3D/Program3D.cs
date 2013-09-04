@@ -148,7 +148,7 @@ namespace flash.display3D {
 			GL.CompileShader (mFragmentShaderId);
 
 			int fragmentCompiled = 0;
-			GL.GetShader (mVertexShaderId, ShaderParameter.CompileStatus, out fragmentCompiled);
+			GL.GetShader (mFragmentShaderId, ShaderParameter.CompileStatus, out fragmentCompiled);
 
 			if (All.True != (All) fragmentCompiled) {
 				var fragmentInfoLog = GL.GetShaderInfoLog (mFragmentShaderId);

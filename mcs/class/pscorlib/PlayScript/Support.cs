@@ -1,5 +1,7 @@
 using System;
 using System.Reflection;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace PlayScript
 {
@@ -34,6 +36,28 @@ namespace PlayScript
 				throw new InvalidCastException ();
 			}
 			return ((Type)type).IsAssignableFrom (value.GetType ()) ? value : null;
+		}
+
+		public static bool DynamicIn(object value, object key) {
+			if (value == null || key == null) {
+				return false;
+			}
+			string keyStr = key as string;
+			if (keyStr != null) {
+				var dyn = value as IDynamicClass;
+				if (dyn != null) {
+					return dyn.__HasDynamicValue (keyStr);
+				}
+				var dict1 = value as IDictionary<string, object>;
+				if (dict1 != null) {
+					return dict1.ContainsKey (keyStr);
+				}
+			}
+			var dict2 = value as IDictionary<object, object>;
+			if (dict2 != null) {
+				return dict2.ContainsKey (value);
+			}
+			return false;
 		}
 
 	}
