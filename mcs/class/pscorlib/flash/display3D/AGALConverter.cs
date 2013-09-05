@@ -166,7 +166,7 @@ namespace flash.display3D
 					str += n.ToString();
 					char indexComponent = (char)('x' + q);  
 					var indexRegister = PrefixFromType(itype, programType) + this.o.ToString() + "." + indexComponent.ToString(); 
-					str += "[" + indexRegister + "+" + offset.ToString() + "]";
+					str += "[ int(" + indexRegister + ") +" + offset.ToString() + "]";
 				}
 
 				if (emitSwizzle && swizzle != "") {
@@ -761,7 +761,7 @@ namespace flash.display3D
 					{
                         // compose the matrix multiply from dot products
                         sr1.sourceMask = sr2.sourceMask = 0xF;
-                        sb.AppendFormat("{0} = vec3(dot({1},{2}), dot({1},{3}), dot({1},{4}); // m34", dr.ToGLSL(), sr1.ToGLSL(true), 
+                        sb.AppendFormat("{0} = vec3(dot({1},{2}), dot({1},{3}), dot({1},{4})); // m34", dr.ToGLSL(), sr1.ToGLSL(true), 
                                         sr2.ToGLSL(true,0),
                                         sr2.ToGLSL(true,1), 
                                         sr2.ToGLSL(true,2)
