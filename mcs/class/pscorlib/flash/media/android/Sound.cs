@@ -23,6 +23,9 @@ namespace flash.media {
 
 	partial class Sound {
 
+		private static int SIZE = 10;
+		private static Queue<ZMediaPlayer> playerQueue = new Queue<ZMediaPlayer>(SIZE);
+
 		private ZMediaPlayer player;
 		private SoundChannel channel = new SoundChannel ();
 
@@ -33,18 +36,28 @@ namespace flash.media {
 			AssetFileDescriptor afd = Application.Context.Assets.OpenFd (url);
 
 			try {
+
+				if ( playerQueue.Count == SIZE )
+				{
+					ZMediaPlayer oldPlayer = playerQueue.Dequeue();
+					oldPlayer.Release();
+				}
+
 				player.SetDataSource (afd.FileDescriptor, afd.StartOffset, afd.Length);
-				player.SetVolume(100, 100);
+				player.SetVolume (100, 100);
 				player.Prepare ();
-			} catch(Exception e) {
+
+				playerQueue.Enqueue( player );
+
+			} catch (Exception e) {
 				Console.WriteLine ("Exception occur loading sounds. " + e.Message);
-				this.dispatchEvent(new IOErrorEvent(IOErrorEvent.IO_ERROR));
+				this.dispatchEvent (new IOErrorEvent (IOErrorEvent.IO_ERROR));
+				player.Release ();
 				player = null;
 				return;
 			}
-					
+								
 			this.dispatchEvent(new Event(Event.COMPLETE));
-
 		}
 
 		private SoundChannel internalPlay(double startTime=0, int loops=0, SoundTransform sndTransform=null)
@@ -61,6 +74,7 @@ namespace flash.media {
 			if (startTime > 0)
 				Console.WriteLine ("StartTime is not supported");
 
+			player.SeekTo (0);
 			player.Start ();
 
 			return channel;
