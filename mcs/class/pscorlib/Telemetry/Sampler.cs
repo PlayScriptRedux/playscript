@@ -238,6 +238,12 @@ namespace Telemetry
 		[DllImport ("__Internal", EntryPoint="thread_get_state")]
 		extern static int thread_get_state (IntPtr thread, int flavor, IntPtr[] state, ref int stateCount);
 
+		[DllImport ("__Internal", EntryPoint="mono_thread_info_suspend_lock")]
+		extern static void mono_thread_info_suspend_lock();
+
+		[DllImport ("__Internal", EntryPoint="mono_thread_info_suspend_unlock")]
+		extern static void mono_thread_info_suspend_unlock();
+
 		// this walks a callstack starting with the provided frame pointer and program counter
 		private static unsafe int BacktraceCallStack(IntPtr pc, IntPtr bp, Address[] callStack)
 		{
@@ -280,10 +286,10 @@ namespace Telemetry
 			long time = 0;
 
 			// suspend thread
-			if (thread_suspend(mTargetThread) != 0) {
-				// could not suspend thread
-				return false;
-			}
+#if PLATFORM_MONOTOUCH
+			mono_thread_info_suspend_lock();
+#endif
+			thread_suspend(mTargetThread);
 
 			try {
 				// compute time since we started sampling
@@ -310,6 +316,9 @@ namespace Telemetry
 			} finally {
 				// resume thread always
 				thread_resume(mTargetThread);
+#if PLATFORM_MONOTOUCH
+				mono_thread_info_suspend_unlock();
+#endif
 			}
 
 			// lock for writing to internal data log
