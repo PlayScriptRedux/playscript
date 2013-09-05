@@ -25,17 +25,17 @@
     <WarningLevel>4</WarningLevel>
     <AndroidLinkMode>None</AndroidLinkMode>
     <ConsolePause>false</ConsolePause>
-   <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>full</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release</OutputPath>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
     <ConsolePause>false</ConsolePause>
-   <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>PLATFORM_MONODROID;OPENGL</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -868,6 +868,36 @@
     </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3String.cs">
       <Link>Amf\Amf3String.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\Protocol.cs">
+      <Link>Telemetry\Protocol.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\Session.cs">
+      <Link>Telemetry\Session.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\Span.cs">
+      <Link>Telemetry\Span.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\Value.cs">
+      <Link>Telemetry\Value.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\Parser.cs">
+      <Link>Telemetry\Parser.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\MethodMap.cs">
+      <Link>Telemetry\MethodMap.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\Sampler.cs">
+      <Link>Telemetry\Sampler.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\Log.cs">
+      <Link>Telemetry\Log.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\SymbolTable.cs">
+      <Link>Telemetry\SymbolTable.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\DotNetError.play">
+      <Link>DotNetError.play</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

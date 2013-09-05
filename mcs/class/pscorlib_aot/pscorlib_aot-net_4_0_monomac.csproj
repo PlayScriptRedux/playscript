@@ -841,6 +841,33 @@
     <Compile Include="..\pscorlib\Amf\Amf3String.cs">
       <Link>Amf\Amf3String.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\Telemetry\Protocol.cs">
+      <Link>Telemetry\Protocol.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\Session.cs">
+      <Link>Telemetry\Session.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\Span.cs">
+      <Link>Telemetry\Span.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\Value.cs">
+      <Link>Telemetry\Value.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\Parser.cs">
+      <Link>Telemetry\Parser.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\Sampler.cs">
+      <Link>Telemetry\Sampler.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\MethodMap.cs">
+      <Link>Telemetry\MethodMap.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\Log.cs">
+      <Link>Telemetry\Log.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\SymbolTable.cs">
+      <Link>Telemetry\SymbolTable.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="flash\external\" />
@@ -851,6 +878,7 @@
     <Folder Include="fl\containers\" />
     <Folder Include="fl\events\" />
     <Folder Include="fl\controls\listClasses\" />
+    <Folder Include="Telemetry\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net_4_0.csproj">

@@ -62,7 +62,11 @@ namespace flash.display3D {
 		// Constants
 		//
 
+#if PLATFORM_MONOTOUCH || PLATFORM_MONOMAC
 		public const int MaxSamplers = 16;
+#elif PLATFORM_MONODROID
+		public const int MaxSamplers = 8;
+#endif
 		public const int MaxAttributes = 16;
 
 		//
@@ -248,23 +252,7 @@ namespace flash.display3D {
 			GL.DrawElements(BeginMode.Triangles, count, DrawElementsType.UnsignedInt, new IntPtr(firstIndex));	
 		}
 
-
-		public void discardDepthBuffer()
-		{
-			#if PLATFORM_MONOTOUCH
-			// discard depth buffer at the end of the frame
-			// this is a hint to GL to not keep the data around
-			All discard = (All)FramebufferSlot.DepthAttachment;
-			GL.BindFramebuffer(FramebufferTarget.Framebuffer, mDefaultFrameBufferId);
-			GL.Ext.DiscardFramebuffer((All)FramebufferTarget.Framebuffer, 1, ref discard);
-			#endif
-		}
- 	 	
 		public void present() {
-
-			// discard depth buffer at the end of the frame
-			discardDepthBuffer();
-
 			if (OnPresent != null)
 				OnPresent(this);
 		}
@@ -692,6 +680,22 @@ namespace flash.display3D {
 							// use default state if program has none
 							texture.setSamplerState(Context3D.DefaultSamplerState);
 						}
+
+						// set alpha texture
+						if (texture.alphaTexture != null) 
+						{
+							GL.ActiveTexture (TextureUnit.Texture8 + sampler);
+							TextureBase alphaTexture = texture.alphaTexture;
+							var alphaTarget = alphaTexture.textureTarget;
+							GL.BindTexture (alphaTarget, alphaTexture.textureId);
+							if (state != null) {
+								alphaTexture.setSamplerState (state);
+							} else {
+								alphaTexture.setSamplerState (Context3D.DefaultSamplerState);
+							}
+						}
+
+
 					} else {
 						// texture is null so unbind texture
 						GL.BindTexture (TextureTarget.Texture2D, 0);

@@ -148,7 +148,7 @@ namespace flash.display3D {
 			GL.CompileShader (mFragmentShaderId);
 
 			int fragmentCompiled = 0;
-			GL.GetShader (mVertexShaderId, ShaderParameter.CompileStatus, out fragmentCompiled);
+			GL.GetShader (mFragmentShaderId, ShaderParameter.CompileStatus, out fragmentCompiled);
 
 			if (All.True != (All) fragmentCompiled) {
 				var fragmentInfoLog = GL.GetShaderInfoLog (mFragmentShaderId);
@@ -204,6 +204,18 @@ namespace flash.display3D {
 				}
 			}
 
+			foreach (var sampler in mAlphaSamplerUniforms)
+			{
+				if (sampler.RegCount == 1) {
+					// single sampler
+					GL.Uniform1(sampler.Location, sampler.RegIndex);
+				} else {
+					// sampler array?
+					for (int i=0; i < sampler.RegCount; i++) {
+						GL.Uniform1(sampler.Location + i, sampler.RegIndex + i);
+					}
+				}
+			}
 		}
 
 		internal void SetPositionScale(float[] positionScale)
@@ -232,6 +244,8 @@ namespace flash.display3D {
 			mVertexUniformLookup  = new Uniform[MaxUniforms];
 			mFragmentUniformLookup = new Uniform[MaxUniforms];
 			mSamplerUniforms.Clear();
+			mAlphaSamplerUniforms.Clear ();
+
 			mSamplerUsageMask = 0;
 
 			int numActive = 0;
@@ -292,7 +306,7 @@ namespace flash.display3D {
 					// store in fragment lookup table
 					mFragmentUniformLookup[uniform.RegIndex] = uniform;
 				}
-				else if (uniform.Name.StartsWith("sampler"))
+				else if (uniform.Name.StartsWith("sampler") && !uniform.Name.EndsWith("_alpha"))
 				{
 					// sampler uniform
 					uniform.RegIndex = int.Parse (uniform.Name.Substring(7));
@@ -303,6 +317,14 @@ namespace flash.display3D {
 					for (int reg=0; reg < uniform.RegCount; reg++) {
 						mSamplerUsageMask |= (1 << (uniform.RegIndex + reg));
 					}
+				}
+				else if (uniform.Name.StartsWith("sampler") && uniform.Name.EndsWith("_alpha"))
+				{
+					// sampler uniform
+					int len = uniform.Name.IndexOf ("_") - 7;
+					uniform.RegIndex = int.Parse (uniform.Name.Substring(7, len)) + 8;
+					// add to list of sampler uniforms
+					mAlphaSamplerUniforms.Add (uniform);
 				}
 
 				if (Verbose) {
@@ -346,6 +368,7 @@ namespace flash.display3D {
 		// uniform lookup tables
 		private List<Uniform>	   mUniforms = new List<Uniform>();
 		private List<Uniform>      mSamplerUniforms = new List<Uniform>();
+		private List<Uniform>      mAlphaSamplerUniforms = new List<Uniform> ();
 		private Uniform[]		   mVertexUniformLookup;
 		private Uniform[]		   mFragmentUniformLookup;
 		private Uniform            mPositionScale;

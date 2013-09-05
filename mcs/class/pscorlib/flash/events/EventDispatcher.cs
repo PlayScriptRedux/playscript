@@ -119,7 +119,9 @@ namespace flash.events
 						EventListener listener = evList[i];
 						try
 						{
+							var span = Telemetry.Session.BeginSpan();
 							listener.invoker.InvokeOverrideA1(ev);
+							Telemetry.Session.EndSpanValue(sNameAsEvent, span, ev.type);
 						}
 						catch (Exception e)
 						{
@@ -349,6 +351,8 @@ namespace flash.events
 			evList.Insert(i, el);
 			return el;
 		}
+
+		private static readonly Amf.Amf3String sNameAsEvent = new Amf.Amf3String(".as.event");
 	}
 }
 

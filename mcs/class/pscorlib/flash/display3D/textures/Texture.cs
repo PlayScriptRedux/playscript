@@ -15,6 +15,7 @@
 namespace flash.display3D.textures {
 	
 	using System;
+	using System.IO;
 	using flash.utils;
 	using flash.display;
 	using flash.display3D;
@@ -30,6 +31,9 @@ namespace flash.display3D.textures {
 	using PixelInternalFormat = OpenTK.Graphics.ES20.All;
 	using PixelFormat = OpenTK.Graphics.ES20.All;
 	using PixelType = OpenTK.Graphics.ES20.All;
+	using TextureParameterName = OpenTK.Graphics.ES20.All;
+	using Android.Opengl;
+	using Java.Nio;
 #endif
 
 	public class Texture : TextureBase {
@@ -67,10 +71,126 @@ namespace flash.display3D.textures {
 
 		private static int sMemoryUsedForTextures = 0;
 
+		enum AtfType 
+		{
+			NORMAL = 0,
+			CUBE_MAP = 1
+		}
+
+		enum AtfFormat
+		{
+			RGB888 = 0,
+			RGBA8888 = 1,
+			Compressed = 2,
+			Block = 5
+		}
+
+		private static uint readUInt24(ByteArray data)
+		{
+			uint value;
+			value  = (data.readUnsignedByte() << 16);
+			value |= (data.readUnsignedByte() << 8);
+			value |=  data.readUnsignedByte();
+			return value;
+		}
+
+		private unsafe void uploadATFTextureFromByteArray (ByteArray data, uint byteArrayOffset)
+		{
+			data.position = byteArrayOffset;
+
+			// read atf signature
+			string signature = data.readUTFBytes(3);
+			if (signature != "ATF") {
+				throw new InvalidDataException("ATF signature not found");
+			}
+
+			// read atf length
+			uint length = readUInt24(data);
+			if ((byteArrayOffset + length) > data.length) {
+				throw new InvalidDataException("ATF length exceeds byte array length");
+			}
+
+			// get format
+			uint tdata = data.readUnsignedByte( );
+			AtfType type = (AtfType)(tdata >> 7); 	
+			if (type != AtfType.NORMAL) {
+				throw new NotImplementedException("ATF Cube maps are not supported");
+			}
+
+//			Removing ATF format limitation to allow for multiple format support.
+//			AtfFormat format = (AtfFormat)(tdata & 0x7f);	
+//			if (format != AtfFormat.Block) {
+//				throw new NotImplementedException("Only ATF block compressed textures are supported");
+//			}
+
+			// get dimensions
+			int width =  (1 << (int)data.readUnsignedByte());
+			int height = (1 << (int)data.readUnsignedByte());
+
+			if (width != mWidth || height != mHeight) {
+				throw new InvalidDataException("ATF Width and height dont match");
+			}
+
+			// get mipmap count
+			int mipCount = (int)data.readUnsignedByte();
+
+			// read all mipmap levels
+			for (int level=0; level < mipCount; level++)
+			{
+				// read all gpu formats
+				for (int gpuFormat=0; gpuFormat < 3; gpuFormat++)
+				{
+					// read block length
+					uint blockLength = readUInt24(data);
+					if ((data.position + blockLength) > data.length) {
+						throw new System.IO.InvalidDataException("Block length exceeds ATF file length");
+					}
+
+					if (blockLength > 0) {
+						// handle PVRTC on iOS						
+						if (gpuFormat == 1) {
+							#if PLATFORM_MONOTOUCH
+							OpenTK.Graphics.ES20.PixelInternalFormat pixelFormat = (OpenTK.Graphics.ES20.PixelInternalFormat)0x8C02;
+							fixed(byte *ptr = data.getRawArray()) 
+							{
+								// upload from data position
+								var address = new IntPtr(ptr + data.position);
+								GL.CompressedTexImage2D(textureTarget, level, pixelFormat, width, height, 0, (int)blockLength, address);							
+							}
+							#endif
+						} 
+						else if (gpuFormat == 2) {
+							#if PLATFORM_MONODROID
+
+							int textureLength = width * height / 2;
+							fixed(byte *ptr = data.getRawArray()) 
+							{
+								var address = new IntPtr(ptr + data.position);
+								GL.CompressedTexImage2D(textureTarget, level, All.Etc1Rgb8Oes, width, height, 0, (int)textureLength, address);
+								if (textureLength < blockLength)
+								{
+									mAlphaTexture = new Texture(mContext, mWidth, mHeight, mFormat, mOptimizeForRenderToTexture, mStreamingLevels);
+									var alphaAddress = new IntPtr(ptr + data.position + textureLength);
+
+									GL.BindTexture (mAlphaTexture.textureTarget, mAlphaTexture.textureId);
+									GL.CompressedTexImage2D(mAlphaTexture.textureTarget, level, All.Etc1Rgb8Oes, width, height, 0, textureLength, alphaAddress);
+								}
+							}
+
+							#endif
+						}
+
+						// TODO handle other formats/platforms
+					}
+
+					// next block data
+					data.position += blockLength;
+				}
+			}
+		}
+
 		public void uploadCompressedTextureFromByteArray (ByteArray data, uint byteArrayOffset, bool async = false)
 		{
-			// $$TODO 
-			// this is empty for now
 #if PLATFORM_MONOMAC
 			System.Console.WriteLine("NotImplementedWarning: Texture.uploadCompressedTextureFromByteArray()");
 
@@ -83,7 +203,21 @@ namespace flash.display3D.textures {
 			}
 #endif
 
-#if PLATFORM_MONOTOUCH
+			// see if this is an ATF container
+			data.position = byteArrayOffset;
+			string signature = data.readUTFBytes(3);
+			data.position = byteArrayOffset;
+			if (signature == "ATF")
+			{
+				// Bind the texture
+				GL.BindTexture (textureTarget, textureId);
+				uploadATFTextureFromByteArray(data, byteArrayOffset);
+				GL.BindTexture (textureTarget, 0);
+				return;
+			}
+
+
+#if PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			int memUsage = (mWidth * mHeight) / 2;
 			sMemoryUsedForTextures += memUsage;
 			Console.WriteLine("Texture.uploadCompressedTextureFromByteArray() - " + mWidth + "x" + mHeight + " - Mem: " + (memUsage / 1024) + " KB - Total Mem: " + (sMemoryUsedForTextures / 1024) + " KB");
@@ -95,15 +229,24 @@ namespace flash.display3D.textures {
 				throw new NotSupportedException();
 			}
 
+		#if PLATFORM_MONOTOUCH
 			int dataLength = (int)(data.length - byteArrayOffset) - 4;		// We remove the 4 bytes footer
-																			// TODO: Fix hardcoded value here
-
+	
+			// TODO: Fix hardcoded value here
 			OpenTK.Graphics.ES20.PixelInternalFormat pixelFormat = (OpenTK.Graphics.ES20.PixelInternalFormat)0x8C02;
+
 			GL.CompressedTexImage2D(textureTarget, 0, pixelFormat, mWidth, mHeight, 0, dataLength, data.getRawArray());
+		#elif PLATFORM_MONODROID		
+			data.position = 16; // skip the header
+			int dataLength = ((int)data.length) - 16;
+
+			GL.CompressedTexImage2D<byte>(textureTarget, 0, All.Etc1Rgb8Oes, mWidth, mHeight, 0, dataLength, data.getRawArray());
+		#endif
 
 			// unbind texture and pixel buffer
 			GL.BindTexture (textureTarget, 0);
 #endif
+
 			if (async) {
 				// load with a delay
 				var timer = new flash.utils.Timer(1, 1);

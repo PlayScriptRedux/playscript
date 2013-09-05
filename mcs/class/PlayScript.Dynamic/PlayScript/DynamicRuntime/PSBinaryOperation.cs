@@ -200,6 +200,11 @@ namespace PlayScript.DynamicRuntime
 			return a + Convert.ToDouble(b);
 		}
 
+		// Note that in Actionscript:
+		//		"5" + "4" = "54"
+		//	But:
+		//		"5" - "4" = 1
+
 		public static object AdditionStringObj (string a, object b)
 		{
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
@@ -236,6 +241,8 @@ namespace PlayScript.DynamicRuntime
 				return AdditionStringObj ((string)a, b);
 			} else if (a is uint) {
 				return AdditionUIntObj ((uint)a, b);
+			} else if (a == null) {
+				return b;
 			} else {
 				ThrowOnInvalidOp (a, ADD);
 				return null;
@@ -332,6 +339,28 @@ namespace PlayScript.DynamicRuntime
 			return a - Convert.ToDouble(b);
 		}
 
+		public static object SubtractionStringObj (string a, object b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			if ((b == null) || (b == PlayScript.Undefined._undefined))
+			{
+				return a;
+			}
+			return Convert.ToDouble(a) - Convert.ToDouble(b);
+		}
+
+		public static object SubtractionObjString (object a, string b)
+		{
+			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
+
+			if ((a == null) || (a == PlayScript.Undefined._undefined))
+			{
+				return -Convert.ToDouble(b);
+			}
+			return Convert.ToDouble(a) - Convert.ToDouble(b);
+		}
+
 		public static object SubtractionObjObj (object a, object b)
 		{
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
@@ -342,6 +371,8 @@ namespace PlayScript.DynamicRuntime
 				return SubtractionDoubleObj ((double)a, b);
 			} else if (a is float) {
 				return SubtractionDoubleObj ((float)a, b);
+			} else if (a is String) {
+				return SubtractionStringObj ((string)a, b);
 			} else if (a is uint) {
 				return SubtractionUIntObj ((uint)a, b);
 			} else {
