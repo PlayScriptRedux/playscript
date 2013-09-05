@@ -5,7 +5,7 @@ using Address = System.UInt32;
 
 namespace Telemetry
 {
-	// method map for translating addresses to symbols to unique ids
+	// method map for translating addresses to symbols to unique method ids
 	internal class MethodMap
 	{
 		// this bit is set on all method ids that are the top of stack
@@ -120,7 +120,7 @@ namespace Telemetry
 			}
 #elif PLATFORM_MONOTOUCH
 			// handle top of stack
-			if (name == "UIApplicationMain" || name.StartsWith("PlayScript_Application_")) {
+			if (name == "UIApplicationMain" || name.StartsWith("PlayScript_Application_", StringComparison.Ordinal)) {
 				isTopOfStack = true;
 			}
 #endif
@@ -146,7 +146,7 @@ namespace Telemetry
 					}
 				}
 			} else {
-				int index = name.IndexOf("__");
+				int index = name.IndexOf("__", StringComparison.Ordinal);
 				if (index > 0) {
 					className = name.Substring(0, index);
 					name = name.Substring(index + 2);

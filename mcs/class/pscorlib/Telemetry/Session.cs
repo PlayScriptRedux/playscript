@@ -330,9 +330,9 @@ namespace Telemetry
 			if (sSpanExit.IsInSpan) {
 				sSpanExit.End();
 
-				sSpanTlmDoPlay.Begin();
+				sSpanTelemetry.Begin();
 				Flush();
-				sSpanTlmDoPlay.End();
+				sSpanTelemetry.End();
 			}
 		}
 
@@ -719,7 +719,7 @@ namespace Telemetry
 		private static readonly Amf3String     sNameSwfFrame  = new Amf3String(".swf.frame");
 		private static readonly Amf3String     sNameEnter  = new Amf3String(".enter");
 		private static readonly Span 		   sSpanExit      = new Span(".exit");
-		private static readonly Span 		   sSpanTlmDoPlay = new Span(".tlm.doplay");
+		private static readonly Span 		   sSpanTelemetry = new Span(".player.workerpoll");
 		#endregion
 	}
 }
