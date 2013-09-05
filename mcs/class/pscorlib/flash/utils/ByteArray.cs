@@ -18,7 +18,8 @@ namespace flash.utils {
 	using System.IO.Compression;
 	using System.Diagnostics;
 	using System.Text;
-
+	using Amf;
+	
 	[DebuggerDisplay("length = {length}")]
 	public class ByteArray : _root.Object, IDataInput, IDataOutput {
 
@@ -251,7 +252,10 @@ namespace flash.utils {
 		}
  	 	
 		public dynamic readObject() {
-			throw new NotImplementedException();
+			Stream stream = getRawStream();
+			Amf3Parser amfparser = new Amf3Parser(stream);
+			object obj = amfparser.ReadNextObject();
+			return obj;
 		}
  	 	
 		public int readShort() {
