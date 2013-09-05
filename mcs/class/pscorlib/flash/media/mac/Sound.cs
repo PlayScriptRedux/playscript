@@ -12,80 +12,28 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-#if PLATFORM_MONOTOUCH
 using System;
 using System.Collections.Generic;
-using MonoTouch.AVFoundation;
-using MonoTouch.Foundation;
 using flash.events;
 
 namespace flash.media {
 
 	// We use a partial C# class for platform specific logic
 	partial class Sound {
+			
+		private SoundChannel channel = new SoundChannel();
 
-		public const int NumberOfPlayers = 10;
-
-		private static Queue<AVAudioPlayer> _players = new Queue<AVAudioPlayer>(NumberOfPlayers);
-
-		private AVAudioPlayer _player;
-		private SoundChannel _channel;
-
-		private void loadIos(String url)
+		private void internalLoad(String url)
 		{
-			_url = url;
-
-			var mediaFile = NSUrl.FromFilename(_url);
-			_player = AVAudioPlayer.FromUrl(mediaFile);
-
-			if (null != _player)
-			{
-			    if (_players.Count == NumberOfPlayers) 
-				{
-				    _players.Dequeue().Dispose();
-				}
-				
-				_players.Enqueue(_player);
-
-				_player.PrepareToPlay();
-
-				_channel = new SoundChannel();
-				_channel.Player = _player;
-
-				_player.DecoderError += delegate {
-					this.dispatchEvent(new IOErrorEvent(IOErrorEvent.IO_ERROR));
-				};
-
-				_player.FinishedPlaying += delegate { 
-					_channel.dispatchEvent (new Event (Event.SOUND_COMPLETE));
-					//_player.Dispose(); 
-				};
-
-				this.dispatchEvent(new Event(Event.COMPLETE));
-
-			}
-
+			Console.WriteLine ("Sound internalLoad is not implemented for this platform");
 		}
 
-		private SoundChannel playIos(double startTime=0, int loops=0, SoundTransform sndTransform=null)
+		private SoundChannel internalPlay(double startTime=0, int loops=0, SoundTransform sndTransform=null)
         {
-			if (null == _player)
-				return null;
-
-			if (loops < 0)
-				loops = 0;
-
-			_player.NumberOfLoops = loops;
-
-			if (startTime > 0)
-				_player.PlayAtTime(startTime);
-			else
-                _player.Play();
-
-			return _channel;
+			Console.WriteLine ("Sound internalPlay is not implemented for this platform");
+			return channel;
         }
 
 	}
 
 }
-#endif
