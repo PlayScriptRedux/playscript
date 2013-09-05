@@ -100,7 +100,7 @@ namespace flash.display3D
 			public ProgramType programType; 
 			public int d;
 			public int q;
-			public int itype;
+			public RegType itype;
 			public RegType type;
 			public int s;
 			public int o;
@@ -113,7 +113,7 @@ namespace flash.display3D
 				sr.programType = programType;
 				sr.d = (int)((v >> 63) & 1); //  Direct=0/Indirect=1 for direct Q and I are ignored, 1bit
 				sr.q = (int)((v >> 48) & 0x3); // index register component select
-				sr.itype = (int)((v >> 40) & 0xF); // index register type
+				sr.itype = (RegType)((v >> 40) & 0xF); // index register type
 				sr.type = (RegType)((v >> 32) & 0xF); // type
 				sr.s = (int)((v >> 24) & 0xFF); // swizzle
 				sr.o = (int)((v >> 16) & 0xFF);  // indirect offset
@@ -128,9 +128,6 @@ namespace flash.display3D
 					return programType == ProgramType.Vertex ? "gl_Position" : "gl_FragColor";
 				}
 
-				if (d != 0 || q != 0 || itype != 0 || o != 0) {
-					throw new NotImplementedException ();
-				}
 
 				bool fullxyzw = (s == 228) && (sourceMask == 0xF);
 
@@ -160,8 +157,18 @@ namespace flash.display3D
 					}
 				}
 
-				var str = PrefixFromType (type, programType);
-				str += (n + offset).ToString ();
+				string str = PrefixFromType(type, programType);
+				if (d == 0) {
+					// direct register
+					str += (n + offset).ToString();
+				} else {
+					// indirect register
+					str += n.ToString();
+					char indexComponent = (char)('x' + q);  
+					var indexRegister = PrefixFromType(itype, programType) + this.o.ToString() + "." + indexComponent.ToString(); 
+					str += "[" + indexRegister + "+" + offset.ToString() + "]";
+				}
+
 				if (emitSwizzle && swizzle != "") {
 					str += "." + swizzle;
 				}
@@ -280,7 +287,8 @@ namespace flash.display3D
 			Matrix44,
 			Sampler2D,
 			Sampler2DAlpha,
-			SamplerCube
+			SamplerCube,
+			Vector4Array
 		};
 
 		class RegisterMap
@@ -310,12 +318,19 @@ namespace flash.display3D
 
 			public RegisterUsage GetUsage(SourceReg sr)
 			{
+				if (sr.d != 0) {
+					return RegisterUsage.Vector4Array;
+				}
 				return GetUsage(sr.type, sr.ToGLSL(false), sr.n);
 			}
 
 
 			public void Add(SourceReg sr, RegisterUsage usage, int offset  = 0)
 			{
+				if (sr.d != 0) {
+					Add (sr.type, PrefixFromType(sr.type, sr.programType) + sr.n.ToString(), sr.n, RegisterUsage.Vector4Array);
+					return;
+				}
 				Add (sr.type, sr.ToGLSL(false, offset), sr.n + offset, usage);
 			}
 
@@ -410,6 +425,7 @@ namespace flash.display3D
 					switch (entry.usage)
 					{
 					case RegisterUsage.Vector4:
+					case RegisterUsage.Vector4Array:
 						sb.Append("vec4 ");
 						break;
 					case RegisterUsage.Matrix44:
@@ -431,6 +447,9 @@ namespace flash.display3D
 						sb.Append ("uniform ");
 						sb.Append ("sampler2D ");
 						sb.Append (entry.name + "_alpha");
+						sb.AppendLine (";");
+					} else if (entry.usage == RegisterUsage.Vector4Array) {
+						sb.AppendFormat ("{0}[{1}]", entry.name, 256);
 						sb.AppendLine (";");
 					} else {
 						sb.Append (entry.name);
@@ -668,7 +687,7 @@ namespace flash.display3D
 				case 0x17: // m33
 				{
 					var existingUsage = map.GetUsage(sr2);
-					if (existingUsage != RegisterUsage.Vector4)
+					if (existingUsage != RegisterUsage.Vector4 && existingUsage != RegisterUsage.Vector4Array)
 					{
 						sb.AppendFormat("{0} = {1} * mat3({2}); // m33", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL(false) ); 
 						map.Add(dr, RegisterUsage.Vector4);
@@ -697,7 +716,7 @@ namespace flash.display3D
 				case 0x18: // m44
 				{
 					var existingUsage = map.GetUsage(sr2);
-					if (existingUsage != RegisterUsage.Vector4)
+					if (existingUsage != RegisterUsage.Vector4 && existingUsage != RegisterUsage.Vector4Array)
 					{
 						sb.AppendFormat("{0} = {1} * {2}; // m44", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL(false) ); 
 						map.Add(dr, RegisterUsage.Vector4);
@@ -731,7 +750,7 @@ namespace flash.display3D
 					dr.mask &= 7;
 
 					var existingUsage = map.GetUsage(sr2);
-					if (existingUsage != RegisterUsage.Vector4)
+					if (existingUsage != RegisterUsage.Vector4 && existingUsage != RegisterUsage.Vector4Array)
 					{
 						sb.AppendFormat("{0} = {1} * {2}; // m34", dr.ToGLSL(), sr1.ToGLSL(), sr2.ToGLSL(false) ); 
 						map.Add(dr, RegisterUsage.Vector4);
