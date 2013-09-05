@@ -698,7 +698,8 @@ namespace Mono.CSharp {
 		/// </summary>
 		public void ApplyAggressiveInlining ()
 		{
-			if ((this.FileType != SourceFileType.PlayScript) || (this.OptAttributes == null)) {
+			if ((this.FileType != SourceFileType.PlayScript) || (this.OptAttributes == null)
+			    || (!System.Enum.IsDefined(typeof(MethodImplOptions), "AggressiveInlining"))) {
 				return;
 			}
 
