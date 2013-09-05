@@ -82,7 +82,9 @@ package flash.display {
 		}
  	 	
 		public function clone():BitmapData {
-			throw new System.NotImplementedException();
+			var clonedBitmapData:BitmapData = new BitmapData(mWidth,mHeight,mTransparent);
+			System.Buffer.BlockCopy(mData, 0, clonedBitmapData.mData, 0, mData.Length);
+			return clonedBitmapData;
 		}
 		
 		public function colorTransform(rect:Rectangle, colorTransform:ColorTransform):void {
