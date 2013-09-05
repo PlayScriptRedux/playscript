@@ -2226,7 +2226,7 @@ parameter_array
 			new TypeExpression(compiler.BuiltinTypes.Object, GetLocation($3)),  
 			ComposedTypeSpecifier.CreateArrayDimension (1, GetLocation ($3)));
 		// NOTE: We add two underscores here to allow us to define the Array version later in ActionScript (not in PlayScript)
-		$$ = new ParamsParameter (type, (parsing_playscript ? "" : "__") + lt.Value, (Attributes) $1, lt.Location);
+		$$ = new ParamsParameter (type, "__" + lt.Value, (Attributes) $1, lt.Location);
 	  }
 	| opt_attributes DOTDOTDOT IDENTIFIER ASSIGN constant_expression
 	  {
@@ -2237,7 +2237,7 @@ parameter_array
 			new TypeExpression(compiler.BuiltinTypes.Object, GetLocation($3)),  
 			ComposedTypeSpecifier.CreateArrayDimension (1, GetLocation ($3)));
 		// NOTE: We add two underscores here to allow us to define the Array version later in ActionScript (not in PlayScript)
-		$$ = new ParamsParameter (type, (parsing_playscript ? "" : "__") + lt.Value, (Attributes) $1, lt.Location);		
+		$$ = new ParamsParameter (type, "__" + lt.Value, (Attributes) $1, lt.Location);
 	  }
 	| opt_attributes DOTDOTDOT error
 	  {

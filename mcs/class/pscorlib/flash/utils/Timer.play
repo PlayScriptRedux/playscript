@@ -150,7 +150,7 @@ package flash.utils {
 		}
 		
 		
-		private static function createTimer(closure:Function, delay:Number, arguments:Object[], repeat:int):uint {
+		private static function createTimer(closure:Function, delay:Number, arguments:Array, repeat:int):uint {
 			// allocate timer id
 			var id:int = sNextTimerId++;
 			
@@ -179,11 +179,11 @@ package flash.utils {
 			}
 		}
 		
-		internal static function setInterval(closure:Function, delay:Number, arguments:Object[]):uint {
+		internal static function setInterval(closure:Function, delay:Number, arguments:Array):uint {
 			return createTimer(closure, delay, arguments, 0);
 		}
 	
-		internal static function setTimeout(closure:Function, delay:Number, arguments:Object[]):uint {
+		internal static function setTimeout(closure:Function, delay:Number, arguments:Array):uint {
 			return createTimer(closure, delay, arguments, 1);
 		}
 		

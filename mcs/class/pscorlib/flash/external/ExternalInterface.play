@@ -18,7 +18,7 @@ package flash.external {
 
 	public static class ExternalInterface {
 
-		public static var CallFunc:System.Func.<String, System.Object[], Object> = null;
+		public static var CallFunc:System.Func.<String, Array, Object> = null;
 
 		public static function get available():Boolean {
 			return (CallFunc != null);
@@ -37,7 +37,7 @@ package flash.external {
 			sCallbacks[method] = f;
 		}
 
-		public static function externalInvokeCallback(method:String, args:System.Object[]):Object{
+		public static function externalInvokeCallback(method:String, args:Array):Object{
 			var f:Function;
 			if (sCallbacks.TryGetValue(method, out f)){
 				return f(args);

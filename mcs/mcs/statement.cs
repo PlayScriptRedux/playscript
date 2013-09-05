@@ -3630,8 +3630,8 @@ namespace Mono.CSharp {
 			if (rc.HasSet (ResolveContext.Options.ExpressionTreeConversion))
 				flags |= Flags.IsExpressionTree;
 
-			// If ActionScript (not PlayScript), create a var args Array local var that wraps the params varargs for .NET
-			if (rc.FileType == SourceFileType.PlayScript && !rc.PsExtended) {
+			// If ActionScript/PlayScript, create a var args Array local var that wraps the params varargs for .NET
+			if (rc.FileType == SourceFileType.PlayScript) {
 				this.PsCreateVarArgsArray (rc);
 			}
 
