@@ -386,9 +386,73 @@ namespace flash.display3D {
 			mSamplerDirty |= mProgram.samplerUsageMask;
 		}
  	 	
-		public void setProgramConstantsFromByteArray(string programType, int firstRegister, 
-			int numRegisters, ByteArray data, uint byteArrayOffset) {
-			throw new NotImplementedException();
+		public void setProgramConstantsFromByteArray(string programType, int firstRegister, int numRegisters, ByteArray data, uint byteArrayOffset) 
+		{
+			if (numRegisters == 0) return;
+
+			if (numRegisters == -1) {
+				numRegisters = (int)(data.length / 4 - byteArrayOffset);
+			}
+
+			bool isVertex = (programType == "vertex");
+
+			// set all registers
+			int register = firstRegister;
+			uint dataIndex = byteArrayOffset;
+			while (numRegisters > 0)
+			{
+				// get uniform mapped to register
+				Program3D.Uniform uniform = mProgram.getUniform(isVertex, register);
+
+				if (uniform == null)
+				{
+					// skip this register
+					register     += 1;
+					numRegisters -= 1;
+					dataIndex    += 16;
+
+					if (enableErrorChecking) {
+						//						Console.WriteLine ("warning: program register not found: {0}", register);
+					}
+					continue;
+				}
+				// convert source data into floating point
+				int tempIndex = 0;
+				data.position = dataIndex;
+				dataIndex += (uint) (uniform.RegCount<<2);
+				for (int i=0; i < uniform.RegCount; i++)
+				{
+					// debug print the constant data
+					//					Console.WriteLine ("{5}[{0}]: {1}, {2}, {3}, {4}", register + i, data[dataIndex+0], data[dataIndex+1], data[dataIndex+2], data[dataIndex+3], programType);
+
+					// copy byte[] to float[] - this can probably be avoided
+					mTemp[tempIndex++]  = (float)data.readFloat();
+					mTemp[tempIndex++]  = (float)data.readFloat();
+					mTemp[tempIndex++]  = (float)data.readFloat();
+					mTemp[tempIndex++]  = (float)data.readFloat();
+				}
+
+				// set uniforms based on type
+				switch (uniform.Type)
+				{
+					case ActiveUniformType.FloatMat2:
+					GL.UniformMatrix2(uniform.Location, uniform.Size, false, mTemp);
+					break;
+					case ActiveUniformType.FloatMat3:
+					GL.UniformMatrix3(uniform.Location, uniform.Size, false, mTemp);
+					break;
+					case ActiveUniformType.FloatMat4:
+					GL.UniformMatrix4(uniform.Location, uniform.Size, false, mTemp);
+					break;
+					default:
+					GL.Uniform4(uniform.Location, uniform.Size, mTemp);
+					break;
+				}
+
+				// advance register number
+				register     += uniform.RegCount;
+				numRegisters -= uniform.RegCount;
+			}
 		}
 
 		private static void convertDoubleToFloat (float[] dest, double[] source, int count)
