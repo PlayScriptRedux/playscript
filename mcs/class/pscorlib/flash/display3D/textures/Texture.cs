@@ -214,8 +214,10 @@ namespace flash.display3D.textures {
 				GL.BindTexture (textureTarget, textureId);
 				uploadATFTextureFromByteArray(data, byteArrayOffset);
 				GL.BindTexture (textureTarget, 0);
-				return;
+
 			}
+			else 
+			{
 
 
 #if PLATFORM_MONOTOUCH || PLATFORM_MONODROID
@@ -249,6 +251,7 @@ namespace flash.display3D.textures {
 			// unbind texture and pixel buffer
 			GL.BindTexture (textureTarget, 0);
 #endif
+			}
 
 			if (async) {
 				// load with a delay
