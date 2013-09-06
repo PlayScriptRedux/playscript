@@ -27,7 +27,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>full</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release</OutputPath>
     <ErrorReport>prompt</ErrorReport>
@@ -35,6 +34,7 @@
     <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
     <ConsolePause>false</ConsolePause>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>PLATFORM_MONODROID;OPENGL</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -882,6 +882,21 @@
     </Compile>
     <Compile Include="..\pscorlib\Telemetry\Parser.cs">
       <Link>Telemetry\Parser.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\MethodMap.cs">
+      <Link>Telemetry\MethodMap.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\Sampler.cs">
+      <Link>Telemetry\Sampler.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\Log.cs">
+      <Link>Telemetry\Log.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\SymbolTable.cs">
+      <Link>Telemetry\SymbolTable.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\DotNetError.play">
+      <Link>DotNetError.play</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

@@ -31,6 +31,9 @@ namespace flash.display3D.textures {
 	using PixelInternalFormat = OpenTK.Graphics.ES20.All;
 	using PixelFormat = OpenTK.Graphics.ES20.All;
 	using PixelType = OpenTK.Graphics.ES20.All;
+	using TextureParameterName = OpenTK.Graphics.ES20.All;
+	using Android.Opengl;
+	using Java.Nio;
 #endif
 
 	public class Texture : TextureBase {
@@ -144,19 +147,39 @@ namespace flash.display3D.textures {
 					}
 
 					if (blockLength > 0) {
-#if PLATFORM_MONOTOUCH
-						// handle PVRTC on iOS
+						// handle PVRTC on iOS						
 						if (gpuFormat == 1) {
+							#if PLATFORM_MONOTOUCH
 							OpenTK.Graphics.ES20.PixelInternalFormat pixelFormat = (OpenTK.Graphics.ES20.PixelInternalFormat)0x8C02;
-
 							fixed(byte *ptr = data.getRawArray()) 
 							{
 								// upload from data position
 								var address = new IntPtr(ptr + data.position);
-								GL.CompressedTexImage2D(textureTarget, level, pixelFormat, width, height, 0, (int)blockLength, address);
+								GL.CompressedTexImage2D(textureTarget, level, pixelFormat, width, height, 0, (int)blockLength, address);							
 							}
+							#endif
+						} 
+						else if (gpuFormat == 2) {
+							#if PLATFORM_MONODROID
+
+							int textureLength = width * height / 2;
+							fixed(byte *ptr = data.getRawArray()) 
+							{
+								var address = new IntPtr(ptr + data.position);
+								GL.CompressedTexImage2D(textureTarget, level, All.Etc1Rgb8Oes, width, height, 0, (int)textureLength, address);
+								if (textureLength < blockLength)
+								{
+									mAlphaTexture = new Texture(mContext, mWidth, mHeight, mFormat, mOptimizeForRenderToTexture, mStreamingLevels);
+									var alphaAddress = new IntPtr(ptr + data.position + textureLength);
+
+									GL.BindTexture (mAlphaTexture.textureTarget, mAlphaTexture.textureId);
+									GL.CompressedTexImage2D(mAlphaTexture.textureTarget, level, All.Etc1Rgb8Oes, width, height, 0, textureLength, alphaAddress);
+								}
+							}
+
+							#endif
 						}
-#endif
+
 						// TODO handle other formats/platforms
 					}
 
@@ -168,8 +191,6 @@ namespace flash.display3D.textures {
 
 		public void uploadCompressedTextureFromByteArray (ByteArray data, uint byteArrayOffset, bool async = false)
 		{
-			// $$TODO 
-			// this is empty for now
 #if PLATFORM_MONOMAC
 			System.Console.WriteLine("NotImplementedWarning: Texture.uploadCompressedTextureFromByteArray()");
 
@@ -196,7 +217,7 @@ namespace flash.display3D.textures {
 			}
 
 
-#if PLATFORM_MONOTOUCH
+#if PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			int memUsage = (mWidth * mHeight) / 2;
 			sMemoryUsedForTextures += memUsage;
 			Console.WriteLine("Texture.uploadCompressedTextureFromByteArray() - " + mWidth + "x" + mHeight + " - Mem: " + (memUsage / 1024) + " KB - Total Mem: " + (sMemoryUsedForTextures / 1024) + " KB");
@@ -208,15 +229,24 @@ namespace flash.display3D.textures {
 				throw new NotSupportedException();
 			}
 
+		#if PLATFORM_MONOTOUCH
 			int dataLength = (int)(data.length - byteArrayOffset) - 4;		// We remove the 4 bytes footer
-																			// TODO: Fix hardcoded value here
-
+	
+			// TODO: Fix hardcoded value here
 			OpenTK.Graphics.ES20.PixelInternalFormat pixelFormat = (OpenTK.Graphics.ES20.PixelInternalFormat)0x8C02;
+
 			GL.CompressedTexImage2D(textureTarget, 0, pixelFormat, mWidth, mHeight, 0, dataLength, data.getRawArray());
+		#elif PLATFORM_MONODROID		
+			data.position = 16; // skip the header
+			int dataLength = ((int)data.length) - 16;
+
+			GL.CompressedTexImage2D<byte>(textureTarget, 0, All.Etc1Rgb8Oes, mWidth, mHeight, 0, dataLength, data.getRawArray());
+		#endif
 
 			// unbind texture and pixel buffer
 			GL.BindTexture (textureTarget, 0);
 #endif
+
 			if (async) {
 				// load with a delay
 				var timer = new flash.utils.Timer(1, 1);

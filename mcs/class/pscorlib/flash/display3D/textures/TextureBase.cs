@@ -39,12 +39,17 @@ namespace flash.display3D.textures {
 		}
 	
 		public virtual void dispose() {
+			if (mAlphaTexture != null) {
+				mAlphaTexture.dispose ();
+			}
+
 			// delete texture
 			GL.DeleteTexture(mTextureId);
 		}
 
 		public int	 		 textureId 		{get {return mTextureId;}}
 		public TextureTarget textureTarget 	{get {return mTextureTarget;}}
+		public Texture 		 alphaTexture 	{ get { return mAlphaTexture; } }
 
 		// sets the sampler state associated with this texture
 		// due to the way GL works, sampler states are parameters of texture objects
@@ -70,6 +75,7 @@ namespace flash.display3D.textures {
 		private readonly int 		   mTextureId;
 		private readonly TextureTarget mTextureTarget;
 		private SamplerState		   mSamplerState;
+		protected Texture mAlphaTexture;
 
 		#else
 		

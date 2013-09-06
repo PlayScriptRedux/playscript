@@ -6,7 +6,7 @@ using Amf;
 
 namespace Telemetry
 {
-	public static class Protocol
+	internal static class Protocol
 	{
 		//
 		// These are the telemetry classes that are serialized to and from AMF
@@ -182,12 +182,12 @@ namespace Telemetry
 
 
 		// this class is used for sampler data through ".sampler.sample"
-		public class Sampler_sampler : IAmf3Serializable 
+		public class Sampler_sample : IAmf3Serializable 
 		{
 			public int time;
 			public int numticks;
-			public uint[] ticktimes;
-			public uint[] callstack;
+			public _root.Vector<double> ticktimes;
+			public _root.Vector<uint>  callstack;
 
 			#region IAmf3Serializable implementation
 			public void Serialize(Amf3Writer writer)
@@ -200,7 +200,7 @@ namespace Telemetry
 			}
 			#endregion
 
-			public static Amf3ClassDef ClassDef = new Amf3ClassDef("Sampler_sampler", new string[] { "time", "numticks", "ticktimes", "callstack"}, false, false);
+			public static Amf3ClassDef ClassDef = new Amf3ClassDef("Sampler_sample", new string[] { "time", "numticks", "ticktimes", "callstack"}, false, false);
 		}
 
 	}
