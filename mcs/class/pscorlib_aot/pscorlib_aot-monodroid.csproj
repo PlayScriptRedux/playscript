@@ -55,6 +55,7 @@
     <Folder Include="flash\filesystem\" />
     <Folder Include="flash\globalization\" />
     <Folder Include="flash\external\" />
+    <Folder Include="flash\media\android\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>
@@ -893,10 +894,10 @@
       <Link>DotNetError.play</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\media\android\Sound.cs">
-      <Link>flash\media\SoundDroid.cs</Link>
+      <Link>flash\media\android\Sound.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\media\android\SoundChannel.cs">
-      <Link>flash\media\SoundChannelDroid.cs</Link>
+      <Link>flash\media\android\SoundChannel.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>
