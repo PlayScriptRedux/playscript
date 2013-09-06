@@ -176,7 +176,7 @@ package flash.net {
 				method = mRequest.method;
 			}
 
-			var wr:WebRequest;
+			var wr:HttpWebRequest;
 			var url:String = mRequest.url;
 			switch(method) {
 				case "GET": {
@@ -184,12 +184,12 @@ package flash.net {
 					if (mRequest.data) {
 						url += "?" + mRequest.data.toString();
 					}
-					wr = HttpWebRequest.Create(url);
+					wr = HttpWebRequest.Create(url) as HttpWebRequest;
 					wr.Method = method;
 					break;
 				}
 				default:
-					wr = HttpWebRequest.Create(url);
+					wr = HttpWebRequest.Create(url) as HttpWebRequest;
 					wr.Method = method;
 					if (mRequest.data) {
 						var postData = String(mRequest.data);
@@ -201,7 +201,20 @@ package flash.net {
 					break;
 			}
 
-			wr.ContentType="application/x-www-form-urlencoded";
+			wr.KeepAlive = mRequest.keepAlive;
+			if (mRequest.userAgent != null)
+			{
+				wr.UserAgent = mRequest.userAgent;
+			}
+			if (mRequest.contentType != null)
+			{
+				wr.ContentType = mRequest.contentType;
+			}
+			else
+			{
+				wr.ContentType = "application/x-www-form-urlencoded";
+			}
+
 			wr.Credentials = CredentialCache.DefaultCredentials;
 			return wr;
 		}

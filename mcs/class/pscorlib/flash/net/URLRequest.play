@@ -46,6 +46,9 @@ package flash.net {
 
  	 	public property userAgent : String { get; set; }
 
+		// Not part of the official Flash API, but convenient to have
+		public property keepAlive : Boolean { get; set; }
+
 		//
 		// Methods 
 		//
