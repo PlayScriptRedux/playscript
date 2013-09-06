@@ -40,9 +40,8 @@ namespace flash.display3D.textures
 		
 		public CubeTexture(Context3D context, int size, string format, 
 		               bool optimizeForRenderToTexture, int streamingLevels)
-			: base(TextureTarget.TextureCubeMap)
+			: base(context, TextureTarget.TextureCubeMap)
 		{
-			mContext = context;
 			mSize = size;
 			mFormat = format;
 			mOptimizeForRenderToTexture = optimizeForRenderToTexture;
@@ -88,7 +87,7 @@ namespace flash.display3D.textures
 #if PLATFORM_MONOTOUCH
 			GL.GenerateMipmap(textureTarget);
 #endif
-
+			trackMemoryUsage(width * height * 4);
 
 			// unbind texture and pixel buffer
 			GL.BindTexture (textureTarget, 0);
@@ -103,7 +102,6 @@ namespace flash.display3D.textures
 		public int height 	{ get { return mSize; } }
 		
 		
-		private readonly Context3D 	mContext;
 		private readonly int 		mSize;
 		private readonly string 	mFormat;
 		private readonly bool 		mOptimizeForRenderToTexture;

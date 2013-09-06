@@ -29,8 +29,11 @@ namespace flash.display3D.textures {
 	public abstract class TextureBase : EventDispatcher {
 
 		#if OPENGL
-		protected TextureBase(TextureTarget target)
+		protected TextureBase(Context3D context, TextureTarget target)
 		{
+			// store context
+			mContext = context;
+
 			// set texture target
 			mTextureTarget = target;
 
@@ -45,6 +48,20 @@ namespace flash.display3D.textures {
 
 			// delete texture
 			GL.DeleteTexture(mTextureId);
+
+			// decrement stats for compressed texture data
+			if (mCompressedMemoryUsage > 0) {
+				mContext.statsDecrement(Context3D.Stats.Count_Texture_Compressed);
+				mContext.statsSubtract(Context3D.Stats.Mem_Texture_Compressed, mCompressedMemoryUsage);
+				mCompressedMemoryUsage = 0;
+			}
+
+			// decrement stats for un compressed texture data
+			if (mMemoryUsage > 0) {
+				mContext.statsDecrement(Context3D.Stats.Count_Texture);
+				mContext.statsSubtract(Context3D.Stats.Mem_Texture, mMemoryUsage);
+				mMemoryUsage = 0;
+			}
 		}
 
 		public int	 		 textureId 		{get {return mTextureId;}}
@@ -72,10 +89,36 @@ namespace flash.display3D.textures {
 			}
 		}
 
+		// adds to the memory usage for this texture
+		protected void trackMemoryUsage(int memory)
+		{
+			if (mMemoryUsage == 0) {
+				mContext.statsIncrement(Context3D.Stats.Count_Texture);
+			}
+			mMemoryUsage += memory;
+			mContext.statsAdd(Context3D.Stats.Mem_Texture, memory);
+		}
+
+		// adds to the compressed memory usage for this texture
+		protected void trackCompressedMemoryUsage(int memory)
+		{
+			if (mCompressedMemoryUsage == 0) {
+				mContext.statsIncrement(Context3D.Stats.Count_Texture_Compressed);
+			}
+			mCompressedMemoryUsage += memory;
+			mContext.statsAdd(Context3D.Stats.Mem_Texture_Compressed, memory);
+
+			// add to normal memory usage as well
+			trackMemoryUsage(memory);
+		}
+
+		protected readonly Context3D   mContext;
 		private readonly int 		   mTextureId;
 		private readonly TextureTarget mTextureTarget;
 		private SamplerState		   mSamplerState;
 		protected Texture mAlphaTexture;
+		private int 				   mMemoryUsage;
+		private int 				   mCompressedMemoryUsage;
 
 		#else
 		

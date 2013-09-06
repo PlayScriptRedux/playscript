@@ -44,16 +44,25 @@ namespace flash.display3D
 			if (multiBufferCount < 1)
 				throw new ArgumentOutOfRangeException("multiBufferCount");
 
+			mContext = context3D;
 			mNumVertices = numVertices;
 			mVertexSize = dataPerVertex;
 			mIds = new uint[multiBufferCount];
 			GL.GenBuffers(mIds.Length, mIds);
 
 			mUsage = isDynamic ? BufferUsage.DynamicDraw : BufferUsage.StaticDraw;
+
+			// update stats
+			mContext.statsIncrement(Context3D.Stats.Count_VertexBuffer);
 		}
 
 		public void dispose() {
 			GL.DeleteBuffers(mIds.Length, mIds);
+
+			// update stats
+			mContext.statsDecrement(Context3D.Stats.Count_VertexBuffer);
+			mContext.statsSubtract(Context3D.Stats.Mem_VertexBuffer, mMemoryUsage);
+			mMemoryUsage = 0;
 		}
 		
 		public void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startVertex, int numVertices) {
@@ -79,6 +88,12 @@ namespace flash.display3D
 				                     new IntPtr(byteCount), 
 				                     data, 
 				                     mUsage);
+
+				if (byteCount != mMemoryUsage) {
+					// update stats for memory usage
+					mContext.statsAdd(Context3D.Stats.Mem_VertexBuffer, byteCount - mMemoryUsage);
+					mMemoryUsage = byteCount;
+				}
 			} 
 			else 
 			{
@@ -126,13 +141,14 @@ namespace flash.display3D
 			get {return mIds[mBufferIndex];}
 		}
 		
+		private readonly Context3D  mContext;
 		private readonly int		mNumVertices;
 		private readonly int		mVertexSize; 		// size in floats
 		private float[]				mData;
 		private uint[]		 		mIds;
 		private int 				mBufferIndex;		// buffer index for multibuffering
 		private BufferUsage         mUsage;
-
+		private int 				mMemoryUsage;
 #else
 
 		public VertexBuffer3D(Context3D context3D, int numVertices, int dataPerVertex, int multiBufferCount = 1)

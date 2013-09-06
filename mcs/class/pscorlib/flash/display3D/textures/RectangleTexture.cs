@@ -34,8 +34,8 @@ namespace flash.display3D.textures {
 		// Methods
 		//
 
-		public RectangleTexture()
-			: base(TextureTarget.Texture2D)
+		public RectangleTexture(Context3D context)
+			: base(context, TextureTarget.Texture2D)
 		{
 		}
 	
