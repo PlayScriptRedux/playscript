@@ -41,6 +41,7 @@ namespace flash.display3D {
 	using FramebufferTarget = OpenTK.Graphics.ES20.All;
 	using FramebufferErrorCode = OpenTK.Graphics.ES20.All;
 	using DepthFunction = OpenTK.Graphics.ES20.All;
+	using StringName = OpenTK.Graphics.ES20.All;
 	using TextureTarget = OpenTK.Graphics.ES20.All;
 	using FramebufferAttachment = OpenTK.Graphics.ES20.All;
 	using ActiveUniformType = OpenTK.Graphics.ES20.All;

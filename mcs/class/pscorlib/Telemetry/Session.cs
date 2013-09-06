@@ -14,6 +14,7 @@ using OpenTK.Graphics.ES20;
 #elif PLATFORM_MONODROID
 using OpenTK.Graphics;
 using OpenTK.Graphics.ES20;
+using StringName = OpenTK.Graphics.ES20.All;
 #endif
 
 namespace Telemetry
