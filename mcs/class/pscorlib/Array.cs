@@ -623,6 +623,9 @@ namespace _root
 
 		#endregion
 
+		public static implicit operator dynamic[](Array a) {
+			return a._GetInnerVector ()._GetInnerArray();
+		}
 	}
 }
 

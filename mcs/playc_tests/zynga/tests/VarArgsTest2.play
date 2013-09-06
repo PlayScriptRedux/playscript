@@ -6,10 +6,18 @@ package
 	
 	public class VarArgsTest2
 	{
+		public static function RunTest2(args:dynamic[]):int
+		{
+			trace(args.ToString());
+			trace(args.Length);
+			return 0;
+		}
+		
 		public static function RunTest(val1:Number, val2:Number, ... rest):Number
 		{
 			Assert.expectEq("getQualifiedClassName(rest) == \"Array\"", "Array", getQualifiedClassName(rest));
 			trace(val1, val2, rest);
+			RunTest2(rest);
 			return 0;
 		}
 		
