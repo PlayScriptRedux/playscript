@@ -39,7 +39,7 @@ namespace Amf
 
         public bool Externalizable { get; private set; }
 
-        public Amf3ClassDef(string name, IEnumerable<string> properties, bool dynamic, bool externalizable)
+        public Amf3ClassDef(string name, IEnumerable<string> properties, bool dynamic = false, bool externalizable = false)
         {
             if (dynamic && externalizable)
                 throw new ArgumentException("AMF classes cannot be both dynamic and externalizable");

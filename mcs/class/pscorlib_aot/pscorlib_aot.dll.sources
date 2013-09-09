@@ -3,6 +3,7 @@
 ../pscorlib/Amf/Amf3ClassDef.cs
 ../pscorlib/Amf/Amf3Object.cs
 ../pscorlib/Amf/Amf3Parser.cs
+../pscorlib/Amf/Amf3SerializableAttribute.cs
 ../pscorlib/Amf/Amf3String.cs
 ../pscorlib/Amf/Amf3TypeCode.cs
 ../pscorlib/Amf/Amf3Writer.cs

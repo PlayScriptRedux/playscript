@@ -69,6 +69,11 @@ namespace Amf
 		{
 			writer.Write(this);
 		}
+
+		public void Serialize(Amf3Parser reader)
+		{
+			throw new NotSupportedException();
+		}
 		#endregion
     }
 }

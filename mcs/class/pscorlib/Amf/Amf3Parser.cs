@@ -47,6 +47,14 @@ namespace Amf
             this.stream = stream;
         }
 
+		// this method is used by the deserialization code for an object
+		public void Read<T>(out T o)
+		{
+			// TODO: make a version that does not box values
+			object next = ReadNextObject();
+			o = (T)next;
+		}
+
         public object ReadNextObject()
         {
             int b = stream.ReadByte();
@@ -363,8 +371,20 @@ namespace Amf
                     key = ReadString();
                 }
             }
-
             return obj;
         }
+
+		// returns all the class definitions that have been found while parsing
+		public Amf3ClassDef[] GetClassDefinitions()
+		{
+			return traitTable.ToArray();
+		}
+
+		// returns all the objects that have been found while parsing
+		public object[] GetObjectTable()
+		{
+			return objectTable.ToArray();
+		}
+
     }
 }
