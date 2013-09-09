@@ -141,6 +141,14 @@ namespace PlayScript
 
 			return IOSHardware.Unknown;
 		}
+
+		public static IOSHardware Version {
+			get {
+				if (sCachedVersion.HasValue == false) {
+					sCachedVersion = RetrieveVersion();
+				}
+				return sCachedVersion.Value;
+			}
 		}
 	}
 
