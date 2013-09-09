@@ -904,4 +904,9 @@
       <Name>PlayScript.Dynamic_aot-monotouch</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\pscorlib\pscorlib.dll.sources">
+      <Link>pscorlib.dll.sources</Link>
+    </None>
+  </ItemGroup>
 </Project>
