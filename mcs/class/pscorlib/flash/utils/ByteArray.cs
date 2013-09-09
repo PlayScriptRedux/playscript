@@ -546,6 +546,17 @@ namespace flash.utils {
 			return ba;
 		}
 
+		public static ByteArray cloneFromArray<T>(T[] array, int count) where T:struct {
+			int byteLength = Buffer.ByteLength(array);
+			if (count != array.Length) {
+				byteLength = byteLength / array.Length * count;
+			}
+
+			byte[] clone = new byte[byteLength];
+			Buffer.BlockCopy(array, 0, clone, 0, clone.Length);
+			return ByteArray.fromArray(clone);
+		}
+
 		public static ByteArray loadFromPath(string path) {
 			var newPath = PlayScript.Player.ResolveResourcePath(path);
 			byte[] data = System.IO.File.ReadAllBytes(newPath);
