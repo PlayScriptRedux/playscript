@@ -309,9 +309,11 @@ namespace flash.display3D.textures {
 		
 		private readonly int 		mWidth;
 		private readonly int 		mHeight;
+#pragma warning disable 414		// the fields below are assigned but never used
 		private readonly string 	mFormat;
 		private readonly bool 		mOptimizeForRenderToTexture;
 		private readonly int    	mStreamingLevels;
+#pragma warning restore 414
 
 #else
 
