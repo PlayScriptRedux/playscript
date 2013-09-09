@@ -251,8 +251,10 @@
 ./Object.cs
 ./PartialAttribute.cs
 ./PlayScript/EmbedLoader.cs
+./PlayScript/Hardware.cs
 ./PlayScript/ParamsDelegateTypes.cs
 ./PlayScript/Player.cs
+./PlayScript/Profiler.cs
 ./PlayScript/Profiler.cs
 ./PlayScript/Support.cs
 ./QName.play
