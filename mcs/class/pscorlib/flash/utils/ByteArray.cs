@@ -390,13 +390,13 @@ namespace flash.utils {
 			long bits = BitConverter.DoubleToInt64Bits(value);
 			if (mEndian == ByteEndian.Little)
 			{
-				writeUnsignedInt((uint)(bits >> 32) );
 				writeUnsignedInt((uint)bits);
+				writeUnsignedInt((uint)(bits >> 32) );
 			}
 			else
 			{
-				writeUnsignedInt((uint)bits);
 				writeUnsignedInt((uint)(bits >> 32) );
+				writeUnsignedInt((uint)bits);
 			}
 		}
  	 	
