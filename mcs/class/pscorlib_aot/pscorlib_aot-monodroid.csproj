@@ -899,6 +899,12 @@
     <Compile Include="..\pscorlib\flash\media\android\SoundChannel.cs">
       <Link>flash\media\android\SoundChannel.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3SerializableAttribute.cs">
+      <Link>Amf\Amf3SerializableAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\PlayScript\Hardware.cs">
+      <Link>PlayScript\Hardware.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monodroid.csproj">
