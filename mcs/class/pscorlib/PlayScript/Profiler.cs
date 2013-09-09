@@ -67,79 +67,80 @@ namespace PlayScript
 		[DllImport(MonoTouch.Constants.SystemLibrary)]
 		static internal extern int sysctlbyname([MarshalAs(UnmanagedType.LPStr)] string property, IntPtr output, IntPtr oldLen, IntPtr newp, uint newlen);
 
-		public static IOSHardware Version {
-			get {
-				var pLen = Marshal.AllocHGlobal(sizeof(int));
-				sysctlbyname(IOSDeviceHardware.HardwareProperty, IntPtr.Zero, pLen, IntPtr.Zero, 0);
+		private static IOSHardware? sCachedVersion;
+		private static IOSHardware RetrieveVersion()
+		{
+			var pLen = Marshal.AllocHGlobal(sizeof(int));
+			sysctlbyname(IOSDeviceHardware.HardwareProperty, IntPtr.Zero, pLen, IntPtr.Zero, 0);
 
-				var length = Marshal.ReadInt32(pLen);
+			var length = Marshal.ReadInt32(pLen);
 
-				if (length == 0) {
-					Marshal.FreeHGlobal(pLen);
-
-					return IOSHardware.Unknown;
-				}
-
-				var pStr = Marshal.AllocHGlobal(length);
-				sysctlbyname(IOSDeviceHardware.HardwareProperty, pStr, pLen, IntPtr.Zero, 0);
-
-				var hardwareStr = Marshal.PtrToStringAnsi(pStr);
-
+			if (length == 0) {
 				Marshal.FreeHGlobal(pLen);
-				Marshal.FreeHGlobal(pStr);
-
-				if (hardwareStr == "iPhone1,1") return IOSHardware.iPhone;
-				if (hardwareStr == "iPhone1,2") return IOSHardware.iPhone3G;
-				if (hardwareStr == "iPhone2,1") return IOSHardware.iPhone3GS;
-				if (hardwareStr == "iPhone3,1") return IOSHardware.iPhone4;
-				if (hardwareStr == "iPhone3,2") return IOSHardware.iPhone4RevA;
-				if (hardwareStr == "iPhone3,3") return IOSHardware.iPhone4CDMA;
-				if (hardwareStr == "iPhone4,1") return IOSHardware.iPhone4S;
-				if (hardwareStr == "iPhone5,1") return IOSHardware.iPhone5GSM;
-				if (hardwareStr == "iPhone5,2") return IOSHardware.iPhone5CDMAGSM;
-
-				if (hardwareStr == "iPad1,1") return IOSHardware.iPad;
-				if (hardwareStr == "iPad1,2") return IOSHardware.iPad3G;
-				if (hardwareStr == "iPad2,1") return IOSHardware.iPad2;
-				if (hardwareStr == "iPad2,2") return IOSHardware.iPad2GSM;
-				if (hardwareStr == "iPad2,3") return IOSHardware.iPad2CDMA;
-				if (hardwareStr == "iPad2,4") return IOSHardware.iPad2RevA;
-				if (hardwareStr == "iPad2,5") return IOSHardware.iPadMini;
-				if (hardwareStr == "iPad2,6") return IOSHardware.iPadMiniGSM;
-				if (hardwareStr == "iPad2,7") return IOSHardware.iPadMiniCDMAGSM;
-				if (hardwareStr == "iPad3,1") return IOSHardware.iPad3;
-				if (hardwareStr == "iPad3,2") return IOSHardware.iPad3CDMA;
-				if (hardwareStr == "iPad3,3") return IOSHardware.iPad3GSM;
-				if (hardwareStr == "iPad3,4") return IOSHardware.iPad4;
-				if (hardwareStr == "iPad3,5") return IOSHardware.iPad4GSM;
-				if (hardwareStr == "iPad3,6") return IOSHardware.iPad4CDMAGSM;
-
-				if (hardwareStr == "iPod1,1") return IOSHardware.iPodTouch1G;
-				if (hardwareStr == "iPod2,1") return IOSHardware.iPodTouch2G;
-				if (hardwareStr == "iPod3,1") return IOSHardware.iPodTouch3G;
-				if (hardwareStr == "iPod4,1") return IOSHardware.iPodTouch4G;
-				if (hardwareStr == "iPod5,1") return IOSHardware.iPodTouch5G;
-
-				if (hardwareStr == "i386" || hardwareStr=="x86_64")
-				{
-					if (UIDevice.CurrentDevice.Model.Contains("iPhone"))
-					{
-						if(UIScreen.MainScreen.Scale > 1.5f)
-							return IOSHardware.iPhoneRetinaSimulator;
-						else
-							return IOSHardware.iPhoneSimulator;
-					}
-					else
-					{
-						if(UIScreen.MainScreen.Scale > 1.5f)
-							return IOSHardware.iPadRetinaSimulator;
-						else
-							return IOSHardware.iPadSimulator;
-					}
-				}
 
 				return IOSHardware.Unknown;
 			}
+
+			var pStr = Marshal.AllocHGlobal(length);
+			sysctlbyname(IOSDeviceHardware.HardwareProperty, pStr, pLen, IntPtr.Zero, 0);
+
+			var hardwareStr = Marshal.PtrToStringAnsi(pStr);
+
+			Marshal.FreeHGlobal(pLen);
+			Marshal.FreeHGlobal(pStr);
+
+			if (hardwareStr == "iPhone1,1") return IOSHardware.iPhone;
+			if (hardwareStr == "iPhone1,2") return IOSHardware.iPhone3G;
+			if (hardwareStr == "iPhone2,1") return IOSHardware.iPhone3GS;
+			if (hardwareStr == "iPhone3,1") return IOSHardware.iPhone4;
+			if (hardwareStr == "iPhone3,2") return IOSHardware.iPhone4RevA;
+			if (hardwareStr == "iPhone3,3") return IOSHardware.iPhone4CDMA;
+			if (hardwareStr == "iPhone4,1") return IOSHardware.iPhone4S;
+			if (hardwareStr == "iPhone5,1") return IOSHardware.iPhone5GSM;
+			if (hardwareStr == "iPhone5,2") return IOSHardware.iPhone5CDMAGSM;
+
+			if (hardwareStr == "iPad1,1") return IOSHardware.iPad;
+			if (hardwareStr == "iPad1,2") return IOSHardware.iPad3G;
+			if (hardwareStr == "iPad2,1") return IOSHardware.iPad2;
+			if (hardwareStr == "iPad2,2") return IOSHardware.iPad2GSM;
+			if (hardwareStr == "iPad2,3") return IOSHardware.iPad2CDMA;
+			if (hardwareStr == "iPad2,4") return IOSHardware.iPad2RevA;
+			if (hardwareStr == "iPad2,5") return IOSHardware.iPadMini;
+			if (hardwareStr == "iPad2,6") return IOSHardware.iPadMiniGSM;
+			if (hardwareStr == "iPad2,7") return IOSHardware.iPadMiniCDMAGSM;
+			if (hardwareStr == "iPad3,1") return IOSHardware.iPad3;
+			if (hardwareStr == "iPad3,2") return IOSHardware.iPad3CDMA;
+			if (hardwareStr == "iPad3,3") return IOSHardware.iPad3GSM;
+			if (hardwareStr == "iPad3,4") return IOSHardware.iPad4;
+			if (hardwareStr == "iPad3,5") return IOSHardware.iPad4GSM;
+			if (hardwareStr == "iPad3,6") return IOSHardware.iPad4CDMAGSM;
+
+			if (hardwareStr == "iPod1,1") return IOSHardware.iPodTouch1G;
+			if (hardwareStr == "iPod2,1") return IOSHardware.iPodTouch2G;
+			if (hardwareStr == "iPod3,1") return IOSHardware.iPodTouch3G;
+			if (hardwareStr == "iPod4,1") return IOSHardware.iPodTouch4G;
+			if (hardwareStr == "iPod5,1") return IOSHardware.iPodTouch5G;
+
+			if (hardwareStr == "i386" || hardwareStr=="x86_64")
+			{
+				if (UIDevice.CurrentDevice.Model.Contains("iPhone"))
+				{
+					if(UIScreen.MainScreen.Scale > 1.5f)
+						return IOSHardware.iPhoneRetinaSimulator;
+					else
+						return IOSHardware.iPhoneSimulator;
+				}
+				else
+				{
+					if(UIScreen.MainScreen.Scale > 1.5f)
+						return IOSHardware.iPadRetinaSimulator;
+					else
+						return IOSHardware.iPadSimulator;
+				}
+			}
+
+			return IOSHardware.Unknown;
+		}
 		}
 	}
 
@@ -271,7 +272,7 @@ namespace PlayScript
 					OnStartReport();
 				}
 			}
-
+		
 			Profiler.Begin("frame");
 		}
 
@@ -637,28 +638,34 @@ namespace PlayScript
 
 		private static PerformanceFrameData GetPerformanceFrameData()
 		{
-			#if PLATFORM_MONOTOUCH
-			switch (IOSDeviceHardware.Version)
+			if (sCurrentPerformanceFrameData == null)
 			{
-				case IOSDeviceHardware.IOSHardware.iPhone:
-				case IOSDeviceHardware.IOSHardware.iPhone3G:
-				case IOSDeviceHardware.IOSHardware.iPhone3GS:
-				case IOSDeviceHardware.IOSHardware.iPhone4:
-				case IOSDeviceHardware.IOSHardware.iPhone4RevA:
-				case IOSDeviceHardware.IOSHardware.iPhone4CDMA:
-				case IOSDeviceHardware.IOSHardware.iPodTouch1G:
-				case IOSDeviceHardware.IOSHardware.iPodTouch2G:
-				case IOSDeviceHardware.IOSHardware.iPodTouch3G:
-				case IOSDeviceHardware.IOSHardware.iPodTouch4G:
-				case IOSDeviceHardware.IOSHardware.iPad:
-				case IOSDeviceHardware.IOSHardware.iPad3G:
-					return sSlowPerformanceFrameData;
-				default:
-					return sDefaultPerformanceFrameData;
+				#if PLATFORM_MONOTOUCH
+				switch (IOSDeviceHardware.Version)
+				{
+					case IOSDeviceHardware.IOSHardware.iPhone:
+					case IOSDeviceHardware.IOSHardware.iPhone3G:
+					case IOSDeviceHardware.IOSHardware.iPhone3GS:
+					case IOSDeviceHardware.IOSHardware.iPhone4:
+					case IOSDeviceHardware.IOSHardware.iPhone4RevA:
+					case IOSDeviceHardware.IOSHardware.iPhone4CDMA:
+					case IOSDeviceHardware.IOSHardware.iPodTouch1G:
+					case IOSDeviceHardware.IOSHardware.iPodTouch2G:
+					case IOSDeviceHardware.IOSHardware.iPodTouch3G:
+					case IOSDeviceHardware.IOSHardware.iPodTouch4G:
+					case IOSDeviceHardware.IOSHardware.iPad:
+					case IOSDeviceHardware.IOSHardware.iPad3G:
+						sCurrentPerformanceFrameData = sSlowPerformanceFrameData;
+						break;
+					default:
+						sCurrentPerformanceFrameData = sDefaultPerformanceFrameData;
+						break;
+				}
+				#else
+				sCurrentPerformanceFrameData = sDefaultPerformanceFrameData;
+				#endif
 			}
-			#else
-			return sDefaultPerformanceFrameData;
-			#endif
+			return sCurrentPerformanceFrameData;
 		}
 
 		class SectionHistory
@@ -701,17 +708,20 @@ namespace PlayScript
 
 		class PerformanceFrameData
 		{
-			public PerformanceFrameData(double fastFrame, double slowFrame)
+			public PerformanceFrameData(double fastFrame, double slowFrame, double autoProfileFrame)
 			{
 				FastFrame = fastFrame;
 				SlowFrame = slowFrame;
+				AutoProfileFrame = autoProfileFrame;
 			}
 			public double	FastFrame;
 			public double	SlowFrame;
+			public double	AutoProfileFrame;
 		}
 
-		private static PerformanceFrameData sDefaultPerformanceFrameData = new PerformanceFrameData(fastFrame: 1000.0/60.0, slowFrame: 1000.0/15.0);
-		private static PerformanceFrameData sSlowPerformanceFrameData = new PerformanceFrameData(fastFrame: 1000.0/30.0, slowFrame: 1000.0/10.0);
+		private static PerformanceFrameData sCurrentPerformanceFrameData;
+		private static PerformanceFrameData sDefaultPerformanceFrameData = new PerformanceFrameData(fastFrame: 1000.0/60.0, slowFrame: 1000.0/15.0, autoProfileFrame: 1000.0/45.0);
+		private static PerformanceFrameData sSlowPerformanceFrameData = new PerformanceFrameData(fastFrame: 1000.0/30.0, slowFrame: 1000.0/10.0, autoProfileFrame: 1000.0/20.0);
 	}
 }
 
