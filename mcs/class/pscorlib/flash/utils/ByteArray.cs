@@ -115,7 +115,7 @@ namespace flash.utils {
 		}
  	 	
 		public void inflate() {
-			throw new NotImplementedException();
+			uncompress (CompressionAlgorithm.DEFLATE);
 		}
  	 	
 		public void setCapacity(int capacity){
@@ -330,33 +330,28 @@ namespace flash.utils {
 			var inStream = getRawStream();
 			var outStream = new MemoryStream();
 
-			switch (algorithm)
-			{
+			switch (algorithm) {
 			case null:
 			case CompressionAlgorithm.ZLIB:
-			{
-				// create inflater
-				var inflater =  new ICSharpCode.SharpZipLib.Zip.Compression.Streams.InflaterInputStream(inStream);
-				inStream.Position = 0;
+				{
+					// create inflater
+					var inflater = new ICSharpCode.SharpZipLib.Zip.Compression.Streams.InflaterInputStream (inStream);
+					inStream.Position = 0;
 
-				// copy stream				
-				inflater.CopyTo(outStream);
-			}
-			break;
+					// copy stream				
+					inflater.CopyTo (outStream);
+				}
+				break;
 
 			case CompressionAlgorithm.LZMA:
 			case CompressionAlgorithm.DEFLATE:
-			{
-				throw new NotImplementedException();
-				/*
-				var outStream:MemoryStream = new MemoryStream();
-				mStream.Position = 0;
-				using (DeflateStream decompressionStream = new DeflateStream(mStream, CompressionMode.Decompress))
 				{
-					decompressionStream.CopyTo(outStream);
+					using (DeflateStream decompressionStream = new DeflateStream(inStream, CompressionMode.Decompress)) {
+						inStream.Position = 0;
+						decompressionStream.CopyTo (outStream);
+					}
 				}
-				*/
-			}
+				break;
 			}
 
 			// resize to be just the right length
