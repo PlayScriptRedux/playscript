@@ -51,6 +51,7 @@ namespace flash.display3D {
 
 		public Program3D(Context3D context3D)
 		{
+			mContext = context3D;
 		}
 		
 		public void dispose() {
@@ -74,6 +75,12 @@ namespace flash.display3D {
 				GL.DeleteShader (mFragmentShaderId);
 				mFragmentShaderId = 0;
 			}
+
+			if (mMemUsage != 0) {
+				mContext.statsDecrement(Context3D.Stats.Count_Program);
+				mContext.statsSubtract(Context3D.Stats.Mem_Program, mMemUsage);
+				mMemUsage = 0;
+			}
 		}
 		
 		public void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startOffset, int count) {
@@ -94,22 +101,6 @@ namespace flash.display3D {
 			for (int i=0; i < samplerStates.Length; i++) {
 				setSamplerState(i, samplerStates[i]);
 			}
-		}
-
-		private string loadShaderSource (string filePath)
-		{
-			//var path = NSBundle.MainBundle.ResourcePath + Path.DirectorySeparatorChar + "GLSL";
-			//var filePath = path + Path.DirectorySeparatorChar + name;
-			using (StreamReader streamReader = new StreamReader (filePath)) {
-				return streamReader.ReadToEnd ();
-			}
-		}
-
-		public void uploadFromGLSLFiles (string vertexShaderName, string fragmentShaderName)
-		{
-			string vertexShaderSource = loadShaderSource(vertexShaderName);
-			string fragmentShaderSource = loadShaderSource(fragmentShaderName); 
-			uploadFromGLSL(vertexShaderSource, fragmentShaderSource);
 		}
 
 		public void uploadFromGLSL (string vertexShaderSource, string fragmentShaderSource)
@@ -182,6 +173,11 @@ namespace flash.display3D {
 
 			// build uniform list
 			buildUniformList();
+
+			// update stats for this program
+			mMemUsage = 1; // TODO, figure out a way to get this
+			mContext.statsIncrement(Context3D.Stats.Count_Program);
+			mContext.statsAdd(Context3D.Stats.Mem_Program, mMemUsage);
 		}
 
 
@@ -371,6 +367,9 @@ namespace flash.display3D {
 		public int samplerUsageMask {
 			get {return mSamplerUsageMask;}
 		}
+
+		private readonly Context3D mContext;
+		private int 			   mMemUsage;
 
 		private int 			   mVertexShaderId = 0;
 		private int 			   mFragmentShaderId = 0;

@@ -13,7 +13,7 @@ using Address = System.UInt32;
 
 namespace Telemetry
 {
-	// method map for translating addresses to symbols to unique ids
+	// method map for translating addresses to symbols (quickly)
 	internal class SymbolTable
 	{
 		public SymbolTable()

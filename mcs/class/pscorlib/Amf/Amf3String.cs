@@ -47,9 +47,15 @@ namespace Amf
 		}
 
 		#region IAmf3Serializable implementation
-		void IAmf3Serializable.Serialize(Amf3Writer writer)
+		public void Serialize(Amf3Writer writer)
 		{
 			writer.Write(this);
+		}
+
+		public void Serialize(Amf3Parser reader)
+		{
+			// can't support this, we are immutable
+			throw new NotSupportedException();
 		}
 		#endregion
 

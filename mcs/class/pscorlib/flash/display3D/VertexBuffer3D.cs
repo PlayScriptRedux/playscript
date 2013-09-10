@@ -44,64 +44,77 @@ namespace flash.display3D
 			if (multiBufferCount < 1)
 				throw new ArgumentOutOfRangeException("multiBufferCount");
 
+			mContext = context3D;
 			mNumVertices = numVertices;
 			mVertexSize = dataPerVertex;
 			mIds = new uint[multiBufferCount];
 			GL.GenBuffers(mIds.Length, mIds);
 
 			mUsage = isDynamic ? BufferUsage.DynamicDraw : BufferUsage.StaticDraw;
+
+			// update stats
+			mContext.statsIncrement(Context3D.Stats.Count_VertexBuffer);
 		}
 
 		public void dispose() {
 			GL.DeleteBuffers(mIds.Length, mIds);
-		}
-		
-		unsafe public void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startVertex, int numVertices)
-		{
-			int byteStart = byteArrayOffset;// + startVertex * mVertexSize * sizeof(float);
-			int countTotal =(startVertex+numVertices) * mVertexSize; 
-			byte[] dataBytes = data.getRawArray();
-			fixed (byte* dataBytesPtr = &dataBytes[byteStart])
-			{
-				//copy float* to float[], this is really a waste of time !!!
-				float *fArray = (float*) dataBytesPtr;
-				float[] dataFloat = new float[countTotal* sizeof(float)];
-				for(int i=0;i<countTotal;i++)
-				{
-					dataFloat[i] = fArray[i];
-				}
 
-				uploadFromArray(dataFloat,startVertex,numVertices);
-			}
+			// update stats
+			mContext.statsDecrement(Context3D.Stats.Count_VertexBuffer);
+			mContext.statsSubtract(Context3D.Stats.Mem_VertexBuffer, mMemoryUsage);
+			mMemoryUsage = 0;
 		}
 
-		public void uploadFromArray(float[] data, int startVertex, int numVertices) 
-		{
 
+		public unsafe void uploadFromPointer(void *data, int dataLength, int startVertex, int numVertices) 
+		{
 			// swap to next buffer
 			mBufferIndex++;
 			if (mBufferIndex >= mIds.Length)
 				mBufferIndex = 0;
 
 			GL.BindBuffer(BufferTarget.ArrayBuffer, mIds[mBufferIndex]);
-			
+
+			// get pointer to byte array data
 			int byteStart = startVertex * mVertexSize * sizeof(float);
 			int byteCount = numVertices * mVertexSize * sizeof(float);
-			if (byteStart == 0)
-			{
+			// bounds check
+			if (byteCount > dataLength)
+				throw new ArgumentOutOfRangeException("data buffer is not big enough for upload");
+			if (byteStart == 0) {
 				// upload whole array
-				GL.BufferData<float>(BufferTarget.ArrayBuffer, 
-				                     new IntPtr(byteCount), 
-				                     data, 
-				                     mUsage);
-			} 
-			else 
-			{
+				GL.BufferData(BufferTarget.ArrayBuffer, 
+				              new IntPtr(byteCount), 
+				              new IntPtr(data), 
+				              mUsage);
+
+				if (byteCount != mMemoryUsage) {
+					// update stats for memory usage
+					mContext.statsAdd(Context3D.Stats.Mem_VertexBuffer, byteCount - mMemoryUsage);
+					mMemoryUsage = byteCount;
+				}
+			} else {
 				// upload whole array
-				GL.BufferSubData<float>(BufferTarget.ArrayBuffer, 
-				                        new IntPtr(byteStart), 
-				                        new IntPtr(byteCount), 
-				                        data);
+				GL.BufferSubData(BufferTarget.ArrayBuffer, 
+				                 new IntPtr(byteStart), 
+				                 new IntPtr(byteCount), 
+				                 new IntPtr(data));
+			}
+		}
+
+		
+		public unsafe void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startVertex, int numVertices) 
+		{
+			// get pointer to byte array data
+			fixed (byte *ptr = data.getRawArray()) {
+				uploadFromPointer(ptr + byteArrayOffset, (int)(data.length - byteArrayOffset), startVertex, numVertices);
+			}
+		}
+
+		public unsafe void uploadFromArray(float[] data, int startVertex, int numVertices) 
+		{
+			fixed (float *ptr = data) {
+				uploadFromPointer(ptr, data.Length * sizeof(float), startVertex, numVertices);
 			}
 		}
 
@@ -141,13 +154,14 @@ namespace flash.display3D
 			get {return mIds[mBufferIndex];}
 		}
 		
+		private readonly Context3D  mContext;
 		private readonly int		mNumVertices;
 		private readonly int		mVertexSize; 		// size in floats
 		private float[]				mData;
 		private uint[]		 		mIds;
 		private int 				mBufferIndex;		// buffer index for multibuffering
 		private BufferUsage         mUsage;
-
+		private int 				mMemoryUsage;
 #else
 
 		public VertexBuffer3D(Context3D context3D, int numVertices, int dataPerVertex, int multiBufferCount = 1)

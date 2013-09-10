@@ -47,6 +47,14 @@ namespace Amf
             this.stream = stream;
         }
 
+		// this method is used by the deserialization code for an object
+		public void Read<T>(out T o)
+		{
+			// TODO: make a version that does not box values
+			object next = ReadNextObject();
+			o = (T)next;
+		}
+
         public object ReadNextObject()
         {
             int b = stream.ReadByte();
@@ -97,8 +105,12 @@ namespace Amf
 			case Amf3TypeCode.VectorDouble:
 				return ReadVectorDouble();
 
-			case Amf3TypeCode.VectorObject:
 			case Amf3TypeCode.Dictionary:
+				return ReadDictionary();
+
+			case Amf3TypeCode.VectorObject:
+				return ReadVectorObject();
+
 			default:
 				throw new NotImplementedException("Cannot parse type " + type.ToString());
             }
@@ -292,6 +304,33 @@ namespace Amf
 			return vector;
 		}
 
+		public Vector<dynamic> ReadVectorObject()
+		{
+			int num = ReadInteger();
+			if ((num & 1) == 0) {
+				return (Vector<dynamic>)GetTableEntry(objectTable, num >> 1);
+			}
+
+			num >>= 1;
+			bool isFixed = stream.ReadByteOrThrow() != 0;
+
+			// read object type name 
+			// this class definition is not known until the first object has been read
+			// (TODO: we need to construct the right vector type based on this)
+			string objectTypeName = ReadString();
+
+			var vector = new Vector<dynamic>((uint)num, isFixed);
+			objectTable.Add(vector);
+
+			// read all values
+			for (int i=0; i < num; i++) {
+				vector[i] = ReadNextObject();
+			}
+
+			return vector;
+		}
+
+
 		public flash.utils.ByteArray ReadByteArray()
 		{
 			int num = ReadInteger();
@@ -310,6 +349,35 @@ namespace Amf
 			objectTable.Add(array);
 			return array;
 		}
+
+		public flash.utils.Dictionary ReadDictionary()
+		{
+			// get entry count
+			int num = ReadInteger();
+			if ((num & 1) == 0) {
+				return (flash.utils.Dictionary)GetTableEntry(objectTable, num >> 1);
+			}
+			num >>= 1;
+
+			// weak keys?
+			bool weakKeys = stream.ReadByteOrThrow()!=0;
+
+			// create dictionary
+			var dict = new flash.utils.Dictionary(weakKeys);
+			objectTable.Add(dict);
+
+			// read entries
+			for (int i=0; i < num; i++) {
+				// read key
+				object key = ReadNextObject();
+				// read value
+				object value = ReadNextObject();
+				// store in dictionary
+				dict[key] = value;
+			}
+			return dict;
+		}
+
 
 
         public Amf3Object ReadAmf3Object()
@@ -363,8 +431,20 @@ namespace Amf
                     key = ReadString();
                 }
             }
-
             return obj;
         }
+
+		// returns all the class definitions that have been found while parsing
+		public Amf3ClassDef[] GetClassDefinitions()
+		{
+			return traitTable.ToArray();
+		}
+
+		// returns all the objects that have been found while parsing
+		public object[] GetObjectTable()
+		{
+			return objectTable.ToArray();
+		}
+
     }
 }

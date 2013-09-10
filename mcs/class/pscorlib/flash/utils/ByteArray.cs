@@ -385,13 +385,13 @@ namespace flash.utils {
 			long bits = BitConverter.DoubleToInt64Bits(value);
 			if (mEndian == ByteEndian.Little)
 			{
-				writeUnsignedInt((uint)(bits >> 32) );
 				writeUnsignedInt((uint)bits);
+				writeUnsignedInt((uint)(bits >> 32) );
 			}
 			else
 			{
-				writeUnsignedInt((uint)bits);
 				writeUnsignedInt((uint)(bits >> 32) );
+				writeUnsignedInt((uint)bits);
 			}
 		}
  	 	
@@ -539,6 +539,17 @@ namespace flash.utils {
 			ba.mData = array;
 			ba.mLength = array.Length;
 			return ba;
+		}
+
+		public static ByteArray cloneFromArray<T>(T[] array, int count) where T:struct {
+			int byteLength = Buffer.ByteLength(array);
+			if (count != array.Length) {
+				byteLength = byteLength / array.Length * count;
+			}
+
+			byte[] clone = new byte[byteLength];
+			Buffer.BlockCopy(array, 0, clone, 0, clone.Length);
+			return ByteArray.fromArray(clone);
 		}
 
 		public static ByteArray loadFromPath(string path) {
