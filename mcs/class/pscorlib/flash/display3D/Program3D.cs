@@ -343,6 +343,20 @@ namespace flash.display3D {
 			}
 		}
 
+		public Uniform searchUniform( bool isVertex, int register )
+		{
+			Uniform[] ary = (isVertex)? mVertexUniformLookup : mFragmentUniformLookup;
+
+			for (int i=0; i<ary.Length; i++) {
+				Uniform uni = ary [i];
+				if ( (uni.RegIndex <= register) &&
+					((uni.RegIndex + uni.RegCount) > register)) {
+					return uni;
+				}
+			}
+			return null;
+		}
+
 		public SamplerState getSamplerState(int sampler)
 		{
 			return mSamplerStates[sampler];
