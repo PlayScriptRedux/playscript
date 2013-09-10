@@ -385,7 +385,7 @@ namespace flash.display3D {
 			// mark all samplers that this program uses as dirty
 			mSamplerDirty |= mProgram.samplerUsageMask;
 		}
- 	 	
+ 
 		public void setProgramConstantsFromByteArray(string programType, int firstRegister, int numRegisters, ByteArray data, uint byteArrayOffset) 
 		{
 			if (numRegisters == 0) return;
@@ -404,23 +404,29 @@ namespace flash.display3D {
 				// get uniform mapped to register
 				Program3D.Uniform uniform = mProgram.getUniform(isVertex, register);
 
-				if (uniform == null)
+				if (uniform == null) 
 				{
-					// skip this register
-					register     += 1;
-					numRegisters -= 1;
-					dataIndex    += 16;
+					uniform = mProgram.searchUniform (isVertex, register);
+		
+					if (uniform == null) 
+					{
+						// skip this register
+						register += 1;
+						numRegisters -= 1;
+						dataIndex += 16;
 
-					if (enableErrorChecking) {
-						//						Console.WriteLine ("warning: program register not found: {0}", register);
+						if (enableErrorChecking) {
+							Console.WriteLine ("warning: program register not found: {0}", register);
+						}
+						continue;
 					}
-					continue;
 				}
 				// convert source data into floating point
 				int tempIndex = 0;
 				data.position = dataIndex;
-				dataIndex += (uint) (uniform.RegCount<<2);
-				for (int i=0; i < uniform.RegCount; i++)
+				int numRegistersWritten = (uniform.RegCount < numRegisters )? uniform.RegCount : numRegisters;
+				dataIndex += (uint) (numRegistersWritten<<4); // <<4 <=> 16 bytes (4 floats, so *16 per registers
+				for (int i=0; i < numRegistersWritten; i++)
 				{
 					// debug print the constant data
 					//					Console.WriteLine ("{5}[{0}]: {1}, {2}, {3}, {4}", register + i, data[dataIndex+0], data[dataIndex+1], data[dataIndex+2], data[dataIndex+3], programType);
@@ -436,22 +442,23 @@ namespace flash.display3D {
 				switch (uniform.Type)
 				{
 					case ActiveUniformType.FloatMat2:
-					GL.UniformMatrix2(uniform.Location, uniform.Size, false, mTemp);
+					GL.UniformMatrix2(uniform.Location+firstRegister-uniform.RegIndex, numRegistersWritten, false, mTemp);
 					break;
 					case ActiveUniformType.FloatMat3:
-					GL.UniformMatrix3(uniform.Location, uniform.Size, false, mTemp);
+					GL.UniformMatrix3(uniform.Location+firstRegister-uniform.RegIndex, numRegistersWritten, false, mTemp);
 					break;
 					case ActiveUniformType.FloatMat4:
-					GL.UniformMatrix4(uniform.Location, uniform.Size, false, mTemp);
+					GL.UniformMatrix4(uniform.Location+firstRegister-uniform.RegIndex, numRegistersWritten, false, mTemp);
 					break;
 					default:
-					GL.Uniform4(uniform.Location, uniform.Size, mTemp);
+					GL.Uniform4(uniform.Location +firstRegister-uniform.RegIndex, numRegistersWritten, mTemp);
 					break;
 				}
 
 				// advance register number
-				register     += uniform.RegCount;
-				numRegisters -= uniform.RegCount;
+				register     += numRegistersWritten;
+				numRegisters -= numRegistersWritten;
+				firstRegister+= numRegistersWritten;
 			}
 		}
 
@@ -515,7 +522,13 @@ namespace flash.display3D {
 			}
 			else
 			{
-				if (enableErrorChecking) {
+				uniform = mProgram.searchUniform(isVertex, firstRegister);
+				if (uniform!=null) {
+					GL.UniformMatrix4(uniform.Location + (firstRegister - uniform.RegIndex) , 1, false, mTemp);
+
+				}
+				else if (enableErrorChecking) 
+				{
 					Console.WriteLine ("warning: program register not found: {0}", firstRegister);
 				}
 			}
