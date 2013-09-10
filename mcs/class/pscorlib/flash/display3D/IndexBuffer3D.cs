@@ -45,6 +45,7 @@ namespace flash.display3D {
 			mContext = context3D;
 			mNumIndices = numIndices;
 			mIds = new uint[multiBufferCount];
+			mElementType = DrawElementsType.UnsignedInt;
 			GL.GenBuffers(multiBufferCount, mIds);
 
 			mUsage = isDynamic ? BufferUsage.DynamicDraw : BufferUsage.StaticDraw;
@@ -68,7 +69,10 @@ namespace flash.display3D {
 			if (mBufferIndex >= mIds.Length)
 				mBufferIndex = 0;
 
-			int byteCount = count * sizeof(uint);
+			// get size of each index
+			int elementSize = (mElementType == DrawElementsType.UnsignedInt) ? sizeof(uint) : sizeof(ushort);
+
+			int byteCount = count * elementSize;
 			// bounds check
 			if (byteCount > dataLength)
 				throw new ArgumentOutOfRangeException("data buffer is not big enough for upload");
@@ -88,7 +92,7 @@ namespace flash.display3D {
 			} else {
 				// update range of index buffer
 				GL.BufferSubData(BufferTarget.ElementArrayBuffer,
-				                 new IntPtr(startOffset * sizeof(uint)),
+				                 new IntPtr(startOffset * elementSize),
 				                 new IntPtr(byteCount), 
 				                 new IntPtr(data));
 			}
@@ -96,6 +100,9 @@ namespace flash.display3D {
 		}
 
 		public unsafe void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startOffset, int count) {
+			// uploading from a byte array implies 16-bit indices
+			mElementType = DrawElementsType.UnsignedShort;
+
 			// pin pointer to byte array data
 			fixed (byte *ptr = data.getRawArray()) {
 				uploadFromPointer(ptr + byteArrayOffset, (int)(data.length - byteArrayOffset), startOffset, count);
@@ -103,6 +110,9 @@ namespace flash.display3D {
 		}
 
 		public unsafe void uploadFromArray(uint[] data, int startOffset, int count) {
+			// uploading from an array or vector implies 32-bit indices
+			mElementType = DrawElementsType.UnsignedInt;
+
 			// pin pointer to array data
 			fixed (uint *ptr = data) {
 				uploadFromPointer(ptr, data.Length * sizeof(uint), startOffset, count);
@@ -115,6 +125,7 @@ namespace flash.display3D {
 		
 		public uint 			id 			{get {return mIds[mBufferIndex];}}
 		public int				numIndices 	{get {return mNumIndices;}}
+		public DrawElementsType	elementType { get { return mElementType; } }
 
 		private readonly Context3D mContext;
 		private readonly int	mNumIndices;
@@ -122,6 +133,7 @@ namespace flash.display3D {
 		private int 			mBufferIndex;		// buffer index for multibuffering
 		private BufferUsage     mUsage;
 		private int 			mMemoryUsage;
+		private DrawElementsType mElementType;
 
 
 #else

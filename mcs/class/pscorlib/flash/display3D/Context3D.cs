@@ -280,7 +280,7 @@ namespace flash.display3D {
 			int count = (numTriangles == -1) ? indexBuffer.numIndices : (numTriangles * 3);
 			GL.BindBuffer(BufferTarget.ElementArrayBuffer, indexBuffer.id);
 
-			GL.DrawElements(BeginMode.Triangles, count, DrawElementsType.UnsignedInt, new IntPtr(firstIndex));	
+			GL.DrawElements(BeginMode.Triangles, count, indexBuffer.elementType, new IntPtr(firstIndex));	
 
 			// increment draw call count
 			statsIncrement(Stats.DrawCalls);
