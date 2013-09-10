@@ -234,7 +234,8 @@ namespace PlayScript
 			tw.WriteLine();
 
 			tw.WriteLine("---------------------------");
-			for (int frame=0; frame < sFrameCount; frame++)
+			int numberOfFramesToPrint = Math.Min(sFrameCount, MaxNumberOfFramesPrintedInHistory);
+			for (int frame=0; frame < numberOfFramesToPrint; frame++)
 			{
 				tw.Write("{0,4}:", frame);
 				int gcCount = 0;
@@ -567,6 +568,7 @@ namespace PlayScript
 		// ordered list of sections
 		private static List<Section> sSectionList = new List<Section>();
 		private static int sFrameCount  = 0;
+		public static int MaxNumberOfFramesPrintedInHistory = 1000;
 
 		// the frequency to print profiiling info
 		private static int sPrintFrameCount  = 60;
