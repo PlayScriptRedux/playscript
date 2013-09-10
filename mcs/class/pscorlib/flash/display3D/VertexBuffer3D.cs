@@ -64,44 +64,57 @@ namespace flash.display3D
 			mContext.statsSubtract(Context3D.Stats.Mem_VertexBuffer, mMemoryUsage);
 			mMemoryUsage = 0;
 		}
-		
-		public void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startVertex, int numVertices) {
-			throw new NotImplementedException();
-		}
 
-		public void uploadFromArray(float[] data, int startVertex, int numVertices) 
+
+		public unsafe void uploadFromPointer(void *data, int dataLength, int startVertex, int numVertices) 
 		{
-
 			// swap to next buffer
 			mBufferIndex++;
 			if (mBufferIndex >= mIds.Length)
 				mBufferIndex = 0;
 
 			GL.BindBuffer(BufferTarget.ArrayBuffer, mIds[mBufferIndex]);
-			
+
+			// get pointer to byte array data
 			int byteStart = startVertex * mVertexSize * sizeof(float);
 			int byteCount = numVertices * mVertexSize * sizeof(float);
-			if (byteStart == 0)
-			{
+			// bounds check
+			if (byteCount > dataLength)
+				throw new ArgumentOutOfRangeException("data buffer is not big enough for upload");
+			if (byteStart == 0) {
 				// upload whole array
-				GL.BufferData<float>(BufferTarget.ArrayBuffer, 
-				                     new IntPtr(byteCount), 
-				                     data, 
-				                     mUsage);
+				GL.BufferData(BufferTarget.ArrayBuffer, 
+				              new IntPtr(byteCount), 
+				              new IntPtr(data), 
+				              mUsage);
 
 				if (byteCount != mMemoryUsage) {
 					// update stats for memory usage
 					mContext.statsAdd(Context3D.Stats.Mem_VertexBuffer, byteCount - mMemoryUsage);
 					mMemoryUsage = byteCount;
 				}
-			} 
-			else 
-			{
+			} else {
 				// upload whole array
-				GL.BufferSubData<float>(BufferTarget.ArrayBuffer, 
-				                        new IntPtr(byteStart), 
-				                        new IntPtr(byteCount), 
-				                        data);
+				GL.BufferSubData(BufferTarget.ArrayBuffer, 
+				                 new IntPtr(byteStart), 
+				                 new IntPtr(byteCount), 
+				                 new IntPtr(data));
+			}
+		}
+
+		
+		public unsafe void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startVertex, int numVertices) 
+		{
+			// get pointer to byte array data
+			fixed (byte *ptr = data.getRawArray()) {
+				uploadFromPointer(ptr + byteArrayOffset, (int)(data.length - byteArrayOffset), startVertex, numVertices);
+			}
+		}
+
+		public unsafe void uploadFromArray(float[] data, int startVertex, int numVertices) 
+		{
+			fixed (float *ptr = data) {
+				uploadFromPointer(ptr, data.Length * sizeof(float), startVertex, numVertices);
 			}
 		}
 

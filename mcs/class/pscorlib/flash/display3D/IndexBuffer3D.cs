@@ -61,28 +61,51 @@ namespace flash.display3D {
 			mContext.statsSubtract(Context3D.Stats.Mem_IndexBuffer, mMemoryUsage);
 			mMemoryUsage = 0;
 		}
-		
-		public void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startOffset, int count) {
-			throw new NotImplementedException();
-		}
 
-		public void uploadFromArray(uint[] data, int startOffset, int count) {
+		public unsafe void uploadFromPointer(void *data, int dataLength, int startOffset, int count) {
 			// swap to next buffer
 			mBufferIndex++;
 			if (mBufferIndex >= mIds.Length)
 				mBufferIndex = 0;
 
 			int byteCount = count * sizeof(uint);
-			GL.BindBuffer(BufferTarget.ElementArrayBuffer, mIds[mBufferIndex]);
-			GL.BufferData<uint>(BufferTarget.ElementArrayBuffer, 
-			                    new IntPtr(byteCount), 
-			                    data, 
-			                    mUsage);
+			// bounds check
+			if (byteCount > dataLength)
+				throw new ArgumentOutOfRangeException("data buffer is not big enough for upload");
 
-			if (byteCount != mMemoryUsage) {
-				// update stats for memory usage
-				mContext.statsAdd(Context3D.Stats.Mem_IndexBuffer, byteCount - mMemoryUsage);
-				mMemoryUsage = byteCount;
+			GL.BindBuffer(BufferTarget.ElementArrayBuffer, mIds[mBufferIndex]);
+			if (startOffset == 0) {
+				GL.BufferData(BufferTarget.ElementArrayBuffer, 
+				             new IntPtr(byteCount), 
+				             new IntPtr(data), 
+				             mUsage);
+
+				if (byteCount != mMemoryUsage) {
+					// update stats for memory usage
+					mContext.statsAdd(Context3D.Stats.Mem_IndexBuffer, byteCount - mMemoryUsage);
+					mMemoryUsage = byteCount;
+				}
+			} else {
+				// update range of index buffer
+				GL.BufferSubData(BufferTarget.ElementArrayBuffer,
+				                 new IntPtr(startOffset * sizeof(uint)),
+				                 new IntPtr(byteCount), 
+				                 new IntPtr(data));
+			}
+
+		}
+
+		public unsafe void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startOffset, int count) {
+			// pin pointer to byte array data
+			fixed (byte *ptr = data.getRawArray()) {
+				uploadFromPointer(ptr + byteArrayOffset, (int)(data.length - byteArrayOffset), startOffset, count);
+			}
+		}
+
+		public unsafe void uploadFromArray(uint[] data, int startOffset, int count) {
+			// pin pointer to array data
+			fixed (uint *ptr = data) {
+				uploadFromPointer(ptr, data.Length * sizeof(uint), startOffset, count);
 			}
 		}
 
