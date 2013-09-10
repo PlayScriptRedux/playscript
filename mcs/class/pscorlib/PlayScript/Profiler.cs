@@ -24,6 +24,7 @@ namespace PlayScript
 	{
 		public static bool Enabled = true;
 		public static bool ProfileGPU = false;
+		public static long LastTelemetryFrameSpanStart = long.MaxValue;
 
 		// if telemetryName is provided then it will be used for the name sent to telemetry when this section is entered
 		public static void Begin(string name, string telemetryName = null)
@@ -93,6 +94,18 @@ namespace PlayScript
 			if (!Enabled)
 				return;
 
+			if (LastTelemetryFrameSpanStart != long.MaxValue)
+			{
+				long endFrameTime = Stopwatch.GetTimestamp();
+				long spanTimeInTicks = endFrameTime - LastTelemetryFrameSpanStart;
+				// From ticks to ns
+				double spanTimeInNs = (double)spanTimeInTicks * (1000000000.0 / (double)Stopwatch.Frequency);
+				PerformanceFrameData frameData = GetPerformanceFrameData();
+				double autoProfileFrameInNs = frameData.AutoProfileFrame * 1000000.0;		// Convert ms to ns
+				if (spanTimeInNs >= autoProfileFrameInNs) {
+					Telemetry.Session.EndSpan("SlowFrame", LastTelemetryFrameSpanStart);
+				}
+			}
 			Profiler.End("frame");
 
 #if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
@@ -147,6 +160,7 @@ namespace PlayScript
 				}
 			}
 		
+			LastTelemetryFrameSpanStart = Telemetry.Session.BeginSpan();
 			Profiler.Begin("frame");
 		}
 
