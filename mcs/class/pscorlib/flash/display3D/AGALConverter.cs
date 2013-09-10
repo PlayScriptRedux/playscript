@@ -449,7 +449,7 @@ namespace flash.display3D
 						sb.Append (entry.name + "_alpha");
 						sb.AppendLine (";");
 					} else if (entry.usage == RegisterUsage.Vector4Array) {
-						sb.AppendFormat ("{0}[{1}]", entry.name, 256);
+						sb.AppendFormat ("{0}[{1}]", entry.name, 128);//128 registers
 						sb.AppendLine (";");
 					} else {
 						sb.Append (entry.name);
@@ -685,6 +685,9 @@ namespace flash.display3D
 					break;
 
 				case 0x17: // m33
+					//destination.x = (source1.x * source2[0].x) + (source1.y * source2[0].y) + (source1.z * source2[0].z)
+					//destination.y = (source1.x * source2[1].x) + (source1.y * source2[1].y) + (source1.z * source2[1].z)
+					//destination.z = (source1.x * source2[2].x) + (source1.y * source2[2].y) + (source1.z * source2[2].z)
 				{
 					var existingUsage = map.GetUsage(sr2);
 					if (existingUsage != RegisterUsage.Vector4 && existingUsage != RegisterUsage.Vector4Array)
@@ -714,6 +717,11 @@ namespace flash.display3D
 					break;
 
 				case 0x18: // m44
+			//multiply matrix 4x4
+			//destination.x = (source1.x * source2[0].x) + (source1.y * source2[0].y) + (source1.z * source2[0].z)+ (source1.w * source2[0].w)
+			//destination.y = (source1.x * source2[1].x) + (source1.y * source2[1].y) + (source1.z * source2[1].z)+ (source1.w * source2[1].w)
+			//destination.z = (source1.x * source2[2].x) + (source1.y * source2[2].y) + (source1.z * source2[2].z)+ (source1.w * source2[2].w)
+			//destination.w = (source1.x * source2[3].x) + (source1.y * source2[3].y) + (source1.z * source2[3].z)+ (source1.w * source2[3].w)
 				{
 					var existingUsage = map.GetUsage(sr2);
 					if (existingUsage != RegisterUsage.Vector4 && existingUsage != RegisterUsage.Vector4Array)
@@ -745,6 +753,10 @@ namespace flash.display3D
 					break;
 
 				case 0x19: // m34
+					//m34 0x19 multiply matrix 3x4
+					//destination.x = (source1.x * source2[0].x) + (source1.y * source2[0].y) + (source1.z * source2[0].z)+ (source1.w * source2[0].w)
+					//destination.y = (source1.x * source2[1].x) + (source1.y * source2[1].y) + (source1.z * source2[1].z)+ (source1.w * source2[1].w)
+					//destination.z = (source1.x * source2[2].x) + (source1.y * source2[2].y) + (source1.z * source2[2].z)+ (source1.w * source2[2].w)
 				{
 					// prevent w from being written for a m34
 					dr.mask &= 7;
