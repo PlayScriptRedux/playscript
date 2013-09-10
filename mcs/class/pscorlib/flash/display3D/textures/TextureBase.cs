@@ -65,7 +65,7 @@ namespace flash.display3D.textures {
 				GL.TexParameter (mTextureTarget, TextureParameterName.TextureWrapS, (int)state.WrapModeS);
 				GL.TexParameter (mTextureTarget, TextureParameterName.TextureWrapT, (int)state.WrapModeT);
 				if (state.LodBias != 0.0) {
-					throw new System.NotImplementedException("Lod bias setting not supported yet");
+					//throw new System.NotImplementedException("Lod bias setting not supported yet");
 				}
 
 				mSamplerState = state;
