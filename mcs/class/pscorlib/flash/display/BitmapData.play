@@ -338,6 +338,8 @@ package flash.display {
 		}
  	 	
 		public function fillRect(rect:Rectangle, color:uint):void {
+			if(mData==null)
+				return;
 			var xmin:int = rect.left;
 			if(xmin<0) xmin=0;
 			if(xmin>=mWidth) xmin=mWidth-1;
