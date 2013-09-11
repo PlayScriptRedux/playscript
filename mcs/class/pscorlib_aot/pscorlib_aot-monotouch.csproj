@@ -54,6 +54,7 @@
     <Folder Include="flash\globalization\" />
     <Folder Include="flash\external\" />
     <Folder Include="Amf\" />
+    <Folder Include="flash\media\ios\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -822,17 +823,11 @@
     <Compile Include="..\pscorlib\fl\events\ComponentEvent.play">
       <Link>fl\events\ComponentEvent.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\media\ios\Sound.cs">
-      <Link>flash\media\SoundIos.cs</Link>
-    </Compile>
     <Compile Include="..\pscorlib\AllowDynamicAttribute.cs">
       <Link>AllowDynamicAttribute.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\ForbidDynamicAttribute.cs">
       <Link>ForbidDynamicAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\media\ios\SoundChannel.cs">
-      <Link>flash\media\SoundChannelIos.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\DotNetError.play">
       <Link>DotNetError.play</Link>
@@ -902,6 +897,12 @@
     </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3SerializableAttribute.cs">
       <Link>Amf\Amf3SerializableAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\media\ios\Sound.cs">
+      <Link>flash\media\ios\Sound.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\media\ios\SoundChannel.cs">
+      <Link>flash\media\ios\SoundChannel.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

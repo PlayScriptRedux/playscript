@@ -12,8 +12,6 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-#if PLATFORM_MONOTOUCH
-
 using MonoTouch.AVFoundation;
 
 namespace flash.media {
@@ -28,11 +26,10 @@ namespace flash.media {
 			set { _player = value; }
 		}
 
-		private void stopIos()
+		private void internalStop()
 		{
 			_player.Stop();
 		}
 	}
 
 }
-#endif

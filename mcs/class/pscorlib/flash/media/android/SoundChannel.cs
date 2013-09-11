@@ -12,32 +12,26 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-package flash.media {
+using Android.Media;
 
-	import flash.events.EventDispatcher;
+namespace flash.media {
+		
+	// We use a partial C# class for platform specific logic
+	partial class SoundChannel {
 
-	public class SoundChannel extends EventDispatcher {
-	
-		//
-		// Properties
-		//
-	
-		public property leftPeak : Number { get { return 0.0; } }
+		private MediaPlayer player;
 
- 	 	public property position : Number { get { return 0.0; } }
+		public MediaPlayer Player
+		{
+			set { player = value; }
+		}
 
- 	 	public property rightPeak : Number { get { return 0.0; } }
-
- 	 	public property soundTransform : SoundTransform { get; set; }
-
- 	 	//
- 	 	// Methods
- 	 	// 
- 	 	
- 	 	public function stop():void {
-		    internalStop();
- 	 	}
-	
+		private void internalStop()
+		{
+			if (player.IsPlaying)
+				player.Stop ();	
+		}
 	}
 
 }
+

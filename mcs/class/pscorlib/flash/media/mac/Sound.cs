@@ -12,32 +12,28 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-package flash.media {
+using System;
+using System.Collections.Generic;
+using flash.events;
 
-	import flash.events.EventDispatcher;
+namespace flash.media {
 
-	public class SoundChannel extends EventDispatcher {
-	
-		//
-		// Properties
-		//
-	
-		public property leftPeak : Number { get { return 0.0; } }
+	// We use a partial C# class for platform specific logic
+	partial class Sound {
+			
+		private SoundChannel channel = new SoundChannel();
 
- 	 	public property position : Number { get { return 0.0; } }
+		private void internalLoad(String url)
+		{
+			Console.WriteLine ("Sound internalLoad is not implemented for this platform");
+		}
 
- 	 	public property rightPeak : Number { get { return 0.0; } }
+		private SoundChannel internalPlay(double startTime=0, int loops=0, SoundTransform sndTransform=null)
+        {
+			Console.WriteLine ("Sound internalPlay is not implemented for this platform");
+			return channel;
+        }
 
- 	 	public property soundTransform : SoundTransform { get; set; }
-
- 	 	//
- 	 	// Methods
- 	 	// 
- 	 	
- 	 	public function stop():void {
-		    internalStop();
- 	 	}
-	
 	}
 
 }
