@@ -252,6 +252,42 @@ namespace Mono.CSharp
 //				return this;
 //			}
 
+			// Attempt to build simple const initializer
+			bool is_const_init = false;
+			TypeSpec const_type = null;
+			if (elements.Count > 0) {
+				is_const_init = true;
+				const_type = vectorType != null ? vectorType.ResolveAsType (rc) : null;
+				foreach (var elem in elements) {
+					if (elem == null) {
+						is_const_init = false;
+						break;
+					}
+					if (!(elem is Constant) && !(elem is Unary && ((Unary)elem).Expr is Constant)) {
+						is_const_init = false;
+						break;
+					}
+					TypeSpec elemType = elem.Type;
+					if (vectorType == null) {
+						if (const_type == null) {
+							const_type = elemType;
+							if (const_type == null) {
+								is_const_init = false;
+								break;
+							}
+						}
+						if (const_type != elemType) {
+							if (((const_type == rc.BuiltinTypes.Int || const_type == rc.BuiltinTypes.UInt) && elemType == rc.BuiltinTypes.Double) ||
+								(const_type == rc.BuiltinTypes.Double && (elemType == rc.BuiltinTypes.Int || elemType == rc.BuiltinTypes.UInt))) {
+								const_type = rc.BuiltinTypes.Double;
+							} else {
+								const_type = rc.BuiltinTypes.Object;
+							}
+						}
+					}
+				}
+			}
+
 			TypeExpression type;
 			if (vectorType != null) { // For new <Type> [ initializer ] expressions..
 				var elemTypeSpec = vectorType.ResolveAsType(rc);
@@ -269,6 +305,12 @@ namespace Mono.CSharp
 			if (typeSpec.IsArray) {
 				ArrayCreation arrayCreate = (ArrayCreation)new ArrayCreation (type, this).Resolve (rc);
 				return arrayCreate;
+			} else if (is_const_init) {
+				// If all elements in the initializer list are simple constants, we just pass the elements in a .NET array to the
+				// PS Array initializer.
+				var newArgs = new Arguments (1);
+				newArgs.Add (new Argument (new ArrayCreation (new TypeExpression(const_type, loc), this, loc)));
+				return new New (type, newArgs, loc).Resolve (rc);
 			} else {
 				var initElems = new List<Expression>();
 				foreach (var e in elements) {

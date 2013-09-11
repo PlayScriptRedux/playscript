@@ -39,7 +39,7 @@ package flash.geom {
 			get
 			{
 				// allocate vector on demand, this is gross
-				var rd:Vector.<Number> = new Vector.<Number>();
+				var rd:Vector.<Number> = new Vector.<Number>(16);
 
 				// copy array to vector
 				for (var i:int=0; i < 16; i++)

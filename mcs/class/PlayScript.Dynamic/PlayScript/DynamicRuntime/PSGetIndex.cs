@@ -40,6 +40,8 @@ namespace PlayScript.DynamicRuntime
 
 			var l2 = o as IList;
 			if (l2 != null) {
+				if (index >= l2.Count)
+					return default(T);
 				var ro = l2 [index];
 				if (ro is T) {
 					return (T)ro;

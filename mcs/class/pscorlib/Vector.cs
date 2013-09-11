@@ -57,7 +57,7 @@ namespace _root {
 
 		int IList.Add(object value)
 		{
-			throw new NotImplementedException();
+			return (int)push ((T)value);
 		}
 
 		void IList.Clear()
@@ -162,7 +162,7 @@ namespace _root {
 		
 		public uint length
 		{
-#if NET_4_5
+#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
 			get { return mCount; } 
@@ -201,6 +201,12 @@ namespace _root {
 			this.append((IEnumerable)a);
 		}
 
+		public Vector(T[] a)
+		{
+			mArray = a.Clone () as T[];
+			mCount = (uint)a.Length;
+		}
+
 		public Vector(IEnumerable e)
 		{
 			mArray = sEmptyArray;
@@ -219,7 +225,7 @@ namespace _root {
 
 		public T this[int i]
 		{
-#if NET_4_5
+#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
 			get {
@@ -237,7 +243,7 @@ namespace _root {
 #endif
 				return mArray[i];
 			}
-#if NET_4_5
+#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
 			set {
@@ -257,7 +263,7 @@ namespace _root {
 
 		public T this[uint i]
 		{
-#if NET_4_5
+#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
 			get {
@@ -275,7 +281,7 @@ namespace _root {
 #endif
 				return mArray[(int)i];
 			}
-#if NET_4_5
+#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
 			set {
@@ -527,16 +533,12 @@ namespace _root {
 			return val;
 		}
 
-#if NET_4_5
+#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
-#if PERFORMANCE_MODE
-		public void push(T value)
-#else
 		public uint push(T value)
-#endif
 		{
-#if !PERFORMANCE_MODE
+#if !PERFORMANCE_MODE || DEBUG
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
 #endif
@@ -544,9 +546,7 @@ namespace _root {
 				EnsureCapacity((uint)(1.25 * (mCount + 1)));
 			mArray[mCount] = value;
 			mCount++;
-#if !PERFORMANCE_MODE
 			return mCount;
-#endif
 		}
 		
 		public uint push(T value, params T[] args) 
@@ -587,11 +587,7 @@ namespace _root {
 			return v;
 		}
 
-#if PERFORMANCE_MODE
-		public void slice(int startIndex = 0, int endIndex = 16777215) 
-#else
 		public Vector<T> slice(int startIndex = 0, int endIndex = 16777215) 
-#endif
 		{
 			if (startIndex < 0) 
 				throw new InvalidOperationException("splice error");
@@ -604,11 +600,9 @@ namespace _root {
 			if (count < 0)
 				count = 0;
 
-#if !PERFORMANCE_MODE
 			var result = new Vector<T>((uint)count, false);
 			System.Array.Copy(mArray, startIndex, result.mArray, 0, count);
 			return result;
-#endif
 		}
 		
 		public bool some(Delegate callback, dynamic thisObject = null) 

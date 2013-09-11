@@ -8,7 +8,6 @@
     <ProjectGuid>{0BACBE20-34DD-4E24-8B91-87970E8A23B9}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>PlayScript.Dynamic</RootNamespace>
-    <AssemblyName>PlayScript.Dynamic_aot</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -19,6 +18,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
+    <AssemblyName>PlayScript.Dynamic_aot</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -28,6 +28,23 @@
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
     <DefineConstants>BINDERS_RUNTIME_STATS</DefineConstants>
+    <AssemblyName>PlayScript.Dynamic_aot</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseNoOpt|iPhone' ">
+    <Optimize>false</Optimize>
+    <OutputPath>bin\iPhone\ReleaseNoOpt</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <AssemblyName>PlayScript.Dynamic_aot-net_4_0</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseNoOpt|AnyCPU' ">
+    <DebugType>none</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <DefineConstants>BINDERS_RUNTIME_STATS</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AssemblyName>PlayScript.Dynamic_aot</AssemblyName>
+    <ConsolePause>false</ConsolePause>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
