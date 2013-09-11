@@ -40,9 +40,6 @@
     <Reference Include="System.Core" />
     <Reference Include="OpenTK-1.0" />
     <Reference Include="System.Xml" />
-    <Reference Include="ICSharpCode.SharpZipLib">
-      <HintPath>..\lib\net_4_5\ICSharpCode.SharpZipLib.dll</HintPath>
-    </Reference>
     <Reference Include="System.Json" />
     <Reference Include="System.Web.Services" />
   </ItemGroup>
