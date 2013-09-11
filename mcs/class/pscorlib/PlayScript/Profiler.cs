@@ -193,12 +193,13 @@ namespace PlayScript
 			temporaryStringBuilder.Length = 0;
 			temporaryStringBuilder.Append("profiler: ");
 			foreach (Section section in sSectionList) {
-				if (section.TotalTime.Ticks == 0) {
+				double timeToDisplay = section.TotalTime.TotalMilliseconds / sFrameCount;
+				if (timeToDisplay < 0.01) {
 					continue;
 				}
 				temporaryStringBuilder.Append(section.Name);
 				temporaryStringBuilder.Append(':');
-				temporaryStringBuilder.AppendFormat("{0:0.00}", (section.TotalTime.TotalMilliseconds / sFrameCount));
+				temporaryStringBuilder.AppendFormat("{0:0.00}", timeToDisplay);
 				temporaryStringBuilder.Append(' ');
 			}
 			tw.WriteLine(temporaryStringBuilder.ToString());
@@ -206,9 +207,14 @@ namespace PlayScript
 
 		public static void PrintFullTimes(TextWriter tw)
 		{
-			foreach (Section section in sSectionList) {
+			foreach (Section section in sSectionList.OrderBy(a => -a.TotalTime)) {
 
 				var total = section.TotalTime;
+				if (total.TotalMilliseconds < 0.01) {
+					// Skip negligible times
+					continue;
+				}
+
 				var average = total.TotalMilliseconds / sFrameCount;
 
 				// do we have a history?
@@ -219,7 +225,7 @@ namespace PlayScript
 					var minTime = history.First();
 					var maxTime = history.Last();
 					var medianTime = history[history.Count / 2];
-					
+
 					tw.WriteLine("{0,-12} total:{1,6} average:{2,6:0.00}ms min:{3,6:0.00}ms max:{4,6:0.00}ms median:{5,6:0.00}ms ",
 					             section.Name,
 					             total,
