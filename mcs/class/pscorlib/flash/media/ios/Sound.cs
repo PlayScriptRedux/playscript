@@ -12,6 +12,8 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
+#if PLATFORM_MONOTOUCH
+
 using System;
 using System.Collections.Generic;
 using MonoTouch.AVFoundation;
@@ -87,3 +89,25 @@ namespace flash.media {
 	}
 
 }
+
+#else
+
+using System;
+
+namespace flash.media {
+
+	// We use a partial C# class for platform specific logic
+	partial class Sound {
+			
+		private void internalLoad(String url)
+		{		
+		}
+
+		private SoundChannel internalPlay(double startTime=0, int loops=0, SoundTransform sndTransform=null)
+		{
+			return null;
+		}
+	}
+}
+
+#endif
