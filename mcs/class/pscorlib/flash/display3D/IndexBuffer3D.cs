@@ -25,6 +25,7 @@ using OpenTK.Graphics.ES20;
 using OpenTK.Graphics.ES20;
 using BufferTarget = OpenTK.Graphics.ES20.All;
 using BufferUsage = OpenTK.Graphics.ES20.All;
+using DrawElementsType = OpenTK.Graphics.ES20.All;
 #endif
 
 namespace flash.display3D {

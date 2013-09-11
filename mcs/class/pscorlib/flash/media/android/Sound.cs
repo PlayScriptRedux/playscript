@@ -33,7 +33,6 @@ namespace flash.media {
 		{
 			player = new ZMediaPlayer (channel);
 
-			AssetFileDescriptor afd = Application.Context.Assets.OpenFd (url);
 
 			try {
 
@@ -43,6 +42,7 @@ namespace flash.media {
 					oldPlayer.Release();
 				}
 
+				AssetFileDescriptor afd = Application.Context.Assets.OpenFd (url);
 				player.SetDataSource (afd.FileDescriptor, afd.StartOffset, afd.Length);
 				player.SetVolume (100, 100);
 				player.Prepare ();
