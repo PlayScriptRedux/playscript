@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">iPhoneSimulator</Platform>
+    <ProductVersion>10.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{501151E8-1480-4C77-A1BA-CC00EA7C48C8}</ProjectGuid>
+    <ProjectTypeGuids>{6BC8ED88-2882-458C-8E55-DFD12B67127B};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <RootNamespace>ICSharpCode.SharpZipLib</RootNamespace>
+    <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
+    <AssemblyName>ICSharpCodeSharpZipLib</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhoneSimulator' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\iPhoneSimulator\Debug</OutputPath>
+    <DefineConstants>DEBUG;NET_4_0</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <MtouchLink>None</MtouchLink>
+    <ConsolePause>false</ConsolePause>
+    <MtouchDebug>true</MtouchDebug>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhoneSimulator' ">
+    <Optimize>true</Optimize>
+    <OutputPath>bin\iPhoneSimulator\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <MtouchLink>None</MtouchLink>
+    <ConsolePause>false</ConsolePause>
+    <DefineConstants>NET_4_0</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhone' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\iPhone\Debug</OutputPath>
+    <DefineConstants>DEBUG;NET_4_0</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <MtouchDebug>true</MtouchDebug>
+    <ConsolePause>false</ConsolePause>
+    <CodesignKey>iPhone Developer</CodesignKey>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhone' ">
+    <Optimize>true</Optimize>
+    <OutputPath>bin\iPhone\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodesignKey>iPhone Developer</CodesignKey>
+    <ConsolePause>false</ConsolePause>
+    <DefineConstants>NET_4_0</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Ad-Hoc|iPhone' ">
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\iPhone\Ad-Hoc</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodesignKey>iPhone Distribution</CodesignKey>
+    <BuildIpa>true</BuildIpa>
+    <ConsolePause>false</ConsolePause>
+    <CodesignProvision>Automatic:AdHoc</CodesignProvision>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'AppStore|iPhone' ">
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\iPhone\AppStore</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodesignKey>iPhone Distribution</CodesignKey>
+    <ConsolePause>false</ConsolePause>
+    <CodesignProvision>Automatic:AppStore</CodesignProvision>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Core" />
+    <Reference Include="monotouch" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Compile Include="ICSharpCode.SharpZipLib\AssemblyInfo.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\SharpZipBaseException.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\BZip2\BZip2.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\BZip2\BZip2Constants.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\BZip2\BZip2Exception.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\BZip2\BZip2InputStream.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\BZip2\BZip2OutputStream.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Checksums\Adler32.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Checksums\CRC32.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Checksums\IChecksum.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Checksums\StrangeCRC.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Core\FileSystemScanner.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Core\INameTransform.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Core\NameFilter.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Core\PathFilter.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Encryption\PkzipClassic.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\GZip\GZIPConstants.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\GZip\GZipException.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\GZip\GzipInputStream.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\GZip\GzipOutputStream.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Tar\InvalidHeaderException.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Tar\TarArchive.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Tar\TarBuffer.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Tar\TarEntry.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Tar\TarException.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Tar\TarHeader.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Tar\TarInputStream.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Tar\TarOutputStream.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Zip\FastZip.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Zip\ZipConstants.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Zip\ZipEntry.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Zip\ZipException.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Zip\ZipFile.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Zip\ZipInputStream.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Zip\ZipNameTransform.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Zip\ZipOutputStream.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Zip\Compression\Deflater.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Zip\Compression\DeflaterConstants.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Zip\Compression\DeflaterEngine.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Zip\Compression\DeflaterHuffman.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Zip\Compression\DeflaterPending.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Zip\Compression\Inflater.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Zip\Compression\InflaterDynHeader.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Zip\Compression\InflaterHuffmanTree.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Zip\Compression\PendingBuffer.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Zip\Compression\Streams\DeflaterOutputStream.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Zip\Compression\Streams\InflaterInputStream.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Zip\Compression\Streams\OutputWindow.cs" />
+    <Compile Include="ICSharpCode.SharpZipLib\Zip\Compression\Streams\StreamManipulator.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ICSharpCode.SharpZipLib\BZip2\.gitattributes" />
+    <None Include="ICSharpCode.SharpZipLib\Checksums\.gitattributes" />
+    <None Include="ICSharpCode.SharpZipLib\Core\.gitattributes" />
+    <None Include="ICSharpCode.SharpZipLib\Encryption\.gitattributes" />
+    <None Include="ICSharpCode.SharpZipLib\GZip\.gitattributes" />
+    <None Include="ICSharpCode.SharpZipLib\Tar\.gitattributes" />
+    <None Include="ICSharpCode.SharpZipLib\Zip\.gitattributes" />
+    <None Include="ICSharpCode.SharpZipLib\Zip\Compression\.gitattributes" />
+    <None Include="ICSharpCode.SharpZipLib\Zip\Compression\Streams\.gitattributes" />
+  </ItemGroup>
+</Project>
