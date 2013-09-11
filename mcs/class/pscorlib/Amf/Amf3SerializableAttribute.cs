@@ -25,9 +25,14 @@ using System.IO;
 
 namespace Amf
 {
-    public interface IAmf3Serializable
-    {
-        void Serialize(Amf3Writer writer);
-		void Serialize(Amf3Parser reader);
-    }
+	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = true)]
+	public class Amf3SerializableAttribute : Attribute
+	{
+		public string ClassName { get; set; }
+
+		public Amf3SerializableAttribute(string className)
+		{
+			ClassName = className;
+		}
+	}
 }

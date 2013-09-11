@@ -28,9 +28,6 @@ namespace Telemetry
 		// begins a span
 		public void Begin()
 		{
-			if (mIsInSpan)
-				throw new InvalidOperationException("Already inside span. Spans do not support recursion (yet)");
-
 			// begin a span
 			mBeginTime = Session.BeginSpan();
 
@@ -41,11 +38,10 @@ namespace Telemetry
 		// ends a span
 		public void End()
 		{
-			if (!mIsInSpan)
-				throw new InvalidOperationException("Span End() called without Begin()");
-
-			// emit end span
-			Session.EndSpan(mName, mBeginTime);
+			if (mIsInSpan) {
+				// emit end span
+				Session.EndSpan(mName, mBeginTime);
+			}
 
 			// clear span flag
 			mIsInSpan = false;
@@ -54,10 +50,10 @@ namespace Telemetry
 		// ends a span with a value
 		public void EndValue(object value)
 		{
-			if (!mIsInSpan)
-				throw new InvalidOperationException("Span EndValue() called without Begin()");
-
-			Session.EndSpanValue(mName, mBeginTime, value);
+			if (mIsInSpan) {
+				// emit end span
+				Session.EndSpanValue(mName, mBeginTime, value);
+			}
 			
 			// clear span flag
 			mIsInSpan = false;

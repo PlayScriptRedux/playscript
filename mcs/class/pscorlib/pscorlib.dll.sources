@@ -2,6 +2,7 @@
 ./Amf/Amf3ClassDef.cs
 ./Amf/Amf3Object.cs
 ./Amf/Amf3Parser.cs
+./Amf/Amf3SerializableAttribute.cs
 ./Amf/Amf3String.cs
 ./Amf/Amf3TypeCode.cs
 ./Amf/Amf3Writer.cs
@@ -251,8 +252,10 @@
 ./Object.cs
 ./PartialAttribute.cs
 ./PlayScript/EmbedLoader.cs
+./PlayScript/Hardware.cs
 ./PlayScript/ParamsDelegateTypes.cs
 ./PlayScript/Player.cs
+./PlayScript/Profiler.cs
 ./PlayScript/Profiler.cs
 ./PlayScript/Support.cs
 ./QName.play
@@ -263,10 +266,14 @@
 ./String.cs
 ./SWFAttribute.cs
 ./SyntaxError.play
+./Telemetry/Log.cs
+./Telemetry/MethodMap.cs
 ./Telemetry/Parser.cs
 ./Telemetry/Protocol.cs
+./Telemetry/Sampler.cs
 ./Telemetry/Session.cs
 ./Telemetry/Span.cs
+./Telemetry/SymbolTable.cs
 ./Telemetry/Value.cs
 ./TypeError.play
 ./URIError.play

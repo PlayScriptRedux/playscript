@@ -13,6 +13,7 @@
 //      limitations under the License.
 
 #if PLATFORM_MONOTOUCH
+
 using System;
 using System.Collections.Generic;
 using MonoTouch.AVFoundation;
@@ -31,7 +32,7 @@ namespace flash.media {
 		private AVAudioPlayer _player;
 		private SoundChannel _channel;
 
-		private void loadIos(String url)
+		private void internalLoad(String url)
 		{
 			_url = url;
 
@@ -67,7 +68,7 @@ namespace flash.media {
 
 		}
 
-		private SoundChannel playIos(double startTime=0, int loops=0, SoundTransform sndTransform=null)
+		private SoundChannel internalPlay(double startTime=0, int loops=0, SoundTransform sndTransform=null)
         {
 			if (null == _player)
 				return null;
@@ -88,4 +89,25 @@ namespace flash.media {
 	}
 
 }
+
+#else
+
+using System;
+
+namespace flash.media {
+
+	// We use a partial C# class for platform specific logic
+	partial class Sound {
+			
+		private void internalLoad(String url)
+		{		
+		}
+
+		private SoundChannel internalPlay(double startTime=0, int loops=0, SoundTransform sndTransform=null)
+		{
+			return null;
+		}
+	}
+}
+
 #endif

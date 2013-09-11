@@ -41,6 +41,7 @@ namespace flash.display3D {
 	using FramebufferTarget = OpenTK.Graphics.ES20.All;
 	using FramebufferErrorCode = OpenTK.Graphics.ES20.All;
 	using DepthFunction = OpenTK.Graphics.ES20.All;
+	using StringName = OpenTK.Graphics.ES20.All;
 	using TextureTarget = OpenTK.Graphics.ES20.All;
 	using FramebufferAttachment = OpenTK.Graphics.ES20.All;
 	using ActiveUniformType = OpenTK.Graphics.ES20.All;
@@ -62,14 +63,38 @@ namespace flash.display3D {
 		// Constants
 		//
 
+#if PLATFORM_MONOTOUCH || PLATFORM_MONOMAC
 		public const int MaxSamplers = 16;
+#elif PLATFORM_MONODROID
+		public const int MaxSamplers = 8;
+#endif
 		public const int MaxAttributes = 16;
+
+		// stats enumeration
+		// these will be used to send data to telemetry and are named such that they translate easily to telemetry names
+		internal enum Stats
+		{
+			DrawCalls,
+			Count_IndexBuffer,
+			Count_VertexBuffer,
+			Count_Texture,
+			Count_Texture_Compressed,
+			Count_Program,
+			Mem_IndexBuffer,
+			Mem_VertexBuffer,
+			Mem_Texture,
+			Mem_Texture_Compressed,
+			Mem_Program,
+
+			Length
+		};
+
 
 		//
 		// Properties
 		//
 	
-		public string driverInfo { get { return "MonoGL"; } }
+		public string driverInfo { get; private set; }
 
 		public bool enableErrorChecking { get; set; }
 
@@ -101,6 +126,16 @@ namespace flash.display3D {
 		public Context3D(Stage3D stage3D)
 		{
 			mStage3D = stage3D;
+
+			// compose driver info string
+			driverInfo = string.Format("OpenGL Vendor={0} Version={1} Renderer={2} GLSL={3}", 
+			                           GL.GetString(StringName.Vendor), 
+			                           GL.GetString(StringName.Version), 
+			                           GL.GetString(StringName.Renderer),
+			                           GL.GetString(StringName.ShadingLanguageVersion));
+			// write driver info to telemetry
+			Telemetry.Session.WriteValue(".platform.3d.driverinfo", driverInfo);
+
 
 			// get default framebuffer for use when restoring rendering to backbuffer
 			GL.GetInteger(GetPName.FramebufferBinding, out mDefaultFrameBufferId);
@@ -245,30 +280,30 @@ namespace flash.display3D {
 			int count = (numTriangles == -1) ? indexBuffer.numIndices : (numTriangles * 3);
 			GL.BindBuffer(BufferTarget.ElementArrayBuffer, indexBuffer.id);
 
-			GL.DrawElements(BeginMode.Triangles, count, DrawElementsType.UnsignedInt, new IntPtr(firstIndex));	
+			GL.DrawElements(BeginMode.Triangles, count, indexBuffer.elementType, new IntPtr(firstIndex));	
+
+			// increment draw call count
+			statsIncrement(Stats.DrawCalls);
 		}
 
-
-		public void discardDepthBuffer()
-		{
-			#if PLATFORM_MONOTOUCH
-			// discard depth buffer at the end of the frame
-			// this is a hint to GL to not keep the data around
-			All discard = (All)FramebufferSlot.DepthAttachment;
-			GL.BindFramebuffer(FramebufferTarget.Framebuffer, mDefaultFrameBufferId);
-			GL.Ext.DiscardFramebuffer((All)FramebufferTarget.Framebuffer, 1, ref discard);
-			#endif
-		}
- 	 	
 		public void present() {
-
-			// discard depth buffer at the end of the frame
-			discardDepthBuffer();
-
 			if (OnPresent != null)
 				OnPresent(this);
+
+			// send stats for frame
+			statsSendToTelemetry();
+
+			// begin and end span for present
+			// note that this span must include the above stats call
+			mSpanPresent.End();
+			mSpanPresent.Begin();
+
+			// clear draw call count
+			statsClear(Stats.DrawCalls);
+
+			// increment frame count
+			mFrameCount++;
 		}
- 	 	
 
 		public void setBlendFactors (string sourceFactor, string destinationFactor)
 		{
@@ -692,6 +727,22 @@ namespace flash.display3D {
 							// use default state if program has none
 							texture.setSamplerState(Context3D.DefaultSamplerState);
 						}
+
+						// set alpha texture
+						if (texture.alphaTexture != null) 
+						{
+							GL.ActiveTexture (TextureUnit.Texture8 + sampler);
+							TextureBase alphaTexture = texture.alphaTexture;
+							var alphaTarget = alphaTexture.textureTarget;
+							GL.BindTexture (alphaTarget, alphaTexture.textureId);
+							if (state != null) {
+								alphaTexture.setSamplerState (state);
+							} else {
+								alphaTexture.setSamplerState (Context3D.DefaultSamplerState);
+							}
+						}
+
+
 					} else {
 						// texture is null so unbind texture
 						GL.BindTexture (TextureTarget.Texture2D, 0);
@@ -705,6 +756,69 @@ namespace flash.display3D {
 				sampler++;
 			}
 
+		}
+
+		// functions for updating the rendering stats
+		internal void statsClear(Stats stat)
+		{
+			mStats[(int)stat] = 0;
+		}
+
+		internal void statsIncrement(Stats stat)
+		{
+			mStats[(int)stat]++;
+		}
+
+		internal void statsDecrement(Stats stat)
+		{
+			mStats[(int)stat]--;
+		}
+
+		internal void statsAdd(Stats stat, int value)
+		{
+			mStats[(int)stat]+= value;
+		}
+
+		internal void statsSubtract(Stats stat, int value)
+		{
+			mStats[(int)stat]-= value;
+		}
+
+		// this function sends stats to telemetry
+		private void statsSendToTelemetry()
+		{
+			// write telemetry stats if we are connected
+			if (!Telemetry.Session.Connected)
+				return;
+
+			// create telemetry values on demand
+			if (mStatsValues == null) {
+				mStatsValues = new Telemetry.Value[(int)Stats.Length];
+				for (Stats i=0; i < Stats.Length; i++) {
+					string name;
+					switch (i) {
+						case Stats.DrawCalls: 
+							name = ".3d.resource.drawCalls";
+							break;
+						default:
+							name = ".3d.resource." + i.ToString().toLowerCase().Replace('_', '.');
+							break;
+					}
+					mStatsValues[(int)i] = new Telemetry.Value(name);
+				}
+			}
+
+			// write all telemetry values
+			for (int i=0; i < (int)Stats.Length; i++) {
+				if (mStats[i] != mLastStats[i]) {
+					// write stat value if it changed
+					mStatsValues[i].WriteValue(mStats[i]);
+					mLastStats[i] = mStats[i];
+				}
+			}
+
+			// write frame count after stats
+			mValueFrame.WriteValue(mFrameCount);
 		}
 
 		// stage3D that owns us
@@ -735,6 +849,15 @@ namespace flash.display3D {
 		// settings for render to texture
 		private TextureBase mRenderToTexture = null;
 		private int  		mTextureFrameBufferId;
+
+		// various stats
+		private int 				mFrameCount;
+		private readonly int[]		mStats = new int[(int)Stats.Length];
+		private readonly int[]		mLastStats = new int[(int)Stats.Length];
+		private Telemetry.Value[]	mStatsValues;
+
+		private readonly Telemetry.Span  mSpanPresent = new Telemetry.Span(".rend.molehill.present");
+		private readonly Telemetry.Value mValueFrame = new Telemetry.Value(".rend.molehill.frame");
 
 #else
 

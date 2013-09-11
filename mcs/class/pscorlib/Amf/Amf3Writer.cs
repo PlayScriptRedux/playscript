@@ -27,6 +27,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using _root;
+using PlayScript.Expando;
 
 namespace Amf
 {
@@ -51,6 +52,8 @@ namespace Amf
 
         private const int amfIntMaxValue = int.MaxValue >> 3;
         private const int amfIntMinValue = int.MinValue >> 3;
+
+		private readonly Amf3ClassDef anonClassDef = new Amf3ClassDef("*", new string[0], true, false);
 
         public Amf3Writer(Stream stream)
         {
@@ -105,6 +108,12 @@ namespace Amf
 			var str = obj as string;
 			if (str != null) {
 				Write(str);
+				return;
+			}
+
+			var expando = obj as ExpandoObject;
+			if (expando != null) {
+				Write(expando);
 				return;
 			}
 
@@ -163,6 +172,11 @@ namespace Amf
 				return;
 			}
 
+			if (obj is Vector<object>) {
+				Write((Vector<object>)obj);
+				return;
+			}
+
 			if (obj is uint[]) {
 				Write((uint[])obj);
 				return;
@@ -178,12 +192,15 @@ namespace Amf
 				return;
 			}
 
-			if (obj is int ||
-			    obj is byte ||
+			if (obj is flash.utils.Dictionary) {
+				Write((flash.utils.Dictionary)obj);
+				return;
+			}
+
+			if (obj is byte ||
 			    obj is sbyte ||
 			    obj is short ||
-			    obj is ushort ||
-			    obj is uint) {
+			    obj is ushort) {
 				Write(Convert.ToInt32(obj));
 				return;
 			}
@@ -263,6 +280,13 @@ namespace Amf
 			TypelessWrite(byteArray);
 		}
 
+		public void Write(flash.utils.Dictionary dict)
+		{
+			Write(Amf3TypeCode.Dictionary);
+			TypelessWrite(dict);
+		}
+
+
 		public void Write(Vector<int> vector)
 		{
 			Write(Amf3TypeCode.VectorInt);
@@ -278,6 +302,12 @@ namespace Amf
 		public void Write(Vector<double> vector)
 		{
 			Write(Amf3TypeCode.VectorDouble);
+			TypelessWrite(vector);
+		}
+
+		public void Write(Vector<object> vector)
+		{
+			Write(Amf3TypeCode.VectorObject);
 			TypelessWrite(vector);
 		}
 
@@ -304,6 +334,13 @@ namespace Amf
             Write(Amf3TypeCode.Object);
             TypelessWrite(obj);
         }
+
+		public void Write(ExpandoObject obj)
+		{
+			Write(Amf3TypeCode.Object);
+			TypelessWrite(obj);
+		}
+
 
         public void TypelessWrite(int integer)
         {
@@ -427,10 +464,13 @@ namespace Amf
 
 		private void WriteDynamicClass(PlayScript.IDynamicClass dc)
         {
-            foreach (string key in dc.__GetDynamicNames()) {
-                TypelessWrite(key);
-                Write(dc.__GetDynamicValue(key));
-            }
+			var names = dc.__GetDynamicNames();
+			if (names != null) {
+				foreach (string key in names) {
+					TypelessWrite(key);
+					Write(dc.__GetDynamicValue(key));
+				}
+			}
 
             TypelessWrite("");
         }
@@ -473,6 +513,36 @@ namespace Amf
 			// write bytes of byte array
 			Stream.Write(byteArray.getRawArray(), 0, (int)byteArray.length);
 		}
+
+		public void TypelessWrite(flash.utils.Dictionary dict)
+		{
+			if (TrackArrayReferences) {
+				if (CheckObjectTable(dict))
+					return;
+
+				StoreObject(dict);
+			} else {
+				StoreObject(null);
+			}
+
+			// write byte array length
+			TypelessWrite((dict.length << 1) | 1);
+			// no weak keys for now
+			TypelessWrite((byte)0);
+
+			// write dictionary key value pairs
+			int count = 0;
+			foreach (var kvp in dict) {
+				Write(kvp.Key);
+				Write(kvp.Value);
+				count++;
+			}
+
+			if (count != dict.length) {
+				throw new InvalidOperationException("flash.utils.Dictionary count does not match expected length");
+			}
+		}
+
 
 		private bool WriteVectorHeader(object vector, uint length, bool isFixed)
 		{
@@ -531,6 +601,24 @@ namespace Amf
 				Stream.Write(tempData, 0, sizeof(double));
 			}
 		}
+
+		public void TypelessWrite(Vector<object> vector)
+		{
+			// write vector header
+			if (WriteVectorHeader(vector, vector.length, vector.@fixed))
+				return;
+
+			// write object type
+			// TODO: we need to maintain this if it a vector of a custom type
+			TypelessWrite((string)"*");
+
+			// write vector data
+			int length = (int)vector.length;
+			for (int i=0; i < length; i++) {
+				Write(vector[i]);
+			}
+		}
+
 
 		public void TypelessWrite(uint[] vector)
 		{
@@ -647,6 +735,35 @@ namespace Amf
                 TypelessWrite("");
             }
         }
+
+
+		public void TypelessWrite(ExpandoObject obj)
+		{
+			if (CheckObjectTable(obj))
+				return;
+
+			// get class definition from expando
+			Amf3ClassDef classDef = obj.ClassDefinition as Amf3ClassDef;
+			if (classDef == null) {
+				classDef = anonClassDef;
+			}
+
+			TypelessWrite(classDef);
+			StoreObject(obj);
+
+			foreach (string i in classDef.Properties) {
+				Write(obj[i]);
+			}
+
+			if (classDef.Dynamic) {
+				foreach (var kvp in obj) {
+					TypelessWrite(kvp.Key);
+					Write(kvp.Value);
+				}
+
+				TypelessWrite("");
+			}
+		}
 
 		public void WriteObjectHeader(Amf3ClassDef classDef)
 		{

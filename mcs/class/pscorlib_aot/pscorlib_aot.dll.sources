@@ -3,6 +3,7 @@
 ../pscorlib/Amf/Amf3ClassDef.cs
 ../pscorlib/Amf/Amf3Object.cs
 ../pscorlib/Amf/Amf3Parser.cs
+../pscorlib/Amf/Amf3SerializableAttribute.cs
 ../pscorlib/Amf/Amf3String.cs
 ../pscorlib/Amf/Amf3TypeCode.cs
 ../pscorlib/Amf/Amf3Writer.cs
@@ -263,10 +264,14 @@
 ../pscorlib/String.cs
 ../pscorlib/SWFAttribute.cs
 ../pscorlib/SyntaxError.play
+../pscorlib/Telemetry/Log.cs
+../pscorlib/Telemetry/MethodMap.cs
 ../pscorlib/Telemetry/Parser.cs
 ../pscorlib/Telemetry/Protocol.cs
+../pscorlib/Telemetry/Sampler.cs
 ../pscorlib/Telemetry/Session.cs
 ../pscorlib/Telemetry/Span.cs
+../pscorlib/Telemetry/SymbolTable.cs
 ../pscorlib/Telemetry/Value.cs
 ../pscorlib/TypeError.play
 ../pscorlib/URIError.play
