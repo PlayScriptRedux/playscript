@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 
 #if PLATFORM_MONOMAC
 using MonoMac.OpenGL;
@@ -25,6 +26,7 @@ namespace PlayScript
 		public static bool Enabled = true;
 		public static bool ProfileGPU = false;
 		public static long LastTelemetryFrameSpanStart = long.MaxValue;
+		private static StringBuilder temporaryStringBuilder = new StringBuilder();
 
 		// if telemetryName is provided then it will be used for the name sent to telemetry when this section is entered
 		public static void Begin(string name, string telemetryName = null)
@@ -188,13 +190,18 @@ namespace PlayScript
 		
 		public static void PrintTimes(TextWriter tw)
 		{
-			var str = "profiler: ";
+			temporaryStringBuilder.Length = 0;
+			temporaryStringBuilder.Append("profiler: ");
 			foreach (Section section in sSectionList) {
-				str += section.Name + ":";
-				str += (section.TotalTime.TotalMilliseconds / sFrameCount).ToString("0.00");
-				str += " ";
+				if (section.TotalTime.Ticks == 0) {
+					continue;
+				}
+				temporaryStringBuilder.Append(section.Name);
+				temporaryStringBuilder.Append(':');
+				temporaryStringBuilder.AppendFormat("{0:0.00}", (section.TotalTime.TotalMilliseconds / sFrameCount));
+				temporaryStringBuilder.Append(' ');
 			}
-			tw.WriteLine(str);
+			tw.WriteLine(temporaryStringBuilder.ToString());
 		}
 
 		public static void PrintFullTimes(TextWriter tw)
