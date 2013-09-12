@@ -334,12 +334,17 @@ namespace flash.utils {
 			case null:
 			case CompressionAlgorithm.ZLIB:
 				{
-					// create inflater
-					var inflater = new ICSharpCode.SharpZipLib.Zip.Compression.Streams.InflaterInputStream (inStream);
-					inStream.Position = 0;
-
-					// copy stream				
-					inflater.CopyTo (outStream);
+					// parse zlib header
+					int header0 = inStream.ReadByte();
+					int flag = inStream.ReadByte();
+					if ((header0 & 0xF) == 8) {
+						// deflate
+						using (DeflateStream decompressionStream = new DeflateStream(inStream, CompressionMode.Decompress)) {
+							decompressionStream.CopyTo(outStream);
+						}
+					} else {
+							throw new System.NotImplementedException("ZLIB compression format:" + header0);
+					}
 				}
 				break;
 
