@@ -10357,14 +10357,12 @@ namespace Mono.CSharp
 				return new IndexerExpr (indexers, type, this);
 			}
 
-			// In PlayScript, convert to MemberAccess.
+			// PlayScript supports indexer accesses for non-objects
 			if (ec.FileType == SourceFileType.PlayScript) {
 				if (loc.SourceFile == null || !loc.SourceFile.PsExtended) { // ASX doesn't allow this
-					if (this.Arguments.Count == 1) {
-						var constant = Arguments [0].Expr as Constant;
-						if (constant != null)
-							return new MemberAccess (Expr, constant.GetValue ().ToString (), null, loc);
-					}
+					type = ec.BuiltinTypes.Dynamic;
+					Expr = EmptyCast.Create (Expr, type, ec);
+					return new IndexerExpr (indexers, ec.BuiltinTypes.Dynamic, this);
 				}
 			}
 
