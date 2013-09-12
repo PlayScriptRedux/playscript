@@ -265,6 +265,15 @@ namespace Mono.CSharp {
 				if (target_type_array != null && expr_type_array.Rank == target_type_array.Rank) {
 
 					//
+					// Disable this conversion for PlayScript, specifically for
+					// the case of passing an array to a function which accepts
+					// var args. We want the function to receive 1 parameter of
+					// type array, rather than n parameters.
+					//
+					if (opt_ec != null && opt_ec.FileType == SourceFileType.PlayScript)
+						return false;
+
+					//
 					// Both SE and TE are reference-types. TE check is defered
 					// to ImplicitReferenceConversionExists
 					//
