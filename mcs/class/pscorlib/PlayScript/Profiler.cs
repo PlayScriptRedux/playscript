@@ -23,16 +23,16 @@ namespace PlayScript
 {
 	public static class Profiler
 	{
-		public static bool Enabled = true;
+ 		public static bool Enabled = true;
 		public static bool ProfileGPU = false;
+		public static bool ProfileMemory = false;			// Profile memory usage, it is very slow though...
 		public static long LastTelemetryFrameSpanStart = long.MaxValue;
-		private static StringBuilder temporaryStringBuilder = new StringBuilder();
 
 		// if telemetryName is provided then it will be used for the name sent to telemetry when this section is entered
-		public static void Begin(string name, string telemetryName = null)
+		public static string Begin(string name, string telemetryName = null)
 		{
 			if (!Enabled)
-				return;
+				return name;
 
 			Section section;
 			if (!sSections.TryGetValue(name, out section)) {
@@ -51,10 +51,16 @@ namespace PlayScript
 			}
 
 			section.Stats.Subtract(PlayScript.Stats.CurrentInstance);
-			section.GCCount -= System.GC.CollectionCount(System.GC.MaxGeneration);
+			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
+				section.GCCounts[i] -= System.GC.CollectionCount(i);
+			}
+			if (ProfileMemory) {
+				section.CurrentUsedMemory -= mono_gc_get_used_size();
+			}
 			if (section.Span != null)
 				section.Span.Begin();
 			section.Timer.Start();
+			return name;
 		}
 		
 		public static void End(string name)
@@ -71,7 +77,17 @@ namespace PlayScript
 			if (section.Span != null)
 				section.Span.End();
 			section.Stats.Add(PlayScript.Stats.CurrentInstance);
-			section.GCCount += System.GC.CollectionCount(System.GC.MaxGeneration);
+			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
+				section.GCCounts[i] += System.GC.CollectionCount(i);
+			}
+			if (ProfileMemory) {
+				section.CurrentUsedMemory += mono_gc_get_used_size();
+				if (section.CurrentUsedMemory > 0) {
+					section.UsedMemory += section.CurrentUsedMemory;	// After a GC the size might actually be negative
+																		// In that case, we actually can't measure the memory cost
+				}
+			}
+			section.CurrentUsedMemory = 0;
 		}
 
 		public static void Reset()
@@ -131,10 +147,14 @@ namespace PlayScript
 
 					var history = new SectionHistory();
 					history.Time = section.Timer.Elapsed;
-					history.GCCount = section.GCCount;
+					for (int i = sGCMinGeneration ; i < Profiler.sGCMaxGeneration ; ++i) {
+						history.GCCounts[i] = section.GCCounts[i];
+					}
 					section.History.Add(history);
 				}
-				section.GCCount = 0;
+				for (int i = sGCMinGeneration ; i < Profiler.sGCMaxGeneration ; ++i) {
+					section.GCCounts[i] = 0;
+				}
 				section.Timer.Reset();
 			}
 
@@ -212,6 +232,7 @@ namespace PlayScript
 				var total = section.TotalTime;
 				if (total.TotalMilliseconds < 0.01) {
 					// Skip negligible times
+					section.Skipped = true;
 					continue;
 				}
 
@@ -226,21 +247,30 @@ namespace PlayScript
 					var maxTime = history.Last();
 					var medianTime = history[history.Count / 2];
 
-					tw.WriteLine("{0,-12} total:{1,6} average:{2,6:0.00}ms min:{3,6:0.00}ms max:{4,6:0.00}ms median:{5,6:0.00}ms ",
+					// Gather all the GCCounts from the history
+					for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i)
+					{
+						section.GCCounts[i] = section.History.Sum(a => a.GCCounts[i]);
+					}
+
+					tw.WriteLine("{0,-40} total:{1,6} average:{2,6:0.00}ms min:{3,6:0.00}ms max:{4,6:0.00}ms median:{5,6:0.00}ms #GC0: {6} UsedMem: {7}Kb",
 					             section.Name,
 					             total,
 					             average,
 					             minTime,
 					             maxTime,
-					             medianTime
+					             medianTime,
+					             section.GCCounts[sGCMinGeneration],
+					             section.UsedMemory / 1024
 					             );
 
 				} else {
 
-					tw.WriteLine("{0,-12} total:{1,6} average:{2,6:0.00}ms",
+					tw.WriteLine("{0,-40} total:{1,6} average:{2,6:0.00}ms UsedMem: {3}Kb",
 				             section.Name,
 				             total,
-				             average
+				             average,
+					         section.UsedMemory / 1024
 				             );
 				}
 			}
@@ -249,8 +279,12 @@ namespace PlayScript
 		public static void PrintHistory(TextWriter tw)
 		{
 			tw.Write("{0,4} ", "");
-			foreach (Section section in sSectionList) 
+			foreach (Section section in sSectionList.OrderBy(a => -a.TotalTime)) 
 			{
+				if (section.Skipped) {
+					continue;
+				}
+
 				tw.Write("{0,12}{1} ", section.Name, ' ');
 
 				// pad history with zeros if necessary
@@ -262,18 +296,27 @@ namespace PlayScript
 
 			tw.WriteLine("---------------------------");
 			int numberOfFramesToPrint = Math.Min(sFrameCount, MaxNumberOfFramesPrintedInHistory);
+			int[] gcCounts = new int[sGCMaxGeneration];
 			for (int frame=0; frame < numberOfFramesToPrint; frame++)
 			{
 				tw.Write("{0,4}:", frame);
-				int gcCount = 0;
+				for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
+					gcCounts[i] = 0;
+				}
 				foreach (Section section in sSectionList) 
 				{
 					var history = section.History[frame];
-					tw.Write("{0,12:0.00}{1} ", history.Time.TotalMilliseconds, (history.GCCount > 0) ? '*' : ' ' );
-					gcCount += history.GCCount;
+					string collect = "";
+					for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
+						if (history.GCCounts[i] > 0) {
+							collect += i.ToString();
+						}
+						gcCounts[i] += history.GCCounts[i];
+					}
+					tw.Write("{0,12:0.00}{1,3} ", history.Time.TotalMilliseconds, (collect != string.Empty) ? "*" + collect : "" );
 				}
-				if (gcCount > 0) {
-					tw.Write("    <=== GC occurred");
+				if (gcCounts[sGCMaxGeneration - 1] > 0) {
+					tw.Write("    <=== GC max occurred");
 				}
 				tw.WriteLine();
 			}
@@ -449,7 +492,10 @@ namespace PlayScript
 			PrintPercentile(tw, "frame", 95);
 			PrintPercentageOfFrames(tw, "frame", "% Fast Frames", a => (a <= performanceFrameData.FastFrame), string.Format("<={0:0.00}ms", performanceFrameData.FastFrame));
 			PrintPercentageOfFrames(tw, "frame", "% Slow frames", a => (a >= performanceFrameData.SlowFrame), string.Format(">={0:0.00}ms", performanceFrameData.SlowFrame));
-			tw.WriteLine("GC Count:      {0}", sReportGCCount);
+			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i)
+			{
+				tw.WriteLine("GC {0} Count:      {1}", i, sReportGCCounts[i]);
+			}
 
 			tw.WriteLine("*********** Timing (ms) ***********");
 			PrintFullTimes(tw);
@@ -483,7 +529,10 @@ namespace PlayScript
 			// enable the report
 			sDoReport = true;
 
-			sReportGCCount = System.GC.CollectionCount(System.GC.MaxGeneration);
+			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i)
+			{
+				sReportGCCounts[i] = System.GC.CollectionCount(i);
+			}
 
 			// start global timer
 			sReportTime = Stopwatch.StartNew();
@@ -515,7 +564,9 @@ namespace PlayScript
 
 			sReportTime.Stop();
 
-			sReportGCCount = System.GC.CollectionCount(System.GC.MaxGeneration) - sReportGCCount;
+			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
+				sReportGCCounts[i] = System.GC.CollectionCount(i) - sReportGCCounts[i];
+			}
 
 			var recording = Telemetry.Session.EndRecording();
 			if (recording != null) {
@@ -579,7 +630,7 @@ namespace PlayScript
 		class SectionHistory
 		{
 			public TimeSpan Time;
-			public int 		GCCount;
+			public int[]	GCCounts = new int[Profiler.sGCMaxGeneration];
 		};
 
 		// info for a single section
@@ -590,8 +641,11 @@ namespace PlayScript
 			public TimeSpan				TotalTime;
 			public List<SectionHistory>	History = new List<SectionHistory>();
 			public Stats 				Stats = new PlayScript.Stats();	
-			public int 					GCCount;
+			public int[]				GCCounts = new int[Profiler.sGCMaxGeneration];
+			public Int64				UsedMemory;
+			public Int64				CurrentUsedMemory;
 			public Telemetry.Span		Span;
+			public bool					Skipped;
 		};
 
 		private static Stopwatch sGlobalTimer = Stopwatch.StartNew();
@@ -612,7 +666,13 @@ namespace PlayScript
 		private static int  sReportFrameCount = 0;
 		private static string sReportName;
 		private static Stopwatch sReportTime;
-		private static int  sReportGCCount;
+		private static StringBuilder temporaryStringBuilder = new StringBuilder();
+		private const int sGCMinGeneration = 0;
+		private readonly static int sGCMaxGeneration = System.GC.MaxGeneration + 1;		// +1 as it seems that's System.GC.MaxGeneration is the index to get oldest collections of the oldest generation
+		private static int[] sReportGCCounts = new int[sGCMaxGeneration];
+
+		[DllImport ("__Internal", EntryPoint="mono_gc_get_used_size")]
+		extern static Int64 mono_gc_get_used_size ();
 		#endregion
 
 		class PerformanceFrameData
