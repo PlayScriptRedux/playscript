@@ -487,6 +487,9 @@ namespace PlayScript
 
 			// start global timer
 			sReportTime = Stopwatch.StartNew();
+
+			// disable traces while profiling
+			_root.TraceConfig.enable = false;
 		}
 
 		private static string  GetProfileLogDir()
@@ -507,6 +510,9 @@ namespace PlayScript
 		/// </summary>
 		private static void OnEndReport()
 		{
+			// re-enable traces after profiling
+			_root.TraceConfig.enable = true;
+
 			sReportTime.Stop();
 
 			sReportGCCount = System.GC.CollectionCount(System.GC.MaxGeneration) - sReportGCCount;
