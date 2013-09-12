@@ -158,7 +158,7 @@ package flash.utils {
 			var timer:Timer = new Timer(delay, repeat);
 			timer.addEventListener(TimerEvent.TIMER, function(e:TimerEvent):void 
 			                       {
-										if (arguments.Length == 0) {
+										if (arguments.length == 0) {
 											closure();
 										} else {
 											closure.DynamicInvoke(arguments);
