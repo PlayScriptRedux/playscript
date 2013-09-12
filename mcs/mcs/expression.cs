@@ -10357,13 +10357,14 @@ namespace Mono.CSharp
 				return new IndexerExpr (indexers, type, this);
 			}
 
-			// In PlayScript, use dynamic
+			// In PlayScript, convert to MemberAccess.
 			if (ec.FileType == SourceFileType.PlayScript) {
 				if (loc.SourceFile == null || !loc.SourceFile.PsExtended) { // ASX doesn't allow this
-					ec.Report.Warning(7157, 1, loc, "Use of property indexer on non Object type.  Was this intended?");
-					type = ec.BuiltinTypes.Dynamic;
-					Expr = EmptyCast.Create (Expr, type, ec);
-					return new IndexerExpr (indexers, ec.BuiltinTypes.Dynamic, this);
+					if (this.Arguments.Count == 1) {
+						var constant = Arguments [0].Expr as Constant;
+						if (constant != null)
+							return new MemberAccess (Expr, constant.GetValue ().ToString (), null, loc);
+					}
 				}
 			}
 
