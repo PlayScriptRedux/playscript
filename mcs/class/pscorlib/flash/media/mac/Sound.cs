@@ -12,42 +12,28 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-#if PLATFORM_MONOTOUCH
-
-using MonoTouch.AVFoundation;
-
-namespace flash.media {
-
-	// We use a partial C# class for platform specific logic
-	partial class SoundChannel {
-
-		private AVAudioPlayer _player;
-
-		public AVAudioPlayer Player
-		{
-			set { _player = value; }
-		}
-
-		private void internalStop()
-		{
-			_player.Stop();
-		}
-	}
-
-}
-
-#else
+using System;
+using System.Collections.Generic;
+using flash.events;
 
 namespace flash.media {
 
 	// We use a partial C# class for platform specific logic
-	partial class SoundChannel {
+	partial class Sound {
 			
-		private void internalStop()
-		{		
+		private SoundChannel channel = new SoundChannel();
+
+		private void internalLoad(String url)
+		{
+			Console.WriteLine ("Sound internalLoad is not implemented for this platform");
 		}
+
+		private SoundChannel internalPlay(double startTime=0, int loops=0, SoundTransform sndTransform=null)
+        {
+			Console.WriteLine ("Sound internalPlay is not implemented for this platform");
+			return channel;
+        }
+
 	}
 
 }
-
-#endif

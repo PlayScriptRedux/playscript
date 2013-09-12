@@ -25,6 +25,7 @@ using OpenTK.Graphics.ES20;
 using OpenTK.Graphics.ES20;
 using BufferTarget = OpenTK.Graphics.ES20.All;
 using BufferUsage = OpenTK.Graphics.ES20.All;
+using DrawElementsType = OpenTK.Graphics.ES20.All;
 #endif
 
 namespace flash.display3D {
@@ -42,32 +43,81 @@ namespace flash.display3D {
 			if (multiBufferCount < 1)
 				throw new ArgumentOutOfRangeException("multiBufferCount");
 
+			mContext = context3D;
 			mNumIndices = numIndices;
 			mIds = new uint[multiBufferCount];
+			mElementType = DrawElementsType.UnsignedInt;
 			GL.GenBuffers(multiBufferCount, mIds);
 
 			mUsage = isDynamic ? BufferUsage.DynamicDraw : BufferUsage.StaticDraw;
+
+			// update stats
+			mContext.statsIncrement(Context3D.Stats.Count_IndexBuffer);
 		}
 
 		public void dispose() {
 			GL.DeleteBuffers(mIds.Length, mIds);
-		}
-		
-		public void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startOffset, int count) {
-			throw new NotImplementedException();
+
+			// update stats
+			mContext.statsDecrement(Context3D.Stats.Count_IndexBuffer);
+			mContext.statsSubtract(Context3D.Stats.Mem_IndexBuffer, mMemoryUsage);
+			mMemoryUsage = 0;
 		}
 
-		public void uploadFromArray(uint[] data, int startOffset, int count) {
+		public unsafe void uploadFromPointer(void *data, int dataLength, int startOffset, int count) {
 			// swap to next buffer
 			mBufferIndex++;
 			if (mBufferIndex >= mIds.Length)
 				mBufferIndex = 0;
 
+			// get size of each index
+			int elementSize = (mElementType == DrawElementsType.UnsignedInt) ? sizeof(uint) : sizeof(ushort);
+
+			int byteCount = count * elementSize;
+			// bounds check
+			if (byteCount > dataLength)
+				throw new ArgumentOutOfRangeException("data buffer is not big enough for upload");
+
 			GL.BindBuffer(BufferTarget.ElementArrayBuffer, mIds[mBufferIndex]);
-			GL.BufferData<uint>(BufferTarget.ElementArrayBuffer, 
-			                    new IntPtr(count * sizeof(uint)), 
-			                    data, 
-			                    mUsage);
+			if (startOffset == 0) {
+				GL.BufferData(BufferTarget.ElementArrayBuffer, 
+				             new IntPtr(byteCount), 
+				             new IntPtr(data), 
+				             mUsage);
+
+				if (byteCount != mMemoryUsage) {
+					// update stats for memory usage
+					mContext.statsAdd(Context3D.Stats.Mem_IndexBuffer, byteCount - mMemoryUsage);
+					mMemoryUsage = byteCount;
+				}
+			} else {
+				// update range of index buffer
+				GL.BufferSubData(BufferTarget.ElementArrayBuffer,
+				                 new IntPtr(startOffset * elementSize),
+				                 new IntPtr(byteCount), 
+				                 new IntPtr(data));
+			}
+
+		}
+
+		public unsafe void uploadFromByteArray(ByteArray data, int byteArrayOffset, int startOffset, int count) {
+			// uploading from a byte array implies 16-bit indices
+			mElementType = DrawElementsType.UnsignedShort;
+
+			// pin pointer to byte array data
+			fixed (byte *ptr = data.getRawArray()) {
+				uploadFromPointer(ptr + byteArrayOffset, (int)(data.length - byteArrayOffset), startOffset, count);
+			}
+		}
+
+		public unsafe void uploadFromArray(uint[] data, int startOffset, int count) {
+			// uploading from an array or vector implies 32-bit indices
+			mElementType = DrawElementsType.UnsignedInt;
+
+			// pin pointer to array data
+			fixed (uint *ptr = data) {
+				uploadFromPointer(ptr, data.Length * sizeof(uint), startOffset, count);
+			}
 		}
 
 		public void uploadFromVector(Vector<uint> data, int startOffset, int count) {
@@ -76,11 +126,15 @@ namespace flash.display3D {
 		
 		public uint 			id 			{get {return mIds[mBufferIndex];}}
 		public int				numIndices 	{get {return mNumIndices;}}
-		
+		public DrawElementsType	elementType { get { return mElementType; } }
+
+		private readonly Context3D mContext;
 		private readonly int	mNumIndices;
 		private uint[]			mIds;
 		private int 			mBufferIndex;		// buffer index for multibuffering
 		private BufferUsage     mUsage;
+		private int 			mMemoryUsage;
+		private DrawElementsType mElementType;
 
 
 #else

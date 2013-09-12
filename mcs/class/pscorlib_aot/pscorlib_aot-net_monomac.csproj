@@ -870,6 +870,15 @@
     <Compile Include="..\pscorlib\Telemetry\SymbolTable.cs">
       <Link>Telemetry\SymbolTable.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3SerializableAttribute.cs">
+      <Link>Amf\Amf3SerializableAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\media\mac\Sound.cs">
+      <Link>flash\media\SoundMac.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\media\mac\SoundChannel.cs">
+      <Link>flash\media\SoundChannelMac.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="flash\external\" />

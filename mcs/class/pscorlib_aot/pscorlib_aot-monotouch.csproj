@@ -40,9 +40,6 @@
     <Reference Include="System.Core" />
     <Reference Include="OpenTK-1.0" />
     <Reference Include="System.Xml" />
-    <Reference Include="ICSharpCode.SharpZipLib">
-      <HintPath>..\lib\net_4_5\ICSharpCode.SharpZipLib.dll</HintPath>
-    </Reference>
     <Reference Include="System.Json" />
     <Reference Include="System.Web.Services" />
   </ItemGroup>
@@ -54,6 +51,7 @@
     <Folder Include="flash\globalization\" />
     <Folder Include="flash\external\" />
     <Folder Include="Amf\" />
+    <Folder Include="flash\media\ios\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -822,17 +820,11 @@
     <Compile Include="..\pscorlib\fl\events\ComponentEvent.play">
       <Link>fl\events\ComponentEvent.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\media\ios\Sound.cs">
-      <Link>flash\media\SoundIos.cs</Link>
-    </Compile>
     <Compile Include="..\pscorlib\AllowDynamicAttribute.cs">
       <Link>AllowDynamicAttribute.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\ForbidDynamicAttribute.cs">
       <Link>ForbidDynamicAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\media\ios\SoundChannel.cs">
-      <Link>flash\media\SoundChannelIos.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\DotNetError.play">
       <Link>DotNetError.play</Link>
@@ -897,11 +889,28 @@
     <Compile Include="..\pscorlib\Telemetry\SymbolTable.cs">
       <Link>Telemetry\SymbolTable.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\PlayScript\Hardware.cs">
+      <Link>PlayScript\Hardware.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3SerializableAttribute.cs">
+      <Link>Amf\Amf3SerializableAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\media\ios\Sound.cs">
+      <Link>flash\media\ios\Sound.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\media\ios\SoundChannel.cs">
+      <Link>flash\media\ios\SoundChannel.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monotouch.csproj">
       <Project>{CC73D545-B7C7-4FB4-996A-C76E8B0D5B81}</Project>
       <Name>PlayScript.Dynamic_aot-monotouch</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\pscorlib\pscorlib.dll.sources">
+      <Link>pscorlib.dll.sources</Link>
+    </None>
   </ItemGroup>
 </Project>

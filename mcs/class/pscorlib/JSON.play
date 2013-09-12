@@ -18,6 +18,7 @@ package {
 	import System.Json.*;
 	import System.Collections.*;
 	import System.Collections.Generic.*;
+	import System.Reflection.*;
 
 	public static class JSON {
 
@@ -90,6 +91,27 @@ package {
 			return ja;
 		}
 
+		private static function ConvertASObjectToJsonObject(obj:_root.Object):JsonObject {
+			// get object type
+			var type = obj.GetType();
+
+			// create json object
+			var jo:JsonObject = new JsonObject();
+
+			// store all public properties in json object
+			for each (var prop:PropertyInfo in type.GetProperties()) {
+				if (prop.Name != "constructor") {
+					jo[prop.Name] = ConvertToJsonValue(prop.GetValue(obj, null));
+				}
+			}
+
+			// store all public fields in json object
+			for each (var field:FieldInfo in type.GetFields()) {
+				jo[field.Name] = ConvertToJsonValue(field.GetValue(obj));
+			}
+			return jo;
+		}
+
 		private static function ConvertToJsonValue(value:Object):JsonValue {
 
 			if (value == null) {
@@ -122,6 +144,11 @@ package {
 
 			if (value is Boolean) {
 				return new JsonPrimitive(Boolean(value));
+			}
+
+			if (value is _root.Object) {
+				// handle concrete actionscript objects
+				return ConvertASObjectToJsonObject(_root.Object(value));
 			}
 
 			throw new System.NotImplementedException();

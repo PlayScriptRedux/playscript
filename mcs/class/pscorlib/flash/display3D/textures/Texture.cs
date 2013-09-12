@@ -46,9 +46,8 @@ namespace flash.display3D.textures {
 
 		public Texture(Context3D context, int width, int height, string format, 
 		                        bool optimizeForRenderToTexture, int streamingLevels)
-			: base(TextureTarget.Texture2D)
+			: base(context, TextureTarget.Texture2D)
 		{
-			mContext = context;
 			mWidth = width;
 			mHeight = height;
 			mFormat = format;
@@ -157,7 +156,9 @@ namespace flash.display3D.textures {
 								var address = new IntPtr(ptr + data.position);
 								GL.CompressedTexImage2D(textureTarget, level, pixelFormat, width, height, 0, (int)blockLength, address);							
 							}
+							trackCompressedMemoryUsage((int)blockLength);
 							#endif
+
 						} 
 						else if (gpuFormat == 2) {
 							#if PLATFORM_MONODROID
@@ -176,7 +177,7 @@ namespace flash.display3D.textures {
 									GL.CompressedTexImage2D(mAlphaTexture.textureTarget, level, All.Etc1Rgb8Oes, width, height, 0, textureLength, alphaAddress);
 								}
 							}
-
+							trackCompressedMemoryUsage((int)blockLength);
 							#endif
 						}
 
@@ -213,8 +214,10 @@ namespace flash.display3D.textures {
 				GL.BindTexture (textureTarget, textureId);
 				uploadATFTextureFromByteArray(data, byteArrayOffset);
 				GL.BindTexture (textureTarget, 0);
-				return;
+
 			}
+			else 
+			{
 
 
 #if PLATFORM_MONOTOUCH || PLATFORM_MONODROID
@@ -243,9 +246,12 @@ namespace flash.display3D.textures {
 			GL.CompressedTexImage2D<byte>(textureTarget, 0, All.Etc1Rgb8Oes, mWidth, mHeight, 0, dataLength, data.getRawArray());
 		#endif
 
+			trackCompressedMemoryUsage(dataLength);
+
 			// unbind texture and pixel buffer
 			GL.BindTexture (textureTarget, 0);
 #endif
+			}
 
 			if (async) {
 				// load with a delay
@@ -288,6 +294,9 @@ namespace flash.display3D.textures {
 			GL.BindTexture (textureTarget, 0);
 
 			source.dispose();
+
+			// store memory usaged by texture
+			trackMemoryUsage(memUsage);
 		}
 		
 		public void uploadFromByteArray(ByteArray data, uint byteArrayOffset, uint miplevel = 0) {
@@ -298,7 +307,6 @@ namespace flash.display3D.textures {
 		public int height 	{ get { return mHeight; } }
 		
 		
-		private readonly Context3D 	mContext;
 		private readonly int 		mWidth;
 		private readonly int 		mHeight;
 		private readonly string 	mFormat;
