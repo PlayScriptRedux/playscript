@@ -3735,7 +3735,8 @@ namespace Mono.CSharp
 			// Comparison warnings
 			if ((oper & Operator.ComparisonMask) != 0) {
 				if (left.Equals (right)) {
-					ec.Report.Warning (1718, 3, loc, "A comparison made to same variable. Did you mean to compare something else?");
+					if (ec.FileType != SourceFileType.PlayScript) // in PlayScript this is used as an efficient NaN check
+						ec.Report.Warning (1718, 3, loc, "A comparison made to same variable. Did you mean to compare something else?");
 				}
 				CheckOutOfRangeComparison (ec, lc, right.Type);
 				CheckOutOfRangeComparison (ec, rc, left.Type);
