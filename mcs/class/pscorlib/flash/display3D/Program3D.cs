@@ -345,7 +345,8 @@ namespace flash.display3D {
 
 			for (int i=0; i<ary.Length; i++) {
 				Uniform uni = ary [i];
-				if ( (uni.RegIndex <= register) &&
+				if ( uni!=null &&
+				    (uni.RegIndex <= register) &&
 					((uni.RegIndex + uni.RegCount) > register)) {
 					return uni;
 				}
