@@ -436,6 +436,89 @@ namespace PlayScript
 			}
 		}
 
+#if PLATFORM_MONOTOUCH
+		private System.Drawing.PointF GetPosition(UITouch touch)
+		{
+			var p = touch.LocationInView(touch.View);
+
+			// convert point to pixels
+			var scale = touch.View.ContentScaleFactor;
+			p.X *= scale;
+			p.Y *= scale;
+			return p;
+		}
+
+		// TODO: at some point we'll have a platform agnostic notion of touches to pass to the player, for now we use UITouch
+		public void OnTouchesBegan (NSSet touches, UIEvent evt)
+		{
+			mMouseDown = true;		// This is used so we can send a MOUSE_UP event 
+
+			foreach (UITouch touch in touches) {
+				var p = GetPosition(touch);
+				//Console.WriteLine ("touches-began {0}", p);
+
+				var te = new flash.events.TouchEvent(flash.events.TouchEvent.TOUCH_BEGIN, true, false, 0, true, p.X, p.Y, 1.0, 1.0, 1.0 );
+				mStage.dispatchEvent (te);
+
+				// Mouse events can be deactivated if a gesture was recognized
+				if (mDeactivateMouseEvents == false) {
+					mStage.mouseX = p.X;
+					mStage.mouseY = p.Y;
+					var me = new flash.events.MouseEvent(flash.events.MouseEvent.MOUSE_DOWN, true, false, p.X, p.Y, mStage);
+					mStage.dispatchEvent (me);
+				}
+			}
+		}
+
+		public void OnTouchesMoved (NSSet touches, UIEvent evt)
+		{
+			foreach (UITouch touch in touches) {
+				var p = GetPosition(touch);
+				//Console.WriteLine ("touches-moved {0}", p);
+
+				var te = new flash.events.TouchEvent(flash.events.TouchEvent.TOUCH_MOVE, true, false, 0, true, p.X, p.Y, 1.0, 1.0, 1.0 );
+				mStage.dispatchEvent (te);
+
+				// Mouse events can be deactivated if a gesture was recognized
+				if (mDeactivateMouseEvents == false) {
+					mStage.mouseX = p.X;
+					mStage.mouseY = p.Y;
+					var me = new flash.events.MouseEvent(flash.events.MouseEvent.MOUSE_MOVE, true, false, p.X, p.Y, mStage);
+					mStage.dispatchEvent (me);
+				}
+			}
+		}
+
+		public void OnTouchesEnded (NSSet touches, UIEvent evt)
+		{
+			mMouseDown = false;
+
+			foreach (UITouch touch in touches) {
+				var p = GetPosition(touch);
+
+				//Console.WriteLine ("touches-ended {0}", p);
+
+				var te = new flash.events.TouchEvent(flash.events.TouchEvent.TOUCH_END, true, false, 0, true, p.X, p.Y, 1.0, 1.0, 1.0 );
+				mStage.dispatchEvent (te);
+
+				// Mouse events can be deactivated if a gesture was recognized
+				if (mDeactivateMouseEvents == false) {
+					mStage.mouseX = p.X;
+					mStage.mouseY = p.Y;
+					// Mouse up events can be deactivated is a gesture was recognized before and we had to already send a mouse up
+					// to avoid having the mouse up at the end of gesture (with the full delta range between the two)
+					if (mSkipNextMouseUp == false) {
+						var me = new flash.events.MouseEvent(flash.events.MouseEvent.MOUSE_UP, true, false, p.X, p.Y, mStage);
+						mStage.dispatchEvent (me);
+					}
+				}
+			}
+
+			if (mDeactivateMouseEvents == false) {
+				mSkipNextMouseUp = false;
+			}
+		}
+#else
 		public void OnTouchesBegan(List<flash.events.TouchEvent> touches)
 		{
 			mSpanPlayerTouch.Begin();
@@ -498,6 +581,7 @@ namespace PlayScript
 			}
 			mSpanPlayerTouch.End();
 		}
+#endif
 
 		public void OnPinchRecognized(flash.events.TransformGestureEvent tge)
 		{
