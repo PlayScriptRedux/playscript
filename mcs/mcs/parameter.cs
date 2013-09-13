@@ -1382,12 +1382,6 @@ namespace Mono.CSharp {
 					(parameter_type.BuiltinType == Mono.CSharp.BuiltinTypeSpec.Type.Dynamic || 
 					 parameter_type.BuiltinType == Mono.CSharp.BuiltinTypeSpec.Type.Object);
 
-				// This currently results in runtime exceptions due to the compiler giving
-				// * and Object types the value of System.Reflection.Missing. Re-enabling the
-				// compiler error until the runtime behavior can be resolved.
-				// See https://github.com/playscript/playscript-mono/issues/258
-				param_is_as_obj = false;
-
 				if (!expr.IsNull && TypeSpec.IsReferenceType (parameter_type) && parameter_type.BuiltinType != BuiltinTypeSpec.Type.String && !param_is_as_obj) {
 					rc.Report.Error (1763, Location,
 						"Optional parameter `{0}' of type `{1}' can only be initialized with `null'",
