@@ -7254,16 +7254,20 @@ catch_clause
 	  {
 		start_block (GetLocation ($2));
 		var lt = (LocatedToken) $3;
-		if ($4 == null) {
+		var type = (FullNamedExpression) $4;
+		if (type == null) {
 			if (settings.PsStrictMode)
 				report.Error (7012, lt.Location, "Variable `{0}' has no type declaration.", lt.Value);
 			else
 				report.Warning (1009, 1, lt.Location, "Variable `{0}' has no type declaration.", lt.Value);
-			$4 = new UntypedExceptionExpression (lt.Location);
+			type = new UntypedExceptionExpression (lt.Location);
 		}
 
+		if (type.Type == compiler.BuiltinTypes.Dynamic)
+			type = new UntypedExceptionExpression (lt.Location);
+
 		var c = new Catch (current_block, GetLocation ($1));
-		c.TypeExpression = (FullNamedExpression) $4;
+		c.TypeExpression = type;
 		c.Variable = new LocalVariable (current_block, lt.Value, lt.Location);
 		c.Variable.TypeExpr = c.TypeExpression;
 		current_block.AddLocalName (c.Variable);
