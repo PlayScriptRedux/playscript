@@ -624,7 +624,9 @@ namespace PlayScript
 
 		private static PerformanceFrameData sCurrentPerformanceFrameData;
 		private static PerformanceFrameData sDefaultPerformanceFrameData = new PerformanceFrameData(fastFrame: 1000.0/60.0, slowFrame: 1000.0/15.0, autoProfileFrame: 1000.0/45.0);
+#if PLATFORM_MONOTOUCH
 		private static PerformanceFrameData sSlowPerformanceFrameData = new PerformanceFrameData(fastFrame: 1000.0/30.0, slowFrame: 1000.0/10.0, autoProfileFrame: 1000.0/20.0);
+#endif
 	}
 }
 

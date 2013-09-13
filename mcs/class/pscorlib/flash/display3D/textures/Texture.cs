@@ -63,10 +63,12 @@ namespace flash.display3D.textures {
 			}
 		}
 
+#if PLATFORM_MONOMAC
 		private static int sColor = 0;
 		private static uint[] sColors = new uint[] {0x0000FF, 0x00FF00, 0xFF0000, 0xFF00FF, 0x00FFFF, 0xFFFF00};
 
 		private bool mDidUpload = false;
+#endif
 
 		private static int sMemoryUsedForTextures = 0;
 
@@ -309,9 +311,11 @@ namespace flash.display3D.textures {
 		
 		private readonly int 		mWidth;
 		private readonly int 		mHeight;
+#pragma warning disable 414		// the fields below are assigned but never used
 		private readonly string 	mFormat;
 		private readonly bool 		mOptimizeForRenderToTexture;
 		private readonly int    	mStreamingLevels;
+#pragma warning restore 414
 
 #else
 

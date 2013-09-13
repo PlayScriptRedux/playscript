@@ -821,8 +821,10 @@ namespace flash.display3D {
 			mValueFrame.WriteValue(mFrameCount);
 		}
 
+#pragma warning disable 414		// the field below is assigned but never used
 		// stage3D that owns us
 		private readonly Stage3D mStage3D;
+#pragma warning restore 414
 
 		// temporary floating point array for constant conversion
 		private readonly float[] mTemp = new float[4 * 1024];
@@ -839,15 +841,20 @@ namespace flash.display3D {
 
 		// settings for backbuffer
 		private int  mDefaultFrameBufferId;
+#if PLATFORM_MONOTOUCH
 		private int  mDepthRenderBufferId;
+#endif
 		private int  mBackBufferWidth = 0;
 		private int  mBackBufferHeight = 0;
+
+#pragma warning disable 414		// the fields below are assigned but never used
 		private int  mBackBufferAntiAlias = 0;
 		private bool mBackBufferEnableDepthAndStencil = true;
 		private bool mBackBufferWantsBestResolution = false;
 
 		// settings for render to texture
 		private TextureBase mRenderToTexture = null;
+#pragma warning restore 414
 		private int  		mTextureFrameBufferId;
 
 		// various stats

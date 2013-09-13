@@ -361,8 +361,10 @@ namespace flash.display3D {
 		private int 			   mFragmentShaderId = 0;
 		private int 			   mProgramId = 0;
 
+#pragma warning disable 414		// the fields below are assigned but never used
 		private string 			   mVertexSource;
 		private string 			   mFragmentSource;
+#pragma warning restore 414
 
 		// uniform lookup tables
 		private List<Uniform>	   mUniforms = new List<Uniform>();

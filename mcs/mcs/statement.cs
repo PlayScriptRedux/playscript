@@ -2528,7 +2528,11 @@ namespace Mono.CSharp {
 		public int ID = id++;
 
 		static int clone_id_counter;
+
+#pragma warning disable 0414
 		int clone_id;
+#pragma warning restore 0414
+
 #endif
 
 //		int assignable_slots;
