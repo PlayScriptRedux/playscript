@@ -58,12 +58,7 @@ package flash.media {
 		}
  	 	
 		public function load(stream:URLRequest, context:SoundLoaderContext = null):void {
-		#if PLATFORM_MONOTOUCH
-			loadIos(stream.url);
-		#else
-			trace("No sound implementation on Mac yet");
-			//throw new System.NotImplementedException();
-		#endif
+			internalLoad(stream.url);
 		}
  	 	
 		public function loadCompressedDataFromByteArray(bytes:ByteArray, bytesLength:uint):void {
@@ -73,13 +68,7 @@ package flash.media {
 		}
  	 	
 		public function play(startTime:Number = 0, loops:int = 0, sndTransform:SoundTransform = null):SoundChannel {
-		#if PLATFORM_MONOTOUCH
-			return playIos(startTime, loops, sndTransform);
-		#else
-			trace("No sound implementation on Mac yet");
-			//throw new System.NotImplementedException();
-		    return null;
-		#endif
+			return internalPlay(startTime, loops, sndTransform);		
 		}
 	
 	}

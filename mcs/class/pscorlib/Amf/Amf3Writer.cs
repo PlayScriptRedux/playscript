@@ -27,6 +27,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using _root;
+using PlayScript.Expando;
 
 namespace Amf
 {
@@ -51,6 +52,8 @@ namespace Amf
 
         private const int amfIntMaxValue = int.MaxValue >> 3;
         private const int amfIntMinValue = int.MinValue >> 3;
+
+		private readonly Amf3ClassDef anonClassDef = new Amf3ClassDef("*", new string[0], true, false);
 
         public Amf3Writer(Stream stream)
         {
@@ -105,6 +108,12 @@ namespace Amf
 			var str = obj as string;
 			if (str != null) {
 				Write(str);
+				return;
+			}
+
+			var expando = obj as ExpandoObject;
+			if (expando != null) {
+				Write(expando);
 				return;
 			}
 
@@ -326,6 +335,13 @@ namespace Amf
             TypelessWrite(obj);
         }
 
+		public void Write(ExpandoObject obj)
+		{
+			Write(Amf3TypeCode.Object);
+			TypelessWrite(obj);
+		}
+
+
         public void TypelessWrite(int integer)
         {
             if (integer > amfIntMaxValue || integer < amfIntMinValue)
@@ -448,10 +464,13 @@ namespace Amf
 
 		private void WriteDynamicClass(PlayScript.IDynamicClass dc)
         {
-            foreach (string key in dc.__GetDynamicNames()) {
-                TypelessWrite(key);
-                Write(dc.__GetDynamicValue(key));
-            }
+			var names = dc.__GetDynamicNames();
+			if (names != null) {
+				foreach (string key in names) {
+					TypelessWrite(key);
+					Write(dc.__GetDynamicValue(key));
+				}
+			}
 
             TypelessWrite("");
         }
@@ -716,6 +735,35 @@ namespace Amf
                 TypelessWrite("");
             }
         }
+
+
+		public void TypelessWrite(ExpandoObject obj)
+		{
+			if (CheckObjectTable(obj))
+				return;
+
+			// get class definition from expando
+			Amf3ClassDef classDef = obj.ClassDefinition as Amf3ClassDef;
+			if (classDef == null) {
+				classDef = anonClassDef;
+			}
+
+			TypelessWrite(classDef);
+			StoreObject(obj);
+
+			foreach (string i in classDef.Properties) {
+				Write(obj[i]);
+			}
+
+			if (classDef.Dynamic) {
+				foreach (var kvp in obj) {
+					TypelessWrite(kvp.Key);
+					Write(kvp.Value);
+				}
+
+				TypelessWrite("");
+			}
+		}
 
 		public void WriteObjectHeader(Amf3ClassDef classDef)
 		{

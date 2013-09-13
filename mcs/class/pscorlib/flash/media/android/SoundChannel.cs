@@ -12,42 +12,32 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-#if PLATFORM_MONOTOUCH
-
-using MonoTouch.AVFoundation;
+using System;
+using Android.Media;
 
 namespace flash.media {
-
+		
 	// We use a partial C# class for platform specific logic
 	partial class SoundChannel {
 
-		private AVAudioPlayer _player;
+		private MediaPlayer player;
 
-		public AVAudioPlayer Player
+		public MediaPlayer Player
 		{
-			set { _player = value; }
+			set { player = value; }
 		}
 
 		private void internalStop()
 		{
-			_player.Stop();
+			try 
+			{
+				if (player.IsPlaying)
+					player.Stop ();	
+			} catch(Exception e) {
+				Console.WriteLine ("Exception occur when stopping player. Message:" + e.Message);
+			}
 		}
 	}
 
 }
 
-#else
-
-namespace flash.media {
-
-	// We use a partial C# class for platform specific logic
-	partial class SoundChannel {
-			
-		private void internalStop()
-		{		
-		}
-	}
-
-}
-
-#endif

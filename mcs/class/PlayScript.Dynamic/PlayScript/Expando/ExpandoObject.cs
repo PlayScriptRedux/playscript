@@ -42,6 +42,19 @@ namespace PlayScript.Expando {
 
         private PropertyChangedEventHandler _propertyChanged;
 
+		// class definition object for use by serialization code (typically AMF3 serialization)
+		public object ClassDefinition { get; set;}
+
+		public dynamic this [string key] {
+			get {
+				throw new NotImplementedException();
+			}
+			set {
+				throw new NotImplementedException();
+			}
+		}
+
+
         /// <summary>
         /// Creates a new ExpandoObject with no members.
         /// </summary>
@@ -1538,6 +1551,9 @@ namespace PlayScript.Expando {
 		// The number of changes made to this dictionary. Used by enumerators
 		// to detect changes and invalidate themselves.
 		int generation;
+
+		// class definition object for use by serialization code (typically AMF3 serialization)
+		public object ClassDefinition { get; set;}
 		
 		public int Count {
 			get { return count; }

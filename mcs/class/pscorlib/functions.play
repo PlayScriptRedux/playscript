@@ -61,25 +61,35 @@ package {
 		}
 	}
 
+	// need to create this temporary class to hold static variables
+	public class TraceConfig
+	{
+		public static var enable:Boolean = true;
+	}
+
 	public static function trace(o:System.Object):void {
+		if (!TraceConfig.enable) return;
 		var str = (o!=null) ? o.ToString() : "";
 		System.Console.WriteLine(str);
 		Telemetry.Session.WriteTrace(str);
 	}
 		
 	public static function trace(o1:System.Object, o2:System.Object):void {
+		if (!TraceConfig.enable) return;
 		var str = System.String.Format("{0} {1}", o1, o2);
 		System.Console.WriteLine(str);
 		Telemetry.Session.WriteTrace(str);
 	}
 
 	public static function trace(o1:System.Object, o2:System.Object, o3:System.Object):void {
+		if (!TraceConfig.enable) return;
 		var str = System.String.Format("{0} {1} {2}", o1, o2, o3);
 		System.Console.WriteLine(str);
 		Telemetry.Session.WriteTrace(str);
 	}
 
 	public static function trace(o1:System.Object, o2:System.Object, o3:System.Object, ...args):void {
+		if (!TraceConfig.enable) return;
 		var argsStr = System.String.Concat(args);
 		var str = System.String.Format("{0} {1} {2} {3}", o1, o2, o3, argsStr);
 		System.Console.WriteLine(str);

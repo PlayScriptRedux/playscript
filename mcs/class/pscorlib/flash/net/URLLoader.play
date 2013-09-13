@@ -215,6 +215,9 @@ package flash.net {
 				wr.ContentType = "application/x-www-form-urlencoded";
 			}
 
+			// add a header to let the server know we are a mobile client
+			wr.Headers.Add("X-Mobile-Client", "true");
+
 			wr.Credentials = CredentialCache.DefaultCredentials;
 			return wr;
 		}
