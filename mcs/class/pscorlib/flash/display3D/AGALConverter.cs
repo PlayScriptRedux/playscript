@@ -163,9 +163,9 @@ namespace flash.display3D
 					str += (n + offset).ToString();
 				} else {
 					// indirect register
-					str += n.ToString();
+					str += o.ToString();
 					char indexComponent = (char)('x' + q);  
-					var indexRegister = PrefixFromType(itype, programType) + this.o.ToString() + "." + indexComponent.ToString(); 
+					var indexRegister = PrefixFromType(itype, programType) + this.n.ToString() + "." + indexComponent.ToString(); 
 					str += "[ int(" + indexRegister + ") +" + offset.ToString() + "]";
 				}
 
@@ -328,7 +328,8 @@ namespace flash.display3D
 			public void Add(SourceReg sr, RegisterUsage usage, int offset  = 0)
 			{
 				if (sr.d != 0) {
-					Add (sr.type, PrefixFromType(sr.type, sr.programType) + sr.n.ToString(), sr.n, RegisterUsage.Vector4Array);
+					Add (sr.itype, PrefixFromType(sr.itype, sr.programType) + sr.n.ToString(), sr.n, RegisterUsage.Vector4);
+					Add (sr.type, PrefixFromType(sr.type, sr.programType) + sr.o.ToString(), sr.o, RegisterUsage.Vector4Array);
 					return;
 				}
 				Add (sr.type, sr.ToGLSL(false, offset), sr.n + offset, usage);

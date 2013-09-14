@@ -1131,6 +1131,7 @@ namespace Mono.CSharp {
 				return ParseResult.Error;
 
 			case "/debug+":
+			case "/debug:+":
 				settings.GenerateDebugInfo = true;
 				return ParseResult.Success;
 

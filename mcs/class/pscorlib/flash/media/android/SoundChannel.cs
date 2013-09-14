@@ -12,6 +12,7 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
+using System;
 using Android.Media;
 
 namespace flash.media {
@@ -28,8 +29,13 @@ namespace flash.media {
 
 		private void internalStop()
 		{
-			if (player.IsPlaying)
-				player.Stop ();	
+			try 
+			{
+				if (player.IsPlaying)
+					player.Stop ();	
+			} catch(Exception e) {
+				Console.WriteLine ("Exception occur when stopping player. Message:" + e.Message);
+			}
 		}
 	}
 
