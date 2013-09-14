@@ -3506,7 +3506,9 @@ namespace Mono.CSharp {
 
 		#endregion
 
-		// PlayScript - We need to create an "Array" for our args parameters for ActionScript/PlayScript..
+		// <summary>
+		//	PlayScript - We need to create an "Array" for our args parameters for ActionScript/PlayScript..
+		// </summary>
 		private void PsCreateVarArgsArray (BlockContext rc)
 		{
 			if (parameters != null && parameters.FixedParameters != null && parameters.FixedParameters.Length > 0) {
@@ -3520,6 +3522,52 @@ namespace Mono.CSharp {
 					decl.Initializer = new Invocation (new MemberAccess(new MemberAccess(new SimpleName("PlayScript", this.loc), "Support", this.loc), "CreateArgListArray", this.loc), arguments);
 					this.AddLocalName (li);
 					this.AddScopeStatement (decl);	
+				}
+			}
+		}
+
+		// <summary>
+		//	PlayScript - Need to support non-null default args for object types
+		// </summary>
+		private void PsInitializeDefaultArgs (BlockContext rc)
+		{
+			if (parameters != null && parameters.FixedParameters != null && parameters.FixedParameters.Length > 0) {
+				int n = parameters.FixedParameters.Length;
+				for (int i = 0; i < n; i++) {
+					var param = parameters.FixedParameters [i] as Parameter;
+					if (param == null || !param.HasDefaultValue)
+						continue;
+
+					//
+					// These types are already handled by default, skip over them.
+					//
+					if (param.DefaultValue.IsNull || !TypeSpec.IsReferenceType (param.Type) || param.Type.BuiltinType == BuiltinTypeSpec.Type.String)
+						continue;
+
+					//
+					// Types that aren't supported by the base C# functionality will
+					// be assigned the value System.Reflection.Missing. We insert an if
+					// block at the top of the function which checks for this type, and
+					// then assigns the variable the real default value.
+					//
+					param = param.Clone ();
+					param.ResolveDefaultValue (rc);
+					var value = param.DefaultValue.Child;
+					if (value is BoxedCast)
+						value = ((BoxedCast)value).Child;
+
+					if (value is ILiteralConstant) {
+						var variable = new SimpleName (param.Name, loc);
+						var assign = new StatementExpression (
+							new SimpleAssign (variable, value.Clone (new CloneContext ())));
+						var missing = new MemberAccess (new MemberAccess (
+							new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "System", loc), "Reflection", loc), "Missing", loc);
+						var statement = new If (new Is (variable, missing, loc), assign, loc);
+						AddScopeStatement (statement);
+					} else {
+						rc.Report.Error (7013, "Optional parameter `{0}' of type `{1}' can't be initialized with the given value",
+						                 param.Name, param.Type.GetSignatureForError ());
+					}
 				}
 			}
 		}
@@ -3634,9 +3682,12 @@ namespace Mono.CSharp {
 			if (rc.HasSet (ResolveContext.Options.ExpressionTreeConversion))
 				flags |= Flags.IsExpressionTree;
 
-			// If ActionScript/PlayScript, create a var args Array local var that wraps the params varargs for .NET
+			//
+			// PlayScript specific setup
+			//
 			if (rc.FileType == SourceFileType.PlayScript) {
-				this.PsCreateVarArgsArray (rc);
+				PsInitializeDefaultArgs (rc);
+				PsCreateVarArgsArray (rc);
 			}
 
 			try {
