@@ -1002,19 +1002,19 @@ opt_attribute_arguments
 
 attribute_arguments
 	: /* empty */ 		{ $$ = null; } 
-	| positional_or_named_argument
+	| positional_argument
 	  {
 	  	Arguments a = new Arguments (4);
 		a.Add ((Argument) $1);
 		$$ = new Arguments [] { a, null };
 	  }
-	| named_attribute_argument
+  	| named_attribute_argument
 	  {
 	  	Arguments a = new Arguments (4);
 		a.Add ((Argument) $1);  
 		$$ = new Arguments [] { null, a };
 	  }
-    | attribute_arguments COMMA positional_or_named_argument
+    | attribute_arguments COMMA positional_argument
 	  {
 		Arguments[] o = (Arguments[]) $1;
 		if (o [1] != null) {
@@ -1039,19 +1039,6 @@ attribute_arguments
 	  }
     ;
 
-positional_or_named_argument
-	: expression
-	  {
-	  	$$ = new Argument ((Expression) $1);
-	  }
-	| named_argument
-	| error
-	  {
-		Error_SyntaxError (yyToken);
-		$$ = null;
-	  }
-	;
-
 named_attribute_argument
 	: IDENTIFIER ASSIGN
 	  {
@@ -1065,36 +1052,19 @@ named_attribute_argument
 		lbag.AddLocation ($$, GetLocation($2));
 	  }
 	;
-	
-named_argument
-	: identifier_inside_body COLON opt_named_modifier expression_or_error
+
+positional_argument
+	: expression
 	  {
-		if (lang_version <= LanguageVersion.V_3)
-			FeatureIsNotAvailable (GetLocation ($1), "named argument");
-			
-		// Avoid boxing in common case (no modifier)
-		var arg_mod = $3 == null ? Argument.AType.None : (Argument.AType) $3;
-			
-		var lt = (LocatedToken) $1;
-		$$ = new NamedArgument (lt.Value, lt.Location, (Expression) $4, arg_mod);
-		lbag.AddLocation ($$, GetLocation($2));
+	  	$$ = new Argument ((Expression) $1);
+	  }
+	| error
+	  {
+		Error_SyntaxError (yyToken);
+		$$ = null;
 	  }
 	;
-	
-opt_named_modifier
-	: /* empty */   { $$ = null; }
-	| REF
-	  { 
-	  	CheckIsPlayScript("ref parameters", GetLocation($1));
-		$$ = Argument.AType.Ref;
-	  }
-	| OUT
-	  { 
-	  	CheckIsPlayScript("out parameters", GetLocation($1));
-		$$ = Argument.AType.Out;
-	  }
-	;
-		  
+
 opt_class_member_declarations
 	: /* empty */
 	| class_member_declarations
@@ -1110,7 +1080,7 @@ class_member_declarations
 		lexer.parsing_modifiers = true;
 	  }
 	;
-	
+
 class_member_declaration
 	: constant_declaration
 	| field_declaration
@@ -4124,7 +4094,7 @@ opt_argument_list
 	;
 
 argument_list
-	: argument_or_named_argument
+	: argument
 	  { 
 		Arguments list = new Arguments (4);
 		list.Add ((Argument) $1);
@@ -4133,24 +4103,7 @@ argument_list
 	| argument_list COMMA argument
 	  {
 		Arguments list = (Arguments) $1;
-		if (list [list.Count - 1] is NamedArgument)
-			Error_NamedArgumentExpected ((NamedArgument) list [list.Count - 1]);
-		
 		list.Add ((Argument) $3);
-		$$ = list;
-	  }
-	| argument_list COMMA named_argument
-	  {
-		Arguments list = (Arguments) $1;
-		NamedArgument a = (NamedArgument) $3;
-		for (int i = 0; i < list.Count; ++i) {
-			NamedArgument na = list [i] as NamedArgument;
-			if (na != null && na.Name == a.Name)
-				report.Error (1740, na.Location, "Named argument `{0}' specified multiple times",
-					na.Name);
-		}
-		
-		list.Add (a);
 		$$ = list;
 	  }
 	| argument_list COMMA error
@@ -4174,11 +4127,6 @@ argument
 	| non_simple_argument
 	;
 
-argument_or_named_argument
-	: argument
-	| named_argument
-	;
-
 non_simple_argument
 	: REF variable_reference 
 	  { 
@@ -4190,16 +4138,6 @@ non_simple_argument
 		$$ = new Argument ((Expression) $2, Argument.AType.Out);
 		lbag.AddLocation ($$, GetLocation ($1));
 	  }
-//	| ARGLIST OPEN_PARENS argument_list CLOSE_PARENS
-//	  {
-//		$$ = new Argument (new Arglist ((Arguments) $3, GetLocation ($1)));
-//		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
-//	  }
-//	| ARGLIST OPEN_PARENS CLOSE_PARENS
-//	  {
-//		$$ = new Argument (new Arglist (GetLocation ($1)));
-//		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($3));
-//	  }	  
 	;
 
 variable_reference
@@ -4276,9 +4214,6 @@ expression_list_arguments
 	| expression_list_arguments COMMA expression_list_argument
 	  {
 		Arguments args = (Arguments) $1;
-		if (args [args.Count - 1] is NamedArgument && !($3 is NamedArgument))
-			Error_NamedArgumentExpected ((NamedArgument) args [args.Count - 1]);
-	  
 		args.Add ((Argument) $3);
 		$$ = args;	  
 	  }
@@ -4289,7 +4224,6 @@ expression_list_argument
 	  {
 	  	$$ = new Argument ((Expression) $1);
 	  }
-	| named_argument
 	;
 
 this_access
