@@ -293,14 +293,20 @@ namespace flash.display3D {
 					// vertex uniform
 					uniform.RegIndex = int.Parse (uniform.Name.Substring(2));
 					// store in vertex lookup table
-					mVertexUniformLookup[uniform.RegIndex] = uniform;
+					for (int reg=0; reg < uniform.RegCount; reg++) 
+					{
+						mVertexUniformLookup[uniform.RegIndex+reg] = uniform;
+					}
 				}
 				else if (uniform.Name.StartsWith("fc"))
 				{
 					// fragment uniform
 					uniform.RegIndex = int.Parse (uniform.Name.Substring(2));
 					// store in fragment lookup table
-					mFragmentUniformLookup[uniform.RegIndex] = uniform;
+					for (int reg=0; reg < uniform.RegCount; reg++) 
+					{
+						mFragmentUniformLookup[uniform.RegIndex+reg] = uniform;
+					}
 				}
 				else if (uniform.Name.StartsWith("sampler") && !uniform.Name.EndsWith("_alpha"))
 				{
@@ -337,21 +343,6 @@ namespace flash.display3D {
 			} else {
 				return mFragmentUniformLookup[register];
 			}
-		}
-
-		public Uniform searchUniform( bool isVertex, int register )
-		{
-			Uniform[] ary = (isVertex)? mVertexUniformLookup : mFragmentUniformLookup;
-
-			for (int i=0; i<ary.Length; i++) {
-				Uniform uni = ary [i];
-				if ( uni!=null &&
-				    (uni.RegIndex <= register) &&
-					((uni.RegIndex + uni.RegCount) > register)) {
-					return uni;
-				}
-			}
-			return null;
 		}
 
 		public SamplerState getSamplerState(int sampler)

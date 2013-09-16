@@ -455,20 +455,15 @@ namespace flash.display3D {
 
 				if (uniform == null) 
 				{
-					uniform = mProgram.searchUniform (isVertex, register);
-				
-					if (uniform == null) 
-					{
-						// skip this register
-						register += 1;
-						numRegisters -= 1;
-						dataIndex += 16;
+					// skip this register
+					register += 1;
+					numRegisters -= 1;
+					dataIndex += 16;
 
-						if (enableErrorChecking) {
-							Console.WriteLine ("warning: program register not found: {0}", register);
-						}
-						continue;
+					if (enableErrorChecking) {
+						Console.WriteLine ("warning: program register not found: {0}", register);
 					}
+					continue;
 				}
 	
 				// rhow many registers are we going to writte?
@@ -577,23 +572,21 @@ namespace flash.display3D {
 				mTemp[13]= (float)source[13];
 				mTemp[14]= (float)source[14];
 				mTemp[15]= (float)source[15];
-		}
+			}
 
 			// set uniform registers
 			Program3D.Uniform uniform =mProgram.getUniform(isVertex, firstRegister);
 			if (uniform != null) 
 			{
-				if(uniform.RegCount==4)
-					GL.UniformMatrix4(uniform.Location + (firstRegister - uniform.RegIndex), 1, false, mTemp);
+				int deltaReg = (firstRegister - uniform.RegIndex);
+				if(uniform.RegCount==4 && (firstRegister == uniform.RegIndex))
+					GL.UniformMatrix4(uniform.Location + deltaReg, 1, false, mTemp);
 				else
-					GL.Uniform4 (uniform.Location + (firstRegister - uniform.RegIndex) , uniform.RegCount, mTemp);
+					GL.Uniform4 (uniform.Location + deltaReg , uniform.RegCount - deltaReg, mTemp);
 			}
 			else
 			{
-				uniform = mProgram.searchUniform(isVertex, firstRegister);
-				if (uniform != null) {
-					GL.Uniform4 (uniform.Location + (firstRegister - uniform.RegIndex), uniform.RegCount, mTemp);
-				} else if (enableErrorChecking) {
+				if (enableErrorChecking) {
 					Console.WriteLine ("warning: program register not found: {0}", firstRegister);
 				}
 			}

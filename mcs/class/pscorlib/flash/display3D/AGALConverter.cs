@@ -379,7 +379,9 @@ namespace flash.display3D
 				);
 
 				var sb = new StringBuilder ();
-				foreach (var entry in mEntries) {
+				for(int i=0;i<mEntries.Count;i++)
+				{
+					Entry entry = mEntries [i];
 				
 					// only emit temporary registers based on boolean passed in
 					// this is so temp registers can be grouped in the main() block
@@ -450,7 +452,10 @@ namespace flash.display3D
 						sb.Append (entry.name + "_alpha");
 						sb.AppendLine (";");
 					} else if (entry.usage == RegisterUsage.Vector4Array) {
-						sb.AppendFormat ("{0}[{1}]", entry.name, 128);//128 registers
+						int count = 128;
+						if (i < mEntries.Count - 1) //find how many registers based on the next entry.
+							count = mEntries [i + 1].number - entry.number;
+						sb.AppendFormat ("{0}[{1}]", entry.name, count);// this is an array of "count" elements.
 						sb.AppendLine (";");
 					} else {
 						sb.Append (entry.name);
