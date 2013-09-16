@@ -428,6 +428,7 @@ namespace Amf
 			else
 			{
 				expandoObject = new PlayScript.Expando.ExpandoObject();
+				expandoObject.ClassDefinition = classDef;
 				obj = expandoObject;
 			}
 
