@@ -14,7 +14,19 @@
 
 package flash.net
 {
+	import System.Collections.Generic.*;
+
 	public function registerClassAlias(aliasName:String, classObject:Class):void {
-		throw new System.NotImplementedException();
+		// We allow the same class to be registered several times.
+		Internal.sClasses[aliasName] = classObject;
+	}
+	
+	public function getClassByAlias(aliasName:String):Class {
+		return Internal.sClasses[aliasName];
+	}
+
+	internal class Internal
+	{
+		internal static var sClasses:Dictionary.<String, Class> = new Dictionary.<String, Class>();
 	}
 }
