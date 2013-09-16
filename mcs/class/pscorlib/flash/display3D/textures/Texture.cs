@@ -179,11 +179,11 @@ namespace flash.display3D.textures {
 								}
 								else 
 								{
-									mAlphaTexture = new Texture(mContext, width, height, mFormat, mOptimizeForRenderToTexture, mStreamingLevels);
-									var clearData = new BitmapData(width, height, true, sColors[sColor % sColors.Length]);
+									mAlphaTexture = new Texture(mContext, 1, 1, mFormat, mOptimizeForRenderToTexture, mStreamingLevels);
+									var clearData = new BitmapData(width, height, true, 0xFFFFFFFF);
 
 									GL.BindTexture (mAlphaTexture.textureTarget, mAlphaTexture.textureId);
-									GL.TexImage2D(mAlphaTexture.textureTarget, level, (int) PixelInternalFormat.Rgba, width, height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, clearData.getRawData());
+									GL.TexImage2D (mAlphaTexture.textureTarget, level, (int) PixelInternalFormat.Rgba, 1, 1, 0, PixelFormat.Rgba, PixelType.UnsignedByte, clearData.getRawData());
 									GL.BindTexture (mAlphaTexture.textureTarget, 0);
 
 									clearData.dispose();
