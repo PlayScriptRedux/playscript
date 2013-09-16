@@ -24,6 +24,12 @@ package flash.net
 	public function getClassByAlias(aliasName:String):Class {
 		return Internal.sClasses[aliasName];
 	}
+	
+	public function tryGetClassByAlias(aliasName:String):Class {
+		var c:Class;
+		Internal.sClasses.TryGetValue(aliasName, out c);
+		return c;
+	}
 
 	internal class Internal
 	{

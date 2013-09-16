@@ -418,8 +418,18 @@ namespace Amf
             }
 
 			// Get the type and constructs one instance
-			System.Type c = flash.net.getClassByAlias_fn.getClassByAlias(classDef.Name);
-			object obj = CreateInstanceWithNoParameters(c);
+			System.Type c = flash.net.tryGetClassByAlias_fn.tryGetClassByAlias(classDef.Name);
+			object obj;
+			PlayScript.Expando.ExpandoObject expandoObject = null;
+			if (c != null)
+			{
+				obj = CreateInstanceWithNoParameters(c);
+			}
+			else
+			{
+				expandoObject = new PlayScript.Expando.ExpandoObject();
+				obj = expandoObject;
+			}
 
             objectTable.Add(obj);
 
@@ -433,30 +443,37 @@ namespace Amf
 			// At some point though, if we generate the corresponding deserializer code, it should not matter anymore
 			foreach (string propName in classDef.Properties) {
 				object value = ReadNextObject();
-				System.Reflection.PropertyInfo prop = c.GetProperty(propName);
-				if (prop != null) {
-					// If there is some mismatch on the property type, this will throw an exception
-					sOneParameter[0] = value;
-					prop.GetSetMethod().Invoke(obj, sOneParameter);
-					continue;
+				if (expandoObject != null)
+				{
+					expandoObject[propName] = value;
 				}
-				System.Reflection.FieldInfo field = c.GetField(propName);
-				if (field != null) {
-					// If there is some mismatch on the field type, this will throw an exception
-
-					// TODO: Implement a cleaner conversion code if this gets a bit more complicated
-					if (field.FieldType == typeof(uint)) {
-						// ReadNextObject() does not know about uint type, so we expect to receive a int here
-						// Let's cast it, so setting the field will not fail due to mismatch types
-						int intValue = (int)value;
-						value = (uint)intValue;			// We just cast from int to uint
+				else
+				{
+					System.Reflection.PropertyInfo prop = c.GetProperty(propName);
+					if (prop != null) {
+						// If there is some mismatch on the property type, this will throw an exception
+						sOneParameter[0] = value;
+						prop.GetSetMethod().Invoke(obj, sOneParameter);
+						continue;
 					}
+					System.Reflection.FieldInfo field = c.GetField(propName);
+					if (field != null) {
+						// If there is some mismatch on the field type, this will throw an exception
 
-					field.SetValue(obj, value);
-					continue;
+						// TODO: Implement a cleaner conversion code if this gets a bit more complicated
+						if (field.FieldType == typeof(uint)) {
+							// ReadNextObject() does not know about uint type, so we expect to receive a int here
+							// Let's cast it, so setting the field will not fail due to mismatch types
+							int intValue = (int)value;
+							value = (uint)intValue;			// We just cast from int to uint
+						}
+
+						field.SetValue(obj, value);
+						continue;
+					}
+					// Private property or field? Something else?
+					throw new NotSupportedException();
 				}
-				// Private property or field? Something else?
-				throw new NotSupportedException();
 			}
 
             if (classDef.Dynamic) {
