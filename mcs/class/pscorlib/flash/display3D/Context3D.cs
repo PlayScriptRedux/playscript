@@ -142,6 +142,7 @@ namespace flash.display3D {
 
 			// generate framebuffer for render to texture
 			GL.GenFramebuffers(1, out mTextureFrameBufferId);
+
 		}
 		
 		public void clear(double red = 0.0, double green = 0.0, double blue = 0.0, double alpha = 1.0, 
@@ -432,10 +433,74 @@ namespace flash.display3D {
 			// mark all samplers that this program uses as dirty
 			mSamplerDirty |= mProgram.samplerUsageMask;
 		}
- 	 	
-		public void setProgramConstantsFromByteArray(string programType, int firstRegister, 
-			int numRegisters, ByteArray data, uint byteArrayOffset) {
-			throw new NotImplementedException();
+ 
+		public void setProgramConstantsFromByteArray(string programType, int firstRegister, int numRegisters, ByteArray data, uint byteArrayOffset) 
+		{
+			if (numRegisters == 0) return;
+
+			if (numRegisters == -1) {
+				numRegisters = (int)((data.length >>2) - byteArrayOffset);
+			}
+
+			bool isVertex = (programType == "vertex");
+
+			// set all registers
+			int register = firstRegister;
+			uint dataIndex = byteArrayOffset;
+
+			while (numRegisters > 0)
+			{
+				// get uniform mapped to register
+				Program3D.Uniform uniform = mProgram.getUniform(isVertex, register);
+
+				if (uniform == null) 
+				{
+					// skip this register
+					register += 1;
+					numRegisters -= 1;
+					dataIndex += 16;
+
+					if (enableErrorChecking) {
+						Console.WriteLine ("warning: program register not found: {0}", register);
+					}
+					continue;
+				}
+	
+				// rhow many registers are we going to writte?
+				int numRegistersWritten = (uniform.RegCount < numRegisters )? uniform.RegCount : numRegisters;
+
+				// set uniforms based on type
+				//pin ByteArray data
+				unsafe
+				{
+					// Pin the buffer to a fixed location in memory. 
+					fixed (byte* dataRawByte = data.getRawArray() ) 
+					{
+						float* temp = (float*)(dataRawByte + dataIndex);
+						switch (uniform.Type) {
+						case ActiveUniformType.FloatMat2:
+							GL.UniformMatrix2 (uniform.Location+firstRegister-uniform.RegIndex, uniform.Size, false, temp);
+							break;
+						case ActiveUniformType.FloatMat3:
+							GL.UniformMatrix3 (uniform.Location+firstRegister-uniform.RegIndex, uniform.Size, false, temp);
+							break;
+						case ActiveUniformType.FloatMat4:
+							GL.UniformMatrix4 (uniform.Location+firstRegister-uniform.RegIndex, uniform.Size, false, temp);
+							break;
+						default:
+							GL.Uniform4 (uniform.Location+firstRegister-uniform.RegIndex, numRegistersWritten, temp);
+							break;
+						}
+					}
+				}
+
+				dataIndex += (uint) (numRegistersWritten<<4); // <<4 <=> 16 bytes (4 floats, so *16 per registers
+
+				// advance register number
+				register     += numRegistersWritten;
+				numRegisters -= numRegistersWritten;
+				firstRegister+= numRegistersWritten;
+			}
 		}
 
 		private static void convertDoubleToFloat (float[] dest, double[] source, int count)
@@ -453,17 +518,21 @@ namespace flash.display3D {
 				dest[i] = (float)source[i];
 			}
 		}
-
+	
 		public void setProgramConstantsFromMatrix (string programType, int firstRegister, Matrix3D matrix, 
 			bool transposedMatrix = false)
 		{
 			// GLES does not support transposed uniform setting so do it manually 
+			bool isVertex = (programType == "vertex");
+	
+			int locationInTemp = firstRegister << 2;//4 floats per register
+			double[] source = matrix.mData;
+
 			if (transposedMatrix) {
 				//    0  1  2  3
 				//    4  5  6  7
 				//    8  9 10 11
 				//   12 13 14 15
-				double[] source = matrix.mData;
 				mTemp[0] = (float)source[0];
 				mTemp[1] = (float)source[4];
 				mTemp[2] = (float)source[8];
@@ -484,17 +553,36 @@ namespace flash.display3D {
 				mTemp[14]= (float)source[11];
 				mTemp[15]= (float)source[15];
 			} else {
-				// convert double->float
-				convertDoubleToFloat (mTemp, matrix.mData, 16);
-			}
+				mTemp[0] = (float)source[0];
+				mTemp[1] = (float)source[1];
+				mTemp[2] = (float)source[2];
+				mTemp[3] = (float)source[3];
 
-			bool isVertex = (programType == "vertex");
+				mTemp[4] = (float)source[4];
+				mTemp[5] = (float)source[5];
+				mTemp[6] = (float)source[6];
+				mTemp[7] = (float)source[7];
+
+				mTemp[8] = (float)source[8];
+				mTemp[9] = (float)source[9];
+				mTemp[10]= (float)source[10];
+				mTemp[11]= (float)source[11];
+
+				mTemp[12]= (float)source[12];
+				mTemp[13]= (float)source[13];
+				mTemp[14]= (float)source[14];
+				mTemp[15]= (float)source[15];
+			}
 
 			// set uniform registers
 			Program3D.Uniform uniform =mProgram.getUniform(isVertex, firstRegister);
-			if (uniform != null)
+			if (uniform != null) 
 			{
-				GL.UniformMatrix4(uniform.Location, 1, false, mTemp);
+				int deltaReg = (firstRegister - uniform.RegIndex);
+				if(uniform.RegCount==4 && (firstRegister == uniform.RegIndex))
+					GL.UniformMatrix4(uniform.Location + deltaReg, 1, false, mTemp);
+				else
+					GL.Uniform4 (uniform.Location + deltaReg , uniform.RegCount - deltaReg, mTemp);
 			}
 			else
 			{
@@ -504,17 +592,16 @@ namespace flash.display3D {
 			}
 		}
 
- 	 	
 		public void setProgramConstantsFromVector (string programType, int firstRegister, Vector<double> data, int numRegisters = -1)
 		{
 			if (numRegisters == 0) return;
 
 			if (numRegisters == -1) {
-				numRegisters = (int)(data.length / 4);
+				numRegisters = (int)(data.length>>2);
 			}
 
 			bool isVertex = (programType == "vertex");
-
+		
 			// set all registers
 			int register = firstRegister;
 			int dataIndex = 0;
@@ -529,8 +616,9 @@ namespace flash.display3D {
 					numRegisters -= 1;
 					dataIndex    += 4;
 
-					if (enableErrorChecking) {
-//						Console.WriteLine ("warning: program register not found: {0}", register);
+					if (enableErrorChecking) 
+					{
+						Console.WriteLine ("warning: program register not found: {0}", register);
 					}
 					continue;
 				}
@@ -547,24 +635,24 @@ namespace flash.display3D {
 					mTemp[tempIndex++] = (float)data[dataIndex++];
 					mTemp[tempIndex++] = (float)data[dataIndex++];
 				}
-
+					
 				// set uniforms based on type
-				switch (uniform.Type)
+				switch (uniform.Type) 
 				{
 				case ActiveUniformType.FloatMat2:
-					GL.UniformMatrix2(uniform.Location, uniform.Size, false, mTemp);
+					GL.UniformMatrix2 (uniform.Location, uniform.Size, false, mTemp);
 					break;
 				case ActiveUniformType.FloatMat3:
-					GL.UniformMatrix3(uniform.Location, uniform.Size, false, mTemp);
+					GL.UniformMatrix3 (uniform.Location, uniform.Size, false, mTemp);
 					break;
 				case ActiveUniformType.FloatMat4:
-					GL.UniformMatrix4(uniform.Location, uniform.Size, false, mTemp);
+					GL.UniformMatrix4 (uniform.Location, uniform.Size, false, mTemp);
 					break;
 				default:
-					GL.Uniform4(uniform.Location, uniform.Size, mTemp);
+					GL.Uniform4 (uniform.Location, uniform.RegCount, mTemp);
 					break;
 				}
-
+		
 				// advance register number
 				register     += uniform.RegCount;
 				numRegisters -= uniform.RegCount;
