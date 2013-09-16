@@ -21,10 +21,12 @@
 // THE SOFTWARE.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using _root;
+using System.Reflection;
 
 namespace Amf
 {
@@ -304,22 +306,24 @@ namespace Amf
 			return vector;
 		}
 
-		public Vector<dynamic> ReadVectorObject()
+		public object ReadVectorObject()
 		{
 			int num = ReadInteger();
 			if ((num & 1) == 0) {
-				return (Vector<dynamic>)GetTableEntry(objectTable, num >> 1);
+				return GetTableEntry(objectTable, num >> 1);
 			}
 
 			num >>= 1;
 			bool isFixed = stream.ReadByteOrThrow() != 0;
 
-			// read object type name 
-			// this class definition is not known until the first object has been read
-			// (TODO: we need to construct the right vector type based on this)
+			// read object type name
+			// this class definition is not known until the first object has been read, but we don't need it here
 			string objectTypeName = ReadString();
 
-			var vector = new Vector<dynamic>((uint)num, isFixed);
+			sGenericParameter[0] = flash.net.getClassByAlias_fn.getClassByAlias(objectTypeName);
+			Type genericType = typeof(_root.Vector<>).MakeGenericType(sGenericParameter);
+			// We use IList so it works for all types, regardless of objectTypeName (cast works because _root.Vector<> implements IList)
+			IList vector = (IList)Activator.CreateInstance(genericType, (uint)num, isFixed);
 			objectTable.Add(vector);
 
 			// read all values
@@ -330,6 +334,7 @@ namespace Amf
 			return vector;
 		}
 
+		private static Type[] sGenericParameter = new Type[1];
 
 		public flash.utils.ByteArray ReadByteArray()
 		{
@@ -380,7 +385,7 @@ namespace Amf
 
 
 
-        public Amf3Object ReadAmf3Object()
+        public object ReadAmf3Object()
         {
             Amf3Object.Flags flags = (Amf3Object.Flags)ReadInteger();
 
@@ -412,27 +417,99 @@ namespace Amf
                 traitTable.Add(classDef);
             }
 
-            Amf3Object obj = new Amf3Object(classDef);
+			// Get the type and constructs one instance
+			System.Type c = flash.net.getClassByAlias_fn.getClassByAlias(classDef.Name);
+			object obj = CreateInstanceWithNoParameters(c);
+
             objectTable.Add(obj);
 
             if (classDef.Externalizable) {
-                obj.Properties["inner"] = ReadNextObject();
-                return obj;
+				throw new NotSupportedException ();
+                //obj.Properties["inner"] = ReadNextObject();
+                //return obj;
             }
 
-            foreach (string i in classDef.Properties) {
-                obj.Properties[i] = ReadNextObject();
-            }
+			// If we want to keep reflection, we should cache the property setter or field setter
+			// At some point though, if we generate the corresponding deserializer code, it should not matter anymore
+			foreach (string propName in classDef.Properties) {
+				object value = ReadNextObject();
+				System.Reflection.PropertyInfo prop = c.GetProperty(propName);
+				if (prop != null) {
+					// If there is some mismatch on the property type, this will throw an exception
+					sOneParameter[0] = value;
+					prop.GetSetMethod().Invoke(obj, sOneParameter);
+					continue;
+				}
+				System.Reflection.FieldInfo field = c.GetField(propName);
+				if (field != null) {
+					// If there is some mismatch on the field type, this will throw an exception
+
+					// TODO: Implement a cleaner conversion code if this gets a bit more complicated
+					if (field.FieldType == typeof(uint)) {
+						// ReadNextObject() does not know about uint type, so we expect to receive a int here
+						// Let's cast it, so setting the field will not fail due to mismatch types
+						int intValue = (int)value;
+						value = (uint)intValue;			// We just cast from int to uint
+					}
+
+					field.SetValue(obj, value);
+					continue;
+				}
+				// Private property or field? Something else?
+				throw new NotSupportedException();
+			}
 
             if (classDef.Dynamic) {
+				throw new NotSupportedException ();
+				/*
                 string key = ReadString();
                 while (key != "") {
                     obj.Properties[key] = ReadNextObject();
                     key = ReadString();
                 }
+                */
             }
             return obj;
         }
+
+		private object CreateInstanceWithNoParameters(Type type)
+		{
+			// First, we look the default constrcutor
+			ConstructorInfo constructor = type.GetConstructor(Type.EmptyTypes);
+			if (constructor != null)
+			{
+				return constructor.Invoke(sZeroParameter);
+			}
+
+			// If there was no default constructor, use a constructor that only has default values
+			ConstructorInfo[] allConstructors = type.GetConstructors();
+			foreach (ConstructorInfo oneConstructor in allConstructors)
+			{
+				ParameterInfo[] parameters = oneConstructor.GetParameters();
+				if (parameters.Length == 0) {
+					// Why did we not get this with the default constructor?
+					// In any case, handle the case gracefully
+				} else if (parameters[0].IsOptional) {
+					// First parameter is optional, so all others are too, this constructor is good enough
+				} else {
+					// We can't use this constructor, try the next one
+					continue;
+				}
+
+				object[] arguments = new object[parameters.Length];
+				for (int i = 0 ; i < parameters.Length ; ++i) {
+					arguments[i] = parameters[i].DefaultValue;
+				}
+
+				return oneConstructor.Invoke(arguments);
+			}
+
+			// Did we miss something?
+			throw new NotSupportedException();
+		}
+
+		private static object[] sZeroParameter = new object[0];
+		private static object[] sOneParameter = new object[1];
 
 		// returns all the class definitions that have been found while parsing
 		public Amf3ClassDef[] GetClassDefinitions()
