@@ -45,6 +45,9 @@ namespace flash.display3D {
 	using TextureTarget = OpenTK.Graphics.ES20.All;
 	using FramebufferAttachment = OpenTK.Graphics.ES20.All;
 	using ActiveUniformType = OpenTK.Graphics.ES20.All;
+	using RenderbufferTarget = OpenTK.Graphics.ES20.All;
+	using RenderbufferInternalFormat = OpenTK.Graphics.ES20.All;
+	using FramebufferSlot = OpenTK.Graphics.ES20.All;
 #endif
 
 	using System;
@@ -815,8 +818,7 @@ namespace flash.display3D {
 						}
 
 						// set alpha texture
-						if (texture.alphaTexture != null) 
-						{
+						if (texture.alphaTexture != null) {
 							GL.ActiveTexture (TextureUnit.Texture8 + sampler);
 							TextureBase alphaTexture = texture.alphaTexture;
 							var alphaTarget = alphaTexture.textureTarget;
@@ -826,8 +828,10 @@ namespace flash.display3D {
 							} else {
 								alphaTexture.setSamplerState (Context3D.DefaultSamplerState);
 							}
+						} else {
+							GL.ActiveTexture (TextureUnit.Texture8 + sampler);
+							GL.BindTexture (TextureTarget.Texture2D, 0);
 						}
-
 
 					} else {
 						// texture is null so unbind texture

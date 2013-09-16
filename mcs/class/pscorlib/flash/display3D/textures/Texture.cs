@@ -170,11 +170,23 @@ namespace flash.display3D.textures {
 								GL.CompressedTexImage2D(textureTarget, level, All.Etc1Rgb8Oes, width, height, 0, (int)textureLength, address);
 								if (textureLength < blockLength)
 								{
-									mAlphaTexture = new Texture(mContext, mWidth, mHeight, mFormat, mOptimizeForRenderToTexture, mStreamingLevels);
+									mAlphaTexture = new Texture(mContext, width, height, mFormat, mOptimizeForRenderToTexture, mStreamingLevels);
 									var alphaAddress = new IntPtr(ptr + data.position + textureLength);
 
 									GL.BindTexture (mAlphaTexture.textureTarget, mAlphaTexture.textureId);
 									GL.CompressedTexImage2D(mAlphaTexture.textureTarget, level, All.Etc1Rgb8Oes, width, height, 0, textureLength, alphaAddress);
+									GL.BindTexture (mAlphaTexture.textureTarget, 0);
+								}
+								else 
+								{
+									mAlphaTexture = new Texture(mContext, width, height, mFormat, mOptimizeForRenderToTexture, mStreamingLevels);
+									var clearData = new BitmapData(width, height, true, sColors[sColor % sColors.Length]);
+
+									GL.BindTexture (mAlphaTexture.textureTarget, mAlphaTexture.textureId);
+									GL.TexImage2D(mAlphaTexture.textureTarget, level, (int) PixelInternalFormat.Rgba, width, height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, clearData.getRawData());
+									GL.BindTexture (mAlphaTexture.textureTarget, 0);
+
+									clearData.dispose();
 								}
 							}
 							trackCompressedMemoryUsage((int)blockLength);
@@ -275,25 +287,26 @@ namespace flash.display3D.textures {
 			// Bind the texture
 			GL.BindTexture (textureTarget, textureId);
 
-#if PLATFORM_MONOMAC
-            if (generateMipmap) {
-                GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.GenerateMipmap, 1);
-            }
-#endif
-#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
-			GL.TexImage2D(textureTarget, (int)miplevel, PixelInternalFormat.Rgba, mWidth, mHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte,source.getRawData());
-#elif PLATFORM_MONODROID
-			GL.TexImage2D<uint>(textureTarget, (int)miplevel, (int) PixelInternalFormat.Rgba, mWidth, mHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte, source.getRawData());
-#endif
+			#if PLATFORM_MONOMAC
+	            if (generateMipmap) {
+	                GL.TexParameter (TextureTarget.Texture2D, TextureParameterName.GenerateMipmap, 1);
+	            }
+			#endif
 
-#if PLATFORM_MONOTOUCH || PLATFORM_MONODROID
-            GL.GenerateMipmap(textureTarget);
-#endif
+			#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
+				GL.TexImage2D(textureTarget, (int)miplevel, PixelInternalFormat.Rgba, mWidth, mHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte,source.getRawData());
+			#elif PLATFORM_MONODROID
+				GL.TexImage2D<uint>(textureTarget, (int)miplevel, (int) PixelInternalFormat.Rgba, mWidth, mHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte, source.getRawData());
+			#endif
+
+			#if PLATFORM_MONOTOUCH || PLATFORM_MONODROID
+            	GL.GenerateMipmap(textureTarget);
+			#endif
 
 			// unbind texture and pixel buffer
 			GL.BindTexture (textureTarget, 0);
 
-			source.dispose();
+			source.dispose();				
 
 			// store memory usaged by texture
 			trackMemoryUsage(memUsage);
