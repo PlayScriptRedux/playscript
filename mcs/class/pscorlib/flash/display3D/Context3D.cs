@@ -19,6 +19,7 @@ namespace flash.display3D {
 #if PLATFORM_MONOMAC
 	using MonoMac.OpenGL;
 	using MonoMac.AppKit;
+	using FramebufferSlot = MonoMac.OpenGL.FramebufferAttachment;
 #elif PLATFORM_MONOTOUCH
 	using MonoTouch.OpenGLES;
 	using MonoTouch.UIKit;
@@ -143,9 +144,14 @@ namespace flash.display3D {
 			// get default framebuffer for use when restoring rendering to backbuffer
 			GL.GetInteger(GetPName.FramebufferBinding, out mDefaultFrameBufferId);
 
+			// generate depth buffer for backbuffer
+			GL.GenRenderbuffers (1, out mDepthRenderBufferId);
+
 			// generate framebuffer for render to texture
 			GL.GenFramebuffers(1, out mTextureFrameBufferId);
 
+			// generate depth buffer for render to texture
+			GL.GenRenderbuffers(1, out mTextureDepthBufferId);
 		}
 		
 		public void clear(double red = 0.0, double green = 0.0, double blue = 0.0, double alpha = 1.0, 
@@ -183,36 +189,23 @@ namespace flash.display3D {
 			mBackBufferWantsBestResolution = wantsBestResolution;
 
 			#if PLATFORM_MONOTOUCH
-
 			if (enableDepthAndStencil)
 			{
-				// setup depth buffer
-				if (mDepthRenderBufferId == 0)
-				{
-					// create depth buffer
-					// $$TODO allow for resizing of depth buffer here
-					GL.GenRenderbuffers (1, out mDepthRenderBufferId);
-					GL.BindRenderbuffer (RenderbufferTarget.Renderbuffer, mDepthRenderBufferId);
-					GL.RenderbufferStorage (RenderbufferTarget.Renderbuffer, RenderbufferInternalFormat.DepthComponent16, width, height);
-					GL.FramebufferRenderbuffer (FramebufferTarget.Framebuffer,
-					                            FramebufferSlot.DepthAttachment,
-					                            RenderbufferTarget.Renderbuffer, 
-					                            mDepthRenderBufferId);
-				}
+				// setup depth buffer size to match backbuffer size
+				GL.BindRenderbuffer (RenderbufferTarget.Renderbuffer, mDepthRenderBufferId);
+				GL.RenderbufferStorage (RenderbufferTarget.Renderbuffer, RenderbufferInternalFormat.DepthComponent16, width, height);
+				GL.FramebufferRenderbuffer (FramebufferTarget.Framebuffer,
+				                            FramebufferSlot.DepthAttachment,
+				                            RenderbufferTarget.Renderbuffer, 
+				                            mDepthRenderBufferId);
 			}
 			else
 			{
-				// delete depth render buffer
-				if (mDepthRenderBufferId != 0)
-				{
-					GL.FramebufferRenderbuffer (FramebufferTarget.Framebuffer,
-					                            FramebufferSlot.DepthAttachment,
-					                            RenderbufferTarget.Renderbuffer, 
-					                            0);
-
-					GL.DeleteRenderbuffers(1, ref mDepthRenderBufferId);
-					mDepthRenderBufferId = 0;
-				}
+				// disable depth render buffer
+				GL.FramebufferRenderbuffer (FramebufferTarget.Framebuffer,
+				                            FramebufferSlot.DepthAttachment,
+				                            RenderbufferTarget.Renderbuffer, 
+				                            0);
 			}
 			#endif
 
@@ -664,6 +657,15 @@ namespace flash.display3D {
 
  	 	public void setRenderToBackBuffer ()
 		{
+#if PLATFORM_MONOTOUCH
+			if (mRenderToTexture != null) {
+				// discard depth buffer after doing a render to texture
+				// this is a hint to GL to not keep the data around
+				All discard = (All)FramebufferSlot.DepthAttachment;
+				GL.Ext.DiscardFramebuffer((All)FramebufferTarget.Framebuffer, 1, ref discard);
+			}
+#endif
+
 			// draw to backbuffer
 			GL.BindFramebuffer (FramebufferTarget.Framebuffer, mDefaultFrameBufferId);
 			// setup viewport for render to backbuffer
@@ -685,12 +687,36 @@ namespace flash.display3D {
 			if (texture2D == null) 
 				throw new Exception("Invalid texture");
 
-			GL.BindFramebuffer(FramebufferTarget.Framebuffer, mTextureFrameBufferId);
 #if PLATFORM_MONOTOUCH
-			GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferSlot.ColorAttachment0, TextureTarget.Texture2D, texture.textureId, 0);
-#elif PLATFORM_MONOMAC || PLATFORM_MONODROID
-			GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, texture.textureId, 0);
+			// discard depth buffer before doing a render to texture
+			// this is a hint to GL to not keep the data around
+			All discard = (All)FramebufferSlot.DepthAttachment;
+			GL.Ext.DiscardFramebuffer((All)FramebufferTarget.Framebuffer, 1, ref discard);
 #endif
+
+			GL.BindFramebuffer(FramebufferTarget.Framebuffer, mTextureFrameBufferId);
+			GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferSlot.ColorAttachment0, TextureTarget.Texture2D, texture.textureId, 0);
+
+#if PLATFORM_MONOTOUCH
+			if (enableDepthAndStencil) {
+				// resize depth attachment to be the appropriate size
+				GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, mTextureDepthBufferId);
+				GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, RenderbufferInternalFormat.DepthComponent16, texture2D.width, texture2D.height);
+				// set depth attachment for render to texture
+				GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer,
+				                           FramebufferSlot.DepthAttachment,
+				                           RenderbufferTarget.Renderbuffer, 
+				                           mTextureDepthBufferId);
+
+			} else {
+				// remove depth attachment
+				GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer,
+				                           FramebufferSlot.DepthAttachment,
+				                           RenderbufferTarget.Renderbuffer, 
+				                           0);
+			}
+#endif
+
 			// setup viewport for render to texture
 			GL.Viewport(0,0, texture2D.width, texture2D.height);
 
@@ -939,6 +965,7 @@ namespace flash.display3D {
 		// settings for render to texture
 		private TextureBase mRenderToTexture = null;
 		private int  		mTextureFrameBufferId;
+		private int  		mTextureDepthBufferId;
 
 		// various stats
 		private int 				mFrameCount;
