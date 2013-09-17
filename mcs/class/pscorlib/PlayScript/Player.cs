@@ -60,6 +60,9 @@ namespace PlayScript
 
 		public static int           ApplicationLoadDelay {get;set;}
 
+		// desired content scale for application (1.0=nonretina, 2.0=retina)
+		public static double?       ApplicationContentScale {get;set;}
+
 		static Player()
 		{
 			// add resource directories in static constructor
