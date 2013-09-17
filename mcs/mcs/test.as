@@ -1,35 +1,45 @@
-package
+package Blah1
 {
-	import flash.utils.Dictionary;
+	public class ClassA {}
+	public class ClassB {}
+	public class ClassC extends ClassB {}
 
-	public class Test
+	public class EqualityTest
 	{
-		public static function Main():void
+		public static function Main():int
 		{
-			Method1();
+			var a:ClassA = new ClassA();
+			var a2:ClassA = new ClassA();
+			var b:ClassB = new ClassB();
+			var c:ClassC = new ClassC();
 
-			var d:* = new Dictionary();
-			d["a"] = {};
-			d["b"] = {};
-			d["c"] = {};
-			d["d"] = [];
+			var d1:Number, d2:Number;
 
-
-			var blah:String = "a";
-			var b:Boolean = (blah in d);
-			if (b) {
-				trace("Yay!");
+			if (d1 == d1) {
+				trace("IsNAN");
 			}
 
-		}
+			if (a == a) {
+				trace("YAY!");
+			}
 
-		[Inline]
-		static function Method1():int {
-			// ... Aggressive inlining.
-			return "one".Length + "two".Length + "three".Length +
-				"four".Length + "five".Length + "six".Length +
-					"seven".Length + "eight".Length + "nine".Length +
-					"ten".Length;
+			if (a == a2) {
+				trace("YAY!");
+			}
+
+			if (a == true) {
+				trace("YAY!");
+			}
+
+			if (b == c) {
+				trace("YAY!");
+			}
+
+			if (a == b) {
+				trace("YAY!");
+			}
+
+			return 0;
 		}
 	}
 }

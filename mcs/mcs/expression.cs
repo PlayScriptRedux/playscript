@@ -3735,8 +3735,12 @@ namespace Mono.CSharp
 			// Comparison warnings
 			if ((oper & Operator.ComparisonMask) != 0) {
 				if (left.Equals (right)) {
-					if (ec.FileType != SourceFileType.PlayScript) // in PlayScript this is used as an efficient NaN check
+					// in PlayScript this is used as an efficient NaN check
+					bool is_playscript_nan_check = (ec.FileType == SourceFileType.PlayScript && 
+						left.Type.BuiltinType == BuiltinTypeSpec.Type.Double && right.Type.BuiltinType == BuiltinTypeSpec.Type.Double);
+					if (!is_playscript_nan_check) { 
 						ec.Report.Warning (1718, 3, loc, "A comparison made to same variable. Did you mean to compare something else?");
+					}
 				}
 				CheckOutOfRangeComparison (ec, lc, right.Type);
 				CheckOutOfRangeComparison (ec, rc, left.Type);
@@ -4253,7 +4257,7 @@ namespace Mono.CSharp
 		}
 
 		//
-		// Equality operators rules
+		// Equality operators rules (<-- heh looks like "Equality operators RULE!")
 		//
 		Expression ResolveEquality (ResolveContext ec, TypeSpec l, TypeSpec r, bool primitives_only)
 		{
@@ -4382,15 +4386,6 @@ namespace Mono.CSharp
 					lifted.Right = right;
 					return lifted.Resolve (ec);
 				}
-
-				//
-				// PlayScript - Try equality with any PlayScript/ActionSCript implicit conversions
-				//
-				if (ec.FileType == SourceFileType.PlayScript) {
-					result = ResolveOperatorPredefined (ec, ec.BuiltinTypes.AsOperatorsBinaryEquality, no_arg_conv);
-					if (result != null)
-						return result;
-				}
 			}
 
 			//
@@ -4406,25 +4401,45 @@ namespace Mono.CSharp
 				return l.Kind == MemberKind.InternalCompilerType || l.Kind == MemberKind.Struct ? null : this;
 			}
 
+			// PlayScript - we have to let control fall through to end of method.. so use ret here and set it to null if invalid
+			Expression ret = this;
+
 			if (!Convert.ExplicitReferenceConversionExists (l, r, ec) &&
 				!Convert.ExplicitReferenceConversionExists (r, l, ec))
-				return null;
+				ret = null;
 
 			// Reject allowed explicit conversions like int->object
 			if (!TypeSpec.IsReferenceType (l) || !TypeSpec.IsReferenceType (r))
-				return null;
+				ret = null;
 
-			if (l.BuiltinType == BuiltinTypeSpec.Type.String || l.BuiltinType == BuiltinTypeSpec.Type.Delegate || MemberCache.GetUserOperator (l, CSharp.Operator.OpType.Equality, false) != null)
+			if (ret != null) {
+			  if (l.BuiltinType == BuiltinTypeSpec.Type.String || l.BuiltinType == BuiltinTypeSpec.Type.Delegate || MemberCache.GetUserOperator (l, CSharp.Operator.OpType.Equality, false) != null)
 				ec.Report.Warning (253, 2, loc,
 					"Possible unintended reference comparison. Consider casting the right side expression to type `{0}' to get value comparison",
 					l.GetSignatureForError ());
 
-			if (r.BuiltinType == BuiltinTypeSpec.Type.String || r.BuiltinType == BuiltinTypeSpec.Type.Delegate || MemberCache.GetUserOperator (r, CSharp.Operator.OpType.Equality, false) != null)
+			  if (r.BuiltinType == BuiltinTypeSpec.Type.String || r.BuiltinType == BuiltinTypeSpec.Type.Delegate || MemberCache.GetUserOperator (r, CSharp.Operator.OpType.Equality, false) != null)
 				ec.Report.Warning (252, 2, loc,
 					"Possible unintended reference comparison. Consider casting the left side expression to type `{0}' to get value comparison",
 					r.GetSignatureForError ());
+			}
 
-			return this;
+			//
+			// PlayScript - Try equality with any PlayScript/ActionScript implicit conversions
+			//
+			if (ret == null && ec.FileType == SourceFileType.PlayScript) {
+				if (TypeSpec.IsReferenceType (l) && TypeSpec.IsReferenceType (r)) {
+					// Comparison of two unrelated reference types?  Punt this to Object.Equals() and let it sort it out.
+					var args = new Arguments (2);
+					args.Add (new Argument (left));
+					args.Add (new Argument (right));
+					ret = new Invocation (new MemberAccess (new TypeExpression (ec.BuiltinTypes.Object, loc), "Equals"), args).Resolve (ec);
+				} else {
+					ret = ResolveOperatorPredefined (ec, ec.BuiltinTypes.AsOperatorsBinaryEquality, no_arg_conv);
+				}
+			}
+
+			return ret;
 		}
 
 
