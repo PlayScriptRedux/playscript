@@ -842,7 +842,8 @@ namespace flash.display3D {
 							// use default state if program has none
 							texture.setSamplerState(Context3D.DefaultSamplerState);
 						}
-
+						
+						#if PLATFORM_MONODROID
 						// set alpha texture
 						if (texture.alphaTexture != null) {
 							GL.ActiveTexture (TextureUnit.Texture8 + sampler);
@@ -856,8 +857,9 @@ namespace flash.display3D {
 							}
 						} else {
 							GL.ActiveTexture (TextureUnit.Texture8 + sampler);
-							GL.BindTexture (TextureTarget.Texture2D, 0);
+							GL.BindTexture( target, texture.textureId);
 						}
+						#endif
 
 					} else {
 						// texture is null so unbind texture

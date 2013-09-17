@@ -74,7 +74,6 @@ namespace flash.media {
 			if (startTime > 0)
 				Console.WriteLine ("StartTime is not supported");
 
-			player.SeekTo (0);
 			player.Start ();
 
 			return channel;
@@ -109,8 +108,6 @@ namespace flash.media {
 					mp.SeekTo (0);
 					mp.Start ();
 				} else if (count >= loopsCount) {
-					this.Reset ();
-					this.Release ();
 					channel.dispatchEvent (new Event (Event.SOUND_COMPLETE));
 				}
 			}								
