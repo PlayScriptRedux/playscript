@@ -221,7 +221,6 @@ namespace Mono.PlayScript
 		bool handle_for_in = false;
 		bool eat_block = false;
 		int eat_block_braces = 0;
-		bool lambda_arguments_parsing;
 		List<Location> escaped_identifiers;
 		int parsing_generic_less_than;
 		readonly bool doc_processing;
@@ -1003,11 +1002,6 @@ namespace Mono.PlayScript
 				if (!parsing_playscript) {
 					res = -1;
 				} else if (!query_parsing) {
-					if (lambda_arguments_parsing) {
-						res = -1;
-						break;
-					}
-
 					PushPosition ();
 					// HACK: to disable generics micro-parser, because PushPosition does not
 					// store identifiers array
@@ -1133,7 +1127,6 @@ namespace Mono.PlayScript
 				} else if (parsing_block > 0) {
 					switch (peek_token ()) {
 					case Token.DELEGATE:
-					case Token.OPEN_PARENS_LAMBDA:
 						// async is keyword
 						break;
 					case Token.IDENTIFIER:
@@ -1306,95 +1299,11 @@ namespace Mono.PlayScript
 		}
 
 		//
-		// Open parens micro parser. Detects both lambda and cast ambiguity.
+		// Open parens micro parser. Only detects simple open parens at the moment.
 		//	
 		int TokenizeOpenParens ()
 		{
-			int ptoken;
-			current_token = -1;
-			current_token_line = 0;
-
-			int bracket_level = 0;
-			
-			while (true) {
-				ptoken = current_token;
-				token ();
-
-				switch (current_token) {
-				case Token.CLOSE_PARENS:
-					token ();
-					
-					//
-					// Expression inside parens is lambda, (int i) => 
-					//
-					if (current_token == Token.ARROW)
-						return Token.OPEN_PARENS_LAMBDA;
-
-					return Token.OPEN_PARENS;
-					
-				case Token.DOT:
-				case Token.DOUBLE_COLON:
-					if (ptoken != Token.IDENTIFIER && ptoken != Token.OP_GENERICS_GT)
-						goto default;
-
-					continue;
-
-				case Token.IDENTIFIER:
-					switch (ptoken) {
-					case Token.DOT:
-					case Token.OP_GENERICS_LT:
-					case Token.COMMA:
-					case Token.DOUBLE_COLON:
-					case -1:
-					default:
-						continue;
-					}
-
-				case Token.OBJECT:
-				case Token.STRING:
-				case Token.BOOL:
-				case Token.DECIMAL:
-				case Token.FLOAT:
-				case Token.DOUBLE:
-				case Token.SBYTE:
-				case Token.BYTE:
-				case Token.SHORT:
-				case Token.USHORT:
-				case Token.INT:
-				case Token.UINT:
-				case Token.LONG:
-				case Token.ULONG:
-				case Token.CHAR:
-				case Token.VOID:
-					continue;
-
-				case Token.COMMA:
-					if (bracket_level == 0)
-						bracket_level = 100;
-					continue;
-
-				case Token.OP_GENERICS_LT:
-				case Token.OPEN_BRACKET:
-					bracket_level++;
-					continue;
-
-				case Token.OP_GENERICS_GT:
-				case Token.CLOSE_BRACKET:
-					--bracket_level;
-					continue;
-
-				case Token.INTERR_NULLABLE:
-				case Token.STAR:
-					continue;
-
-				case Token.REF:
-				case Token.OUT:
-					continue;
-
-				default:
-					return Token.OPEN_PARENS;
-				}
-			}
+			return Token.OPEN_PARENS;
 		}
 
 		public static bool IsValidIdentifier (string s)
@@ -3651,7 +3560,7 @@ namespace Mono.PlayScript
 
 					parse_regex_xml = 2;  // regex literals may be included in array initializers.
 
-					if (parsing_block == 0 || lambda_arguments_parsing)
+					if (parsing_block == 0)
 						return Token.OPEN_BRACKET;
 
 					next = peek_char ();
@@ -3685,7 +3594,7 @@ namespace Mono.PlayScript
 					//
 					// An expression versions of parens can appear in block context only
 					//
-					if (parsing_block != 0 && !lambda_arguments_parsing) {
+					if (parsing_block != 0) {
 						
 						//
 						// Optmize most common case where we know that parens
@@ -3716,11 +3625,9 @@ namespace Mono.PlayScript
 							return Token.OPEN_PARENS;
 						}
 
-						lambda_arguments_parsing = true;
 						PushPosition ();
 						d = TokenizeOpenParens ();
 						PopPosition ();
-						lambda_arguments_parsing = false;
 						return d;
 					}
 

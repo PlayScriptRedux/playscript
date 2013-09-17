@@ -382,8 +382,6 @@ namespace Mono.PlayScript
 %token IDENTIFIER
 %token IDENTIFIER_MODIFIER
 %token IDENTIFIER_CONFIG
-%token OPEN_PARENS_LAMBDA
-%token OPEN_PARENS_CAST
 %token GENERIC_DIMENSION
 %token DEFAULT_COLON
 %token OPEN_BRACKET_EXPR
@@ -3816,15 +3814,8 @@ boolean_literal
 	| FALSE			{ $$ = new BoolLiteral (compiler.BuiltinTypes, false, GetLocation ($1)); }
 	;
 
-
-//
-// Here is the trick, tokenizer may think that parens is a special but
-// parser is interested in open parens only, so we merge them.
-// Consider: if (a)foo ();
-//
 open_parens_any
 	: OPEN_PARENS
-	| OPEN_PARENS_CAST
 	;
 
 // 
@@ -3965,11 +3956,6 @@ invocation_expression
  		$$ = initializer;
 		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($2), GetLocation ($4));
 	  }
-//	| builtin_types open_parens_any opt_argument_list close_parens
-//	  {
-//		$$ = new Invocation ((Expression) $1, (Arguments) $3);
-//		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
-//	  }  
 	| primary_expression open_parens_any opt_argument_list close_parens
 	  {
 	    var newExpr = $1 as AsNew;
@@ -4761,7 +4747,7 @@ anonymous_method_expression
 	  opt_formal_parameter_list CLOSE_PARENS COLON member_type
 	  {
 		valid_param_mod = 0;
-		start_anonymous (false, (ParametersCompiled) $4, (FullNamedExpression) $7, false, GetLocation ($1));
+		start_anonymous ((ParametersCompiled) $4, (FullNamedExpression) $7, false, GetLocation ($1));
 	  }
 	  anon_block
 	  {
@@ -4774,7 +4760,7 @@ anonymous_method_expression
 	  opt_formal_parameter_list CLOSE_PARENS COLON member_type
 	  {
 		valid_param_mod = 0;
-		start_anonymous (false, (ParametersCompiled) $5, (FullNamedExpression) $8, true, GetLocation ($1));
+		start_anonymous ((ParametersCompiled) $5, (FullNamedExpression) $8, true, GetLocation ($1));
 	  }
 	  anon_block
 	  {
@@ -4790,7 +4776,7 @@ local_function_statement
 	  opt_formal_parameter_list CLOSE_PARENS COLON member_type
 	  {
 		valid_param_mod = 0;
-		start_anonymous (false, (ParametersCompiled) $5, (FullNamedExpression) $8, false, GetLocation ($1));
+		start_anonymous ((ParametersCompiled) $5, (FullNamedExpression) $8, false, GetLocation ($1));
 	  }
 	  block
 	  {
@@ -4811,7 +4797,7 @@ local_function_statement
 	  opt_formal_parameter_list CLOSE_PARENS COLON member_type
 	  {
 		valid_param_mod = 0;
-		start_anonymous (false, (ParametersCompiled) $6, (FullNamedExpression) $9, true, GetLocation ($1));
+		start_anonymous ((ParametersCompiled) $6, (FullNamedExpression) $9, true, GetLocation ($1));
 	  }
 	  block
 	  {
@@ -4862,20 +4848,12 @@ unary_expression
 	  {
 		$$ = new Unary (Unary.Operator.OnesComplement, (Expression) $2, GetLocation ($1));
 	  }
-//	| OPEN_PARENS_CAST type CLOSE_PARENS prefixed_unary_expression
-//	  {
-//		$$ = new Cast ((FullNamedExpression) $2, (Expression) $4, GetLocation ($1));
-//		lbag.AddLocation ($$, GetLocation ($3));
-//	  }
 	| AWAIT prefixed_unary_expression
 	  {
 	  	CheckIsPlayScript("await", GetLocation($1));
 	  	
 		if (!async_block) {
-			 if (current_anonymous_method is LambdaExpression) {
-				report.Error (4034, GetLocation ($1),
-					"The `await' operator can only be used when its containing lambda expression is marked with the `async' modifier");
-			} else if (current_anonymous_method is AnonymousMethodExpression) {
+			 if (current_anonymous_method is AnonymousMethodExpression) {
 				report.Error (4035, GetLocation ($1),
 					"The `await' operator can only be used when its containing anonymous method is marked with the `async' modifier");
 			} else if (interactive_async != null) {
@@ -4920,13 +4898,6 @@ unary_expression
 
 		$$ = new Unary (Unary.Operator.OnesComplement, null, GetLocation ($1));
 	  }
-//	| OPEN_PARENS_CAST type CLOSE_PARENS error
-//	  {
-//		Error_SyntaxError (yyToken);
-//
-//		$$ = new Cast ((FullNamedExpression) $2, null, GetLocation ($1));
-//		lbag.AddLocation ($$, GetLocation ($3));
-//	  }
 	| AWAIT error
 	  {
 		Error_SyntaxError (yyToken);
@@ -5435,159 +5406,12 @@ assignment_expression
 	  }
 	;
 
-lambda_parameter_list
-	: lambda_parameter
-	  {
-		var pars = new List<Parameter> (4);
-		pars.Add ((Parameter) $1);
-
-		$$ = pars;
-	  }
-	| lambda_parameter_list COMMA lambda_parameter
-	  {
-		var pars = (List<Parameter>) $1;
-		Parameter p = (Parameter)$3;
-		if (pars[0].GetType () != p.GetType ()) {
-			report.Error (748, p.Location, "All lambda parameters must be typed either explicitly or implicitly");
-		}
-		
-		pars.Add (p);
-		$$ = pars;
-	  }
-	;
-
-lambda_parameter
-	: parameter_modifier parameter_type identifier_inside_body
-	  {
-		var lt = (LocatedToken) $3;
-
-		$$ = new Parameter ((FullNamedExpression) $2, lt.Value, (Parameter.Modifier) $1, null, lt.Location);
-	  }
-	| parameter_type identifier_inside_body
-	  {
-		var lt = (LocatedToken) $2;
-
-		$$ = new Parameter ((FullNamedExpression) $1, lt.Value, Parameter.Modifier.NONE, null, lt.Location);
-	  }
-	| IDENTIFIER
-	  {
-	  	var lt = (LocatedToken) $1;
-		$$ = new ImplicitLambdaParameter (lt.Value, lt.Location);
-	  }
-	| AWAIT
-	  {
-	  	var lt = (LocatedToken) Error_AwaitAsIdentifier ($1);
-		$$ = new ImplicitLambdaParameter (lt.Value, lt.Location);
-	  }
-	;
-
-opt_lambda_parameter_list
-	: /* empty */			{ $$ = ParametersCompiled.EmptyReadOnlyParameters; }
-	| lambda_parameter_list		{ 
-		var pars_list = (List<Parameter>) $1;
-		$$ = new ParametersCompiled (pars_list.ToArray ());
-	  }
-	;
-
-lambda_expression_body
-	: {
-		start_block (Location.Null);
-	  }
-	  expression	// All expressions must handle error or current block won't be restored and breaking ast completely
-	  {
-		Block b = end_block (Location.Null);
-		b.IsCompilerGenerated = true;
-		b.AddStatement (new ContextualReturn ((Expression) $2));
-		$$ = b;
-	  } 
-	| block
-	| error
-	  {
-	  	// Handles only cases like foo = x.FirstOrDefault (l => );
-	  	// where we must restore current_variable
-		Block b = end_block (Location.Null);
-		b.IsCompilerGenerated = true;
-
-		Error_SyntaxError (yyToken);
-		$$ = null;
-	  }
-	;
-
 expression_or_error
 	: expression
 	| error
 	  {
 		Error_SyntaxError (yyToken);
 		$$ = null;
-	  }
-	;
-	
-lambda_expression
-	: IDENTIFIER ARROW 
-	  {
-		var lt = (LocatedToken) $1;	
-		Parameter p = new ImplicitLambdaParameter (lt.Value, lt.Location);
-		start_anonymous (true, new ParametersCompiled (p), null, false, lt.Location);
-	  }
-	  lambda_expression_body
-	  {
-		CheckIsPlayScript("lambda", GetLocation($1)); 	  
-		$$ = end_anonymous ((ParametersBlock) $4);
-		lbag.AddLocation ($$, GetLocation ($2));
-	  }
-	| AWAIT ARROW
-	  {
-		var lt = (LocatedToken) Error_AwaitAsIdentifier ($1);
-		Parameter p = new ImplicitLambdaParameter (lt.Value, lt.Location);
-		start_anonymous (true, new ParametersCompiled (p), null, false, lt.Location);
-	  }
-	  lambda_expression_body
-	  {
-		CheckIsPlayScript("lambda", GetLocation($1)); 	  
-		$$ = end_anonymous ((ParametersBlock) $4);
-		lbag.AddLocation ($$, GetLocation ($2));
-	  }
-	| ASYNC identifier_inside_body ARROW
-	  {
-		var lt = (LocatedToken) $2;
-		Parameter p = new ImplicitLambdaParameter (lt.Value, lt.Location);
-		start_anonymous (true, new ParametersCompiled (p), null, true, lt.Location);
-	  }
-	  lambda_expression_body
-	  {
-		CheckIsPlayScript("lambda", GetLocation($1)); 	  
-		$$ = end_anonymous ((ParametersBlock) $5);
-		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($3));
-	  }
-	| OPEN_PARENS_LAMBDA
-	  {
-	  	valid_param_mod = ParameterModifierType.Ref | ParameterModifierType.Out;
-	  }
-	  opt_lambda_parameter_list CLOSE_PARENS ARROW 
-	  {
-	  	valid_param_mod = 0;
-		start_anonymous (true, (ParametersCompiled) $3, null, false, GetLocation ($1));
-	  }
-	  lambda_expression_body
-	  {
-		CheckIsPlayScript("lambda", GetLocation($1)); 	  
-		$$ = end_anonymous ((ParametersBlock) $7);
-		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($4), GetLocation ($5));
-	  }
-	| ASYNC OPEN_PARENS_LAMBDA
-	  {
-	  	valid_param_mod = ParameterModifierType.Ref | ParameterModifierType.Out;	  
-	  }
-	  opt_lambda_parameter_list CLOSE_PARENS ARROW 
-	  {
-	  	valid_param_mod = 0;
-		start_anonymous (true, (ParametersCompiled) $4, null, true, GetLocation ($1));
-	  }
-	  lambda_expression_body
-	  {
-		CheckIsPlayScript("lambda", GetLocation($1)); 	  
-		$$ = end_anonymous ((ParametersBlock) $8);
-		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($2), GetLocation ($5), GetLocation ($6));
 	  }
 	;
 
@@ -5598,7 +5422,6 @@ expression
 	
 non_assignment_expression
 	: conditional_expression
-	| lambda_expression
 	| query_expression
 //	| ARGLIST
 //	  {
@@ -6370,7 +6193,7 @@ identifier_inside_body
 	| AWAIT
 	  {
 		if (async_block) {
-			report.Error (4003, GetLocation ($1), "`await' cannot be used as an identifier within an async method or lambda expression");
+			report.Error (4003, GetLocation ($1), "`await' cannot be used as an identifier within an async method");
 			$$ = new LocatedToken ("await", GetLocation ($1));
 		}
 	  }
@@ -8202,7 +8025,7 @@ void Error_MissingInitializer (Location loc)
 object Error_AwaitAsIdentifier (object token)
 {
 	if (async_block) {
-		report.Error (4003, GetLocation (token), "`await' cannot be used as an identifier within an async method or lambda expression");
+		report.Error (4003, GetLocation (token), "`await' cannot be used as an identifier within an async method");
 		return new LocatedToken ("await", GetLocation (token));
 	}
 
@@ -8441,7 +8264,7 @@ end_block (Location loc)
 	return retval;
 }
 
-void start_anonymous (bool isLambda, ParametersCompiled parameters, FullNamedExpression retType, bool isAsync, Location loc)
+void start_anonymous (ParametersCompiled parameters, FullNamedExpression retType, bool isAsync, Location loc)
 {
 	oob_stack.Push (current_anonymous_method);
 	oob_stack.Push (current_local_parameters);
@@ -8450,17 +8273,10 @@ void start_anonymous (bool isLambda, ParametersCompiled parameters, FullNamedExp
 	oob_stack.Push (Lexer.PrevAutoSemiInsertion);  // Auto semi will always be false after a FUNCTION keyword.. we want to know what it was before that.
 
 	current_local_parameters = parameters;
-	if (isLambda) {
-		if (lang_version <= LanguageVersion.ISO_2)
-			FeatureIsNotAvailable (loc, "lambda expressions");
-
-		current_anonymous_method = new LambdaExpression (loc);
-	} else {
-		if (lang_version == LanguageVersion.ISO_1)
-			FeatureIsNotAvailable (loc, "anonymous methods");
-			
-		current_anonymous_method = new AnonymousMethodExpression (loc, parameters, retType);
-	}
+	if (lang_version == LanguageVersion.ISO_1)
+		FeatureIsNotAvailable (loc, "anonymous methods");
+		
+	current_anonymous_method = new AnonymousMethodExpression (loc, parameters, retType);
 
 	async_block = isAsync;
 	// Force the next block to be created as a ToplevelBlock
@@ -8468,8 +8284,7 @@ void start_anonymous (bool isLambda, ParametersCompiled parameters, FullNamedExp
 }
 
 /*
- * Completes the anonymous method processing, if lambda_expr is null, this
- * means that we have a Statement instead of an Expression embedded 
+ * Completes the anonymous method processing
  */
 AnonymousMethodExpression end_anonymous (ParametersBlock anon_block)
 {
@@ -9055,8 +8870,6 @@ static string GetTokenName (int token)
 		return "[";
 	case Token.CLOSE_BRACKET:
 		return "]";
-	case Token.OPEN_PARENS_CAST:
-	case Token.OPEN_PARENS_LAMBDA:
 	case Token.OPEN_PARENS:
 		return "(";
 	case Token.CLOSE_PARENS:
