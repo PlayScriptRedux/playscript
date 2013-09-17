@@ -4427,16 +4427,9 @@ namespace Mono.CSharp
 			//
 			// PlayScript - Try equality with any PlayScript/ActionScript implicit conversions
 			//
-			if (ret == null && ec.FileType == SourceFileType.PlayScript) {
-				if (TypeSpec.IsReferenceType (l) && TypeSpec.IsReferenceType (r)) {
-					// Comparison of two unrelated reference types?  Punt this to Object.Equals() and let it sort it out.
-					var args = new Arguments (2);
-					args.Add (new Argument (left));
-					args.Add (new Argument (right));
-					ret = new Invocation (new MemberAccess (new TypeExpression (ec.BuiltinTypes.Object, loc), "Equals"), args).Resolve (ec);
-				} else {
-					ret = ResolveOperatorPredefined (ec, ec.BuiltinTypes.AsOperatorsBinaryEquality, no_arg_conv);
-				}
+			if (ret == null && ec.FileType == SourceFileType.PlayScript && 
+			   (!TypeSpec.IsReferenceType (l) || !TypeSpec.IsReferenceType (r))) {
+				ret = ResolveOperatorPredefined (ec, ec.BuiltinTypes.AsOperatorsBinaryEquality, no_arg_conv);
 			}
 
 			return ret;
