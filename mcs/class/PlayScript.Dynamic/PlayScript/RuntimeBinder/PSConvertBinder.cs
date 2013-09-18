@@ -24,13 +24,13 @@ namespace PlayScript.RuntimeBinder
 	{
 		private static Dictionary<Type, object> delegates = new Dictionary<Type, object>();
 
-		readonly Type type;
+	//	readonly Type type;
 	//	readonly CSharpBinderFlags flags;
 	//	readonly Type context;
 		
 		public PSConvertBinder (Type type, Type context, CSharpBinderFlags flags)
 		{
-			this.type = type;
+	//		this.type = type;
 	//		this.flags = flags;
 	//		this.context = context;
 		}

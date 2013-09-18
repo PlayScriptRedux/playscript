@@ -508,7 +508,7 @@ namespace Mono.CSharp {
 
 		protected override Expression ResolveConversions (ResolveContext ec)
 		{
-			source = EmptyCast.Create (source, target.Type);
+			source = EmptyCast.Create (source, target.Type, ec);
 			return this;
 		}
 	}
@@ -844,8 +844,17 @@ namespace Mono.CSharp {
 			// Otherwise, if the selected operator is a predefined operator
 			//
 			Binary b = source as Binary;
-			if (b == null && source is ReducedExpression)
-				b = ((ReducedExpression) source).OriginalExpression as Binary;
+			if (b == null) {
+				if (source is ReducedExpression)
+					b = ((ReducedExpression) source).OriginalExpression as Binary;
+				else if (source is Nullable.LiftedBinaryOperator) {
+					var po = ((Nullable.LiftedBinaryOperator) source);
+					if (po.UserOperator == null)
+						b = po.Binary;
+				} else if (source is TypeCast) {
+					b = ((TypeCast) source).Child as Binary;
+				}
+			}
 
 			if (b != null) {
 				//

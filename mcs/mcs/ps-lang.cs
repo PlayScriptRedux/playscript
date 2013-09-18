@@ -42,6 +42,61 @@ namespace Mono.CSharp
 	//
 	// Expressions
 	//
+	
+	public class UntypedTypeExpression : TypeExpr
+	{
+		public UntypedTypeExpression (Location loc)
+		{
+			this.loc = loc;
+		}
+
+		public override TypeSpec ResolveAsType (IMemberContext mc)
+		{
+			return mc.Module.Compiler.BuiltinTypes.Dynamic;
+		}
+	}
+
+	public class UntypedBlockVariable : BlockVariable
+	{
+		public UntypedBlockVariable (LocalVariable li)
+			: base (li)
+		{
+		}
+
+		public new FullNamedExpression TypeExpression {
+			get {
+				return type_expr;
+			}
+			set {
+				type_expr = value;
+			}
+		}
+
+		public override bool Resolve (BlockContext bc)
+		{
+			if (type_expr == null) {
+				if (Initializer == null)
+					type_expr = new UntypedTypeExpression (loc);
+				else
+					type_expr = new VarExpr (loc);
+			}
+
+			return base.Resolve (bc);
+		}
+	}
+
+	public class UntypedExceptionExpression : UntypedTypeExpression
+	{
+		public UntypedExceptionExpression (Location loc)
+			: base(loc)
+		{
+		}
+
+		public override TypeSpec ResolveAsType (IMemberContext mc)
+		{
+			return mc.Module.Compiler.BuiltinTypes.Exception;
+		}
+	}
 
 	//
 	// ActionScript: Object initializers implement standard JSON style object
@@ -52,7 +107,7 @@ namespace Mono.CSharp
 	public partial class AsObjectInitializer : Expression
 	{
 		List<Expression> elements;
-		BlockVariableDeclaration variable;
+		BlockVariable variable;
 		Assign assign;
 
 		public AsObjectInitializer (List<Expression> init, Location loc)
@@ -89,7 +144,7 @@ namespace Mono.CSharp
 			}
 		}
 
-		public BlockVariableDeclaration VariableDeclaration {
+		public BlockVariable VariableDeclaration {
 			get {
 				return variable;
 			}
@@ -1053,9 +1108,9 @@ namespace Mono.CSharp
 		
 		public string Name;
 		public AnonymousMethodExpression MethodExpr;
-		public BlockVariableDeclaration VarDecl;
+		public BlockVariable VarDecl;
 
-		public AsLocalFunction (Location loc, string name, AnonymousMethodExpression methodExpr, BlockVariableDeclaration varDecl)
+		public AsLocalFunction (Location loc, string name, AnonymousMethodExpression methodExpr, BlockVariable varDecl)
 		{
 			this.loc = loc;
 			this.Name = name;
@@ -1074,7 +1129,7 @@ namespace Mono.CSharp
 
 			target.Name = Name;
 			target.MethodExpr = MethodExpr.Clone (clonectx) as AnonymousMethodExpression;
-			target.VarDecl = VarDecl.Clone (clonectx) as BlockVariableDeclaration;
+			target.VarDecl = VarDecl.Clone (clonectx) as BlockVariable;
 		}
 
 		protected override void DoEmit (EmitContext ec)
@@ -1303,5 +1358,34 @@ namespace Mono.CSharp
 		
 	}
 
+	public class AsMethod : Method
+	{
+		public AsMethod (TypeDefinition parent, FullNamedExpression returnType, Modifiers mod, MemberName name, ParametersCompiled parameters, Attributes attrs)
+			: base (parent, returnType, mod, name, parameters, attrs)
+		{
+		}
 
+		public static new Method Create (TypeDefinition parent, FullNamedExpression returnType, Modifiers mod,
+		                                 MemberName name, ParametersCompiled parameters, Attributes attrs)
+		{
+			var rt = returnType ?? new UntypedTypeExpression (name.Location);
+
+			var m = Method.Create (parent, rt, mod, name, parameters, attrs);
+
+			if (returnType == null)
+				m.HasNoReturnType = true;
+
+			return m;
+		}
+
+		protected override void Error_OverrideWithoutBase (MemberSpec candidate)
+		{
+			if (candidate == null) {
+				Report.Error (1020, Location, "`{0}': Method marked override must override another method", GetSignatureForError ());
+				return;
+			}
+
+			base.Error_OverrideWithoutBase (candidate);
+		}
+	}
 }

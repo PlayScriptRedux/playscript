@@ -9,7 +9,7 @@ namespace PlayScript
 		// the parent object is the object that owns these properties
 		// if a lookup fails we should use members of this object instead
 		public DynamicProperties(object parentObject = null) {
-			mParentObject = parentObject;
+//			mParentObject = parentObject;
 		}
 
 		#region IDynamicClass implementation
@@ -49,7 +49,7 @@ namespace PlayScript
 
 		#endregion
 
-		private readonly object mParentObject;
+//		private readonly object mParentObject;
 		private readonly Dictionary<string, object> mDictionary = new Dictionary<string, object>();
 	}
 

@@ -62,6 +62,7 @@ namespace Mono.CSharp {
 			}
 
 			ec.StartFlowBranching (FlowBranching.BranchingType.Block, loc);
+			ec.CurrentBranching.CurrentUsageVector.Goto ();
 			bool ok = Resolve (ec);
 			ec.KillFlowBranching ();
 
@@ -889,7 +890,7 @@ namespace Mono.CSharp {
 
 	public class StatementErrorExpression : Statement
 	{
-		readonly Expression expr;
+		Expression expr;
 
 		public StatementErrorExpression (Expression expr)
 		{
@@ -916,7 +917,9 @@ namespace Mono.CSharp {
 
 		protected override void CloneTo (CloneContext clonectx, Statement target)
 		{
-			throw new NotImplementedException ();
+			var t = (StatementErrorExpression) target;
+
+			t.expr = expr.Clone (clonectx);
 		}
 		
 		public override object Accept (StructuralVisitor visitor)
@@ -1075,6 +1078,11 @@ namespace Mono.CSharp {
 				if (ec.CurrentIterator != null) {
 					Error_ReturnFromIterator (ec);
 				} else if (ec.ReturnType != InternalType.ErrorType) {
+					if (ec.HasNoReturnType && ec.FileType == SourceFileType.PlayScript) {
+						expr = new MemberAccess(new MemberAccess(new SimpleName("PlayScript", loc), "Undefined", loc), "_undefined", loc).Resolve (ec);
+						return true;
+					}
+
 					ec.Report.Error (126, loc,
 						"An object of a type convertible to `{0}' is required for the return statement",
 						ec.ReturnType.GetSignatureForError ());
@@ -1444,10 +1452,7 @@ namespace Mono.CSharp {
 				return false;
 			}
 
-			if (ec.Switch.DefaultLabel == null) {
-				FlowBranchingBlock.Error_UnknownLabel (loc, "default", ec.Report);
-				return false;
-			}
+			ec.Switch.RegisterGotoCase (null, null);
 
 			return true;
 		}
@@ -1468,7 +1473,6 @@ namespace Mono.CSharp {
 	/// </summary>
 	public class GotoCase : Statement {
 		Expression expr;
-		SwitchLabel sl;
 		
 		public GotoCase (Expression e, Location l)
 		{
@@ -1481,6 +1485,8 @@ namespace Mono.CSharp {
  				return this.expr;
 			}
 		}
+
+		public SwitchLabel Label { get; set; }
 		
 		public override bool Resolve (BlockContext ec)
 		{
@@ -1491,13 +1497,8 @@ namespace Mono.CSharp {
 
 			ec.CurrentBranching.CurrentUsageVector.Goto ();
 
-			expr = expr.Resolve (ec);
-			if (expr == null)
-				return false;
-
-			Constant c = expr as Constant;
+			Constant c = expr.ResolveLabelConstant (ec);
 			if (c == null) {
-				ec.Report.Error (150, expr.Location, "A constant value is expected");
 				return false;
 			}
 
@@ -1519,13 +1520,13 @@ namespace Mono.CSharp {
 
 			}
 
-			sl = ec.Switch.ResolveGotoCase (ec, res);
+			ec.Switch.RegisterGotoCase (this, res);
 			return true;
 		}
 
 		protected override void DoEmit (EmitContext ec)
 		{
-			ec.Emit (OpCodes.Br, sl.GetILLabel (ec));
+			ec.Emit (OpCodes.Br, Label.GetILLabel (ec));
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Statement t)
@@ -1723,91 +1724,100 @@ namespace Mono.CSharp {
 		FullNamedExpression TypeExpr { get; set; }
 	}
 
-	public partial class BlockVariableDeclaration : Statement
+	public class BlockVariableDeclarator
 	{
-		public class Declarator
+		LocalVariable li;
+		FullNamedExpression type_expr;		
+		Expression initializer;
+		Location loc;
+
+		public BlockVariableDeclarator (LocalVariable li, Expression initializer, FullNamedExpression type_expr = null)
 		{
-			LocalVariable li;
-			FullNamedExpression type_expr;
-			Expression initializer;
-			Location loc;
+			if (li.Type != null)
+				throw new ArgumentException ("Expected null variable type");
 
-			public Declarator (LocalVariable li, Expression initializer, FullNamedExpression type_expr = null)
-			{
-				if (li.Type != null)
-					throw new ArgumentException ("Expected null variable type");
-
-				this.li = li;
-				this.type_expr = type_expr;
-				this.initializer = initializer;
-			}
-
-			public Declarator (Declarator clone, Expression initializer)
-			{
-				this.li = clone.li;
-				this.type_expr = clone.type_expr;
-				this.initializer = initializer;
-			}
-
-			#region Properties
-
-			public LocalVariable Variable {
-				get {
-					return li;
-				}
-			}
-
-			public Expression Initializer {
-				get {
-					return initializer;
-				}
-				set {
-					initializer = value;
-				}
-			}
-
-			public FullNamedExpression TypeExpression {
-				get { 
-					return type_expr; 
-				}
-				set {
-					type_expr = value;
-				}
-			}
-
-			public Location Location {
-				get {
-					return loc;
-				}
-				set {
-					loc = value;
-				}
-			}
-
-			#endregion
+			this.li = li;
+			this.type_expr = type_expr;
+			this.initializer = initializer;
 		}
 
+		public BlockVariableDeclarator (BlockVariableDeclarator clone, Expression initializer)
+		{
+			this.li = clone.li;
+			this.type_expr = clone.type_expr;
+			this.initializer = initializer;
+		}
+
+		#region Properties
+
+		public LocalVariable Variable {
+			get {
+				return li;
+			}
+		}
+
+		public Expression Initializer {
+			get {
+				return initializer;
+			}
+			set {
+				initializer = value;
+			}
+		}
+
+		public FullNamedExpression TypeExpression {
+			get { 
+				return type_expr; 
+			}
+			set {
+				type_expr = value;
+			}
+		}
+
+		public Location Location {
+			get {
+				return loc;
+			}
+			set {
+				loc = value;
+			}
+		}
+
+		#endregion
+
+		public virtual BlockVariableDeclarator Clone (CloneContext cloneCtx)
+		{
+			var t = (BlockVariableDeclarator) MemberwiseClone ();
+			if (initializer != null)
+				t.initializer = initializer.Clone (cloneCtx);
+
+			return t;
+		}
+	}
+
+	public partial class BlockVariable : Statement
+	{
 		Expression initializer;
 		protected FullNamedExpression type_expr;
 		protected LocalVariable li;
-		protected List<Declarator> declarators;
+		protected List<BlockVariableDeclarator> declarators;
 		TypeSpec type;
 
-		public BlockVariableDeclaration (FullNamedExpression type, LocalVariable li)
+		public BlockVariable (FullNamedExpression type, LocalVariable li)
 		{
 			this.type_expr = type;
 			this.li = li;
 			this.loc = type_expr.Location;
 		}
 
-		protected BlockVariableDeclaration (LocalVariable li)
+		protected BlockVariable (LocalVariable li)
 		{
 			this.li = li;
 		}
 
 		#region Properties
 
-		public List<Declarator> Declarators {
+		public List<BlockVariableDeclarator> Declarators {
 			get {
 				return declarators;
 			}
@@ -1836,10 +1846,10 @@ namespace Mono.CSharp {
 
 		#endregion
 
-		public void AddDeclarator (Declarator decl)
+		public void AddDeclarator (BlockVariableDeclarator decl)
 		{
 			if (declarators == null)
-				declarators = new List<Declarator> ();
+				declarators = new List<BlockVariableDeclarator> ();
 
 			declarators.Add (decl);
 		}
@@ -1923,7 +1933,7 @@ namespace Mono.CSharp {
 
 		private static TypeSpec ResolveVariableType(LocalVariable li, Expression type_expr, 
 		                                     Expression initializer, out Expression resolvedInitializer, 
-		                                     List<Declarator> declarators, Location loc, BlockContext bc) 
+		                                     List<BlockVariableDeclarator> declarators, Location loc, BlockContext bc) 
 		{
 			TypeSpec type = null;
 
@@ -2038,7 +2048,7 @@ namespace Mono.CSharp {
 
 		protected override void CloneTo (CloneContext clonectx, Statement target)
 		{
-			BlockVariableDeclaration t = (BlockVariableDeclaration) target;
+			BlockVariable t = (BlockVariable) target;
 
 			if (type_expr != null)
 				t.type_expr = (FullNamedExpression) type_expr.Clone (clonectx);
@@ -2049,7 +2059,7 @@ namespace Mono.CSharp {
 			if (declarators != null) {
 				t.declarators = null;
 				foreach (var d in declarators)
-					t.AddDeclarator (new Declarator (d, d.Initializer == null ? null : d.Initializer.Clone (clonectx)));
+					t.AddDeclarator (d.Clone (clonectx));
 			}
 		}
 
@@ -2083,9 +2093,9 @@ namespace Mono.CSharp {
 		}
 	}
 
-	public class BlockConstantDeclaration : BlockVariableDeclaration
+	public class BlockConstant : BlockVariable
 	{
-		public BlockConstantDeclaration (FullNamedExpression type, LocalVariable li)
+		public BlockConstant (FullNamedExpression type, LocalVariable li)
 			: base (type, li)
 		{
 		}
@@ -2518,7 +2528,11 @@ namespace Mono.CSharp {
 		public int ID = id++;
 
 		static int clone_id_counter;
+
+#pragma warning disable 0414
 		int clone_id;
+#pragma warning restore 0414
+
 #endif
 
 //		int assignable_slots;
@@ -2659,6 +2673,11 @@ namespace Mono.CSharp {
 			} else {
 				scope_initializers.Add (s);
 			}
+		}
+
+		public void InsertStatement (int index, Statement s)
+		{
+			statements.Insert (index, s);
 		}
 		
 		public void AddStatement (Statement s)
@@ -3146,6 +3165,24 @@ namespace Mono.CSharp {
 								if (pb.StateMachine == storey)
 									break;
 
+								//
+								// If we are state machine with no parent we can hook into we don't
+ 								// add reference but capture this directly
+								//
+								ExplicitBlock parent_storey_block = pb;
+								while (parent_storey_block.Parent != null) {
+									parent_storey_block = parent_storey_block.Parent.Explicit;
+									if (parent_storey_block.AnonymousMethodStorey != null) {
+										break;
+									}
+								}
+
+								if (parent_storey_block.AnonymousMethodStorey == null) {
+									pb.StateMachine.AddCapturedThisField (ec);
+									b.HasCapturedThis = true;
+									continue;
+								}
+
 								pb.StateMachine.AddParentStoreyReference (ec, storey);
 							}
 							
@@ -3469,7 +3506,9 @@ namespace Mono.CSharp {
 
 		#endregion
 
-		// PlayScript - We need to create an "Array" for our args parameters for ActionScript/PlayScript..
+		// <summary>
+		//	PlayScript - We need to create an "Array" for our args parameters for ActionScript/PlayScript..
+		// </summary>
 		private void PsCreateVarArgsArray (BlockContext rc)
 		{
 			if (parameters != null && parameters.FixedParameters != null && parameters.FixedParameters.Length > 0) {
@@ -3477,12 +3516,58 @@ namespace Mono.CSharp {
 				if (param != null && (param.ParameterModifier & Parameter.Modifier.PARAMS) != 0) {
 					string argName = param.Name.Substring (2); // Arg should start with "__" (we added it in the parser).
 					var li = new LocalVariable (this, argName, this.loc);
-					var decl = new BlockVariableDeclaration (new Mono.CSharp.TypeExpression(rc.Module.PredefinedTypes.AsArray.Resolve(), this.loc), li);
+					var decl = new BlockVariable (new Mono.CSharp.TypeExpression(rc.Module.PredefinedTypes.AsArray.Resolve(), this.loc), li);
 					var arguments = new Arguments (1);
 					arguments.Add (new Argument(new SimpleName(param.Name, this.loc)));
 					decl.Initializer = new Invocation (new MemberAccess(new MemberAccess(new SimpleName("PlayScript", this.loc), "Support", this.loc), "CreateArgListArray", this.loc), arguments);
 					this.AddLocalName (li);
 					this.AddScopeStatement (decl);	
+				}
+			}
+		}
+
+		// <summary>
+		//	PlayScript - Need to support non-null default args for object types
+		// </summary>
+		private void PsInitializeDefaultArgs (BlockContext rc)
+		{
+			if (parameters != null && parameters.FixedParameters != null && parameters.FixedParameters.Length > 0) {
+				int n = parameters.FixedParameters.Length;
+				for (int i = 0; i < n; i++) {
+					var param = parameters.FixedParameters [i] as Parameter;
+					if (param == null || !param.HasDefaultValue)
+						continue;
+
+					//
+					// These types are already handled by default, skip over them.
+					//
+					if (param.DefaultValue.IsNull || !TypeSpec.IsReferenceType (param.Type) || param.Type.BuiltinType == BuiltinTypeSpec.Type.String)
+						continue;
+
+					//
+					// Types that aren't supported by the base C# functionality will
+					// be assigned the value System.Reflection.Missing. We insert an if
+					// block at the top of the function which checks for this type, and
+					// then assigns the variable the real default value.
+					//
+					param = param.Clone ();
+					param.ResolveDefaultValue (rc);
+					var value = param.DefaultValue.Child;
+					if (value is BoxedCast)
+						value = ((BoxedCast)value).Child;
+
+					if (value is ILiteralConstant) {
+						var variable = new SimpleName (param.Name, loc);
+						var assign = new StatementExpression (
+							new SimpleAssign (variable, value.Clone (new CloneContext ())));
+						var missing = new MemberAccess (new MemberAccess (
+							new QualifiedAliasMember (QualifiedAliasMember.GlobalAlias, "System", loc), "Reflection", loc), "Missing", loc);
+						var statement = new If (new Is (variable, missing, loc), assign, loc);
+						AddScopeStatement (statement);
+					} else {
+						rc.Report.Error (7013, "Optional parameter `{0}' of type `{1}' can't be initialized with the given value",
+						                 param.Name, param.Type.GetSignatureForError ());
+					}
 				}
 			}
 		}
@@ -3597,9 +3682,12 @@ namespace Mono.CSharp {
 			if (rc.HasSet (ResolveContext.Options.ExpressionTreeConversion))
 				flags |= Flags.IsExpressionTree;
 
-			// If ActionScript (not PlayScript), create a var args Array local var that wraps the params varargs for .NET
-			if (rc.FileType == SourceFileType.PlayScript && !rc.PsExtended) {
-				this.PsCreateVarArgsArray (rc);
+			//
+			// PlayScript specific setup
+			//
+			if (rc.FileType == SourceFileType.PlayScript) {
+				PsInitializeDefaultArgs (rc);
+				PsCreateVarArgsArray (rc);
 			}
 
 			try {
@@ -3633,6 +3721,12 @@ namespace Mono.CSharp {
 					if (md is StateMachineMethod) {
 						unreachable = true;
 					} else {
+						if (rc.HasNoReturnType && rc.FileType == SourceFileType.PlayScript) {
+							var ret = new Return (null, EndLocation);
+							ret.Resolve (rc);
+							statements.Add (ret);
+							return true;
+						}
 						rc.Report.Error (161, md.Location, "`{0}': not all code paths return a value", md.GetSignatureForError ());
 						return false;
 					}
@@ -4248,6 +4342,9 @@ namespace Mono.CSharp {
 
 		public override bool Resolve (BlockContext bc)
 		{
+			if (ResolveAndReduce (bc))
+				bc.Switch.RegisterLabel (bc, this);
+
 			bc.CurrentBranching.CurrentUsageVector.ResetBarrier ();
 
 			return base.Resolve (bc);
@@ -4257,29 +4354,25 @@ namespace Mono.CSharp {
 		// Resolves the expression, reduces it to a literal if possible
 		// and then converts it to the requested type.
 		//
-		public bool ResolveAndReduce (ResolveContext ec, TypeSpec required_type, bool allow_nullable)
-		{	
-			Expression e = label.Resolve (ec);
+		bool ResolveAndReduce (ResolveContext rc)
+		{
+			if (IsDefault)
+				return true;
 
-			if (e == null)
+			var c = label.ResolveLabelConstant (rc);
+			if (c == null)
 				return false;
 
-			Constant c = e as Constant;
-			if (c == null){
-				ec.Report.Error (150, loc, "A constant value is expected");
-				return false;
-			}
-
-			if (allow_nullable && c is NullLiteral) {
+			if (rc.Switch.IsNullable && c is NullLiteral) {
 				converted = c;
 				return true;
 			}
 
-			converted = c.ImplicitConversionRequired (ec, required_type, loc);
+			converted = c.ImplicitConversionRequired (rc, rc.Switch.SwitchType, loc);
 			return converted != null;
 		}
 
-		public void Error_AlreadyOccurs (ResolveContext ec, TypeSpec switch_type, SwitchLabel collision_with)
+		public void Error_AlreadyOccurs (ResolveContext ec, SwitchLabel collision_with)
 		{
 			string label;
 			if (converted == null)
@@ -4395,6 +4488,8 @@ namespace Mono.CSharp {
 		Dictionary<long, SwitchLabel> labels;
 		Dictionary<string, SwitchLabel> string_labels;
 		List<SwitchLabel> case_labels;
+
+		List<Tuple<GotoCase, Constant>> goto_cases;
 
 		/// <summary>
 		///   The governing switch type
@@ -4515,88 +4610,40 @@ namespace Mono.CSharp {
 			};
 		}
 
-		//
-		// Performs the basic sanity checks on the switch statement
-		// (looks for duplicate keys and non-constant expressions).
-		//
-		// It also returns a hashtable with the keys that we will later
-		// use to compute the switch tables
-		//
-		bool ResolveLabels (ResolveContext ec, Constant value)
+		public void RegisterLabel (ResolveContext rc, SwitchLabel sl)
 		{
-			bool error = false;
-			if (SwitchType.BuiltinType == BuiltinTypeSpec.Type.String) {
-				string_labels = new Dictionary<string, SwitchLabel> ();
-			} else {
-				labels = new Dictionary<long, SwitchLabel> ();
-			}
+			case_labels.Add (sl);
 
-			case_labels = new List<SwitchLabel> ();
-			int default_label_index = -1;
-			bool constant_label_found = false;
-
-			for (int i = 0; i < block.Statements.Count; ++i) {
-				var s = block.Statements[i];
-
-				var sl = s as SwitchLabel;
-				if (sl == null) {
-					continue;
-				}
-
-				case_labels.Add (sl);
-
-				if (sl.IsDefault) {
-					if (case_default != null) {
-						sl.Error_AlreadyOccurs (ec, SwitchType, case_default);
-						error = true;
-					}
-
-					default_label_index = i;
+			if (sl.IsDefault) {
+				if (case_default != null) {
+					sl.Error_AlreadyOccurs (rc, case_default);
+				} else {
 					case_default = sl;
-					continue;
 				}
 
-				if (!sl.ResolveAndReduce (ec, SwitchType, IsNullable)) {
-					error = true;
-					continue;
-				}
-
-				try {
-					if (string_labels != null) {
-						string string_value = sl.Converted.GetValue () as string;
-						if (string_value == null)
-							case_null = sl;
-						else
-							string_labels.Add (string_value, sl);
-					} else {
-						if (sl.Converted is NullLiteral) {
-							case_null = sl;
-						} else {
-							labels.Add (sl.Converted.GetValueAsLong (), sl);
-						}
-					}
-				} catch (ArgumentException) {
-					if (string_labels != null)
-						sl.Error_AlreadyOccurs (ec, SwitchType, string_labels[(string) sl.Converted.GetValue ()]);
-					else
-						sl.Error_AlreadyOccurs (ec, SwitchType, labels[sl.Converted.GetValueAsLong ()]);
-
-					error = true;
-				}
-
-				if (value != null) {
-					var constant_label = constant_label_found ? null : FindLabel (value);
-					if (constant_label == null || constant_label != sl)
-						block.Statements[i] = new EmptyStatement (s.loc);
-					else
-						constant_label_found = true;
-				}
+				return;
 			}
 
-			if (value != null && constant_label_found && default_label_index >= 0)
-				block.Statements[default_label_index] = new EmptyStatement (case_default.loc);
-
-			return !error;
+			try {
+				if (string_labels != null) {
+					string string_value = sl.Converted.GetValue () as string;
+					if (string_value == null)
+						case_null = sl;
+					else
+						string_labels.Add (string_value, sl);
+				} else {
+					if (sl.Converted is NullLiteral) {
+						case_null = sl;
+					} else {
+						labels.Add (sl.Converted.GetValueAsLong (), sl);
+					}
+				}
+			} catch (ArgumentException) {
+				if (string_labels != null)
+					sl.Error_AlreadyOccurs (rc, string_labels[(string) sl.Converted.GetValue ()]);
+				else
+					sl.Error_AlreadyOccurs (rc, labels[sl.Converted.GetValueAsLong ()]);
+			}
 		}
 		
 		//
@@ -4837,24 +4884,29 @@ namespace Mono.CSharp {
 			if (block.Statements.Count == 0)
 				return true;
 
-			var constant = new_expr as Constant;
+			if (SwitchType.BuiltinType == BuiltinTypeSpec.Type.String) {
+				string_labels = new Dictionary<string, SwitchLabel> ();
+			} else {
+				labels = new Dictionary<long, SwitchLabel> ();
+			}
 
-			if (!ResolveLabels (ec, constant))
-				return false;
+			case_labels = new List<SwitchLabel> ();
+
+			var constant = new_expr as Constant;
 
 			//
 			// Don't need extra variable for constant switch or switch with
 			// only default case
 			//
-			if (constant == null && (case_labels.Count - (case_default != null ? 1 : 0)) != 0) {
+			if (constant == null) {
 				//
 				// Store switch expression for comparison purposes
 				//
 				value = new_expr as VariableReference;
-				if (value == null) {
-					// Create temporary variable inside switch scope
+				if (value == null && !HasOnlyDefaultSection ()) {
 					var current_block = ec.CurrentBlock;
 					ec.CurrentBlock = Block;
+					// Create temporary variable inside switch scope
 					value = TemporaryVariableReference.Create (SwitchType, ec.CurrentBlock, loc);
 					value.Resolve (ec);
 					ec.CurrentBlock = current_block;
@@ -4877,6 +4929,33 @@ namespace Mono.CSharp {
 			ec.EndFlowBranching ();
 			ec.Switch = old_switch;
 
+			//
+			// Check if all goto cases are valid. Needs to be done after switch
+			// is resolved becuase goto can jump forward in the scope.
+			//
+			if (goto_cases != null) {
+				foreach (var gc in goto_cases) {
+					if (gc.Item1 == null) {
+						if (DefaultLabel == null) {
+							FlowBranchingBlock.Error_UnknownLabel (loc, "default", ec.Report);
+						}
+
+						continue;
+					}
+
+					var sl = FindLabel (gc.Item2);
+					if (sl == null) {
+						FlowBranchingBlock.Error_UnknownLabel (loc, "case " + gc.Item2.GetValueAsLiteral (), ec.Report);
+					} else {
+						gc.Item1.Label = sl;
+					}
+				}
+			}
+
+			if (constant != null) {
+				ResolveUnreachableSections (ec, constant);
+			}
+
 			if (!ok)
 				return false;
 
@@ -4885,23 +4964,34 @@ namespace Mono.CSharp {
 			}
 
 			//
-			// Needed to emit anonymous storey initialization before
+			// Anonymous storey initialization has to happen before
 			// any generated switch dispatch
 			//
-			block.AddScopeStatement (new DispatchStatement (this));
+			block.InsertStatement (0, new DispatchStatement (this));
 
 			return true;
 		}
 
-		public SwitchLabel ResolveGotoCase (ResolveContext rc, Constant value)
+		bool HasOnlyDefaultSection ()
 		{
-			var sl = FindLabel (value);
+			for (int i = 0; i < block.Statements.Count; ++i) {
+				var s = block.Statements[i] as SwitchLabel;
 
-			if (sl == null) {
-				FlowBranchingBlock.Error_UnknownLabel (loc, "case " + value.GetValueAsLiteral (), rc.Report);
+				if (s == null || s.IsDefault)
+					continue;
+
+				return false;
 			}
 
-			return sl;
+			return true;
+		}
+
+		public void RegisterGotoCase (GotoCase gotoCase, Constant value)
+		{
+			if (goto_cases == null)
+				goto_cases = new List<Tuple<GotoCase, Constant>> ();
+
+			goto_cases.Add (Tuple.Create (gotoCase, value));
 		}
 
 		//
@@ -4960,6 +5050,38 @@ namespace Mono.CSharp {
 
 			switch_cache_field = new FieldExpr (field, loc);
 			string_dictionary = new SimpleAssign (switch_cache_field, initializer.Resolve (ec));
+		}
+
+		void ResolveUnreachableSections (BlockContext bc, Constant value)
+		{
+			var constant_label = FindLabel (value) ?? case_default;
+
+			bool found = false;
+			bool unreachable_reported = false;
+			for (int i = 0; i < block.Statements.Count; ++i) {
+				var s = block.Statements[i];
+
+				if (s is SwitchLabel) {
+					if (unreachable_reported) {
+						found = unreachable_reported = false;
+					}
+
+					found |= s == constant_label;
+					continue;
+				}
+
+				if (found) {
+					unreachable_reported = true;
+					continue;
+				}
+
+				if (!unreachable_reported) {
+					unreachable_reported = true;
+					bc.Report.Warning (162, 2, s.loc, "Unreachable code detected");
+				}
+
+				block.Statements[i] = new EmptyStatement (s.loc);
+			}
 		}
 
 		void DoEmitStringSwitch (EmitContext ec)
@@ -5072,12 +5194,6 @@ namespace Mono.CSharp {
 				return;
 			}
 
-			//
-			// Mark sequence point explicitly to switch
-			//
-			ec.Mark (block.StartLocation);
-			block.IsCompilerGenerated = true;
-
 			if (string_dictionary != null) {
 				DoEmitStringSwitch (ec);
 			} else if (case_labels.Count < 4 || string_labels != null) {
@@ -5113,6 +5229,14 @@ namespace Mono.CSharp {
 				} else if (new_expr != value) {
 					value.EmitAssign (ec, new_expr, false, false);
 				}
+
+
+				//
+				// Next statement is compiler generated we don't need extra
+				// nop when we can use the statement for sequence point
+				//
+				ec.Mark (block.StartLocation);
+				block.IsCompilerGenerated = true;
 			}
 
 			block.Emit (ec);
@@ -5844,7 +5968,7 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public class VariableDeclaration : BlockVariableDeclaration
+		public class VariableDeclaration : BlockVariable
 		{
 			public VariableDeclaration (FullNamedExpression type, LocalVariable li)
 				: base (type, li)
@@ -5969,7 +6093,7 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public BlockVariableDeclaration Variables {
+		public BlockVariable Variables {
 			get {
 				return decl;
 			}
@@ -6422,7 +6546,7 @@ namespace Mono.CSharp {
 
 	public class Using : TryFinallyBlock
 	{
-		public class VariableDeclaration : BlockVariableDeclaration
+		public class VariableDeclaration : BlockVariable
 		{
 			Statement dispose_call;
 
@@ -6599,7 +6723,7 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public BlockVariableDeclaration Variables {
+		public BlockVariable Variables {
 			get {
 				return decl;
 			}
@@ -7252,7 +7376,7 @@ namespace Mono.CSharp {
 				} else {
 					if (is_dynamic) {
 						// Explicit cast of dynamic collection elements has to be done at runtime
-						current_pe = EmptyCast.Create (current_pe, ec.BuiltinTypes.Dynamic);
+						current_pe = EmptyCast.Create (current_pe, ec.BuiltinTypes.Dynamic, ec);
 					}
 
 					variable.Type = for_each.type.ResolveAsType (ec);

@@ -388,6 +388,8 @@ namespace Mono.CSharp {
 		{
 			if (rhs == EmptyExpression.LValueMemberAccess || rhs == EmptyExpression.LValueMemberOutAccess) {
 				// Already reported as CS1612
+			} else if (rhs == EmptyExpression.OutAccess) {
+				rc.Report.Error (1510, loc, "A ref or out argument must be an assignable variable");
 			} else {
 				rc.Report.Error (131, loc, "The left-hand side of an assignment must be a variable, a property or an indexer");
 			}
@@ -533,10 +535,7 @@ namespace Mono.CSharp {
 
 			if (e == null) {
 				if (errors == ec.Report.Errors) {
-					if (out_access)
-						ec.Report.Error (1510, loc, "A ref or out argument must be an assignable variable");
-					else
-						Error_ValueAssignment (ec, right_side);
+					Error_ValueAssignment (ec, right_side);
 				}
 				return null;
 			}
@@ -548,6 +547,23 @@ namespace Mono.CSharp {
 				throw new Exception ("Expression " + e + " did not set its type after Resolve");
 
 			return e;
+		}
+
+		public Constant ResolveLabelConstant (ResolveContext rc)
+		{
+			var expr = Resolve (rc);
+			if (expr == null)
+				return null;
+
+			Constant c = expr as Constant;
+			if (c == null) {
+				if (c.type != InternalType.ErrorType)
+					rc.Report.Error (150, StartLocation, "A constant value is expected");
+
+				return null;
+			}
+
+			return c;
 		}
 
 		public virtual void EncodeAttributeValue (IMemberContext rc, AttributeEncoder enc, TypeSpec targetType)
@@ -809,8 +825,18 @@ namespace Mono.CSharp {
 					}
 
 					if ((restrictions & MemberLookupRestrictions.InvocableOnly) != 0) {
-						if (member is MethodSpec)
+						if (member is MethodSpec) {
+							//
+							// Interface members that are hidden by class members are removed from the set. This
+							// step only has an effect if T is a type parameter and T has both an effective base 
+							// class other than object and a non-empty effective interface set
+							//
+							var tps = queried_type as TypeParameterSpec;
+							if (tps != null && tps.HasTypeConstraint)
+								members = RemoveHiddenTypeParameterMethods (members);
+
 							return new MethodGroupExpr (members, queried_type, loc);
+						}
 
 						if (!Invocation.IsMemberInvocable (member, rc as ResolveContext))
 							continue;
@@ -874,6 +900,54 @@ namespace Mono.CSharp {
 			} while (members != null);
 
 			return null;
+		}
+
+		static IList<MemberSpec> RemoveHiddenTypeParameterMethods (IList<MemberSpec> members)
+		{
+			if (members.Count < 2)
+				return members;
+
+			//
+			// If M is a method, then all non-method members declared in an interface declaration
+			// are removed from the set, and all methods with the same signature as M declared in
+			// an interface declaration are removed from the set
+			//
+
+			bool copied = false;
+			for (int i = 0; i < members.Count; ++i) {
+				var method = members[i] as MethodSpec;
+				if (method == null) {
+					if (!copied) {
+						copied = true;
+						members = new List<MemberSpec> (members);
+					} 
+					
+					members.RemoveAt (i--);
+					continue;
+				}
+
+				if (!method.DeclaringType.IsInterface)
+					continue;
+
+				for (int ii = 0; ii < members.Count; ++ii) {
+					var candidate = members[ii] as MethodSpec;
+					if (candidate == null || !candidate.DeclaringType.IsClass)
+						continue;
+
+					if (!TypeSpecComparer.Override.IsEqual (candidate.Parameters, method.Parameters))
+						continue;
+
+					if (!copied) {
+						copied = true;
+						members = new List<MemberSpec> (members);
+					}
+
+					members.RemoveAt (i--);
+					break;
+				}
+			}
+
+			return members;
 		}
 
 		protected virtual void Error_NegativeArrayIndex (ResolveContext ec, Location loc)
@@ -1324,11 +1398,23 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public static Expression Create (Expression child, TypeSpec type)
+		public static Expression Create (Expression child, TypeSpec type, ResolveContext opt_ec)
 		{
 			Constant c = child as Constant;
-			if (c != null)
-				return new EmptyConstantCast (c, type);
+			if (c != null) {
+				var enum_constant = c as EnumConstant;
+				if (enum_constant != null)
+					c = enum_constant.Child;
+
+				if (!(c is ReducedExpression.ReducedConstantExpression)) {
+					if (c.Type == type)
+						return c;
+
+					var res = c.ConvertImplicitly (type, opt_ec, false);
+					if (res != null)
+						return res;
+				}
+			}
 
 			EmptyCast e = child as EmptyCast;
 			if (e != null)
@@ -1344,7 +1430,7 @@ namespace Mono.CSharp {
 					// dont really like this, but sometimes its needed
 					return new BoxedCast(child, rc.BuiltinTypes.Object);
 				} else {
-					return EmptyCast.Create(child, rc.BuiltinTypes.Object);
+					return EmptyCast.Create(child, rc.BuiltinTypes.Object, rc);
 				}
 			}
 			return child;
@@ -1771,7 +1857,11 @@ namespace Mono.CSharp {
 		public override void Emit (EmitContext ec)
 		{
 			base.Emit (ec);
+			Emit (ec, mode);
+		}
 
+		public static void Emit (EmitContext ec, Mode mode)
+		{
 			if (ec.HasSet (EmitContext.Options.CheckedScope)) {
 				switch (mode){
 				case Mode.I1_U1: ec.Emit (OpCodes.Conv_Ovf_U1); break;
@@ -2046,7 +2136,7 @@ namespace Mono.CSharp {
 	//
 	public class ReducedExpression : Expression
 	{
-		sealed class ReducedConstantExpression : EmptyConstantCast
+		public sealed class ReducedConstantExpression : EmptyConstantCast
 		{
 			readonly Expression orig_expr;
 
@@ -2520,18 +2610,18 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public override FullNamedExpression ResolveAsTypeOrNamespace (IMemberContext ec)
+		public override FullNamedExpression ResolveAsTypeOrNamespace (IMemberContext mc)
 		{
 			// PlayScript - Use absolute namespace resolution, not relative
 			bool absolute_ns =  loc.SourceFile != null && loc.SourceFile.FileType == SourceFileType.PlayScript;
 
-			FullNamedExpression fne = ec.LookupNamespaceOrType (Name, Arity, LookupMode.Normal, absolute_ns, loc);
+			FullNamedExpression fne = mc.LookupNamespaceOrType (Name, Arity, LookupMode.Normal, absolute_ns, loc);
 
 			if (fne != null) {
 				if (fne.Type != null && Arity > 0) {
 					if (HasTypeArguments) {
 						GenericTypeExpr ct = new GenericTypeExpr (fne.Type, targs, loc);
-						if (ct.ResolveAsType (ec) == null)
+						if (ct.ResolveAsType (mc) == null)
 							return null;
 
 						return ct;
@@ -2547,21 +2637,21 @@ namespace Mono.CSharp {
 					return fne;
 			}
 
-			if (Arity == 0 && Name == "dynamic" && ec.Module.Compiler.Settings.Version > LanguageVersion.V_3) {
-				if (!ec.Module.PredefinedAttributes.Dynamic.IsDefined) {
-					ec.Module.Compiler.Report.Error (1980, Location,
+			if (Arity == 0 && Name == "dynamic" && mc.Module.Compiler.Settings.Version > LanguageVersion.V_3) {
+				if (!mc.Module.PredefinedAttributes.Dynamic.IsDefined) {
+					mc.Module.Compiler.Report.Error (1980, Location,
 						"Dynamic keyword requires `{0}' to be defined. Are you missing System.Core.dll assembly reference?",
-						ec.Module.PredefinedAttributes.Dynamic.GetSignatureForError ());
+						mc.Module.PredefinedAttributes.Dynamic.GetSignatureForError ());
 				}
 
 				fne = new DynamicTypeExpr (loc);
-				fne.ResolveAsType (ec);
+				fne.ResolveAsType (mc);
 			}
 
 			if (fne != null)
 				return fne;
 
-			Error_TypeOrNamespaceNotFound (ec);
+			Error_TypeOrNamespaceNotFound (mc);
 			return null;
 		}
 
@@ -2813,7 +2903,7 @@ namespace Mono.CSharp {
 						var paramBlock = rc.CurrentBlock.ParametersBlock;
 						var li = new LocalVariable (paramBlock, "arguments", paramBlock.loc);
 						li.Type = rc.Module.PredefinedTypes.AsArray.Resolve();
-						var decl = new BlockVariableDeclaration(new Mono.CSharp.TypeExpression(rc.Module.PredefinedTypes.AsArray.Resolve(), paramBlock.loc), li);
+						var decl = new BlockVariable(new Mono.CSharp.TypeExpression(rc.Module.PredefinedTypes.AsArray.Resolve(), paramBlock.loc), li);
 						if (rc.PsExtended) { // PlayScript uses a normal array for 'arguments'
 							var initializers = new List<Expression>();
 							foreach (Parameter param in paramBlock.Parameters.FixedParameters) {
@@ -3556,8 +3646,12 @@ namespace Mono.CSharp {
 			if (ExtensionExpression == null)
 				return null;
 
+			var cand = candidates;
 			arguments.Insert (0, new Argument (ExtensionExpression, Argument.AType.ExtensionType));
 			var res = base.OverloadResolve (ec, ref arguments, ehandler ?? this, restr);
+			
+			// Restore candidates in case we are running in probing mode 
+			candidates = cand;
 
 			// Store resolved argument and restore original arguments
 			if (res == null) {
@@ -4654,6 +4748,11 @@ namespace Mono.CSharp {
 								arg_moved = true;
 							}
 
+							if (arguments == orig_args) {
+								arguments = new Arguments (orig_args.Count);
+								arguments.AddRange (orig_args);
+							}
+
 							arguments[index] = arguments[i];
 							arguments[i] = temp;
 
@@ -4962,7 +5061,7 @@ namespace Mono.CSharp {
 				// is used as argument or delegate conversion
 				//
 				if (!Convert.ImplicitConversionExists (ec, argument.Expr, parameter)) {
-					return 2;
+					return parameter.IsDelegate && argument.Expr is AnonymousMethodExpression ? 2 : 3;
 				}
 			}
 

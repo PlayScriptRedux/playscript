@@ -12,11 +12,11 @@ using System;
 using System.Diagnostics;
 using System.Xml;
 using System.Collections.Generic;
-using System.Reflection;
 using System.IO;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Text;
+using IKVM.Reflection;
 
 
 #if NET_4_5
@@ -37,6 +37,7 @@ class MakeBundle {
 	static string style = "linux";
 	static bool compress;
 	static bool nomain;
+	static bool? use_dos2unix = null;
 	
 	static int Main (string [] args)
 	{
@@ -232,12 +233,20 @@ class MakeBundle {
 		// Preallocate the strings we need.
 		if (chars [0] == null) {
 			for (int i = 0; i < chars.Length; i++)
-				chars [i] = string.Format ("\t.byte {0}\n", i.ToString ());
+				chars [i] = string.Format ("{0}", i.ToString ());
 		}
 
 		while ((n = stream.Read (buffer, 0, buffer.Length)) != 0) {
-			for (int i = 0; i < n; i++)
+			int count = 0;
+			for (int i = 0; i < n; i++) {
+				if (count % 32 == 0) {
+					ts.Write ("\n\t.byte ");
+				} else {
+					ts.Write (",");
+				}
 				ts.Write (chars [buffer [i]]);
+				count ++;
+			}
 		}
 
 		ts.WriteLine ();
@@ -263,9 +272,22 @@ class MakeBundle {
 			using (StreamWriter tc = new StreamWriter (File.Create (temp_c))) {
 			string prog = null;
 
+#if XAMARIN_ANDROID
 			tc.WriteLine ("/* This source code was produced by mkbundle, do not edit */");
+			tc.WriteLine ("\n#ifndef NULL\n#define NULL (void *)0\n#endif");
+			tc.WriteLine (@"
+typedef struct {
+	const char *name;
+	const unsigned char *data;
+	const unsigned int size;
+} MonoBundledAssembly;
+void          mono_register_bundled_assemblies (const MonoBundledAssembly **assemblies);
+void          mono_register_config_for_assembly (const char* assembly_name, const char* config_xml);
+");
+#else
 			tc.WriteLine ("#include <mono/metadata/mono-config.h>");
 			tc.WriteLine ("#include <mono/metadata/assembly.h>\n");
+#endif
 
 			if (compress) {
 				tc.WriteLine ("typedef struct _compressed_data {");
@@ -276,15 +298,12 @@ class MakeBundle {
 
 			object monitor = new object ();
 
+			var streams = new Dictionary<string, Stream> ();
+			var sizes = new Dictionary<string, long> ();
+
 			// Do the file reading and compression in parallel
 			Action<string> body = delegate (string url) {
 				string fname = new Uri (url).LocalPath;
-				string aname = Path.GetFileName (fname);
-				string encoded = aname.Replace ("-", "_").Replace (".", "_");
-
-				if (prog == null)
-					prog = aname;
-								
 				Stream stream = File.OpenRead (fname);
 
 				long real_size = stream.Length;
@@ -301,50 +320,66 @@ class MakeBundle {
 					stream = new MemoryStream (bytes, 0, (int) ms.Length, false, false);
 				}
 
-				// The non-parallel part
 				lock (monitor) {
-					Console.WriteLine ("   embedding: " + fname);
-
-					WriteSymbol (ts, "assembly_data_" + encoded, stream.Length);
-			
-					WriteBuffer (ts, stream, buffer);
-
-					if (compress) {
-						tc.WriteLine ("extern const unsigned char assembly_data_{0} [];", encoded);
-						tc.WriteLine ("static CompressedAssembly assembly_bundle_{0} = {{{{\"{1}\"," +
-									  " assembly_data_{0}, {2}}}, {3}}};",
-									  encoded, aname, real_size, stream.Length);
-						double ratio = ((double) stream.Length * 100) / real_size;
-						Console.WriteLine ("   compression ratio: {0:.00}%", ratio);
-					} else {
-						tc.WriteLine ("extern const unsigned char assembly_data_{0} [];", encoded);
-						tc.WriteLine ("static const MonoBundledAssembly assembly_bundle_{0} = {{\"{1}\", assembly_data_{0}, {2}}};",
-									  encoded, aname, real_size);
-					}
-					stream.Close ();
-
-					c_bundle_names.Add ("assembly_bundle_" + encoded);
-
-					try {
-						FileStream cf = File.OpenRead (fname + ".config");
-						Console.WriteLine (" config from: " + fname + ".config");
-						tc.WriteLine ("extern const unsigned char assembly_config_{0} [];", encoded);
-						WriteSymbol (ts, "assembly_config_" + encoded, cf.Length);
-						WriteBuffer (ts, cf, buffer);
-						ts.WriteLine ();
-						config_names.Add (new string[] {aname, encoded});
-					} catch (FileNotFoundException) {
-						/* we ignore if the config file doesn't exist */
-					}
+					streams [url] = stream;
+					sizes [url] = real_size;
 				}
 			};
 
-#if NET_4_5
+			//#if NET_4_5
+#if FALSE
 			Parallel.ForEach (files, body);
 #else
 			foreach (var url in files)
 				body (url);
 #endif
+
+			// The non-parallel part
+			foreach (var url in files) {
+				string fname = new Uri (url).LocalPath;
+				string aname = Path.GetFileName (fname);
+				string encoded = aname.Replace ("-", "_").Replace (".", "_");
+
+				if (prog == null)
+					prog = aname;
+
+				var stream = streams [url];
+				var real_size = sizes [url];
+
+				Console.WriteLine ("   embedding: " + fname);
+
+				WriteSymbol (ts, "assembly_data_" + encoded, stream.Length);
+			
+				WriteBuffer (ts, stream, buffer);
+
+				if (compress) {
+					tc.WriteLine ("extern const unsigned char assembly_data_{0} [];", encoded);
+					tc.WriteLine ("static CompressedAssembly assembly_bundle_{0} = {{{{\"{1}\"," +
+								  " assembly_data_{0}, {2}}}, {3}}};",
+								  encoded, aname, real_size, stream.Length);
+					double ratio = ((double) stream.Length * 100) / real_size;
+					Console.WriteLine ("   compression ratio: {0:.00}%", ratio);
+				} else {
+					tc.WriteLine ("extern const unsigned char assembly_data_{0} [];", encoded);
+					tc.WriteLine ("static const MonoBundledAssembly assembly_bundle_{0} = {{\"{1}\", assembly_data_{0}, {2}}};",
+								  encoded, aname, real_size);
+				}
+				stream.Close ();
+
+				c_bundle_names.Add ("assembly_bundle_" + encoded);
+
+				try {
+					FileStream cf = File.OpenRead (fname + ".config");
+					Console.WriteLine (" config from: " + fname + ".config");
+					tc.WriteLine ("extern const unsigned char assembly_config_{0} [];", encoded);
+					WriteSymbol (ts, "assembly_config_" + encoded, cf.Length);
+					WriteBuffer (ts, cf, buffer);
+					ts.WriteLine ();
+					config_names.Add (new string[] {aname, encoded});
+				} catch (FileNotFoundException) {
+					/* we ignore if the config file doesn't exist */
+				}
+			}
 
 			if (config_file != null){
 				FileStream conf;
@@ -418,9 +453,9 @@ class MakeBundle {
 
 			Stream template_stream;
 			if (compress) {
-				template_stream = Assembly.GetAssembly (typeof(MakeBundle)).GetManifestResourceStream ("template_z.c");
+				template_stream = System.Reflection.Assembly.GetAssembly (typeof(MakeBundle)).GetManifestResourceStream ("template_z.c");
 			} else {
-				template_stream = Assembly.GetAssembly (typeof(MakeBundle)).GetManifestResourceStream ("template.c");
+				template_stream = System.Reflection.Assembly.GetAssembly (typeof(MakeBundle)).GetManifestResourceStream ("template.c");
 			}
 
 			StreamReader s = new StreamReader (template_stream);
@@ -428,7 +463,7 @@ class MakeBundle {
 			tc.Write (template);
 
 			if (!nomain) {
-				Stream template_main_stream = Assembly.GetAssembly (typeof(MakeBundle)).GetManifestResourceStream ("template_main.c");
+				Stream template_main_stream = System.Reflection.Assembly.GetAssembly (typeof(MakeBundle)).GetManifestResourceStream ("template_main.c");
 				StreamReader st = new StreamReader (template_main_stream);
 				string maintemplate = st.ReadToEnd ();
 				tc.Write (maintemplate);
@@ -504,19 +539,21 @@ class MakeBundle {
 		return assemblies;
 	}
 	
+	static readonly Universe universe = new Universe ();
+	
 	static void QueueAssembly (List<string> files, string codebase)
 	{
 		if (files.Contains (codebase))
 			return;
 
 		files.Add (codebase);
-		Assembly a = Assembly.LoadFrom (new Uri(codebase).LocalPath);
+		Assembly a = universe.LoadFile (new Uri(codebase).LocalPath);
 
 		if (!autodeps)
 			return;
 		
 		foreach (AssemblyName an in a.GetReferencedAssemblies ()) {
-			a = Assembly.Load (an);
+			a = universe.Load (an.Name);
 			QueueAssembly (files, a.CodeBase);
 		}
 	}
@@ -529,12 +566,12 @@ class MakeBundle {
 			char[] path_chars = { '/', '\\' };
 			
 			if (assembly.IndexOfAny (path_chars) != -1) {
-				a = Assembly.LoadFrom (assembly);
+				a = universe.LoadFile (assembly);
 			} else {
 				string ass = assembly;
 				if (ass.EndsWith (".dll"))
 					ass = assembly.Substring (0, assembly.Length - 4);
-				a = Assembly.Load (ass);
+				a = universe.Load (ass);
 			}
 			return a;
 		} catch (FileNotFoundException){
@@ -546,7 +583,7 @@ class MakeBundle {
 					full_path += ".dll";
 				
 				try {
-					a = Assembly.LoadFrom (full_path);
+					a = universe.LoadFile (full_path);
 					return a;
 				} catch (FileNotFoundException ff) {
 					total_log += ff.FusionLog;
@@ -555,10 +592,10 @@ class MakeBundle {
 			}
 			Error ("Cannot find assembly `" + assembly + "'" );
 			Console.WriteLine ("Log: \n" + total_log);
-		} catch (BadImageFormatException f) {
-			Error ("Cannot load assembly (bad file format)" + f.FusionLog);
+		} catch (IKVM.Reflection.BadImageFormatException f) {
+			Error ("Cannot load assembly (bad file format) " + f.Message);
 		} catch (FileLoadException f){
-			Error ("Cannot load assembly " + f.FusionLog);
+			Error ("Cannot load assembly " + f.Message);
 		} catch (ArgumentNullException){
 			Error("Cannot load assembly (null argument)");
 		}
@@ -631,11 +668,42 @@ class MakeBundle {
 			Console.WriteLine (cmdLine);
 			return system (cmdLine);
 		}
-
+		
 		// on Windows, we have to pipe the output of a
 		// `cmd` interpolation to dos2unix, because the shell does not
 		// strip the CRLFs generated by the native pkg-config distributed
 		// with Mono.
+		//
+		// But if it's *not* on cygwin, just skip it.
+		
+		// check if dos2unix is applicable.
+		if (use_dos2unix == null) {
+			use_dos2unix = false;
+			try {
+				var dos2unix = Process.Start ("dos2unix");
+				dos2unix.StandardInput.WriteLine ("aaa");
+				dos2unix.StandardInput.WriteLine ("\u0004");
+				dos2unix.WaitForExit ();
+				if (dos2unix.ExitCode == 0)
+					use_dos2unix = true;
+			} catch {
+				// ignore
+			}
+		}
+		// and if there is no dos2unix, just run cmd /c.
+		if (use_dos2unix == false) {
+			Console.WriteLine (cmdLine);
+			ProcessStartInfo dos2unix = new ProcessStartInfo ();
+			dos2unix.UseShellExecute = false;
+			dos2unix.FileName = "cmd";
+			dos2unix.Arguments = String.Format ("/c \"{0}\"", cmdLine);
+
+			using (Process p = Process.Start (dos2unix)) {
+				p.WaitForExit ();
+				return p.ExitCode;
+			}
+		}
+
 		StringBuilder b = new StringBuilder ();
 		int count = 0;
 		for (int i = 0; i < cmdLine.Length; i++) {

@@ -7,7 +7,6 @@ namespace Mono.CSharp
 		public Expression Expr;
 		private Expression inlineExpr;
 
-		private ResolveContext rc;
 		private bool inlineFailed;
 		private Invocation invocation;
 		private MethodSpec methodSpec;
@@ -82,7 +81,7 @@ namespace Mono.CSharp
 				return null;
 			}
 
-			public override object Visit (Mono.CSharp.BlockVariableDeclaration s) 
+			public override object Visit (Mono.CSharp.BlockVariable s) 
 			{
 				statements++;
 				return null;
@@ -225,7 +224,6 @@ namespace Mono.CSharp
 //				inlineExpr = newBlock;
 			}
 
-			this.rc = rc;
 			this.inlineFailed = false;
 
 			Expression ret;

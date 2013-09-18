@@ -37,7 +37,7 @@ namespace PlayScript.DynamicRuntime
 		private static string GT = "gt";
 		private static string GTE = "gte";
 		private static string EQ = "eq";
-		private static string NEQ = "ne";
+//		private static string NEQ = "ne";
 //		private static string AND = "and";
 //		private static string OR = "or";
 		private static string XOR = "xor";

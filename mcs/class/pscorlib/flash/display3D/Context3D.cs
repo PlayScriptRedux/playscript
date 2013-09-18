@@ -939,8 +939,10 @@ namespace flash.display3D {
 			mValueFrame.WriteValue(mFrameCount);
 		}
 
+#pragma warning disable 414		// the field below is assigned but never used
 		// stage3D that owns us
 		private readonly Stage3D mStage3D;
+#pragma warning restore 414
 
 		// temporary floating point array for constant conversion
 		private readonly float[] mTemp = new float[4 * 1024];
@@ -957,18 +959,23 @@ namespace flash.display3D {
 
 		// settings for backbuffer
 		private int  mDefaultFrameBufferId;
-		private int  mDepthRenderBufferId;
 		private int  mBackBufferWidth = 0;
 		private int  mBackBufferHeight = 0;
+
+#pragma warning disable 414		// the fields below are assigned but never used
+		private int  mDepthRenderBufferId;
+
 		private int  mBackBufferAntiAlias = 0;
 		private bool mBackBufferEnableDepthAndStencil = true;
 		private bool mBackBufferWantsBestResolution = false;
 
 		// settings for render to texture
 		private TextureBase mRenderToTexture = null;
-		private int  		mTextureFrameBufferId;
-		private int  		mTextureDepthBufferId;
 
+		private int  mTextureDepthBufferId;
+#pragma warning restore 414
+
+		private int  		mTextureFrameBufferId;
 		// various stats
 		private int 				mFrameCount;
 		private readonly int[]		mStats = new int[(int)Stats.Length];

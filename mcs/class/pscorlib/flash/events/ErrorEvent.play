@@ -44,7 +44,7 @@ package flash.events {
  	 		return null;
  	 	}
  	 	
- 	 	public function get text():String {
+		public override function get text():String {
  	 		return toString();
  	 	}
  	 	

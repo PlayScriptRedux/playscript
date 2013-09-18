@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.Versioning;
 
 // Information about this assembly is defined by the following attributes. 
 // Change them to the values specific to your project.
@@ -18,6 +19,8 @@ using System.Runtime.CompilerServices;
 // and "{Major}.{Minor}.{Build}.*" will update just the revision.
 
 [assembly: AssemblyVersion("1.0.*")]
+
+[assembly: TargetFramework (".NETFramework,Version=v4.5", FrameworkDisplayName=".NET Framework 4.5")]
 
 // The following attributes are used to specify the signing key for the assembly, 
 // if desired. See the Mono documentation for more information about signing.

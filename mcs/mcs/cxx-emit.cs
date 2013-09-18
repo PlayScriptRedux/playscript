@@ -1121,7 +1121,7 @@ namespace Mono.CSharp
 		}
 	}
 
-	public partial class BlockVariableDeclaration
+	public partial class BlockVariable
 	{
 		protected override void DoEmitCpp (CppEmitContext cec)
 		{

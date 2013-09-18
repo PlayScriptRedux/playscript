@@ -133,8 +133,10 @@ package flash.display {
 		var mContent:DisplayObject = null;
 		var mLoaderInfo:LoaderInfo = new LoaderInfo();
 		var mRequest:URLRequest = null;
+#pragma warning disable 414		// fields are assigned but values are never used
 		var mContext:LoaderContext = null;
 		var mUrlLoader:URLLoader = null;
+#pragma warning restore 414
 	
 	}
 

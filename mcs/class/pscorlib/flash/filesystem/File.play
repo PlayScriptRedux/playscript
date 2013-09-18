@@ -87,7 +87,7 @@ package flash.filesystem {
 			{
 				Application.Context.Assets.Open(mPath);
 				return true;
-			} catch (e:Exception)
+			} catch
 			{
 				return false;
 			}
@@ -117,7 +117,7 @@ package flash.filesystem {
 				}
 
 				return true;
-			} catch (e:Exception)
+			} catch
 			{
 				return false;
 			}

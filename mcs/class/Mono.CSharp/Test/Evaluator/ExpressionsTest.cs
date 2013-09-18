@@ -51,6 +51,12 @@ namespace MonoTests.EvaluatorTest
 		}
 
 		[Test]
+		public void AnonymousType ()
+		{
+			Evaluator.Run ("var foo = new { Bar = \"baz\" };");
+		}
+
+		[Test]
 		public void Simple ()
 		{
 			object res;
@@ -131,6 +137,17 @@ namespace MonoTests.EvaluatorTest
 			Evaluator.Run ("dynamic d = 1;");
 			Evaluator.Run ("d = 'a';");
 			Evaluator.Run ("d.GetType ();");
+		}
+#endif
+
+#if NET_4_5
+		[Test]
+		public void AwaitExpression ()
+		{
+			Evaluator.WaitOnTask = true;
+			var res = Evaluator.Evaluate("var res = await System.Threading.Tasks.Task.FromResult (1) + await System.Threading.Tasks.Task.FromResult (2);");
+			res = Evaluator.Evaluate ("res;");
+			Assert.AreEqual (3, res, "#1");
 		}
 #endif
 	}

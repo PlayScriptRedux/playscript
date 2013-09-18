@@ -774,24 +774,34 @@ namespace Mono.CSharp
 
 					for (int i = nested_hierarchy.Count; i != 0; --i) {
 						var t = nested_hierarchy [i - 1];
-						spec = MemberCache.FindNestedType (spec, t.Name, t.Arity);
+						if (t.Kind == MemberKind.MissingType)
+							spec = t;
+						else
+							spec = MemberCache.FindNestedType (spec, t.Name, t.Arity);
+
 						if (t.Arity > 0) {
 							spec = spec.MakeGenericType (module, targs.Skip (targs_pos).Take (spec.Arity).ToArray ());
 							targs_pos += t.Arity;
 						}
 					}
 
-					string name = type.Name;
-					int index = name.IndexOf ('`');
-					if (index > 0)
-						name = name.Substring (0, index);
+					if (spec.Kind == MemberKind.MissingType) {
+						spec = new TypeSpec (MemberKind.MissingType, spec, new ImportedTypeDefinition (type_def, this), type_def, Modifiers.PUBLIC);
+						spec.MemberCache = MemberCache.Empty;
+					} else {
+						if ((type_def.Attributes & TypeAttributes.VisibilityMask) == TypeAttributes.NestedPrivate && IgnorePrivateMembers)
+							return null;
 
-					spec = MemberCache.FindNestedType (spec, name, targs.Length - targs_pos);
-					if (spec == null)
-						return null;
+						string name = type.Name;
+						int index = name.IndexOf ('`');
+						if (index > 0)
+							name = name.Substring (0, index);
 
-					if (spec.Arity > 0) {
-						spec = spec.MakeGenericType (module, targs.Skip (targs_pos).ToArray ());
+						spec = MemberCache.FindNestedType (spec, name, targs.Length - targs_pos);
+
+						if (spec.Arity > 0) {
+							spec = spec.MakeGenericType (module, targs.Skip (targs_pos).ToArray ());
+						}
 					}
 				}
 
@@ -1929,7 +1939,7 @@ namespace Mono.CSharp
 
 		}
 
-		public static void Error_MissingDependency (IMemberContext ctx, List<TypeSpec> types, Location loc)
+		public static void Error_MissingDependency (IMemberContext ctx, List<MissingTypeSpecReference> missing, Location loc)
 		{
 			// 
 			// Report details about missing type and most likely cause of the problem.
@@ -1940,8 +1950,8 @@ namespace Mono.CSharp
 
 			var report = ctx.Module.Compiler.Report;
 
-			for (int i = 0; i < types.Count; ++i) {
-				var t = types [i];
+			for (int i = 0; i < missing.Count; ++i) {
+				var t = missing [i].Type;
 
 				//
 				// Report missing types only once
@@ -1950,6 +1960,10 @@ namespace Mono.CSharp
 					continue;
 
 				string name = t.GetSignatureForError ();
+
+				var caller = missing[i].Caller;
+				if (caller.Kind != MemberKind.MissingType)
+					report.SymbolRelatedToPreviousError (missing[i].Caller);
 
 				if (t.MemberDefinition.DeclaringAssembly == ctx.Module.DeclaringAssembly) {
 					report.Error (1683, loc,

@@ -65,6 +65,7 @@ MCS_OPTS		+= /debug:full
 MCS_OPTS		+= /optimize-
 MCS_OPTS		+= /codepage:utf8
 MCS_OPTS		+= /unsafe
+MCS_OPTS		+= /psstrict-
 MCS_OPTS		+= /define:DEBUG
 MCS_OPTS		+= /t:exe
 
