@@ -31,7 +31,7 @@ namespace flash.media {
 
 		private void internalLoad(String url)
 		{
-			player = new ZMediaPlayer (channel);
+			player = new ZMediaPlayer (url, channel);
 
 
 			try {
@@ -42,11 +42,7 @@ namespace flash.media {
 					oldPlayer.Release();
 				}
 
-				AssetFileDescriptor afd = Application.Context.Assets.OpenFd (url);
-				player.SetDataSource (afd.FileDescriptor, afd.StartOffset, afd.Length);
-				player.SetVolume (100, 100);
-				player.Prepare ();
-
+				player.Initialize();
 				playerQueue.Enqueue( player );
 
 			} catch (Exception e) {
@@ -74,31 +70,60 @@ namespace flash.media {
 			if (startTime > 0)
 				Console.WriteLine ("StartTime is not supported");
 
+			// if the player is stopped, we need to initialize it again
+			if (!player.isInitialize ())
+				player.Initialize ();
+
 			player.Start ();
 
 			return channel;
 
         }
 
-		class ZMediaPlayer : MediaPlayer, MediaPlayer.IOnCompletionListener {
+		public class ZMediaPlayer : MediaPlayer, MediaPlayer.IOnCompletionListener {
 
+			private String url;
 			private SoundChannel channel;
 			private int count;
 			private int loopsCount;		
+			private bool isInit;
 
-			public ZMediaPlayer(SoundChannel channel) 
+			public ZMediaPlayer(String url, SoundChannel channel) 
 			{
+				this.url = url;
 				this.channel = channel;
 				this.channel.Player = this;
 				this.count = 0;
 				this.loopsCount = 0;
+				this.isInit = false;
 
 				this.SetOnCompletionListener( this );
+			}
+
+			public override void Stop ()
+			{
+				base.Stop ();
+				this.isInit = false;
+			}
+
+			public void Initialize()
+			{				
+				AssetFileDescriptor afd = Application.Context.Assets.OpenFd (url);
+				SetDataSource (afd.FileDescriptor, afd.StartOffset, afd.Length);
+				SetVolume (100, 100);
+				Prepare ();
+
+				this.isInit = true;
 			}
 
 			public void SetLoopsCount(int loopsCount)
 			{
 				this.loopsCount = loopsCount;
+			}
+
+			public bool isInitialize()
+			{
+				return this.isInit;
 			}
 
 			public void OnCompletion (MediaPlayer mp)
