@@ -2,6 +2,10 @@ package
 {
 	import com.adobe.test.Assert;
 
+	public class ClassA {}
+	public class ClassB {}
+	public class ClassC extends ClassB {}
+
 	public class EqualityTest
 	{
 		public static function Main():int
@@ -19,6 +23,7 @@ package
 			Assert.expectEq("num1 == uint1", true, num1 == uint1);
 			Assert.expectEq("num1 === uint1", true, num1 === uint1);
 			Assert.expectEq("\"5\" == \"5\"", true, "5" == "5");
+			Assert.expectEq("\"5\" == \"\"", false, "5" == "");
 			Assert.expectEq("\"5\" === \"5\"", true, "5" === "5");
 			Assert.expectEq("\"5\" == 5", true, "5" == 5);
 			Assert.expectEq("\"5\" !== 5", true, "5" !== 5);
@@ -41,6 +46,23 @@ package
 			Assert.expectEq("obj3 !== obj4", true, obj3 !== obj4);
 			Assert.expectEq("\"5.5\" == 5.5", true, "5.5" == 5.5);
 			Assert.expectEq("\"5.5\" !== 5.5", true, "5.5" !== 5.5);
+
+			var a:ClassA = new ClassA();
+			var a2:ClassA = new ClassA();
+			var b:ClassB = new ClassB();
+			var c:ClassC = new ClassC();
+
+			// The test below expects to generate a compiler warning number CS1718
+			Assert.expectEq("a == a", true, a == a);
+			Assert.expectEq("a == a2", false, a == a2);
+
+			// Test below expects the comparison of an instance to true to return false
+//			Assert.expectEq("a == true", false, a == true);
+			Assert.expectEq("b == c", false, b == c);
+
+			// The test below expects to generate a compiler error number CS0019
+//			Assert.expectError("a == b", "CS0019", a == b);
+
 			return 0;
 		}
 	}
