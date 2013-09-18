@@ -142,16 +142,102 @@ namespace _root
 		
 		#endregion
 
-		// public get enumerator that returns a faster struct
-		public Vector<dynamic>.VectorEnumeratorStruct GetEnumerator()
+		public struct ArrayKeyEnumeratorStruct : IEnumerator
 		{
-			return mList.GetEnumerator();
+			private Vector<dynamic>.VectorKeyEnumeratorStruct mVectorKeyEnumerator;
+			private IEnumerator mDynamicEnum;
+			private bool enumerateDynamics;
+
+			public ArrayKeyEnumeratorStruct(Vector<dynamic>.VectorKeyEnumeratorStruct venum, PlayScript.IDynamicClass dynprops)
+			{
+				mVectorKeyEnumerator = venum;
+				mDynamicEnum = (dynprops==null) ? null : dynprops.__GetDynamicNames().GetEnumerator();
+				enumerateDynamics = false;
+			}
+			public bool MoveNext ()
+			{
+				bool ok = false;
+				if (!enumerateDynamics) 
+				{
+					ok = mVectorKeyEnumerator.MoveNext ();
+					if(!ok && mDynamicEnum!=null)
+						enumerateDynamics = true;
+				}
+				if (enumerateDynamics)
+					ok = mDynamicEnum.MoveNext ();
+				return ok;
+			}
+
+			public void Reset ()
+			{
+				mVectorKeyEnumerator.Reset();
+				enumerateDynamics = false;
+				if(mDynamicEnum!=null)
+					mDynamicEnum.Reset ();
+			}
+
+			public dynamic Current {
+				get {
+					return (enumerateDynamics)?  mDynamicEnum.Current : mVectorKeyEnumerator.Current;
+				}
+			}
+		}
+
+		// this is the public struct enumerator, it does not implement IDisposable and doesnt allocate space on the heap
+		public struct ArrayEnumeratorStruct
+		{
+			private Vector<dynamic>.VectorEnumeratorStruct mVectorEnumerator;
+			private IEnumerator mDynamicEnum;
+			private PlayScript.IDynamicClass mDynprops;
+			private bool enumerateDynamics;
+
+			public ArrayEnumeratorStruct(Vector<dynamic>.VectorEnumeratorStruct venum, PlayScript.IDynamicClass dynprops)
+			{
+				mVectorEnumerator = venum;
+				mDynprops    = dynprops;
+				mDynamicEnum = (dynprops==null)? null : dynprops.__GetDynamicNames().GetEnumerator();
+				enumerateDynamics = false;
+			}
+
+			public bool MoveNext ()
+			{
+				bool ok = false;
+				if (!enumerateDynamics) 
+				{
+					ok = mVectorEnumerator.MoveNext ();
+					if(!ok && mDynamicEnum!=null)
+						enumerateDynamics = true;
+				}
+				if (enumerateDynamics)
+					ok = mDynamicEnum.MoveNext ();
+				return ok;
+			}
+
+			public void Reset ()
+			{
+				mVectorEnumerator.Reset();
+				enumerateDynamics = false;
+				if(mDynamicEnum!=null)
+					mDynamicEnum.Reset ();
+			}
+
+			public dynamic Current {
+				get {
+					return (enumerateDynamics)? mDynprops.__GetDynamicValue(mDynamicEnum.Current as string) : mVectorEnumerator.Current;
+				}
+			}
+		}
+
+		// public get enumerator that returns a faster struct
+		public ArrayEnumeratorStruct GetEnumerator()
+		{
+			return new ArrayEnumeratorStruct(mList.GetEnumerator(), __dynamicProps);
 		}
 
 		// public get key enumerator that returns a faster struct
-		public Vector<dynamic>.VectorKeyEnumeratorStruct GetKeyEnumerator()
+		public ArrayKeyEnumeratorStruct GetKeyEnumerator()
 		{
-			return mList.GetKeyEnumerator();
+			return new ArrayKeyEnumeratorStruct(mList.GetKeyEnumerator(),__dynamicProps);
 		}
 
 		
