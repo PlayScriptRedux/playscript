@@ -68,11 +68,19 @@ namespace flash.media {
 			player.SetLoopsCount (loops);
 
 			if (startTime > 0)
-				Console.WriteLine ("StartTime is not supported");
+				Console.WriteLine ("Warning: Sounds StartTime is not supported");
 
-			// if the player is stopped, we need to initialize it again
-			if (!player.isInitialize ())
-				player.Initialize ();
+			try {
+				// if the player is stopped, we need to initialize it again
+				if (!player.isInitialize ())
+					player.Initialize ();
+			} catch (Exception e){
+				Console.WriteLine ("Exception occur initializing sounds. " + e.Message);
+				this.dispatchEvent (new IOErrorEvent (IOErrorEvent.IO_ERROR));
+				player.Release ();
+				player = null;
+				return null;
+			}
 
 			player.Start ();
 
@@ -108,6 +116,7 @@ namespace flash.media {
 
 			public void Initialize()
 			{				
+				Reset ();
 				AssetFileDescriptor afd = Application.Context.Assets.OpenFd (url);
 				SetDataSource (afd.FileDescriptor, afd.StartOffset, afd.Length);
 				SetVolume (100, 100);
