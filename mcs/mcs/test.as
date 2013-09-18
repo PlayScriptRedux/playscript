@@ -13,12 +13,6 @@ package Blah1
 			var b:ClassB = new ClassB();
 			var c:ClassC = new ClassC();
 
-			var d1:Number, d2:Number;
-
-			if (d1 == d1) {
-				trace("IsNAN");
-			}
-
 			if (a == a) {
 				trace("YAY!");
 			}
@@ -35,9 +29,9 @@ package Blah1
 				trace("YAY!");
 			}
 
-			if (a == b) {
-				trace("YAY!");
-			}
+//			if (a == b) {  // ERROR!
+//				trace("YAY!");
+//			}
 
 			return 0;
 		}
