@@ -293,14 +293,20 @@ namespace flash.display3D {
 					// vertex uniform
 					uniform.RegIndex = int.Parse (uniform.Name.Substring(2));
 					// store in vertex lookup table
-					mVertexUniformLookup[uniform.RegIndex] = uniform;
+					for (int reg=0; reg < uniform.RegCount; reg++) 
+					{
+						mVertexUniformLookup[uniform.RegIndex+reg] = uniform;
+					}
 				}
 				else if (uniform.Name.StartsWith("fc"))
 				{
 					// fragment uniform
 					uniform.RegIndex = int.Parse (uniform.Name.Substring(2));
 					// store in fragment lookup table
-					mFragmentUniformLookup[uniform.RegIndex] = uniform;
+					for (int reg=0; reg < uniform.RegCount; reg++) 
+					{
+						mFragmentUniformLookup[uniform.RegIndex+reg] = uniform;
+					}
 				}
 				else if (uniform.Name.StartsWith("sampler") && !uniform.Name.EndsWith("_alpha"))
 				{

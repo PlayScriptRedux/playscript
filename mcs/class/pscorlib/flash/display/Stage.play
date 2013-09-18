@@ -112,6 +112,10 @@ package flash.display {
 			this.fullScreenWidth = uint(width); 
 			this.fullScreenHeight = uint(height);
 			this.frameRate = 60;
+
+			// update capabilities
+			flash.system.Capabilities.screenResolutionX = width;
+			flash.system.Capabilities.screenResolutionY = height;
 	
 			var stage3D = new Stage3D(); 
 			mStage3Ds.push( stage3D );
@@ -126,7 +130,11 @@ package flash.display {
 				this.stageHeight = height;
 				this.fullScreenWidth = uint(width); 
 				this.fullScreenHeight = uint(height);
-				
+
+				// update capabilities
+				flash.system.Capabilities.screenResolutionX = width;
+				flash.system.Capabilities.screenResolutionY = height;
+
 				// dispatch resize event here...
 				var ev:flash.events.Event = new flash.events.Event(flash.events.Event.RESIZE);
 				this.dispatchEvent(ev);

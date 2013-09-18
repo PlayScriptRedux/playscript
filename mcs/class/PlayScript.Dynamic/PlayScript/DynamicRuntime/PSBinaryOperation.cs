@@ -1411,6 +1411,8 @@ namespace PlayScript.DynamicRuntime
 				return GreaterThanOrEqualDoubleObj ((float)a, b);
 			} else if (a is uint) {
 				return GreaterThanOrEqualUIntObj ((uint)a, b);
+			} else if (a == null) {
+				return GreaterThanOrEqualIntObj(0, b);
 			} else {
 				ThrowOnInvalidOp (a, GTE);
 				return false;

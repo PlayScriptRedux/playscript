@@ -70,18 +70,25 @@ namespace _root
 		}
 
 		public static int indexOf(this string s, string val, double startIndex = 0) {
-			if (s == null) return -1;
-			if (val == null) return -1;
+			if (s == null || val == null || startIndex >= s.Length) {
+				return -1;
+			}
+			if (startIndex < 0) {
+				startIndex = 0;
+			}
 			return s.IndexOf(val, (int)startIndex, StringComparison.Ordinal);
 		}
-						
+
 		public static int lastIndexOf(this string s, string val, double startIndex = 0x7FFFFFFF) {
-			if (startIndex == 0x7FFFFFFF) {
+			if (startIndex < 0) {
+				return -1;
+			}
+			if (startIndex == 0x7FFFFFFF || startIndex > s.Length) {
 				startIndex = s.Length;
 			}
 			return s.LastIndexOf(val, (int)startIndex, StringComparison.Ordinal);
 		}
-						
+
 		public static int localeCompare(this string s, string other, params object[] values) {
 			throw new NotImplementedException();
 		}

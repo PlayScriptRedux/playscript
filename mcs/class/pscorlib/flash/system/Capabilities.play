@@ -22,8 +22,31 @@ package flash.system {
 	
 		public static property avHardwareDisable : Boolean { get { throw new Error(); } }
 		
-		public static property cpuArchitecture : String { get { throw new Error(); } }
-		
+		public static property cpuArchitecture : String 
+		{ 
+			// "PowerPC", "x86", "SPARC", "ARM". 
+			get 
+			{
+				if (sCpuArchitecture == null) {
+					// cache architecture string
+					#if PLATFORM_MONOMAC
+					sCpuArchitecture = "x86";
+					#elif PLATFORM_MONOTOUCH 
+					if (PlayScript.IOSDeviceHardware.Version.ToString().Contains("Simulator")) {
+						sCpuArchitecture = "x86";
+					} else {
+						sCpuArchitecture = "ARM";
+					}
+					#elif PLATFORM_MONODROID
+					sCpuArchitecture = "ARM";
+					#else
+					sCpuArchitecture = "Unknown";
+					#endif			
+				}
+				return sCpuArchitecture;
+			} 
+		}
+
 		public static property hasAccessibility : Boolean { get { throw new Error(); } }
 		
 		public static property hasAudio : Boolean { get { throw new Error(); } }
@@ -50,68 +73,117 @@ package flash.system {
 		
 		public static property hasVideoEncoder : Boolean { get { throw new Error(); } }
 		
-		public static property isDebugger : Boolean { get { return true; } }
+		public static property isDebugger : Boolean 
+		{ 
+			// this returns true if a debug player is used (we return true if a debug build is used)
+			get 
+			{ 
+#if DEBUG
+				return true; 
+#else
+				return false; 
+#endif
+			} 
+		}
 		
-		public static property isEmbeddedInAcrobat : Boolean { get { throw new Error(); } }
+		public static property isEmbeddedInAcrobat : Boolean { get { return false; } }
 		
-		public static property language : String { get { throw new Error(); } }
+		public static property language : String { get { return "en"; } }
 		
-		public static property languages : Array { get { throw new Error(); } }
+		public static property languages : Array { 
+			get { 
+				return ["en"];
+			} 
+		}
 		
 		public static property localFileReadDisable : Boolean { get { throw new Error(); } }
 		
 		public static property manufacturer : String { 
 			get { 
-#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH 
-				return "iOS";
+#if PLATFORM_MONOMAC 
+				return "Adobe Macintosh";
+#elif PLATFORM_MONOTOUCH 
+				return "Adobe iOS";
 #elif PLATFORM_MONODROID
-				return Android.OS.Build.Manufacturer;
+				return "Adobe Android"; //Android.OS.Build.Manufacturer;
 #else
-				return null;
+				return "Adobe Unknown";
 #endif			
 			} 
 		}
 		
 		public static property maxLevelIDC : String { get { throw new Error(); } }
 		
-		public static property os : String { get { throw new Error(); } }
-		
-		public static property pixelAspectRatio : Number { get { throw new Error(); } }
-		
-		public static property playerType : String { get { return "Desktop"; } }
-		
-		public static property screenColor : String { get { throw new Error(); } }
-		
-		public static property screenDPI : Number { get { throw new Error(); } }
-		
-		public static property screenResolutionX : Number { get { throw new Error(); } }
-		
-		public static property screenResolutionY : Number { get { throw new Error(); } }
-		
-		public static property serverString : String { 
-			get { 
-//				var caps = new flash.net.URLVariables();
-//				caps["M"] = "Adobe Macintosh";
-//				caps["R"] = "1680x1050";
-//				caps["COL"] = "color";
-//				caps["OS"] = "Mac OS 10.7.4";
-//				caps["ARCH"] = "x86";
-//				caps["AR"] = "1.0";
-//				caps["L"] = "en";
-//				caps["PR32"] = "t";
-//				caps["PR64"] = "t";
-//				caps["LS"] = "en;ja;fr;de;es;it;pt;pt-PT;nl;sv;nb;da;fi;ru;pl;zh-Hans;zh-Hant;ko;ar;cs;hu;tr";
-
-				// TODO: compose this using URL Variables
-				return "&M=Adobe%20Macintosh&R=1920x1200&COL=color&AR=1.0&OS=Mac%20OS%2010.7.4&ARCH=x86&L=en&PR32=t&PR64=t&LS=en;ja;fr;de;es;it;pt;pt-PT;nl;sv;nb;da;fi;ru;pl;zh-Hans;zh-Hant;ko;ar;cs;hu;tr";
+		public static property os : String 
+		{ 
+			get 
+			{ 
+#if PLATFORM_MONOMAC
+				// TODO: get real OS version
+				return "Mac OS 10.7.4";
+#elif PLATFORM_MONOTOUCH
+				// TODO: get real OS version
+				return "iPhone OS 6.1 " + PlayScript.IOSDeviceHardware.Version.ToString();
+#elif PLATFORM_MONODROID
+				// TODO: get real OS version
+				return "Android OS";
+#else
+				return "Unknown OS";
+#endif
 			} 
 		}
 		
-		public static property supports32BitProcesses : Boolean { get { throw new Error(); } }
+		public static property pixelAspectRatio : Number { get { return 1.0; } }
 		
-		public static property supports64BitProcesses : Boolean { get { throw new Error(); } }
+		public static property playerType : String { get { return "Desktop"; } }
 		
-		public static property touchscreenType : String { get { throw new Error(); } }
+		public static property screenColor : String { get { return "color"; } }
+		
+		public static property screenDPI : Number 
+		{ 
+			get {return sScreenDPI;} set {sScreenDPI = value;}
+		}
+		
+		public static property screenResolutionX : Number 
+		{ 
+			get {return sScreenResolutionX;} set {sScreenResolutionX = value;}
+		}
+		
+		public static property screenResolutionY : Number 
+		{ 
+			get {return sScreenResolutionY;} set {sScreenResolutionY = value;}
+		}
+		
+		public static property serverString : String { 
+			get { 
+				var caps = new flash.net.URLVariables();
+				caps["M"] = flash.system.Capabilities.manufacturer;
+				caps["R"] = flash.system.Capabilities.screenResolutionX + "x" + flash.system.Capabilities.screenResolutionY;
+				caps["COL"] = flash.system.Capabilities.screenColor;
+				caps["OS"] = flash.system.Capabilities.os;
+				caps["ARCH"] = flash.system.Capabilities.cpuArchitecture;
+				caps["AR"] = flash.system.Capabilities.pixelAspectRatio;
+				caps["L"] = flash.system.Capabilities.language;
+				caps["PR32"] = flash.system.Capabilities.supports32BitProcesses ? "t" : "f";
+				caps["PR64"] = flash.system.Capabilities.supports64BitProcesses ? "t" : "f";
+				return caps.toString();
+			} 
+		}
+		
+		public static property supports32BitProcesses : Boolean { get { return true; } }
+		
+		public static property supports64BitProcesses : Boolean { get { return false; } }
+		
+		public static property touchscreenType : String { 
+			get 
+			{ 
+#if PLATFORM_MONOMAC
+				return "none"; 
+#else
+				return "finger"; 
+#endif
+			} 
+		}
 		
 		public static property version : String { get { return "MAC 11,7,700,203"; } }
 
@@ -122,7 +194,12 @@ package flash.system {
 		public static function hasMultiChannelAudio(type:String):Boolean {
 			throw new Error();
 		}
-	
+
+
+		private static var sCpuArchitecture:String = null;
+		private static var sScreenResolutionX:Number = 640.0;
+		private static var sScreenResolutionY:Number = 960.0;
+		private static var sScreenDPI:Number = 72.0;
 	}
 
 }

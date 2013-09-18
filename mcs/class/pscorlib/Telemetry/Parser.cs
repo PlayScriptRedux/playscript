@@ -34,13 +34,13 @@ namespace Telemetry
 				return sb.ToString();
 			} else if (o is _root.Vector<int>){
 				var a = o as _root.Vector<int>;
-				return "(int)[" + o.ToString() + "]";
+				return "(int)[" + a.ToString() + "]";
 			} else if (o is _root.Vector<uint>){
 				var a = o as _root.Vector<uint>;
-				return "(uint)[" + o.ToString() + "]";
+				return "(uint)[" + a.ToString() + "]";
 			} else if (o is _root.Vector<double>){
 				var a = o as _root.Vector<double>;
-				return "(number)[" + o.ToString() + "]";
+				return "(number)[" + a.ToString() + "]";
 			} else if (o is double){
 				return "(number)" + o.ToString();
 			} else {

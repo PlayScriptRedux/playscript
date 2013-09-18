@@ -19,6 +19,7 @@ namespace flash.display3D {
 #if PLATFORM_MONOMAC
 	using MonoMac.OpenGL;
 	using MonoMac.AppKit;
+	using FramebufferSlot = MonoMac.OpenGL.FramebufferAttachment;
 #elif PLATFORM_MONOTOUCH
 	using MonoTouch.OpenGLES;
 	using MonoTouch.UIKit;
@@ -45,6 +46,9 @@ namespace flash.display3D {
 	using TextureTarget = OpenTK.Graphics.ES20.All;
 	using FramebufferAttachment = OpenTK.Graphics.ES20.All;
 	using ActiveUniformType = OpenTK.Graphics.ES20.All;
+	using RenderbufferTarget = OpenTK.Graphics.ES20.All;
+	using RenderbufferInternalFormat = OpenTK.Graphics.ES20.All;
+	using FramebufferSlot = OpenTK.Graphics.ES20.All;
 #endif
 
 	using System;
@@ -140,8 +144,14 @@ namespace flash.display3D {
 			// get default framebuffer for use when restoring rendering to backbuffer
 			GL.GetInteger(GetPName.FramebufferBinding, out mDefaultFrameBufferId);
 
+			// generate depth buffer for backbuffer
+			GL.GenRenderbuffers (1, out mDepthRenderBufferId);
+
 			// generate framebuffer for render to texture
 			GL.GenFramebuffers(1, out mTextureFrameBufferId);
+
+			// generate depth buffer for render to texture
+			GL.GenRenderbuffers(1, out mTextureDepthBufferId);
 		}
 		
 		public void clear(double red = 0.0, double green = 0.0, double blue = 0.0, double alpha = 1.0, 
@@ -179,36 +189,23 @@ namespace flash.display3D {
 			mBackBufferWantsBestResolution = wantsBestResolution;
 
 			#if PLATFORM_MONOTOUCH
-
 			if (enableDepthAndStencil)
 			{
-				// setup depth buffer
-				if (mDepthRenderBufferId == 0)
-				{
-					// create depth buffer
-					// $$TODO allow for resizing of depth buffer here
-					GL.GenRenderbuffers (1, out mDepthRenderBufferId);
-					GL.BindRenderbuffer (RenderbufferTarget.Renderbuffer, mDepthRenderBufferId);
-					GL.RenderbufferStorage (RenderbufferTarget.Renderbuffer, RenderbufferInternalFormat.DepthComponent16, width, height);
-					GL.FramebufferRenderbuffer (FramebufferTarget.Framebuffer,
-					                            FramebufferSlot.DepthAttachment,
-					                            RenderbufferTarget.Renderbuffer, 
-					                            mDepthRenderBufferId);
-				}
+				// setup depth buffer size to match backbuffer size
+				GL.BindRenderbuffer (RenderbufferTarget.Renderbuffer, mDepthRenderBufferId);
+				GL.RenderbufferStorage (RenderbufferTarget.Renderbuffer, RenderbufferInternalFormat.DepthComponent16, width, height);
+				GL.FramebufferRenderbuffer (FramebufferTarget.Framebuffer,
+				                            FramebufferSlot.DepthAttachment,
+				                            RenderbufferTarget.Renderbuffer, 
+				                            mDepthRenderBufferId);
 			}
 			else
 			{
-				// delete depth render buffer
-				if (mDepthRenderBufferId != 0)
-				{
-					GL.FramebufferRenderbuffer (FramebufferTarget.Framebuffer,
-					                            FramebufferSlot.DepthAttachment,
-					                            RenderbufferTarget.Renderbuffer, 
-					                            0);
-
-					GL.DeleteRenderbuffers(1, ref mDepthRenderBufferId);
-					mDepthRenderBufferId = 0;
-				}
+				// disable depth render buffer
+				GL.FramebufferRenderbuffer (FramebufferTarget.Framebuffer,
+				                            FramebufferSlot.DepthAttachment,
+				                            RenderbufferTarget.Renderbuffer, 
+				                            0);
 			}
 			#endif
 
@@ -432,10 +429,74 @@ namespace flash.display3D {
 			// mark all samplers that this program uses as dirty
 			mSamplerDirty |= mProgram.samplerUsageMask;
 		}
- 	 	
-		public void setProgramConstantsFromByteArray(string programType, int firstRegister, 
-			int numRegisters, ByteArray data, uint byteArrayOffset) {
-			throw new NotImplementedException();
+ 
+		public void setProgramConstantsFromByteArray(string programType, int firstRegister, int numRegisters, ByteArray data, uint byteArrayOffset) 
+		{
+			if (numRegisters == 0) return;
+
+			if (numRegisters == -1) {
+				numRegisters = (int)((data.length >>2) - byteArrayOffset);
+			}
+
+			bool isVertex = (programType == "vertex");
+
+			// set all registers
+			int register = firstRegister;
+			uint dataIndex = byteArrayOffset;
+
+			while (numRegisters > 0)
+			{
+				// get uniform mapped to register
+				Program3D.Uniform uniform = mProgram.getUniform(isVertex, register);
+
+				if (uniform == null) 
+				{
+					// skip this register
+					register += 1;
+					numRegisters -= 1;
+					dataIndex += 16;
+
+					if (enableErrorChecking) {
+						Console.WriteLine ("warning: program register not found: {0}", register);
+					}
+					continue;
+				}
+	
+				// rhow many registers are we going to writte?
+				int numRegistersWritten = (uniform.RegCount < numRegisters )? uniform.RegCount : numRegisters;
+
+				// set uniforms based on type
+				//pin ByteArray data
+				unsafe
+				{
+					// Pin the buffer to a fixed location in memory. 
+					fixed (byte* dataRawByte = data.getRawArray() ) 
+					{
+						float* temp = (float*)(dataRawByte + dataIndex);
+						switch (uniform.Type) {
+						case ActiveUniformType.FloatMat2:
+							GL.UniformMatrix2 (uniform.Location+firstRegister-uniform.RegIndex, uniform.Size, false, temp);
+							break;
+						case ActiveUniformType.FloatMat3:
+							GL.UniformMatrix3 (uniform.Location+firstRegister-uniform.RegIndex, uniform.Size, false, temp);
+							break;
+						case ActiveUniformType.FloatMat4:
+							GL.UniformMatrix4 (uniform.Location+firstRegister-uniform.RegIndex, uniform.Size, false, temp);
+							break;
+						default:
+							GL.Uniform4 (uniform.Location+firstRegister-uniform.RegIndex, numRegistersWritten, temp);
+							break;
+						}
+					}
+				}
+
+				dataIndex += (uint) (numRegistersWritten<<4); // <<4 <=> 16 bytes (4 floats, so *16 per registers
+
+				// advance register number
+				register     += numRegistersWritten;
+				numRegisters -= numRegistersWritten;
+				firstRegister+= numRegistersWritten;
+			}
 		}
 
 		private static void convertDoubleToFloat (float[] dest, double[] source, int count)
@@ -453,17 +514,19 @@ namespace flash.display3D {
 				dest[i] = (float)source[i];
 			}
 		}
-
+	
 		public void setProgramConstantsFromMatrix (string programType, int firstRegister, Matrix3D matrix, 
 			bool transposedMatrix = false)
 		{
 			// GLES does not support transposed uniform setting so do it manually 
+			bool isVertex = (programType == "vertex");
+			double[] source = matrix.mData;
+
 			if (transposedMatrix) {
 				//    0  1  2  3
 				//    4  5  6  7
 				//    8  9 10 11
 				//   12 13 14 15
-				double[] source = matrix.mData;
 				mTemp[0] = (float)source[0];
 				mTemp[1] = (float)source[4];
 				mTemp[2] = (float)source[8];
@@ -484,17 +547,36 @@ namespace flash.display3D {
 				mTemp[14]= (float)source[11];
 				mTemp[15]= (float)source[15];
 			} else {
-				// convert double->float
-				convertDoubleToFloat (mTemp, matrix.mData, 16);
-			}
+				mTemp[0] = (float)source[0];
+				mTemp[1] = (float)source[1];
+				mTemp[2] = (float)source[2];
+				mTemp[3] = (float)source[3];
 
-			bool isVertex = (programType == "vertex");
+				mTemp[4] = (float)source[4];
+				mTemp[5] = (float)source[5];
+				mTemp[6] = (float)source[6];
+				mTemp[7] = (float)source[7];
+
+				mTemp[8] = (float)source[8];
+				mTemp[9] = (float)source[9];
+				mTemp[10]= (float)source[10];
+				mTemp[11]= (float)source[11];
+
+				mTemp[12]= (float)source[12];
+				mTemp[13]= (float)source[13];
+				mTemp[14]= (float)source[14];
+				mTemp[15]= (float)source[15];
+			}
 
 			// set uniform registers
 			Program3D.Uniform uniform =mProgram.getUniform(isVertex, firstRegister);
-			if (uniform != null)
+			if (uniform != null) 
 			{
-				GL.UniformMatrix4(uniform.Location, 1, false, mTemp);
+				int deltaReg = (firstRegister - uniform.RegIndex);
+				if(uniform.RegCount==4 && (firstRegister == uniform.RegIndex))
+					GL.UniformMatrix4(uniform.Location + deltaReg, 1, false, mTemp);
+				else
+					GL.Uniform4 (uniform.Location + deltaReg , uniform.RegCount - deltaReg, mTemp);
 			}
 			else
 			{
@@ -504,17 +586,16 @@ namespace flash.display3D {
 			}
 		}
 
- 	 	
 		public void setProgramConstantsFromVector (string programType, int firstRegister, Vector<double> data, int numRegisters = -1)
 		{
 			if (numRegisters == 0) return;
 
 			if (numRegisters == -1) {
-				numRegisters = (int)(data.length / 4);
+				numRegisters = (int)(data.length>>2);
 			}
 
 			bool isVertex = (programType == "vertex");
-
+		
 			// set all registers
 			int register = firstRegister;
 			int dataIndex = 0;
@@ -529,8 +610,9 @@ namespace flash.display3D {
 					numRegisters -= 1;
 					dataIndex    += 4;
 
-					if (enableErrorChecking) {
-//						Console.WriteLine ("warning: program register not found: {0}", register);
+					if (enableErrorChecking) 
+					{
+						Console.WriteLine ("warning: program register not found: {0}", register);
 					}
 					continue;
 				}
@@ -547,24 +629,24 @@ namespace flash.display3D {
 					mTemp[tempIndex++] = (float)data[dataIndex++];
 					mTemp[tempIndex++] = (float)data[dataIndex++];
 				}
-
+					
 				// set uniforms based on type
-				switch (uniform.Type)
+				switch (uniform.Type) 
 				{
 				case ActiveUniformType.FloatMat2:
-					GL.UniformMatrix2(uniform.Location, uniform.Size, false, mTemp);
+					GL.UniformMatrix2 (uniform.Location, uniform.Size, false, mTemp);
 					break;
 				case ActiveUniformType.FloatMat3:
-					GL.UniformMatrix3(uniform.Location, uniform.Size, false, mTemp);
+					GL.UniformMatrix3 (uniform.Location, uniform.Size, false, mTemp);
 					break;
 				case ActiveUniformType.FloatMat4:
-					GL.UniformMatrix4(uniform.Location, uniform.Size, false, mTemp);
+					GL.UniformMatrix4 (uniform.Location, uniform.Size, false, mTemp);
 					break;
 				default:
-					GL.Uniform4(uniform.Location, uniform.Size, mTemp);
+					GL.Uniform4 (uniform.Location, uniform.RegCount, mTemp);
 					break;
 				}
-
+		
 				// advance register number
 				register     += uniform.RegCount;
 				numRegisters -= uniform.RegCount;
@@ -575,6 +657,15 @@ namespace flash.display3D {
 
  	 	public void setRenderToBackBuffer ()
 		{
+#if PLATFORM_MONOTOUCH
+			if (mRenderToTexture != null) {
+				// discard depth buffer after doing a render to texture
+				// this is a hint to GL to not keep the data around
+				All discard = (All)FramebufferSlot.DepthAttachment;
+				GL.Ext.DiscardFramebuffer((All)FramebufferTarget.Framebuffer, 1, ref discard);
+			}
+#endif
+
 			// draw to backbuffer
 			GL.BindFramebuffer (FramebufferTarget.Framebuffer, mDefaultFrameBufferId);
 			// setup viewport for render to backbuffer
@@ -596,12 +687,36 @@ namespace flash.display3D {
 			if (texture2D == null) 
 				throw new Exception("Invalid texture");
 
-			GL.BindFramebuffer(FramebufferTarget.Framebuffer, mTextureFrameBufferId);
 #if PLATFORM_MONOTOUCH
-			GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferSlot.ColorAttachment0, TextureTarget.Texture2D, texture.textureId, 0);
-#elif PLATFORM_MONOMAC || PLATFORM_MONODROID
-			GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, texture.textureId, 0);
+			// discard depth buffer before doing a render to texture
+			// this is a hint to GL to not keep the data around
+			All discard = (All)FramebufferSlot.DepthAttachment;
+			GL.Ext.DiscardFramebuffer((All)FramebufferTarget.Framebuffer, 1, ref discard);
 #endif
+
+			GL.BindFramebuffer(FramebufferTarget.Framebuffer, mTextureFrameBufferId);
+			GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferSlot.ColorAttachment0, TextureTarget.Texture2D, texture.textureId, 0);
+
+#if PLATFORM_MONOTOUCH
+			if (enableDepthAndStencil) {
+				// resize depth attachment to be the appropriate size
+				GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, mTextureDepthBufferId);
+				GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, RenderbufferInternalFormat.DepthComponent16, texture2D.width, texture2D.height);
+				// set depth attachment for render to texture
+				GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer,
+				                           FramebufferSlot.DepthAttachment,
+				                           RenderbufferTarget.Renderbuffer, 
+				                           mTextureDepthBufferId);
+
+			} else {
+				// remove depth attachment
+				GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer,
+				                           FramebufferSlot.DepthAttachment,
+				                           RenderbufferTarget.Renderbuffer, 
+				                           0);
+			}
+#endif
+
 			// setup viewport for render to texture
 			GL.Viewport(0,0, texture2D.width, texture2D.height);
 
@@ -727,10 +842,10 @@ namespace flash.display3D {
 							// use default state if program has none
 							texture.setSamplerState(Context3D.DefaultSamplerState);
 						}
-
+						
+						#if PLATFORM_MONODROID
 						// set alpha texture
-						if (texture.alphaTexture != null) 
-						{
+						if (texture.alphaTexture != null) {
 							GL.ActiveTexture (TextureUnit.Texture8 + sampler);
 							TextureBase alphaTexture = texture.alphaTexture;
 							var alphaTarget = alphaTexture.textureTarget;
@@ -740,8 +855,11 @@ namespace flash.display3D {
 							} else {
 								alphaTexture.setSamplerState (Context3D.DefaultSamplerState);
 							}
+						} else {
+							GL.ActiveTexture (TextureUnit.Texture8 + sampler);
+							GL.BindTexture( target, texture.textureId);
 						}
-
+						#endif
 
 					} else {
 						// texture is null so unbind texture
@@ -856,6 +974,7 @@ namespace flash.display3D {
 		private TextureBase mRenderToTexture = null;
 #pragma warning restore 414
 		private int  		mTextureFrameBufferId;
+		private int  		mTextureDepthBufferId;
 
 		// various stats
 		private int 				mFrameCount;
