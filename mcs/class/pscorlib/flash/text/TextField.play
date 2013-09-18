@@ -110,7 +110,7 @@ package flash.text {
 
  	 	public property text : String 
 		{ 
-			get {return mText;} 
+			get { return mText; } 
 			set
 			{
 				if (mText != value)
@@ -120,6 +120,11 @@ package flash.text {
 					mDirty = true;
 				}
 			}
+		}
+
+		public property selectedText : String
+		{
+			get { return ""; }
 		}
 
  	 	public property textColor : uint { get; set; }
@@ -232,7 +237,6 @@ package flash.text {
 			trace("warning: not implemented setTextFormat");
 		}
 
-
 		private function UpdateBounds():void
 		{
 			if (mDirty) 
@@ -289,6 +293,10 @@ package flash.text {
 #endif
 				mDirty = false;
 			}
+		}
+
+		public function getRawText():String {
+			return mText;
 		}
 
 		private var mDirty:Boolean = true;

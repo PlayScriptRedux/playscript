@@ -1,4 +1,6 @@
 ./AssemblyInfo.cs
+./obj/Debug/dynamic.g.cs
+./obj/Debug/MonoAndroid,Version=v2.2.AssemblyAttribute.cs
 ../pscorlib/AllowDynamicAttribute.cs
 ../pscorlib/Amf/Amf3ClassDef.cs
 ../pscorlib/Amf/Amf3Object.cs
@@ -158,10 +160,14 @@
 ../pscorlib/flash/geom/Vector3D.play
 ../pscorlib/flash/globalization/Collator.play
 ../pscorlib/flash/globalization/DateTimeFormatter.play
+../pscorlib/flash/media/android/Sound.cs
+../pscorlib/flash/media/android/SoundChannel.cs
 ../pscorlib/flash/media/Camera.play
 ../pscorlib/flash/media/ID3Info.play
 ../pscorlib/flash/media/ios/Sound.cs
 ../pscorlib/flash/media/ios/SoundChannel.cs
+../pscorlib/flash/media/mac/Sound.cs
+../pscorlib/flash/media/mac/SoundChannel.cs
 ../pscorlib/flash/media/Sound.play
 ../pscorlib/flash/media/SoundChannel.play
 ../pscorlib/flash/media/SoundLoaderContext.play
@@ -247,11 +253,15 @@
 ../pscorlib/int.cs
 ../pscorlib/JSON.play
 ../pscorlib/Math.play
+../pscorlib/mx/graphics/codec/IImageEncoder.play
+../pscorlib/mx/graphics/codec/JPEGEncoder.play
+../pscorlib/mx/graphics/codec/PNGEncoder.play
 ../pscorlib/Namespace.play
 ../pscorlib/Number.cs
 ../pscorlib/Object.cs
 ../pscorlib/PartialAttribute.cs
 ../pscorlib/PlayScript/EmbedLoader.cs
+../pscorlib/PlayScript/Hardware.cs
 ../pscorlib/PlayScript/ParamsDelegateTypes.cs
 ../pscorlib/PlayScript/Player.cs
 ../pscorlib/PlayScript/Profiler.cs

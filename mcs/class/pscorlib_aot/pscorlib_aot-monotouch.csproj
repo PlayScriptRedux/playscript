@@ -55,6 +55,7 @@
     <Folder Include="flash\external\" />
     <Folder Include="Amf\" />
     <Folder Include="flash\media\ios\" />
+    <Folder Include="mx\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -903,6 +904,15 @@
     </Compile>
     <Compile Include="..\pscorlib\flash\media\ios\SoundChannel.cs">
       <Link>flash\media\ios\SoundChannel.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\mx\graphics\codec\IImageEncoder.play">
+      <Link>mx\graphics\codec\IImageEncoder.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\mx\graphics\codec\JPEGEncoder.play">
+      <Link>mx\graphics\codec\JPEGEncoder.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\mx\graphics\codec\PNGEncoder.play">
+      <Link>mx\graphics\codec\PNGEncoder.play</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

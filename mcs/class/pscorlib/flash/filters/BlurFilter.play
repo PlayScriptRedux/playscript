@@ -47,18 +47,37 @@ package flash.filters {
 		public var shadowAlpha:Number;
 		public var shadowColor:uint;
 		public var distance:Number;
+		public var type:String;
 	}
 
 	public class GradientBevelFilter extends BitmapFilter
 	{
-		//$$TODO
+		//$$TODO -- these are stubbed out
+		public function GradientBevelFilter(distance:Number = 4.0, angle:Number = 45, colors:Array = null, alphas:Array = null, ratios:Array = null, 
+		                    blurX:Number = 4.0, blurY:Number = 4.0, strength:Number = 1, quality:int = 1, type:String = "inner", 
+		                    knockout:Boolean = false) {
+		}
+
+		public var alphas:Array;
+		public var angle:Number;
+		public var blurX:Number;
+		public var blurY:Number;
+		public var colors:Array;
+		public var distance:Number;
+		public var knockout:Boolean;
+		public var quality:int;
+		public var ratios:Array;
+		public var strength:Number;
+		public var type:String;
 	}
 
 	
 	public class DropShadowFilter extends BitmapFilter
 	{
 		// $$TODO -- these are stubbed out
-		public function DropShadowFilter(distance:Number = 4.0, angle:Number = 45, color:uint = 0, alpha:Number = 1.0, blurX:Number = 4.0, blurY:Number = 4.0, strength:Number = 1.0, quality:int = 1, inner:Boolean = false, knockout:Boolean = false, hideObject:Boolean = false)
+		public function DropShadowFilter(distance:Number = 4.0, angle:Number = 45, color:uint = 0, alpha:Number = 1.0, 
+		                                 blurX:Number = 4.0, blurY:Number = 4.0, strength:Number = 1.0, quality:int = 1, 
+		                                 inner:Boolean = false, knockout:Boolean = false, hideObject:Boolean = false)
 		{
 			throw new System.NotImplementedException();
 		}
@@ -101,7 +120,25 @@ package flash.filters {
 
 	public class GradientGlowFilter extends BitmapFilter
 	{
-		//$$TODO
+		//$$TODO - these are stubbed out
+		public function GradientGlowFilter(distance:Number = 4.0, angle:Number = 45, colors:Array = null, alphas:Array = null, ratios:Array = null, blurX:Number = 4.0, blurY:Number = 4.0, strength:Number = 1, 
+		                   quality:int = 1, type:String = "inner", knockout:Boolean = false)
+		{
+			throw new System.NotImplementedException();
+		}
+
+		public var alphas:Array;
+		public var angle:Number;
+		public var blurX:Number;
+		public var blurY:Number;
+		public var colors:Array;
+		public var distance:Number;
+		public var knockout:Boolean;
+		public var quality:int;
+		public var ratios:Array;
+		public var strength:Number;
+		public var type:String;
+
 	}
 
 }

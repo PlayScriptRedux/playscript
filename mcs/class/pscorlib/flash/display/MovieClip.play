@@ -81,6 +81,10 @@ package flash.display {
 			throw new System.NotImplementedException();		
 		}
 
+		public function addFrameScript(frame:int, script:Function):void {
+			throw new System.NotImplementedException();		
+		}
+
 	}
 
 }
