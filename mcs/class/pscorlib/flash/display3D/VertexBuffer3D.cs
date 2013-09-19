@@ -50,7 +50,7 @@ namespace flash.display3D
 			mIds = new uint[multiBufferCount];
 			GL.GenBuffers(mIds.Length, mIds);
 
-			mUsage = isDynamic ? BufferUsage.DynamicDraw : BufferUsage.StaticDraw;
+			mUsage = isDynamic ? BufferUsage.StreamDraw : BufferUsage.StaticDraw;
 
 			// update stats
 			mContext.statsIncrement(Context3D.Stats.Count_VertexBuffer);
@@ -88,17 +88,29 @@ namespace flash.display3D
 				              new IntPtr(data), 
 				              mUsage);
 
+			
 				if (byteCount != mMemoryUsage) {
 					// update stats for memory usage
 					mContext.statsAdd(Context3D.Stats.Mem_VertexBuffer, byteCount - mMemoryUsage);
 					mMemoryUsage = byteCount;
 				}
 			} else {
-				// upload whole array
+				// upload whole array for now, otherwise we crash , even when mUsage = 
+				IntPtr dataIntPtr =  new IntPtr(data);
+				dataIntPtr -= byteStart;
+				GL.BufferData(BufferTarget.ArrayBuffer, 
+				              new IntPtr(byteCount+byteStart), 
+				              dataIntPtr, 
+				              mUsage);
+					
+				//SubData crahing
+				/*
 				GL.BufferSubData(BufferTarget.ArrayBuffer, 
 				                 new IntPtr(byteStart), 
 				                 new IntPtr(byteCount), 
 				                 new IntPtr(data));
+				*/                 
+				                 
 			}
 		}
 
