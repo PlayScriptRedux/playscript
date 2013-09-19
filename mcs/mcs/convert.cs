@@ -825,8 +825,19 @@ namespace Mono.CSharp {
 				//
 				if (target_type.BuiltinType == BuiltinTypeSpec.Type.Double)
 					return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_R8);
-				else if (ft == SourceFileType.PlayScript && target_type.BuiltinType == BuiltinTypeSpec.Type.Bool)
-					return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new FloatLiteral(opt_ec.BuiltinTypes, 0.0f, expr.Location)).Resolve(opt_ec);
+				//
+				// PlayScript only - from float to int, uint, bool
+				//
+				if (ft == SourceFileType.PlayScript && !upconvert_only) {
+					switch (target_type.BuiltinType) {
+					case BuiltinTypeSpec.Type.Int:
+						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_I4);
+					case BuiltinTypeSpec.Type.UInt:
+						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U4);
+					case BuiltinTypeSpec.Type.Bool:
+						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new FloatLiteral(opt_ec.BuiltinTypes, 0.0f, expr.Location)).Resolve(opt_ec);
+					}
+				}
 				break;
 			case BuiltinTypeSpec.Type.Double:
 				//
