@@ -122,7 +122,7 @@ namespace Mono.CSharp {
 					this.Initializer.Accept (visitor);
 				if (visitor.Continue && declarators != null && visitor.Depth >= VisitDepth.Initializers) {
 					foreach (var decl in declarators) {
-						if (visitor.Continue && decl.Initializer != null && decl.Initializer != null) {
+						if (visitor.Continue && decl.Initializer != null) {
 							decl.Initializer.Accept (visitor);
 						}
 					}

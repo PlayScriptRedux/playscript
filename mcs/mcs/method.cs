@@ -993,7 +993,7 @@ namespace Mono.CSharp {
 					visitor.Skip = false;
 					return;
 				}
-				if (visitor.Continue && visitor.Depth >= VisitDepth.MethodBodies)
+				if (visitor.Continue && visitor.Depth >= VisitDepth.MethodBodies && this.block != null)
 					this.block.Accept (visitor);
 			}
 		}
@@ -1771,7 +1771,7 @@ namespace Mono.CSharp {
 			visitor.Visit (this);
 
 			if (visitor.AutoVisit) {
-				if (visitor.Continue && visitor.Depth >= VisitDepth.MethodBodies)
+				if (visitor.Continue && visitor.Depth >= VisitDepth.MethodBodies && this.block != null)
 					this.block.Accept (visitor);
 			}
 		}
@@ -2453,7 +2453,7 @@ namespace Mono.CSharp {
 					visitor.Skip = false;
 					return;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && this.block != null)
 					this.block.Accept (visitor);
 			}
 		}
@@ -2854,7 +2854,7 @@ namespace Mono.CSharp {
 					visitor.Skip = false;
 					return;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && this.block != null)
 					this.block.Accept (visitor);
 			}
 		}

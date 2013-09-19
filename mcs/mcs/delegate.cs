@@ -195,9 +195,11 @@ namespace Mono.CSharp {
 					visitor.Skip = false;
 					return;
 				}
-				foreach (var member in Members) {
-					if (visitor.Continue)
-						member.Accept (visitor);
+				if (visitor.Continue && Members != null && Members.Count > 0) {
+					foreach (var member in Members) {
+						if (visitor.Continue)
+							member.Accept (visitor);
+					}
 				}
 			}
 		}

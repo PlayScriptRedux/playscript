@@ -453,9 +453,9 @@ namespace Mono.CSharp {
 					visitor.Skip = false;
 					return ret;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && this.target != null)
 					this.target.Accept (visitor);
-				if (visitor.Continue)
+				if (visitor.Continue && this.source != null)
 					this.source.Accept (visitor);
 			}
 
@@ -915,9 +915,9 @@ namespace Mono.CSharp {
 					visitor.Skip = false;
 					return ret;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && this.target != null)
 					this.target.Accept (visitor);
-				if (visitor.Continue)
+				if (visitor.Continue && this.source != null)
 					this.source.Accept (visitor);
 			}
 

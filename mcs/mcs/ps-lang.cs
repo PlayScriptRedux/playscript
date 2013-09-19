@@ -518,7 +518,7 @@ namespace Mono.CSharp
 					visitor.Skip = false;
 					return ret;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && this.Expr != null)
 					this.Expr.Accept (visitor);
 			}
 
@@ -742,7 +742,7 @@ namespace Mono.CSharp
 					visitor.Skip = false;
 					return ret;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && this.Expr != null)
 					this.Expr.Accept (visitor);
 			}
 
@@ -1029,9 +1029,9 @@ namespace Mono.CSharp
 					visitor.Skip = false;
 					return ret;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && this.expr != null)
 					this.expr.Accept (visitor);
-				if (visitor.Continue)
+				if (visitor.Continue && this.objExpr != null)
 					this.objExpr.Accept (visitor);
 			}
 
@@ -1163,7 +1163,7 @@ namespace Mono.CSharp
 					visitor.Skip = false;
 					return ret;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && this.MethodExpr != null)
 					this.MethodExpr.Accept (visitor);
 			}
 
@@ -1274,7 +1274,7 @@ namespace Mono.CSharp
 					visitor.Skip = false;
 					return ret;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && this.expr != null)
 					this.expr.Accept (visitor);
 			}
 
@@ -1347,9 +1347,9 @@ namespace Mono.CSharp
 					visitor.Skip = false;
 					return ret;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && this.expr != null)
 					this.expr.Accept (visitor);
-				if (visitor.Continue)
+				if (visitor.Continue && this.query != null)
 					this.query.Accept (visitor);
 			}
 
