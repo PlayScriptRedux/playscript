@@ -553,7 +553,19 @@ namespace Mono.CSharp
 		{
 			return newExpr.ContainsEmitWithAwait ();
 		}
-		
+
+		private bool IsPlayScriptScalarClass (string className)
+		{
+			switch (className) {
+			case "String":
+			case "Number":
+			case "Boolean":
+				return true;
+			default:
+				return false;
+			}
+		}
+
 		protected override Expression DoResolve (ResolveContext ec)
 		{
 			if (ec.Target == Target.JavaScript) {
@@ -569,6 +581,32 @@ namespace Mono.CSharp
 
 			if (Expr is Invocation) {
 				var inv = Expr as Invocation;
+
+				//
+				// Special case for PlayScript scalar types with 1 argument - 
+				// just do an assignment. This is required for cosntructs like
+				//
+				//	var num:Number = new Number(1.0);
+				//
+				// since the underlying C# types are primitives and don't have
+				// constructors which take arugments.
+				//
+				var sn = inv.Exp as SimpleName;
+				if (sn != null && IsPlayScriptScalarClass (sn.Name) && inv.Arguments != null && inv.Arguments.Count == 1) {
+					Argument arg = inv.Arguments [0].Clone (new CloneContext ());
+					arg.Resolve (ec);
+					if (arg.Expr.Type != null) {
+						if (BuiltinTypeSpec.IsPrimitiveType (arg.Expr.Type) || arg.Expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
+							return arg.Expr;
+					}
+					// TODO: ActionScript does actually allow this, but its runtime
+					// rules are hard to implement at compile time, and this should
+					// be a rare use case, so I am leaving it as a compiler error for
+					// now.
+					ec.Report.Error (7112, loc, "The type `{0}' does not contain a constructor that takes non-scalar arguments", sn.Name);
+					return null;
+				}
+
 				newExpr = new New(inv.Exp, inv.Arguments, loc);
 			} else if (Expr is ElementAccess) {
 				if (loc.SourceFile != null && !loc.SourceFile.PsExtended) {
