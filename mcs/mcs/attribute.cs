@@ -1688,6 +1688,8 @@ namespace Mono.CSharp {
 		public readonly PredefinedAttribute AsAllowDynamicAttribute;
 		public readonly PredefinedAttribute AsForbidDynamicAttribute;
 
+		public readonly PredefinedAttribute NumberIsFloatAttribute;
+
 		// Mono.Optimization attributes
 		public readonly PredefinedAttribute InlineAttribute;
 
@@ -1757,6 +1759,8 @@ namespace Mono.CSharp {
 			AsBindableAttribute = new PredefinedAttribute (module, PsConsts.PsRootNamespace, "BindableAttribute");
 			AsAllowDynamicAttribute = new PredefinedAttribute (module, PsConsts.PsRootNamespace, "AllowDynamicAttribute");
 			AsForbidDynamicAttribute = new PredefinedAttribute (module, PsConsts.PsRootNamespace, "ForbidDynamicAttribute");
+
+			NumberIsFloatAttribute = new PredefinedAttribute (module, "PlayScript", "NumberIsFloatAttribute");
 
 			// Mono.Optimization
 			InlineAttribute = new PredefinedAttribute (module, "Mono.Optimization", "InlineAttribute");

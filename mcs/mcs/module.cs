@@ -295,7 +295,7 @@ namespace Mono.CSharp
 					return;
 				}
 				foreach (var cont in containers) {
-					if (visitor.Continue && visitor.Depth >= VisitDepth.Namespaces)
+					if (visitor.Continue && visitor.Depth >= VisitDepth.Namespaces && cont != null)
 						cont.Accept (visitor);
 				}
 			}

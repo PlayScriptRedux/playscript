@@ -453,9 +453,9 @@ namespace Mono.CSharp {
 					visitor.Skip = false;
 					return ret;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && this.target != null)
 					this.target.Accept (visitor);
-				if (visitor.Continue)
+				if (visitor.Continue && this.source != null)
 					this.source.Accept (visitor);
 			}
 
@@ -496,6 +496,24 @@ namespace Mono.CSharp {
 				ec.Report.Warning (1717, 3, loc, "Assignment made to same variable; did you mean to assign something else?");
 
 			return this;
+		}
+
+		public override object Accept (StructuralVisitor visitor)
+		{
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue && this.source != null)
+					this.source.Accept (visitor);
+				if (visitor.Continue && this.target != null)
+					this.target.Accept (visitor);
+			}
+
+			return ret;
 		}
 	}
 
@@ -897,9 +915,9 @@ namespace Mono.CSharp {
 					visitor.Skip = false;
 					return ret;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && this.target != null)
 					this.target.Accept (visitor);
-				if (visitor.Continue)
+				if (visitor.Continue && this.source != null)
 					this.source.Accept (visitor);
 			}
 
