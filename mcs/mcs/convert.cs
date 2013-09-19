@@ -821,7 +821,7 @@ namespace Mono.CSharp {
 				break;
 			case BuiltinTypeSpec.Type.Float:
 				//
-				// float to double
+				// From float to double
 				//
 				if (target_type.BuiltinType == BuiltinTypeSpec.Type.Double)
 					return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_R8);
@@ -830,21 +830,19 @@ namespace Mono.CSharp {
 				break;
 			case BuiltinTypeSpec.Type.Double:
 				//
-				// float to double
+				// PlayScript only - from double to int, uint, float, bool
 				//
-				switch (target_type.BuiltinType) {
-				case BuiltinTypeSpec.Type.Int:
-					if (ft == SourceFileType.PlayScript && !upconvert_only)
+				if (ft == SourceFileType.PlayScript && !upconvert_only) {
+					switch (target_type.BuiltinType) {
+					case BuiltinTypeSpec.Type.Int:
 						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_I4);
-					break;
-				case BuiltinTypeSpec.Type.UInt:
-					if (ft == SourceFileType.PlayScript && !upconvert_only)
+					case BuiltinTypeSpec.Type.UInt:
 						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U4);
-					break;
-				case BuiltinTypeSpec.Type.Bool:
-					if (ft == SourceFileType.PlayScript && !upconvert_only)
-						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new DoubleLiteral(opt_ec.BuiltinTypes, 0.0, expr.Location)).Resolve(opt_ec);
-					break;
+					case BuiltinTypeSpec.Type.Float:
+						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_R4);
+					case BuiltinTypeSpec.Type.Bool:
+						return expr == null ? EmptyExpression.Null : new Binary (Binary.Operator.Inequality, expr, new DoubleLiteral (opt_ec.BuiltinTypes, 0.0, expr.Location)).Resolve (opt_ec);
+					}
 				}
 				break;
 			}

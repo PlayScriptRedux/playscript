@@ -3,9 +3,7 @@ package
 	[PlayScript.NumberIsFloat]
 	public class NumberIsFloatTest
 	{
-		// TODO: Need implicit cast from double to float
-		//public static const INF:Number = Number.POSITIVE_INFINITY;
-		public static const INF:Number = 12.3432;
+		public static const INF:Number = Number.POSITIVE_INFINITY;
 
 		private static var Value:Number = 3.14;
 
@@ -27,9 +25,7 @@ package
 
 		private static function printNumber(num:Number):Number
 		{
-			// TODO: Need implicit cast from double to float
-			//return DoubleLogger.printNumber(num);
-			return System.Convert.ToSingle(DoubleLogger.printNumber(num));
+			return DoubleLogger.printNumber(num);
 		}
 	}
 }
@@ -39,9 +35,7 @@ public class DoubleLogger
 	public static function printNumber(num:Number):Number
 	{
 		trace(num);
-		// TODO: Need implicit cast from double to float
-		//num = FloatLogger.printNumber(num);
-		num = FloatLogger.printNumber(System.Convert.ToSingle(num));
+		num = FloatLogger.printNumber(num);
 		return num;
 	}
 }
