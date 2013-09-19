@@ -1408,7 +1408,7 @@ namespace Mono.CSharp {
 			var ret = visitor.Visit (this);
 
 			if (visitor.AutoVisit) {
-				if (visitor.Continue)
+				if (visitor.Continue && this.Block != null)
 					this.Block.Accept (visitor);
 			}
 

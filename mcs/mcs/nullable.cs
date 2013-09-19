@@ -1240,9 +1240,9 @@ namespace Mono.CSharp.Nullable
 					visitor.Skip = false;
 					return ret;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && left != null)
 					left.Accept (visitor);
-				if (visitor.Continue)
+				if (visitor.Continue && right != null)
 					right.Accept (visitor);
 			}
 

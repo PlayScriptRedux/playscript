@@ -3044,6 +3044,15 @@ namespace Mono.CSharp
 
 		protected override bool DoDefineMembers ()
 		{
+			//
+			// We provide a mechanism to use single precision floats instead of
+			// doubles for the PlayScript Number type via the [NumberIsFloat]
+			// attribute. This is a class level attribute that we apply
+			// recursively using a visitor.
+			//
+			if (OptAttributes != null && OptAttributes.Contains (Module.PredefinedAttributes.NumberIsFloatAttribute))
+				Accept (new DoubleToFloatConverter (this));
+
 			if ((ModFlags & Modifiers.ABSTRACT) == Modifiers.ABSTRACT && (ModFlags & (Modifiers.SEALED | Modifiers.STATIC)) != 0) {
 				Report.Error (418, Location, "`{0}': an abstract class cannot be sealed or static", GetSignatureForError ());
 			}
@@ -3181,6 +3190,103 @@ namespace Mono.CSharp
 
 			caching_flags |= Flags.Excluded;
 			return conditions;
+		}
+	}
+
+	public sealed class DoubleToFloatConverter : StructuralVisitor
+	{
+		TypeContainer tc;
+
+		public DoubleToFloatConverter (TypeContainer root)
+		{
+			AutoVisit = true;
+			tc = root;
+		}
+
+		public override void Visit (Field f)
+		{
+			base.Visit (f);
+
+			if (ConvertToFloat (f.TypeExpression))
+				ConvertToFloat (f.Initializer);
+		}
+
+		public override void Visit (Const c)
+		{
+			base.Visit (c);
+
+			if (ConvertToFloat (c.TypeExpression)) {
+				if (c.Initializer is ConstInitializer) {
+					var initializer = c.Initializer as ConstInitializer;
+					ConvertToFloat (initializer.Expr);
+				}
+			}
+		}
+
+		public override void Visit (Property p)
+		{
+			base.Visit (p);
+
+			ConvertToFloat (p.TypeExpression);
+		}
+
+		public override void Visit (Method m)
+		{
+			base.Visit (m);
+
+			ConvertToFloat (m.TypeExpression);
+		}
+
+		public override object Visit (Constant c)
+		{
+			var result = base.Visit (c);
+
+			ConvertToFloat (c);
+
+			return result;
+		}
+
+		public override object Visit (Block b)
+		{
+			var result = base.Visit (b);
+
+			ParametersCompiled pc = b is ParametersBlock ? ((ParametersBlock)b).Parameters : null;
+			if (pc != null) {
+				Parameter[] parameters = pc.FixedParameters as Parameter[];
+				if (parameters != null) {
+					foreach (Parameter param in parameters)
+						ConvertToFloat (param.TypeExpression);
+				}
+			}
+
+			return result;
+		}
+
+		public override object Visit (BlockVariable b)
+		{
+			var result = base.Visit (b);
+
+			ConvertToFloat (b.TypeExpression);
+
+			return result;
+		}
+
+		public override object Visit (BlockConstant b)
+		{
+			var result = base.Visit (b);
+
+			ConvertToFloat (b.TypeExpression);
+
+			return result;
+		}
+
+		private bool ConvertToFloat (Expression e)
+		{
+			if (e != null && e.Type != null && e.Type.BuiltinType == BuiltinTypeSpec.Type.Double) {
+				e.Type = tc.Compiler.BuiltinTypes.Float;
+				return true;
+			}
+			return false;
 		}
 	}
 

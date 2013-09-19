@@ -115,33 +115,33 @@ namespace Mono.CSharp {
 		{
 			switch (t.BuiltinType) {
 			case BuiltinTypeSpec.Type.Int:
-				return new IntConstant (t, (int) v, loc);
+				return new IntConstant (t, System.Convert.ToInt32 (v), loc);
 			case BuiltinTypeSpec.Type.String:
 				return new StringConstant (t, (string) v, loc);
 			case BuiltinTypeSpec.Type.UInt:
-				return new UIntConstant (t, (uint) v, loc);
+				return new UIntConstant (t, System.Convert.ToUInt32 (v), loc);
 			case BuiltinTypeSpec.Type.Long:
-				return new LongConstant (t, (long) v, loc);
+				return new LongConstant (t, System.Convert.ToInt64 (v), loc);
 			case BuiltinTypeSpec.Type.ULong:
-				return new ULongConstant (t, (ulong) v, loc);
+				return new ULongConstant (t, System.Convert.ToUInt64 (v), loc);
 			case BuiltinTypeSpec.Type.Float:
-				return new FloatConstant (t, (float) v, loc);
+				return new FloatConstant (t, System.Convert.ToSingle (v), loc);
 			case BuiltinTypeSpec.Type.Double:
-				return new DoubleConstant (t, (double) v, loc);
+				return new DoubleConstant (t, System.Convert.ToDouble (v), loc);
 			case BuiltinTypeSpec.Type.Short:
-				return new ShortConstant (t, (short) v, loc);
+				return new ShortConstant (t, System.Convert.ToInt16 (v), loc);
 			case BuiltinTypeSpec.Type.UShort:
-				return new UShortConstant (t, (ushort) v, loc);
+				return new UShortConstant (t, System.Convert.ToUInt16 (v), loc);
 			case BuiltinTypeSpec.Type.SByte:
-				return new SByteConstant (t, (sbyte) v, loc);
+				return new SByteConstant (t, System.Convert.ToSByte (v), loc);
 			case BuiltinTypeSpec.Type.Byte:
-				return new ByteConstant (t, (byte) v, loc);
+				return new ByteConstant (t, System.Convert.ToByte (v), loc);
 			case BuiltinTypeSpec.Type.Char:
-				return new CharConstant (t, (char) v, loc);
+				return new CharConstant (t, System.Convert.ToChar (v), loc);
 			case BuiltinTypeSpec.Type.Bool:
-				return new BoolConstant (t, (bool) v, loc);
+				return new BoolConstant (t, System.Convert.ToBoolean (v), loc);
 			case BuiltinTypeSpec.Type.Decimal:
-				return new DecimalConstant (t, (decimal) v, loc);
+				return new DecimalConstant (t, System.Convert.ToDecimal (v), loc);
 			}
 
 			if (t.IsEnum) {

@@ -111,7 +111,7 @@ namespace Mono.CSharp
 					visitor.Skip = false;
 					return ret;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && expr != null)
 					expr.Accept (visitor);
 			}
 
