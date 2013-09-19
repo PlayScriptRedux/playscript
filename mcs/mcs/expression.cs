@@ -7035,9 +7035,9 @@ namespace Mono.CSharp
 					visitor.Skip = false;
 					return ret;
 				}
-				if (visitor.Continue) {
+				if (visitor.Continue && arguments != null) {
 					foreach (var arg in arguments) {
-						if (visitor.Continue)
+						if (visitor.Continue && arg.Expr != null)
 							arg.Expr.Accept (visitor);
 					}
 				}

@@ -497,6 +497,24 @@ namespace Mono.CSharp {
 
 			return this;
 		}
+
+		public override object Accept (StructuralVisitor visitor)
+		{
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue && this.source != null)
+					this.source.Accept (visitor);
+				if (visitor.Continue && this.target != null)
+					this.target.Accept (visitor);
+			}
+
+			return ret;
+		}
 	}
 
 	public class RuntimeExplicitAssign : Assign
