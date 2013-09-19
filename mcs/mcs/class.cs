@@ -3046,7 +3046,7 @@ namespace Mono.CSharp
 		{
 			//
 			// We provide a mechanism to use single precision floats instead of
-			// of doubles for the PlayScript Number type via the [NumberIsFloat]
+			// doubles for the PlayScript Number type via the [NumberIsFloat]
 			// attribute. This is a class level attribute that we apply
 			// recursively using a visitor.
 			//
