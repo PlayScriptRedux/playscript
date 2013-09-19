@@ -1,6 +1,4 @@
 ./AssemblyInfo.cs
-./obj/Debug/dynamic.g.cs
-./obj/Debug/MonoAndroid,Version=v2.2.AssemblyAttribute.cs
 ../pscorlib/AllowDynamicAttribute.cs
 ../pscorlib/Amf/Amf3ClassDef.cs
 ../pscorlib/Amf/Amf3Object.cs

@@ -90,24 +90,4 @@ namespace flash.media {
 
 }
 
-#else
-
-using System;
-
-namespace flash.media {
-
-	// We use a partial C# class for platform specific logic
-	partial class Sound {
-			
-		private void internalLoad(String url)
-		{		
-		}
-
-		private SoundChannel internalPlay(double startTime=0, int loops=0, SoundTransform sndTransform=null)
-		{
-			return null;
-		}
-	}
-}
-
 #endif

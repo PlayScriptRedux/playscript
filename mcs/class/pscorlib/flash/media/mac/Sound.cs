@@ -16,6 +16,8 @@ using System;
 using System.Collections.Generic;
 using flash.events;
 
+#if PLATFORM_MONOMAC
+
 namespace flash.media {
 
 	// We use a partial C# class for platform specific logic
@@ -37,3 +39,5 @@ namespace flash.media {
 	}
 
 }
+
+#endif

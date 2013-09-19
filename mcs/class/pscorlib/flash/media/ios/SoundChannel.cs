@@ -36,18 +36,4 @@ namespace flash.media {
 
 }
 
-#else
-
-namespace flash.media {
-
-	// We use a partial C# class for platform specific logic
-	partial class SoundChannel {
-			
-		private void internalStop()
-		{		
-		}
-	}
-
-}
-
 #endif
