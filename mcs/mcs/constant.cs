@@ -117,7 +117,7 @@ namespace Mono.CSharp {
 			case BuiltinTypeSpec.Type.Int:
 				return new IntConstant (t, System.Convert.ToInt32 (v), loc);
 			case BuiltinTypeSpec.Type.String:
-				return new StringConstant (t, System.Convert.ToString (v), loc);
+				return new StringConstant (t, (string) v, loc);
 			case BuiltinTypeSpec.Type.UInt:
 				return new UIntConstant (t, System.Convert.ToUInt32 (v), loc);
 			case BuiltinTypeSpec.Type.Long:
