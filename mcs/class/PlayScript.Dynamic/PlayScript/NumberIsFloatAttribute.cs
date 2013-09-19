@@ -4,7 +4,7 @@ namespace PlayScript
 {
 	//
 	// This attribute provides a mechanism to use single precision floats
-	// instead of of doubles for the PlayScript Number type. This is a class
+	// instead of doubles for the PlayScript Number type. This is a class
 	// level attribute that is applied recursively - everything from fields,
 	// constants, method parameters and return values are converted to floats.
 	//
