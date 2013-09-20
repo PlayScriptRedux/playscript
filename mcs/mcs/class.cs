@@ -3228,6 +3228,8 @@ namespace Mono.CSharp
 			base.Visit (p);
 
 			ConvertToFloat (p.TypeExpression);
+			VisitParameters (p.Get.ParameterInfo.FixedParameters as Parameter[]);
+			VisitParameters (p.Set.ParameterInfo.FixedParameters as Parameter[]);
 		}
 
 		public override void Visit (Method m)
@@ -3251,15 +3253,18 @@ namespace Mono.CSharp
 			var result = base.Visit (b);
 
 			ParametersCompiled pc = b is ParametersBlock ? ((ParametersBlock)b).Parameters : null;
-			if (pc != null) {
-				Parameter[] parameters = pc.FixedParameters as Parameter[];
-				if (parameters != null) {
-					foreach (Parameter param in parameters)
-						ConvertToFloat (param.TypeExpression);
-				}
-			}
+			if (pc != null)
+				VisitParameters (pc.FixedParameters as Parameter[]);
 
 			return result;
+		}
+
+		private void VisitParameters (Parameter[] parameters)
+		{
+			if (parameters != null) {
+				foreach (Parameter param in parameters)
+					ConvertToFloat (param.TypeExpression);
+			}
 		}
 
 		public override object Visit (BlockVariable b)
