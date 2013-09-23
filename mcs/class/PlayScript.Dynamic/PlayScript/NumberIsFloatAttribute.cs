@@ -8,7 +8,7 @@ namespace PlayScript
 	// level attribute that is applied recursively - everything from fields,
 	// constants, method parameters and return values are converted to floats.
 	//
-	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface, AllowMultiple = false)]
 	public class NumberIsFloatAttribute : Attribute
 	{
 		public NumberIsFloatAttribute ()

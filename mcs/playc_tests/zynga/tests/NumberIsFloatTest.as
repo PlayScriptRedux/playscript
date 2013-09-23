@@ -1,7 +1,7 @@
 package
 {
 	[PlayScript.NumberIsFloat]
-	public class NumberIsFloatTest
+	public class NumberIsFloatTest implements INumberIsFloatTest
 	{
 		public static const INF:Number = Number.POSITIVE_INFINITY;
 
@@ -17,6 +17,10 @@ package
 		public function set value(n:Number):void
 		{
 			_value = n;
+		}
+
+		public function update(num:Number):void
+		{
 		}
 
 		public static function Main():void
@@ -42,6 +46,16 @@ package
 			return DoubleLogger.printNumber(num);
 		}
 	}
+}
+
+[PlayScript.NumberIsFloat]
+public interface INumberIsFloatTest
+{
+	function get value():Number;
+
+	function set value(n:Number):void;
+
+	function update(num:Number):void;
 }
 
 public class DoubleLogger
