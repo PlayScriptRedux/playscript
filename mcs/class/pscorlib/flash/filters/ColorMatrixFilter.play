@@ -17,11 +17,33 @@ package flash.filters {
 	public class ColorMatrixFilter extends BitmapFilter {
 
 		public function ColorMatrixFilter(matrix:Array = null) {
-			throw new System.NotImplementedException();
+			this.matrix = new Array();
+			var i:int;
+			if (matrix == null) {
+				for (i = 0; i < 20; i++) {
+					if (i == 0 || i == 6 || i == 12 || i == 18) {
+						this.matrix.push(1.0);
+					} else {
+						this.matrix.push(0.0);
+					}
+				}
+			} else {
+				var len:int = matrix.length;
+				for (i = 0; i < 20; i++) {
+					if (i < len) {
+						this.matrix.push(Number(matrix[i]));
+					} else {
+						this.matrix.push(0.0);
+					}
+				}
+			}
 		}
 
-		public var matrix:Array = new Array();
-		//$$TODO
+		public override function clone():BitmapFilter {
+			return new ColorMatrixFilter(matrix);
+		}
+
+		public var matrix:Array;
 	}
 
 }

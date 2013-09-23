@@ -380,6 +380,9 @@ package flash.display {
 		}
  	 	
 		public function getPixel(x:int, y:int):uint {
+			if (mData==null)
+				return 0;
+
 			if (x < 0 || y < 0 || x >= width || y >= height) {			
 				throw new System.ArgumentOutOfRangeException("XY position out of range");
 			}
@@ -389,7 +392,15 @@ package flash.display {
 		}
 		
 		public function getPixel32(x:int, y:int):uint {
-			throw new System.NotImplementedException();
+			if (mData==null)
+				return 0;
+
+			if (x < 0 || y < 0 || x >= width || y >= height) {			
+				throw new System.ArgumentOutOfRangeException("XY position out of range");
+			}
+
+			// return color
+			return mData[y * mWidth + x];
 		}
 
 		public function getPixels(rect:Rectangle):ByteArray {
@@ -397,7 +408,23 @@ package flash.display {
 		}
  	 	
 		public function getVector(rect:Rectangle):Vector.<uint> {
-			throw new System.NotImplementedException();
+			if (rect.left < 0 || rect.top < 0 || rect.right > this.width || rect.bottom > this.height) 
+				throw new Error("Invalid rectangle");
+			var v:Vector.<uint> = new Vector.<uint>(rect.width * rect.height);
+			if (mData==null)
+				return v;
+			var a:uint[] = v._GetInnerArray();
+			var i:int = 0;
+			var s:int = 0;
+			for (var y:int = rect.top; y < rect.bottom; y++) {
+				s = y * this.width + rect.left;
+				for (var x:int = rect.left; x < rect.right; x++) {
+					a[i] = mData[s];
+					i++;
+					s++;
+				}
+			}
+			return v;
 		}
 
 		public function histogram(hRect:Rectangle = null):Vector.<Vector.<Number>> {

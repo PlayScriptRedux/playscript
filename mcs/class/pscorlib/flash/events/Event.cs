@@ -127,8 +127,11 @@ namespace flash.events
 		public const string USER_PRESENT = "userPresent";
 
 		private string _type;
-		private bool _bubbles;
+		private bool _bubbles;				// Note: in C# bools are bytes, so this isn't really so bad in terms of mem usage
 		private bool _cancelable;
+		internal bool _preventDefault;
+//		internal bool _stopProp;			// Since we don't implement "display", nobody ever checks this.
+		internal bool _stopImmediateProp;
 		internal dynamic _currentTarget;
 		internal dynamic _target;
 		internal uint _eventPhase;
@@ -164,21 +167,22 @@ namespace flash.events
 
 		public virtual void preventDefault()
 		{
-			throw new System.NotImplementedException();
+			_preventDefault = true;
 		}
 
 		public virtual bool isDefaultPrevented()
 		{
-			throw new System.NotImplementedException();
+			return _preventDefault;
 		}
 
 		public virtual void stopPropagation() 
 		{
-			throw new System.NotImplementedException();
+			// Do nothing, our display NON-implementation doesn't ever check this
+//			_stopProp = true;
 		}
 
 		public virtual void stopImmediatePropagation() {
-			throw new System.NotImplementedException();
+			_stopImmediateProp = true;
 		}
 
 	}

@@ -1,37 +1,31 @@
 package Blah1
 {
-	public class ClassA {}
-	public class ClassB {}
-	public class ClassC extends ClassB {}
+	public dynamic class A {
+
+		public var a:int;
+		private var _b:Boolean;
+
+		public function get b():Boolean {
+			return _b;
+		}
+
+		public function set b(value:Boolean):void {
+			_b = value;
+		}
+
+	}
 
 	public class EqualityTest
 	{
 		public static function Main():int
 		{
-			var a:ClassA = new ClassA();
-			var a2:ClassA = new ClassA();
-			var b:ClassB = new ClassB();
-			var c:ClassC = new ClassC();
+			var foo:A = new A();
 
-			if (a == a) {
-				trace("YAY!");
-			}
+			foo["a"] = 100;
+			foo["b"] = true;
+			foo["c"] = "blah";
 
-			if (a == a2) {
-				trace("YAY!");
-			}
-
-			if (a == true) {
-				trace("YAY!");
-			}
-
-			if (b == c) {
-				trace("YAY!");
-			}
-
-//			if (a == b) {  // ERROR!
-//				trace("YAY!");
-//			}
+			trace("output: " + foo["a"] + foo["b"] + foo["c"]);
 
 			return 0;
 		}
