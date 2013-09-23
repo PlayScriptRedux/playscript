@@ -3047,7 +3047,7 @@ namespace Mono.CSharp
 			//
 			// We provide a mechanism to use single precision floats instead of
 			// doubles for the PlayScript Number type via the [NumberIsFloat]
-			// attribute. This is a class level attribute that we apply
+			// attribute. This is a class/interface level attribute that we apply
 			// recursively using a visitor.
 			//
 			if (OptAttributes != null && OptAttributes.Contains (Module.PredefinedAttributes.NumberIsFloatAttribute))
@@ -3228,6 +3228,10 @@ namespace Mono.CSharp
 			base.Visit (p);
 
 			ConvertToFloat (p.TypeExpression);
+			if (p.Get != null && p.Get.ParameterInfo != null)
+				VisitParameters (p.Get.ParameterInfo.FixedParameters as Parameter[]);
+			if (p.Set != null && p.Set.ParameterInfo != null)
+				VisitParameters (p.Set.ParameterInfo.FixedParameters as Parameter[]);
 		}
 
 		public override void Visit (Method m)
@@ -3235,6 +3239,8 @@ namespace Mono.CSharp
 			base.Visit (m);
 
 			ConvertToFloat (m.TypeExpression);
+			if (m.ParameterInfo != null)
+				VisitParameters (m.ParameterInfo.FixedParameters as Parameter[]);
 		}
 
 		public override object Visit (Constant c)
@@ -3246,20 +3252,12 @@ namespace Mono.CSharp
 			return result;
 		}
 
-		public override object Visit (Block b)
+		private void VisitParameters (Parameter[] parameters)
 		{
-			var result = base.Visit (b);
-
-			ParametersCompiled pc = b is ParametersBlock ? ((ParametersBlock)b).Parameters : null;
-			if (pc != null) {
-				Parameter[] parameters = pc.FixedParameters as Parameter[];
-				if (parameters != null) {
-					foreach (Parameter param in parameters)
-						ConvertToFloat (param.TypeExpression);
-				}
+			if (parameters != null) {
+				foreach (Parameter param in parameters)
+					ConvertToFloat (param.TypeExpression);
 			}
-
-			return result;
 		}
 
 		public override object Visit (BlockVariable b)
@@ -3542,6 +3540,20 @@ namespace Mono.CSharp
 		}
 
 		#endregion
+
+		protected override bool DoDefineMembers ()
+		{
+			//
+			// We provide a mechanism to use single precision floats instead of
+			// doubles for the PlayScript Number type via the [NumberIsFloat]
+			// attribute. This is a class/interface level attribute that we apply
+			// recursively using a visitor.
+			//
+			if (OptAttributes != null && OptAttributes.Contains (Module.PredefinedAttributes.NumberIsFloatAttribute))
+				Accept (new DoubleToFloatConverter (this));
+
+			return base.DoDefineMembers ();
+		}
 
 		public override void Accept (StructuralVisitor visitor)
 		{
