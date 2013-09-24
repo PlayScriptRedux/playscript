@@ -1439,7 +1439,7 @@ namespace PlayScript
 								IConverter<double, int>, IConverter<double, uint>, IConverter<double, double>, IConverter<double, bool>, IConverter<double, string>,
 								IConverter<bool, int>,  IConverter<bool, uint>, IConverter<bool, double>, IConverter<bool, bool>, IConverter<bool, string>,
 								IConverter<string, int>, IConverter<string, uint>, IConverter<string, double>, IConverter<string, bool>, IConverter<string, string>,
-								IConverter<int>, IConverter<uint>, IConverter<double>, IConverter<bool>, IConverter<string>, IConverter<object>
+								IConverter<int>, IConverter<uint>, IConverter<double>, IConverter<bool>, IConverter<string>, IConverter<object>, IConverter<float>
 	{
 		public static Converter Instance = new Converter();
 
@@ -1685,6 +1685,37 @@ namespace PlayScript
 		object IConverter<object>.ConvertFromObject(object value)
 		{
 			return value;
+		}
+
+		float IConverter<float>.ConvertFromObject(object value)
+		{
+			if (value is double)
+			{
+				return (float)(double)value;
+			}
+			else if (value is int)
+			{
+				return (float)(int)value;
+			}
+			else if (value is string)
+			{
+				return float.Parse((string)value);
+			}
+			else if (value is uint)
+			{
+				return (float)(uint)value;
+			}
+			else if (value is bool)
+			{
+				return (bool)value ? 1.0f : 0.0f;
+			}
+			else if (value is float)
+			{
+				// This is the target type, but it should have been tested already earlier
+				// So we test it last (just in case) before we do the slow conversion
+				return (float)value;
+			}
+			return Convert.ToSingle(value);
 		}
 	}
 
