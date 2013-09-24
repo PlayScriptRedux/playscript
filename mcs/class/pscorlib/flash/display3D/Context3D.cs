@@ -524,8 +524,6 @@ namespace flash.display3D {
 		{
 			// GLES does not support transposed uniform setting so do it manually 
 			bool isVertex = (programType == "vertex");
-	
-			int locationInTemp = firstRegister << 2;//4 floats per register
 			double[] source = matrix.mData;
 
 			if (transposedMatrix) {

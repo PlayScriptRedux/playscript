@@ -127,7 +127,7 @@ package flash.display {
 		}
  	 	
 		public function unloadAndStop(gc:Boolean = true):void {
-			//throw new System.NotImplementedException();
+			throw new System.NotImplementedException();
 		}
 		
 		var mContent:DisplayObject = null;
