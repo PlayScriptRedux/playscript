@@ -74,6 +74,10 @@ namespace PlayScript.DynamicRuntime
 			// select method based on simple compatibility
 			// TODO: this could change to use a rating system
 			foreach (var method in mMethodList) {
+				// late bound operations cannot be performed on types or methods
+				// for which ContainsGenericParameters is true
+				if (method.Method.ContainsGenericParameters)
+					continue;
 				// is this method compatible?
 				if (method.CheckArguments(mArgs)) {
 					mMethod = method;
