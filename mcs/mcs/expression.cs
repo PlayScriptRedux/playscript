@@ -3701,7 +3701,7 @@ namespace Mono.CSharp
 							// Implement string comparisons
 							return new Binary(oper, MakeStringComparison (ec).Resolve (ec), new IntLiteral(ec.BuiltinTypes, 0, loc)).Resolve (ec);
 						}
-					} else if (Oper == Operator.Division && right.Type != ec.BuiltinTypes.Double) {
+					} else if (Oper == Operator.Division && right.Type != ec.BuiltinTypes.Double && right.Type != ec.BuiltinTypes.Float) {
 
 						// In PlayScript division always results in a double.
 						left = new Cast(new TypeExpression(ec.BuiltinTypes.Double, loc), left, loc).Resolve (ec);

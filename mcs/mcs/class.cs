@@ -3203,6 +3203,14 @@ namespace Mono.CSharp
 			tc = root;
 		}
 
+		public override void Visit (Constructor c)
+		{
+			base.Visit (c);
+
+			if (c.ParameterInfo != null)
+				VisitParameters (c.ParameterInfo.FixedParameters as Parameter[]);
+		}
+
 		public override void Visit (Field f)
 		{
 			base.Visit (f);
@@ -3265,6 +3273,7 @@ namespace Mono.CSharp
 			var result = base.Visit (b);
 
 			ConvertToFloat (b.TypeExpression);
+			ConvertToFloat (b.Initializer);
 
 			return result;
 		}
@@ -3274,6 +3283,7 @@ namespace Mono.CSharp
 			var result = base.Visit (b);
 
 			ConvertToFloat (b.TypeExpression);
+			ConvertToFloat (b.Initializer);
 
 			return result;
 		}
