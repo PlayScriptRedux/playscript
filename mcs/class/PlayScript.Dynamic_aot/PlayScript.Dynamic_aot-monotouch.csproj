@@ -53,22 +53,6 @@
     <ConsolePause>false</ConsolePause>
     <AssemblyName>PlayScript.Dynamic_monotouch</AssemblyName>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseNoOpt|iPhone' ">
-    <DebugType>none</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release</OutputPath>
-    <DefineConstants>PLATFORM_MONOTOUCH</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <ConsolePause>false</ConsolePause>
-    <AssemblyName>PlayScript.Dynamic_monotouch</AssemblyName>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseNoOpt|AnyCPU' ">
-    <Optimize>false</Optimize>
-    <OutputPath>bin\ReleaseNoOpt</OutputPath>
-    <WarningLevel>4</WarningLevel>
-    <AssemblyName>PlayScriptDynamic_aotmonotouch</AssemblyName>
-  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="monotouch" />
@@ -93,6 +77,9 @@
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\ExtensionAttribute.cs">
       <Link>PlayScript\ExtensionAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\NumberIsFloatAttribute.cs">
+      <Link>PlayScript\NumberIsFloatAttribute.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\Expando\BindingRestrictionsEx.cs">
       <Link>PlayScript\Expando\BindingRestrictionsEx.cs</Link>

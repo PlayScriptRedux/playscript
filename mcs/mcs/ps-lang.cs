@@ -42,6 +42,61 @@ namespace Mono.CSharp
 	//
 	// Expressions
 	//
+	
+	public class UntypedTypeExpression : TypeExpr
+	{
+		public UntypedTypeExpression (Location loc)
+		{
+			this.loc = loc;
+		}
+
+		public override TypeSpec ResolveAsType (IMemberContext mc)
+		{
+			return mc.Module.Compiler.BuiltinTypes.Dynamic;
+		}
+	}
+
+	public class UntypedBlockVariable : BlockVariable
+	{
+		public UntypedBlockVariable (LocalVariable li)
+			: base (li)
+		{
+		}
+
+		public new FullNamedExpression TypeExpression {
+			get {
+				return type_expr;
+			}
+			set {
+				type_expr = value;
+			}
+		}
+
+		public override bool Resolve (BlockContext bc)
+		{
+			if (type_expr == null) {
+				if (Initializer == null)
+					type_expr = new UntypedTypeExpression (loc);
+				else
+					type_expr = new VarExpr (loc);
+			}
+
+			return base.Resolve (bc);
+		}
+	}
+
+	public class UntypedExceptionExpression : UntypedTypeExpression
+	{
+		public UntypedExceptionExpression (Location loc)
+			: base(loc)
+		{
+		}
+
+		public override TypeSpec ResolveAsType (IMemberContext mc)
+		{
+			return mc.Module.Compiler.BuiltinTypes.Exception;
+		}
+	}
 
 	//
 	// ActionScript: Object initializers implement standard JSON style object
@@ -52,7 +107,7 @@ namespace Mono.CSharp
 	public partial class AsObjectInitializer : Expression
 	{
 		List<Expression> elements;
-		BlockVariableDeclaration variable;
+		BlockVariable variable;
 		Assign assign;
 
 		public AsObjectInitializer (List<Expression> init, Location loc)
@@ -89,7 +144,7 @@ namespace Mono.CSharp
 			}
 		}
 
-		public BlockVariableDeclaration VariableDeclaration {
+		public BlockVariable VariableDeclaration {
 			get {
 				return variable;
 			}
@@ -505,7 +560,7 @@ namespace Mono.CSharp
 					visitor.Skip = false;
 					return ret;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && this.Expr != null)
 					this.Expr.Accept (visitor);
 			}
 
@@ -540,7 +595,19 @@ namespace Mono.CSharp
 		{
 			return newExpr.ContainsEmitWithAwait ();
 		}
-		
+
+		private bool IsPlayScriptScalarClass (string className)
+		{
+			switch (className) {
+			case "String":
+			case "Number":
+			case "Boolean":
+				return true;
+			default:
+				return false;
+			}
+		}
+
 		protected override Expression DoResolve (ResolveContext ec)
 		{
 			if (ec.Target == Target.JavaScript) {
@@ -556,6 +623,32 @@ namespace Mono.CSharp
 
 			if (Expr is Invocation) {
 				var inv = Expr as Invocation;
+
+				//
+				// Special case for PlayScript scalar types with 1 argument - 
+				// just do an assignment. This is required for cosntructs like
+				//
+				//	var num:Number = new Number(1.0);
+				//
+				// since the underlying C# types are primitives and don't have
+				// constructors which take arugments.
+				//
+				var sn = inv.Exp as SimpleName;
+				if (sn != null && IsPlayScriptScalarClass (sn.Name) && inv.Arguments != null && inv.Arguments.Count == 1) {
+					Argument arg = inv.Arguments [0].Clone (new CloneContext ());
+					arg.Resolve (ec);
+					if (arg.Expr.Type != null) {
+						if (BuiltinTypeSpec.IsPrimitiveType (arg.Expr.Type) || arg.Expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
+							return arg.Expr;
+					}
+					// TODO: ActionScript does actually allow this, but its runtime
+					// rules are hard to implement at compile time, and this should
+					// be a rare use case, so I am leaving it as a compiler error for
+					// now.
+					ec.Report.Error (7112, loc, "The type `{0}' does not contain a constructor that takes non-scalar arguments", sn.Name);
+					return null;
+				}
+
 				newExpr = new New(inv.Exp, inv.Arguments, loc);
 			} else if (Expr is ElementAccess) {
 				if (loc.SourceFile != null && !loc.SourceFile.PsExtended) {
@@ -629,9 +722,9 @@ namespace Mono.CSharp
 					visitor.Skip = false;
 					return ret;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && this.Expr != null)
 					this.Expr.Accept (visitor);
-				if (visitor.Continue)
+				if (visitor.Continue && this.newExpr != null)
 					this.newExpr.Accept (visitor);
 			}
 
@@ -729,7 +822,7 @@ namespace Mono.CSharp
 					visitor.Skip = false;
 					return ret;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && this.Expr != null)
 					this.Expr.Accept (visitor);
 			}
 
@@ -1016,9 +1109,9 @@ namespace Mono.CSharp
 					visitor.Skip = false;
 					return ret;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && this.expr != null)
 					this.expr.Accept (visitor);
-				if (visitor.Continue)
+				if (visitor.Continue && this.objExpr != null)
 					this.objExpr.Accept (visitor);
 			}
 
@@ -1095,9 +1188,9 @@ namespace Mono.CSharp
 		
 		public string Name;
 		public AnonymousMethodExpression MethodExpr;
-		public BlockVariableDeclaration VarDecl;
+		public BlockVariable VarDecl;
 
-		public AsLocalFunction (Location loc, string name, AnonymousMethodExpression methodExpr, BlockVariableDeclaration varDecl)
+		public AsLocalFunction (Location loc, string name, AnonymousMethodExpression methodExpr, BlockVariable varDecl)
 		{
 			this.loc = loc;
 			this.Name = name;
@@ -1116,7 +1209,7 @@ namespace Mono.CSharp
 
 			target.Name = Name;
 			target.MethodExpr = MethodExpr.Clone (clonectx) as AnonymousMethodExpression;
-			target.VarDecl = VarDecl.Clone (clonectx) as BlockVariableDeclaration;
+			target.VarDecl = VarDecl.Clone (clonectx) as BlockVariable;
 		}
 
 		protected override void DoEmit (EmitContext ec)
@@ -1150,7 +1243,7 @@ namespace Mono.CSharp
 					visitor.Skip = false;
 					return ret;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && this.MethodExpr != null)
 					this.MethodExpr.Accept (visitor);
 			}
 
@@ -1261,7 +1354,7 @@ namespace Mono.CSharp
 					visitor.Skip = false;
 					return ret;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && this.expr != null)
 					this.expr.Accept (visitor);
 			}
 
@@ -1334,9 +1427,9 @@ namespace Mono.CSharp
 					visitor.Skip = false;
 					return ret;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && this.expr != null)
 					this.expr.Accept (visitor);
-				if (visitor.Continue)
+				if (visitor.Continue && this.query != null)
 					this.query.Accept (visitor);
 			}
 
@@ -1345,5 +1438,34 @@ namespace Mono.CSharp
 		
 	}
 
+	public class AsMethod : Method
+	{
+		public AsMethod (TypeDefinition parent, FullNamedExpression returnType, Modifiers mod, MemberName name, ParametersCompiled parameters, Attributes attrs)
+			: base (parent, returnType, mod, name, parameters, attrs)
+		{
+		}
 
+		public static new Method Create (TypeDefinition parent, FullNamedExpression returnType, Modifiers mod,
+		                                 MemberName name, ParametersCompiled parameters, Attributes attrs)
+		{
+			var rt = returnType ?? new UntypedTypeExpression (name.Location);
+
+			var m = Method.Create (parent, rt, mod, name, parameters, attrs);
+
+			if (returnType == null)
+				m.HasNoReturnType = true;
+
+			return m;
+		}
+
+		protected override void Error_OverrideWithoutBase (MemberSpec candidate)
+		{
+			if (candidate == null) {
+				Report.Error (1020, Location, "`{0}': Method marked override must override another method", GetSignatureForError ());
+				return;
+			}
+
+			base.Error_OverrideWithoutBase (candidate);
+		}
+	}
 }

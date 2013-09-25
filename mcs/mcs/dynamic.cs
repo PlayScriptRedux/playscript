@@ -848,7 +848,7 @@ namespace Mono.CSharp
 		{
 			if ((target_type.IsClass || target_type.IsInterface) && (target_type.BuiltinType != BuiltinTypeSpec.Type.String)){
 				// perform empty cast to reference type
-				return EmptyCast.Create(expr, target_type);
+				return EmptyCast.Create(expr, target_type, rc);
 			}
 
 			TypeSpec converter = rc.Module.PredefinedTypes.PsConverter.Resolve();
@@ -877,7 +877,7 @@ namespace Mono.CSharp
 					break;
 				default:
 //					throw new InvalidOperationException("Unhandled convert to: " + target_type.GetSignatureForError());
-					return EmptyCast.Create(expr, target_type);
+					return EmptyCast.Create(expr, target_type, rc);
 //					converterMethod = "ConvertTo" + target_type.Name.ToString();
 //					break;
 			}

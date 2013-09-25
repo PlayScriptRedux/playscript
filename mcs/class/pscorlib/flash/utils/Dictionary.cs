@@ -42,9 +42,11 @@ namespace flash.utils
 				return this.Count;
 			} 	
 			set {
-				if (value == 0)
-					this.Clear();
-				else
+				if (value == 0) {
+					if (Count != 0) {
+						Clear();
+					}
+				} else
 					throw new System.NotImplementedException();
 			}
 		}

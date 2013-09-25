@@ -406,7 +406,6 @@ namespace Mono.CSharp
 
 		public string GetSignatureForMetadata ()
 		{
-#if STATIC
 			if (Parent is TypeDefinition) {
 				return Parent.GetSignatureForMetadata () + "+" + TypeNameParser.Escape (MemberName.Basename);
 			}
@@ -414,9 +413,6 @@ namespace Mono.CSharp
 			var sb = new StringBuilder ();
 			CreateMetadataName (sb);
 			return sb.ToString ();
-#else
-			throw new NotImplementedException ();
-#endif
 		}
 
 		public virtual void RemoveContainer (TypeContainer cont)
@@ -1279,6 +1275,11 @@ namespace Mono.CSharp
 			}
 		}
 
+		public virtual void SetBaseTypes (List<FullNamedExpression> baseTypes)
+		{
+			type_bases = baseTypes;
+		}
+
 		/// <summary>
 		///   This function computes the Base class and also the
 		///   list of interfaces that the class or struct @c implements.
@@ -1397,7 +1398,7 @@ namespace Mono.CSharp
 				}
 
 				bool pair_found = false;
-				for (int ii = i + 1; ii < members.Count; ++ii) {
+				for (int ii = 0; ii < members.Count; ++ii) {
 					var o_b = members[ii] as Operator;
 					if (o_b == null || o_b.OperatorType != matching_type)
 						continue;
@@ -2996,14 +2997,14 @@ namespace Mono.CSharp
 			}
 		}
 
-		public override void AddBasesForPart (List<FullNamedExpression> bases)
+		public override void SetBaseTypes (List<FullNamedExpression> baseTypes)
 		{
 			var pmn = MemberName;
 			if (pmn.Name == "Object" && !pmn.IsGeneric && Parent.MemberName.Name == "System" && Parent.MemberName.Left == null)
 				Report.Error (537, Location,
 					"The class System.Object cannot have a base class or implement an interface.");
 
-			base.AddBasesForPart (bases);
+			base.SetBaseTypes (baseTypes);
 		}
 
 		public override void ApplyAttributeBuilder (Attribute a, MethodSpec ctor, byte[] cdata, PredefinedAttributes pa)
@@ -3043,6 +3044,15 @@ namespace Mono.CSharp
 
 		protected override bool DoDefineMembers ()
 		{
+			//
+			// We provide a mechanism to use single precision floats instead of
+			// doubles for the PlayScript Number type via the [NumberIsFloat]
+			// attribute. This is a class/interface level attribute that we apply
+			// recursively using a visitor.
+			//
+			if (OptAttributes != null && OptAttributes.Contains (Module.PredefinedAttributes.NumberIsFloatAttribute))
+				Accept (new DoubleToFloatConverter (this));
+
 			if ((ModFlags & Modifiers.ABSTRACT) == Modifiers.ABSTRACT && (ModFlags & (Modifiers.SEALED | Modifiers.STATIC)) != 0) {
 				Report.Error (418, Location, "`{0}': an abstract class cannot be sealed or static", GetSignatureForError ());
 			}
@@ -3180,6 +3190,111 @@ namespace Mono.CSharp
 
 			caching_flags |= Flags.Excluded;
 			return conditions;
+		}
+	}
+
+	public sealed class DoubleToFloatConverter : StructuralVisitor
+	{
+		TypeContainer tc;
+
+		public DoubleToFloatConverter (TypeContainer root)
+		{
+			AutoVisit = true;
+			tc = root;
+		}
+
+		public override void Visit (Constructor c)
+		{
+			base.Visit (c);
+
+			if (c.ParameterInfo != null)
+				VisitParameters (c.ParameterInfo.FixedParameters as Parameter[]);
+		}
+
+		public override void Visit (Field f)
+		{
+			base.Visit (f);
+
+			if (ConvertToFloat (f.TypeExpression))
+				ConvertToFloat (f.Initializer);
+		}
+
+		public override void Visit (Const c)
+		{
+			base.Visit (c);
+
+			if (ConvertToFloat (c.TypeExpression)) {
+				if (c.Initializer is ConstInitializer) {
+					var initializer = c.Initializer as ConstInitializer;
+					ConvertToFloat (initializer.Expr);
+				}
+			}
+		}
+
+		public override void Visit (Property p)
+		{
+			base.Visit (p);
+
+			ConvertToFloat (p.TypeExpression);
+			if (p.Get != null && p.Get.ParameterInfo != null)
+				VisitParameters (p.Get.ParameterInfo.FixedParameters as Parameter[]);
+			if (p.Set != null && p.Set.ParameterInfo != null)
+				VisitParameters (p.Set.ParameterInfo.FixedParameters as Parameter[]);
+		}
+
+		public override void Visit (Method m)
+		{
+			base.Visit (m);
+
+			ConvertToFloat (m.TypeExpression);
+			if (m.ParameterInfo != null)
+				VisitParameters (m.ParameterInfo.FixedParameters as Parameter[]);
+		}
+
+		public override object Visit (Constant c)
+		{
+			var result = base.Visit (c);
+
+			ConvertToFloat (c);
+
+			return result;
+		}
+
+		private void VisitParameters (Parameter[] parameters)
+		{
+			if (parameters != null) {
+				foreach (Parameter param in parameters)
+					ConvertToFloat (param.TypeExpression);
+			}
+		}
+
+		public override object Visit (BlockVariable b)
+		{
+			var result = base.Visit (b);
+
+			ConvertToFloat (b.TypeExpression);
+			ConvertToFloat (b.Initializer);
+
+			return result;
+		}
+
+		public override object Visit (BlockConstant b)
+		{
+			var result = base.Visit (b);
+
+			ConvertToFloat (b.TypeExpression);
+			ConvertToFloat (b.Initializer);
+
+			return result;
+		}
+
+		private bool ConvertToFloat (Expression e)
+		{
+			if (e != null && e.Type != null && e.Type.BuiltinType == BuiltinTypeSpec.Type.Double) {
+				e.Type = tc.Compiler.BuiltinTypes.Float;
+				return true;
+			}
+			return false;
 		}
 	}
 
@@ -3436,6 +3551,20 @@ namespace Mono.CSharp
 
 		#endregion
 
+		protected override bool DoDefineMembers ()
+		{
+			//
+			// We provide a mechanism to use single precision floats instead of
+			// doubles for the PlayScript Number type via the [NumberIsFloat]
+			// attribute. This is a class/interface level attribute that we apply
+			// recursively using a visitor.
+			//
+			if (OptAttributes != null && OptAttributes.Contains (Module.PredefinedAttributes.NumberIsFloatAttribute))
+				Accept (new DoubleToFloatConverter (this));
+
+			return base.DoDefineMembers ();
+		}
+
 		public override void Accept (StructuralVisitor visitor)
 		{
 			visitor.Visit (this);
@@ -3582,27 +3711,7 @@ namespace Mono.CSharp
 
 			if ((ModFlags & Modifiers.OVERRIDE) != 0) {
 				if (base_member == null) {
-					if (candidate == null) {
-						if (this is Method && ((Method)this).ParameterInfo.IsEmpty && MemberName.Name == Destructor.MetadataName && MemberName.Arity == 0) {
-							Report.Error (249, Location, "Do not override `{0}'. Use destructor syntax instead",
-								"object.Finalize()");
-						} else {
-							Report.Error (115, Location, "`{0}' is marked as an override but no suitable {1} found to override",
-								GetSignatureForError (), SimpleName.GetMemberType (this));
-						}
-					} else {
-						Report.SymbolRelatedToPreviousError (candidate);
-						if (this is Event)
-							Report.Error (72, Location, "`{0}': cannot override because `{1}' is not an event",
-								GetSignatureForError (), TypeManager.GetFullNameSignature (candidate));
-						else if (this is PropertyBase)
-							Report.Error (544, Location, "`{0}': cannot override because `{1}' is not a property",
-								GetSignatureForError (), TypeManager.GetFullNameSignature (candidate));
-						else
-							Report.Error (505, Location, "`{0}': cannot override because `{1}' is not a method",
-								GetSignatureForError (), TypeManager.GetFullNameSignature (candidate));
-					}
-
+					Error_OverrideWithoutBase (candidate);
 					return false;
 				}
 
@@ -3795,7 +3904,11 @@ namespace Mono.CSharp
 					Parent.PartialContainer.VerifyImplements (this);
 				}
 
-				ModifiersExtensions.Check (Modifiers.AllowedExplicitImplFlags, explicit_mod_flags, 0, Location, Report);
+				Modifiers allowed_explicit = Modifiers.AllowedExplicitImplFlags;
+				if (this is Method)
+					allowed_explicit |= Modifiers.ASYNC;
+
+				ModifiersExtensions.Check (allowed_explicit, explicit_mod_flags, 0, Location, Report);
 			}
 
 			return base.Define ();
@@ -3904,6 +4017,30 @@ namespace Mono.CSharp
 				member.GetSignatureForError (),
 				ModifiersExtensions.AccessibilityName (base_modifiers),
 				base_member.GetSignatureForError ());
+		}
+
+		protected virtual void Error_OverrideWithoutBase (MemberSpec candidate)
+		{
+			if (candidate == null) {
+				if (this is Method && ((Method) this).ParameterInfo.IsEmpty && MemberName.Name == Destructor.MetadataName && MemberName.Arity == 0) {
+					Report.Error (249, Location, "Do not override `{0}'. Use destructor syntax instead",
+					              "object.Finalize()");
+				} else {
+					Report.Error (115, Location, "`{0}' is marked as an override but no suitable {1} found to override",
+					              GetSignatureForError (), SimpleName.GetMemberType (this));
+				}
+			} else {
+				Report.SymbolRelatedToPreviousError (candidate);
+				if (this is Event)
+					Report.Error (72, Location, "`{0}': cannot override because `{1}' is not an event",
+					              GetSignatureForError (), TypeManager.GetFullNameSignature (candidate));
+				else if (this is PropertyBase)
+					Report.Error (544, Location, "`{0}': cannot override because `{1}' is not a property",
+					              GetSignatureForError (), TypeManager.GetFullNameSignature (candidate));
+				else
+					Report.Error (505, Location, "`{0}': cannot override because `{1}' is not a method",
+					              GetSignatureForError (), TypeManager.GetFullNameSignature (candidate));
+			}
 		}
 
 		protected void Error_StaticReturnType ()

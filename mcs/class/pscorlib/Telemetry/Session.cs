@@ -217,11 +217,11 @@ namespace Telemetry
 
 			// write platform info
 			WriteValue(".platform.cpucount", System.Environment.ProcessorCount);
+			WriteValue(".platform.capabilities", flash.system.Capabilities.serverString);
+
 #if PLATFORM_MONOMAC
-			WriteValue(".platform.capabilities", "&M=Adobe%20Macintosh&R=1920x1200&COL=color&AR=1.0&OS=Mac%20OS%2010.7.4&ARCH=x86&L=en&PR32=t&PR64=t&LS=en;ja;fr;de;es;it;pt;pt-PT;nl;sv;nb;da;fi;ru;pl;zh-Hans;zh-Hant;ko;ar;cs;hu;tr");
 			WriteValue(".platform.gpu.kind", "opengl");
 #else
-			WriteValue(".platform.capabilities", "&M=Adobe iOS&R=640x960&COL=color&AR=1&OS=iPhone OS 6.1 iPhone5,1&ARCH=ARM&L=en&IME=false&PR32=true&PR64=false&LS=en;fr;de;ja;nl;it;es;pt;pt-PT;da;fi;nb;sv;ko;zh-Hans;zh-Hant;ru;pl;tr;uk;ar;hr;cs;el;he;ro;sk;th;id;ms;en-GB;ca;hu;vi");
 			WriteValue(".platform.gpu.kind", "opengles2");
 #endif
 
@@ -256,7 +256,7 @@ namespace Telemetry
 			WriteTime(".swf.start");
 
 			// write swf stats
-			WriteSWFStats(appName, 800, 600, 60, swfVersion, swfSize);
+			WriteSWFStats(appName, (int)flash.system.Capabilities.screenResolutionX, (int)flash.system.Capabilities.screenResolutionY, 60, swfVersion, swfSize);
 
 			// write memory stats
 			WriteMemoryStats();
@@ -380,7 +380,7 @@ namespace Telemetry
 		}
 
 		// starts a telemetry session and writes telemetry data over the network
-		public static bool Connect(string hostname, int port)
+		public static bool Connect(string hostname, int port, bool loadRemoteConfig = true)
 		{
 			if (!Enabled) {
 				// telemetry is not enabled
@@ -392,6 +392,11 @@ namespace Telemetry
 				// already connected...
 				Console.WriteLine("Telemetry: already connected, disconnect first");
 				return true;
+			}
+
+			if (loadRemoteConfig) {
+				// load remote configuration from telemetry tool before connecting
+				LoadRemoteConfig(hostname, port);
 			}
 
 			Console.WriteLine("Telemetry: connecting to {0}:{1}...", hostname, port);
@@ -638,16 +643,14 @@ namespace Telemetry
 		}
 
 		// the session init loads the telemetry configuration and connects
-		public static void Init()
+		public static void Init(bool needLocalConfig = false)
 		{
 			if (!Enabled) return;
 
 			// load configuration
-			if (LoadLocalConfig(ConfigFileName)) {
-				if (LoadRemoteConfig()) {
-					// if we have configuration, then connect
-					Connect();
-				}
+			if (!needLocalConfig || LoadLocalConfig(ConfigFileName)) {
+				// if we have configuration, then connect
+				Connect();
 			}
 		}
 

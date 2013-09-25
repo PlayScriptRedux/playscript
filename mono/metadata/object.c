@@ -2171,7 +2171,7 @@ mono_class_create_runtime_vtable (MonoDomain *domain, MonoClass *class, gboolean
 	mono_loader_unlock ();
 
 	/* Initialization is now complete, we can throw if the InheritanceDemand aren't satisfied */
-	if (mono_is_security_manager_active () && (class->exception_type == MONO_EXCEPTION_SECURITY_INHERITANCEDEMAND) && raise_on_error)
+	if (mono_security_enabled () && (class->exception_type == MONO_EXCEPTION_SECURITY_INHERITANCEDEMAND) && raise_on_error)
 		mono_raise_exception (mono_class_get_exception_for_failure (class));
 
 	/* make sure the parent is initialized */
@@ -2627,7 +2627,7 @@ mono_remote_class_vtable (MonoDomain *domain, MonoRemoteClass *remote_class, Mon
 		type = ((MonoReflectionType *)rp->class_to_proxy)->type;
 		klass = mono_class_from_mono_type (type);
 #ifndef DISABLE_COMf
-		if ((mono_class_is_com_object (klass) || (mono_defaults.com_object_class && klass == mono_defaults.com_object_class)) && !mono_vtable_is_remote (mono_class_vtable (mono_domain_get (), klass)))
+		if ((mono_class_is_com_object (klass) || (mono_class_get_com_object_class () && klass == mono_class_get_com_object_class ())) && !mono_vtable_is_remote (mono_class_vtable (mono_domain_get (), klass)))
 			remote_class->default_vtable = mono_class_proxy_vtable (domain, remote_class, MONO_REMOTING_TARGET_COMINTEROP);
 		else
 #endif
@@ -2750,7 +2750,7 @@ mono_object_get_virtual_method (MonoObject *obj, MonoMethod *method)
 			res = mono_marshal_get_remoting_invoke_with_check (res);
 		else {
 #ifndef DISABLE_COM
-			if (klass == mono_defaults.com_object_class || mono_class_is_com_object (klass))
+			if (klass == mono_class_get_com_object_class () || mono_class_is_com_object (klass))
 				res = mono_cominterop_get_invoke (res);
 			else
 #endif
@@ -3178,14 +3178,7 @@ mono_field_get_value_object (MonoDomain *domain, MonoClassField *field, MonoObje
 		is_static = TRUE;
 
 		if (!is_literal) {
-			vtable = mono_class_vtable (domain, field->parent);
-			if (!vtable) {
-				char *name = mono_type_get_full_name (field->parent);
-				/*FIXME extend this to use the MonoError api*/
-				g_warning ("Could not retrieve the vtable for type %s in mono_field_get_value_object", name);
-				g_free (name);
-				return NULL;
-			}
+			vtable = mono_class_vtable_full (domain, field->parent, TRUE);
 			if (!vtable->initialized)
 				mono_runtime_class_init (vtable);
 		}
@@ -6094,7 +6087,15 @@ mono_print_unhandled_exception (MonoObject *exc)
 			MonoObject *other_exc = NULL;
 			str = mono_object_to_string (exc, &other_exc);
 			if (other_exc) {
-				message = g_strdup ("Nested exception, bailing out");
+				char *original_backtrace = mono_exception_get_managed_backtrace ((MonoException*)exc);
+				char *nested_backtrace = mono_exception_get_managed_backtrace ((MonoException*)other_exc);
+				
+				message = g_strdup_printf ("Nested exception detected.\nOriginal Exception: %s\nNested exception:%s\n",
+					original_backtrace, nested_backtrace);
+
+				g_free (original_backtrace);
+				g_free (nested_backtrace);
+				free_message = TRUE;
 			} else if (str) {
 				message = mono_string_to_utf8_checked (str, &error);
 				if (!mono_error_ok (&error)) {

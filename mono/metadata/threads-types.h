@@ -184,7 +184,6 @@ void mono_thread_init_apartment_state (void) MONO_INTERNAL;
 void mono_thread_cleanup_apartment_state (void) MONO_INTERNAL;
 
 void mono_threads_set_shutting_down (void) MONO_INTERNAL;
-gboolean mono_threads_is_shutting_down (void) MONO_INTERNAL;
 
 gunichar2* mono_thread_get_name (MonoInternalThread *this_obj, guint32 *name_len) MONO_INTERNAL;
 
@@ -226,5 +225,8 @@ gpointer mono_get_special_static_data_for_thread (MonoInternalThread *thread, gu
 
 MonoException* mono_thread_resume_interruption (void) MONO_INTERNAL;
 void mono_threads_perform_thread_dump (void) MONO_INTERNAL;
+MonoThread *mono_thread_attach_full (MonoDomain *domain, gboolean force_attach) MONO_INTERNAL;
+
+void mono_thread_init_tls (void) MONO_INTERNAL;
 
 #endif /* _MONO_METADATA_THREADS_TYPES_H_ */

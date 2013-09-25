@@ -108,6 +108,27 @@ namespace Mono.CSharp {
 					"The type `{0}' cannot be declared const", t.GetSignatureForError ());
 			}
 		}
+
+		public override void Accept (StructuralVisitor visitor)
+		{
+			visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return;
+				}
+				if (visitor.Continue && this.Initializer != null && visitor.Depth >= VisitDepth.Initializers)
+					this.Initializer.Accept (visitor);
+				if (visitor.Continue && declarators != null && visitor.Depth >= VisitDepth.Initializers) {
+					foreach (var decl in declarators) {
+						if (visitor.Continue && decl.Initializer != null) {
+							decl.Initializer.Accept (visitor);
+						}
+					}
+				}
+			}
+		}
 	}
 
 	public class ConstSpec : FieldSpec

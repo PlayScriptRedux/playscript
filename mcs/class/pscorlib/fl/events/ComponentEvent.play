@@ -22,7 +22,7 @@ package fl.events {
 			super(type, bubbles, cancelable);
 		}
 
-		public const RESIZE:String = "resize";
+		public new const RESIZE:String = "resize";
 		
 	}
 

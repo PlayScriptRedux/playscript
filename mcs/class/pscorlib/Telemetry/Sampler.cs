@@ -15,30 +15,6 @@ namespace Telemetry
 {
 	internal sealed class Sampler : IDisposable
 	{
-		// TODO: this should be moved to a central place (player capabilities?)
-		enum Architecture
-		{
-			Unknown,
-			x86,
-			ARM
-		};
-
-		// TODO: this should be moved to a central place (player capabilities?)
-		static Architecture GetArchitecture()
-		{
-			#if PLATFORM_MONOMAC
-			return Architecture.x86;
-			#elif PLATFORM_MONOTOUCH
-			if (PlayScript.IOSDeviceHardware.Version.ToString().Contains("Simulator")) {
-				return Architecture.x86;
-			} else {
-				return Architecture.ARM;
-			}
-			#else
-			return Architecture.Unknown;
-			#endif
-		}
-
 		public Sampler(long timeBase, int divisor, int samplerRate, int maxCallstackDepth, int startDelay, int bufferLength = 8192)
 		{
 			mTimeBase     = timeBase;
@@ -62,17 +38,17 @@ namespace Telemetry
 			mTargetThread = mach_thread_self();
 
 			// setup architecture specific settings
-			var arch = GetArchitecture();
+			var arch = flash.system.Capabilities.cpuArchitecture;
 			switch (arch)
 			{
-			case Architecture.ARM:
+			case "ARM":
 				mThreadStateLength = 17;
 				mThreadStateFlavor = 1;
 				mRegisterPC = 15;
 				mRegisterBP = 7;
 				break;
 
-			case Architecture.x86:
+			case "x86":
 				mThreadStateLength = 32;
 				mThreadStateFlavor = 1;
 				mRegisterPC = 10;

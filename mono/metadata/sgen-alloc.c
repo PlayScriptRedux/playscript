@@ -347,6 +347,7 @@ mono_gc_try_alloc_obj_nolock (MonoVTable *vtable, size_t size)
 	TLAB_ACCESS_INIT;
 
 	size = ALIGN_UP (size);
+	SGEN_ASSERT (9, size >= sizeof (MonoObject), "Object too small");
 
 	g_assert (vtable->gc_descr);
 	if (size > SGEN_MAX_SMALL_OBJ_SIZE)
@@ -692,6 +693,7 @@ create_allocator (int atype)
 	if (!registered) {
 		mono_register_jit_icall (mono_gc_alloc_obj, "mono_gc_alloc_obj", mono_create_icall_signature ("object ptr int"), FALSE);
 		mono_register_jit_icall (mono_gc_alloc_vector, "mono_gc_alloc_vector", mono_create_icall_signature ("object ptr int int"), FALSE);
+		mono_register_jit_icall (mono_gc_alloc_string, "mono_gc_alloc_string", mono_create_icall_signature ("object ptr int int32"), FALSE);
 		registered = TRUE;
 	}
 
@@ -704,14 +706,23 @@ create_allocator (int atype)
 	} else if (atype == ATYPE_VECTOR) {
 		num_params = 2;
 		name = "AllocVector";
+	} else if (atype == ATYPE_STRING) {
+		num_params = 2;
+		name = "AllocString";
 	} else {
 		g_assert_not_reached ();
 	}
 
 	csig = mono_metadata_signature_alloc (mono_defaults.corlib, num_params);
-	csig->ret = &mono_defaults.object_class->byval_arg;
-	for (i = 0; i < num_params; ++i)
-		csig->params [i] = &mono_defaults.int_class->byval_arg;
+	if (atype == ATYPE_STRING) {
+		csig->ret = &mono_defaults.string_class->byval_arg;
+		csig->params [0] = &mono_defaults.int_class->byval_arg;
+		csig->params [1] = &mono_defaults.int32_class->byval_arg;
+	} else {
+		csig->ret = &mono_defaults.object_class->byval_arg;
+		for (i = 0; i < num_params; ++i)
+			csig->params [i] = &mono_defaults.int_class->byval_arg;
+	}
 
 	mb = mono_mb_new (mono_defaults.object_class, name, MONO_WRAPPER_ALLOC);
 
@@ -785,6 +796,16 @@ create_allocator (int atype)
 		mono_mb_set_clauses (mb, 1, clause);
 		mono_mb_patch_branch (mb, pos_leave);
 		/* end catch */
+	} else if (atype == ATYPE_STRING) {
+		/* a string allocator method takes the args: (vtable, len) */
+		/* bytes = (sizeof (MonoString) + ((len + 1) * 2)); */
+		mono_mb_emit_ldarg (mb, 1);
+		mono_mb_emit_icon (mb, 1);
+		mono_mb_emit_byte (mb, MONO_CEE_SHL);
+		//WE manually fold the above + 2 here
+		mono_mb_emit_icon (mb, sizeof (MonoString) + 2);
+		mono_mb_emit_byte (mb, CEE_ADD);
+		mono_mb_emit_stloc (mb, size_var);
 	} else {
 		g_assert_not_reached ();
 	}
@@ -849,6 +870,9 @@ create_allocator (int atype)
 	} else if (atype == ATYPE_VECTOR) {
 		mono_mb_emit_ldarg (mb, 1);
 		mono_mb_emit_icall (mb, mono_gc_alloc_vector);
+	} else if (atype == ATYPE_STRING) {
+		mono_mb_emit_ldarg (mb, 1);
+		mono_mb_emit_icall (mb, mono_gc_alloc_string);
 	} else {
 		g_assert_not_reached ();
 	}
@@ -883,6 +907,22 @@ create_allocator (int atype)
 #else
 		mono_mb_emit_byte (mb, CEE_STIND_I4);
 #endif
+	} else 	if (atype == ATYPE_STRING) {
+		/* need to set length and clear the last char */
+		/* s->length = len; */
+		mono_mb_emit_ldloc (mb, p_var);
+		mono_mb_emit_icon (mb, G_STRUCT_OFFSET (MonoString, length));
+		mono_mb_emit_byte (mb, MONO_CEE_ADD);
+		mono_mb_emit_ldarg (mb, 1);
+		mono_mb_emit_byte (mb, MONO_CEE_STIND_I4);
+		/* s->chars [len] = 0; */
+		mono_mb_emit_ldloc (mb, p_var);
+		mono_mb_emit_ldloc (mb, size_var);
+		mono_mb_emit_icon (mb, 2);
+		mono_mb_emit_byte (mb, MONO_CEE_SUB);
+		mono_mb_emit_byte (mb, MONO_CEE_ADD);
+		mono_mb_emit_icon (mb, 0);
+		mono_mb_emit_byte (mb, MONO_CEE_STIND_I2);
 	}
 
 	/*
@@ -915,10 +955,9 @@ create_allocator (int atype)
  * 	object allocate (MonoVTable *vtable)
  */
 MonoMethod*
-mono_gc_get_managed_allocator (MonoVTable *vtable, gboolean for_box)
+mono_gc_get_managed_allocator (MonoClass *klass, gboolean for_box)
 {
 #ifdef MANAGED_ALLOCATION
-	MonoClass *klass = vtable->klass;
 
 #ifdef HAVE_KW_THREAD
 	int tlab_next_offset = -1;
@@ -934,16 +973,17 @@ mono_gc_get_managed_allocator (MonoVTable *vtable, gboolean for_box)
 		return NULL;
 	if (klass->instance_size > tlab_size)
 		return NULL;
+
 	if (klass->has_finalize || mono_class_is_marshalbyref (klass) || (mono_profiler_get_events () & MONO_PROFILE_ALLOCATIONS))
 		return NULL;
 	if (klass->rank)
 		return NULL;
 	if (klass->byval_arg.type == MONO_TYPE_STRING)
-		return NULL;
+		return mono_gc_get_managed_allocator_by_type (ATYPE_STRING);
 	if (collect_before_allocs)
 		return NULL;
-
-	if (ALIGN_TO (klass->instance_size, ALLOC_ALIGN) < MAX_SMALL_OBJ_SIZE)
+	/* Generic classes have dynamic field and can go above MAX_SMALL_OBJ_SIZE. */
+	if (ALIGN_TO (klass->instance_size, ALLOC_ALIGN) < MAX_SMALL_OBJ_SIZE && !mono_class_is_open_constructed_type (&klass->byval_arg))
 		return mono_gc_get_managed_allocator_by_type (ATYPE_SMALL);
 	else
 		return mono_gc_get_managed_allocator_by_type (ATYPE_NORMAL);

@@ -63,6 +63,11 @@ namespace Mono.CSharp
 
 			return this.Type != null;
 		}
+			
+		public virtual FullNamedExpression GetFieldTypeExpression (FieldBase field)
+		{
+			return new TypeExpression (field.MemberType, Name.Location); 
+		}
 	}
 
 	//
@@ -388,9 +393,9 @@ namespace Mono.CSharp
 			return fs;
 		}
 
-		public override List<TypeSpec> ResolveMissingDependencies ()
+		public override List<MissingTypeSpecReference> ResolveMissingDependencies (MemberSpec caller)
 		{
-			return memberType.ResolveMissingDependencies ();
+			return memberType.ResolveMissingDependencies (this);
 		}
 	}
 
@@ -444,8 +449,7 @@ namespace Mono.CSharp
 					GetSignatureForError ());
 			} else if (declarators != null) {
 				foreach (var d in declarators) {
-					var t = new TypeExpression (d.Type, TypeExpression.Location);
-					var f = new FixedField (Parent, t, ModFlags, new MemberName (d.Name.Value, d.Name.Location), OptAttributes);
+					var f = new FixedField (Parent, d.GetFieldTypeExpression (this), ModFlags, new MemberName (d.Name.Value, d.Name.Location), OptAttributes);
 					f.initializer = d.Initializer;
 					((ConstInitializer) f.initializer).Name = d.Name.Value;
 					f.Define ();
@@ -653,7 +657,7 @@ namespace Mono.CSharp
 					this.Initializer.Accept (visitor);
 				if (visitor.Continue && declarators != null && visitor.Depth >= VisitDepth.Initializers) {
 					foreach (var decl in declarators) {
-						if (visitor.Continue && decl.Initializer != null && decl.Initializer != null) {
+						if (visitor.Continue && decl.Initializer != null) {
 							decl.Initializer.Accept (visitor);
 						}
 					}
@@ -692,8 +696,7 @@ namespace Mono.CSharp
 
 			if (declarators != null) {
 				foreach (var d in declarators) {
-					var t = new TypeExpression (d.Type, d.Name.Location);
-					var f = new Field (Parent, t, ModFlags, new MemberName (d.Name.Value, d.Name.Location), OptAttributes);
+					var f = new Field (Parent, d.TypeExpression ?? d.GetFieldTypeExpression (this), ModFlags, new MemberName (d.Name.Value, d.Name.Location), OptAttributes);
 					if (d.Initializer != null)
 						f.initializer = d.Initializer;
 

@@ -90,8 +90,12 @@ package {
 
 	public static function trace(o1:System.Object, o2:System.Object, o3:System.Object, ...args):void {
 		if (!TraceConfig.enable) return;
-		var argsStr = System.String.Concat(args);
-		var str = System.String.Format("{0} {1} {2} {3}", o1, o2, o3, argsStr);
+		var sb = new System.Text.StringBuilder();
+		sb.AppendFormat("{0} {1} {2}", o1, o2, o3);
+		for each (var o:System.Object in args) {
+			sb.AppendFormat(" {0}", o);
+		}
+		var str = sb.ToString();
 		System.Console.WriteLine(str);
 		Telemetry.Session.WriteTrace(str);
 	}

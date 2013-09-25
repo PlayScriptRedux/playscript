@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 struct Foo {
-	public int i, j;
+	public int i, j, k, l, m, n;
 }
 
 struct GFoo<T> {
@@ -40,11 +40,17 @@ class GFoo3<T> {
 
 // FIXME: Add mixed ref/noref tests, i.e. Dictionary<string, int>
 
+#if MOBILE
+public class GSharedTests
+#else
 public class Tests
+#endif
 {
+#if !MOBILE
 	public static int Main (String[] args) {
 		return TestDriver.RunTests (typeof (Tests), args);
 	}
+#endif
 
 	[MethodImplAttribute (MethodImplOptions.NoInlining)]
 	static void gshared<T> (T [] array, int i, int j) {
@@ -173,6 +179,9 @@ public class Tests
 	}
 
 	public static int test_0_vt_unbox_any () {
+		int[] iarr = new int [16];
+		unbox_any<int> (iarr, new object [] { 12 });
+
 		Foo[] arr = new Foo [2];
 
 		object[] arr2 = new object [16];
@@ -180,6 +189,25 @@ public class Tests
 		unbox_any<Foo> (arr, arr2);
 		if (arr [0].i != 1 || arr [0].j != 2)
 			return 2;
+		return 0;
+	}
+
+	interface IFaceUnbox {
+		T Unbox<T, T2> (T t, T2 t2, object o);
+	}
+
+	class ClassUnbox : IFaceUnbox {
+		public T Unbox<T, T2> (T t, T2 t2, object o) {
+			return (T)o;
+		}
+	}
+
+	// unbox.any on a ref type in a gsharedvt method
+	public static int test_0_ref_gsharedvt_aot_unbox_any () {
+		IFaceUnbox iface = new ClassUnbox ();
+		string s = iface.Unbox<string, int> ("A", 2, "A");
+		if (s != "A")
+			return 1;
 		return 0;
 	}
 
@@ -386,7 +414,7 @@ public class Tests
 		var v2 = return_t<GFoo2<int>> (v);
 		if (v2.t != 55 || v2.t2 != 32)
 			return 6;
-		i = new Tests ().return_this_t<int> (42);
+		i = new GSharedTests ().return_this_t<int> (42);
 		if (i != 42)
 			return 7;
 		return 0;
@@ -631,6 +659,10 @@ public class Tests
 		return 0;
 	}
 
+	interface IFaceKVP {
+		T do_kvp<T> (T a);
+	}
+
 	static KeyValuePair<T1, T2> make_kvp<T1, T2> (T1 t1, T2 t2) {
 		return new KeyValuePair<T1, T2> (t1, t2);
 	}
@@ -638,16 +670,18 @@ public class Tests
 	static T2 use_kvp<T1, T2> (KeyValuePair<T1, T2> kvp) {
 		return kvp.Value;
 	}
-		
-	[MethodImplAttribute (MethodImplOptions.NoInlining)]
-	static T do_kvp<T> (T a) {
-		var t = make_kvp (a, a);
-		// argument is an instance of a vtype instantiated with gsharedvt type arguments
-		return use_kvp (t);
+
+	class ClassKVP : IFaceKVP {
+		public T do_kvp<T> (T a) {
+			var t = make_kvp (a, a);
+			// argument is an instance of a vtype instantiated with gsharedvt type arguments
+			return use_kvp (t);
+		}
 	}
 
 	public static int test_0_gsharedvt_ginstvt_constructed_arg () {
-		if (do_kvp<long> (1) != 1)
+		IFaceKVP c = new ClassKVP ();
+		if (c.do_kvp<long> (1) != 1)
 			return 1;
 		return 0;
 	}
@@ -878,11 +912,17 @@ public class Tests
 		return t.ToString ();
 	}
 
+	enum AnEnum {
+		One
+	};
+
 	public static int test_0_constrained_tostring () {
 		if (to_string<int, int> (1, 1) != "1")
 			return 1;
-		if (to_string<string, int> ("A", 1) != "A")
+		if (to_string<AnEnum, int> (AnEnum.One, 1) != "One")
 			return 2;
+		if (to_string<string, int> ("A", 1) != "A")
+			return 3;
 		return 0;
 	}
 
@@ -896,8 +936,27 @@ public class Tests
 			return 1;
 		if (get_hash<double, int> (1.0, 1) != 1.0.GetHashCode ())
 			return 2;
-		if (get_hash<string, int> ("A", 1) != "A".GetHashCode ())
+		if (get_hash<AnEnum, int> (AnEnum.One, 1) != AnEnum.One.GetHashCode ())
 			return 3;
+		if (get_hash<string, int> ("A", 1) != "A".GetHashCode ())
+			return 4;
+		return 0;
+	}
+
+	[MethodImplAttribute (MethodImplOptions.NoInlining)]
+	static bool equals<T, T2>(T t, T2 t2) {
+		return t.Equals (t);
+	}
+
+	public static int test_0_constrained_equals () {
+		if (equals<int, int> (1, 1) != true)
+			return 1;
+		if (equals<double, int> (1.0, 1) != true)
+			return 2;
+		if (equals<AnEnum, int> (AnEnum.One, 1) != true)
+			return 3;
+		if (equals<string, int> ("A", 1) != true)
+			return 4;
 		return 0;
 	}
 
@@ -1086,4 +1145,75 @@ public class Tests
 		return 0;
 	}
 
+	public class TAbstractTableItem<TC> {
+		[MethodImplAttribute (MethodImplOptions.NoInlining)]
+		public static void SetProperty<TV> () {    }
+
+		[MethodImplAttribute (MethodImplOptions.NoInlining)]
+		public static void Test () {
+			SetProperty<bool> ();
+		}
+	}
+
+	public static int test_0_gsharedvt_method_on_shared_class () {
+       TAbstractTableItem<object>.Test ();
+	   return 0;
+	}
+
+	interface IFaceBox {
+		object box<T> (T t);
+	}
+
+	class ClassBox : IFaceBox {
+		public object box<T> (T t) {
+			object o = t;
+			return o;
+		}
+	}
+
+	public static int test_0_nullable_box () {
+		IFaceBox c = new ClassBox ();
+		int i = 5;
+		object o = c.box<int?> (i);
+		if ((int)o != i)
+			return 1;
+		if (c.box<int?> (null) != null)
+			return 2;
+		long l = Int64.MaxValue - 1;
+		o = c.box<long?> (l);
+		if ((long)o != l)
+			return 3;
+		if (c.box<long?> (null) != null)
+			return 4;
+		string s = "A";
+		if (c.box<string> (s) != (object)s)
+			return 5;
+		return 0;
+	}
+
+	interface IFaceUnbox2 {
+		T unbox<T> (object o);
+	}
+
+	class ClassUnbox2 : IFaceUnbox2 {
+		public T unbox<T> (object o) {
+			return (T)o;
+		}
+	}
+
+	public static int test_0_nullable_unbox () {	
+		IFaceUnbox2 c = new ClassUnbox2 ();
+		int? i = c.unbox<int?> (5);
+		if (i != 5)
+			return 1;
+		int? j = c.unbox<int?> (null);
+		if (j != null)
+			return 2;
+		return 0;
+	}
 }
+
+#if !MOBILE
+public class GSharedTests : Tests {
+}
+#endif

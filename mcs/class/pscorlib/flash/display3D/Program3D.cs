@@ -293,14 +293,20 @@ namespace flash.display3D {
 					// vertex uniform
 					uniform.RegIndex = int.Parse (uniform.Name.Substring(2));
 					// store in vertex lookup table
-					mVertexUniformLookup[uniform.RegIndex] = uniform;
+					for (int reg=0; reg < uniform.RegCount; reg++) 
+					{
+						mVertexUniformLookup[uniform.RegIndex+reg] = uniform;
+					}
 				}
 				else if (uniform.Name.StartsWith("fc"))
 				{
 					// fragment uniform
 					uniform.RegIndex = int.Parse (uniform.Name.Substring(2));
 					// store in fragment lookup table
-					mFragmentUniformLookup[uniform.RegIndex] = uniform;
+					for (int reg=0; reg < uniform.RegCount; reg++) 
+					{
+						mFragmentUniformLookup[uniform.RegIndex+reg] = uniform;
+					}
 				}
 				else if (uniform.Name.StartsWith("sampler") && !uniform.Name.EndsWith("_alpha"))
 				{
@@ -361,8 +367,10 @@ namespace flash.display3D {
 		private int 			   mFragmentShaderId = 0;
 		private int 			   mProgramId = 0;
 
+#pragma warning disable 414		// the fields below are assigned but never used
 		private string 			   mVertexSource;
 		private string 			   mFragmentSource;
+#pragma warning restore 414
 
 		// uniform lookup tables
 		private List<Uniform>	   mUniforms = new List<Uniform>();

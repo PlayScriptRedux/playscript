@@ -159,6 +159,7 @@ static MonoClass *process_async_call_klass;
 
 static GPtrArray *wsqs;
 CRITICAL_SECTION wsqs_lock;
+static gboolean suspended;
 
 /* Hooks */
 static MonoThreadPoolFunc tp_start_func;
@@ -600,6 +601,7 @@ mono_async_invoke (ThreadPool *tp, MonoAsyncResult *ares)
 	MonoObject *res, *exc = NULL;
 	MonoArray *out_args = NULL;
 	HANDLE wait_event = NULL;
+	MonoInternalThread *thread = mono_thread_internal_current ();
 
 	if (ares->execution_context) {
 		/* use captured ExecutionContext (if available) */
@@ -612,7 +614,10 @@ mono_async_invoke (ThreadPool *tp, MonoAsyncResult *ares)
 	if (ac == NULL) {
 		/* Fast path from ThreadPool.*QueueUserWorkItem */
 		void *pa = ares->async_state;
+		/* The debugger needs this */
+		thread->async_invoke_method = ((MonoDelegate*)ares->async_delegate)->method;
 		res = mono_runtime_delegate_invoke (ares->async_delegate, &pa, &exc);
+		thread->async_invoke_method = NULL;
 	} else {
 		MonoObject *cb_exc = NULL;
 
@@ -635,7 +640,9 @@ mono_async_invoke (ThreadPool *tp, MonoAsyncResult *ares)
 		if (ac != NULL && ac->cb_method) {
 			void *pa = &ares;
 			cb_exc = NULL;
+			thread->async_invoke_method = ac->cb_method;
 			mono_runtime_invoke (ac->cb_method, ac->cb_target, pa, &cb_exc);
+			thread->async_invoke_method = NULL;
 			exc = cb_exc;
 		} else {
 			exc = NULL;
@@ -763,6 +770,7 @@ monitor_thread (gpointer unused)
 	ves_icall_System_Threading_Thread_SetName_internal (thread, mono_string_new (mono_domain_get (), "Threadpool monitor"));
 	while (1) {
 		ms = 500;
+		i = 10; //number of spurious awakes we tolerate before doing a round of rebalancing.
 		do {
 			guint32 ts;
 			ts = mono_msec_ticks ();
@@ -773,10 +781,13 @@ monitor_thread (gpointer unused)
 				break;
 			if (THREAD_WANTS_A_BREAK (thread))
 				mono_thread_interruption_checkpoint ();
-		} while (ms > 0);
+		} while (ms > 0 && i--);
 
 		if (mono_runtime_is_shutting_down ())
 			break;
+
+		if (suspended)
+			continue;
 
 		for (i = 0; i < 2; i++) {
 			ThreadPool *tp;
@@ -803,7 +814,13 @@ monitor_thread (gpointer unused)
 }
 
 void
-mono_thread_pool_init ()
+mono_thread_pool_init_tls (void)
+{
+	mono_wsq_init ();
+}
+
+void
+mono_thread_pool_init (void)
 {
 	gint threads_per_cpu = 1;
 	gint thread_count;
@@ -840,7 +857,6 @@ mono_thread_pool_init ()
 
 	InitializeCriticalSection (&wsqs_lock);
 	wsqs = g_ptr_array_sized_new (MAX (100 * cpu_count, thread_count));
-	mono_wsq_init ();
 
 #ifndef DISABLE_PERFCOUNTERS
 	async_tp.pc_nitems = init_perf_counter ("Mono Threadpool", "Work Items Added");
@@ -1084,16 +1100,22 @@ static void
 threadpool_clear_queue (ThreadPool *tp, MonoDomain *domain)
 {
 	MonoObject *obj;
-	MonoMList *other;
+	MonoMList *other = NULL;
+	MonoCQ *queue = tp->queue;
 
-	other = NULL;
-	while (mono_cq_dequeue (tp->queue, &obj)) {
+	if (!queue)
+		return;
+
+	while (mono_cq_dequeue (queue, &obj)) {
 		if (obj == NULL)
 			continue;
 		if (obj->vtable->domain != domain)
 			other = mono_mlist_prepend (other, obj);
 		threadpool_jobs_dec (obj);
 	}
+
+	if (mono_runtime_is_shutting_down ())
+		return;
 
 	while (other) {
 		threadpool_append_job (tp, (MonoObject *) mono_mlist_get_data (other));
@@ -1675,4 +1697,22 @@ mono_internal_thread_unhandled_exception (MonoObject* exc)
 		if (klass == mono_defaults.threadabortexception_class)
 		 mono_thread_internal_reset_abort (mono_thread_internal_current ());
 	}
+}
+
+/*
+ * Suspend creation of new threads.
+ */
+void
+mono_thread_pool_suspend (void)
+{
+	suspended = TRUE;
+}
+
+/*
+ * Resume creation of new threads.
+ */
+void
+mono_thread_pool_resume (void)
+{
+	suspended = FALSE;
 }

@@ -37,7 +37,7 @@ namespace PlayScript.DynamicRuntime
 		private static string GT = "gt";
 		private static string GTE = "gte";
 		private static string EQ = "eq";
-		private static string NEQ = "ne";
+//		private static string NEQ = "ne";
 //		private static string AND = "and";
 //		private static string OR = "or";
 		private static string XOR = "xor";
@@ -1411,6 +1411,8 @@ namespace PlayScript.DynamicRuntime
 				return GreaterThanOrEqualDoubleObj ((float)a, b);
 			} else if (a is uint) {
 				return GreaterThanOrEqualUIntObj ((uint)a, b);
+			} else if (a == null) {
+				return GreaterThanOrEqualIntObj(0, b);
 			} else {
 				ThrowOnInvalidOp (a, GTE);
 				return false;

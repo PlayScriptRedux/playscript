@@ -27,11 +27,11 @@ namespace PlayScript.RuntimeBinder
 	{
 		private static Dictionary<Type, object> delegates = new Dictionary<Type, object>();
 
-		private readonly string mName;
+//		private readonly string mName;
 
 		public PSIsEventBinder (CSharpBinderFlags flags, string name, Type context)
 		{
-			mName = name;
+//			mName = name;
 		}
 
 		private static bool IsEvent(CallSite site, object o)

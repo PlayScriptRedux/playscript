@@ -297,6 +297,7 @@ rm -rf %buildroot
 %_prefix/lib/mono/4.5/System.Json.Microsoft.dll
 %_prefix/lib/mono/4.5/System.Net.dll
 %_prefix/lib/mono/4.5/System.Net.Http.dll
+%_prefix/lib/mono/4.5/System.Net.Http.WebRequest.dll
 %_prefix/lib/mono/4.5/System.Numerics.dll
 %_prefix/lib/mono/4.5/System.Security.dll
 %_prefix/lib/mono/4.5/System.Threading.Tasks.Dataflow.dll
@@ -305,6 +306,10 @@ rm -rf %buildroot
 %_prefix/lib/mono/4.5/System.dll
 %_prefix/lib/mono/4.5/cscompmgd.dll
 %_prefix/lib/mono/4.5/mscorlib.dll*
+%_prefix/lib/mono/4.5/System.Windows.dll
+%_prefix/lib/mono/4.5/System.Xml.Serialization.dll
+%_prefix/lib/mono/4.5/Facades/*.dll
+%_prefix/lib/mono/4.5/Facades/*.dll.mdb
 %_prefix/lib/mono/compat-2.0/ICSharpCode.SharpZipLib.dll
 %_prefix/lib/mono/gac/Commons.Xml.Relaxng
 %_prefix/lib/mono/gac/CustomMarshalers
@@ -335,6 +340,7 @@ rm -rf %buildroot
 %_prefix/lib/mono/gac/System.IO.Compression.FileSystem
 %_prefix/lib/mono/gac/System.Net
 %_prefix/lib/mono/gac/System.Net.Http
+%_prefix/lib/mono/gac/System.Net.Http.WebRequest
 %_prefix/lib/mono/gac/System.Numerics
 %_prefix/lib/mono/gac/System.Security
 %_prefix/lib/mono/gac/System.Threading.Tasks.Dataflow
@@ -342,6 +348,8 @@ rm -rf %buildroot
 %_prefix/lib/mono/gac/System.Xml.Linq
 %_prefix/lib/mono/gac/System.Json
 %_prefix/lib/mono/gac/System.Json.Microsoft
+%_prefix/lib/mono/gac/System.Windows
+%_prefix/lib/mono/gac/System.Xml.Serialization
 %_prefix/lib/mono/gac/cscompmgd
 %_prefix/lib/mono/mono-configuration-crypto
 
@@ -1296,6 +1304,7 @@ Mono development tools.
 %_prefix/lib/mono/4.0/Microsoft.Common.targets
 %_prefix/lib/mono/4.0/Microsoft.Common.tasks
 %_prefix/lib/mono/4.0/Microsoft.VisualBasic.targets
+%_prefix/lib/mono/4.0/Microsoft.Portable.CSharp.targets
 %_prefix/lib/mono/4.0/Mono.Debugger.Soft.dll
 %_prefix/lib/mono/4.0/PEAPI.dll
 %_prefix/lib/mono/4.5/Microsoft.Build.dll
@@ -1349,6 +1358,8 @@ Mono development tools.
 %_prefix/lib/mono/gac/Mono.Debugger.Soft
 %_prefix/lib/mono/gac/PEAPI
 %_prefix/lib/mono/xbuild
+%_prefix/lib/mono/xbuild/Microsoft/Portable/v4.0/Microsoft.Portable.CSharp.targets
+%_prefix/lib/mono/xbuild/Microsoft/Portable/v4.5/Microsoft.Portable.CSharp.targets
 %_prefix/lib/mono/xbuild-frameworks
 
 %package -n monodoc-core

@@ -528,29 +528,29 @@ namespace Mono.CSharp {
 			return ms;
 		}
 
-		public override List<TypeSpec> ResolveMissingDependencies ()
+		public override List<MissingTypeSpecReference> ResolveMissingDependencies (MemberSpec caller)
 		{
-			var missing = returnType.ResolveMissingDependencies ();
+			var missing = returnType.ResolveMissingDependencies (this);
 			foreach (var pt in parameters.Types) {
-				var m = pt.GetMissingDependencies ();
+				var m = pt.GetMissingDependencies (this);
 				if (m == null)
 					continue;
 
 				if (missing == null)
-					missing = new List<TypeSpec> ();
+					missing = new List<MissingTypeSpecReference> ();
 
 				missing.AddRange (m);
 			}
 
 			if (Arity > 0) {
 				foreach (var tp in GenericDefinition.TypeParameters) {
-					var m = tp.GetMissingDependencies ();
+					var m = tp.GetMissingDependencies (this);
 
 					if (m == null)
 						continue;
 
 					if (missing == null)
-						missing = new List<TypeSpec> ();
+						missing = new List<MissingTypeSpecReference> ();
 
 					missing.AddRange (m);
 				}
@@ -684,10 +684,54 @@ namespace Mono.CSharp {
 
 			Parent.MemberCache.AddMember (this, explicit_name, spec);
 
+			ApplyAggressiveInlining ();
+
 			if (Compiler.Settings.Inlining != InliningMode.None)
 				isInlinable = Inliner.DetermineIsInlinable (Compiler, this);
 
 			return true;
+		}
+
+		/// <summary>
+		/// Checks for inline attribute and converts it to MethodImplAttribute(MethodImplOptions.AggressiveInlining)
+		/// if parsing a PlayScript file.
+		/// </summary>
+		public void ApplyAggressiveInlining ()
+		{
+			if ((this.FileType != SourceFileType.PlayScript) || (this.OptAttributes == null)
+			    || (!System.Enum.IsDefined(typeof(MethodImplOptions), "AggressiveInlining"))) {
+				return;
+			}
+
+			bool hasInlineAttribute = false;
+
+			foreach (var attr in this.OptAttributes.Attrs) {
+				if (String.Compare (attr.Name, "inline", StringComparison.OrdinalIgnoreCase) == 0) {
+					hasInlineAttribute = true;
+					break;
+				}
+			}
+
+			if (hasInlineAttribute) {
+				var system = new SimpleName ("System", Location.Null);
+				var runtime = new MemberAccess (system, "Runtime", Location.Null);
+				var compilerServices = new MemberAccess (runtime, "CompilerServices", Location.Null);
+				var methodImplOptions = new MemberAccess (compilerServices, "MethodImplOptions", Location.Null);
+
+				var args = new Arguments (0);
+				var aggressiveInlinning = new MemberAccess (methodImplOptions, "AggressiveInlining", Location.Null);
+				args.Add (new Argument (aggressiveInlinning));
+
+				var argsArray = new Arguments[2];
+				argsArray [0] = args;
+				argsArray [1] = null;
+
+				var methodImplAttribute = new MemberAccess (compilerServices, "MethodImplAttribute", Location.Null);
+				var inlineAttribute = new Attribute (null, methodImplAttribute, argsArray, Location.Null, false);
+				inlineAttribute.AttachTo (this, this);
+
+				this.OptAttributes.AddAttribute (inlineAttribute);
+			}
 		}
 
 		protected override void DoMemberTypeIndependentChecks ()
@@ -755,7 +799,8 @@ namespace Mono.CSharp {
 			if (MethodData != null)
 				MethodData.Emit (Parent);
 
-			Block = null;
+			if ((ModFlags & Modifiers.PARTIAL) == 0)
+				Block = null;
 		}
 
 		public override void EmitJs (JsEmitContext jec)
@@ -889,7 +934,7 @@ namespace Mono.CSharp {
 
 		public override void WriteDebugSymbol (MonoSymbolFile file)
 		{
-			if (MethodData != null)
+			if (MethodData != null && !IsPartialDefinition)
 				MethodData.WriteDebugSymbol (file);
 		}
 	}
@@ -905,12 +950,14 @@ namespace Mono.CSharp {
 				AllowedModifiersClass | Modifiers.ASYNC,
 				name, attrs, parameters)
 		{
+			HasNoReturnType = false;
 		}
 
 		protected Method (TypeDefinition parent, FullNamedExpression return_type, Modifiers mod, Modifiers amod,
 					MemberName name, ParametersCompiled parameters, Attributes attrs)
 			: base (parent, return_type, mod, amod, name, attrs, parameters)
 		{
+			HasNoReturnType = false;
 		}
 
 		#region Properties
@@ -933,6 +980,8 @@ namespace Mono.CSharp {
 			}
 		}
 
+		public bool HasNoReturnType { get; set; }
+
 		#endregion
 
 		public override void Accept (StructuralVisitor visitor)
@@ -944,7 +993,7 @@ namespace Mono.CSharp {
 					visitor.Skip = false;
 					return;
 				}
-				if (visitor.Continue && visitor.Depth >= VisitDepth.MethodBodies)
+				if (visitor.Continue && visitor.Depth >= VisitDepth.MethodBodies && this.block != null)
 					this.block.Accept (visitor);
 			}
 		}
@@ -1412,9 +1461,6 @@ namespace Mono.CSharp {
 					}
 				}
 
-				if (IsExplicitImpl)
-					MethodData.DefineOverride (Parent);
-
 				if (block != null && block.StateMachine is AsyncTaskStorey) {
 					var psm = Module.PredefinedAttributes.AsyncStateMachine;
 					
@@ -1725,7 +1771,7 @@ namespace Mono.CSharp {
 			visitor.Visit (this);
 
 			if (visitor.AutoVisit) {
-				if (visitor.Continue && visitor.Depth >= VisitDepth.MethodBodies)
+				if (visitor.Continue && visitor.Depth >= VisitDepth.MethodBodies && this.block != null)
 					this.block.Accept (visitor);
 			}
 		}
@@ -2292,7 +2338,7 @@ namespace Mono.CSharp {
 			return true;
 		}
 
-		public void DefineOverride (TypeDefinition container)
+		void DefineOverride (TypeDefinition container)
 		{
 			if (implementing == null)
 				return;
@@ -2407,7 +2453,7 @@ namespace Mono.CSharp {
 					visitor.Skip = false;
 					return;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && this.block != null)
 					this.block.Accept (visitor);
 			}
 		}
@@ -2808,7 +2854,7 @@ namespace Mono.CSharp {
 					visitor.Skip = false;
 					return;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && this.block != null)
 					this.block.Accept (visitor);
 			}
 		}

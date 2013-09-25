@@ -134,12 +134,14 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.GetMemberBinder_Resolve_Invoked);
 
 			// resolve as property
-			var property = otype.GetProperty(mName);
+			// TODO: we allow access to non-public properties for simplicity,
+			// should cleanup to check access levels
+			var property = otype.GetProperty(mName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
 			if (property != null)
 			{
 				// found property
 				var getter = property.GetGetMethod();
-				if (getter != null && getter.IsPublic && getter.IsStatic == isStatic) 
+				if (getter != null && getter.IsStatic == isStatic)
 				{
 					// setup binding to property
 					mType     = otype;
@@ -155,11 +157,13 @@ namespace PlayScript.DynamicRuntime
 			}
 
 			// resolve as field
-			var field = otype.GetField(mName);
+			// TODO: we allow access to non-public fields for simplicity,
+			// should cleanup to check access levels
+			var field = otype.GetField(mName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
 			if (field != null)
 			{
 				// found field
-				if (field.IsPublic && field.IsStatic == isStatic) {
+				if (field.IsStatic == isStatic) {
 					// setup binding to field
 					mType     = otype;
 					mPreviousFunc = null;

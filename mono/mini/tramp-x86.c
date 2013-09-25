@@ -40,16 +40,16 @@ gpointer
 mono_arch_get_unbox_trampoline (MonoMethod *m, gpointer addr)
 {
 	guint8 *code, *start;
-	int this_pos = 4;
+	int this_pos = 4, size = NACL_SIZE(16, 32);
 	MonoDomain *domain = mono_domain_get ();
 
-	start = code = mono_domain_code_reserve (domain, 16);
+	start = code = mono_domain_code_reserve (domain, size);
 
 	x86_alu_membase_imm (code, X86_ADD, X86_ESP, this_pos, sizeof (MonoObject));
 	x86_jump_code (code, addr);
-	g_assert ((code - start) < 16);
+	g_assert ((code - start) < size);
 
-	nacl_domain_code_validate (domain, &start, 16, &code);
+	nacl_domain_code_validate (domain, &start, size, &code);
 
 	return start;
 }
@@ -62,7 +62,7 @@ mono_arch_get_static_rgctx_trampoline (MonoMethod *m, MonoMethodRuntimeGenericCo
 
 	MonoDomain *domain = mono_domain_get ();
 
-	buf_len = 10;
+	buf_len = NACL_SIZE (10, 32);
 
 	start = code = mono_domain_code_reserve (domain, buf_len);
 
@@ -554,7 +554,7 @@ mono_arch_get_nullified_class_init_trampoline (MonoTrampInfo **info)
 	mono_arch_flush_icache (buf, code - buf);
 
 	if (info)
-		*info = mono_tramp_info_create (g_strdup_printf ("nullified_class_init_trampoline"), buf, code - buf, NULL, NULL);
+		*info = mono_tramp_info_create ("nullified_class_init_trampoline", buf, code - buf, NULL, NULL);
 
 	if (mono_jit_map_is_enabled ())
 		mono_emit_jit_tramp (buf, code - buf, "nullified_class_init_trampoline");
@@ -682,8 +682,11 @@ mono_arch_create_rgctx_lazy_fetch_trampoline (guint32 slot, MonoTrampInfo **info
 
 	g_assert (code - buf <= tramp_size);
 
-	if (info)
-		*info = mono_tramp_info_create (mono_get_rgctx_fetch_trampoline_name (slot), buf, code - buf, ji, unwind_ops);
+	if (info) {
+		char *name = mono_get_rgctx_fetch_trampoline_name (slot);
+		*info = mono_tramp_info_create (name, buf, code - buf, ji, unwind_ops);
+		g_free (name);
+	}
 
 	return buf;
 }
@@ -782,7 +785,7 @@ mono_arch_create_generic_class_init_trampoline (MonoTrampInfo **info, gboolean a
 	nacl_global_codeman_validate (&buf, tramp_size, &code);
 
 	if (info)
-		*info = mono_tramp_info_create (g_strdup_printf ("generic_class_init_trampoline"), buf, code - buf, ji, unwind_ops);
+		*info = mono_tramp_info_create ("generic_class_init_trampoline", buf, code - buf, ji, unwind_ops);
 
 	return buf;
 }
@@ -931,7 +934,7 @@ mono_arch_create_monitor_enter_trampoline (MonoTrampInfo **info, gboolean aot)
 	nacl_global_codeman_validate (&buf, tramp_size, &code);
 
 	if (info)
-		*info = mono_tramp_info_create (g_strdup_printf ("monitor_enter_trampoline"), buf, code - buf, ji, unwind_ops);
+		*info = mono_tramp_info_create ("monitor_enter_trampoline", buf, code - buf, ji, unwind_ops);
 
 	return buf;
 }
@@ -1046,7 +1049,7 @@ mono_arch_create_monitor_exit_trampoline (MonoTrampInfo **info, gboolean aot)
 	g_assert (code - buf <= tramp_size);
 
 	if (info)
-		*info = mono_tramp_info_create (g_strdup_printf ("monitor_exit_trampoline"), buf, code - buf, ji, unwind_ops);
+		*info = mono_tramp_info_create ("monitor_exit_trampoline", buf, code - buf, ji, unwind_ops);
 
 	return buf;
 }

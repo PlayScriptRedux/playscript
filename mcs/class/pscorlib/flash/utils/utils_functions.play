@@ -16,6 +16,7 @@ package flash.utils {
 
 	import System.AppDomain;
 	import System.Reflection.*;
+	import System.Collections.Generic.*;
 
 	public function clearInterval(id:uint):void {
 		Timer.clearInterval(id);
@@ -32,8 +33,22 @@ package flash.utils {
 	public function escapeMultiByte(value:String):String {
 		throw new System.NotImplementedException();
 	}
-	
-	public function getDefinitionByName(name:String):Object {
+
+	internal class Internal
+	{
+		internal static var sCachedDefinitions:Dictionary.<String, System.Type>  = new Dictionary.<String, System.Type>();
+	}
+
+	public function getDefinitionByName(name:String):System.Type {
+		var type:System.Type;
+		if (Internal.sCachedDefinitions.TryGetValue(name, out type) == false) {
+			type = getDefinitionByNamePrivate(name);
+			Internal.sCachedDefinitions.Add(name, type);
+		}
+		return type;
+	}
+
+	internal function getDefinitionByNamePrivate(name:String):System.Type {
 		// There are a some types that we have to lookup explictly as we are aliasing them implicitly
 		// Note that as typeof() is not supported in PlayScript, we are using the slow String lookup.
 		switch (name) {
@@ -46,10 +61,6 @@ package flash.utils {
 		}
 
 		name = name.Replace("::", ".");
-
-		// TODO: We probably should add some caching at some point.
-		// In most cases, user code is probably going to look up the same code over and over (like JSON).
-
 		var alternativeName:String = "_root." + name;
 
 		// we must iterate over all assemblies because Type.GetType(..) only works on the current assembly
