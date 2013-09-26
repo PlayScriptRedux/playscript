@@ -1431,6 +1431,10 @@ namespace PlayScript.DynamicRuntime
 			{
 				return false;
 			}
+			if (a is string)
+			{
+				return EqualityStringNumeric ((string)a, b);
+			}
 			return Convert.ToDouble(a) == (double)b;	// Should we compare with an epsilon here?
 		}
 
@@ -1445,6 +1449,10 @@ namespace PlayScript.DynamicRuntime
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return false;
+			}
+			if (b is string)
+			{
+				return EqualityStringNumeric ((string)b, a);
 			}
 			return (double)a == Convert.ToDouble(b);	// Should we compare with an epsilon here?
 		}
@@ -1461,6 +1469,10 @@ namespace PlayScript.DynamicRuntime
 			{
 				return false;
 			}
+			if (a is string)
+			{
+				return EqualityStringNumeric ((string)a, b);
+			}
 			return Convert.ToDouble(a) == (double)b;	// Should we compare with an epsilon here?
 		}
 
@@ -1475,6 +1487,10 @@ namespace PlayScript.DynamicRuntime
 			if ((b == null) || (b == PlayScript.Undefined._undefined))
 			{
 				return false;
+			}
+			if (b is string)
+			{
+				return EqualityStringNumeric ((string)b, a);
 			}
 			return (double)a == Convert.ToDouble(b);	// Should we compare with an epsilon here?
 		}
@@ -1491,6 +1507,10 @@ namespace PlayScript.DynamicRuntime
 			{
 				return false;
 			}
+			if (a is string)
+			{
+				return EqualityStringNumeric ((string)a, b);
+			}
 			return Convert.ToDouble(a) == b;	// Should we compare with an epsilon here?
 		}
 
@@ -1506,6 +1526,10 @@ namespace PlayScript.DynamicRuntime
 			{
 				return false;
 			}
+			if (b is string)
+			{
+				return EqualityStringNumeric ((string)b, a);
+			}
 			return a == Convert.ToDouble(b);	// Should we compare with an epsilon here?
 		}
 
@@ -1514,7 +1538,9 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
 
 			if (a is string) {
-				return String.CompareOrdinal((string)a, b) == 0;
+				return String.CompareOrdinal ((string)a, b) == 0;
+			} else if (IsNumeric(a)) {
+				return EqualityStringNumeric (b, a);
 			} else {
 				ThrowOnInvalidOp (a, EQ);
 				return false;
@@ -1526,9 +1552,11 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
 
 			if (b is string) {
-				return String.CompareOrdinal(a, (string)b) == 0;
-			} else if (b == null) {
+				return String.CompareOrdinal (a, (string)b) == 0;
+			} else if ((b == null) || (b == PlayScript.Undefined._undefined)) {
 				return a == null;
+			} else if (IsNumeric(b)) {
+				return EqualityStringNumeric (a, b);
 			} else {
 				ThrowOnInvalidOp (b, EQ);
 				return false;
@@ -1630,6 +1658,19 @@ namespace PlayScript.DynamicRuntime
 		public static bool InequalityObjObj (object a, object b)
 		{
 			return !EqualityObjObj(a, b);
+		}
+
+		private static bool EqualityStringNumeric (string a, dynamic b)
+		{
+			double value;
+			if (Double.TryParse (a, out value))
+			{
+				return value == (double)b;
+			}
+			else
+			{
+				return false;
+			}
 		}
 
 		private static bool IsNumeric (object a)
