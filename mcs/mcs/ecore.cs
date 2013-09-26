@@ -7132,6 +7132,15 @@ namespace Mono.CSharp {
 				return false;
 			}
 
+			//
+			// We provide a mechanism to use single precision floats instead of
+			// doubles for the PlayScript Number type via the [NumberIsFloat]
+			// attribute. For VarExpr types we must do the conversion from double
+			// to float here.
+			//
+			if (ec.PsNumberIsFloat && type.BuiltinType == BuiltinTypeSpec.Type.Double)
+				type = ec.BuiltinTypes.Float;
+
 			eclass = ExprClass.Variable;
 			return true;
 		}
