@@ -324,13 +324,12 @@ namespace Mono.CSharp
 					}
 					TypeSpec elemType = elem.Type;
 					if (vectorType == null) {
-						if (const_type == null) {
-							const_type = elemType;
-							if (const_type == null) {
-								is_const_init = false;
-								break;
-							}
+						if (elemType == null) {
+							is_const_init = false;
+							break;
 						}
+						if (const_type == null)
+							const_type = BuiltinTypeSpec.IsPrimitiveType (elemType) ? elemType : rc.BuiltinTypes.Object;
 						if (const_type != elemType) {
 							if (((const_type == rc.BuiltinTypes.Int || const_type == rc.BuiltinTypes.UInt) && elemType == rc.BuiltinTypes.Double) ||
 								(const_type == rc.BuiltinTypes.Double && (elemType == rc.BuiltinTypes.Int || elemType == rc.BuiltinTypes.UInt))) {
