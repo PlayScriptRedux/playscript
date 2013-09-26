@@ -1,4 +1,5 @@
 ./AssemblyInfo.cs
+./flash/display/BitmapData.cs
 ../pscorlib/AllowDynamicAttribute.cs
 ../pscorlib/Amf/Amf3ClassDef.cs
 ../pscorlib/Amf/Amf3Object.cs

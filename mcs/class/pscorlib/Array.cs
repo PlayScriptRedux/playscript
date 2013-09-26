@@ -207,6 +207,11 @@ namespace _root
 			mList.expand((uint)size);
 		}
 
+		public Array(string s)
+		{
+			mList.push (s);
+		}
+
 		public Array(object arg1, params object[] args)
 		{
 			if (args.Length == 0 && (arg1 is int || arg1 is uint || arg1 is double)) {

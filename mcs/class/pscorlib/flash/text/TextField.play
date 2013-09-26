@@ -68,7 +68,19 @@ package flash.text {
 
  	 	public property condenseWhite : Boolean { get; set; }
 
- 	 	public property defaultTextFormat : TextFormat { get; set; }
+ 	 	public property defaultTextFormat : TextFormat { 
+			get {
+				if (mTextFormat == null) {
+					mTextFormat = new TextFormat();
+					mDirty = true;
+				}
+				return mTextFormat;
+			}
+			set {
+				mTextFormat = value;
+				mDirty = true;
+			}
+		}
 
  	 	public property displayAsPassword : Boolean { get; set; }
 
@@ -244,13 +256,17 @@ package flash.text {
 #if PLATFORM_MONOTOUCH
 				var format:flash.text.TextFormat = defaultTextFormat;
 				var font:UIFont = UIFont.FromName(format.font, float(Number(format.size)) );
+				if (font == null) {
+					font = UIFont.FromName("Verdana", float(Number(format.size)) );
+				}
 				if (font != null)
 				{
-//					// $$TODO handle wordwrap and single line
-//					if (!wordWrap || !multiline) 
-//						throw new System.NotImplementedException();
-
-					var size:System.Drawing.SizeF = (new NSString(text)).StringSize(font, float(width), UILineBreakMode.WordWrap); 
+					var size:System.Drawing.SizeF;
+					if (this.multiline) {
+						size = (new NSString(text)).StringSize(font, float(width), this.wordWrap ? UILineBreakMode.WordWrap : UILineBreakMode.CharacterWrap); 
+					} else {
+						size = (new NSString(text)).StringSize(font);
+					}
 					mTextWidth  = size.Width;
 					mTextHeight = size.Height;
 				}
@@ -303,6 +319,7 @@ package flash.text {
 		private var mText:String;
 		private var mTextWidth:Number;
 		private var mTextHeight:Number;
+		private var mTextFormat:TextFormat;
 	
 	}
 
