@@ -24,7 +24,7 @@ using System.Diagnostics;
 namespace flash.utils
 {
 
-#if !PERFORMANCE_MODE
+#if PERFORMANCE_MODE
 
 	internal static class HashPrimeNumbers
 	{

@@ -25,7 +25,7 @@ using PlayScript;
 namespace _root
 {
 	
-	#if !PERFORMANCE_MODE
+	#if PERFORMANCE_MODE
 
 	// this class is used to display a custom view of the vector values to the debugger
 	// TODO: we need to make these elements editable 
