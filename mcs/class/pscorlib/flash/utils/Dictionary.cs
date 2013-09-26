@@ -1,3 +1,7 @@
+#if !PERFORMANCE_MODE
+#define PERFORMANCE_MODE
+#endif
+
 // Copyright 2013 Zynga Inc.
 //	
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -112,6 +116,7 @@ namespace flash.utils
 		public int Next;
 	}
 
+	[DynamicClass]
 	[ComVisible(false)]
 	[Serializable]
 	[DebuggerDisplay ("Count={Count}")]
@@ -1263,6 +1268,7 @@ namespace flash.utils
 
 	}
 
+	[DynamicClass]
 	[DebuggerTypeProxy (typeof (DictionaryDebugView))]
 	public class Dictionary : Dictionary<object, object>, IDynamicClass {
 
