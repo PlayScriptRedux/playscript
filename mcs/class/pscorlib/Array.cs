@@ -25,7 +25,7 @@ using PlayScript;
 namespace _root
 {
 	
-	#if PERFORMANCE_MODE
+	#if !PERFORMANCE_MODE
 
 	// this class is used to display a custom view of the vector values to the debugger
 	// TODO: we need to make these elements editable 
@@ -60,7 +60,7 @@ namespace _root
 
 		int IList.Add(object value)
 		{
-			return push (value as dynamic);
+			return (int) push (value);
 		}
 
 		void IList.Clear()
@@ -70,12 +70,12 @@ namespace _root
 
 		bool IList.Contains(object value)
 		{
-			return this.indexOf((dynamic)value) >= 0;
+			return this.indexOf(value) >= 0;
 		}
 
 		int IList.IndexOf(object value)
 		{
-			return this.indexOf((dynamic)value);
+			return this.indexOf(value);
 		}
 
 		void IList.Insert(int index, object value)
@@ -110,7 +110,7 @@ namespace _root
 				return (object)this[index];
 			}
 			set {
-				this[index] = (dynamic)value;
+				this[index] = value;
 			}
 		}
 
@@ -151,13 +151,13 @@ namespace _root
 		public const uint RETURNINDEXEDARRAY = 8;
 		public const uint UNIQUESORT = 4;
 
-		private dynamic[] mArray;
+		private object[] mArray;
 		private uint mCount;
 		private bool mFixed = false;
 		private PlayScript.IDynamicClass __dynamicProps = null;		// By default it is not created as it is not commonly used (nor a good practice).
 																	// We create it only if there is a dynamic set.
 
-		private static dynamic[] sEmptyArray = new dynamic[0];
+		private static object[] sEmptyArray = new object[0];
 
 		//
 		// Properties
@@ -193,7 +193,7 @@ namespace _root
 
 		public Array(Array a)
 		{
-			mArray = new dynamic[a.length];
+			mArray = new object[a.length];
 			this.append((IEnumerable)a);
 		}
 
@@ -206,7 +206,7 @@ namespace _root
 		public Array(uint length)
 		{
 			if (length != 0)
-				mArray = new dynamic[(int)length];
+				mArray = new object[(int)length];
 			else
 				mArray = sEmptyArray;
 			mCount = length;
@@ -215,7 +215,7 @@ namespace _root
 		public Array(int length)
 		{
 			if (length != 0)
-				mArray = new dynamic[(int)length];
+				mArray = new object[(int)length];
 			else
 				mArray = sEmptyArray;
 			mCount = (uint)length;
@@ -224,7 +224,7 @@ namespace _root
 		public Array(double length)
 		{
 			if (length != 0)
-				mArray = new dynamic[(int)length];
+				mArray = new object[(int)length];
 			else
 				mArray = sEmptyArray;
 			mCount = (uint)length;
@@ -245,7 +245,7 @@ namespace _root
 
 		public Array(IList a)
 		{
-			mArray = new dynamic[a.Count];
+			mArray = new object[a.Count];
 			this.append((IEnumerable)a);
 		}
 
@@ -264,7 +264,7 @@ namespace _root
 				#else
 				if ((i >= mCount) || (i < 0))
 				{
-					return default(dynamic);
+					return null;
 				}
 				#endif
 				return mArray[i];
@@ -283,7 +283,7 @@ namespace _root
 					expand((uint)(i+1));
 				}
 				#endif
-				mArray[i] = value;
+				mArray[i] = (object)value;
 			}
 		}
 
@@ -302,7 +302,7 @@ namespace _root
 				#else
 				if (i >= mCount)
 				{
-					return default(dynamic);
+					return null;
 				}
 				#endif
 				return mArray[(int)i];
@@ -321,7 +321,7 @@ namespace _root
 					expand((uint)(i+1));
 				}
 				#endif
-				mArray[(int)i] = value;
+				mArray[(int)i] = (object)value;
 			}
 		}
 
@@ -329,32 +329,32 @@ namespace _root
 		{
 			get {
 				if (__dynamicProps != null) {
-					return default(dynamic);				// default(dynamic) as we can't return Undefined
+					return null;												// default(dynamic) as we can't return Undefined
 				}
 				else {
-					dynamic result = __dynamicProps.__GetDynamicValue(name);	// The instance that was set was only of dynamic type (or undefined)
+					object result = __dynamicProps.__GetDynamicValue(name);	// The instance that was set was only of dynamic type (or undefined)
 					if (result == PlayScript.Undefined._undefined)	{
-						return default(dynamic);				// default(dynamic) as we can't return Undefined
+						return null;											// default(dynamic) as we can't return Undefined
 					}
-					return (dynamic)result;
+					return result;
 				}
 			}
 			set {
 				if (__dynamicProps == null) {
 					__dynamicProps = new PlayScript.DynamicProperties();	// Create the dynamic propertties only on the first set usage
 				}
-				__dynamicProps.__SetDynamicValue(name, value);					// This will only inject dynamic type instances.
+				__dynamicProps.__SetDynamicValue(name, (object)value);					// This will only inject dynamic type instances.
 			}
 		}
 
-		public dynamic[] ToArray()
+		public object[] ToArray()
 		{
-			dynamic[] ret = new dynamic[mCount];
+			object[] ret = new object[mCount];
 			System.Array.Copy(mArray, ret, mCount);
 			return ret;
 		}
 
-		public dynamic[] _GetInnerArray()
+		public object[] _GetInnerArray()
 		{
 			return mArray;
 		}
@@ -375,18 +375,18 @@ namespace _root
 				if (newSize == 0) newSize = 4;
 				while (newSize < size)
 					newSize = newSize * 2;
-				dynamic[] newArray = new dynamic[newSize];
+				object[] newArray = new object[newSize];
 				System.Array.Copy(mArray, newArray, mArray.Length);
 				mArray = newArray;
 			}
 		}
 
-		public void Add(dynamic value) 
+		public void Add(object value) 
 		{
 			this.push (value);
 		}
 
-		private void _Insert(int index, dynamic value) 
+		private void _Insert(int index, object value) 
 		{
 			if (index > mCount) throw new NotImplementedException();
 
@@ -409,10 +409,10 @@ namespace _root
 				throw new IndexOutOfRangeException();
 
 			if (index == (int)mCount - 1) {
-				mArray[index] = default(dynamic);
+				mArray[index] = null;
 			} else {
 				System.Array.Copy (mArray, index + 1, mArray, index, (int)mCount - index - 1);
-				mArray[mCount - 1] = default(dynamic);
+				mArray[mCount - 1] = null;
 			}
 			mCount--;
 		}
@@ -444,15 +444,15 @@ namespace _root
 			}
 
 			foreach (var item in items) {
-				this.Add ((dynamic)item);
+				this.Add (item);
 			}
 		}
 
 
-		public void append(IEnumerable<dynamic> items)
+		public void append(IEnumerable<object> items)
 		{
-			if (items is IList<dynamic>) {
-				var list = (items as IList<dynamic>);
+			if (items is IList<object>) {
+				var list = (items as IList<object>);
 				EnsureCapacity(mCount + (uint)list.Count);
 			}
 
@@ -492,9 +492,9 @@ namespace _root
 //			// concat all supplied vecots
 //			foreach (var o in args)
 //			{
-//				if (o is IEnumerable<dynamic>)
+//				if (o is IEnumerable<object>)
 //				{
-//					v.append(o as IEnumerable<dynamic>);
+//					v.append(o as IEnumerable<object>);
 //				} 
 //				else
 //				{
@@ -504,17 +504,17 @@ namespace _root
 //			return v;
 //		}
 
-		public bool every(Delegate callback, dynamic thisObject = null) 
+		public bool every(Delegate callback, object thisObject = null) 
 		{
 			throw new System.NotImplementedException();
 		}
 
-		public Array sort(dynamic sortBehavior = null) 
+		public Array sort(object sortBehavior = null) 
 		{
-			IComparer<dynamic> comparer;
-			if (sortBehavior is System.Func<dynamic, dynamic,int>)
+			IComparer<object> comparer;
+			if (sortBehavior is System.Func<object, object,int>)
 			{
-				System.Func<dynamic, dynamic,int> func = (System.Func<dynamic, dynamic,int>)sortBehavior;
+				System.Func<object, object,int> func = (System.Func<object, object,int>)sortBehavior;
 				// By definition, we know that the vector only contains type T,
 				// so if the function passed has the exact expected signature, we use the fast path
 				comparer = new TypedFunctionSorter(func);
@@ -700,12 +700,12 @@ namespace _root
 		}
 
 
-		public Array filter(Delegate callback, dynamic thisObject = null) 
+		public Array filter(Delegate callback, object thisObject = null) 
 		{
 			throw new System.NotImplementedException();
 		}
 
-		public void forEach(Delegate callback, dynamic thisObject = null) 
+		public void forEach(Delegate callback, object thisObject = null) 
 		{
 			if (thisObject != null)
 			{
@@ -717,7 +717,7 @@ namespace _root
 			}
 		}
 
-		public int indexOf(dynamic searchElement)
+		public int indexOf(object searchElement)
 		{
 			for (var i = 0; i < mCount; i++) {
 				if (mArray [i] == (object)searchElement) {
@@ -727,7 +727,7 @@ namespace _root
 			return -1;
 		}
 
-		public int indexOf(dynamic searchElement, int fromIndex) 
+		public int indexOf(object searchElement, int fromIndex) 
 		{
 			for (var i = fromIndex; i < mCount; i++) {
 				if (mArray [i] == (object)searchElement) {
@@ -755,12 +755,12 @@ namespace _root
 			return sb.ToString();
 		}
 
-		public int lastIndexOf(dynamic searchElement, int fromIndex = 0x7fffffff) 
+		public int lastIndexOf(object searchElement, int fromIndex = 0x7fffffff) 
 		{
 			throw new System.NotImplementedException();
 		}
 
-		public Array map(Delegate callback, dynamic thisObject = null) 
+		public Array map(Delegate callback, object thisObject = null) 
 		{
 			throw new System.NotImplementedException();
 		}
@@ -770,18 +770,18 @@ namespace _root
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
 			if (mCount == 0) {
-				return default(dynamic);
+				return null;
 			}
-			dynamic val = mArray[mCount - 1];
+			object val = mArray[mCount - 1];
 			mCount--;
-			mArray[mCount] = default(dynamic);
+			mArray[mCount] = null;
 			return val;
 		}
 
 		#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		#endif
-		public uint push(dynamic value)
+		public uint push(object value)
 		{
 			#if !PERFORMANCE_MODE || DEBUG
 			if (mFixed)
@@ -794,7 +794,7 @@ namespace _root
 			return mCount;
 		}
 
-		public uint push(dynamic value, params dynamic[] args) 
+		public uint push(object value, params object[] args) 
 		{
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
@@ -825,9 +825,9 @@ namespace _root
 
 			if (mCount == 0)
 			{
-				return default(dynamic);
+				return null;
 			}
-			dynamic v = this[0];
+			object v = this[0];
 			_RemoveAt(0);
 			return v;
 		}
@@ -850,24 +850,24 @@ namespace _root
 			return result;
 		}
 
-		public bool some(Delegate callback, dynamic thisObject = null) 
+		public bool some(Delegate callback, object thisObject = null) 
 		{
 			throw new System.NotImplementedException();
 		}
 
 		private class TypedFunctionSorter : System.Collections.Generic.IComparer<object>
 		{
-			public TypedFunctionSorter(System.Func<dynamic, dynamic,int> comparerDelegate)
+			public TypedFunctionSorter(System.Func<object, object, int> comparerDelegate)
 			{
 				mDelegate = comparerDelegate;
 			}
 
-			public int Compare(dynamic x, dynamic y)
+			public int Compare(object x, object y)
 			{
 				return mDelegate.Invoke(x, y);
 			}
 
-			private System.Func<dynamic, dynamic,int> mDelegate;
+			private System.Func<object, object,int> mDelegate;
 		}
 
 
@@ -875,14 +875,19 @@ namespace _root
 		{
 			public FunctionSorter(object func)
 			{
+				mDelegate = func as Func<object,object,int>;
 				mFunc = func;
 			}
 
-			public int Compare(dynamic x, dynamic y)
+			public int Compare(object x, object y)
 			{
-				return (int)mFunc(x, y);
+				if (mDelegate != null)
+					return mDelegate (x, y);
+				else
+					return (int)mFunc(x, y);
 			}
 
+			private Func<object,object,int> mDelegate;
 			private dynamic mFunc;
 		};
 
@@ -893,10 +898,10 @@ namespace _root
 				// mOptions = options;
 			}
 
-			public int Compare(dynamic x, dynamic y)
+			public int Compare(object x, object y)
 			{
 				//$$TODO examine options
-				var xc = x as System.IComparable<dynamic>;
+				var xc = x as System.IComparable<object>;
 				if (xc != null)
 				{
 					return xc.CompareTo(y);
@@ -912,7 +917,7 @@ namespace _root
 
 		private class DefaultSorter : System.Collections.Generic.IComparer<object>
 		{
-			public int Compare(dynamic x, dynamic y)
+			public int Compare(object x, object y)
 			{
 				// From doc:
 				//	http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/Array.html#sort%28%29
@@ -922,92 +927,7 @@ namespace _root
 			}
 		}
 
-		public Array splice(int startIndex = 0, uint deleteCount = 4294967295) 
-		{
-			Array removed = null;
-
-			if (mFixed)
-				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
-
-			if (startIndex < 0) 
-				throw new InvalidOperationException("splice error");
-
-			// determine number of items to delete
-			int toDelete = (int)mCount - startIndex;
-			if ((uint)toDelete > deleteCount) 
-				toDelete = (int)deleteCount;
-
-			if (toDelete == 1) {
-				removed = new Array(1);
-				removed.mArray[0] = mArray[startIndex];
-				int toMove = (int)mCount - 1 - startIndex;
-				if (toMove > 0)
-					System.Array.Copy (mArray, startIndex + toDelete, mArray, startIndex, toMove);
-				mArray[mCount - 1] = default(dynamic);
-				mCount--;
-			} else if (toDelete > 1) {
-				removed = new Array((uint)toDelete);
-				System.Array.Copy (mArray, startIndex, removed.mArray, 0, toDelete);
-				int toMove = (int)mCount - toDelete - startIndex;
-				if (toMove > 0)
-					System.Array.Copy (mArray, startIndex + toDelete, mArray, startIndex, toMove);
-				System.Array.Clear (mArray, startIndex + toMove, toDelete);
-				mCount = (uint)(startIndex + toMove);
-			}
-
-			return removed;
-		}
-
-		public Array splice(int startIndex, uint deleteCount = 4294967295, params dynamic[] items) 
-		{
-			Array removed = null;
-
-			if (mFixed)
-				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
-
-			if (startIndex < 0) 
-				throw new InvalidOperationException("splice error");
-
-			// determine number of items to delete
-			int toDelete = (int)mCount - startIndex;
-			if ((uint)toDelete > deleteCount) 
-				toDelete = (int)deleteCount;
-
-			if (toDelete == 1) {
-				removed = new Array(1);
-				removed.mArray[0] = mArray[startIndex];
-				int toMove = (int)mCount - 1 - startIndex;
-				if (toMove > 0)
-					System.Array.Copy (mArray, startIndex + toDelete, mArray, startIndex, toMove);
-				mArray[mCount - 1] = default(dynamic);
-				mCount--;
-			} else if (toDelete > 1) {
-				removed = new Array((uint)toDelete);
-				System.Array.Copy (mArray, startIndex, removed.mArray, 0, toDelete);
-				int toMove = (int)mCount - toDelete - startIndex;
-				if (toMove > 0)
-					System.Array.Copy (mArray, startIndex + toDelete, mArray, startIndex, toMove);
-				System.Array.Clear (mArray, startIndex + toMove, toDelete);
-				mCount = (uint)(startIndex + toMove);
-			}
-
-			uint itemsLen = (uint)items.Length;
-			if (itemsLen > 0) {
-				EnsureCapacity(mCount + itemsLen);
-				int toMove = (int)mCount - startIndex;
-				if (toMove > 0)
-					System.Array.Copy (mArray, startIndex, mArray, startIndex + itemsLen, toMove);
-				if (itemsLen == 1)
-					mArray[startIndex] = items[0];
-				else
-					System.Array.Copy (items, 0, mArray, startIndex, itemsLen);
-				mCount += itemsLen;
-			}
-
-			return removed;
-		}
-
-		public void splice_noret(int startIndex, uint deleteCount = 4294967295) 
+		public void splice(int startIndex = 0, uint deleteCount = 4294967295) 
 		{
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
@@ -1024,7 +944,7 @@ namespace _root
 				int toMove = (int)mCount - 1 - startIndex;
 				if (toMove > 0)
 					System.Array.Copy (mArray, startIndex + toDelete, mArray, startIndex, toMove);
-				mArray[mCount - 1] = default(dynamic);
+				mArray[mCount - 1] = null;
 				mCount--;
 			} else if (toDelete > 1) {
 				int toMove = (int)mCount - toDelete - startIndex;
@@ -1035,7 +955,7 @@ namespace _root
 			}
 		}
 
-		public void splice_noret(int startIndex, uint deleteCount = 4294967295, params dynamic[] items) 
+		public void splice(int startIndex, uint deleteCount = 4294967295, params object[] items) 
 		{
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
@@ -1052,7 +972,7 @@ namespace _root
 				int toMove = (int)mCount - 1 - startIndex;
 				if (toMove > 0)
 					System.Array.Copy (mArray, startIndex + toDelete, mArray, startIndex, toMove);
-				mArray[mCount - 1] = default(dynamic);
+				mArray[mCount - 1] = null;
 				mCount--;
 			} else if (toDelete > 1) {
 				int toMove = (int)mCount - toDelete - startIndex;
@@ -1086,7 +1006,7 @@ namespace _root
 			return this.join(",");
 		}
 
-		public uint unshift(dynamic item) 
+		public uint unshift(object item) 
 		{
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
@@ -1099,7 +1019,7 @@ namespace _root
 			return mCount;
 		}
 
-		public uint unshift(dynamic item, params dynamic[] args) 
+		public uint unshift(object item, params object[] args) 
 		{
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
@@ -1158,7 +1078,7 @@ namespace _root
 
 			#region IEnumerator implementation
 
-			public dynamic Current {
+			public object Current {
 				get {
 					return mVector.mArray[mIndex];
 				}
@@ -1192,7 +1112,7 @@ namespace _root
 				mIndex = -1;
 			}
 
-			public dynamic Current {
+			public object Current {
 				get {
 					return mVector.mArray[mIndex];
 				}
