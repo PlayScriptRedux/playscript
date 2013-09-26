@@ -676,8 +676,18 @@ namespace _root {
 				return x.ToString().CompareTo(y.ToString());
 			}
 		}
-		
-		public Vector<T> sort(dynamic sortBehavior = null) 
+
+		public Vector<T> sort(Delegate sortBehavior)
+		{
+			return sortInternal(sortBehavior);
+		}
+
+		public Vector<T> sort(object sortBehavior = null)
+		{
+			return sortInternal(sortBehavior);
+		}
+
+		private Vector<T> sortInternal(object sortBehavior) 
 		{
 			IComparer<T> comparer;
 			if (sortBehavior is System.Func<T, T,int>)

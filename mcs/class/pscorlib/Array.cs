@@ -509,7 +509,17 @@ namespace _root
 			throw new System.NotImplementedException();
 		}
 
-		public Array sort(dynamic sortBehavior = null) 
+		public Array sort(Delegate sortBehavior)
+		{
+			return sortInternal(sortBehavior);
+		}
+
+		public Array sort(object sortBehavior = null) 
+		{
+			return sortInternal(sortBehavior);
+		}
+
+		private Array sortInternal(object sortBehavior)
 		{
 			IComparer<dynamic> comparer;
 			if (sortBehavior is System.Func<dynamic, dynamic,int>)
