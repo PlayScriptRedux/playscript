@@ -328,6 +328,12 @@ namespace _root
 		public dynamic this[string name]
 		{
 			get {
+				int index;
+				if (int.TryParse(name, out index))
+				{
+					// If we can convert the string to an index, then it is an indexed access
+					return mArray[index];
+				}
 				if (__dynamicProps != null) {
 					return null;												// default(dynamic) as we can't return Undefined
 				}
@@ -340,6 +346,13 @@ namespace _root
 				}
 			}
 			set {
+				int index;
+				if (int.TryParse(name, out index))
+				{
+					// If we can convert the string to an index, then it is an indexed access
+					mArray[index] = value;
+					return;
+				}
 				if (__dynamicProps == null) {
 					__dynamicProps = new PlayScript.DynamicProperties();	// Create the dynamic propertties only on the first set usage
 				}
@@ -727,20 +740,10 @@ namespace _root
 			}
 		}
 
-		public int indexOf(object searchElement)
-		{
-			for (var i = 0; i < mCount; i++) {
-				if (mArray [i] == (object)searchElement) {
-					return i;
-				}
-			}
-			return -1;
-		}
-
-		public int indexOf(object searchElement, int fromIndex) 
+		public int indexOf(object searchElement, int fromIndex = 0)
 		{
 			for (var i = fromIndex; i < mCount; i++) {
-				if (mArray [i] == (object)searchElement) {
+				if (mArray [i] == searchElement || mArray [i].Equals (searchElement)) {
 					return i;
 				}
 			}
@@ -937,8 +940,10 @@ namespace _root
 			}
 		}
 
-		public void splice(int startIndex = 0, uint deleteCount = 4294967295) 
+		public Array splice(int startIndex = 0, uint deleteCount = 4294967295) 
 		{
+			Array removed = null;
+
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
 
@@ -951,22 +956,30 @@ namespace _root
 				toDelete = (int)deleteCount;
 
 			if (toDelete == 1) {
+				removed = new Array(1);
+				removed.mArray[0] = mArray[startIndex];
 				int toMove = (int)mCount - 1 - startIndex;
 				if (toMove > 0)
 					System.Array.Copy (mArray, startIndex + toDelete, mArray, startIndex, toMove);
-				mArray[mCount - 1] = null;
+				mArray[mCount - 1] = default(dynamic);
 				mCount--;
 			} else if (toDelete > 1) {
+				removed = new Array((uint)toDelete);
+				System.Array.Copy (mArray, startIndex, removed.mArray, 0, toDelete);
 				int toMove = (int)mCount - toDelete - startIndex;
 				if (toMove > 0)
 					System.Array.Copy (mArray, startIndex + toDelete, mArray, startIndex, toMove);
 				System.Array.Clear (mArray, startIndex + toMove, toDelete);
 				mCount = (uint)(startIndex + toMove);
 			}
+
+			return removed;
 		}
 
-		public void splice(int startIndex, uint deleteCount = 4294967295, params object[] items) 
+		public Array splice(int startIndex, uint deleteCount = 4294967295, params dynamic[] items) 
 		{
+			Array removed = null;
+
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
 
@@ -979,12 +992,16 @@ namespace _root
 				toDelete = (int)deleteCount;
 
 			if (toDelete == 1) {
+				removed = new Array(1);
+				removed.mArray[0] = mArray[startIndex];
 				int toMove = (int)mCount - 1 - startIndex;
 				if (toMove > 0)
 					System.Array.Copy (mArray, startIndex + toDelete, mArray, startIndex, toMove);
-				mArray[mCount - 1] = null;
+				mArray[mCount - 1] = default(dynamic);
 				mCount--;
 			} else if (toDelete > 1) {
+				removed = new Array((uint)toDelete);
+				System.Array.Copy (mArray, startIndex, removed.mArray, 0, toDelete);
 				int toMove = (int)mCount - toDelete - startIndex;
 				if (toMove > 0)
 					System.Array.Copy (mArray, startIndex + toDelete, mArray, startIndex, toMove);
@@ -1004,6 +1021,8 @@ namespace _root
 					System.Array.Copy (items, 0, mArray, startIndex, itemsLen);
 				mCount += itemsLen;
 			}
+
+			return removed;
 		}
 
 		public string toLocaleString() 
