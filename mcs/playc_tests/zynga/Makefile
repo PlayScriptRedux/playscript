@@ -69,12 +69,12 @@ MCS_OPTS		+= /psstrict-
 MCS_OPTS		+= /define:DEBUG
 MCS_OPTS		+= /t:exe
 
-ALL_AS_TEST_FILES	:= $(shell find tests -name '*.as')
+ALL_AS_TEST_FILES	?= $(shell find tests -name '*.as')
 BAD_AS_TEST_FILES	:= 
 AS_TEST_FILES		:= $(filter-out $(BAD_AS_TEST_FILES),$(ALL_AS_TEST_FILES))
 AS_TEST_FILE_NAMES	:= $(AS_TEST_FILES:%.as=%)
 
-ALL_PS_TEST_FILES	:= $(shell find tests -name '*.play')
+ALL_PS_TEST_FILES	?= $(shell find tests -name '*.play')
 BAD_PS_TEST_FILES	:= tests/test-ps-004.play
 BAD_PS_TEST_FILES	+= tests/test-ps-006.play
 BAD_PS_TEST_FILES	+= tests/test-ps-010.play
