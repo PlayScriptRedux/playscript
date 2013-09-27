@@ -40,7 +40,17 @@ namespace PlayScript.DynamicRuntime
 
 			var l2 = o as IList;
 			if (l2 != null) {
-				l2 [index] = value;
+				int count = l2.Count;
+				if (index < count)
+					l2 [index] = value;
+				else if (index == count)
+					l2.Add (value);
+				else {
+					while (l2.Count < index) {
+						l2.Add (default(T));
+					}
+					l2 [index] = value;
+				}
 				return value;
 			} 
 

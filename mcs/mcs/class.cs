@@ -3203,6 +3203,14 @@ namespace Mono.CSharp
 			tc = root;
 		}
 
+		public override void Visit (Constructor c)
+		{
+			base.Visit (c);
+
+			if (c.ParameterInfo != null)
+				VisitParameters (c.ParameterInfo.FixedParameters as Parameter[]);
+		}
+
 		public override void Visit (Field f)
 		{
 			base.Visit (f);
@@ -3243,15 +3251,6 @@ namespace Mono.CSharp
 				VisitParameters (m.ParameterInfo.FixedParameters as Parameter[]);
 		}
 
-		public override object Visit (Constant c)
-		{
-			var result = base.Visit (c);
-
-			ConvertToFloat (c);
-
-			return result;
-		}
-
 		private void VisitParameters (Parameter[] parameters)
 		{
 			if (parameters != null) {
@@ -3265,6 +3264,10 @@ namespace Mono.CSharp
 			var result = base.Visit (b);
 
 			ConvertToFloat (b.TypeExpression);
+			if (b.Declarators != null) {
+				foreach (BlockVariableDeclarator declarator in b.Declarators)
+					ConvertToFloat (declarator.TypeExpression);
+			}
 
 			return result;
 		}
@@ -3274,6 +3277,7 @@ namespace Mono.CSharp
 			var result = base.Visit (b);
 
 			ConvertToFloat (b.TypeExpression);
+			ConvertToFloat (b.Initializer);
 
 			return result;
 		}

@@ -10,6 +10,21 @@ package
 	{
 		public static function Main():int
 		{
+			var o1:Object = 16;
+			var o2:Object = "blah";
+			Assert.expectEq("o1 == o2", false, o1 == o2);
+			Assert.expectEq("o2 == o1", false, o2 == o1);
+			var o3:Object = 3.14;
+			var o4:Object = "3.14";
+			Assert.expectEq("o3 == o4", true, o3 == o4);
+			Assert.expectEq("o4 == o3", true, o4 == o3);
+			Assert.expectEq("3.14 == o3", true, 3.14 == o3);
+			Assert.expectEq("o3 == 3.14", true, o3 == 3.14);
+			// TODO:
+			//Assert.expectEq("\"3.14\" == o3", true, "3.14" == o3);
+			Assert.expectEq("\"3.14\" == o4", true, "3.14" == o4);
+			// TODO:
+			//Assert.expectEq("\"3.14\" == o3", true, "3.14" == o3);
 			var num1:Number = new Number();
 			num1 = 1.0;
 			var num2:Number = 1;
@@ -33,6 +48,12 @@ package
 			Assert.expectEq("true == 1", true, true == 1);
 			Assert.expectEq("true !== 1", true, true !== 1);
 			Assert.expectEq("null == undefined", true, null == undefined);
+			Assert.expectEq("null != undefined", false, null != undefined);
+			var undef:Object = undefined;
+			// TODO:
+			//Assert.expectEq("null == undef", true, null == undef);
+			// TODO:
+			//Assert.expectEq("null != undef", false, null != undef);
 			Assert.expectEq("undefined == null", true, undefined == null);
 			Assert.expectEq("null !== undefined", true, null !== undefined);
 			Assert.expectEq("undefined !== null", true, undefined !== null);

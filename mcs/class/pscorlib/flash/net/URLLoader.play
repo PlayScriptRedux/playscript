@@ -68,13 +68,6 @@ package flash.net {
 			if (url.StartsWith("http:") || url.StartsWith("https:")) {
 				// handle a http load
 				// load with a delay
-				
-				// Replace https: by http:
-				if (mRequest.url.StartsWith("https:"))
-				{
-//					trace("Disable SSL for request " + mRequest.url);
-					mRequest.url = mRequest.url.Replace("https:", "http:");
-				}
 
 				if (PlayScript.Player.Offline) {
 					// load from offline cache

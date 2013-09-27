@@ -576,6 +576,17 @@ namespace Mono.CSharp
 			}
 		}
 
+		public bool PsNumberIsFloat {
+			get {
+				if (CurrentMemberDefinition != null && CurrentMemberDefinition.Parent != null) {
+					var attributes = CurrentMemberDefinition.Parent.OptAttributes;
+					if (attributes != null && attributes.Contains (Module.PredefinedAttributes.NumberIsFloatAttribute))
+						return true;
+				}
+				return false;
+			}
+		}
+
 		public Target Target {
 			get { return Module.Compiler.Settings.Target; }
 		}

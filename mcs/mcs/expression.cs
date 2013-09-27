@@ -181,7 +181,7 @@ namespace Mono.CSharp
 			}
 
 			TypeSpec expr_type = e.Type;
-			
+
 			switch (Oper){
 			case Operator.UnaryPlus:
 				// Unary numeric promotions
@@ -521,8 +521,18 @@ namespace Mono.CSharp
 			Constant cexpr = Expr as Constant;
 			if (cexpr != null) {
 				cexpr = TryReduceConstant (ec, cexpr);
-				if (cexpr != null)
+				if (cexpr != null) {
+					//
+					// We provide a mechanism to use single precision floats instead of
+					// doubles for the PlayScript Number type via the [NumberIsFloat]
+					// attribute. By casting doubles to floats here, we allow the constant
+					// folding to do its thing and remove any unnecessary coversions.
+					//
+					if (ec.PsNumberIsFloat && cexpr.Type.BuiltinType == BuiltinTypeSpec.Type.Double)
+						return new Cast (new TypeExpression (ec.BuiltinTypes.Float, cexpr.Location), cexpr, cexpr.Location).Resolve (ec);
+
 					return cexpr;
+				}
 			}
 
 			Expression expr = ResolveOperator (ec, Expr);
@@ -3701,7 +3711,7 @@ namespace Mono.CSharp
 							// Implement string comparisons
 							return new Binary(oper, MakeStringComparison (ec).Resolve (ec), new IntLiteral(ec.BuiltinTypes, 0, loc)).Resolve (ec);
 						}
-					} else if (Oper == Operator.Division && right.Type != ec.BuiltinTypes.Double) {
+					} else if (Oper == Operator.Division && right.Type != ec.BuiltinTypes.Double && right.Type != ec.BuiltinTypes.Float) {
 
 						// In PlayScript division always results in a double.
 						left = new Cast(new TypeExpression(ec.BuiltinTypes.Double, loc), left, loc).Resolve (ec);
@@ -3829,6 +3839,19 @@ namespace Mono.CSharp
 				args.Add(new Argument(left));
 				args.Add(new Argument(right));
 				return new DynamicBinaryExpression (this.oper, this.GetOperatorExpressionTypeName(), args, loc).Resolve(ec);
+			}
+
+			//
+			// We provide a mechanism to use single precision floats instead of
+			// doubles for the PlayScript Number type via the [NumberIsFloat]
+			// attribute. By casting doubles to floats here, we allow the constant
+			// folding to do its thing and remove any unnecessary coversions.
+			//
+			if (ec.PsNumberIsFloat) {
+				if (left.Type != null && left.Type.BuiltinType == BuiltinTypeSpec.Type.Double)
+					left = new Cast (new TypeExpression (ec.BuiltinTypes.Float, left.Location), left, left.Location).Resolve (ec);
+				if (right.Type != null && right.Type.BuiltinType == BuiltinTypeSpec.Type.Double)
+					right = new Cast (new TypeExpression (ec.BuiltinTypes.Float, right.Location), right, right.Location).Resolve (ec);
 			}
 
 			return DoResolveCore (ec, left, right);
