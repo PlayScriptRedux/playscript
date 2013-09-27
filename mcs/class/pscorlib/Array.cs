@@ -54,7 +54,7 @@ namespace _root
 	[DynamicClass]
 	[DebuggerDisplay("length = {length}")]
 	[DebuggerTypeProxy(typeof(ArrayDebugView))]
-	public sealed class Array : Object, IList, PlayScript.IDynamicClass, PlayScript.IKeyEnumerable
+	public sealed class Array : _root.Object, IList, PlayScript.IDynamicClass, PlayScript.IKeyEnumerable
 	{
 		#region IList implementation
 
@@ -509,7 +509,7 @@ namespace _root
 			throw new System.NotImplementedException();
 		}
 
-		public Array sort(object sortBehavior = null) 
+		public Array sort(dynamic sortBehavior = null)
 		{
 			IComparer<object> comparer;
 			if (sortBehavior is System.Func<object, object,int>)

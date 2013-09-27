@@ -120,7 +120,7 @@ namespace flash.utils
 	[ComVisible(false)]
 	[Serializable]
 	[DebuggerDisplay ("Count={Count}")]
-	public class Dictionary<TKey, TValue> : IDictionary<TKey, TValue>, IDictionary, IDynamicClass, IKeyEnumerable
+	public class Dictionary<TKey, TValue> : _root.Object, IDictionary<TKey, TValue>, IDictionary, IDynamicClass, IKeyEnumerable
 	{
 		// The implementation of this class uses a hash table and linked lists
 		// (see: http://msdn2.microsoft.com/en-us/library/ms379571(VS.80).aspx).
