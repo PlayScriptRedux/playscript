@@ -334,13 +334,13 @@ namespace _root
 					// If we can convert the string to an index, then it is an indexed access
 					return mArray[index];
 				}
-				if (__dynamicProps != null) {
-					return null;												// default(dynamic) as we can't return Undefined
+				if (__dynamicProps == null) {
+					return null;
 				}
 				else {
 					object result = __dynamicProps.__GetDynamicValue(name);	// The instance that was set was only of dynamic type (or undefined)
 					if (result == PlayScript.Undefined._undefined)	{
-						return null;											// default(dynamic) as we can't return Undefined
+						return null;										// null as we can't return Undefined
 					}
 					return result;
 				}
@@ -356,7 +356,7 @@ namespace _root
 				if (__dynamicProps == null) {
 					__dynamicProps = new PlayScript.DynamicProperties();	// Create the dynamic propertties only on the first set usage
 				}
-				__dynamicProps.__SetDynamicValue(name, (object)value);					// This will only inject dynamic type instances.
+				__dynamicProps.__SetDynamicValue(name, (object)value);		// This will only inject dynamic type instances.
 			}
 		}
 
@@ -961,7 +961,7 @@ namespace _root
 				int toMove = (int)mCount - 1 - startIndex;
 				if (toMove > 0)
 					System.Array.Copy (mArray, startIndex + toDelete, mArray, startIndex, toMove);
-				mArray[mCount - 1] = default(dynamic);
+				mArray[mCount - 1] = null;
 				mCount--;
 			} else if (toDelete > 1) {
 				removed = new Array((uint)toDelete);
@@ -976,7 +976,7 @@ namespace _root
 			return removed;
 		}
 
-		public Array splice(int startIndex, uint deleteCount = 4294967295, params dynamic[] items) 
+		public Array splice(int startIndex, uint deleteCount = 4294967295, params object[] items) 
 		{
 			Array removed = null;
 
@@ -997,7 +997,7 @@ namespace _root
 				int toMove = (int)mCount - 1 - startIndex;
 				if (toMove > 0)
 					System.Array.Copy (mArray, startIndex + toDelete, mArray, startIndex, toMove);
-				mArray[mCount - 1] = default(dynamic);
+				mArray[mCount - 1] = null;
 				mCount--;
 			} else if (toDelete > 1) {
 				removed = new Array((uint)toDelete);
