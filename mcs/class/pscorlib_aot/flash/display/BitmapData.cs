@@ -28,7 +28,7 @@ namespace flash.display
 #if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
 		private const string DEFAULT_FONT = "Verdana";
 		private static Dictionary<string,bool> sHasFont = new Dictionary<string,bool> ();
-#elif
+#else
 		// WHAT IS THE DEFAULT FONT FOR ANDROID?
 #endif
 

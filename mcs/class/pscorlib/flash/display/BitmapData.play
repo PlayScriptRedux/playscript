@@ -280,9 +280,11 @@ package flash.display {
 		}
  	 	
 		public function getVector(rect:Rectangle):Vector.<uint> {
-			if (rect.left < 0 || rect.top < 0 || rect.right > this.width || rect.bottom > this.height) 
-				throw new Error("Invalid rectangle");
 			var v:Vector.<uint> = new Vector.<uint>(rect.width * rect.height);
+			if (rect.left < 0 || rect.top < 0 || rect.right > this.width || rect.bottom > this.height) { 
+				trace("Invalid rectangle for BitmapData.getVector()");
+				return v;
+			}
 			if (mData==null)
 				return v;
 			var a:uint[] = v._GetInnerArray();
