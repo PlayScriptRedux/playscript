@@ -841,7 +841,9 @@ namespace flash.utils
 		{
 			Dictionary<TKey, TValue> dictionary;
 			int next;
+#if DEBUG || !PERFORMANCE_MODE
 			int stamp;
+#endif
 
 			internal KeyValuePair<TKey, TValue> current;
 
@@ -849,7 +851,9 @@ namespace flash.utils
 			: this ()
 			{
 				this.dictionary = dictionary;
+#if DEBUG || !PERFORMANCE_MODE
 				stamp = dictionary.generation;
+#endif
 			}
 
 			public bool MoveNext ()
