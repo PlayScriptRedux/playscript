@@ -144,33 +144,33 @@ namespace _root
 
 		public struct ArrayKeyEnumeratorStruct : IEnumerator
 		{
-			private Vector<dynamic>.VectorKeyEnumeratorStruct mVectorKeyEnumerator;
+			private Vector<dynamic>.VectorKeyEnumeratorStruct mVectorKeyEnum;
 			private IEnumerator mDynamicEnum;
 			private bool enumerateDynamics;
 
 			public ArrayKeyEnumeratorStruct(Vector<dynamic>.VectorKeyEnumeratorStruct venum, PlayScript.IDynamicClass dynprops)
 			{
-				mVectorKeyEnumerator = venum;
+				mVectorKeyEnum = venum;
 				mDynamicEnum = (dynprops==null) ? null : dynprops.__GetDynamicNames().GetEnumerator();
 				enumerateDynamics = false;
 			}
 			public bool MoveNext ()
 			{
-				bool ok = false;
+				bool hasNext = false;
 				if (!enumerateDynamics) 
 				{
-					ok = mVectorKeyEnumerator.MoveNext ();
-					if(!ok && mDynamicEnum!=null)
+					hasNext = mVectorKeyEnum.MoveNext ();
+					if(!hasNext && mDynamicEnum!=null)
 						enumerateDynamics = true;
 				}
 				if (enumerateDynamics)
-					ok = mDynamicEnum.MoveNext ();
-				return ok;
+					hasNext = mDynamicEnum.MoveNext ();
+				return hasNext;
 			}
 
 			public void Reset ()
 			{
-				mVectorKeyEnumerator.Reset();
+				mVectorKeyEnum.Reset();
 				enumerateDynamics = false;
 				if(mDynamicEnum!=null)
 					mDynamicEnum.Reset ();
@@ -178,7 +178,7 @@ namespace _root
 
 			public dynamic Current {
 				get {
-					return (enumerateDynamics)?  mDynamicEnum.Current : mVectorKeyEnumerator.Current;
+					return (enumerateDynamics)?  mDynamicEnum.Current : mVectorKeyEnum.Current;
 				}
 			}
 		}
@@ -186,14 +186,14 @@ namespace _root
 		// this is the public struct enumerator, it does not implement IDisposable and doesnt allocate space on the heap
 		public struct ArrayEnumeratorStruct
 		{
-			private Vector<dynamic>.VectorEnumeratorStruct mVectorEnumerator;
+			private Vector<dynamic>.VectorEnumeratorStruct mVectorEnum;
 			private IEnumerator mDynamicEnum;
 			private PlayScript.IDynamicClass mDynprops;
 			private bool enumerateDynamics;
 
 			public ArrayEnumeratorStruct(Vector<dynamic>.VectorEnumeratorStruct venum, PlayScript.IDynamicClass dynprops)
 			{
-				mVectorEnumerator = venum;
+				mVectorEnum = venum;
 				mDynprops    = dynprops;
 				mDynamicEnum = (dynprops==null)? null : dynprops.__GetDynamicNames().GetEnumerator();
 				enumerateDynamics = false;
@@ -201,21 +201,21 @@ namespace _root
 
 			public bool MoveNext ()
 			{
-				bool ok = false;
+				bool hasNext = false;
 				if (!enumerateDynamics) 
 				{
-					ok = mVectorEnumerator.MoveNext ();
-					if(!ok && mDynamicEnum!=null)
+					hasNext = mVectorEnum.MoveNext ();
+					if(!hasNext && mDynamicEnum!=null)
 						enumerateDynamics = true;
 				}
 				if (enumerateDynamics)
-					ok = mDynamicEnum.MoveNext ();
-				return ok;
+					hasNext = mDynamicEnum.MoveNext ();
+				return hasNext;
 			}
 
 			public void Reset ()
 			{
-				mVectorEnumerator.Reset();
+				mVectorEnum.Reset();
 				enumerateDynamics = false;
 				if(mDynamicEnum!=null)
 					mDynamicEnum.Reset ();
@@ -223,7 +223,7 @@ namespace _root
 
 			public dynamic Current {
 				get {
-					return (enumerateDynamics)? mDynprops.__GetDynamicValue(mDynamicEnum.Current as string) : mVectorEnumerator.Current;
+					return (enumerateDynamics)? mDynprops.__GetDynamicValue(mDynamicEnum.Current as string) : mVectorEnum.Current;
 				}
 			}
 		}
