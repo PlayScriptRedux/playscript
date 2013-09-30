@@ -317,7 +317,7 @@ namespace Amf
 			// read object type name 
 			// this class definition is not known until the first object has been read
 			// (TODO: we need to construct the right vector type based on this)
-			string objectTypeName = ReadString();
+			/*string objectTypeName =*/ ReadString();
 
 			var vector = new Vector<dynamic>((uint)num, isFixed);
 			objectTable.Add(vector);

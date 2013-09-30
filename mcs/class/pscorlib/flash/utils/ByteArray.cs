@@ -336,7 +336,7 @@ namespace flash.utils {
 				{
 					// parse zlib header
 					int header0 = inStream.ReadByte();
-					int flag = inStream.ReadByte();
+					/*int flag =*/ inStream.ReadByte();
 					if ((header0 & 0xF) == 8) {
 						// deflate
 						using (DeflateStream decompressionStream = new DeflateStream(inStream, CompressionMode.Decompress)) {
