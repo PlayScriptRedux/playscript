@@ -682,7 +682,7 @@ namespace _root {
 			return sortInternal(sortBehavior);
 		}
 
-		public Vector<T> sort(object sortBehavior = null)
+		public Vector<T> sort(object sortBehavior)
 		{
 			return sortInternal(sortBehavior);
 		}
