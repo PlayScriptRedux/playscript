@@ -14,6 +14,7 @@ package
 			var value:String = "value1";
 			var dict:Dictionary = new Dictionary();
 			dict[key] = value;
+			delete dict[4]; // should do nothing, just testing that it compiles and doesn't crash
 			if (!ContainsKey(dict, key) || !dict.hasOwnProperty(key))
 				return 1;
 			delete dict[key];
