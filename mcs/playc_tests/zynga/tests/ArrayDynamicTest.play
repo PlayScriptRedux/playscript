@@ -4,7 +4,7 @@ package
 	{
 		public static function Main():int
 		{
-	   		var a:Array = [];
+	   		var a:Array = new Array(3);
         	a[0] = 10;
         	a[1] = 11;
         	a[2] = 12;
@@ -17,17 +17,23 @@ package
         	{
         		strForEach += o;
         	}
-        	if(strForEach != "101112a0a1a2")
-        		throw new Error("Array - for each is wrong");
+        	if (strForEach != "101112a0a1a2")
+			{
+				trace("Array - for each is wrong; expected=\"101112a0a1a2\", actual=\"" + strForEach + "\"");
+				return 1;
+			}
         	
         	var strForIn:String = "";  	
-        	for ( o in a)
+        	for (o in a)
         	{
     	    	strForIn += o;
         	}
-        	if(strForIn != "012key_a0key_a1key_a2")
-        		throw new Error("Array - for in is wrong");
-			
+        	if (strForIn != "012key_a0key_a1key_a2")
+			{
+				trace("Array - for in is wrong; expected=\"012key_a0key_a1key_a2\", actual=\"" + strForIn + "\"");
+				return 2;
+			}
+
 			return 0;
 		}
 	}

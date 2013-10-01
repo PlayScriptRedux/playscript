@@ -1116,13 +1116,17 @@ namespace _root
 
 		private class ArrayEnumeratorClass : IEnumerator
 		{
-			private readonly Array mVector;
+			private readonly IList mVector;
 			private int mIndex;
+			private IDynamicClass mDynamicProps;
+			private IEnumerator mDynamicEnumerator;
 
-			public ArrayEnumeratorClass(Array vector)
+			public ArrayEnumeratorClass(IList vector, IDynamicClass dynamicProps)
 			{
 				mVector = vector;
 				mIndex = -1;
+				mDynamicProps = dynamicProps;
+				mDynamicEnumerator = mDynamicProps.__GetDynamicNames ().GetEnumerator ();
 			}
 
 			#region IEnumerator implementation
@@ -1130,17 +1134,23 @@ namespace _root
 			public bool MoveNext ()
 			{
 				mIndex++;
-				return mIndex < mVector.mCount;
+				if (mIndex < mVector.Count)
+					return true;
+				else
+					return mDynamicEnumerator.MoveNext ();
 			}
 
 			public void Reset ()
 			{
 				mIndex = -1;
+				mDynamicEnumerator.Reset ();
 			}
 
 			object System.Collections.IEnumerator.Current {
 				get {
-					return mVector.mArray[mIndex];
+					if (mIndex < mVector.Count)
+						return mVector[mIndex];
+					return mDynamicProps.__GetDynamicValue ((string)mDynamicEnumerator.Current);
 				}
 			}
 
@@ -1158,7 +1168,9 @@ namespace _root
 
 			public object Current {
 				get {
-					return mVector.mArray[mIndex];
+					if (mIndex < mVector.Count)
+						return mVector[mIndex];
+					return mDynamicProps.__GetDynamicValue ((string)mDynamicEnumerator.Current);
 				}
 			}
 
@@ -1169,39 +1181,51 @@ namespace _root
 		// this is the public struct enumerator, it does not implement IDisposable and doesnt allocate space on the heap
 		public struct ArrayEnumeratorStruct
 		{
-			private readonly Array mVector;
+			private readonly IList mVector;
 			private int mIndex;
+			private IDynamicClass mDynamicProps;
+			private IEnumerator mDynamicEnumerator;
 
-			public ArrayEnumeratorStruct(Array vector)
+			public ArrayEnumeratorStruct(IList vector, IDynamicClass dynamicProps)
 			{
 				mVector = vector;
 				mIndex = -1;
+				mDynamicProps = dynamicProps;
+				mDynamicEnumerator = mDynamicProps.__GetDynamicNames ().GetEnumerator ();
 			}
 
 			#region IEnumerator implementation
+
 			public bool MoveNext ()
 			{
 				mIndex++;
-				return mIndex < mVector.mCount;
+				if (mIndex < mVector.Count)
+					return true;
+				else
+					return mDynamicEnumerator.MoveNext ();
 			}
 
 			public void Reset ()
 			{
 				mIndex = -1;
+				mDynamicEnumerator.Reset ();
 			}
 
 			public object Current {
 				get {
-					return mVector.mArray[mIndex];
+					if (mIndex < mVector.Count)
+						return mVector[mIndex];
+					return mDynamicProps.__GetDynamicValue ((string)mDynamicEnumerator.Current);
 				}
 			}
+
 			#endregion
 		}
 
 		// public get enumerator that returns a faster struct
 		public ArrayEnumeratorStruct GetEnumerator ()
 		{
-			return new ArrayEnumeratorStruct(this);
+			return new ArrayEnumeratorStruct(this, __dynamicProps);
 		}
 
 		#endregion
@@ -1211,7 +1235,7 @@ namespace _root
 		// private IEnumerable get enumerator that returns a (slower) class on the heap
 		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator ()
 		{
-			return new ArrayEnumeratorClass(this);
+			return new ArrayEnumeratorClass(this, __dynamicProps);
 		}
 
 		#endregion
@@ -1223,11 +1247,13 @@ namespace _root
 		{
 			private readonly IList mVector;
 			private int mIndex;
+			private IEnumerator mDynamicEnumerator;
 
-			public ArrayKeyEnumeratorClass(IList vector)
+			public ArrayKeyEnumeratorClass(IList vector, IDynamicClass dynamicProps)
 			{
 				mVector = vector;
 				mIndex = -1;
+				mDynamicEnumerator = dynamicProps.__GetDynamicNames ().GetEnumerator ();
 			}
 
 			#region IEnumerator implementation
@@ -1235,17 +1261,23 @@ namespace _root
 			public bool MoveNext ()
 			{
 				mIndex++;
-				return mIndex < mVector.Count;
+				if (mIndex < mVector.Count)
+					return true;
+				else
+					return mDynamicEnumerator.MoveNext ();
 			}
 
 			public void Reset ()
 			{
 				mIndex = -1;
+				mDynamicEnumerator.Reset ();
 			}
 
 			object System.Collections.IEnumerator.Current {
 				get {
-					return mIndex;
+					if (mIndex < mVector.Count)
+						return mIndex;
+					return mDynamicEnumerator.Current;
 				}
 			}
 
@@ -1265,11 +1297,13 @@ namespace _root
 		{
 			private readonly IList mVector;
 			private int mIndex;
+			private IEnumerator mDynamicEnumerator;
 
-			public ArrayKeyEnumeratorStruct(IList vector)
+			public ArrayKeyEnumeratorStruct(IList vector, PlayScript.IDynamicClass dynamicProps)
 			{
 				mVector = vector;
 				mIndex = -1;
+				mDynamicEnumerator = dynamicProps.__GetDynamicNames ().GetEnumerator ();
 			}
 
 			#region IEnumerator implementation
@@ -1277,33 +1311,40 @@ namespace _root
 			public bool MoveNext ()
 			{
 				mIndex++;
-				return mIndex < mVector.Count;
+				if (mIndex < mVector.Count)
+					return true;
+				else
+					return mDynamicEnumerator.MoveNext ();
 			}
 
 			public void Reset ()
 			{
 				mIndex = -1;
+				mDynamicEnumerator.Reset ();
 			}
 
 			// unfortunately this has to return object because the for() loop could use a non-int as its variable, causing bad IL
 			public object Current {
 				get {
-					return mIndex;
+					if (mIndex < mVector.Count)
+						return mIndex;
+					return mDynamicEnumerator.Current;
 				}
 			}
+
 			#endregion
 		}
 
 		// public get enumerator that returns a faster struct
 		public ArrayKeyEnumeratorStruct GetKeyEnumerator()
 		{
-			return new ArrayKeyEnumeratorStruct(this);
+			return new ArrayKeyEnumeratorStruct(this, __dynamicProps);
 		}
 
 		// private IKeyEnumerable get enumerator that returns a (slower) class on the heap
 		IEnumerator PlayScript.IKeyEnumerable.GetKeyEnumerator()
 		{
-			return new ArrayKeyEnumeratorClass(this);
+			return new ArrayKeyEnumeratorClass(this, __dynamicProps);
 		}
 
 		#endregion
