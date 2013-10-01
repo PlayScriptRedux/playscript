@@ -1907,7 +1907,12 @@ namespace PlayScript.Expando {
 			touchedSlots = 0;
 			generation++;
 		}
-		
+
+		public override string ToString ()
+		{
+			return "[object Object]";
+		}
+
 		public bool ContainsKey (string key)
 		{
 			if (key == null)
