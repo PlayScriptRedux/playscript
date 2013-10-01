@@ -1126,7 +1126,7 @@ namespace _root
 				mVector = vector;
 				mIndex = -1;
 				mDynamicProps = dynamicProps;
-				mDynamicEnumerator = mDynamicProps.__GetDynamicNames ().GetEnumerator ();
+				mDynamicEnumerator = mDynamicProps != null ? mDynamicProps.__GetDynamicNames ().GetEnumerator () : null;
 			}
 
 			#region IEnumerator implementation
@@ -1136,21 +1136,25 @@ namespace _root
 				mIndex++;
 				if (mIndex < mVector.Count)
 					return true;
-				else
+				if (mDynamicEnumerator != null)
 					return mDynamicEnumerator.MoveNext ();
+				return false;
 			}
 
 			public void Reset ()
 			{
 				mIndex = -1;
-				mDynamicEnumerator.Reset ();
+				if (mDynamicEnumerator != null)
+					mDynamicEnumerator.Reset ();
 			}
 
 			object System.Collections.IEnumerator.Current {
 				get {
 					if (mIndex < mVector.Count)
 						return mVector[mIndex];
-					return mDynamicProps.__GetDynamicValue ((string)mDynamicEnumerator.Current);
+					if (mDynamicProps != null)
+						return mDynamicProps.__GetDynamicValue ((string)mDynamicEnumerator.Current);
+					return null;
 				}
 			}
 
@@ -1170,7 +1174,9 @@ namespace _root
 				get {
 					if (mIndex < mVector.Count)
 						return mVector[mIndex];
-					return mDynamicProps.__GetDynamicValue ((string)mDynamicEnumerator.Current);
+					if (mDynamicProps != null)
+						return mDynamicProps.__GetDynamicValue ((string)mDynamicEnumerator.Current);
+					return null;
 				}
 			}
 
@@ -1191,7 +1197,7 @@ namespace _root
 				mVector = vector;
 				mIndex = -1;
 				mDynamicProps = dynamicProps;
-				mDynamicEnumerator = mDynamicProps.__GetDynamicNames ().GetEnumerator ();
+				mDynamicEnumerator = mDynamicProps != null ? mDynamicProps.__GetDynamicNames ().GetEnumerator () : null;
 			}
 
 			#region IEnumerator implementation
@@ -1201,21 +1207,25 @@ namespace _root
 				mIndex++;
 				if (mIndex < mVector.Count)
 					return true;
-				else
+				if (mDynamicEnumerator != null)
 					return mDynamicEnumerator.MoveNext ();
+				return false;
 			}
 
 			public void Reset ()
 			{
 				mIndex = -1;
-				mDynamicEnumerator.Reset ();
+				if (mDynamicEnumerator != null)
+					mDynamicEnumerator.Reset ();
 			}
 
 			public object Current {
 				get {
 					if (mIndex < mVector.Count)
 						return mVector[mIndex];
-					return mDynamicProps.__GetDynamicValue ((string)mDynamicEnumerator.Current);
+					if (mDynamicProps != null)
+						return mDynamicProps.__GetDynamicValue ((string)mDynamicEnumerator.Current);
+					return null;
 				}
 			}
 
@@ -1253,7 +1263,7 @@ namespace _root
 			{
 				mVector = vector;
 				mIndex = -1;
-				mDynamicEnumerator = dynamicProps.__GetDynamicNames ().GetEnumerator ();
+				mDynamicEnumerator = dynamicProps != null ? dynamicProps.__GetDynamicNames ().GetEnumerator () : null;
 			}
 
 			#region IEnumerator implementation
@@ -1263,21 +1273,25 @@ namespace _root
 				mIndex++;
 				if (mIndex < mVector.Count)
 					return true;
-				else
+				if (mDynamicEnumerator != null)
 					return mDynamicEnumerator.MoveNext ();
+				return false;
 			}
 
 			public void Reset ()
 			{
 				mIndex = -1;
-				mDynamicEnumerator.Reset ();
+				if (mDynamicEnumerator != null)
+					mDynamicEnumerator.Reset ();
 			}
 
 			object System.Collections.IEnumerator.Current {
 				get {
 					if (mIndex < mVector.Count)
 						return mIndex;
-					return mDynamicEnumerator.Current;
+					if (mDynamicEnumerator != null)
+						return mDynamicEnumerator.Current;
+					return null;
 				}
 			}
 
@@ -1299,11 +1313,11 @@ namespace _root
 			private int mIndex;
 			private IEnumerator mDynamicEnumerator;
 
-			public ArrayKeyEnumeratorStruct(IList vector, PlayScript.IDynamicClass dynamicProps)
+			public ArrayKeyEnumeratorStruct(IList vector, IDynamicClass dynamicProps)
 			{
 				mVector = vector;
 				mIndex = -1;
-				mDynamicEnumerator = dynamicProps.__GetDynamicNames ().GetEnumerator ();
+				mDynamicEnumerator = dynamicProps != null ? dynamicProps.__GetDynamicNames ().GetEnumerator () : null;
 			}
 
 			#region IEnumerator implementation
@@ -1313,14 +1327,16 @@ namespace _root
 				mIndex++;
 				if (mIndex < mVector.Count)
 					return true;
-				else
+				if (mDynamicEnumerator != null)
 					return mDynamicEnumerator.MoveNext ();
+				return false;
 			}
 
 			public void Reset ()
 			{
 				mIndex = -1;
-				mDynamicEnumerator.Reset ();
+				if (mDynamicEnumerator != null)
+					mDynamicEnumerator.Reset ();
 			}
 
 			// unfortunately this has to return object because the for() loop could use a non-int as its variable, causing bad IL
@@ -1328,7 +1344,9 @@ namespace _root
 				get {
 					if (mIndex < mVector.Count)
 						return mIndex;
-					return mDynamicEnumerator.Current;
+					if (mDynamicEnumerator != null)
+						return mDynamicEnumerator.Current;
+					return null;
 				}
 			}
 
