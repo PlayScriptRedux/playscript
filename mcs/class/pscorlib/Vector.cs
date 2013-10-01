@@ -299,6 +299,23 @@ namespace _root {
 			}
 		}
 
+		public T this[long l]
+		{
+#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+			get {
+				return this [(int)l];
+
+			}
+#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+			set {
+				this [(int)l] = value;
+			}
+		}
+
 		public T this[string name]
 		{
 			get {

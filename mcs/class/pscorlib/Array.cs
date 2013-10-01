@@ -24,8 +24,7 @@ using PlayScript;
 
 namespace _root
 {
-	
-	#if PERFORMANCE_MODE
+#if PERFORMANCE_MODE
 
 	// this class is used to display a custom view of the vector values to the debugger
 	// TODO: we need to make these elements editable 
@@ -325,6 +324,23 @@ namespace _root
 			}
 		}
 
+		public dynamic this[long l]
+		{
+			#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			#endif
+			get {
+				return this [(int)l];
+
+			}
+			#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
+			#endif
+			set {
+				this [(int)l] = value;
+			}
+		}
+
 		public dynamic this[string name]
 		{
 			get {
@@ -357,6 +373,34 @@ namespace _root
 					__dynamicProps = new PlayScript.DynamicProperties();	// Create the dynamic propertties only on the first set usage
 				}
 				__dynamicProps.__SetDynamicValue(name, (object)value);		// This will only inject dynamic type instances.
+			}
+		}
+
+		//
+		// Treat floating point as a string. It will be considered an indexed access if
+		// the value is an integer, otherwise it will be a dynamic property access.
+		//
+		public dynamic this[double d]
+		{
+			get {
+				return this [d.ToString ()];
+			}
+			set {
+				this [d.ToString ()] = value;
+			}
+		}
+
+		//
+		// Treat floating point as a string. It will be considered an indexed access if
+		// the value is an integer, otherwise it will be a dynamic property access.
+		//
+		public dynamic this[float f]
+		{
+			get {
+				return this [f.ToString ()];
+			}
+			set {
+				this [f.ToString ()] = value;
 			}
 		}
 
@@ -1546,6 +1590,17 @@ namespace _root
 			}
 		}
 
+		public dynamic this[long l]
+		{
+			get {
+				return this [(int)l];
+
+			}
+			set {
+				this [(int)l] = value;
+			}
+		}
+
 		public dynamic this[string name]
 		{
 			get {
@@ -1575,6 +1630,34 @@ namespace _root
 					__dynamicProps = new PlayScript.DynamicProperties(this);
 				}
 				__dynamicProps.__SetDynamicValue(name, value);
+			}
+		}
+
+		//
+		// Treat floating point as a string. It will be considered an indexed access if
+		// the value is an integer, otherwise it will be a dynamic property access.
+		//
+		public dynamic this[double d]
+		{
+			get {
+				return this [d.ToString ()];
+			}
+			set {
+				this [d.ToString ()] = value;
+			}
+		}
+
+		//
+		// Treat floating point as a string. It will be considered an indexed access if
+		// the value is an integer, otherwise it will be a dynamic property access.
+		//
+		public dynamic this[float f]
+		{
+			get {
+				return this [f.ToString ()];
+			}
+			set {
+				this [f.ToString ()] = value;
 			}
 		}
 
