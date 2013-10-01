@@ -50,10 +50,12 @@ namespace flash.display3D
 			mIds = new uint[multiBufferCount];
 			GL.GenBuffers(mIds.Length, mIds);
 
-			mUsage = isDynamic ? BufferUsage.DynamicDraw : BufferUsage.StaticDraw;
+			mUsage = isDynamic ? BufferUsage.StreamDraw : BufferUsage.StaticDraw;
 
 			// update stats
 			mContext.statsIncrement(Context3D.Stats.Count_VertexBuffer);
+
+			mFirstTime = true;
 		}
 
 		public void dispose() {
@@ -81,24 +83,47 @@ namespace flash.display3D
 			// bounds check
 			if (byteCount > dataLength)
 				throw new ArgumentOutOfRangeException("data buffer is not big enough for upload");
-			if (byteStart == 0) {
+
+			if((mUsage == BufferUsage.StaticDraw) && (byteStart == 0))
+			{		
 				// upload whole array
 				GL.BufferData(BufferTarget.ArrayBuffer, 
-				              new IntPtr(byteCount), 
+				              new IntPtr(byteCount),
 				              new IntPtr(data), 
 				              mUsage);
-
 				if (byteCount != mMemoryUsage) {
 					// update stats for memory usage
 					mContext.statsAdd(Context3D.Stats.Mem_VertexBuffer, byteCount - mMemoryUsage);
 					mMemoryUsage = byteCount;
 				}
-			} else {
-				// upload whole array
-				GL.BufferSubData(BufferTarget.ArrayBuffer, 
-				                 new IntPtr(byteStart), 
-				                 new IntPtr(byteCount), 
-				                 new IntPtr(data));
+			} 
+			else 
+			{
+				// upload whole array the very first time
+				if (mFirstTime) 
+				{
+					mUsage = BufferUsage.StreamDraw; //make sure to switch to streamDraw
+					mFirstTime = false;
+					IntPtr dataIntPtr = new IntPtr (data);
+					dataIntPtr -= byteStart;
+					GL.BufferData (BufferTarget.ArrayBuffer, 
+					               new IntPtr (byteCount + byteStart), 
+					               new IntPtr (null), 
+					               mUsage);
+					//upload the whole buffer:
+					GL.BufferSubData(BufferTarget.ArrayBuffer, 
+					                 new IntPtr(0), 
+					                 new IntPtr(byteCount+byteStart), 
+					                 dataIntPtr);
+				}				
+				//SubData upload
+				else
+				{
+					GL.BufferSubData(BufferTarget.ArrayBuffer, 
+					                 new IntPtr(byteStart), 
+					                 new IntPtr(byteCount), 
+					                 new IntPtr (data));
+				}                                  
 			}
 		}
 
@@ -162,6 +187,7 @@ namespace flash.display3D
 		private int 				mBufferIndex;		// buffer index for multibuffering
 		private BufferUsage         mUsage;
 		private int 				mMemoryUsage;
+		private bool				mFirstTime;
 #else
 
 		public VertexBuffer3D(Context3D context3D, int numVertices, int dataPerVertex, int multiBufferCount = 1)
