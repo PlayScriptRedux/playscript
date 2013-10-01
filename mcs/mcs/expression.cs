@@ -3724,6 +3724,15 @@ namespace Mono.CSharp
 				} else if (right.Type == ec.BuiltinTypes.Dynamic && (left is NullLiteral || left.Type == ec.BuiltinTypes.String)) {
 					right = EmptyCast.Create(right, ec.BuiltinTypes.Object, ec);
 				}
+
+				// In PlayScript, if either side of an addition operator is a string, convert the other side
+				// to string as well. This is necessary to resolve ambiguities between object and string.
+				if (oper == Operator.Addition) {
+					if (left.Type.BuiltinType == BuiltinTypeSpec.Type.String && right.Type.BuiltinType != BuiltinTypeSpec.Type.String)
+						right = Convert.ImplicitConversion (ec, right, ec.BuiltinTypes.String, loc).Resolve (ec);
+					if (right.Type.BuiltinType == BuiltinTypeSpec.Type.String && left.Type.BuiltinType != BuiltinTypeSpec.Type.String)
+						left = Convert.ImplicitConversion (ec, left, ec.BuiltinTypes.String, loc).Resolve (ec);
+				}
 			}
 
 			Constant rc = right as Constant;
