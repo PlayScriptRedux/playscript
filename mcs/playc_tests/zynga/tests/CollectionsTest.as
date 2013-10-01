@@ -93,6 +93,15 @@ package
 				return 19;
 			if (!v.hasOwnProperty("0.0"))
 				return 20;
+			if (v.length != 2)
+				return 21;
+			// TODO: error CS1955: The member `_root.Vector<int>.this[string]' cannot be used as method or delegate
+			//v["push"](8);
+			Object(v).push(8);
+			if (v.length != 3)
+				return 22;
+			if (v[2] !== 8)
+				return 23;
 
 			return 0;
 		}

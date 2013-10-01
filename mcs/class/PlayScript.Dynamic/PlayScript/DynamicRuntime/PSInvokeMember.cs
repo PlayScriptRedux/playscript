@@ -94,8 +94,9 @@ namespace PlayScript.DynamicRuntime
 			// We could workaround this limitation if we did have version number in the dynamic object (and detect if it changed - or changed function - since last call)
 			var dc = o as IDynamicClass;
 			if (dc != null) {
-				var func = dc.__GetDynamicValue(mName) as Delegate;
-				if (func != null) {
+				object value;
+				if (dc.__TryGetDynamicValue(mName, out value) && value is Delegate) {
+					var func = value as Delegate;
 					mInvoker = InvokerBase.UpdateOrCreate(mInvoker, func.Target, func.Method);
 					return true;			// Because we found a dynamic value as an invoker, we have to invoke later and not resolve it again (either with the fast path or the slow path)
 				}
@@ -133,8 +134,9 @@ namespace PlayScript.DynamicRuntime
 				// It means that we did not get the invoker from the fast path (overloaded - rare - or it is the first time - very common).
 				var dc = o as IDynamicClass;
 				if (dc != null) {
-					var func = dc.__GetDynamicValue(mName) as Delegate;
-					if (func != null) {
+					object value;
+					if (dc.__TryGetDynamicValue(mName, out value) && value is Delegate) {
+						var func = value as Delegate;
 						// Assume that most time, it is due to the first execution, so don't compare with previous version
 						mInvoker = ActionCreator.CreateInvoker(func);	// This is going to use an invoker factory (can be registered by user too for more optimal code).
 						invokeOnly = true;
