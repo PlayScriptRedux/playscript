@@ -370,7 +370,7 @@ namespace _root
 				// If we can convert the string to an index, then it is an indexed access.
 				int index;
 				if (TryParseIndex (name, out index)) {
-					mArray[(int)index] = value;
+					mArray[index] = value;
 					return;
 				}
 				// Otherwise this is a dynamic property.
