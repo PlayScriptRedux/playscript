@@ -1,0 +1,29 @@
+package
+{
+	import com.adobe.test.Assert;
+	
+	import flash.utils.getQualifiedClassName;
+	
+	public class VarArgsTest2
+	{
+		public static function RunTest(numArgs, ... args):Number
+		{
+			Assert.expectEq("getQualifiedClassName(args == \"Array\"", "Array", getQualifiedClassName(args));
+			Assert.expectEq("numArgs == args.length", numArgs, args.length);
+			return 0;
+		}
+		
+		public static function Main():int
+		{
+			if (RunTest(1, []) != 0)
+				return 1;
+			if (RunTest(2, ["hello"], ["world"]) != 0)
+				return 2;
+			if (RunTest(1, ["hello", "world"]) != 0)
+				return 3;
+			trace ("ok");
+			return 0;
+		}
+	}
+}
+

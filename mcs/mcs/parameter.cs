@@ -1352,17 +1352,24 @@ namespace Mono.CSharp {
 
 			expr = Child;
 
-			if (!(expr is Constant || expr is DefaultValueExpression || (expr is New && ((New) expr).IsDefaultStruct))) {
-				rc.Report.Error (1736, Location,
-					"The expression being assigned to optional parameter `{0}' must be a constant or default value",
-					p.Name);
-
-				return;
-			}
-
 			var parameter_type = p.Type;
 			if (type == parameter_type)
 				return;
+
+			// ActionScript allows * and Object types to have default values as well.
+			bool param_is_as_obj = rc.FileType == Mono.CSharp.SourceFileType.PlayScript &&
+				(parameter_type.BuiltinType == Mono.CSharp.BuiltinTypeSpec.Type.Dynamic ||
+				 parameter_type.BuiltinType == Mono.CSharp.BuiltinTypeSpec.Type.Object);
+
+			if (!(expr is Constant || expr is DefaultValueExpression || (expr is New && ((New) expr).IsDefaultStruct))) {
+				if (!param_is_as_obj) {
+					rc.Report.Error (1736, Location,
+						"The expression being assigned to optional parameter `{0}' must be a constant or default value",
+		                 p.Name);
+
+					return;
+				}
+			}
 
 			var res = Convert.ImplicitConversionStandard (rc, expr, parameter_type, Location);
 			if (res != null) {
@@ -1376,11 +1383,6 @@ namespace Mono.CSharp {
 						return;
 					}
 				}
-
-				// ActionScript allows * and Object types to have default values as well.
-				bool param_is_as_obj = rc.FileType == Mono.CSharp.SourceFileType.PlayScript &&
-					(parameter_type.BuiltinType == Mono.CSharp.BuiltinTypeSpec.Type.Dynamic || 
-					 parameter_type.BuiltinType == Mono.CSharp.BuiltinTypeSpec.Type.Object);
 
 				if (!expr.IsNull && TypeSpec.IsReferenceType (parameter_type) && parameter_type.BuiltinType != BuiltinTypeSpec.Type.String && !param_is_as_obj) {
 					rc.Report.Error (1763, Location,

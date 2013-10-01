@@ -19,6 +19,11 @@ namespace PlayScript
 	public class Undefined
 	{
 		public static Undefined _undefined = new Undefined();
+
+		public override string ToString()
+		{
+			return "undefined";
+		}
 	}
 }
 

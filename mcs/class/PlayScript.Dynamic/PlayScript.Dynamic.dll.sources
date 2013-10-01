@@ -12,6 +12,7 @@ AssemblyInfo.cs
 ./PlayScript/ParamsDelegateTypes.cs
 ./PlayScript/ExpressionType.cs
 ./PlayScript/ExtensionAttribute.cs
+./PlayScript/NumberIsFloatAttribute.cs
 ./PlayScript/Stats.cs
 ./PlayScript/Undefined.cs
 ./PlayScript/Expando/BindingRestrictionsEx.cs

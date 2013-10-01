@@ -380,7 +380,7 @@ namespace Telemetry
 		}
 
 		// starts a telemetry session and writes telemetry data over the network
-		public static bool Connect(string hostname, int port)
+		public static bool Connect(string hostname, int port, bool loadRemoteConfig = true)
 		{
 			if (!Enabled) {
 				// telemetry is not enabled
@@ -392,6 +392,11 @@ namespace Telemetry
 				// already connected...
 				Console.WriteLine("Telemetry: already connected, disconnect first");
 				return true;
+			}
+
+			if (loadRemoteConfig) {
+				// load remote configuration from telemetry tool before connecting
+				LoadRemoteConfig(hostname, port);
 			}
 
 			Console.WriteLine("Telemetry: connecting to {0}:{1}...", hostname, port);
@@ -638,16 +643,14 @@ namespace Telemetry
 		}
 
 		// the session init loads the telemetry configuration and connects
-		public static void Init()
+		public static void Init(bool needLocalConfig = false)
 		{
 			if (!Enabled) return;
 
 			// load configuration
-			if (LoadLocalConfig(ConfigFileName)) {
-				if (LoadRemoteConfig()) {
-					// if we have configuration, then connect
-					Connect();
-				}
+			if (!needLocalConfig || LoadLocalConfig(ConfigFileName)) {
+				// if we have configuration, then connect
+				Connect();
 			}
 		}
 

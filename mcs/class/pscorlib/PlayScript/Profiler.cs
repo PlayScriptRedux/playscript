@@ -26,6 +26,7 @@ namespace PlayScript
  		public static bool Enabled = true;
 		public static bool ProfileGPU = false;
 		public static bool ProfileMemory = false;			// Profile memory usage, it is very slow though...
+		public static bool DisableTraces = true;			// set to true to disable traces during profiling session
 		public static long LastTelemetryFrameSpanStart = long.MaxValue;
 
 		// if telemetryName is provided then it will be used for the name sent to telemetry when this section is entered
@@ -537,8 +538,10 @@ namespace PlayScript
 			// start global timer
 			sReportTime = Stopwatch.StartNew();
 
-			// disable traces while profiling
-			_root.TraceConfig.enable = false;
+			if (DisableTraces) {
+				// disable traces while profiling
+				_root.TraceConfig.enable = false;
+			}
 		}
 
 		private static string  GetProfileLogDir()
@@ -690,7 +693,9 @@ namespace PlayScript
 
 		private static PerformanceFrameData sCurrentPerformanceFrameData;
 		private static PerformanceFrameData sDefaultPerformanceFrameData = new PerformanceFrameData(fastFrame: 1000.0/60.0, slowFrame: 1000.0/15.0, autoProfileFrame: 1000.0/45.0);
+#if PLATFORM_MONOTOUCH
 		private static PerformanceFrameData sSlowPerformanceFrameData = new PerformanceFrameData(fastFrame: 1000.0/30.0, slowFrame: 1000.0/10.0, autoProfileFrame: 1000.0/20.0);
+#endif
 	}
 }
 

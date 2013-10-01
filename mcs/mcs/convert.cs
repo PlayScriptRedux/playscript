@@ -185,7 +185,7 @@ namespace Mono.CSharp {
 				if (!explicit_cast)
 					return expr;
 
-				return EmptyCast.Create (expr, target_type);
+				return EmptyCast.Create (expr, target_type, opt_ec);
 			}
 
 			return null;
@@ -263,6 +263,15 @@ namespace Mono.CSharp {
 				// From an array-type S to an array-type of type T
 				//
 				if (target_type_array != null && expr_type_array.Rank == target_type_array.Rank) {
+
+					//
+					// Disable this conversion for PlayScript, specifically for
+					// the case of passing an array to a function which accepts
+					// var args. We want the function to receive 1 parameter of
+					// type array, rather than n parameters.
+					//
+					if (opt_ec != null && opt_ec.FileType == SourceFileType.PlayScript)
+						return false;
 
 					//
 					// Both SE and TE are reference-types. TE check is defered
@@ -401,7 +410,7 @@ namespace Mono.CSharp {
 				} else {
 					// PlayScript: Call the "Boolean()" static method to convert a dynamic to a bool.  EXPENSIVE, but hey..
 					Arguments args = new Arguments (1);
-					args.Add (new Argument(EmptyCast.Create(expr, opt_ec.BuiltinTypes.Object)));
+					args.Add (new Argument(EmptyCast.Create(expr, opt_ec.BuiltinTypes.Object, opt_ec)));
 					//				opt_ec.Report.Warning (7164, 1, expr.Location, "Expensive reference conversion to bool");
 					return new Invocation(new MemberAccess(new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, 
 					                                                                       expr.Location), "Boolean_fn", expr.Location), "Boolean", expr.Location), args).Resolve (opt_ec);
@@ -417,7 +426,7 @@ namespace Mono.CSharp {
 
 				// PlayScript: Call the "CastToString()" static method to convert a dynamic to a string.  EXPENSIVE, but hey..
 				Arguments args = new Arguments (1);
-				args.Add (new Argument(EmptyCast.Create(expr, opt_ec.BuiltinTypes.Object)));
+				args.Add (new Argument(EmptyCast.Create(expr, opt_ec.BuiltinTypes.Object, opt_ec)));
 				//				opt_ec.Report.Warning (7164, 1, expr.Location, "Expensive reference conversion to bool");
 				return new Invocation(new MemberAccess(new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, 
 				                                                                       expr.Location), "String_fn", expr.Location), "CastToString", expr.Location), args).Resolve (opt_ec);
@@ -560,7 +569,7 @@ namespace Mono.CSharp {
 			}
 			
 			if (expr_type != expr.Type)
-				return new Nullable.Lifted (conv, unwrap, target_type).Resolve (ec);
+				return new Nullable.LiftedConversion (conv, unwrap, target_type).Resolve (ec);
 
 			return Nullable.Wrap.Create (conv, target_type);
 		}
@@ -617,7 +626,7 @@ namespace Mono.CSharp {
 				case BuiltinTypeSpec.Type.UInt:
 				case BuiltinTypeSpec.Type.Short:
 				case BuiltinTypeSpec.Type.UShort:
-					return expr == null ? EmptyExpression.Null : EmptyCast.Create (expr, target_type);
+					return expr == null ? EmptyExpression.Null : EmptyCast.Create (expr, target_type, opt_ec);
 				case BuiltinTypeSpec.Type.ULong:
 					return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U8);
 				case BuiltinTypeSpec.Type.Long:
@@ -640,7 +649,7 @@ namespace Mono.CSharp {
 				//
 				switch (target_type.BuiltinType) {
 				case BuiltinTypeSpec.Type.Int:
-					return expr == null ? EmptyExpression.Null : EmptyCast.Create (expr, target_type);
+					return expr == null ? EmptyExpression.Null : EmptyCast.Create (expr, target_type, opt_ec);
 				case BuiltinTypeSpec.Type.Long:
 					return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_I8);
 				case BuiltinTypeSpec.Type.Double:
@@ -662,7 +671,7 @@ namespace Mono.CSharp {
 				switch (target_type.BuiltinType) {
 				case BuiltinTypeSpec.Type.Int:
 				case BuiltinTypeSpec.Type.UInt:
-					return expr == null ? EmptyExpression.Null : EmptyCast.Create (expr, target_type);
+					return expr == null ? EmptyExpression.Null : EmptyCast.Create (expr, target_type, opt_ec);
 				case BuiltinTypeSpec.Type.ULong:
 					return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U8);
 				case BuiltinTypeSpec.Type.Long:
@@ -797,7 +806,7 @@ namespace Mono.CSharp {
 				case BuiltinTypeSpec.Type.UShort:
 				case BuiltinTypeSpec.Type.Int:
 				case BuiltinTypeSpec.Type.UInt:
-					return expr == null ? EmptyExpression.Null : EmptyCast.Create (expr, target_type);
+					return expr == null ? EmptyExpression.Null : EmptyCast.Create (expr, target_type, opt_ec);
 				case BuiltinTypeSpec.Type.ULong:
 					return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U8);
 				case BuiltinTypeSpec.Type.Long:
@@ -812,30 +821,39 @@ namespace Mono.CSharp {
 				break;
 			case BuiltinTypeSpec.Type.Float:
 				//
-				// float to double
+				// From float to double
 				//
 				if (target_type.BuiltinType == BuiltinTypeSpec.Type.Double)
 					return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_R8);
-				else if (ft == SourceFileType.PlayScript && target_type.BuiltinType == BuiltinTypeSpec.Type.Bool)
-					return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new FloatLiteral(opt_ec.BuiltinTypes, 0.0f, expr.Location)).Resolve(opt_ec);
+				//
+				// PlayScript only - from float to int, uint, bool
+				//
+				if (ft == SourceFileType.PlayScript && !upconvert_only) {
+					switch (target_type.BuiltinType) {
+					case BuiltinTypeSpec.Type.Int:
+						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_I4);
+					case BuiltinTypeSpec.Type.UInt:
+						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U4);
+					case BuiltinTypeSpec.Type.Bool:
+						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new FloatLiteral(opt_ec.BuiltinTypes, 0.0f, expr.Location)).Resolve(opt_ec);
+					}
+				}
 				break;
 			case BuiltinTypeSpec.Type.Double:
 				//
-				// float to double
+				// PlayScript only - from double to int, uint, float, bool
 				//
-				switch (target_type.BuiltinType) {
-				case BuiltinTypeSpec.Type.Int:
-					if (ft == SourceFileType.PlayScript && !upconvert_only)
+				if (ft == SourceFileType.PlayScript && !upconvert_only) {
+					switch (target_type.BuiltinType) {
+					case BuiltinTypeSpec.Type.Int:
 						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_I4);
-					break;
-				case BuiltinTypeSpec.Type.UInt:
-					if (ft == SourceFileType.PlayScript && !upconvert_only)
+					case BuiltinTypeSpec.Type.UInt:
 						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U4);
-					break;
-				case BuiltinTypeSpec.Type.Bool:
-					if (ft == SourceFileType.PlayScript && !upconvert_only)
-						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new DoubleLiteral(opt_ec.BuiltinTypes, 0.0, expr.Location)).Resolve(opt_ec);
-					break;
+					case BuiltinTypeSpec.Type.Float:
+						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_R4);
+					case BuiltinTypeSpec.Type.Bool:
+						return expr == null ? EmptyExpression.Null : new Binary (Binary.Operator.Inequality, expr, new DoubleLiteral (opt_ec.BuiltinTypes, 0.0, expr.Location)).Resolve (opt_ec);
+					}
 				}
 				break;
 			}
@@ -1277,14 +1295,16 @@ namespace Mono.CSharp {
 			TypeSpec source_type = source.Type;
 			TypeSpec target_type = target;
 			Expression source_type_expr;
+			bool nullable_source = false;
 
 			if (source_type.IsNullableType) {
 				// No unwrapping conversion S? -> T for non-reference types
 				if (implicitOnly && !TypeSpec.IsReferenceType (target_type) && !target_type.IsNullableType) {
 					source_type_expr = source;
 				} else {
-					source_type_expr = Nullable.Unwrap.Create (source);
+					source_type_expr = Nullable.Unwrap.CreateUnwrapped (source);
 					source_type = source_type_expr.Type;
+					nullable_source = true;
 				}
 			} else {
 				source_type_expr = source;
@@ -1411,26 +1431,48 @@ namespace Mono.CSharp {
 			//
 			if (t_x != target_type) {
 				//
-				// User operator is of T?, no need to lift it
+				// User operator is of T?
 				//
-				if (t_x == target && t_x.IsNullableType)
-					return source;
+				if (t_x.IsNullableType && target.IsNullableType) {
+					//
+					// User operator return type does not match target type we need
+					// yet another conversion. This should happen for promoted numeric
+					// types only
+					//
+					if (t_x != target) {
+						var unwrap = Nullable.Unwrap.CreateUnwrapped (source);
 
-				source = implicitOnly ?
-					ImplicitConversionStandard (ec, source, target_type, loc) :
-					ExplicitConversionStandard (ec, source, target_type, loc);
+						source = implicitOnly ?
+							ImplicitConversionStandard (ec, unwrap, target_type, loc) :
+							ExplicitConversionStandard (ec, unwrap, target_type, loc);
 
-				if (source == null)
-					return null;
+						if (source == null)
+							return null;
+
+						source = new Nullable.LiftedConversion (source, unwrap, target).Resolve (ec);
+					}
+				} else {
+					source = implicitOnly ?
+						ImplicitConversionStandard (ec, source, target_type, loc) :
+						ExplicitConversionStandard (ec, source, target_type, loc);
+
+					if (source == null)
+						return null;
+				}
 			}
 
+
 			//
-			// Source expression is of nullable type, lift the result in the case it's null and
-			// not nullable/lifted user operator is used
+			// Source expression is of nullable type and underlying conversion returns
+			// only non-nullable type we need to lift it manually
 			//
-			if (source_type_expr is Nullable.Unwrap && !s_x.IsNullableType && (TypeSpec.IsReferenceType (target) || target_type != target))
-				source = new Nullable.Lifted (source, source_type_expr, target).Resolve (ec);
-			else if (target_type != target)
+			if (nullable_source && !s_x.IsNullableType)
+				return new Nullable.LiftedConversion (source, source_type_expr, target).Resolve (ec);
+
+			//
+			// Target is of nullable type but source type is not, wrap the result expression
+			//
+			if (target.IsNullableType && !t_x.IsNullableType)
 				source = Nullable.Wrap.Create (source, target);
 
 			return source;
@@ -1575,7 +1617,7 @@ namespace Mono.CSharp {
 				    ec.Target != Target.JavaScript) {
 
 					var cast_args = new Arguments(1);
-					cast_args.Add (new Argument(EmptyCast.Create(expr, ec.BuiltinTypes.Object)));
+					cast_args.Add (new Argument(EmptyCast.Create(expr, ec.BuiltinTypes.Object, ec)));
 
 //					ec.Report.Warning (7164, 1, expr.Location, "Expensive reference conversion to bool");
 
@@ -1588,7 +1630,7 @@ namespace Mono.CSharp {
 				case MemberKind.ArrayType:
 				case MemberKind.Class:
 					if (target_type.BuiltinType == BuiltinTypeSpec.Type.Object)
-						return EmptyCast.Create (expr, target_type);
+						return EmptyCast.Create (expr, target_type, ec);
 
 					goto case MemberKind.Struct;
 				case MemberKind.Struct:
@@ -1665,7 +1707,7 @@ namespace Mono.CSharp {
 							return expr;
 
 						if (target_pc.Element.Kind == MemberKind.Void)
-							return EmptyCast.Create (expr, target_type);
+							return EmptyCast.Create (expr, target_type, ec);
 
 						//return null;
 					}
@@ -1685,6 +1727,9 @@ namespace Mono.CSharp {
 				Expression am = ame.Compatible (ec, target_type);
 				if (am != null)
 					return am.Resolve (ec);
+
+				// Avoid CS1503 after CS1661
+				return ErrorExpression.Instance;
 			}
 
 			if (expr_type == InternalType.Arglist && target_type == ec.Module.PredefinedTypes.ArgIterator.TypeSpec)
@@ -1694,7 +1739,7 @@ namespace Mono.CSharp {
 			// dynamic erasure conversion on value types
 			//
 			if (expr_type.IsStruct && TypeSpecComparer.IsEqual (expr_type, target_type))
-				return expr_type == target_type ? expr : EmptyCast.Create (expr, target_type);
+				return expr_type == target_type ? expr : EmptyCast.Create (expr, target_type, ec);
 
 			return null;
 		}
@@ -1989,7 +2034,7 @@ namespace Mono.CSharp {
 
 				// One of the built-in conversions that belonged in the class library
 				case BuiltinTypeSpec.Type.IntPtr:
-					return new OperatorCast (EmptyCast.Create (expr, rc.BuiltinTypes.Long), target_type, true);
+					return new OperatorCast (EmptyCast.Create (expr, rc.BuiltinTypes.Long, rc), target_type, true);
 
 				// PlayScript explicit casts..
 				case BuiltinTypeSpec.Type.Bool:
@@ -2101,18 +2146,18 @@ namespace Mono.CSharp {
 				case BuiltinTypeSpec.Type.Short:
 					return new ConvCast (new OperatorCast (expr, expr.Type, rc.BuiltinTypes.UInt, true), target_type, ConvCast.Mode.U4_I2);
 				case BuiltinTypeSpec.Type.Int:
-					return EmptyCast.Create (new OperatorCast (expr, expr.Type, rc.BuiltinTypes.UInt, true), target_type);
+					return EmptyCast.Create (new OperatorCast (expr, expr.Type, rc.BuiltinTypes.UInt, true), target_type, rc);
 				case BuiltinTypeSpec.Type.UInt:
 					return new OperatorCast (expr, expr.Type, target_type, true);
 				case BuiltinTypeSpec.Type.Long:
-					return EmptyCast.Create (new OperatorCast (expr, expr.Type, rc.BuiltinTypes.ULong, true), target_type);
+					return EmptyCast.Create (new OperatorCast (expr, expr.Type, rc.BuiltinTypes.ULong, true), target_type, rc);
 				}
 				break;
 			case BuiltinTypeSpec.Type.IntPtr:
 				if (target_type.BuiltinType == BuiltinTypeSpec.Type.UInt)
-					return EmptyCast.Create (new OperatorCast (expr, expr.Type, rc.BuiltinTypes.Int, true), target_type);
+					return EmptyCast.Create (new OperatorCast (expr, expr.Type, rc.BuiltinTypes.Int, true), target_type, rc);
 				if (target_type.BuiltinType == BuiltinTypeSpec.Type.ULong)
-					return EmptyCast.Create (new OperatorCast (expr, expr.Type, rc.BuiltinTypes.Long, true), target_type);
+					return EmptyCast.Create (new OperatorCast (expr, expr.Type, rc.BuiltinTypes.Long, true), target_type, rc);
 				
 				break;
 			case BuiltinTypeSpec.Type.Decimal:
@@ -2352,7 +2397,7 @@ namespace Mono.CSharp {
 
 			if (expr_type.IsEnum) {
 				TypeSpec real_target = target_type.IsEnum ? EnumSpec.GetUnderlyingType (target_type) : target_type;
-				Expression underlying = EmptyCast.Create (expr, EnumSpec.GetUnderlyingType (expr_type));
+				Expression underlying = EmptyCast.Create (expr, EnumSpec.GetUnderlyingType (expr_type), ec);
 				if (underlying.Type == real_target)
 					ne = underlying;
 
@@ -2368,7 +2413,7 @@ namespace Mono.CSharp {
 				if (ne == null && (real_target.BuiltinType == BuiltinTypeSpec.Type.IntPtr || real_target.BuiltinType == BuiltinTypeSpec.Type.UIntPtr))
 					ne = ExplicitUserConversion (ec, underlying, real_target, loc);
 
-				return ne != null ? EmptyCast.Create (ne, target_type) : null;
+				return ne != null ? EmptyCast.Create (ne, target_type, ec) : null;
 			}
 
 			if (target_type.IsEnum) {
@@ -2381,7 +2426,7 @@ namespace Mono.CSharp {
 				TypeSpec real_target = target_type.IsEnum ? EnumSpec.GetUnderlyingType (target_type) : target_type;
 
 				if (expr_type == real_target)
-					return EmptyCast.Create (expr, target_type);
+					return EmptyCast.Create (expr, target_type, ec);
 
 				Constant c = expr as Constant;
 				if (c != null) {
@@ -2391,11 +2436,11 @@ namespace Mono.CSharp {
 				} else {
 					ne = ImplicitNumericConversion (expr, real_target, ec);
 					if (ne != null)
-						return EmptyCast.Create (ne, target_type);
+						return EmptyCast.Create (ne, target_type, ec);
 
 					ne = ExplicitNumericConversion (ec, expr, real_target);
 					if (ne != null)
-						return EmptyCast.Create (ne, target_type);
+						return EmptyCast.Create (ne, target_type, ec);
 
 					//
 					// LAMESPEC: IntPtr and UIntPtr conversion to any Enum is allowed
@@ -2424,7 +2469,7 @@ namespace Mono.CSharp {
 			}
 
 			if (ec.IsUnsafe){
-				ne = ExplicitUnsafe (expr, target_type);
+				ne = ExplicitUnsafe (expr, target_type, ec);
 				if (ne != null)
 					return ne;
 			}
@@ -2432,13 +2477,13 @@ namespace Mono.CSharp {
 			return null;
 		}
 
-		public static Expression ExplicitUnsafe (Expression expr, TypeSpec target_type)
+		public static Expression ExplicitUnsafe (Expression expr, TypeSpec target_type, ResolveContext rc)
 		{
 			TypeSpec expr_type = expr.Type;
 
 			if (target_type.IsPointer){
 				if (expr_type.IsPointer)
-					return EmptyCast.Create (expr, target_type);
+					return EmptyCast.Create (expr, target_type, rc);
 
 				switch (expr_type.BuiltinType) {
 				case BuiltinTypeSpec.Type.SByte:
@@ -2505,7 +2550,7 @@ namespace Mono.CSharp {
 				return ne;
 
 			if (ec.IsUnsafe && expr.Type.IsPointer && target_type.IsPointer && ((PointerContainer)expr.Type).Element.Kind == MemberKind.Void)
-				return EmptyCast.Create (expr, target_type);
+				return EmptyCast.Create (expr, target_type, ec);
 
 			expr.Error_ValueCannotBeConverted (ec, target_type, true);
 			return null;
@@ -2545,7 +2590,7 @@ namespace Mono.CSharp {
 					if (e == null)
 						return null;
 
-					return new Nullable.Lifted (e, unwrap, target_type).Resolve (ec);
+					return new Nullable.LiftedConversion (e, unwrap, target_type).Resolve (ec);
 				}
 				if (expr_type.BuiltinType == BuiltinTypeSpec.Type.Object) {
 					return new UnboxCast (expr, target_type);
@@ -2563,7 +2608,7 @@ namespace Mono.CSharp {
 				e = Nullable.Unwrap.Create (expr, false);			
 				e = ExplicitConversionCore (ec, e, target_type, loc);
 				if (e != null)
-					return EmptyCast.Create (e, target_type);
+					return EmptyCast.Create (e, target_type, ec);
 			}
 			
 			e = ExplicitUserConversion (ec, expr, target_type, loc);

@@ -56,6 +56,7 @@ typedef struct  {
 static const char*
 default_path [] = {
 	NULL,
+	NULL,
 	NULL
 };
 
@@ -644,6 +645,7 @@ mono_set_rootdir (void)
 		gchar buf[4096];
  		guint buf_size = sizeof (buf);
  
+		name = NULL;
  		if (_NSGetExecutablePath (buf, &buf_size) == 0)
  			name = g_strdup (buf);
  
@@ -851,6 +853,8 @@ static KeyRemapEntry key_remap_table[] = {
 	{ "System.ComponentModel.Composition", WINFX_KEY, ECMA_KEY },
 	{ "System.ComponentModel.DataAnnotations", "ddd0da4d3e678217", WINFX_KEY },
 	{ "System.Core", SILVERLIGHT_KEY, ECMA_KEY },
+	// FIXME: MS uses MSFINAL_KEY for .NET 4.5
+	{ "System.Net", SILVERLIGHT_KEY, ECMA_KEY },
 	{ "System.Numerics", WINFX_KEY, ECMA_KEY },
 	{ "System.Runtime.Serialization", SILVERLIGHT_KEY, ECMA_KEY },
 	{ "System.ServiceModel", WINFX_KEY, ECMA_KEY },
@@ -1016,6 +1020,7 @@ mono_assembly_load_reference (MonoImage *image, int index)
 		MonoTableInfo *t = &image->tables [MONO_TABLE_ASSEMBLYREF];
 	
 		image->references = g_new0 (MonoAssembly *, t->rows + 1);
+		image->nreferences = t->rows;
 	}
 	reference = image->references [index];
 	mono_assemblies_unlock ();
@@ -2782,7 +2787,10 @@ mono_assembly_load_corlib (const MonoRuntimeInfo *runtime, MonoImageOpenStatus *
 	}
 	corlib = load_in_path (corlib_file, default_path, status, FALSE);
 	g_free (corlib_file);
-
+	
+	if (corlib && !strcmp (runtime->framework_version, "4.5"))
+		default_path [1] = g_strdup_printf ("%s/mono/4.5/Facades", default_path [0]);
+		
 	return corlib;
 }
 

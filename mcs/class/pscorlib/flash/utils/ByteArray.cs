@@ -332,6 +332,7 @@ namespace flash.utils {
 
 			switch (algorithm) {
 			case null:
+			case "":
 			case CompressionAlgorithm.ZLIB:
 				{
 					// parse zlib header

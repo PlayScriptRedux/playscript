@@ -23,10 +23,47 @@ using Mono.CSharp;
 
 namespace Mono.PlayScript
 {
+	//
+	// This class has to be used by parser only, it reuses token
+	// details once a file is parsed
+	//
+	public class LocatedToken
+	{
+		public int row, column;
+		public string value;
+		public SourceFile file;
+
+		public LocatedToken ()
+		{
+		}
+
+		public LocatedToken (string value, Location loc)
+		{
+			this.value = value;
+			file = loc.SourceFile;
+			row = loc.Row;
+			column = loc.Column;
+		}
+
+		public override string ToString ()
+		{
+			return string.Format ("Token '{0}' at {1},{2}", Value, row, column);
+		}
+
+		public Location Location
+		{
+			get { return new Location (file, row, column); }
+		}
+
+		public string Value
+		{
+			get { return value; }
+		}
+	}
+
 	/// <summary>
 	///    Tokenizer for C# source code. 
 	/// </summary>
-
 	public class Tokenizer : yyParser.yyInput
 	{
 		class KeywordEntry<T>
@@ -70,42 +107,6 @@ namespace Mono.PlayScript
 			}
 		}
 
-		//
-		// This class has to be used by parser only, it reuses token
-		// details after each file parse completion
-		//
-		public class LocatedToken
-		{
-			public int row, column;
-			public string value;
-			public SourceFile file;
-
-			public LocatedToken ()
-			{
-			}
-
-			public LocatedToken (string value, Location loc)
-			{
-				this.value = value;
-				file = loc.SourceFile;
-				row = loc.Row;
-				column = loc.Column;
-			}
-
-			public override string ToString ()
-			{
-				return string.Format ("Token '{0}' at {1},{2}", Value, row, column);
-			}
-			
-			public Location Location {
-				get { return new Location (file, row, column); }
-			}
-
-			public string Value {
-				get { return value; }
-			}
-		}
-
 		public class LocatedTokenBuffer
 		{
 			readonly LocatedToken[] buffer;
@@ -140,10 +141,10 @@ namespace Mono.PlayScript
 				if (pos >= buffer.Length) {
 					entry = new LocatedToken ();
 				} else {
-					entry = buffer [pos];
+					entry = buffer[pos];
 					if (entry == null) {
 						entry = new LocatedToken ();
-						buffer [pos] = entry;
+						buffer[pos] = entry;
 					}
 
 					++pos;
@@ -220,7 +221,6 @@ namespace Mono.PlayScript
 		bool handle_for_in = false;
 		bool eat_block = false;
 		int eat_block_braces = 0;
-		bool lambda_arguments_parsing;
 		List<Location> escaped_identifiers;
 		int parsing_generic_less_than;
 		readonly bool doc_processing;
@@ -272,6 +272,9 @@ namespace Mono.PlayScript
 		public const int EvalCompilationUnitParserCharacter = 0x100001;
 		public const int EvalUsingDeclarationsParserCharacter = 0x100002;
 		public const int DocumentationXref = 0x100003;
+		
+		const int UnicodeLS = 0x2028;
+		const int UnicodePS = 0x2029;
 		
 		//
 		// XML documentation buffer. The save point is used to divide
@@ -934,7 +937,6 @@ namespace Mono.PlayScript
 			case Token.FUNCTION:
 				parsing_modifiers = false;
 				this.AutoSemiInsertion = false;
-				bool is_get_set = false;
 				PushPosition();
 				var fn_token = token ();
 				if (fn_token == Token.IDENTIFIER)
@@ -1000,11 +1002,6 @@ namespace Mono.PlayScript
 				if (!parsing_playscript) {
 					res = -1;
 				} else if (!query_parsing) {
-					if (lambda_arguments_parsing) {
-						res = -1;
-						break;
-					}
-
 					PushPosition ();
 					// HACK: to disable generics micro-parser, because PushPosition does not
 					// store identifiers array
@@ -1130,7 +1127,6 @@ namespace Mono.PlayScript
 				} else if (parsing_block > 0) {
 					switch (peek_token ()) {
 					case Token.DELEGATE:
-					case Token.OPEN_PARENS_LAMBDA:
 						// async is keyword
 						break;
 					case Token.IDENTIFIER:
@@ -1303,166 +1299,11 @@ namespace Mono.PlayScript
 		}
 
 		//
-		// Open parens micro parser. Detects both lambda and cast ambiguity.
+		// Open parens micro parser. Only detects simple open parens at the moment.
 		//	
 		int TokenizeOpenParens ()
 		{
-			int ptoken;
-			current_token = -1;
-			current_token_line = 0;
-
-			int bracket_level = 0;
-			bool is_type = false;
-			bool can_be_type = false;
-			
-			while (true) {
-				ptoken = current_token;
-				token ();
-
-				switch (current_token) {
-				case Token.CLOSE_PARENS:
-					token ();
-					
-					//
-					// Expression inside parens is lambda, (int i) => 
-					//
-					if (current_token == Token.ARROW)
-						return Token.OPEN_PARENS_LAMBDA;
-
-//					//
-//					// Expression inside parens is single type, (int[])
-//					//
-//					if (is_type)
-//						return Token.OPEN_PARENS_CAST;
-//
-//					//
-//					// Expression is possible cast, look at next token, (T)null
-//					//
-//					if (can_be_type) {
-//						switch (current_token) {
-//						case Token.OPEN_PARENS:
-//						case Token.BANG:
-//						case Token.TILDE:
-//						case Token.IDENTIFIER:
-//						case Token.LITERAL:
-//						case Token.SUPER:
-//						case Token.CHECKED:
-//						case Token.DELEGATE:
-//						case Token.FALSE:
-//						case Token.FIXED:
-//						case Token.NEW:
-//						case Token.NULL:
-//						case Token.SIZEOF:
-//						case Token.THIS:
-//						case Token.THROW:
-//						case Token.TRUE:
-//						case Token.TYPEOF:
-//						case Token.UNCHECKED:
-//						case Token.UNSAFE:
-//						case Token.DEFAULT:
-//						case Token.AWAIT:
-//
-//						//
-//						// These can be part of a member access
-//						//
-//						case Token.INT:
-//						case Token.UINT:
-//						case Token.SHORT:
-//						case Token.USHORT:
-//						case Token.LONG:
-//						case Token.ULONG:
-//						case Token.DOUBLE:
-//						case Token.FLOAT:
-//						case Token.CHAR:
-//						case Token.BYTE:
-//						case Token.DECIMAL:
-//						case Token.BOOL:
-//							return Token.OPEN_PARENS_CAST;
-//						}
-//					}
-					return Token.OPEN_PARENS;
-					
-				case Token.DOT:
-				case Token.DOUBLE_COLON:
-					if (ptoken != Token.IDENTIFIER && ptoken != Token.OP_GENERICS_GT)
-						goto default;
-
-					continue;
-
-				case Token.IDENTIFIER:
-					switch (ptoken) {
-					case Token.DOT:
-						if (bracket_level == 0) {
-							is_type = false;
-							can_be_type = true;
-						}
-
-						continue;
-					case Token.OP_GENERICS_LT:
-					case Token.COMMA:
-					case Token.DOUBLE_COLON:
-					case -1:
-						if (bracket_level == 0)
-							can_be_type = true;
-						continue;
-					default:
-						can_be_type = is_type = false;
-						continue;
-					}
-
-				case Token.OBJECT:
-				case Token.STRING:
-				case Token.BOOL:
-				case Token.DECIMAL:
-				case Token.FLOAT:
-				case Token.DOUBLE:
-				case Token.SBYTE:
-				case Token.BYTE:
-				case Token.SHORT:
-				case Token.USHORT:
-				case Token.INT:
-				case Token.UINT:
-				case Token.LONG:
-				case Token.ULONG:
-				case Token.CHAR:
-				case Token.VOID:
-					if (bracket_level == 0)
-						is_type = true;
-					continue;
-
-				case Token.COMMA:
-					if (bracket_level == 0) {
-						bracket_level = 100;
-						can_be_type = is_type = false;
-					}
-					continue;
-
-				case Token.OP_GENERICS_LT:
-				case Token.OPEN_BRACKET:
-					if (bracket_level++ == 0)
-						is_type = true;
-					continue;
-
-				case Token.OP_GENERICS_GT:
-				case Token.CLOSE_BRACKET:
-					--bracket_level;
-					continue;
-
-				case Token.INTERR_NULLABLE:
-				case Token.STAR:
-					if (bracket_level == 0)
-						is_type = true;
-					continue;
-
-				case Token.REF:
-				case Token.OUT:
-					can_be_type = is_type = false;
-					continue;
-
-				default:
-					return Token.OPEN_PARENS;
-				}
-			}
+			return Token.OPEN_PARENS;
 		}
 
 		public static bool IsValidIdentifier (string s)
@@ -2160,18 +2001,25 @@ namespace Mono.PlayScript
 				x = reader.Read ();
 			}
 			
-			if (x == '\r') {
-				if (peek_char () == '\n') {
-					putback_char = -1;
-				}
+			if (x <= 13) {
+				if (x == '\r') {
+					if (peek_char () == '\n') {
+						putback_char = -1;
+					}
 
-				x = '\n';
-				advance_line ();
-			} else if (x == '\n') {
+					x = '\n';
+					advance_line ();
+				} else if (x == '\n') {
+					advance_line ();
+				} else {
+					col++;
+				}
+			} else if (x >= UnicodeLS && x <= UnicodePS) {
 				advance_line ();
 			} else {
 				col++;
 			}
+
 			return x;
 		}
 
@@ -2203,7 +2051,7 @@ namespace Mono.PlayScript
 				throw new InternalErrorException (string.Format ("Secondary putback [{0}] putting back [{1}] is not allowed", (char)putback_char, (char) c), Location);
 			}
 
-			if (c == '\n' || col == 0) {
+			if (c == '\n' || col == 0 || (c >= UnicodeLS && c <= UnicodePS)) {
 				// It won't happen though.
 				line--;
 				ref_line--;
@@ -2297,7 +2145,7 @@ namespace Mono.PlayScript
 			int has_identifier_argument = (int)(cmd & PreprocessorDirective.RequiresArgument);
 			int pos = 0;
 
-			while (c != -1 && c != '\n') {
+			while (c != -1 && c != '\n' && c != UnicodeLS && c != UnicodePS) {
 				if (c == '\\' && has_identifier_argument >= 0) {
 					if (has_identifier_argument != 0) {
 						has_identifier_argument = 1;
@@ -2324,10 +2172,7 @@ namespace Mono.PlayScript
 					// Eat single-line comments
 					//
 					get_char ();
-					do {
-						c = get_char ();
-					} while (c != -1 && c != '\n');
-
+					ReadToEndOfLine ();
 					break;
 				}
 
@@ -2389,10 +2234,7 @@ namespace Mono.PlayScript
 				//
 				// Eat any remaining characters to continue parsing on next line
 				//
-				while (c != -1 && c != '\n') {
-					c = get_char ();
-				}
-
+				ReadToEndOfLine ();
 				return false;
 			}
 
@@ -2401,10 +2243,7 @@ namespace Mono.PlayScript
 				//
 				// Eat any remaining characters to continue parsing on next line
 				//
-				while (c != -1 && c != '\n') {
-					c = get_char ();
-				}
-
+				ReadToEndOfLine ();
 				return new_line != 0;
 			}
 
@@ -2418,13 +2257,11 @@ namespace Mono.PlayScript
 				c = 0;
 			}
 
-			if (c != '\n' && c != '/' && c != '"') {
+			if (c != '\n' && c != '/' && c != '"' && c != UnicodeLS && c != UnicodePS) {
 				//
 				// Eat any remaining characters to continue parsing on next line
 				//
-				while (c != -1 && c != '\n') {
-					c = get_char ();
-				}
+				ReadToEndOfLine ();
 
 				Report.Error (1578, loc, "Filename, single-line comment or end-of-line expected");
 				return true;
@@ -2440,16 +2277,15 @@ namespace Mono.PlayScript
 				}
 			}
 
-			if (c == '\n') {
+			if (c == '\n' || c == UnicodeLS || c == UnicodePS) {
+
 			} else if (c == '/') {
 				ReadSingleLineComment ();
 			} else {
 				//
 				// Eat any remaining characters to continue parsing on next line
 				//
-				while (c != -1 && c != '\n') {
-					c = get_char ();
-				}
+				ReadToEndOfLine ();
 
 				Error_EndLineExpected ();
 				return true;
@@ -2684,7 +2520,7 @@ namespace Mono.PlayScript
 		string TokenizeFileName (ref int c)
 		{
 			var string_builder = new StringBuilder ();
-			while (c != -1 && c != '\n') {
+			while (c != -1 && c != '\n' && c != UnicodeLS && c != UnicodePS) {
 				c = get_char ();
 				if (c == '"') {
 					c = get_char ();
@@ -2732,13 +2568,19 @@ namespace Mono.PlayScript
 					Report.Warning (1692, 1, Location, "Invalid number");
 
 					// Read everything till the end of the line or file
-					do {
-						c = get_char ();
-					} while (c != -1 && c != '\n');
+					ReadToEndOfLine ();
 				}
 			}
 
 			return number;
+		}
+
+		void ReadToEndOfLine ()
+		{
+			int c;
+			do {
+				c = get_char ();
+			} while (c != -1 && c != '\n' && c != UnicodeLS && c != UnicodePS);
 		}
 
 		void ReadSingleLineComment ()
@@ -2747,10 +2589,7 @@ namespace Mono.PlayScript
 				Report.Warning (1696, 1, Location, "Single-line comment or end-of-line expected");
 
 			// Read everything till the end of the line or file
-			int c;
-			do {
-				c = get_char ();
-			} while (c != -1 && c != '\n');
+			ReadToEndOfLine ();
 		}
 
 		/// <summary>
@@ -2776,7 +2615,7 @@ namespace Mono.PlayScript
 
 						var loc = Location;
 
-						if (c == '\n' || c == '/') {
+						if (c == '\n' || c == '/' || c == UnicodeLS || c == UnicodePS) {
 							if (c == '/')
 								ReadSingleLineComment ();
 
@@ -2802,7 +2641,7 @@ namespace Mono.PlayScript
 										Report.RegisterWarningRegion (loc).WarningEnable (loc, code, context);
 									}
 								}
-							} while (code >= 0 && c != '\n' && c != -1);
+							} while (code >= 0 && c != '\n' && c != -1 && c != UnicodeLS && c != UnicodePS);
 						}
 
 						return;
@@ -2810,6 +2649,10 @@ namespace Mono.PlayScript
 				}
 
 				Report.Warning (1634, 1, Location, "Expected disable or restore");
+
+				// Eat any remaining characters on the line
+				ReadToEndOfLine ();
+
 				return;
 			}
 
@@ -3277,13 +3120,23 @@ namespace Mono.PlayScript
 					return Token.LITERAL;
 				}
 
-				if (c == '\n') {
+				if (c == '\n' || c == UnicodeLS || c == UnicodePS) {
 					if (!quoted) {
 						Report.Error (1010, Location, "Newline in constant");
+
+						advance_line ();
+
+						// Don't add \r to string literal
+						if (pos > 1 && value_builder [pos - 1] == '\r')
+							--pos;
+
 						val = new StringLiteral (context.BuiltinTypes, new string (value_builder, 0, pos), start_location);
 						return Token.LITERAL;
 					}
+
+					advance_line ();
 				} else if (c == '\\' && !quoted) {
+					++col;
 					int surrogate;
 					c = escape (c, out surrogate);
 					if (c == -1)
@@ -3298,6 +3151,8 @@ namespace Mono.PlayScript
 				} else if (c == -1) {
 					Report.Error (1039, Location, "Unterminated string literal");
 					return Token.EOF;
+				} else {
+					++col;
 				}
 
 				if (pos == value_builder.Length)
@@ -3705,7 +3560,7 @@ namespace Mono.PlayScript
 
 					parse_regex_xml = 2;  // regex literals may be included in array initializers.
 
-					if (parsing_block == 0 || lambda_arguments_parsing)
+					if (parsing_block == 0)
 						return Token.OPEN_BRACKET;
 
 					next = peek_char ();
@@ -3719,6 +3574,8 @@ namespace Mono.PlayScript
 					case '\v':
 					case '\r':
 					case '\n':
+					case UnicodeLS:
+					case UnicodePS:
 					case '/':
 						next = peek_token ();
 						if (next == Token.COMMA || next == Token.CLOSE_BRACKET)
@@ -3737,7 +3594,7 @@ namespace Mono.PlayScript
 					//
 					// An expression versions of parens can appear in block context only
 					//
-					if (parsing_block != 0 && !lambda_arguments_parsing) {
+					if (parsing_block != 0) {
 						
 						//
 						// Optmize most common case where we know that parens
@@ -3768,11 +3625,9 @@ namespace Mono.PlayScript
 							return Token.OPEN_PARENS;
 						}
 
-						lambda_arguments_parsing = true;
 						PushPosition ();
 						d = TokenizeOpenParens ();
 						PopPosition ();
-						lambda_arguments_parsing = false;
 						return d;
 					}
 
@@ -3996,9 +3851,9 @@ namespace Mono.PlayScript
 							}
 						}
 
-						while ((d = get_char ()) != -1 && d != '\n');
+						while ((d = get_char ()) != -1 && d != '\n' && d != UnicodeLS && d != UnicodePS);
 
-						if (d == '\n')
+						if (d == '\n' || d == UnicodeLS || d == UnicodePS)
 							putback (d);
 
 						any_token_seen |= tokens_seen;
@@ -4054,7 +3909,7 @@ namespace Mono.PlayScript
 							if (docAppend)
 								xml_comment_buffer.Append ((char)d);
 							
-							if (d == '\n') {
+							if (d == '\n' || d == UnicodeLS || d == UnicodePS){
 								any_token_seen |= tokens_seen;
 								tokens_seen = false;
 								// 
@@ -4109,6 +3964,8 @@ namespace Mono.PlayScript
 					return is_number (c);
 
 				case '\n': // white space
+				case UnicodeLS:
+				case UnicodePS:
 					if (do_auto_semi_insertion (parse_token, line - 1, c, -1))
 						return Token.SEMICOLON;
 					any_token_seen |= tokens_seen;
@@ -4193,7 +4050,7 @@ namespace Mono.PlayScript
 							continue;
 						}
 
-						if (c == ' ' || c == '\t' || c == '\n' || c == '\f' || c == '\v')
+						if (c == ' ' || c == '\t' || c == '\n' || c == '\f' || c == '\v' || c == UnicodeLS || c == UnicodePS)
 							continue;
 
 						if (c == '#') {
@@ -4302,7 +4159,7 @@ namespace Mono.PlayScript
 //				return Token.LITERAL;
 //			}
 //
-//			if (c == '\n') {
+//			if (c == '\n' || c == UnicodeLS || c == UnicodePS) {
 //				Report.Error (1010, start_location, "Newline in constant");
 //				return Token.ERROR;
 //			}

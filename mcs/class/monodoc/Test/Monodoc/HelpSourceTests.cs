@@ -7,8 +7,10 @@ using NUnit.Framework;
 
 using Monodoc;
 using Monodoc.Generators;
+using Monodoc.Providers;
 
-using HtmlAgilityPack;
+// Used by ReachabilityWithCrefsTest
+// using HtmlAgilityPack;
 
 namespace MonoTests.Monodoc
 {
@@ -152,6 +154,24 @@ namespace MonoTests.Monodoc
 			Assert.IsTrue (rootTree.RenderUrl ("T:System.IComparable{T}", generator, out result), "#6");
 		}
 
+		[Test]
+		public void PublicUrlOnUnattachedHelpSourceRoot ()
+		{
+			// Unattached help source have no root:/ URL attributed
+			var hs = new EcmaHelpSource (Path.Combine (BaseDir, "sources", "netdocs"), false);
+			var rootTree = RootTree.LoadTree (Path.GetFullPath (BaseDir), false);
+			hs.RootTree = rootTree;
+			Assert.IsNull (hs.Tree.RootNode.PublicUrl);
+			var nsChildUrl = hs.Tree.RootNode.ChildNodes.First ().PublicUrl;
+			Assert.IsNotNull (nsChildUrl);
+			StringAssert.StartsWith ("N:", nsChildUrl);
+			// Verify GetNodeTypeParent
+			var typeNode = hs.Tree.RootNode.ChildNodes.First ().ChildNodes.First ();
+			var metaNode = typeNode.ChildNodes.First (cn => cn.Element == "M");
+			StringAssert.StartsWith (typeNode.PublicUrl, metaNode.PublicUrl);
+		}
+
+		/*
 		[Test, Ignore ("Mono documentation is full of syntax errors so we can't use it reliably for this test")]
 		public void ReachabilityWithCrefsTest ()
 		{
@@ -202,6 +222,6 @@ namespace MonoTests.Monodoc
 			}
 
 			Assert.AreEqual (0, errorCount, errorCount + " / " + crefs.Count);
-		}
+		}*/
 	}
 }

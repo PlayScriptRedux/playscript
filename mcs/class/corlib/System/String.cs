@@ -1278,11 +1278,11 @@ namespace System
 		{
 			if (value == null)
 				throw new ArgumentNullException ("value");
-			if (value.length == 0)
+			if (value.Length == 0)
 				return 0;
 			if (this.length == 0)
 				return -1;
-			return CultureInfo.CurrentCulture.CompareInfo.IndexOf (this, value, 0, length, CompareOptions.Ordinal);
+			return CultureInfo.CurrentCulture.CompareInfo.IndexOf (this, value, 0, length, CompareOptions.None);
 		}
 
 		public int IndexOf (String value, int startIndex)
@@ -1516,7 +1516,10 @@ namespace System
 
 		public bool Contains (String value)
 		{
-			return IndexOf (value) != -1;
+			if (value == null)
+				throw new ArgumentNullException ("value");
+
+			return IndexOfOrdinalUnchecked (value, 0, Length) != -1;
 		}
 
 		public static bool IsNullOrEmpty (String value)
@@ -1691,9 +1694,9 @@ namespace System
 			case StringComparison.InvariantCultureIgnoreCase:
 				return CultureInfo.InvariantCulture.CompareInfo.IsSuffix (this, value, CompareOptions.IgnoreCase);
 			case StringComparison.Ordinal:
-				return CultureInfo.CurrentCulture.CompareInfo.IsSuffix (this, value, CompareOptions.Ordinal);
+				return CultureInfo.InvariantCulture.CompareInfo.IsSuffix (this, value, CompareOptions.Ordinal);
 			case StringComparison.OrdinalIgnoreCase:
-				return CultureInfo.CurrentCulture.CompareInfo.IsSuffix (this, value, CompareOptions.OrdinalIgnoreCase);
+				return CultureInfo.InvariantCulture.CompareInfo.IsSuffix (this, value, CompareOptions.OrdinalIgnoreCase);
 			default:
 				string msg = Locale.GetText ("Invalid value '{0}' for StringComparison", comparisonType);
 				throw new ArgumentException (msg, "comparisonType");
@@ -3080,6 +3083,43 @@ namespace System
 			}
 			memcpy4 (dest, src, size);
 		}
+
+		/* Used by the runtime */
+		internal static unsafe void bzero (byte *dest, int len) {
+			memset (dest, 0, len);
+		}
+
+		internal static unsafe void bzero_aligned_1 (byte *dest, int len) {
+			((byte*)dest) [0] = 0;
+		}
+
+		internal static unsafe void bzero_aligned_2 (byte *dest, int len) {
+			((short*)dest) [0] = 0;
+		}
+
+		internal static unsafe void bzero_aligned_4 (byte *dest, int len) {
+			((int*)dest) [0] = 0;
+		}
+
+		internal static unsafe void bzero_aligned_8 (byte *dest, int len) {
+			((long*)dest) [0] = 0;
+		}
+
+		internal static unsafe void memcpy_aligned_1 (byte *dest, byte *src, int size) {
+			((byte*)dest) [0] = ((byte*)src) [0];
+		}			
+
+		internal static unsafe void memcpy_aligned_2 (byte *dest, byte *src, int size) {
+			((short*)dest) [0] = ((short*)src) [0];
+		}			
+
+		internal static unsafe void memcpy_aligned_4 (byte *dest, byte *src, int size) {
+			((int*)dest) [0] = ((int*)src) [0];
+		}			
+
+		internal static unsafe void memcpy_aligned_8 (byte *dest, byte *src, int size) {
+			((long*)dest) [0] = ((long*)src) [0];
+		}			
 
 		internal static unsafe void CharCopy (char *dest, char *src, int count) {
 			// Same rules as for memcpy, but with the premise that 

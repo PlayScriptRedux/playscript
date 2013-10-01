@@ -322,7 +322,9 @@ namespace Mono.CSharp
 
 			PsExtended = 1 << 27,
 
-			PsDynamicDisabled = 1 << 28
+			PsDynamicDisabled = 1 << 28,
+
+			HasNoReturnType = 1 << 29,
 		}
 
 		// utility helper for CheckExpr, UnCheckExpr, Checked and Unchecked statements
@@ -434,6 +436,13 @@ namespace Mono.CSharp
 					flags |= Options.PsDynamicDisabled;
 			}
 
+			//
+			// Handle missing return type
+			//
+			if (memberCore is Method) {
+				if (((Method)memberCore).HasNoReturnType)
+					flags |= Options.HasNoReturnType;
+			}
 		}
 
 		public ResolveContext (IMemberContext mc, Options options)
@@ -530,6 +539,12 @@ namespace Mono.CSharp
 			}
 		}
 
+		public bool HasNoReturnType {
+			get {
+				return (flags & Options.HasNoReturnType) != 0;
+			}
+		}
+
 		public ModuleContainer Module {
 			get {
 				return MemberContext.Module;
@@ -558,6 +573,17 @@ namespace Mono.CSharp
 					flags |= Options.PsExtended; 
 				else 
 					flags &= ~Options.PsExtended; 
+			}
+		}
+
+		public bool PsNumberIsFloat {
+			get {
+				if (CurrentMemberDefinition != null && CurrentMemberDefinition.Parent != null) {
+					var attributes = CurrentMemberDefinition.Parent.OptAttributes;
+					if (attributes != null && attributes.Contains (Module.PredefinedAttributes.NumberIsFloatAttribute))
+						return true;
+				}
+				return false;
 			}
 		}
 
@@ -850,8 +876,8 @@ namespace Mono.CSharp
 
 		public LocationsBag LocationsBag { get; set; }
 		public bool UseJayGlobalArrays { get; set; }
-		public Tokenizer.LocatedToken[] LocatedTokens { get; set; }
-		public Mono.PlayScript.Tokenizer.LocatedToken[] AsLocatedTokens { get; set; }
+		public LocatedToken[] LocatedTokens { get; set; }
+		public Mono.PlayScript.LocatedToken[] AsLocatedTokens { get; set; }
 
 		public MD5 GetChecksumAlgorithm ()
 		{

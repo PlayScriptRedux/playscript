@@ -453,9 +453,9 @@ namespace Mono.CSharp {
 					visitor.Skip = false;
 					return ret;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && this.target != null)
 					this.target.Accept (visitor);
-				if (visitor.Continue)
+				if (visitor.Continue && this.source != null)
 					this.source.Accept (visitor);
 			}
 
@@ -497,6 +497,24 @@ namespace Mono.CSharp {
 
 			return this;
 		}
+
+		public override object Accept (StructuralVisitor visitor)
+		{
+			var ret = visitor.Visit (this);
+
+			if (visitor.AutoVisit) {
+				if (visitor.Skip) {
+					visitor.Skip = false;
+					return ret;
+				}
+				if (visitor.Continue && this.source != null)
+					this.source.Accept (visitor);
+				if (visitor.Continue && this.target != null)
+					this.target.Accept (visitor);
+			}
+
+			return ret;
+		}
 	}
 
 	public class RuntimeExplicitAssign : Assign
@@ -508,7 +526,7 @@ namespace Mono.CSharp {
 
 		protected override Expression ResolveConversions (ResolveContext ec)
 		{
-			source = EmptyCast.Create (source, target.Type);
+			source = EmptyCast.Create (source, target.Type, ec);
 			return this;
 		}
 	}
@@ -844,8 +862,17 @@ namespace Mono.CSharp {
 			// Otherwise, if the selected operator is a predefined operator
 			//
 			Binary b = source as Binary;
-			if (b == null && source is ReducedExpression)
-				b = ((ReducedExpression) source).OriginalExpression as Binary;
+			if (b == null) {
+				if (source is ReducedExpression)
+					b = ((ReducedExpression) source).OriginalExpression as Binary;
+				else if (source is Nullable.LiftedBinaryOperator) {
+					var po = ((Nullable.LiftedBinaryOperator) source);
+					if (po.UserOperator == null)
+						b = po.Binary;
+				} else if (source is TypeCast) {
+					b = ((TypeCast) source).Child as Binary;
+				}
+			}
 
 			if (b != null) {
 				//
@@ -888,9 +915,9 @@ namespace Mono.CSharp {
 					visitor.Skip = false;
 					return ret;
 				}
-				if (visitor.Continue)
+				if (visitor.Continue && this.target != null)
 					this.target.Accept (visitor);
-				if (visitor.Continue)
+				if (visitor.Continue && this.source != null)
 					this.source.Accept (visitor);
 			}
 

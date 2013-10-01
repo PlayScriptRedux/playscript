@@ -25,6 +25,8 @@
     <WarningLevel>4</WarningLevel>
     <AndroidLinkMode>None</AndroidLinkMode>
     <ConsolePause>false</ConsolePause>
+    <NoWarn>618</NoWarn>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Optimize>true</Optimize>
@@ -34,6 +36,8 @@
     <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
     <ConsolePause>false</ConsolePause>
     <DefineConstants>PLATFORM_MONODROID</DefineConstants>
+    <NoWarn>618</NoWarn>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -59,6 +63,9 @@
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\ExtensionAttribute.cs">
       <Link>PlayScript\ExtensionAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\NumberIsFloatAttribute.cs">
+      <Link>PlayScript\NumberIsFloatAttribute.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\Expando\BindingRestrictionsEx.cs">
       <Link>PlayScript\Expando\BindingRestrictionsEx.cs</Link>
