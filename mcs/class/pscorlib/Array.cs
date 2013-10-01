@@ -1785,6 +1785,7 @@ namespace _root
 				index = (int)d;
 				return true;
 			}
+			index = -1;
 			return false;
 		}
 
