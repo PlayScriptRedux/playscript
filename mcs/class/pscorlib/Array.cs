@@ -344,31 +344,29 @@ namespace _root
 		public dynamic this[string name]
 		{
 			get {
-				int index;
-				if (int.TryParse(name, out index))
-				{
-					// If we can convert the string to an index, then it is an indexed access
-					return mArray[index];
+				// If we can convert the string to an index, then it is an indexed access.
+				double index;
+				if (double.TryParse(name, out index) && System.Math.Truncate(index) == index) {
+					return mArray[(int)index];
 				}
+				// Otherwise this is a dynamic property.
 				if (__dynamicProps == null) {
 					return null;
 				}
-				else {
-					object result = __dynamicProps.__GetDynamicValue(name);	// The instance that was set was only of dynamic type (or undefined)
-					if (result == PlayScript.Undefined._undefined)	{
-						return null;										// null as we can't return Undefined
-					}
-					return result;
+				object result = __dynamicProps.__GetDynamicValue(name);	// The instance that was set was only of dynamic type (or undefined)
+				if (result == PlayScript.Undefined._undefined)	{
+					return null;										// null as we can't return Undefined
 				}
+				return result;
 			}
 			set {
-				int index;
-				if (int.TryParse(name, out index))
-				{
-					// If we can convert the string to an index, then it is an indexed access
-					mArray[index] = value;
+				// If we can convert the string to an index, then it is an indexed access.
+				double index;
+				if (double.TryParse(name, out index) && System.Math.Truncate(index) == index) {
+					mArray[(int)index] = value;
 					return;
 				}
+				// Otherwise this is a dynamic property.
 				if (__dynamicProps == null) {
 					__dynamicProps = new PlayScript.DynamicProperties();	// Create the dynamic propertties only on the first set usage
 				}
@@ -1604,25 +1602,22 @@ namespace _root
 		public dynamic this[string name]
 		{
 			get {
+				// If we can convert the string to an index, then it is an indexed access.
 				int index;
-				if (int.TryParse(name, out index))
-				{
-					// If we can convert the string to an index, then it is an indexed access
+				if (double.TryParse(name, out index) && System.Math.Truncate(index) == index) {
 					return mList[index];
 				}
 				// Otherwise this is a dynamic property. However we can't use mList[name] as we would lose the undefined information,
-				// it would be replaced bny default(T), so in this case null.
-				if (__dynamicProps != null)
-				{
+				// it would be replaced by default(T), so in this case null.
+				if (__dynamicProps != null) {
 					return __dynamicProps.__GetDynamicValue(name);
 				}
 				return PlayScript.Undefined._undefined;
 			}
 			set {
+				// If we can convert the string to an index, then it is an indexed access.
 				int index;
-				if (int.TryParse(name, out index))
-				{
-					// If we can convert the string to an index, then it is an indexed access
+				if (double.TryParse(name, out index) && System.Math.Truncate(index) == index) {
 					mList[index] = value;
 					return;
 				}

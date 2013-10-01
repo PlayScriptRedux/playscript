@@ -7,6 +7,9 @@ package
 	{
 		public static function Main():int
 		{
+			//
+			// Test Dictionary functionality
+			//
 			var key:String = "key1";
 			var value:String = "value1";
 			var dict:Dictionary = new Dictionary();
@@ -25,6 +28,9 @@ package
 			if (ContainsKey(typedDict, key) || typedDict.hasOwnProperty(key))
 				return 4;
 
+			//
+			// Test Array functionality
+			//
 			var a:Array = [];
 			a.push("apple");
 			a.push(1);
@@ -42,6 +48,43 @@ package
 			var a2:Array = a.slice();
 			if (!CompareArrays(a, a2))
 				return 9;
+			if (a["0.0"] != a[0])
+				return 10;
+			if (a["0.1"] != undefined)
+				return 11;
+			a["0.1"] = 4;
+			if (a["0.1"] != 4)
+				return 12;
+
+			//
+			// Test Vector functionality
+			//
+			var v:Vector.<int> = new Vector.<int>();
+			v.push(9);
+			v.push(2);
+			if (v[0] !== 9)
+				return 13;
+			if (v["0.0"] !== 9)
+				return 14;
+			var re:ReferenceError = null;
+			try {
+				trace(v["0.1"]);
+			} catch (e:ReferenceError) {
+				re = e;
+			}
+			if (re == null)
+				return 15;
+			var re2:ReferenceError = null;
+			try {
+				v["0.1"] = 4;
+			} catch (e2:ReferenceError) {
+				re2 = e2;
+			}
+			if (re2 == null)
+				return 16;
+			v["0.0"] = 12;
+			if (v["0.0"] !== v[0])
+				return 17;
 
 			return 0;
 		}
@@ -50,9 +93,8 @@ package
 		{
 			if (!(key in dictionary))
 				return false;
-			// TODO: calling hasOwnProperty on type IDictionary generates invalid IL
-			//if (!dictionary.hasOwnProperty(key))
-			//	return false;
+			if (!dictionary.hasOwnProperty(key))
+				return false;
 			return true;
 		}
 
