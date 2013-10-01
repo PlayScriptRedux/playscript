@@ -263,7 +263,7 @@ namespace _root
 				#else
 				if ((i >= mCount) || (i < 0))
 				{
-					return null;
+					return PlayScript.Undefined._undefined;
 				}
 				#endif
 				return mArray[i];
@@ -301,7 +301,7 @@ namespace _root
 				#else
 				if (i >= mCount)
 				{
-					return null;
+					return PlayScript.Undefined._undefined;
 				}
 				#endif
 				return mArray[(int)i];
@@ -341,34 +341,39 @@ namespace _root
 			}
 		}
 
+		bool TryParseIndex(string input, out int index)
+		{
+			double d;
+			if (double.TryParse (input, out d) && System.Math.Truncate (d) == d) {
+				index = (int)d;
+				return true;
+			}
+			index = -1;
+			return false;
+		}
+
 		public dynamic this[string name]
 		{
 			get {
+				// If we can convert the string to an index, then it is an indexed access.
 				int index;
-				if (int.TryParse(name, out index))
-				{
-					// If we can convert the string to an index, then it is an indexed access
-					return mArray[index];
+				if (TryParseIndex (name, out index)) {
+					return mArray [index];
 				}
+				// Otherwise this is a dynamic property.
 				if (__dynamicProps == null) {
-					return null;
+					return PlayScript.Undefined._undefined;
 				}
-				else {
-					object result = __dynamicProps.__GetDynamicValue(name);	// The instance that was set was only of dynamic type (or undefined)
-					if (result == PlayScript.Undefined._undefined)	{
-						return null;										// null as we can't return Undefined
-					}
-					return result;
-				}
+				return __dynamicProps.__GetDynamicValue(name);	// The instance that was set was only of dynamic type (or undefined)
 			}
 			set {
+				// If we can convert the string to an index, then it is an indexed access.
 				int index;
-				if (int.TryParse(name, out index))
-				{
-					// If we can convert the string to an index, then it is an indexed access
+				if (TryParseIndex (name, out index)) {
 					mArray[index] = value;
 					return;
 				}
+				// Otherwise this is a dynamic property.
 				if (__dynamicProps == null) {
 					__dynamicProps = new PlayScript.DynamicProperties();	// Create the dynamic propertties only on the first set usage
 				}
@@ -827,7 +832,7 @@ namespace _root
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
 			if (mCount == 0) {
-				return null;
+				return PlayScript.Undefined._undefined;
 			}
 			object val = mArray[mCount - 1];
 			mCount--;
@@ -882,7 +887,7 @@ namespace _root
 
 			if (mCount == 0)
 			{
-				return null;
+				return PlayScript.Undefined._undefined;
 			}
 			object v = this[0];
 			_RemoveAt(0);
@@ -1311,7 +1316,12 @@ namespace _root
 		}
 
 		dynamic PlayScript.IDynamicClass.__GetDynamicValue (string name) {
-			object value = null;
+			int index;
+			if (TryParseIndex (name, out index)) {
+				return this [index];
+			}
+
+			object value = PlayScript.Undefined._undefined;
 			if (__dynamicProps != null) {
 				value = __dynamicProps.__GetDynamicValue(name);
 			}
@@ -1319,15 +1329,27 @@ namespace _root
 		}
 
 		bool PlayScript.IDynamicClass.__TryGetDynamicValue (string name, out object value) {
+			int index;
+			if (TryParseIndex (name, out index)) {
+				value = this [index];
+				return true;
+			}
+
 			if (__dynamicProps != null) {
 				return __dynamicProps.__TryGetDynamicValue(name, out value);
 			} else {
-				value = null;
+				value = PlayScript.Undefined._undefined;
 				return false;
 			}
 		}
 
 		void PlayScript.IDynamicClass.__SetDynamicValue (string name, object value) {
+			int index;
+			if (TryParseIndex (name, out index)) {
+				this [index] = value;
+				return;
+			}
+
 			if (__dynamicProps == null) {
 				__dynamicProps = new PlayScript.DynamicProperties(this);
 			}
@@ -1335,6 +1357,12 @@ namespace _root
 		}
 
 		bool PlayScript.IDynamicClass.__DeleteDynamicValue (object name) {
+			int index;
+			if (name is string && TryParseIndex ((string)name, out index)) {
+				this [index] = PlayScript.Undefined._undefined;
+				return true;
+			}
+
 			if (__dynamicProps != null) {
 				return __dynamicProps.__DeleteDynamicValue(name);
 			}
@@ -1342,6 +1370,10 @@ namespace _root
 		}
 
 		bool PlayScript.IDynamicClass.__HasDynamicValue (string name) {
+			int index;
+			if (TryParseIndex (name, out index)) {
+				return index < mCount;
+			}
 			if (__dynamicProps != null) {
 				return __dynamicProps.__HasDynamicValue(name);
 			}
@@ -1687,28 +1719,35 @@ namespace _root
 			}
 		}
 
+		bool TryParseIndex(string input, out int index)
+		{
+			double d;
+			if (double.TryParse (input, out d) && System.Math.Truncate (d) == d) {
+				index = (int)d;
+				return true;
+			}
+			return false;
+		}
+
 		public dynamic this[string name]
 		{
 			get {
+				// If we can convert the string to an index, then it is an indexed access.
 				int index;
-				if (int.TryParse(name, out index))
-				{
-					// If we can convert the string to an index, then it is an indexed access
+				if (TryParseIndex (name, out index)) {
 					return mList[index];
 				}
 				// Otherwise this is a dynamic property. However we can't use mList[name] as we would lose the undefined information,
-				// it would be replaced bny default(T), so in this case null.
-				if (__dynamicProps != null)
-				{
+				// it would be replaced by default(T), so in this case null.
+				if (__dynamicProps != null) {
 					return __dynamicProps.__GetDynamicValue(name);
 				}
 				return PlayScript.Undefined._undefined;
 			}
 			set {
+				// If we can convert the string to an index, then it is an indexed access.
 				int index;
-				if (int.TryParse(name, out index))
-				{
-					// If we can convert the string to an index, then it is an indexed access
+				if (TryParseIndex (name, out index)) {
 					mList[index] = value;
 					return;
 				}
@@ -1784,7 +1823,7 @@ namespace _root
 
 		public dynamic shift() {
 			if (mList.length == 0) {
-				return null;
+				return PlayScript.Undefined._undefined;
 			}
 			return mList.shift();
 		}

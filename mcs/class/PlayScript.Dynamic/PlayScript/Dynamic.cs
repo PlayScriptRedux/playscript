@@ -435,7 +435,12 @@ namespace PlayScript
 			var dict = o as IDictionary<string, object>;
 			if (dict != null) {
 				return dict.ContainsKey(name);
-			} 
+			}
+
+			var dict2 = o as IDictionary;
+			if (dict2 != null) {
+				return dict2.Contains((object)name);
+			}
 
 			var dc = o as IDynamicClass;
 			if (dc != null) {
