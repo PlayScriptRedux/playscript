@@ -48,7 +48,8 @@ namespace _root {
 			}
 		}
 	}
-	
+
+	[PlayScript.DynamicClass]
 	[DebuggerDisplay("length = {length}")]
 	[DebuggerTypeProxy(typeof(VectorDebugView<>))]
 	public sealed class Vector<T> : Object, IList<T>, IList, PlayScript.IDynamicClass, PlayScript.IKeyEnumerable
@@ -314,12 +315,23 @@ namespace _root {
 			}
 		}
 
+		bool TryParseIndex(string input, out int index)
+		{
+			double d;
+			if (double.TryParse (input, out d) && System.Math.Truncate (d) == d) {
+				index = (int)d;
+				return true;
+			}
+			index = -1;
+			return false;
+		}
+
 		public T this[string name]
 		{
 			get {
 				// If we can convert the string to an index, then it is an indexed access.
-				double index;
-				if (double.TryParse (name, out index) && System.Math.Truncate (index) == index) {
+				int index;
+				if (TryParseIndex (name, out index)) {
 					return this [(int)index];
 				}
 				// Otherwise this is a dynamic property, which is not allowed for Vectors.
@@ -327,9 +339,9 @@ namespace _root {
 			}
 			set {
 				// If we can convert the string to an index, then it is an indexed access.
-				double index;
-				if (double.TryParse (name, out index) && System.Math.Truncate (index) == index) {
-					this [(int)index] = value;
+				int index;
+				if (TryParseIndex (name, out index)) {
+					this [index] = value;
 					return;
 				}
 				// Otherwise this is a dynamic property, which is not allowed for Vectors.
@@ -1234,16 +1246,31 @@ namespace _root {
 		#region IDynamicClass implementation
 
 		dynamic PlayScript.IDynamicClass.__GetDynamicValue (string name) {
+			int index;
+			if (TryParseIndex (name, out index)) {
+				return this [index];
+			}
 			// Dynamic properties are not allowed for Vectors.
 			throw new ReferenceError (string.Format ("Error #1069: Property `{0}' not found on {1} and there is no default value.", name, GetType ().Name));
 		}
 
 		bool PlayScript.IDynamicClass.__TryGetDynamicValue (string name, out object value) {
+			int index;
+			if (TryParseIndex (name, out index)) {
+				value = this [index];
+				return true;
+			}
+			// Dynamic properties are not allowed for Vectors.
 			value = null;
 			return false;
 		}
 		 
 		void PlayScript.IDynamicClass.__SetDynamicValue (string name, object value) {
+			int index;
+			if (TryParseIndex (name, out index)) {
+				this [index] = (T)value;
+				return;
+			}
 			// Dynamic properties are not allowed for Vectors.
 			throw new ReferenceError (string.Format ("Error #1056: Cannot create property `{0}' on {1}.", name, GetType ().Name));
 		}
@@ -1253,6 +1280,10 @@ namespace _root {
 		}
 
 		bool PlayScript.IDynamicClass.__HasDynamicValue (string name) {
+			int index;
+			if (TryParseIndex (name, out index)) {
+				return index < mCount;
+			}
 			return false;
 		}
 

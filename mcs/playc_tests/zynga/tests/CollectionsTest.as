@@ -35,26 +35,28 @@ package
 			a.push("apple");
 			a.push(1);
 			a.push("orange");
-			if (a.indexOf("orange") != 2)
+			delete a["0.0"]; // should set index 0 to undefined
+			delete a[0]; // should set index 0 to undefined
+			if (a[0] != undefined)
 				return 5;
-			if (a.indexOf(1) != 1)
+			if (a.indexOf("orange") != 2)
 				return 6;
-			// TODO: support in operator for arrays
-			//if (!("apple" in a))
-			//	return 7;
-			// TODO: support hasOwnProperty for arrays
-			//if (!a.hasOwnProperty("apple"))
-			//	return 8;
+			if (a.indexOf(1) != 1)
+				return 7;
+			if (!("0.0" in a))
+				return 8;
+			if (!a.hasOwnProperty("0.0"))
+				return 9;
 			var a2:Array = a.slice();
 			if (!CompareArrays(a, a2))
-				return 9;
-			if (a["0.0"] != a[0])
 				return 10;
-			if (a["0.1"] != undefined)
+			if (a["0.0"] != a[0])
 				return 11;
+			if (a["0.1"] != undefined)
+				return 12;
 			a["0.1"] = 4;
 			if (a["0.1"] != 4)
-				return 12;
+				return 13;
 
 			//
 			// Test Vector functionality
@@ -62,10 +64,12 @@ package
 			var v:Vector.<int> = new Vector.<int>();
 			v.push(9);
 			v.push(2);
+			delete v[0]; // should do nothing
+			delete v["0.0"]; // should do nothing
 			if (v[0] !== 9)
-				return 13;
-			if (v["0.0"] !== 9)
 				return 14;
+			if (v["0.0"] !== 9)
+				return 15;
 			var re:ReferenceError = null;
 			try {
 				trace(v["0.1"]);
@@ -73,7 +77,7 @@ package
 				re = e;
 			}
 			if (re == null)
-				return 15;
+				return 16;
 			var re2:ReferenceError = null;
 			try {
 				v["0.1"] = 4;
@@ -81,10 +85,14 @@ package
 				re2 = e2;
 			}
 			if (re2 == null)
-				return 16;
+				return 17;
 			v["0.0"] = 12;
 			if (v["0.0"] !== v[0])
-				return 17;
+				return 18;
+			if (!("0.0" in v))
+				return 19;
+			if (!v.hasOwnProperty("0.0"))
+				return 20;
 
 			return 0;
 		}
