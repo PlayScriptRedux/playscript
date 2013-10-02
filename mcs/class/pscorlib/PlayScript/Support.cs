@@ -10,6 +10,9 @@ namespace PlayScript
 		// Simple method to convert a .NET array to AS Array for var arg list methods.
 		public static _root.Array CreateArgListArray(object[] argList) {
 			// If this is optimized, vararg method calls will run faster.
+			if (argList == null) {
+				argList = new object[1] { null };
+			}
 			return new _root.Array(argList);
 		}
 

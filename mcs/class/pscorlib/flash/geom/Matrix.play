@@ -127,15 +127,15 @@ package flash.geom {
 			var tb:Number = -b * det;
 			var tc:Number = -c * det;
 			var td:Number =  a * det;
-
+			var ttx:Number =  (c * ty - d * tx) * det;
+			var tty:Number =  (b * tx - a * ty) * det;
+			
 			this.a = ta;
 			this.b = tb;
 			this.c = tc;
 			this.d = td;
-
-			// $$TODO this only works if the matrix rotation is identity
-			this.tx = -this.tx;
-			this.ty = -this.ty;
+			this.tx = ttx;
+			this.ty = tty;
 		}
  	 	
 		public function rotate(angle:Number):void {
