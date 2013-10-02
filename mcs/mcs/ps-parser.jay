@@ -5406,7 +5406,15 @@ class_declaration
 	  }
 	  type_declaration_name
 	  {
-		Class c = new Class (current_container, (MemberName) $6, (Modifiers) $2, (Attributes) $1);
+	  	// To workaround access level restrictions, we make internal classes
+	  	// public for ActionScript.
+	    var modifiers = (Modifiers) $2;
+	    if (!parsing_playscript && (modifiers & Modifiers.INTERNAL) != 0) {
+	    	modifiers &= ~Modifiers.INTERNAL;
+	    	modifiers |= Modifiers.PUBLIC;
+	    }
+
+		Class c = new Class (current_container, (MemberName) $6, modifiers, (Attributes) $1);
 		if (((c.ModFlags & Modifiers.STATIC) != 0) && lang_version == LanguageVersion.ISO_1) {
 			FeatureIsNotAvailable (c.Location, "static classes");
 		}
@@ -5492,7 +5500,7 @@ modifiers
 	  }
 	;
 
-modifier
+modifier 
 	: NEW
 	  {
 		$$ = Modifiers.NEW;
