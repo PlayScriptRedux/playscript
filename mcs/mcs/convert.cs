@@ -382,11 +382,8 @@ namespace Mono.CSharp {
 
 		public static Expression ImplicitPlayScriptConversion (Expression expr, TypeSpec target_type, ResolveContext opt_ec, bool upconvert_only)
 		{
-			if (opt_ec == null || opt_ec.FileType != SourceFileType.PlayScript)
-			{
-				// not in a playscript file
+			if (!ImplicitPlayScriptConversionExists (expr.Type, target_type, opt_ec, upconvert_only))
 				return null;
-			}
 			
 			TypeSpec expr_type = expr.Type;
 			
@@ -410,10 +407,15 @@ namespace Mono.CSharp {
 				} else {
 					// PlayScript: Call the "Boolean()" static method to convert a dynamic to a bool.  EXPENSIVE, but hey..
 					Arguments args = new Arguments (1);
-					args.Add (new Argument(EmptyCast.Create(expr, opt_ec.BuiltinTypes.Object, opt_ec)));
-					//				opt_ec.Report.Warning (7164, 1, expr.Location, "Expensive reference conversion to bool");
-					return new Invocation(new MemberAccess(new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, 
-					                                                                       expr.Location), "Boolean_fn", expr.Location), "Boolean", expr.Location), args).Resolve (opt_ec);
+					if (BuiltinTypeSpec.IsPrimitiveType (expr_type))
+						args.Add (new Argument (new BoxedCast (expr, target_type)));
+					else
+						args.Add (new Argument(EmptyCast.Create(expr, opt_ec.BuiltinTypes.Object, opt_ec)));
+
+					var function = new MemberAccess (new MemberAccess (
+						new SimpleName (PsConsts.PsRootNamespace, expr.Location), "Boolean_fn", expr.Location), "Boolean", expr.Location);
+
+					return new Invocation (function, args).Resolve (opt_ec);
 				}
 			}
 			
@@ -426,10 +428,15 @@ namespace Mono.CSharp {
 
 				// PlayScript: Call the "CastToString()" static method to convert a dynamic to a string.  EXPENSIVE, but hey..
 				Arguments args = new Arguments (1);
-				args.Add (new Argument(EmptyCast.Create(expr, opt_ec.BuiltinTypes.Object, opt_ec)));
-				//				opt_ec.Report.Warning (7164, 1, expr.Location, "Expensive reference conversion to bool");
-				return new Invocation(new MemberAccess(new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, 
-				                                                                       expr.Location), "String_fn", expr.Location), "CastToString", expr.Location), args).Resolve (opt_ec);
+				if (BuiltinTypeSpec.IsPrimitiveType (expr_type))
+					args.Add (new Argument (new BoxedCast (expr, target_type)));
+				else
+					args.Add (new Argument(EmptyCast.Create(expr, opt_ec.BuiltinTypes.Object, opt_ec)));
+
+				var function = new MemberAccess (new MemberAccess (
+					new SimpleName (PsConsts.PsRootNamespace, expr.Location), "String_fn", expr.Location), "CastToString", expr.Location);
+
+				return new Invocation (function, args).Resolve (opt_ec);
 			}
 			
 			return null;
@@ -438,26 +445,22 @@ namespace Mono.CSharp {
 		public static bool ImplicitPlayScriptConversionExists (TypeSpec expr_type, TypeSpec target_type, ResolveContext opt_ec, bool upconvert_only)
 		{
 			if (opt_ec == null || opt_ec.FileType != SourceFileType.PlayScript)
-			{
-				// not in a playscript file
 				return false;
-			}
 
-			// PlayScript references can always be implicitly cast to bool
-			if (target_type.BuiltinType == BuiltinTypeSpec.Type.Bool && !upconvert_only) {
+			//
+			// PlayScript types can always be implicitly cast to bool
+			//
+			if (target_type.BuiltinType == BuiltinTypeSpec.Type.Bool && !upconvert_only)
 				return true;
-			}
-			
-			// PlayScript references can always be implicitly cast to string
-// disabling this for now, it causes ambiguity with functions that take either String or Object
-//			if (target_type.BuiltinType == BuiltinTypeSpec.Type.String && !upconvert_only) {
-//				return true;
-//			}
+
+			//
+			// PlayScript types can always be implicitly cast to string
+			//
+			if (target_type.BuiltinType == BuiltinTypeSpec.Type.String && !upconvert_only)
+				return true;
 			
 			return false;
 		}
-
-
 
 		public static Expression ImplicitBoxingConversion (Expression expr, TypeSpec expr_type, TypeSpec target_type)
 		{

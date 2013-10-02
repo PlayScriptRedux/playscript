@@ -1,0 +1,41 @@
+package
+{
+	public class ArrayDynamicTest
+	{
+		public static function Main():int
+		{
+	   		var a:Array = new Array(3);
+        	a[0] = 10;
+        	a[1] = 11;
+        	a[2] = 12;
+        	a["key_a0"] = "a0";
+        	a["key_a1"] = "a1";
+        	a["key_a2"] = "a2";
+			var o:Object;
+			var strForEach:String = "";
+        	for each(o in a)
+        	{
+        		strForEach += o;
+        	}
+        	if (strForEach != "101112a0a1a2")
+			{
+				trace("Array - for each is wrong; expected=\"101112a0a1a2\", actual=\"" + strForEach + "\"");
+				return 1;
+			}
+        	
+        	var strForIn:String = "";  	
+        	for (o in a)
+        	{
+    	    	strForIn += o;
+        	}
+        	if (strForIn != "012key_a0key_a1key_a2")
+			{
+				trace("Array - for in is wrong; expected=\"012key_a0key_a1key_a2\", actual=\"" + strForIn + "\"");
+				return 2;
+			}
+
+			return 0;
+		}
+	}
+}
+
