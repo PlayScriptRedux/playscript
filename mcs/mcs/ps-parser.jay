@@ -5409,9 +5409,14 @@ class_declaration
 	  	// To workaround access level restrictions, we make internal classes
 	  	// public for ActionScript.
 	    var modifiers = (Modifiers) $2;
-	    if (!parsing_playscript && (modifiers & Modifiers.INTERNAL) != 0) {
-	    	modifiers &= ~Modifiers.INTERNAL;
-	    	modifiers |= Modifiers.PUBLIC;
+	    if (!parsing_playscript) {
+	    	if ((modifiers & Modifiers.INTERNAL) != 0) { // specified as internal
+	    		modifiers &= ~Modifiers.INTERNAL;
+	    		modifiers |= Modifiers.PUBLIC;
+	    	}
+	    	if ((modifiers & Modifiers.AccessibilityMask) == 0) { // defaults to internal
+	    		modifiers |= Modifiers.PUBLIC;
+	    	}
 	    }
 
 		Class c = new Class (current_container, (MemberName) $6, modifiers, (Attributes) $1);
