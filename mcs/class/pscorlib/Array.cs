@@ -198,8 +198,13 @@ namespace _root
 
 		public Array(IEnumerable e)
 		{
-			mArray = sEmptyArray;
-			this.append(e);
+			if (e is string) {
+				mArray = sEmptyArray;
+				push ((string)e);
+			} else {
+				mArray = sEmptyArray;
+				this.append (e);
+			}
 		}
 
 		public Array(uint length)
