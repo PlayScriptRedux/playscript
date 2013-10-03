@@ -403,7 +403,12 @@ namespace Mono.CSharp
 
 			var site_container = ec.CreateDynamicSite ();
 
-			BlockContext bc = new BlockContext (ec.MemberContext, null, ec.BuiltinTypes.Void);
+			var block = ec.MemberContext is MethodCore ? 
+				((MethodCore)ec.MemberContext).Block : 
+				((ec.MemberContext is AbstractPropertyEventMethod) ? ((AbstractPropertyEventMethod)ec.MemberContext).Block : null);
+			if (block == null)
+				throw new InvalidOperationException ("Must have block when creating block context!");
+			BlockContext bc = new BlockContext (ec.MemberContext, block, ec.BuiltinTypes.Void);
 
 			FieldExpr site_field_expr = null;
 			StatementExpression s = null;
@@ -679,7 +684,12 @@ namespace Mono.CSharp
 
 			FieldExpr site_field_expr = new FieldExpr (MemberCache.GetMember (gt, field), loc);
 
-			BlockContext bc = new BlockContext (ec.MemberContext, null, ec.BuiltinTypes.Void);
+			var block = ec.MemberContext is MethodCore ? 
+				((MethodCore)ec.MemberContext).Block : 
+					((ec.MemberContext is AbstractPropertyEventMethod) ? ((AbstractPropertyEventMethod)ec.MemberContext).Block : null);
+			if (block == null)
+				throw new InvalidOperationException ("Must have block when creating block context!");
+			BlockContext bc = new BlockContext (ec.MemberContext, block, ec.BuiltinTypes.Void);
 
 			Arguments args = new Arguments (1);
 			args.Add (new Argument (binder));

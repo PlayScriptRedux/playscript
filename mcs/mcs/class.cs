@@ -953,12 +953,12 @@ namespace Mono.CSharp
 			MemberCore mc = null;
 			if (this.FileType == SourceFileType.PlayScript) {
 				if ((modifiers & Modifiers.STATIC) != 0) {
-					defined_static_names.TryGetValue (name, out mc);
+					PartialContainer.defined_static_names.TryGetValue (name, out mc);
 				} else {
-					defined_instance_names.TryGetValue (name, out mc);
+					PartialContainer.defined_instance_names.TryGetValue (name, out mc);
 				}
 			} else {
-				defined_names.TryGetValue (name, out mc);
+				PartialContainer.defined_names.TryGetValue (name, out mc);
 			}
 
 			return mc;

@@ -183,6 +183,10 @@ namespace PlayScript
 			PlayScript.DynamicRuntime.TypeLogger.LogType(mTarget);
 
 			mMethod = methodInfo;
+#if DEBUG
+			if (mMethod.ContainsGenericParameters) 
+				throw new NotSupportedException ("Can not invoke methods that have unexpanded generic parameters.");
+#endif
 			mTarget = target;
 		}
 
@@ -191,6 +195,10 @@ namespace PlayScript
 			PlayScript.DynamicRuntime.TypeLogger.LogType(del.Target);
 
 			mMethod = del.Method;
+			#if DEBUG
+			if (mMethod.ContainsGenericParameters) 
+				throw new NotSupportedException ("Can not invoke methods that have unexpanded generic parameters.");
+			#endif
 			mTarget = del.Target;
 		}
 

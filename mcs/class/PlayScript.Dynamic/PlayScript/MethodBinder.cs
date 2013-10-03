@@ -156,8 +156,16 @@ namespace PlayScript
 			{
 				if (extraArgCount > 0)
 				{
-					// we have too many arguments and this function is not variadic
-					return false;
+					// Truncate the args list if we have too many args..
+					if (argIndex == 0) {
+						outArgs = sEmptyArray;
+					} else {
+						object[] newOutArgs = new object[argIndex];
+						for (i = 0; i < argIndex; i++) {
+							newOutArgs [i] = outArgs [i];
+						}
+						outArgs = newOutArgs;
+					}
 				}
 			}
 			
@@ -179,7 +187,7 @@ namespace PlayScript
 			if (type != null) {
 				var methods = type.GetMethods(flags);
 				foreach (var method in methods)	{
-					if (method.Name == name) {
+					if (method.Name == name && !method.ContainsGenericParameters) {
 						var newInfo = new MethodBinder(method, false);
 						if (newInfo.CheckArgumentCount(argCount)) {
 							if (!newInfo.IsVariadic) {

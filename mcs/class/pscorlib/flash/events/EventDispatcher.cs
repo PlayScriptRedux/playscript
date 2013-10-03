@@ -125,8 +125,12 @@ namespace flash.events
 						}
 						catch (Exception e)
 						{
-							// If you have an exception here, big chance that you did not turn on exception catching in Xamarin
-							// Or that Xamarin is being naughty with you, and removed exceptions catching every few days behind your back.
+							_root.trace_fn.trace (e.Message);
+							// This catch is where exceptions usually trigger the Xamarin debugger IDE to halt the program and display the
+							// exception. But this is not the code that originally threw the exception, so what you need to now is to find a 
+							// spot during execution where you can add the exception(s) (sometimes adding all of them is a good idea) to stop
+							// on in the IDE "Run/Exceptions..." menu item so that the debugger will break right where the exception is
+							// first thrown.  
 							if (e.InnerException != null)
 							{
 								throw e.InnerException;
@@ -135,6 +139,9 @@ namespace flash.events
 							{
 								throw e;
 							}
+						}
+						if (ev._stopImmediateProp) {
+							break;
 						}
                     }
 					dispatched = (l != 0);

@@ -6586,9 +6586,6 @@ namespace Mono.CSharp {
 		MethodSpec getter, setter;
 		protected T best_candidate;
 
-		// Resolve method can set getter/setter directly to a pair of methodspecs (allows get/set implemented as separate methods vs property).
-		protected MethodSpec method_pair_getter, method_pair_setter;
-
 		protected LocalTemporary temp;
 		protected bool emitting_compound_assignment;
 		protected bool has_await_arguments;
@@ -6715,15 +6712,9 @@ namespace Mono.CSharp {
 
 		bool ResolveGetter (ResolveContext rc)
 		{
-			// Resolve provided us with a getter setter pair (instead of a property/indexer)
-			if (method_pair_getter != null) {
-				getter = CandidateToBaseOverride (rc, method_pair_getter);
-				return true;
-			}
-
 			if (best_candidate == null || !best_candidate.HasGet) {
 				if (InstanceExpression != EmptyExpression.Null) {
-					MemberSpec ms = (MemberSpec)best_candidate ?? (MemberSpec)method_pair_setter;
+					MemberSpec ms = (MemberSpec)best_candidate;
 					if (ms != null) {
 						rc.Report.SymbolRelatedToPreviousError (ms);
 						rc.Report.Error (154, loc, "The property or indexer `{0}' cannot be used in this context because it lacks the `get' accessor",
@@ -6754,14 +6745,8 @@ namespace Mono.CSharp {
 
 		bool ResolveSetter (ResolveContext rc)
 		{
-			// Resolve provided us with a getter setter pair (instead of a property/indexer)
-			if (method_pair_setter != null) {
-				setter = CandidateToBaseOverride (rc, method_pair_setter);
-				return true;
-			}
-
 			if (best_candidate == null || !best_candidate.HasSet) {
-				MemberSpec ms = (MemberSpec)best_candidate ?? (MemberSpec)method_pair_getter;
+				MemberSpec ms = (MemberSpec)best_candidate;
 				if (ms != null) {
 					rc.Report.Error (200, loc, "Property or indexer `{0}' cannot be assigned to (it is read-only)",
 						ms.GetSignatureForError ());

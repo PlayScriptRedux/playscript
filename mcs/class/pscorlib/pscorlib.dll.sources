@@ -158,10 +158,14 @@
 ./flash/geom/Vector3D.play
 ./flash/globalization/Collator.play
 ./flash/globalization/DateTimeFormatter.play
+./flash/media/android/Sound.cs
+./flash/media/android/SoundChannel.cs
 ./flash/media/Camera.play
 ./flash/media/ID3Info.play
 ./flash/media/ios/Sound.cs
 ./flash/media/ios/SoundChannel.cs
+./flash/media/mac/Sound.cs
+./flash/media/mac/SoundChannel.cs
 ./flash/media/Sound.play
 ./flash/media/SoundChannel.play
 ./flash/media/SoundLoaderContext.play
@@ -247,6 +251,9 @@
 ./int.cs
 ./JSON.play
 ./Math.play
+./mx/graphics/codec/IImageEncoder.play
+./mx/graphics/codec/JPEGEncoder.play
+./mx/graphics/codec/PNGEncoder.play
 ./Namespace.play
 ./Number.cs
 ./Object.cs
@@ -255,7 +262,6 @@
 ./PlayScript/Hardware.cs
 ./PlayScript/ParamsDelegateTypes.cs
 ./PlayScript/Player.cs
-./PlayScript/Profiler.cs
 ./PlayScript/Profiler.cs
 ./PlayScript/Support.cs
 ./QName.play

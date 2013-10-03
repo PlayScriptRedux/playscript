@@ -9,6 +9,9 @@ namespace PlayScript
 {
 	public static class Dynamic
 	{
+		// Application callback to get a delegate type for a method. 
+		public static Func<MethodInfo,Type> AppGetDelegateTypeForMethodCallback;
+
 		public static object[] ConvertArgumentList(MethodInfo methodInfo, IList args)
 		{
 			if (args == null) return null;
@@ -247,6 +250,9 @@ namespace PlayScript
 			Stats.Increment(StatsCounter.Dynamic_GetDelegateTypeForMethodInvoked);
 
 			var plist = method.GetParameters();
+			if (plist.Length > 4) {
+				return AppGetDelegateTypeForMethodCallback (method);
+			}
 
 			// build delegate type
 			Type delegateType;
@@ -443,20 +449,31 @@ namespace PlayScript
 			}
 
 			var dc = o as IDynamicClass;
-			if (dc != null) {
-				return dc.__HasDynamicValue(name);
-			}
+			if (dc != null && dc.__HasDynamicValue (name))
+				return true;
 
 			var otype = o.GetType();
 
-			var prop = otype.GetProperty(name);
-			if (prop != null) return true;
+			try {
+				var prop = otype.GetProperty(name);
+				if (prop != null) 
+					return true;
+			} catch (Exception) {
+			}
 
-			var field = otype.GetField(name);
-			if (field != null) return true;
+			try {
+				var field = otype.GetField(name);
+				if (field != null) 
+					return true;
+			} catch (Exception) {
+			}
 
-			var method = otype.GetMethod(name);
-			if (method != null) return true;
+			try {
+				var method = otype.GetMethod(name);
+				if (method != null) 
+					return true;
+			} catch (Exception) {
+			}
 
 			// not found
 			return false;

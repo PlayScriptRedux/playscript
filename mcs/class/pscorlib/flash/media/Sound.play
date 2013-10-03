@@ -71,6 +71,19 @@ package flash.media {
 			return internalPlay(startTime, loops, sndTransform);		
 		}
 	
+#if PLATFORM_GENERIC
+
+		private function internalLoad(url:String):void {
+			trace("Sound internalLoad is not implemented for this platform");
+		}
+
+		private function internalPlay(startTime:Number=0, loops:int=0, sndTransform:SoundTransform=null):SoundChannel {
+			trace("Sound internalPlay is not implemented for this platform");
+			return null;
+		}
+
+#endif
+
 	}
 
 }

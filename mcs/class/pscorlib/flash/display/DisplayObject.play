@@ -82,7 +82,16 @@ package flash.display {
 
  	 	public property stage : Stage { get { return mStage; } }
 
- 	 	public property transform : Transform { get; set; }
+ 	 	public property transform : Transform { 
+			get {
+				if (mTransform == null) {
+					mTransform = new Transform();
+				}
+				return mTransform;
+			}
+			set {
+			}
+		}
 
  	 	public property visible : Boolean { get; set; }
 
@@ -110,6 +119,7 @@ package flash.display {
 			mStage 		= constructorStage;
 			mLoaderInfo = constructorLoaderInfo;
 			mRoot  		= (constructorStage != null) ? this : null;
+			alpha 		= 1.0;
 		}
 		
 		public function getBounds(targetCoordinateSpace:DisplayObject):Rectangle {
@@ -165,9 +175,11 @@ package flash.display {
 
 
 		internal var mParent:DisplayObjectContainer;
+		internal var mTransform:Transform;
 
 		private readonly var mRoot:DisplayObject;
 		private readonly var mLoaderInfo:LoaderInfo;
+
         
         // DisplayObjects not added to the stage still receive enter/exit frame events so they need to be tracked globally
         // we keep around this list to track all display objects that listen for enter/exit frame events (and perhaps others)

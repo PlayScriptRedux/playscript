@@ -12,28 +12,27 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-#if PLATFORM_MONOTOUCH
+package mx.graphics.codec  {
 
-using MonoTouch.AVFoundation;
+	import flash.utils.ByteArray;
+	import flash.display.BitmapData;
 
-namespace flash.media {
+	public interface IImageEncoder {
+	
+		//
+		// Properties
+		//
 
-	// We use a partial C# class for platform specific logic
-	partial class SoundChannel {
+		property contentType:String { get; }
 
-		private AVAudioPlayer _player;
+		//
+		// Methods
+		//
 
-		public AVAudioPlayer Player
-		{
-			set { _player = value; }
-		}
+		function encode(bitmapData:BitmapData):ByteArray;
 
-		private void internalStop()
-		{
-			_player.Stop();
-		}
+		function encodeByteArray(byteArray:ByteArray, width:int, height:int, transparent:Boolean = true):ByteArray;
+	
 	}
 
 }
-
-#endif

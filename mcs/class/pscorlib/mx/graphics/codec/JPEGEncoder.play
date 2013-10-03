@@ -12,39 +12,39 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-package flash.media {
+package mx.graphics.codec {
 
-	import flash.events.EventDispatcher;
+	import flash.utils.ByteArray;
+	import flash.display.BitmapData;
 
-	public class SoundChannel extends EventDispatcher {
-	
+	public class JPEGEncoder implements IImageEncoder {
+
 		//
 		// Properties
 		//
-	
-		public property leftPeak : Number { get { return 0.0; } }
 
- 	 	public property position : Number { get { return 0.0; } }
-
- 	 	public property rightPeak : Number { get { return 0.0; } }
-
- 	 	public property soundTransform : SoundTransform { get; set; }
-
- 	 	//
- 	 	// Methods
- 	 	// 
- 	 	
- 	 	public function stop():void {
-		    internalStop();
- 	 	}
-
-#if PLATFORM_GENERIC
-
-		private function internalStop():void {		
+		public property contentType:String { 
+			get {
+				throw new System.NotImplementedException();
+			} 
 		}
 
-#endif
-	
+		//
+		// Methods
+		//
+
+		public function JPEGEncoder(quality:Number = 50.0) {
+			throw new System.NotImplementedException();
+		}
+
+		public function encode(bitmapData:BitmapData):ByteArray {
+			throw new System.NotImplementedException();
+		}
+
+		public function encodeByteArray(byteArray:ByteArray, width:int, height:int, transparent:Boolean = true):ByteArray {
+			throw new System.NotImplementedException();
+		}
+
 	}
 
 }

@@ -704,19 +704,19 @@ namespace PlayScript
 		{
 			Telemetry.Session.OnBeginFrame();
 
-			bool didPresent = false;
-
 			// set context3D callback
+			Player player = this;
+			player.mDidPresent = false;
 			flash.display3D.Context3D.OnPresent = (context) =>
 			{
-				didPresent = true;
+				player.mDidPresent = true;
 				if (onPresent != null)
 					onPresent();
 			};
 
 			// loop until a Stage3D present occurred
 			var timer = Stopwatch.StartNew();
-			while (!didPresent)
+			while (!mDidPresent)
 			{
 				OnFrame(bounds);
 
@@ -843,6 +843,7 @@ namespace PlayScript
 		private bool mDeactivateMouseEvents = false;
 		private bool mMouseDown = false;
 		private bool mSkipNextMouseUp = false;
+		private bool mDidPresent = false;
 
 		private static List<string> sResourceDirectories = new List<string>();
 

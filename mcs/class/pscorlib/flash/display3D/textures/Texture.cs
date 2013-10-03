@@ -308,7 +308,8 @@ namespace flash.display3D.textures {
 			// unbind texture and pixel buffer
 			GL.BindTexture (textureTarget, 0);
 
-			source.dispose();				
+			// Uhh... no!  BEN
+//			source.dispose();				
 
 			// store memory usaged by texture
 			trackMemoryUsage(memUsage);

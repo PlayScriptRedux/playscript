@@ -60,6 +60,7 @@
     <Folder Include="flash\globalization\" />
     <Folder Include="flash\external\" />
     <Folder Include="flash\media\android\" />
+    <Folder Include="mx\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>
@@ -908,6 +909,15 @@
     </Compile>
     <Compile Include="..\pscorlib\PlayScript\Hardware.cs">
       <Link>PlayScript\Hardware.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\mx\graphics\codec\IImageEncoder.play">
+      <Link>mx\graphics\codec\IImageEncoder.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\mx\graphics\codec\JPEGEncoder.play">
+      <Link>mx\graphics\codec\JPEGEncoder.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\mx\graphics\codec\PNGEncoder.play">
+      <Link>mx\graphics\codec\PNGEncoder.play</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

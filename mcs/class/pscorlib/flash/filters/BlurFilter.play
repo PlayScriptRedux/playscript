@@ -19,6 +19,13 @@ package flash.filters {
 
 		public function BlurFilter(blurX:Number = 4.0, blurY:Number = 4.0, quality:int = 1):void
 		{
+			this.blurX = blurX;
+			this.blurY = blurY;
+			this.quality = quality;
+		}
+
+		public override function clone():BitmapFilter {
+			return new BlurFilter(blurX, blurY, quality);
 		}
 
 		public var blurX:Number;
@@ -26,13 +33,30 @@ package flash.filters {
 		public var quality:Number;
 	}
 
-
 	public class BevelFilter extends BitmapFilter
 	{
-		// $$TODO -- these are stubbed out
-		public function BevelFilter(distance:Number = 4.0, angle:Number = 45, highlightColor:uint = 0xFFFFFF, highlightAlpha:Number = 1.0, shadowColor:uint = 0x000000, shadowAlpha:Number = 1.0, blurX:Number = 4.0, blurY:Number = 4.0, strength:Number = 1, quality:int = 1, type:String = "inner", knockout:Boolean = false)
+		public function BevelFilter(distance:Number = 4.0, angle:Number = 45, highlightColor:uint = 0xFFFFFF, 
+		                            highlightAlpha:Number = 1.0, shadowColor:uint = 0x000000, shadowAlpha:Number = 1.0, 
+		                            blurX:Number = 4.0, blurY:Number = 4.0, strength:Number = 1, quality:int = 1, 
+		                            type:String = "inner", knockout:Boolean = false)
 		{
-			throw new System.NotImplementedException();
+			this.distance = distance;
+			this.angle = angle;
+			this.highlightColor = highlightColor;
+			this.highlightAlpha = highlightAlpha;
+			this.shadowColor = shadowColor;
+			this.shadowAlpha = shadowAlpha;
+			this.blurX = blurX;
+			this.blurY = blurY;
+			this.strength = strength;
+			this.quality = quality;
+			this.type = type;
+			this.knockout = knockout;
+		}
+
+		public override function clone():BitmapFilter {
+			return new BevelFilter(distance, angle, highlightColor, highlightAlpha, shadowColor, shadowAlpha,
+			                       blurX, blurY, strength, quality, type, knockout);
 		}
 	
 		public var blurX:Number;
@@ -47,22 +71,68 @@ package flash.filters {
 		public var shadowAlpha:Number;
 		public var shadowColor:uint;
 		public var distance:Number;
+		public var knockout:Boolean;
+		public var type:String;
 	}
 
 	public class GradientBevelFilter extends BitmapFilter
 	{
-		//$$TODO
+		public function GradientBevelFilter(distance:Number = 4.0, angle:Number = 45, colors:Array = null, alphas:Array = null, ratios:Array = null, 
+		                    blurX:Number = 4.0, blurY:Number = 4.0, strength:Number = 1, quality:int = 1, type:String = "inner", 
+		                    knockout:Boolean = false) {
+			this.distance = distance;
+			this.angle = angle;
+			this.colors = colors;
+			this.alphas = alphas;
+			this.ratios = ratios;
+			this.blurX = blurX;
+			this.blurY = blurY;
+			this.strength = strength;
+			this.quality = quality;
+			this.type = type;
+			this.knockout = knockout;
+		}
+
+		public override function clone():BitmapFilter {
+			return new GradientBevelFilter(distance, angle, colors, alphas, ratios, blurX, blurY, strength, quality, type, knockout);
+		}
+
+		public var alphas:Array;
+		public var angle:Number;
+		public var blurX:Number;
+		public var blurY:Number;
+		public var colors:Array;
+		public var distance:Number;
+		public var knockout:Boolean;
+		public var quality:int;
+		public var ratios:Array;
+		public var strength:Number;
+		public var type:String;
 	}
 
-	
 	public class DropShadowFilter extends BitmapFilter
 	{
-		// $$TODO -- these are stubbed out
-		public function DropShadowFilter(distance:Number = 4.0, angle:Number = 45, color:uint = 0, alpha:Number = 1.0, blurX:Number = 4.0, blurY:Number = 4.0, strength:Number = 1.0, quality:int = 1, inner:Boolean = false, knockout:Boolean = false, hideObject:Boolean = false)
-		{
-			throw new System.NotImplementedException();
+		public function DropShadowFilter(distance:Number = 4.0, angle:Number = 45, color:uint = 0, alpha:Number = 1.0, 
+		                                 blurX:Number = 4.0, blurY:Number = 4.0, strength:Number = 1.0, quality:int = 1, 
+		                                 inner:Boolean = false, knockout:Boolean = false, hideObject:Boolean = false)
+		{ 
+			this.distance = distance;
+			this.angle = angle;
+			this.color = color;
+			this.alpha = alpha;
+			this.blurX = blurX;
+			this.blurY = blurY;
+			this.strength = strength;
+			this.quality = quality;
+			this.inner = inner;
+			this.knockout = knockout;
+			this.hideObject = hideObject; 
 		}
-		
+
+		public override function clone():BitmapFilter {
+			return new DropShadowFilter(distance, angle, color, alpha, blurX, blurY, strength, quality, inner, knockout, hideObject);
+		}
+
 		public var blurX:Number;
 		public var blurY:Number;
 		public var strength:Number;
@@ -82,10 +152,21 @@ package flash.filters {
 	
 	public class GlowFilter extends BitmapFilter
 	{
-		// $$TODO -- these are stubbed out
-		public function GlowFilter(color:uint = 0xFF0000, alpha:Number = 1.0, blurX:Number = 6.0, blurY:Number = 6.0, strength:Number = 2, quality:int = 1, inner:Boolean = false, knockout:Boolean = false)
+		public function GlowFilter(color:uint = 0xFF0000, alpha:Number = 1.0, blurX:Number = 6.0, blurY:Number = 6.0, 
+		                           strength:Number = 2, quality:int = 1, inner:Boolean = false, knockout:Boolean = false)
 		{
-			throw new System.NotImplementedException();
+			this.color = color;
+			this.alpha = alpha;
+			this.blurX = blurX;
+			this.blurY = blurY;
+			this.strength = strength;
+			this.quality = quality;
+			this.inner = inner;
+			this.knockout = knockout;
+		}
+
+		public override function clone():BitmapFilter {
+			return new GlowFilter(color, alpha, blurX, blurY, strength, quality, inner, knockout);
 		}
 
 		public var blurX:Number;
@@ -96,12 +177,42 @@ package flash.filters {
 		public var quality:Number;
 		public var inner:Boolean;
 		public var knockout:Boolean;
-		//$$TODO
 	}
 
 	public class GradientGlowFilter extends BitmapFilter
 	{
-		//$$TODO
+		public function GradientGlowFilter(distance:Number = 4.0, angle:Number = 45, colors:Array = null, alphas:Array = null, 
+		                                   ratios:Array = null, blurX:Number = 4.0, blurY:Number = 4.0, strength:Number = 1, 
+		 				                   quality:int = 1, type:String = "inner", knockout:Boolean = false)
+		{
+			this.distance = distance;
+			this.angle = angle;
+			this.colors = colors;
+			this.alphas = alphas;
+			this.ratios = ratios;
+			this.blurX = blurX;
+			this.strength = strength;
+			this.quality = quality;
+			this.type = type;
+			this.knockout = knockout;
+		}
+
+		public override function clone():BitmapFilter {
+			return new GradientGlowFilter(distance, angle, colors, alphas, ratios, blurX, blurY, strength, quality, type, knockout);
+		}
+
+		public var alphas:Array;
+		public var angle:Number;
+		public var blurX:Number;
+		public var blurY:Number;
+		public var colors:Array;
+		public var distance:Number;
+		public var knockout:Boolean;
+		public var quality:int;
+		public var ratios:Array;
+		public var strength:Number;
+		public var type:String;
+
 	}
 
 }

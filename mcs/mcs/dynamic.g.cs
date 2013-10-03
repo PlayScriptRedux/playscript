@@ -1,79 +1,56 @@
 
 // Generated dynamic class partial classes
 
-using System.Collections.Generic;
 
-namespace _root {
+namespace Blah1 {
 
-	partial class Foo : PlayScript.IDynamicClass {
+	partial class A : PlayScript.IDynamicClass {
 
-		private Dictionary<string, object> __dynamicDict;
+		private PlayScript.IDynamicClass __dynamicProps;
 
 		dynamic PlayScript.IDynamicClass.__GetDynamicValue(string name) {
 			object value = null;
-			if (__dynamicDict != null) {
-				__dynamicDict.TryGetValue(name, out value);
+			if (__dynamicProps != null) {
+				value = __dynamicProps.__GetDynamicValue(name);
 			}
 			return value;
 		}
+
+		bool PlayScript.IDynamicClass.__TryGetDynamicValue(string name, out object value) {
+			if (__dynamicProps != null) {
+				return __dynamicProps.__TryGetDynamicValue(name, out value);
+			} else {
+				value = null;
+				return false;
+			}
+		}
 			
 		void PlayScript.IDynamicClass.__SetDynamicValue(string name, object value) {
-			if (__dynamicDict == null) {
-				__dynamicDict = new Dictionary<string, object>();
+			if (__dynamicProps == null) {
+				__dynamicProps = new PlayScript.DynamicProperties(this);
 			}
-			__dynamicDict[name] = value;
+			__dynamicProps.__SetDynamicValue(name, value);
+		}
+
+		bool PlayScript.IDynamicClass.__DeleteDynamicValue(object name) {
+			if (__dynamicProps != null) {
+				return __dynamicProps.__DeleteDynamicValue(name);
+			}
+			return false;
 		}
 			
 		bool PlayScript.IDynamicClass.__HasDynamicValue(string name) {
-			if (__dynamicDict != null) {
-				return __dynamicDict.ContainsKey(name);
+			if (__dynamicProps != null) {
+				return __dynamicProps.__HasDynamicValue(name);
 			}
 			return false;
 		}
 
-		_root.Array PlayScript.IDynamicClass.__GetDynamicNames() {
-			if (__dynamicDict != null) {
-				return new _root.Array(__dynamicDict.Keys);
+		System.Collections.IEnumerable PlayScript.IDynamicClass.__GetDynamicNames() {
+			if (__dynamicProps != null) {
+				return __dynamicProps.__GetDynamicNames();
 			}
-			return new _root.Array();
-		}
-	}
-}
-
-
-namespace _root {
-
-	partial class Bar2 : PlayScript.IDynamicClass {
-
-		private Dictionary<string, object> __dynamicDict;
-
-		dynamic PlayScript.IDynamicClass.__GetDynamicValue(string name) {
-			object value = null;
-			if (__dynamicDict != null) {
-				__dynamicDict.TryGetValue(name, out value);
-			}
-			return value;
-		}
-			
-		void PlayScript.IDynamicClass.__SetDynamicValue(string name, object value) {
-			if (__dynamicDict == null) {
-				__dynamicDict = new Dictionary<string, object>();
-			}
-			__dynamicDict[name] = value;
-		}
-			
-		bool PlayScript.IDynamicClass.__HasDynamicValue(string name) {
-			if (__dynamicDict != null) {
-				return __dynamicDict.ContainsKey(name);
-			}
-			return false;
-		}
-
-		_root.Array PlayScript.IDynamicClass.__GetDynamicNames() {
-			if (__dynamicDict != null) {
-				return new _root.Array(__dynamicDict.Keys);
-			}
-			return new _root.Array();
+			return null;
 		}
 	}
 }
