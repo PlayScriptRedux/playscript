@@ -23,7 +23,7 @@ package {
 		//
 		
 		public property dotall : Boolean { 
- 	 		get { return mDoTail;} 
+			get { return (mRegex.Options & RegexOptions.Singleline) != 0; }
  	 	}
  	 	public property extended : Boolean { 
  	 		get { return mExtended;} 
@@ -32,13 +32,13 @@ package {
  	 		get { return mGlobal;} 
  	 	}
  	 	public property ignoreCase : Boolean { 
- 	 		get { return (mRegex.Options & RegexOptions.IgnoreCase) != 0;} 
+ 	 		get { return (mRegex.Options & RegexOptions.IgnoreCase) != 0; }
  	 	}
  	 	public property lastIndex : Number { 
- 	 		get { throw new NotImplementedException();} 
+			get { return mLastIndex; } 
  	 	}
  	 	public property multiline : Boolean { 
- 	 		get { return (mRegex.Options & RegexOptions.Multiline) != 0;} 
+ 	 		get { return (mRegex.Options & RegexOptions.Multiline) != 0; }
  	 	}
  	 	
  	 	public property source : String { 
@@ -66,34 +66,49 @@ package {
 					mExtended = true;
 					break;
 				case "s":
-					mDoTail = true;
+					options |= RegexOptions.Singleline;
 					break;
 				default:
 					throw new NotImplementedException();
 				}
 			}
 
+			// In extended mode, unescaped whitespace characters are removed.
+			if (mExtended) {
+				re = Regex.Replace(re, "((?<!\\\\))\\s+", "$1");
+			}
+
 			mSource = re;
 			mRegex = new Regex(re, options);
+			mLastIndex = 0;
 		}
 
 		public function exec(str:String):Object {
-			var m = mRegex.Match(str);
+			var m = mRegex.Match(str, mLastIndex);
 			if (m.Success) {
+				if (mGlobal) {
+					mLastIndex = m.Index + m.Value.Length;
+				}
 				var a:Array = [];
-				// a.push(m.Value);
+				a["index"] = m.Index;
+				a["input"] = str;
 				for each (var g:Group in m.Groups) {
 					a.push(g.Value);
 				}
 				return a;
-			} else
-			{
-				return null;
 			}
+			return null;
 		}
  	 	
 		public function test(str:String):Boolean {
-			return mRegex.IsMatch(str);
+			var m = mRegex.Match(str, mLastIndex);
+			if (m.Success) {
+				if (mGlobal) {
+					mLastIndex = m.Index + m.Value.Length;
+				}
+				return true;
+			}
+			return false;
 		}
 		
 		public function replace(str:String, replaceWith:String):String {
@@ -119,8 +134,7 @@ package {
 			return a;
 		}
 		
-		public function split(str:String):Array
-		{
+		public function split(str:String):Array {
 			var a:Array = new Array();
 
 			var lastIndex:int = 0;
@@ -149,7 +163,7 @@ package {
 			// push everything after last match
 			var end:String = str.Substring(lastIndex, str.Length - lastIndex);
 			a.push(end);
-									
+								
 			return a;
 		}
 		
@@ -157,8 +171,7 @@ package {
 		var mSource:String;
 		var mGlobal:Boolean;
 		var mExtended:Boolean;
-		var mDoTail:Boolean;
-	
+		var mLastIndex:Number;
 	}
 
 }
