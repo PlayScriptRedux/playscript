@@ -39,7 +39,7 @@ namespace flash.display3D {
 
 		public const int MaxUniforms = 512;
 
-		public static bool Verbose = false;
+		public static bool Verbose = true;
 		
 
 		
@@ -68,11 +68,13 @@ namespace flash.display3D {
 
 			if (mVertexShaderId!=0) {
 				GL.DeleteShader (mVertexShaderId);
+				GLUtils.CheckGLError ();
 				mVertexShaderId = 0;
 			}
 
 			if (mFragmentShaderId!=0) {
 				GL.DeleteShader (mFragmentShaderId);
+				GLUtils.CheckGLError ();
 				mFragmentShaderId = 0;
 			}
 
@@ -119,10 +121,14 @@ namespace flash.display3D {
 			// compiler vertex shader
 			mVertexShaderId = GL.CreateShader (ShaderType.VertexShader);
 			GL.ShaderSource (mVertexShaderId, vertexShaderSource);
+			GLUtils.CheckGLError ();
+
 			GL.CompileShader (mVertexShaderId);
+			GLUtils.CheckGLError ();
 
 			int shaderCompiled = 0;
 			GL.GetShader (mVertexShaderId, ShaderParameter.CompileStatus, out shaderCompiled);
+			GLUtils.CheckGLError ();
 
 			if ( All.True != (All) shaderCompiled ) {
 				var vertexInfoLog = GL.GetShaderInfoLog (mVertexShaderId);
@@ -136,7 +142,10 @@ namespace flash.display3D {
 			// compile fragment shader
 			mFragmentShaderId = GL.CreateShader (ShaderType.FragmentShader);
 			GL.ShaderSource (mFragmentShaderId, fragmentShaderSource);
+			GLUtils.CheckGLError ();
+
 			GL.CompileShader (mFragmentShaderId);
+			GLUtils.CheckGLError ();
 
 			int fragmentCompiled = 0;
 			GL.GetShader (mFragmentShaderId, ShaderParameter.CompileStatus, out fragmentCompiled);
@@ -153,7 +162,10 @@ namespace flash.display3D {
 			// create program
 			mProgramId = GL.CreateProgram ();
 			GL.AttachShader (mProgramId, mVertexShaderId);
+			GLUtils.CheckGLError ();
+
 			GL.AttachShader (mProgramId, mFragmentShaderId);
+			GLUtils.CheckGLError ();
 
 			// bind all attribute locations
 			for (int i=0; i < Context3D.MaxAttributes; i++) {
@@ -185,30 +197,24 @@ namespace flash.display3D {
 		{
 			// use program
 			GL.UseProgram (mProgramId);
-			
-			// update texture units for all sampler uniforms
-			foreach (var sampler in mSamplerUniforms)
-			{
-				if (sampler.RegCount == 1) {
-					// single sampler
-					GL.Uniform1(sampler.Location, sampler.RegIndex);
-				} else {
-					// sampler array?
-					for (int i=0; i < sampler.RegCount; i++) {
-						GL.Uniform1(sampler.Location + i, sampler.RegIndex + i);
-					}
-				}
-			}
+			GLUtils.CheckGLError ();
 
-			foreach (var sampler in mAlphaSamplerUniforms)
+			List<Uniform> samplers = new List<Uniform>();
+			samplers.AddRange (mSamplerUniforms);
+			samplers.AddRange (mAlphaSamplerUniforms);
+
+			// update texture units for all sampler uniforms
+			foreach (var sampler in samplers)
 			{
 				if (sampler.RegCount == 1) {
 					// single sampler
 					GL.Uniform1(sampler.Location, sampler.RegIndex);
+					GLUtils.CheckGLError ();
 				} else {
 					// sampler array?
 					for (int i=0; i < sampler.RegCount; i++) {
 						GL.Uniform1(sampler.Location + i, sampler.RegIndex + i);
+						GLUtils.CheckGLError ();
 					}
 				}
 			}
@@ -220,6 +226,7 @@ namespace flash.display3D {
 			if (mPositionScale != null)
 			{
 				GL.Uniform4(mPositionScale.Location, 1, positionScale); 
+				GLUtils.CheckGLError ();
 			}
 		}
 
@@ -246,6 +253,8 @@ namespace flash.display3D {
 
 			int numActive = 0;
 			GL.GetProgram(mProgramId, ProgramParameter.ActiveUniforms, out numActive);
+			GLUtils.CheckGLError ();
+
 			for (int i=0; i < numActive; i++)
 			{
 				// create new uniform
@@ -255,12 +264,15 @@ namespace flash.display3D {
 				var name = new StringBuilder(1024);
 
 				GL.GetActiveUniform(mProgramId, i, name.MaxCapacity, out length, out uniform.Size, out uniform.Type, name);
+				GLUtils.CheckGLError ();
 				uniform.Name 	 = name.ToString();
 
 #if PLATFORM_MONOTOUCH || PLATFORM_MONOMAC
 				uniform.Location = GL.GetUniformLocation (mProgramId, uniform.Name );
+				GLUtils.CheckGLError ();
 #elif PLATFORM_MONODROID
 				uniform.Location = GL.GetUniformLocation (mProgramId, name);
+				GLUtils.CheckGLError ();
 #endif
 				// remove array [x] from names
 				int indexBracket = uniform.Name.IndexOf('[');
@@ -324,7 +336,7 @@ namespace flash.display3D {
 				{
 					// sampler uniform
 					int len = uniform.Name.IndexOf ("_") - 7;
-					uniform.RegIndex = int.Parse (uniform.Name.Substring(7, len)) + 8;
+					uniform.RegIndex = int.Parse (uniform.Name.Substring(7, len)) + 4;
 					// add to list of sampler uniforms
 					mAlphaSamplerUniforms.Add (uniform);
 				}

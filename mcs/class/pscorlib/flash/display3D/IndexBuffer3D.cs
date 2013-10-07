@@ -48,6 +48,7 @@ namespace flash.display3D {
 			mIds = new uint[multiBufferCount];
 			mElementType = DrawElementsType.UnsignedShort;
 			GL.GenBuffers(multiBufferCount, mIds);
+			GLUtils.CheckGLError ();
 
 			mUsage = isDynamic ? BufferUsage.DynamicDraw : BufferUsage.StaticDraw;
 
@@ -79,11 +80,14 @@ namespace flash.display3D {
 				throw new ArgumentOutOfRangeException("data buffer is not big enough for upload");
 
 			GL.BindBuffer(BufferTarget.ElementArrayBuffer, mIds[mBufferIndex]);
+			GLUtils.CheckGLError ();
+
 			if (startOffset == 0) {
 				GL.BufferData(BufferTarget.ElementArrayBuffer, 
 				             new IntPtr(byteCount), 
 				             new IntPtr(data), 
 				             mUsage);
+				GLUtils.CheckGLError ();
 
 				if (byteCount != mMemoryUsage) {
 					// update stats for memory usage
@@ -96,6 +100,7 @@ namespace flash.display3D {
 				                 new IntPtr(startOffset * elementSize),
 				                 new IntPtr(byteCount), 
 				                 new IntPtr(data));
+				GLUtils.CheckGLError ();
 			}
 
 		}

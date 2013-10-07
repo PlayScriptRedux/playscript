@@ -915,6 +915,9 @@
       <Link>mx\graphics\codec\PNGEncoder.play</Link>
     </Compile>
     <Compile Include="flash\display\BitmapData.cs" />
+    <Compile Include="..\pscorlib\flash\display3D\GLUtils.cs">
+      <Link>flash\display3D\GLUtils.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monotouch.csproj">
