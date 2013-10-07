@@ -808,13 +808,12 @@ namespace _root
 		{
 			var sb = new System.Text.StringBuilder();
 			bool needsSeperator = false;
-			foreach (var item in this)
-			{
+			for (var i = 0; i < mCount; i++) {
+				var item = mArray [i];
 				if (needsSeperator) {
 					sb.Append(sep);
 				}
-				if (item != null)
-				{
+				if (item != null) {
 					sb.Append(item.ToString());
 				}
 				needsSeperator = true;
