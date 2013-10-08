@@ -29,12 +29,14 @@ namespace flash.display3D {
 
 		public static void CheckGLError()
 		{
+			#if PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			ErrorCode error = GL.GetError ();
 			if (error != 0) {
 				System.Diagnostics.StackTrace trace = new System.Diagnostics.StackTrace();
 
 				throw new InvalidOperationException("Error calling openGL api. Error: " + error + "\n" + trace.ToString());
 			}
+			#endif
 		}
 
 	}
