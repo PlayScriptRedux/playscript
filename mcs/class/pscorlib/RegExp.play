@@ -112,9 +112,43 @@ package {
 		}
 		
 		public function replace(str:String, replaceWith:String):String {
-			return mRegex.Replace(str, replaceWith);
+			if (mGlobal) {
+				return mRegex.Replace(str, replaceWith);
+			} else {
+				return mRegex.Replace(str, replaceWith, 1);
+			}
 		}
-		
+
+		public function replace(str:String, replacer:Delegate):String {
+			//
+			// Create a MatchEvaluator wrapper function to call the replacer function
+			// according to the rules defined here:
+			//
+			// http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/String.html#replace()
+			//
+			var evaluator:MatchEvaluator = new MatchEvaluator(function (m:Match):String {
+				var results:System.Object[] = new System.Object[m.Groups.Count + 2];
+				var i:int = 0;
+				for each (var g:Group in m.Groups) {
+					results[i++] = g.Value;
+				}
+				results[i++] = m.Index;
+				results[i++] = str;
+				// Need to call the replacer function using Invoke rather than calling
+				// it directly so that it is called with n arguments instead of 1 argument
+				// (the single argument being an array of n elements).
+				var args:System.Object[] = new System.Object[1];
+				args[0] = results;
+				return replacer.Method.Invoke(replacer.Target, args);
+			});
+
+			if (mGlobal) {
+				return mRegex.Replace(str, evaluator);
+			} else {
+				return mRegex.Replace(str, evaluator, 1);
+			}
+		}
+
 		public function search(str:String):int {
 			var m = mRegex.Match(str);
 			if (!m.Success) {

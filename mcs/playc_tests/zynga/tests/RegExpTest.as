@@ -74,7 +74,20 @@ package
 			if (results.toString() != "0-She,,e,10-seashells,sea,ells,27-seashore,sea,ore")
 				return 17;
 
+			str = "abc12 def34";
+			pattern = /([a-z]+)([0-9]+)/g;
+			if (str.replace(pattern, Function(swapMatches)) != "12abc 34def")
+				return 18;
+			pattern = /([a-z]+)([0-9]+)/;
+			if (str.replace(pattern, Function(swapMatches)) != "12abc def34")
+				return 19;
+
 			return 0;
+		}
+
+		public static function swapMatches(...args:Array):String
+		{
+			return args[2] + args[1];
 		}
 	}
 }

@@ -110,13 +110,17 @@ namespace _root
 				return null;
 			}
 
-			if (repl is System.Delegate) {
-				throw new NotSupportedException("Replacing function is not supported.");
+			var re = pattern as RegExp;
+
+			if (repl is Delegate) {
+				if (re == null) {
+					re = new RegExp (pattern.ToString ());
+				}
+				return re.replace (s, repl as Delegate);
 			}
 
-			if (pattern is RegExp) {
+			if (re != null) {
 				// pattern is a regexp
-				var re = pattern as RegExp;
 				return re.replace(s, repl.ToString());
 			} else {
 				// pattern is a string or other object
