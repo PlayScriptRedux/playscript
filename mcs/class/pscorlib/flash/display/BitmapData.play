@@ -199,6 +199,7 @@ package flash.display {
 			mData = null;
 		}
 
+		/* this function lives in BitmapData.cs 
  	 	public function draw(source:IBitmapDrawable, matrix:Matrix = null, colorTransform:ColorTransform = null, blendMode:String = null, 
 	 	 	clipRect:Rectangle = null, smoothing:Boolean = false):void {
 
@@ -352,6 +353,7 @@ package flash.display {
 				trace("NotImplementedWarning: BitmapData.draw()");
 			}
  	 	}
+		*/
  	 	
 		public function drawWithQuality(source:IBitmapDrawable, matrix:Matrix = null, colorTransform:ColorTransform = null, blendMode:String = null, 
 			clipRect:Rectangle = null, smoothing:Boolean = false, quality:String = null):void {

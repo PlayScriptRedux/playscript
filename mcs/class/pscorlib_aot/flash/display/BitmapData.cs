@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using flash.display;
 using flash.geom;
-using flash.utils;
 using flash.text;
 
 #if PLATFORM_MONOMAC
@@ -25,18 +24,18 @@ namespace flash.display
 	public partial class BitmapData
 	{
 
-#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
+		#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
 		private const string DEFAULT_FONT = "Verdana";
 		private static Dictionary<string,bool> sHasFont = new Dictionary<string,bool> ();
-#else
+		#else
 		// WHAT IS THE DEFAULT FONT FOR ANDROID?
-#endif
+		#endif
 
 		// Partial class implementation of draw() in c# to allow use of unsafe code..
 		public unsafe void draw(IBitmapDrawable source, Matrix matrix = null, ColorTransform colorTransform = null, string blendMode = null, 
-		                 Rectangle clipRect = null, Boolean smoothing = false) {
+		                        Rectangle clipRect = null, Boolean smoothing = false) {
 
-#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
+			#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
 
 			if (source is flash.text.TextField)
 			{
@@ -114,9 +113,9 @@ namespace flash.display
 			}
 			else
 
-#elif PLATFORM_MONODROID
+				#elif PLATFORM_MONODROID
 
-			if ( source is flash.text.TextField )
+				if ( source is flash.text.TextField )
 			{
 				var tf:flash.text.TextField = source as flash.text.TextField;
 				var format:flash.text.TextFormat = tf.defaultTextFormat;
@@ -176,7 +175,32 @@ namespace flash.display
 			}
 
 			else
-#endif
+				#endif
+				if ( source is flash.display.BitmapData)
+			{
+				//naive implementation , 
+				//to be implemented: 
+				// -smoothing / antialiasing, 
+				// -blend mode
+				// -colorTransform
+				// -cliprect
+				BitmapData sourceBitmap = source as BitmapData;
+				Matrix matInverse = (matrix!=null) ? matrix.clone() : new Matrix();
+				matInverse.invert();
+
+				for(int y = 0;y<mHeight;y++)
+				{	
+					for(int x = 0;x<mWidth;x++)
+					{
+						int x2 = (int)(x * matInverse.a + y * matInverse.c + matInverse.tx);
+						int y2 = (int)(x * matInverse.b + y * matInverse.d + matInverse.ty);
+						if(x2>=0 && y2>=0 && x2<sourceBitmap.width && y2< sourceBitmap.height)
+						{
+							mData[x + y*mWidth ] = sourceBitmap.mData[ x2 + y2* sourceBitmap.mWidth ];
+						}	
+					}
+				}
+			}
 
 			{
 				_root.trace_fn.trace("NotImplementedWarning: BitmapData.draw()");
