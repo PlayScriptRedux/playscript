@@ -9,7 +9,6 @@ AssemblyInfo.cs
 ./PlayScript/IKeyEnumerable.cs
 ./PlayScript/Invoker.cs
 ./PlayScript/MethodBinder.cs
-./PlayScript/ParamsDelegateTypes.cs
 ./PlayScript/ExpressionType.cs
 ./PlayScript/ExtensionAttribute.cs
 ./PlayScript/NumberIsFloatAttribute.cs
