@@ -131,9 +131,15 @@ namespace flash.events
 							// spot during execution where you can add the exception(s) (sometimes adding all of them is a good idea) to stop
 							// on in the IDE "Run/Exceptions..." menu item so that the debugger will break right where the exception is
 							// first thrown.  
-							if (e.InnerException != null)
+							var inner = e.InnerException;
+							if (inner != null) 
 							{
-								throw e.InnerException;
+								while ((e = inner.InnerException) != null) 
+								{
+									inner = e;
+								}
+
+								throw inner;
 							}
 							else
 							{
