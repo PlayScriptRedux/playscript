@@ -201,7 +201,7 @@ namespace flash.display
 					}
 				}
 			}
-
+			else
 			{
 				_root.trace_fn.trace("NotImplementedWarning: BitmapData.draw()");
 			}
