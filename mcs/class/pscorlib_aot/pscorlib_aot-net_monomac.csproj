@@ -892,6 +892,9 @@
     <Compile Include="..\pscorlib\mx\graphics\codec\PNGEncoder.play">
       <Link>mx\graphics\codec\PNGEncoder.play</Link>
     </Compile>
+    <Compile Include="..\pscorlib\flash\display3D\GLUtils.cs">
+      <Link>flash\display3D\GLUtils.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="flash\external\" />

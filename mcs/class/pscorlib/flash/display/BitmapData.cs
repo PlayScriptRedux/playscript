@@ -32,7 +32,7 @@ namespace flash.display
 		#endif
 
 		// Partial class implementation of draw() in c# to allow use of unsafe code..
-		public unsafe void draw(IBitmapDrawable source, Matrix matrix = null, ColorTransform colorTransform = null, string blendMode = null, 
+		public unsafe void draw(IBitmapDrawable source, flash.geom.Matrix matrix = null, ColorTransform colorTransform = null, string blendMode = null, 
 		                        Rectangle clipRect = null, Boolean smoothing = false) {
 
 			#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
@@ -117,19 +117,19 @@ namespace flash.display
 
 				if ( source is flash.text.TextField )
 			{
-				var tf:flash.text.TextField = source as flash.text.TextField;
-				var format:flash.text.TextFormat = tf.defaultTextFormat;
+				flash.text.TextField tf  = source as flash.text.TextField;
+				flash.text.TextFormat format = tf.defaultTextFormat;
 
 				// $$TODO figure out how to get rid of this extra data copy
 				var data = new byte[width * height * 4];
 				System.Buffer.BlockCopy(mData, 0, data, 0, data.Length);
 
-				var config:Android.Graphics.Bitmap.Config = Android.Graphics.Bitmap.Config.Argb8888;
-				var bitmap:Android.Graphics.Bitmap = Android.Graphics.Bitmap.CreateBitmap(width, height, config);
+				Android.Graphics.Bitmap.Config config = Android.Graphics.Bitmap.Config.Argb8888;
+				Android.Graphics.Bitmap bitmap = Android.Graphics.Bitmap.CreateBitmap(width, height, config);
 
-				var canvas:Canvas = new Canvas(bitmap);
-				var x:Number = matrix.tx;
-				var y:Number = matrix.ty;
+				Canvas canvas = new Canvas(bitmap);
+				var x = matrix.tx;
+				var y = matrix.ty;
 
 				// invert y because the CG origin is bottom,left
 				// y = height - tf.textHeight - y;
@@ -154,23 +154,23 @@ namespace flash.display
 					throw new System.NotImplementedException();
 				}
 
-				var paint:Paint = new Paint(PaintFlags.AntiAlias);
+				Paint paint = new Paint(PaintFlags.AntiAlias);
 
 				paint.Color = Color.Black;
-				paint.TextSize = float(Number(format.size));
+				paint.TextSize = (float) format.size;
 				paint.SetTypeface( Typeface.Create(format.font, TypefaceStyle.Normal) );
 				paint.TextAlign = Paint.Align.Center;			
 
-				canvas.DrawText(tf.text, float(x), float(y), paint);
+				canvas.DrawText(tf.text, (float) x, (float) y, paint);
 
 				mData = new uint[ bitmap.Width * bitmap.Height ];
 				var buffer = new int[ bitmap.Width * bitmap.Height ];
 				bitmap.GetPixels(buffer, 0, width, 0, 0, width, height);
 
-				for (var i:int = 0; i < buffer.Length; i++)
+				for (int i = 0; i < buffer.Length; i++)
 				{
 
-					mData[i] = uint(buffer[i]);
+					mData[i] = (uint) buffer[i];
 				}
 			}
 
@@ -185,7 +185,7 @@ namespace flash.display
 				// -colorTransform
 				// -cliprect
 				BitmapData sourceBitmap = source as BitmapData;
-				Matrix matInverse = (matrix!=null) ? matrix.clone() : new Matrix();
+				flash.geom.Matrix matInverse = (matrix!=null) ? matrix.clone() : new flash.geom.Matrix();
 				matInverse.invert();
 
 				for(int y = 0;y<mHeight;y++)
