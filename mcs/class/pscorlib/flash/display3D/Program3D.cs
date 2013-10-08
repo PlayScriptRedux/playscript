@@ -39,7 +39,7 @@ namespace flash.display3D {
 
 		public const int MaxUniforms = 512;
 
-		public static bool Verbose = true;
+		public static bool Verbose = false;
 		
 
 		
@@ -199,12 +199,23 @@ namespace flash.display3D {
 			GL.UseProgram (mProgramId);
 			GLUtils.CheckGLError ();
 
-			List<Uniform> samplers = new List<Uniform>();
-			samplers.AddRange (mSamplerUniforms);
-			samplers.AddRange (mAlphaSamplerUniforms);
-
 			// update texture units for all sampler uniforms
-			foreach (var sampler in samplers)
+			foreach (var sampler in mSamplerUniforms)
+			{
+				if (sampler.RegCount == 1) {
+					// single sampler
+					GL.Uniform1(sampler.Location, sampler.RegIndex);
+					GLUtils.CheckGLError ();
+				} else {
+					// sampler array?
+					for (int i=0; i < sampler.RegCount; i++) {
+						GL.Uniform1(sampler.Location + i, sampler.RegIndex + i);
+						GLUtils.CheckGLError ();
+					}
+				}
+			}
+
+			foreach (var sampler in mAlphaSamplerUniforms)
 			{
 				if (sampler.RegCount == 1) {
 					// single sampler
