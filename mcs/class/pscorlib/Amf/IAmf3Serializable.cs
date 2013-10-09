@@ -25,9 +25,14 @@ using System.IO;
 
 namespace Amf
 {
+	// object serializer delegates (for use when you dont want to implement IAmf3Serializable)
+	public delegate object Amf3ObjectConstructor();
+	public delegate void   Amf3ObjectSerializer(object obj, Amf3Writer writer);
+	public delegate void   Amf3ObjectDeserializer(object obj, Amf3PropertyReader reader);
+
     public interface IAmf3Serializable
     {
         void Serialize(Amf3Writer writer);
-		void Serialize(Amf3Parser reader);
+		void Serialize(Amf3PropertyReader reader);
     }
 }

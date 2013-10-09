@@ -70,7 +70,7 @@ namespace Amf
 			writer.Write(this);
 		}
 
-		public void Serialize(Amf3Parser reader)
+		public void Serialize(Amf3PropertyReader reader)
 		{
 			throw new NotSupportedException();
 		}

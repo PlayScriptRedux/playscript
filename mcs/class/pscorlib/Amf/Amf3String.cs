@@ -52,7 +52,7 @@ namespace Amf
 			writer.Write(this);
 		}
 
-		public void Serialize(Amf3Parser reader)
+		public void Serialize(Amf3PropertyReader reader)
 		{
 			// can't support this, we are immutable
 			throw new NotSupportedException();

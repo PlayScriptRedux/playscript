@@ -23,7 +23,6 @@
     <ConsolePause>False</ConsolePause>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn>219</NoWarn>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -915,6 +914,12 @@
       <Link>mx\graphics\codec\PNGEncoder.play</Link>
     </Compile>
     <Compile Include="flash\display\BitmapData.cs" />
+    <Compile Include="..\pscorlib\Amf\Amf3Variant.cs">
+      <Link>Amf\Amf3Variant.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3PropertyReader.cs">
+      <Link>Amf\Amf3PropertyReader.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monotouch.csproj">

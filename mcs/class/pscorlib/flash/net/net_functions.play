@@ -14,25 +14,16 @@
 
 package flash.net
 {
-	import System.Collections.Generic.*;
 
 	public function registerClassAlias(aliasName:String, classObject:Class):void {
-		// We allow the same class to be registered several times.
-		Internal.sClasses[aliasName] = classObject;
-	}
-	
-	public function getClassByAlias(aliasName:String):Class {
-		return Internal.sClasses[aliasName];
-	}
-	
-	public function tryGetClassByAlias(aliasName:String):Class {
-		var c:Class;
-		Internal.sClasses.TryGetValue(aliasName, out c);
-		return c;
+		Amf.Amf3ClassDef.RegisterClassType(aliasName, classObject);
 	}
 
-	internal class Internal
-	{
-		internal static var sClasses:Dictionary.<String, Class> = new Dictionary.<String, Class>();
+	public function getClassByAlias(aliasName:String):Class {
+		var c:Class = Amf.Amf3ClassDef.GetClassType(aliasName);
+		if (c == null)
+			throw new Error("Class alias not found");
+		return c;
 	}
+	
 }
