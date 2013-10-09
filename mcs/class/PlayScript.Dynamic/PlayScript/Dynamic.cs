@@ -418,6 +418,15 @@ namespace PlayScript
 			}
 		}
 
+		public static bool IsNullOrUndefined(object value)
+		{
+			Stats.Increment(StatsCounter.Dynamic_IsNullOrUndefinedInvoked);
+
+			// NOTE: using Object.ReferenceEquals to avoid invoking PSBinaryOperation,
+			// which does more work than necessary
+			return (value == null || Object.ReferenceEquals(value, PlayScript.Undefined._undefined));
+		}
+
 		public static bool hasOwnProperty(object o, object name)
 		{
 			if (name == null) {
