@@ -11,6 +11,8 @@ package
 				return 2;
 			if (o === null)
 				return 3;
+			for each (var i:* in o)
+				trace(i);
 
 			return 0;
 		}
