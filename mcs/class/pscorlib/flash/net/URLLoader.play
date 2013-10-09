@@ -56,15 +56,21 @@ package flash.net {
 		public function load(request:URLRequest, synchronous:Boolean = false):void {
 			mRequest = request;
 
+			var url:String = request.url.ToLowerInvariant();
+			if (url.EndsWith(".swf")) {
+				// SWF files are not supported by PlayScript. There is no reason to try to load them.
+				skipSwfLoad(synchronous);
+				return;
+			}
+
 			// get next request id for this load
 			mId = sNextRequestId++;
 
 			// send data to telemetry
 			Telemetry.Session.WriteTime(".network.request.time");
-			sTelemetryRequestUrl.WriteValue(request.url);
+			sTelemetryRequestUrl.WriteValue(url);
 			sTelemetryRequestId.WriteValue(mId);
 
-			var url:String = request.url.ToLowerInvariant();
 			if (url.StartsWith("http:") || url.StartsWith("https:")) {
 				// handle a http load
 				// load with a delay
@@ -93,6 +99,35 @@ package flash.net {
 					// load with a delay
 					enqueueAction(doLocalLoad);
 				}
+			}
+		}
+
+		private function skipSwfLoad(synchronous:Boolean):void {
+			trace("URLLoader: skip http SWF load ", mRequest.url);
+
+			this.bytesLoaded = 0;
+			this.bytesTotal  = 0;
+
+			switch (dataFormat) {
+				case URLLoaderDataFormat.BINARY: {
+					var ba:ByteArray = new ByteArray();
+					ba.writeUTFBytes("FWS");		// We set the SWF header with no content. This is enough to skip the code flow for the caller.
+					this.data = ba;
+					break;
+				}
+				case URLLoaderDataFormat.TEXT: {
+					// convert to string
+					this.data = "";
+					break;
+				}
+				default:
+					throw new System.NotImplementedException();
+			}
+
+			if (synchronous) {
+				dispatchCompleteEvent();
+			} else {
+				enqueueAction(dispatchCompleteEvent);
 			}
 		}
 
@@ -284,7 +319,7 @@ package flash.net {
 			if (path == null)
 			{
 				trace("URLLoader: could not load ", mRequest.url);
-				// io error, file not found
+					// io error, file not found
 				this.dispatchEvent(new IOErrorEvent(IOErrorEvent.IO_ERROR));
 				return;
 			}
@@ -305,18 +340,18 @@ package flash.net {
 
 			switch (dataFormat)
 			{
-			case URLLoaderDataFormat.BINARY: {
-				var ba:ByteArray = ByteArray.fromArray(fileData);
-				this.data = ba;
-				break;
-			}
-			case URLLoaderDataFormat.TEXT: {
-				var text:String =  System.Text.Encoding.UTF8.GetString(fileData);
-				this.data = text;
-				break;
-			}
-			default:
-				throw new System.NotImplementedException();
+				case URLLoaderDataFormat.BINARY: {
+					var ba:ByteArray = ByteArray.fromArray(fileData);
+					this.data = ba;
+					break;
+				}
+				case URLLoaderDataFormat.TEXT: {
+					var text:String =  System.Text.Encoding.UTF8.GetString(fileData);
+					this.data = text;
+					break;
+				}
+				default:
+					throw new System.NotImplementedException();
 			}
 
 			// update bytes loaded
