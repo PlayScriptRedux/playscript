@@ -895,6 +895,9 @@
     <Compile Include="..\pscorlib\flash\display3D\GLUtils.cs">
       <Link>flash\display3D\GLUtils.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\PlayScript\ParamsDelegateTypes.cs">
+      <Link>PlayScript\ParamsDelegateTypes.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="flash\external\" />
