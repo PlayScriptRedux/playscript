@@ -394,10 +394,8 @@ namespace Amf
 			// this class definition is not known until the first object has been read, but we don't need it here
 			string objectTypeName = ReadString();
 
-			sGenericParameter[0] = flash.net.getClassByAlias_fn.getClassByAlias(objectTypeName);
-			Type genericType = typeof(_root.Vector<>).MakeGenericType(sGenericParameter);
-			// We use IList so it works for all types, regardless of objectTypeName (cast works because _root.Vector<> implements IList)
-			IList vector = (IList)Activator.CreateInstance(genericType, (uint)num, isFixed);
+			// create vector
+			IList vector = Amf3ClassDef.CreateObjectVector(objectTypeName, (uint)num, isFixed);
 			objectTable.Add(vector);
 
 			// read all values
@@ -407,8 +405,6 @@ namespace Amf
 
 			return vector;
 		}
-
-		private static Type[] sGenericParameter = new Type[1];
 
 		public flash.utils.ByteArray ReadByteArray()
 		{

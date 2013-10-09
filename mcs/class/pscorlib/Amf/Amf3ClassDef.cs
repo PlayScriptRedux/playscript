@@ -22,6 +22,7 @@
 
 using System;
 using System.Reflection;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -33,7 +34,9 @@ namespace Amf
 		public class ClassInfo
 		{
 			public System.Type				Type;
+			public System.Type				VectorType;
 			public Amf3ObjectConstructor 	Constructor;
+			public Amf3ObjectVectorConstructor 	VectorConstructor;
 			public Amf3ObjectSerializer		Serializer;
 			public Amf3ObjectDeserializer 	Deserializer;
 			public string[]				 	DeserializerOrder;
@@ -180,6 +183,33 @@ namespace Amf
 			return info.Type;
 		}
 
+		
+		public static IList CreateObjectVector(string aliasName, uint num, bool isFixed)
+		{
+			// get class info
+			var info = GetOrCreateClassInfo(aliasName);
+
+			if (info.VectorConstructor != null) {
+				// invoke vector constructor if we have one
+				return info.VectorConstructor(num, isFixed);
+			}
+
+			if (info.Type == null) {
+				// use dynamic type 
+				return new _root.Vector<dynamic>(num, isFixed);
+			}
+
+			if (info.VectorType == null) {
+				sGenericParameter[0] = info.Type;
+				info.VectorType = typeof(_root.Vector<>).MakeGenericType(sGenericParameter);
+			}
+
+			// We use IList so it works for all types, regardless of objectTypeName (cast works because _root.Vector<> implements IList)
+			IList vector = (IList)Activator.CreateInstance(info.VectorType, num, isFixed);
+			return vector;
+		}
+		private static Type[] sGenericParameter = new Type[1];
+
 		// registers a system type to be associated with a class alias
 		public static void RegisterClassType(string aliasName, System.Type type) {
 			var info = GetOrCreateClassInfo(aliasName);
@@ -187,9 +217,10 @@ namespace Amf
 		}
 
 		// registers a constructor method to be associated with a class alias
-		public static void RegisterClassConstructor(string aliasName, Amf3ObjectConstructor func) {
+		public static void RegisterClassConstructor(string aliasName, Amf3ObjectConstructor func, Amf3ObjectVectorConstructor vectorFunc = null) {
 			var info = GetOrCreateClassInfo(aliasName);
 			info.Constructor = func;
+			info.VectorConstructor = vectorFunc;
 		}
 
 		// registers a serializer (amf writer) method to be associated with a class alias

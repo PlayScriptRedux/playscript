@@ -21,12 +21,14 @@
 // THE SOFTWARE.
 
 using System;
+using System.Collections;
 using System.IO;
 
 namespace Amf
 {
 	// object serializer delegates (for use when you dont want to implement IAmf3Serializable)
 	public delegate object Amf3ObjectConstructor();
+	public delegate IList  Amf3ObjectVectorConstructor(uint num, bool isFixed);
 	public delegate void   Amf3ObjectSerializer(object obj, Amf3Writer writer);
 	public delegate void   Amf3ObjectDeserializer(object obj, Amf3PropertyReader reader);
 
