@@ -3665,9 +3665,9 @@ namespace Mono.CSharp
 					// Delegate to PlayScript.Dynamic.IsNullOrUndefined where possible
 					if (Oper == Operator.Equality || Oper == Operator.Inequality) {
 						if (left.Type == ec.BuiltinTypes.Dynamic && (right is NullLiteral || right.Type == ec.Module.PredefinedTypes.AsUndefined.Resolve ()))
-							return MakeIsNullOrUndefinedExpression (ec, left).Resolve (ec);
+							return PsMakeIsNullOrUndefinedExpression (ec, left).Resolve (ec);
 						else if (right.Type == ec.BuiltinTypes.Dynamic && (left is NullLiteral || left.Type == ec.Module.PredefinedTypes.AsUndefined.Resolve ()))
-							return MakeIsNullOrUndefinedExpression (ec, right).Resolve (ec);
+							return PsMakeIsNullOrUndefinedExpression (ec, right).Resolve (ec);
 					}
 
 					if ((typeHint != ec.BuiltinTypes.Bool) && (oper == Operator.LogicalOr || oper == Operator.LogicalAnd) && 
@@ -3894,7 +3894,7 @@ namespace Mono.CSharp
 			return MakeExpression (ctx, left, right);
 		}
 
-		Expression MakeIsNullOrUndefinedExpression (ResolveContext ec, Expression expr)
+		Expression PsMakeIsNullOrUndefinedExpression (ResolveContext ec, Expression expr)
 		{
 			var args = new Arguments (1);
 			args.Add (new Argument (new As (expr, new TypeExpression (ec.BuiltinTypes.Object, loc), loc)));
