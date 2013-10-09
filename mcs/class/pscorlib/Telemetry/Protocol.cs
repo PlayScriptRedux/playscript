@@ -23,7 +23,8 @@ namespace Telemetry
 				writer.Write(value);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out name);
 				reader.Read(out value);
 			}
@@ -47,7 +48,8 @@ namespace Telemetry
 				writer.Write(delta);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out name);
 				reader.Read(out span);
 				reader.Read(out delta);
@@ -74,7 +76,8 @@ namespace Telemetry
 				writer.Write(value);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out name);
 				reader.Read(out span);
 				reader.Read(out delta);
@@ -102,7 +105,8 @@ namespace Telemetry
 				writer.Write(ymax);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out xmin);
 				reader.Read(out xmax);
 				reader.Read(out ymin);
@@ -136,7 +140,8 @@ namespace Telemetry
 				writer.Write(modified);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out xmin);
 				reader.Read(out xmax);
 				reader.Read(out ymin);
@@ -169,7 +174,8 @@ namespace Telemetry
 				writer.Write(type);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out time);
 				reader.Read(out id);
 				reader.Read(out size);
@@ -194,7 +200,8 @@ namespace Telemetry
 				writer.Write(id);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out time);
 				reader.Read(out id);
 			}
@@ -216,7 +223,8 @@ namespace Telemetry
 				writer.Write(delta);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out name);
 				reader.Read(out delta);
 			}
@@ -244,7 +252,8 @@ namespace Telemetry
 				writer.Write(id);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out xmin);
 				reader.Read(out xmax);
 				reader.Read(out ymin);
@@ -269,7 +278,8 @@ namespace Telemetry
 				writer.Write(profile);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out mode);
 				reader.Read(out profile);
 			}
@@ -295,7 +305,8 @@ namespace Telemetry
 				writer.Write(callstack);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out time);
 				reader.Read(out numticks);
 				reader.Read(out ticktimes);
@@ -323,7 +334,8 @@ namespace Telemetry
 				writer.Write(depthstencil);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out width);
 				reader.Read(out height);
 				reader.Read(out antialias);
@@ -357,7 +369,8 @@ namespace Telemetry
 				writer.Write(mask);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out red);
 				reader.Read(out green);
 				reader.Read(out blue);
@@ -384,7 +397,8 @@ namespace Telemetry
 				writer.Write(passCompareMode);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out depthMask);
 				reader.Read(out passCompareMode);
 			}
@@ -410,7 +424,8 @@ namespace Telemetry
 				writer.Write(h);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out x);
 				reader.Read(out y);
 				reader.Read(out w);
@@ -434,7 +449,8 @@ namespace Telemetry
 				writer.Write(destFactor);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out sourceFactor);
 				reader.Read(out destFactor);
 			}
@@ -460,7 +476,8 @@ namespace Telemetry
 				writer.Write(stackid);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out time);
 				reader.Read(out id);
 				reader.Read(out size);
@@ -482,7 +499,8 @@ namespace Telemetry
 				writer.Write(resultId);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out resultId);
 			}
 
@@ -505,7 +523,8 @@ namespace Telemetry
 				writer.Write(fragmentProgram);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out programId);
 				reader.Read(out vertexProgram);
 				reader.Read(out fragmentProgram);
@@ -526,7 +545,8 @@ namespace Telemetry
 				writer.Write(programId);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out programId);
 			}
 
@@ -545,7 +565,8 @@ namespace Telemetry
 				writer.Write(triangleFaceToCull);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out triangleFaceToCull);
 			}
 
@@ -570,7 +591,8 @@ namespace Telemetry
 				writer.Write(numRegisters);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out programType);
 				reader.Read(out firstRegister);
 				reader.Read(out data);
@@ -602,7 +624,8 @@ namespace Telemetry
 				writer.Write(resultId);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out width);
 				reader.Read(out height);
 				reader.Read(out format);
@@ -642,7 +665,8 @@ namespace Telemetry
 				writer.Write(miplevel);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out textureId);
 				reader.Read(out srcdata);
 				reader.Read(out srcbytesperline);
@@ -671,7 +695,8 @@ namespace Telemetry
 				writer.Write(textureId);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out sampler);
 				reader.Read(out textureId);
 			}
@@ -695,7 +720,8 @@ namespace Telemetry
 				writer.Write(resultId);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out count);
 				reader.Read(out dwordsPerVertex);
 				reader.Read(out resultId);
@@ -722,7 +748,8 @@ namespace Telemetry
 				writer.Write(countVertices);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out vertexBufferId);
 				reader.Read(out source);
 				reader.Read(out startVertex);
@@ -750,7 +777,8 @@ namespace Telemetry
 				writer.Write(countVertices);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out vertexBufferId);
 				reader.Read(out source);
 				reader.Read(out startVertex);
@@ -778,7 +806,8 @@ namespace Telemetry
 				writer.Write(format);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out index);
 				reader.Read(out vertexBufferId);
 				reader.Read(out bufferOffset);
@@ -806,7 +835,8 @@ namespace Telemetry
 				writer.Write(numRegisters);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out programType);
 				reader.Read(out firstRegister);
 				reader.Read(out data);
@@ -830,7 +860,8 @@ namespace Telemetry
 				writer.Write(resultId);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out count);
 				reader.Read(out resultId);
 			}
@@ -856,7 +887,8 @@ namespace Telemetry
 				writer.Write(count);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out indexBufferId);
 				reader.Read(out source);
 				reader.Read(out offset);
@@ -882,7 +914,8 @@ namespace Telemetry
 				writer.Write(numTriangles);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 				reader.Read(out indexBufferId);
 				reader.Read(out firstIndex);
 				reader.Read(out numTriangles);
@@ -901,7 +934,8 @@ namespace Telemetry
 				writer.WriteObjectHeader(ClassDef);
 			}
 
-			public void Serialize(Amf3PropertyReader reader) {
+			public void Serialize(Amf3Reader reader) {
+				reader.ReadObjectHeader(ClassDef);
 			}
 
 			#endregion

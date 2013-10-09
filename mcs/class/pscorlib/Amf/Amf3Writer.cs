@@ -99,7 +99,7 @@ namespace Amf
                 return;
             }
 
-			var serializable = obj as IAmf3Serializable;
+			var serializable = obj as IAmf3Writable;
 			if (serializable != null) {
 				serializable.Serialize(this);
                 return;

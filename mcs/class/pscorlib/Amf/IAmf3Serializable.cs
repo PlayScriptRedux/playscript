@@ -30,11 +30,19 @@ namespace Amf
 	public delegate object Amf3ObjectConstructor();
 	public delegate IList  Amf3ObjectVectorConstructor(uint num, bool isFixed);
 	public delegate void   Amf3ObjectSerializer(object obj, Amf3Writer writer);
-	public delegate void   Amf3ObjectDeserializer(object obj, Amf3PropertyReader reader);
+	public delegate void   Amf3ObjectDeserializer(object obj, Amf3Reader reader);
 
-    public interface IAmf3Serializable
+	public interface IAmf3Writable
+	{
+		void Serialize(Amf3Writer writer);
+	}
+
+	public interface IAmf3Readable
+	{
+		void Serialize(Amf3Reader reader);
+	}
+
+    public interface IAmf3Serializable : IAmf3Readable, IAmf3Writable
     {
-        void Serialize(Amf3Writer writer);
-		void Serialize(Amf3PropertyReader reader);
     }
 }

@@ -499,9 +499,9 @@ namespace Amf
             }
 
 			// do we have a custom deserializer method?
-			if ((classDef.Info.Deserializer != null) || (obj is IAmf3Serializable)) {
+			if ((classDef.Info.Deserializer != null) || (obj is IAmf3Readable)) {
 				// create property reader
-				Amf3PropertyReader propReader = AllocatePropertyReader();
+				Amf3Reader propReader = AllocateReader();
 				// read all properties
 				propReader.BeginReadProperties(this, classDef, classDef.Info.DeserializerOrder);
 
@@ -511,7 +511,7 @@ namespace Amf
 					classDef.Info.Deserializer.Invoke(obj, propReader);
 				} else {
 					// invoke deserialize method on object
-					var serializable = (IAmf3Serializable)obj;
+					var serializable = (IAmf3Readable)obj;
 					serializable.Serialize(propReader);
 				}
 
@@ -579,28 +579,28 @@ namespace Amf
 		}
 
 		
-		private Amf3PropertyReader AllocatePropertyReader()
+		private Amf3Reader AllocateReader()
 		{
-			var reader = mPropertyReaderPool;
+			var reader = mReaderPool;
 			if (reader == null) {
 				// create new property reader if pool is empty
-				return new Amf3PropertyReader();
+				return new Amf3Reader();
 			}
 
 			// use next property reader from pool
-			mPropertyReaderPool = mPropertyReaderPool.NextReader;
+			mReaderPool = mReaderPool.NextReader;
 			return reader;
 		}
 
-		private void ReleasePropertyReader(Amf3PropertyReader reader)
+		private void ReleasePropertyReader(Amf3Reader reader)
 		{
-			// add property reader to pool
-			reader.NextReader = mPropertyReaderPool;
-			mPropertyReaderPool = reader;
+			// add reader to pool
+			reader.NextReader = mReaderPool;
+			mReaderPool = reader;
 		}
 
-		// singly linked list of property readers in pool
-		private Amf3PropertyReader mPropertyReaderPool;
+		// singly linked list of readers in pool
+		private Amf3Reader mReaderPool;
     }
 
 }

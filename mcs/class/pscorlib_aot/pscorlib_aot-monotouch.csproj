@@ -917,8 +917,8 @@
     <Compile Include="..\pscorlib\Amf\Amf3Variant.cs">
       <Link>Amf\Amf3Variant.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\Amf\Amf3PropertyReader.cs">
-      <Link>Amf\Amf3PropertyReader.cs</Link>
+    <Compile Include="..\pscorlib\Amf\Amf3Reader.cs">
+      <Link>Amf\Amf3Reader.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

@@ -18,8 +18,14 @@ using System.Collections.Generic;
 
 namespace Amf
 {
-	public sealed class Amf3PropertyReader
+	public sealed class Amf3Reader
 	{
+		// begins the reading of a new object
+		// the classdef passed in here will define the ordering of the subsequent property reads
+		public void ReadObjectHeader(Amf3ClassDef classDef)
+		{
+		}
+
 		// read next property
 		public void Read<T>(out T o)
 		{
@@ -69,7 +75,7 @@ namespace Amf
 		}
 
 		#region Internal
-		internal Amf3PropertyReader NextReader;
+		internal Amf3Reader NextReader;
 
 		internal void BeginReadProperties(Amf3Parser parser, Amf3ClassDef classDef, string[] propertyOrder)
 		{
