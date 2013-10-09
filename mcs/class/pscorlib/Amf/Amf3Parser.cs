@@ -502,9 +502,8 @@ namespace Amf
 			if ((classDef.Info.Deserializer != null) || (obj is IAmf3Readable)) {
 				// create property reader
 				Amf3Reader propReader = AllocateReader();
-				// read all properties
-				propReader.BeginReadProperties(this, classDef, classDef.Info.DeserializerOrder);
-
+				// begin reading
+				propReader.BeginRead(classDef);
 				// we support either a deserializer delegate or a serializer interface
 				if (classDef.Info.Deserializer != null) {
 					// invoke deserialize delegate on object
@@ -514,9 +513,8 @@ namespace Amf
 					var serializable = (IAmf3Readable)obj;
 					serializable.Serialize(propReader);
 				}
-
-				// finish reading properties
-				propReader.EndReadProperties();
+				// finish reading 
+				propReader.EndRead();
 				// release reader back to pool
 				ReleasePropertyReader(propReader);
 			} else if (obj is PlayScript.Expando.ExpandoObject) {
@@ -584,7 +582,7 @@ namespace Amf
 			var reader = mReaderPool;
 			if (reader == null) {
 				// create new property reader if pool is empty
-				return new Amf3Reader();
+				return new Amf3Reader(this);
 			}
 
 			// use next property reader from pool

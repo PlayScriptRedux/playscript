@@ -35,21 +35,20 @@ namespace Amf
 		{
 			public System.Type				Type;
 			public System.Type				VectorType;
-			public Amf3ObjectConstructor 	Constructor;
-			public Amf3ObjectVectorConstructor 	VectorConstructor;
+			public Amf3ObjectConstructor	Constructor;
+			public Amf3ObjectVectorConstructor	VectorConstructor;
 			public Amf3ObjectSerializer		Serializer;
-			public Amf3ObjectDeserializer 	Deserializer;
-			public string[]				 	DeserializerOrder;
+			public Amf3ObjectDeserializer	Deserializer;
+			public Amf3ClassDef				DeserializerClassDef;
 		};
 
         public static readonly Amf3ClassDef Anonymous =
             new Amf3ClassDef("", new string[0], true, false);
 
-		public readonly string[] 				Properties;
-		public readonly string 	 				Name;
-		public readonly bool 					Dynamic;
-		public readonly bool 					Externalizable;
-		public int[] 							PropertyRemapTable;
+		public readonly string[]			Properties;
+		public readonly string				Name;
+		public readonly bool				Dynamic;
+		public readonly bool				Externalizable;
 		public ClassInfo Info
 		{
 			get 
@@ -60,7 +59,11 @@ namespace Amf
 				return mInfo;
 			}
 		}
-		private ClassInfo mInfo;
+
+		private ClassInfo					mInfo;
+		private Amf3ClassDef				mRemapClassDef; 
+		private int[]						mRemapTable;
+
 
 		public Amf3ClassDef(string name, string[] properties, bool dynamic = false, bool externalizable = false)
         {
@@ -72,6 +75,27 @@ namespace Amf
             Dynamic = dynamic;
             Externalizable = externalizable;
         }
+
+		public int[] GetRemapTable(Amf3ClassDef serializerClassDef)
+		{
+			// has the serializer class definition changed?
+			if (mRemapClassDef != serializerClassDef)	{
+				// if so, create remap table
+				// create remap table from the serializer properties to our properties
+				mRemapTable = new int[serializerClassDef.Properties.Length];
+				for (int i=0; i < serializerClassDef.Properties.Length; i++) 
+				{
+					// get out property index
+					int remapIndex = GetPropertyIndex(serializerClassDef.Properties[i]);
+					// store in remap table
+					mRemapTable[i] = remapIndex + 1; // we add one here to make 0 be the 'missing' property
+				}
+				// cache class definition
+				mRemapClassDef = serializerClassDef;
+			}
+			// return remap table
+			return mRemapTable;
+		}
 
 		public int GetPropertyIndex(string name)
 		{
@@ -200,15 +224,13 @@ namespace Amf
 			}
 
 			if (info.VectorType == null) {
-				sGenericParameter[0] = info.Type;
-				info.VectorType = typeof(_root.Vector<>).MakeGenericType(sGenericParameter);
+				info.VectorType = typeof(_root.Vector<>).MakeGenericType(new Type[1] {info.Type});
 			}
 
 			// We use IList so it works for all types, regardless of objectTypeName (cast works because _root.Vector<> implements IList)
 			IList vector = (IList)Activator.CreateInstance(info.VectorType, num, isFixed);
 			return vector;
 		}
-		private static Type[] sGenericParameter = new Type[1];
 
 		// registers a system type to be associated with a class alias
 		public static void RegisterClassType(string aliasName, System.Type type) {
@@ -230,10 +252,9 @@ namespace Amf
 		}
 
 		// registers a deserializer (amf reader) method to be associated with a class alias
-		public static void RegisterClassDeserializer(string aliasName, Amf3ObjectDeserializer func, string[] propertyOrder = null) {
+		public static void RegisterClassDeserializer(string aliasName, Amf3ObjectDeserializer func) {
 			var info = GetOrCreateClassInfo(aliasName);
 			info.Deserializer = func;
-			info.DeserializerOrder = propertyOrder;
 		}
 
 		// register all classes in assembly that have the Amf3Serializable attribute
