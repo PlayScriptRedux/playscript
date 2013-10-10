@@ -923,6 +923,10 @@ namespace flash.display3D {
 								alphaTexture.setSamplerState (Context3D.DefaultSamplerState);
 							}
 						} 
+						else {
+							GL.ActiveTexture (TextureUnit.Texture4 + sampler);
+							GL.BindTexture( target, texture.textureId);
+						}
 						#endif
 
 					} else {
