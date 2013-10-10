@@ -33,6 +33,7 @@ namespace _root {
 		
 		// The constructor for the type proxy class must have a 
 		// constructor that takes the target type as a parameter.
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public VectorDebugView(Vector<T> vector)
 		{
 			this.mVector = vector;
@@ -41,6 +42,7 @@ namespace _root {
 		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 		public T[] Values
 		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get
 			{
 				mVector._TrimCapacity();
@@ -56,21 +58,25 @@ namespace _root {
 	{
 		#region IList implementation
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		int IList.Add(object value)
 		{
 			return (int)push ((T)value);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void IList.Clear()
 		{
 			this.length = 0;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool IList.Contains(object value)
 		{
 			return this.indexOf((T)value) >= 0;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		int IList.IndexOf(object value)
 		{
 			return this.indexOf((T)value);
@@ -92,21 +98,26 @@ namespace _root {
 		}
 
 		bool IList.IsFixedSize {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return @fixed;
 			}
 		}
 
 		bool IList.IsReadOnly {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return false;
 			}
 		}
 
 		object IList.this[int index] {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return (object)this[index];
 			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				this[index] = (T)value;
 			}
@@ -116,24 +127,28 @@ namespace _root {
 
 		#region ICollection implementation
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void ICollection.CopyTo(System.Array array, int index)
 		{
 			System.Array.Copy(mArray, 0, array, index, mCount);
 		}
 
 		bool ICollection.IsSynchronized {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return false;
 			}
 		}
 
 		int ICollection.Count {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return (int)this.length;
 			}
 		}
 
 		object ICollection.SyncRoot {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return null;
 			}
@@ -155,7 +170,10 @@ namespace _root {
 		
 		public bool @fixed 
 		{ 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return mFixed; } 
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set { mFixed = value;} 
 		}
 		
@@ -165,6 +183,8 @@ namespace _root {
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 #endif
 			get { return mCount; } 
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set { 
 				if (value == 0) {
 					System.Array.Clear (mArray, 0, (int)mCount);
@@ -181,6 +201,7 @@ namespace _root {
 		// Methods
 		//
 		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Vector(Vector<T> v) 
 		{
 			mArray = v.mArray.Clone() as T[];
@@ -188,30 +209,35 @@ namespace _root {
 			mFixed = v.mFixed;
 		}
 		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Vector(Array a)
 		{
 			mArray = new T[a.length];
 			this.append((IEnumerable)a);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Vector(IList a)
 		{
 			mArray = new T[a.Count];
 			this.append((IEnumerable)a);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Vector(T[] a)
 		{
 			mArray = a.Clone () as T[];
 			mCount = (uint)a.Length;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Vector(IEnumerable e)
 		{
 			mArray = sEmptyArray;
 			this.append(e);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Vector(uint length = 0, bool @fixed = false)
 		{
 			if (length != 0)
@@ -315,6 +341,7 @@ namespace _root {
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool TryParseIndex(string input, out int index)
 		{
 			double d;
@@ -328,6 +355,7 @@ namespace _root {
 
 		public T this[string name]
 		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				// If we can convert the string to an index, then it is an indexed access.
 				int index;
@@ -337,6 +365,8 @@ namespace _root {
 				// Otherwise this is a dynamic property, which is not allowed for Vectors.
 				throw new ReferenceError (string.Format ("Error #1069: Property `{0}' not found on {1} and there is no default value.", name, GetType ().Name));
 			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				// If we can convert the string to an index, then it is an indexed access.
 				int index;
@@ -355,9 +385,12 @@ namespace _root {
 		//
 		public T this[double d]
 		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return this [d.ToString ()];
 			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				this [d.ToString ()] = value;
 			}
@@ -369,14 +402,18 @@ namespace _root {
 		//
 		public T this[float f]
 		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return this [f.ToString ()];
 			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				this [f.ToString ()] = value;
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public T[] ToArray()
 		{
 			T[] ret = new T[mCount];
@@ -384,11 +421,13 @@ namespace _root {
 			return ret;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public T[] _GetInnerArray()
 		{
 			return mArray;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void _TrimCapacity()
 		{
 			if (mCount < mArray.Length) {
@@ -396,6 +435,7 @@ namespace _root {
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void EnsureCapacity(uint size)
 		{
 			if (mArray.Length < size) {
@@ -411,11 +451,13 @@ namespace _root {
 			}
 		}
 		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Add(T value) 
 		{
 			this.push (value);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void _Insert(int index, T value) 
 		{
 			if (index > mCount) throw new NotImplementedException();
@@ -433,6 +475,7 @@ namespace _root {
 			mCount++;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void _RemoveAt(int index)
 		{
 			if (index < 0 || index >= (int)mCount)
@@ -449,6 +492,7 @@ namespace _root {
 
 		// optionally expands the vector to accomodate the new size
 		// if the vector is big enough then nothing is done
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void expand(uint newSize) 
 		{
 			EnsureCapacity(newSize);
@@ -456,6 +500,7 @@ namespace _root {
 				mCount = newSize;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void append(Vector<T> vec)
 		{
 			EnsureCapacity(mCount + vec.mCount);
@@ -463,6 +508,7 @@ namespace _root {
 			mCount += vec.mCount;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void append(IEnumerable items)
 		{
 			if (items == null) {
@@ -478,7 +524,7 @@ namespace _root {
 			}
 		}
 
-
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void append(IEnumerable<T> items)
 		{
 			if (items is IList<T>) {
@@ -491,14 +537,17 @@ namespace _root {
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void copyTo(Vector<T> dest, int sourceIndex, int destIndex, int count) {
 			System.Array.Copy(this.mArray, sourceIndex, dest.mArray, destIndex, count);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Vector<T> clone() {
 			return new Vector<T>(this);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Vector<T> concat(params object[] args) {
 			Vector<T> v = clone();
 			// concat all supplied vecots
@@ -526,6 +575,7 @@ namespace _root {
 			throw new System.NotImplementedException();
 		}
 		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void forEach(Delegate callback, dynamic thisObject = null) 
 		{
 			if (thisObject != null)
@@ -538,16 +588,19 @@ namespace _root {
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public int indexOf(T searchElement)
 		{
 			return System.Array.IndexOf<T>(mArray, searchElement, 0, (int)mCount);
 		}
 		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public int indexOf(T searchElement, int fromIndex) 
 		{
 			return System.Array.IndexOf<T>(mArray, searchElement, fromIndex, (int)mCount);
 		}
 		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public string join(string sep = ",") 
 		{
 			var sb = new System.Text.StringBuilder();
@@ -576,6 +629,7 @@ namespace _root {
 			throw new System.NotImplementedException();
 		}
 		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public T pop() 
 		{
 			if (mFixed)
@@ -605,6 +659,7 @@ namespace _root {
 			return mCount;
 		}
 		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public uint push(T value, params T[] args) 
 		{
 			if (mFixed)
@@ -618,6 +673,7 @@ namespace _root {
 			return mCount;
 		}
 		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Vector<T> reverse() 
 		{
 			var nv = new Vector<T>(length, @fixed);
@@ -629,6 +685,7 @@ namespace _root {
 			return nv;
 		}
 		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public T shift() 
 		{
 			if (mFixed)
@@ -643,6 +700,7 @@ namespace _root {
 			return v;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Vector<T> slice(int startIndex = 0, int endIndex = 16777215) 
 		{
 			if (startIndex < 0) 
@@ -668,11 +726,13 @@ namespace _root {
 
 		private class TypedFunctionSorter : System.Collections.Generic.IComparer<T>
 		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public TypedFunctionSorter(System.Func<T, T,int> comparerDelegate)
 			{
 				mDelegate = comparerDelegate;
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public int Compare(T x, T y)
 			{
 				return mDelegate.Invoke(x, y);
@@ -684,11 +744,13 @@ namespace _root {
 
 		private class FunctionSorter : System.Collections.Generic.IComparer<T>
 		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public FunctionSorter(object func)
 			{
 				mFunc = func;
 			}
 			
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public int Compare(T x, T y)
 			{
 				return (int)mFunc(x, y);
@@ -699,11 +761,13 @@ namespace _root {
 		
 		private class OptionsSorter : System.Collections.Generic.IComparer<T>
 		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public OptionsSorter(uint options)
 			{
 				// mOptions = options;
 			}
 			
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public int Compare(T x, T y)
 			{
 				//$$TODO examine options
@@ -723,6 +787,7 @@ namespace _root {
 
 		private class DefaultSorter : System.Collections.Generic.IComparer<T>
 		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public int Compare(T x, T y)
 			{
 				// From doc:
@@ -733,16 +798,19 @@ namespace _root {
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Vector<T> sort(Delegate sortBehavior)
 		{
 			return sortInternal(sortBehavior);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Vector<T> sort(object sortBehavior)
 		{
 			return sortInternal(sortBehavior);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private Vector<T> sortInternal(object sortBehavior) 
 		{
 			IComparer<T> comparer;
@@ -971,11 +1039,13 @@ namespace _root {
 			throw new System.NotImplementedException();
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public override string toString() 
 		{
 			return this.join(",");
 		}
 		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public uint unshift(T item) 
 		{
 			if (mFixed)
@@ -989,6 +1059,7 @@ namespace _root {
 			return mCount;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public uint unshift(T item, params T[] args) 
 		{
 			if (mFixed)
@@ -1005,16 +1076,19 @@ namespace _root {
 		
 		#region IList implementation
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		int IList<T>.IndexOf (T item)
 		{
 			return this.indexOf(item);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void IList<T>.Insert (int index, T item)
 		{
 			_Insert (index, item);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void IList<T>.RemoveAt (int index)
 		{
 			_RemoveAt(index);
@@ -1029,21 +1103,25 @@ namespace _root {
 //			this._Add (item);
 //		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void ICollection<T>.Clear ()
 		{
 			this.length = 0;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool ICollection<T>.Contains (T item)
 		{
 			return this.indexOf(item) != -1;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void ICollection<T>.CopyTo (T[] array, int arrayIndex)
 		{
 			System.Array.Copy (mArray, 0, array, arrayIndex, (int)mCount);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool ICollection<T>.Remove (T item)
 		{
 			int i = this.indexOf(item);
@@ -1056,12 +1134,14 @@ namespace _root {
 		}
 
 		int ICollection<T>.Count {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return (int)mCount;
 			}
 		}
 
 		bool ICollection<T>.IsReadOnly {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return false;
 			}
@@ -1076,6 +1156,7 @@ namespace _root {
 			private readonly Vector<T> mVector;
 			private int mIndex;
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public VectorEnumeratorClass(Vector<T> vector)
 			{
 				mVector = vector;
@@ -1084,18 +1165,21 @@ namespace _root {
 
 			#region IEnumerator implementation
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public bool MoveNext ()
 			{
 				mIndex++;
 				return mIndex < mVector.mCount;
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Reset ()
 			{
 				mIndex = -1;
 			}
 
 			object System.Collections.IEnumerator.Current {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get {
 					return mVector.mArray[mIndex];
 				}
@@ -1105,6 +1189,7 @@ namespace _root {
 
 			#region IDisposable implementation
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Dispose ()
 			{
 			}
@@ -1114,6 +1199,7 @@ namespace _root {
 			#region IEnumerator implementation
 
 			public T Current {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get {
 					return mVector.mArray[mIndex];
 				}
@@ -1129,6 +1215,7 @@ namespace _root {
 			private readonly Vector<T> mVector;
 			private int mIndex;
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public VectorEnumeratorStruct(Vector<T> vector)
 			{
 				mVector = vector;
@@ -1136,18 +1223,21 @@ namespace _root {
 			}
 
 			#region IEnumerator implementation
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public bool MoveNext ()
 			{
 				mIndex++;
 				return mIndex < mVector.mCount;
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Reset ()
 			{
 				mIndex = -1;
 			}
 
 			public T Current {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get {
 					return mVector.mArray[mIndex];
 				}
@@ -1156,12 +1246,14 @@ namespace _root {
 		}
 
 		// public get enumerator that returns a faster struct
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public VectorEnumeratorStruct GetEnumerator ()
 		{
 			return new VectorEnumeratorStruct(this);
 		}
 
 		// private IEnumerable<T> get enumerator that returns a (slower) class on the heap
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		IEnumerator<T> IEnumerable<T>.GetEnumerator ()
 		{
 			return new VectorEnumeratorClass(this);
@@ -1172,6 +1264,7 @@ namespace _root {
 		#region IEnumerable implementation
 
 		// private IEnumerable get enumerator that returns a (slower) class on the heap
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator ()
 		{
 			return new VectorEnumeratorClass(this);
@@ -1187,6 +1280,7 @@ namespace _root {
 			private readonly IList mVector;
 			private int mIndex;
 			
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public VectorKeyEnumeratorClass(IList vector)
 			{
 				mVector = vector;
@@ -1195,18 +1289,21 @@ namespace _root {
 			
 			#region IEnumerator implementation
 			
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public bool MoveNext ()
 			{
 				mIndex++;
 				return mIndex < mVector.Count;
 			}
 			
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Reset ()
 			{
 				mIndex = -1;
 			}
 			
 			object System.Collections.IEnumerator.Current {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get {
 					return mIndex;
 				}
@@ -1216,6 +1313,7 @@ namespace _root {
 			
 			#region IDisposable implementation
 			
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Dispose ()
 			{
 			}
@@ -1229,6 +1327,7 @@ namespace _root {
 			private readonly IList mVector;
 			private int mIndex;
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public VectorKeyEnumeratorStruct(IList vector)
 			{
 				mVector = vector;
@@ -1237,12 +1336,14 @@ namespace _root {
 
 			#region IEnumerator implementation
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public bool MoveNext ()
 			{
 				mIndex++;
 				return mIndex < mVector.Count;
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Reset ()
 			{
 				mIndex = -1;
@@ -1250,6 +1351,7 @@ namespace _root {
 
 			// unfortunately this has to return object because the for() loop could use a non-int as its variable, causing bad IL
 			public object Current {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get {
 					return mIndex;
 				}
@@ -1258,12 +1360,14 @@ namespace _root {
 		}
 
 		// public get enumerator that returns a faster struct
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public VectorKeyEnumeratorStruct GetKeyEnumerator()
 		{
 			return new VectorKeyEnumeratorStruct(this);
 		}
 
 		// private IKeyEnumerable get enumerator that returns a (slower) class on the heap
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		IEnumerator PlayScript.IKeyEnumerable.GetKeyEnumerator()
 		{
 			return new VectorKeyEnumeratorClass(this);
@@ -1273,6 +1377,7 @@ namespace _root {
 
 		#region IDynamicClass implementation
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		dynamic PlayScript.IDynamicClass.__GetDynamicValue (string name) {
 			int index;
 			if (TryParseIndex (name, out index)) {
@@ -1282,6 +1387,7 @@ namespace _root {
 			throw new ReferenceError (string.Format ("Error #1069: Property `{0}' not found on {1} and there is no default value.", name, GetType ().Name));
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool PlayScript.IDynamicClass.__TryGetDynamicValue (string name, out object value) {
 			int index;
 			if (TryParseIndex (name, out index)) {
@@ -1292,7 +1398,8 @@ namespace _root {
 			value = null;
 			return false;
 		}
-		 
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void PlayScript.IDynamicClass.__SetDynamicValue (string name, object value) {
 			int index;
 			if (TryParseIndex (name, out index)) {
@@ -1303,10 +1410,12 @@ namespace _root {
 			throw new ReferenceError (string.Format ("Error #1056: Cannot create property `{0}' on {1}.", name, GetType ().Name));
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool PlayScript.IDynamicClass.__DeleteDynamicValue (object name) {
 			return false;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool PlayScript.IDynamicClass.__HasDynamicValue (string name) {
 			int index;
 			if (TryParseIndex (name, out index)) {
@@ -1315,17 +1424,20 @@ namespace _root {
 			return false;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		IEnumerable PlayScript.IDynamicClass.__GetDynamicNames () {
 			return null;
 		}
 
 		#endregion
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static implicit operator Vector<T>(Array a) {
 			PlayScript.Stats.Increment(PlayScript.StatsCounter.Runtime_CastArrayToVector);
 			return new Vector<T>(a);
 		}
 		
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static implicit operator Array(Vector<T> v) {
 			PlayScript.Stats.Increment(PlayScript.StatsCounter.Runtime_CastVectorToArray);
 			return new Array(v);
