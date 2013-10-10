@@ -244,7 +244,19 @@ namespace PlayScript
 					var jsonText = System.IO.File.ReadAllText(newPath);
 #elif PLATFORM_MONODROID
 					var jsonText = "";
-					Stream stream = Application.Context.Assets.Open(path);
+				    Stream stream;
+				    try
+				    {
+					    stream = Application.Context.Assets.Open(path);
+				    }
+				    // if cannot load as assets, try loading it as plain file
+				    // disable the ex defined but not used "warning as error"
+					#pragma warning disable 0168
+					catch (Java.IO.FileNotFoundException ex)
+					#pragma warning restore 0168
+					{
+					    stream = File.OpenRead(path);
+					}
 					using (StreamReader sr = new System.IO.StreamReader(stream))
 					{
 						jsonText = sr.ReadToEnd();
@@ -293,10 +305,11 @@ namespace PlayScript
 #if PLATFORM_MONODROID
 			try {
 				Application.Context.Assets.Open(path);
-			} catch (Java.IO.FileNotFoundException e)
+			} 
+			catch (Java.IO.FileNotFoundException e)
 			{
-				Console.WriteLine("File does not exists for " + path + " " + e.Message);
-				return null;
+			    Console.WriteLine("File does not exists for " + path + " " + e.Message);
+			    return null;
 			}
 
 			return path;
