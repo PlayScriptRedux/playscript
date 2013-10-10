@@ -422,9 +422,9 @@ namespace PlayScript
 		{
 			Stats.Increment(StatsCounter.Dynamic_IsNullOrUndefinedInvoked);
 
-			// NOTE: using "is Undefined" to avoid invoking PSBinaryOperation,
+			// NOTE: using Object.ReferenceEquals to avoid invoking PSBinaryOperation,
 			// which does more work than necessary
-			return (value == null || value is Undefined);
+			return (value == null || Object.ReferenceEquals(value, PlayScript.Undefined._undefined));
 		}
 
 		/// <summary>
@@ -432,10 +432,10 @@ namespace PlayScript
 		/// </summary>
 		public static object FormatKeyForAs(object key)
 		{
-			if (key is Undefined)
-				return key.ToString ();
 			if (key == null)
 				return "null";
+			if (Object.ReferenceEquals(key, PlayScript.Undefined._undefined))
+				return "undefined";
 			return key;
 		}
 
