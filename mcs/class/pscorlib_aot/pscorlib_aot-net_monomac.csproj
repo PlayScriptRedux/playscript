@@ -907,6 +907,9 @@
     <Compile Include="..\pscorlib\PlayScript\ParamsDelegateTypes.cs">
       <Link>PlayScript\ParamsDelegateTypes.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\flash\display\BitmapData.cs">
+      <Link>flash\display\BitmapData.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="flash\external\" />
