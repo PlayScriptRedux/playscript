@@ -269,20 +269,21 @@ namespace flash.display3D {
 			for (int i=0; i < numActive; i++)
 			{
 				// create new uniform
-				var uniform = new Uniform();
-
-				int length;
-				var name = new StringBuilder(1024);
-
-				GL.GetActiveUniform(mProgramId, i, name.MaxCapacity, out length, out uniform.Size, out uniform.Type, name);
+				int size = 0;
+				ActiveUniformType uniformType;
+				var name = GL.GetActiveUniform (mProgramId, i, out size, out uniformType);
 				GLUtils.CheckGLError ();
-				uniform.Name 	 = name.ToString();
+
+				var uniform = new Uniform();
+				uniform.Name = name.ToString();
+				uniform.Size = size;
+				uniform.Type = uniformType;
 
 #if PLATFORM_MONOTOUCH || PLATFORM_MONOMAC
 				uniform.Location = GL.GetUniformLocation (mProgramId, uniform.Name );
 				GLUtils.CheckGLError ();
 #elif PLATFORM_MONODROID
-				uniform.Location = GL.GetUniformLocation (mProgramId, name);
+				uniform.Location = GL.GetUniformLocation (mProgramId, new StringBuilder(uniform.Name, 0, uniform.Name.Length, uniform.Name.Length));
 				GLUtils.CheckGLError ();
 #endif
 				// remove array [x] from names
