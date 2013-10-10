@@ -49,14 +49,6 @@ namespace Amf
             this.stream = stream;
         }
 
-		// this method is used by the deserialization code for an object
-		public void Read<T>(out T o)
-		{
-			// TODO: make a version that does not box values
-			object next = ReadNextObject();
-			o = (T)next;
-		}
-
         public object ReadNextObject()
         {
             int b = stream.ReadByte();
