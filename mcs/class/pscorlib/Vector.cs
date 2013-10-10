@@ -695,7 +695,7 @@ namespace _root {
 			}
 			
 			private dynamic mFunc;
-		};
+		}
 		
 		private class OptionsSorter : System.Collections.Generic.IComparer<T>
 		{
@@ -719,7 +719,7 @@ namespace _root {
 			}
 			
 			// private uint mOptions;
-		};
+		}
 
 		private class DefaultSorter : System.Collections.Generic.IComparer<T>
 		{
