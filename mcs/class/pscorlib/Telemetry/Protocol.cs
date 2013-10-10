@@ -6,10 +6,8 @@ using Amf;
 using _root;
 using flash.utils;
 
-namespace Telemetry
+namespace Telemetry.Protocol
 {
-	public static class Protocol
-	{
 		[Amf3Serializable(".value")]
 		public class Value : IAmf3Serializable
 		{
@@ -941,7 +939,5 @@ namespace Telemetry
 			#endregion
 			public static Amf3ClassDef ClassDef = new Amf3ClassDef("Context3D_present", new string[] {} );
 		}
-
-	}
 }
 
