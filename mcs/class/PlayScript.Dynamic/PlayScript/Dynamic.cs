@@ -432,10 +432,12 @@ namespace PlayScript
 		/// </summary>
 		public static object FormatKeyForAs(object key)
 		{
+#if !DISABLE_NULL_KEYS
 			if (key == null)
 				return "null";
 			if (Object.ReferenceEquals(key, PlayScript.Undefined._undefined))
 				return "undefined";
+#endif
 			return key;
 		}
 
@@ -444,8 +446,10 @@ namespace PlayScript
 		/// </summary>
 		public static string FormatKeyForAs(string key)
 		{
+#if !DISABLE_NULL_KEYS
 			if (key == null)
 				return "null";
+#endif
 			return key;
 		}
 
@@ -465,9 +469,11 @@ namespace PlayScript
 
 		public static bool HasOwnProperty(object o, string name)
 		{
+			name = FormatKeyForAs (name);
+
 			Stats.Increment(StatsCounter.Dynamic_HasOwnPropertyInvoked);
 
-			if (o == null || o == PlayScript.Undefined._undefined) return false;
+			if (IsNullOrUndefined(o)) return false;
 
 			// handle dictionaries
 			var dict = o as IDictionary<string, object>;

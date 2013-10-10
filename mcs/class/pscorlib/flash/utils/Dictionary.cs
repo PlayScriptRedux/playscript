@@ -675,6 +675,8 @@ namespace flash.utils
 		static TKey ToTKey (object key)
 		{
 			key = PlayScript.Dynamic.FormatKeyForAs (key);
+			if (key == null)
+				throw new ArgumentNullException ("key");
 			if (!(key is TKey))
 				throw new ArgumentException ("not of type: " + typeof (TKey).ToString (), "key");
 			return (TKey) key;
@@ -711,6 +713,8 @@ namespace flash.utils
 		bool IDictionary.Contains (object key)
 		{
 			key = PlayScript.Dynamic.FormatKeyForAs (key);
+			if (key == null)
+				throw new ArgumentNullException ("key");
 			if (key is TKey)
 				return ContainsKey ((TKey) key);
 			return false;
@@ -719,6 +723,8 @@ namespace flash.utils
 		void IDictionary.Remove (object key)
 		{
 			key = PlayScript.Dynamic.FormatKeyForAs (key);
+			if (key == null)
+				throw new ArgumentNullException ("key");
 			if (key is TKey)
 				Remove ((TKey) key);
 		}
@@ -1232,13 +1238,13 @@ namespace flash.utils
 
 		dynamic IDynamicClass.__GetDynamicValue (string name)
 		{
-			return this[(TKey)(object)PlayScript.Dynamic.FormatKeyForAs (name)];
+			return this[(TKey)(object)name];
 		}
 
 		bool IDynamicClass.__TryGetDynamicValue(string name, out object value) 
 		{
 			TValue outValue;
-			if (this.TryGetValue ((TKey)(object)PlayScript.Dynamic.FormatKeyForAs (name), out outValue)) {
+			if (this.TryGetValue ((TKey)(object)name, out outValue)) {
 				value = outValue;
 				return true;
 			}
@@ -1248,17 +1254,17 @@ namespace flash.utils
 
 		void IDynamicClass.__SetDynamicValue (string name, object value)
 		{
-			this[(TKey)(object)PlayScript.Dynamic.FormatKeyForAs (name)] = (TValue)value;
+			this[(TKey)(object)name] = (TValue)value;
 		}
 
 		bool IDynamicClass.__DeleteDynamicValue (object name)
 		{
-			return this.Remove((TKey)PlayScript.Dynamic.FormatKeyForAs (name));
+			return this.Remove((TKey)(object)name);
 		}
 
 		bool IDynamicClass.__HasDynamicValue (string name)
 		{
-			return this.ContainsKey((TKey)(object)PlayScript.Dynamic.FormatKeyForAs (name));
+			return this.ContainsKey((TKey)(object)name);
 		}
 
 		IEnumerable IDynamicClass.__GetDynamicNames ()
@@ -1312,31 +1318,26 @@ namespace flash.utils
 
 		dynamic IDynamicClass.__GetDynamicValue (string name)
 		{
-			name = PlayScript.Dynamic.FormatKeyForAs (name);
 			return this[name];
 		}
 
 		bool IDynamicClass.__TryGetDynamicValue(string name, out object value) 
 		{
-			name = PlayScript.Dynamic.FormatKeyForAs (name);
 			return this.TryGetValue(name, out value);
 		}
 
 		void IDynamicClass.__SetDynamicValue (string name, object value)
 		{
-			name = PlayScript.Dynamic.FormatKeyForAs (name);
 			this[name] = value;
 		}
 
 		bool IDynamicClass.__DeleteDynamicValue (object name)
 		{
-			name = PlayScript.Dynamic.FormatKeyForAs (name);
 			return this.Remove(name);
 		}
 
 		bool IDynamicClass.__HasDynamicValue (string name)
 		{
-			name = PlayScript.Dynamic.FormatKeyForAs (name);
 			return this.ContainsKey(name);
 		}
 
@@ -1450,6 +1451,9 @@ namespace flash.utils
 				key = PlayScript.Dynamic.FormatKeyForAs (key);
 				// the flash dictionary implementation does not throw if key not found
 				object value;
+				if (key == null) {
+					return PlayScript.Undefined._undefined;
+				}
 				if (base.TryGetValue(key, out value)) {
 					return value;
 				} else {
@@ -1480,31 +1484,26 @@ namespace flash.utils
 
 		dynamic IDynamicClass.__GetDynamicValue (string name)
 		{
-			name = PlayScript.Dynamic.FormatKeyForAs (name);
 			return this[name];
 		}
 
 		bool IDynamicClass.__TryGetDynamicValue(string name, out object value) 
 		{
-			name = PlayScript.Dynamic.FormatKeyForAs (name);
 			return this.TryGetValue(name, out value);
 		}
 
 		void IDynamicClass.__SetDynamicValue (string name, object value)
 		{
-			name = PlayScript.Dynamic.FormatKeyForAs (name);
 			this[name] = value;
 		}
 
 		bool IDynamicClass.__DeleteDynamicValue (object name)
 		{
-			name = PlayScript.Dynamic.FormatKeyForAs (name);
 			return this.Remove(name);
 		}
 
 		bool IDynamicClass.__HasDynamicValue (string name)
 		{
-			name = PlayScript.Dynamic.FormatKeyForAs (name);
 			return this.ContainsKey(name);
 		}
 
