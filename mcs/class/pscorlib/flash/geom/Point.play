@@ -24,9 +24,9 @@ package flash.geom {
 			get { return System.Math.Sqrt(x * x + y * y); }
 		}
 
- 	 	public property x : Number { get; set; }
+		public var x : Number;
 
- 	 	public property y : Number { get; set; }
+		public var y : Number;
 
 		// 
 		// Methods 
