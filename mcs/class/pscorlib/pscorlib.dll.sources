@@ -53,6 +53,7 @@
 ./flash/desktop/NativeApplication.play
 ./flash/display/ActionScriptVersion.play
 ./flash/display/Bitmap.play
+./flash/display/BitmapData.cs
 ./flash/display/BitmapData.play
 ./flash/display/BitmapDataChannel.play
 ./flash/display/BlendMode.play
@@ -102,6 +103,7 @@
 ./flash/display3D/Context3DTextureFormat.play
 ./flash/display3D/Context3DTriangleFace.play
 ./flash/display3D/Context3DVertexBufferFormat.play
+./flash/display3D/GLUtils.cs
 ./flash/display3D/IndexBuffer3D.cs
 ./flash/display3D/Program3D.cs
 ./flash/display3D/textures/CubeTexture.cs
