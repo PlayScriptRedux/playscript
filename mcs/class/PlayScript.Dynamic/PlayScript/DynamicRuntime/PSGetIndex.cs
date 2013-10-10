@@ -116,6 +116,7 @@ namespace PlayScript.DynamicRuntime
 		
 		public T GetIndexAs<T> (object o, object key)
 		{
+			key = PlayScript.Dynamic.FormatKeyForAs (key);
 			if (key is int) {
 				return GetIndexAs<T>(o, (int)key);
 			} else if (key is string) {

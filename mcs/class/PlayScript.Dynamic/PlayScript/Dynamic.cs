@@ -422,13 +422,36 @@ namespace PlayScript
 		{
 			Stats.Increment(StatsCounter.Dynamic_IsNullOrUndefinedInvoked);
 
-			// NOTE: using Object.ReferenceEquals to avoid invoking PSBinaryOperation,
+			// NOTE: using "is Undefined" to avoid invoking PSBinaryOperation,
 			// which does more work than necessary
-			return (value == null || Object.ReferenceEquals(value, PlayScript.Undefined._undefined));
+			return (value == null || value is Undefined);
+		}
+
+		/// <summary>
+		///   In ActionScript, using null or undefined as a key converts to a string value
+		/// </summary>
+		public static object FormatKeyForAs(object key)
+		{
+			if (key is Undefined)
+				return key.ToString ();
+			if (key == null)
+				return "null";
+			return key;
+		}
+
+		/// <summary>
+		///   In ActionScript, using null or undefined as a key converts to a string value
+		/// </summary>
+		public static string FormatKeyForAs(string key)
+		{
+			if (key == null)
+				return "null";
+			return key;
 		}
 
 		public static bool hasOwnProperty(object o, object name)
 		{
+			name = FormatKeyForAs (name);
 			if (name == null) {
 				return false;
 			}

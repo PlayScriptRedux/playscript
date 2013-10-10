@@ -194,10 +194,10 @@ namespace flash.utils
 
 		public TValue this [TKey key] {
 			get {
+				key = FormatKeyForAs (key);
 				if (key != null) {
-
 					// get first item of linked list corresponding to given key
-					int hashCode = key.GetHashCode() | HASH_FLAG;
+					int hashCode = key.GetHashCode () | HASH_FLAG;
 					int cur = table [(hashCode & int.MaxValue) % table.Length] - 1;
 
 					// walk linked list until right slot is found or end is reached 
@@ -213,6 +213,7 @@ namespace flash.utils
 				return default(TValue);
 			}
 			set {
+				key = FormatKeyForAs (key);
 				if (key == null)
 					throw new ArgumentNullException ("key");
 
@@ -451,8 +452,18 @@ namespace flash.utils
 			threshold = (int)(newSize * DEFAULT_LOAD_FACTOR);
 		}
 
+		TKey FormatKeyForAs (TKey key)
+		{
+			// handle the value null when TKey is string
+			object formattedKey = PlayScript.Dynamic.FormatKeyForAs (key);
+			if (formattedKey is TKey)
+				key = (TKey)formattedKey;
+			return key;
+		}
+
 		public void Add (TKey key, TValue value)
 		{
+			key = FormatKeyForAs (key);
 			if (key == null)
 				throw new ArgumentNullException ("key");
 
@@ -516,6 +527,7 @@ namespace flash.utils
 
 		public bool ContainsKey (TKey key)
 		{
+			key = FormatKeyForAs (key);
 			if (key == null)
 				throw new ArgumentNullException ("key");
 
@@ -552,6 +564,7 @@ namespace flash.utils
 
 		public bool Remove (TKey key)
 		{
+			key = FormatKeyForAs (key);
 			if (key == null)
 				throw new ArgumentNullException ("key");
 
@@ -603,6 +616,7 @@ namespace flash.utils
 
 		public bool TryGetValue (TKey key, out TValue value)
 		{
+			key = FormatKeyForAs (key);
 			if (key == null)
 				throw new ArgumentNullException ("key");
 
@@ -660,8 +674,7 @@ namespace flash.utils
 
 		static TKey ToTKey (object key)
 		{
-			if (key == null)
-				throw new ArgumentNullException ("key");
+			key = PlayScript.Dynamic.FormatKeyForAs (key);
 			if (!(key is TKey))
 				throw new ArgumentException ("not of type: " + typeof (TKey).ToString (), "key");
 			return (TKey) key;
@@ -678,22 +691,26 @@ namespace flash.utils
 
 		object IDictionary.this [object key] {
 			get {
+				key = PlayScript.Dynamic.FormatKeyForAs (key);
 				if (key is TKey && ContainsKey((TKey) key))
 					return this [ToTKey (key)];
 				return null;
 			}
-			set { this [ToTKey (key)] = ToTValue (value); }
+			set {
+				key = PlayScript.Dynamic.FormatKeyForAs (key);
+				this [ToTKey (key)] = ToTValue (value);
+			}
 		}
 
 		void IDictionary.Add (object key, object value)
 		{
+			key = PlayScript.Dynamic.FormatKeyForAs (key);
 			this.Add (ToTKey (key), ToTValue (value));
 		}
 
 		bool IDictionary.Contains (object key)
 		{
-			if (key == null)
-				throw new ArgumentNullException ("key");
+			key = PlayScript.Dynamic.FormatKeyForAs (key);
 			if (key is TKey)
 				return ContainsKey ((TKey) key);
 			return false;
@@ -701,8 +718,7 @@ namespace flash.utils
 
 		void IDictionary.Remove (object key)
 		{
-			if (key == null)
-				throw new ArgumentNullException ("key");
+			key = PlayScript.Dynamic.FormatKeyForAs (key);
 			if (key is TKey)
 				Remove ((TKey) key);
 		}
@@ -1216,13 +1232,13 @@ namespace flash.utils
 
 		dynamic IDynamicClass.__GetDynamicValue (string name)
 		{
-			return this[(TKey)(object)name];
+			return this[(TKey)(object)PlayScript.Dynamic.FormatKeyForAs (name)];
 		}
 
 		bool IDynamicClass.__TryGetDynamicValue(string name, out object value) 
 		{
 			TValue outValue;
-			if (this.TryGetValue ((TKey)(object)name, out outValue)) {
+			if (this.TryGetValue ((TKey)(object)PlayScript.Dynamic.FormatKeyForAs (name), out outValue)) {
 				value = outValue;
 				return true;
 			}
@@ -1232,17 +1248,17 @@ namespace flash.utils
 
 		void IDynamicClass.__SetDynamicValue (string name, object value)
 		{
-			this[(TKey)(object)name] = (TValue)value;
+			this[(TKey)(object)PlayScript.Dynamic.FormatKeyForAs (name)] = (TValue)value;
 		}
 
 		bool IDynamicClass.__DeleteDynamicValue (object name)
 		{
-			return this.Remove((TKey)(object)name);
+			return this.Remove((TKey)PlayScript.Dynamic.FormatKeyForAs (name));
 		}
 
 		bool IDynamicClass.__HasDynamicValue (string name)
 		{
-			return this.ContainsKey((TKey)(object)name);
+			return this.ContainsKey((TKey)(object)PlayScript.Dynamic.FormatKeyForAs (name));
 		}
 
 		IEnumerable IDynamicClass.__GetDynamicNames ()
@@ -1279,9 +1295,11 @@ namespace flash.utils
 
 		public new dynamic this [object key] {
 			get {
+				key = PlayScript.Dynamic.FormatKeyForAs (key);
 				return base [key];
 			}
 			set {
+				key = PlayScript.Dynamic.FormatKeyForAs (key);
 				base[key] = value;
 			}
 		}
@@ -1294,26 +1312,31 @@ namespace flash.utils
 
 		dynamic IDynamicClass.__GetDynamicValue (string name)
 		{
+			name = PlayScript.Dynamic.FormatKeyForAs (name);
 			return this[name];
 		}
 
 		bool IDynamicClass.__TryGetDynamicValue(string name, out object value) 
 		{
+			name = PlayScript.Dynamic.FormatKeyForAs (name);
 			return this.TryGetValue(name, out value);
 		}
 
 		void IDynamicClass.__SetDynamicValue (string name, object value)
 		{
+			name = PlayScript.Dynamic.FormatKeyForAs (name);
 			this[name] = value;
 		}
 
 		bool IDynamicClass.__DeleteDynamicValue (object name)
 		{
+			name = PlayScript.Dynamic.FormatKeyForAs (name);
 			return this.Remove(name);
 		}
 
 		bool IDynamicClass.__HasDynamicValue (string name)
 		{
+			name = PlayScript.Dynamic.FormatKeyForAs (name);
 			return this.ContainsKey(name);
 		}
 
@@ -1424,18 +1447,17 @@ namespace flash.utils
 
 		public new dynamic this [object key] {
 			get {
+				key = PlayScript.Dynamic.FormatKeyForAs (key);
 				// the flash dictionary implementation does not throw if key not found
 				object value;
-				if (key == null) {
-					return null; // PlayScript.Undefined._undefined;
-				}
 				if (base.TryGetValue(key, out value)) {
 					return value;
 				} else {
-					return null; // PlayScript.Undefined._undefined;
+					return PlayScript.Undefined._undefined;
 				}
 			}
 			set {
+				key = PlayScript.Dynamic.FormatKeyForAs (key);
 				base[key] = value;
 			}
 		}
@@ -1458,26 +1480,31 @@ namespace flash.utils
 
 		dynamic IDynamicClass.__GetDynamicValue (string name)
 		{
+			name = PlayScript.Dynamic.FormatKeyForAs (name);
 			return this[name];
 		}
 
 		bool IDynamicClass.__TryGetDynamicValue(string name, out object value) 
 		{
+			name = PlayScript.Dynamic.FormatKeyForAs (name);
 			return this.TryGetValue(name, out value);
 		}
 
 		void IDynamicClass.__SetDynamicValue (string name, object value)
 		{
+			name = PlayScript.Dynamic.FormatKeyForAs (name);
 			this[name] = value;
 		}
 
 		bool IDynamicClass.__DeleteDynamicValue (object name)
 		{
+			name = PlayScript.Dynamic.FormatKeyForAs (name);
 			return this.Remove(name);
 		}
 
 		bool IDynamicClass.__HasDynamicValue (string name)
 		{
+			name = PlayScript.Dynamic.FormatKeyForAs (name);
 			return this.ContainsKey(name);
 		}
 

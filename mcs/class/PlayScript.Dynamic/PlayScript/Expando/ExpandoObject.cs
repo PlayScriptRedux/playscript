@@ -1565,8 +1565,7 @@ namespace PlayScript.Expando {
 		
 		public dynamic this [string key] {
 			get {
-				if (key == null)
-					throw new ArgumentNullException ("key");
+				key = PlayScript.Dynamic.FormatKeyForAs (key);
 				
 				// get first item of linked list corresponding to given key
 				int hashCode = hcp.GetHashCode (key) | HASH_FLAG;
@@ -1586,9 +1585,8 @@ namespace PlayScript.Expando {
 			}
 			
 			set {
-				if (key == null)
-					throw new ArgumentNullException ("key");
-				
+				key = PlayScript.Dynamic.FormatKeyForAs (key);
+
 				// get first item of linked list corresponding to given key
 				int hashCode = hcp.GetHashCode (key) | HASH_FLAG;
 				int index = (hashCode & int.MaxValue) % table.Length;
@@ -1843,8 +1841,7 @@ namespace PlayScript.Expando {
 		
 		public void Add (string key, object value)
 		{
-			if (key == null)
-				throw new ArgumentNullException ("key");
+			key = PlayScript.Dynamic.FormatKeyForAs (key);
 			
 			// get first item of linked list corresponding to given key
 			int hashCode = hcp.GetHashCode (key) | HASH_FLAG;
@@ -2016,9 +2013,8 @@ namespace PlayScript.Expando {
 		
 		public bool Remove (string key)
 		{
-			if (key == null)
-				throw new ArgumentNullException ("key");
-			
+			key = PlayScript.Dynamic.FormatKeyForAs (key);
+
 			// get first item of linked list corresponding to given key
 			int hashCode = hcp.GetHashCode (key) | HASH_FLAG;
 			int index = (hashCode & int.MaxValue) % table.Length;
@@ -2067,8 +2063,7 @@ namespace PlayScript.Expando {
 		
 		public bool TryGetValue (string key, out object value)
 		{
-			if (key == null)
-				throw new ArgumentNullException ("key");
+			key = PlayScript.Dynamic.FormatKeyForAs (key);
 			
 			// get first item of linked list corresponding to given key
 			int hashCode = hcp.GetHashCode (key) | HASH_FLAG;
@@ -2141,13 +2136,13 @@ namespace PlayScript.Expando {
 		
 		static string Tostring (object key)
 		{
+			key = PlayScript.Dynamic.FormatKeyForAs (key);
+
 			// Optimize for the most common case - strings
 			string keyString = key as string;
 			if (keyString != null) {
 				return keyString;
 			}
-			if (key == null)
-				throw new ArgumentNullException ("key");
 
 			return key.ToString();
 		}
