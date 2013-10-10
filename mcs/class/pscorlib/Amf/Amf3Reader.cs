@@ -18,6 +18,10 @@ using System.Collections.Generic;
 
 namespace Amf
 {
+	// this class allows for the reading of object properties from an AMF stream
+	// the deserialization function must first provide an Amf3ClassDef by calling ReadObjectHeader() that describes the desired property ordering needed by the reading code
+	// the function must then read all properties in that order using the Read(out value) or the ReadInt() methods
+	// the property values will be remapped from the ordering of the AMF stream to the ordering expected by the deserialization code
 	public sealed class Amf3Reader 
 	{
 		// begins the reading of a new object
@@ -33,8 +37,9 @@ namespace Amf
 		}
 
 		//
-		// out-based readers (unnamed)
-		// because they are unnamed they require that a class definition be supplied via ReadObjectHeader
+		// property value readers using out values
+		// because they are overloaded they do not require mangling of names (like the methods below: ReadInt, ReadNumber)
+		// ReadObjectHeader(classDef) must first be called before reading property values in a serialization function so that the property ordering may be established
 		//
 
 		// read next property as boolean
@@ -87,61 +92,10 @@ namespace Amf
 		}
 
 		//
-		// out-based readers with property names
-		//
-
-		// read next property as boolean
-		public void Read(string name, out bool value)
-		{
-			int index = RemapProperty(name);
-			value = mValues[index].AsBoolean();
-		}
-
-		// read next property as integer
-		public void Read(string name, out int value)
-		{
-			int index = RemapProperty(name);
-			value = mValues[index].AsInt();
-		}
-
-		// read next property as unsigned integer
-		public void Read(string name, out uint value)
-		{
-			int index = RemapProperty(name);
-			value = mValues[index].AsUInt();
-		}
-
-		// read next property as string
-		public void Read(string name, out double value)
-		{
-			int index = RemapProperty(name);
-			value = mValues[index].AsNumber();
-		}
-
-		// read next property as string
-		public void Read(string name, out string value)
-		{
-			int index = RemapProperty(name);
-			value = mValues[index].AsString();
-		}
-
-		// read next property as object
-		public void Read(string name, out object value)
-		{
-			int index = RemapProperty(name);
-			value = mValues[index].AsObject();
-		}
-
-		// read next property as object
-		public void Read<T>(string name, out T value) where T:class
-		{
-			int index = RemapProperty(name);
-			value = mValues[index].AsObject() as T;
-		}
-
-		//
-		// returning readers without property names
-		// because they are unnamed they require that a class definition be supplied via ReadObjectHeader
+		// property value readers that return values
+		// the reading functions have the type name appended to the end (ie, ReadAsBoolean, ReadAsInt, etc)
+		// these are mostly useful when reading values into class properties, which cannot use out-values
+		// ReadObjectHeader(classDef) must first be called before reading property values in a serialization function so that the property ordering may be established
 		//
 
 		// read next property as boolean
@@ -186,50 +140,11 @@ namespace Amf
 			return mValues[index].AsObject();
 		}
 
-		//
-		// returning readers with property names
-		//
-
-		// read next property as boolean
-		public bool ReadAsBoolean(string name)
+		// read next property as T
+		public T ReadAs<T>() where T:class
 		{
-			int index = RemapProperty(name);
-			return mValues[index].AsBoolean();
-		}
-
-		// read next property as integer
-		public int ReadAsInt(string name)
-		{
-			int index = RemapProperty(name);
-			return mValues[index].AsInt();
-		}
-
-		// read next property as unsigned integer
-		public uint ReadAsUInt(string name)
-		{
-			int index = RemapProperty(name);
-			return mValues[index].AsUInt();
-		}
-
-		// read next property as number
-		public double ReadAsNumber(string name)
-		{
-			int index = RemapProperty(name);
-			return mValues[index].AsNumber();
-		}
-
-		// read next property as string
-		public string ReadAsString(string name)
-		{
-			int index = RemapProperty(name);
-			return mValues[index].AsString();
-		}
-
-		// read next property as object
-		public object ReadAsObject(string name)
-		{
-			int index = RemapProperty(name);
-			return mValues[index].AsObject();
+			int index = mRemapTable[mReadIndex++];
+			return mValues[index].AsObject() as T;
 		}
 
 		#region Internal
@@ -249,8 +164,8 @@ namespace Amf
 			mReadIndex          = 0;
 
 			// read all property values from amf stream
-			// these are in the order specified by the amf stream classDef and must be remapped for the deserializer
-			// note that mValues[0] is reserved for undefined, in missing properties will be mapped there
+			// these are in the order specified by the amf stream classDef and must be remapped for the deserializer for each propery read
+			// note that mValues[0] is reserved for undefined, any missing properties will be mapped there
 
 			// resize value array if we need to 
 			int count = mStreamClassDef.Properties.Length + 1; // +1 for undefined property 0
@@ -262,7 +177,7 @@ namespace Amf
 			mValues[0].Type        = Amf3TypeCode.Undefined;
 			mValues[0].ObjectValue = null;
 
-			// read all objects
+			// read all property values
 			for (int i=1; i < count; i++){
 				mParser.ReadNextObject(ref mValues[i]);
 			}
@@ -270,59 +185,20 @@ namespace Amf
 
 		internal void EndRead()
 		{
-			if (mSerializerPropertyNames != null)
-			{
-				// dynamically generate serializer class definition here based on the order that the properties were read
-				mStreamClassDef.Info.DeserializerClassDef = new Amf3ClassDef(mStreamClassDef.Name, mSerializerPropertyNames.ToArray());
-				mSerializerPropertyNames = null;
-			}
+			// empty
 		}
 
 		#endregion
 
 		#region Private
-		private int RemapProperty(string name)
-		{
-			if (mSerializerClassDef != null)  { 
-				// if the property values are already remapped, then return next remapped index
-				return mRemapTable[mReadIndex++];
-			}
-
-			// if we dont have a serializer class definition then we cant read a named property quickly...
-
-			// is there a autogenerated deserializer class definition we can use?
-			if (mStreamClassDef.Info.DeserializerClassDef != null) {
-				// use it to create remap table...
-				ReadObjectHeader(mStreamClassDef.Info.DeserializerClassDef);
-				// return next remapped index
-				return mRemapTable[mReadIndex++];
-			} 
-				
-			// fallback to slow property lookup...
-			// this only happens once though, it will not happen after the remap table has been built
-
-			// add name to internal list for autogenerated deserializer class creation
-			if (mSerializerPropertyNames == null) {
-				mSerializerPropertyNames = new List<string>();
-			}
-			mSerializerPropertyNames.Add(name);
-
-			// lookup index of property
-			int propIndex = mStreamClassDef.GetPropertyIndex(name);
-			if (propIndex < 0) {
-				// property is not defined
-				Console.WriteLine("Warning: could not find AMF property {0} for class {1}", name, mStreamClassDef.Name);
-			}
-			return propIndex + 1; // +1 for undefined property 0
-		}
-
+		#pragma warning disable 414
 		private Amf3Parser		mParser;				// parser
 		private Amf3ClassDef	mStreamClassDef;		// class definition for amf stream we are reading
 		private Amf3ClassDef	mSerializerClassDef;	// class definition for deserializer method being called
-		private Amf3Variant[]	mValues;				// property value array, one for each value from stream
-		private int 			mReadIndex;				// property seralizer read index
+		private Amf3Variant[]	mValues;				// property value array, one for each value from stream with [0] being undefined
+		private int 			mReadIndex;				// property serializer read index
 		private int[] 			mRemapTable;  			// property remap table (serializer -> stream)
-		private List<string>	mSerializerPropertyNames;
+		#pragma warning restore 414
 		#endregion
 	}
 }
