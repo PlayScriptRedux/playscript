@@ -2,6 +2,7 @@
 ./flash/display/BitmapData.cs
 ../pscorlib/AllowDynamicAttribute.cs
 ../pscorlib/Amf/Amf3ClassDef.cs
+../pscorlib/Amf/Amf3CodeGen.cs
 ../pscorlib/Amf/Amf3Object.cs
 ../pscorlib/Amf/Amf3Parser.cs
 ../pscorlib/Amf/Amf3Reader.cs

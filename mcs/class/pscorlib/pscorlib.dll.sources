@@ -1,5 +1,6 @@
 ./AllowDynamicAttribute.cs
 ./Amf/Amf3ClassDef.cs
+./Amf/Amf3CodeGen.cs
 ./Amf/Amf3Object.cs
 ./Amf/Amf3Parser.cs
 ./Amf/Amf3Reader.cs

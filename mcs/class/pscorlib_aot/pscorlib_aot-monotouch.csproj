@@ -920,6 +920,9 @@
     <Compile Include="..\pscorlib\Amf\Amf3Reader.cs">
       <Link>Amf\Amf3Reader.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3CodeGen.cs">
+      <Link>Amf\Amf3CodeGen.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monotouch.csproj">

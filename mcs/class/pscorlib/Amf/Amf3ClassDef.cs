@@ -33,6 +33,7 @@ namespace Amf
 		// registered class info (type, callbacks, etcs)
 		public class ClassInfo
 		{
+			public string 					Alias;
 			public System.Type				Type;
 			public System.Type				VectorType;
 			public Amf3ObjectConstructor	Constructor;
@@ -200,11 +201,23 @@ namespace Amf
 		// gets system type associated with class alias
 		public static System.Type GetClassType(string aliasName)
 		{
-			ClassInfo info = null;
-			if (!sClassInfo.TryGetValue(aliasName, out info)) {
-				return null;
+			lock (sClassInfo)
+			{
+				ClassInfo info = null;
+				if (!sClassInfo.TryGetValue(aliasName, out info)) {
+					return null;
+				}
+				return info.Type;
 			}
-			return info.Type;
+		}
+
+		// get all class information for all registered classes
+		public static ClassInfo[] GetAllRegisteredClasses()
+		{
+			lock (sClassInfo)
+			{
+				return sClassInfo.Values.ToArray();
+			}
 		}
 
 		
@@ -232,29 +245,65 @@ namespace Amf
 			return vector;
 		}
 
+		private static object GetStaticMethod<T>(System.Type type, string name) where T:class
+		{
+			MethodInfo method = type.GetMethod(name, BindingFlags.Static | BindingFlags.Public);
+			if (method != null) {
+				return Delegate.CreateDelegate(typeof(T), method);
+			} else {
+				return null;
+			}
+		}
+
 		// registers a system type to be associated with a class alias
+		// this type typically implements IAmf3Serializable or has delegates that do the serialization
 		public static void RegisterClassType(string aliasName, System.Type type) {
 			var info = GetOrCreateClassInfo(aliasName);
 			info.Type = type;
+
+			// register static helper delegates from this type
+			RegisterHelperDelegates(aliasName, type);
+
+			Console.WriteLine("AMF: Registered class {0} => {1}", aliasName, type.FullName);
 		}
 
-		// registers a constructor method to be associated with a class alias
-		public static void RegisterClassConstructor(string aliasName, Amf3ObjectConstructor func, Amf3ObjectVectorConstructor vectorFunc = null) {
+		// registers a system type and a serializer to be associated with a class alias
+		// the serializer is typically a static class which implements ObjectSerializer/ObjectDeserializer/etc
+		public static void RegisterExternalSerializer(string aliasName, System.Type serializerType, System.Type targetType) {
 			var info = GetOrCreateClassInfo(aliasName);
-			info.Constructor = func;
-			info.VectorConstructor = vectorFunc;
+			info.Type = targetType;
+
+			// register static helper delegates from serializer type
+			RegisterHelperDelegates(aliasName, serializerType);
+
+			Console.WriteLine("AMF: Registered external serializer {0} => {1} => {2}", aliasName, serializerType.FullName, targetType.FullName);
 		}
 
-		// registers a serializer (amf writer) method to be associated with a class alias
-		public static void RegisterClassSerializer(string aliasName, Amf3ObjectSerializer func) {
+		// registers any static helper delegates that are found on the class type
+		public static void RegisterHelperDelegates(string aliasName, System.Type type)
+		{
 			var info = GetOrCreateClassInfo(aliasName);
-			info.Serializer = func;
-		}
 
-		// registers a deserializer (amf reader) method to be associated with a class alias
-		public static void RegisterClassDeserializer(string aliasName, Amf3ObjectDeserializer func) {
-			var info = GetOrCreateClassInfo(aliasName);
-			info.Deserializer = func;
+			// resolve static methods as delegates
+			var constructor = GetStaticMethod<Amf3ObjectConstructor>(type, "ObjectConstructor");
+			if (constructor != null) {
+				info.Constructor = (Amf3ObjectConstructor)constructor;
+			}
+
+			var vectorConstructor = GetStaticMethod<Amf3ObjectVectorConstructor>(type, "VectorObjectConstructor");
+			if (vectorConstructor != null) {
+				info.VectorConstructor = (Amf3ObjectVectorConstructor)vectorConstructor;
+			}
+
+			var serializer = GetStaticMethod<Amf3ObjectSerializer>(type, "ObjectSerializer");
+			if (serializer != null) {
+				info.Serializer = (Amf3ObjectSerializer)serializer;
+			}
+
+			var deserializer = GetStaticMethod<Amf3ObjectDeserializer>(type, "ObjectDeserializer");
+			if (deserializer != null) {
+				info.Deserializer = (Amf3ObjectDeserializer)deserializer;
+			}
 		}
 
 		// register all classes in assembly that have the Amf3Serializable attribute
@@ -264,6 +313,11 @@ namespace Amf
 				var attr = type.GetCustomAttribute<Amf3SerializableAttribute>();
 				if (attr != null) { 
 					RegisterClassType(attr.ClassName, type);
+				}
+
+				var externalAttr = type.GetCustomAttribute<Amf3ExternalSerializerAttribute>();
+				if (externalAttr != null) { 
+					RegisterExternalSerializer(externalAttr.ClassName, type, externalAttr.TargetType);
 				}
 			}
 		}
@@ -284,10 +338,17 @@ namespace Amf
 				if (!sClassInfo.TryGetValue(aliasName, out info))
 				{
 					info = new ClassInfo();
+					info.Alias = aliasName;
 					sClassInfo.Add(aliasName, info);
 				}
 				return info;
 			}
+		}
+
+		static Amf3ClassDef()
+		{
+			// register all AMF serializable classes we can find
+			RegisterAllClasses();
 		}
 
 		// the last writer to write this object

@@ -25,14 +25,41 @@ using System.IO;
 
 namespace Amf
 {
-	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = true)]
+	// the Amf3Serializable attribute is applied to a class when it implements IAmf3Serializable and has its own instance methods that do serialization:
+	// [Amf3Serializable("MyClass"]
+	// public class MyClass : IAmf3Serializable {
+	//		public void Serialize(Amf3Writer writer) { ... }
+	//		public void Serialize(Amf3Reader reader) { ... }
+	// }
+	[AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 	public class Amf3SerializableAttribute : Attribute
 	{
-		public string ClassName { get; set; }
+		public string ClassName { get; private set; }
 
 		public Amf3SerializableAttribute(string className)
 		{
 			ClassName = className;
 		}
 	}
+
+	// the Amf3ExternalSerializer attribute is applied to a static class that performs serialization of another "target" class via static methods
+	// this pattern is useful if the class to be serialized is in another library that you dont have source code to
+	// [Amf3ExternalSerializer("MyClass", typeof(MyClass)]
+	// public class MySerializerClass {
+	//		public static void ObjectSerializer(object o, Amf3Writer writer) { ... }
+	//		public static void ObjectDeserializer(object o, Amf3Reader reader) { ... }
+	// }
+	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+	public class Amf3ExternalSerializerAttribute : Attribute
+	{
+		public string ClassName { get; private set; }
+		public Type TargetType { get; private set; }
+
+		public Amf3ExternalSerializerAttribute(string className, Type targetType)
+		{
+			ClassName = className;
+			TargetType = targetType;
+		}
+	}
+
 }
