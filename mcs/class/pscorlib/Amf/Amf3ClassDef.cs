@@ -120,7 +120,7 @@ namespace Amf
 
 			if (info.Type == null) {
 				// no type registered? use an expando object 
-				return new PlayScript.Expando.ExpandoObject();
+				return new PlayScript.Expando.ExpandoObject(this.Properties.Length);
 			}
 
 			// construct object using reflection (slower)
@@ -264,7 +264,7 @@ namespace Amf
 			// register static helper delegates from this type
 			RegisterHelperDelegates(aliasName, type);
 
-			Console.WriteLine("AMF: Registered class {0} => {1}", aliasName, type.FullName);
+//			Console.WriteLine("AMF: Registered class {0} => {1}", aliasName, type.FullName);
 		}
 
 		// registers a system type and a serializer to be associated with a class alias
@@ -276,7 +276,7 @@ namespace Amf
 			// register static helper delegates from serializer type
 			RegisterHelperDelegates(aliasName, serializerType);
 
-			Console.WriteLine("AMF: Registered external serializer {0} => {1} => {2}", aliasName, serializerType.FullName, targetType.FullName);
+//			Console.WriteLine("AMF: Registered external serializer {0} => {1} => {2}", aliasName, serializerType.FullName, targetType.FullName);
 		}
 
 		// registers any static helper delegates that are found on the class type
