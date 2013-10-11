@@ -1,5 +1,4 @@
 ./AssemblyInfo.cs
-./flash/display/BitmapData.cs
 ../pscorlib/AllowDynamicAttribute.cs
 ../pscorlib/Amf/Amf3ClassDef.cs
 ../pscorlib/Amf/Amf3CodeGen.cs
@@ -54,6 +53,7 @@
 ../pscorlib/flash/desktop/NativeApplication.play
 ../pscorlib/flash/display/ActionScriptVersion.play
 ../pscorlib/flash/display/Bitmap.play
+../pscorlib/flash/display/BitmapData.cs
 ../pscorlib/flash/display/BitmapData.play
 ../pscorlib/flash/display/BitmapDataChannel.play
 ../pscorlib/flash/display/BlendMode.play
@@ -105,6 +105,7 @@
 ../pscorlib/flash/display3D/Context3DVertexBufferFormat.play
 ../pscorlib/flash/display3D/IndexBuffer3D.cs
 ../pscorlib/flash/display3D/Program3D.cs
+../pscorlib/flash/display3D/GLUtils.cs
 ../pscorlib/flash/display3D/textures/CubeTexture.cs
 ../pscorlib/flash/display3D/textures/RectangleTexture.cs
 ../pscorlib/flash/display3D/textures/SamplerState.cs

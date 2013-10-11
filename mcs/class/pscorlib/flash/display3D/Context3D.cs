@@ -26,8 +26,10 @@ namespace flash.display3D {
 	using OpenTK.Graphics;
 	using OpenTK.Graphics.ES20;
 #elif PLATFORM_MONODROID
+	using OpenTK;
 	using OpenTK.Graphics;
 	using OpenTK.Graphics.ES20;
+
 	using GetPName = OpenTK.Graphics.ES20.All;
 	using BufferTarget = OpenTK.Graphics.ES20.All;
 	using BeginMode = OpenTK.Graphics.ES20.All;
@@ -146,12 +148,15 @@ namespace flash.display3D {
 
 			// generate depth buffer for backbuffer
 			GL.GenRenderbuffers (1, out mDepthRenderBufferId);
+			GLUtils.CheckGLError ();
 
 			// generate framebuffer for render to texture
 			GL.GenFramebuffers(1, out mTextureFrameBufferId);
+			GLUtils.CheckGLError ();
 
 			// generate depth buffer for render to texture
 			GL.GenRenderbuffers(1, out mTextureDepthBufferId);
+			GLUtils.CheckGLError ();
 		}
 		
 		public void clear(double red = 0.0, double green = 0.0, double blue = 0.0, double alpha = 1.0, 
@@ -163,23 +168,34 @@ namespace flash.display3D {
 			// save old depth mask
 			bool oldDepthWriteMask;
 			GL.GetBoolean(GetPName.DepthWritemask, out oldDepthWriteMask);
+			GLUtils.CheckGLError ();
 
 			// depth writes must be enabled to clear the depth buffer!
 			GL.DepthMask(true);
+			GLUtils.CheckGLError ();
 
 			GL.ClearColor ((float)red, (float)green, (float)blue, (float)alpha);
+			GLUtils.CheckGLError ();
+
 			GL.ClearDepth((float)depth);
+			GLUtils.CheckGLError ();
+
 			GL.ClearStencil((int)stencil);
+			GLUtils.CheckGLError ();
+
 			GL.Clear (ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit | ClearBufferMask.StencilBufferBit);
+			GLUtils.CheckGLError ();
 
 			// restore depth mask
 			GL.DepthMask(oldDepthWriteMask);
+			GLUtils.CheckGLError ();
 		}
 		
 		public void configureBackBuffer(int width, int height, int antiAlias, 
 			bool enableDepthAndStencil = true, bool wantsBestResolution = false) {
 
 			GL.Viewport(0,0, width, height);
+			GLUtils.CheckGLError ();
 
 			// $$TODO allow for resizing of frame buffer here
 			mBackBufferWidth = width;
@@ -193,11 +209,16 @@ namespace flash.display3D {
 			{
 				// setup depth buffer size to match backbuffer size
 				GL.BindRenderbuffer (RenderbufferTarget.Renderbuffer, mDepthRenderBufferId);
+				GLUtils.CheckGLError ();
+
 				GL.RenderbufferStorage (RenderbufferTarget.Renderbuffer, RenderbufferInternalFormat.DepthComponent16, width, height);
+				GLUtils.CheckGLError ();
+
 				GL.FramebufferRenderbuffer (FramebufferTarget.Framebuffer,
 				                            FramebufferSlot.DepthAttachment,
 				                            RenderbufferTarget.Renderbuffer, 
 				                            mDepthRenderBufferId);
+				GLUtils.CheckGLError ();
 			}
 			else
 			{
@@ -206,11 +227,14 @@ namespace flash.display3D {
 				                            FramebufferSlot.DepthAttachment,
 				                            RenderbufferTarget.Renderbuffer, 
 				                            0);
+				GLUtils.CheckGLError ();
 			}
 			#endif
 
 			// validate framebuffer status
 			var status = GL.CheckFramebufferStatus (FramebufferTarget.Framebuffer);
+			GLUtils.CheckGLError ();
+
 			if (status != FramebufferErrorCode.FramebufferComplete) {
 				Console.Error.WriteLine("FrameBuffer configuration error: {0}", status);
 			}
@@ -238,9 +262,11 @@ namespace flash.display3D {
  	 	}
 
 		public int createVertexArray() {
-#if PLATFORM_MONOTOUCH
+#if PLATFORM_MONOTOUCH 
 			int id;
 			GL.Oes.GenVertexArrays(1, out id);
+			GLUtils.CheckGLError ();
+
 			return id;
 #else
 			// not supported
@@ -249,14 +275,16 @@ namespace flash.display3D {
 		}
 
 		public void bindVertexArray(int id) {
-#if PLATFORM_MONOTOUCH
+#if PLATFORM_MONOTOUCH 
 			GL.Oes.BindVertexArray(id);
+			GLUtils.CheckGLError ();
 #endif
 		}
 
 		public void disposeVertexArray(int id) {
 #if PLATFORM_MONOTOUCH
 			GL.Oes.DeleteVertexArrays(1, ref id);
+			GLUtils.CheckGLError ();
 #endif
 		}
 
@@ -276,8 +304,10 @@ namespace flash.display3D {
 
 			int count = (numTriangles == -1) ? indexBuffer.numIndices : (numTriangles * 3);
 			GL.BindBuffer(BufferTarget.ElementArrayBuffer, indexBuffer.id);
+			GLUtils.CheckGLError ();
 
 			GL.DrawElements(BeginMode.Triangles, count, indexBuffer.elementType, new IntPtr(firstIndex));	
+			GLUtils.CheckGLError ();
 
 			// increment draw call count
 			statsIncrement(Stats.DrawCalls);
@@ -476,15 +506,19 @@ namespace flash.display3D {
 						switch (uniform.Type) {
 						case ActiveUniformType.FloatMat2:
 							GL.UniformMatrix2 (uniform.Location+firstRegister-uniform.RegIndex, uniform.Size, false, temp);
+							GLUtils.CheckGLError ();
 							break;
 						case ActiveUniformType.FloatMat3:
 							GL.UniformMatrix3 (uniform.Location+firstRegister-uniform.RegIndex, uniform.Size, false, temp);
+							GLUtils.CheckGLError ();
 							break;
 						case ActiveUniformType.FloatMat4:
 							GL.UniformMatrix4 (uniform.Location+firstRegister-uniform.RegIndex, uniform.Size, false, temp);
+							GLUtils.CheckGLError ();
 							break;
 						default:
 							GL.Uniform4 (uniform.Location+firstRegister-uniform.RegIndex, numRegistersWritten, temp);
+							GLUtils.CheckGLError ();
 							break;
 						}
 					}
@@ -573,10 +607,13 @@ namespace flash.display3D {
 			if (uniform != null) 
 			{
 				int deltaReg = (firstRegister - uniform.RegIndex);
-				if(uniform.RegCount==4 && (firstRegister == uniform.RegIndex))
-					GL.UniformMatrix4(uniform.Location + deltaReg, 1, false, mTemp);
-				else
-					GL.Uniform4 (uniform.Location + deltaReg , uniform.RegCount - deltaReg, mTemp);
+				if (uniform.RegCount == 4 && (firstRegister == uniform.RegIndex)) {
+					GL.UniformMatrix4 (uniform.Location + deltaReg, 1, false, mTemp);
+					GLUtils.CheckGLError ();	
+				} else {
+					GL.Uniform4 (uniform.Location + deltaReg, uniform.RegCount - deltaReg, mTemp);
+					GLUtils.CheckGLError ();
+				}
 			}
 			else
 			{
@@ -635,15 +672,19 @@ namespace flash.display3D {
 				{
 				case ActiveUniformType.FloatMat2:
 					GL.UniformMatrix2 (uniform.Location, uniform.Size, false, mTemp);
+					GLUtils.CheckGLError ();
 					break;
 				case ActiveUniformType.FloatMat3:
 					GL.UniformMatrix3 (uniform.Location, uniform.Size, false, mTemp);
+					GLUtils.CheckGLError ();
 					break;
 				case ActiveUniformType.FloatMat4:
 					GL.UniformMatrix4 (uniform.Location, uniform.Size, false, mTemp);
+					GLUtils.CheckGLError ();
 					break;
 				default:
 					GL.Uniform4 (uniform.Location, uniform.RegCount, mTemp);
+					GLUtils.CheckGLError ();
 					break;
 				}
 		
@@ -668,8 +709,11 @@ namespace flash.display3D {
 
 			// draw to backbuffer
 			GL.BindFramebuffer (FramebufferTarget.Framebuffer, mDefaultFrameBufferId);
+			GLUtils.CheckGLError ();
+
 			// setup viewport for render to backbuffer
 			GL.Viewport(0,0, mBackBufferWidth, mBackBufferHeight);
+			GLUtils.CheckGLError ();
 
 			// normal scaling
 			mPositionScale[1] = 1.0f;
@@ -695,7 +739,10 @@ namespace flash.display3D {
 #endif
 
 			GL.BindFramebuffer(FramebufferTarget.Framebuffer, mTextureFrameBufferId);
+			GLUtils.CheckGLError ();
+
 			GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferSlot.ColorAttachment0, TextureTarget.Texture2D, texture.textureId, 0);
+			GLUtils.CheckGLError ();
 
 #if PLATFORM_MONOTOUCH
 			if (enableDepthAndStencil) {
@@ -719,9 +766,12 @@ namespace flash.display3D {
 
 			// setup viewport for render to texture
 			GL.Viewport(0,0, texture2D.width, texture2D.height);
+			GLUtils.CheckGLError ();
 
 			// validate framebuffer status
 			var code = GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
+			GLUtils.CheckGLError ();
+
 			if (code != FramebufferErrorCode.FramebufferComplete)
 			{
 				throw new Exception("FrameBuffer status error:" + code);
@@ -778,13 +828,20 @@ namespace flash.display3D {
 		{
 			if (buffer == null) {
 				GL.DisableVertexAttribArray (index);
+				GLUtils.CheckGLError ();
+
 				GL.BindBuffer (BufferTarget.ArrayBuffer, 0);
+				GLUtils.CheckGLError ();
+
 				return;
-			}
-		
+			}		
+
 			// enable vertex attribute array
 			GL.EnableVertexAttribArray (index);
+			GLUtils.CheckGLError ();
+
 			GL.BindBuffer (BufferTarget.ArrayBuffer, buffer.id);
+			GLUtils.CheckGLError ();
 
 			IntPtr byteOffset = new IntPtr(bufferOffset * 4); // buffer offset is in 32-bit words
 
@@ -792,15 +849,19 @@ namespace flash.display3D {
 			switch (format) {
 			case "float4":
 				GL.VertexAttribPointer(index, 4, VertexAttribPointerType.Float, false, buffer.stride, byteOffset);
+				GLUtils.CheckGLError ();
 				break;
 			case "float3":
 				GL.VertexAttribPointer(index, 3, VertexAttribPointerType.Float, false, buffer.stride, byteOffset);
+				GLUtils.CheckGLError ();
 				break;
 			case "float2":
 				GL.VertexAttribPointer(index, 2, VertexAttribPointerType.Float, false, buffer.stride, byteOffset);
+				GLUtils.CheckGLError ();
 				break;
 			case "float1":
 				GL.VertexAttribPointer(index, 1, VertexAttribPointerType.Float, false, buffer.stride, byteOffset);
+				GLUtils.CheckGLError ();
 				break;
 			default:
 				throw new NotImplementedException();
@@ -823,6 +884,7 @@ namespace flash.display3D {
 
 					// activate texture unit for GL
 					GL.ActiveTexture(TextureUnit.Texture0 + sampler);
+					GLUtils.CheckGLError ();
 
 					// get texture for sampler
 					TextureBase texture = mSamplerTextures[sampler];
@@ -831,6 +893,7 @@ namespace flash.display3D {
 						var target = texture.textureTarget;
 
 						GL.BindTexture( target, texture.textureId);
+						GLUtils.CheckGLError ();
 
 						// TODO: support sampler state overrides through setSamplerAt(...)
 						// get sampler state from program
@@ -846,17 +909,22 @@ namespace flash.display3D {
 						#if PLATFORM_MONODROID
 						// set alpha texture
 						if (texture.alphaTexture != null) {
-							GL.ActiveTexture (TextureUnit.Texture8 + sampler);
+							GL.ActiveTexture (TextureUnit.Texture4 + sampler);
+							GLUtils.CheckGLError ();
+
 							TextureBase alphaTexture = texture.alphaTexture;
 							var alphaTarget = alphaTexture.textureTarget;
 							GL.BindTexture (alphaTarget, alphaTexture.textureId);
+							GLUtils.CheckGLError ();
+
 							if (state != null) {
 								alphaTexture.setSamplerState (state);
 							} else {
 								alphaTexture.setSamplerState (Context3D.DefaultSamplerState);
 							}
-						} else {
-							GL.ActiveTexture (TextureUnit.Texture8 + sampler);
+						} 
+						else {
+							GL.ActiveTexture (TextureUnit.Texture4 + sampler);
 							GL.BindTexture( target, texture.textureId);
 						}
 						#endif
@@ -864,6 +932,7 @@ namespace flash.display3D {
 					} else {
 						// texture is null so unbind texture
 						GL.BindTexture (TextureTarget.Texture2D, 0);
+						GLUtils.CheckGLError ();
 					}
 
 					// clear dirty bit

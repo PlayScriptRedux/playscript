@@ -850,6 +850,15 @@
     <Compile Include="..\pscorlib\Amf\Amf3Writer.cs">
       <Link>Amf\Amf3Writer.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Variant.cs">
+      <Link>Amf\Amf3Variant.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Reader.cs">
+      <Link>Amf\Amf3Reader.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3CodeGen.cs">
+      <Link>Amf\Amf3CodeGen.cs</Link>
+    </Compile>
     <Compile Include="..\pscorlib\Amf\DataConverter.cs">
       <Link>Amf\DataConverter.cs</Link>
     </Compile>
@@ -913,15 +922,11 @@
     <Compile Include="..\pscorlib\mx\graphics\codec\PNGEncoder.play">
       <Link>mx\graphics\codec\PNGEncoder.play</Link>
     </Compile>
-    <Compile Include="flash\display\BitmapData.cs" />
-    <Compile Include="..\pscorlib\Amf\Amf3Variant.cs">
-      <Link>Amf\Amf3Variant.cs</Link>
+    <Compile Include="..\pscorlib\flash\display3D\GLUtils.cs">
+      <Link>flash\display3D\GLUtils.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\Amf\Amf3Reader.cs">
-      <Link>Amf\Amf3Reader.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\Amf\Amf3CodeGen.cs">
-      <Link>Amf\Amf3CodeGen.cs</Link>
+    <Compile Include="..\pscorlib\flash\display\BitmapData.cs">
+      <Link>flash\display\BitmapData.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

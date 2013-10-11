@@ -4,6 +4,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace PlayScript
 {
@@ -418,8 +419,54 @@ namespace PlayScript
 			}
 		}
 
+		public static bool IsNullOrUndefined(object value)
+		{
+			Stats.Increment(StatsCounter.Dynamic_IsNullOrUndefinedInvoked);
+
+			// false implicitly converts to null in ActionScript, but not C#. Check for it here.
+			if (value is bool && (bool)value == false)
+				return true;
+
+			// NOTE: using Object.ReferenceEquals to avoid invoking PSBinaryOperation,
+			// which does more work than necessary
+			return (value == null || Object.ReferenceEquals(value, PlayScript.Undefined._undefined));
+		}
+
+		/// <summary>
+		///   In ActionScript, using null or undefined as a key converts to a string value
+		/// </summary>
+#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+		public static object FormatKeyForAs(object key)
+		{
+#if !DISABLE_NULL_KEYS
+			if (key == null)
+				return "null";
+			if (Object.ReferenceEquals(key, PlayScript.Undefined._undefined))
+				return "undefined";
+#endif
+			return key;
+		}
+
+		/// <summary>
+		///   In ActionScript, using null or undefined as a key converts to a string value
+		/// </summary>
+#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+#endif
+		public static string FormatKeyForAs(string key)
+		{
+#if !DISABLE_NULL_KEYS
+			if (key == null)
+				return "null";
+#endif
+			return key;
+		}
+
 		public static bool hasOwnProperty(object o, object name)
 		{
+			name = FormatKeyForAs (name);
 			if (name == null) {
 				return false;
 			}
@@ -433,9 +480,11 @@ namespace PlayScript
 
 		public static bool HasOwnProperty(object o, string name)
 		{
+			name = FormatKeyForAs (name);
+
 			Stats.Increment(StatsCounter.Dynamic_HasOwnPropertyInvoked);
 
-			if (o == null || o == PlayScript.Undefined._undefined) return false;
+			if (IsNullOrUndefined(o)) return false;
 
 			// handle dictionaries
 			var dict = o as IDictionary<string, object>;

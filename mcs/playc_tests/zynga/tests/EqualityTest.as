@@ -50,10 +50,8 @@ package
 			Assert.expectEq("null == undefined", true, null == undefined);
 			Assert.expectEq("null != undefined", false, null != undefined);
 			var undef:Object = undefined;
-			// TODO:
-			//Assert.expectEq("null == undef", true, null == undef);
-			// TODO:
-			//Assert.expectEq("null != undef", false, null != undef);
+			Assert.expectEq("null == undef", true, null == undef);
+			Assert.expectEq("null != undef", false, null != undef);
 			Assert.expectEq("undefined == null", true, undefined == null);
 			Assert.expectEq("null !== undefined", true, null !== undefined);
 			Assert.expectEq("undefined !== null", true, undefined !== null);

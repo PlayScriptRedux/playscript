@@ -114,10 +114,6 @@ package {
 
 		private static function ConvertToJsonValue(value:Object):JsonValue {
 
-			if (value == null) {
-				return null;
-			}
-
 			if (value is String) {
 				return new JsonPrimitive(String(value));
 			}
@@ -149,6 +145,15 @@ package {
 			if (value is _root.Object) {
 				// handle concrete actionscript objects
 				return ConvertASObjectToJsonObject(_root.Object(value));
+			}
+
+			// NOTE: check must come after checks for value that implicitly convert to
+			// null (i.e. false). Strict equality is the proper solution, but for some
+			// reason it is generating "`System.Linq.Expressions.ExpressionType' does
+			// not contain a definition for `StrictEqual'" when building playscript-mono
+			// (though Xamarin is fine with it).
+			if (value == null) {
+				return null;
 			}
 
 			throw new System.NotImplementedException();

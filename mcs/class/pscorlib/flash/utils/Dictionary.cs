@@ -194,10 +194,10 @@ namespace flash.utils
 
 		public TValue this [TKey key] {
 			get {
+				key = FormatKeyForAs (key);
 				if (key != null) {
-
 					// get first item of linked list corresponding to given key
-					int hashCode = key.GetHashCode() | HASH_FLAG;
+					int hashCode = key.GetHashCode () | HASH_FLAG;
 					int cur = table [(hashCode & int.MaxValue) % table.Length] - 1;
 
 					// walk linked list until right slot is found or end is reached 
@@ -213,6 +213,7 @@ namespace flash.utils
 				return default(TValue);
 			}
 			set {
+				key = FormatKeyForAs (key);
 				if (key == null)
 					throw new ArgumentNullException ("key");
 
@@ -451,8 +452,18 @@ namespace flash.utils
 			threshold = (int)(newSize * DEFAULT_LOAD_FACTOR);
 		}
 
+		TKey FormatKeyForAs (TKey key)
+		{
+			// handle the value null when TKey is string
+			object formattedKey = PlayScript.Dynamic.FormatKeyForAs (key);
+			if (formattedKey is TKey)
+				key = (TKey)formattedKey;
+			return key;
+		}
+
 		public void Add (TKey key, TValue value)
 		{
+			key = FormatKeyForAs (key);
 			if (key == null)
 				throw new ArgumentNullException ("key");
 
@@ -516,6 +527,7 @@ namespace flash.utils
 
 		public bool ContainsKey (TKey key)
 		{
+			key = FormatKeyForAs (key);
 			if (key == null)
 				throw new ArgumentNullException ("key");
 
@@ -552,6 +564,7 @@ namespace flash.utils
 
 		public bool Remove (TKey key)
 		{
+			key = FormatKeyForAs (key);
 			if (key == null)
 				throw new ArgumentNullException ("key");
 
@@ -603,6 +616,7 @@ namespace flash.utils
 
 		public bool TryGetValue (TKey key, out TValue value)
 		{
+			key = FormatKeyForAs (key);
 			if (key == null)
 				throw new ArgumentNullException ("key");
 
@@ -660,6 +674,7 @@ namespace flash.utils
 
 		static TKey ToTKey (object key)
 		{
+			key = PlayScript.Dynamic.FormatKeyForAs (key);
 			if (key == null)
 				throw new ArgumentNullException ("key");
 			if (!(key is TKey))
@@ -678,20 +693,26 @@ namespace flash.utils
 
 		object IDictionary.this [object key] {
 			get {
+				key = PlayScript.Dynamic.FormatKeyForAs (key);
 				if (key is TKey && ContainsKey((TKey) key))
 					return this [ToTKey (key)];
 				return null;
 			}
-			set { this [ToTKey (key)] = ToTValue (value); }
+			set {
+				key = PlayScript.Dynamic.FormatKeyForAs (key);
+				this [ToTKey (key)] = ToTValue (value);
+			}
 		}
 
 		void IDictionary.Add (object key, object value)
 		{
+			key = PlayScript.Dynamic.FormatKeyForAs (key);
 			this.Add (ToTKey (key), ToTValue (value));
 		}
 
 		bool IDictionary.Contains (object key)
 		{
+			key = PlayScript.Dynamic.FormatKeyForAs (key);
 			if (key == null)
 				throw new ArgumentNullException ("key");
 			if (key is TKey)
@@ -701,6 +722,7 @@ namespace flash.utils
 
 		void IDictionary.Remove (object key)
 		{
+			key = PlayScript.Dynamic.FormatKeyForAs (key);
 			if (key == null)
 				throw new ArgumentNullException ("key");
 			if (key is TKey)
@@ -1279,9 +1301,11 @@ namespace flash.utils
 
 		public new dynamic this [object key] {
 			get {
+				key = PlayScript.Dynamic.FormatKeyForAs (key);
 				return base [key];
 			}
 			set {
+				key = PlayScript.Dynamic.FormatKeyForAs (key);
 				base[key] = value;
 			}
 		}
@@ -1424,18 +1448,20 @@ namespace flash.utils
 
 		public new dynamic this [object key] {
 			get {
+				key = PlayScript.Dynamic.FormatKeyForAs (key);
 				// the flash dictionary implementation does not throw if key not found
 				object value;
 				if (key == null) {
-					return null; // PlayScript.Undefined._undefined;
+					return PlayScript.Undefined._undefined;
 				}
 				if (base.TryGetValue(key, out value)) {
 					return value;
 				} else {
-					return null; // PlayScript.Undefined._undefined;
+					return PlayScript.Undefined._undefined;
 				}
 			}
 			set {
+				key = PlayScript.Dynamic.FormatKeyForAs (key);
 				base[key] = value;
 			}
 		}

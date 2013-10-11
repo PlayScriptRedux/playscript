@@ -76,6 +76,7 @@ namespace PlayScript
 		Dynamic_CastObjectToBoolInvoked,
 		Dynamic_InvokeStaticInvoked,
 		Dynamic_ObjectIsClassInvoked,
+		Dynamic_IsNullOrUndefinedInvoked,
 		Dynamic_HasOwnPropertyInvoked,
 
 		// other

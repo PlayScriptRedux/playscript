@@ -46,8 +46,9 @@ namespace flash.display3D {
 			mContext = context3D;
 			mNumIndices = numIndices;
 			mIds = new uint[multiBufferCount];
-			mElementType = DrawElementsType.UnsignedInt;
+			mElementType = DrawElementsType.UnsignedShort;
 			GL.GenBuffers(multiBufferCount, mIds);
+			GLUtils.CheckGLError ();
 
 			mUsage = isDynamic ? BufferUsage.DynamicDraw : BufferUsage.StaticDraw;
 
@@ -71,7 +72,7 @@ namespace flash.display3D {
 				mBufferIndex = 0;
 
 			// get size of each index
-			int elementSize = (mElementType == DrawElementsType.UnsignedInt) ? sizeof(uint) : sizeof(ushort);
+			int elementSize = sizeof(ushort);
 
 			int byteCount = count * elementSize;
 			// bounds check
@@ -79,11 +80,14 @@ namespace flash.display3D {
 				throw new ArgumentOutOfRangeException("data buffer is not big enough for upload");
 
 			GL.BindBuffer(BufferTarget.ElementArrayBuffer, mIds[mBufferIndex]);
+			GLUtils.CheckGLError ();
+
 			if (startOffset == 0) {
 				GL.BufferData(BufferTarget.ElementArrayBuffer, 
 				             new IntPtr(byteCount), 
 				             new IntPtr(data), 
 				             mUsage);
+				GLUtils.CheckGLError ();
 
 				if (byteCount != mMemoryUsage) {
 					// update stats for memory usage
@@ -96,6 +100,7 @@ namespace flash.display3D {
 				                 new IntPtr(startOffset * elementSize),
 				                 new IntPtr(byteCount), 
 				                 new IntPtr(data));
+				GLUtils.CheckGLError ();
 			}
 
 		}
@@ -112,11 +117,16 @@ namespace flash.display3D {
 
 		public unsafe void uploadFromArray(uint[] data, int startOffset, int count) {
 			// uploading from an array or vector implies 32-bit indices
-			mElementType = DrawElementsType.UnsignedInt;
+			mElementType = DrawElementsType.UnsignedShort;
+
+			ushort[] shortData = new ushort[data.Length];
+			for (int i = 0; i < data.Length; i++) {
+				shortData [i] = (ushort) data [i];
+			}
 
 			// pin pointer to array data
-			fixed (uint *ptr = data) {
-				uploadFromPointer(ptr, data.Length * sizeof(uint), startOffset, count);
+			fixed (ushort *ptr = shortData) {
+				uploadFromPointer(ptr, data.Length * sizeof(ushort), startOffset, count);
 			}
 		}
 
