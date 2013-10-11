@@ -527,7 +527,7 @@ namespace Amf
 
 					System.Reflection.PropertyInfo prop = type.GetProperty(name);
 					if (prop != null) {
-						prop.SetValue(obj, value.AsType(prop.PropertyType));
+						prop.SetValue(obj, value.AsType(prop.PropertyType), null);
 						continue;
 					}
 					System.Reflection.FieldInfo field = type.GetField(name);
