@@ -679,7 +679,7 @@ namespace _root
 				}
 				return mDescending ? -result : result;
 			}
-		};
+		}
 
 		private class DefaultSorterOn : System.Collections.Generic.IComparer<object>
 		{
@@ -941,7 +941,7 @@ namespace _root
 
 			private Func<object,object,int> mDelegate;
 			private dynamic mFunc;
-		};
+		}
 
 		private class OptionsSorter : System.Collections.Generic.IComparer<object>
 		{
@@ -965,7 +965,7 @@ namespace _root
 			}
 
 			// private uint mOptions;
-		};
+		}
 
 		private class DefaultSorter : System.Collections.Generic.IComparer<object>
 		{
@@ -1977,7 +1977,7 @@ namespace _root
 				}
 				return mDescending ? -result : result;
 			}
-		};
+		}
 
 		private class DefaultSorterOn : System.Collections.Generic.IComparer<object>
 		{
