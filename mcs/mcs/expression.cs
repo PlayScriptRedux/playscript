@@ -3662,6 +3662,14 @@ namespace Mono.CSharp
 			// Handle PlayScript binary operators that need to be converted to methods.
 			if (ec.FileType == SourceFileType.PlayScript) {
 				if (ec.Target != Target.JavaScript) {
+					// Delegate to PlayScript.Dynamic.IsNullOrUndefined where possible
+					if (Oper == Operator.Equality || Oper == Operator.Inequality) {
+						if (left.Type == ec.BuiltinTypes.Dynamic && (right is NullLiteral || right.Type == ec.Module.PredefinedTypes.AsUndefined.Resolve ()))
+							return PsMakeIsNullOrUndefinedExpression (ec, left).Resolve (ec);
+						else if (right.Type == ec.BuiltinTypes.Dynamic && (left is NullLiteral || left.Type == ec.Module.PredefinedTypes.AsUndefined.Resolve ()))
+							return PsMakeIsNullOrUndefinedExpression (ec, right).Resolve (ec);
+					}
+
 					if ((typeHint != ec.BuiltinTypes.Bool) && (oper == Operator.LogicalOr || oper == Operator.LogicalAnd) && 
 					    (left.Type.BuiltinType != BuiltinTypeSpec.Type.Bool || right.Type.BuiltinType != Mono.CSharp.BuiltinTypeSpec.Type.Bool)) {
 						Expression leftExpr = left;
@@ -3718,10 +3726,10 @@ namespace Mono.CSharp
 						right = new Cast(new TypeExpression(ec.BuiltinTypes.Double, loc), right, loc).Resolve (ec);
 					}
 				}
-				// If we're doing null checks, or doing any string operations prefer "object" vs. "dynamic"
-				if (left.Type == ec.BuiltinTypes.Dynamic && (right is NullLiteral || right.Type == ec.BuiltinTypes.String)) {
+				// If we're doing any string operations prefer "object" vs. "dynamic"
+				if (left.Type == ec.BuiltinTypes.Dynamic && right.Type == ec.BuiltinTypes.String) {
 					left = EmptyCast.Create(left, ec.BuiltinTypes.Object, ec);
-				} else if (right.Type == ec.BuiltinTypes.Dynamic && (left is NullLiteral || left.Type == ec.BuiltinTypes.String)) {
+				} else if (right.Type == ec.BuiltinTypes.Dynamic && left.Type == ec.BuiltinTypes.String) {
 					right = EmptyCast.Create(right, ec.BuiltinTypes.Object, ec);
 				}
 
@@ -3884,6 +3892,16 @@ namespace Mono.CSharp
 		public override SLE.Expression MakeExpression (BuilderContext ctx)
 		{
 			return MakeExpression (ctx, left, right);
+		}
+
+		Expression PsMakeIsNullOrUndefinedExpression (ResolveContext ec, Expression expr)
+		{
+			var args = new Arguments (1);
+			args.Add (new Argument (new As (expr, new TypeExpression (ec.BuiltinTypes.Object, loc), loc)));
+			var call = new Invocation (new MemberAccess (new MemberAccess (new SimpleName ("PlayScript", loc), "Dynamic", loc), "IsNullOrUndefined", loc), args);
+			if (oper == Operator.Inequality)
+				return new Unary (Unary.Operator.LogicalNot, call, loc);
+			return call;
 		}
 
 		public SLE.Expression MakeExpression (BuilderContext ctx, Expression left, Expression right)
