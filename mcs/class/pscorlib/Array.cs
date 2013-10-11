@@ -1094,7 +1094,7 @@ namespace _root
 
 		#region IEnumerable implementation
 
-		private class ArrayEnumeratorClass : IEnumerator
+		private class ArrayEnumeratorClass : IEnumerator, IDisposable
 		{
 			private readonly IList mVector;
 			private int mIndex;
