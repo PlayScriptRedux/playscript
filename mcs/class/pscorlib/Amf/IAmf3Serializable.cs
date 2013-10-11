@@ -21,13 +21,39 @@
 // THE SOFTWARE.
 
 using System;
+using System.Collections;
 using System.IO;
 
 namespace Amf
 {
-    public interface IAmf3Serializable
+	// this interface applies to an object that can be written to an AMF stream
+	public interface IAmf3Writable
+	{
+		void Serialize(Amf3Writer writer);
+	}
+
+	// this interface applies to an object that can be read from an AMF stream
+	public interface IAmf3Readable
+	{
+		void Serialize(Amf3Reader reader);
+	}
+
+	// this interface applies to an object that can be read from or written to an AMF stream
+    public interface IAmf3Serializable : IAmf3Readable, IAmf3Writable
     {
-        void Serialize(Amf3Writer writer);
-		void Serialize(Amf3Parser reader);
     }
+
+	// object serializer delegates (for use when you cannot implement IAmf3Serializable)
+	// using the delegates is much faster than using reflection to construct or serialize an object
+	// they can be added to an Amf3Serializable or Amf3ExternalSerializer class and named this way:
+	//	public static class AmfSerializer_Value	{
+	//		public static object ObjectConstructor() {return new Value();}
+	//		public static System.Collections.IList VectorObjectConstructor(uint len, bool isFixed) {return new _root.Vector<Value>(len, isFixed);}
+	//		public static void ObjectSerializer(object o, Amf3Writer writer) { ... }
+	//		public static void ObjectDeserializer(object o, Amf3Reader reader) { ... }
+	//	}
+	public delegate object Amf3ObjectConstructor();
+	public delegate IList  Amf3ObjectVectorConstructor(uint num, bool isFixed);
+	public delegate void   Amf3ObjectSerializer(object obj, Amf3Writer writer);
+	public delegate void   Amf3ObjectDeserializer(object obj, Amf3Reader reader);
 }

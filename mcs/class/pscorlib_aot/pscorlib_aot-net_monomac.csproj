@@ -44,10 +44,10 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Drawing" />
     <Reference Include="ICSharpCode.SharpZipLib" />
-    <Reference Include="System.Json">
-      <HintPath>..\lib\net_4_0\System.Json.dll</HintPath>
-    </Reference>
     <Reference Include="System.Web" />
+    <Reference Include="System.Json">
+      <HintPath>..\lib\net_4_5\System.Json.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -891,6 +891,15 @@
     </Compile>
     <Compile Include="..\pscorlib\mx\graphics\codec\PNGEncoder.play">
       <Link>mx\graphics\codec\PNGEncoder.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3CodeGen.cs">
+      <Link>Amf\Amf3CodeGen.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Reader.cs">
+      <Link>Amf\Amf3Reader.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Variant.cs">
+      <Link>Amf\Amf3Variant.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\display3D\GLUtils.cs">
       <Link>flash\display3D\GLUtils.cs</Link>

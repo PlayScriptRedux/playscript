@@ -841,11 +841,20 @@
     <Compile Include="..\pscorlib\Amf\Amf3ClassDef.cs">
       <Link>Amf\Amf3ClassDef.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3CodeGen.cs">
+      <Link>Amf\Amf3CodeGen.cs</Link>
+    </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3Object.cs">
       <Link>Amf\Amf3Object.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3Parser.cs">
       <Link>Amf\Amf3Parser.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Reader.cs">
+      <Link>Amf\Amf3Reader.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Variant.cs">
+      <Link>Amf\Amf3Variant.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3TypeCode.cs">
       <Link>Amf\Amf3TypeCode.cs</Link>

@@ -23,7 +23,6 @@
     <ConsolePause>False</ConsolePause>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn>219</NoWarn>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -850,6 +849,15 @@
     </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3Writer.cs">
       <Link>Amf\Amf3Writer.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Variant.cs">
+      <Link>Amf\Amf3Variant.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Reader.cs">
+      <Link>Amf\Amf3Reader.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3CodeGen.cs">
+      <Link>Amf\Amf3CodeGen.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Amf\DataConverter.cs">
       <Link>Amf\DataConverter.cs</Link>
