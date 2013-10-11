@@ -178,9 +178,7 @@ namespace _root
 
 		public uint length
 		{
-			#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			#endif
 			get { return mCount; } 
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -279,9 +277,7 @@ namespace _root
 
 		public dynamic this[int i]
 		{
-			#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			#endif
 			get {
 				#if PERFORMANCE_MODE && DEBUG
 				if ((i >= mCount) || (i < 0))
@@ -297,9 +293,8 @@ namespace _root
 				#endif
 				return mArray[i];
 			}
-			#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
+
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			#endif
 			set {
 				#if PERFORMANCE_MODE && DEBUG
 				if (i >= mCount) {
@@ -317,9 +312,7 @@ namespace _root
 
 		public dynamic this[uint i]
 		{
-			#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			#endif
 			get {
 				#if PERFORMANCE_MODE && DEBUG
 				if (i >= mCount)
@@ -335,9 +328,8 @@ namespace _root
 				#endif
 				return mArray[(int)i];
 			}
-			#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
+
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			#endif
 			set {
 				#if PERFORMANCE_MODE && DEBUG
 				if (i >= mCount) {
@@ -355,16 +347,13 @@ namespace _root
 
 		public dynamic this[long l]
 		{
-			#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			#endif
 			get {
 				return this [(int)l];
 
 			}
-			#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
+
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			#endif
 			set {
 				this [(int)l] = value;
 			}
@@ -897,9 +886,7 @@ namespace _root
 			return val;
 		}
 
-		#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		#endif
 		public uint push(object value)
 		{
 			if (mCount >= mArray.Length)
