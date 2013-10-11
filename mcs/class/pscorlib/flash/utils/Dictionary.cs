@@ -815,7 +815,7 @@ namespace flash.utils
 		}
 
 		[Serializable]
-		private class ShimEnumerator : IDictionaryEnumerator, IEnumerator
+		private class ShimEnumerator : IDictionaryEnumerator, IEnumerator, IDisposable
 		{
 			Enumerator host_enumerator;
 			public ShimEnumerator (Dictionary<TKey, TValue> host)
