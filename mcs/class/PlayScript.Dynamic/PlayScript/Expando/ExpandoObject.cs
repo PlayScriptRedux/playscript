@@ -63,6 +63,12 @@ namespace PlayScript.Expando {
             LockObject = new object();
         }
 
+		/// <summary>
+		/// Creates a new ExpandoObject with specified capacity
+		/// </summary>
+		public ExpandoObject(int capacity) : base() {
+		}
+
         #region Get/Set/Delete Helpers
 
         /// <summary>
