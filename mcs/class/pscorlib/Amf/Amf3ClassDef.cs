@@ -310,12 +310,12 @@ namespace Amf
 		public static void RegisterAllClassesInAssembly(Assembly assembly)
 		{
 			foreach (var type in assembly.GetTypes()) {
-				var attr = type.GetCustomAttribute<Amf3SerializableAttribute>();
+				var attr = Attribute.GetCustomAttribute(type, typeof(Amf3SerializableAttribute)) as Amf3SerializableAttribute;
 				if (attr != null) { 
 					RegisterClassType(attr.ClassName, type);
 				}
 
-				var externalAttr = type.GetCustomAttribute<Amf3ExternalSerializerAttribute>();
+				var externalAttr = Attribute.GetCustomAttribute(type, typeof(Amf3ExternalSerializerAttribute)) as Amf3ExternalSerializerAttribute;
 				if (externalAttr != null) { 
 					RegisterExternalSerializer(externalAttr.ClassName, type, externalAttr.TargetType);
 				}
