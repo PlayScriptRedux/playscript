@@ -1233,7 +1233,7 @@ namespace _root
 
 		#region IKeyEnumerable implementation
 
-		private class ArrayKeyEnumeratorClass : IEnumerator
+		private class ArrayKeyEnumeratorClass : IEnumerator, IDisposable
 		{
 			private readonly IList mVector;
 			private int mIndex;
