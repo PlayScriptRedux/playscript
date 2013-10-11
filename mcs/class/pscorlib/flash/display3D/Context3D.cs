@@ -738,6 +738,13 @@ namespace flash.display3D {
 			GL.Ext.DiscardFramebuffer((All)FramebufferTarget.Framebuffer, 1, ref discard);
 #endif
 
+			if (!texture.allocated)
+			{
+				GL.BindTexture( TextureTarget.Texture2D, texture.textureId);
+				GL.TexImage2D (TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, texture2D.width, texture2D.height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
+				texture.allocated = true;
+			}
+
 			GL.BindFramebuffer(FramebufferTarget.Framebuffer, mTextureFrameBufferId);
 			GLUtils.CheckGLError ();
 
@@ -763,7 +770,6 @@ namespace flash.display3D {
 				                           0);
 			}
 #endif
-
 			// setup viewport for render to texture
 			GL.Viewport(0,0, texture2D.width, texture2D.height);
 			GLUtils.CheckGLError ();

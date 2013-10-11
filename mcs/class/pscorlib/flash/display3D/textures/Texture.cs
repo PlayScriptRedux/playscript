@@ -20,7 +20,7 @@ namespace flash.display3D.textures {
 	using flash.display;
 	using flash.display3D;
 	using flash.events;
-
+	
 #if PLATFORM_MONOMAC
 	using MonoMac.OpenGL;
 #elif PLATFORM_MONOTOUCH
@@ -32,6 +32,7 @@ namespace flash.display3D.textures {
 	using PixelFormat = OpenTK.Graphics.ES20.All;
 	using PixelType = OpenTK.Graphics.ES20.All;
 	using TextureParameterName = OpenTK.Graphics.ES20.All;
+	using Android.Opengl;
 	using Java.Nio;
 #endif
 
@@ -156,6 +157,7 @@ namespace flash.display3D.textures {
 								// upload from data position
 								var address = new IntPtr(ptr + data.position);
 								GL.CompressedTexImage2D(textureTarget, level, pixelFormat, width, height, 0, (int)blockLength, address);							
+								mAllocated = true;
 							}
 							trackCompressedMemoryUsage((int)blockLength);
 							#endif
@@ -172,6 +174,7 @@ namespace flash.display3D.textures {
 
 								GLUtils.CheckGLError ();
 
+								mAllocated = true;
 								if (textureLength < blockLength)
 								{
 									mAlphaTexture = new Texture(mContext, width, height, mFormat, mOptimizeForRenderToTexture, mStreamingLevels);
@@ -183,6 +186,7 @@ namespace flash.display3D.textures {
 									GLUtils.CheckGLError ();
 									GL.BindTexture (mAlphaTexture.textureTarget, 0);
 									GLUtils.CheckGLError ();
+									mAllocated = true;
 								}
 								else 
 								{
@@ -196,6 +200,7 @@ namespace flash.display3D.textures {
 									GL.BindTexture (mAlphaTexture.textureTarget, 0);
 									GLUtils.CheckGLError ();
 
+									mAllocated = true;
 									clearData.dispose();
 								}
 							}
@@ -266,12 +271,13 @@ namespace flash.display3D.textures {
 			OpenTK.Graphics.ES20.PixelInternalFormat pixelFormat = (OpenTK.Graphics.ES20.PixelInternalFormat)0x8C02;
 
 			GL.CompressedTexImage2D(textureTarget, 0, pixelFormat, mWidth, mHeight, 0, dataLength, data.getRawArray());
+			mAllocated = true;
 		#elif PLATFORM_MONODROID		
 			data.position = 16; // skip the header
 			int dataLength = ((int)data.length) - 16;
 
 			GL.CompressedTexImage2D<byte>(textureTarget, 0, All.Etc1Rgb8Oes, mWidth, mHeight, 0, dataLength, data.getRawArray());
-			GLUtils.CheckGLError ();
+			mAllocated = true;
 		#endif
 
 			trackCompressedMemoryUsage(dataLength);
@@ -313,9 +319,11 @@ namespace flash.display3D.textures {
 
 			#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
 				GL.TexImage2D(textureTarget, (int)miplevel, PixelInternalFormat.Rgba, mWidth, mHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte,source.getRawData());
+				mAllocated = true;
 			#elif PLATFORM_MONODROID
 				GL.TexImage2D<uint>(textureTarget, (int)miplevel, (int) PixelInternalFormat.Rgba, mWidth, mHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte, source.getRawData());
 				GLUtils.CheckGLError ();
+				mAllocated = true;
 			#endif
 
 			#if PLATFORM_MONOTOUCH || PLATFORM_MONODROID
