@@ -114,7 +114,7 @@ package {
 
 		private static function ConvertToJsonValue(value:Object):JsonValue {
 
-			if (value == null) {
+			if (value === null) {
 				return null;
 			}
 

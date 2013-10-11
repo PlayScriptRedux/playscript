@@ -15,6 +15,9 @@ package
 				return 3;
 			for each (var i:* in o)
 				trace(i);
+			o = false;
+			for each (var i:* in o)
+				trace(i);
 
 			var key:*;
 			o = {};
