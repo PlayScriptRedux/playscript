@@ -225,11 +225,6 @@ net_4_0_dirs := \
 	System.Data.Services.Client	\
 	System.Data.Services \
 	System.Json.Microsoft \
-	Mono.PlayScript \
-	PlayScript.Dynamic \
-	PlayScript.Dynamic_aot \
-	pscorlib \
-	pscorlib_aot \
 	Mono.Optimization \
 	monodoc
 	
@@ -257,6 +252,11 @@ net_4_5_dirs := \
 	System.IO.Compression.FileSystem \
 	System.Windows \
 	System.Xml.Serialization \
+	Mono.PlayScript \
+	PlayScript.Dynamic \
+	PlayScript.Dynamic_aot \
+	pscorlib \
+	pscorlib_aot \
 	Facades
 	
 net_2_0_SUBDIRS := $(common_dirs) $(net_2_0_dirs) $(net_2_0_only_dirs) aot-compiler
