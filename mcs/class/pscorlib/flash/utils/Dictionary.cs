@@ -823,15 +823,16 @@ namespace flash.utils
 				host_enumerator = host.GetEnumerator ();
 			}
 
+			#region IDisposable implementation
+
 			public void Dispose ()
 			{
 				host_enumerator.Dispose ();
 			}
 
-			public bool MoveNext ()
-			{
-				return host_enumerator.MoveNext ();
-			}
+			#endregion
+
+			#region IDictionaryEnumerator implementation
 
 			public DictionaryEntry Entry {
 				get { return ((IDictionaryEnumerator) host_enumerator).Entry; }
@@ -845,6 +846,15 @@ namespace flash.utils
 				get { return host_enumerator.Current.Value; }
 			}
 
+			#endregion
+
+			#region IEnumerator implementation
+
+			public bool MoveNext ()
+			{
+				return host_enumerator.MoveNext ();
+			}
+
 			// This is the raison d' etre of this $%!@$%@^@ class.
 			// We want: IDictionary.GetEnumerator ().Current is DictionaryEntry
 			public object Current {
@@ -855,6 +865,8 @@ namespace flash.utils
 			{
 				host_enumerator.Reset ();
 			}
+
+			#endregion
 		}
 
 		[Serializable]
@@ -877,6 +889,8 @@ namespace flash.utils
 				stamp = dictionary.generation;
 #endif
 			}
+
+			#region IEnumerator implementation
 
 			public bool MoveNext ()
 			{
@@ -947,6 +961,10 @@ namespace flash.utils
 				next = 0;
 			}
 
+			#endregion
+
+			#region IDictionaryEnumerator implementation
+
 			DictionaryEntry IDictionaryEnumerator.Entry {
 				get {
 #if DEBUG || !PERFORMANCE_MODE
@@ -963,6 +981,8 @@ namespace flash.utils
 			object IDictionaryEnumerator.Value {
 				get { return CurrentValue; }
 			}
+
+			#endregion
 
 #if DEBUG || !PERFORMANCE_MODE
 			void VerifyState ()
@@ -981,10 +1001,14 @@ namespace flash.utils
 			}
 #endif
 
+			#region IDisposable implementation
+
 			public void Dispose ()
 			{
 				dictionary = null;
 			}
+
+			#endregion
 		}
 
 		// This collection is a read only collection
@@ -1079,10 +1103,16 @@ namespace flash.utils
 					host_enumerator = host.GetEnumerator ();
 				}
 
+				#region IDisposable implementation
+
 				public void Dispose ()
 				{
 					host_enumerator.Dispose ();
 				}
+
+				#endregion
+
+				#region IEnumerator implementation
 
 				public bool MoveNext ()
 				{
@@ -1101,6 +1131,8 @@ namespace flash.utils
 				{
 					host_enumerator.Reset ();
 				}
+
+				#endregion
 			}
 		}
 
@@ -1195,10 +1227,16 @@ namespace flash.utils
 					host_enumerator = host.GetEnumerator ();
 				}
 
+				#region IDisposable implementation
+
 				public void Dispose ()
 				{
 					host_enumerator.Dispose ();
 				}
+
+				#endregion
+
+				#region IEnumerator implementation
 
 				public bool MoveNext ()
 				{
@@ -1217,6 +1255,8 @@ namespace flash.utils
 				{
 					host_enumerator.Reset ();
 				}
+
+				#endregion
 			}
 		}
 
