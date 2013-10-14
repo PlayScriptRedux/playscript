@@ -18,6 +18,7 @@ using System;
 using System.Collections.Generic;
 using MonoTouch.AVFoundation;
 using MonoTouch.Foundation;
+using MonoTouch.CoreFoundation;
 using flash.events;
 
 namespace flash.media {
@@ -25,12 +26,35 @@ namespace flash.media {
 	// We use a partial C# class for platform specific logic
 	partial class Sound {
 
-		public const int NumberOfPlayers = 10;
+		public const int NumberOfSounds = 10;
 
-		private static Queue<AVAudioPlayer> _players = new Queue<AVAudioPlayer>(NumberOfPlayers);
+		private static Queue<Sound> _sounds = new Queue<Sound>(NumberOfSounds);
 
 		private AVAudioPlayer _player;
 		private SoundChannel _channel;
+		private bool _loaded = false;
+
+		public AVAudioPlayer Player
+		{
+			get { return _player; }
+			set { _player = value; }
+		}
+
+		public SoundChannel Channel
+		{
+			get { return _channel; }
+			set { _channel = value; }
+		}
+
+		public void unload()
+		{
+			_loaded = false;
+
+			_player.Dispose ();
+			_player = null;
+
+			_channel.dispatchEvent (new Event (Event.SOUND_COMPLETE));
+		}
 
 		private void internalLoad(String url)
 		{
@@ -41,27 +65,48 @@ namespace flash.media {
 
 			if (null != _player)
 			{
-			    if (_players.Count == NumberOfPlayers) 
-				{
-				    _players.Dequeue().Dispose();
-				}
-				
-				_players.Enqueue(_player);
 
-				_player.PrepareToPlay();
+			    if (_sounds.Count == NumberOfSounds) 
+				{
+					Sound deqSound = _sounds.Dequeue ();
+					int deqCnt = 0;
+					while (deqSound.Player.Playing && deqCnt < NumberOfSounds)
+					{
+						_sounds.Enqueue (deqSound);
+						deqSound = _sounds.Dequeue ();
+
+						deqCnt ++;
+					}
+
+					if (deqSound.Player.Playing) 
+					{
+						Console.WriteLine("Disposing audio player which is playing");
+					}
+
+					deqSound.unload ();
+
+				}
 
 				_channel = new SoundChannel();
 				_channel.Player = _player;
 
+				_sounds.Enqueue(this);
+
+				_player.PrepareToPlay();
+
+
 				_player.DecoderError += delegate {
+					_loaded = false;
 					this.dispatchEvent(new IOErrorEvent(IOErrorEvent.IO_ERROR));
 				};
 
 				_player.FinishedPlaying += delegate { 
+					_loaded = false;
 					_channel.dispatchEvent (new Event (Event.SOUND_COMPLETE));
 					//_player.Dispose(); 
 				};
 
+				_loaded = true;
 				this.dispatchEvent(new Event(Event.COMPLETE));
 
 			}
@@ -70,44 +115,26 @@ namespace flash.media {
 
 		private SoundChannel internalPlay(double startTime=0, int loops=0, SoundTransform sndTransform=null)
         {
-			if (null == _player)
-				return null;
+			if (null == _player && _url != null)
+				internalLoad (_url);
 
 			if (loops < 0)
 				loops = 0;
 
 			_player.NumberOfLoops = loops;
 
-			if (startTime > 0)
-				_player.PlayAtTime(startTime);
-			else
-                _player.Play();
+            DispatchQueue.DefaultGlobalQueue.DispatchAsync (() => {
+                if (startTime > 0)
+                    _player.PlayAtTime(startTime);
+                else
+                    _player.Play();
+            }
 
 			return _channel;
         }
 
 	}
 
-}
-
-#else
-
-using System;
-
-namespace flash.media {
-
-	// We use a partial C# class for platform specific logic
-	partial class Sound {
-			
-		private void internalLoad(String url)
-		{		
-		}
-
-		private SoundChannel internalPlay(double startTime=0, int loops=0, SoundTransform sndTransform=null)
-		{
-			return null;
-		}
-	}
 }
 
 #endif
