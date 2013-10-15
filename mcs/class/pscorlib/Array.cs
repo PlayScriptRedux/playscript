@@ -34,7 +34,6 @@ namespace _root
 		
 		// The constructor for the type proxy class must have a 
 		// constructor that takes the target type as a parameter.
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public ArrayDebugView(Array array)
 		{
 			this.mArray = array;
@@ -43,7 +42,6 @@ namespace _root
 		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 		public object[] Values
 		{
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get
 			{
 				mArray._TrimCapacity();
@@ -181,7 +179,6 @@ namespace _root
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return mCount; } 
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set { 
 				if (value == 0) {
 					System.Array.Clear (mArray, 0, (int)mCount);
@@ -212,7 +209,6 @@ namespace _root
 			this.append((IEnumerable)a);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array(IEnumerable e)
 		{
 			if (e is string) {
@@ -224,7 +220,6 @@ namespace _root
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array(uint length)
 		{
 			if (length != 0)
@@ -234,7 +229,6 @@ namespace _root
 			mCount = length;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array(int length)
 		{
 			if (length != 0)
@@ -244,7 +238,6 @@ namespace _root
 			mCount = (uint)length;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array(double length)
 		{
 			if (length != 0)
@@ -254,7 +247,6 @@ namespace _root
 			mCount = (uint)length;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array(object arg1, params object[] args)
 		{
 			mArray = sEmptyArray;
@@ -359,7 +351,6 @@ namespace _root
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool TryParseIndex(string input, out int index)
 		{
 			double d;
@@ -459,7 +450,6 @@ namespace _root
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void EnsureCapacity(uint size)
 		{
 			if (mArray.Length < size) {
@@ -479,7 +469,6 @@ namespace _root
 			this.push (value);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void _Insert(int index, object value) 
 		{
 			if (index > mCount) throw new NotImplementedException();
@@ -497,7 +486,6 @@ namespace _root
 			mCount++;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void _RemoveAt(int index)
 		{
 			if (index < 0 || index >= (int)mCount)
@@ -530,7 +518,6 @@ namespace _root
 			mCount += vec.mCount;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void append(IEnumerable items)
 		{
 			if (items == null) {
@@ -546,7 +533,6 @@ namespace _root
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void append(IEnumerable<object> items)
 		{
 			if (items is IList<object>) {
@@ -559,7 +545,6 @@ namespace _root
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array concat(params object[] args) 
 		{
 			Array v = new Array();
@@ -621,7 +606,6 @@ namespace _root
 			return sortInternal(sortBehavior);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private Array sortInternal(object sortBehavior)
 		{
 			IComparer<object> comparer;
@@ -793,7 +777,6 @@ namespace _root
 		}
 
 		// Sorts the elements in an array according to one or more fields in the array.
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array sortOn(object fieldName, object options = null) {
 			if (length == 0) {
 				return this;
@@ -822,7 +805,6 @@ namespace _root
 			throw new System.NotImplementedException();
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void forEach(Delegate callback, object thisObject = null) 
 		{
 			if (thisObject != null)
@@ -835,7 +817,6 @@ namespace _root
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public int indexOf(object searchElement, int fromIndex = 0)
 		{
 			for (var i = fromIndex; i < mCount; i++) {
@@ -846,7 +827,6 @@ namespace _root
 			return -1;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public string join(string sep = ",") 
 		{
 			var sb = new System.Text.StringBuilder();
@@ -874,7 +854,6 @@ namespace _root
 			throw new System.NotImplementedException();
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public dynamic pop() 
 		{
 			if (mCount == 0) {
@@ -886,7 +865,6 @@ namespace _root
 			return val;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public uint push(object value)
 		{
 			if (mCount >= mArray.Length)
@@ -896,7 +874,6 @@ namespace _root
 			return mCount;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public uint push(object value, params object[] args) 
 		{
 			uint len = (uint)args.Length;
@@ -908,7 +885,6 @@ namespace _root
 			return mCount;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array reverse() 
 		{
 			var nv = new Array(length);
@@ -920,7 +896,6 @@ namespace _root
 			return nv;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public dynamic shift() 
 		{
 			if (mCount == 0)
@@ -932,7 +907,6 @@ namespace _root
 			return v;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array slice(int startIndex = 0, int endIndex = 16777215) 
 		{
 			if (startIndex < 0) 
@@ -1125,7 +1099,6 @@ namespace _root
 			return this.join(",");
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public uint unshift(object item) 
 		{
 			if (mCount >= mArray.Length)
@@ -1137,7 +1110,6 @@ namespace _root
 			return mCount;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public uint unshift(object item, params object[] args) 
 		{
 			uint argsLen = (uint)args.Length;
@@ -1436,7 +1408,6 @@ namespace _root
 			__dynamicProps = props;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		dynamic PlayScript.IDynamicClass.__GetDynamicValue (string name) {
 			int index;
 			if (TryParseIndex (name, out index)) {
@@ -1450,7 +1421,6 @@ namespace _root
 			return value;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool PlayScript.IDynamicClass.__TryGetDynamicValue (string name, out object value) {
 			int index;
 			if (TryParseIndex (name, out index)) {
@@ -1466,7 +1436,6 @@ namespace _root
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void PlayScript.IDynamicClass.__SetDynamicValue (string name, object value) {
 			int index;
 			if (TryParseIndex (name, out index)) {
@@ -1480,7 +1449,6 @@ namespace _root
 			__dynamicProps.__SetDynamicValue(name, value);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool PlayScript.IDynamicClass.__DeleteDynamicValue (object name) {
 			int index;
 			if (name is string && TryParseIndex ((string)name, out index)) {
@@ -1494,7 +1462,6 @@ namespace _root
 			return false;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool PlayScript.IDynamicClass.__HasDynamicValue (string name) {
 			int index;
 			if (TryParseIndex (name, out index)) {
@@ -1528,7 +1495,6 @@ namespace _root
 
 		// The constructor for the type proxy class must have a 
 		// constructor that takes the target type as a parameter.
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public ArrayDebugView(Array array)
 		{
 			this.mArray = array;
@@ -1537,7 +1503,6 @@ namespace _root
 		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 		public object[] Values
 		{
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get
 			{
 				mArray._GetInnerVector()._TrimCapacity();
@@ -1831,7 +1796,6 @@ namespace _root
 			mList.push (s);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array(object arg1, params object[] args)
 		{
 			if (args.Length == 0 && (arg1 is int || arg1 is uint || arg1 is double)) {
@@ -1915,7 +1879,6 @@ namespace _root
 
 		public dynamic this[string name]
 		{
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				// If we can convert the string to an index, then it is an indexed access.
 				int index;
@@ -1930,7 +1893,6 @@ namespace _root
 				return PlayScript.Undefined._undefined;
 			}
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				// If we can convert the string to an index, then it is an indexed access.
 				int index;
@@ -1995,7 +1957,6 @@ namespace _root
 			return mList.pop();
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public uint push(object value, params object[] args) {
 			mList.push(value);
 			foreach(var e in args) {
@@ -2053,7 +2014,6 @@ namespace _root
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array map(Delegate callback, dynamic thisObject = null) 
 		{
 			throw new System.NotImplementedException();
@@ -2210,7 +2170,6 @@ namespace _root
 		}
 
 		// Sorts the elements in an array according to one or more fields in the array.
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array sortOn(object fieldName, object options = null) {
 			if (length == 0) {
 				return this;
@@ -2243,7 +2202,6 @@ namespace _root
 			mList.append(items);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array concat(params object[] args) 
 		{
 			Array v = new Array();
