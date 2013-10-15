@@ -71,7 +71,6 @@ namespace flash.utils
 		// Private static methods
 		//
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static bool TestPrime (int x)
 		{
 			if ((x & 1) != 0) {
@@ -87,7 +86,6 @@ namespace flash.utils
 			return (x == 2);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static int CalcPrime (int x)
 		{
 			for (int i = (x & (~1))-1; i< Int32.MaxValue; i += 2) {
@@ -96,7 +94,6 @@ namespace flash.utils
 			return x;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static int ToPrime (int x)
 		{
 			for (int i = 0; i < primeTbl.Length; i++) {
@@ -202,7 +199,6 @@ namespace flash.utils
 		}
 
 		public TValue this [TKey key] {
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				key = FormatKeyForAs (key);
 				if (key != null) {
@@ -308,7 +304,6 @@ namespace flash.utils
 			Init (capacity);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Dictionary (IDictionary<TKey, TValue> dictionary)
 		{
 			if (dictionary == null)
@@ -319,7 +314,6 @@ namespace flash.utils
 				this.Add (entry.Key, entry.Value);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void Init (int capacity)
 		{
 			if (capacity < 0)
@@ -334,7 +328,6 @@ namespace flash.utils
 			generation = 0;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void InitArrays (int size) {
 			table = new int [size];
 
@@ -350,7 +343,6 @@ namespace flash.utils
 				threshold = 1;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void CopyToCheck (Array array, int index)
 		{
 			if (array == null)
@@ -364,7 +356,6 @@ namespace flash.utils
 				throw new ArgumentException ("Destination array cannot hold the requested elements!");
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void CopyKeys (TKey[] array, int index)
 		{
 			for (int i = 0; i < touchedSlots; i++) {
@@ -373,7 +364,6 @@ namespace flash.utils
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void CopyValues (TValue[] array, int index)
 		{
 			for (int i = 0; i < touchedSlots; i++) {
@@ -403,7 +393,6 @@ namespace flash.utils
 			return value;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void CopyTo (KeyValuePair<TKey, TValue> [] array, int index)
 		{
 			CopyToCheck (array, index);
@@ -413,7 +402,6 @@ namespace flash.utils
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void Do_ICollectionCopyTo<TRet> (Array array, int index, Transform<TRet> transform)
 		{
 			Type src = typeof (TRet);
@@ -531,7 +519,6 @@ namespace flash.utils
 			generation++;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Clear ()
 		{
 			count = 0;
@@ -549,7 +536,6 @@ namespace flash.utils
 			generation++;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public bool ContainsKey (TKey key)
 		{
 			key = FormatKeyForAs (key);
@@ -572,7 +558,6 @@ namespace flash.utils
 			return false;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public bool ContainsValue (TValue value)
 		{
 			IEqualityComparer<TValue> cmp = EqualityComparer<TValue>.Default;
@@ -640,7 +625,6 @@ namespace flash.utils
 			return true;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public bool TryGetValue (TKey key, out TValue value)
 		{
 			key = FormatKeyForAs (key);
@@ -707,7 +691,6 @@ namespace flash.utils
 			get { return false; }
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		static TKey ToTKey (object key)
 		{
 			key = PlayScript.Dynamic.FormatKeyForAs (key);
@@ -718,7 +701,6 @@ namespace flash.utils
 			return (TKey) key;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		static TValue ToTValue (object value)
 		{
 			if (value == null && !typeof (TValue).IsValueType)
@@ -751,7 +733,6 @@ namespace flash.utils
 			this.Add (ToTKey (key), ToTValue (value));
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool IDictionary.Contains (object key)
 		{
 			key = PlayScript.Dynamic.FormatKeyForAs (key);
@@ -762,7 +743,6 @@ namespace flash.utils
 			return false;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void IDictionary.Remove (object key)
 		{
 			key = PlayScript.Dynamic.FormatKeyForAs (key);
@@ -1143,7 +1123,6 @@ namespace flash.utils
 				return this.GetEnumerator ();
 			}
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			void ICollection.CopyTo (Array array, int index)
 			{
 				var target = array as TKey [];
@@ -1284,7 +1263,6 @@ namespace flash.utils
 				return this.GetEnumerator ();
 			}
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			void ICollection.CopyTo (Array array, int index)
 			{
 				var target = array as TValue [];
@@ -1376,7 +1354,6 @@ namespace flash.utils
 			return ContainsKey((TKey)(object)name);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public object[] cloneKeyArray() {
 			var keys = new object[Count];
 			int i=0;
@@ -1395,7 +1372,6 @@ namespace flash.utils
 			return this[(TKey)(object)name];
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool IDynamicClass.__TryGetDynamicValue(string name, out object value) 
 		{
 			TValue outValue;
@@ -1550,7 +1526,6 @@ namespace flash.utils
 			[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 			public string ValueTypeName
 			{
-				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get {
 					var v = value;
 					if (v != null) {
@@ -1580,7 +1555,6 @@ namespace flash.utils
 			[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 			public KeyValuePairDebugView[] Keys
 			{
-				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get
 				{
 					var keys = new KeyValuePairDebugView[_dict.length];
@@ -1662,7 +1636,6 @@ namespace flash.utils
 			return ContainsKey(name);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public object[] cloneKeyArray() {
 			var keys = new object[Count];
 			int i=0;
@@ -1758,7 +1731,6 @@ namespace flash.utils
 			[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 			public string ValueTypeName
 			{
-				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get {
 					var v = value;
 					if (v != null) {
@@ -1788,7 +1760,6 @@ namespace flash.utils
 			[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 			public KeyValuePairDebugView[] Keys
 			{
-				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get
 				{
 					var keys = new KeyValuePairDebugView[_dict.Count];
