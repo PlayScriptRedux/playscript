@@ -655,7 +655,7 @@ namespace _root
 					x = field.GetValue(x);
 				}
 
-				IDynamicClass right = x as IDynamicClass;
+				IDynamicClass right = y as IDynamicClass;
 				if (right != null)
 				{
 					y = right.__GetDynamicValue(mFieldName);
