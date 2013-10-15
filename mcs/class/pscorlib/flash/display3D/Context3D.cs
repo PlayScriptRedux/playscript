@@ -51,6 +51,9 @@ namespace flash.display3D {
 	using RenderbufferTarget = OpenTK.Graphics.ES20.All;
 	using RenderbufferInternalFormat = OpenTK.Graphics.ES20.All;
 	using FramebufferSlot = OpenTK.Graphics.ES20.All;
+	using PixelInternalFormat = OpenTK.Graphics.ES20.All;
+	using PixelFormat = OpenTK.Graphics.ES20.All;
+	using PixelType = OpenTK.Graphics.ES20.All;
 #endif
 
 	using System;
@@ -741,7 +744,11 @@ namespace flash.display3D {
 			if (!texture.allocated)
 			{
 				GL.BindTexture( TextureTarget.Texture2D, texture.textureId);
+#if PLATFORM_MONOTOUCH
 				GL.TexImage2D (TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, texture2D.width, texture2D.height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
+#elif PLATFORM_MONODROID
+				GL.TexImage2D (TextureTarget.Texture2D, 0, (int)PixelInternalFormat.Rgba, texture2D.width, texture2D.height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
+#endif
 				texture.allocated = true;
 			}
 
