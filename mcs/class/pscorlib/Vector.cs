@@ -33,7 +33,6 @@ namespace _root {
 		
 		// The constructor for the type proxy class must have a 
 		// constructor that takes the target type as a parameter.
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public VectorDebugView(Vector<T> vector)
 		{
 			this.mVector = vector;
@@ -42,7 +41,6 @@ namespace _root {
 		[DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
 		public T[] Values
 		{
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get
 			{
 				mVector._TrimCapacity();
@@ -182,7 +180,6 @@ namespace _root {
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return mCount; } 
 
-			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set { 
 				if (value == 0) {
 					System.Array.Clear (mArray, 0, (int)mCount);
@@ -423,7 +420,6 @@ namespace _root {
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void EnsureCapacity(uint size)
 		{
 			if (mArray.Length < size) {
@@ -445,7 +441,6 @@ namespace _root {
 			this.push (value);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void _Insert(int index, T value) 
 		{
 			if (index > mCount) throw new NotImplementedException();
@@ -463,7 +458,6 @@ namespace _root {
 			mCount++;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private void _RemoveAt(int index)
 		{
 			if (index < 0 || index >= (int)mCount)
@@ -496,7 +490,6 @@ namespace _root {
 			mCount += vec.mCount;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void append(IEnumerable items)
 		{
 			if (items == null) {
@@ -512,7 +505,6 @@ namespace _root {
 			}
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void append(IEnumerable<T> items)
 		{
 			if (items is IList<T>) {
@@ -535,7 +527,6 @@ namespace _root {
 			return new Vector<T>(this);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Vector<T> concat(params object[] args) {
 			Vector<T> v = clone();
 			// concat all supplied vecots
@@ -563,7 +554,6 @@ namespace _root {
 			throw new System.NotImplementedException();
 		}
 		
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void forEach(Delegate callback, dynamic thisObject = null) 
 		{
 			if (thisObject != null)
@@ -588,7 +578,6 @@ namespace _root {
 			return System.Array.IndexOf<T>(mArray, searchElement, fromIndex, (int)mCount);
 		}
 		
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public string join(string sep = ",") 
 		{
 			var sb = new System.Text.StringBuilder();
@@ -617,7 +606,6 @@ namespace _root {
 			throw new System.NotImplementedException();
 		}
 		
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public T pop() 
 		{
 			if (mFixed)
@@ -631,7 +619,6 @@ namespace _root {
 			return val;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public uint push(T value)
 		{
 #if !PERFORMANCE_MODE || DEBUG
@@ -645,7 +632,6 @@ namespace _root {
 			return mCount;
 		}
 		
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public uint push(T value, params T[] args) 
 		{
 			if (mFixed)
@@ -659,7 +645,6 @@ namespace _root {
 			return mCount;
 		}
 		
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Vector<T> reverse() 
 		{
 			var nv = new Vector<T>(length, @fixed);
@@ -671,7 +656,6 @@ namespace _root {
 			return nv;
 		}
 		
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public T shift() 
 		{
 			if (mFixed)
@@ -686,7 +670,6 @@ namespace _root {
 			return v;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Vector<T> slice(int startIndex = 0, int endIndex = 16777215) 
 		{
 			if (startIndex < 0) 
@@ -796,7 +779,6 @@ namespace _root {
 			return sortInternal(sortBehavior);
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private Vector<T> sortInternal(object sortBehavior) 
 		{
 			IComparer<T> comparer;
@@ -1031,7 +1013,6 @@ namespace _root {
 			return this.join(",");
 		}
 		
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public uint unshift(T item) 
 		{
 			if (mFixed)
@@ -1045,7 +1026,6 @@ namespace _root {
 			return mCount;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public uint unshift(T item, params T[] args) 
 		{
 			if (mFixed)
@@ -1363,7 +1343,6 @@ namespace _root {
 
 		#region IDynamicClass implementation
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		dynamic PlayScript.IDynamicClass.__GetDynamicValue (string name) {
 			int index;
 			if (TryParseIndex (name, out index)) {
@@ -1373,7 +1352,6 @@ namespace _root {
 			throw new ReferenceError (string.Format ("Error #1069: Property `{0}' not found on {1} and there is no default value.", name, GetType ().Name));
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool PlayScript.IDynamicClass.__TryGetDynamicValue (string name, out object value) {
 			int index;
 			if (TryParseIndex (name, out index)) {
@@ -1385,7 +1363,6 @@ namespace _root {
 			return false;
 		}
 
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void PlayScript.IDynamicClass.__SetDynamicValue (string name, object value) {
 			int index;
 			if (TryParseIndex (name, out index)) {
