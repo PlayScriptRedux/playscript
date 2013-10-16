@@ -256,6 +256,7 @@
 ./int.cs
 ./JSON.play
 ./Math.play
+./MiniJson/Json.cs
 ./mx/graphics/codec/IImageEncoder.play
 ./mx/graphics/codec/JPEGEncoder.play
 ./mx/graphics/codec/PNGEncoder.play

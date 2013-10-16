@@ -118,6 +118,9 @@
     <Compile Include="..\pscorlib\Math.play">
       <Link>Math.play</Link>
     </Compile>
+    <Compile Include="..\pscorlib\MiniJson\Json.cs">
+      <Link>Json.cs</Link>
+    </Compile>
     <Compile Include="..\pscorlib\Namespace.play">
       <Link>Namespace.play</Link>
     </Compile>

@@ -256,6 +256,7 @@
 ../pscorlib/int.cs
 ../pscorlib/JSON.play
 ../pscorlib/Math.play
+../pscorlib/MiniJson/Json.cs
 ../pscorlib/mx/graphics/codec/IImageEncoder.play
 ../pscorlib/mx/graphics/codec/JPEGEncoder.play
 ../pscorlib/mx/graphics/codec/PNGEncoder.play
