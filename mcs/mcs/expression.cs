@@ -3662,7 +3662,21 @@ namespace Mono.CSharp
 			// Handle PlayScript binary operators that need to be converted to methods.
 			if (ec.FileType == SourceFileType.PlayScript) {
 				if (ec.Target != Target.JavaScript) {
+					//
+					// Restrict bitwise operations to the proper numeric types
+					//
+					if (oper == Operator.BitwiseOr || oper == Operator.BitwiseAnd) {
+						if (!left.Type.IsNumeric || !right.Type.IsNumeric) {
+							ec.Report.Error (7025, loc, "Bitwise operators are not permitted between types `{0}' and `{1}'",
+							                 left.Type.GetSignatureForError (),
+							                 right.Type.GetSignatureForError ());
+							return null;
+						}
+					}
+
+					//
 					// Delegate to PlayScript.Dynamic.IsNullOrUndefined where possible
+					//
 					if (Oper == Operator.Equality || Oper == Operator.Inequality) {
 						if (left.Type == ec.BuiltinTypes.Dynamic && (right is NullLiteral || right.Type == ec.Module.PredefinedTypes.AsUndefined.Resolve ()))
 							return PsMakeIsNullOrUndefinedExpression (ec, left).Resolve (ec);

@@ -312,6 +312,14 @@ namespace Mono.CSharp {
 			}
 		}
 
+		public override bool IsNumeric {
+			get {
+				if (underlying != null)
+					return underlying.IsNumeric;
+				return base.IsNumeric;
+			}
+		}
+
 		public static TypeSpec GetUnderlyingType (TypeSpec t)
 		{
 			return ((EnumSpec) t.GetDefinition ()).UnderlyingType;
