@@ -12,6 +12,10 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
+#if PLATFORM_MONOTOUCH
+	import MonoTouch.Foundation.NSLocale;
+#endif
+
 package flash.system {
 
 	public static class Capabilities {
@@ -87,8 +91,16 @@ package flash.system {
 		}
 		
 		public static property isEmbeddedInAcrobat : Boolean { get { return false; } }
-		
-		public static property language : String { get { return "en"; } }
+
+		public static property language : String { 
+			get { 
+				#if PLATFORM_MONOTOUCH
+				return NSLocale.PreferredLanguages[0];
+				#else
+					return "en"; 
+				#endif
+			} 
+		}
 		
 		public static property languages : Array { 
 			get { 
