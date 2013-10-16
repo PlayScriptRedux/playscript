@@ -132,10 +132,6 @@ namespace flash.media {
 					_player.Play ();
 			});
 
-			/*
-			var t = MonoTouch.AudioToolbox.SystemSound.FromFile(_url);
-			t.PlaySystemSound();
-			*/
 			return _channel;
         }
 
