@@ -26,13 +26,15 @@ namespace flash.media {
 	// We use a partial C# class for platform specific logic
 	partial class Sound {
 
-		public const int NumberOfSounds = 10;
+		public const int NumberOfSounds = 1000;
 
 		private static Queue<Sound> _sounds = new Queue<Sound>(NumberOfSounds);
 
 		private AVAudioPlayer _player;
 		private SoundChannel _channel;
+		#pragma warning disable 414
 		private bool _loaded = false;
+		#pragma warning restore 414
 
 		public AVAudioPlayer Player
 		{
@@ -123,13 +125,17 @@ namespace flash.media {
 
 			_player.NumberOfLoops = loops;
 
-            DispatchQueue.DefaultGlobalQueue.DispatchAsync (() => {
-                if (startTime > 0)
-                    _player.PlayAtTime(startTime);
-                else
-                    _player.Play();
-            }
+			DispatchQueue.DefaultGlobalQueue.DispatchAsync (() => {
+				if (startTime > 0)
+					_player.PlayAtTime (startTime);
+				else
+					_player.Play ();
+			});
 
+			/*
+			var t = MonoTouch.AudioToolbox.SystemSound.FromFile(_url);
+			t.PlaySystemSound();
+			*/
 			return _channel;
         }
 
