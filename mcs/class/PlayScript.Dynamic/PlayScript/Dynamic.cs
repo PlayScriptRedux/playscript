@@ -435,9 +435,7 @@ namespace PlayScript
 		/// <summary>
 		///   In ActionScript, using null or undefined as a key converts to a string value
 		/// </summary>
-#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
 		public static object FormatKeyForAs(object key)
 		{
 #if !DISABLE_NULL_KEYS
@@ -452,9 +450,7 @@ namespace PlayScript
 		/// <summary>
 		///   In ActionScript, using null or undefined as a key converts to a string value
 		/// </summary>
-#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-#endif
 		public static string FormatKeyForAs(string key)
 		{
 #if !DISABLE_NULL_KEYS
