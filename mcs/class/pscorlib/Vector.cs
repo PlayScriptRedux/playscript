@@ -1071,7 +1071,7 @@ namespace _root {
 
 		#region IEnumerable implementation
 
-		private class VectorEnumeratorClass : IEnumerator<T>
+		private class VectorEnumeratorClass : IEnumerator<T>, IDisposable
 		{
 			private readonly Vector<T> mVector;
 			private int mIndex;
@@ -1182,7 +1182,7 @@ namespace _root {
 
 		#region IKeyEnumerable implementation
 
-		private class VectorKeyEnumeratorClass : IEnumerator
+		private class VectorKeyEnumeratorClass : IEnumerator, IDisposable
 		{
 			private readonly IList mVector;
 			private int mIndex;
