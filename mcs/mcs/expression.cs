@@ -3740,15 +3740,19 @@ namespace Mono.CSharp
 						right = new Cast(new TypeExpression(ec.BuiltinTypes.Double, loc), right, loc).Resolve (ec);
 					}
 				}
-				// If we're doing any string operations prefer "object" vs. "dynamic"
-				if (left.Type == ec.BuiltinTypes.Dynamic && right.Type == ec.BuiltinTypes.String) {
-					left = EmptyCast.Create(left, ec.BuiltinTypes.Object, ec);
-				} else if (right.Type == ec.BuiltinTypes.Dynamic && left.Type == ec.BuiltinTypes.String) {
-					right = EmptyCast.Create(right, ec.BuiltinTypes.Object, ec);
-				}
 
+				//
+				// If we're doing any string operations prefer "string" vs. "dynamic"
+				//
+				if (left.Type == ec.BuiltinTypes.Dynamic && right.Type == ec.BuiltinTypes.String)
+					left = Convert.ImplicitConversion (ec, left, ec.BuiltinTypes.String, loc).Resolve (ec);
+				else if (right.Type == ec.BuiltinTypes.Dynamic && left.Type == ec.BuiltinTypes.String)
+					right = Convert.ImplicitConversion (ec, right, ec.BuiltinTypes.String, loc).Resolve (ec);
+
+				//
 				// In PlayScript, if either side of an addition operator is a string, convert the other side
 				// to string as well. This is necessary to resolve ambiguities between object and string.
+				//
 				if (oper == Operator.Addition) {
 					if (left.Type.BuiltinType == BuiltinTypeSpec.Type.String && right.Type.BuiltinType != BuiltinTypeSpec.Type.String)
 						right = Convert.ImplicitConversion (ec, right, ec.BuiltinTypes.String, loc).Resolve (ec);
