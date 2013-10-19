@@ -34,7 +34,10 @@ namespace _root
 				return (string)o;
 			}
 			if (o == null) {
-				return null;
+				return "null";
+			}
+			if (o == PlayScript.Undefined._undefined) {
+				return "undefined";
 			}
 			if (o is JsonValue) {
 				// dont call ToString on a json value else it becomes quoted

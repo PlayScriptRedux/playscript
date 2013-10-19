@@ -33,7 +33,10 @@ namespace PlayScript.DynamicRuntime
 				return (string)o;
 			}
 			if (o == null) {
-				return null;
+				return "null";
+			}
+			if (o == PlayScript.Undefined._undefined) {
+				return "undefined";
 			}
 //			if (o is JsonValue) {
 //				// dont call ToString on a json value else it becomes quoted
@@ -252,8 +255,10 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.ConvertBinderInvoked);
 
-			if (o == null || o == PlayScript.Undefined._undefined) {
-				return null;
+			if (o == null) {
+				return "null";
+			} else if (o == PlayScript.Undefined._undefined) {
+				return "undefined";
 			} else if  (o is string) {
 				return (string)o;
 			} else {
