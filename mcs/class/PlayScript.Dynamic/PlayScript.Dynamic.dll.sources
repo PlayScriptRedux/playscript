@@ -5,6 +5,7 @@
 ./PlayScript/Dynamic.cs
 ./PlayScript/DynamicClassAttribute.cs
 ./PlayScript/DynamicProperties.cs
+./PlayScript/DynamicRuntime/PSBinaryArithmetic.cs
 ./PlayScript/DynamicRuntime/PSBinaryOperation.cs
 ./PlayScript/DynamicRuntime/PSConverter.cs
 ./PlayScript/DynamicRuntime/PSGetIndex.cs
