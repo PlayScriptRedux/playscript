@@ -437,6 +437,23 @@ namespace PlayScript
 			tw.WriteLine("Avg (clamped):{0,6:0.00}ms - {1, 12:0.0} fps        min {2:0.00}ms", sum, GetFpsFromMs(sum), minimumClampedValue);
 		}
 
+		private static void PrintAverageNWorst(TextWriter tw, string key, int NWorst)
+		{
+			Section section;
+			if (sSections.TryGetValue(key, out section) == false)
+			{
+				return;
+			}
+			List<double> history = section.History.Select(a => a.Time.TotalMilliseconds).OrderBy(a => a).ToList();
+			double sum = 0;
+			for (int frame = Math.Max(0, sFrameCount - NWorst) ; frame < sFrameCount ; frame++)
+			{
+				sum += history[frame];
+			}
+			sum /= (double)NWorst;
+			tw.WriteLine("Avg {2, 3} worst:{0,6:0.00}ms - {1, 12:0.0} fps", sum, GetFpsFromMs(sum), NWorst);
+		}
+
 		private static void PrintPercentile(TextWriter tw, string key, int percentile)
 		{
 			Section section;
@@ -493,6 +510,7 @@ namespace PlayScript
 			PrintPercentile(tw, "frame", 95);
 			PrintPercentageOfFrames(tw, "frame", "% Fast Frames", a => (a <= performanceFrameData.FastFrame), string.Format("<={0:0.00}ms", performanceFrameData.FastFrame));
 			PrintPercentageOfFrames(tw, "frame", "% Slow frames", a => (a >= performanceFrameData.SlowFrame), string.Format(">={0:0.00}ms", performanceFrameData.SlowFrame));
+			PrintAverageNWorst(tw, "frame", 10);
 			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i)
 			{
 				tw.WriteLine("GC {0} Count:      {1}", i, sReportGCCounts[i]);
