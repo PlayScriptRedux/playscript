@@ -60,7 +60,7 @@ foreach (string type in types) {
 				return (<#=T#>)a + b;
 
 			if (a == PlayScript.Undefined._undefined)
-				return 0; // any math with undefined results in NaN
+				return Double.NaN; // any math with undefined results in NaN
 
 			if (a == null)
 				return b; // null converts to 0

@@ -55,7 +55,7 @@ namespace PlayScript.DynamicRuntime
 				return (int)a + b;
 
 			if (a == PlayScript.Undefined._undefined)
-				return 0; // any math with undefined results in NaN
+				return Double.NaN; // any math with undefined results in NaN
 
 			if (a == null)
 				return b; // null converts to 0
@@ -228,7 +228,7 @@ namespace PlayScript.DynamicRuntime
 				return (uint)a + b;
 
 			if (a == PlayScript.Undefined._undefined)
-				return 0; // any math with undefined results in NaN
+				return Double.NaN; // any math with undefined results in NaN
 
 			if (a == null)
 				return b; // null converts to 0
@@ -401,7 +401,7 @@ namespace PlayScript.DynamicRuntime
 				return (double)a + b;
 
 			if (a == PlayScript.Undefined._undefined)
-				return 0; // any math with undefined results in NaN
+				return Double.NaN; // any math with undefined results in NaN
 
 			if (a == null)
 				return b; // null converts to 0
