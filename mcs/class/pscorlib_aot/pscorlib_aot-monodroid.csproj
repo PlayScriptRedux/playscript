@@ -940,6 +940,9 @@
     <Compile Include="..\pscorlib\flash\display\BitmapData.cs">
       <Link>flash\display\BitmapData.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\PlayScript\ProfilerData.cs">
+      <Link>PlayScript\ProfilerData.cs</Link>
+    </Compile>
     <Compile Include="..\pscorlib\flash\display3D\Context3DStateCache.cs">
       <Link>flash\display3D\Context3DStateCache.cs</Link>
     </Compile>

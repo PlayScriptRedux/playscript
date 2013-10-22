@@ -652,12 +652,14 @@ namespace PlayScript
 
 		public static void InvokeReportDelegate ()
 		{
-
-			if (ReporterDelegate != null) {
-				string theReport = "<stuff-goes-here>";
-
-				ReporterDelegate (theReport);
+			if (ReporterDelegate == null) {
+				return;
 			}
+
+			ProfilerData profilerData = new ProfilerData ();
+
+
+			ReporterDelegate (profilerData);
 		}
 
 		private static PerformanceFrameData GetPerformanceFrameData()
@@ -692,7 +694,7 @@ namespace PlayScript
 			return sCurrentPerformanceFrameData;
 		}
 
-		public delegate void ReportDelegate (string report);
+		public delegate void ReportDelegate (ProfilerData report);
 		public static ReportDelegate ReporterDelegate { get; set; }
 
 		class SectionHistory
