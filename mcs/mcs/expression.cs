@@ -3603,6 +3603,17 @@ namespace Mono.CSharp
 			return Convert.ImplicitNumericConversion (expr, type, rc);
 		}
 
+		static bool PsIsNullOrUndefined (ResolveContext ec, Expression expr)
+		{
+			if (expr is NullLiteral)
+				return true;
+
+			if (expr != null && expr.Type == ec.Module.PredefinedTypes.AsUndefined.Resolve ())
+				return true;
+
+			return false;
+		}
+
 		protected override Expression DoResolve (ResolveContext ec)
 		{
 			if (ec.FileType == SourceFileType.PlayScript) {
@@ -3663,9 +3674,23 @@ namespace Mono.CSharp
 			if (ec.FileType == SourceFileType.PlayScript) {
 				if (ec.Target != Target.JavaScript) {
 					//
+					// Delegate math operations involving null or undefined to the dynamic runtime
+					// to avoid using nullable types (which do not work the way we want)
+					//
+					if ((oper & Operator.ArithmeticMask) != 0) {
+						var args = new Arguments(2);
+						args.Add (new Argument (left));
+						args.Add (new Argument (right));
+						if (left.Type.IsNumeric && PsIsNullOrUndefined (ec, right))
+							return new DynamicBinaryExpression (oper, this.GetOperatorExpressionTypeName (), args, loc).Resolve (ec);
+						else if (right.Type.IsNumeric && PsIsNullOrUndefined (ec, left))
+							return new DynamicBinaryExpression (oper, this.GetOperatorExpressionTypeName (), args, loc).Resolve (ec);
+					}
+
+					//
 					// Restrict bitwise operations to the proper numeric types
 					//
-					if (oper == Operator.BitwiseOr || oper == Operator.BitwiseAnd) {
+					if ((oper & Operator.BitwiseMask) != 0) {
 						if (!left.Type.IsNumeric || !right.Type.IsNumeric) {
 							ec.Report.Error (7025, loc, "Bitwise operators are not permitted between types `{0}' and `{1}'",
 							                 left.Type.GetSignatureForError (),
@@ -3678,9 +3703,9 @@ namespace Mono.CSharp
 					// Delegate to PlayScript.Dynamic.IsNullOrUndefined where possible
 					//
 					if (Oper == Operator.Equality || Oper == Operator.Inequality) {
-						if (left.Type == ec.BuiltinTypes.Dynamic && (right is NullLiteral || right.Type == ec.Module.PredefinedTypes.AsUndefined.Resolve ()))
+						if (left.Type == ec.BuiltinTypes.Dynamic && PsIsNullOrUndefined (ec, right))
 							return PsMakeIsNullOrUndefinedExpression (ec, left).Resolve (ec);
-						else if (right.Type == ec.BuiltinTypes.Dynamic && (left is NullLiteral || left.Type == ec.Module.PredefinedTypes.AsUndefined.Resolve ()))
+						else if (right.Type == ec.BuiltinTypes.Dynamic && PsIsNullOrUndefined (ec, left))
 							return PsMakeIsNullOrUndefinedExpression (ec, right).Resolve (ec);
 					}
 
