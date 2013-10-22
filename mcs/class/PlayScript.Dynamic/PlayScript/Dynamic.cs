@@ -251,7 +251,7 @@ namespace PlayScript
 			Stats.Increment(StatsCounter.Dynamic_GetDelegateTypeForMethodInvoked);
 
 			var plist = method.GetParameters();
-			if (plist.Length > 4) {
+			if (plist.Length > 4 && AppGetDelegateTypeForMethodCallback != null) {
 				return AppGetDelegateTypeForMethodCallback (method);
 			}
 
