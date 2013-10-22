@@ -646,6 +646,18 @@ namespace PlayScript
 
 			// print to console (not the full version though)
 			PrintReport(System.Console.Out, false);
+
+			InvokeReportDelegate ();
+		}
+
+		public static void InvokeReportDelegate ()
+		{
+
+			if (ReporterDelegate != null) {
+				string theReport = "<stuff-goes-here>";
+
+				ReporterDelegate (theReport);
+			}
 		}
 
 		private static PerformanceFrameData GetPerformanceFrameData()
@@ -679,6 +691,9 @@ namespace PlayScript
 			}
 			return sCurrentPerformanceFrameData;
 		}
+
+		public delegate void ReportDelegate (string report);
+		public static ReportDelegate ReporterDelegate { get; set; }
 
 		class SectionHistory
 		{
