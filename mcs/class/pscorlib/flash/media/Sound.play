@@ -58,6 +58,7 @@ package flash.media {
 		}
  	 	
 		public function load(stream:URLRequest, context:SoundLoaderContext = null):void {
+			_url = stream.url;
 			internalLoad(stream.url);
 		}
  	 	
