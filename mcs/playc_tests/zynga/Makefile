@@ -164,7 +164,7 @@ $(foreach folder,$(sort $(dir $(ALL_TEST_FILE_NAMES))),$(eval $(call define_copy
 #
 define define_run_test
 
-.PHONY .NOTPARALLEL: run-$(1)
+.PHONY: run-$(1)
 run-test: run-$(1)
 run-$(1): $(DESTDIR)/$(1).exe
 run-$(1):
