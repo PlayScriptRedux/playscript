@@ -982,8 +982,11 @@ namespace flash.display3D {
 				if ((mSamplerDirty & (1 << sampler)) != 0) {
 
 					// activate texture unit for GL
-					GL.ActiveTexture (TextureUnit.Texture0 + sampler);
-					GLUtils.CheckGLError ();
+					if (StateCache.updateActiveTextureSample(sampler)) 
+					{
+						GL.ActiveTexture (TextureUnit.Texture0 + sampler);
+						GLUtils.CheckGLError ();
+					}
 
 					// get texture for sampler
 					TextureBase texture = mSamplerTextures[sampler];
@@ -1008,8 +1011,12 @@ namespace flash.display3D {
 						#if PLATFORM_MONODROID
 						// set alpha texture
 						if (texture.alphaTexture != null) {
-							GL.ActiveTexture (TextureUnit.Texture4 + sampler);
-							GLUtils.CheckGLError ();
+
+							if (StateCache.updateActiveTextureSample(4 + sampler)) 
+							{
+								GL.ActiveTexture (TextureUnit.Texture4 + sampler);
+								GLUtils.CheckGLError ();
+							}
 
 							TextureBase alphaTexture = texture.alphaTexture;
 							var alphaTarget = alphaTexture.textureTarget;
@@ -1023,7 +1030,13 @@ namespace flash.display3D {
 							}
 						} 
 						else {
-							GL.ActiveTexture (TextureUnit.Texture4 + sampler);
+
+							if (StateCache.updateActiveTextureSample(4 + sampler)) 
+							{
+								GL.ActiveTexture (TextureUnit.Texture4 + sampler);
+								GLUtils.CheckGLError ();
+							}
+
 							GL.BindTexture( target, texture.textureId);
 						}
 						#endif
