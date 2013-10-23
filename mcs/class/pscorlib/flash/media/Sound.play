@@ -47,7 +47,9 @@ package flash.media {
  	 	//
  	 	 	 	 	 	
 		public function Sound(stream:URLRequest = null, context:SoundLoaderContext = null) {
+#if PLATFORM_MONOTOUCH
 			Init();
+#endif
 		}
 
  	 	public function close():void {
