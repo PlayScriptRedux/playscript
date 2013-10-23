@@ -47,6 +47,7 @@ package flash.media {
  	 	//
  	 	 	 	 	 	
 		public function Sound(stream:URLRequest = null, context:SoundLoaderContext = null) {
+			Init();
 		}
 
  	 	public function close():void {

@@ -12,6 +12,8 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
+//#define DEBUG_TRACE
+
 #if PLATFORM_MONOTOUCH
 
 using System;
@@ -30,12 +32,14 @@ namespace flash.media {
 	partial class Sound {
 
 		private const int ReportNumberOfPlayersAbove = 10;
+		private const int MaxNumberOfPlayingSounds = 3;
 
-		private static List<Sound> mPlayingSounds = new List<Sound>(ReportNumberOfPlayersAbove);
-		private static int MaxNumberOfPlayingSounds = 0;
+		private static List<Sound> sPlayingSounds = new List<Sound>(ReportNumberOfPlayersAbove);
 
 		private AVAudioPlayer mPlayer;
 		private SoundChannel mChannel;
+		private static int sNextId = 0;
+		private int mId;
 
 		private static List<Action> sAsyncEventDispatcher = new List<Action>();
 		private static object sSync = new object();
@@ -62,6 +66,23 @@ namespace flash.media {
 				NSData soundData = NSData.FromUrl(nsUrl);
 				sCachedSoundData.Add(soundFile, soundData);
 			}
+		}
+
+		[Conditional("DEBUG_TRACE")]
+		private static void GeneralDebugTrace(string text)
+		{
+			Console.WriteLine("[Sound] " + text);
+		}
+
+		[Conditional("DEBUG_TRACE")]
+		private void DebugTrace(string text)
+		{
+			Console.WriteLine("[Sound - " + mId + "] " + text);
+		}
+
+		private void Init()
+		{
+			mId = sNextId++;
 		}
 
 		private List<AVAudioPlayer> GetOrCreateRecycledAudioPlayerList()
@@ -140,80 +161,100 @@ namespace flash.media {
 			// This will aynway automatically be taken care of next time a sound is played, and this player will be recycled.
 		}
 
-		public void unload()
+		private void unload()
 		{
-			mPlayer.FinishedPlaying -= OnFinishedPlaying;		// Remove the event for this sound, another sound will register the event for this player
+			CheckInPlayingList(false);
 
-			// For the moment, this sound does not need a player anymore (but another sound might need the same later, so we recycle it).
-			GetOrCreateRecycledAudioPlayerList().Add(mPlayer);
-			mPlayer = null;
+			if (mPlayer != null)
+			{
+				mPlayer.FinishedPlaying -= OnFinishedPlaying;		// Remove the event for this sound, another sound will register the event for this player
+
+				// For the moment, this sound does not need a player anymore (but another sound might need the same later, so we recycle it).
+				GetOrCreateRecycledAudioPlayerList().Add(mPlayer);
+				mPlayer = null;
+			}
 		}
 
 		private static void RemoveUnusedAudioPlayers()
 		{
+			CheckValidity();
+
 			// Remove all the sounds that are done playing
-			int newCount = mPlayingSounds.Count;
+			int newCount = sPlayingSounds.Count;
 			for (int i = newCount - 1 ; i  >= 0 ; --i)
 			{
-				Sound sound = mPlayingSounds[i];
+				Sound sound = sPlayingSounds[i];
 				if (sound.mPlayer.Playing == false)
 				{
+					sound.DebugTrace("Remove finished sound.");
+
 					// We can remove this player as it is not playing anymore
 					// Swap it with last available sound (has already been parsed so we know we can keep it)
 					if (i != newCount - 1)
 					{
-						mPlayingSounds[i] = mPlayingSounds[newCount - 1];
+						sPlayingSounds[i] = sPlayingSounds[newCount - 1];
 					}
 					--newCount;
+					sPlayingSounds.RemoveAt(newCount);
 
 					sound.unload();
 				}
-			}
-			int toRemove = mPlayingSounds.Count - newCount;
-			if (toRemove != 0)
-			{
-				// Use an if test, easier to put a breakpoint when something has to be removed.
-				// Also we don't have to remove often
-				mPlayingSounds.RemoveRange(newCount, mPlayingSounds.Count - newCount);
+				else
+				{
+					sound.DebugTrace("Still playing.");
+				}
 			}
 
-			// Out of the remaining sounds, remove the sounds that are over the limit
-			// We should probably remove the sounds that are alsmost done instead of the last one in the list (this is a bit aggressive).
-			// Even better, we should just not start a new sound, also we should make sure to never kill music (or not skip music)
-			// TODO: Improve this
-			/*
-			while (mPlayingSounds.Count >= MaxNumberOfPlayingSounds)
+			Debug.Assert(sPlayingSounds.Count == newCount);
+			CheckValidity();
+		}
+
+		[Conditional("DEBUG")]
+		private static void CheckValidity()
+		{
+			HashSet<int> ids = new HashSet<int>();
+			for (int i = 0 ; i < sPlayingSounds.Count ; ++i)
 			{
-				int index = mPlayingSounds.Count - 1;
-				Sound sound = mPlayingSounds[index];
-				mPlayingSounds.RemoveAt(index);
-				sound.unload();
+				bool added = ids.Add(sPlayingSounds[i].mId);
+				Debug.Assert(added);
 			}
-			*/
+		}
+
+		[Conditional("DEBUG")]
+		private void CheckInPlayingList(bool expectInPlayingList)
+		{
+			bool inPlayingList = false;
+			for (int i = 0 ; i < sPlayingSounds.Count ; ++i)
+			{
+				if (sPlayingSounds[i].mId == mId)
+				{
+					inPlayingList = true;
+					break;
+				}
+			}
+			Debug.Assert(inPlayingList == expectInPlayingList);
+		}
+
+		private bool IsInPlayingList()
+		{
+			for (int i = 0 ; i < sPlayingSounds.Count ; ++i)
+			{
+				if (sPlayingSounds[i].mId == mId)
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 
 		private void internalLoad(String url)
 		{
-			_url = url.ToLowerInvariant();
-
-			// Instead of doing this every frame, we only do it when we play a new sound (it is less often)
-			// This still gives us opportunity to recycle audio players before a new one is needed
-			RemoveUnusedAudioPlayers();
+			_url = url;
 
 			mPlayer = GetOrCreateAudioPlayer();
 			if (null == mPlayer)
 			{
 				return;
-			}
-
-			mPlayingSounds.Add(this);
-			if (mPlayingSounds.Count > MaxNumberOfPlayingSounds)
-			{
-				MaxNumberOfPlayingSounds = mPlayingSounds.Count;		// Let's see how many sounds are played simultaneously
-				if (MaxNumberOfPlayingSounds >= ReportNumberOfPlayersAbove)
-				{
-					Console.WriteLine("{0} sounds playing simultaneously.", MaxNumberOfPlayingSounds);
-				}
 			}
 
 			mChannel = new SoundChannel();
@@ -224,25 +265,66 @@ namespace flash.media {
 
 		private SoundChannel internalPlay(double startTime = 0, int loops = 0, SoundTransform sndTransform = null)
         {
+			// Instead of doing this every frame, we only do it when we play a new sound (it is less often)
+			// This still gives us opportunity to recycle audio players before a new one is needed
+			RemoveUnusedAudioPlayers();
+
 			if (null == mPlayer && _url != null)
 				internalLoad (_url);
+			if (null == mPlayer)
+			{
+				DebugTrace("Could not load sound " + (_url != null ? _url : "<unknown>"));
+				return null;			// If we could not still load it, probably should add an error message
+			}
 
-			if (loops < 0)
-				loops = 0;
+			DebugTrace("Play sound " + _url);
 
-			mPlayer.NumberOfLoops = loops;
+			if (sPlayingSounds.Count >= MaxNumberOfPlayingSounds)
+			{
+				// Too many sounds, if that's mp3, we assume it is music, and in that case we don't skip this one...
+				if (_url.EndsWith(".mp3", StringComparison.InvariantCultureIgnoreCase) == false)
+				{
+					if (IsInPlayingList() == false)
+					{
+						DebugTrace("    Unloaded.");
+						unload();		// We can safely unload it if it is not in the playlist already
+					}
+					DebugTrace("    Skipped.");
+					return null;
+				}
+			}
 
-			//DispatchQueue.DefaultGlobalQueue.DispatchAsync (() => {
+			// We add it to the playing sounds only if it does not actually plays
+			if (IsInPlayingList() == false)
+			{
+				// Not already in the list, add it and play it
+				Debug.Assert(mPlayer.Playing == false);
+				CheckInPlayingList(false);
+				sPlayingSounds.Add(this);
+				CheckInPlayingList(true);
+
+				if (sPlayingSounds.Count >= ReportNumberOfPlayersAbove)
+				{
+					GeneralDebugTrace(sPlayingSounds.Count.ToString() + " sounds playing simultaneously.");
+				}
+			}
+
+			mPlayer.NumberOfLoops = (loops > 0) ? loops : 0;
+
+			if (mPlayer.Playing == false)
+			{
+				//DispatchQueue.DefaultGlobalQueue.DispatchAsync (() => {
 				if (startTime > 0)
-					mPlayer.PlayAtTime (startTime);
+					mPlayer.PlayAtTime(startTime);
 				else
-					mPlayer.Play ();
-			//});
-
-			/*
-			var t = MonoTouch.AudioToolbox.SystemSound.FromFile(_url);
-			t.PlaySystemSound();
-			*/
+					mPlayer.Play();
+				//});
+			}
+			else
+			{
+				DebugTrace("    Was already playing.");
+			}
+	
 			return mChannel;
         }
 
