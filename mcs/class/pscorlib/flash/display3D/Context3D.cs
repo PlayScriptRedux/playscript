@@ -982,11 +982,8 @@ namespace flash.display3D {
 				if ((mSamplerDirty & (1 << sampler)) != 0) {
 
 					// activate texture unit for GL
-					if (StateCache.updateActiveTextureSample(sampler)) 
-					{
-						GL.ActiveTexture (TextureUnit.Texture0 + sampler);
-						GLUtils.CheckGLError ();
-					}
+					GL.ActiveTexture (TextureUnit.Texture0 + sampler);
+					GLUtils.CheckGLError ();
 
 					// get texture for sampler
 					TextureBase texture = mSamplerTextures[sampler];
