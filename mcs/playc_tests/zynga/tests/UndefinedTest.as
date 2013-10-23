@@ -80,7 +80,20 @@ package
 			if (a[key] != 4)
 				return 21;
 
+			var undef:* = undefined;
+			try {
+				var a:A = undef; // should throw System.InvalidCastException (should really be "TypeError: Error #1034")
+				return 22;
+			} catch (e1:System.InvalidCastException) {
+				// good
+			} catch (e2:*) {
+				return 23;
+			}
 			return 0;
 		}
 	}
+}
+
+class A
+{
 }

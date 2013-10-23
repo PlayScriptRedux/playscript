@@ -847,19 +847,25 @@ namespace Mono.CSharp
 			}
 
 			if (rc.Module.PredefinedTypes.IsPlayScriptAotMode && rc.Module.Compiler.Settings.NewDynamicRuntime_Convert) {
-				return CreateDynamicConversion(rc, expr.Resolve(rc), this.Type).Resolve(rc);
+				var conversion = CreateDynamicConversion (rc, expr.Resolve (rc), this.Type);
+				if (conversion != null)
+					return conversion.Resolve (rc);
 			}
 
 			return base.DoResolve(rc);
 		}
 
 		#region IDynamicCallSite implementation
+
 		public static Expression CreateDynamicConversion(ResolveContext rc, Expression expr, TypeSpec target_type)
 		{
-			if ((target_type.IsClass || target_type.IsInterface) && (target_type.BuiltinType != BuiltinTypeSpec.Type.String)){
-				// perform empty cast to reference type
+			// object can hold any value
+			if (target_type.BuiltinType == BuiltinTypeSpec.Type.Object)
 				return EmptyCast.Create(expr, target_type, rc);
-			}
+
+			// other class types must be type checked - fall back to the slow path
+			if ((target_type.IsClass || target_type.IsInterface) && target_type.BuiltinType != BuiltinTypeSpec.Type.String)
+				return null;
 
 			TypeSpec converter = rc.Module.PredefinedTypes.PsConverter.Resolve();
 
