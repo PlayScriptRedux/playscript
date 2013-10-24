@@ -29,6 +29,10 @@ namespace PlayScript
 		public static bool DisableTraces = true;			// set to true to disable traces during profiling session
 		public static long LastTelemetryFrameSpanStart = long.MaxValue;
 
+		public static bool FrameSkippingEnabled = false;
+		public static int  NextFramesElapsed = 1;
+		public static int  MaxNumberOfFramesElapsed = 0;
+
 		// if telemetryName is provided then it will be used for the name sent to telemetry when this section is entered
 		public static string Begin(string name, string telemetryName = null)
 		{
@@ -107,6 +111,8 @@ namespace PlayScript
 
 			// reset all counters
 			sFrameCount = 0;
+			MaxNumberOfFramesElapsed = 0;
+			NextFramesElapsed = 1;
 		}
 
 		public static void OnFrame()
@@ -137,6 +143,9 @@ namespace PlayScript
 			}
 #endif
 
+			sFrameCount += NextFramesElapsed;
+			MaxNumberOfFramesElapsed = Math.Max(MaxNumberOfFramesElapsed, NextFramesElapsed);
+
 			// update all sections
 			foreach (Section section in sSectionList) {
 				section.TotalTime += section.Timer.Elapsed;
@@ -162,7 +171,6 @@ namespace PlayScript
 				section.NumberOfCalls = 0;
 			}
 
-			sFrameCount++;
 			if (!sDoReport) {
 				// normal profiling, just print out every so often
 				if ((sPrintFrameCount!=0) && (sFrameCount >= sPrintFrameCount)) {
@@ -185,7 +193,7 @@ namespace PlayScript
 					OnStartReport();
 				}
 			}
-		
+
 			LastTelemetryFrameSpanStart = Telemetry.Session.BeginSpan();
 			Profiler.Begin("frame");
 		}
@@ -207,6 +215,8 @@ namespace PlayScript
 			sReportName = reportName;
 			sReportFrameCount = frameCount;
 			sReportStartDelay = reportStartDelay;
+			MaxNumberOfFramesElapsed = 0;
+			NextFramesElapsed = 1;
 
 			Console.WriteLine("Starting profiling session: {0} frames:{1} frameDelay:", reportName, frameCount, reportStartDelay);
 		}
@@ -513,8 +523,17 @@ namespace PlayScript
 
 			tw.WriteLine("************* Session *************");
 
-			tw.WriteLine("Total Frames:  {0}", sFrameCount);
+			tw.WriteLine("Total Frames:  {0}", sReportFrameCount);
+			tw.WriteLine("Real Frames:   {0}", sFrameCount);
 			tw.WriteLine("Total Time:    {0}", sReportTime.Elapsed);
+			if (FrameSkippingEnabled)
+			{
+				tw.WriteLine("Frame Skipping:Yes - Max Frame skipped: {0}", MaxNumberOfFramesElapsed - 1);		// -1 because the first frame is not really skipped.
+			}
+			else
+			{
+				tw.WriteLine("Frame Skipping:No");
+			}
 			PerformanceFrameData performanceFrameData = GetPerformanceFrameData();
 			PrintAverageClamped(tw, "frame", performanceFrameData.FastFrame);
 			PrintPercentile(tw, "frame", 95);
@@ -589,7 +608,7 @@ namespace PlayScript
 
 
 		/// <summary>
-		/// This is called when a profilng report is ended
+		/// This is called when a profiling report is ended
 		/// </summary>
 		private static void OnEndReport()
 		{
