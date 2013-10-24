@@ -75,6 +75,7 @@ namespace PlayScript
 			}
 
 			section.Timer.Stop();
+			section.NumberOfCalls += 1;
 			if (section.Span != null)
 				section.Span.End();
 			section.Stats.Add(PlayScript.Stats.CurrentInstance);
@@ -148,6 +149,7 @@ namespace PlayScript
 
 					var history = new SectionHistory();
 					history.Time = section.Timer.Elapsed;
+					history.NumberOfCalls = section.NumberOfCalls;
 					for (int i = sGCMinGeneration ; i < Profiler.sGCMaxGeneration ; ++i) {
 						history.GCCounts[i] = section.GCCounts[i];
 					}
@@ -157,6 +159,7 @@ namespace PlayScript
 					section.GCCounts[i] = 0;
 				}
 				section.Timer.Reset();
+				section.NumberOfCalls = 0;
 			}
 
 			sFrameCount++;
@@ -280,13 +283,17 @@ namespace PlayScript
 		public static void PrintHistory(TextWriter tw)
 		{
 			tw.Write("{0,4} ", "");
-			foreach (Section section in sSectionList.OrderBy(a => -a.TotalTime)) 
+
+			var sortedSections = sSectionList.OrderBy(a => -a.TotalTime);
+			char c = 'a';	// Shorthand so we can reference numbers more easily
+			foreach (Section section in sortedSections)
 			{
 				if (section.Skipped) {
 					continue;
 				}
 
-				tw.Write("{0,12}{1} ", section.Name, ' ');
+				tw.Write("{0,12}{1}{2} ", section.Name, ' ', c);
+				++c;
 
 				// pad history with zeros if necessary
 				while (section.History.Count < sFrameCount) {
@@ -296,15 +303,16 @@ namespace PlayScript
 			tw.WriteLine();
 
 			tw.WriteLine("---------------------------");
-			int numberOfFramesToPrint = Math.Min(sFrameCount, MaxNumberOfFramesPrintedInHistory);
 			int[] gcCounts = new int[sGCMaxGeneration];
-			for (int frame=0; frame < numberOfFramesToPrint; frame++)
+			for (int frame=0; frame < sFrameCount; frame++)
 			{
 				tw.Write("{0,4}:", frame);
 				for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
 					gcCounts[i] = 0;
 				}
-				foreach (Section section in sSectionList) 
+
+				c = 'a';	// Shorthand so we can reference numbers more easily
+				foreach (Section section in sortedSections) 
 				{
 					var history = section.History[frame];
 					string collect = "";
@@ -314,7 +322,9 @@ namespace PlayScript
 						}
 						gcCounts[i] += history.GCCounts[i];
 					}
-					tw.Write("{0,12:0.00}{1,3} ", history.Time.TotalMilliseconds, (collect != string.Empty) ? "*" + collect : "" );
+					string numberOfCalls = (history.NumberOfCalls > 1) ? history.NumberOfCalls.ToString() + "x" : "";
+					tw.Write("{3,6}{0,6:0.00}{1,3}{2} ", history.Time.TotalMilliseconds, (collect != string.Empty) ? "*" + collect : "", c, numberOfCalls);
+					++c;
 				}
 				if (gcCounts[sGCMaxGeneration - 1] > 0) {
 					tw.Write("    <=== GC max occurred");
@@ -486,7 +496,7 @@ namespace PlayScript
 			tw.WriteLine("{0}: {1,4:0.0}%                             {2}", text, (double)(100.0 * matchingFrames) / (double)sFrameCount, additionalText);
 		}
 
-		private static void PrintReport(TextWriter tw)
+		private static void PrintReport(TextWriter tw, bool full)
 		{
 			tw.WriteLine("******** Profiling report *********");
 			tw.WriteLine("ReportName:    {0}", sReportName);
@@ -525,8 +535,11 @@ namespace PlayScript
 			tw.WriteLine("***** Dynamic Runtime Stats ******");
 			PrintStats(tw);
 
-			tw.WriteLine("************ History *************");
-			PrintHistory(tw);
+			if (full)
+			{
+				tw.WriteLine("************ History *************");
+				PrintHistory(tw);
+			}
 
 			tw.WriteLine("**********************************");
 		}
@@ -601,7 +614,7 @@ namespace PlayScript
 				var path = Path.Combine(profileLogDir, "profile-" + id + ".log");
 				Console.WriteLine("Writing profiling report to: {0}", path);
 				using (var sw = new StreamWriter(path)) {
-					PrintReport(sw);
+					PrintReport(sw, true);
 				}
 
 				if (recording != null)	{
@@ -612,8 +625,8 @@ namespace PlayScript
 				}
 			}
 
-			// print to console 
-			PrintReport(System.Console.Out);
+			// print to console (not the full version though)
+			PrintReport(System.Console.Out, false);
 		}
 
 		private static PerformanceFrameData GetPerformanceFrameData()
@@ -651,6 +664,7 @@ namespace PlayScript
 		class SectionHistory
 		{
 			public TimeSpan Time;
+			public int		NumberOfCalls;
 			public int[]	GCCounts = new int[Profiler.sGCMaxGeneration];
 		};
 
@@ -667,6 +681,7 @@ namespace PlayScript
 			public Int64				CurrentUsedMemory;
 			public Telemetry.Span		Span;
 			public bool					Skipped;
+			public int					NumberOfCalls;
 		};
 
 		private static Stopwatch sGlobalTimer = Stopwatch.StartNew();
@@ -676,7 +691,6 @@ namespace PlayScript
 		// ordered list of sections
 		private static List<Section> sSectionList = new List<Section>();
 		private static int sFrameCount  = 0;
-		public static int MaxNumberOfFramesPrintedInHistory = 1000;
 
 		// the frequency to print profiiling info
 		private static int sPrintFrameCount  = 60;
