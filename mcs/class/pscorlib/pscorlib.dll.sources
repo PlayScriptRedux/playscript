@@ -93,6 +93,7 @@
 ./flash/display/TriangleCulling.play
 ./flash/display3D/AGALConverter.cs
 ./flash/display3D/Context3D.cs
+./flash/display3D/Context3DStateCache.cs
 ./flash/display3D/Context3DBlendFactor.play
 ./flash/display3D/Context3DClearMask.play
 ./flash/display3D/Context3DCompareMode.play
@@ -256,6 +257,7 @@
 ./int.cs
 ./JSON.play
 ./Math.play
+./MiniJson/Json.cs
 ./mx/graphics/codec/IImageEncoder.play
 ./mx/graphics/codec/JPEGEncoder.play
 ./mx/graphics/codec/PNGEncoder.play

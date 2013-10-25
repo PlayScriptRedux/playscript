@@ -93,6 +93,7 @@
 ../pscorlib/flash/display/TriangleCulling.play
 ../pscorlib/flash/display3D/AGALConverter.cs
 ../pscorlib/flash/display3D/Context3D.cs
+../pscorlib/flash/display3D/Context3DStateCache.cs
 ../pscorlib/flash/display3D/Context3DBlendFactor.play
 ../pscorlib/flash/display3D/Context3DClearMask.play
 ../pscorlib/flash/display3D/Context3DCompareMode.play
@@ -256,6 +257,7 @@
 ../pscorlib/int.cs
 ../pscorlib/JSON.play
 ../pscorlib/Math.play
+../pscorlib/MiniJson/Json.cs
 ../pscorlib/mx/graphics/codec/IImageEncoder.play
 ../pscorlib/mx/graphics/codec/JPEGEncoder.play
 ../pscorlib/mx/graphics/codec/PNGEncoder.play

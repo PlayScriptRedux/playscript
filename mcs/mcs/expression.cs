@@ -3662,7 +3662,21 @@ namespace Mono.CSharp
 			// Handle PlayScript binary operators that need to be converted to methods.
 			if (ec.FileType == SourceFileType.PlayScript) {
 				if (ec.Target != Target.JavaScript) {
+					//
+					// Restrict bitwise operations to the proper numeric types
+					//
+					if (oper == Operator.BitwiseOr || oper == Operator.BitwiseAnd) {
+						if (!left.Type.IsNumeric || !right.Type.IsNumeric) {
+							ec.Report.Error (7025, loc, "Bitwise operators are not permitted between types `{0}' and `{1}'",
+							                 left.Type.GetSignatureForError (),
+							                 right.Type.GetSignatureForError ());
+							return null;
+						}
+					}
+
+					//
 					// Delegate to PlayScript.Dynamic.IsNullOrUndefined where possible
+					//
 					if (Oper == Operator.Equality || Oper == Operator.Inequality) {
 						if (left.Type == ec.BuiltinTypes.Dynamic && (right is NullLiteral || right.Type == ec.Module.PredefinedTypes.AsUndefined.Resolve ()))
 							return PsMakeIsNullOrUndefinedExpression (ec, left).Resolve (ec);
@@ -3726,15 +3740,19 @@ namespace Mono.CSharp
 						right = new Cast(new TypeExpression(ec.BuiltinTypes.Double, loc), right, loc).Resolve (ec);
 					}
 				}
-				// If we're doing any string operations prefer "object" vs. "dynamic"
-				if (left.Type == ec.BuiltinTypes.Dynamic && right.Type == ec.BuiltinTypes.String) {
-					left = EmptyCast.Create(left, ec.BuiltinTypes.Object, ec);
-				} else if (right.Type == ec.BuiltinTypes.Dynamic && left.Type == ec.BuiltinTypes.String) {
-					right = EmptyCast.Create(right, ec.BuiltinTypes.Object, ec);
-				}
 
+				//
+				// If we're doing any string operations prefer "string" vs. "dynamic"
+				//
+				if (left.Type == ec.BuiltinTypes.Dynamic && right.Type == ec.BuiltinTypes.String)
+					left = Convert.ImplicitConversion (ec, left, ec.BuiltinTypes.String, loc).Resolve (ec);
+				else if (right.Type == ec.BuiltinTypes.Dynamic && left.Type == ec.BuiltinTypes.String)
+					right = Convert.ImplicitConversion (ec, right, ec.BuiltinTypes.String, loc).Resolve (ec);
+
+				//
 				// In PlayScript, if either side of an addition operator is a string, convert the other side
 				// to string as well. This is necessary to resolve ambiguities between object and string.
+				//
 				if (oper == Operator.Addition) {
 					if (left.Type.BuiltinType == BuiltinTypeSpec.Type.String && right.Type.BuiltinType != BuiltinTypeSpec.Type.String)
 						right = Convert.ImplicitConversion (ec, right, ec.BuiltinTypes.String, loc).Resolve (ec);

@@ -346,6 +346,31 @@ namespace Mono.CSharp
 			}
 		}
 
+		public virtual bool IsNumeric {
+			get {
+				switch (BuiltinType) {
+				case BuiltinTypeSpec.Type.Byte:
+				case BuiltinTypeSpec.Type.SByte:
+				case BuiltinTypeSpec.Type.Char:
+				case BuiltinTypeSpec.Type.Short:
+				case BuiltinTypeSpec.Type.UShort:
+				case BuiltinTypeSpec.Type.Int:
+				case BuiltinTypeSpec.Type.UInt:
+				case BuiltinTypeSpec.Type.Long:
+				case BuiltinTypeSpec.Type.ULong:
+				case BuiltinTypeSpec.Type.Float:
+				case BuiltinTypeSpec.Type.Double:
+				case BuiltinTypeSpec.Type.Decimal:
+				case BuiltinTypeSpec.Type.IntPtr:
+				case BuiltinTypeSpec.Type.UIntPtr:
+				case BuiltinTypeSpec.Type.Enum:
+					return true;
+				default:
+					return false;
+				}
+			}
+		}
+
 		//
 		// A cache of all type members (including nested types)
 		//
