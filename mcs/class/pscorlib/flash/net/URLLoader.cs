@@ -12,6 +12,7 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 using System;
+using System.Diagnostics;
 using System.Net;
 
 namespace flash.net {
@@ -34,6 +35,38 @@ namespace flash.net {
 				var action = (Action)iar.AsyncState;
 				action.EndInvoke(iar);
 			}), wrapperAction);
+		}
+
+		[Conditional("TRACE_ACCURATE_METRICS")]
+		private void TraceAccurateMetricsStartLoading()
+		{
+			_root.trace_fn.trace("@@@ Start loading ", mRequest.url);
+			startLoadTime = Stopwatch.GetTimestamp();
+		}
+
+		[Conditional("TRACE_ACCURATE_METRICS")]
+		private void TraceAccurateMetricsEndLoading()
+		{
+			_root.trace_fn.trace("@@@ End loading ", mRequest.url);
+			endLoadTime = Stopwatch.GetTimestamp();
+		}
+
+		[Conditional("TRACE_ACCURATE_METRICS")]
+		private void TraceAccurateMetricsStartDispatching()
+		{
+			startDispatchTime = Stopwatch.GetTimestamp();
+		}
+
+		[Conditional("TRACE_ACCURATE_METRICS")]
+		private void TraceAccurateMetricsEndDispatching()
+		{
+			endDispatchTime = Stopwatch.GetTimestamp();
+
+			double ticksPerSecond = (double)Stopwatch.Frequency;
+
+			double loadTimeInSeconds = (double)(endLoadTime - startLoadTime) / ticksPerSecond;
+			double dispatchTimeInSeconds = (double)(endDispatchTime - startDispatchTime) / ticksPerSecond;
+			_root.trace_fn.trace("@@@ End dispatching ", mRequest.url, " --- load: ", loadTimeInSeconds, " dispatch: ", dispatchTimeInSeconds );
 		}
 	}
 

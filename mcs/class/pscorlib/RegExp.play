@@ -23,7 +23,7 @@ package {
 		//
 		
 		public property dotall : Boolean { 
- 	 		get { return mDoTail;} 
+			get { return (mRegex.Options & RegexOptions.Singleline) != 0; }
  	 	}
  	 	public property extended : Boolean { 
  	 		get { return mExtended;} 
@@ -32,13 +32,13 @@ package {
  	 		get { return mGlobal;} 
  	 	}
  	 	public property ignoreCase : Boolean { 
- 	 		get { return (mRegex.Options & RegexOptions.IgnoreCase) != 0;} 
+ 	 		get { return (mRegex.Options & RegexOptions.IgnoreCase) != 0; }
  	 	}
  	 	public property lastIndex : Number { 
- 	 		get { throw new NotImplementedException();} 
+			get { return mLastIndex; } 
  	 	}
  	 	public property multiline : Boolean { 
- 	 		get { return (mRegex.Options & RegexOptions.Multiline) != 0;} 
+ 	 		get { return (mRegex.Options & RegexOptions.Multiline) != 0; }
  	 	}
  	 	
  	 	public property source : String { 
@@ -66,40 +66,89 @@ package {
 					mExtended = true;
 					break;
 				case "s":
-					mDoTail = true;
+					options |= RegexOptions.Singleline;
 					break;
 				default:
 					throw new NotImplementedException();
 				}
 			}
 
+			// In extended mode, unescaped whitespace characters are removed.
+			if (mExtended) {
+				re = Regex.Replace(re, "((?<!\\\\))\\s+", "$1");
+			}
+
 			mSource = re;
 			mRegex = new Regex(re, options);
+			mLastIndex = 0;
 		}
 
 		public function exec(str:String):Object {
-			var m = mRegex.Match(str);
+			var m = mRegex.Match(str, mLastIndex);
 			if (m.Success) {
+				if (mGlobal) {
+					mLastIndex = m.Index + m.Value.Length;
+				}
 				var a:Array = [];
-				// a.push(m.Value);
+				a["index"] = m.Index;
+				a["input"] = str;
 				for each (var g:Group in m.Groups) {
 					a.push(g.Value);
 				}
 				return a;
-			} else
-			{
-				return null;
 			}
+			return null;
 		}
  	 	
 		public function test(str:String):Boolean {
-			return mRegex.IsMatch(str);
+			var m = mRegex.Match(str, mLastIndex);
+			if (m.Success) {
+				if (mGlobal) {
+					mLastIndex = m.Index + m.Value.Length;
+				}
+				return true;
+			}
+			return false;
 		}
 		
 		public function replace(str:String, replaceWith:String):String {
-			return mRegex.Replace(str, replaceWith);
+			if (mGlobal) {
+				return mRegex.Replace(str, replaceWith);
+			} else {
+				return mRegex.Replace(str, replaceWith, 1);
+			}
 		}
-		
+
+		public function replace(str:String, replacer:Delegate):String {
+			//
+			// Create a MatchEvaluator wrapper function to call the replacer function
+			// according to the rules defined here:
+			//
+			// http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/String.html#replace()
+			//
+			var evaluator:MatchEvaluator = new MatchEvaluator(function (m:Match):String {
+				var results:System.Object[] = new System.Object[m.Groups.Count + 2];
+				var i:int = 0;
+				for each (var g:Group in m.Groups) {
+					results[i++] = g.Value;
+				}
+				results[i++] = m.Index;
+				results[i++] = str;
+				// Need to call the replacer function using Invoke rather than calling
+				// it directly so that it is called with n arguments instead of 1 argument
+				// (the single argument being an array of n elements).
+				var args:System.Object[] = new System.Object[1];
+				args[0] = results;
+				return replacer.Method.Invoke(replacer.Target, args);
+			});
+
+			if (mGlobal) {
+				return mRegex.Replace(str, evaluator);
+			} else {
+				return mRegex.Replace(str, evaluator, 1);
+			}
+		}
+
 		public function search(str:String):int {
 			var m = mRegex.Match(str);
 			if (!m.Success) {
@@ -119,8 +168,7 @@ package {
 			return a;
 		}
 		
-		public function split(str:String):Array
-		{
+		public function split(str:String):Array {
 			var a:Array = new Array();
 
 			var lastIndex:int = 0;
@@ -149,7 +197,7 @@ package {
 			// push everything after last match
 			var end:String = str.Substring(lastIndex, str.Length - lastIndex);
 			a.push(end);
-									
+								
 			return a;
 		}
 		
@@ -157,8 +205,7 @@ package {
 		var mSource:String;
 		var mGlobal:Boolean;
 		var mExtended:Boolean;
-		var mDoTail:Boolean;
-	
+		var mLastIndex:Number;
 	}
 
 }

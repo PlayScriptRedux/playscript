@@ -34,6 +34,7 @@ namespace flash.display3D.textures {
 	using TextureParameterName = OpenTK.Graphics.ES20.All;
 	using Android.Opengl;
 	using Java.Nio;
+	using GLUtils = flash.display3D.GLUtils;
 #endif
 
 	public class Texture : TextureBase {
@@ -157,6 +158,7 @@ namespace flash.display3D.textures {
 								// upload from data position
 								var address = new IntPtr(ptr + data.position);
 								GL.CompressedTexImage2D(textureTarget, level, pixelFormat, width, height, 0, (int)blockLength, address);							
+								mAllocated = true;
 							}
 							trackCompressedMemoryUsage((int)blockLength);
 							#endif
@@ -170,14 +172,22 @@ namespace flash.display3D.textures {
 							{
 								var address = new IntPtr(ptr + data.position);
 								GL.CompressedTexImage2D(textureTarget, level, All.Etc1Rgb8Oes, width, height, 0, (int)textureLength, address);
+
+								GLUtils.CheckGLError ();
+
+								mAllocated = true;
 								if (textureLength < blockLength)
 								{
 									mAlphaTexture = new Texture(mContext, width, height, mFormat, mOptimizeForRenderToTexture, mStreamingLevels);
 									var alphaAddress = new IntPtr(ptr + data.position + textureLength);
 
 									GL.BindTexture (mAlphaTexture.textureTarget, mAlphaTexture.textureId);
+									GLUtils.CheckGLError ();
 									GL.CompressedTexImage2D(mAlphaTexture.textureTarget, level, All.Etc1Rgb8Oes, width, height, 0, textureLength, alphaAddress);
+									GLUtils.CheckGLError ();
 									GL.BindTexture (mAlphaTexture.textureTarget, 0);
+									GLUtils.CheckGLError ();
+									mAllocated = true;
 								}
 								else 
 								{
@@ -185,9 +195,13 @@ namespace flash.display3D.textures {
 									var clearData = new BitmapData(width, height, true, 0xFFFFFFFF);
 
 									GL.BindTexture (mAlphaTexture.textureTarget, mAlphaTexture.textureId);
+									GLUtils.CheckGLError ();
 									GL.TexImage2D (mAlphaTexture.textureTarget, level, (int) PixelInternalFormat.Rgba, 1, 1, 0, PixelFormat.Rgba, PixelType.UnsignedByte, clearData.getRawData());
+									GLUtils.CheckGLError ();
 									GL.BindTexture (mAlphaTexture.textureTarget, 0);
+									GLUtils.CheckGLError ();
 
+									mAllocated = true;
 									clearData.dispose();
 								}
 							}
@@ -226,8 +240,12 @@ namespace flash.display3D.textures {
 			{
 				// Bind the texture
 				GL.BindTexture (textureTarget, textureId);
+				GLUtils.CheckGLError ();
+
 				uploadATFTextureFromByteArray(data, byteArrayOffset);
+
 				GL.BindTexture (textureTarget, 0);
+				GLUtils.CheckGLError ();
 
 			}
 			else 
@@ -241,6 +259,7 @@ namespace flash.display3D.textures {
 
 			// Bind the texture
 			GL.BindTexture (textureTarget, textureId);
+			GLUtils.CheckGLError ();
 
 			if (byteArrayOffset != 0) {
 				throw new NotSupportedException();
@@ -253,17 +272,20 @@ namespace flash.display3D.textures {
 			OpenTK.Graphics.ES20.PixelInternalFormat pixelFormat = (OpenTK.Graphics.ES20.PixelInternalFormat)0x8C02;
 
 			GL.CompressedTexImage2D(textureTarget, 0, pixelFormat, mWidth, mHeight, 0, dataLength, data.getRawArray());
+			mAllocated = true;
 		#elif PLATFORM_MONODROID		
 			data.position = 16; // skip the header
 			int dataLength = ((int)data.length) - 16;
 
 			GL.CompressedTexImage2D<byte>(textureTarget, 0, All.Etc1Rgb8Oes, mWidth, mHeight, 0, dataLength, data.getRawArray());
+			mAllocated = true;
 		#endif
 
 			trackCompressedMemoryUsage(dataLength);
 
 			// unbind texture and pixel buffer
 			GL.BindTexture (textureTarget, 0);
+			GLUtils.CheckGLError ();
 #endif
 			}
 
@@ -288,6 +310,7 @@ namespace flash.display3D.textures {
 
 			// Bind the texture
 			GL.BindTexture (textureTarget, textureId);
+			GLUtils.CheckGLError ();
 
 			#if PLATFORM_MONOMAC
 	            if (generateMipmap) {
@@ -297,18 +320,24 @@ namespace flash.display3D.textures {
 
 			#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
 				GL.TexImage2D(textureTarget, (int)miplevel, PixelInternalFormat.Rgba, mWidth, mHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte,source.getRawData());
+				mAllocated = true;
 			#elif PLATFORM_MONODROID
 				GL.TexImage2D<uint>(textureTarget, (int)miplevel, (int) PixelInternalFormat.Rgba, mWidth, mHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte, source.getRawData());
+				GLUtils.CheckGLError ();
+				mAllocated = true;
 			#endif
 
 			#if PLATFORM_MONOTOUCH || PLATFORM_MONODROID
             	GL.GenerateMipmap(textureTarget);
+				GLUtils.CheckGLError ();
 			#endif
 
 			// unbind texture and pixel buffer
 			GL.BindTexture (textureTarget, 0);
+			GLUtils.CheckGLError ();
 
-			source.dispose();				
+			// Uhh... no!  BEN
+//			source.dispose();				
 
 			// store memory usaged by texture
 			trackMemoryUsage(memUsage);

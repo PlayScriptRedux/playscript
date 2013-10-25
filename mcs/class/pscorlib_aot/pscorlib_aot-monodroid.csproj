@@ -60,6 +60,7 @@
     <Folder Include="flash\globalization\" />
     <Folder Include="flash\external\" />
     <Folder Include="flash\media\android\" />
+    <Folder Include="mx\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>
@@ -116,6 +117,9 @@
     </Compile>
     <Compile Include="..\pscorlib\Math.play">
       <Link>Math.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\MiniJson\Json.cs">
+      <Link>Json.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Namespace.play">
       <Link>Namespace.play</Link>
@@ -840,11 +844,20 @@
     <Compile Include="..\pscorlib\Amf\Amf3ClassDef.cs">
       <Link>Amf\Amf3ClassDef.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3CodeGen.cs">
+      <Link>Amf\Amf3CodeGen.cs</Link>
+    </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3Object.cs">
       <Link>Amf\Amf3Object.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3Parser.cs">
       <Link>Amf\Amf3Parser.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Reader.cs">
+      <Link>Amf\Amf3Reader.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Variant.cs">
+      <Link>Amf\Amf3Variant.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3TypeCode.cs">
       <Link>Amf\Amf3TypeCode.cs</Link>
@@ -908,6 +921,24 @@
     </Compile>
     <Compile Include="..\pscorlib\PlayScript\Hardware.cs">
       <Link>PlayScript\Hardware.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\mx\graphics\codec\IImageEncoder.play">
+      <Link>mx\graphics\codec\IImageEncoder.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\mx\graphics\codec\JPEGEncoder.play">
+      <Link>mx\graphics\codec\JPEGEncoder.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\mx\graphics\codec\PNGEncoder.play">
+      <Link>mx\graphics\codec\PNGEncoder.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\display3D\GLUtils.cs">
+      <Link>flash\display3D\GLUtils.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\display\BitmapData.cs">
+      <Link>flash\display\BitmapData.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\display3D\Context3DStateCache.cs">
+      <Link>flash\display3D\Context3DStateCache.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

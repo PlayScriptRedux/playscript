@@ -268,7 +268,7 @@ package {
 		}
 		
 		public override function toString():String {
-            return super.toString();
+			return toXMLString();
 		}
 		
 		public function toXMLString():String {

@@ -464,7 +464,7 @@ namespace Telemetry
 		{
 			if (!Enabled) {
 				// telemetry is not enabled
-				Console.WriteLine("Telemetry: did record, telemetry not enabled");
+				Console.WriteLine("Telemetry: did not record, telemetry not enabled");
 				return false;
 			}
 
@@ -510,7 +510,7 @@ namespace Telemetry
 		{
 			if (!Enabled) {
 				// telemetry is not enabled
-				Console.WriteLine("Telemetry: did send recording, telemetry not enabled");
+				Console.WriteLine("Telemetry: did not send recording, telemetry not enabled");
 				return;
 			}
 
@@ -544,7 +544,7 @@ namespace Telemetry
 		{
 			if (!Enabled) {
 				// telemetry is not enabled
-				Console.WriteLine("Telemetry: did save recording, telemetry not enabled");
+				Console.WriteLine("Telemetry: did not save recording, telemetry not enabled");
 				return;
 			}
 

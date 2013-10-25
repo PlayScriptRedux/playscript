@@ -44,10 +44,10 @@
     <Reference Include="System.Xml" />
     <Reference Include="System.Drawing" />
     <Reference Include="ICSharpCode.SharpZipLib" />
-    <Reference Include="System.Json">
-      <HintPath>..\lib\net_4_0\System.Json.dll</HintPath>
-    </Reference>
     <Reference Include="System.Web" />
+    <Reference Include="System.Json">
+      <HintPath>..\lib\net_4_5\System.Json.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -104,6 +104,9 @@
     </Compile>
     <Compile Include="..\pscorlib\Math.play">
       <Link>Math.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\MiniJson\Json.cs">
+      <Link>Json.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Namespace.play">
       <Link>Namespace.play</Link>
@@ -878,10 +881,40 @@
       <Link>Amf\Amf3SerializableAttribute.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\media\mac\Sound.cs">
-      <Link>flash\media\SoundMac.cs</Link>
+      <Link>flash\media\mac\Sound.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\media\mac\SoundChannel.cs">
-      <Link>flash\media\SoundChannelMac.cs</Link>
+      <Link>flash\media\mac\SoundChannel.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\mx\graphics\codec\IImageEncoder.play">
+      <Link>mx\graphics\codec\IImageEncoder.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\mx\graphics\codec\JPEGEncoder.play">
+      <Link>mx\graphics\codec\JPEGEncoder.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\mx\graphics\codec\PNGEncoder.play">
+      <Link>mx\graphics\codec\PNGEncoder.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3CodeGen.cs">
+      <Link>Amf\Amf3CodeGen.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Reader.cs">
+      <Link>Amf\Amf3Reader.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Variant.cs">
+      <Link>Amf\Amf3Variant.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\display3D\GLUtils.cs">
+      <Link>flash\display3D\GLUtils.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\PlayScript\ParamsDelegateTypes.cs">
+      <Link>PlayScript\ParamsDelegateTypes.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\display\BitmapData.cs">
+      <Link>flash\display\BitmapData.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\display3D\Context3DStateCache.cs">
+      <Link>flash\display3D\Context3DStateCache.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>
@@ -894,6 +927,8 @@
     <Folder Include="fl\events\" />
     <Folder Include="fl\controls\listClasses\" />
     <Folder Include="Telemetry\" />
+    <Folder Include="mx\" />
+    <Folder Include="flash\media\mac\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net.csproj">

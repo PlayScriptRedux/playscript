@@ -99,7 +99,7 @@ namespace Amf
                 return;
             }
 
-			var serializable = obj as IAmf3Serializable;
+			var serializable = obj as IAmf3Writable;
 			if (serializable != null) {
 				serializable.Serialize(this);
                 return;
@@ -693,7 +693,7 @@ namespace Amf
 				if (classDef.Dynamic)
 					flags |= Amf3Object.Flags.Dynamic;
 
-				TypelessWrite((int)flags | (classDef.Properties.Count << 4));
+				TypelessWrite((int)flags | (classDef.Properties.Length << 4));
 
 				TypelessWrite(classDef.Name);
 

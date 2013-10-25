@@ -49,14 +49,6 @@ namespace Amf
             this.stream = stream;
         }
 
-		// this method is used by the deserialization code for an object
-		public void Read<T>(out T o)
-		{
-			// TODO: make a version that does not box values
-			object next = ReadNextObject();
-			o = (T)next;
-		}
-
         public object ReadNextObject()
         {
             int b = stream.ReadByte();
@@ -117,6 +109,80 @@ namespace Amf
 				throw new NotImplementedException("Cannot parse type " + type.ToString());
             }
         }
+
+		// this read the next object into a value structure
+		// this avoids unnecessary boxing/unboxing of value types and speeds up deserialization
+		public void ReadNextObject(ref Amf3Variant value)
+        {
+            int b = stream.ReadByte();
+
+            if (b < 0)
+                throw new EndOfStreamException();
+
+			// store type in value
+			value.Type = (Amf3TypeCode) b;
+			value.ObjectValue = null;
+
+            switch (value.Type) {
+            case Amf3TypeCode.Undefined:
+            case Amf3TypeCode.Null:
+			case Amf3TypeCode.False:
+			case Amf3TypeCode.True:
+                break;
+
+            case Amf3TypeCode.Integer:
+                value.IntValue = ReadInteger();
+				break;
+
+            case Amf3TypeCode.Number:
+                value.NumberValue = ReadNumber();
+				break;
+
+            case Amf3TypeCode.String:
+				value.ObjectValue = ReadString();
+				break;
+
+            case Amf3TypeCode.Date:
+				value.ObjectValue = ReadDate();
+				break;
+
+            case Amf3TypeCode.Array:
+				value.ObjectValue = ReadArray();
+				break;
+
+            case Amf3TypeCode.Object:
+				value.ObjectValue = ReadAmf3Object();
+				break;
+
+			case Amf3TypeCode.ByteArray:
+				value.ObjectValue = ReadByteArray();
+				break;
+
+			case Amf3TypeCode.VectorInt:
+				value.ObjectValue = ReadVectorInt();
+				break;
+
+			case Amf3TypeCode.VectorUInt:
+				value.ObjectValue = ReadVectorUInt();
+				break;
+
+			case Amf3TypeCode.VectorDouble:
+				value.ObjectValue = ReadVectorDouble();
+				break;
+
+			case Amf3TypeCode.Dictionary:
+				value.ObjectValue = ReadDictionary();
+				break;
+
+			case Amf3TypeCode.VectorObject:
+				value.ObjectValue = ReadVectorObject();
+				break;
+
+			default:
+				throw new NotImplementedException("Cannot parse type " + value.Type.ToString());
+            }
+        }
+
 
         public int ReadInteger()
         {
@@ -320,10 +386,8 @@ namespace Amf
 			// this class definition is not known until the first object has been read, but we don't need it here
 			string objectTypeName = ReadString();
 
-			sGenericParameter[0] = flash.net.getClassByAlias_fn.getClassByAlias(objectTypeName);
-			Type genericType = typeof(_root.Vector<>).MakeGenericType(sGenericParameter);
-			// We use IList so it works for all types, regardless of objectTypeName (cast works because _root.Vector<> implements IList)
-			IList vector = (IList)Activator.CreateInstance(genericType, (uint)num, isFixed);
+			// create vector
+			IList vector = Amf3ClassDef.CreateObjectVector(objectTypeName, (uint)num, isFixed);
 			objectTable.Add(vector);
 
 			// read all values
@@ -333,8 +397,6 @@ namespace Amf
 
 			return vector;
 		}
-
-		private static Type[] sGenericParameter = new Type[1];
 
 		public flash.utils.ByteArray ReadByteArray()
 		{
@@ -383,7 +445,27 @@ namespace Amf
 			return dict;
 		}
 
+		private Amf3ClassDef ReadAmf3ClassDef(Amf3Object.Flags flags)
+		{
+			bool externalizable = ((flags & Amf3Object.Flags.Externalizable) != 0);
+			bool dynamic = ((flags & Amf3Object.Flags.Dynamic) != 0);
+			string name = ReadString();
 
+			if (externalizable && dynamic)
+				throw new InvalidOperationException("Serialized objects cannot be both dynamic and externalizable");
+
+			List<string> properties = new List<string>();
+
+			int members = ((int) flags) >> 4;
+
+			for (int i = 0; i < members; i++) {
+				properties.Add(ReadString());
+			}
+
+			Amf3ClassDef classDef = new Amf3ClassDef(name, properties.ToArray(), dynamic, externalizable);
+			traitTable.Add(classDef);
+			return classDef;
+		}
 
         public object ReadAmf3Object()
         {
@@ -394,140 +476,85 @@ namespace Amf
             }
 
             Amf3ClassDef classDef;
-
             if ((flags & Amf3Object.Flags.InlineClassDef) == 0) {
                 classDef = GetTableEntry(traitTable, ((int)flags) >> 2);
             } else {
-                bool externalizable = ((flags & Amf3Object.Flags.Externalizable) != 0);
-                bool dynamic = ((flags & Amf3Object.Flags.Dynamic) != 0);
-                string name = ReadString();
-
-                if (externalizable && dynamic)
-                    throw new InvalidOperationException("Serialized objects cannot be both dynamic and externalizable");
-
-                List<string> properties = new List<string>();
-
-                int members = ((int) flags) >> 4;
-
-                for (int i = 0; i < members; i++) {
-                    properties.Add(ReadString());
-                }
-
-                classDef = new Amf3ClassDef(name, properties, dynamic, externalizable);
-                traitTable.Add(classDef);
+				classDef = ReadAmf3ClassDef(flags);
             }
 
-			// Get the type and constructs one instance
-			System.Type c = flash.net.tryGetClassByAlias_fn.tryGetClassByAlias(classDef.Name);
-			object obj;
-			PlayScript.Expando.ExpandoObject expandoObject = null;
-			if (c != null)
-			{
-				obj = CreateInstanceWithNoParameters(c);
-			}
-			else
-			{
-				expandoObject = new PlayScript.Expando.ExpandoObject();
-				expandoObject.ClassDefinition = classDef;
-				obj = expandoObject;
-			}
-
+			// construct instance of class
+			object obj = classDef.CreateInstance();
             objectTable.Add(obj);
 
             if (classDef.Externalizable) {
 				throw new NotSupportedException ();
-                //obj.Properties["inner"] = ReadNextObject();
-                //return obj;
             }
 
-			// If we want to keep reflection, we should cache the property setter or field setter
-			// At some point though, if we generate the corresponding deserializer code, it should not matter anymore
-			foreach (string propName in classDef.Properties) {
-				object value = ReadNextObject();
-				if (expandoObject != null)
-				{
-					expandoObject[propName] = value;
+			// do we have a custom deserializer method?
+			if ((classDef.Info.Deserializer != null) || (obj is IAmf3Readable)) {
+				// create property reader
+				Amf3Reader propReader = AllocateReader();
+				// begin reading
+				propReader.BeginRead(classDef);
+				// we support either a deserializer delegate or a serializer interface
+				if (classDef.Info.Deserializer != null) {
+					// invoke deserialize delegate on object
+					classDef.Info.Deserializer.Invoke(obj, propReader);
+				} else {
+					// invoke deserialize method on object
+					var serializable = (IAmf3Readable)obj;
+					serializable.Serialize(propReader);
 				}
-				else
-				{
-					System.Reflection.PropertyInfo prop = c.GetProperty(propName);
+				// finish reading 
+				propReader.EndRead();
+				// release reader back to pool
+				ReleasePropertyReader(propReader);
+			} else if (obj is PlayScript.Expando.ExpandoObject) {
+				// read expando object
+				var expando = obj as PlayScript.Expando.ExpandoObject;
+				foreach (var name in classDef.Properties){
+					object value = ReadNextObject();
+					expando[name] = value;
+				}
+			} else {
+				// read object properties with reflection
+				Amf3Variant value = new Amf3Variant();
+				System.Type type = obj.GetType();
+				// If we want to keep reflection, we should cache the property setter or field setter
+				foreach (var name in classDef.Properties){
+					// read value
+					ReadNextObject(ref value);
+
+					System.Reflection.PropertyInfo prop = type.GetProperty(name);
 					if (prop != null) {
-						// If there is some mismatch on the property type, this will throw an exception
-						sOneParameter[0] = value;
-						prop.GetSetMethod().Invoke(obj, sOneParameter);
+						prop.SetValue(obj, value.AsType(prop.PropertyType), null);
 						continue;
 					}
-					System.Reflection.FieldInfo field = c.GetField(propName);
+					System.Reflection.FieldInfo field = type.GetField(name);
 					if (field != null) {
-						// If there is some mismatch on the field type, this will throw an exception
-
-						// TODO: Implement a cleaner conversion code if this gets a bit more complicated
-						if (field.FieldType == typeof(uint)) {
-							// ReadNextObject() does not know about uint type, so we expect to receive a int here
-							// Let's cast it, so setting the field will not fail due to mismatch types
-							int intValue = (int)value;
-							value = (uint)intValue;			// We just cast from int to uint
-						}
-
-						field.SetValue(obj, value);
+						field.SetValue(obj, value.AsType(field.FieldType));
 						continue;
 					}
 					// Private property or field? Something else?
-					throw new NotSupportedException();
+					throw new Exception("Property not found:" + name);
 				}
 			}
 
+			// read dynamic properties
             if (classDef.Dynamic) {
-				throw new NotSupportedException ();
-				/*
+				var dc = obj as PlayScript.IDynamicClass;
+				if (dc == null) {
+					throw new NotSupportedException ("Trying to deserialize class that is not dynamic");
+				}
+
                 string key = ReadString();
                 while (key != "") {
-                    obj.Properties[key] = ReadNextObject();
+					dc.__SetDynamicValue(key, ReadNextObject());
                     key = ReadString();
                 }
-                */
             }
             return obj;
         }
-
-		private object CreateInstanceWithNoParameters(Type type)
-		{
-			// First, we look the default constrcutor
-			ConstructorInfo constructor = type.GetConstructor(Type.EmptyTypes);
-			if (constructor != null)
-			{
-				return constructor.Invoke(sZeroParameter);
-			}
-
-			// If there was no default constructor, use a constructor that only has default values
-			ConstructorInfo[] allConstructors = type.GetConstructors();
-			foreach (ConstructorInfo oneConstructor in allConstructors)
-			{
-				ParameterInfo[] parameters = oneConstructor.GetParameters();
-				if (parameters.Length == 0) {
-					// Why did we not get this with the default constructor?
-					// In any case, handle the case gracefully
-				} else if (parameters[0].IsOptional) {
-					// First parameter is optional, so all others are too, this constructor is good enough
-				} else {
-					// We can't use this constructor, try the next one
-					continue;
-				}
-
-				object[] arguments = new object[parameters.Length];
-				for (int i = 0 ; i < parameters.Length ; ++i) {
-					arguments[i] = parameters[i].DefaultValue;
-				}
-
-				return oneConstructor.Invoke(arguments);
-			}
-
-			// Did we miss something?
-			throw new NotSupportedException();
-		}
-
-		private static object[] sZeroParameter = new object[0];
-		private static object[] sOneParameter = new object[1];
 
 		// returns all the class definitions that have been found while parsing
 		public Amf3ClassDef[] GetClassDefinitions()
@@ -541,5 +568,29 @@ namespace Amf
 			return objectTable.ToArray();
 		}
 
+		
+		private Amf3Reader AllocateReader()
+		{
+			var reader = mReaderPool;
+			if (reader == null) {
+				// create new property reader if pool is empty
+				return new Amf3Reader(this);
+			}
+
+			// use next property reader from pool
+			mReaderPool = mReaderPool.NextReader;
+			return reader;
+		}
+
+		private void ReleasePropertyReader(Amf3Reader reader)
+		{
+			// add reader to pool
+			reader.NextReader = mReaderPool;
+			mReaderPool = reader;
+		}
+
+		// singly linked list of readers in pool
+		private Amf3Reader mReaderPool;
     }
+
 }

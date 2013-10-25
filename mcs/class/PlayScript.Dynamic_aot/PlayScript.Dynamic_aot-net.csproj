@@ -131,9 +131,6 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpUnaryOperationBinder.cs">
       <Link>PlayScript\RuntimeBinder\CSharpUnaryOperationBinder.cs</Link>
     </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\ParamsDelegateTypes.cs">
-      <Link>PlayScript\ParamsDelegateTypes.cs</Link>
-    </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\Undefined.cs">
       <Link>PlayScript\Undefined.cs</Link>
     </Compile>

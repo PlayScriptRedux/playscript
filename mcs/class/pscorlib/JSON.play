@@ -14,161 +14,16 @@
 
 package {
 
-	import System.*;
-	import System.Json.*;
-	import System.Collections.*;
-	import System.Collections.Generic.*;
-	import System.Reflection.*;
-
 	public static class JSON {
-
-		private static function ConvertJsonObjectToDynamic(jv:JsonObject):Object {
-			// convert all properties
-			var o:Object = new Object;
-			for each (var key:String in jv.Keys) {
-				var element:Object = ConvertJsonValueToDynamic(jv[key]);
-				o[key] = element;
-			}
+	
+		public static function parse(text:String, reviver:Function = null):Object {
+			var o:Object = MiniJson.Json.Parse(text);
 			return o;
 		}
 
-		private static function ConvertJsonArrayToDynamic(jv:JsonArray):Object {
-			var a:Array = new Array();
-			for (var i:int=0; i < jv.Count; i++) {
-				var element:Object = ConvertJsonValueToDynamic(jv[i]);
-				a.push (element);
-			}
-			return a;
-		}
-
-		private static function ConvertJsonValueToDynamic(jv:JsonValue):Object {
-			if (jv == null) return null;
-
-			switch (jv.JsonType)
-			{
-			case JsonType.Object:
-				return ConvertJsonObjectToDynamic(jv as JsonObject);
-			case JsonType.Array:
-				return ConvertJsonArrayToDynamic(jv as JsonArray);
-			case JsonType.Number:
-				return Number(jv);
-			case JsonType.String:
-				return String(jv);
-			case JsonType.Boolean:
- 				return jv.ToString() == "true"; // ugh, no other way in playscript
-			default:
-				throw new Error("NotImplemented");
-			}
-		}
-	
-		public static function parse(text:String, reviver:Function = null):Object {
-			try
-			{
-				// parse json
-				var jv:JsonValue = System.Json.JsonValue.Parse(text);
-				// convert value into dynamic object here ? 
-				return ConvertJsonValueToDynamic(jv);
-			} catch (e:Exception)
-			{
-				throw new Error(e.Message);
-			}
-		}
-
-
-		private static function ConvertDictionaryToJsonObject(dict:IDictionary):JsonObject {
-			var jo:JsonObject = new JsonObject();
-			for each (var key:String in dict.Keys) {
-				jo[key] = ConvertToJsonValue(dict[key]);
-			}
-			return jo;
-		}
-
-		private static function ConvertEnumerableToJsonArray(list:IEnumerable):JsonArray {
-			var ja:JsonArray = new JsonArray();
-			for each (var o:Object in list) {
-				ja.Add(ConvertToJsonValue(o));
-			}
-			return ja;
-		}
-
-		private static function ConvertASObjectToJsonObject(obj:_root.Object):JsonObject {
-			// get object type
-			var type = obj.GetType();
-
-			// create json object
-			var jo:JsonObject = new JsonObject();
-
-			// store all public properties in json object
-			for each (var prop:PropertyInfo in type.GetProperties()) {
-				if (prop.Name != "constructor") {
-					jo[prop.Name] = ConvertToJsonValue(prop.GetValue(obj, null));
-				}
-			}
-
-			// store all public fields in json object
-			for each (var field:FieldInfo in type.GetFields()) {
-				jo[field.Name] = ConvertToJsonValue(field.GetValue(obj));
-			}
-			return jo;
-		}
-
-		private static function ConvertToJsonValue(value:Object):JsonValue {
-
-			if (value == null) {
-				return null;
-			}
-
-			if (value is String) {
-				return new JsonPrimitive(String(value));
-			}
-			
-			if (value is IDictionary) {
-				return ConvertDictionaryToJsonObject(IDictionary(value));
-			}
-
-			if (value is IEnumerable) {
-				return ConvertEnumerableToJsonArray(IEnumerable(value));
-			}
-
-			if (value is int) {
-				return new JsonPrimitive(int(value));
-			}
-
-			if (value is uint) {
-				return new JsonPrimitive(uint(value));
-			}
-
-			if (value is Number) {
-				return new JsonPrimitive(Number(value));
-			}
-
-			if (value is Boolean) {
-				return new JsonPrimitive(Boolean(value));
-			}
-
-			if (value is _root.Object) {
-				// handle concrete actionscript objects
-				return ConvertASObjectToJsonObject(_root.Object(value));
-			}
-
-			throw new System.NotImplementedException();
-		}
-
-
 		public static function stringify(value:Object, replacer:* = null, space:* = null):String {
-			try
-			{
-				var jv:JsonValue = ConvertToJsonValue(value);
-				return jv.ToString ();
-			} catch (e:Exception)
-			{
-				throw new Error(e.Message);
-			}
-		}
-	
-		public static function encode(value:Object):String {
-			throw new System.NotImplementedException();
+			var s:String = MiniJson.Json.Stringify(value);
+			return s;
 		}
 	}
-
 }

@@ -127,11 +127,28 @@ namespace PlayScript.DynamicRuntime
 					return PlayScript.Dynamic.ConvertValue<T>(result);
 				}
 
+				if (mName == "constructor") {
+					return PlayScript.Dynamic.ConvertValue<T> (otype);
+				}
+
 				throw new System.InvalidOperationException("Unhandled member type in PSGetMemberBinder");
 			}
 
 			// resolve name
 			Stats.Increment(StatsCounter.GetMemberBinder_Resolve_Invoked);
+
+			// The constructor is a special synthetic property - we have to handle this for AS compatibility
+			if (mName == "constructor") {
+				// setup binding to field
+				mType = otype;
+				mPreviousFunc = null;
+				mPreviousTarget = null;
+				mProperty = null;
+				mField = null;
+				mMethod = null;
+				mTargetType = typeof(Type);
+				return PlayScript.Dynamic.ConvertValue<T> (otype);
+			}
 
 			// resolve as property
 			// TODO: we allow access to non-public properties for simplicity,
@@ -194,6 +211,8 @@ namespace PlayScript.DynamicRuntime
 				mField    = null;
 				mMethod   = method;
 				mTargetType = PlayScript.Dynamic.GetDelegateTypeForMethod(mMethod);
+				if (mTargetType == null) {
+				}
 
 				// construct method delegate
 				return PlayScript.Dynamic.ConvertValue<T>(Delegate.CreateDelegate(mTargetType, o, mMethod));

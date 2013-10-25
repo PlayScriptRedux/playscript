@@ -198,159 +198,6 @@ package flash.display {
 		public function dispose():void {
 			mData = null;
 		}
-
- 	 	public function draw(source:IBitmapDrawable, matrix:Matrix = null, colorTransform:ColorTransform = null, blendMode:String = null, 
-	 	 	clipRect:Rectangle = null, smoothing:Boolean = false):void {
-
-#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
-			if (source is flash.text.TextField)
-			{
-				var tf:flash.text.TextField = source as flash.text.TextField;
-				var format:flash.text.TextFormat = tf.defaultTextFormat;
-
-				// $$TODO figure out how to get rid of this extra data copy
-				var sizeToDraw = (width * height)<<2;
-				if(sizeToDraw==0)
-					return;
-				var data = new byte[sizeToDraw];
-				System.Buffer.BlockCopy(mData, 0, data, 0, data.Length);
-
-				using (CGBitmapContext context = new CGBitmapContext(data, width, height, 8, 4 * width, 
-				                                                 CGColorSpace.CreateDeviceRGB(), 
-				                                                 CGImageAlphaInfo.PremultipliedLast))
-				{
-					var black:CGColor = new CGColor(0f, 0f, 0f, 1f);
-					context.SetFillColor(black);
-					context.SetStrokeColor(black);
-					context.SelectFont(format.font, float(Number(format.size)), CGTextEncoding.MacRoman);
-					context.SetAllowsAntialiasing( (tf.antiAliasType == flash.text.AntiAliasType.ADVANCED) );
-
-					var x:Number = matrix.tx;
-					var y:Number = matrix.ty;
-
-					// invert y because the CG origin is bottom,left
-					y = height - tf.textHeight - y;
-
-					// align text
-					switch (format.align)
-					{
-					case TextFormatAlign.LEFT:
-						// no adjustment required
-						break;
-					case TextFormatAlign.CENTER:
-						// center x
-						x += width / 2;
-						x -= tf.textWidth / 2;
-						break;
-					case TextFormatAlign.RIGHT:
-						// right justify x
-						x += width;
-						x -= tf.textWidth;
-						break;
-					default:
-						throw new System.NotImplementedException();
-					}
-
-					// draw text
-					context.ShowTextAtPoint(float(x), float(y), tf.text );
-				}
-
-				System.Buffer.BlockCopy(data, 0, mData, 0, data.Length);
-			}
-			else
-
-#elif PLATFORM_MONODROID
-
-			if ( source is flash.text.TextField )
-			{
-				var tf:flash.text.TextField = source as flash.text.TextField;
-				var format:flash.text.TextFormat = tf.defaultTextFormat;
-
-				// $$TODO figure out how to get rid of this extra data copy
-				var data = new byte[width * height * 4];
-				System.Buffer.BlockCopy(mData, 0, data, 0, data.Length);
-
-				var config:Android.Graphics.Bitmap.Config = Android.Graphics.Bitmap.Config.Argb8888;
-				var bitmap:Android.Graphics.Bitmap = Android.Graphics.Bitmap.CreateBitmap(width, height, config);
-
-				var canvas:Canvas = new Canvas(bitmap);
-				var x:Number = matrix.tx;
-				var y:Number = matrix.ty;
-
-				// invert y because the CG origin is bottom,left
-				// y = height - tf.textHeight - y;
-
-				// align text
-				switch (format.align)
-				{
-					case TextFormatAlign.LEFT:
-					// no adjustment required
-					break;
-					case TextFormatAlign.CENTER:
-					// center x
-					x += width / 2;
-					x -= tf.textWidth / 2;
-					break;
-					case TextFormatAlign.RIGHT:
-					// right justify x
-					x += width;
-					x -= tf.textWidth;
-					break;
-					default:
-					throw new System.NotImplementedException();
-				}
-
-				var paint:Paint = new Paint(PaintFlags.AntiAlias);
-
-				paint.Color = Color.Black;
-				paint.TextSize = float(Number(format.size));
-				paint.SetTypeface( Typeface.Create(format.font, TypefaceStyle.Normal) );
-				paint.TextAlign = Paint.Align.Center;			
-
-				canvas.DrawText(tf.text, float(x), float(y), paint);
-
-				mData = new uint[ bitmap.Width * bitmap.Height ];
-				var buffer = new int[ bitmap.Width * bitmap.Height ];
-				bitmap.GetPixels(buffer, 0, width, 0, 0, width, height);
-
-				for (var i:int = 0; i < buffer.Length; i++)
-				{
-
-					mData[i] = uint(buffer[i]);
-				}
-			}
-			else 
-#endif
-			if ( source is BitmapData)
-			{
-				//naive implementation , 
-				//to be implemented: 
-				// -smoothing / antialiasing, 
-				// -blend mode
-				// -colorTransform
-				// -cliprect
-				var sourceBitmap:BitmapData = source as BitmapData;
-				var matInverse:Matrix = (matrix!=null) ? matrix.clone() : new Matrix();
-				matInverse.invert();
-				
-				for(var y:int =0;y<mHeight;y++)
-				{	
-					for(var x:int =0;x<mWidth;x++)
-					{
-						var x2:int = x * matInverse.a + y * matInverse.c + matInverse.tx;
-						var y2:int = x * matInverse.b + y * matInverse.d + matInverse.ty;
-						if(x2>=0 && y2>=0 && x2<sourceBitmap.width && y2< sourceBitmap.height)
-						{
-							mData[x + y*mWidth ] = sourceBitmap.mData[ x2 + y2* sourceBitmap.mWidth ];
-						}	
-					}
-				}
-			}
-			else
-			{
-				trace("NotImplementedWarning: BitmapData.draw()");
-			}
- 	 	}
  	 	
 		public function drawWithQuality(source:IBitmapDrawable, matrix:Matrix = null, colorTransform:ColorTransform = null, blendMode:String = null, 
 			clipRect:Rectangle = null, smoothing:Boolean = false, quality:String = null):void {
@@ -404,6 +251,9 @@ package flash.display {
 		}
  	 	
 		public function getPixel(x:int, y:int):uint {
+			if (mData==null)
+				return 0;
+
 			if (x < 0 || y < 0 || x >= width || y >= height) {			
 				throw new System.ArgumentOutOfRangeException("XY position out of range");
 			}
@@ -413,7 +263,15 @@ package flash.display {
 		}
 		
 		public function getPixel32(x:int, y:int):uint {
-			throw new System.NotImplementedException();
+			if (mData==null)
+				return 0;
+
+			if (x < 0 || y < 0 || x >= width || y >= height) {			
+				throw new System.ArgumentOutOfRangeException("XY position out of range");
+			}
+
+			// return color
+			return mData[y * mWidth + x];
 		}
 
 		public function getPixels(rect:Rectangle):ByteArray {
@@ -421,7 +279,25 @@ package flash.display {
 		}
  	 	
 		public function getVector(rect:Rectangle):Vector.<uint> {
-			throw new System.NotImplementedException();
+			var v:Vector.<uint> = new Vector.<uint>(rect.width * rect.height);
+			if (rect.left < 0 || rect.top < 0 || rect.right > this.width || rect.bottom > this.height) { 
+				trace("Invalid rectangle for BitmapData.getVector()");
+				return v;
+			}
+			if (mData==null)
+				return v;
+			var a:uint[] = v._GetInnerArray();
+			var i:int = 0;
+			var s:int = 0;
+			for (var y:int = rect.top; y < rect.bottom; y++) {
+				s = y * this.width + rect.left;
+				for (var x:int = rect.left; x < rect.right; x++) {
+					a[i] = mData[s];
+					i++;
+					s++;
+				}
+			}
+			return v;
 		}
 
 		public function histogram(hRect:Rectangle = null):Vector.<Vector.<Number>> {

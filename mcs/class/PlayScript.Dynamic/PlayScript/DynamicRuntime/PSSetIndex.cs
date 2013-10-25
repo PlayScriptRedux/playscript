@@ -108,6 +108,7 @@ namespace PlayScript.DynamicRuntime
 
 		public T SetIndexAs<T> (object o, object key, T value)
 		{
+			key = PlayScript.Dynamic.FormatKeyForAs (key);
 			if (key is int) {
 				SetIndexAs<T>(o, (int)key, value);
 			} else if (key is string) {

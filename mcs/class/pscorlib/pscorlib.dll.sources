@@ -1,10 +1,13 @@
 ./AllowDynamicAttribute.cs
 ./Amf/Amf3ClassDef.cs
+./Amf/Amf3CodeGen.cs
 ./Amf/Amf3Object.cs
 ./Amf/Amf3Parser.cs
+./Amf/Amf3Reader.cs
 ./Amf/Amf3SerializableAttribute.cs
 ./Amf/Amf3String.cs
 ./Amf/Amf3TypeCode.cs
+./Amf/Amf3Variant.cs
 ./Amf/Amf3Writer.cs
 ./Amf/DataConverter.cs
 ./Amf/IAmf3Serializable.cs
@@ -50,6 +53,7 @@
 ./flash/desktop/NativeApplication.play
 ./flash/display/ActionScriptVersion.play
 ./flash/display/Bitmap.play
+./flash/display/BitmapData.cs
 ./flash/display/BitmapData.play
 ./flash/display/BitmapDataChannel.play
 ./flash/display/BlendMode.play
@@ -89,6 +93,7 @@
 ./flash/display/TriangleCulling.play
 ./flash/display3D/AGALConverter.cs
 ./flash/display3D/Context3D.cs
+./flash/display3D/Context3DStateCache.cs
 ./flash/display3D/Context3DBlendFactor.play
 ./flash/display3D/Context3DClearMask.play
 ./flash/display3D/Context3DCompareMode.play
@@ -99,6 +104,7 @@
 ./flash/display3D/Context3DTextureFormat.play
 ./flash/display3D/Context3DTriangleFace.play
 ./flash/display3D/Context3DVertexBufferFormat.play
+./flash/display3D/GLUtils.cs
 ./flash/display3D/IndexBuffer3D.cs
 ./flash/display3D/Program3D.cs
 ./flash/display3D/textures/CubeTexture.cs
@@ -158,10 +164,14 @@
 ./flash/geom/Vector3D.play
 ./flash/globalization/Collator.play
 ./flash/globalization/DateTimeFormatter.play
+./flash/media/android/Sound.cs
+./flash/media/android/SoundChannel.cs
 ./flash/media/Camera.play
 ./flash/media/ID3Info.play
 ./flash/media/ios/Sound.cs
 ./flash/media/ios/SoundChannel.cs
+./flash/media/mac/Sound.cs
+./flash/media/mac/SoundChannel.cs
 ./flash/media/Sound.play
 ./flash/media/SoundChannel.play
 ./flash/media/SoundLoaderContext.play
@@ -247,6 +257,10 @@
 ./int.cs
 ./JSON.play
 ./Math.play
+./MiniJson/Json.cs
+./mx/graphics/codec/IImageEncoder.play
+./mx/graphics/codec/JPEGEncoder.play
+./mx/graphics/codec/PNGEncoder.play
 ./Namespace.play
 ./Number.cs
 ./Object.cs
@@ -255,7 +269,6 @@
 ./PlayScript/Hardware.cs
 ./PlayScript/ParamsDelegateTypes.cs
 ./PlayScript/Player.cs
-./PlayScript/Profiler.cs
 ./PlayScript/Profiler.cs
 ./PlayScript/Support.cs
 ./QName.play

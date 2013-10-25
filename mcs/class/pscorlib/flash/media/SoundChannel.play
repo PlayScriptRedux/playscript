@@ -37,6 +37,13 @@ package flash.media {
  	 	public function stop():void {
 		    internalStop();
  	 	}
+
+#if PLATFORM_GENERIC
+
+		private function internalStop():void {		
+		}
+
+#endif
 	
 	}
 

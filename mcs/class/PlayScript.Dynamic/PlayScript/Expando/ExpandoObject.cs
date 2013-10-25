@@ -63,6 +63,12 @@ namespace PlayScript.Expando {
             LockObject = new object();
         }
 
+		/// <summary>
+		/// Creates a new ExpandoObject with specified capacity
+		/// </summary>
+		public ExpandoObject(int capacity) : base() {
+		}
+
         #region Get/Set/Delete Helpers
 
         /// <summary>
@@ -1565,9 +1571,10 @@ namespace PlayScript.Expando {
 		
 		public dynamic this [string key] {
 			get {
+				key = PlayScript.Dynamic.FormatKeyForAs (key);
 				if (key == null)
 					throw new ArgumentNullException ("key");
-				
+
 				// get first item of linked list corresponding to given key
 				int hashCode = hcp.GetHashCode (key) | HASH_FLAG;
 				int cur = table [(hashCode & int.MaxValue) % table.Length] - 1;
@@ -1586,9 +1593,10 @@ namespace PlayScript.Expando {
 			}
 			
 			set {
+				key = PlayScript.Dynamic.FormatKeyForAs (key);
 				if (key == null)
 					throw new ArgumentNullException ("key");
-				
+
 				// get first item of linked list corresponding to given key
 				int hashCode = hcp.GetHashCode (key) | HASH_FLAG;
 				int index = (hashCode & int.MaxValue) % table.Length;
@@ -1843,9 +1851,10 @@ namespace PlayScript.Expando {
 		
 		public void Add (string key, object value)
 		{
+			key = PlayScript.Dynamic.FormatKeyForAs (key);
 			if (key == null)
 				throw new ArgumentNullException ("key");
-			
+
 			// get first item of linked list corresponding to given key
 			int hashCode = hcp.GetHashCode (key) | HASH_FLAG;
 			int index = (hashCode & int.MaxValue) % table.Length;
@@ -1915,6 +1924,7 @@ namespace PlayScript.Expando {
 
 		public bool ContainsKey (string key)
 		{
+			key = PlayScript.Dynamic.FormatKeyForAs (key);
 			if (key == null)
 				return false;
 			
@@ -2016,9 +2026,10 @@ namespace PlayScript.Expando {
 		
 		public bool Remove (string key)
 		{
+			key = PlayScript.Dynamic.FormatKeyForAs (key);
 			if (key == null)
 				throw new ArgumentNullException ("key");
-			
+
 			// get first item of linked list corresponding to given key
 			int hashCode = hcp.GetHashCode (key) | HASH_FLAG;
 			int index = (hashCode & int.MaxValue) % table.Length;
@@ -2067,9 +2078,10 @@ namespace PlayScript.Expando {
 		
 		public bool TryGetValue (string key, out object value)
 		{
+			key = PlayScript.Dynamic.FormatKeyForAs (key);
 			if (key == null)
 				throw new ArgumentNullException ("key");
-			
+
 			// get first item of linked list corresponding to given key
 			int hashCode = hcp.GetHashCode (key) | HASH_FLAG;
 			int cur = table [(hashCode & int.MaxValue) % table.Length] - 1;
@@ -2141,6 +2153,8 @@ namespace PlayScript.Expando {
 		
 		static string Tostring (object key)
 		{
+			key = PlayScript.Dynamic.FormatKeyForAs (key);
+
 			// Optimize for the most common case - strings
 			string keyString = key as string;
 			if (keyString != null) {

@@ -28,6 +28,8 @@ namespace flash.display3D.textures {
 
 	public abstract class TextureBase : EventDispatcher {
 
+		protected bool mAllocated = false;
+
 		#if OPENGL
 		protected TextureBase(Context3D context, TextureTarget target)
 		{
@@ -64,6 +66,7 @@ namespace flash.display3D.textures {
 			}
 		}
 
+		public bool allocated { get { return mAllocated; } set {mAllocated = value;} }
 		public int	 		 textureId 		{get {return mTextureId;}}
 		public TextureTarget textureTarget 	{get {return mTextureTarget;}}
 		public Texture 		 alphaTexture 	{ get { return mAlphaTexture; } }

@@ -30,7 +30,7 @@ namespace Amf
 	/// The string id reference is cached in here, avoiding a dictionary lookup.
 	/// The string is pre-converted to UTF8.
 	/// </summary>
-	public class Amf3String : IAmf3Serializable
+	public class Amf3String : IAmf3Writable
     {
 		public string Value 	{ get { return mValue; } }
 		public byte[] Bytes     { get { return mBytes; } }
@@ -46,16 +46,10 @@ namespace Amf
 			return mValue;
 		}
 
-		#region IAmf3Serializable implementation
+		#region IAmf3Writable implementation
 		public void Serialize(Amf3Writer writer)
 		{
 			writer.Write(this);
-		}
-
-		public void Serialize(Amf3Parser reader)
-		{
-			// can't support this, we are immutable
-			throw new NotSupportedException();
 		}
 		#endregion
 

@@ -12,6 +12,8 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
+//#define TRACE_ACCURATE_METRICS
+
 package flash.net {
 
 	import System.IO.*;
@@ -40,7 +42,13 @@ package flash.net {
  	 	public property data : * { get; set; }
 
  	 	public property dataFormat : String { get; set; }
- 	 	
+
+		// Used for trace accurate metrics (has to be there even if it is not defined) - Shared for both loading and dispatch
+		public var startLoadTime : long;
+		public var endLoadTime : long;
+		public var startDispatchTime : long;
+		public var endDispatchTime : long;
+
 		//
 		// Methods
 		//
@@ -57,15 +65,21 @@ package flash.net {
 		public function load(request:URLRequest, synchronous:Boolean = false):void {
 			mRequest = request;
 
+			var url:String = request.url.ToLowerInvariant();
+			if (url.EndsWith(".swf")) {
+				// SWF files are not supported by PlayScript. There is no reason to try to load them.
+				skipSwfLoad(synchronous);
+				return;
+			}
+
 			// get next request id for this load
 			mId = sNextRequestId++;
 
 			// send data to telemetry
 			Telemetry.Session.WriteTime(".network.request.time");
-			sTelemetryRequestUrl.WriteValue(request.url);
+			sTelemetryRequestUrl.WriteValue(url);
 			sTelemetryRequestId.WriteValue(mId);
 
-			var url:String = request.url.ToLowerInvariant();
 			if (url.StartsWith("http:") || url.StartsWith("https:")) {
 				// handle a http load
 				// load with a delay
@@ -97,6 +111,39 @@ package flash.net {
 			}
 		}
 
+		private function skipSwfLoad(synchronous:Boolean):void {
+			trace("URLLoader: skip http SWF load ", mRequest.url);
+
+			TraceAccurateMetricsStartLoading();
+
+			this.bytesLoaded = 0;
+			this.bytesTotal  = 0;
+
+			switch (dataFormat) {
+				case URLLoaderDataFormat.BINARY: {
+					var ba:ByteArray = new ByteArray();
+					ba.writeUTFBytes("FWS");		// We set the SWF header with no content. This is enough to skip the code flow for the caller.
+					this.data = ba;
+					break;
+				}
+				case URLLoaderDataFormat.TEXT: {
+					// convert to string
+					this.data = "";
+					break;
+				}
+				default:
+					throw new System.NotImplementedException();
+			}
+
+			TraceAccurateMetricsEndLoading();
+
+			if (synchronous) {
+				dispatchCompleteEvent();
+			} else {
+				enqueueAction(dispatchCompleteEvent);
+			}
+		}
+
 		// Temporary hack
 		// TODO: Find a better place for this
 
@@ -122,6 +169,9 @@ package flash.net {
 		}
 
 		private function doLoadFromOfflineCache():void {
+
+			TraceAccurateMetricsStartLoading();
+
 			var hash:String = mRequest.getHash();
 			var span = Telemetry.Session.BeginSpan();
 
@@ -136,6 +186,9 @@ package flash.net {
 					this.bytesLoaded = cachedBinaryResponse.length;
 					this.bytesTotal  = cachedBinaryResponse.length;
 					this.data = cachedBinaryResponse;
+
+					TraceAccurateMetricsEndLoading();
+
 					dispatchCompleteEvent();
 					Telemetry.Session.EndSpanValue(".network.loadfile", span, mRequest.url);
 					return;
@@ -150,6 +203,9 @@ package flash.net {
 					this.bytesLoaded = cachedTextResponse.Length;
 					this.bytesTotal  = cachedTextResponse.Length;
 					this.data = cachedTextResponse;
+
+					TraceAccurateMetricsEndLoading();
+
 					dispatchCompleteEvent();
 					Telemetry.Session.EndSpanValue(".network.loadfile", span, mRequest.url);
 					return;
@@ -164,6 +220,8 @@ package flash.net {
 
 		private function sendRequest():WebRequest {
 			trace("URLLoader: http load ", mRequest.url);
+
+			TraceAccurateMetricsStartLoading();
 
 			var method:String = "GET";
 			if (mRequest.method != null) {
@@ -255,19 +313,29 @@ package flash.net {
 			// Cleanup the streams and the response.
 			dataStream.Close ();
 			response.Close ();
+
+			TraceAccurateMetricsEndLoading();
+
 			trace("URLLoader: http load complete length:", this.bytesLoaded, mRequest.url);
 		}
 
 		private function responseActionWithDelayedEvent(response:HttpWebResponse):void {
 			responseAction(response);
+
 			// By delaying the complete event, we make sure it is going to be dispatched in the main thread
 			enqueueAction(dispatchCompleteEvent);
 		}
 
 		private function dispatchCompleteEvent():void {
+
+			TraceAccurateMetricsStartDispatching();
+
 			// TODO:addEventListener Find a way to make sure this event is dispatched in the main thread
 			var de:Event = new Event(Event.COMPLETE);
 			this.dispatchEvent(de);
+
+			TraceAccurateMetricsEndDispatching();
+
 		}
 
 		private function dispatchErrorEvent():void {
@@ -280,12 +348,14 @@ package flash.net {
 
 			var span = Telemetry.Session.BeginSpan();
 
+			TraceAccurateMetricsStartLoading();
+
 			// handle file loading
 			var path:String = PlayScript.Player.TryResolveResourcePath(mRequest.url);
 			if (path == null)
 			{
 				trace("URLLoader: could not load ", mRequest.url);
-				// io error, file not found
+					// io error, file not found
 				this.dispatchEvent(new IOErrorEvent(IOErrorEvent.IO_ERROR));
 				return;
 			}
@@ -320,27 +390,28 @@ package flash.net {
 
 			switch (dataFormat)
 			{
-			case URLLoaderDataFormat.BINARY: {
-				var ba:ByteArray = ByteArray.fromArray(fileData);
-				this.data = ba;
-				break;
-			}
-			case URLLoaderDataFormat.TEXT: {
-				var text:String =  System.Text.Encoding.UTF8.GetString(fileData);
-				this.data = text;
-				break;
-			}
-			default:
-				throw new System.NotImplementedException();
+				case URLLoaderDataFormat.BINARY: {
+					var ba:ByteArray = ByteArray.fromArray(fileData);
+					this.data = ba;
+					break;
+				}
+				case URLLoaderDataFormat.TEXT: {
+					var text:String =  System.Text.Encoding.UTF8.GetString(fileData);
+					this.data = text;
+					break;
+				}
+				default:
+					throw new System.NotImplementedException();
 			}
 
 			// update bytes loaded
 			this.bytesLoaded = fileData.Length;
 			this.bytesTotal  = fileData.Length;
 
+			TraceAccurateMetricsEndLoading();
+
 			// dispatch complete event
-			var de:Event = new Event(Event.COMPLETE);
-			this.dispatchEvent(de);
+			dispatchCompleteEvent();
 			Telemetry.Session.EndSpanValue(".network.loadfile", span, mRequest.url);
 		}
 

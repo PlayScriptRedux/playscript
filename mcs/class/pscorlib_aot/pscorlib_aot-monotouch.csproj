@@ -23,7 +23,6 @@
     <ConsolePause>False</ConsolePause>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn>219</NoWarn>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -55,6 +54,7 @@
     <Folder Include="flash\external\" />
     <Folder Include="Amf\" />
     <Folder Include="flash\media\ios\" />
+    <Folder Include="mx\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -111,6 +111,9 @@
     </Compile>
     <Compile Include="..\pscorlib\Math.play">
       <Link>Math.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\MiniJson\Json.cs">
+      <Link>Json.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Namespace.play">
       <Link>Namespace.play</Link>
@@ -850,6 +853,15 @@
     <Compile Include="..\pscorlib\Amf\Amf3Writer.cs">
       <Link>Amf\Amf3Writer.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Variant.cs">
+      <Link>Amf\Amf3Variant.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Reader.cs">
+      <Link>Amf\Amf3Reader.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3CodeGen.cs">
+      <Link>Amf\Amf3CodeGen.cs</Link>
+    </Compile>
     <Compile Include="..\pscorlib\Amf\DataConverter.cs">
       <Link>Amf\DataConverter.cs</Link>
     </Compile>
@@ -903,6 +915,24 @@
     </Compile>
     <Compile Include="..\pscorlib\flash\media\ios\SoundChannel.cs">
       <Link>flash\media\ios\SoundChannel.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\mx\graphics\codec\IImageEncoder.play">
+      <Link>mx\graphics\codec\IImageEncoder.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\mx\graphics\codec\JPEGEncoder.play">
+      <Link>mx\graphics\codec\JPEGEncoder.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\mx\graphics\codec\PNGEncoder.play">
+      <Link>mx\graphics\codec\PNGEncoder.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\display3D\GLUtils.cs">
+      <Link>flash\display3D\GLUtils.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\display\BitmapData.cs">
+      <Link>flash\display\BitmapData.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\display3D\Context3DStateCache.cs">
+      <Link>flash\display3D\Context3DStateCache.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>
