@@ -41,6 +41,9 @@
     <Compile Include="..\PlayScript.Dynamic\System\Runtime\CompilerServices\DynamicAttribute.cs">
       <Link>System\Runtime\CompilerServices\DynamicAttribute.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\AsUntypedAttribute.cs">
+      <Link>PlayScript\AsUntypedAttribute.cs</Link>
+    </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\CallSite.cs">
       <Link>PlayScript\CallSite.cs</Link>
     </Compile>

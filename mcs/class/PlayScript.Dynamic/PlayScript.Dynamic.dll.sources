@@ -1,5 +1,6 @@
 ./AssemblyInfo.cs
 ./PlayScript/ActionCreator.cs
+./PlayScript/AsUntypedAttribute.cs
 ./PlayScript/CallSite.cs
 ./PlayScript/CallSiteBinder.cs
 ./PlayScript/Dynamic.cs

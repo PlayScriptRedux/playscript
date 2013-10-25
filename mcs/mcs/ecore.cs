@@ -1425,7 +1425,7 @@ namespace Mono.CSharp {
 
 		public static Expression RemoveDynamic(ResolveContext rc, Expression child)
 		{
-			if (child.Type == rc.BuiltinTypes.Dynamic) {
+			if (child.Type.IsDynamic) {
 				if (child.eclass == ExprClass.Unresolved) {
 					// dont really like this, but sometimes its needed
 					return new BoxedCast(child, rc.BuiltinTypes.Object);

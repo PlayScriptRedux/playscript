@@ -3688,13 +3688,11 @@ namespace Mono.CSharp
 					}
 
 					//
-					// Restrict bitwise operations to the proper numeric types
+					// Restrict math operations to numeric types
 					//
-					if ((oper & Operator.BitwiseMask) != 0) {
-						if (!left.Type.IsNumeric || !right.Type.IsNumeric) {
-							ec.Report.Error (7025, loc, "Bitwise operators are not permitted between types `{0}' and `{1}'",
-							                 left.Type.GetSignatureForError (),
-							                 right.Type.GetSignatureForError ());
+					if ((oper & (Operator.BitwiseMask | Operator.ArithmeticMask | Operator.ShiftMask)) != 0 && oper != Operator.Addition) {
+						if (!(left.Type.IsNumeric || left.Type.IsAsUntyped) || !(right.Type.IsNumeric || right.Type.IsAsUntyped)) {
+							Error_OperatorCannotBeApplied (ec, left, right, oper, loc);
 							return null;
 						}
 					}
@@ -3703,9 +3701,9 @@ namespace Mono.CSharp
 					// Delegate to PlayScript.Dynamic.IsNullOrUndefined where possible
 					//
 					if (Oper == Operator.Equality || Oper == Operator.Inequality) {
-						if (left.Type == ec.BuiltinTypes.Dynamic && PsIsNullOrUndefined (ec, right))
+						if (left.Type.IsDynamic && PsIsNullOrUndefined (ec, right))
 							return PsMakeIsNullOrUndefinedExpression (ec, left).Resolve (ec);
-						else if (right.Type == ec.BuiltinTypes.Dynamic && PsIsNullOrUndefined (ec, left))
+						else if (right.Type.IsDynamic && PsIsNullOrUndefined (ec, left))
 							return PsMakeIsNullOrUndefinedExpression (ec, right).Resolve (ec);
 					}
 
@@ -3769,9 +3767,9 @@ namespace Mono.CSharp
 				//
 				// If we're doing any string operations prefer "string" vs. "dynamic"
 				//
-				if (left.Type == ec.BuiltinTypes.Dynamic && right.Type == ec.BuiltinTypes.String)
+				if (left.Type.IsDynamic && right.Type == ec.BuiltinTypes.String)
 					left = Convert.ImplicitConversion (ec, left, ec.BuiltinTypes.String, loc).Resolve (ec);
-				else if (right.Type == ec.BuiltinTypes.Dynamic && left.Type == ec.BuiltinTypes.String)
+				else if (right.Type.IsDynamic && left.Type == ec.BuiltinTypes.String)
 					right = Convert.ImplicitConversion (ec, right, ec.BuiltinTypes.String, loc).Resolve (ec);
 
 				//
@@ -6878,7 +6876,7 @@ namespace Mono.CSharp
 				arguments.Resolve (ec, out dynamic_arg);
 
 			TypeSpec expr_type = member_expr.Type;
-			if (expr_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
+			if (expr_type.IsDynamic) {
 				return DoResolveDynamic (ec, member_expr);
 			} else if (isPlayScript && expr_type.BuiltinType == BuiltinTypeSpec.Type.Delegate) { // Calls through delegate in PlayScript are dynamic
 				return DoResolveDynamic (ec, new Cast(new TypeExpression(ec.BuiltinTypes.Dynamic, Location), member_expr, Location).Resolve (ec));
@@ -9792,7 +9790,7 @@ namespace Mono.CSharp
 						expr.Error_UnexpectedKind (rc, flags, sn.Location);
 						expr = null;
 					}
-				} else {
+				} else if (expr != null) {
 					expr = expr.Resolve (rc, flags);
 				}
 			}
@@ -10461,9 +10459,9 @@ namespace Mono.CSharp
 			// PlayScript supports indexer accesses for non-objects
 			if (ec.FileType == SourceFileType.PlayScript) {
 				if (loc.SourceFile == null || !loc.SourceFile.PsExtended) { // ASX doesn't allow this
-					type = ec.BuiltinTypes.Dynamic;
+					type = ec.BuiltinTypes.AsUntyped;
 					Expr = EmptyCast.Create (Expr, type, ec);
-					return new IndexerExpr (indexers, ec.BuiltinTypes.Dynamic, this);
+					return new IndexerExpr (indexers, type, this);
 				}
 			}
 

@@ -6,12 +6,12 @@ package
 	{
 		public static function Main():int
 		{
-			var o:Object = undefined;
+			var o:* = undefined;
 			if (o)
 				return 1;
-			if (o != null)
+			if (o != null || o != undefined)
 				return 2;
-			if (o === null)
+			if (o === null || o !== undefined)
 				return 3;
 			for each (var i:* in o)
 				trace(i);
@@ -81,14 +81,37 @@ package
 				return 21;
 
 			var undef:* = undefined;
-			try {
-				var a:A = undef; // should throw System.InvalidCastException (should really be "TypeError: Error #1034")
-				return 22;
-			} catch (e1:System.InvalidCastException) {
-				// good
-			} catch (e2:*) {
+			var instance:A = undef;
+			if (instance !== null || instance === undefined)
 				return 23;
-			}
+
+			var a2:Array = [];
+			var o2:* = a2.pop();
+			if (o2 !== undefined || o2 === null)
+				return 24;
+			var o3:Object = a2.pop();
+			if (o3 !== null || o3 === undefined)
+				return 25;
+			instance = a2.pop();
+			if (instance !== null || instance === undefined)
+				return 26;
+
+			var d2:Dictionary = new Dictionary();
+			// * should be undefined
+			var value:* = d2["missing"];
+			if (value !== undefined || d2["missing"] !== undefined)
+				return 27;
+
+			// class instance should be null
+            instance = d2["missing"];
+			if (instance !== null || instance === undefined)
+				return 28;
+
+			// object should be null
+            var o4:Object = d2["missing"];
+			if (o4 !== null || o4 === undefined)
+				return 29;
+
 			return 0;
 		}
 	}

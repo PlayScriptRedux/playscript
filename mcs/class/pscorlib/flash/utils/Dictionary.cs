@@ -177,6 +177,10 @@ namespace flash.utils
 		// to detect changes and invalidate themselves.
 		int generation;
 
+		// The default value to return in the case of a key not being present.
+		// Defaults to default(TValue).
+		TValue defaultValue;
+
 		public int length {
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return count; }
@@ -216,7 +220,7 @@ namespace flash.utils
 						cur = linkSlots [cur].Next;
 					}
 				}
-				return default(TValue);
+				return DefaultValue;
 			}
 			set {
 				key = FormatKeyForAs (key);
@@ -285,6 +289,17 @@ namespace flash.utils
 				valueSlots [cur] = value;
 
 				generation++;
+			}
+		}
+
+		protected TValue DefaultValue {
+			get {
+				if (defaultValue == null)
+					return default(TValue);
+				return defaultValue;
+			}
+			set {
+				defaultValue = value;
 			}
 		}
 
@@ -1379,7 +1394,7 @@ namespace flash.utils
 				value = outValue;
 				return true;
 			}
-			value = default(TValue);
+			value = DefaultValue;
 			return false;
 		}
 
@@ -1429,15 +1444,18 @@ namespace flash.utils
 
 	[DynamicClass]
 	[DebuggerTypeProxy (typeof (DictionaryDebugView))]
-	public class Dictionary : Dictionary<object, object>, IDynamicClass {
+	[AsUntyped] // necessary to convert dynamic -> "*"
+	public class Dictionary : Dictionary<object, dynamic>, IDynamicClass {
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Dictionary(bool weakKeys = false) 
 			: base(weakKeys)
 		{
+			DefaultValue = PlayScript.Undefined._undefined;
 		}
 
 		public new dynamic this [object key] {
+			[return: AsUntyped]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				key = PlayScript.Dynamic.FormatKeyForAs (key);
@@ -1609,6 +1627,7 @@ namespace flash.utils
 		}
 
 		public new dynamic this [object key] {
+			[return: AsUntyped]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				key = PlayScript.Dynamic.FormatKeyForAs (key);

@@ -4244,6 +4244,18 @@ namespace Mono.CSharp
 				throw new InternalErrorException ("Multi-resolve");
 
 			member_type = type_expr.ResolveAsType (this);
+
+			//
+			// Support the ActionScript "*" type
+			//
+			if (member_type == Module.Compiler.BuiltinTypes.Dynamic || member_type == Module.Compiler.BuiltinTypes.Object) {
+				if (OptAttributes != null) {
+					var a = OptAttributes.Search (Module.PredefinedAttributes.AsUntypedAttribute);
+					if (a != null && (a.ExplicitTarget == null || a.ExplicitTarget == "return"))
+						member_type = Module.Compiler.BuiltinTypes.AsUntyped;
+				}
+			}
+
 			return member_type != null;
 		}
 	}

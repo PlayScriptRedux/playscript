@@ -388,7 +388,7 @@ namespace Mono.CSharp {
 			TypeSpec expr_type = expr.Type;
 			
 			// PlayScript references can always be implicitly cast to bool
-			if (target_type.BuiltinType == BuiltinTypeSpec.Type.Bool &&  !upconvert_only) {
+			if (target_type.BuiltinType == BuiltinTypeSpec.Type.Bool) {
 				if (expr_type.BuiltinType == BuiltinTypeSpec.Type.Bool) {
 					// already a boolean
 					return expr;
@@ -420,7 +420,7 @@ namespace Mono.CSharp {
 			}
 			
 			// PlayScript references can always be implicitly cast to string
-			if (expr_type.BuiltinType != BuiltinTypeSpec.Type.String && target_type.BuiltinType == BuiltinTypeSpec.Type.String && !upconvert_only) {
+			if (expr_type.BuiltinType != BuiltinTypeSpec.Type.String && target_type.BuiltinType == BuiltinTypeSpec.Type.String) {
 				if (expr_type.BuiltinType == BuiltinTypeSpec.Type.String) {
 					// already a string
 					return expr;
@@ -438,27 +438,76 @@ namespace Mono.CSharp {
 
 				return new Invocation (function, args).Resolve (opt_ec);
 			}
-			
+
+			if ((expr_type.IsDynamic || PsIsUndefied (expr_type, opt_ec)) && target_type.IsDynamic) {
+				if (expr_type == target_type)
+					return expr; // nothing to do
+
+				// In C#, allow dynamic to hold undefined
+				if (opt_ec.FileType != SourceFileType.PlayScript)
+					return EmptyCast.Create (expr, target_type, opt_ec).Resolve (opt_ec);
+
+				// Cast from * (AsUntyped) to Object (Dynamic)
+				if ((expr_type.IsAsUntyped || PsIsUndefied (expr_type, opt_ec)) && !target_type.IsAsUntyped) {
+					var args = new Arguments (1);
+					args.Add (new Argument (EmptyCast.RemoveDynamic (opt_ec, expr)));
+
+					var function = new MemberAccess (new TypeExpression (
+						opt_ec.Module.PredefinedTypes.PsConverter.Resolve (), expr.Location), "ConvertToObj", expr.Location);
+
+					return new Invocation (function, args).Resolve (opt_ec);
+				}
+
+				// Cast from Object (Dynamic) to * (AsUntyped)
+				return EmptyCast.Create (expr, target_type, opt_ec).Resolve (opt_ec);
+			}
+
 			return null;
 		}
 
 		public static bool ImplicitPlayScriptConversionExists (TypeSpec expr_type, TypeSpec target_type, ResolveContext opt_ec, bool upconvert_only)
 		{
-			if (opt_ec == null || opt_ec.FileType != SourceFileType.PlayScript)
+			if (opt_ec == null)
+				return false;
+
+			//
+			// Can always cast between Object (Dynamic) and * (AsUntyped),
+			// even in C#. This is to support using the "*" type in C#.
+			//
+			if ((expr_type.IsDynamic || PsIsUndefied (expr_type, opt_ec)) && target_type.IsDynamic)
+				return true;
+
+			if (opt_ec.FileType != SourceFileType.PlayScript || upconvert_only)
 				return false;
 
 			//
 			// PlayScript types can always be implicitly cast to bool
 			//
-			if (target_type.BuiltinType == BuiltinTypeSpec.Type.Bool && !upconvert_only)
+			if (target_type.BuiltinType == BuiltinTypeSpec.Type.Bool)
 				return true;
 
 			//
 			// PlayScript types can always be implicitly cast to string
 			//
-			if (target_type.BuiltinType == BuiltinTypeSpec.Type.String && !upconvert_only)
+			if (target_type.BuiltinType == BuiltinTypeSpec.Type.String)
 				return true;
-			
+
+			return false;
+		}
+
+		static bool PsIsUndefied (TypeSpec expr_type, ResolveContext opt_ec)
+		{
+			if (opt_ec == null)
+				return false;
+
+			//
+			// AsUndefined is only defined if PlayScript.Dynamic is included, so
+			// we excplitily check if it has been defined, rather than calling
+			// Resolve.
+			//
+			if (opt_ec.Module.PredefinedTypes.AsUndefined.IsDefined && expr_type == opt_ec.Module.PredefinedTypes.AsUndefined.TypeSpec)
+				return true;
+
 			return false;
 		}
 
@@ -883,7 +932,7 @@ namespace Mono.CSharp {
 			if (expr.eclass == ExprClass.MethodGroup) {
 				// PlayScript can implicitly cast unique methods/lambdas to dynamic/delegate types.
 				if (!target_type.IsDelegate && ec.FileType == SourceFileType.PlayScript && 
-				    (target_type == ec.BuiltinTypes.Dynamic || target_type == ec.BuiltinTypes.Delegate)) {
+				    (target_type.IsDynamic || target_type == ec.BuiltinTypes.Delegate)) {
 					MethodGroupExpr mg = expr as MethodGroupExpr;
 					if (mg != null && mg.Candidates.Count == 1) {
 						return true;
@@ -1527,7 +1576,7 @@ namespace Mono.CSharp {
 			if (expr.eclass == ExprClass.MethodGroup){
 				if (!target_type.IsDelegate){
 					if (ec.FileType == SourceFileType.PlayScript && 
-					    (target_type == ec.BuiltinTypes.Dynamic || target_type == ec.BuiltinTypes.Delegate)) {
+					    (target_type.IsDynamic || target_type == ec.BuiltinTypes.Delegate)) {
 						MethodGroupExpr mg = expr as MethodGroupExpr;
 						if (mg != null) {
 							if (mg.Candidates.Count != 1) {
@@ -1614,20 +1663,9 @@ namespace Mono.CSharp {
 
 			if (expr_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
 
-				// Implicitly cast references to bools in PlayScript
-				if (ec.FileType == SourceFileType.PlayScript && 
-				    target_type.BuiltinType == BuiltinTypeSpec.Type.Bool &&
-				    ec.Target != Target.JavaScript) {
-
-					var cast_args = new Arguments(1);
-					cast_args.Add (new Argument(EmptyCast.Create(expr, ec.BuiltinTypes.Object, ec)));
-
-//					ec.Report.Warning (7164, 1, expr.Location, "Expensive reference conversion to bool");
-
-					return new Invocation(new MemberAccess(new MemberAccess(new SimpleName(
-						PsConsts.PsRootNamespace, expr.Location), "Boolean_fn", expr.Location), "Boolean", expr.Location), 
-					                      cast_args).Resolve (ec);
-				}
+				e = ImplicitPlayScriptConversion (expr, target_type, ec, upconvert_only);
+				if (e != null)
+					return e;
 
 				switch (target_type.Kind) {
 				case MemberKind.ArrayType:
@@ -1723,7 +1761,7 @@ namespace Mono.CSharp {
 			if (expr_type == InternalType.AnonymousMethod){
 				AnonymousMethodExpression ame = (AnonymousMethodExpression) expr;
 				if (ec.FileType == SourceFileType.PlayScript && 
-				    (target_type == ec.BuiltinTypes.Dynamic || target_type == ec.BuiltinTypes.Delegate)) {
+				    (target_type.IsDynamic || target_type == ec.BuiltinTypes.Delegate)) {
 					var del_type = Delegate.CreateDelegateType (ec, ame.AsParameters, ame.AsReturnType.ResolveAsType(ec), loc);
 					return new Cast(new TypeExpression(del_type, loc), expr, loc).Resolve(ec);
 				}

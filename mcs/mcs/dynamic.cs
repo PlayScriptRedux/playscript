@@ -352,7 +352,7 @@ namespace Mono.CSharp
 			eclass = ExprClass.Value;
 
 			if (type == null)
-				type = rc.BuiltinTypes.Dynamic;
+				type = rc.FileType == SourceFileType.PlayScript ? rc.BuiltinTypes.AsUntyped : rc.BuiltinTypes.Dynamic;
 
 			if (rc.Report.Errors == errors)
 				return true;
@@ -1591,7 +1591,7 @@ namespace Mono.CSharp
 			if (ret.Type == rc.BuiltinTypes.Object) {
 				// cast object to dynamic for return types
 				ret = new Cast (new TypeExpression (rc.BuiltinTypes.Dynamic, loc), ret, loc).Resolve (rc);
-			} 
+			}
 			return ret;
 		}
 
@@ -1778,7 +1778,7 @@ namespace Mono.CSharp
 			if (ret.Type == rc.BuiltinTypes.Object) {
 				// cast object to dynamic for return types
 				ret = new Cast (new TypeExpression (rc.BuiltinTypes.Dynamic, loc), ret, loc).Resolve (rc);
-			} 
+			}
 			return ret;
 		}
 

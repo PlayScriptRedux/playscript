@@ -64,6 +64,7 @@ namespace Mono.CSharp
 		// build-in type (mostly object)
 		//
 		public readonly BuiltinTypeSpec Dynamic;
+		public readonly BuiltinTypeSpec AsUntyped;
 
 		// Predefined operators tables
 		public readonly Binary.PredefinedOperator[] OperatorsBinaryStandard;
@@ -120,6 +121,7 @@ namespace Mono.CSharp
 
 			// TODO: Maybe I should promote it to different kind for faster compares
 			Dynamic = new BuiltinTypeSpec ("dynamic", BuiltinTypeSpec.Type.Dynamic);
+			AsUntyped = new BuiltinTypeSpec ("*", BuiltinTypeSpec.Type.Dynamic);
 
 			OperatorsBinaryStandard = Binary.CreateStandardOperatorsTable (this);
 			AsOperatorsBinaryStandard = Binary.CreateAsStandardOperatorsTable (this);
@@ -170,6 +172,8 @@ namespace Mono.CSharp
 
 			// Set internal build-in types
 			Dynamic.SetDefinition (Object);
+			AsUntyped.SetDefinition (Object);
+			AsUntyped.Modifiers |= Modifiers.AS_UNTYPED;
 
 			return true;
 		}
@@ -392,6 +396,8 @@ namespace Mono.CSharp
 			Task.Define ();
 			if (TaskGeneric.Define ())
 				TaskGeneric.TypeSpec.IsGenericTask = true;
+
+			AsUndefined.Define ();
 		}
 
 		private void CheckPlayScriptDynamicMode()

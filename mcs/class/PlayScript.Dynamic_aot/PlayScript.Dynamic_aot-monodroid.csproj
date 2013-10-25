@@ -127,6 +127,9 @@
     <Compile Include="..\PlayScript.Dynamic\System\Runtime\CompilerServices\DynamicAttribute.cs">
       <Link>System\Runtime\CompilerServices\DynamicAttribute.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\AsUntypedAttribute.cs">
+      <Link>PlayScript\AsUntypedAttribute.cs</Link>
+    </Compile>
     <Compile Include="..\PlayScript.Dynamic\AssemblyInfo.cs">
       <Link>AssemblyInfo.cs</Link>
     </Compile>

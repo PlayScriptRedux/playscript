@@ -251,6 +251,7 @@ namespace flash.utils {
 			return str;		
 		}
  	 	
+		[return: PlayScript.AsUntyped]
 		public dynamic readObject() {
 			Stream stream = getRawStream();
 			Amf3Parser amfparser = new Amf3Parser(stream);

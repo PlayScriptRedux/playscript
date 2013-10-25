@@ -34,10 +34,19 @@ namespace Mono.CSharp
 		//
 		protected struct DynamicTypeReader
 		{
-			static readonly bool[] single_attribute = { true };
+			enum TypeFlags
+			{
+				None		= 0,
+				Dynamic		= 1,
+				AsUntyped	= 2,
+
+				All			= Dynamic | AsUntyped,
+			}
+
+			static readonly TypeFlags[] single_dynamic_attribute = { TypeFlags.Dynamic };
 
 			public int Position;
-			bool[] flags;
+			TypeFlags[] flags;
 
 			// There is no common type for CustomAttributeData and we cannot
 			// use ICustomAttributeProvider
@@ -61,7 +70,7 @@ namespace Mono.CSharp
 				if (provider != null)
 					ReadAttribute (importer);
 
-				return flags != null && Position < flags.Length && flags[Position];
+				return flags != null && Position < flags.Length && (flags [Position] & TypeFlags.Dynamic) != 0;
 			}
 
 			//
@@ -73,6 +82,17 @@ namespace Mono.CSharp
 					ReadAttribute (importer);
 
 				return flags != null;
+			}
+
+			//
+			// Returns true when object at local position has an AsUntypedAttribute
+			//
+			public bool IsAsUntypedObject (MetadataImporter importer)
+			{
+				if (provider != null)
+					ReadAttribute (importer);
+
+				return flags != null && Position < flags.Length && (flags [Position] & TypeFlags.AsUntyped) != 0;
 			}
 
 			void ReadAttribute (MetadataImporter importer)
@@ -88,13 +108,16 @@ namespace Mono.CSharp
 				}
 
 				if (cad.Count > 0) {
+					//
+					// Check for DynamicAttribute
+					//
 					foreach (var ca in cad) {
 						var dt = ca.Constructor.DeclaringType;
 						if (dt.Name != "DynamicAttribute" || dt.Namespace != CompilerServicesNamespace)
 							continue;
 
 						if (ca.ConstructorArguments.Count == 0) {
-							flags = single_attribute;
+							flags = single_dynamic_attribute;
 							break;
 						}
 
@@ -102,12 +125,32 @@ namespace Mono.CSharp
 
 						if (arg_type.IsArray && MetaType.GetTypeCode (arg_type.GetElementType ()) == TypeCode.Boolean) {
 							var carg = (IList<CustomAttributeTypedArgument>) ca.ConstructorArguments[0].Value;
-							flags = new bool[carg.Count];
+							flags = new TypeFlags[carg.Count];
 							for (int i = 0; i < flags.Length; ++i) {
-								if (MetaType.GetTypeCode (carg[i].ArgumentType) == TypeCode.Boolean)
-									flags[i] = (bool) carg[i].Value;
+								if (MetaType.GetTypeCode (carg [i].ArgumentType) == TypeCode.Boolean)
+									flags [i] |= (bool)carg [i].Value ? TypeFlags.Dynamic : 0;
 							}
 
+							break;
+						}
+					}
+
+					//
+					// Check for AsUntypedAttribute
+					//
+					if (flags != null) {
+						foreach (var ca in cad) {
+							var dt = ca.Constructor.DeclaringType;
+							if (dt.Name != "AsUntypedAttribute")
+								continue;
+
+							var newFlags = new TypeFlags[flags.Length];
+							for (int i = 0; i < flags.Length; ++i) {
+								newFlags [i] = flags [i];
+								if ((flags [i] & TypeFlags.Dynamic) != 0)
+									newFlags [i] |= TypeFlags.AsUntyped;
+							}
+							flags = newFlags;
 							break;
 						}
 					}
@@ -714,6 +757,9 @@ namespace Mono.CSharp
 			TypeSpec spec;
 			if (import_cache.TryGetValue (type, out spec)) {
 				if (spec.BuiltinType == BuiltinTypeSpec.Type.Object) {
+					if (dtype.IsAsUntypedObject (this))
+						return module.Compiler.BuiltinTypes.AsUntyped;
+
 					if (dtype.IsDynamicObject (this))
 						return module.Compiler.BuiltinTypes.Dynamic;
 
@@ -2140,7 +2186,7 @@ namespace Mono.CSharp
 						if (possible_accessors == null)
 							continue;
 
-						var p = (PropertyInfo) member;
+						var p = (PropertyInfo)member;
 						//
 						// Links possible accessors with property
 						//
