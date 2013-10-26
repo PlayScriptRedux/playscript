@@ -93,6 +93,7 @@
 ../pscorlib/flash/display/TriangleCulling.play
 ../pscorlib/flash/display3D/AGALConverter.cs
 ../pscorlib/flash/display3D/Context3D.cs
+../pscorlib/flash/display3D/Context3DStateCache.cs
 ../pscorlib/flash/display3D/Context3DBlendFactor.play
 ../pscorlib/flash/display3D/Context3DClearMask.play
 ../pscorlib/flash/display3D/Context3DCompareMode.play

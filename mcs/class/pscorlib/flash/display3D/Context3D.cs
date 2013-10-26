@@ -64,6 +64,7 @@ namespace flash.display3D {
 	using flash.geom;
 	using flash.display3D;
 	using flash.display3D.textures;
+
 	using _root;
 	
 	public class Context3D : EventDispatcher {
@@ -113,6 +114,11 @@ namespace flash.display3D {
 		/// </summary>
 		public static System.Action<Context3D> OnPresent;
 
+		/// <summary>
+		// keeps track of the current state of the device and don't call GL if not strictly needed
+		/// </summary>
+		private static Context3DStateCache StateCache = new Context3DStateCache(); 
+
 		//
 		// Methods
 		//
@@ -160,8 +166,11 @@ namespace flash.display3D {
 			// generate depth buffer for render to texture
 			GL.GenRenderbuffers(1, out mTextureDepthBufferId);
 			GLUtils.CheckGLError ();
+
+			// clear the settings cache
+			StateCache.clearSettings ();
 		}
-		
+
 		public void clear(double red = 0.0, double green = 0.0, double blue = 0.0, double alpha = 1.0, 
 		                  double depth = 1.0, uint stencil = 0, uint mask = 0xffffffff) {
 
@@ -197,8 +206,7 @@ namespace flash.display3D {
 		public void configureBackBuffer(int width, int height, int antiAlias, 
 			bool enableDepthAndStencil = true, bool wantsBestResolution = false) {
 
-			GL.Viewport(0,0, width, height);
-			GLUtils.CheckGLError ();
+			setViewport(0, 0, width, height);
 
 			// $$TODO allow for resizing of frame buffer here
 			mBackBufferWidth = width;
@@ -278,9 +286,12 @@ namespace flash.display3D {
 		}
 
 		public void bindVertexArray(int id) {
-#if PLATFORM_MONOTOUCH 
-			GL.Oes.BindVertexArray(id);
-			GLUtils.CheckGLError ();
+#if PLATFORM_MONOTOUCH
+			if( StateCache.updateActiveVertexArray(id) )
+			{
+				GL.Oes.BindVertexArray(id);
+				GLUtils.CheckGLError ();
+			}
 #endif
 		}
 
@@ -291,7 +302,6 @@ namespace flash.display3D {
 #endif
 		}
 
- 	 	
 		public void dispose() {
 			throw new NotImplementedException();
 		}
@@ -299,17 +309,29 @@ namespace flash.display3D {
 		public void drawToBitmapData(BitmapData destination) {
 		 	throw new NotImplementedException();
 		}
- 	 	
-		public void drawTriangles(IndexBuffer3D indexBuffer, int firstIndex = 0, int numTriangles = -1) {
 
+		public void drawTriangles(IndexBuffer3D indexBuffer, int firstIndex = 0, int numTriangles = -1) 
+		{
 			// flush sampler state before drawing
 			flushSamplerState();
 
 			int count = (numTriangles == -1) ? indexBuffer.numIndices : (numTriangles * 3);
+
 			GL.BindBuffer(BufferTarget.ElementArrayBuffer, indexBuffer.id);
 			GLUtils.CheckGLError ();
 
 			GL.DrawElements(BeginMode.Triangles, count, indexBuffer.elementType, new IntPtr(firstIndex));	
+			GLUtils.CheckGLError ();
+
+			// increment draw call count
+			statsIncrement(Stats.DrawCalls);
+		}
+
+		public void drawTrianglesVA(int firstIndex, int numTriangles, DrawElementsType elementType) 
+		{
+			// flush sampler state before drawing
+			flushSamplerState();
+			GL.DrawElements(BeginMode.Triangles, (numTriangles * 3), elementType, new IntPtr(firstIndex));	
 			GLUtils.CheckGLError ();
 
 			// increment draw call count
@@ -337,51 +359,58 @@ namespace flash.display3D {
 
 		public void setBlendFactors (string sourceFactor, string destinationFactor)
 		{
-			BlendingFactorSrc src;
-			BlendingFactorDest dest;
+			BlendingFactorSrc src 		= BlendingFactorSrc.One;
+			BlendingFactorDest dest 	= BlendingFactorDest.OneMinusSrcAlpha;
+			bool updateBlendFunction 	= false;
 
-			// translate strings into enums
-			switch (sourceFactor) {
-			case Context3DBlendFactor.ONE: 							src = BlendingFactorSrc.One; break;
-			case Context3DBlendFactor.ZERO: 						src = BlendingFactorSrc.Zero; break;
-			case Context3DBlendFactor.SOURCE_ALPHA: 				src = BlendingFactorSrc.SrcAlpha; break;
-#if PLATFORM_MONOTOUCH
-			case Context3DBlendFactor.SOURCE_COLOR: 				src = BlendingFactorSrc.SrcColor; break;
-#endif
-			case Context3DBlendFactor.DESTINATION_ALPHA: 			src = BlendingFactorSrc.DstAlpha; break;
-			case Context3DBlendFactor.DESTINATION_COLOR: 			src = BlendingFactorSrc.DstColor; break;
-			case Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA: 		src = BlendingFactorSrc.OneMinusSrcAlpha; break;
-#if PLATFORM_MONOTOUCH
-			case Context3DBlendFactor.ONE_MINUS_SOURCE_COLOR: 		src = BlendingFactorSrc.OneMinusSrcColor; break;
-#endif
-			case Context3DBlendFactor.ONE_MINUS_DESTINATION_ALPHA: 	src = BlendingFactorSrc.OneMinusDstAlpha; break;
-			case Context3DBlendFactor.ONE_MINUS_DESTINATION_COLOR: 	src = BlendingFactorSrc.OneMinusDstColor; break;
-			default:
-				throw new NotImplementedException();
+			if ( StateCache.updateBlendSrcFactor (sourceFactor) || StateCache.updateBlendDestFactor (destinationFactor) )
+				updateBlendFunction = true;
+
+			if ( updateBlendFunction ) 
+			{
+				// translate strings into enums
+				switch (sourceFactor) {
+					case Context3DBlendFactor.ONE: 							src = BlendingFactorSrc.One; break;
+					case Context3DBlendFactor.ZERO: 						src = BlendingFactorSrc.Zero; break;
+					case Context3DBlendFactor.SOURCE_ALPHA: 				src = BlendingFactorSrc.SrcAlpha; break;
+					#if PLATFORM_MONOTOUCH
+					case Context3DBlendFactor.SOURCE_COLOR: 				src = BlendingFactorSrc.SrcColor; break;
+					#endif
+					case Context3DBlendFactor.DESTINATION_ALPHA: 			src = BlendingFactorSrc.DstAlpha; break;
+					case Context3DBlendFactor.DESTINATION_COLOR: 			src = BlendingFactorSrc.DstColor; break;
+					case Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA: 		src = BlendingFactorSrc.OneMinusSrcAlpha; break;
+					#if PLATFORM_MONOTOUCH
+					case Context3DBlendFactor.ONE_MINUS_SOURCE_COLOR: 		src = BlendingFactorSrc.OneMinusSrcColor; break;
+					#endif
+					case Context3DBlendFactor.ONE_MINUS_DESTINATION_ALPHA: 	src = BlendingFactorSrc.OneMinusDstAlpha; break;
+					case Context3DBlendFactor.ONE_MINUS_DESTINATION_COLOR: 	src = BlendingFactorSrc.OneMinusDstColor; break;
+					default:
+					throw new NotImplementedException();
+				}
+			
+				// translate strings into enums
+				switch (destinationFactor) {
+					case Context3DBlendFactor.ONE: 							dest = BlendingFactorDest.One; break;
+					case Context3DBlendFactor.ZERO: 						dest = BlendingFactorDest.Zero; break;
+					case Context3DBlendFactor.SOURCE_ALPHA: 				dest = BlendingFactorDest.SrcAlpha; break;
+					case Context3DBlendFactor.SOURCE_COLOR: 				dest = BlendingFactorDest.SrcColor; break;
+					case Context3DBlendFactor.DESTINATION_ALPHA: 			dest = BlendingFactorDest.DstAlpha; break;
+					#if PLATFORM_MONOTOUCH
+					case Context3DBlendFactor.DESTINATION_COLOR: 			dest = BlendingFactorDest.DstColor; break;
+					#endif
+					case Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA: 		dest = BlendingFactorDest.OneMinusSrcAlpha; break;
+					case Context3DBlendFactor.ONE_MINUS_SOURCE_COLOR: 		dest = BlendingFactorDest.OneMinusSrcColor; break;
+					case Context3DBlendFactor.ONE_MINUS_DESTINATION_ALPHA: 	dest = BlendingFactorDest.OneMinusDstAlpha; break;
+					#if PLATFORM_MONOTOUCH
+					case Context3DBlendFactor.ONE_MINUS_DESTINATION_COLOR: 	dest = BlendingFactorDest.OneMinusDstColor; break;
+					#endif
+					default:
+					throw new NotImplementedException();
+				}
+
+				GL.Enable(EnableCap.Blend);
+				GL.BlendFunc(src, dest);
 			}
-
-			// translate strings into enums
-			switch (destinationFactor) {
-			case Context3DBlendFactor.ONE: 							dest = BlendingFactorDest.One; break;
-			case Context3DBlendFactor.ZERO: 						dest = BlendingFactorDest.Zero; break;
-			case Context3DBlendFactor.SOURCE_ALPHA: 				dest = BlendingFactorDest.SrcAlpha; break;
-			case Context3DBlendFactor.SOURCE_COLOR: 				dest = BlendingFactorDest.SrcColor; break;
-			case Context3DBlendFactor.DESTINATION_ALPHA: 			dest = BlendingFactorDest.DstAlpha; break;
-#if PLATFORM_MONOTOUCH
-			case Context3DBlendFactor.DESTINATION_COLOR: 			dest = BlendingFactorDest.DstColor; break;
-#endif
-			case Context3DBlendFactor.ONE_MINUS_SOURCE_ALPHA: 		dest = BlendingFactorDest.OneMinusSrcAlpha; break;
-			case Context3DBlendFactor.ONE_MINUS_SOURCE_COLOR: 		dest = BlendingFactorDest.OneMinusSrcColor; break;
-			case Context3DBlendFactor.ONE_MINUS_DESTINATION_ALPHA: 	dest = BlendingFactorDest.OneMinusDstAlpha; break;
-#if PLATFORM_MONOTOUCH
-			case Context3DBlendFactor.ONE_MINUS_DESTINATION_COLOR: 	dest = BlendingFactorDest.OneMinusDstColor; break;
-#endif
-			default:
-				throw new NotImplementedException();
-			}
-
-			GL.Enable(EnableCap.Blend);
-			GL.BlendFunc(src, dest);
 		}
  	 	
 		public void setColorMask(bool red, bool green, bool blue, bool alpha) {
@@ -390,77 +419,93 @@ namespace flash.display3D {
  	 	
 		public void setCulling (string triangleFaceToCull)
 		{
-			switch (triangleFaceToCull) {
-			case Context3DTriangleFace.NONE:
-				GL.Disable(EnableCap.CullFace);
-				break;
-			case Context3DTriangleFace.BACK:
-				GL.Enable(EnableCap.CullFace);
-				GL.CullFace (CullFaceMode.Front);		// oddly this is inverted
-				break;
-			case Context3DTriangleFace.FRONT:
-				GL.Enable(EnableCap.CullFace);
-				GL.CullFace (CullFaceMode.Back);		// oddly this is inverted
-				break;
-			case Context3DTriangleFace.FRONT_AND_BACK:
-				GL.Enable(EnableCap.CullFace);
-				GL.CullFace (CullFaceMode.FrontAndBack);
-				break;
-			default:
-				throw new NotImplementedException();
+			if ( StateCache.updateCullingMode(triangleFaceToCull) )
+			{
+				switch (triangleFaceToCull) {
+				case Context3DTriangleFace.NONE:
+					GL.Disable (EnableCap.CullFace);
+					break;
+				case Context3DTriangleFace.BACK:
+					GL.Enable (EnableCap.CullFace);
+					GL.CullFace (CullFaceMode.Front);		// oddly this is inverted
+					break;
+				case Context3DTriangleFace.FRONT:
+					GL.Enable (EnableCap.CullFace);
+					GL.CullFace (CullFaceMode.Back);		// oddly this is inverted
+					break;
+				case Context3DTriangleFace.FRONT_AND_BACK:
+					GL.Enable (EnableCap.CullFace);
+					GL.CullFace (CullFaceMode.FrontAndBack);
+					break;
+				default:
+					throw new NotImplementedException ();
+				}
 			}
+
 		}
  	 	
 		public void setDepthTest (bool depthMask, string passCompareMode)
 		{
-			GL.Enable (EnableCap.DepthTest);
-			GL.DepthMask(depthMask);
-
-			switch (passCompareMode) {
-			case Context3DCompareMode.ALWAYS:
-				GL.DepthFunc(DepthFunction.Always);
-				break;
-			case Context3DCompareMode.EQUAL:
-				GL.DepthFunc(DepthFunction.Equal);
-				break;
-			case Context3DCompareMode.GREATER:
-				GL.DepthFunc(DepthFunction.Greater);
-				break;
-			case Context3DCompareMode.GREATER_EQUAL:
-				GL.DepthFunc(DepthFunction.Gequal);
-				break;
-			case Context3DCompareMode.LESS:
-				GL.DepthFunc(DepthFunction.Less);
-				break;
-			case Context3DCompareMode.LESS_EQUAL:
-				GL.DepthFunc(DepthFunction.Lequal);
-				break;
-			case Context3DCompareMode.NEVER:
-				GL.DepthFunc(DepthFunction.Never);
-				break;
-			case Context3DCompareMode.NOT_EQUAL:
-				GL.DepthFunc(DepthFunction.Notequal);
-				break;
-			default:
-				throw new NotImplementedException();
+			if ( StateCache.updateDepthTestEnabled(true) ) 
+			{
+				GL.Enable (EnableCap.DepthTest);
 			}
+
+			if ( StateCache.updateDepthTestMask(depthMask) )
+			{
+				GL.DepthMask(depthMask);
+			}
+			
+			if ( StateCache.updateDepthCompareMode(passCompareMode) )
+			{
+				switch (passCompareMode) {
+				case Context3DCompareMode.ALWAYS:
+					GL.DepthFunc (DepthFunction.Always);
+					break;
+				case Context3DCompareMode.EQUAL:
+					GL.DepthFunc (DepthFunction.Equal);
+					break;
+				case Context3DCompareMode.GREATER:
+					GL.DepthFunc (DepthFunction.Greater);
+					break;
+				case Context3DCompareMode.GREATER_EQUAL:
+					GL.DepthFunc (DepthFunction.Gequal);
+					break;
+				case Context3DCompareMode.LESS:
+					GL.DepthFunc (DepthFunction.Less);
+					break;
+				case Context3DCompareMode.LESS_EQUAL:
+					GL.DepthFunc (DepthFunction.Lequal);
+					break;
+				case Context3DCompareMode.NEVER:
+					GL.DepthFunc (DepthFunction.Never);
+					break;
+				case Context3DCompareMode.NOT_EQUAL:
+					GL.DepthFunc (DepthFunction.Notequal);
+					break;
+				default:
+					throw new NotImplementedException ();
+				}
+			}
+
 		}
  	 	
 		public void setProgram (Program3D program)
 		{
-			if (program != null) {
-				program.Use();
-				program.SetPositionScale(mPositionScale);
-			} else {
-				// ?? 
-				throw new NotImplementedException();
+			if (program == null)
+				throw new NotImplementedException ();
+
+			if ( StateCache.updateProgram3D(program) )
+			{
+				program.Use ();
+				program.SetPositionScale (mPositionScale);
+
+				// store current program
+				mProgram = program;
+
+				// mark all samplers that this program uses as dirty
+				mSamplerDirty |= mProgram.samplerUsageMask;
 			}
-
-			// store current program
-			mProgram = program;
-
-			// mark all samplers that this program uses as dirty
-			mSamplerDirty |= mProgram.samplerUsageMask;
 		}
  
 		public void setProgramConstantsFromByteArray(string programType, int firstRegister, int numRegisters, ByteArray data, uint byteArrayOffset) 
@@ -508,20 +553,28 @@ namespace flash.display3D {
 						float* temp = (float*)(dataRawByte + dataIndex);
 						switch (uniform.Type) {
 						case ActiveUniformType.FloatMat2:
-							GL.UniformMatrix2 (uniform.Location+firstRegister-uniform.RegIndex, uniform.Size, false, temp);
-							GLUtils.CheckGLError ();
+							if (StateCache.updateRegisters (mTemp, uniform.Location + firstRegister - uniform.RegIndex, uniform.RegCount)) {
+								GL.UniformMatrix2 (uniform.Location + firstRegister - uniform.RegIndex, uniform.Size, false, temp);
+								GLUtils.CheckGLError ();
+							}
 							break;
 						case ActiveUniformType.FloatMat3:
-							GL.UniformMatrix3 (uniform.Location+firstRegister-uniform.RegIndex, uniform.Size, false, temp);
-							GLUtils.CheckGLError ();
+							if (StateCache.updateRegisters (mTemp, uniform.Location + firstRegister - uniform.RegIndex, uniform.RegCount)) {
+								GL.UniformMatrix3 (uniform.Location + firstRegister - uniform.RegIndex, uniform.Size, false, temp);
+								GLUtils.CheckGLError ();
+							}
 							break;
 						case ActiveUniformType.FloatMat4:
-							GL.UniformMatrix4 (uniform.Location+firstRegister-uniform.RegIndex, uniform.Size, false, temp);
-							GLUtils.CheckGLError ();
+							if (StateCache.updateRegisters (mTemp, uniform.Location + firstRegister - uniform.RegIndex, uniform.RegCount)) {
+								GL.UniformMatrix4 (uniform.Location + firstRegister - uniform.RegIndex, uniform.Size, false, temp);
+								GLUtils.CheckGLError ();
+							}
 							break;
 						default:
-							GL.Uniform4 (uniform.Location+firstRegister-uniform.RegIndex, numRegistersWritten, temp);
-							GLUtils.CheckGLError ();
+							if (StateCache.updateRegisters (mTemp, uniform.Location + firstRegister - uniform.RegIndex, numRegistersWritten)) {
+								GL.Uniform4 (uniform.Location + firstRegister - uniform.RegIndex, numRegistersWritten, temp);
+								GLUtils.CheckGLError ();
+							}
 							break;
 						}
 					}
@@ -549,6 +602,15 @@ namespace flash.display3D {
 			// $$TODO optimize this
 			for (int i=0; i < count; i++) {
 				dest[i] = (float)source[i];
+			}
+		}
+
+		public void setViewport(int originX, int originY, int width, int height)
+		{
+			if ( StateCache.updateViewport (originX, originY, width, height) ) 
+			{
+				GL.Viewport(originX, originY, width, height);
+				GLUtils.CheckGLError ();
 			}
 		}
 	
@@ -611,11 +673,19 @@ namespace flash.display3D {
 			{
 				int deltaReg = (firstRegister - uniform.RegIndex);
 				if (uniform.RegCount == 4 && (firstRegister == uniform.RegIndex)) {
-					GL.UniformMatrix4 (uniform.Location + deltaReg, 1, false, mTemp);
-					GLUtils.CheckGLError ();	
+
+					if (StateCache.updateRegisters (mTemp, uniform.Location + deltaReg, uniform.RegCount)) {
+						GL.UniformMatrix4 (uniform.Location + deltaReg, 1, false, mTemp);
+						GLUtils.CheckGLError ();
+					}
+
 				} else {
-					GL.Uniform4 (uniform.Location + deltaReg, uniform.RegCount - deltaReg, mTemp);
-					GLUtils.CheckGLError ();
+
+					if (StateCache.updateRegisters (mTemp, uniform.Location + deltaReg, uniform.RegCount - deltaReg) ) {
+						GL.Uniform4 (uniform.Location + deltaReg, uniform.RegCount - deltaReg, mTemp);
+						GLUtils.CheckGLError ();
+					}
+
 				}
 			}
 			else
@@ -625,7 +695,7 @@ namespace flash.display3D {
 				}
 			}
 		}
-
+	
 		public void setProgramConstantsFromVector (string programType, int firstRegister, Vector<double> data, int numRegisters = -1)
 		{
 			if (numRegisters == 0) return;
@@ -669,33 +739,44 @@ namespace flash.display3D {
 					mTemp[tempIndex++] = (float)data[dataIndex++];
 					mTemp[tempIndex++] = (float)data[dataIndex++];
 				}
-					
-				// set uniforms based on type
-				switch (uniform.Type) 
+
+				// only update registers in GL if needed
+				if ( StateCache.updateRegisters(mTemp, uniform.Location, uniform.RegCount) )
 				{
-				case ActiveUniformType.FloatMat2:
-					GL.UniformMatrix2 (uniform.Location, uniform.Size, false, mTemp);
-					GLUtils.CheckGLError ();
+					// set uniforms based on type
+					switch (uniform.Type) {
+					case ActiveUniformType.FloatMat2:
+
+						GL.UniformMatrix2 (uniform.Location, uniform.Size, false, mTemp);
+						GLUtils.CheckGLError ();
+
 					break;
-				case ActiveUniformType.FloatMat3:
-					GL.UniformMatrix3 (uniform.Location, uniform.Size, false, mTemp);
-					GLUtils.CheckGLError ();
+					case ActiveUniformType.FloatMat3:
+
+						GL.UniformMatrix3 (uniform.Location, uniform.Size, false, mTemp);
+						GLUtils.CheckGLError ();
+
 					break;
-				case ActiveUniformType.FloatMat4:
-					GL.UniformMatrix4 (uniform.Location, uniform.Size, false, mTemp);
-					GLUtils.CheckGLError ();
+					case ActiveUniformType.FloatMat4:
+
+						GL.UniformMatrix4 (uniform.Location, uniform.Size, false, mTemp);
+						GLUtils.CheckGLError ();
+
 					break;
-				default:
-					GL.Uniform4 (uniform.Location, uniform.RegCount, mTemp);
-					GLUtils.CheckGLError ();
+					default:
+
+						GL.Uniform4 (uniform.Location, uniform.RegCount, mTemp);
+						GLUtils.CheckGLError ();
+
 					break;
+					}
+
 				}
 		
 				// advance register number
 				register     += uniform.RegCount;
 				numRegisters -= uniform.RegCount;
 			}
-			
 		}
  	 	
 
@@ -715,9 +796,8 @@ namespace flash.display3D {
 			GLUtils.CheckGLError ();
 
 			// setup viewport for render to backbuffer
-			GL.Viewport(0,0, mBackBufferWidth, mBackBufferHeight);
-			GLUtils.CheckGLError ();
-
+			setViewport(0, 0, mBackBufferWidth, mBackBufferHeight);
+		
 			// normal scaling
 			mPositionScale[1] = 1.0f;
 			if (mProgram != null) {
@@ -778,8 +858,7 @@ namespace flash.display3D {
 			}
 #endif
 			// setup viewport for render to texture
-			GL.Viewport(0,0, texture2D.width, texture2D.height);
-			GLUtils.CheckGLError ();
+			setViewport(0, 0, texture2D.width, texture2D.height);
 
 			// validate framebuffer status
 			var code = GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
@@ -837,12 +916,19 @@ namespace flash.display3D {
 			}
 		}
 
+		public void setIndexBuffer(IndexBuffer3D indexBuffer)
+		{
+			GL.BindBuffer(BufferTarget.ElementArrayBuffer, indexBuffer.id);
+			GLUtils.CheckGLError ();
+		}
+
 		public void setVertexBufferAt (int index, VertexBuffer3D buffer, int bufferOffset = 0, string format = "float4")
 		{
 			if (buffer == null) {
 				GL.DisableVertexAttribArray (index);
 				GLUtils.CheckGLError ();
 
+				// carloX not sure this is catually needed 
 				GL.BindBuffer (BufferTarget.ArrayBuffer, 0);
 				GLUtils.CheckGLError ();
 
@@ -896,8 +982,11 @@ namespace flash.display3D {
 				if ((mSamplerDirty & (1 << sampler)) != 0) {
 
 					// activate texture unit for GL
-					GL.ActiveTexture(TextureUnit.Texture0 + sampler);
-					GLUtils.CheckGLError ();
+					if (StateCache.updateActiveTextureSample(sampler)) 
+					{
+						GL.ActiveTexture (TextureUnit.Texture0 + sampler);
+						GLUtils.CheckGLError ();
+					}
 
 					// get texture for sampler
 					TextureBase texture = mSamplerTextures[sampler];
@@ -922,8 +1011,12 @@ namespace flash.display3D {
 						#if PLATFORM_MONODROID
 						// set alpha texture
 						if (texture.alphaTexture != null) {
-							GL.ActiveTexture (TextureUnit.Texture4 + sampler);
-							GLUtils.CheckGLError ();
+
+							if (StateCache.updateActiveTextureSample(4 + sampler)) 
+							{
+								GL.ActiveTexture (TextureUnit.Texture4 + sampler);
+								GLUtils.CheckGLError ();
+							}
 
 							TextureBase alphaTexture = texture.alphaTexture;
 							var alphaTarget = alphaTexture.textureTarget;
@@ -937,7 +1030,13 @@ namespace flash.display3D {
 							}
 						} 
 						else {
-							GL.ActiveTexture (TextureUnit.Texture4 + sampler);
+
+							if (StateCache.updateActiveTextureSample(4 + sampler)) 
+							{
+								GL.ActiveTexture (TextureUnit.Texture4 + sampler);
+								GLUtils.CheckGLError ();
+							}
+
 							GL.BindTexture( target, texture.textureId);
 						}
 						#endif
@@ -955,7 +1054,6 @@ namespace flash.display3D {
 				// next sampler
 				sampler++;
 			}
-
 		}
 
 		// functions for updating the rendering stats

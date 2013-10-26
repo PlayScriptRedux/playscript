@@ -484,7 +484,20 @@ package flash.display {
 			var image:CGImage = (new UIImage(fullpath)).CGImage;
 			bd = BitmapData.loadFromCGImage(image);
 #elif PLATFORM_MONODROID
-			var stream:Stream = Application.Context.Assets.Open(fullpath);
+			var stream:Stream;
+			try 
+			{
+			    stream = Application.Context.Assets.Open(fullpath);
+			}
+			// if cannot load as assets, try loading it as plain file
+			// disable the ex defined but not used "warning as error"
+			#pragma warning disable 0168
+			catch (ex:Java.IO.FileNotFoundException)
+			#pragma warning restore 0168
+			{
+				stream = File.OpenRead(path);
+			}
+
 			var memStream:MemoryStream = new MemoryStream();
 			stream.CopyTo(memStream);
 			var data:byte[] = memStream.ToArray();
