@@ -7,6 +7,7 @@
 ./Amf/Amf3SerializableAttribute.cs
 ./Amf/Amf3String.cs
 ./Amf/Amf3TypeCode.cs
+./Amf/Amf3Utils.cs
 ./Amf/Amf3Variant.cs
 ./Amf/Amf3Writer.cs
 ./Amf/DataConverter.cs
