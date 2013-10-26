@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Reflection;
 using _root;
 using PlayScript.Expando;
 
@@ -38,6 +39,8 @@ namespace Amf
         public Stream Stream { get; private set; }
 
 		public bool TrackArrayReferences { get; set; }
+		public bool WriteDoublesAsInts {get; set;}
+		public bool WriteZerosAsNulls {get; set;}
 
         private Dictionary<string, int> stringTable = new Dictionary<string, int>();
 
@@ -64,6 +67,10 @@ namespace Amf
 
 			// track array references by default
 			TrackArrayReferences = true;
+			// write doubles as integers by default
+			WriteDoublesAsInts = true;
+			// dont write zeros as nulls by default (non-standard?)
+			WriteZerosAsNulls = false;
         }
 
         private bool CheckObjectTable(object obj)
@@ -147,48 +154,13 @@ namespace Amf
 				return;
 			}
 
-            if (obj is _root.Array) {
-				Write((_root.Array)obj);
+            if (obj is IList) {
+				Write((IList)obj);
                 return;
             }
 
 			if (obj is flash.utils.ByteArray) {
 				Write((flash.utils.ByteArray)obj);
-				return;
-			}
-
-			if (obj is Vector<uint>) {
-				Write((Vector<uint>)obj);
-				return;
-			}
-
-			if (obj is Vector<int>) {
-				Write((Vector<int>)obj);
-				return;
-			}
-
-			if (obj is Vector<double>) {
-				Write((Vector<double>)obj);
-				return;
-			}
-
-			if (obj is Vector<object>) {
-				Write((Vector<object>)obj);
-				return;
-			}
-
-			if (obj is uint[]) {
-				Write((uint[])obj);
-				return;
-			}
-
-			if (obj is int[]) {
-				Write((int[])obj);
-				return;
-			}
-
-			if (obj is double[]) {
-				Write((double[])obj);
 				return;
 			}
 
@@ -202,6 +174,24 @@ namespace Amf
 			    obj is short ||
 			    obj is ushort) {
 				Write(Convert.ToInt32(obj));
+				return;
+			}
+
+			// see if class has been registered
+			var info = Amf3ClassDef.GetClassInfoFromSystemType(obj.GetType());
+			if (info != null) {
+				// see if external serializer delegate has been registered
+				if (info.Serializer != null) {
+					// invoke serializer
+					info.Serializer(obj, this);
+				} else {
+					if (info.SerializerClassDef == null) {
+						// automatically create class definition from system type
+						info.SerializerClassDef = new Amf3ClassDef(info.Alias, obj.GetType());
+					}
+					// write object with reflection (slow)
+					WriteObjectWithRefection(info.SerializerClassDef, obj);
+				}
 				return;
 			}
 
@@ -240,12 +230,28 @@ namespace Amf
 
         public void Write(int integer)
         {
+			if (WriteZerosAsNulls && integer == 0) {
+				Write(Amf3TypeCode.Null);
+				return;
+			}
+
             Write(Amf3TypeCode.Integer);
             TypelessWrite(integer);
         }
 
         public void Write(double number)
         {
+			// is number within range of an integer?
+			if (WriteDoublesAsInts && !double.IsNaN(number) && (number >= amfIntMinValue) && (number <= amfIntMaxValue)) {
+				// write number as integer if we can 
+				int numberInt = (int)number;
+				if (((double)numberInt) == number) {
+					// write as integer
+					Write(numberInt);
+					return;
+				}
+			}
+
             Write(Amf3TypeCode.Number);
             TypelessWrite(number);
         }
@@ -268,10 +274,58 @@ namespace Amf
             TypelessWrite(date);
         }
 
-        public void Write(_root.Array array)
+        public void Write(IList obj)
         {
-            Write(Amf3TypeCode.Array);
-            TypelessWrite(array);
+			if (obj is _root.Array) {
+				Write(Amf3TypeCode.Array);
+				TypelessWriteArray((_root.Array)obj);
+				return;
+			} 
+
+			if (obj is Vector<uint>) {
+				Write((Vector<uint>)obj);
+				return;
+			}
+
+			if (obj is Vector<int>) {
+				Write((Vector<int>)obj);
+				return;
+			}
+
+			if (obj is Vector<double>) {
+				Write((Vector<double>)obj);
+				return;
+			}
+
+			if (obj is Vector<object>) {
+				Write((Vector<object>)obj);
+				return;
+			}
+
+			if (obj is uint[]) {
+				Write((uint[])obj);
+				return;
+			}
+
+			if (obj is int[]) {
+				Write((int[])obj);
+				return;
+			}
+
+			if (obj is double[]) {
+				Write((double[])obj);
+				return;
+			}
+
+			// check for a typed vector, example: Vector<MyClass>
+			var objType = obj.GetType();
+			if (objType.Name == "Vector`1")	{
+				Write(Amf3TypeCode.VectorObject);
+				TypelessWriteVectorObject(obj);
+				return;
+			}
+
+			throw new ArgumentException("Cannot serialize object of type " + objType.FullName);
         }
 
 		public void Write(flash.utils.ByteArray byteArray)
@@ -475,7 +529,7 @@ namespace Amf
             TypelessWrite("");
         }
 
-        public void TypelessWrite(_root.Array array)
+        public void TypelessWriteArray(_root.Array array)
         {
 			if (TrackArrayReferences) {
 				if (CheckObjectTable(array))
@@ -495,6 +549,34 @@ namespace Amf
                 Write(i);
             }
         }
+
+		public void TypelessWriteVectorObject(IList vector)
+		{
+			if (TrackArrayReferences) {
+				if (CheckObjectTable(vector))
+					return;
+
+				StoreObject(vector);
+			} else {
+				StoreObject(null);
+			}
+
+			TypelessWrite((vector.Count << 1) | 1);
+
+			// get type of vector element
+			Type elementType = vector.GetType().GetGenericArguments()[0];
+			// get class info for type
+			var info = Amf3ClassDef.GetClassInfoFromSystemType(elementType);
+			// get alias of vector element from info
+			string alias = (info!=null) ? info.Alias : elementType.FullName;
+			// write vector element class alias
+			TypelessWrite(alias);
+
+			foreach (object i in vector) {
+				Write(i);
+			}
+		}
+
 
 		public void TypelessWrite(flash.utils.ByteArray byteArray)
 		{
@@ -765,11 +847,43 @@ namespace Amf
 			}
 		}
 
-		public void WriteObjectHeader(Amf3ClassDef classDef)
+		public void WriteObjectHeader(Amf3ClassDef classDef, object obj = null)
 		{
 			Write(Amf3TypeCode.Object);
 			TypelessWrite(classDef);
-			StoreObject(null);
+			StoreObject(obj);
 		}
+
+		// this writes an object to the amf stream using reflection
+		// this is much slower than having a custom serialization method for the class
+		public void WriteObjectWithRefection(Amf3ClassDef classDef, object obj) 
+		{
+			// write object header and class definition
+			Write(Amf3TypeCode.Object);
+			TypelessWrite(classDef);
+			StoreObject(obj);
+
+			// get all members for this class definition
+			var members = classDef.GetMemberListForType(obj.GetType());
+			// write all members
+			foreach (MemberInfo member in members) {
+				var field = member as FieldInfo;
+				if (field != null) {
+					// get field value and write it
+					object value = field.GetValue(obj);
+					Write(value);
+				} else {
+					var property = member as PropertyInfo;
+					if (property != null) {
+						// get property value and write it
+						object value = property.GetValue(obj, null);
+						Write(value);
+					} else {
+						throw new Exception("Unhandled member type (or missing member)");
+					}
+				}
+			}
+		}
+
     }
 }
