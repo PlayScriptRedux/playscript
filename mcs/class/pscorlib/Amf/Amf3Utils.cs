@@ -33,7 +33,7 @@ namespace Amf
 			JsonStringToAmfFile(jsonText, amfFile, generateClassDefinitions);
 		}
 
-		// this function converts a json text to an amf file
+		// this function converts json text to an amf file
 		public static void JsonStringToAmfFile(string jsonText, string amfFile, bool generateClassDefinitions)
 		{
 			// write to memory stream and return bytes
@@ -42,7 +42,7 @@ namespace Amf
 			}
 		}
 
-		// this function converts a json text to an amf byte array
+		// this function converts json text to an amf byte array
 		public static byte[] JsonStringToAmfBytes(string jsonText, bool generateClassDefinitions)
 		{
 			// write to memory stream and return bytes
@@ -52,7 +52,7 @@ namespace Amf
 			}
 		}
 
-		// this function converts parses json text, generates class definitions, and writes object graph to output stream
+		// this function parses json text, generates class definitions, and writes object graph to output stream
 		public static void JsonStringToAmfStream(string jsonText, Stream outStream, bool generateClassDefinitions)
 		{
 			// parse json
@@ -83,9 +83,7 @@ namespace Amf
 
 		private static void GenerateAndApplyClassDefinitionsRecursive(object root, IList<ExpandoObject> expandos, Dictionary<string, Amf3ClassDef> classDefs)
 		{
-			//Console.WriteLine(path);
 			if (root is ExpandoObject) {
-
 				var expando = (ExpandoObject)root;
 
 				// get properties from expando
@@ -128,10 +126,8 @@ namespace Amf
 			} else if (root is System.Collections.IList) {
 				var array = (System.Collections.IList)root;
 
-				int i = 0;
 				foreach (var element in array) {
 					GenerateAndApplyClassDefinitionsRecursive(element, expandos, classDefs);
-					i++;
 				}
 			} 
 		}
