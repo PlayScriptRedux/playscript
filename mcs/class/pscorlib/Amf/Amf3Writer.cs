@@ -552,16 +552,8 @@ namespace Amf
 
 		public void TypelessWriteVectorObject(IList vector)
 		{
-			if (TrackArrayReferences) {
-				if (CheckObjectTable(vector))
-					return;
-
-				StoreObject(vector);
-			} else {
-				StoreObject(null);
-			}
-
-			TypelessWrite((vector.Count << 1) | 1);
+			if (WriteVectorHeader(vector, (uint)vector.Count, true))
+				return;
 
 			// get type of vector element
 			Type elementType = vector.GetType().GetGenericArguments()[0];
