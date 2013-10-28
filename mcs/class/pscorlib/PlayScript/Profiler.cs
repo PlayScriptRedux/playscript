@@ -433,19 +433,16 @@ namespace PlayScript
 			}
 		}
 
-		#region Private
-		private static double GetFpsFromMs(double value)
-		{
-			return (value <= 0.0) ? double.NaN : (1000.0 / value);
-		}
-
-		private static void PrintAverageClamped(TextWriter tw, string key, double minimumClampedValue)
+		public static bool GetAverageClampedInMs (string key, double minimumClampedValue, out double value)
 		{
 			Section section;
-			if (sSections.TryGetValue(key, out section) == false)
+			if ((sFrameCount == 0) || (sSections.TryGetValue(key, out section) == false)
+			    || (section.History.Count == 0))
 			{
-				return;
+				value = 0.0;
+				return false;
 			}
+
 			double sum = 0;
 			for (int frame=0; frame < sFrameCount; frame++)
 			{
@@ -454,7 +451,29 @@ namespace PlayScript
 				sum += milliseconds;
 			}
 			sum /= sFrameCount;
-			tw.WriteLine("Avg (clamped):{0,6:0.00}ms - {1, 12:0.0} fps        min {2:0.00}ms", sum, GetFpsFromMs(sum), minimumClampedValue);
+			value = sum;
+
+			return true;
+		}
+
+		public static Dictionary<string, TimeSpan> LoadMilestones
+		{
+			get { return sLoadMilestones; }
+		}
+
+		#region Private
+		private static double GetFpsFromMs(double value)
+		{
+			return (value <= 0.0) ? double.NaN : (1000.0 / value);
+		}
+
+		private static void PrintAverageClamped(TextWriter tw, string key, double minimumClampedValue)
+		{
+			double sum;
+			if (GetAverageClampedInMs (key, minimumClampedValue, out sum)) {
+				tw.WriteLine ("Avg (clamped):{0,6:0.00}ms - {1, 12:0.0} fps        min {2:0.00}ms",
+				              sum, GetFpsFromMs (sum), minimumClampedValue);
+			}
 		}
 
 		private static void PrintAverageNWorst(TextWriter tw, string key, int NWorst)
@@ -646,9 +665,23 @@ namespace PlayScript
 
 			// print to console (not the full version though)
 			PrintReport(System.Console.Out, false);
+
+			InvokeReportDelegate ();
 		}
 
-		private static PerformanceFrameData GetPerformanceFrameData()
+		public static void InvokeReportDelegate ()
+		{
+			if (ReporterDelegate == null) {
+				return;
+			}
+
+			ProfilerData profilerData = new ProfilerData ();
+
+
+			ReporterDelegate (profilerData);
+		}
+
+		public static PerformanceFrameData GetPerformanceFrameData()
 		{
 			if (sCurrentPerformanceFrameData == null)
 			{
@@ -680,7 +713,10 @@ namespace PlayScript
 			return sCurrentPerformanceFrameData;
 		}
 
-		class SectionHistory
+		public delegate void ReportDelegate (ProfilerData report);
+		public static ReportDelegate ReporterDelegate { get; set; }
+
+		public class SectionHistory
 		{
 			public TimeSpan Time;
 			public int		NumberOfCalls;
@@ -688,7 +724,7 @@ namespace PlayScript
 		};
 
 		// info for a single section
-		class Section
+		public class Section
 		{
 			public string               Name;
 			public Stopwatch 			Timer = new Stopwatch();
@@ -729,7 +765,7 @@ namespace PlayScript
 		extern static Int64 mono_gc_get_used_size ();
 		#endregion
 
-		class PerformanceFrameData
+		public class PerformanceFrameData
 		{
 			public PerformanceFrameData(double fastFrame, double slowFrame, double autoProfileFrame)
 			{
