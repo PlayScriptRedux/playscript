@@ -36,6 +36,8 @@ using Android.App;
 
 namespace PlayScript
 {
+	public delegate string ResourcePathConverter(string origPath);
+
 	public class Player
 	{
 		public string Title
@@ -62,6 +64,8 @@ namespace PlayScript
 
 		// desired content scale for application (1.0=nonretina, 2.0=retina)
 		public static double?       ApplicationContentScale {get;set;}
+
+		public static ResourcePathConverter RemotePathConverter {get;set;}
 
 		static Player()
 		{
@@ -271,6 +275,14 @@ namespace PlayScript
 				default:
 					throw new NotImplementedException("Loader for " + ext);
 			}
+		}
+
+		public static string ToRemotePath(string path)
+		{
+			if (RemotePathConverter != null)
+				return RemotePathConverter(path);
+			else
+				return path;
 		}
 
 		public static string ResolveResourcePath(string path)

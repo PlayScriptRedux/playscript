@@ -84,29 +84,53 @@ package flash.net {
 				// handle a http load
 				// load with a delay
 
-				if (PlayScript.Player.Offline) {
-					// load from offline cache
-					if (synchronous) {
-						doLoadFromOfflineCache();
-					} else {
-						// this must be done on the 'next' frame
-						enqueueAction(doLoadFromOfflineCache);
-					}
-				} else 
+				doRemoteLoad(synchronous);
+			} else
+			{
+				var localPath = PlayScript.Player.TryResolveResourcePath(url);
+				if (localPath == null)
 				{
+					// doesn't exist locally, so try to load it remotely.
+					url = PlayScript.Player.ToRemotePath(url);
+					if (url != mRequest.url)
+					{
+						mRequest.url = url;
+						doRemoteLoad(synchronous);
+					}
+					else
+					{
+						trace("URLLoader: could not load ", mRequest.url);
+						// io error, file not found
+						this.dispatchEvent(new IOErrorEvent(IOErrorEvent.IO_ERROR));
+						return;
+					}
+				} else {
 					if (synchronous) {
-						doHttpLoadSynchronous();
+						doLocalLoad();
 					} else {
-						doHttpLoadAsynchronous();
+						// load with a delay
+						enqueueAction(doLocalLoad);
 					}
 				}
+			}
+		}
 
-			} else {
+		private function doRemoteLoad(synchronous:Boolean = false):void
+		{
+			if (PlayScript.Player.Offline) {
+				// load from offline cache
 				if (synchronous) {
-					doLocalLoad();
+					doLoadFromOfflineCache();
 				} else {
-					// load with a delay
-					enqueueAction(doLocalLoad);
+					// this must be done on the 'next' frame
+					enqueueAction(doLoadFromOfflineCache);
+				}
+			} else 
+			{
+				if (synchronous) {
+					doHttpLoadSynchronous();
+				} else {
+					doHttpLoadAsynchronous();
 				}
 			}
 		}
@@ -352,6 +376,7 @@ package flash.net {
 
 			// handle file loading
 			var path:String = PlayScript.Player.TryResolveResourcePath(mRequest.url);
+
 			if (path == null)
 			{
 				trace("URLLoader: could not load ", mRequest.url);
