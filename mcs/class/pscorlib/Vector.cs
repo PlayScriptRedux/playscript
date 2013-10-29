@@ -647,13 +647,8 @@ namespace _root {
 		
 		public Vector<T> reverse() 
 		{
-			var nv = new Vector<T>(length, @fixed);
-			int l = (int)length;
-			for (int i = 0; i < l; i++)
-			{
-				nv[i] = this[l - i - 1];
-			}
-			return nv;
+			System.Array.Reverse(mArray, 0, (int)mCount);
+			return this;
 		}
 		
 		public T shift() 
