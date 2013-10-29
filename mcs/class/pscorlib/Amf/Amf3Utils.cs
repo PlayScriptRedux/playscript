@@ -132,5 +132,34 @@ namespace Amf
 			} 
 		}
 
+		// this function profiles the json and amf parsing code 
+		// it takes in a path to a json file to load, convert json to amf, and parse amf
+		public static void PerformanceTest(string path)
+		{
+			var newPath = PlayScript.Player.ResolveResourcePath(path);
+			// read bytes from file
+			var bytes = System.IO.File.ReadAllBytes(newPath);
+
+			// perform json decoding
+			var jsonTimer = System.Diagnostics.Stopwatch.StartNew();
+			var jsonText = System.Text.Encoding.UTF8.GetString(bytes);
+			object jsonRoot = _root.JSON.parse(jsonText);
+			jsonTimer.Stop();
+
+			// write to memory stream and return bytes
+			using (var outStream = new MemoryStream()) {
+				JsonStringToAmfStream(jsonText, outStream, true);
+
+				outStream.Position = 0;
+
+				var amfTimer = System.Diagnostics.Stopwatch.StartNew();
+				var reader = new Amf3Parser(outStream);
+				var obj = reader.ReadNextObject();
+				amfTimer.Stop();
+				Console.WriteLine("{0} JSONSize:{1} AMFSize:{2} JSONDecodeTime:{3} AMFDecodeTime:{4}", path, bytes.Length, outStream.Length, 
+				                  jsonTimer.Elapsed, amfTimer.Elapsed);
+			}
+		}
+
 	}
 }
