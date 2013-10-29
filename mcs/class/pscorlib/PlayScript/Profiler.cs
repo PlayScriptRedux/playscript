@@ -203,6 +203,10 @@ namespace PlayScript
 		/// </summary>
 		public static void LoadMilestone(string name)
 		{
+			if (Enabled) {
+				Console.WriteLine("Loading milestone {0} {1}", name, sGlobalTimer.Elapsed);
+			}
+
 			// store load complete time
 			sLoadMilestones[name] = sGlobalTimer.Elapsed;
 		}
