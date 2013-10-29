@@ -608,8 +608,10 @@ namespace _root {
 		
 		public T pop() 
 		{
+#if !PERFORMANCE_MODE || DEBUG
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
+#endif
 			if (mCount == 0) {
 				return default(T);
 			}
@@ -634,8 +636,10 @@ namespace _root {
 		
 		public uint push(T value, params T[] args) 
 		{
+#if !PERFORMANCE_MODE || DEBUG
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
+#endif
 			uint len = (uint)args.Length;
 			if (mArray.Length < mCount + 1 + len)
 				EnsureCapacity((uint)(1.25 * (mCount + len)));
@@ -653,8 +657,10 @@ namespace _root {
 		
 		public T shift() 
 		{
+#if !PERFORMANCE_MODE || DEBUG
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
+#endif
 
 			if (mCount == 0)
 			{
