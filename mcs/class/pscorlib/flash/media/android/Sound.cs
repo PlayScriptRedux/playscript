@@ -91,6 +91,10 @@ namespace flash.media {
 
         }
 
+		public static void AsyncDispatchEvents()
+		{
+		}
+
 		public class ZMediaPlayer : MediaPlayer, MediaPlayer.IOnCompletionListener {
 
 			private String url;

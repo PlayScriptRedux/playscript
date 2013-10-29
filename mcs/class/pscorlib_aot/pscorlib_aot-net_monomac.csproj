@@ -913,8 +913,14 @@
     <Compile Include="..\pscorlib\flash\display\BitmapData.cs">
       <Link>flash\display\BitmapData.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\PlayScript\ProfilerData.cs">
+      <Link>PlayScript\ProfilerData.cs</Link>
+    </Compile>
     <Compile Include="..\pscorlib\flash\display3D\Context3DStateCache.cs">
       <Link>flash\display3D\Context3DStateCache.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Utils.cs">
+      <Link>Amf\Amf3Utils.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

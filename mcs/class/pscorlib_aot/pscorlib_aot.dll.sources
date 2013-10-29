@@ -8,6 +8,7 @@
 ../pscorlib/Amf/Amf3SerializableAttribute.cs
 ../pscorlib/Amf/Amf3String.cs
 ../pscorlib/Amf/Amf3TypeCode.cs
+../pscorlib/Amf/Amf3Utils.cs
 ../pscorlib/Amf/Amf3Variant.cs
 ../pscorlib/Amf/Amf3Writer.cs
 ../pscorlib/Amf/DataConverter.cs
@@ -93,13 +94,13 @@
 ../pscorlib/flash/display/TriangleCulling.play
 ../pscorlib/flash/display3D/AGALConverter.cs
 ../pscorlib/flash/display3D/Context3D.cs
-../pscorlib/flash/display3D/Context3DStateCache.cs
 ../pscorlib/flash/display3D/Context3DBlendFactor.play
 ../pscorlib/flash/display3D/Context3DClearMask.play
 ../pscorlib/flash/display3D/Context3DCompareMode.play
 ../pscorlib/flash/display3D/Context3DProfile.play
 ../pscorlib/flash/display3D/Context3DProgramType.play
 ../pscorlib/flash/display3D/Context3DRenderMode.play
+../pscorlib/flash/display3D/Context3DStateCache.cs
 ../pscorlib/flash/display3D/Context3DStencilAction.play
 ../pscorlib/flash/display3D/Context3DTextureFormat.play
 ../pscorlib/flash/display3D/Context3DTriangleFace.play
@@ -270,6 +271,7 @@
 ../pscorlib/PlayScript/ParamsDelegateTypes.cs
 ../pscorlib/PlayScript/Player.cs
 ../pscorlib/PlayScript/Profiler.cs
+../pscorlib/PlayScript/ProfilerData.cs
 ../pscorlib/PlayScript/Support.cs
 ../pscorlib/QName.play
 ../pscorlib/RangeError.play

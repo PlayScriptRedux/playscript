@@ -7,6 +7,7 @@
 ./Amf/Amf3SerializableAttribute.cs
 ./Amf/Amf3String.cs
 ./Amf/Amf3TypeCode.cs
+./Amf/Amf3Utils.cs
 ./Amf/Amf3Variant.cs
 ./Amf/Amf3Writer.cs
 ./Amf/DataConverter.cs
@@ -93,13 +94,13 @@
 ./flash/display/TriangleCulling.play
 ./flash/display3D/AGALConverter.cs
 ./flash/display3D/Context3D.cs
-./flash/display3D/Context3DStateCache.cs
 ./flash/display3D/Context3DBlendFactor.play
 ./flash/display3D/Context3DClearMask.play
 ./flash/display3D/Context3DCompareMode.play
 ./flash/display3D/Context3DProfile.play
 ./flash/display3D/Context3DProgramType.play
 ./flash/display3D/Context3DRenderMode.play
+./flash/display3D/Context3DStateCache.cs
 ./flash/display3D/Context3DStencilAction.play
 ./flash/display3D/Context3DTextureFormat.play
 ./flash/display3D/Context3DTriangleFace.play
@@ -270,6 +271,7 @@
 ./PlayScript/ParamsDelegateTypes.cs
 ./PlayScript/Player.cs
 ./PlayScript/Profiler.cs
+./PlayScript/ProfilerData.cs
 ./PlayScript/Support.cs
 ./QName.play
 ./RangeError.play
