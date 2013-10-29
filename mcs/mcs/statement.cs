@@ -7570,10 +7570,22 @@ namespace Mono.CSharp {
 				statement = new CollectionForeach (this, variable, expr);
 			}
 
-			// PlayScript - always check if enumerable var is null before doing loop
+			// PlayScript - always check if var is enumerable before doing loop
 			if (ec.FileType == SourceFileType.PlayScript && expr != null && 
 			    (expr.Type.IsClass || expr.Type.IsInterface || expr.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic)) {
-				statement = new If (new Binary(Binary.Operator.Inequality, expr, new NullLiteral(loc)), statement, loc);
+
+				//
+				// For dynamics, check that it's enumerable. For classes, just check
+				// against null.
+				//
+				if (expr.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
+					if (asForEachType == AsForEachType.ForEachKey)
+						statement = new If (new Is (expr, new TypeExpression (ec.Module.PredefinedTypes.AsIKeyEnumerable.Resolve (), loc), loc), statement, loc);
+					else
+						statement = new If (new Is (expr, new TypeExpression (ec.Module.Compiler.BuiltinTypes.IEnumerable, loc), loc), statement, loc);
+				} else {
+					statement = new If (new Binary(Binary.Operator.Inequality, expr, new NullLiteral(loc)), statement, loc);
+				}
 			}
 
 			return statement.Resolve (ec);
