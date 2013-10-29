@@ -36,7 +36,7 @@
     <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
     <ConsolePause>false</ConsolePause>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DefineConstants>PLATFORM_MONODROID;OPENGL</DefineConstants>
+    <DefineConstants>PLATFORM_MONODROID;OPENGL;PERFORMANCE_MODE</DefineConstants>
     <NoWarn>219</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
