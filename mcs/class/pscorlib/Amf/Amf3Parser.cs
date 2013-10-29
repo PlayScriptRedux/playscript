@@ -41,6 +41,14 @@ namespace Amf
         private List<object> objectTable = new List<object>();
         private List<Amf3ClassDef> traitTable = new List<Amf3ClassDef>();
 
+		private static readonly object sBoolTrue = (object)true;
+		private static readonly object sBoolFalse = (object)false;
+		private static readonly object sIntNegOne = (object)(int)-1;
+		private static readonly object sIntZero = (object)(int)0;
+		private static readonly object sIntOne = (object)(int)1;
+		private static readonly object sNumberZero = (object)(double)0.0;
+		private static readonly object sNumberOne = (object)(double)1.0;
+
         public Amf3Parser(Stream stream)
         {
             if (stream == null)
@@ -64,16 +72,27 @@ namespace Amf
                 return null;
 
             case Amf3TypeCode.False:
-                return false;
+                return sBoolFalse;
 
             case Amf3TypeCode.True:
-                return true;
+                return sBoolTrue;
 
             case Amf3TypeCode.Integer:
-                return ReadInteger();
+				{
+					int i = ReadInteger();
+					if (i == 0) return sIntZero;
+					if (i == 1) return sIntOne;
+					if (i ==-1) return sIntNegOne;
+					return (object)i;
+				}
 
             case Amf3TypeCode.Number:
-                return ReadNumber();
+				{
+					double d = ReadNumber();
+					if (d == 0.0) return sNumberZero;
+					if (d == 1.0) return sNumberOne;
+					return (object)d;
+				}
 
             case Amf3TypeCode.String:
                 return ReadString();
