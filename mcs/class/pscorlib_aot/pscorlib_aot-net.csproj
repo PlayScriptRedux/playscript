@@ -911,6 +911,9 @@
     <Compile Include="..\pscorlib\flash\display3D\GLUtils.cs">
       <Link>flash\display3D\GLUtils.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\PlayScript\ProfilerData.cs">
+      <Link>PlayScript\ProfilerData.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="flash\external\" />

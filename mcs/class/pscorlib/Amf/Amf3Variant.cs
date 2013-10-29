@@ -90,6 +90,17 @@ namespace Amf
 			throw new InvalidCastException("Cannot cast to Number");
 		}
 
+		public float AsFloat()
+		{
+			if (Type == Amf3TypeCode.Number) {
+				return (float)NumberValue;
+			}
+			if (Type == Amf3TypeCode.Integer) {
+				return (float)IntValue;
+			}
+			throw new InvalidCastException("Cannot cast to float");
+		}
+
 		public string AsString()
 		{
 			if (Type == Amf3TypeCode.String) {
@@ -115,7 +126,7 @@ namespace Amf
 			case TypeCode.UInt32:
 				return AsUInt();
 			case TypeCode.Single:
-				return (float)AsNumber();
+				return AsFloat();
 			case TypeCode.String:
 				return AsString();
 			case TypeCode.Object:
