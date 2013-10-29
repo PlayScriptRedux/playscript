@@ -439,7 +439,7 @@ namespace Mono.CSharp {
 				return new Invocation (function, args).Resolve (opt_ec);
 			}
 
-			if ((expr_type.IsDynamic || PsIsUndefied (expr_type, opt_ec)) && target_type.IsDynamic) {
+			if ((expr_type.IsDynamic || PsIsUndefined (expr_type, opt_ec)) && target_type.IsDynamic) {
 				if (expr_type == target_type)
 					return expr; // nothing to do
 
@@ -448,7 +448,7 @@ namespace Mono.CSharp {
 					return EmptyCast.Create (expr, target_type, opt_ec).Resolve (opt_ec);
 
 				// Cast from * (AsUntyped) to Object (Dynamic)
-				if ((expr_type.IsAsUntyped || PsIsUndefied (expr_type, opt_ec)) && !target_type.IsAsUntyped) {
+				if ((expr_type.IsAsUntyped || PsIsUndefined (expr_type, opt_ec)) && !target_type.IsAsUntyped) {
 					var args = new Arguments (1);
 					args.Add (new Argument (EmptyCast.RemoveDynamic (opt_ec, expr)));
 
@@ -474,7 +474,7 @@ namespace Mono.CSharp {
 			// Can always cast between Object (Dynamic) and * (AsUntyped),
 			// even in C#. This is to support using the "*" type in C#.
 			//
-			if ((expr_type.IsDynamic || PsIsUndefied (expr_type, opt_ec)) && target_type.IsDynamic)
+			if ((expr_type.IsDynamic || PsIsUndefined (expr_type, opt_ec)) && target_type.IsDynamic)
 				return true;
 
 			if (opt_ec.FileType != SourceFileType.PlayScript || upconvert_only)
@@ -495,7 +495,7 @@ namespace Mono.CSharp {
 			return false;
 		}
 
-		static bool PsIsUndefied (TypeSpec expr_type, ResolveContext opt_ec)
+		static bool PsIsUndefined (TypeSpec expr_type, ResolveContext opt_ec)
 		{
 			if (opt_ec == null)
 				return false;
