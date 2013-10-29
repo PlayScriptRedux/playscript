@@ -101,6 +101,7 @@ namespace Amf
 				foreach (var prop in properties) {
 					if (delimiter) sb.Append(',');
 					sb.Append(prop);
+					delimiter = true;
 				}
 				var propertyHash = sb.ToString();
 
@@ -112,7 +113,7 @@ namespace Amf
 					classDefs.Add(propertyHash, classDef);
 
 					if (Verbose) {
-						Console.WriteLine("AMF3 generated class: ", propertyHash);
+						Console.WriteLine("AMF3 generated class: {0}", propertyHash);
 					}
 				}
 
@@ -126,14 +127,14 @@ namespace Amf
 			} else if (root is System.Collections.IList) {
 				var array = (System.Collections.IList)root;
 
-				foreach (var element in array) {
+				foreach (object element in array) {
 					GenerateAndApplyClassDefinitionsRecursive(element, expandos, classDefs);
 				}
 			} 
 		}
 
 		// this function profiles the json and amf parsing code 
-		// it takes in a path to a json file to load, convert json to amf, and parse amf
+		// it takes in a path to a json file to load, converts json to amf, and parses amf
 		public static void PerformanceTest(string path)
 		{
 			var newPath = PlayScript.Player.ResolveResourcePath(path);
