@@ -1737,7 +1737,7 @@ namespace PlayScript
 				return (ToT)value;
 			}
 
-			if (value == null) {
+			if (Dynamic.IsNullOrUndefined(value)) {
 				return default(ToT);
 			}
 

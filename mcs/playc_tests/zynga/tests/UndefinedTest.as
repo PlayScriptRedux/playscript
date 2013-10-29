@@ -112,6 +112,22 @@ package
 			if (o4 !== null || o4 === undefined)
 				return 29;
 
+			var o5:Object = {};
+			// * should be undefined
+			value = o5["missing"];
+			if (value !== undefined || d2["missing"] !== undefined)
+				return 30;
+
+			// object should be null
+			var o6:Object = o5["missing"];
+			if (o6 !== null || o6 === undefined)
+				return 31;
+
+			// class instance should be null
+			instance = o5["missing"];
+			if (instance !== null || instance === undefined)
+				return 32;
+
 			return 0;
 		}
 	}

@@ -78,7 +78,7 @@ namespace PlayScript.DynamicRuntime
 				return default(T);
 			}
 
-			if (o == null) {
+			if (PlayScript.Dynamic.IsNullOrUndefined(o)) {
 				return default(T);
 			}
 
