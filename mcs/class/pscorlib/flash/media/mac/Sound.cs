@@ -36,6 +36,10 @@ namespace flash.media {
 			return channel;
         }
 
+		public static void AsyncDispatchEvents()
+		{
+			Console.WriteLine ("Sound AsyncDispatchEvents is not implemented for this platform");
+		}
 	}
 
 }
