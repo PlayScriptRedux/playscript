@@ -823,7 +823,7 @@ namespace flash.display3D
 						dr.mask = mask & 8;
 						if (dr.mask != 0)
 						{
-							sb.AppendFormat("if ( {0} == 1 ) {{ ", dr.ToGLSL() ); 
+							sb.AppendFormat("if ( {0} == 1.0 ) {{ ", dr.ToGLSL() ); 
 							sb.AppendLine();
 							sb.AppendFormat("{0} = texture2D({2}_alpha, {1}).r; // tex \n", dr.ToGLSL(), sr1.ToGLSL(), sampler.ToGLSL() ); 
 							sb.AppendLine();
