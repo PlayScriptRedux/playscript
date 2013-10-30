@@ -29,7 +29,7 @@ using PTRINT = System.UInt32;
 namespace playscript.utils {
 
 	// CRC32 calculator
-	public static class Crc32
+	internal static class BinJSonCrc32
 	{
 		public const uint DefaultPolynomial = 0xedb88320u;
 		public const uint DefaultSeed = 0xffffffffu;
@@ -734,7 +734,7 @@ namespace playscript.utils {
 				if (System.Object.ReferenceEquals (key, PlayScript.DynamicRuntime.PSGetIndex.LastKeyString))
 					return ((IGetMemberProvider<string>)this).GetMember (PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc);
 				else {
-					uint crc = Crc32.Calculate (key) & 0x1FFFFFFF;
+					uint crc = BinJSonCrc32.Calculate (key) & 0x1FFFFFFF;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyString = key;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc = crc;
 					return ((IGetMemberProvider<string>)this).GetMember (crc);
@@ -806,7 +806,7 @@ namespace playscript.utils {
 				if (System.Object.ReferenceEquals (key, PlayScript.DynamicRuntime.PSGetIndex.LastKeyString))
 					return ((IGetMemberProvider<int>)this).GetMember (PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc);
 				else {
-					uint crc = Crc32.Calculate (key) & 0x1FFFFFFF;
+					uint crc = BinJSonCrc32.Calculate (key) & 0x1FFFFFFF;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyString = key;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc = crc;
 					return ((IGetMemberProvider<int>)this).GetMember (crc);
@@ -863,7 +863,7 @@ namespace playscript.utils {
 				if (System.Object.ReferenceEquals (key, PlayScript.DynamicRuntime.PSGetIndex.LastKeyString))
 					return ((IGetMemberProvider<double>)this).GetMember (PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc);
 				else {
-					uint crc = Crc32.Calculate (key) & 0x1FFFFFFF;
+					uint crc = BinJSonCrc32.Calculate (key) & 0x1FFFFFFF;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyString = key;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc = crc;
 					return ((IGetMemberProvider<double>)this).GetMember (crc);
@@ -920,7 +920,7 @@ namespace playscript.utils {
 				if (System.Object.ReferenceEquals (key, PlayScript.DynamicRuntime.PSGetIndex.LastKeyString))
 					return ((IGetMemberProvider<uint>)this).GetMember (PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc);
 				else {
-					uint crc = Crc32.Calculate (key) & 0x1FFFFFFF;
+					uint crc = BinJSonCrc32.Calculate (key) & 0x1FFFFFFF;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyString = key;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc = crc;
 					return ((IGetMemberProvider<uint>)this).GetMember (crc);
@@ -977,7 +977,7 @@ namespace playscript.utils {
 				if (System.Object.ReferenceEquals (key, PlayScript.DynamicRuntime.PSGetIndex.LastKeyString))
 					return ((IGetMemberProvider<bool>)this).GetMember (PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc);
 				else {
-					uint crc = Crc32.Calculate (key) & 0x1FFFFFFF;
+					uint crc = BinJSonCrc32.Calculate (key) & 0x1FFFFFFF;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyString = key;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc = crc;
 					return ((IGetMemberProvider<bool>)this).GetMember (crc);
@@ -1059,7 +1059,7 @@ namespace playscript.utils {
 				if (System.Object.ReferenceEquals (key, PlayScript.DynamicRuntime.PSGetIndex.LastKeyString))
 					return ((IGetMemberProvider<object>)this).GetMember (PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc);
 				else {
-					uint crc = Crc32.Calculate (key) & 0x1FFFFFFF;
+					uint crc = BinJSonCrc32.Calculate (key) & 0x1FFFFFFF;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyString = key;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc = crc;
 					return ((IGetMemberProvider<object>)this).GetMember (crc);
@@ -1392,8 +1392,8 @@ namespace playscript.utils {
 
 			public static object Parse(string jsonString) {
 				using (var instance = new Parser(jsonString)) {
-					if (Crc32.Table == null)
-						Crc32.InitializeTable ();
+					if (BinJSonCrc32.Table == null)
+						BinJSonCrc32.InitializeTable ();
 					instance.Parse();
 					BinJsonDocument doc = new BinJsonDocument ();
 					doc.data = instance.data;
@@ -2004,7 +2004,7 @@ namespace playscript.utils {
 				src++;
 
 				// Make string hash (FNV-1a hash offset_basis)
-				uint crc = Crc32.DefaultSeed;
+				uint crc = BinJSonCrc32.DefaultSeed;
 
 				byte d = 0;
 				bool parsing = true;
@@ -2071,7 +2071,7 @@ namespace playscript.utils {
 					*dataPtr++ = d;
 
 					// FNV-1a hash
-					crc = (crc >> 8) ^ Crc32.Table[(byte)c ^ crc & 0xff];
+					crc = (crc >> 8) ^ BinJSonCrc32.Table[(byte)c ^ crc & 0xff];
 				}
 
 				crc = ~crc & 0x1FFFFFFF; // top 3 bits 0 to allow for type bits
