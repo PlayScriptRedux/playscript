@@ -112,6 +112,9 @@
     <Compile Include="..\pscorlib\Math.play">
       <Link>Math.play</Link>
     </Compile>
+    <Compile Include="..\pscorlib\MiniJson\Json.cs">
+      <Link>Json.cs</Link>
+    </Compile>
     <Compile Include="..\pscorlib\Namespace.play">
       <Link>Namespace.play</Link>
     </Compile>
@@ -859,6 +862,9 @@
     <Compile Include="..\pscorlib\Amf\Amf3CodeGen.cs">
       <Link>Amf\Amf3CodeGen.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Utils.cs">
+      <Link>Amf\Amf3Utils.cs</Link>
+    </Compile>
     <Compile Include="..\pscorlib\Amf\DataConverter.cs">
       <Link>Amf\DataConverter.cs</Link>
     </Compile>
@@ -930,6 +936,12 @@
     </Compile>
     <Compile Include="..\pscorlib\PlayScript\BinJSON.cs">
       <Link>PlayScript\BinJSON.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\display3D\Context3DStateCache.cs">
+      <Link>flash\display3D\Context3DStateCache.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\PlayScript\ProfilerData.cs">
+      <Link>PlayScript\ProfilerData.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

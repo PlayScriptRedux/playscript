@@ -19,6 +19,7 @@ using PlayScript;
 using System.Runtime.Serialization;
 using System.Security.Permissions;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 using System.Diagnostics;
 
 namespace flash.utils
@@ -69,6 +70,7 @@ namespace flash.utils
 		//
 		// Private static methods
 		//
+
 		public static bool TestPrime (int x)
 		{
 			if ((x & 1) != 0) {
@@ -176,7 +178,10 @@ namespace flash.utils
 		int generation;
 
 		public int length {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return count; }
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				if (value == 0) {
 					if (Count != 0) {
@@ -189,6 +194,7 @@ namespace flash.utils
 		}
 
 		public int Count {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return count; }
 		}
 
@@ -286,11 +292,13 @@ namespace flash.utils
 			throw new NotImplementedException();
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Dictionary(bool weakKeys = false) 
 		{
 			Init (INITIAL_SIZE);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Dictionary (int capacity)
 		{
 			Init (capacity);
@@ -367,16 +375,19 @@ namespace flash.utils
 		delegate TRet Transform<TRet> (TKey key, TValue value);
 
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		static KeyValuePair<TKey, TValue> make_pair (TKey key, TValue value)
 		{
 			return new KeyValuePair<TKey, TValue> (key, value);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		static TKey pick_key (TKey key, TValue value)
 		{
 			return key;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		static TValue pick_value (TKey key, TValue value)
 		{
 			return value;
@@ -641,34 +652,42 @@ namespace flash.utils
 		}
 
 		ICollection<TKey> IDictionary<TKey, TValue>.Keys {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return Keys; }
 		}
 
 		ICollection<TValue> IDictionary<TKey, TValue>.Values {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return Values; }
 		}
 
 		public KeyCollection Keys {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return new KeyCollection (this); }
 		}
 
 		public ValueCollection Values {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return new ValueCollection (this); }
 		}
 
 		ICollection IDictionary.Keys {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return Keys; }
 		}
 
 		ICollection IDictionary.Values {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return Values; }
 		}
 
 		bool IDictionary.IsFixedSize {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return false; }
 		}
 
 		bool IDictionary.IsReadOnly {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return false; }
 		}
 
@@ -692,18 +711,22 @@ namespace flash.utils
 		}
 
 		object IDictionary.this [object key] {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				key = PlayScript.Dynamic.FormatKeyForAs (key);
 				if (key is TKey && ContainsKey((TKey) key))
 					return this [ToTKey (key)];
 				return null;
 			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				key = PlayScript.Dynamic.FormatKeyForAs (key);
 				this [ToTKey (key)] = ToTValue (value);
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void IDictionary.Add (object key, object value)
 		{
 			key = PlayScript.Dynamic.FormatKeyForAs (key);
@@ -730,32 +753,39 @@ namespace flash.utils
 		}
 
 		bool ICollection.IsSynchronized {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return false; }
 		}
 
 		object ICollection.SyncRoot {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return this; }
 		}
 
 		bool ICollection<KeyValuePair<TKey, TValue>>.IsReadOnly {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return false; }
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void ICollection<KeyValuePair<TKey, TValue>>.Add (KeyValuePair<TKey, TValue> keyValuePair)
 		{
 			Add (keyValuePair.Key, keyValuePair.Value);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool ICollection<KeyValuePair<TKey, TValue>>.Contains (KeyValuePair<TKey, TValue> keyValuePair)
 		{
 			return ContainsKeyValuePair (keyValuePair);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void ICollection<KeyValuePair<TKey, TValue>>.CopyTo (KeyValuePair<TKey, TValue> [] array, int index)
 		{
 			this.CopyTo (array, index);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool ICollection<KeyValuePair<TKey, TValue>>.Remove (KeyValuePair<TKey, TValue> keyValuePair)
 		{
 			if (!ContainsKeyValuePair (keyValuePair))
@@ -764,6 +794,7 @@ namespace flash.utils
 			return Remove (keyValuePair.Key);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool ContainsKeyValuePair (KeyValuePair<TKey, TValue> pair)
 		{
 			TValue value;
@@ -794,67 +825,92 @@ namespace flash.utils
 			Do_ICollectionCopyTo<KeyValuePair<TKey, TValue>> (array, index, make_pair);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		IEnumerator IEnumerable.GetEnumerator ()
 		{
 			return new Enumerator (this);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator ()
 		{
 			return new Enumerator (this);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		IDictionaryEnumerator IDictionary.GetEnumerator ()
 		{
 			return new ShimEnumerator (this);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Enumerator GetEnumerator ()
 		{
 			return new Enumerator (this);
 		}
 
 		[Serializable]
-		private class ShimEnumerator : IDictionaryEnumerator, IEnumerator
+		private class ShimEnumerator : IDictionaryEnumerator, IEnumerator, IDisposable
 		{
 			Enumerator host_enumerator;
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public ShimEnumerator (Dictionary<TKey, TValue> host)
 			{
 				host_enumerator = host.GetEnumerator ();
 			}
 
+
+			#region IDisposable implementation
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Dispose ()
 			{
 				host_enumerator.Dispose ();
 			}
+
+			#endregion
+
+			#region IDictionaryEnumerator implementation
+
+			public DictionaryEntry Entry {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
+				get { return ((IDictionaryEnumerator) host_enumerator).Entry; }
+			}
+
+			public object Key {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
+				get { return host_enumerator.Current.Key; }
+			}
+
+			public object Value {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
+				get { return host_enumerator.Current.Value; }
+			}
+
+			#endregion
+
+			#region IEnumerator implementation
 
 			public bool MoveNext ()
 			{
 				return host_enumerator.MoveNext ();
 			}
 
-			public DictionaryEntry Entry {
-				get { return ((IDictionaryEnumerator) host_enumerator).Entry; }
-			}
-
-			public object Key {
-				get { return host_enumerator.Current.Key; }
-			}
-
-			public object Value {
-				get { return host_enumerator.Current.Value; }
-			}
-
 			// This is the raison d' etre of this $%!@$%@^@ class.
 			// We want: IDictionary.GetEnumerator ().Current is DictionaryEntry
 			public object Current {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get { return Entry; }
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Reset ()
 			{
 				host_enumerator.Reset ();
 			}
+
+			#endregion
 		}
 
 		[Serializable]
@@ -869,6 +925,7 @@ namespace flash.utils
 
 			internal KeyValuePair<TKey, TValue> current;
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			internal Enumerator (Dictionary<TKey, TValue> dictionary)
 			: this ()
 			{
@@ -878,6 +935,9 @@ namespace flash.utils
 #endif
 			}
 
+			#region IEnumerator implementation
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public bool MoveNext ()
 			{
 #if DEBUG || !PERFORMANCE_MODE
@@ -904,10 +964,12 @@ namespace flash.utils
 
 			// No error checking happens.  Usually, Current is immediately preceded by a MoveNext(), so it's wasteful to check again
 			public KeyValuePair<TKey, TValue> Current {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get { return current; }
 			}
 
 			internal TKey CurrentKey {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get {
 #if DEBUG || !PERFORMANCE_MODE
 					VerifyCurrent ();
@@ -917,6 +979,7 @@ namespace flash.utils
 			}
 
 			internal TValue CurrentValue {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get {
 #if DEBUG || !PERFORMANCE_MODE
 					VerifyCurrent ();
@@ -926,6 +989,7 @@ namespace flash.utils
 			}
 
 			object IEnumerator.Current {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get {
 #if DEBUG || !PERFORMANCE_MODE
 					VerifyCurrent ();
@@ -934,11 +998,13 @@ namespace flash.utils
 				}
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			void IEnumerator.Reset ()
 			{
 				Reset ();
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			internal void Reset ()
 			{
 #if DEBUG || !PERFORMANCE_MODE
@@ -947,7 +1013,12 @@ namespace flash.utils
 				next = 0;
 			}
 
+			#endregion
+
+			#region IDictionaryEnumerator implementation
+
 			DictionaryEntry IDictionaryEnumerator.Entry {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get {
 #if DEBUG || !PERFORMANCE_MODE
 					VerifyCurrent ();
@@ -957,14 +1028,19 @@ namespace flash.utils
 			}
 
 			object IDictionaryEnumerator.Key {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get { return CurrentKey; }
 			}
 
 			object IDictionaryEnumerator.Value {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get { return CurrentValue; }
 			}
 
+			#endregion
+
 #if DEBUG || !PERFORMANCE_MODE
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			void VerifyState ()
 			{
 				if (dictionary == null)
@@ -973,6 +1049,7 @@ namespace flash.utils
 					throw new InvalidOperationException ("out of sync");
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			void VerifyCurrent ()
 			{
 				VerifyState ();
@@ -981,10 +1058,15 @@ namespace flash.utils
 			}
 #endif
 
+			#region IDisposable implementation
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Dispose ()
 			{
 				dictionary = null;
 			}
+
+			#endregion
 		}
 
 		// This collection is a read only collection
@@ -993,6 +1075,7 @@ namespace flash.utils
 		public sealed class KeyCollection : ICollection<TKey>, IEnumerable<TKey>, ICollection, IEnumerable {
 			Dictionary<TKey, TValue> dictionary;
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public KeyCollection (Dictionary<TKey, TValue> dictionary)
 			{
 				if (dictionary == null)
@@ -1000,13 +1083,14 @@ namespace flash.utils
 				this.dictionary = dictionary;
 			}
 
-
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void CopyTo (TKey [] array, int index)
 			{
 				dictionary.CopyToCheck (array, index);
 				dictionary.CopyKeys (array, index);
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public Enumerator GetEnumerator ()
 			{
 				return new Enumerator (dictionary);
@@ -1022,6 +1106,7 @@ namespace flash.utils
 				throw new NotSupportedException ("this is a read-only collection");
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			bool ICollection<TKey>.Contains (TKey item)
 			{
 				return dictionary.ContainsKey (item);
@@ -1032,6 +1117,7 @@ namespace flash.utils
 				throw new NotSupportedException ("this is a read-only collection");
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			IEnumerator<TKey> IEnumerable<TKey>.GetEnumerator ()
 			{
 				return this.GetEnumerator ();
@@ -1049,24 +1135,29 @@ namespace flash.utils
 				dictionary.Do_ICollectionCopyTo<TKey> (array, index, pick_key);
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			IEnumerator IEnumerable.GetEnumerator ()
 			{
 				return this.GetEnumerator ();
 			}
 
 			public int Count {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get { return dictionary.length; }
 			}
 
 			bool ICollection<TKey>.IsReadOnly {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get { return true; }
 			}
 
 			bool ICollection.IsSynchronized {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get { return false; }
 			}
 
 			object ICollection.SyncRoot {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get { return ((ICollection) dictionary).SyncRoot; }
 			}
 
@@ -1074,33 +1165,47 @@ namespace flash.utils
 			public struct Enumerator : IEnumerator<TKey>, IDisposable, IEnumerator {
 				Dictionary<TKey, TValue>.Enumerator host_enumerator;
 
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				internal Enumerator (Dictionary<TKey, TValue> host)
 				{
 					host_enumerator = host.GetEnumerator ();
 				}
 
+				#region IDisposable implementation
+
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				public void Dispose ()
 				{
 					host_enumerator.Dispose ();
 				}
 
+				#endregion
+
+				#region IEnumerator implementation
+
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				public bool MoveNext ()
 				{
 					return host_enumerator.MoveNext ();
 				}
 
 				public TKey Current {
+					[MethodImpl(MethodImplOptions.AggressiveInlining)]
 					get { return host_enumerator.current.Key; }
 				}
 
 				object IEnumerator.Current {
+					[MethodImpl(MethodImplOptions.AggressiveInlining)]
 					get { return host_enumerator.CurrentKey; }
 				}
 
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				void IEnumerator.Reset ()
 				{
 					host_enumerator.Reset ();
 				}
+
+				#endregion
 			}
 		}
 
@@ -1110,6 +1215,7 @@ namespace flash.utils
 		public sealed class ValueCollection : ICollection<TValue>, IEnumerable<TValue>, ICollection, IEnumerable {
 			Dictionary<TKey, TValue> dictionary;
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public ValueCollection (Dictionary<TKey, TValue> dictionary)
 			{
 				if (dictionary == null)
@@ -1117,12 +1223,14 @@ namespace flash.utils
 				this.dictionary = dictionary;
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void CopyTo (TValue [] array, int index)
 			{
 				dictionary.CopyToCheck (array, index);
 				dictionary.CopyValues (array, index);
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public Enumerator GetEnumerator ()
 			{
 				return new Enumerator (dictionary);
@@ -1138,6 +1246,7 @@ namespace flash.utils
 				throw new NotSupportedException ("this is a read-only collection");
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			bool ICollection<TValue>.Contains (TValue item)
 			{
 				return dictionary.ContainsValue (item);
@@ -1148,6 +1257,7 @@ namespace flash.utils
 				throw new NotSupportedException ("this is a read-only collection");
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator ()
 			{
 				return this.GetEnumerator ();
@@ -1165,24 +1275,29 @@ namespace flash.utils
 				dictionary.Do_ICollectionCopyTo<TValue> (array, index, pick_value);
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			IEnumerator IEnumerable.GetEnumerator ()
 			{
 				return this.GetEnumerator ();
 			}
 
 			public int Count {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get { return dictionary.length; }
 			}
 
 			bool ICollection<TValue>.IsReadOnly {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get { return true; }
 			}
 
 			bool ICollection.IsSynchronized {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get { return false; }
 			}
 
 			object ICollection.SyncRoot {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get { return ((ICollection) dictionary).SyncRoot; }
 			}
 
@@ -1190,36 +1305,51 @@ namespace flash.utils
 			public struct Enumerator : IEnumerator<TValue>, IDisposable, IEnumerator {
 				Dictionary<TKey, TValue>.Enumerator host_enumerator;
 
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				internal Enumerator (Dictionary<TKey,TValue> host)
 				{
 					host_enumerator = host.GetEnumerator ();
 				}
 
+				#region IDisposable implementation
+
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				public void Dispose ()
 				{
 					host_enumerator.Dispose ();
 				}
 
+				#endregion
+
+				#region IEnumerator implementation
+
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				public bool MoveNext ()
 				{
 					return host_enumerator.MoveNext ();
 				}
 
 				public TValue Current {
+					[MethodImpl(MethodImplOptions.AggressiveInlining)]
 					get { return host_enumerator.current.Value; }
 				}
 
 				object IEnumerator.Current {
+					[MethodImpl(MethodImplOptions.AggressiveInlining)]
 					get { return host_enumerator.CurrentValue; }
 				}
 
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				void IEnumerator.Reset ()
 				{
 					host_enumerator.Reset ();
 				}
+
+				#endregion
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public bool hasOwnProperty(string name) {
 			return ContainsKey((TKey)(object)name);
 		}
@@ -1236,6 +1366,7 @@ namespace flash.utils
 
 		#region IDynamicClass implementation
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		dynamic IDynamicClass.__GetDynamicValue (string name)
 		{
 			return this[(TKey)(object)name];
@@ -1252,21 +1383,25 @@ namespace flash.utils
 			return false;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void IDynamicClass.__SetDynamicValue (string name, object value)
 		{
 			this[(TKey)(object)name] = (TValue)value;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool IDynamicClass.__DeleteDynamicValue (object name)
 		{
 			return this.Remove((TKey)(object)name);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool IDynamicClass.__HasDynamicValue (string name)
 		{
 			return this.ContainsKey((TKey)(object)name);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		IEnumerable IDynamicClass.__GetDynamicNames ()
 		{
 			return this.Keys;
@@ -1276,11 +1411,13 @@ namespace flash.utils
 
 		#region IKeyEnumerable implementation
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public KeyCollection.Enumerator GetKeyEnumerator()
 		{
 			return this.Keys.GetEnumerator();
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		IEnumerator PlayScript.IKeyEnumerable.GetKeyEnumerator()
 		{
 			return this.Keys.GetEnumerator();
@@ -1294,53 +1431,64 @@ namespace flash.utils
 	[DebuggerTypeProxy (typeof (DictionaryDebugView))]
 	public class Dictionary : Dictionary<object, object>, IDynamicClass {
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Dictionary(bool weakKeys = false) 
 			: base(weakKeys)
 		{
 		}
 
 		public new dynamic this [object key] {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				key = PlayScript.Dynamic.FormatKeyForAs (key);
 				return base [key];
 			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				key = PlayScript.Dynamic.FormatKeyForAs (key);
 				base[key] = value;
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public new bool hasOwnProperty(string name) {
 			return ContainsKey(name);
 		}
 
 		#region IDynamicClass implementation
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		dynamic IDynamicClass.__GetDynamicValue (string name)
 		{
 			return this[name];
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool IDynamicClass.__TryGetDynamicValue(string name, out object value) 
 		{
 			return this.TryGetValue(name, out value);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void IDynamicClass.__SetDynamicValue (string name, object value)
 		{
 			this[name] = value;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool IDynamicClass.__DeleteDynamicValue (object name)
 		{
 			return this.Remove(name);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool IDynamicClass.__HasDynamicValue (string name)
 		{
 			return this.ContainsKey(name);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		IEnumerable IDynamicClass.__GetDynamicNames ()
 		{
 			return this.Keys;
@@ -1353,13 +1501,22 @@ namespace flash.utils
 		[DebuggerDisplay("{value}", Name = "{key}", Type = "{ValueTypeName}")]
 		internal class KeyValuePairDebugView
 		{
-			public object key   {get { return _key; }}
+			public object key
+			{
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
+				get { return _key; }
+			}
+
 			public object value 
 			{
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get { return _dict[_key];}
+
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				set { _dict[_key] = value;}
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public KeyValuePairDebugView(Dictionary expando, object key)
 			{
 				_dict = expando;
@@ -1389,6 +1546,7 @@ namespace flash.utils
 		{
 			private Dictionary _dict;
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public DictionaryDebugView(Dictionary dict)
 			{
 				_dict = dict;
@@ -1423,6 +1581,7 @@ namespace flash.utils
 	[DynamicClass]
 	public class Dictionary : Dictionary<object, object>, IDynamicClass, PlayScript.IKeyEnumerable
 	{
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Dictionary(bool weakKeys = false) 
 			: base()
 		{
@@ -1433,9 +1592,12 @@ namespace flash.utils
 		}
 		
 		public int length { 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return this.Count;
 			} 	
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				if (value == 0) {
 					if (Count != 0) {
@@ -1447,6 +1609,7 @@ namespace flash.utils
 		}
 
 		public new dynamic this [object key] {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				key = PlayScript.Dynamic.FormatKeyForAs (key);
 				// the flash dictionary implementation does not throw if key not found
@@ -1460,12 +1623,15 @@ namespace flash.utils
 					return PlayScript.Undefined._undefined;
 				}
 			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				key = PlayScript.Dynamic.FormatKeyForAs (key);
 				base[key] = value;
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public bool hasOwnProperty(string name) {
 			return ContainsKey(name);
 		}
@@ -1482,31 +1648,37 @@ namespace flash.utils
 
 		#region IDynamicClass implementation
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		dynamic IDynamicClass.__GetDynamicValue (string name)
 		{
 			return this[name];
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool IDynamicClass.__TryGetDynamicValue(string name, out object value) 
 		{
 			return this.TryGetValue(name, out value);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void IDynamicClass.__SetDynamicValue (string name, object value)
 		{
 			this[name] = value;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool IDynamicClass.__DeleteDynamicValue (object name)
 		{
 			return this.Remove(name);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool IDynamicClass.__HasDynamicValue (string name)
 		{
 			return this.ContainsKey(name);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		IEnumerable IDynamicClass.__GetDynamicNames ()
 		{
 			return this.Keys;
@@ -1516,11 +1688,13 @@ namespace flash.utils
 
 		#region IKeyEnumerable implementation
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public KeyCollection.Enumerator GetKeyEnumerator()
 		{
 			return this.Keys.GetEnumerator();
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		IEnumerator PlayScript.IKeyEnumerable.GetKeyEnumerator()
 		{
 			return this.Keys.GetEnumerator();
@@ -1532,13 +1706,22 @@ namespace flash.utils
 		[DebuggerDisplay("{value}", Name = "{key}", Type = "{ValueTypeName}")]
 		internal class KeyValuePairDebugView
 		{
-			public object key   {get { return _key; }}
+			public object key
+			{
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
+				get { return _key; }
+			}
+
 			public object value 
 			{
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get { return _dict[_key];}
+
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				set { _dict[_key] = value;}
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public KeyValuePairDebugView(Dictionary expando, object key)
 			{
 				_dict = expando;
@@ -1568,6 +1751,7 @@ namespace flash.utils
 		{
 			private Dictionary _dict;
 			
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public DictionaryDebugView(Dictionary dict)
 			{
 				_dict = dict;

@@ -7,6 +7,7 @@
 ./Amf/Amf3SerializableAttribute.cs
 ./Amf/Amf3String.cs
 ./Amf/Amf3TypeCode.cs
+./Amf/Amf3Utils.cs
 ./Amf/Amf3Variant.cs
 ./Amf/Amf3Writer.cs
 ./Amf/DataConverter.cs
@@ -53,6 +54,7 @@
 ./flash/desktop/NativeApplication.play
 ./flash/display/ActionScriptVersion.play
 ./flash/display/Bitmap.play
+./flash/display/BitmapData.cs
 ./flash/display/BitmapData.play
 ./flash/display/BitmapDataChannel.play
 ./flash/display/BlendMode.play
@@ -98,10 +100,12 @@
 ./flash/display3D/Context3DProfile.play
 ./flash/display3D/Context3DProgramType.play
 ./flash/display3D/Context3DRenderMode.play
+./flash/display3D/Context3DStateCache.cs
 ./flash/display3D/Context3DStencilAction.play
 ./flash/display3D/Context3DTextureFormat.play
 ./flash/display3D/Context3DTriangleFace.play
 ./flash/display3D/Context3DVertexBufferFormat.play
+./flash/display3D/GLUtils.cs
 ./flash/display3D/IndexBuffer3D.cs
 ./flash/display3D/Program3D.cs
 ./flash/display3D/textures/CubeTexture.cs
@@ -254,6 +258,7 @@
 ./int.cs
 ./JSON.play
 ./Math.play
+./MiniJson/Json.cs
 ./mx/graphics/codec/IImageEncoder.play
 ./mx/graphics/codec/JPEGEncoder.play
 ./mx/graphics/codec/PNGEncoder.play
@@ -266,6 +271,7 @@
 ./PlayScript/ParamsDelegateTypes.cs
 ./PlayScript/Player.cs
 ./PlayScript/Profiler.cs
+./PlayScript/ProfilerData.cs
 ./PlayScript/Support.cs
 ./QName.play
 ./RangeError.play

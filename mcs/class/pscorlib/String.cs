@@ -214,7 +214,7 @@ namespace _root
 		}
 
 		public static string toLocaleLowerCase(this string s) {
-			throw new NotImplementedException();
+			return s.toLowerCase();
 		}
 
 		public static string toLocaleUpperCase(this string s) {

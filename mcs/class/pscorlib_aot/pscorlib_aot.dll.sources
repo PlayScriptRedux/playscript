@@ -8,6 +8,7 @@
 ../pscorlib/Amf/Amf3SerializableAttribute.cs
 ../pscorlib/Amf/Amf3String.cs
 ../pscorlib/Amf/Amf3TypeCode.cs
+../pscorlib/Amf/Amf3Utils.cs
 ../pscorlib/Amf/Amf3Variant.cs
 ../pscorlib/Amf/Amf3Writer.cs
 ../pscorlib/Amf/DataConverter.cs
@@ -99,13 +100,14 @@
 ../pscorlib/flash/display3D/Context3DProfile.play
 ../pscorlib/flash/display3D/Context3DProgramType.play
 ../pscorlib/flash/display3D/Context3DRenderMode.play
+../pscorlib/flash/display3D/Context3DStateCache.cs
 ../pscorlib/flash/display3D/Context3DStencilAction.play
 ../pscorlib/flash/display3D/Context3DTextureFormat.play
 ../pscorlib/flash/display3D/Context3DTriangleFace.play
 ../pscorlib/flash/display3D/Context3DVertexBufferFormat.play
+../pscorlib/flash/display3D/GLUtils.cs
 ../pscorlib/flash/display3D/IndexBuffer3D.cs
 ../pscorlib/flash/display3D/Program3D.cs
-../pscorlib/flash/display3D/GLUtils.cs
 ../pscorlib/flash/display3D/textures/CubeTexture.cs
 ../pscorlib/flash/display3D/textures/RectangleTexture.cs
 ../pscorlib/flash/display3D/textures/SamplerState.cs
@@ -256,6 +258,7 @@
 ../pscorlib/int.cs
 ../pscorlib/JSON.play
 ../pscorlib/Math.play
+../pscorlib/MiniJson/Json.cs
 ../pscorlib/mx/graphics/codec/IImageEncoder.play
 ../pscorlib/mx/graphics/codec/JPEGEncoder.play
 ../pscorlib/mx/graphics/codec/PNGEncoder.play
@@ -268,6 +271,7 @@
 ../pscorlib/PlayScript/ParamsDelegateTypes.cs
 ../pscorlib/PlayScript/Player.cs
 ../pscorlib/PlayScript/Profiler.cs
+../pscorlib/PlayScript/ProfilerData.cs
 ../pscorlib/PlayScript/Support.cs
 ../pscorlib/QName.play
 ../pscorlib/RangeError.play

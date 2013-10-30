@@ -34,6 +34,7 @@ namespace flash.display3D.textures {
 	using TextureParameterName = OpenTK.Graphics.ES20.All;
 	using Android.Opengl;
 	using Java.Nio;
+	using GLUtils = flash.display3D.GLUtils;
 #endif
 
 	public class Texture : TextureBase {

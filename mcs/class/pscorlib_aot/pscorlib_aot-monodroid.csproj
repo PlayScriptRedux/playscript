@@ -36,7 +36,7 @@
     <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
     <ConsolePause>false</ConsolePause>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DefineConstants>PLATFORM_MONODROID;OPENGL</DefineConstants>
+    <DefineConstants>PLATFORM_MONODROID;OPENGL;PERFORMANCE_MODE</DefineConstants>
     <NoWarn>219</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
@@ -117,6 +117,9 @@
     </Compile>
     <Compile Include="..\pscorlib\Math.play">
       <Link>Math.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\MiniJson\Json.cs">
+      <Link>Json.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Namespace.play">
       <Link>Namespace.play</Link>
@@ -844,6 +847,9 @@
     <Compile Include="..\pscorlib\Amf\Amf3CodeGen.cs">
       <Link>Amf\Amf3CodeGen.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Utils.cs">
+      <Link>Amf\Amf3Utils.cs</Link>
+    </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3Object.cs">
       <Link>Amf\Amf3Object.cs</Link>
     </Compile>
@@ -933,6 +939,12 @@
     </Compile>
     <Compile Include="..\pscorlib\flash\display\BitmapData.cs">
       <Link>flash\display\BitmapData.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\PlayScript\ProfilerData.cs">
+      <Link>PlayScript\ProfilerData.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\display3D\Context3DStateCache.cs">
+      <Link>flash\display3D\Context3DStateCache.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

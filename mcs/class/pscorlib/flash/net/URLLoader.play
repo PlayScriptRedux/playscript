@@ -26,6 +26,7 @@ package flash.net {
 
 #if PLATFORM_MONODROID
 	import Android.App.*;
+	import Android.Content.*;
 #endif
 
 	public class URLLoader extends EventDispatcher {
@@ -64,8 +65,8 @@ package flash.net {
 		public function load(request:URLRequest, synchronous:Boolean = false):void {
 			mRequest = request;
 
-			var url:String = request.url.ToLowerInvariant();
-			if (url.EndsWith(".swf")) {
+			var lowerCaseUrl:String = request.url.ToLowerInvariant();
+			if (lowerCaseUrl.EndsWith(".swf")) {
 				// SWF files are not supported by PlayScript. There is no reason to try to load them.
 				skipSwfLoad(synchronous);
 				return;
@@ -76,36 +77,60 @@ package flash.net {
 
 			// send data to telemetry
 			Telemetry.Session.WriteTime(".network.request.time");
-			sTelemetryRequestUrl.WriteValue(url);
+			sTelemetryRequestUrl.WriteValue(lowerCaseUrl);
 			sTelemetryRequestId.WriteValue(mId);
 
-			if (url.StartsWith("http:") || url.StartsWith("https:")) {
+			if (lowerCaseUrl.StartsWith("http:") || lowerCaseUrl.StartsWith("https:")) {
 				// handle a http load
 				// load with a delay
 
-				if (PlayScript.Player.Offline) {
-					// load from offline cache
-					if (synchronous) {
-						doLoadFromOfflineCache();
-					} else {
-						// this must be done on the 'next' frame
-						enqueueAction(doLoadFromOfflineCache);
-					}
-				} else 
+				doRemoteLoad(synchronous);
+			} else
+			{
+				var localPath = PlayScript.Player.TryResolveResourcePath(request.url);
+				if (localPath == null)
 				{
+					// doesn't exist locally, so try to load it remotely.
+					var url = PlayScript.Player.ToRemotePath(request.url);
+					if (url != mRequest.url)
+					{
+						mRequest.url = url;
+						doRemoteLoad(synchronous);
+					}
+					else
+					{
+						trace("URLLoader: could not load ", mRequest.url);
+						// io error, file not found
+						this.dispatchEvent(new IOErrorEvent(IOErrorEvent.IO_ERROR));
+						return;
+					}
+				} else {
 					if (synchronous) {
-						doHttpLoadSynchronous();
+						doLocalLoad();
 					} else {
-						doHttpLoadAsynchronous();
+						// load with a delay
+						enqueueAction(doLocalLoad);
 					}
 				}
+			}
+		}
 
-			} else {
+		private function doRemoteLoad(synchronous:Boolean = false):void
+		{
+			if (PlayScript.Player.Offline) {
+				// load from offline cache
 				if (synchronous) {
-					doLocalLoad();
+					doLoadFromOfflineCache();
 				} else {
-					// load with a delay
-					enqueueAction(doLocalLoad);
+					// this must be done on the 'next' frame
+					enqueueAction(doLoadFromOfflineCache);
+				}
+			} else 
+			{
+				if (synchronous) {
+					doHttpLoadSynchronous();
+				} else {
+					doHttpLoadAsynchronous();
 				}
 			}
 		}
@@ -351,6 +376,7 @@ package flash.net {
 
 			// handle file loading
 			var path:String = PlayScript.Player.TryResolveResourcePath(mRequest.url);
+
 			if (path == null)
 			{
 				trace("URLLoader: could not load ", mRequest.url);
@@ -363,9 +389,23 @@ package flash.net {
 			// file exists. read it
 			var fileData:byte[] = File.ReadAllBytes(path);
 #elif PLATFORM_MONODROID 
-			var src:Stream;
-			src = Application.Context.Assets.Open(path);
+
 			var dest:MemoryStream = new MemoryStream();
+			var src:Stream;
+
+			try
+			{
+				src = Application.Context.Assets.Open(path);
+			}
+			// if cannot load as assets, try loading it as plain file
+			// disable the ex defined but not used "warning as error"
+			#pragma warning disable 0168
+			catch (ex:Java.IO.FileNotFoundException)
+			#pragma warning restore 0168
+			{
+				src = File.OpenRead(path);
+			}
+
 			src.CopyTo(dest);
 			var fileData:byte[] = dest.ToArray();
 

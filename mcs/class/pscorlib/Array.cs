@@ -71,21 +71,25 @@ namespace _root
 	{
 		#region IList implementation
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		int IList.Add(object value)
 		{
 			return (int) push (value);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void IList.Clear()
 		{
 			this.length = 0;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool IList.Contains(object value)
 		{
 			return this.indexOf(value) >= 0;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		int IList.IndexOf(object value)
 		{
 			return this.indexOf(value);
@@ -107,21 +111,26 @@ namespace _root
 		}
 
 		bool IList.IsFixedSize {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return false;
 			}
 		}
 
 		bool IList.IsReadOnly {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return false;
 			}
 		}
 
 		object IList.this[int index] {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return (object)this[index];
 			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				this[index] = value;
 			}
@@ -131,6 +140,7 @@ namespace _root
 
 		#region ICollection implementation
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void ICollection.CopyTo(System.Array array, int index)
 		{
 			if (mStaticArray != null)
@@ -139,18 +149,21 @@ namespace _root
 		}
 
 		bool ICollection.IsSynchronized {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return false;
 			}
 		}
 
 		int ICollection.Count {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return (int)this.length;
 			}
 		}
 
 		object ICollection.SyncRoot {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return null;
 			}
@@ -180,9 +193,7 @@ namespace _root
 
 		public uint length
 		{
-			#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			#endif
 			get { return (mStaticArray != null) ? mStaticArray.length : mCount; } 
 			set { 
 				if (mStaticArray != null)
@@ -202,12 +213,14 @@ namespace _root
 		// Methods
 		//
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array()
 		{
 			mArray = sEmptyArray;
 			mCount = 0;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array(Array a)
 		{
 			if (a.mStaticArray != null) {
@@ -269,6 +282,7 @@ namespace _root
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array(IList a)
 		{
 			mArray = new object[a.Count];
@@ -282,9 +296,7 @@ namespace _root
 
 		public dynamic this[int i]
 		{
-			#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			#endif
 			get {
 				if (mStaticArray != null)
 					return mStaticArray.getObjectAt ((uint)i);
@@ -302,9 +314,8 @@ namespace _root
 				#endif
 				return mArray[i];
 			}
-			#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
+
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			#endif
 			set {
 				if (mStaticArray != null)
 					throw new InvalidOperationException ();
@@ -324,9 +335,7 @@ namespace _root
 
 		public dynamic this[uint i]
 		{
-			#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			#endif
 			get {
 				if (mStaticArray != null)
 					return mStaticArray.getObjectAt ((uint)i);
@@ -344,9 +353,8 @@ namespace _root
 				#endif
 				return mArray[(int)i];
 			}
-			#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
+
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			#endif
 			set {
 				if (mStaticArray != null)
 					throw new InvalidOperationException ();
@@ -366,18 +374,15 @@ namespace _root
 
 		public dynamic this[long l]
 		{
-			#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			#endif
 			get {
 				if (mStaticArray != null)
 					return mStaticArray.getObjectAt ((uint)l);
 				return this [(int)l];
 
 			}
-			#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
+
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			#endif
 			set {
 				if (mStaticArray != null)
 					throw new InvalidOperationException ();
@@ -398,6 +403,7 @@ namespace _root
 
 		public dynamic this[string name]
 		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				// If we can convert the string to an index, then it is an indexed access.
 				int index;
@@ -412,6 +418,8 @@ namespace _root
 				}
 				return __dynamicProps.__GetDynamicValue(name);	// The instance that was set was only of dynamic type (or undefined)
 			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				if (mStaticArray != null)
 					throw new InvalidOperationException ();
@@ -435,11 +443,14 @@ namespace _root
 		//
 		public dynamic this[double d]
 		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				if (mStaticArray != null)
 					return mStaticArray.getObjectAt ((uint)d);
 				return this [d.ToString ()];
 			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				if (mStaticArray != null)
 					throw new InvalidOperationException ();
@@ -453,11 +464,14 @@ namespace _root
 		//
 		public dynamic this[float f]
 		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				if (mStaticArray != null)
 					return mStaticArray.getObjectAt ((uint)f);
 				return this [f.ToString ()];
 			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				if (mStaticArray != null)
 					throw new InvalidOperationException ();
@@ -465,6 +479,7 @@ namespace _root
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public object[] ToArray()
 		{
 			object[] ret;
@@ -481,6 +496,7 @@ namespace _root
 			return ret;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public object[] _GetInnerArray()
 		{
 			if (mStaticArray != null)
@@ -488,6 +504,7 @@ namespace _root
 			return mArray;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void _TrimCapacity()
 		{
 			if (mStaticArray != null)
@@ -543,6 +560,7 @@ namespace _root
 
 		// optionally expands the vector to accomodate the new size
 		// if the vector is big enough then nothing is done
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void expand(uint newSize) 
 		{
 			EnsureCapacity(newSize);
@@ -550,6 +568,7 @@ namespace _root
 				mCount = newSize;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void append(Array vec)
 		{
 			EnsureCapacity(mCount + vec.mCount);
@@ -571,7 +590,6 @@ namespace _root
 				this.push (item);
 			}
 		}
-
 
 		public void append(IEnumerable<object> items)
 		{
@@ -605,6 +623,7 @@ namespace _root
 			return v;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void copyTo(Array dest, int sourceIndex, int destIndex, int count) {
 			if (mStaticArray != null) {
 				throw new NotImplementedException ();
@@ -612,6 +631,7 @@ namespace _root
 				System.Array.Copy(this.mArray, sourceIndex, dest.mArray, destIndex, count);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array clone() {
 			return new Array(this);
 		}
@@ -638,6 +658,7 @@ namespace _root
 			throw new System.NotImplementedException();
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array sort(Delegate sortBehavior)
 		{
 			if (mStaticArray != null)
@@ -645,6 +666,7 @@ namespace _root
 			return sortInternal(sortBehavior);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array sort(object sortBehavior = null) 
 		{
 			if (mStaticArray != null)
@@ -685,6 +707,7 @@ namespace _root
 			//private uint mOptions;
 			private bool mDescending;
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public OptionsSorterOn(string fieldName, uint options)
 			{
 				mFieldName = fieldName;
@@ -724,7 +747,7 @@ namespace _root
 					x = field.GetValue(x);
 				}
 
-				IDynamicClass right = x as IDynamicClass;
+				IDynamicClass right = y as IDynamicClass;
 				if (right != null)
 				{
 					y = right.__GetDynamicValue(mFieldName);
@@ -748,11 +771,13 @@ namespace _root
 				}
 				return mDescending ? -result : result;
 			}
-		};
+		}
 
 		private class DefaultSorterOn : System.Collections.Generic.IComparer<object>
 		{
 			private string mFieldName;
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public DefaultSorterOn(string fieldName)
 			{
 				mFieldName = fieldName;
@@ -928,9 +953,6 @@ namespace _root
 			return val;
 		}
 
-		#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		#endif
 		public uint push(object value)
 		{
 			if (mStaticArray != null)
@@ -1008,11 +1030,13 @@ namespace _root
 
 		private class TypedFunctionSorter : System.Collections.Generic.IComparer<object>
 		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public TypedFunctionSorter(System.Func<object, object, int> comparerDelegate)
 			{
 				mDelegate = comparerDelegate;
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public int Compare(object x, object y)
 			{
 				return mDelegate.Invoke(x, y);
@@ -1024,12 +1048,14 @@ namespace _root
 
 		private class FunctionSorter : System.Collections.Generic.IComparer<object>
 		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public FunctionSorter(object func)
 			{
 				mDelegate = func as Func<object,object,int>;
 				mFunc = func;
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public int Compare(object x, object y)
 			{
 				if (mDelegate != null)
@@ -1040,15 +1066,17 @@ namespace _root
 
 			private Func<object,object,int> mDelegate;
 			private dynamic mFunc;
-		};
+		}
 
 		private class OptionsSorter : System.Collections.Generic.IComparer<object>
 		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public OptionsSorter(uint options)
 			{
 				// mOptions = options;
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public int Compare(object x, object y)
 			{
 				//$$TODO examine options
@@ -1064,10 +1092,11 @@ namespace _root
 			}
 
 			// private uint mOptions;
-		};
+		}
 
 		private class DefaultSorter : System.Collections.Generic.IComparer<object>
 		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public int Compare(object x, object y)
 			{
 				// From doc:
@@ -1168,6 +1197,7 @@ namespace _root
 			throw new System.NotImplementedException();
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public override string toString() 
 		{
 			return this.join(",");
@@ -1201,13 +1231,14 @@ namespace _root
 
 		#region IEnumerable implementation
 
-		private class ArrayEnumeratorClass : IEnumerator
+		private class ArrayEnumeratorClass : IEnumerator, IDisposable
 		{
 			private readonly IList mVector;
 			private int mIndex;
 			private IDynamicClass mDynamicProps;
 			private IEnumerator mDynamicEnumerator;
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public ArrayEnumeratorClass(IList vector, IDynamicClass dynamicProps)
 			{
 				mVector = vector;
@@ -1218,6 +1249,7 @@ namespace _root
 
 			#region IEnumerator implementation
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public bool MoveNext ()
 			{
 				mIndex++;
@@ -1228,6 +1260,7 @@ namespace _root
 				return false;
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Reset ()
 			{
 				mIndex = -1;
@@ -1236,6 +1269,7 @@ namespace _root
 			}
 
 			object System.Collections.IEnumerator.Current {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get {
 					if (mIndex < mVector.Count)
 						return mVector[mIndex];
@@ -1258,6 +1292,7 @@ namespace _root
 			#region IEnumerator implementation
 
 			public object Current {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get {
 					if (mIndex < mVector.Count)
 						return mVector[mIndex];
@@ -1279,6 +1314,7 @@ namespace _root
 			private IDynamicClass mDynamicProps;
 			private IEnumerator mDynamicEnumerator;
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public ArrayEnumeratorStruct(IList vector, IDynamicClass dynamicProps)
 			{
 				mVector = vector;
@@ -1289,6 +1325,7 @@ namespace _root
 
 			#region IEnumerator implementation
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public bool MoveNext ()
 			{
 				mIndex++;
@@ -1299,6 +1336,7 @@ namespace _root
 				return false;
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Reset ()
 			{
 				mIndex = -1;
@@ -1307,6 +1345,7 @@ namespace _root
 			}
 
 			public object Current {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get {
 					if (mIndex < mVector.Count)
 						return mVector[mIndex];
@@ -1320,6 +1359,7 @@ namespace _root
 		}
 
 		// public get enumerator that returns a faster struct
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public ArrayEnumeratorStruct GetEnumerator ()
 		{
 			return new ArrayEnumeratorStruct(this, __dynamicProps);
@@ -1330,6 +1370,7 @@ namespace _root
 		#region IEnumerable implementation
 
 		// private IEnumerable get enumerator that returns a (slower) class on the heap
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator ()
 		{
 			return new ArrayEnumeratorClass(this, __dynamicProps);
@@ -1340,12 +1381,13 @@ namespace _root
 
 		#region IKeyEnumerable implementation
 
-		private class ArrayKeyEnumeratorClass : IEnumerator
+		private class ArrayKeyEnumeratorClass : IEnumerator, IDisposable
 		{
 			private readonly IList mVector;
 			private int mIndex;
 			private IEnumerator mDynamicEnumerator;
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public ArrayKeyEnumeratorClass(IList vector, IDynamicClass dynamicProps)
 			{
 				mVector = vector;
@@ -1355,6 +1397,7 @@ namespace _root
 
 			#region IEnumerator implementation
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public bool MoveNext ()
 			{
 				mIndex++;
@@ -1365,6 +1408,7 @@ namespace _root
 				return false;
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Reset ()
 			{
 				mIndex = -1;
@@ -1373,6 +1417,7 @@ namespace _root
 			}
 
 			object System.Collections.IEnumerator.Current {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get {
 					if (mIndex < mVector.Count)
 						return mIndex;
@@ -1386,6 +1431,7 @@ namespace _root
 
 			#region IDisposable implementation
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Dispose ()
 			{
 			}
@@ -1400,6 +1446,7 @@ namespace _root
 			private int mIndex;
 			private IEnumerator mDynamicEnumerator;
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public ArrayKeyEnumeratorStruct(IList vector, IDynamicClass dynamicProps)
 			{
 				mVector = vector;
@@ -1409,6 +1456,7 @@ namespace _root
 
 			#region IEnumerator implementation
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public bool MoveNext ()
 			{
 				mIndex++;
@@ -1419,6 +1467,7 @@ namespace _root
 				return false;
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Reset ()
 			{
 				mIndex = -1;
@@ -1428,6 +1477,7 @@ namespace _root
 
 			// unfortunately this has to return object because the for() loop could use a non-int as its variable, causing bad IL
 			public object Current {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get {
 					if (mIndex < mVector.Count)
 						return mIndex;
@@ -1441,12 +1491,14 @@ namespace _root
 		}
 
 		// public get enumerator that returns a faster struct
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public ArrayKeyEnumeratorStruct GetKeyEnumerator()
 		{
 			return new ArrayKeyEnumeratorStruct(this, __dynamicProps);
 		}
 
 		// private IKeyEnumerable get enumerator that returns a (slower) class on the heap
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		IEnumerator PlayScript.IKeyEnumerable.GetKeyEnumerator()
 		{
 			return new ArrayKeyEnumeratorClass(this, __dynamicProps);
@@ -1457,6 +1509,7 @@ namespace _root
 		#region IDynamicClass implementation
 
 		// this method can be used to override the dynamic property implementation of this dynamic class
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void __SetDynamicProperties(PlayScript.IDynamicClass props) {
 			__dynamicProps = props;
 		}
@@ -1526,6 +1579,7 @@ namespace _root
 			return false;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		IEnumerable PlayScript.IDynamicClass.__GetDynamicNames () {
 			if (__dynamicProps != null) {
 				return __dynamicProps.__GetDynamicNames();
@@ -1573,57 +1627,69 @@ namespace _root
 
 		#region IList implementation
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		int IList.Add(object value)
 		{
 			return ((IList)mList).Add (value);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void IList.Clear()
 		{
 			((IList)mList).Clear ();
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool IList.Contains(object value)
 		{
 			return ((IList)mList).Contains (value);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		int IList.IndexOf(object value)
 		{
 			return ((IList)mList).IndexOf (value);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void IList.Insert(int index, object value)
 		{
 			((IList)mList).Insert (index, value);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void IList.Remove(object value)
 		{
 			((IList)mList).Remove (value);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void IList.RemoveAt(int index)
 		{
 			((IList)mList).RemoveAt (index);
 		}
 
 		bool IList.IsFixedSize {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return mList.@fixed;
 			}
 		}
 
 		bool IList.IsReadOnly {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return false;
 			}
 		}
 
 		object IList.this[int index] {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return mList[index];
 			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				mList[index] = value;
 			}
@@ -1633,24 +1699,28 @@ namespace _root
 
 		#region ICollection implementation
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void ICollection.CopyTo(System.Array array, int index)
 		{
 			((ICollection)mList).CopyTo(array,index);
 		}
 
 		int ICollection.Count {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return (int)mList.length;
 			}
 		}
 
 		bool ICollection.IsSynchronized {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return false;
 			}
 		}
 
 		object ICollection.SyncRoot {
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return null;
 			}
@@ -1664,12 +1734,15 @@ namespace _root
 			private IEnumerator mDynamicEnum;
 			private bool enumerateDynamics;
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public ArrayKeyEnumeratorStruct(Vector<dynamic>.VectorKeyEnumeratorStruct venum, PlayScript.IDynamicClass dynprops)
 			{
 				mVectorKeyEnum = venum;
 				mDynamicEnum = (dynprops==null) ? null : dynprops.__GetDynamicNames().GetEnumerator();
 				enumerateDynamics = false;
 			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public bool MoveNext ()
 			{
 				bool hasNext = false;
@@ -1684,6 +1757,7 @@ namespace _root
 				return hasNext;
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Reset ()
 			{
 				mVectorKeyEnum.Reset();
@@ -1693,6 +1767,7 @@ namespace _root
 			}
 
 			public dynamic Current {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get {
 					return (enumerateDynamics)?  mDynamicEnum.Current : mVectorKeyEnum.Current;
 				}
@@ -1707,6 +1782,7 @@ namespace _root
 			private PlayScript.IDynamicClass mDynprops;
 			private bool enumerateDynamics;
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public ArrayEnumeratorStruct(Vector<dynamic>.VectorEnumeratorStruct venum, PlayScript.IDynamicClass dynprops)
 			{
 				mVectorEnum = venum;
@@ -1715,6 +1791,7 @@ namespace _root
 				enumerateDynamics = false;
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public bool MoveNext ()
 			{
 				bool hasNext = false;
@@ -1729,6 +1806,7 @@ namespace _root
 				return hasNext;
 			}
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public void Reset ()
 			{
 				mVectorEnum.Reset();
@@ -1738,6 +1816,7 @@ namespace _root
 			}
 
 			public dynamic Current {
+				[MethodImpl(MethodImplOptions.AggressiveInlining)]
 				get {
 					return (enumerateDynamics)? mDynprops.__GetDynamicValue(mDynamicEnum.Current as string) : mVectorEnum.Current;
 				}
@@ -1745,12 +1824,14 @@ namespace _root
 		}
 
 		// public get enumerator that returns a faster struct
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public ArrayEnumeratorStruct GetEnumerator()
 		{
 			return new ArrayEnumeratorStruct(mList.GetEnumerator(), __dynamicProps);
 		}
 
 		// public get key enumerator that returns a faster struct
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public ArrayKeyEnumeratorStruct GetKeyEnumerator()
 		{
 			return new ArrayKeyEnumeratorStruct(mList.GetKeyEnumerator(),__dynamicProps);
@@ -1759,6 +1840,7 @@ namespace _root
 
 		#region IEnumerable implementation
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		IEnumerator IEnumerable.GetEnumerator()
 		{
 			return ((IEnumerable)mList).GetEnumerator();
@@ -1768,6 +1850,7 @@ namespace _root
 
 		#region IKeyEnumerable implementation
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		IEnumerator IKeyEnumerable.GetKeyEnumerator()
 		{
 			return ((IKeyEnumerable)mList).GetKeyEnumerator();
@@ -1791,24 +1874,29 @@ namespace _root
 		private PlayScript.IDynamicClass __dynamicProps = null;		// By default it is not created as it is not commonly used (nor a good practice).
 		// We create it only if there is a dynamic set.
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array() {
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array(int size)
 		{
 			mList.expand((uint)size);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array(uint size)
 		{
 			mList.expand(size);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array(double size)
 		{
 			mList.expand((uint)size);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array(string s)
 		{
 			mList.push (s);
@@ -1826,6 +1914,7 @@ namespace _root
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array (IEnumerable list)
 		{
 			mList.append(list);
@@ -1833,7 +1922,10 @@ namespace _root
 
 		public uint length
 		{ 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get { return mList.length; } 
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set { 
 				mList.length = value;
 			} 
@@ -1841,9 +1933,12 @@ namespace _root
 
 		public dynamic this[int i]
 		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return mList[i];
 			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				mList[i] = value;
 			}
@@ -1851,9 +1946,12 @@ namespace _root
 
 		public dynamic this[uint i]
 		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return mList[i];
 			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				mList[i] = value;
 			}
@@ -1861,15 +1959,19 @@ namespace _root
 
 		public dynamic this[long l]
 		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return this [(int)l];
 
 			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				this [(int)l] = value;
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool TryParseIndex(string input, out int index)
 		{
 			double d;
@@ -1896,6 +1998,7 @@ namespace _root
 				}
 				return PlayScript.Undefined._undefined;
 			}
+
 			set {
 				// If we can convert the string to an index, then it is an indexed access.
 				int index;
@@ -1916,9 +2019,12 @@ namespace _root
 		//
 		public dynamic this[double d]
 		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return this [d.ToString ()];
 			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				this [d.ToString ()] = value;
 			}
@@ -1930,24 +2036,29 @@ namespace _root
 		//
 		public dynamic this[float f]
 		{
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return this [f.ToString ()];
 			}
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
 				this [f.ToString ()] = value;
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public object[] ToArray()
 		{
 			return mList.ToArray();
 		}
 
-
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public uint push(object value) {
 			return mList.push(value);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public dynamic pop() {
 			return mList.pop();
 		}
@@ -1960,6 +2071,7 @@ namespace _root
 			return mList.length;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static Array AsArray(Vector<dynamic> v)
 		{
 			var a = new Array();
@@ -1969,10 +2081,12 @@ namespace _root
 			return a;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array reverse() {
 			return AsArray(mList.reverse());
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public dynamic shift() {
 			if (mList.length == 0) {
 				return PlayScript.Undefined._undefined;
@@ -1980,20 +2094,24 @@ namespace _root
 			return mList.shift();
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public uint unshift(object o) {
 			return mList.unshift(o);
 		}
 
 #if PERFORMANCE_MODE
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void slice(int startIndex = 0, int endIndex = 16777215) {
 			mList.slice(startIndex, endIndex);
 		}
 #else
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array slice(int startIndex = 0, int endIndex = 16777215) {
 			return AsArray(mList.slice(startIndex, endIndex));
 		}
 #endif
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array splice(int startIndex = 0, uint deleteCount = 4294967295, params object[] items) {
 			if (items.Length > 0) {
 				return AsArray(mList.splice(startIndex, deleteCount, items));
@@ -2002,13 +2120,12 @@ namespace _root
 			}
 		}
 
-
 		public Array map(Delegate callback, dynamic thisObject = null) 
 		{
 			throw new System.NotImplementedException();
 		}
 
-
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array sort(dynamic sortBehavior = null) 
 		{
 			mList.sort(sortBehavior);
@@ -2021,6 +2138,7 @@ namespace _root
 			//private uint mOptions;
 			private bool mDescending;
 
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public OptionsSorterOn(string fieldName, uint options)
 			{
 				mFieldName = fieldName;
@@ -2084,11 +2202,13 @@ namespace _root
 				}
 				return mDescending ? -result : result;
 			}
-		};
+		}
 
 		private class DefaultSorterOn : System.Collections.Generic.IComparer<object>
 		{
 			private string mFieldName;
+
+			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			public DefaultSorterOn(string fieldName)
 			{
 				mFieldName = fieldName;
@@ -2182,6 +2302,7 @@ namespace _root
 			throw new System.NotImplementedException();
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void append(IEnumerable items)
 		{
 			mList.append(items);
@@ -2204,25 +2325,30 @@ namespace _root
 			return v;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public int indexOf(object searchElement)
 		{
 			return mList.indexOf(searchElement);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public override string toString()
 		{
 			return this.join(",");
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Add(object value)
 		{
 			mList.push(value);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public string join(string sep = ",") {
 			return mList.join(sep);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Vector<dynamic> _GetInnerVector()
 		{
 			return mList;
@@ -2232,10 +2358,12 @@ namespace _root
 		#region IDynamicClass implementation
 
 		// this method can be used to override the dynamic property implementation of this dynamic class
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void __SetDynamicProperties(PlayScript.IDynamicClass props) {
 			__dynamicProps = props;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		dynamic PlayScript.IDynamicClass.__GetDynamicValue (string name) {
 			object value = null;
 			if (__dynamicProps != null) {
@@ -2244,6 +2372,7 @@ namespace _root
 			return value;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool PlayScript.IDynamicClass.__TryGetDynamicValue (string name, out object value) {
 			if (__dynamicProps != null) {
 				return __dynamicProps.__TryGetDynamicValue(name, out value);
@@ -2253,6 +2382,7 @@ namespace _root
 			}
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void PlayScript.IDynamicClass.__SetDynamicValue (string name, object value) {
 			if (__dynamicProps == null) {
 				__dynamicProps = new PlayScript.DynamicProperties(this);
@@ -2260,6 +2390,7 @@ namespace _root
 			__dynamicProps.__SetDynamicValue(name, value);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool PlayScript.IDynamicClass.__DeleteDynamicValue (object name) {
 			if (__dynamicProps != null) {
 				return __dynamicProps.__DeleteDynamicValue(name);
@@ -2267,6 +2398,7 @@ namespace _root
 			return false;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		bool PlayScript.IDynamicClass.__HasDynamicValue (string name) {
 			if (__dynamicProps != null) {
 				return __dynamicProps.__HasDynamicValue(name);
@@ -2274,6 +2406,7 @@ namespace _root
 			return false;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		IEnumerable PlayScript.IDynamicClass.__GetDynamicNames () {
 			if (__dynamicProps != null) {
 				return __dynamicProps.__GetDynamicNames();
@@ -2283,6 +2416,7 @@ namespace _root
 
 		#endregion
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static implicit operator dynamic[](Array a) {
 			return a._GetInnerVector ().ToArray ();
 		}

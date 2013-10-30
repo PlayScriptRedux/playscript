@@ -36,7 +36,7 @@ namespace Amf
 	{
 		public string ClassName { get; private set; }
 
-		public Amf3SerializableAttribute(string className)
+		public Amf3SerializableAttribute(string className = null)
 		{
 			ClassName = className;
 		}

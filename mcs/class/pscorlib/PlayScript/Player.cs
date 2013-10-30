@@ -36,6 +36,8 @@ using Android.App;
 
 namespace PlayScript
 {
+	public delegate string ResourcePathConverter(string origPath);
+
 	public class Player
 	{
 		public string Title
@@ -62,6 +64,8 @@ namespace PlayScript
 
 		// desired content scale for application (1.0=nonretina, 2.0=retina)
 		public static double?       ApplicationContentScale {get;set;}
+
+		public static ResourcePathConverter RemotePathConverter {get;set;}
 
 		static Player()
 		{
@@ -244,7 +248,19 @@ namespace PlayScript
 					var jsonText = System.IO.File.ReadAllText(newPath);
 #elif PLATFORM_MONODROID
 					var jsonText = "";
-					Stream stream = Application.Context.Assets.Open(path);
+				    Stream stream;
+				    try
+				    {
+					    stream = Application.Context.Assets.Open(path);
+				    }
+				    // if cannot load as assets, try loading it as plain file
+				    // disable the ex defined but not used "warning as error"
+					#pragma warning disable 0168
+					catch (Java.IO.FileNotFoundException ex)
+					#pragma warning restore 0168
+					{
+					    stream = File.OpenRead(path);
+					}
 					using (StreamReader sr = new System.IO.StreamReader(stream))
 					{
 						jsonText = sr.ReadToEnd();
@@ -259,6 +275,14 @@ namespace PlayScript
 				default:
 					throw new NotImplementedException("Loader for " + ext);
 			}
+		}
+
+		public static string ToRemotePath(string path)
+		{
+			if (RemotePathConverter != null)
+				return RemotePathConverter(path);
+			else
+				return path;
 		}
 
 		public static string ResolveResourcePath(string path)
@@ -293,10 +317,11 @@ namespace PlayScript
 #if PLATFORM_MONODROID
 			try {
 				Application.Context.Assets.Open(path);
-			} catch (Java.IO.FileNotFoundException e)
+			} 
+			catch (Java.IO.FileNotFoundException e)
 			{
-				Console.WriteLine("File does not exists for " + path + " " + e.Message);
-				return null;
+			    Console.WriteLine("File does not exists for " + path + " " + e.Message);
+			    return null;
 			}
 
 			return path;

@@ -39,6 +39,7 @@ namespace Amf
 			public Amf3ObjectConstructor	Constructor;
 			public Amf3ObjectVectorConstructor	VectorConstructor;
 			public Amf3ObjectSerializer		Serializer;
+			public Amf3ClassDef				SerializerClassDef;
 			public Amf3ObjectDeserializer	Deserializer;
 			public Amf3ClassDef				DeserializerClassDef;
 		};
@@ -65,6 +66,9 @@ namespace Amf
 		private Amf3ClassDef				mRemapClassDef; 
 		private int[]						mRemapTable;
 
+		private MemberInfo[]				mMemberList;
+		private Type 						mMemberListType;
+
 
 		public Amf3ClassDef(string name, string[] properties, bool dynamic = false, bool externalizable = false)
         {
@@ -76,6 +80,29 @@ namespace Amf
             Dynamic = dynamic;
             Externalizable = externalizable;
         }
+
+		public Amf3ClassDef(string name, System.Type type, bool dynamic = false, bool externalizable = false)
+		{
+			if (dynamic && externalizable)
+				throw new ArgumentException("AMF classes cannot be both dynamic and externalizable");
+
+			// get all instance fields of type (public or private)
+			var properties = new List<string>();
+			var members = new List<MemberInfo>();
+			foreach (var field in type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))	{
+				members.Add(field);
+				properties.Add(field.Name);
+			}
+
+			Name = name;
+			Properties = properties.ToArray();
+			Dynamic = dynamic;
+			Externalizable = externalizable;
+
+			// cache member list
+			mMemberList = members.ToArray();
+			mMemberListType = type;
+		}
 
 		public int[] GetRemapTable(Amf3ClassDef serializerClassDef)
 		{
@@ -106,6 +133,27 @@ namespace Amf
 				}
 			}
 			return -1;
+		}
+
+		public MemberInfo[] GetMemberListForType(Type type)
+		{
+			// check member list cache
+			if (mMemberList == null || mMemberListType != type) {
+				// build member info list in property order
+				var list = new List<MemberInfo>();
+				foreach (var name in Properties) {
+					MemberInfo[] members = type.GetMember(name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+					if (members == null || members.Length == 0) {
+						Console.WriteLine("AMF: warning member {0} not found for type {1}", name, type.FullName);
+					}
+					list.Add(members[0]);
+				}
+
+				// cache member list
+				mMemberListType = type;
+				mMemberList     = list.ToArray();
+			}
+			return mMemberList;
 		}
 
 		public object CreateInstance()
@@ -211,6 +259,32 @@ namespace Amf
 			}
 		}
 
+		// gets class info associated with system type
+		public static ClassInfo GetClassInfoFromSystemType(System.Type type)
+		{
+			lock (sTypeToClassInfo)
+			{
+				ClassInfo info = null;
+				if (!sTypeToClassInfo.TryGetValue(type, out info)) {
+					return null;
+				}
+				return info;
+			}
+		}
+
+		// gets class info associated with class alias
+		public static ClassInfo GetClassInfoFromAlias(string aliasName)
+		{
+			lock (sClassInfo)
+			{
+				ClassInfo info = null;
+				if (!sClassInfo.TryGetValue(aliasName, out info)) {
+					return null;
+				}
+				return info;
+			}
+		}
+
 		// get all class information for all registered classes
 		public static ClassInfo[] GetAllRegisteredClasses()
 		{
@@ -261,8 +335,13 @@ namespace Amf
 			var info = GetOrCreateClassInfo(aliasName);
 			info.Type = type;
 
+			lock (sTypeToClassInfo)	{
+				// set type lookup
+				sTypeToClassInfo[type] = info;
+			}
+
 			// register static helper delegates from this type
-			RegisterHelperDelegates(aliasName, type);
+			RegisterHelperDelegates(info, type);
 
 //			Console.WriteLine("AMF: Registered class {0} => {1}", aliasName, type.FullName);
 		}
@@ -273,17 +352,20 @@ namespace Amf
 			var info = GetOrCreateClassInfo(aliasName);
 			info.Type = targetType;
 
+			lock (sTypeToClassInfo)	{
+				// set type lookup
+				sTypeToClassInfo[targetType] = info;
+			}
+
 			// register static helper delegates from serializer type
-			RegisterHelperDelegates(aliasName, serializerType);
+			RegisterHelperDelegates(info, serializerType);
 
 //			Console.WriteLine("AMF: Registered external serializer {0} => {1} => {2}", aliasName, serializerType.FullName, targetType.FullName);
 		}
 
 		// registers any static helper delegates that are found on the class type
-		public static void RegisterHelperDelegates(string aliasName, System.Type type)
+		private static void RegisterHelperDelegates(ClassInfo info, System.Type type)
 		{
-			var info = GetOrCreateClassInfo(aliasName);
-
 			// resolve static methods as delegates
 			var constructor = GetStaticMethod<Amf3ObjectConstructor>(type, "ObjectConstructor");
 			if (constructor != null) {
@@ -358,5 +440,7 @@ namespace Amf
 
 		// class info registration
 		private static readonly Dictionary<string, ClassInfo> sClassInfo = new Dictionary<string, ClassInfo>();
+		// system type => class info 
+		private static readonly Dictionary<Type, ClassInfo> sTypeToClassInfo = new Dictionary<Type, ClassInfo>();
     }
 }

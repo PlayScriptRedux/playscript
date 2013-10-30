@@ -53,10 +53,21 @@ namespace flash.display
 				// Check if the font is installed?
 				bool hasFont = true;
 				if (!sHasFont.TryGetValue(fontName, out hasFont)) {
+					#if PLATFORM_MONOTOUCH
 					UIFont font = UIFont.FromName(fontName, 10);
+
+					sHasFont[fontName] = hasFont = font != null;
+					if (font != null)
+						font.Dispose();
+					#elif PLATFORM_MONOMAC
+					NSFont font = NSFont.FromFontName(fontName, 10);
+
 					sHasFont[fontName] = hasFont = font != null;
 					if (font != null) 
 						font.Dispose();
+					#else
+					sHasFont[fontName] = false;
+					#endif
 				}
 				if (!hasFont) {
 					fontName = DEFAULT_FONT;
