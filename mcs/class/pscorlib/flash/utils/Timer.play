@@ -161,7 +161,7 @@ package flash.utils {
 										if (arguments.length == 0) {
 											closure();
 										} else {
-											closure.DynamicInvoke(arguments);
+											closure.DynamicInvoke(arguments._GetInnerArray());
 										}
 									} );
 			timer.start();
