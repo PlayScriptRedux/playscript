@@ -24,10 +24,6 @@ using PlayScript;
 
 namespace PlayScript.DynamicRuntime
 {
-	public interface IGetIndexProvider<T>
-	{
-		T GetIndex(int index);
-	}
 
 	public class PSGetIndex
 	{
@@ -173,5 +169,22 @@ namespace PlayScript.DynamicRuntime
 		}
 	}
 }
+#else
+namespace PlayScript.DynamicRuntime
+{
+	public class PSGetIndex
+	{
+		// For fast access to CRC Keys
+		public static string 	LastKeyString;
+		public static uint		LastKeyCrc;
+	}
+}
 #endif
 
+namespace PlayScript.DynamicRuntime
+{
+	public interface IGetIndexProvider<T>
+	{
+		T GetIndex(int index);
+	}
+}

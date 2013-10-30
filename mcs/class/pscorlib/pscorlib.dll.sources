@@ -266,6 +266,7 @@
 ./Number.cs
 ./Object.cs
 ./PartialAttribute.cs
+./PlayScript/BinJSON.cs
 ./PlayScript/EmbedLoader.cs
 ./PlayScript/Hardware.cs
 ./PlayScript/ParamsDelegateTypes.cs

@@ -24,7 +24,6 @@ using PlayScript;
 
 namespace _root
 {
-#if PERFORMANCE_MODE
 
 	// Interface implemented by static array backing store providers (like BinJsonArray)
 	public interface IStaticArray : IEnumerable
@@ -37,6 +36,8 @@ namespace _root
 		bool getBoolAt (uint index);
 		object getObjectAt (uint index);
 	}
+
+#if PERFORMANCE_MODE
 
 	// this class is used to display a custom view of the vector values to the debugger
 	// TODO: we need to make these elements editable 

@@ -23,11 +23,6 @@ using System.Collections.Generic;
 
 namespace PlayScript.DynamicRuntime
 {
-	public interface IGetMemberProvider<T>
-	{
-		T GetMember(uint crc);
-		T GetMember(string key);
-	}
 
 	#if !NEW_PSGETMEMBER
 	
@@ -322,7 +317,7 @@ namespace PlayScript.DynamicRuntime
 		private uint			mCrc;
 	};
 
-#elif
+#else
 
 	// Optimized PSGetMember - uses delegate to call directly to target method
 
@@ -524,3 +519,13 @@ namespace PlayScript.DynamicRuntime
 
 }
 #endif
+
+namespace PlayScript.DynamicRuntime
+{
+	public interface IGetMemberProvider<T>
+	{
+		T GetMember(uint crc);
+		T GetMember(string key);
+	}
+}
+

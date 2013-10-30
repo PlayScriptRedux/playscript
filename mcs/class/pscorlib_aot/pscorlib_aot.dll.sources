@@ -266,6 +266,7 @@
 ../pscorlib/Number.cs
 ../pscorlib/Object.cs
 ../pscorlib/PartialAttribute.cs
+../pscorlib/PlayScript/BinJSON.cs
 ../pscorlib/PlayScript/EmbedLoader.cs
 ../pscorlib/PlayScript/Hardware.cs
 ../pscorlib/PlayScript/ParamsDelegateTypes.cs
