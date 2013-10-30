@@ -115,18 +115,27 @@ namespace flash.display3D {
 			}
 		}
 
+		public static ushort[] sShortData;
+
 		public unsafe void uploadFromArray(uint[] data, int startOffset, int count) {
 			// uploading from an array or vector implies 32-bit indices
 			mElementType = DrawElementsType.UnsignedShort;
 
-			ushort[] shortData = new ushort[data.Length];
-			for (int i = 0; i < data.Length; i++) {
-				shortData [i] = (ushort) data [i];
+			int length = data.Length;
+			if ((sShortData == null) || (sShortData.Length < length))
+			{
+				// First time, or the array is not big enough
+				// Let's reallocate, this time we allocate 20% bigger size to reduce reallocation
+				sShortData = new ushort[(int)((float)data.Length * 1.2)];
+			}
+
+			for (int i = 0; i < length; i++) {
+				sShortData [i] = (ushort) data [i];
 			}
 
 			// pin pointer to array data
-			fixed (ushort *ptr = shortData) {
-				uploadFromPointer(ptr, data.Length * sizeof(ushort), startOffset, count);
+			fixed (ushort *ptr = sShortData) {
+				uploadFromPointer(ptr, length * sizeof(ushort), startOffset, count);
 			}
 		}
 
