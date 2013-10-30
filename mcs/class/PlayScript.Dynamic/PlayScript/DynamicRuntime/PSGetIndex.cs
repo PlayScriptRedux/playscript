@@ -24,14 +24,34 @@ using PlayScript;
 
 namespace PlayScript.DynamicRuntime
 {
+	public interface IGetIndexProvider<T>
+	{
+		T GetIndex(int index);
+	}
+
 	public class PSGetIndex
 	{
+		// For fast access to CRC Keys
+		public static string 	LastKeyString;
+		public static uint		LastKeyCrc;
+
 		private PSGetMember			  mGetMember;
 
 		public T GetIndexAs<T> (object o, int index)
 		{
 			Stats.Increment(StatsCounter.GetIndexBinderInvoked);
 			Stats.Increment(StatsCounter.GetIndexBinder_Int_Invoked);
+
+			var p = o as IGetIndexProvider<T>;
+			if (p != null) {
+				return p.GetIndex (index);
+			}
+
+			var po = o as IGetIndexProvider<object>;
+			if (po != null) {
+				object value = po.GetIndex (index);
+				return Dynamic.ConvertValue<T>(value);
+			}
 
 			var l = o as IList<T>;
 			if (l != null) {
@@ -87,6 +107,24 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.GetIndexBinderInvoked);
 			Stats.Increment(StatsCounter.GetIndexBinder_Key_Invoked);
+
+			var p = o as IGetMemberProvider<T>;
+			if (p != null) {
+				if (Object.ReferenceEquals (key, LastKeyString))
+					return p.GetMember (LastKeyCrc);
+				else
+					return p.GetMember (key);
+			}
+
+			var po = o as IGetMemberProvider<object>;
+			if (po != null) {
+				object value;
+				if (Object.ReferenceEquals (key, LastKeyString))
+					value = po.GetMember (LastKeyCrc);
+				else
+					value = po.GetMember (key);
+				return value != null ? (T)value : default(T);
+			}
 
 			// handle dictionaries
 			var dict = o as IDictionary;

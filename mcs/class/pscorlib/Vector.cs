@@ -411,7 +411,7 @@ namespace _root {
 			}
 		}
 		
-		public void Add(T value) 
+ 	    void ICollection<T>.Add(T value) 
 		{
 			this.push (value);
 		}
@@ -474,7 +474,7 @@ namespace _root {
 			}
 			
 			foreach (var item in items) {
-				this.Add ((T)item);
+				this.push ((T)item);
 			}
 		}
 
@@ -487,7 +487,7 @@ namespace _root {
 			}
 		
 			foreach (var item in items) {
-				this.Add (item);
+				this.push (item);
 			}
 		}
 

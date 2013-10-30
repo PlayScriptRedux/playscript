@@ -108,6 +108,16 @@ namespace PlayScript
 			}
 		}
 
+		public void AddAt(Stats other, StatsCounter counter)
+		{
+			Counters[(int)counter] += other.Counters[(int)counter];
+		}
+
+		public void SubtractAt(Stats other, StatsCounter counter)
+		{
+			Counters[(int)counter] -= other.Counters[(int)counter];
+		}
+
 		public void CopyFrom(Stats other)
 		{
 			for (int i=0; i < Counters.Length; i++) {

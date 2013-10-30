@@ -26,6 +26,18 @@ namespace _root
 {
 #if PERFORMANCE_MODE
 
+	// Interface implemented by static array backing store providers (like BinJsonArray)
+	public interface IStaticArray : IEnumerable
+	{
+		uint length { get; }
+		string getStringAt (uint index);
+		int getIntAt (uint index);
+		uint getUIntAt (uint index);
+		double getDoubleAt (uint index);
+		bool getBoolAt (uint index);
+		object getObjectAt (uint index);
+	}
+
 	// this class is used to display a custom view of the vector values to the debugger
 	// TODO: we need to make these elements editable 
 	internal class ArrayDebugView
@@ -44,8 +56,10 @@ namespace _root
 		{
 			get
 			{
-				mArray._TrimCapacity();
-				return mArray._GetInnerArray();
+				if (mArray._GetInnerArray () != null)
+					return mArray._GetInnerArray ();
+				else
+					return mArray.ToArray ();
 			}
 		}
 	}
@@ -119,6 +133,8 @@ namespace _root
 
 		void ICollection.CopyTo(System.Array array, int index)
 		{
+			if (mStaticArray != null)
+				throw new InvalidOperationException ();
 			System.Array.Copy(mArray, 0, array, index, mCount);
 		}
 
@@ -152,6 +168,7 @@ namespace _root
 
 		private object[] mArray;
 		private uint mCount;
+		private IStaticArray mStaticArray;
 		private PlayScript.IDynamicClass __dynamicProps = null;		// By default it is not created as it is not commonly used (nor a good practice).
 																	// We create it only if there is a dynamic set.
 
@@ -166,8 +183,10 @@ namespace _root
 			#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			#endif
-			get { return mCount; } 
+			get { return (mStaticArray != null) ? mStaticArray.length : mCount; } 
 			set { 
+				if (mStaticArray != null)
+					throw new InvalidOperationException ();
 				if (value == 0) {
 					System.Array.Clear (mArray, 0, (int)mCount);
 				} else if (mCount < value) {
@@ -191,8 +210,12 @@ namespace _root
 
 		public Array(Array a)
 		{
-			mArray = new object[a.length];
-			this.append((IEnumerable)a);
+			if (a.mStaticArray != null) {
+				mStaticArray = a.mStaticArray;
+			} else {
+				mArray = new object[a.length];
+				this.append((IEnumerable)a);
+			}
 		}
 
 		public Array(IEnumerable e)
@@ -252,12 +275,19 @@ namespace _root
 			this.append((IEnumerable)a);
 		}
 
+		public Array(IStaticArray staticArray)
+		{
+			mStaticArray = staticArray;
+		}
+
 		public dynamic this[int i]
 		{
 			#if NET_4_5 || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			#endif
 			get {
+				if (mStaticArray != null)
+					return mStaticArray.getObjectAt ((uint)i);
 				#if PERFORMANCE_MODE && DEBUG
 				if ((i >= mCount) || (i < 0))
 				{
@@ -276,6 +306,8 @@ namespace _root
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			#endif
 			set {
+				if (mStaticArray != null)
+					throw new InvalidOperationException ();
 				#if PERFORMANCE_MODE && DEBUG
 				if (i >= mCount) {
 					throw new IndexOutOfRangeException();
@@ -296,6 +328,8 @@ namespace _root
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			#endif
 			get {
+				if (mStaticArray != null)
+					return mStaticArray.getObjectAt ((uint)i);
 				#if PERFORMANCE_MODE && DEBUG
 				if (i >= mCount)
 				{
@@ -314,6 +348,8 @@ namespace _root
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			#endif
 			set {
+				if (mStaticArray != null)
+					throw new InvalidOperationException ();
 				#if PERFORMANCE_MODE && DEBUG
 				if (i >= mCount) {
 					throw new IndexOutOfRangeException();
@@ -334,6 +370,8 @@ namespace _root
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			#endif
 			get {
+				if (mStaticArray != null)
+					return mStaticArray.getObjectAt ((uint)l);
 				return this [(int)l];
 
 			}
@@ -341,11 +379,13 @@ namespace _root
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			#endif
 			set {
+				if (mStaticArray != null)
+					throw new InvalidOperationException ();
 				this [(int)l] = value;
 			}
 		}
 
-		bool TryParseIndex(string input, out int index)
+		private bool TryParseIndex(string input, out int index)
 		{
 			double d;
 			if (double.TryParse (input, out d) && System.Math.Truncate (d) == d) {
@@ -364,6 +404,8 @@ namespace _root
 				if (TryParseIndex (name, out index)) {
 					return mArray [index];
 				}
+				if (mStaticArray != null)
+					return mStaticArray.getObjectAt ((uint)index);
 				// Otherwise this is a dynamic property.
 				if (__dynamicProps == null) {
 					return PlayScript.Undefined._undefined;
@@ -371,6 +413,8 @@ namespace _root
 				return __dynamicProps.__GetDynamicValue(name);	// The instance that was set was only of dynamic type (or undefined)
 			}
 			set {
+				if (mStaticArray != null)
+					throw new InvalidOperationException ();
 				// If we can convert the string to an index, then it is an indexed access.
 				int index;
 				if (TryParseIndex (name, out index)) {
@@ -392,9 +436,13 @@ namespace _root
 		public dynamic this[double d]
 		{
 			get {
+				if (mStaticArray != null)
+					return mStaticArray.getObjectAt ((uint)d);
 				return this [d.ToString ()];
 			}
 			set {
+				if (mStaticArray != null)
+					throw new InvalidOperationException ();
 				this [d.ToString ()] = value;
 			}
 		}
@@ -406,27 +454,44 @@ namespace _root
 		public dynamic this[float f]
 		{
 			get {
+				if (mStaticArray != null)
+					return mStaticArray.getObjectAt ((uint)f);
 				return this [f.ToString ()];
 			}
 			set {
+				if (mStaticArray != null)
+					throw new InvalidOperationException ();
 				this [f.ToString ()] = value;
 			}
 		}
 
 		public object[] ToArray()
 		{
-			object[] ret = new object[mCount];
-			System.Array.Copy(mArray, ret, mCount);
+			object[] ret;
+			if (mStaticArray != null) {
+				int len = (int)mStaticArray.length;
+				ret = new object[len];
+				for (var i = 0; i < len; i++) {
+					ret [i] = mStaticArray.getObjectAt ((uint)i);
+				}
+			} else {
+				ret = new object[mCount];
+				System.Array.Copy(mArray, ret, mCount);
+			}
 			return ret;
 		}
 
 		public object[] _GetInnerArray()
 		{
+			if (mStaticArray != null)
+				return null;
 			return mArray;
 		}
 
 		public void _TrimCapacity()
 		{
+			if (mStaticArray != null)
+				throw new InvalidOperationException ();
 			if (mCount < mArray.Length) {
 				mArray = ToArray();
 			}
@@ -443,11 +508,6 @@ namespace _root
 				System.Array.Copy(mArray, newArray, mArray.Length);
 				mArray = newArray;
 			}
-		}
-
-		public void Add(object value) 
-		{
-			this.push (value);
 		}
 
 		private void _Insert(int index, object value) 
@@ -508,7 +568,7 @@ namespace _root
 			}
 
 			foreach (var item in items) {
-				this.Add (item);
+				this.push (item);
 			}
 		}
 
@@ -521,12 +581,15 @@ namespace _root
 			}
 
 			foreach (var item in items) {
-				this.Add (item);
+				this.push (item);
 			}
 		}
 
 		public Array concat(params object[] args) 
 		{
+			if (mStaticArray != null)
+				throw new InvalidOperationException ();
+
 			Array v = new Array();
 			// add this vector
 			v.append (this);
@@ -542,9 +605,11 @@ namespace _root
 			return v;
 		}
 
-
 		public void copyTo(Array dest, int sourceIndex, int destIndex, int count) {
-			System.Array.Copy(this.mArray, sourceIndex, dest.mArray, destIndex, count);
+			if (mStaticArray != null) {
+				throw new NotImplementedException ();
+			} else
+				System.Array.Copy(this.mArray, sourceIndex, dest.mArray, destIndex, count);
 		}
 
 		public Array clone() {
@@ -575,11 +640,15 @@ namespace _root
 
 		public Array sort(Delegate sortBehavior)
 		{
+			if (mStaticArray != null)
+				throw new NotImplementedException ();
 			return sortInternal(sortBehavior);
 		}
 
 		public Array sort(object sortBehavior = null) 
 		{
+			if (mStaticArray != null)
+				throw new NotImplementedException ();
 			return sortInternal(sortBehavior);
 		}
 
@@ -756,6 +825,9 @@ namespace _root
 				return this;
 			}
 
+			if (mStaticArray != null)
+				throw new NotImplementedException ();
+
 			// Reference doc:
 			// http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/Array.html#sortOn%28%29
 
@@ -793,6 +865,8 @@ namespace _root
 
 		public int indexOf(object searchElement, int fromIndex = 0)
 		{
+			if (mStaticArray != null)
+				throw new NotImplementedException ();
 			for (var i = fromIndex; i < mCount; i++) {
 				if (mArray [i] == searchElement || mArray [i].Equals (searchElement)) {
 					return i;
@@ -805,15 +879,28 @@ namespace _root
 		{
 			var sb = new System.Text.StringBuilder();
 			bool needsSeperator = false;
-			for (var i = 0; i < mCount; i++) {
-				var item = mArray [i];
-				if (needsSeperator) {
-					sb.Append(sep);
+			if (mStaticArray != null) {
+				for (var i = 0; i < mStaticArray.length; i++) {
+					var item = mStaticArray.getObjectAt((uint)i);
+					if (needsSeperator) {
+						sb.Append(sep);
+					}
+					if (item != null) {
+						sb.Append(item.ToString());
+					}
+					needsSeperator = true;
 				}
-				if (item != null) {
-					sb.Append(item.ToString());
+			} else {
+				for (var i = 0; i < mCount; i++) {
+					var item = mArray [i];
+					if (needsSeperator) {
+						sb.Append(sep);
+					}
+					if (item != null) {
+						sb.Append(item.ToString());
+					}
+					needsSeperator = true;
 				}
-				needsSeperator = true;
 			}
 			return sb.ToString();
 		}
@@ -830,6 +917,8 @@ namespace _root
 
 		public dynamic pop() 
 		{
+			if (mStaticArray != null)
+				throw new InvalidOperationException ();
 			if (mCount == 0) {
 				return PlayScript.Undefined._undefined;
 			}
@@ -844,6 +933,8 @@ namespace _root
 		#endif
 		public uint push(object value)
 		{
+			if (mStaticArray != null)
+				throw new InvalidOperationException ();
 			if (mCount >= mArray.Length)
 				EnsureCapacity((uint)(1.25 * (mCount + 1)));
 			mArray[mCount] = value;
@@ -853,6 +944,8 @@ namespace _root
 
 		public uint push(object value, params object[] args) 
 		{
+			if (mStaticArray != null)
+				throw new InvalidOperationException ();
 			uint len = (uint)args.Length;
 			if (mArray.Length < mCount + 1 + len)
 				EnsureCapacity((uint)(1.25 * (mCount + len)));
@@ -864,6 +957,8 @@ namespace _root
 
 		public Array reverse() 
 		{
+			if (mStaticArray != null)
+				throw new NotImplementedException ();
 			var nv = new Array(length);
 			int l = (int)length;
 			for (int i = 0; i < l; i++)
@@ -875,8 +970,9 @@ namespace _root
 
 		public dynamic shift() 
 		{
-			if (mCount == 0)
-			{
+			if (mStaticArray != null)
+				throw new InvalidOperationException ();
+			if (mCount == 0) {
 				return PlayScript.Undefined._undefined;
 			}
 			object v = this[0];
@@ -886,6 +982,9 @@ namespace _root
 
 		public Array slice(int startIndex = 0, int endIndex = 16777215) 
 		{
+			if (mStaticArray != null)
+				throw new InvalidOperationException ();
+
 			if (startIndex < 0) 
 				throw new InvalidOperationException("splice error");
 
@@ -981,6 +1080,9 @@ namespace _root
 
 		public Array splice(int startIndex = 0, uint deleteCount = 4294967295) 
 		{
+			if (mStaticArray != null)
+				throw new InvalidOperationException ();
+
 			Array removed = null;
 
 			if (startIndex < 0) 
@@ -1014,6 +1116,9 @@ namespace _root
 
 		public Array splice(int startIndex, uint deleteCount = 4294967295, params object[] items) 
 		{
+			if (mStaticArray != null)
+				throw new InvalidOperationException ();
+
 			Array removed = null;
 
 			if (startIndex < 0) 
@@ -1070,6 +1175,8 @@ namespace _root
 
 		public uint unshift(object item) 
 		{
+			if (mStaticArray != null)
+				throw new InvalidOperationException ();
 			if (mCount >= mArray.Length)
 				EnsureCapacity(mCount + 1);
 			if (mCount > 0)

@@ -52,10 +52,10 @@ namespace PlayScript
 			}
 
 			section.Stats.Subtract(PlayScript.Stats.CurrentInstance);
-			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
-				section.GCCounts[i] -= System.GC.CollectionCount(i);
-			}
 			if (ProfileMemory) {
+				for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
+					section.GCCounts[i] -= System.GC.CollectionCount(i);
+				}
 				section.CurrentUsedMemory -= mono_gc_get_used_size();
 			}
 			if (section.Span != null)
@@ -78,10 +78,10 @@ namespace PlayScript
 			if (section.Span != null)
 				section.Span.End();
 			section.Stats.Add(PlayScript.Stats.CurrentInstance);
-			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
-				section.GCCounts[i] += System.GC.CollectionCount(i);
-			}
 			if (ProfileMemory) {
+				for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
+					section.GCCounts[i] += System.GC.CollectionCount(i);
+				}
 				section.CurrentUsedMemory += mono_gc_get_used_size();
 				if (section.CurrentUsedMemory > 0) {
 					section.UsedMemory += section.CurrentUsedMemory;	// After a GC the size might actually be negative
@@ -493,9 +493,10 @@ namespace PlayScript
 			PrintPercentile(tw, "frame", 95);
 			PrintPercentageOfFrames(tw, "frame", "% Fast Frames", a => (a <= performanceFrameData.FastFrame), string.Format("<={0:0.00}ms", performanceFrameData.FastFrame));
 			PrintPercentageOfFrames(tw, "frame", "% Slow frames", a => (a >= performanceFrameData.SlowFrame), string.Format(">={0:0.00}ms", performanceFrameData.SlowFrame));
-			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i)
-			{
-				tw.WriteLine("GC {0} Count:      {1}", i, sReportGCCounts[i]);
+			if (ProfileMemory) {
+				for (int i = sGCMinGeneration; i < sGCMaxGeneration; ++i) {
+					tw.WriteLine ("GC {0} Count:      {1}", i, sReportGCCounts [i]);
+				}
 			}
 
 			tw.WriteLine("*********** Timing (ms) ***********");
@@ -530,11 +531,13 @@ namespace PlayScript
 			// enable the report
 			sDoReport = true;
 
-			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i)
-			{
-				sReportGCCounts[i] = System.GC.CollectionCount(i);
+			if (ProfileMemory) {
+				for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i)
+				{
+					sReportGCCounts[i] = System.GC.CollectionCount(i);
+				}
 			}
-
+			
 			// start global timer
 			sReportTime = Stopwatch.StartNew();
 
@@ -567,8 +570,10 @@ namespace PlayScript
 
 			sReportTime.Stop();
 
-			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
-				sReportGCCounts[i] = System.GC.CollectionCount(i) - sReportGCCounts[i];
+			if (ProfileMemory) {
+				for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
+					sReportGCCounts[i] = System.GC.CollectionCount(i) - sReportGCCounts[i];
+				}
 			}
 
 			var recording = Telemetry.Session.EndRecording();

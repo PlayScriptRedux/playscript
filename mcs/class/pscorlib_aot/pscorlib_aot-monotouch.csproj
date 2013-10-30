@@ -928,6 +928,9 @@
     <Compile Include="..\pscorlib\flash\display\BitmapData.cs">
       <Link>flash\display\BitmapData.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\PlayScript\BinJSON.cs">
+      <Link>PlayScript\BinJSON.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monotouch.csproj">
