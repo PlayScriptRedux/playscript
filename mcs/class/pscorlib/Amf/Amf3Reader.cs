@@ -63,11 +63,18 @@ namespace Amf
 			value = mValues[index].AsUInt();
 		}
 
-		// read next property as string
+		// read next property as double
 		public void Read(out double value)
 		{
 			int index = mRemapTable[mReadIndex++];
 			value = mValues[index].AsNumber();
+		}
+
+		// read next property as float
+		public void Read(out float value)
+		{
+			int index = mRemapTable[mReadIndex++];
+			value = mValues[index].AsFloat();
 		}
 
 		// read next property as string
@@ -124,6 +131,13 @@ namespace Amf
 		{
 			int index = mRemapTable[mReadIndex++];
 			return mValues[index].AsNumber();
+		}
+
+		// read next property as float
+		public float ReadAsFloat()
+		{
+			int index = mRemapTable[mReadIndex++];
+			return mValues[index].AsFloat();
 		}
 
 		// read next property as string

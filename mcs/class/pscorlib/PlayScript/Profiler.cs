@@ -32,11 +32,12 @@ namespace PlayScript
 		public static bool FrameSkippingEnabled = false;
 		public static int  NextFramesElapsed = 1;
 		public static int  MaxNumberOfFramesElapsed = 0;
+		private static string sFilterPrefix;
 
 		// if telemetryName is provided then it will be used for the name sent to telemetry when this section is entered
 		public static string Begin(string name, string telemetryName = null)
 		{
-			if (!Enabled)
+			if (!Enabled || filter(name))
 				return name;
 
 			Section section;
@@ -70,7 +71,7 @@ namespace PlayScript
 		
 		public static void End(string name)
 		{
-			if (!Enabled)
+			if (!Enabled || filter(name))
 				return;
 
 			Section section;
@@ -211,7 +212,7 @@ namespace PlayScript
 			sLoadMilestones[name] = sGlobalTimer.Elapsed;
 		}
 
-		public static void StartSession(string reportName, int frameCount, int reportStartDelay = 5)
+		public static void StartSession(string reportName, int frameCount, int reportStartDelay = 5, string filterPrefix = null)
 		{
 			if (!Enabled)
 				return;
@@ -221,8 +222,19 @@ namespace PlayScript
 			sReportStartDelay = reportStartDelay;
 			MaxNumberOfFramesElapsed = 0;
 			NextFramesElapsed = 1;
+			sFilterPrefix = filterPrefix;
 
 			Console.WriteLine("Starting profiling session: {0} frames:{1} frameDelay:", reportName, frameCount, reportStartDelay);
+		}
+
+		public static void EndSession()
+		{
+			sReportFrameCount = sFrameCount;
+		}
+
+		private static bool filter(string name)
+		{
+			return sFilterPrefix != null && !name.StartsWith (sFilterPrefix);
 		}
 
 		
@@ -231,6 +243,8 @@ namespace PlayScript
 			temporaryStringBuilder.Length = 0;
 			temporaryStringBuilder.Append("profiler: ");
 			foreach (Section section in sSectionList) {
+				if (filter (section.Name))
+					continue;
 				double timeToDisplay = section.TotalTime.TotalMilliseconds / sFrameCount;
 				if (timeToDisplay < 0.01) {
 					continue;
@@ -246,7 +260,8 @@ namespace PlayScript
 		public static void PrintFullTimes(TextWriter tw)
 		{
 			foreach (Section section in sSectionList.OrderBy(a => -a.TotalTime)) {
-
+				if (filter (section.Name))
+					continue;
 				var total = section.TotalTime;
 				if (total.TotalMilliseconds < 0.01) {
 					// Skip negligible times
@@ -302,7 +317,7 @@ namespace PlayScript
 			char c = 'a';	// Shorthand so we can reference numbers more easily
 			foreach (Section section in sortedSections)
 			{
-				if (section.Skipped) {
+				if (section.Skipped || filter(section.Name)) {
 					continue;
 				}
 
@@ -328,6 +343,10 @@ namespace PlayScript
 				c = 'a';	// Shorthand so we can reference numbers more easily
 				foreach (Section section in sortedSections) 
 				{
+					if (section.Skipped || filter(section.Name)) {
+						continue;
+					}
+
 					var history = section.History[frame];
 					string collect = "";
 					for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
@@ -350,6 +369,8 @@ namespace PlayScript
 		public static void PrintStats(TextWriter tw)
 		{
 			foreach (Section section in sSectionList) {
+				if (filter (section.Name))
+					continue;
 				var dict = section.Stats.ToDictionary(true);
 				if (dict.Count > 0) {
 					tw.WriteLine("---------- {0} ----------", section.Name);
@@ -373,20 +394,25 @@ namespace PlayScript
 		}
 
 
-		private static void PrintHistogram(TextWriter tw, double bucketSize, List<double> history, double minRange, double maxRange, double splitThreshold)
+		private static void PrintHistogram(TextWriter tw, double bucketSize, List<SectionHistory> history, double minRange, double maxRange, double splitThreshold)
 		{
 			var counts = new List<int>();
-			foreach (var time in history) {
+			var callCounts = new List<int>();
+			foreach (var h in history) {
+				var time = h.Time.TotalMilliseconds;
 				if (time >= minRange && time <= maxRange) {
 					// find bucket
 					int i = (int)Math.Floor( (time - minRange) / bucketSize);
 
 					// resize counts
-					while (i >= counts.Count)
-						counts.Add(0);
+					while (i >= counts.Count) {
+						counts.Add (0);
+						callCounts.Add (0);
+					}
 
 					// increment histogram
 					counts[i]++;
+					callCounts[i] += h.NumberOfCalls;
 				}
 			}
 
@@ -400,8 +426,8 @@ namespace PlayScript
 					if ((percent <= splitThreshold) || (bucketSize <= 0.1))
 					{
 						// print counts for this range
-						tw.WriteLine("{0,4}ms->{1,4}ms {2,5} {3,5:0.0}% {4}", 
-						             startTime, endTime, counts[i], percent, new string('=', (int)Math.Ceiling(percent) ) );
+						tw.WriteLine("{0,4}ms->{1,4}ms {2,5} {3,5} {4,5:0.0}% {5}", 
+						             startTime, endTime, counts[i], callCounts[i], percent, new string('=', (int)Math.Ceiling(percent) ) );
 					}
 					else
 					{
@@ -420,7 +446,11 @@ namespace PlayScript
 		{
 			foreach (var section in sSectionList)
 			{
-				var history = section.History.Select(h => h.Time.TotalMilliseconds).OrderBy(h=>h).ToList();
+				if (filter (section.Name))
+					continue;
+
+				var history = section.History;
+				history.OrderBy(h => h.Time.TotalMilliseconds);
 				if (history.Count == 0)
 					continue;
 
