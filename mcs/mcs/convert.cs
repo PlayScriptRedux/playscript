@@ -439,27 +439,14 @@ namespace Mono.CSharp {
 				return new Invocation (function, args).Resolve (opt_ec);
 			}
 
-			if ((expr_type.IsDynamic || PsIsUndefined (expr_type, opt_ec)) && target_type.IsDynamic) {
+			// Can always cast between Object (Dynamic) and * (AsUntyped)
+			if ((expr_type.IsDynamic || TypeManager.IsAsUndefined (expr_type, opt_ec)) && target_type.IsDynamic) {
 				if (expr_type == target_type)
 					return expr; // nothing to do
 
-				// In C#, allow dynamic to hold undefined
-				if (opt_ec.FileType != SourceFileType.PlayScript)
-					return EmptyCast.Create (expr, target_type, opt_ec).Resolve (opt_ec);
-
-				// Cast from * (AsUntyped) to Object (Dynamic)
-				if ((expr_type.IsAsUntyped || PsIsUndefined (expr_type, opt_ec)) && !target_type.IsAsUntyped) {
-					var args = new Arguments (1);
-					args.Add (new Argument (EmptyCast.RemoveDynamic (opt_ec, expr)));
-
-					var function = new MemberAccess (new TypeExpression (
-						opt_ec.Module.PredefinedTypes.PsConverter.Resolve (), expr.Location), "ConvertToObj", expr.Location);
-
-					return new Invocation (function, args).Resolve (opt_ec);
-				}
-
-				// Cast from Object (Dynamic) to * (AsUntyped)
-				return EmptyCast.Create (expr, target_type, opt_ec).Resolve (opt_ec);
+				Arguments args = new Arguments (1);
+				args.Add (new Argument (expr));
+				return new DynamicConversion (target_type, 0, args, expr.Location).Resolve (opt_ec).Resolve (opt_ec);
 			}
 
 			return null;
@@ -474,7 +461,7 @@ namespace Mono.CSharp {
 			// Can always cast between Object (Dynamic) and * (AsUntyped),
 			// even in C#. This is to support using the "*" type in C#.
 			//
-			if ((expr_type.IsDynamic || PsIsUndefined (expr_type, opt_ec)) && target_type.IsDynamic)
+			if ((expr_type.IsDynamic || TypeManager.IsAsUndefined (expr_type, opt_ec)) && target_type.IsDynamic)
 				return true;
 
 			if (opt_ec.FileType != SourceFileType.PlayScript || upconvert_only)
@@ -490,22 +477,6 @@ namespace Mono.CSharp {
 			// PlayScript types can always be implicitly cast to string
 			//
 			if (target_type.BuiltinType == BuiltinTypeSpec.Type.String)
-				return true;
-
-			return false;
-		}
-
-		static bool PsIsUndefined (TypeSpec expr_type, ResolveContext opt_ec)
-		{
-			if (opt_ec == null)
-				return false;
-
-			//
-			// AsUndefined is only defined if PlayScript.Dynamic is included, so
-			// we excplitily check if it has been defined, rather than calling
-			// Resolve.
-			//
-			if (opt_ec.Module.PredefinedTypes.AsUndefined.IsDefined && expr_type == opt_ec.Module.PredefinedTypes.AsUndefined.TypeSpec)
 				return true;
 
 			return false;

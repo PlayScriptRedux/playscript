@@ -1213,7 +1213,26 @@ namespace Mono.CSharp
 	{
 		return t is ElementTypeSpec;
 	}
-
+	
+	/// <summary>
+	///   Utility function to check whether a type is AsUndefined or not
+	/// </summary>
+	public static bool IsAsUndefined (TypeSpec type, ResolveContext opt_ec)
+	{
+		if (opt_ec == null)
+			return false;
+		
+		//
+		// AsUndefined is only defined if PlayScript.Dynamic is included, so
+		// we excplitily check if it has been defined, rather than calling
+		// Resolve.
+		//
+		if (opt_ec.Module.PredefinedTypes.AsUndefined.IsDefined && type == opt_ec.Module.PredefinedTypes.AsUndefined.TypeSpec)
+			return true;
+		
+		return false;
+	}
+	
 	/// <summary>
 	///   Utility function that can be used to probe whether a type
 	///   is managed or not.  

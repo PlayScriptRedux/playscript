@@ -28,6 +28,21 @@ namespace PlayScript.DynamicRuntime
 	{
 		private PSGetMember			  mGetMember;
 
+		public dynamic GetIndexAsObject(object o, object index)
+		{
+			var result = GetIndexAs<object>(o, index);
+			// Need to check for undefined if we're not returning AsUntyped
+			if (Dynamic.IsUndefined (result))
+				result = null;
+			return result;
+		}
+
+		[return: AsUntyped]
+		public dynamic GetIndexAsUntyped(object o, object index)
+		{
+			return GetIndexAs<object>(o, index);
+		}
+
 		public T GetIndexAs<T> (object o, int index)
 		{
 			Stats.Increment(StatsCounter.GetIndexBinderInvoked);
