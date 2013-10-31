@@ -434,9 +434,11 @@ namespace _root {
 				mArray = newArray;
 			}
 		}
-		
+
+		// NOTE: This method should not be public!  However intializers depend on it and so it 
+		// still has to be public for now.
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
- 	    void ICollection<T>.Add(T value) 
+ 	    public void Add(T value) 
 		{
 			this.push (value);
 		}

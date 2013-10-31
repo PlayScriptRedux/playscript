@@ -1198,6 +1198,14 @@ namespace _root
 			throw new System.NotImplementedException();
 		}
 
+		// NOTE: This method should not be public!  However intializers depend on it and so it 
+		// still has to be public for now.  The compiler should be switched to 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public void Add(object o)
+		{
+			this.push (o);
+		}
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public override string toString() 
 		{
