@@ -168,6 +168,19 @@ namespace playscript.utils {
 			}
 		}
 
+		public byte[] ToArray() 
+		{
+			byte[] array = new byte[this.Size];
+			uint* s = (uint*)this.data;
+			fixed (byte* a = &array[0]) {
+				uint* d = (uint*)a;
+				int size = this.Size;
+				for (var i = 0; i < size; i += 4)
+					*d++ = *s++;
+			}
+			return array;
+		}
+
 		#if DEBUG
 
 		public byte[] Data { 
@@ -1349,6 +1362,9 @@ namespace playscript.utils {
 			public static byte* tempStringEnd;
 			public static int tempStringSize;
 
+			// Float ptr memory
+			public static byte* floatConvMem;
+
 			// Unique string dictionary
 			UniqueStringDictionary stringTable = new UniqueStringDictionary();
 
@@ -1388,6 +1404,12 @@ namespace playscript.utils {
 					tempStringEnd = tempString + tempStringSize;
 				}
 				tempStringPtr = tempString;
+
+				// We need a few bytes to do float to uint conversions
+				if (floatConvMem == null) {
+					floatConvMem = (byte*)Marshal.AllocHGlobal(16).ToPointer();
+				}
+
 			}
 
 			public static object Parse(string jsonString) {
@@ -1417,7 +1439,6 @@ namespace playscript.utils {
 			public int DataPos { get { return (int)(dataPtr - data); } }
 			public int TempPos { get { return (int)(tempPtr - temp); } }
 			public int TempDataPos { get { return (int)(tempDataPtr - tempData); } }
-
 
 			public byte[] Data { 
 				get {
@@ -2145,8 +2166,30 @@ namespace playscript.utils {
 
 				if (json != end) {
 					if (ch == 'e' || ch == 'E') {
-						// TODO: Support exponential notation.
-						throw new NotSupportedException();
+						json++;
+						if (json == end)
+							throw new InvalidDataException ("Invalid number");
+						ch = *json;
+						bool isNegExp = false;
+						if (ch == '-') {
+							isNegExp = true;
+							json++;
+						} else if (ch == '+') {
+							json++;
+						}
+						if (json == end)
+							throw new InvalidDataException ("Invalid number");
+						double e = 0.0;
+						while (json != end) {
+							ch = *json;
+							if (ch < '0' || ch > '9')
+								break;
+							e = e * 10.0 + (double)(ch - '0');
+							json++;
+						}
+						if (isNegExp)
+							e = -e;
+						v = v * System.Math.Pow(10.0, e);
 					}
 				}
 
@@ -2158,16 +2201,14 @@ namespace playscript.utils {
 					id |= (uint)DATA_TYPE.INT << 29;
 					offset = (uint)i;
 				} else if (_useFloat32) {
-					if (tempDataPtr + 4 >= tempDataEnd)
-						ExpandTempData ();
 					id |= (uint)DATA_TYPE.FLOAT << 29;
-					*(float*)tempDataPtr = (float)v;
-					return *(uint*)tempDataPtr;
+					*(float*)floatConvMem = (float)v;
+					return *(uint*)floatConvMem;
 				} else {
 					id |= (uint)DATA_TYPE.DOUBLE << 29;
 					if (tempDataPtr + 16 >= tempDataEnd)
 						ExpandTempData ();
-					while (((uint)tempDataPtr & 0x7) != 0) {
+					while (((uint)tempDataPtr & 0x7) != 0) { // Align to even 8 bytes
 						*tempDataPtr++ = 0;
 					}
 					*(double*)tempDataPtr = v;
