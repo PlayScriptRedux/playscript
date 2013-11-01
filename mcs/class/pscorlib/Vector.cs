@@ -420,15 +420,16 @@ namespace _root {
 			}
 		}
 
-		private void EnsureCapacity(uint size)
+		public void EnsureCapacity(uint size)
 		{
 			if (mArray.Length < size) {
+#if !PERFORMANCE_MODE || DEBUG
 				if (mFixed)
 					throw new InvalidOperationException(ERROR_RESIZING_FIXED);
-				int newSize = mArray.Length * 2;
-				if (newSize == 0) newSize = 4;
-				while (newSize < size)
-					newSize = newSize * 2;
+#endif
+				// If we have to grow the vector, allocate 20% over the needed size
+				int newSize = (int)((double)size * 1.20);
+				if (newSize < 4) newSize = 4;
 				T[] newArray = new T[newSize];
 				System.Array.Copy(mArray, newArray, mArray.Length);
 				mArray = newArray;
