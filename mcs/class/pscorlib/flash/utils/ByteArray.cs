@@ -253,8 +253,10 @@ namespace flash.utils {
  	 	
 		public dynamic readObject() {
 			Stream stream = getRawStream();
+			PlayScript.Profiler.Begin("amf-parse");
 			Amf3Parser amfparser = new Amf3Parser(stream);
 			object obj = amfparser.ReadNextObject();
+			PlayScript.Profiler.End("amf-parse");
 			return obj;
 		}
  	 	

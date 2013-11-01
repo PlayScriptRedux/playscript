@@ -28,6 +28,8 @@ namespace PlayScript
 		public static bool ProfileMemory = false;			// Profile memory usage, it is very slow though...
 		public static bool DisableTraces = true;			// set to true to disable traces during profiling session
 		public static long LastTelemetryFrameSpanStart = long.MaxValue;
+		public static Action<string, double> LoadingMilestoneCallback = null; // callback on each loading milestone
+		public static Func< IDictionary<string, string> > SessionDataCallback = null; // callback to retreive additional session data
 
 		public static bool FrameSkippingEnabled = false;
 		public static int  NextFramesElapsed = 1;
@@ -206,6 +208,11 @@ namespace PlayScript
 		{
 			if (Enabled) {
 				Console.WriteLine("Loading milestone {0} {1}", name, sGlobalTimer.Elapsed);
+
+				// invoke callback on each loading milestone
+				if (LoadingMilestoneCallback != null) {
+					LoadingMilestoneCallback(name, sGlobalTimer.ElapsedMilliseconds);
+				}
 			}
 
 			// store load complete time
@@ -596,6 +603,14 @@ namespace PlayScript
 			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i)
 			{
 				tw.WriteLine("GC {0} Count:      {1}", i, sReportGCCounts[i]);
+			}
+
+			if (SessionDataCallback != null) {
+				// write extra data about session
+				var extraData = SessionDataCallback();
+				foreach (var kvp in extraData) {
+					tw.WriteLine("{0}:  {1}", kvp.Key, kvp.Value);
+				}
 			}
 
 			tw.WriteLine("*********** Timing (ms) ***********");

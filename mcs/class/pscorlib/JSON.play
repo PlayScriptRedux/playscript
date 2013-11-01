@@ -17,12 +17,16 @@ package {
 	public static class JSON {
 	
 		public static function parse(text:String, reviver:Function = null):Object {
+			PlayScript.Profiler.Begin("json-parse");
 			var o:Object = MiniJson.Json.Parse(text);
+			PlayScript.Profiler.End("json-parse");
 			return o;
 		}
 
 		public static function stringify(value:Object, replacer:* = null, space:* = null):String {
+			PlayScript.Profiler.Begin("json-stringify");
 			var s:String = MiniJson.Json.Stringify(value);
+			PlayScript.Profiler.End("json-stringify");
 			return s;
 		}
 	}
