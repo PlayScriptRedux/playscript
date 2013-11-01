@@ -58,6 +58,8 @@ namespace Amf
 
 		private readonly Amf3ClassDef anonClassDef = new Amf3ClassDef("*", new string[0], true, false);
 
+		private readonly Dictionary<Type, IAmf3Serializer> typeToSerializer = new Dictionary<Type, IAmf3Serializer>();
+
         public Amf3Writer(Stream stream)
         {
             if (stream == null)
@@ -94,10 +96,44 @@ namespace Amf
 			objectTableIndex++;
 		}
 
+		private IAmf3Serializer GetSerializerForType(System.Type type)
+		{
+			IAmf3Serializer serializer;
+			if (!typeToSerializer.TryGetValue(type, out serializer)) {
+				var alias = Amf3ClassDef.GetAliasFromType(type);
+				if (alias != null) {
+					serializer = Amf3ClassDef.GetSerializerFromAlias(alias);
+					if (serializer == null) {
+						// create reflection serializer
+						serializer = new ReflectionSerializer(alias, type, true, false);
+						// automatically register it
+						Amf3ClassDef.RegisterSerializer(alias, serializer);
+					}
+				} else {
+					// create anonymous serializer
+					serializer = new ReflectionSerializer("*", type, true, false);
+				}
+				// store serializer in our local cache
+				typeToSerializer.Add(type, serializer);
+			}
+			return serializer;
+		}
+
         private void Write(Amf3TypeCode type)
         {
             Stream.WriteByte((byte)type);
         }
+
+
+		public void WriteDefaultObjectForType(Type type)
+		{
+			// get serializer
+			IAmf3Serializer serializer = GetSerializerForType(type);
+			// create default instance
+			var defaultInstance = serializer.NewInstance(null);
+			// write object using serializer
+			serializer.WriteObject(this, defaultInstance);
+		}
 
         public void Write(object obj)
         {
@@ -177,25 +213,11 @@ namespace Amf
 				return;
 			}
 
-			// see if class has been registered
-			var info = Amf3ClassDef.GetClassInfoFromSystemType(obj.GetType());
-			if (info != null) {
-				// see if external serializer delegate has been registered
-				if (info.Serializer != null) {
-					// invoke serializer
-					info.Serializer(obj, this);
-				} else {
-					if (info.SerializerClassDef == null) {
-						// automatically create class definition from system type
-						info.SerializerClassDef = new Amf3ClassDef(info.Alias, obj.GetType());
-					}
-					// write object with reflection (slow)
-					WriteObjectWithRefection(info.SerializerClassDef, obj);
-				}
-				return;
-			}
-
-            throw new ArgumentException("Cannot serialize object of type " + obj.GetType().FullName);
+			// get serializer from type
+			var type = obj.GetType();
+			IAmf3Serializer serializer = GetSerializerForType(type);
+			// write object using serializer
+			serializer.WriteObject(this, obj);
         }
 
         public void Write(bool boolean)
@@ -276,6 +298,11 @@ namespace Amf
 
         public void Write(IList obj)
         {
+			if (obj == null) {
+				Write(Amf3TypeCode.Null);
+				return;
+			}
+
 			if (obj is _root.Array) {
 				Write(Amf3TypeCode.Array);
 				TypelessWriteArray((_root.Array)obj);
@@ -382,12 +409,6 @@ namespace Amf
 			Write(Amf3TypeCode.VectorDouble);
 			TypelessWrite(vector);
 		}
-
-        public void Write(Amf3Object obj)
-        {
-            Write(Amf3TypeCode.Object);
-            TypelessWrite(obj);
-        }
 
 		public void Write(ExpandoObject obj)
 		{
@@ -558,9 +579,11 @@ namespace Amf
 			// get type of vector element
 			Type elementType = vector.GetType().GetGenericArguments()[0];
 			// get class info for type
-			var info = Amf3ClassDef.GetClassInfoFromSystemType(elementType);
+			string alias = Amf3ClassDef.GetAliasFromType(elementType);
 			// get alias of vector element from info
-			string alias = (info!=null) ? info.Alias : elementType.FullName;
+			if (alias == null) {
+				alias = elementType.FullName;
+			}
 			// write vector element class alias
 			TypelessWrite(alias);
 
@@ -777,42 +800,15 @@ namespace Amf
 			}
 		}
 
-        public void TypelessWrite(Amf3Object obj)
-        {
-            if (CheckObjectTable(obj))
-                return;
-
-			TypelessWrite(obj.ClassDef);
-
-			StoreObject(obj);
-
-            if (obj.ClassDef.Externalizable) {
-                Write(obj["inner"]);
-                return;
-            }
-
-            foreach (string i in obj.ClassDef.Properties) {
-                Write(obj[i]);
-            }
-
-            if (obj.ClassDef.Dynamic) {
-                var dynamicProperties =
-                    from i in obj.Properties
-                    where !obj.ClassDef.Properties.Contains(i.Key)
-                    select i;
-
-                foreach (var i in dynamicProperties) {
-                    TypelessWrite(i.Key);
-                    Write(i.Value);
-                }
-
-                TypelessWrite("");
-            }
-        }
-
-
 		public void TypelessWrite(ExpandoObject obj)
 		{
+			// this allows for the sharing of expando values easily
+			var redirect = obj.ClassDefinition as ExpandoObject;
+			if (redirect != null) {
+				TypelessWrite(redirect);
+				return;
+			}
+
 			if (CheckObjectTable(obj))
 				return;
 
@@ -845,37 +841,5 @@ namespace Amf
 			TypelessWrite(classDef);
 			StoreObject(obj);
 		}
-
-		// this writes an object to the amf stream using reflection
-		// this is much slower than having a custom serialization method for the class
-		public void WriteObjectWithRefection(Amf3ClassDef classDef, object obj) 
-		{
-			// write object header and class definition
-			Write(Amf3TypeCode.Object);
-			TypelessWrite(classDef);
-			StoreObject(obj);
-
-			// get all members for this class definition
-			var members = classDef.GetMemberListForType(obj.GetType());
-			// write all members
-			foreach (MemberInfo member in members) {
-				var field = member as FieldInfo;
-				if (field != null) {
-					// get field value and write it
-					object value = field.GetValue(obj);
-					Write(value);
-				} else {
-					var property = member as PropertyInfo;
-					if (property != null) {
-						// get property value and write it
-						object value = property.GetValue(obj, null);
-						Write(value);
-					} else {
-						throw new Exception("Unhandled member type (or missing member)");
-					}
-				}
-			}
-		}
-
     }
 }

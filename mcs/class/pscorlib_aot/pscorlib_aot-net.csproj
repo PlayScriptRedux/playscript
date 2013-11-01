@@ -914,6 +914,12 @@
     <Compile Include="..\pscorlib\PlayScript\ProfilerData.cs">
       <Link>PlayScript\ProfilerData.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\Amf\ReflectionSerializer.cs">
+      <Link>Amf\ReflectionSerializer.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\ExpandoSerializer.cs">
+      <Link>Amf\ExpandoSerializer.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="flash\external\" />

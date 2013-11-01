@@ -21,54 +21,142 @@
 // THE SOFTWARE.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Amf
 {
 	public class Amf3Object : IAmf3Writable
     {
-        public Amf3ClassDef ClassDef { get; private set; }
+		// class definition
+		public readonly Amf3ClassDef 					 ClassDef;
+		// property values (one for each Amf3ClassDef Properties)
+		public readonly Amf3Variant[]					 Properties;
+		// dynamic property values (if this class is dynamic)
+		public readonly IDictionary<string, Amf3Variant> DynamicProperties;
 
-        public IDictionary<string, object> Properties { get; private set; }
-
-        public object this[string key]
+        public Amf3Variant this[string key]
         {
             get
             {
-                object r;
-                return Properties.TryGetValue(key, out r) ? r : null;
+				// return undefined by default
+				var r = new Amf3Variant();
+
+				if (DynamicProperties != null) {
+					if (DynamicProperties.TryGetValue(key, out r)) {
+						// return value from dynamic properties if we have them
+						return r;
+					}
+				}
+
+				int index = ClassDef.GetPropertyIndex(key);
+				if (index >= 0) {
+					// return value from normal property
+					return Properties[index];
+				} 
+
+				// return value
+				return r;
             }
-            set
-            {
-                Properties[key] = value;
-            }
+			set
+			{
+				int index = ClassDef.GetPropertyIndex(key);
+				if (index >= 0) {
+					// set class definition property
+					Properties[index] = value;
+					return;
+				} 
+
+				if (DynamicProperties != null) {
+					// set dynamic property
+					DynamicProperties[key] = value;
+				}
+			}
         }
 
-        public Amf3Object(Amf3ClassDef classDef)
+		public Amf3Object(Amf3ClassDef classDef)
         {
             if (classDef == null)
                 throw new ArgumentNullException("classDef");
 
-            ClassDef = classDef;
-            Properties = new Dictionary<string, object>();
+			// set class definition
+			ClassDef   = classDef;
+
+			// allocate property store
+			Properties = new Amf3Variant[classDef.Properties.Length];
+
+			if (classDef.Dynamic) {
+				// create dynamic value store
+				DynamicProperties = new Dictionary<string, Amf3Variant>();
+			}
         }
 
-        public Amf3Object() : this(Amf3ClassDef.Anonymous) {}
-
-        [Flags]
-        internal enum Flags : int
-        {
-            Inline = 1,
-            InlineClassDef = 2,
-            Externalizable = 4,
-            Dynamic = 8
-        }
-
-		#region IAmf3Writable implementation
-		public void Serialize(Amf3Writer writer)
+		[Flags]
+		internal enum Flags : int
 		{
-			writer.Write(this);
+			Inline = 1,
+			InlineClassDef = 2,
+			Externalizable = 4,
+			Dynamic = 8
+		}
+
+		#region IAmf3Serializable implementation
+		public void Serialize(Amf3Writer writer) {
+			writer.WriteObjectHeader(ClassDef, this);
+
+			// write class properties
+			for (int i=0; i < Properties.Length; i++) {
+				writer.Write(Properties[i]);
+			}
+
+			if (ClassDef.Dynamic) {
+				// write dynamic properties
+				// TODO: this is a little weird and shouldnt be here.. should be handled by the writer
+				foreach (var kvp in DynamicProperties) {
+					writer.TypelessWrite(kvp.Key);
+					writer.Write(kvp.Value);
+				}
+
+				// write terminator
+				writer.TypelessWrite("");
+			}
 		}
 		#endregion
+
+		// serializer for playscript expando objects
+		public class Serializer : IAmf3Serializer
+		{
+			#region IAmfSerializer implementation
+
+			public object NewInstance(Amf3ClassDef classDef)
+			{
+				return new Amf3Object(classDef);
+			}
+
+			public IList NewVector(uint num, bool isFixed)
+			{
+				return new _root.Vector<Amf3Object>(num, isFixed);
+			}
+
+			public void   WriteObject(Amf3Writer writer, object obj)
+			{
+				var amfObj = (Amf3Object)obj;
+				amfObj.Serialize(writer);
+			}
+
+			public void ReadObject(Amf3Reader reader, object obj)
+			{
+				var amfObj = (Amf3Object)obj;
+				reader.ReadObjectHeader(amfObj.ClassDef);
+
+				// read class properties
+				for (int i=0; i < amfObj.Properties.Length; i++)
+				{
+					reader.Read(ref amfObj.Properties[i]);
+				}
+			}
+			#endregion
+		};
+
     }
 }

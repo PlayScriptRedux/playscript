@@ -17,8 +17,9 @@ namespace Telemetry
 			}
 		}
 
-		private static string Format(object o)
+		private static string Format(Amf3Variant value)
 		{
+			object o = value.AsObject();
 			if (o == null) {
 				return "null";
 			} else if (o is string) {
@@ -27,8 +28,8 @@ namespace Telemetry
 				var sb = new System.Text.StringBuilder();
 				var ao = (Amf3Object)o; 
 				sb.AppendFormat("[{0} ", ao.ClassDef.Name);
-				foreach (var prop in ao.Properties) {
-					sb.AppendFormat("{0}:{1} ", prop.Key, Format(prop.Value));
+				for (int i=0; i < ao.ClassDef.Properties.Length; i++) {
+					sb.AppendFormat("{0}:{1} ", ao.ClassDef.Properties[i], Format(ao.Properties[i]));
 				}
 				sb.AppendFormat("]");
 				return sb.ToString();
@@ -56,36 +57,40 @@ namespace Telemetry
 			int enterTime = 0;
 
 			while (stream.Position < stream.Length ) {
-				var o =	parser.ReadNextObject();
-				if (o == null)
+				Amf3Variant v = new Amf3Variant();
+				parser.ReadNextObject(ref v);
+				if (!v.IsDefined)
+					break;
+
+				var amfObj = v.AsObject() as Amf3Object;
+				if (amfObj == null)
 					break;
 
 				output.Write("{0:D8}: ", time);
 
-				var amfObj = (Amf3Object)o;
 				switch (amfObj.ClassDef.Name)
 				{
 					case ".value":
 						{
 							output.WriteLine("WriteValue({0}, {1});", 
-							                Format(amfObj.Properties["name"]), 
-							                Format(amfObj.Properties["value"])
+							                Format(amfObj["name"]), 
+							                Format(amfObj["value"])
 							);
 							break;
 						}
 					case ".span":
 						{
-							time += (int)amfObj.Properties["delta"];
+							time += amfObj["delta"].AsInt();
 							output.WriteLine("WriteSpan({0}, {1}, {2});", 
-							                Format(amfObj.Properties["name"]), 
-							                amfObj.Properties["span"],
-							                amfObj.Properties["delta"]
+							                Format(amfObj["name"]), 
+							                amfObj["span"],
+							                amfObj["delta"]
 							);
 
 							// handle end of frame
-							string name = (string)amfObj.Properties["name"];
+							string name = amfObj["name"].AsString();
 							if (name == ".exit") {
-								int span = (int)amfObj.Properties["span"];
+								int span = amfObj["span"].AsInt();
 								int deltas = time - enterTime;
 								output.WriteLine("// frame deltas:{0} span:{1} diff:{2}", deltas, span, deltas - span);
 							}
@@ -94,32 +99,32 @@ namespace Telemetry
 						}
 					case ".spanValue":
 						{
-							time += (int)amfObj.Properties["delta"];
+							time += amfObj["delta"].AsInt();
 							output.WriteLine("WriteSpanValue({0}, {1}, {2}, {3});", 
-							                Format(amfObj.Properties["name"]), 
-							                amfObj.Properties["span"],
-							                amfObj.Properties["delta"],
-							                Format(amfObj.Properties["value"])
+							                Format(amfObj["name"]), 
+							                amfObj["span"],
+							                amfObj["delta"],
+							                Format(amfObj["value"])
 							);
 							break;
 						}
 					case ".time":
 						{
-							time += (int)amfObj.Properties["delta"];
+							time += amfObj["delta"].AsInt();
 							output.WriteLine("WriteTime({0}, {1});", 
-							                Format(amfObj.Properties["name"]), 
-							                amfObj.Properties["delta"]
+							                Format(amfObj["name"]), 
+							                amfObj["delta"]
 							);
 
 							// handle start of frame
-							string name = (string)amfObj.Properties["name"];
+							string name = amfObj["name"].AsString();
 							if (name == ".enter") {
 								enterTime = time;
 							}
 						}
 						break;
 					default:
-						output.WriteLine(Format(o));
+						output.WriteLine(Format(v));
 						break;
 				}
 			}
