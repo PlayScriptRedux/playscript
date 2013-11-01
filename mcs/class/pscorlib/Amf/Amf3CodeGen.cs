@@ -105,7 +105,7 @@ namespace Amf
 			if (mode == Mode.PartialClass) {
 				tw.Write("public void Serialize(Amf3Writer writer) {");
 			} else {
-				tw.Write("public void WriteObject(Amf3Writer writer, object o)");
+				tw.Write("public void WriteObject(Amf3Writer writer, object o) {");
 			}
 
 			Indent(tw);
@@ -136,16 +136,11 @@ namespace Amf
 			}
 			UnIndent(tw);
 			tw.WriteLine("}");
-
-			// end region
-			if (mode == Mode.PartialClass) 
-				tw.WriteLine("#endregion");
 			tw.WriteLine();
-
 
 			if (mode == Mode.ExternalClass)  {
 				// generate class constructor
-				tw.Write("public object NewInstance(Amf3ClassDef classDef)");
+				tw.Write("public object NewInstance(Amf3ClassDef classDef) {");
 				Indent(tw);
 				tw.Write("return new {0}();", className);
 				UnIndent(tw);
@@ -153,13 +148,17 @@ namespace Amf
 				tw.WriteLine();
 
 				// generate class vector constructor
-				tw.Write("public System.Collections.IList NewVector(uint len, bool isFixed)");
+				tw.Write("public System.Collections.IList NewVector(uint len, bool isFixed) {");
 				Indent(tw);
 				tw.Write("return new _root.Vector<{0}>(len, isFixed);", className);
 				UnIndent(tw);
 				tw.WriteLine("}");
 				tw.WriteLine();
 			}
+
+			// end region
+			tw.WriteLine("#endregion");
+			tw.WriteLine();
 
 			// write class definition
 			string names = "{";
