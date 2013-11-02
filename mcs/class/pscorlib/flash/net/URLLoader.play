@@ -246,6 +246,9 @@ package flash.net {
 			trace("URLLoader: http load ", mRequest.url);
 
 			TraceAccurateMetricsStartLoading();
+			if (PlayScript.Profiler.ProfileLoading) {
+				PlayScript.Profiler.Begin("load:" + mRequest.url, "");
+			}
 
 			var method:String = "GET";
 			if (mRequest.method != null) {
@@ -338,6 +341,10 @@ package flash.net {
 			dataStream.Close ();
 			response.Close ();
 
+			if (PlayScript.Profiler.ProfileLoading) {
+				PlayScript.Profiler.End("load:" + mRequest.url);
+			}
+
 			TraceAccurateMetricsEndLoading();
 
 			trace("URLLoader: http load complete length:", this.bytesLoaded, mRequest.url);
@@ -352,6 +359,10 @@ package flash.net {
 
 		private function dispatchCompleteEvent():void {
 
+			if (PlayScript.Profiler.ProfileLoading) {
+				PlayScript.Profiler.Begin("dispatch:" + mRequest.url, "");
+			}
+
 			TraceAccurateMetricsStartDispatching();
 
 			// TODO:addEventListener Find a way to make sure this event is dispatched in the main thread
@@ -360,6 +371,9 @@ package flash.net {
 
 			TraceAccurateMetricsEndDispatching();
 
+			if (PlayScript.Profiler.ProfileLoading) {
+				PlayScript.Profiler.End("dispatch:" + mRequest.url);
+			}
 		}
 
 		private function dispatchErrorEvent():void {
@@ -369,6 +383,9 @@ package flash.net {
 
 		private function doLocalLoad():void {
 			trace("URLLoader: local load ", mRequest.url);
+			if (PlayScript.Profiler.ProfileLoading) {
+				PlayScript.Profiler.Begin("load:" + mRequest.url, "");
+			}
 
 			var span = Telemetry.Session.BeginSpan();
 
@@ -434,6 +451,9 @@ package flash.net {
 			this.bytesTotal  = fileData.Length;
 
 			TraceAccurateMetricsEndLoading();
+			if (PlayScript.Profiler.ProfileLoading) {
+				PlayScript.Profiler.End("load:" + mRequest.url);
+			}
 
 			// dispatch complete event
 			dispatchCompleteEvent();
