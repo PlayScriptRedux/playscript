@@ -824,10 +824,114 @@ namespace PlayScript
 				return;
 			}
 
-			ProfilerData profilerData = new ProfilerData ();
+			var pd = new ProfilerData();
+
+			#if PLATFORM_MONOTOUCH
+			pd.ReportName = sReportName;
+			pd.Device = UIDevice.CurrentDevice.Name;
+			pd.Model = IOSDeviceHardware.Version.ToString ();
+			pd.SystemVersion = UIDevice.CurrentDevice.SystemVersion;
+			pd.Screen = new ScreenData (UIScreen.MainScreen.Bounds,
+			                            UIScreen.MainScreen.Scale);
+			#endif
+
+			// loading section
+			pd.Loading = new LoadingData (PlayScript.Player.Offline);
+			foreach (var milestone in sLoadMilestones) {
+				pd.Loading.AddMilestone(milestone.Key, milestone.Value);
+			}
+
+			// session section
+			pd.Session = new SessionData();
+			pd.Session.TotalFrames = sReportFrameCount;
+			pd.Session.TotalTime = sReportTime.Elapsed;
+
+			PerformanceFrameData performanceFrameData = GetPerformanceFrameData();
+
+			string key = "frame";
+			double minimumClampedValue = performanceFrameData.FastFrame;
+			double sum;
+
+			if (GetAverageClampedInMs ("frame", minimumClampedValue, out sum)) {
+				pd.Session.AverageFrameRateInMs = (float)sum;
+				pd.Session.AverageFrameRateInFps = (float)GetFpsFromMs (sum);
+				pd.Session.AverageMinimumFrameRate = (float)minimumClampedValue;
+			}
+
+			Section section;
+			if (sSections.TryGetValue(key, out section) == true) {
+				List<double> history = section.History.Select(a => a.Time.TotalMilliseconds).OrderBy(a => a).ToList();
+				int percentile = 95;
+				int index = (history.Count * percentile) / 100;
+				double pTime = history[index];
+
+				pd.Session.NinetyFivePercentInMiliseconds = pTime;
+				pd.Session.NinetyFivePercentInFramesPerSecond = GetFpsFromMs (pTime);
+			}
+
+			// TODO: convert this to a method. See PrintPercentageOfFrames
+			if (sSections.TryGetValue(key, out section) == true) {
+				int matchingFrames = 0;
+				for (int frame = 0 ; frame < sFrameCount ; frame++)
+				{
+					var history = section.History[frame];
+					if (history.Time.TotalMilliseconds <= performanceFrameData.FastFrame)
+					{
+						matchingFrames++;
+					}
+				}
+
+				pd.Session.FastFramePercentage = (double)(100.0 * matchingFrames) / (double)sFrameCount;
+			}
+
+			// TODO: convert this to a method. See PrintPercentageOfFrames
+			if (sSections.TryGetValue(key, out section) == true) {
+				int matchingFrames = 0;
+				for (int frame = 0 ; frame < sFrameCount ; frame++)
+				{
+					var history = section.History[frame];
+					if (history.Time.TotalMilliseconds >= performanceFrameData.SlowFrame)
+					{
+						matchingFrames++;
+					}
+				}
+
+				pd.Session.SlowFramePercentage = (double)(100.0 * matchingFrames) / (double)sFrameCount;
+			}
+
+			// TODO: missing in ProfilerData
+//			PrintAverageNWorst(tw, "frame", 10);
+
+#if ENABLE_GC_COUNT
+			// TODO: use a loop instead. Search for sGCMinGeneration and sGCMaxGeneration
+			pd.Session.GarbageCollection0Count = sReportGCCounts[0];
+			pd.Session.GarbageCollection1Count = sReportGCCounts[1];
+#endif
+
+			var t = new TimingData();
+			t.Name = "frame";
+			t.TotalTime = TimeSpan.Parse("00:01:58.8786507");
+			t.Average = 36.58;
+			t.Minimum = 9.37;
+			t.Maximum = 915.04;
+			t.Median = 30.64;
+			t.GarbageCollection0Count = 453;
+			t.UsedMemoryInKiloBytes = 0;
+			pd.Timings.Add(t);
+
+			t = new TimingData();
+			t.Name = "enterFrame";
+			t.TotalTime = TimeSpan.Parse("00:01:43.6920595");
+			t.Average = 31.91;
+			t.Minimum = 7.45;
+			t.Maximum = 912.19;
+			t.Median = 25.52;
+			t.GarbageCollection0Count = 431;
+			t.UsedMemoryInKiloBytes = 0;
+			pd.Timings.Add(t);
 
 
-			ReporterDelegate (profilerData);
+			ReporterDelegate (pd);
 		}
 
 		public static PerformanceFrameData GetPerformanceFrameData()
