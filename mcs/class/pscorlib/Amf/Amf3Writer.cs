@@ -257,6 +257,12 @@ namespace Amf
 				return;
 			}
 
+			if (integer > amfIntMaxValue || integer < amfIntMinValue) {
+				// write large integers as doubles
+				Write((double)integer);
+				return;
+			}
+
             Write(Amf3TypeCode.Integer);
             TypelessWrite(integer);
         }
