@@ -12,6 +12,9 @@
 //      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
+#if PLATFORM_MONOTOUCH || PLATFORM_MONODROID
+#define USE_UNION
+#endif
 
 using System;
 using System.Collections.Generic;
@@ -21,14 +24,26 @@ namespace Amf
 {
 	// this struct can hold any value read from an AMF stream
 	// this is used to prevent unnecessary boxing of value types (bool/int/number etc)
-//	[StructLayout(LayoutKind.Explicit, Size=20)]
+#if USE_UNION
+	[StructLayout(LayoutKind.Explicit, Size=16)]
+#endif
 	public struct Amf3Variant : IEquatable<Amf3Variant>
 	{
+#if PLATFORM_MONOTOUCH || PLATFORM_MONODROID
+		[FieldOffset(0)]
+		public Amf3TypeCode Type;
+		[FieldOffset(4)]
 		public object 		ObjectValue;	// this handles all other object types
+		[FieldOffset(8)]
 		public double 		NumberValue;
+		[FieldOffset(8)]
+		public int 			IntValue;
+#else
 		public Amf3TypeCode Type;
 		public int 			IntValue;
-
+		public object 		ObjectValue;	// this handles all other object types
+		public double 		NumberValue;
+#endif
 		public bool IsDefined
 		{
 			get
