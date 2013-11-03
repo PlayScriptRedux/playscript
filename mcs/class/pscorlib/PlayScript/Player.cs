@@ -67,6 +67,9 @@ namespace PlayScript
 
 		public static ResourcePathConverter RemotePathConverter {get;set;}
 
+		// if true, any local .json will attempt to be loaded as AMF if a file exists with the ".json.amf.z" extension
+		public static bool LoadJsonAsAmf {get; set;}
+
 		static Player()
 		{
 			// add resource directories in static constructor
