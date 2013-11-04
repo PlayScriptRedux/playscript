@@ -70,6 +70,9 @@ namespace PlayScript
 		// if true, any local .json will attempt to be loaded as AMF if a file exists with the ".json.amf.z" extension
 		public static bool LoadJsonAsAmf {get; set;}
 
+		// maximum time spent running event loop until present is done
+		public static double MaxRunTimeUntilPresent = 100.0;
+
 		static Player()
 		{
 			// add resource directories in static constructor
@@ -728,7 +731,7 @@ namespace PlayScript
 
 
 		// runs until graphics have been presented through Stage3D
-		public void RunUntilPresent(RectangleF bounds, Action onPresent = null, double maxTimeMs = 100.0)
+		public void RunUntilPresent(RectangleF bounds, Action onPresent = null)
 		{
 			Telemetry.Session.OnBeginFrame();
 
@@ -749,7 +752,7 @@ namespace PlayScript
 				OnFrame(bounds);
 
 				// dont let us run too long waiting for a present
-				if (timer.ElapsedMilliseconds > maxTimeMs) {
+				if (timer.ElapsedMilliseconds > MaxRunTimeUntilPresent) {
 					break;
 				}
 			}
