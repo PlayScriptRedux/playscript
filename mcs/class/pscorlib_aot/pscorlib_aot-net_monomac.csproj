@@ -45,9 +45,6 @@
     <Reference Include="System.Drawing" />
     <Reference Include="ICSharpCode.SharpZipLib" />
     <Reference Include="System.Web" />
-    <Reference Include="System.Json">
-      <HintPath>..\lib\net_4_5\System.Json.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
