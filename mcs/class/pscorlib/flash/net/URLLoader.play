@@ -392,7 +392,16 @@ package flash.net {
 			TraceAccurateMetricsStartLoading();
 
 			// handle file loading
-			var path:String = PlayScript.Player.TryResolveResourcePath(mRequest.url);
+			var path:String = null;
+
+			if (PlayScript.Player.LoadJsonAsAmf && mRequest.url.EndsWith(".json")) {
+				// see if a compressed amf version exists and load it instead
+				path = PlayScript.Player.TryResolveResourcePath(mRequest.url + ".amf.z");
+			}
+
+			if (path ==null) {
+				path = PlayScript.Player.TryResolveResourcePath(mRequest.url);
+			}
 
 			if (path == null)
 			{
@@ -401,6 +410,7 @@ package flash.net {
 				this.dispatchEvent(new IOErrorEvent(IOErrorEvent.IO_ERROR));
 				return;
 			}
+		
 
 #if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
 			// file exists. read it
@@ -429,6 +439,14 @@ package flash.net {
 #else
 			var fileData:byte[] = new byte[0];
 #endif
+
+			if (PlayScript.Player.LoadJsonAsAmf && path.EndsWith(".json.amf.z")) {
+				var amfKey:String =  "json$$" + path;
+				var amfData:ByteArray = ByteArray.fromArray(fileData);
+				JSON.storeAmfData(amfKey, amfData);
+				// return the key we generated, it will be used by json parse
+				fileData = System.Text.Encoding.UTF8.GetBytes(amfKey);
+			} 
 
 			switch (dataFormat)
 			{

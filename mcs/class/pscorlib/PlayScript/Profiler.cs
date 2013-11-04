@@ -144,7 +144,7 @@ namespace PlayScript
 
 			if (ProfileLoading && !sHasProfiledLoading) {
 				// begin session for loading
-				StartSession("Loading", 100, 1);
+				StartSession("Loading", int.MaxValue, 1);
 				sHasProfiledLoading = true;
 			}
 

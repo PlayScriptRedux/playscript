@@ -67,6 +67,9 @@ namespace PlayScript
 
 		public static ResourcePathConverter RemotePathConverter {get;set;}
 
+		// if true, any local .json will attempt to be loaded as AMF if a file exists with the ".json.amf.z" extension
+		public static bool LoadJsonAsAmf {get; set;}
+
 		// maximum time spent running event loop until present is done
 		public static double MaxRunTimeUntilPresent = 100.0;
 

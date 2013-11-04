@@ -11,8 +11,10 @@
 ./Amf/Amf3Variant.cs
 ./Amf/Amf3Writer.cs
 ./Amf/DataConverter.cs
+./Amf/ExpandoSerializer.cs
 ./Amf/IAmf3Serializable.cs
 ./Amf/ReferenceEqualityComparer.cs
+./Amf/ReflectionSerializer.cs
 ./Amf/Rocks.cs
 ./ArgumentError.play
 ./Array.cs
