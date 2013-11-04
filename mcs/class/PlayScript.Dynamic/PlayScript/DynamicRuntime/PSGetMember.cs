@@ -123,7 +123,7 @@ namespace PlayScript.DynamicRuntime
 			if (getMemberObjProv != null) {
 				if (mCrc == 0)
 					mCrc = Crc32.Calculate (mName) & 0x1FFFFFFF; // clear top 3 bits
-				object value = getMemberProv.GetMember (mCrc);
+				object value = getMemberObjProv.GetMember (mCrc);
 				return value != null ? (T)value : default(T);
 			}
 
@@ -524,6 +524,8 @@ namespace PlayScript.DynamicRuntime
 {
 	public interface IGetMemberProvider<T>
 	{
+		bool HasMember(uint crc);
+		bool HasMember(string key);
 		T GetMember(uint crc);
 		T GetMember(string key);
 	}

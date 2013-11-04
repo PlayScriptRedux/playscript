@@ -891,11 +891,20 @@ namespace _root
 
 		public int indexOf(object searchElement, int fromIndex = 0)
 		{
-			if (mStaticArray != null)
-				throw new NotImplementedException ();
-			for (var i = fromIndex; i < mCount; i++) {
-				if (mArray [i] == searchElement || mArray [i].Equals (searchElement)) {
-					return i;
+			object elem = null;
+			if (mStaticArray != null) {
+				for (var i = fromIndex; i < this.length; i++) {
+					elem = this [i];
+					if (elem == searchElement || (elem != null && elem.Equals (searchElement))) {
+						return i;
+					}
+				}
+			} else {
+				for (var i = fromIndex; i < mCount; i++) {
+					elem = mArray [i];
+					if (elem == searchElement || (elem != null && elem.Equals (searchElement))) {
+						return i;
+					}
 				}
 			}
 			return -1;
@@ -933,7 +942,25 @@ namespace _root
 
 		public int lastIndexOf(object searchElement, int fromIndex = 0x7fffffff) 
 		{
-			throw new System.NotImplementedException();
+			object elem = null;
+			if (fromIndex >= (int)this.length)
+				fromIndex = (int)this.length - 1;
+			if (mStaticArray != null) {
+				for (var i = fromIndex; i >= 0; i--) {
+					elem = this [i];
+					if (elem == searchElement || (elem != null && elem.Equals (searchElement))) {
+						return i;
+					}
+				}
+			} else {
+				for (var i = fromIndex; i >= 0; i--) {
+					elem = mArray [i];
+					if (elem == searchElement || (elem != null && elem.Equals (searchElement))) {
+						return i;
+					}
+				}
+			}
+			return -1;
 		}
 
 		public Array map(Delegate callback, object thisObject = null) 

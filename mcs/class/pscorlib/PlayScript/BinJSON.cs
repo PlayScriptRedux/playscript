@@ -29,7 +29,7 @@ using PTRINT = System.UInt32;
 namespace playscript.utils {
 
 	// CRC32 calculator
-	internal static class BinJSonCrc32
+	internal static class BinJsonCrc32
 	{
 		public const uint DefaultPolynomial = 0xedb88320u;
 		public const uint DefaultSeed = 0xffffffffu;
@@ -63,7 +63,7 @@ namespace playscript.utils {
 			uint crc = DefaultSeed;
 			int size = buffer.Length;
 			for (var i = 0; i < size; i++)
-				crc = (crc >> 8) ^ Table[(byte)buffer[i] ^ crc & 0xff];
+				crc = (crc >> 8) ^ Table[(byte)buffer[i] ^ (byte)crc & 0xff];
 			return ~crc;
 		}
 
@@ -152,7 +152,7 @@ namespace playscript.utils {
 
 		public Dictionary<uint, string> KeyTable {
 			get {
-				if (keyStringsByCrc == null) {
+				if (keyStringsByCrc == null || keyStringsByCrc.Count != KeyTableCount) {
 					keyStringsByCrc = new Dictionary<uint, string> ();
 					int len = KeyTableCount;
 					for (var i = 0; i < len; i++) {
@@ -272,7 +272,9 @@ namespace playscript.utils {
 		{
 			get
 			{
-				var keys = new KeyValuePairDebugView[binObj.Count];
+				var keyPairs = binObj.KeyPairs;
+
+				var keys = new KeyValuePairDebugView[keyPairs.length];
 
 				int i = 0;
 				foreach(string key in binObj.KeyPairs.keys)
@@ -289,10 +291,10 @@ namespace playscript.utils {
 	// get member that accellerate the dynamic runtime.
 	[DebuggerDisplay ("Count = {Count}")]
 	[DebuggerTypeProxy (typeof (BinJsonObjectDebugView))]
-	public unsafe class BinJsonObject : 
-		IGetIndexProvider<string>, IGetIndexProvider<int>, IGetIndexProvider<uint>, IGetIndexProvider<double>, IGetIndexProvider<bool>, IGetIndexProvider<object>,
-		IGetMemberProvider<string>, IGetMemberProvider<int>, IGetMemberProvider<uint>, IGetMemberProvider<double>, IGetMemberProvider<bool>, IGetMemberProvider<object>,
-		IKeyEnumerable
+	public unsafe class BinJsonObject : _root.Object,
+		IGetIndexProvider<string>, IGetIndexProvider<int>, IGetIndexProvider<uint>, IGetIndexProvider<double>, IGetIndexProvider<bool>, IGetIndexProvider<object>, IGetIndexProvider<float>,
+		IGetMemberProvider<string>, IGetMemberProvider<int>, IGetMemberProvider<uint>, IGetMemberProvider<double>, IGetMemberProvider<bool>, IGetMemberProvider<object>, IGetMemberProvider<float>,
+		IKeyEnumerable, IEnumerable
 	{
 		protected BinJsonDocument doc;
 		protected byte* list;
@@ -303,8 +305,14 @@ namespace playscript.utils {
 			this.list = list;
 		}
 
-		public int Count {
+		public int ListCount {
 			get { return (int)(*(uint*)(list + 4) & 0xFFFFFF); }
+		}
+
+		public int Count {
+			get { 
+				return KeyPairs.length;
+			}
 		}
 
 		public BinJsonDocument Document {
@@ -313,9 +321,20 @@ namespace playscript.utils {
 
 		internal KeyCrcPairs KeyPairs {
 			get {
-				KeyCrcPairs pairs;
-				if (keyPairs == null || keyPairs.TryGetTarget(out pairs) == false) {
-					int len = Count;
+				KeyCrcPairs pairs = null;
+				if (keyPairs != null)
+					keyPairs.TryGetTarget (out pairs);
+				if (pairs == null) {
+					int i;
+					int listCount = this.ListCount;
+					int len = 0;
+					DataElem* dataElem = (DataElem*)(list + 8);
+					for (i = 0; i < listCount; i++) {
+						uint id = dataElem->id;
+						if (id != 0)
+							len++;
+						dataElem++;
+					}
 					pairs = new KeyCrcPairs ();
 					pairs.length = len;
 					string[] keyArray = new string[len];
@@ -323,12 +342,16 @@ namespace playscript.utils {
 					uint[] crcArray = new uint[len];
 					pairs.crcs = crcArray;
 					Dictionary<uint,string> crcStrTable = doc.KeyTable;
-					DataElem* dataElem = (DataElem*)(list + 8);
-					for (var i = 0; i < len; i++) {
+					dataElem = (DataElem*)(list + 8);
+					int pos = 0;
+					for (i = 0; i < listCount; i++) {
 						uint crc = dataElem->id & 0x1FFFFFFF;
-						string key = crcStrTable[crc];
-						keyArray [i] = key;
-						crcArray [i] = crc;
+						if (crc != 0) {
+							string key = crcStrTable [crc];
+							keyArray [pos] = key;
+							crcArray [pos] = crc;
+							pos++;
+						}
 						dataElem++;
 					}
 					if (keyPairs == null)
@@ -340,14 +363,27 @@ namespace playscript.utils {
 			}
 		}
 
+		public object CloneToExpando() {
+			IDictionary expando = new PlayScript.Expando.ExpandoObject ();
+			KeyCrcPairs keyPairs = this.KeyPairs;
+			int len = keyPairs.length;
+			IGetMemberProvider<object> getMemProv = (IGetMemberProvider<object>)this;
+			for (var i = 0; i < len; i++) {
+				string key = keyPairs.keys [i];
+				uint crc = keyPairs.crcs [i];
+				expando.Add (key, getMemProv.GetMember (crc));
+			}
+			return expando;
+		}
+
 		#region IKeyEnumerable implementation
 
-		private class CrcKeyEnumerator : IEnumerator {
+		private class KeyEnumerator : IEnumerator {
 
 			private KeyCrcPairs _pairs;
 			private int _index;
 
-			public CrcKeyEnumerator(KeyCrcPairs pairs) {
+			public KeyEnumerator(KeyCrcPairs pairs) {
 				_pairs = pairs;
 				_index = -1;
 			}
@@ -383,7 +419,59 @@ namespace playscript.utils {
 
 		IEnumerator IKeyEnumerable.GetKeyEnumerator ()
 		{
-			return new CrcKeyEnumerator (this.KeyPairs);
+			return new KeyEnumerator (this.KeyPairs);
+		}
+
+		#endregion
+
+		#region IEnumerable implementation
+
+		private class ValueEnumerator : IEnumerator {
+
+			private IGetMemberProvider<object> _jsonObj;
+			private KeyCrcPairs _pairs;
+			private int _index;
+
+			public ValueEnumerator(IGetMemberProvider<object> jsonObj, KeyCrcPairs pairs) {
+				_jsonObj = jsonObj;
+				_pairs = pairs;
+				_index = -1;
+			}
+
+			#region IEnumerator implementation
+
+			public bool MoveNext ()
+			{
+				if (_index + 1 >= _pairs.length)
+					return false;
+				_index++;
+				return true;
+			}
+
+			public void Reset ()
+			{
+				_index = -1;
+			}
+
+			public object Current {
+				get {
+					// We store the last string and crc in the PSGetIndex so it can short path to using them during a loop over
+					// keys in an object.
+					uint crc;
+					PlayScript.DynamicRuntime.PSGetIndex.LastKeyString = _pairs.keys [_index];
+					PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc = crc = _pairs.crcs [_index];
+					return _jsonObj.GetMember(crc);
+				}
+			}
+
+			#endregion
+		}
+
+
+
+		IEnumerator IEnumerable.GetEnumerator ()
+		{
+			return new ValueEnumerator (this, this.KeyPairs);
 		}
 
 		#endregion
@@ -408,7 +496,7 @@ namespace playscript.utils {
 		private static object _falseObject = false;
 		private static object _trueObject = true;
 		private static object _zeroDoubleObject = 0.0;
-		private static object _zeroIntObject = 0;
+//		private static object _zeroIntObject = 0;
 
 		internal string GetValueString(DATA_TYPE elemType, byte* data, DataElem* dataElem)
 		{
@@ -546,7 +634,7 @@ namespace playscript.utils {
 				return GetValueString (elemType, data, dataElem);
 				case DATA_TYPE.INT:
 				int i = dataElem->intValue;
-				return (i == 0) ? _zeroIntObject : (object)i;
+				return (i == 0) ? _zeroDoubleObject : (object)(double)i;
 				case DATA_TYPE.FLOAT:
 				float f = dataElem->floatValue;
 				return (f == 0.0f) ? _zeroDoubleObject : (object)(double)f;
@@ -704,9 +792,68 @@ namespace playscript.utils {
 			}
 		}
 
+		// Handle .NET types that aren't commonly used in AS but can come up in interop..
+
+		float IGetIndexProvider<float>.GetIndex(int index)
+		{
+			return (float)((IGetIndexProvider<double>)this).GetIndex (index);
+		}
+
 		#endregion
 
 		#region IGetMemberProvider Implementations
+
+		public bool HasMember(uint crc)
+		{
+			uint len = *(uint*)(list + 4);
+			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+			len &= 0xFFFFFF;
+			if (listType == LIST_TYPE.OBJECT && len > 0) {
+				DataElem* firstElem = (DataElem*)(list + 8);
+				DataElem* dataElem = firstElem + (crc % len);
+				if ((dataElem->id & 0x1FFFFFFF) != crc) {
+					DataElem* lastElem = firstElem + len;
+					DataElem* startElem = dataElem;
+					DataElem* curElem = dataElem;
+					while (true) {
+						curElem++;
+						if (curElem >= lastElem)
+							curElem = firstElem;
+						if (curElem == startElem)
+							return false;
+						uint curCrc = curElem->id & 0x1FFFFFFF;
+						if (curCrc == crc) {
+							dataElem = curElem;
+							break;
+						} else if (curCrc == 0) {
+							return false;
+						}
+					}
+				}
+				return true;
+			}
+			return false;
+		}
+
+		
+		public bool HasMember(string key) 
+		{
+			uint len = *(uint*)(list + 4);
+			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+			if (listType == LIST_TYPE.OBJECT) {
+				if (System.Object.ReferenceEquals (key, PlayScript.DynamicRuntime.PSGetIndex.LastKeyString))
+					return HasMember (PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc);
+				else {
+					uint crc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+					PlayScript.DynamicRuntime.PSGetIndex.LastKeyString = (string)key;
+					PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc = crc;
+					return HasMember (crc);
+				}
+			} else {
+				return false;
+			}
+		}
+
 
 		string IGetMemberProvider<string>.GetMember(uint crc)
 		{
@@ -726,9 +873,12 @@ namespace playscript.utils {
 							curElem = firstElem;
 						if (curElem == startElem)
 							return null;
-						if ((curElem->id & 0x1FFFFFFF) == crc) {
+						uint curCrc = curElem->id & 0x1FFFFFFF;
+						if (curCrc == crc) {
 							dataElem = curElem;
 							break;
+						} else if (curCrc == 0) {
+							return null;
 						}
 					}
 				}
@@ -747,7 +897,7 @@ namespace playscript.utils {
 				if (System.Object.ReferenceEquals (key, PlayScript.DynamicRuntime.PSGetIndex.LastKeyString))
 					return ((IGetMemberProvider<string>)this).GetMember (PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc);
 				else {
-					uint crc = BinJSonCrc32.Calculate (key) & 0x1FFFFFFF;
+					uint crc = BinJsonCrc32.Calculate (key) & 0x1FFFFFFF;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyString = key;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc = crc;
 					return ((IGetMemberProvider<string>)this).GetMember (crc);
@@ -779,33 +929,17 @@ namespace playscript.utils {
 							curElem = firstElem;
 						if (curElem == startElem)
 							return 0;
-						if ((curElem->id & 0x1FFFFFFF) == crc) {
+						uint curCrc = curElem->id & 0x1FFFFFFF;
+						if (curCrc == crc) {
 							dataElem = curElem;
 							break;
+						} else if (curCrc == 0) { // Fast out if key is not in obj
+							return 0;
 						}
 					}
 				}
 				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
-				byte* data = doc.data + *(uint*)list;
-				int i;
-				switch (dataType) {
-				case DATA_TYPE.STRING:
-					int.TryParse (GetValueString (dataType, data, dataElem), out i);
-					return i;
-				case DATA_TYPE.INT:
-					return dataElem->intValue;
-				case DATA_TYPE.FLOAT:
-					return (int)dataElem->floatValue;
-				case DATA_TYPE.DOUBLE:
-					return (int)*(double*)(data + dataElem->offset);
-				case DATA_TYPE.TRUE:
-					return 1;
-				case DATA_TYPE.FALSE:
-				case DATA_TYPE.NULL:
-				case DATA_TYPE.OBJARRAY:
-					return 0;
-				}
-				return 0;
+				return GetValueInt (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
 				return 0;
 			}
@@ -819,7 +953,7 @@ namespace playscript.utils {
 				if (System.Object.ReferenceEquals (key, PlayScript.DynamicRuntime.PSGetIndex.LastKeyString))
 					return ((IGetMemberProvider<int>)this).GetMember (PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc);
 				else {
-					uint crc = BinJSonCrc32.Calculate (key) & 0x1FFFFFFF;
+					uint crc = BinJsonCrc32.Calculate (key) & 0x1FFFFFFF;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyString = key;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc = crc;
 					return ((IGetMemberProvider<int>)this).GetMember (crc);
@@ -851,18 +985,17 @@ namespace playscript.utils {
 							curElem = firstElem;
 						if (curElem == startElem)
 							return 0.0;
-						if ((curElem->id & 0x1FFFFFFF) == crc) {
+						uint curCrc = curElem->id & 0x1FFFFFFF;
+						if (curCrc == crc) {
 							dataElem = curElem;
 							break;
+						} else if (curCrc == 0) { // Fast out if key is not in obj
+							return 0.0;
 						}
 					}
 				}
-				if (dataElem != null) {
-					DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
-					return GetValueDouble (dataType, doc.data + *(uint*)list, dataElem);
-				} else {
-					return 0.0;
-				}
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				return GetValueDouble (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
 				return 0.0;
 			}
@@ -876,7 +1009,7 @@ namespace playscript.utils {
 				if (System.Object.ReferenceEquals (key, PlayScript.DynamicRuntime.PSGetIndex.LastKeyString))
 					return ((IGetMemberProvider<double>)this).GetMember (PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc);
 				else {
-					uint crc = BinJSonCrc32.Calculate (key) & 0x1FFFFFFF;
+					uint crc = BinJsonCrc32.Calculate (key) & 0x1FFFFFFF;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyString = key;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc = crc;
 					return ((IGetMemberProvider<double>)this).GetMember (crc);
@@ -908,18 +1041,17 @@ namespace playscript.utils {
 							curElem = firstElem;
 						if (curElem == startElem)
 							return 0u;
-						if ((curElem->id & 0x1FFFFFFF) == crc) {
+						uint curCrc = curElem->id & 0x1FFFFFFF;
+						if (curCrc == crc) {
 							dataElem = curElem;
 							break;
+						} else if (curCrc == 0) { // Fast out if key is not in obj
+							return 0u;
 						}
 					}
 				}
-				if (dataElem != null) {
-					DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
-					return GetValueUInt (dataType, doc.data + *(uint*)list, dataElem);
-				} else {
-					return 0u;
-				}
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				return GetValueUInt (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
 				return 0u;
 			}
@@ -933,7 +1065,7 @@ namespace playscript.utils {
 				if (System.Object.ReferenceEquals (key, PlayScript.DynamicRuntime.PSGetIndex.LastKeyString))
 					return ((IGetMemberProvider<uint>)this).GetMember (PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc);
 				else {
-					uint crc = BinJSonCrc32.Calculate (key) & 0x1FFFFFFF;
+					uint crc = BinJsonCrc32.Calculate (key) & 0x1FFFFFFF;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyString = key;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc = crc;
 					return ((IGetMemberProvider<uint>)this).GetMember (crc);
@@ -965,18 +1097,17 @@ namespace playscript.utils {
 							curElem = firstElem;
 						if (curElem == startElem)
 							return false;
-						if ((curElem->id & 0x1FFFFFFF) == crc) {
+						uint curCrc = curElem->id & 0x1FFFFFFF;
+						if (curCrc == crc) {
 							dataElem = curElem;
 							break;
+						} else if (curCrc == 0) { // Fast out if key is not in obj
+							return false;
 						}
 					}
 				}
-				if (dataElem != null) {
-					DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
-					return GetValueBool (dataType, doc.data + *(uint*)list, dataElem);
-				} else {
-					return false;
-				}
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				return GetValueBool (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
 				return false;
 			}
@@ -990,7 +1121,7 @@ namespace playscript.utils {
 				if (System.Object.ReferenceEquals (key, PlayScript.DynamicRuntime.PSGetIndex.LastKeyString))
 					return ((IGetMemberProvider<bool>)this).GetMember (PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc);
 				else {
-					uint crc = BinJSonCrc32.Calculate (key) & 0x1FFFFFFF;
+					uint crc = BinJsonCrc32.Calculate (key) & 0x1FFFFFFF;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyString = key;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc = crc;
 					return ((IGetMemberProvider<bool>)this).GetMember (crc);
@@ -1022,43 +1153,17 @@ namespace playscript.utils {
 							curElem = firstElem;
 						if (curElem == startElem)
 							return null;
-						if ((curElem->id & 0x1FFFFFFF) == crc) {
+						uint curCrc = curElem->id & 0x1FFFFFFF;
+						if (curCrc == crc) {
 							dataElem = curElem;
 							break;
+						} else if (curCrc == 0) { // Fast out if key is not in obj
+							return null;
 						}
 					}
 				}
 				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
-				switch (dataType) {
-				case DATA_TYPE.STRING:
-					return GetValueString (dataType, doc.data + *(uint*)list, dataElem);
-				case DATA_TYPE.INT:
-					int i = dataElem->intValue;
-					return (i == 0) ? _zeroIntObject : (object)i;
-				case DATA_TYPE.FLOAT:
-					float f = dataElem->floatValue;
-					return (f == 0.0f) ? _zeroDoubleObject : (object)(double)f;
-				case DATA_TYPE.DOUBLE:
-					double d = *(double*)(doc.data + *(uint*)list + dataElem->offset);
-					return (d == 0.0) ? _zeroDoubleObject : (object)d;
-				case DATA_TYPE.TRUE:
-					return _trueObject;
-				case DATA_TYPE.FALSE:
-					return _falseObject;
-				case DATA_TYPE.NULL:
-					return null;
-				case DATA_TYPE.OBJARRAY:
-					byte* childList = doc.data + *(uint*)(doc.data + *(uint*)list + dataElem->offset);
-					LIST_TYPE childListType = (LIST_TYPE)(*(uint*)(childList + 4) & 0xFF000000);
-					switch (childListType) {
-					case LIST_TYPE.OBJECT:
-						return new BinJsonObject (doc, list);
-					case LIST_TYPE.ARRAY:
-						return new _root.Array (new BinJsonArray (doc, list));
-					}
-					return null;
-				}
-				return null;
+				return GetValueObject (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
 				return null;
 			}
@@ -1072,7 +1177,7 @@ namespace playscript.utils {
 				if (System.Object.ReferenceEquals (key, PlayScript.DynamicRuntime.PSGetIndex.LastKeyString))
 					return ((IGetMemberProvider<object>)this).GetMember (PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc);
 				else {
-					uint crc = BinJSonCrc32.Calculate (key) & 0x1FFFFFFF;
+					uint crc = BinJsonCrc32.Calculate (key) & 0x1FFFFFFF;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyString = key;
 					PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc = crc;
 					return ((IGetMemberProvider<object>)this).GetMember (crc);
@@ -1084,6 +1189,18 @@ namespace playscript.utils {
 				else
 					return null;
 			}
+		}
+
+		// Handle .NET types that aren't commonly used in AS but can come up in interop..
+		
+		float IGetMemberProvider<float>.GetMember(uint crc)
+		{
+			return (float)((IGetMemberProvider<double>)this).GetMember (crc);
+		}
+
+		float IGetMemberProvider<float>.GetMember(string key)
+		{
+			return (float)((IGetMemberProvider<double>)this).GetMember (key);
 		}
 
 		#endregion
@@ -1244,12 +1361,12 @@ namespace playscript.utils {
 	/// </summary>
 	public unsafe static class BinJSON {
 
-		internal static string _numberSize = NumberSize.Float32;
-		internal static bool _useFloat32 = true;
+		internal static string _numberSize = NumberSize.Float64;
+		internal static bool _useFloat32 = false;
 		internal static bool _preserveOrder = false;
 
 		public static dynamic parse(string json) {
-			// save the string for debug information
+			_useFloat32 = _numberSize == NumberSize.Float32;
 			if (json == null) {
 				throw new ArgumentNullException ("json");
 			}
@@ -1364,9 +1481,13 @@ namespace playscript.utils {
 
 			// Float ptr memory
 			public static byte* floatConvMem;
+			public static byte* doubleStrMem;
 
 			// Unique string dictionary
 			UniqueStringDictionary stringTable = new UniqueStringDictionary();
+
+			[DllImport ("__Internal", EntryPoint="mono_strtod")]
+			public static extern double strtod (byte* start, byte* end);
 
 			Parser(string jsonString) 
 			{
@@ -1410,12 +1531,19 @@ namespace playscript.utils {
 					floatConvMem = (byte*)Marshal.AllocHGlobal(16).ToPointer();
 				}
 
+				// We need some memory for double string conversions
+				if (doubleStrMem == null) {
+					doubleStrMem = (byte*)Marshal.AllocHGlobal(64).ToPointer();
+				}
+
 			}
 
 			public static object Parse(string jsonString) {
+				uint crc1 = BinJsonCrc32.Calculate ("saveAtLocation");
+				uint crc2 = BinJsonCrc32.Calculate ("save");
 				using (var instance = new Parser(jsonString)) {
-					if (BinJSonCrc32.Table == null)
-						BinJSonCrc32.InitializeTable ();
+					if (BinJsonCrc32.Table == null)
+						BinJsonCrc32.InitializeTable ();
 					instance.Parse();
 					BinJsonDocument doc = new BinJsonDocument ();
 					doc.data = instance.data;
@@ -1436,6 +1564,7 @@ namespace playscript.utils {
 			//
 
 			public char Ch { get { return *json; } }
+			public string ParseStr { get { return Marshal.PtrToStringUni (new IntPtr (json), 30); } }
 			public int DataPos { get { return (int)(dataPtr - data); } }
 			public int TempPos { get { return (int)(tempPtr - temp); } }
 			public int TempDataPos { get { return (int)(tempDataPtr - tempData); } }
@@ -1482,11 +1611,34 @@ namespace playscript.utils {
 			{
 				if (size == 0)
 					return;
-				size = size >> 2;
+
+				// Copy 4 byte words
+				int words = size / 4;
 				uint* src = (uint*)srcPtr;
 				uint* dst = (uint*)dstPtr;
-				for (var i = 0; i < size; i++)
+				for (int i = 0; i < words; i++)
 					*dst++ = *src++;
+
+				// Copy any remaining bytes
+				int bytes = size % 4;
+				if (bytes != 0) {
+					byte* srcb = (byte*)src;
+					byte* dstb = (byte*)dst;
+					switch (bytes) {
+					case 1:
+						*dstb++ = *srcb++;
+						break;
+					case 2:
+						*dstb++ = *srcb++;
+						*dstb++ = *srcb++;
+						break;
+					case 3:
+						*dstb++ = *srcb++;
+						*dstb++ = *srcb++;
+						*dstb++ = *srcb++;
+						break;
+					}
+				}
 			}
 
 			public void ExpandData()
@@ -1560,31 +1712,34 @@ namespace playscript.utils {
 			{
 				if (size == 0)
 					return;
-				while (dataPtr + size >= dataEnd)
-					ExpandData ();
 
 				// Get table length
 				int len = *(int*)(ptr + 4) & 0xFFFFFF;
+				int hashlen = len + len / 4;  // Increase size by 25% to avoid long lookups when item is not in table
+
+				size = hashlen * sizeof(DataElem) + 8;
+				while (dataPtr + size >= dataEnd)
+					ExpandData ();
 
 				// Copy length and offset
 				*(uint*)dataPtr = *(uint*)ptr;  // data offset
 				dataPtr += 4;
 				ptr += 4;
-				*(uint*)dataPtr = *(uint*)ptr;  // length & type
+				*(uint*)dataPtr = (*(uint*)ptr & 0xFF000000) | (uint)hashlen;  // length & type
 				dataPtr += 4;
 				ptr += 4;
 
 				// Place hashes in hash lookup order
 				if (len > 0) {
 					DataElem* firstElem = (DataElem*)dataPtr;
-					DataElem* lastElem = firstElem + len;
+					DataElem* lastElem = firstElem + hashlen;
 					DataElem* srcElem = (DataElem*)ptr;
 					int i;
-					for (i = 0; i < len; i++)
-						firstElem[i].id = 0;  // Make sure table is clear
+					for (i = 0; i < hashlen; i++)
+						firstElem[i].id = firstElem[i].offset = 0;  // Make sure table is clear
 					for (i = 0; i < len; i++) {
 						uint crc = srcElem->id & 0x1FFFFFFF;
-						uint slot = crc % (uint)len;
+						uint slot = crc % (uint)hashlen;
 						DataElem* startElem = firstElem + slot;
 						DataElem* curElem = startElem;
 						while (true) {
@@ -2025,7 +2180,7 @@ namespace playscript.utils {
 				src++;
 
 				// Make string hash (FNV-1a hash offset_basis)
-				uint crc = BinJSonCrc32.DefaultSeed;
+				uint crc = BinJsonCrc32.DefaultSeed;
 
 				byte d = 0;
 				bool parsing = true;
@@ -2086,24 +2241,24 @@ namespace playscript.utils {
 					if (!parsing)
 						break;
 
+					if (d == 0)
+						throw new InvalidDataException("Null character not allowed in key strings!");
+
 					// Add char to string
 					if (dataPtr + 1 >= dataEnd)
 						ExpandData ();
 					*dataPtr++ = d;
 
 					// FNV-1a hash
-					crc = (crc >> 8) ^ BinJSonCrc32.Table[(byte)c ^ crc & 0xff];
+					crc = (crc >> 8) ^ BinJsonCrc32.Table[(byte)d ^ (byte)crc & 0xff];
 				}
 
-				crc = ~crc & 0x1FFFFFFF; // top 3 bits 0 to allow for type bits
+				crc = ~crc & 0x1FFFFFFFu; // top 3 bits 0 to allow for type bits
 
 				// Add null terminator
 				if (dataPtr + 1 >= dataEnd)
 					ExpandData ();
 				*dataPtr++ = 0;
-
-				// Advance parse position
-				json = src;
 
 				// Check if it's already in the string table..
 				int stridx = stringTable.GetStringIndex (data, strPtr, crc);
@@ -2121,99 +2276,107 @@ namespace playscript.utils {
 					dataPtr = data + strPtr;
 				}
 
+				// Advance parse position
+				json = src;
+
 				return crc;
 			}
 
 			uint ParseNumber(uint parentDataStart, ref uint id) {
 
+				byte* d = doubleStrMem;
+
 				uint offset = 0;
 
 				bool isInt = true;
+				int intValue = 0;
+				int sign;
 
-				bool isNeg;
+				// Parse sign
 				if (*json == '-') {
-					isNeg = true;
+					sign = -1;
+					*d++ = (byte)'-';
 					json++;
 				} else {
-					isNeg = false;
+					sign = 1;
 				}
 				
-				double v = 0.0;
+				// Parse number before decimal
 				char ch = '\x0';
 				while (json != end) {
 					ch = *json;
 					if (ch < '0' || ch > '9')
 						break;
-					v = v * 10.0 + (double)(ch - '0');
+					*d++ = (byte)ch;
+					intValue = intValue * 10 + (ch - '0');
 					json++;
 				}
 
-				if (json != end) {
-					if (ch == '.') {
-						isInt = false;
-						json++;
-						double dec = 0.1;
-						while (json != end) {
-							ch = *json;
-							if (ch < '0' || ch > '9')
-								break;
-							v = v + dec * (double)(ch - '0');
-							dec = dec * 0.1;
-							json++;
-						}
-					}
-				}
-
-				if (json != end) {
-					if (ch == 'e' || ch == 'E') {
-						json++;
-						if (json == end)
-							throw new InvalidDataException ("Invalid number");
+				// Parse decimal
+				if (json != end && ch == '.') {
+					*d++ = (byte)ch;
+					isInt = false;
+					json++;
+					while (json != end) {
 						ch = *json;
-						bool isNegExp = false;
-						if (ch == '-') {
-							isNegExp = true;
+						if (ch < '0' || ch > '9')
+							break;
+						*d++ = (byte)ch;
+						json++;
+					}
+
+					// Parse exponent
+					if (json != end) {
+						if (ch == 'e' || ch == 'E') {
 							json++;
-						} else if (ch == '+') {
-							json++;
-						}
-						if (json == end)
-							throw new InvalidDataException ("Invalid number");
-						double e = 0.0;
-						while (json != end) {
+							if (json == end)
+								throw new InvalidDataException ("Invalid number");
+							*d++ = (byte)ch;
 							ch = *json;
-							if (ch < '0' || ch > '9')
-								break;
-							e = e * 10.0 + (double)(ch - '0');
-							json++;
+							if (ch == '-') {
+								*d++ = (byte)ch;
+								json++;
+							} else if (ch == '+') {
+								*d++ = (byte)ch;
+								json++;
+							}
+							if (json == end)
+								throw new InvalidDataException ("Invalid number");
+							while (json != end) {
+								ch = *json;
+								*d++ = (byte)ch;
+								if (ch < '0' || ch > '9')
+									break;
+								json++;
+							}
 						}
-						if (isNegExp)
-							e = -e;
-						v = v * System.Math.Pow(10.0, e);
 					}
 				}
 
-				if (isNeg)
-					v = -v;
+				*d++ = 0;
 
-				if (isInt) {
-					int i = (int)v;
+				// Write value (either int, float, or double)
+				if (isInt && intValue > (long)int.MinValue && intValue < (long)int.MaxValue) {
+					intValue = intValue * sign;
 					id |= (uint)DATA_TYPE.INT << 29;
-					offset = (uint)i;
-				} else if (_useFloat32) {
-					id |= (uint)DATA_TYPE.FLOAT << 29;
-					*(float*)floatConvMem = (float)v;
-					return *(uint*)floatConvMem;
+					offset = (uint)intValue;
 				} else {
-					id |= (uint)DATA_TYPE.DOUBLE << 29;
-					if (tempDataPtr + 16 >= tempDataEnd)
-						ExpandTempData ();
-					while (((uint)tempDataPtr & 0x7) != 0) { // Align to even 8 bytes
-						*tempDataPtr++ = 0;
+					double doubleValue = strtod (doubleStrMem, d);
+					if (_useFloat32) {
+						id |= (uint)DATA_TYPE.FLOAT << 29;
+						*(float*)floatConvMem = (float)doubleValue;
+						return *(uint*)floatConvMem;
+					} else {
+						id |= (uint)DATA_TYPE.DOUBLE << 29;
+						if (tempDataPtr + 16 >= tempDataEnd)
+							ExpandTempData ();
+						while (((uint)tempDataPtr & 0x7) != 0) { // Align to even 8 bytes
+							*tempDataPtr++ = 0;
+						}
+						*(double*)tempDataPtr = doubleValue;
+						offset = (uint)(tempDataPtr - (tempData + parentDataStart));
+						tempDataPtr += 8;
 					}
-					*(double*)tempDataPtr = v;
-					offset = (uint)(tempDataPtr - (tempData + parentDataStart));
-					tempDataPtr += 8;
 				}
 
 				return offset;
