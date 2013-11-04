@@ -208,6 +208,9 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\TypeLogger.cs">
       <Link>PlayScript\DynamicRuntime\TypeLogger.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\Variant.cs">
+      <Link>PlayScript\Variant.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\PlayScript.Dynamic\PlayScript.Dynamic.dll.sources">
