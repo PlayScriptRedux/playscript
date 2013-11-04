@@ -14,6 +14,7 @@ AssemblyInfo.cs
 ./PlayScript/NumberIsFloatAttribute.cs
 ./PlayScript/Stats.cs
 ./PlayScript/Undefined.cs
+./PlayScript/Variant.cs
 ./PlayScript/Expando/BindingRestrictionsEx.cs
 ./PlayScript/Expando/CacheDict.cs
 ./PlayScript/Expando/CollectionDebuggerView.cs

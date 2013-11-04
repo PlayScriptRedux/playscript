@@ -15,6 +15,7 @@
 ../PlayScript.Dynamic/PlayScript/MethodBinder.cs
 ../PlayScript.Dynamic/PlayScript/Stats.cs
 ../PlayScript.Dynamic/PlayScript/Undefined.cs
+../PlayScript.Dynamic/PlayScript/Variant.cs
 ../PlayScript.Dynamic/PlayScript/Expando/BindingRestrictionsEx.cs
 ../PlayScript.Dynamic/PlayScript/Expando/CacheDict.cs
 ../PlayScript.Dynamic/PlayScript/Expando/CollectionDebuggerView.cs
