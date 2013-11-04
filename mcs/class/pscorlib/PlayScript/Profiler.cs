@@ -31,7 +31,7 @@ namespace PlayScript
 		public static bool EmitSlowFrames = false;			// emit slow frame sections
 		public static bool DisableTraces = true;			// set to true to disable traces during profiling session
 		public static long LastTelemetryFrameSpanStart = long.MaxValue;
-		public static Func< IDictionary<string, string> > SessionDataCallback = null; // callback to retreive additional session data
+		public static Dictionary<string, string> SessionData = new Dictionary<string, string>(); // additional profiling session data to be printed in reports
 
 		public static bool FrameSkippingEnabled = false;
 		public static int  NextFramesElapsed = 1;
@@ -243,6 +243,12 @@ namespace PlayScript
 			sFilterPrefix = filterPrefix;
 
 			Console.WriteLine("Starting profiling session: {0} frames:{1} frameDelay:", reportName, frameCount, reportStartDelay);
+
+			if (sReportStartDelay == 0) {
+				// start report immediately
+				OnStartReport();
+			}
+
 		}
 
 		public static void EndSession()
@@ -483,6 +489,11 @@ namespace PlayScript
 				if (history.Count == 0)
 					continue;
 
+				// skip if it was called once or less
+				var callCount = history.Select(a=>a.NumberOfCalls).Sum();
+				if (callCount <= 1)
+					continue;
+
 				tw.WriteLine(" --- {0} ---", section.Name);
 
 				if (section.Name == "frame") {
@@ -627,10 +638,9 @@ namespace PlayScript
 				tw.WriteLine("GC {0} Count:      {1}", i, sReportGCCounts[i]);
 			}
 
-			if (SessionDataCallback != null) {
+			if (SessionData != null) {
 				// write extra data about session
-				var extraData = SessionDataCallback();
-				foreach (var kvp in extraData) {
+				foreach (var kvp in SessionData) {
 					tw.WriteLine("{0}:  {1}", kvp.Key, kvp.Value);
 				}
 			}
