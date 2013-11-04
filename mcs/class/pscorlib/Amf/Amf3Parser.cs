@@ -27,6 +27,7 @@ using System.IO;
 using System.Text;
 using _root;
 using System.Reflection;
+using PlayScript;
 
 namespace Amf
 {
@@ -164,74 +165,78 @@ namespace Amf
 
 		// this read the next object into a value structure
 		// this avoids unnecessary boxing/unboxing of value types and speeds up deserialization
-		public void ReadNextObject(ref Amf3Variant value)
+		public void ReadNextObject(ref Variant value)
         {
             int b = stream.ReadByte();
 
             if (b < 0)
                 throw new EndOfStreamException();
 
-			// store type in value
-			value.Type = (Amf3TypeCode) b;
-			value.ObjectValue = null;
-
-            switch (value.Type) {
+			Amf3TypeCode type = (Amf3TypeCode) b;
+            switch (type) {
             case Amf3TypeCode.Undefined:
+				value = Variant.Undefined;
+				return;
             case Amf3TypeCode.Null:
+				value = Variant.Null;
+				return;
 			case Amf3TypeCode.False:
+				value = false;
+				return;
 			case Amf3TypeCode.True:
-                break;
+				value = true;
+				return;
 
             case Amf3TypeCode.Integer:
-                value.IntValue = ReadInteger();
+                value = ReadInteger();
 				break;
 
             case Amf3TypeCode.Number:
-                value.NumberValue = ReadNumber();
+                value = ReadNumber();
 				break;
 
             case Amf3TypeCode.String:
-				value.ObjectValue = ReadString();
+				value = ReadString();
 				break;
 
             case Amf3TypeCode.Date:
-				value.ObjectValue = ReadDate();
+				value = new Variant(ReadDate());
 				break;
 
             case Amf3TypeCode.Array:
-				value.ObjectValue = ReadArray();
+				value = new Variant(ReadArray());
 				break;
 
             case Amf3TypeCode.Object:
-				value.ObjectValue = ReadAmf3Object();
+				value = new Variant(ReadAmf3Object());
 				break;
 
 			case Amf3TypeCode.ByteArray:
-				value.ObjectValue = ReadByteArray();
+				value = new Variant(ReadByteArray());
 				break;
 
 			case Amf3TypeCode.VectorInt:
-				value.ObjectValue = ReadVectorInt();
+				value = new Variant(ReadVectorInt());
 				break;
 
 			case Amf3TypeCode.VectorUInt:
-				value.ObjectValue = ReadVectorUInt();
+				value = new Variant(ReadVectorUInt());
 				break;
 
 			case Amf3TypeCode.VectorDouble:
-				value.ObjectValue = ReadVectorDouble();
+				value = new Variant(ReadVectorDouble());
 				break;
 
 			case Amf3TypeCode.Dictionary:
-				value.ObjectValue = ReadDictionary();
+				value = new Variant(ReadDictionary());
 				break;
 
 			case Amf3TypeCode.VectorObject:
-				value.ObjectValue = ReadVectorObject();
+				value = new Variant(ReadVectorObject());
 				break;
 
 			default:
-				throw new NotImplementedException("Cannot parse type " + value.Type.ToString());
+				throw new NotImplementedException("Cannot parse type " + type.ToString());
             }
         }
 
@@ -589,14 +594,13 @@ namespace Amf
 
 			// read dynamic properties
 			if (classDef.Dynamic) {
-//				var dc = obj as PlayScript.IDynamicClass;
+				var dc = obj as PlayScript.IDynamicClass;
 				string key = ReadString();
 				while (key != "") {
-					Amf3Variant v = new Amf3Variant();
-					ReadNextObject(ref v);
-//					if (dc != null) {
-//						dc.__SetDynamicValue(key, v.AsObject());
-//					}
+					var value  = ReadNextObject();
+					if (dc != null) {
+						dc.__SetDynamicValue(key, value);
+					}
 					key = ReadString();
 				}
 			}

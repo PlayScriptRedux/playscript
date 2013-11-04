@@ -3,6 +3,7 @@ using System.IO;
 using System.Diagnostics;
 using System.Collections.Generic;
 using Amf;
+using PlayScript;
 
 namespace Telemetry
 {
@@ -17,7 +18,7 @@ namespace Telemetry
 			}
 		}
 
-		private static string Format(Amf3Variant value)
+		private static string Format(Variant value)
 		{
 			object o = value.AsObject();
 			if (o == null) {
@@ -29,7 +30,7 @@ namespace Telemetry
 				var ao = (Amf3Object)o; 
 				sb.AppendFormat("[{0} ", ao.ClassDef.Name);
 				for (int i=0; i < ao.ClassDef.Properties.Length; i++) {
-					sb.AppendFormat("{0}:{1} ", ao.ClassDef.Properties[i], Format(ao.Properties[i]));
+					sb.AppendFormat("{0}:{1} ", ao.ClassDef.Properties[i], Format(ao.Values[i]));
 				}
 				sb.AppendFormat("]");
 				return sb.ToString();
@@ -57,7 +58,7 @@ namespace Telemetry
 			int enterTime = 0;
 
 			while (stream.Position < stream.Length ) {
-				Amf3Variant v = new Amf3Variant();
+				Variant v = new Variant();
 				parser.ReadNextObject(ref v);
 				if (!v.IsDefined)
 					break;

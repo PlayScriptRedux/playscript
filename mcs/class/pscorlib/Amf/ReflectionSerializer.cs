@@ -18,6 +18,7 @@ using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using PlayScript;
 
 namespace Amf
 {
@@ -109,7 +110,7 @@ namespace Amf
 			// read all fields using reflection
 			foreach (var field in mFieldList){
 				// read value
-				Amf3Variant value = reader.ReadAsVariant();
+				Variant value = reader.ReadAsVariant();
 				if (value.IsDefined) {
 					field.SetValue(obj, value.AsType(field.FieldType));
 				}
@@ -118,7 +119,7 @@ namespace Amf
 			// read all properties using reflection
 			foreach (var property in mPropertyList){
 				// read value
-				Amf3Variant value = reader.ReadAsVariant();
+				Variant value = reader.ReadAsVariant();
 				if (value.IsDefined) {
 					property.SetValue(obj, value.AsType(property.PropertyType), null);
 				}

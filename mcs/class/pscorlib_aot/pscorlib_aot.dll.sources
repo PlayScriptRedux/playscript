@@ -9,7 +9,6 @@
 ../pscorlib/Amf/Amf3String.cs
 ../pscorlib/Amf/Amf3TypeCode.cs
 ../pscorlib/Amf/Amf3Utils.cs
-../pscorlib/Amf/Amf3Variant.cs
 ../pscorlib/Amf/Amf3Writer.cs
 ../pscorlib/Amf/DataConverter.cs
 ../pscorlib/Amf/ExpandoSerializer.cs

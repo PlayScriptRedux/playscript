@@ -41,6 +41,8 @@ namespace Amf
 		private  string 					mHash;				// cached class hash (backs Hash property)
 		private  Amf3Reader 				mReaderPool;		// singly linked list of readers in pool
 
+		private Dictionary<string, int>		mLookup;			// cached name -> index lookup  (could use custom hash table for this)
+
 		internal Amf3Writer					mWriter;			// the last writer to write this object
 		internal int 						mId;				// the id associated with this object
 
@@ -106,13 +108,18 @@ namespace Amf
 
 		public int GetPropertyIndex(string name)
 		{
-			for (int i=0; i < Properties.Length; i++) {
-				if (Properties[i] == name) {
-					return i;
+			if (mLookup == null) {
+				// build lookup table
+				mLookup = new Dictionary<string, int>(Properties.Length);
+				for (int i=0; i < Properties.Length; i++) {
+					mLookup[Properties[i]] = i;
 				}
 			}
-			return -1;
+
+			int value;
+			return mLookup.TryGetValue(name, out value) ? value : -1;
 		}
+
 
         public override int GetHashCode()
         {

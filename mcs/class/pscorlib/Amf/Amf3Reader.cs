@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using PlayScript;
 
 namespace Amf
 {
@@ -95,12 +96,12 @@ namespace Amf
 		}
 
 		// current property value
-		public Amf3Variant Value
+		public Variant Value
 		{
 			get
 			{
 				int index = mRemapTable[mReadIndex];
-				if (index < 0) return Amf3Variant.Undefined; // property does not exist in source stream
+				if (index < 0) return Variant.Undefined; // property does not exist in source stream
 				return mValues[index];
 			}
 		}
@@ -193,7 +194,7 @@ namespace Amf
 		}
 
 		// read next property as variant (any type)
-		public void Read(ref Amf3Variant value)
+		public void Read(ref Variant value)
 		{
 			int index = mRemapTable[mReadIndex++];
 			if (index < 0) return;
@@ -273,10 +274,10 @@ namespace Amf
 		}
 
 		// read next property as variant
-		public Amf3Variant ReadAsVariant()
+		public Variant ReadAsVariant()
 		{
 			int index = mRemapTable[mReadIndex++];
-			if (index < 0) return Amf3Variant.Undefined;
+			if (index < 0) return Variant.Undefined;
 			return mValues[index];
 		}
 
@@ -287,7 +288,7 @@ namespace Amf
 		internal Amf3Reader(Amf3ClassDef streamClassDef)
 		{
 			mStreamClassDef     = streamClassDef;
-			mValues             = new Amf3Variant[streamClassDef.Properties.Length + 1];  // +1 for undefined property 0
+			mValues             = new Variant[streamClassDef.Properties.Length + 1];  // +1 for undefined property 0
 			mNames              = streamClassDef.Properties;
 		}
 
@@ -304,7 +305,7 @@ namespace Amf
 			}
 
 			// force value[0] to undefined to elegantly handle missing properties as index 0
-			mValues[0]	= Amf3Variant.Undefined;
+			mValues[0]	= Variant.Undefined;
 		}
 
 		internal void EndRead()
@@ -325,7 +326,7 @@ namespace Amf
 		private Amf3ClassDef	mSerializerClassDef;	// class definition for deserializer method being called
 		private int[] 			mSerializerRemapTable;	// remap table for the last serializer used
 		private string[] 		mNames;					// property name array
-		private Amf3Variant[]	mValues;				// property value array, one for each value from stream with [0] being undefined
+		private Variant[]		mValues;				// property value array, one for each value from stream with [0] being undefined
 		private int 			mReadIndex;				// property serializer read index
 		private int 			mReadCount;				// number of properties available
 		private int[] 			mRemapTable;  			// property remap table that is accessed for each Read() (maps read index to value table)
