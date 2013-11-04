@@ -443,12 +443,8 @@ namespace Amf
 			// this class definition is not known until the first object has been read, but we don't need it here
 			string objectTypeName = ReadString();
 
-			// get serializer
-			IAmf3Serializer serializer = Amf3ClassDef.GetSerializerFromAlias(objectTypeName);
-			if (serializer == null) {
-				// fallback on default serializer
-				serializer = DefaultSerializer;
-			}
+			// get serializer for class alias
+			IAmf3Serializer serializer = GetSerializerFromAlias(objectTypeName);
 
 			// create vector using serializer
 			IList vector = serializer.NewVector((uint)num, isFixed);
@@ -532,28 +528,38 @@ namespace Amf
 			return classDef;
 		}
 
+		// gets serializer for a class alias string
+		private IAmf3Serializer GetSerializerFromAlias(string alias)
+		{
+			IAmf3Serializer serializer = Amf3ClassDef.GetSerializerFromAlias(alias);
+			if (serializer == null) {
+				var type = Amf3ClassDef.GetTypeFromAlias(alias);
+				if (type != null) {
+					// create reflection serializer
+					serializer = new ReflectionSerializer(alias, type, true, false);
+					// automatically register it
+					Amf3ClassDef.RegisterSerializer(alias, serializer);
+				} else {
+					// last resort, fallback to default serializer
+					serializer = DefaultSerializer;
+				}
+			}
+			return serializer;
+		}
+
+		// gets serializer for a class definition
 		protected virtual IAmf3Serializer GetSerializerForClassDef(Amf3ClassDef classDef)
 		{
+			// use override serializer if it exists
+			if (OverrideSerializer != null) {
+				return OverrideSerializer;
+			}
+
+			// get serializer cached in class definition
 			IAmf3Serializer serializer = classDef.Serializer;
 			if (serializer == null) {
-				// try override serializer
-				serializer = OverrideSerializer;
-				if (serializer == null) {
-					// get registered serializer by alias
-					serializer = Amf3ClassDef.GetSerializerFromAlias(classDef.Name);
-					if (serializer == null) {
-						var type = Amf3ClassDef.GetTypeFromAlias(classDef.Name);
-						if (type != null) {
-							// create reflection serializer
-							serializer = new ReflectionSerializer(classDef.Name, type, true, false);
-							// automatically register it
-							Amf3ClassDef.RegisterSerializer(classDef.Name, serializer);
-						} else {
-							// last resort, fallback to default serializer
-							serializer = DefaultSerializer;
-						}
-					}
-				}
+				// get registered serializer by alias
+				serializer = GetSerializerFromAlias(classDef.Name);
 				// cache serializer in class definition for next time
 				classDef.Serializer = serializer;
 			}
