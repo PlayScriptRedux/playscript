@@ -230,6 +230,9 @@ namespace flash.display3D {
 
 		public bool updateRegisters(float[] mTemp, int startRegister, int numRegisters)
 		{
+			return true;
+
+			/*
 			bool needToUpdate		= false;
 			int  startFloat 		= startRegister * FLOATS_PER_REGISTER;
 			int  numFloat   		= numRegisters  * FLOATS_PER_REGISTER;
@@ -248,7 +251,7 @@ namespace flash.display3D {
 				++inCounter;
 			}
 
-			return needToUpdate;
+			return needToUpdate;*/
 		}
 
 	}

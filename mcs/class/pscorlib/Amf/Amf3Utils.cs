@@ -71,21 +71,14 @@ namespace Amf
 		// this function generates AMF class definitions for all dynamic (expando) objects it finds and assigns them to the ClassDefinition property of Expando
 		// it does this by generating a class definition for each unique property list
 		// having shared class definitions will result in a much more compact serialized form
-		public static void GenerateAndApplyClassDefinitions(object root)
+		public static void GenerateAndApplyClassDefinitions(object root, bool keepExistingAlias = true)
 		{
 			var expandos = new List<ExpandoObject>();
 			var classDefs = new Dictionary<string, Amf3ClassDef>();
-			GenerateAndApplyClassDefinitionsRecursive(root, expandos, classDefs);
-			if (Verbose)  {
-				Console.WriteLine("AMF3 expandos: {0} classDefs: {1}", expandos.Count, classDefs.Count);
-			}
-		}
 
-		private static void GenerateAndApplyClassDefinitionsRecursive(object root, IList<ExpandoObject> expandos, Dictionary<string, Amf3ClassDef> classDefs)
-		{
-			if (root is ExpandoObject) {
-				var expando = (ExpandoObject)root;
-
+			// visit all expando objects in graph and apply class definitions
+			VisitAllExpandoObjects(root,
+			(expando)=> {
 				// get properties from expando
 				var properties = new List<String>();
 				foreach (var kvp in expando) {
@@ -95,43 +88,100 @@ namespace Amf
 				// sort properties
 				properties.Sort();
 
-				// hash properties as one string
-				var sb = new System.Text.StringBuilder();
-				bool delimiter = false;
-				foreach (var prop in properties) {
-					if (delimiter) sb.Append(',');
-					sb.Append(prop);
-					delimiter = true;
+				string alias = "*";
+				if (keepExistingAlias && expando.ClassDefinition !=null) {
+					var existingClassDef = expando.ClassDefinition as Amf3ClassDef;
+					if (existingClassDef != null) {
+						alias = existingClassDef.Name;
+					} else {
+						var existingClassAlias = expando.ClassDefinition as string;
+						if (existingClassAlias != null) {
+							alias = existingClassAlias;
+						}
+					}
 				}
-				var propertyHash = sb.ToString();
 
-				Amf3ClassDef classDef;
+				// create class definition from properties
+				var expandoDef = new Amf3ClassDef(alias, properties.ToArray());
+
 				// see if a class definition already exists for these properties...
-				if (!classDefs.TryGetValue(propertyHash, out classDef)) {
-					// does not exist, so create it and add it to dictionary
-					classDef = new Amf3ClassDef("*", properties.ToArray());
-					classDefs.Add(propertyHash, classDef);
+				Amf3ClassDef classDef;
+				if (!classDefs.TryGetValue(expandoDef.Hash, out classDef)) {
+
+					// register new class definition
+					classDef = expandoDef;
+					classDefs.Add(classDef.Hash, classDef);
 
 					if (Verbose) {
-						Console.WriteLine("AMF3 generated class: {0}", propertyHash);
+						Console.WriteLine("AMF3 generated class: {0}", classDef.Hash);
 					}
 				}
 
 				// set class definition for expando object
 				expando.ClassDefinition = classDef;
+			}
+			);
 
-				// recurse expando properties
-				foreach (var kvp in expando) {
-					GenerateAndApplyClassDefinitionsRecursive(kvp.Value, expandos, classDefs);
+			if (Verbose)  {
+				Console.WriteLine("AMF3 expandos: {0} classDefs: {1}", expandos.Count, classDefs.Count);
+			}
+		}
+
+		// this function traverses an object graph and invokes visitor on all objects
+		public static void VisitAll(object o, Action<object> visitor)
+		{
+			// execute visitor delegate
+			visitor(o);
+
+			// traverse
+			if (o is flash.utils.Dictionary) {
+				// recurse dictionary entries
+				var dict = (flash.utils.Dictionary)o;
+				foreach(var kvp in dict) {
+					VisitAll(kvp.Value, visitor);
 				}
-			} else if (root is System.Collections.IList) {
-				var array = (System.Collections.IList)root;
-
+			} else if (o is ExpandoObject) {
+				// recurse expando properties
+				var expando = (ExpandoObject)o;
+				foreach (var kvp in expando) {
+					VisitAll(kvp.Value, visitor);
+				}
+			} else if (o is System.Collections.IList) {
+				// recurse list items
+				var array = (System.Collections.IList)o;
 				foreach (object element in array) {
-					GenerateAndApplyClassDefinitionsRecursive(element, expandos, classDefs);
+					VisitAll(element, visitor);
 				}
 			} 
 		}
+
+		// this function traverses an object graph and invokes visitor on all expando objects
+		public static void VisitAllExpandoObjects(object o, Action<ExpandoObject> visitor)
+		{
+			VisitAll(o, (obj) => {
+				if (obj is ExpandoObject) {
+					visitor((ExpandoObject)obj);
+				}
+			});
+		}
+
+		// this function gets all the default values for a type by creating a dummy instance and serializing them in and out 
+		public static Amf3Object GetClassDefaultsAsObject(System.Type type)
+		{
+			// serialize to stream
+			var stream = new MemoryStream();
+			var amfWriter = new Amf3Writer(stream);
+			// write the defaults to amf stream
+			amfWriter.WriteDefaultObjectForType(type);
+
+			stream.Position = 0;
+
+			// read back defaults object
+			var amfReader = new Amf3Parser(stream);
+			amfReader.OverrideSerializer = new Amf3Object.Serializer();
+			return amfReader.ReadNextObject() as Amf3Object;
+		}
+
 
 		// this function profiles the json and amf parsing code 
 		// it takes in a path to a json file to load, converts json to amf, and parses amf

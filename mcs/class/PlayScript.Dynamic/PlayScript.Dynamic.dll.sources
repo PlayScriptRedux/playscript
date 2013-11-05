@@ -65,4 +65,5 @@
 ./PlayScript/RuntimeBinder/RuntimeBinderInternalCompilerException.cs
 ./PlayScript/Stats.cs
 ./PlayScript/Undefined.cs
+./PlayScript/Variant.cs
 ./System/Runtime/CompilerServices/DynamicAttribute.cs

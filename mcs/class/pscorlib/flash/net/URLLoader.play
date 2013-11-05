@@ -246,6 +246,9 @@ package flash.net {
 			trace("URLLoader: http load ", mRequest.url);
 
 			TraceAccurateMetricsStartLoading();
+			if (PlayScript.Profiler.ProfileLoading) {
+				PlayScript.Profiler.Begin("load:" + mRequest.url, "");
+			}
 
 			var method:String = "GET";
 			if (mRequest.method != null) {
@@ -338,6 +341,10 @@ package flash.net {
 			dataStream.Close ();
 			response.Close ();
 
+			if (PlayScript.Profiler.ProfileLoading) {
+				PlayScript.Profiler.End("load:" + mRequest.url);
+			}
+
 			TraceAccurateMetricsEndLoading();
 
 			trace("URLLoader: http load complete length:", this.bytesLoaded, mRequest.url);
@@ -352,6 +359,10 @@ package flash.net {
 
 		private function dispatchCompleteEvent():void {
 
+			if (PlayScript.Profiler.ProfileLoading) {
+				PlayScript.Profiler.Begin("dispatch:" + mRequest.url, "");
+			}
+
 			TraceAccurateMetricsStartDispatching();
 
 			// TODO:addEventListener Find a way to make sure this event is dispatched in the main thread
@@ -360,6 +371,9 @@ package flash.net {
 
 			TraceAccurateMetricsEndDispatching();
 
+			if (PlayScript.Profiler.ProfileLoading) {
+				PlayScript.Profiler.End("dispatch:" + mRequest.url);
+			}
 		}
 
 		private function dispatchErrorEvent():void {
@@ -369,13 +383,25 @@ package flash.net {
 
 		private function doLocalLoad():void {
 			trace("URLLoader: local load ", mRequest.url);
+			if (PlayScript.Profiler.ProfileLoading) {
+				PlayScript.Profiler.Begin("load:" + mRequest.url, "");
+			}
 
 			var span = Telemetry.Session.BeginSpan();
 
 			TraceAccurateMetricsStartLoading();
 
 			// handle file loading
-			var path:String = PlayScript.Player.TryResolveResourcePath(mRequest.url);
+			var path:String = null;
+
+			if (PlayScript.Player.LoadJsonAsAmf && mRequest.url.EndsWith(".json")) {
+				// see if a compressed amf version exists and load it instead
+				path = PlayScript.Player.TryResolveResourcePath(mRequest.url + ".amf.z");
+			}
+
+			if (path ==null) {
+				path = PlayScript.Player.TryResolveResourcePath(mRequest.url);
+			}
 
 			if (path == null)
 			{
@@ -384,6 +410,7 @@ package flash.net {
 				this.dispatchEvent(new IOErrorEvent(IOErrorEvent.IO_ERROR));
 				return;
 			}
+		
 
 #if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
 			// file exists. read it
@@ -413,6 +440,14 @@ package flash.net {
 			var fileData:byte[] = new byte[0];
 #endif
 
+			if (PlayScript.Player.LoadJsonAsAmf && path.EndsWith(".json.amf.z")) {
+				var amfKey:String =  "json$$" + path;
+				var amfData:ByteArray = ByteArray.fromArray(fileData);
+				JSON.storeAmfData(amfKey, amfData);
+				// return the key we generated, it will be used by json parse
+				fileData = System.Text.Encoding.UTF8.GetBytes(amfKey);
+			} 
+
 			switch (dataFormat)
 			{
 				case URLLoaderDataFormat.BINARY: {
@@ -434,6 +469,9 @@ package flash.net {
 			this.bytesTotal  = fileData.Length;
 
 			TraceAccurateMetricsEndLoading();
+			if (PlayScript.Profiler.ProfileLoading) {
+				PlayScript.Profiler.End("load:" + mRequest.url);
+			}
 
 			// dispatch complete event
 			dispatchCompleteEvent();

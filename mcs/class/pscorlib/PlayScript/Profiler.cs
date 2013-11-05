@@ -26,12 +26,17 @@ namespace PlayScript
  		public static bool Enabled = true;
 		public static bool ProfileGPU = false;
 		public static bool ProfileMemory = false;			// Profile memory usage, it is very slow though...
+		public static bool ProfileLoading = false;			// set to true to profile loading
+		public static string LoadingEndMilestone = "interactive";
+		public static bool EmitSlowFrames = false;			// emit slow frame sections
 		public static bool DisableTraces = true;			// set to true to disable traces during profiling session
 		public static long LastTelemetryFrameSpanStart = long.MaxValue;
+		public static Dictionary<string, string> SessionData = new Dictionary<string, string>(); // additional profiling session data to be printed in reports
 
 		public static bool FrameSkippingEnabled = false;
 		public static int  NextFramesElapsed = 1;
 		public static int  MaxNumberOfFramesElapsed = 0;
+		private static bool sHasProfiledLoading = false;		// set to true after loading has been profiled
 		private static string sFilterPrefix;
 
 		// if telemetryName is provided then it will be used for the name sent to telemetry when this section is entered
@@ -45,8 +50,10 @@ namespace PlayScript
 				section = new Section();
 				section.Name = name;
 				if (telemetryName != null) {
-					// use provided telemetry name
-					section.Span = new Telemetry.Span(telemetryName);
+					if (telemetryName != "") {
+						// use provided telemetry name
+						section.Span = new Telemetry.Span(telemetryName);
+					}
 				} else if (name != "swap" && name != "frame") {
 					// use section name for telemetry data
 					section.Span = new Telemetry.Span(name);
@@ -121,7 +128,7 @@ namespace PlayScript
 			if (!Enabled)
 				return;
 
-			if (LastTelemetryFrameSpanStart != long.MaxValue)
+			if (EmitSlowFrames && LastTelemetryFrameSpanStart != long.MaxValue)
 			{
 				long endFrameTime = Stopwatch.GetTimestamp();
 				long spanTimeInTicks = endFrameTime - LastTelemetryFrameSpanStart;
@@ -134,6 +141,12 @@ namespace PlayScript
 				}
 			}
 			Profiler.End("frame");
+
+			if (ProfileLoading && !sHasProfiledLoading) {
+				// begin session for loading
+				StartSession("Loading", int.MaxValue, 1);
+				sHasProfiledLoading = true;
+			}
 
 #if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			if (ProfileGPU) {
@@ -206,6 +219,11 @@ namespace PlayScript
 		{
 			if (Enabled) {
 				Console.WriteLine("Loading milestone {0} {1}", name, sGlobalTimer.Elapsed);
+
+				// end profiling session for loading
+				if ((LoadingEndMilestone!=null) && name.Contains(LoadingEndMilestone)) {
+					EndSession();
+				}
 			}
 
 			// store load complete time
@@ -225,6 +243,12 @@ namespace PlayScript
 			sFilterPrefix = filterPrefix;
 
 			Console.WriteLine("Starting profiling session: {0} frames:{1} frameDelay:", reportName, frameCount, reportStartDelay);
+
+			if (sReportStartDelay == 0) {
+				// start report immediately
+				OnStartReport();
+			}
+
 		}
 
 		public static void EndSession()
@@ -269,12 +293,21 @@ namespace PlayScript
 					continue;
 				}
 
+				var callCount = section.History.Select(a=>a.NumberOfCalls).Sum();
+				if (callCount == 0) {
+					// Skip no calls
+					section.Skipped = true;
+					continue;
+				}
+
 				var average = total.TotalMilliseconds / sFrameCount;
+				var averagePerCall = total.TotalMilliseconds / callCount;
+
+				// get history in milliseconds, sorted
+				var history = section.History.Where(a=>a.NumberOfCalls > 0).Select(a => a.Time.TotalMilliseconds).OrderBy(a => a).ToList();
 
 				// do we have a history?
-				if (section.History.Count > 0) {
-					// get history in milliseconds, sorted
-					var history = section.History.Select(a => a.Time.TotalMilliseconds).OrderBy(a => a).ToList();
+				if (history.Count > 0) {
 					// get min/max/median
 					var minTime = history.First();
 					var maxTime = history.Last();
@@ -286,23 +319,26 @@ namespace PlayScript
 						section.GCCounts[i] = section.History.Sum(a => a.GCCounts[i]);
 					}
 
-					tw.WriteLine("{0,-40} total:{1,6} average:{2,6:0.00}ms min:{3,6:0.00}ms max:{4,6:0.00}ms median:{5,6:0.00}ms #GC0: {6} UsedMem: {7}Kb",
+					tw.WriteLine("{0,-40} total:{1,6} average:{2,6:0.00}ms average/call:{3,6:0.00}ms min:{4,6:0.00}ms max:{5,6:0.00}ms median:{6,6:0.00}ms #GC0: {7} #GC1: {8} UsedMem: {9}Kb",
 					             section.Name,
 					             total,
 					             average,
+					             averagePerCall,
 					             minTime,
 					             maxTime,
 					             medianTime,
 					             section.GCCounts[sGCMinGeneration],
+					             section.GCCounts[sGCMaxGeneration-1],
 					             section.UsedMemory / 1024
 					             );
 
 				} else {
 
-					tw.WriteLine("{0,-40} total:{1,6} average:{2,6:0.00}ms UsedMem: {3}Kb",
+					tw.WriteLine("{0,-40} total:{1,6} average/frame:{2,6:0.00}ms average/call:{3,6:0.00}ms UsedMem: {4}Kb",
 				             section.Name,
 				             total,
 				             average,
+				             averagePerCall,
 					         section.UsedMemory / 1024
 				             );
 				}
@@ -449,9 +485,13 @@ namespace PlayScript
 				if (filter (section.Name))
 					continue;
 
-				var history = section.History;
-				history.OrderBy(h => h.Time.TotalMilliseconds);
+				var history = section.History.Where(h=>h.NumberOfCalls > 0).OrderBy(h => h.Time.TotalMilliseconds).ToList();
 				if (history.Count == 0)
+					continue;
+
+				// skip if it was called once or less
+				var callCount = history.Select(a=>a.NumberOfCalls).Sum();
+				if (callCount <= 1)
 					continue;
 
 				tw.WriteLine(" --- {0} ---", section.Name);
@@ -596,6 +636,13 @@ namespace PlayScript
 			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i)
 			{
 				tw.WriteLine("GC {0} Count:      {1}", i, sReportGCCounts[i]);
+			}
+
+			if (SessionData != null) {
+				// write extra data about session
+				foreach (var kvp in SessionData) {
+					tw.WriteLine("{0}:  {1}", kvp.Key, kvp.Value);
+				}
 			}
 
 			tw.WriteLine("*********** Timing (ms) ***********");

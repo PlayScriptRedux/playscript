@@ -45,9 +45,6 @@
     <Reference Include="System.Drawing" />
     <Reference Include="ICSharpCode.SharpZipLib" />
     <Reference Include="System.Web" />
-    <Reference Include="System.Json">
-      <HintPath>..\lib\net_4_5\System.Json.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -901,9 +898,6 @@
     <Compile Include="..\pscorlib\Amf\Amf3Reader.cs">
       <Link>Amf\Amf3Reader.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\Amf\Amf3Variant.cs">
-      <Link>Amf\Amf3Variant.cs</Link>
-    </Compile>
     <Compile Include="..\pscorlib\flash\display3D\GLUtils.cs">
       <Link>flash\display3D\GLUtils.cs</Link>
     </Compile>
@@ -921,6 +915,12 @@
     </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3Utils.cs">
       <Link>Amf\Amf3Utils.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\ExpandoSerializer.cs">
+      <Link>Amf\ExpandoSerializer.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\ReflectionSerializer.cs">
+      <Link>Amf\ReflectionSerializer.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

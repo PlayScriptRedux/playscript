@@ -214,6 +214,9 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSBinaryArithmetic.cs">
       <DependentUpon>PSBinaryArithmetic.tt</DependentUpon>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\Variant.cs">
+      <Link>PlayScript\Variant.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\PlayScript.Dynamic\PlayScript.Dynamic.dll.sources">
