@@ -91,6 +91,13 @@ namespace PlayScript.DynamicRuntime
 			if (IsNumeric (a))
 				return Convert.ToDouble (a) - (double)b;
 
+			if (a is string) {
+				double value;
+				if (Double.TryParse ((string)a, out value))
+					return value - (double)b;
+				return Double.NaN; // non-numeric strings convert to NaN
+			}
+			
 			ThrowOnInvalidOp (SUB, a, b);
 			return null;
 		}
@@ -111,6 +118,13 @@ namespace PlayScript.DynamicRuntime
 			if (IsNumeric (b))
 				return (double)a - Convert.ToDouble (b);
 
+			if (b is string) {
+				double value;
+				if (Double.TryParse ((string)b, out value))
+					return (double)a - value;
+				return Double.NaN; // non-numeric strings convert to NaN
+			}
+
 			ThrowOnInvalidOp (SUB, a, b);
 			return null;
 		}
@@ -130,6 +144,13 @@ namespace PlayScript.DynamicRuntime
 
 			if (IsNumeric (a))
 				return Convert.ToDouble (a) * (double)b;
+
+			if (a is string) {
+				double value;
+				if (Double.TryParse ((string)a, out value))
+					return value * (double)b;
+				return Double.NaN; // non-numeric strings convert to NaN
+			}
 
 			ThrowOnInvalidOp (MUL, a, b);
 			return null;
@@ -156,6 +177,13 @@ namespace PlayScript.DynamicRuntime
 			if (IsNumeric (a))
 				return Convert.ToDouble (a) / (double)b;
 
+			if (a is string) {
+				double value;
+				if (Double.TryParse ((string)a, out value))
+					return value / (double)b;
+				return Double.NaN; // non-numeric strings convert to NaN
+			}
+
 			ThrowOnInvalidOp (DIV, a, b);
 			return null;
 		}
@@ -175,6 +203,13 @@ namespace PlayScript.DynamicRuntime
 
 			if (IsNumeric (b))
 				return (double)a / Convert.ToDouble (b);
+
+			if (b is string) {
+				double value;
+				if (Double.TryParse ((string)b, out value))
+					return (double)a / value;
+				return Double.NaN; // non-numeric strings convert to NaN
+			}
 
 			ThrowOnInvalidOp (DIV, a, b);
 			return null;
@@ -196,6 +231,13 @@ namespace PlayScript.DynamicRuntime
 			if (IsNumeric (a))
 				return Convert.ToDouble (a) % (double)b;
 
+			if (a is string) {
+				double value;
+				if (Double.TryParse ((string)a, out value))
+					return value % (double)b;
+				return Double.NaN; // non-numeric strings convert to NaN
+			}
+
 			ThrowOnInvalidOp (MOD, a, b);
 			return null;
 		}
@@ -215,6 +257,13 @@ namespace PlayScript.DynamicRuntime
 
 			if (IsNumeric (b))
 				return (double)a % Convert.ToDouble (b);
+
+			if (b is string) {
+				double value;
+				if (Double.TryParse ((string)b, out value))
+					return (double)a % value;
+				return Double.NaN; // non-numeric strings convert to NaN
+			}
 
 			ThrowOnInvalidOp (MOD, a, b);
 			return null;
@@ -264,6 +313,13 @@ namespace PlayScript.DynamicRuntime
 			if (IsNumeric (a))
 				return Convert.ToDouble (a) - (double)b;
 
+			if (a is string) {
+				double value;
+				if (Double.TryParse ((string)a, out value))
+					return value - (double)b;
+				return Double.NaN; // non-numeric strings convert to NaN
+			}
+			
 			ThrowOnInvalidOp (SUB, a, b);
 			return null;
 		}
@@ -284,6 +340,13 @@ namespace PlayScript.DynamicRuntime
 			if (IsNumeric (b))
 				return (double)a - Convert.ToDouble (b);
 
+			if (b is string) {
+				double value;
+				if (Double.TryParse ((string)b, out value))
+					return (double)a - value;
+				return Double.NaN; // non-numeric strings convert to NaN
+			}
+
 			ThrowOnInvalidOp (SUB, a, b);
 			return null;
 		}
@@ -303,6 +366,13 @@ namespace PlayScript.DynamicRuntime
 
 			if (IsNumeric (a))
 				return Convert.ToDouble (a) * (double)b;
+
+			if (a is string) {
+				double value;
+				if (Double.TryParse ((string)a, out value))
+					return value * (double)b;
+				return Double.NaN; // non-numeric strings convert to NaN
+			}
 
 			ThrowOnInvalidOp (MUL, a, b);
 			return null;
@@ -329,6 +399,13 @@ namespace PlayScript.DynamicRuntime
 			if (IsNumeric (a))
 				return Convert.ToDouble (a) / (double)b;
 
+			if (a is string) {
+				double value;
+				if (Double.TryParse ((string)a, out value))
+					return value / (double)b;
+				return Double.NaN; // non-numeric strings convert to NaN
+			}
+
 			ThrowOnInvalidOp (DIV, a, b);
 			return null;
 		}
@@ -348,6 +425,13 @@ namespace PlayScript.DynamicRuntime
 
 			if (IsNumeric (b))
 				return (double)a / Convert.ToDouble (b);
+
+			if (b is string) {
+				double value;
+				if (Double.TryParse ((string)b, out value))
+					return (double)a / value;
+				return Double.NaN; // non-numeric strings convert to NaN
+			}
 
 			ThrowOnInvalidOp (DIV, a, b);
 			return null;
@@ -369,6 +453,13 @@ namespace PlayScript.DynamicRuntime
 			if (IsNumeric (a))
 				return Convert.ToDouble (a) % (double)b;
 
+			if (a is string) {
+				double value;
+				if (Double.TryParse ((string)a, out value))
+					return value % (double)b;
+				return Double.NaN; // non-numeric strings convert to NaN
+			}
+
 			ThrowOnInvalidOp (MOD, a, b);
 			return null;
 		}
@@ -388,6 +479,13 @@ namespace PlayScript.DynamicRuntime
 
 			if (IsNumeric (b))
 				return (double)a % Convert.ToDouble (b);
+
+			if (b is string) {
+				double value;
+				if (Double.TryParse ((string)b, out value))
+					return (double)a % value;
+				return Double.NaN; // non-numeric strings convert to NaN
+			}
 
 			ThrowOnInvalidOp (MOD, a, b);
 			return null;
@@ -437,6 +535,13 @@ namespace PlayScript.DynamicRuntime
 			if (IsNumeric (a))
 				return Convert.ToDouble (a) - (double)b;
 
+			if (a is string) {
+				double value;
+				if (Double.TryParse ((string)a, out value))
+					return value - (double)b;
+				return Double.NaN; // non-numeric strings convert to NaN
+			}
+			
 			ThrowOnInvalidOp (SUB, a, b);
 			return null;
 		}
@@ -457,6 +562,13 @@ namespace PlayScript.DynamicRuntime
 			if (IsNumeric (b))
 				return (double)a - Convert.ToDouble (b);
 
+			if (b is string) {
+				double value;
+				if (Double.TryParse ((string)b, out value))
+					return (double)a - value;
+				return Double.NaN; // non-numeric strings convert to NaN
+			}
+
 			ThrowOnInvalidOp (SUB, a, b);
 			return null;
 		}
@@ -476,6 +588,13 @@ namespace PlayScript.DynamicRuntime
 
 			if (IsNumeric (a))
 				return Convert.ToDouble (a) * (double)b;
+
+			if (a is string) {
+				double value;
+				if (Double.TryParse ((string)a, out value))
+					return value * (double)b;
+				return Double.NaN; // non-numeric strings convert to NaN
+			}
 
 			ThrowOnInvalidOp (MUL, a, b);
 			return null;
@@ -502,6 +621,13 @@ namespace PlayScript.DynamicRuntime
 			if (IsNumeric (a))
 				return Convert.ToDouble (a) / (double)b;
 
+			if (a is string) {
+				double value;
+				if (Double.TryParse ((string)a, out value))
+					return value / (double)b;
+				return Double.NaN; // non-numeric strings convert to NaN
+			}
+
 			ThrowOnInvalidOp (DIV, a, b);
 			return null;
 		}
@@ -521,6 +647,13 @@ namespace PlayScript.DynamicRuntime
 
 			if (IsNumeric (b))
 				return (double)a / Convert.ToDouble (b);
+
+			if (b is string) {
+				double value;
+				if (Double.TryParse ((string)b, out value))
+					return (double)a / value;
+				return Double.NaN; // non-numeric strings convert to NaN
+			}
 
 			ThrowOnInvalidOp (DIV, a, b);
 			return null;
@@ -542,6 +675,13 @@ namespace PlayScript.DynamicRuntime
 			if (IsNumeric (a))
 				return Convert.ToDouble (a) % (double)b;
 
+			if (a is string) {
+				double value;
+				if (Double.TryParse ((string)a, out value))
+					return value % (double)b;
+				return Double.NaN; // non-numeric strings convert to NaN
+			}
+
 			ThrowOnInvalidOp (MOD, a, b);
 			return null;
 		}
@@ -561,6 +701,13 @@ namespace PlayScript.DynamicRuntime
 
 			if (IsNumeric (b))
 				return (double)a % Convert.ToDouble (b);
+
+			if (b is string) {
+				double value;
+				if (Double.TryParse ((string)b, out value))
+					return (double)a % value;
+				return Double.NaN; // non-numeric strings convert to NaN
+			}
 
 			ThrowOnInvalidOp (MOD, a, b);
 			return null;

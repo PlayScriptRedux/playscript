@@ -150,6 +150,14 @@ namespace PlayScript.DynamicRuntime
 			return PSBinaryArithmetic.SubtractionDoubleObj (a, b);
 		}
 
+		public static object SubtractionStringObj (string a, object b)
+		{
+			double value;
+			if (double.TryParse (a, out value))
+				return PSBinaryArithmetic.SubtractionDoubleObj (value, b);
+			return double.NaN; // non-numeric strings convert to NaN
+		}
+
 		public static object SubtractionObjObj (object a, object b)
 		{
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
@@ -162,6 +170,8 @@ namespace PlayScript.DynamicRuntime
 				return SubtractionDoubleObj ((float)a, b);
 			} else if (a is uint) {
 				return SubtractionUIntObj ((uint)a, b);
+			} else if (a is String) {
+				return SubtractionStringObj ((string)a, b);
 			} else {
 				ThrowOnInvalidOp (PSBinaryArithmetic.SUB, a, b);
 				return null;
@@ -198,6 +208,14 @@ namespace PlayScript.DynamicRuntime
 			return PSBinaryArithmetic.MultiplyDoubleObj (a, b);
 		}
 
+		public static object MultiplyStringObj (string a, object b)
+		{
+			double value;
+			if (double.TryParse (a, out value))
+				return PSBinaryArithmetic.MultiplyDoubleObj (value, b);
+			return double.NaN; // non-numeric strings convert to NaN
+		}
+
 		public static object MultiplyObjObj (object a, object b)
 		{
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
@@ -210,6 +228,8 @@ namespace PlayScript.DynamicRuntime
 				return MultiplyDoubleObj ((float)a, b);
 			} else if (a is uint) {
 				return MultiplyUIntObj ((uint)a, b);
+			} else if (a is String) {
+				return MultiplyStringObj ((string)a, b);
 			} else {
 				ThrowOnInvalidOp (PSBinaryArithmetic.MUL, a, b);
 				return null;
@@ -246,6 +266,14 @@ namespace PlayScript.DynamicRuntime
 			return PSBinaryArithmetic.DivisionDoubleObj (a, b);
 		}
 
+		public static object DivisionStringObj (string a, object b)
+		{
+			double value;
+			if (double.TryParse (a, out value))
+				return PSBinaryArithmetic.DivisionDoubleObj (value, b);
+			return double.NaN; // non-numeric strings convert to NaN
+		}
+
 		public static object DivisionObjObj (object a, object b)
 		{
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
@@ -258,6 +286,8 @@ namespace PlayScript.DynamicRuntime
 				return DivisionDoubleObj ((float)a, b);
 			} else if (a is uint) {
 				return DivisionUIntObj ((uint)a, b);
+			} else if (a is String) {
+				return DivisionStringObj ((string)a, b);
 			} else {
 				ThrowOnInvalidOp (PSBinaryArithmetic.DIV, a, b);
 				return null;
@@ -294,6 +324,14 @@ namespace PlayScript.DynamicRuntime
 			return PSBinaryArithmetic.ModulusDoubleObj (a, b);
 		}
 
+		public static object ModulusStringObj (string a, object b)
+		{
+			double value;
+			if (double.TryParse (a, out value))
+				return PSBinaryArithmetic.ModulusDoubleObj (value, b);
+			return double.NaN; // non-numeric strings convert to NaN
+		}
+
 		public static object ModulusObjObj (object a, object b)
 		{
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
@@ -306,6 +344,8 @@ namespace PlayScript.DynamicRuntime
 				return ModulusDoubleObj ((float)a, b);
 			} else if (a is uint) {
 				return ModulusUIntObj ((uint)a, b);
+			} else if (a is String) {
+				return ModulusStringObj ((string)a, b);
 			} else {
 				ThrowOnInvalidOp (PSBinaryArithmetic.MOD, a, b);
 				return null;
