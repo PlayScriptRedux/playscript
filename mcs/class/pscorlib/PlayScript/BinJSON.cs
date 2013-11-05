@@ -287,6 +287,28 @@ namespace playscript.utils {
 		}
 	}
 
+	public interface IStaticObject
+	{
+		bool HasMember (string key);
+		string GetString (string key);
+		int GetInt (string key);
+		uint GetUInt (string key);
+		double GetNumber (string key);
+		bool GetBool (string key);
+		object GetObject (string key);
+	}
+
+	public interface IStaticCrcObject
+	{
+		bool HasMember (uint crc);
+		string GetString (uint crc);
+		int GetInt (uint crc);
+		uint GetUInt (uint crc);
+		double GetNumber (uint crc);
+		bool GetBool (uint crc);
+		object GetObject (uint crc);
+	}
+
 	// Used to implement "Object" semantics for binary json document.  Implements fast versions of dynamic get index and dynamic
 	// get member that accellerate the dynamic runtime.
 	[DebuggerDisplay ("Count = {Count}")]
@@ -294,7 +316,7 @@ namespace playscript.utils {
 	public unsafe class BinJsonObject : _root.Object,
 		IGetIndexProvider<string>, IGetIndexProvider<int>, IGetIndexProvider<uint>, IGetIndexProvider<double>, IGetIndexProvider<bool>, IGetIndexProvider<object>, IGetIndexProvider<float>,
 		IGetMemberProvider<string>, IGetMemberProvider<int>, IGetMemberProvider<uint>, IGetMemberProvider<double>, IGetMemberProvider<bool>, IGetMemberProvider<object>, IGetMemberProvider<float>,
-		IKeyEnumerable, IEnumerable
+		IKeyEnumerable, IEnumerable, IStaticObject, IStaticCrcObject
 	{
 		protected BinJsonDocument doc;
 		protected byte* list;
@@ -835,7 +857,6 @@ namespace playscript.utils {
 			return false;
 		}
 
-		
 		public bool HasMember(string key) 
 		{
 			uint len = *(uint*)(list + 4);
@@ -853,7 +874,6 @@ namespace playscript.utils {
 				return false;
 			}
 		}
-
 
 		string IGetMemberProvider<string>.GetMember(uint crc)
 		{
@@ -909,6 +929,16 @@ namespace playscript.utils {
 				else
 					return null;
 			}
+		}
+
+		public string GetString(uint crc)
+		{
+			return ((IGetMemberProvider<string>)this).GetMember (crc);
+		}
+
+		public string GetString(string key)
+		{
+			return ((IGetMemberProvider<string>)this).GetMember (key);
 		}
 
 		int IGetMemberProvider<int>.GetMember(uint crc)
@@ -967,6 +997,16 @@ namespace playscript.utils {
 			}
 		}
 
+		public int GetInt(uint crc)
+		{
+			return ((IGetMemberProvider<int>)this).GetMember (crc);
+		}
+
+		public int GetInt(string key)
+		{
+			return ((IGetMemberProvider<int>)this).GetMember (key);
+		}
+
 		double IGetMemberProvider<double>.GetMember(uint crc)
 		{
 			uint len = *(uint*)(list + 4);
@@ -984,20 +1024,20 @@ namespace playscript.utils {
 						if (curElem >= lastElem)
 							curElem = firstElem;
 						if (curElem == startElem)
-							return 0.0;
+							return double.NaN;
 						uint curCrc = curElem->id & 0x1FFFFFFF;
 						if (curCrc == crc) {
 							dataElem = curElem;
 							break;
 						} else if (curCrc == 0) { // Fast out if key is not in obj
-							return 0.0;
+							return double.NaN;
 						}
 					}
 				}
 				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
 				return GetValueDouble (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
-				return 0.0;
+				return double.NaN;
 			}
 		}
 
@@ -1019,8 +1059,18 @@ namespace playscript.utils {
 				if (int.TryParse (key, out i)) 
 					return ((IGetIndexProvider<double>)this).GetIndex (i);
 				else
-					return 0.0;
+					return double.NaN;
 			}
+		}
+
+		public double GetNumber(uint crc)
+		{
+			return ((IGetMemberProvider<double>)this).GetMember (crc);
+		}
+
+		public double GetNumber(string key)
+		{
+			return ((IGetMemberProvider<double>)this).GetMember (key);
 		}
 
 		uint IGetMemberProvider<uint>.GetMember(uint crc)
@@ -1079,6 +1129,16 @@ namespace playscript.utils {
 			}
 		}
 
+		public uint GetUInt(uint crc)
+		{
+			return ((IGetMemberProvider<uint>)this).GetMember (crc);
+		}
+
+		public uint GetUInt(string key)
+		{
+			return ((IGetMemberProvider<uint>)this).GetMember (key);
+		}
+
 		bool IGetMemberProvider<bool>.GetMember(uint crc)
 		{
 			uint len = *(uint*)(list + 4);
@@ -1135,6 +1195,16 @@ namespace playscript.utils {
 			}
 		}
 
+		public bool GetBool(uint crc)
+		{
+			return ((IGetMemberProvider<bool>)this).GetMember (crc);
+		}
+
+		public bool GetBool(string key)
+		{
+			return ((IGetMemberProvider<bool>)this).GetMember (key);
+		}
+
 		object IGetMemberProvider<object>.GetMember(uint crc)
 		{
 			uint len = *(uint*)(list + 4);
@@ -1189,6 +1259,16 @@ namespace playscript.utils {
 				else
 					return null;
 			}
+		}
+
+		public object GetObject(uint crc)
+		{
+			return ((IGetMemberProvider<object>)this).GetMember (crc);
+		}
+
+		public object GetObject(string key)
+		{
+			return ((IGetMemberProvider<object>)this).GetMember (key);
 		}
 
 		// Handle .NET types that aren't commonly used in AS but can come up in interop..
@@ -1404,6 +1484,16 @@ namespace playscript.utils {
 			set {
 				_preserveOrder = value;
 			}
+		}
+
+		/// <summary>
+		/// Returns the CRC id for the given identifier.
+		/// </summary>
+		/// <returns>The crc identifier.</returns>
+		/// <param name="key">The key string.</param>
+		public static uint crcId(string key)
+		{
+			return BinJsonCrc32.Calculate (key) & 0x1FFFFFFF;
 		}
 
 		private sealed unsafe class Parser : IDisposable {
