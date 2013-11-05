@@ -98,6 +98,11 @@ namespace PlayScript.DynamicRuntime
 			return GetIndexAs<T>(o, (int)index);
 		}
 
+		public T GetIndexAs<T> (object o, float index)
+		{
+			return GetIndexAs<T>(o, (int)index);
+		}
+
 		public T GetIndexAs<T> (object o, string key)
 		{
 			Stats.Increment(StatsCounter.GetIndexBinderInvoked);
@@ -127,7 +132,6 @@ namespace PlayScript.DynamicRuntime
 			// get member value
 			return mGetMember.GetNamedMember<T>(o, key);			
 		}
-
 		
 		public T GetIndexAs<T> (object o, object key)
 		{
@@ -140,6 +144,8 @@ namespace PlayScript.DynamicRuntime
 				return GetIndexAs<T>(o, (uint)key);
 			}  else if (key is double) {
 				return GetIndexAs<T>(o, (double)key);
+			}  else if (key is float) {
+				return GetIndexAs<T>(o, (float)key);
 			} else {
 				throw new InvalidOperationException("Cannot index object with key of type: " + key.GetType());
 			}
