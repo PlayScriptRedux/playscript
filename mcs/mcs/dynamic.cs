@@ -1608,7 +1608,11 @@ namespace Mono.CSharp
 
 		private Expression CreateDynamicUnaryOperation(ResolveContext rc)
 		{
-			this.Arguments.CastDynamicArgs(rc);
+			// if type is "*", we return "*"; otherwise, dynamic
+			var isAsUntyped = Arguments[0].Type.IsAsUntyped;
+
+			// strip dynamic from argument
+			Arguments.CastDynamicArgs(rc);
 
 			TypeSpec unary = rc.Module.PredefinedTypes.PsUnaryOperation.Resolve();
 			string type = GetDynamicUnaryTypeName(Arguments[0].Type);
@@ -1616,10 +1620,10 @@ namespace Mono.CSharp
 			// create unary method name
 			string unaryMethod = this.name + type;
 
-			var ret = new Invocation(new MemberAccess(new TypeExpression(unary, loc), unaryMethod, loc), this.Arguments).Resolve(rc);
+			var ret = new Invocation (new MemberAccess (new TypeExpression (unary, loc), unaryMethod, loc), Arguments).Resolve (rc);
 			if (ret.Type == rc.BuiltinTypes.Object) {
-				// cast object to dynamic for return types
-				ret = new Cast (new TypeExpression (rc.BuiltinTypes.Dynamic, loc), ret, loc).Resolve (rc);
+				// cast object to untyped/dynamic for return types
+				ret = new Cast (new TypeExpression (isAsUntyped ? rc.BuiltinTypes.AsUntyped : rc.BuiltinTypes.Dynamic, loc), ret, loc).Resolve (rc);
 			}
 			return ret;
 		}
@@ -1701,6 +1705,9 @@ namespace Mono.CSharp
 
 		private Expression CreateDynamicBinaryOperation(ResolveContext rc)
 		{
+			// if either type is "*", we return "*"; otherwise, dynamic
+			var isAsUntyped = (Arguments [0].Type.IsAsUntyped || Arguments [1].Type.IsAsUntyped);
+
 			// strip dynamic from all arguments
 			Arguments.CastDynamicArgs(rc);
 
@@ -1803,10 +1810,10 @@ namespace Mono.CSharp
 			// append to binary method instead of using overloads
 			binaryMethod += leftType + rightType;
 
-			var ret = new Invocation(new MemberAccess(new TypeExpression(binary, loc), binaryMethod, loc), Arguments).Resolve(rc);
+			var ret = new Invocation (new MemberAccess (new TypeExpression (binary, loc), binaryMethod, loc), Arguments).Resolve (rc);
 			if (ret.Type == rc.BuiltinTypes.Object) {
-				// cast object to dynamic for return types
-				ret = new Cast (new TypeExpression (rc.BuiltinTypes.Dynamic, loc), ret, loc).Resolve (rc);
+				// cast object to untyped/dynamic for return types
+				ret = new Cast (new TypeExpression (isAsUntyped ? rc.BuiltinTypes.AsUntyped : rc.BuiltinTypes.Dynamic, loc), ret, loc).Resolve (rc);
 			}
 			return ret;
 		}
