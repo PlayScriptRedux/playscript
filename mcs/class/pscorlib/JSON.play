@@ -14,6 +14,7 @@
 
 package {
 
+	import System.*;
 	import flash.utils.ByteArray;
 	import flash.utils.Dictionary;
 
@@ -24,18 +25,17 @@ package {
 		public static function parse(text:String, reviver:Function = null):Object {
 			var cached:Object = sJsonLookup[text];
 			if (cached != null) {
-				if (cached is ByteArray) {
-					var ba:ByteArray = ByteArray(cached);
-					ba.uncompress();
-					// parse amf
-					var amfObj:Object = ba.readObject();
+				if (cached is Func.<String, Object>) {
+					var func:Func.<String, Object> = Func.<String, Object>(cached);
+					// invoke function to get object graph
+					var obj:Object = func.Invoke(text);
 					// store amf in cache (this assumes amf is immutable)
-					sJsonLookup[text] = amfObj;
-					sJsonLookup[amfObj] = text;
-					return amfObj;
+					sJsonLookup[text] = obj;
+					sJsonLookup[obj] = text;
+					return obj;
 				}
 
-				// return cached amf value
+				// return cached object
 				return cached;
 			}
 
@@ -57,9 +57,9 @@ package {
 			return s;
 		}
 
-		public static function storeAmfData(jsonKey:String, data:ByteArray):void {
-			// store key -> binary data
-			sJsonLookup[jsonKey] = data;
+		public static function storeJsonParseFunc(jsonKey:String, func:Func.<String, Object>):void {
+			// store key -> parse function data
+			sJsonLookup[jsonKey] = func;
 		}
 	}
 }

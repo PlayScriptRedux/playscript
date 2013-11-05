@@ -16,6 +16,7 @@
 
 package flash.net {
 
+	import System.*;
 	import System.IO.*;
 	import flash.events.EventDispatcher;
 	import flash.events.Event;
@@ -43,6 +44,9 @@ package flash.net {
 
  	 	public property dataFormat : String { get; set; }
 
+		// playscript extension to load json resources with amf data instead
+		public property loadJsonAsAmf:Boolean {get; set;}
+
 		// Used for trace accurate metrics (has to be there even if it is not defined) - Shared for both loading and dispatch
 		public var startLoadTime : long;
 		public var endLoadTime : long;
@@ -56,6 +60,9 @@ package flash.net {
 		public function URLLoader(request:URLRequest = null) {
 			dataFormat = URLLoaderDataFormat.TEXT;
 			mRequest = request;
+
+			// get global setting for loading json as amf (defaults to false)
+			this.loadJsonAsAmf = PlayScript.Player.LoadJsonAsAmf;
 		}
  	 	
 		public function close():void {
@@ -394,9 +401,12 @@ package flash.net {
 			// handle file loading
 			var path:String = null;
 
-			if (PlayScript.Player.LoadJsonAsAmf && mRequest.url.EndsWith(".json")) {
+			if (this.loadJsonAsAmf && mRequest.url.EndsWith(".json")) {
 				// see if a compressed amf version exists and load it instead
 				path = PlayScript.Player.TryResolveResourcePath(mRequest.url + ".amf.z");
+				if (path != null) {
+					trace("URLLoader: loading amf instead of json: " + path);
+				}
 			}
 
 			if (path ==null) {
@@ -440,10 +450,24 @@ package flash.net {
 			var fileData:byte[] = new byte[0];
 #endif
 
-			if (PlayScript.Player.LoadJsonAsAmf && path.EndsWith(".json.amf.z")) {
+			if (this.loadJsonAsAmf && path.EndsWith(".json.amf.z")) {
 				var amfKey:String =  "json$$" + path;
+
+				// create byte array for amf data
 				var amfData:ByteArray = ByteArray.fromArray(fileData);
-				JSON.storeAmfData(amfKey, amfData);
+				// uncompress data
+				amfData.uncompress();
+
+				// create function to do amf parsing
+				var func:Func.<String, Object> = function(key:String):Object { 
+					amfData.position = 0;
+					// read object from amf stream
+					var obj:Object = amfData.readObject();
+					return obj;
+				};
+
+				// store parse function in json translator
+				JSON.storeJsonParseFunc(amfKey, func);
 				// return the key we generated, it will be used by json parse
 				fileData = System.Text.Encoding.UTF8.GetBytes(amfKey);
 			} 
