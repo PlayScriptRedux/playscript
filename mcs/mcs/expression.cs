@@ -3712,8 +3712,8 @@ namespace Mono.CSharp
 						Expression leftExpr = left;
 						Expression rightExpr = right;
 						if (left.Type != right.Type) {
-							leftExpr = new Cast (new TypeExpression(ec.BuiltinTypes.Dynamic, loc), left, loc);
-							rightExpr = new Cast (new TypeExpression(ec.BuiltinTypes.Dynamic, loc), right, loc);
+							leftExpr = new Cast (new TypeExpression(ec.BuiltinTypes.AsUntyped, loc), left, loc);
+							rightExpr = new Cast (new TypeExpression(ec.BuiltinTypes.AsUntyped, loc), right, loc);
 						}
 						if (oper == Operator.LogicalOr) {
 							return new Conditional (new Cast(new TypeExpression(ec.BuiltinTypes.Bool, loc), left, loc), leftExpr, rightExpr, loc).Resolve (ec);
