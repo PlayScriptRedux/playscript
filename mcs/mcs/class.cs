@@ -4246,12 +4246,13 @@ namespace Mono.CSharp
 			member_type = type_expr.ResolveAsType (this);
 
 			//
-			// Support the ActionScript "*" type
+			// Switch the type from dynamic to "*" if the AsUntyped attribute is present.
+			// This is required to use the "*" type in C# code.
 			//
-			if (member_type == Module.Compiler.BuiltinTypes.Dynamic || member_type == Module.Compiler.BuiltinTypes.Object) {
+			if (member_type == Module.Compiler.BuiltinTypes.Dynamic) {
 				if (OptAttributes != null) {
 					var a = OptAttributes.Search (Module.PredefinedAttributes.AsUntypedAttribute);
-					if (a != null && (a.ExplicitTarget == null || a.ExplicitTarget == "return"))
+					if (a != null && a.ExplicitTarget == "return")
 						member_type = Module.Compiler.BuiltinTypes.AsUntyped;
 				}
 			}

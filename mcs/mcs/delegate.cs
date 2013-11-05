@@ -420,11 +420,16 @@ namespace Mono.CSharp {
 			base.Emit ();
 
 			if (ReturnType.Type != null) {
-				if (ReturnType.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
+				if (ReturnType.Type == Module.Compiler.BuiltinTypes.AsUntyped) {
 					return_attributes = new ReturnParameter (this, InvokeBuilder.MethodBuilder, Location);
+					Module.PredefinedAttributes.AsUntypedAttribute.EmitAttribute (return_attributes.Builder);
+				}
+
+				if (ReturnType.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
+					return_attributes = return_attributes ?? new ReturnParameter (this, InvokeBuilder.MethodBuilder, Location);
 					Module.PredefinedAttributes.Dynamic.EmitAttribute (return_attributes.Builder);
 				} else if (ReturnType.Type.HasDynamicElement) {
-					return_attributes = new ReturnParameter (this, InvokeBuilder.MethodBuilder, Location);
+					return_attributes = return_attributes ?? new ReturnParameter (this, InvokeBuilder.MethodBuilder, Location);
 					Module.PredefinedAttributes.Dynamic.EmitAttribute (return_attributes.Builder, ReturnType.Type, Location);
 				}
 

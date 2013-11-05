@@ -504,7 +504,7 @@ namespace Mono.CSharp
 		public readonly PredefinedMember<FieldSpec> StructLayoutSize;
 		public readonly PredefinedMember<MethodSpec> TypeGetTypeFromHandle;
 		public readonly PredefinedMember<MethodSpec> AsIKeyEnumerableGetKeyEnumerator;
-
+		public readonly PredefinedMember<MethodSpec> AsUntypedAttributeCtor;
 
 		public PredefinedMembers (ModuleContainer module)
 		{
@@ -814,6 +814,9 @@ namespace Mono.CSharp
 			AsIKeyEnumerableGetKeyEnumerator = new PredefinedMember<MethodSpec> (module, types.AsIKeyEnumerable,
 			                                                             "GetKeyEnumerator", TypeSpec.EmptyTypes);
 
+			AsUntypedAttributeCtor = new PredefinedMember<MethodSpec> (module, atypes.AsUntypedAttribute, MemberFilter.Constructor (
+				ParametersCompiled.CreateFullyResolved (
+					ArrayContainer.MakeType (module, btypes.Bool))));
 		}
 	}
 
