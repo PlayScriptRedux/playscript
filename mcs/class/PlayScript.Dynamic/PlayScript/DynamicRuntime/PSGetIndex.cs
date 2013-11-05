@@ -33,6 +33,19 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.GetIndexBinderInvoked);
 			Stats.Increment(StatsCounter.GetIndexBinder_Int_Invoked);
 
+			// get accessor for value type T
+			var accessor = o as IDynamicAccessor<T>;
+			if (accessor != null) {
+				return accessor.GetIndex(index);
+			}
+
+			// fallback on object accessor and cast it to T
+			var objectAccessor = o as IDynamicAccessor<object>;
+			if (objectAccessor != null) {
+				object value = objectAccessor.GetIndex(index);
+				return (value is T) ? (T)value : default(T);
+			}
+
 			var l = o as IList<T>;
 			if (l != null) {
 				return l [index];
@@ -87,6 +100,19 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.GetIndexBinderInvoked);
 			Stats.Increment(StatsCounter.GetIndexBinder_Key_Invoked);
+
+			// get accessor for value type T
+			var accessor = o as IDynamicAccessor<T>;
+			if (accessor != null) {
+				return accessor.GetIndex(key);
+			}
+
+			// fallback on object accessor and cast it to T
+			var objectAccessor = o as IDynamicAccessor<object>;
+			if (objectAccessor != null) {
+				object value = objectAccessor.GetIndex(key);
+				return (value is T) ? (T)value : default(T);
+			}
 
 			// handle dictionaries
 			var dict = o as IDictionary;

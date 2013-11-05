@@ -35,6 +35,7 @@ namespace PlayScript.DynamicRuntime
 			if (name != mName)
 			{
 				mName = name;
+				mNameHint = 0; // invalidate name hint when name changes
 				mType = null;
 			}
 
@@ -56,6 +57,19 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.GetMemberBinderInvoked);
 
 			TypeLogger.LogType(o);
+
+			// get accessor for value type T
+			var accessor = o as IDynamicAccessor<T>;
+			if (accessor != null) {
+				return accessor.GetMember(mName, ref mNameHint);
+			}
+
+			// fallback on object accessor and cast it to T
+			var objectAccessor = o as IDynamicAccessor<object>;
+			if (objectAccessor != null) {
+				object value = objectAccessor.GetMember(mName, ref mNameHint);
+				return (value is T) ? (T)value : default(T);
+			}
 
 			// resolve as dictionary (this is usually an expando)
 			var dict = o as IDictionary<string, object>;
@@ -236,6 +250,7 @@ namespace PlayScript.DynamicRuntime
 
 
 		private string			mName;
+		private uint 			mNameHint;
 		private Type			mType;
 		private PropertyInfo	mProperty;
 		private FieldInfo		mField;
