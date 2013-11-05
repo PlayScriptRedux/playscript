@@ -426,8 +426,15 @@ namespace Mono.CSharp {
 					return expr;
 				}
 
-				// PlayScript: Call the "CastToString()" static method to convert a dynamic to a string.  EXPENSIVE, but hey..
 				Arguments args = new Arguments (1);
+
+				// Use a dynamic conversion where possible to take advantage of type hints
+				if (expr_type.IsDynamic) {
+					args.Add (new Argument (expr));
+					return new DynamicConversion (target_type, 0, args, expr.Location).Resolve (opt_ec);
+				}
+
+				// PlayScript: Call the "CastToString()" static method to convert a dynamic to a string.  EXPENSIVE, but hey..
 				if (BuiltinTypeSpec.IsPrimitiveType (expr_type))
 					args.Add (new Argument (new BoxedCast (expr, target_type)));
 				else
@@ -446,7 +453,7 @@ namespace Mono.CSharp {
 
 				Arguments args = new Arguments (1);
 				args.Add (new Argument (expr));
-				return new DynamicConversion (target_type, 0, args, expr.Location).Resolve (opt_ec).Resolve (opt_ec);
+				return new DynamicConversion (target_type, 0, args, expr.Location).Resolve (opt_ec);
 			}
 
 			return null;
