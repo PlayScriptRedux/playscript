@@ -68,7 +68,12 @@ namespace PlayScript.DynamicRuntime
 			var objectAccessor = o as IDynamicAccessor<object>;
 			if (objectAccessor != null) {
 				object value = objectAccessor.GetMember(mName, ref mNameHint);
-				return (value is T) ? (T)value : default(T);
+				if (value == null) return default(T);
+				if (value is T) {
+					return (T)value;
+				} else {
+					return PlayScript.Dynamic.ConvertValue<T>(value);
+				}
 			}
 
 			// resolve as dictionary (this is usually an expando)

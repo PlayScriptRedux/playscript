@@ -43,7 +43,12 @@ namespace PlayScript.DynamicRuntime
 			var objectAccessor = o as IDynamicAccessor<object>;
 			if (objectAccessor != null) {
 				object value = objectAccessor.GetIndex(index);
-				return (value is T) ? (T)value : default(T);
+				if (value == null) return default(T);
+				if (value is T) {
+					return (T)value;
+				} else {
+					return PlayScript.Dynamic.ConvertValue<T>(value);
+				}
 			}
 
 			var l = o as IList<T>;
@@ -111,7 +116,12 @@ namespace PlayScript.DynamicRuntime
 			var objectAccessor = o as IDynamicAccessor<object>;
 			if (objectAccessor != null) {
 				object value = objectAccessor.GetIndex(key);
-				return (value is T) ? (T)value : default(T);
+				if (value == null) return default(T);
+				if (value is T) {
+					return (T)value;
+				} else {
+					return PlayScript.Dynamic.ConvertValue<T>(value);
+				}
 			}
 
 			// handle dictionaries
