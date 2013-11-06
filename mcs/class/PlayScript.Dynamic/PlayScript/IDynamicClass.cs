@@ -46,8 +46,9 @@ namespace PlayScript
 			IDynamicAccessor<string>, 
 			IDynamicAccessor<object>, 
 			IDynamicHasProperty,
-			IKeyEnumerable, 				
-			IEnumerable 					
+			IKeyEnumerable, 
+			IEnumerable,
+			IEnumerable< KeyValuePair<string, object> >
 	{ 
 	}
 

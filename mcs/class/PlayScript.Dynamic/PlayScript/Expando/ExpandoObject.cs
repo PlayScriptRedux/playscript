@@ -1476,6 +1476,7 @@ using System.Security.Permissions;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using PlayScript;
+using PlayScript.DynamicRuntime;
 
 namespace PlayScript.Expando {
 
@@ -1492,7 +1493,7 @@ namespace PlayScript.Expando {
 	[Serializable]
 	[DebuggerDisplay ("Count = {Count}")]
 	[DebuggerTypeProxy (typeof (ExpandoDebugView))]
-	public class ExpandoObject : IDictionary<string, object>, IDictionary, ISerializable, IDeserializationCallback, IDynamicClass, IKeyEnumerable
+	public class ExpandoObject : IDictionary<string, object>, IDictionary, ISerializable, IDeserializationCallback, IDynamicClass, IKeyEnumerable, IDynamicAccessor<object>
 #if NET_4_5
 		, IReadOnlyDictionary<string, object>
 #endif
@@ -2764,6 +2765,72 @@ namespace PlayScript.Expando {
 			return this.Keys;
 		}
 		#endregion
+
+
+		#region IDynamicAccessor implementation
+
+		private string ConvertKey(string key)
+		{
+			if (key == null)
+				return "null";
+			return key;
+		}
+
+		private string ConvertKey(int key)
+		{
+			return key.ToString();
+		}
+
+		private string ConvertKey(object key)
+		{
+			if (key == null)
+				return "null";
+			if (Object.ReferenceEquals(key, PlayScript.Undefined._undefined))
+				return "undefined";
+			return key.ToString();
+		}
+
+		object IDynamicAccessor<object>.GetMember(string name, ref uint hint)
+		{
+			return this[name];
+		}
+
+		void IDynamicAccessor<object>.SetMember(string name, ref uint hint, object value)
+		{
+			this[name] = value;
+		}
+
+		object IDynamicAccessor<object>.GetIndex(string key)
+		{
+			return this[ConvertKey(key)];
+		}
+
+		void IDynamicAccessor<object>.SetIndex(string key, object value)
+		{
+			this[ConvertKey(key)] = value;
+		}
+
+		object IDynamicAccessor<object>.GetIndex(int key)
+		{
+			return this[ConvertKey(key)];
+		}
+
+		void IDynamicAccessor<object>.SetIndex(int key, object value)
+		{
+			this[ConvertKey(key)] = value;
+		}
+
+		object IDynamicAccessor<object>.GetIndex(object key)
+		{
+			return this[ConvertKey(key)];
+		}
+
+		void IDynamicAccessor<object>.SetIndex(object key, object value)
+		{
+			this[ConvertKey(key)] = value;
+		}
+		#endregion
+
 	}
 }
 
