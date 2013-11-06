@@ -130,11 +130,19 @@ namespace playscript.utils {
 		internal Vector<string> valueStringCache;
 		internal string[] valueStringCacheArray;
 
-		public BinJsonDocument()
+		public BinJsonDocument(byte* data)
 		{
 			valueStringCache = new Vector<string> ();
 			// Make sure we have something at element 0 so it's not used.
 			valueStringCache.push ("");
+
+			this.data = data;
+			this.keyStringTable = (StringTableElem*)(data + *(uint*)(data + 16));
+		}
+
+		public BinJsonObject GetRootObject()
+		{
+			return new BinJsonObject (this, this.data + *(uint*)(this.data + 12));
 		}
 
 		public int Size {
@@ -1444,19 +1452,101 @@ namespace playscript.utils {
 		internal static string _numberSize = NumberSize.Float64;
 		internal static bool _useFloat32 = false;
 		internal static bool _preserveOrder = false;
+		internal static bool _useJson = false;
+		internal static bool _dumpBinary = false;
+		internal static string _dumpBinaryPath = "";
+		internal static bool _loadFromBinary = false;
 
-		public static dynamic parse(string json) {
-			_useFloat32 = _numberSize == NumberSize.Float32;
-			if (json == null) {
-				throw new ArgumentNullException ("json");
-			}
+		private static System.Text.StringBuilder _log = new System.Text.StringBuilder();
 
-			return Parser.Parse(json);
+		public static void trace(string msg)
+		{
+			_log.Append (msg + "\n");
+			_root.trace_fn.trace ("#############\n" + _log.ToString());
 		}
 
-		public static dynamic fromBinary(flash.utils.ByteArray buffer) {
-			// TODO: Implement instantiating a binary json tree from the buffer.
-			throw new NotImplementedException ();
+		/// <summary>
+		/// Parse the specified json string and return a binary json tree.
+		/// </summary>
+		/// <param name="json">The json string.</param>
+		/// <param name="url">The original relative load url from which the file was loaded.</param>
+		public static dynamic parse(string json, string url = null) 
+		{
+
+//			#if DEBUG
+			System.Diagnostics.Stopwatch sw = new Stopwatch ();
+			Process proc = Process.GetCurrentProcess();
+			long memStart = proc.WorkingSet64;
+			sw.Reset ();
+			sw.Start ();
+//			#endif
+
+			object ret;
+
+			if (_useJson) {
+				ret = _root.JSON.parse (json);
+			} else {
+				_useFloat32 = _numberSize == NumberSize.Float32;
+				if (json == null) {
+					throw new ArgumentNullException ("json");
+				}
+				ret = Parser.Parse(json);
+			}
+
+//			#if DEBUG
+			sw.Stop ();
+			trace("** " + (_useJson ? "JSON" : "BINJSON") + ": Parse '" + (url != null ? url : "<unknown>") + "': " + 
+			            sw.ElapsedMilliseconds + "ms memUsed: " + (proc.WorkingSet64 - memStart) + 
+			      		" totalMem: " + proc.WorkingSet64);
+//			#endif
+
+			// Dump binary
+			if (_dumpBinary && !_loadFromBinary && url != null) {
+				string saveUrl = url.Replace (".json", ".binj");
+				var data = ((BinJsonObject)ret).Document.ToArray();
+				System.IO.File.WriteAllBytes (_dumpBinaryPath + saveUrl, data);
+			}
+
+			return ret;
+		}
+
+		public static dynamic parseBinary(object buffer) 
+		{
+			if (!(buffer is flash.utils.ByteArray)) {
+				throw new ArgumentException ("buffer");
+			}
+			var byteArray = buffer as flash.utils.ByteArray;
+			byte[] array = byteArray.getRawArray ();
+			GCHandle gch = GCHandle.Alloc(array, GCHandleType.Pinned);
+			byte* data = (byte*)gch.AddrOfPinnedObject().ToPointer();
+			BinJsonDocument doc = new BinJsonDocument (data);
+			return doc.GetRootObject ();
+		}
+
+		/// <summary>
+		/// True to load json data from binary cached.
+		/// </summary>
+		/// <value><c>true</c> if load from binary; otherwise, <c>false</c>.</value>
+		public static bool loadFromBinary {
+			get {
+				return _loadFromBinary;
+			}
+			set {
+				_loadFromBinary = value;
+			}
+		}
+
+		/// <summary>
+		/// Converts .json url to .binj url conditional on BinJSON.loadFromBinary being true.
+		/// </summary>
+		/// <returns>The converted url.</returns>
+		/// <param name="url">The original url.</param>
+		public static string convertUrl(string url)
+		{
+			if (_loadFromBinary) {
+				return url.replace (".json", ".binj");
+			}
+			return url;
 		}
 
 		/// <summary>
@@ -1474,7 +1564,7 @@ namespace playscript.utils {
 		}
 
 		/// <summary>
-		/// Gets or sets a value indicating whether to preserve the key order in objects.
+		/// Preserve the key order in objects.
 		/// </summary>
 		/// <value><c>true</c> to preserve key order in objects <c>false</c> to use crc hash order for fast value lookups.</value>
 		public static bool preserveOrder {
@@ -1485,6 +1575,46 @@ namespace playscript.utils {
 				_preserveOrder = value;
 			}
 		}
+
+		/// <summary>
+		/// Use the standard JSON implementation instead of binary JSON.
+		/// </summary>
+		/// <value><c>true</c> if use json; otherwise, <c>false</c>.</value>
+		public static bool useJson {
+			get {
+				return _useJson;
+			}
+			set {
+				_useJson = value;
+			}
+		}
+
+		/// <summary>
+		/// True to automatically dump all binary buffers to the path specified by dumpBinaryPath.
+		/// </summary>
+		/// <value><c>true</c> if dump binary; otherwise, <c>false</c>.</value>
+		public static bool dumpBinary {
+			get {
+				return _dumpBinary;
+			}
+			set {
+				_dumpBinary = value;
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the dump binary path.
+		/// </summary>
+		/// <value>The dump binary path.</value>
+		public static string dumpBinaryPath {
+			get {
+				return _dumpBinaryPath;
+			}
+			set {
+				_dumpBinaryPath = value;
+			}
+		}
+
 
 		/// <summary>
 		/// Returns the CRC id for the given identifier.
@@ -1635,10 +1765,8 @@ namespace playscript.utils {
 					if (BinJsonCrc32.Table == null)
 						BinJsonCrc32.InitializeTable ();
 					instance.Parse();
-					BinJsonDocument doc = new BinJsonDocument ();
-					doc.data = instance.data;
-					doc.keyStringTable = (StringTableElem*)(instance.data + *(uint*)(instance.data + 16));
-					return new BinJsonObject (doc, doc.data + *(uint*)(doc.data + 12));
+					BinJsonDocument doc = new BinJsonDocument (instance.data);
+					return doc.GetRootObject ();
 				}
 			}
 
