@@ -73,6 +73,9 @@ namespace PlayScript
 		// maximum time spent running event loop until present is done
 		public static double MaxRunTimeUntilPresent = 100.0;
 
+		// time to sleep between frames if no present occurs
+		public static int SleepTimeBetweenFrames = 1;
+
 		static Player()
 		{
 			// add resource directories in static constructor
@@ -754,6 +757,13 @@ namespace PlayScript
 				// dont let us run too long waiting for a present
 				if (timer.ElapsedMilliseconds > MaxRunTimeUntilPresent) {
 					break;
+				} else {
+					if (SleepTimeBetweenFrames > 0) {
+						// sleep between frames
+						Profiler.Begin("sleep", ".player.condition.wait");
+						System.Threading.Thread.Sleep(SleepTimeBetweenFrames);
+						Profiler.End("sleep");
+					}
 				}
 			}
 
