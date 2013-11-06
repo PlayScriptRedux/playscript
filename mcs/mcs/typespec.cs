@@ -371,6 +371,24 @@ namespace Mono.CSharp
 			}
 		}
 
+		public bool IsDynamic {
+			get {
+				return BuiltinType == BuiltinTypeSpec.Type.Dynamic;
+			}
+		}
+
+		//
+		// There is a distinction between the "Object" and "*" types in ActionScript. The
+		// former adds a small amount of type safety (i.e. it disallows numeric operators),
+		// whereas the latter is fully dynamic, and is the only type that can contain the
+		// value of "undefined".
+		//
+		public bool IsAsUntyped {
+			get {
+				return IsDynamic && (Modifiers & Modifiers.AS_UNTYPED) != 0;
+			}
+		}
+
 		//
 		// A cache of all type members (including nested types)
 		//

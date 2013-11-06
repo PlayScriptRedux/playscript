@@ -689,7 +689,7 @@ namespace Mono.CSharp
 			for (var i = 0; i < args.Count; i++) {
 				var arg = args [i];
 				var paramType = parameters.Types [i];
-				if (arg.Expr.Type == ec.BuiltinTypes.Dynamic) {
+				if (arg.Expr.Type.IsDynamic) {
 					var parCastType = paramType.BuiltinType == BuiltinTypeSpec.Type.Dynamic ? ec.BuiltinTypes.Object : paramType;
 					var new_arg = new Argument (new Cast (
 						new TypeExpression (parCastType, arg.Expr.Location), 
@@ -746,7 +746,7 @@ namespace Mono.CSharp
 				for (var i = 0; i < args.Count; i++) {
 					var arg = args [i];
 					var paramType = parameters.Types [i];
-					if (arg.Expr.Type == ec.BuiltinTypes.Dynamic) {
+					if (arg.Expr.Type.IsDynamic) {
 						var parCastType = paramType.BuiltinType == BuiltinTypeSpec.Type.Dynamic ? ec.BuiltinTypes.Object : paramType;
 						var new_arg = new Argument (new Cast (
 							new TypeExpression (parCastType, arg.Expr.Location), 

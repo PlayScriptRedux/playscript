@@ -9,7 +9,7 @@ package
 			return sClassName;
 		}
 		
-		public static function set ClassName(className:Object)
+		public static function set ClassName(className)
 		{
 			sClassName = className;
 		}
@@ -19,7 +19,7 @@ package
 			return null;
 		}
 		
-		public function set SomeProperty(property:Object)
+		public function set SomeProperty(property)
 		{
 		}
 		

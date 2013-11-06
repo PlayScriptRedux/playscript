@@ -661,6 +661,9 @@ namespace Mono.CSharp {
 			}
 
 			if (parameter_type != null) {
+				if (parameter_type == pa.Module.Compiler.BuiltinTypes.AsUntyped)
+					pa.AsUntypedAttribute.EmitAttribute (builder);
+
 				if (parameter_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
 					pa.Dynamic.EmitAttribute (builder);
 				} else if (parameter_type.HasDynamicElement) {

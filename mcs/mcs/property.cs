@@ -691,6 +691,9 @@ namespace Mono.CSharp
 			if (OptAttributes != null)
 				OptAttributes.Emit ();
 
+			if (member_type == Module.Compiler.BuiltinTypes.AsUntyped)
+				Module.PredefinedAttributes.AsUntypedAttribute.EmitAttribute (PropertyBuilder);
+
 			if (member_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
 				Module.PredefinedAttributes.Dynamic.EmitAttribute (PropertyBuilder);
 			} else if (member_type.HasDynamicElement) {

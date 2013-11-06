@@ -127,6 +127,9 @@
     <Compile Include="..\PlayScript.Dynamic\System\Runtime\CompilerServices\DynamicAttribute.cs">
       <Link>System\Runtime\CompilerServices\DynamicAttribute.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\AsUntypedAttribute.cs">
+      <Link>PlayScript\AsUntypedAttribute.cs</Link>
+    </Compile>
     <Compile Include="..\PlayScript.Dynamic\AssemblyInfo.cs">
       <Link>AssemblyInfo.cs</Link>
     </Compile>
@@ -217,11 +220,18 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\TypeLogger.cs">
       <Link>PlayScript\DynamicRuntime\TypeLogger.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSBinaryArithmetic.cs">
+      <DependentUpon>PSBinaryArithmetic.tt</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\PlayScript.Dynamic\PlayScript.Dynamic.dll.sources">
       <Link>PlayScript.Dynamic.dll.sources</Link>
     </None>
     <None Include="PlayScript.Dynamic_aot.dll.sources" />
+    <None Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSBinaryArithmetic.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>PSBinaryArithmetic.cs</LastGenOutput>
+    </None>
   </ItemGroup>
 </Project>

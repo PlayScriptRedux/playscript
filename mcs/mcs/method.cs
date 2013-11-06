@@ -770,11 +770,16 @@ namespace Mono.CSharp {
 			if ((ModFlags & Modifiers.DEBUGGER_HIDDEN) != 0)
 				Module.PredefinedAttributes.DebuggerHidden.EmitAttribute (MethodBuilder);
 
-			if (ReturnType.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
+			if (ReturnType == Module.Compiler.BuiltinTypes.AsUntyped) {
 				return_attributes = new ReturnParameter (this, MethodBuilder, Location);
+				Module.PredefinedAttributes.AsUntypedAttribute.EmitAttribute (return_attributes.Builder);
+			}
+
+			if (ReturnType.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
+				return_attributes = return_attributes ?? new ReturnParameter (this, MethodBuilder, Location);
 				Module.PredefinedAttributes.Dynamic.EmitAttribute (return_attributes.Builder);
 			} else if (ReturnType.HasDynamicElement) {
-				return_attributes = new ReturnParameter (this, MethodBuilder, Location);
+				return_attributes = return_attributes ?? new ReturnParameter (this, MethodBuilder, Location);
 				Module.PredefinedAttributes.Dynamic.EmitAttribute (return_attributes.Builder, ReturnType, Location);
 			}
 
@@ -2676,11 +2681,16 @@ namespace Mono.CSharp {
 			if (((ModFlags & Modifiers.DEBUGGER_HIDDEN) != 0))
 				Module.PredefinedAttributes.DebuggerHidden.EmitAttribute (method_data.MethodBuilder);
 
-			if (ReturnType.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
+			if (ReturnType == Module.Compiler.BuiltinTypes.AsUntyped) {
 				return_attributes = new ReturnParameter (this, method_data.MethodBuilder, Location);
+				Module.PredefinedAttributes.AsUntypedAttribute.EmitAttribute (return_attributes.Builder);
+			}
+
+			if (ReturnType.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
+				return_attributes = return_attributes ?? new ReturnParameter (this, method_data.MethodBuilder, Location);
 				Module.PredefinedAttributes.Dynamic.EmitAttribute (return_attributes.Builder);
 			} else if (ReturnType.HasDynamicElement) {
-				return_attributes = new ReturnParameter (this, method_data.MethodBuilder, Location);
+				return_attributes = return_attributes ?? new ReturnParameter (this, method_data.MethodBuilder, Location);
 				Module.PredefinedAttributes.Dynamic.EmitAttribute (return_attributes.Builder, ReturnType, Location);
 			}
 
