@@ -100,34 +100,34 @@ namespace PlayScript
 		public Variant(bool value)
 		{
 			mType = TypeCode.Boolean;
-			mObject = null;
+			mObject = value ? sBoolTrue : sBoolFalse;
 			mNumberValue = 0.0;
 			mIntValue = 0;
 			mBoolValue = value;
 		}
 
-		public Variant(int value)
+		public Variant(int value, object boxedValue = null)
 		{
 			mType = TypeCode.Int;
-			mObject = null;
+			mObject = boxedValue;
 			mBoolValue = false;
 			mNumberValue = 0.0;
 			mIntValue = value;
 		}
 
-		public Variant(uint value)
+		public Variant(uint value, object boxedValue = null)
 		{
 			mType = TypeCode.UInt;
-			mObject = null;
+			mObject = boxedValue;
 			mBoolValue = false;
 			mNumberValue = 0.0;
 			mIntValue = (int)value;
 		}
 
-		public Variant(double value)
+		public Variant(double value, object boxedValue = null)
 		{
 			mType = TypeCode.Number;
-			mObject = null;
+			mObject = boxedValue;
 			mBoolValue = false;
 			mIntValue = 0;
 			mNumberValue = value;
@@ -196,6 +196,14 @@ namespace PlayScript
 			}
 		}
 
+		public bool IsBoxed
+		{
+			get 
+			{
+				return mObject != null;
+			}
+		}
+
 		// set to true if the value is the default (false,0,null)
 		public bool HasDefaultValue
 		{
@@ -248,6 +256,7 @@ namespace PlayScript
 			}
 		}
 
+
 		//
 		// conversion operators (variant -> system types)
 		//
@@ -259,33 +268,36 @@ namespace PlayScript
 
 		public object AsObject()
 		{
-			switch (mType) {
-			case TypeCode.Undefined:
-				return null;		// casting undefined to object == null
-			case TypeCode.Null:
-				return null;
-			case TypeCode.Boolean:
-				return mBoolValue ? sBoolTrue : sBoolFalse;
-			case TypeCode.Int:
-				if (mIntValue == 0) return sIntZero;
-				if (mIntValue == 1) return sIntOne;
-				if (mIntValue ==-1) return sIntNegOne;
-				return (object)mIntValue;	// box integer
-			case TypeCode.UInt:
-				if (UIntValue == 0) return sUIntZero;
-				if (UIntValue == 1) return sUIntOne;
-				return (object)UIntValue;	// box integer
-			case TypeCode.Number:
-				if (mNumberValue == 0.0) return sNumberZero;
-				if (mNumberValue == 1.0) return sNumberOne;
-				return (object)mNumberValue; // box number
-			case TypeCode.String:
-				return mObject;			
-			case TypeCode.Object:
+			// return referenced or boxed object if we have it
+			if (mObject != null) {
 				return mObject;
-			default:
-				throw new InvalidCastException();
 			}
+
+			// box value types to number and cache boxed object in our reference
+			switch (mType) {
+			case TypeCode.Boolean:
+				mObject = mBoolValue ? sBoolTrue : sBoolFalse;
+				break;
+			case TypeCode.Int:
+				if (mIntValue == 0) mObject = sIntZero; else 
+				if (mIntValue == 1) mObject = sIntOne; else 
+				if (mIntValue ==-1) mObject = sIntNegOne; else
+					mObject = (object)mIntValue;	// box integer
+				break;
+			case TypeCode.UInt:
+				if (UIntValue == 0) mObject = sUIntZero; else 
+				if (UIntValue == 1) mObject = sUIntOne; else
+					mObject = (object)UIntValue;	// box integer
+				break;
+			case TypeCode.Number:
+				if (mNumberValue == 0.0) mObject = sNumberZero; else
+				if (mNumberValue == 1.0) mObject = sNumberOne; else 
+					mObject = (object)mNumberValue; // box number
+				break;
+			}
+
+			// return boxed value
+			return mObject;
 		}
 
 		public int AsInt()
@@ -511,15 +523,15 @@ namespace PlayScript
 			var typeCode = System.Type.GetTypeCode (o.GetType());
 			switch (typeCode) {
 			case System.TypeCode.Int32:
-				return new Variant((int)o);
+				return new Variant((int)o, o);
 			case System.TypeCode.Single:
 				return new Variant((double)(float)o);
 			case System.TypeCode.Double:
-				return new Variant((double)o);
+				return new Variant((double)o, o);
 			case System.TypeCode.Boolean:
 				return new Variant((bool)o);
 			case System.TypeCode.UInt32:
-				return new Variant((uint)o);
+				return new Variant((uint)o, o);
 			case System.TypeCode.String:
 				return new Variant((string)o);
 			case System.TypeCode.Object:
