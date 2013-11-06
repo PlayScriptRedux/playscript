@@ -128,6 +128,14 @@ package
 			if (instance !== null || instance === undefined)
 				return 32;
 
+			var d3:Dictionary = new Dictionary();
+			var s:String = d3["missing"];
+			if (s !== null)
+				return 1;
+			s = String(d3["missing"]);
+			if (s != "undefined")
+				return 2;
+
 			return 0;
 		}
 	}
