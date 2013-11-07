@@ -1494,7 +1494,7 @@ namespace PlayScript.Expando {
 	[Serializable]
 	[DebuggerDisplay ("Count = {Count}")]
 	[DebuggerTypeProxy (typeof (ExpandoDebugView))]
-	public class ExpandoObject : IDictionary<string, object>, IDictionary, ISerializable, IDeserializationCallback, IDynamicClass, IKeyEnumerable, IDynamicAccessor<object>
+	public class ExpandoObject : IDictionary<string, object>, IDictionary, ISerializable, IDeserializationCallback, IDynamicClass, IKeyEnumerable, IDynamicAccessor<object>, IDynamicAccessorUntyped
 #if NET_4_5
 		, IReadOnlyDictionary<string, object>
 #endif
@@ -2830,6 +2830,27 @@ namespace PlayScript.Expando {
 			this[ConvertKey(key)] = value;
 		}
 		#endregion
+
+		#region IDynamicAccessorUntyped implementation
+
+		object IDynamicAccessorUntyped.GetMember(string name, ref uint hint)
+		{
+			return this[name];
+		}
+		object IDynamicAccessorUntyped.GetIndex(string key)
+		{
+			return this[ConvertKey(key)];
+		}
+		object IDynamicAccessorUntyped.GetIndex(int key)
+		{
+			return this[ConvertKey(key)];
+		}
+		object IDynamicAccessorUntyped.GetIndex(object key)
+		{
+			return this[ConvertKey(key)];
+		}
+		#endregion
+
 
 	}
 }

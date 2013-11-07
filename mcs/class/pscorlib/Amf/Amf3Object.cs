@@ -169,6 +169,30 @@ namespace Amf
 			return null;
 		}
 
+		public object GetPropertyValueAsUntyped(string key)
+		{
+			// lookup index of value from class definition
+			int index = ClassDef.GetPropertyIndex(key);
+			// does value exist in the class?
+			if (index >= 0) {
+				// return value from class property
+				// we do this AsObject here so that the boxed value will be cached
+				return Values[index].AsUntyped();
+			} 
+
+			// lookup value from dynamic properties 
+			if (DynamicProperties != null) {
+				Variant dynamicValue;
+				if (DynamicProperties.TryGetValue(key, out dynamicValue)) {
+					// return value from dynamic properties if we have them
+					return dynamicValue.AsUntyped();
+				}
+			}
+
+			// not found, return undefined
+			return PlayScript.Undefined._undefined;
+		}
+
 
 		public void SetPropertyValue(object key, Variant value)
 		{
@@ -201,6 +225,12 @@ namespace Amf
 		}
 
 		public void SetPropertyValueAsObject(string key, object value)
+		{
+			SetPropertyValue(key, Variant.FromAnyType(value));
+		}
+
+		// untyped means that the value could be undefined
+		public void SetPropertyValueAsUntyped(string key, object value)
 		{
 			SetPropertyValue(key, Variant.FromAnyType(value));
 		}
@@ -372,6 +402,24 @@ namespace Amf
 		public bool DeleteIndex(object key)
 		{
 			return DeleteMember(ConvertKey(key));
+		}
+		#endregion
+		#region IDynamicAccessor implementation
+		object IDynamicAccessorUntyped.GetMember(string name, ref uint hint)
+		{
+			return GetPropertyValueAsUntyped(name);
+		}
+		object IDynamicAccessorUntyped.GetIndex(string key)
+		{
+			return GetPropertyValueAsUntyped(key);
+		}
+		object IDynamicAccessorUntyped.GetIndex(int key)
+		{
+			return GetPropertyValueAsUntyped(ConvertKey(key));
+		}
+		object IDynamicAccessorUntyped.GetIndex(object key)
+		{
+			return GetPropertyValueAsUntyped(ConvertKey(key));
 		}
 		#endregion
 		#region IDynamicAccessor implementation

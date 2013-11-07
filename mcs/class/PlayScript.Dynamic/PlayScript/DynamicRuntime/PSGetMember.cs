@@ -54,6 +54,12 @@ namespace PlayScript.DynamicRuntime
 		[return: AsUntyped]
 		public dynamic GetMemberAsUntyped(object o)
 		{
+			// get accessor for untyped 
+			var accessor = o as IDynamicAccessorUntyped;
+			if (accessor != null) {
+				return accessor.GetMember(mName, ref mNameHint);
+			}
+
 			return GetMember<object>(o);
 		}
 

@@ -33,7 +33,7 @@ namespace PlayScript
 #else
 	[StructLayout(LayoutKind.Explicit, Size=24)]
 #endif
-	[DebuggerDisplay("{Type} {IntValue} {NumberValue} {ObjectValue}")]
+	[DebuggerDisplay("{mType} {mIntValue} {mNumberValue} {mObject}")]
 	public struct Variant : IEquatable<Variant>
 	{
 		// type code for variant
@@ -266,6 +266,18 @@ namespace PlayScript
 			return (dynamic)AsObject();
 		}
 
+		// returns an object or a reference to undefined
+		public object AsUntyped()
+		{
+			if (mType == TypeCode.Undefined) {
+				return PlayScript.Undefined._undefined;
+			} else {
+				return AsObject();
+			}
+		}
+
+		// returns a boxed object
+		// will return null if undefined
 		public object AsObject()
 		{
 			// return referenced or boxed object if we have it

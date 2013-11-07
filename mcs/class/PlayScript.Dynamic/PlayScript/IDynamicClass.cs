@@ -17,6 +17,15 @@ namespace PlayScript
 		void	SetIndex(object key, T value);
 	}
 
+	// this interface allows for the getting of member or indexed values that may be undefined
+	public interface IDynamicAccessorUntyped
+	{
+		object	GetMember(string name, ref uint hint);
+		object	GetIndex(string key);
+		object	GetIndex(int key);
+		object	GetIndex(object key);
+	}
+
 	// this interface allows for the querying of member or index existence and the deleting of members
 	public interface IDynamicHasProperty 
 	{
@@ -45,6 +54,7 @@ namespace PlayScript
 			IDynamicAccessor<double>, 
 			IDynamicAccessor<string>, 
 			IDynamicAccessor<object>, 
+			IDynamicAccessorUntyped,
 			IDynamicHasProperty,
 			IKeyEnumerable, 
 			IEnumerable,

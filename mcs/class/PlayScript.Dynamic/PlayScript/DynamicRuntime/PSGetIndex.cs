@@ -40,6 +40,12 @@ namespace PlayScript.DynamicRuntime
 		[return: AsUntyped]
 		public dynamic GetIndexAsUntyped(object o, object index)
 		{
+			// get untyped accessor
+			var accessor = o as IDynamicAccessorUntyped;
+			if (accessor != null) {
+				return accessor.GetIndex(index);
+			}
+
 			return GetIndexAs<object>(o, index);
 		}
 
