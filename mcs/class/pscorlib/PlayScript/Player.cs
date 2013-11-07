@@ -304,6 +304,39 @@ namespace PlayScript
 			return altPath;
 		}
 
+		private static string normalizePath(string path)
+		{
+			string[] pathParts = path.Split(Path.DirectorySeparatorChar);
+			List<string> result = new List<string>();
+			int skip = 0;
+
+			for(int i = pathParts.Length - 1; i >= 0; i--)
+			{
+				string p = pathParts[i];
+				if(p == "" || p == ".")
+				{
+					continue;
+				}
+
+				if(p == "..")
+				{
+					skip++;
+					continue;
+				}
+
+				if(skip != 0)
+				{
+					skip--;
+					continue;
+				}
+
+				result.Insert(0, p);
+			}
+
+			string separator = new string(Path.DirectorySeparatorChar, 1);
+			return string.Join(separator, result);
+		}
+
 		public static string TryResolveResourcePath(string path)
 		{
 			if (File.Exists(path))
@@ -324,8 +357,9 @@ namespace PlayScript
 			}
 
 #if PLATFORM_MONODROID
+			string npath = normalizePath(path);
 			try {
-				Application.Context.Assets.Open(path);
+				Application.Context.Assets.Open(npath);
 			} 
 			catch (Java.IO.FileNotFoundException e)
 			{
@@ -333,7 +367,7 @@ namespace PlayScript
 			    return null;
 			}
 
-			return path;
+			return npath;
 #else
 
 			// try all resource directories 
