@@ -42,6 +42,8 @@ namespace Amf
 		private  Amf3Reader 				mReaderPool;		// singly linked list of readers in pool
 
 		private Dictionary<string, int>		mLookup;			// cached name -> index lookup  (could use custom hash table for this)
+		private string 						mLastLookupKey;		// cached last key that was looked up
+		private int 						mLastLookupIndex;
 
 		internal Amf3Writer					mWriter;			// the last writer to write this object
 		internal int 						mId;				// the id associated with this object
@@ -108,6 +110,11 @@ namespace Amf
 
 		public int GetPropertyIndex(string name)
 		{
+			// do a quick comparison against the last lookup that weas performed
+			if (mLastLookupKey == name) {
+				return mLastLookupIndex;
+			}
+
 			if (mLookup == null) {
 				// build lookup table
 				mLookup = new Dictionary<string, int>(Properties.Length);
@@ -116,8 +123,52 @@ namespace Amf
 				}
 			}
 
+			mLastLookupKey = name;
+
 			int value;
-			return mLookup.TryGetValue(name, out value) ? value : -1;
+			if (mLookup.TryGetValue(name, out value)) {
+				// found key
+				mLastLookupIndex = value;
+				return value;
+			} else {
+				// did not find key
+				mLastLookupIndex = -1;
+				return -1;
+			}
+		}
+
+		// enumerates all properties of this class definition
+		public IEnumerator GetKeyEnumerator()
+		{
+			// enumerate class properties
+			for (int i=0; i < Properties.Length; i++) {
+				string key = Properties[i];
+				// cache last key since its likely to be read next
+				mLastLookupKey    = key;
+				mLastLookupIndex  = i;
+				yield return key;
+			}
+		}
+
+		// enumerates all properties of this class definition
+		public IEnumerator GetKeyEnumerator(IEnumerable<string> dynamicProperties)
+		{
+			// enumerate dynamic properties
+			foreach (var key in dynamicProperties) {
+				// invalidate last key since its not in this class definition
+				mLastLookupKey    = key;
+				mLastLookupIndex  = -1;
+				yield return key;
+			}
+
+			// enumerate class properties
+			for (int i=0; i < Properties.Length; i++) {
+				string key = Properties[i];
+				// cache last key since its likely to be read next
+				mLastLookupKey    = key;
+				mLastLookupIndex  = i;
+				yield return key;
+			}
 		}
 
 

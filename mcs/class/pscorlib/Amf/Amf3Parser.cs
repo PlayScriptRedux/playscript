@@ -53,6 +53,10 @@ namespace Amf
 		public IAmf3Serializer DefaultSerializer;
 		public IAmf3Serializer OverrideSerializer;
 
+		// if true, all unregistered class aliases will use Expandos, if false they will use Amf3Objects
+		// this can be overridden by changing the DefaultSerializer
+		public static bool UseExpandoAsDefault = true;
+
         public Amf3Parser(Stream stream, bool autoSetCapacity = true)
         {
             if (stream == null)
@@ -61,7 +65,11 @@ namespace Amf
             this.stream = stream;
 
 			// set default serializer
-			this.DefaultSerializer = new ExpandoSerializer();
+			if (UseExpandoAsDefault) {
+				this.DefaultSerializer = new ExpandoSerializer();
+			} else {
+				this.DefaultSerializer = new Amf3Object.Serializer();
+			}
 
 			if (autoSetCapacity) 
 			{
@@ -446,8 +454,14 @@ namespace Amf
 			// get serializer for class alias
 			IAmf3Serializer serializer = GetSerializerFromAlias(objectTypeName);
 
-			// create vector using serializer
-			IList vector = serializer.NewVector((uint)num, isFixed);
+			IList vector;
+			if (serializer != null) {
+				// create vector using serializer
+				vector = serializer.NewVector((uint)num, isFixed);
+			} else {
+				// create a new vector of dynamic
+				vector = new _root.Vector<dynamic>((uint)num, isFixed);
+			}
 
 			objectTable.Add(vector);
 
@@ -524,6 +538,10 @@ namespace Amf
 			}
 
 			Amf3ClassDef classDef = new Amf3ClassDef(name, properties.ToArray(), dynamic, externalizable);
+
+			// lookup serializer to use for this class definition
+			classDef.Serializer = GetSerializerFromAlias(classDef.Name);
+
 			traitTable.Add(classDef);
 			return classDef;
 		}
@@ -539,29 +557,7 @@ namespace Amf
 					serializer = new ReflectionSerializer(alias, type, true, false);
 					// automatically register it
 					Amf3ClassDef.RegisterSerializer(alias, serializer);
-				} else {
-					// last resort, fallback to default serializer
-					serializer = DefaultSerializer;
-				}
-			}
-			return serializer;
-		}
-
-		// gets serializer for a class definition
-		protected virtual IAmf3Serializer GetSerializerForClassDef(Amf3ClassDef classDef)
-		{
-			// use override serializer if it exists
-			if (OverrideSerializer != null) {
-				return OverrideSerializer;
-			}
-
-			// get serializer cached in class definition
-			IAmf3Serializer serializer = classDef.Serializer;
-			if (serializer == null) {
-				// get registered serializer by alias
-				serializer = GetSerializerFromAlias(classDef.Name);
-				// cache serializer in class definition for next time
-				classDef.Serializer = serializer;
+				} 
 			}
 			return serializer;
 		}
@@ -581,8 +577,16 @@ namespace Amf
 				classDef = ReadAmf3ClassDef(flags);
             }
 
-			// get the serializer to use from the class definition
-			IAmf3Serializer serializer = GetSerializerForClassDef(classDef);
+			// get the serializer to use (start with the override serializer)
+			IAmf3Serializer serializer = OverrideSerializer;
+			if (serializer == null) {
+				// no override? get serializer from class definition
+				serializer = classDef.Serializer;
+				if (serializer == null) {
+					// no serializer for class definition? use default serializer 
+					serializer = DefaultSerializer;
+				}
+			}
 
 			// create object instance using serializer
 			object obj = serializer.NewInstance(classDef);

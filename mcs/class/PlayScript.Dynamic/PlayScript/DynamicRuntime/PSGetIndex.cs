@@ -24,13 +24,8 @@ using PlayScript;
 
 namespace PlayScript.DynamicRuntime
 {
-
 	public class PSGetIndex
 	{
-		// For fast access to CRC Keys
-		public static string 	LastKeyString;
-		public static uint		LastKeyCrc;
-
 		private PSGetMember			  mGetMember;
 
 		public dynamic GetIndexAsObject(object o, object index)
@@ -45,6 +40,12 @@ namespace PlayScript.DynamicRuntime
 		[return: AsUntyped]
 		public dynamic GetIndexAsUntyped(object o, object index)
 		{
+			// get untyped accessor
+			var accessor = o as IDynamicAccessorUntyped;
+			if (accessor != null) {
+				return accessor.GetIndex(index);
+			}
+
 			return GetIndexAs<object>(o, index);
 		}
 
@@ -53,15 +54,22 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.GetIndexBinderInvoked);
 			Stats.Increment(StatsCounter.GetIndexBinder_Int_Invoked);
 
-			var p = o as IGetIndexProvider<T>;
-			if (p != null) {
-				return p.GetIndex (index);
+			// get accessor for value type T
+			var accessor = o as IDynamicAccessor<T>;
+			if (accessor != null) {
+				return accessor.GetIndex(index);
 			}
 
-			var po = o as IGetIndexProvider<object>;
-			if (po != null) {
-				object value = po.GetIndex (index);
-				return Dynamic.ConvertValue<T>(value);
+			// fallback on object accessor and cast it to T
+			var untypedAccessor = o as IDynamicAccessorUntyped;
+			if (untypedAccessor != null) {
+				object value = untypedAccessor.GetIndex(index);
+				if (value == null) return default(T);
+				if (value is T) {
+					return (T)value;
+				} else {
+					return PlayScript.Dynamic.ConvertValue<T>(value);
+				}
 			}
 
 			var l = o as IList<T>;
@@ -124,22 +132,22 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.GetIndexBinderInvoked);
 			Stats.Increment(StatsCounter.GetIndexBinder_Key_Invoked);
 
-			var p = o as IGetMemberProvider<T>;
-			if (p != null) {
-				if (Object.ReferenceEquals (key, LastKeyString))
-					return p.GetMember (LastKeyCrc);
-				else
-					return p.GetMember (key);
+			// get accessor for value type T
+			var accessor = o as IDynamicAccessor<T>;
+			if (accessor != null) {
+				return accessor.GetIndex(key);
 			}
 
-			var po = o as IGetMemberProvider<object>;
-			if (po != null) {
-				object value;
-				if (Object.ReferenceEquals (key, LastKeyString))
-					value = po.GetMember (LastKeyCrc);
-				else
-					value = po.GetMember (key);
-				return value != null ? (T)value : default(T);
+			// fallback on object accessor and cast it to T
+			var untypedAccessor = o as IDynamicAccessorUntyped;
+			if (untypedAccessor != null) {
+				object value = untypedAccessor.GetIndex(key);
+				if (value == null) return default(T);
+				if (value is T) {
+					return (T)value;
+				} else {
+					return PlayScript.Dynamic.ConvertValue<T>(value);
+				}
 			}
 
 			// handle dictionaries
@@ -190,22 +198,5 @@ namespace PlayScript.DynamicRuntime
 		}
 	}
 }
-#else
-namespace PlayScript.DynamicRuntime
-{
-	public class PSGetIndex
-	{
-		// For fast access to CRC Keys
-		public static string 	LastKeyString;
-		public static uint		LastKeyCrc;
-	}
-}
 #endif
 
-namespace PlayScript.DynamicRuntime
-{
-	public interface IGetIndexProvider<T>
-	{
-		T GetIndex(int index);
-	}
-}

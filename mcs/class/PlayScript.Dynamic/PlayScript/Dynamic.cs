@@ -487,14 +487,10 @@ namespace PlayScript
 
 			if (IsNullOrUndefined(o)) return false;
 
-			// Handle get member provider implementations
-			var gmp = o as PlayScript.DynamicRuntime.IGetMemberProvider<object>;
-			if (gmp != null) {
-				if (Object.ReferenceEquals (name, PlayScript.DynamicRuntime.PSGetIndex.LastKeyString)) {
-					return gmp.HasMember (PlayScript.DynamicRuntime.PSGetIndex.LastKeyCrc);
-				} else {
-					return gmp.HasMember (name);
-				}
+			// handle dynamic objects
+			var dynamicObject = o as IDynamicAccessorUntyped;
+			if (dynamicObject != null) {
+				return dynamicObject.HasMember(name);
 			}
 
 			// handle dictionaries

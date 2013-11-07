@@ -23,59 +23,6 @@ using System.Collections.Generic;
 
 namespace PlayScript.DynamicRuntime
 {
-
-	#if !NEW_PSGETMEMBER
-	
-	/// <summary>
-	/// Implements a 32-bit CRC hash algorithm compatible with Zip etc.
-	/// </summary>
-	/// <remarks>
-	/// Crc32 should only be used for backward compatibility with older file formats
-	/// and algorithms. It is not secure enough for new applications.
-	/// If you need to call multiple times for the same data either use the HashAlgorithm
-	/// interface or remember that the result of one Compute call needs to be ~ (XOR) before
-	/// being passed in as the seed for the next Compute call.
-	/// </remarks>
-	internal static class Crc32
-	{
-		public const uint DefaultPolynomial = 0xedb88320u;
-		public const uint DefaultSeed = 0xffffffffu;
-
-		public static uint[] Table;
-
-		public static void InitializeTable()
-		{
-			uint polynomial = DefaultPolynomial;
-			var createTable = new uint[256];
-			for (var i = 0; i < 256; i++)
-			{
-				var entry = (uint)i;
-				for (var j = 0; j < 8; j++)
-					if ((entry & 1) == 1)
-						entry = (entry >> 1) ^ polynomial;
-				else
-					entry = entry >> 1;
-				createTable[i] = entry;
-			}
-
-			Table = createTable;
-		}
-
-		public static uint Calculate(string buffer)
-		{
-			if (buffer == null)
-				return 0;
-			if (Table == null)
-				InitializeTable ();
-			uint crc = DefaultSeed;
-			int size = buffer.Length;
-			for (var i = 0; i < size; i++)
-				crc = (crc >> 8) ^ Table[(byte)buffer[i] ^ crc & 0xff];
-			return ~crc;
-		}
-
-	}
-
 	public class PSGetMember
 	{
 		public PSGetMember(string name)
@@ -88,6 +35,7 @@ namespace PlayScript.DynamicRuntime
 			if (name != mName)
 			{
 				mName = name;
+				mNameHint = 0; // invalidate name hint when name changes
 				mType = null;
 			}
 
@@ -106,6 +54,12 @@ namespace PlayScript.DynamicRuntime
 		[return: AsUntyped]
 		public dynamic GetMemberAsUntyped(object o)
 		{
+			// get accessor for untyped 
+			var accessor = o as IDynamicAccessorUntyped;
+			if (accessor != null) {
+				return accessor.GetMember(mName, ref mNameHint);
+			}
+
 			return GetMember<object>(o);
 		}
 
@@ -120,21 +74,22 @@ namespace PlayScript.DynamicRuntime
 
 			TypeLogger.LogType(o);
 
-			// Handles various versions of IGetMemberProvider for different types
-			var getMemberProv = o as IGetMemberProvider<T>;
-			if (getMemberProv != null) {
-				if (mCrc == 0)
-					mCrc = Crc32.Calculate (mName) & 0x1FFFFFFF; // clear top 3 bits
-				return getMemberProv.GetMember (mCrc);
+			// get accessor for value type T
+			var accessor = o as IDynamicAccessor<T>;
+			if (accessor != null) {
+				return accessor.GetMember(mName, ref mNameHint);
 			}
 
-			// Handles object version of IGetMemberProvider
-			var getMemberObjProv = o as IGetMemberProvider<object>;
-			if (getMemberObjProv != null) {
-				if (mCrc == 0)
-					mCrc = Crc32.Calculate (mName) & 0x1FFFFFFF; // clear top 3 bits
-				object value = getMemberObjProv.GetMember (mCrc);
-				return value != null ? (T)value : default(T);
+			// fallback on object accessor and cast it to T
+			var untypedAccessor = o as IDynamicAccessorUntyped;
+			if (untypedAccessor != null) {
+				object value = untypedAccessor.GetMember(mName, ref mNameHint);
+				if (value == null) return default(T);
+				if (value is T) {
+					return (T)value;
+				} else {
+					return PlayScript.Dynamic.ConvertValue<T>(value);
+				}
 			}
 
 			// resolve as dictionary (this is usually an expando)
@@ -316,6 +271,7 @@ namespace PlayScript.DynamicRuntime
 
 
 		private string			mName;
+		private uint 			mNameHint;
 		private Type			mType;
 		private PropertyInfo	mProperty;
 		private FieldInfo		mField;
@@ -324,220 +280,6 @@ namespace PlayScript.DynamicRuntime
 		private Type			mTargetType;
 		private object			mPreviousTarget;
 		private object			mPreviousFunc;
-		private uint			mCrc;
 	};
-
-#else
-
-	// Optimized PSGetMember - uses delegate to call directly to target method
-
-	public class PSGetMember
-	{
-		private string			mName;
-		private uint			mCrc;
-		private Type			mType;
-		private object			mFunc;
-
-		public PSGetMember(string name)
-		{
-			mName = name;
-		}
-
-		public T GetNamedMember<T>(object o, string name )
-		{
-			if (name != mName)
-			{
-				mName = name;
-			}
-
-			return GetMember<T>(o);
-		}
-
-		public object GetMemberAsObject(object o)
-		{
-			// Handles various versions of IGetMemberProvider for different types
-			var getMemberProv = o as IGetMemberProvider<object>;
-			if (getMemberProv != null) {
-				return getMemberProv.GetMember (mCrc);
-			}
-
-			return GetMember<object>(o);
-		}
-
-		/// <summary>
-		/// This is the most generic method for getting a member's value.
-		/// It will attempt to resolve the member by name and the get its value by invoking the 
-		/// callsite's delegate
-		/// </summary>
-		public T GetMember<T> (object o)
-		{
-			Stats.Increment(StatsCounter.GetMemberBinderInvoked);
-
-			TypeLogger.LogType(o);
-
-			if (o == null)
-				return default(T);
-
-			// determine if this is a instance member or a static member
-			bool isStatic;
-			Type otype;
-			if (o is System.Type) {
-				// static member
-				otype = (System.Type)o;
-				o = null;
-				isStatic = true;
-			} else {
-				// instance member
-				otype = o.GetType();
-				isStatic = false;
-			}
-
-			// Use previous method
-			if (otype == mType) {
-				return ((Func<object, T>)this.mFunc)(o);
-			}
-
-			mType = otype;
-
-			Func<object, T> func;
-
-			// Handles various versions of IGetMemberProvider for different types
-			var getMemberProv = o as IGetMemberProvider<T>;
-			if (getMemberProv != null) {
-				if (mCrc == 0)
-					mCrc = Crc32.Calculate (mName) & 0x1FFFFFFF; // clear top 3 bits
-				func = delegate(object obj) {
-					return ((IGetMemberProvider<T>)obj).GetMember (mName);
-				};
-				mFunc = func;
-				return func (o);
-			}
-
-			// Handles object version of IGetMemberProvider
-			var getMemberObjProv = o as IGetMemberProvider<object>;
-			if (getMemberObjProv != null) {
-				if (mCrc == 0)
-					mCrc = Crc32.Calculate (mName) & 0x1FFFFFFF; // clear top 3 bits
-				func = delegate(object obj) {
-					object value = ((IGetMemberProvider<object>)obj).GetMember(mCrc);
-					return value != null ? (T)value : default(T);
-				};
-				mFunc = func;
-				return func (o);
-			}
-
-			// resolve as dictionary (this is usually an expando)
-			var dict = o as IDictionary<string, object>;
-			if (dict != null) 
-			{
-				Stats.Increment(StatsCounter.GetMemberBinder_Expando);
-				func = delegate(object obj) {
-					object value;
-					if (dict.TryGetValue (mName, out value)) {
-						// fast path empty cast just in case
-						if (value is T) {
-							return (T)value;
-						} else {
-							return PlayScript.Dynamic.ConvertValue<T> (value);
-						}
-					}
-					return default(T);
-				};
-				mFunc = func;
-				return func (o);
-			}
-
-			// resolve name
-			Stats.Increment(StatsCounter.GetMemberBinder_Resolve_Invoked);
-
-			// The constructor is a special synthetic property - we have to handle this for AS compatibility
-			if (mName == "constructor") {
-				func =  delegate(object obj) {
-					return PlayScript.Dynamic.ConvertValue<T> (obj as Type ?? (obj != null ? obj.GetType () : null));
-				};
-				mFunc = func;
-				return func(o);
-			}
-
-			// resolve as property
-			// TODO: we allow access to non-public properties for simplicity,
-			// should cleanup to check access levels
-			var property = otype.GetProperty(mName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-			if (property != null)
-			{
-				// found property
-				var getter = property.GetGetMethod();
-				if (getter != null && getter.IsStatic == isStatic)
-				{
-					func = delegate(object obj) {
-						return PlayScript.Dynamic.ConvertValue<T>(getter.Invoke(obj, null));
-					};
-					mFunc = func;
-					return func (o);
-				}
-			}
-
-			// resolve as field
-			// TODO: we allow access to non-public fields for simplicity,
-			// should cleanup to check access levels
-			var field = otype.GetField(mName, BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-			if (field != null)
-			{
-				// found field
-				if (field.IsStatic == isStatic) {
-					func = delegate(object obj) {
-						return PlayScript.Dynamic.ConvertValue<T>(field.GetValue(obj));
-					};
-					mFunc = func;
-					return func (o);
-				}
-			}
-
-			// resolve as method
-			BindingFlags flags = BindingFlags.NonPublic | BindingFlags.Public;
-			if (isStatic) {
-				flags |= BindingFlags.Static;
-			} else {
-				flags |= BindingFlags.Instance;
-			}
-			var method = otype.GetMethod(mName, flags);
-			if (method != null)
-			{
-				Type targetType = PlayScript.Dynamic.GetDelegateTypeForMethod(method);
-				func = delegate(object obj) {
-					return PlayScript.Dynamic.ConvertValue<T> (Delegate.CreateDelegate (targetType, obj, method));
-				};
-				mFunc = func;
-				return func (o);
-			}
-
-			if (o is IDynamicClass)
-			{
-				func = delegate(object obj) {
-					return PlayScript.Dynamic.ConvertValue<T>(((IDynamicClass)obj).__GetDynamicValue(mName));
-				};
-				mFunc = func;
-				return func (o);
-			}
-
-			return default(T);
-		}
-
-	};
-
-#endif
-
 }
 #endif
-
-namespace PlayScript.DynamicRuntime
-{
-	public interface IGetMemberProvider<T>
-	{
-		bool HasMember(uint crc);
-		bool HasMember(string key);
-		T GetMember(uint crc);
-		T GetMember(string key);
-	}
-}
-
