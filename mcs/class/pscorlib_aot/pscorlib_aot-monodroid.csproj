@@ -12,7 +12,6 @@
     <AndroidResgenClass>Resource</AndroidResgenClass>
     <MonoAndroidResourcePrefix>Resources</MonoAndroidResourcePrefix>
     <MonoAndroidAssetsPrefix>Assets</MonoAndroidAssetsPrefix>
-    <AssemblyName>pscorlib_monodroid</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -27,6 +26,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn>219</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AssemblyName>pscorlib_monodroid</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Optimize>true</Optimize>
@@ -39,6 +39,20 @@
     <DefineConstants>PLATFORM_MONODROID;OPENGL;PERFORMANCE_MODE</DefineConstants>
     <NoWarn>219</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AssemblyName>pscorlib_monodroid</AssemblyName>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'QE|AnyCPU' ">
+    <Optimize>true</Optimize>
+    <OutputPath>bin\QE</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
+    <ConsolePause>false</ConsolePause>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>PLATFORM_MONODROID;OPENGL;PERFORMANCE_MODE</DefineConstants>
+    <NoWarn>219</NoWarn>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AssemblyName>pscorlib_monodroid</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
