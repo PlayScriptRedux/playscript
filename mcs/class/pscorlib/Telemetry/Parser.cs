@@ -53,6 +53,7 @@ namespace Telemetry
 		public static void Parse(Stream stream, TextWriter output)
 		{
 			Amf3Parser parser = new Amf3Parser(stream);
+			parser.OverrideSerializer = new Amf3Object.Serializer();
 
 			int time = 0;
 			int enterTime = 0;
