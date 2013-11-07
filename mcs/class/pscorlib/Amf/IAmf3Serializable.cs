@@ -43,17 +43,15 @@ namespace Amf
     {
     }
 
-	// object serializer delegates (for use when you cannot implement IAmf3Serializable)
-	// using the delegates is much faster than using reflection to construct or serialize an object
-	// they can be added to an Amf3Serializable or Amf3ExternalSerializer class and named this way:
-	//	public static class AmfSerializer_Value	{
-	//		public static object ObjectConstructor() {return new Value();}
-	//		public static System.Collections.IList VectorObjectConstructor(uint len, bool isFixed) {return new _root.Vector<Value>(len, isFixed);}
-	//		public static void ObjectSerializer(object o, Amf3Writer writer) { ... }
-	//		public static void ObjectDeserializer(object o, Amf3Reader reader) { ... }
-	//	}
-	public delegate object Amf3ObjectConstructor();
-	public delegate IList  Amf3ObjectVectorConstructor(uint num, bool isFixed);
-	public delegate void   Amf3ObjectSerializer(object obj, Amf3Writer writer);
-	public delegate void   Amf3ObjectDeserializer(object obj, Amf3Reader reader);
+	// this is an interface to a specialized serializer for a particular class
+	// it can serialize an object's properties to and from an amf stream
+	// it can construct an instance or a vector of instances
+	// a serializer can be registered to a class using RegisterSerializer in Amf3ClassDef
+	public interface IAmf3Serializer
+	{
+		object NewInstance(Amf3ClassDef classDef);
+		IList  NewVector(uint num, bool isFixed);
+		void   WriteObject(Amf3Writer writer, object obj);
+		void   ReadObject(Amf3Reader reader, object obj);
+	}
 }

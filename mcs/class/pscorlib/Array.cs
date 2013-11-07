@@ -297,6 +297,7 @@ namespace _root
 
 		public dynamic this[int i]
 		{
+			[return: AsUntyped]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				if (mStaticArray != null)
@@ -336,6 +337,7 @@ namespace _root
 
 		public dynamic this[uint i]
 		{
+			[return: AsUntyped]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				if (mStaticArray != null)
@@ -375,6 +377,7 @@ namespace _root
 
 		public dynamic this[long l]
 		{
+			[return: AsUntyped]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				if (mStaticArray != null)
@@ -404,6 +407,7 @@ namespace _root
 
 		public dynamic this[string name]
 		{
+			[return: AsUntyped]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				// If we can convert the string to an index, then it is an indexed access.
@@ -444,6 +448,7 @@ namespace _root
 		//
 		public dynamic this[double d]
 		{
+			[return: AsUntyped]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				if (mStaticArray != null)
@@ -465,6 +470,7 @@ namespace _root
 		//
 		public dynamic this[float f]
 		{
+			[return: AsUntyped]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				if (mStaticArray != null)
@@ -920,7 +926,7 @@ namespace _root
 					if (needsSeperator) {
 						sb.Append(sep);
 					}
-					if (item != null) {
+					if (!PlayScript.Dynamic.IsNullOrUndefined(item)) {
 						sb.Append(item.ToString());
 					}
 					needsSeperator = true;
@@ -931,7 +937,7 @@ namespace _root
 					if (needsSeperator) {
 						sb.Append(sep);
 					}
-					if (item != null) {
+					if (!PlayScript.Dynamic.IsNullOrUndefined(item)) {
 						sb.Append(item.ToString());
 					}
 					needsSeperator = true;
@@ -968,6 +974,7 @@ namespace _root
 			throw new System.NotImplementedException();
 		}
 
+		[return: AsUntyped]
 		public dynamic pop() 
 		{
 			if (mStaticArray != null)
@@ -1009,15 +1016,11 @@ namespace _root
 		{
 			if (mStaticArray != null)
 				throw new NotImplementedException ();
-			var nv = new Array(length);
-			int l = (int)length;
-			for (int i = 0; i < l; i++)
-			{
-				nv[i] = this[l - i - 1];
-			}
-			return nv;
+			System.Array.Reverse(mArray, 0, (int)mCount);
+			return this;
 		}
 
+		[return: AsUntyped]
 		public dynamic shift() 
 		{
 			if (mStaticArray != null)
@@ -1969,6 +1972,7 @@ namespace _root
 
 		public dynamic this[int i]
 		{
+			[return: AsUntyped]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return mList[i];
@@ -1982,6 +1986,7 @@ namespace _root
 
 		public dynamic this[uint i]
 		{
+			[return: AsUntyped]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return mList[i];
@@ -1995,6 +2000,7 @@ namespace _root
 
 		public dynamic this[long l]
 		{
+			[return: AsUntyped]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return this [(int)l];
@@ -2021,6 +2027,7 @@ namespace _root
 
 		public dynamic this[string name]
 		{
+			[return: AsUntyped]
 			get {
 				// If we can convert the string to an index, then it is an indexed access.
 				int index;
@@ -2055,6 +2062,7 @@ namespace _root
 		//
 		public dynamic this[double d]
 		{
+			[return: AsUntyped]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return this [d.ToString ()];
@@ -2072,6 +2080,7 @@ namespace _root
 		//
 		public dynamic this[float f]
 		{
+			[return: AsUntyped]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
 				return this [f.ToString ()];
@@ -2094,6 +2103,7 @@ namespace _root
 			return mList.push(value);
 		}
 
+		[return: AsUntyped]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public dynamic pop() {
 			return mList.pop();
@@ -2122,6 +2132,7 @@ namespace _root
 			return AsArray(mList.reverse());
 		}
 
+		[return: AsUntyped]
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public dynamic shift() {
 			if (mList.length == 0) {

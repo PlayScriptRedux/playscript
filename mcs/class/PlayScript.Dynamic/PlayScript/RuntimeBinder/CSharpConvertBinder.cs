@@ -96,15 +96,8 @@ namespace PlayScript.RuntimeBinder
 	{
 		private static Dictionary<Type, object> delegates = new Dictionary<Type, object>();
 
-	//	readonly Type type;
-	//	readonly CSharpBinderFlags flags;
-	//	readonly Type context;
-		
 		public CSharpConvertBinder (Type type, Type context, CSharpBinderFlags flags)
 		{
-	//		this.type = type;
-	//		this.flags = flags;
-	//		this.context = context;
 		}
 
 		public static int ConvertToInt (CallSite site, object o)
@@ -207,8 +200,10 @@ namespace PlayScript.RuntimeBinder
 
 		public static string ConvertToString (CallSite site, object o)
 		{
-			if (o == null || o == PlayScript.Undefined._undefined) {
-				return null;
+			if (o == null) {
+				return "null";
+			} else if (o == PlayScript.Undefined._undefined) {
+				return "undefined";
 			} else if  (o is string) {
 				return (string)o;
 			} else {
@@ -218,6 +213,10 @@ namespace PlayScript.RuntimeBinder
 
 		public static object ConvertToObj (CallSite site, object o)
 		{
+			if (o == PlayScript.Undefined._undefined) {
+				return null; // only type "*" can be undefined
+			}
+
 			return o;
 		}
 

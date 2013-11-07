@@ -23,7 +23,7 @@ namespace PlayScript
 {
 	public static class Profiler
 	{
-		public static bool Enabled = true;
+ 		public static bool Enabled = true;
 		public static bool ProfileGPU = false;
 		public static bool ProfileMemory = false;			// Profile memory usage, it is very slow though...
 		public static bool ProfileLoading = false;			// set to true to profile loading
@@ -75,7 +75,7 @@ namespace PlayScript
 			section.Timer.Start();
 			return name;
 		}
-
+		
 		public static void End(string name)
 		{
 			if (!Enabled || filter(name))
@@ -98,7 +98,7 @@ namespace PlayScript
 				section.CurrentUsedMemory += mono_gc_get_used_size();
 				if (section.CurrentUsedMemory > 0) {
 					section.UsedMemory += section.CurrentUsedMemory;	// After a GC the size might actually be negative
-					// In that case, we actually can't measure the memory cost
+																		// In that case, we actually can't measure the memory cost
 				}
 			}
 			section.CurrentUsedMemory = 0;
@@ -148,14 +148,14 @@ namespace PlayScript
 				sHasProfiledLoading = true;
 			}
 
-			#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
+#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			if (ProfileGPU) {
 				// this stalls and waits for the gpu to finish 
 				PlayScript.Profiler.Begin("gpu", ".rend.gl.swap");
 				GL.Finish();
 				PlayScript.Profiler.End("gpu");
 			}
-			#endif
+#endif
 
 			sFrameCount += NextFramesElapsed;
 			MaxNumberOfFramesElapsed = Math.Max(MaxNumberOfFramesElapsed, NextFramesElapsed);
@@ -261,7 +261,7 @@ namespace PlayScript
 			return sFilterPrefix != null && !name.StartsWith (sFilterPrefix);
 		}
 
-
+		
 		public static void PrintTimes(TextWriter tw)
 		{
 			temporaryStringBuilder.Length = 0;
@@ -335,12 +335,12 @@ namespace PlayScript
 				} else {
 
 					tw.WriteLine("{0,-40} total:{1,6} average/frame:{2,6:0.00}ms average/call:{3,6:0.00}ms UsedMem: {4}Kb",
-					             section.Name,
-					             total,
-					             average,
-					             averagePerCall,
-					             section.UsedMemory / 1024
-					             );
+				             section.Name,
+				             total,
+				             average,
+				             averagePerCall,
+					         section.UsedMemory / 1024
+				             );
 				}
 			}
 		}
@@ -740,7 +740,7 @@ namespace PlayScript
 					// write telemetry data to file
 					var telemetryPath = Path.Combine(profileLogDir, "telemetry-" + id + ".flm");
 					Telemetry.Session.SaveRecordingToFile(recording, telemetryPath);
-					//					Telemetry.Parser.ParseFile(telemetryPath, telemetryPath + ".txt");
+//					Telemetry.Parser.ParseFile(telemetryPath, telemetryPath + ".txt");
 				}
 			}
 
@@ -781,11 +781,11 @@ namespace PlayScript
 					case IOSDeviceHardware.IOSHardware.iPodTouch4G:
 					case IOSDeviceHardware.IOSHardware.iPad:
 					case IOSDeviceHardware.IOSHardware.iPad3G:
-					sCurrentPerformanceFrameData = sSlowPerformanceFrameData;
-					break;
+						sCurrentPerformanceFrameData = sSlowPerformanceFrameData;
+						break;
 					default:
-					sCurrentPerformanceFrameData = sDefaultPerformanceFrameData;
-					break;
+						sCurrentPerformanceFrameData = sDefaultPerformanceFrameData;
+						break;
 				}
 				#else
 				sCurrentPerformanceFrameData = sDefaultPerformanceFrameData;
@@ -861,8 +861,9 @@ namespace PlayScript
 
 		private static PerformanceFrameData sCurrentPerformanceFrameData;
 		private static PerformanceFrameData sDefaultPerformanceFrameData = new PerformanceFrameData(fastFrame: 1000.0/60.0, slowFrame: 1000.0/15.0, autoProfileFrame: 1000.0/45.0);
-		#if PLATFORM_MONOTOUCH
+#if PLATFORM_MONOTOUCH
 		private static PerformanceFrameData sSlowPerformanceFrameData = new PerformanceFrameData(fastFrame: 1000.0/30.0, slowFrame: 1000.0/10.0, autoProfileFrame: 1000.0/20.0);
-		#endif
+#endif
 	}
 }
+

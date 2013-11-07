@@ -33,6 +33,21 @@ namespace PlayScript.DynamicRuntime
 
 		private PSGetMember			  mGetMember;
 
+		public dynamic GetIndexAsObject(object o, object index)
+		{
+			var result = GetIndexAs<object>(o, index);
+			// Need to check for undefined if we're not returning AsUntyped
+			if (Dynamic.IsUndefined (result))
+				result = null;
+			return result;
+		}
+
+		[return: AsUntyped]
+		public dynamic GetIndexAsUntyped(object o, object index)
+		{
+			return GetIndexAs<object>(o, index);
+		}
+
 		public T GetIndexAs<T> (object o, int index)
 		{
 			Stats.Increment(StatsCounter.GetIndexBinderInvoked);
@@ -99,6 +114,11 @@ namespace PlayScript.DynamicRuntime
 			return GetIndexAs<T>(o, (int)index);
 		}
 
+		public T GetIndexAs<T> (object o, float index)
+		{
+			return GetIndexAs<T>(o, (int)index);
+		}
+
 		public T GetIndexAs<T> (object o, string key)
 		{
 			Stats.Increment(StatsCounter.GetIndexBinderInvoked);
@@ -146,7 +166,6 @@ namespace PlayScript.DynamicRuntime
 			// get member value
 			return mGetMember.GetNamedMember<T>(o, key);			
 		}
-
 		
 		public T GetIndexAs<T> (object o, object key)
 		{
@@ -159,6 +178,8 @@ namespace PlayScript.DynamicRuntime
 				return GetIndexAs<T>(o, (uint)key);
 			}  else if (key is double) {
 				return GetIndexAs<T>(o, (double)key);
+			}  else if (key is float) {
+				return GetIndexAs<T>(o, (float)key);
 			} else {
 				throw new InvalidOperationException("Cannot index object with key of type: " + key.GetType());
 			}

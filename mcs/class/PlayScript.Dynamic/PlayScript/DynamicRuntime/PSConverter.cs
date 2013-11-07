@@ -15,9 +15,6 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-#if !DYNAMIC_SUPPORT
-
-
 using System;
 using System.Reflection;
 using System.Collections;
@@ -26,21 +23,9 @@ namespace PlayScript.DynamicRuntime
 {
 	public static class PSConverter
 	{
-		public static object ConvertToString(object o, Type targetType) {
-			Stats.Increment(StatsCounter.ConvertBinderInvoked);
-
-			if (o is string) {
-				return (string)o;
-			}
-			if (o == null) {
-				return null;
-			}
-//			if (o is JsonValue) {
-//				// dont call ToString on a json value else it becomes quoted
-//				return (string)(JsonValue)o;
-//			}
-
-			return o.ToString();
+		public static object ConvertToString(object o, Type targetType)
+		{
+			return ConvertToString (o);
 		}
 
 		public static Func<object, Type, object> GetConversionFunction(object value, Type targetType, bool valueTypeIsConstant)
@@ -78,7 +63,6 @@ namespace PlayScript.DynamicRuntime
 				return System.Convert.ChangeType;
 			}
 		}
-
 		
 		public static int ConvertToInt (object o)
 		{
@@ -86,11 +70,11 @@ namespace PlayScript.DynamicRuntime
 
 			if (o is int) {
 				return (int)o;
-			} 
+			}
 			if (o is uint) {
 				return (int)(uint)o;
-			} 
-			if (o == null || o == PlayScript.Undefined._undefined) {
+			}
+			if (PlayScript.Dynamic.IsNullOrUndefined (o)) {
 				return 0;
 			}
 
@@ -126,11 +110,11 @@ namespace PlayScript.DynamicRuntime
 
 			if (o is uint) {
 				return (uint)o;
-			} 
+			}
 			if (o is int) {
 				return (uint)(int)o;
-			} 
-			if (o == null || o == PlayScript.Undefined._undefined) {
+			}
+			if (PlayScript.Dynamic.IsNullOrUndefined (o)) {
 				return 0;
 			}
 
@@ -162,8 +146,8 @@ namespace PlayScript.DynamicRuntime
 			} 
 			if (o is double) {
 				return (float)(double)o;
-			} 
-			if (o == null || o == PlayScript.Undefined._undefined) {
+			}
+			if (PlayScript.Dynamic.IsNullOrUndefined (o)) {
 				return 0.0f;
 			}
 
@@ -186,7 +170,6 @@ namespace PlayScript.DynamicRuntime
 			}
 		}
 
-
 		public static double ConvertToDouble (object o)
 		{
 			Stats.Increment(StatsCounter.ConvertBinderInvoked);
@@ -197,7 +180,7 @@ namespace PlayScript.DynamicRuntime
 			if (o is float) {
 				return (double)(float)o;
 			} 
-			if (o == null || o == PlayScript.Undefined._undefined) {
+			if (PlayScript.Dynamic.IsNullOrUndefined (o)) {
 				return 0.0;
 			}
 
@@ -227,7 +210,7 @@ namespace PlayScript.DynamicRuntime
 			if (o is bool) {
 				return (bool)o;
 			} 
-			if (o == null || o == PlayScript.Undefined._undefined) {
+			if (PlayScript.Dynamic.IsNullOrUndefined (o)) {
 				return false;
 			}
 
@@ -252,7 +235,7 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.ConvertBinderInvoked);
 
-			if (o == null || o == PlayScript.Undefined._undefined) {
+			if (PlayScript.Dynamic.IsNullOrUndefined (o)) {
 				return null;
 			} else if  (o is string) {
 				return (string)o;
@@ -265,11 +248,13 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.ConvertBinderInvoked);
 
+			if (o == PlayScript.Undefined._undefined) {
+				return null; // only type "*" can be undefined
+			}
+
 			return o;
 		}
 
 	}
 
 }
-#endif
-

@@ -52,7 +52,7 @@ namespace Mono.CSharp
 
 		public override TypeSpec ResolveAsType (IMemberContext mc)
 		{
-			return mc.Module.Compiler.BuiltinTypes.Dynamic;
+			return mc.Module.Compiler.BuiltinTypes.AsUntyped;
 		}
 	}
 
@@ -1063,7 +1063,7 @@ namespace Mono.CSharp
 			var args = new Arguments (1);
 			args.Add (new Argument (expr));
 
-			if (objExpRes.Type == ec.BuiltinTypes.Dynamic) {
+			if (objExpRes.Type.IsDynamic) {
 				var inArgs = new Arguments (2);
 				inArgs.Add (new Argument (objExpr));
 				inArgs.Add (new Argument (expr));

@@ -312,20 +312,27 @@ namespace Mono.CSharp {
 
 			case Binary.Operator.Addition:
 				//
+				// In PlayScript, null has the string value "null". In C#, it is the empty string.
+				//
+				var nullString = ec.FileType == SourceFileType.PlayScript ? "null" : "";
+
+				//
 				// If both sides are strings, then concatenate
 				//
 				// string operator + (string x, string y)
 				//
-				if (lt.BuiltinType == BuiltinTypeSpec.Type.String || rt.BuiltinType == BuiltinTypeSpec.Type.String){
-					if (lt == rt)
-						return new StringConstant (ec.BuiltinTypes, (string)left.GetValue () + (string)right.GetValue (),
-							left.Location);
+				if (lt.BuiltinType == BuiltinTypeSpec.Type.String || rt.BuiltinType == BuiltinTypeSpec.Type.String) {
+					if (lt == rt) {
+						var leftValue = left.GetValue () ?? nullString;
+						var rightValue = right.GetValue () ?? nullString;
+						return new StringConstant (ec.BuiltinTypes, (string)leftValue + (string)rightValue, left.Location);
+					}
 
 					if (lt == InternalType.NullLiteral)
-						return new StringConstant (ec.BuiltinTypes, "" + right.GetValue (), left.Location);
+						return new StringConstant (ec.BuiltinTypes, nullString + right.GetValue (), left.Location);
 
 					if (rt == InternalType.NullLiteral)
-						return new StringConstant (ec.BuiltinTypes, left.GetValue () + "", left.Location);
+						return new StringConstant (ec.BuiltinTypes, left.GetValue () + nullString, left.Location);
 
 					return null;
 				}
@@ -335,7 +342,7 @@ namespace Mono.CSharp {
 				//
 				if (lt == InternalType.NullLiteral) {
 					if (rt.BuiltinType == BuiltinTypeSpec.Type.Object)
-						return new StringConstant (ec.BuiltinTypes, "" + right.GetValue (), left.Location);
+						return new StringConstant (ec.BuiltinTypes, nullString + right.GetValue (), left.Location);
 
 					if (lt == rt) {
 						ec.Report.Error (34, loc, "Operator `{0}' is ambiguous on operands of type `{1}' and `{2}'",
@@ -351,7 +358,7 @@ namespace Mono.CSharp {
 				//
 				if (rt == InternalType.NullLiteral) {
 					if (lt.BuiltinType == BuiltinTypeSpec.Type.Object)
-						return new StringConstant (ec.BuiltinTypes, right.GetValue () + "", left.Location);
+						return new StringConstant (ec.BuiltinTypes, left.GetValue () + nullString, left.Location);
 	
 					return left;
 				}
