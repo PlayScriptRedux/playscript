@@ -257,6 +257,9 @@ namespace Mono.CSharp
 
 		public override void Emit ()
 		{
+			if (member_type == Module.Compiler.BuiltinTypes.AsUntyped)
+				Module.PredefinedAttributes.AsUntypedAttribute.EmitAttribute (FieldBuilder);
+
 			if (member_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
 				Module.PredefinedAttributes.Dynamic.EmitAttribute (FieldBuilder);
 			} else if (!Parent.IsCompilerGenerated && member_type.HasDynamicElement) {

@@ -251,6 +251,7 @@ namespace flash.utils {
 			return str;		
 		}
  	 	
+		[return: PlayScript.AsUntyped]
 		public dynamic readObject() {
 			Stream stream = getRawStream();
 			PlayScript.Profiler.Begin("amf-parse");

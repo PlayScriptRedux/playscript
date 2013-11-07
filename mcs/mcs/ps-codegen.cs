@@ -87,7 +87,7 @@ namespace {1} {{
 			if (__dynamicProps != null) {{
 				return __dynamicProps.__TryGetDynamicValue(name, out value);
 			}} else {{
-				value = null;
+				value = PlayScript.Undefined._undefined;
 				return false;
 			}}
 		}}

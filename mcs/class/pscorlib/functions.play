@@ -49,41 +49,37 @@ package {
 	public function isXMLName(str:String):Boolean {
 		throw new System.NotImplementedException();	
 	}
- 	 	
-	public function parseFloat(str:String):Number {
-		if (str == "undefined") return System.Double.NaN;
 
-		if (!System.String.IsNullOrEmpty(str))
-		{
-			return System.Double.Parse(str);
-		} else {
+	public function parseFloat(str:String):Number {
+		var n:Number;
+		if (!double.TryParse(str, out n)) {
 			return System.Double.NaN;
 		}
+		return n;
 	}
 
 	// need to create this temporary class to hold static variables
-	public class TraceConfig
-	{
+	public class TraceConfig {
 		public static var enable:Boolean = true;
 	}
 
 	public static function trace(o:System.Object):void {
 		if (!TraceConfig.enable) return;
-		var str = (o!=null) ? o.ToString() : "";
+		var str = String(o);
 		System.Console.WriteLine(str);
 		Telemetry.Session.WriteTrace(str);
 	}
 		
 	public static function trace(o1:System.Object, o2:System.Object):void {
 		if (!TraceConfig.enable) return;
-		var str = System.String.Format("{0} {1}", o1, o2);
+		var str = System.String.Format("{0} {1}", String(o1), String(o2));
 		System.Console.WriteLine(str);
 		Telemetry.Session.WriteTrace(str);
 	}
 
 	public static function trace(o1:System.Object, o2:System.Object, o3:System.Object):void {
 		if (!TraceConfig.enable) return;
-		var str = System.String.Format("{0} {1} {2}", o1, o2, o3);
+		var str = System.String.Format("{0} {1} {2}", String(o1), String(o2), String(o3));
 		System.Console.WriteLine(str);
 		Telemetry.Session.WriteTrace(str);
 	}
@@ -91,37 +87,38 @@ package {
 	public static function trace(o1:System.Object, o2:System.Object, o3:System.Object, ...args):void {
 		if (!TraceConfig.enable) return;
 		var sb = new System.Text.StringBuilder();
-		sb.AppendFormat("{0} {1} {2}", o1, o2, o3);
+		sb.AppendFormat("{0} {1} {2}", String(o1), String(o2), String(o3));
 		for each (var o:System.Object in args) {
-			sb.AppendFormat(" {0}", o);
+			sb.AppendFormat(" {0}", String(o));
 		}
 		var str = sb.ToString();
 		System.Console.WriteLine(str);
 		Telemetry.Session.WriteTrace(str);
 	}
- 	 	
-	public function parseInt(str:String, radix:uint):int {
+
+	public function parseInt(str:String, radix:uint):Number {
 		if (radix != 0 && radix != 10) 
 			throw new System.NotImplementedException();
 
-		if (str == null || str == "") return 0;
 
-		if (str.StartsWith("0x", System.StringComparison.Ordinal)) {
-			// parse hex
-			return System.Convert.ToInt32(str.Substring(2), 16);
-		} else {
-			if (!str.Contains('.')) {
-				return System.Convert.ToInt32(str);
-			} else {
-				return int(System.Convert.ToDouble(str));
+		if (str != null && str.StartsWith("0x", System.StringComparison.Ordinal)) {
+			var i:uint;
+			if (!uint.TryParse(str.Substring(2), System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.CurrentCulture, out i)) {
+				return System.Double.NaN;
 			}
+			return i;
 		}
+
+		var n:Number;
+		if (!double.TryParse(str, out n)) {
+			return System.Double.NaN;
+		}
+		return int(n);
 	}
 
 	public function parseInt(str:String):int {
 		return parseInt(str, 10);
 	}
-
 
 	public function unescape(str:String):String {
 		throw new System.NotImplementedException();
@@ -131,8 +128,7 @@ package {
 		return PlayScript.Dynamic.ObjectIsClass(o,type);
 	}
 	
-	public function invokeStaticMethod(type:Class, methodName:String, args:Array):Object
-	{
+	public function invokeStaticMethod(type:Class, methodName:String, args:Array):Object {
 		// pass this off to C# code
 		return PlayScript.Dynamic.InvokeStaticMethod(type, methodName, args);
 	}
@@ -148,8 +144,7 @@ package {
 		}
 	}
 
-	public function setStaticProperty(type:Class, propertyName:String, v:Object):void
-	{
+	public function setStaticProperty(type:Class, propertyName:String, v:Object):void {
 		// pass this off to C# code
 		if (!PlayScript.Dynamic.SetStaticMember(type, propertyName, v)) {
 			throw new Error("Could not find static property: " + propertyName);

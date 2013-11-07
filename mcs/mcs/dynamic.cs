@@ -352,7 +352,7 @@ namespace Mono.CSharp
 			eclass = ExprClass.Value;
 
 			if (type == null)
-				type = rc.BuiltinTypes.Dynamic;
+				type = rc.FileType == SourceFileType.PlayScript ? rc.BuiltinTypes.AsUntyped : rc.BuiltinTypes.Dynamic;
 
 			if (rc.Report.Errors == errors)
 				return true;
@@ -847,19 +847,48 @@ namespace Mono.CSharp
 			}
 
 			if (rc.Module.PredefinedTypes.IsPlayScriptAotMode && rc.Module.Compiler.Settings.NewDynamicRuntime_Convert) {
-				return CreateDynamicConversion(rc, expr.Resolve(rc), this.Type).Resolve(rc);
+				var conversion = CreateDynamicConversion (rc, expr.Resolve (rc), this.Type);
+				if (conversion != null)
+					return conversion.Resolve (rc);
 			}
 
 			return base.DoResolve(rc);
 		}
 
 		#region IDynamicCallSite implementation
+
 		public static Expression CreateDynamicConversion(ResolveContext rc, Expression expr, TypeSpec target_type)
 		{
-			if ((target_type.IsClass || target_type.IsInterface) && (target_type.BuiltinType != BuiltinTypeSpec.Type.String)){
-				// perform empty cast to reference type
+			var expr_type = expr.Type;
+
+			// object can hold any value
+			if (target_type.BuiltinType == BuiltinTypeSpec.Type.Object)
 				return EmptyCast.Create(expr, target_type, rc);
+
+			// casts between Object (Dynamic) and * (AsUntyped), and vice versa
+			if ((expr_type.IsDynamic || TypeManager.IsAsUndefined (expr_type, rc)) && target_type.IsDynamic) {
+				if (expr_type == target_type)
+					return expr; // nothing to do
+
+				// in C#, allow dynamic to hold undefined
+				if (rc.FileType != SourceFileType.PlayScript)
+					return EmptyCast.Create (expr, target_type, rc).Resolve (rc);
+
+				// cast from * (AsUntyped) to Object (Dynamic)
+				if ((expr.Type.IsAsUntyped || TypeManager.IsAsUndefined (expr.Type, rc)) && !target_type.IsAsUntyped) {
+					var args = new Arguments (1);
+					args.Add (new Argument (EmptyCast.RemoveDynamic (rc, expr)));
+					var function = new MemberAccess (new TypeExpression (rc.Module.PredefinedTypes.PsConverter.Resolve (), expr.Location), "ConvertToObj", expr.Location);
+					return new Invocation (function, args);
+				}
+
+				// cast from Object (Dynamic) to * (AsUntyped)
+				return EmptyCast.Create (expr, target_type, rc).Resolve (rc);
 			}
+
+			// other class types must be type checked - fall back to the slow path
+			if ((target_type.IsClass || target_type.IsInterface) && target_type.BuiltinType != BuiltinTypeSpec.Type.String)
+				return null;
 
 			TypeSpec converter = rc.Module.PredefinedTypes.PsConverter.Resolve();
 
@@ -1022,7 +1051,7 @@ namespace Mono.CSharp
 				type,
 				site_args, 
 				loc
-				);
+			);
 		}
 
 		public override Expression InvokeCallSite(ResolveContext rc, Expression site, Arguments args, TypeSpec returnType, bool isStatement)
@@ -1040,9 +1069,10 @@ namespace Mono.CSharp
 					site_args.Add(new Argument(index));
 
 					// get as an object
-					var type_args = new TypeArguments();
-					type_args.Add(new TypeExpression(rc.BuiltinTypes.Object, loc));
-					return new Invocation(new MemberAccess(site, "GetIndexAs", type_args, loc), site_args);
+					if (returnType != null && returnType.IsAsUntyped)
+						return new Invocation(new MemberAccess(site, "GetIndexAsUntyped"), site_args);
+					else
+						return new Invocation(new MemberAccess(site, "GetIndexAsObject"), site_args);
 				} else {
 					var site_args = new Arguments(2);
 					site_args.Add(new Argument(obj));
@@ -1065,6 +1095,7 @@ namespace Mono.CSharp
 					// set as an object
 					var type_args = new TypeArguments();
 					type_args.Add(new TypeExpression(rc.BuiltinTypes.Object, loc));
+					// TODO: AsUntyped parameters aren't yet supported, so there is no SetIndexAsUntyped
 					return new Invocation(new MemberAccess(site, "SetIndexAs", type_args, loc), site_args);
 				} else {
 					var site_args = new Arguments(3);
@@ -1347,7 +1378,7 @@ namespace Mono.CSharp
 				type,
 				site_args, 
 				loc
-				);
+			);
 		}
 
 		public override Expression InvokeCallSite(ResolveContext rc, Expression site, Arguments args, TypeSpec returnType, bool isStatement)
@@ -1360,7 +1391,10 @@ namespace Mono.CSharp
 				if (NeedsCastToObject(returnType)) {
 					var site_args = new Arguments(1);
 					site_args.Add(new Argument(obj));
-					return new Invocation(new MemberAccess(site, "GetMemberAsObject"), site_args);
+					if (returnType != null && returnType.IsAsUntyped)
+						return new Invocation(new MemberAccess(site, "GetMemberAsUntyped"), site_args);
+					else
+						return new Invocation(new MemberAccess(site, "GetMemberAsObject"), site_args);
 				} else {
 					var site_args = new Arguments(1);
 					site_args.Add(new Argument(obj));
@@ -1377,6 +1411,7 @@ namespace Mono.CSharp
 					site_args.Add(new Argument(obj));
 					site_args.Add(new Argument(new Cast(new TypeExpression(rc.BuiltinTypes.Object, loc), setVal, loc)));
 					site_args.Add(new Argument(new BoolLiteral(rc.BuiltinTypes, false, loc)));
+					// TODO: AsUntyped parameters aren't yet supported, so there is no SetMemberAsUntyped
 					return new Invocation(new MemberAccess(site, "SetMemberAsObject"), site_args);
 				} else {
 					var site_args = new Arguments(2);
@@ -1573,7 +1608,11 @@ namespace Mono.CSharp
 
 		private Expression CreateDynamicUnaryOperation(ResolveContext rc)
 		{
-			this.Arguments.CastDynamicArgs(rc);
+			// if type is "*", we return "*"; otherwise, dynamic
+			var isAsUntyped = Arguments[0].Type.IsAsUntyped;
+
+			// strip dynamic from argument
+			Arguments.CastDynamicArgs(rc);
 
 			TypeSpec unary = rc.Module.PredefinedTypes.PsUnaryOperation.Resolve();
 			string type = GetDynamicUnaryTypeName(Arguments[0].Type);
@@ -1581,11 +1620,11 @@ namespace Mono.CSharp
 			// create unary method name
 			string unaryMethod = this.name + type;
 
-			var ret = new Invocation(new MemberAccess(new TypeExpression(unary, loc), unaryMethod, loc), this.Arguments).Resolve(rc);
+			var ret = new Invocation (new MemberAccess (new TypeExpression (unary, loc), unaryMethod, loc), Arguments).Resolve (rc);
 			if (ret.Type == rc.BuiltinTypes.Object) {
-				// cast object to dynamic for return types
-				ret = new Cast (new TypeExpression (rc.BuiltinTypes.Dynamic, loc), ret, loc).Resolve (rc);
-			} 
+				// cast object to untyped/dynamic for return types
+				ret = new Cast (new TypeExpression (isAsUntyped ? rc.BuiltinTypes.AsUntyped : rc.BuiltinTypes.Dynamic, loc), ret, loc).Resolve (rc);
+			}
 			return ret;
 		}
 
@@ -1666,6 +1705,9 @@ namespace Mono.CSharp
 
 		private Expression CreateDynamicBinaryOperation(ResolveContext rc)
 		{
+			// if either type is "*", we return "*"; otherwise, dynamic
+			var isAsUntyped = (Arguments [0].Type.IsAsUntyped || Arguments [1].Type.IsAsUntyped);
+
 			// strip dynamic from all arguments
 			Arguments.CastDynamicArgs(rc);
 
@@ -1768,11 +1810,11 @@ namespace Mono.CSharp
 			// append to binary method instead of using overloads
 			binaryMethod += leftType + rightType;
 
-			var ret = new Invocation(new MemberAccess(new TypeExpression(binary, loc), binaryMethod, loc), Arguments).Resolve(rc);
+			var ret = new Invocation (new MemberAccess (new TypeExpression (binary, loc), binaryMethod, loc), Arguments).Resolve (rc);
 			if (ret.Type == rc.BuiltinTypes.Object) {
-				// cast object to dynamic for return types
-				ret = new Cast (new TypeExpression (rc.BuiltinTypes.Dynamic, loc), ret, loc).Resolve (rc);
-			} 
+				// cast object to untyped/dynamic for return types
+				ret = new Cast (new TypeExpression (isAsUntyped ? rc.BuiltinTypes.AsUntyped : rc.BuiltinTypes.Dynamic, loc), ret, loc).Resolve (rc);
+			}
 			return ret;
 		}
 

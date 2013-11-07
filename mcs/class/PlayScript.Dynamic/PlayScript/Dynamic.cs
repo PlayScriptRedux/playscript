@@ -423,13 +423,18 @@ namespace PlayScript
 		{
 			Stats.Increment(StatsCounter.Dynamic_IsNullOrUndefinedInvoked);
 
-			// false implicitly converts to null in ActionScript, but not C#. Check for it here.
-			if (value is bool && (bool)value == false)
-				return true;
-
 			// NOTE: using Object.ReferenceEquals to avoid invoking PSBinaryOperation,
 			// which does more work than necessary
 			return (value == null || Object.ReferenceEquals(value, PlayScript.Undefined._undefined));
+		}
+
+		public static bool IsUndefined(object value)
+		{
+			Stats.Increment(StatsCounter.Dynamic_IsUndefinedInvoked);
+
+			// NOTE: using Object.ReferenceEquals to avoid invoking PSBinaryOperation,
+			// which does more work than necessary
+			return Object.ReferenceEquals(value, PlayScript.Undefined._undefined);
 		}
 
 		/// <summary>

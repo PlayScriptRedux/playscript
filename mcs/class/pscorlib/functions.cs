@@ -32,7 +32,10 @@ namespace _root
 				return (string)o;
 			}
 			if (o == null) {
-				return null;
+				return "null";
+			}
+			if (o == PlayScript.Undefined._undefined) {
+				return "undefined";
 			}
 
 			return o.ToString();

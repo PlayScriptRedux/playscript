@@ -15,6 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Diagnostics;
 
 namespace flash.events
 {
@@ -35,6 +36,7 @@ namespace flash.events
 		private IEventDispatcher _evRedirect; // this is used for redirecting all event handling, not sure if this is needed
 		private IEventDispatcher _evTarget;
 		private Dictionary<string, List<EventListener>> _events;
+		private static bool		 _traceEventDispatch = false;
 
 		public EventDispatcher() {
 			_evTarget = this;
@@ -119,9 +121,13 @@ namespace flash.events
 						EventListener listener = evList[i];
 						try
 						{
+							TraceEventDispatchBefore(listener.invoker);
+
 							var span = Telemetry.Session.BeginSpan();
 							listener.invoker.InvokeOverrideA1(ev);
 							Telemetry.Session.EndSpanValue(sNameAsEvent, span, ev.type);
+
+							TraceEventDispatchAfter(listener.invoker);
 						}
 						catch (Exception e)
 						{
@@ -363,6 +369,21 @@ namespace flash.events
 
 			evList.Insert(i, el);
 			return el;
+		}
+
+		[Conditional("DEBUG")]
+		private void TraceEventDispatchBefore(PlayScript.InvokerBase invoker)
+		{
+			if (_traceEventDispatch)
+			{
+				string debugName = invoker.GetDebugName();
+				System.Console.WriteLine("    " + debugName);
+			}
+		}
+
+		[Conditional("DEBUG")]
+		private void TraceEventDispatchAfter(PlayScript.InvokerBase invoker)
+		{
 		}
 
 		private static readonly Amf.Amf3String sNameAsEvent = new Amf.Amf3String(".as.event");

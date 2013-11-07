@@ -64,6 +64,7 @@ namespace Mono.CSharp
 		// build-in type (mostly object)
 		//
 		public readonly BuiltinTypeSpec Dynamic;
+		public readonly BuiltinTypeSpec AsUntyped;
 
 		// Predefined operators tables
 		public readonly Binary.PredefinedOperator[] OperatorsBinaryStandard;
@@ -120,6 +121,7 @@ namespace Mono.CSharp
 
 			// TODO: Maybe I should promote it to different kind for faster compares
 			Dynamic = new BuiltinTypeSpec ("dynamic", BuiltinTypeSpec.Type.Dynamic);
+			AsUntyped = new BuiltinTypeSpec ("*", BuiltinTypeSpec.Type.Dynamic);
 
 			OperatorsBinaryStandard = Binary.CreateStandardOperatorsTable (this);
 			AsOperatorsBinaryStandard = Binary.CreateAsStandardOperatorsTable (this);
@@ -170,6 +172,8 @@ namespace Mono.CSharp
 
 			// Set internal build-in types
 			Dynamic.SetDefinition (Object);
+			AsUntyped.SetDefinition (Object);
+			AsUntyped.Modifiers |= Modifiers.AS_UNTYPED;
 
 			return true;
 		}
@@ -392,6 +396,8 @@ namespace Mono.CSharp
 			Task.Define ();
 			if (TaskGeneric.Define ())
 				TaskGeneric.TypeSpec.IsGenericTask = true;
+
+			AsUndefined.Define ();
 		}
 
 		private void CheckPlayScriptDynamicMode()
@@ -498,7 +504,7 @@ namespace Mono.CSharp
 		public readonly PredefinedMember<FieldSpec> StructLayoutSize;
 		public readonly PredefinedMember<MethodSpec> TypeGetTypeFromHandle;
 		public readonly PredefinedMember<MethodSpec> AsIKeyEnumerableGetKeyEnumerator;
-
+		public readonly PredefinedMember<MethodSpec> AsUntypedAttributeCtor;
 
 		public PredefinedMembers (ModuleContainer module)
 		{
@@ -808,6 +814,9 @@ namespace Mono.CSharp
 			AsIKeyEnumerableGetKeyEnumerator = new PredefinedMember<MethodSpec> (module, types.AsIKeyEnumerable,
 			                                                             "GetKeyEnumerator", TypeSpec.EmptyTypes);
 
+			AsUntypedAttributeCtor = new PredefinedMember<MethodSpec> (module, atypes.AsUntypedAttribute, MemberFilter.Constructor (
+				ParametersCompiled.CreateFullyResolved (
+					ArrayContainer.MakeType (module, btypes.Bool))));
 		}
 	}
 
@@ -1207,7 +1216,26 @@ namespace Mono.CSharp
 	{
 		return t is ElementTypeSpec;
 	}
-
+	
+	/// <summary>
+	///   Utility function to check whether a type is AsUndefined or not
+	/// </summary>
+	public static bool IsAsUndefined (TypeSpec type, ResolveContext opt_ec)
+	{
+		if (opt_ec == null)
+			return false;
+		
+		//
+		// AsUndefined is only defined if PlayScript.Dynamic is included, so
+		// we excplitily check if it has been defined, rather than calling
+		// Resolve.
+		//
+		if (opt_ec.Module.PredefinedTypes.AsUndefined.IsDefined && type == opt_ec.Module.PredefinedTypes.AsUndefined.TypeSpec)
+			return true;
+		
+		return false;
+	}
+	
 	/// <summary>
 	///   Utility function that can be used to probe whether a type
 	///   is managed or not.  

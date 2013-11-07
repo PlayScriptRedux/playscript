@@ -1489,6 +1489,7 @@ namespace PlayScript.Expando {
 		public int Next;
 	}
 
+	[DynamicClass]
 	[ComVisible(false)]
 	[Serializable]
 	[DebuggerDisplay ("Count = {Count}")]
@@ -1571,6 +1572,7 @@ namespace PlayScript.Expando {
 		}
 		
 		public dynamic this [string key] {
+			[return: AsUntyped]
 			get {
 				key = PlayScript.Dynamic.FormatKeyForAs (key);
 				if (key == null)
@@ -1588,9 +1590,7 @@ namespace PlayScript.Expando {
 						return valueSlots [cur];
 					cur = linkSlots [cur].Next;
 				}
-				// this is not an exceptional condition although we should be returning undefined instead of null
-				return null;
-				//throw new KeyNotFoundException ();
+				return PlayScript.Undefined._undefined;
 			}
 			
 			set {
@@ -2099,7 +2099,7 @@ namespace PlayScript.Expando {
 			}
 			
 			// we did not find the slot
-			value = default (object);
+			value = PlayScript.Undefined._undefined;
 			return false;
 		}
 

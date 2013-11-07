@@ -38,7 +38,7 @@ package
 			a.push("orange");
 			delete a["0.0"]; // should set index 0 to undefined
 			delete a[0]; // should set index 0 to undefined
-			if (a[0] != undefined)
+			if (a[0] !== undefined)
 				return 5;
 			if (a.indexOf("orange") != 2)
 				return 6;

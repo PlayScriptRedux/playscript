@@ -93,6 +93,11 @@ namespace PlayScript.DynamicRuntime
 			return SetIndexAs<T>(o, (int)index, value);
 		}
 
+		public T SetIndexAs<T> (object o, float index, T value)
+		{
+			return SetIndexAs<T>(o, (int)index, value);
+		}
+
 		public T SetIndexAs<T> (object o, string key, T value)
 		{
 			Stats.Increment(StatsCounter.SetIndexBinderInvoked);
@@ -145,6 +150,8 @@ namespace PlayScript.DynamicRuntime
 				SetIndexAs<T>(o, (uint)key, value);
 			} else  if (key is double) {
 				SetIndexAs<T>(o, (double)key, value);
+			} else  if (key is float) {
+				SetIndexAs<T>(o, (float)key, value);
 			} else {
 				throw new InvalidOperationException("Cannot index object with key of type: " + key.GetType());
 			}

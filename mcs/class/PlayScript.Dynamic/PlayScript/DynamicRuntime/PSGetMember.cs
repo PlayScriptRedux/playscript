@@ -30,7 +30,7 @@ namespace PlayScript.DynamicRuntime
 			mName = name;
 		}
 
-		public T GetNamedMember<T>(object o, string name )
+		public T GetNamedMember<T>(object o, string name)
 		{
 			if (name != mName)
 			{
@@ -42,7 +42,17 @@ namespace PlayScript.DynamicRuntime
 			return GetMember<T>(o);
 		}
 
-		public object GetMemberAsObject(object o)
+		public dynamic GetMemberAsObject(object o)
+		{
+			var result = GetMember<object>(o);
+			// Need to check for undefined if we're not returning AsUntyped
+			if (Dynamic.IsUndefined (result))
+				result = null;
+			return result;
+		}
+
+		[return: AsUntyped]
+		public dynamic GetMemberAsUntyped(object o)
 		{
 			return GetMember<object>(o);
 		}
@@ -97,7 +107,7 @@ namespace PlayScript.DynamicRuntime
 				return default(T);
 			}
 
-			if (o == null) {
+			if (PlayScript.Dynamic.IsNullOrUndefined(o)) {
 				return default(T);
 			}
 

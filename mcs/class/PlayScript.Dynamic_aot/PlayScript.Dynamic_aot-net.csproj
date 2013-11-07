@@ -115,6 +115,9 @@
     <Compile Include="..\PlayScript.Dynamic\AssemblyInfo.cs">
       <Link>AssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\AsUntypedAttribute.cs">
+      <Link>PlayScript\AsUntypedAttribute.cs</Link>
+    </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\Undefined.cs">
       <Link>PlayScript\Undefined.cs</Link>
     </Compile>
@@ -202,6 +205,9 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\TypeLogger.cs">
       <Link>PlayScript\DynamicRuntime\TypeLogger.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSBinaryArithmetic.cs">
+      <DependentUpon>PlayScript\DynamicRuntime\PSBinaryArithmetic.tt</DependentUpon>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -213,6 +219,10 @@
     <None Include="PlayScript.Dynamic_aot.dll.sources" />
     <None Include="..\PlayScript.Dynamic\PlayScript.Dynamic.dll.sources">
       <Link>PlayScript.Dynamic.dll.sources</Link>
+    </None>
+    <None Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSBinaryArithmetic.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>PlayScript\DynamicRuntime\PSBinaryArithmetic.cs</LastGenOutput>
     </None>
   </ItemGroup>
 </Project>

@@ -1737,7 +1737,12 @@ namespace PlayScript
 				return (ToT)value;
 			}
 
-			if (value == null) {
+			if (Dynamic.IsNullOrUndefined(value))
+			{
+				if (value == null)
+					return default(ToT);
+				if (IsNumeric ())
+					return FromObject (double.NaN);
 				return default(ToT);
 			}
 
@@ -1750,6 +1755,27 @@ namespace PlayScript
 			// We assume these are various classes and structs (and not primitive types)
 			// We don't have other choice than boxing and cast - for classes it should be pretty quick
 			return (ToT)value;
+		}
+
+		static bool IsNumeric()
+		{
+			switch (Type.GetTypeCode (typeof (ToT)))
+			{
+			case TypeCode.Byte:
+			case TypeCode.SByte:
+			case TypeCode.UInt16:
+			case TypeCode.UInt32:
+			case TypeCode.UInt64:
+			case TypeCode.Int16:
+			case TypeCode.Int32:
+			case TypeCode.Int64:
+			case TypeCode.Decimal:
+			case TypeCode.Double:
+			case TypeCode.Single:
+				return true;
+			default:
+				return false;
+			}
 		}
 	}
 

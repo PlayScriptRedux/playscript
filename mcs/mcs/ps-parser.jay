@@ -3646,7 +3646,7 @@ type_expression
 	  }
 	| STAR
 	  {
-	  	$$ = new TypeExpression (compiler.BuiltinTypes.Dynamic, GetLocation ($1));
+		$$ = new TypeExpression (compiler.BuiltinTypes.AsUntyped, GetLocation ($1));
 	  }
 //	| namespace_or_type_expr pointer_stars
 //	  {
@@ -7033,7 +7033,7 @@ catch_clause
 			type = new UntypedExceptionExpression (lt.Location);
 		}
 
-		if (type.Type == compiler.BuiltinTypes.Dynamic)
+		if (type.Type != null && type.Type.IsDynamic)
 			type = new UntypedExceptionExpression (lt.Location);
 
 		var c = new Catch (current_block, GetLocation ($1));

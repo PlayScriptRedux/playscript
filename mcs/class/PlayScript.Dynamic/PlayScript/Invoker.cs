@@ -169,6 +169,8 @@ namespace PlayScript
 			// We could not update the current one, we have to create it
 			return ActionCreator.CreateInvoker(target, methodInfo);
 		}
+
+		public abstract string GetDebugName(); 
 	}
 
 	public class DynamicInvoker : InvokerBase
@@ -265,6 +267,11 @@ namespace PlayScript
 			return this;
 #endif
 		}
+
+		public override string GetDebugName()
+		{
+			return mMethod.DeclaringType.FullName + "." + mMethod.Name;
+		}
 	}
 
 	/// <summary>
@@ -344,6 +351,11 @@ namespace PlayScript
 			mMethod = methodInfo;
 			// If methods are different, we will have to reset default parameters
 			return this;
+		}
+
+		public override string GetDebugName()
+		{
+			return mMethod.DeclaringType.FullName + "." + mMethod.Name;
 		}
 
 		private static object[] sTemp = new object[1];
@@ -905,6 +917,11 @@ namespace PlayScript
 			return null;
 		}
 
+		public override string GetDebugName()
+		{
+			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
+		}
+
 		void ICallerA.Call()
 		{
 			mDelegate();
@@ -967,6 +984,11 @@ namespace PlayScript
 			return null;
 		}
 
+		public override string GetDebugName()
+		{
+			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
+		}
+
 		void ICallerA.Call()
 		{
 			CheckDefaultArguments(0, mDelegate.Method);
@@ -1026,6 +1048,11 @@ namespace PlayScript
 		{
 			mDelegate((P1)args[0], (P2)args[1]);
 			return null;
+		}
+
+		public override string GetDebugName()
+		{
+			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
 		}
 
 		void ICallerA.Call()
@@ -1094,6 +1121,11 @@ namespace PlayScript
 		{
 			mDelegate((P1)args[0], (P2)args[1], (P3)args[2]);
 			return null;
+		}
+
+		public override string GetDebugName()
+		{
+			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
 		}
 
 		void ICallerA.Call()
@@ -1169,6 +1201,11 @@ namespace PlayScript
 		{
 			mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3]);
 			return null;
+		}
+
+		public override string GetDebugName()
+		{
+			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
 		}
 
 		void ICallerA.Call()
@@ -1251,6 +1288,11 @@ namespace PlayScript
 		{
 			mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4]);
 			return null;
+		}
+
+		public override string GetDebugName()
+		{
+			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
 		}
 
 		void ICallerA.Call()
@@ -1341,6 +1383,11 @@ namespace PlayScript
 		{
 			mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5]);
 			return null;
+		}
+
+		public override string GetDebugName()
+		{
+			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
 		}
 
 		void ICallerA.Call()
@@ -1438,6 +1485,11 @@ namespace PlayScript
 		{
 			mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6]);
 			return null;
+		}
+
+		public override string GetDebugName()
+		{
+			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
 		}
 
 		void ICallerA.Call()
@@ -1543,6 +1595,11 @@ namespace PlayScript
 		{
 			mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6], (P8)args[7]);
 			return null;
+		}
+
+		public override string GetDebugName()
+		{
+			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
 		}
 
 		void ICallerA.Call()
@@ -1654,6 +1711,11 @@ namespace PlayScript
 			return mDelegate();
 		}
 
+		public override string GetDebugName()
+		{
+			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
+		}
+
 		R ICallerF<R>.Call()
 		{
 			return mDelegate();
@@ -1713,6 +1775,11 @@ namespace PlayScript
 		public override object UnsafeInvokeWith(object[] args)
 		{
 			return mDelegate((P1)args[0]);
+		}
+
+		public override string GetDebugName()
+		{
+			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
 		}
 
 		R ICallerF<R>.Call()
@@ -1782,6 +1849,11 @@ namespace PlayScript
 		public override object UnsafeInvokeWith(object[] args)
 		{
 			return mDelegate((P1)args[0], (P2)args[1]);
+		}
+
+		public override string GetDebugName()
+		{
+			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
 		}
 
 		R ICallerF<R>.Call()
@@ -1865,6 +1937,11 @@ namespace PlayScript
 		public override object UnsafeInvokeWith(object[] args)
 		{
 			return mDelegate((P1)args[0], (P2)args[1], (P3)args[2]);
+		}
+
+		public override string GetDebugName()
+		{
+			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
 		}
 
 		R ICallerF<R>.Call()
@@ -1961,6 +2038,11 @@ namespace PlayScript
 		public override object UnsafeInvokeWith(object[] args)
 		{
 			return mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3]);
+		}
+
+		public override string GetDebugName()
+		{
+			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
 		}
 
 		R ICallerF<R>.Call()
@@ -2071,6 +2153,11 @@ namespace PlayScript
 		public override object UnsafeInvokeWith(object[] args)
 		{
 			return mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4]);
+		}
+
+		public override string GetDebugName()
+		{
+			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
 		}
 
 		R ICallerF<R>.Call()
@@ -2194,6 +2281,11 @@ namespace PlayScript
 		public override object UnsafeInvokeWith(object[] args)
 		{
 			return mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5]);
+		}
+
+		public override string GetDebugName()
+		{
+			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
 		}
 
 		R ICallerF<R>.Call()
@@ -2331,6 +2423,11 @@ namespace PlayScript
 		public override object UnsafeInvokeWith(object[] args)
 		{
 			return mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6]);
+		}
+
+		public override string GetDebugName()
+		{
+			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
 		}
 
 		R ICallerF<R>.Call()
@@ -2482,6 +2579,11 @@ namespace PlayScript
 		public override object UnsafeInvokeWith(object[] args)
 		{
 			return mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6], (P8)args[7]);
+		}
+
+		public override string GetDebugName()
+		{
+			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
 		}
 
 		R ICallerF<R>.Call()
