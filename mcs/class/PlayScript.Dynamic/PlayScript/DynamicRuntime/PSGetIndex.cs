@@ -61,9 +61,9 @@ namespace PlayScript.DynamicRuntime
 			}
 
 			// fallback on object accessor and cast it to T
-			var objectAccessor = o as IDynamicAccessor<object>;
-			if (objectAccessor != null) {
-				object value = objectAccessor.GetIndex(index);
+			var untypedAccessor = o as IDynamicAccessorUntyped;
+			if (untypedAccessor != null) {
+				object value = untypedAccessor.GetIndex(index);
 				if (value == null) return default(T);
 				if (value is T) {
 					return (T)value;
@@ -139,9 +139,9 @@ namespace PlayScript.DynamicRuntime
 			}
 
 			// fallback on object accessor and cast it to T
-			var objectAccessor = o as IDynamicAccessor<object>;
-			if (objectAccessor != null) {
-				object value = objectAccessor.GetIndex(key);
+			var untypedAccessor = o as IDynamicAccessorUntyped;
+			if (untypedAccessor != null) {
+				object value = untypedAccessor.GetIndex(key);
 				if (value == null) return default(T);
 				if (value is T) {
 					return (T)value;

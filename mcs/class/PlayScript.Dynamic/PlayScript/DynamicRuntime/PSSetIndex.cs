@@ -38,10 +38,10 @@ namespace PlayScript.DynamicRuntime
 				return value;
 			}
 
-			// fallback on object accessor
-			var objectAccessor = o as IDynamicAccessor<object>;
-			if (objectAccessor != null) {
-				objectAccessor.SetIndex(index, (object)value);
+			// fallback on untyped accessor
+			var untypedAccessor = o as IDynamicAccessorUntyped;
+			if (untypedAccessor != null) {
+				untypedAccessor.SetIndex(index, (object)value);
 				return value;
 			}
 
@@ -110,10 +110,10 @@ namespace PlayScript.DynamicRuntime
 				return value;
 			}
 
-			// fallback on object accessor
-			var objectAccessor = o as IDynamicAccessor<object>;
-			if (objectAccessor != null) {
-				objectAccessor.SetIndex(key, (object)value);
+			// fallback on untyped accessor
+			var untypedAccessor = o as IDynamicAccessorUntyped;
+			if (untypedAccessor != null) {
+				untypedAccessor.SetIndex(key, (object)value);
 				return value;
 			}
 

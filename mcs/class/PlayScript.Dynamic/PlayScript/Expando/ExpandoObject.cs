@@ -2767,7 +2767,6 @@ namespace PlayScript.Expando {
 		#endregion
 
 
-		#region IDynamicAccessor implementation
 
 		private string ConvertKey(string key)
 		{
@@ -2790,41 +2789,35 @@ namespace PlayScript.Expando {
 			return key.ToString();
 		}
 
+		#region IDynamicAccessor implementation
 		object IDynamicAccessor<object>.GetMember(string name, ref uint hint)
 		{
 			return this[name];
 		}
-
 		void IDynamicAccessor<object>.SetMember(string name, ref uint hint, object value)
 		{
 			this[name] = value;
 		}
-
 		object IDynamicAccessor<object>.GetIndex(string key)
 		{
 			return this[ConvertKey(key)];
 		}
-
 		void IDynamicAccessor<object>.SetIndex(string key, object value)
 		{
 			this[ConvertKey(key)] = value;
 		}
-
 		object IDynamicAccessor<object>.GetIndex(int key)
 		{
 			return this[ConvertKey(key)];
 		}
-
 		void IDynamicAccessor<object>.SetIndex(int key, object value)
 		{
 			this[ConvertKey(key)] = value;
 		}
-
 		object IDynamicAccessor<object>.GetIndex(object key)
 		{
 			return this[ConvertKey(key)];
 		}
-
 		void IDynamicAccessor<object>.SetIndex(object key, object value)
 		{
 			this[ConvertKey(key)] = value;
@@ -2832,26 +2825,67 @@ namespace PlayScript.Expando {
 		#endregion
 
 		#region IDynamicAccessorUntyped implementation
-
 		object IDynamicAccessorUntyped.GetMember(string name, ref uint hint)
 		{
 			return this[name];
+		}
+		void IDynamicAccessorUntyped.SetMember(string name, ref uint hint, object value)
+		{
+			this[name] = value;
 		}
 		object IDynamicAccessorUntyped.GetIndex(string key)
 		{
 			return this[ConvertKey(key)];
 		}
+		void IDynamicAccessorUntyped.SetIndex(string key, object value)
+		{
+			this[ConvertKey(key)] = value;
+		}
 		object IDynamicAccessorUntyped.GetIndex(int key)
 		{
 			return this[ConvertKey(key)];
+		}
+		void IDynamicAccessorUntyped.SetIndex(int key, object value)
+		{
+			this[ConvertKey(key)] = value;
 		}
 		object IDynamicAccessorUntyped.GetIndex(object key)
 		{
 			return this[ConvertKey(key)];
 		}
+		void IDynamicAccessorUntyped.SetIndex(object key, object value)
+		{
+			this[ConvertKey(key)] = value;
+		}
+		bool IDynamicAccessorUntyped.HasMember(string name)
+		{
+			return this.ContainsKey(name);
+		}
+		bool IDynamicAccessorUntyped.HasMember(string name, ref uint hint)
+		{
+			return this.ContainsKey(name);
+		}
+		bool IDynamicAccessorUntyped.DeleteMember(string name)
+		{
+			return this.Remove(name);
+		}
+		bool IDynamicAccessorUntyped.HasIndex(int key)
+		{
+			return this.ContainsKey(ConvertKey(key));
+		}
+		bool IDynamicAccessorUntyped.DeleteIndex(int key)
+		{
+			return this.Remove(ConvertKey(key));
+		}
+		bool IDynamicAccessorUntyped.HasIndex(object key)
+		{
+			return this.ContainsKey(ConvertKey(key));
+		}
+		bool IDynamicAccessorUntyped.DeleteIndex(object key)
+		{
+			return this.Remove(ConvertKey(key));
+		}
 		#endregion
-
-
 	}
 }
 

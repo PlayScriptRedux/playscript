@@ -38,6 +38,7 @@ namespace Amf
 		IDynamicClass,	
 		IDynamicObject
     {
+
 		// class definition
 		public readonly Amf3ClassDef 					ClassDef;
 		// property values (one for each Amf3ClassDef Properties)
@@ -58,12 +59,7 @@ namespace Amf
 			}
 		}
 
-		public bool HasMember(string name, ref uint hint)
-		{
-			return HasMember(name);
-		}
-
-		public bool HasMember(string key)
+		public bool ContainsKey(string key)
 		{
 			// lookup index of value from class definition
 			int index = ClassDef.GetPropertyIndex(key);
@@ -80,7 +76,7 @@ namespace Amf
 			return false;
 		}
 
-		public bool DeleteMember(string key)
+		public bool Remove(string key)
 		{
 			if (DynamicProperties != null) {
 				// remove dynamic properties
@@ -386,40 +382,66 @@ namespace Amf
 		}
 		#endregion
 
-		#region IDynamicHasProperty implementation
-		public bool HasIndex(int key)
-		{
-			return HasMember(ConvertKey(key));
-		}
-		public bool DeleteIndex(int key)
-		{
-			return DeleteMember(ConvertKey(key));
-		}
-		public bool HasIndex(object key)
-		{
-			return HasMember(ConvertKey(key));
-		}
-		public bool DeleteIndex(object key)
-		{
-			return DeleteMember(ConvertKey(key));
-		}
-		#endregion
-		#region IDynamicAccessor implementation
+		#region IDynamicAccessorUntyped implementation
 		object IDynamicAccessorUntyped.GetMember(string name, ref uint hint)
 		{
 			return GetPropertyValueAsUntyped(name);
+		}
+		void IDynamicAccessorUntyped.SetMember(string name, ref uint hint, object value)
+		{
+			SetPropertyValueAsUntyped(name, value);
 		}
 		object IDynamicAccessorUntyped.GetIndex(string key)
 		{
 			return GetPropertyValueAsUntyped(key);
 		}
+		void IDynamicAccessorUntyped.SetIndex(string key, object value)
+		{
+			SetPropertyValueAsUntyped(key, value);
+		}
 		object IDynamicAccessorUntyped.GetIndex(int key)
 		{
 			return GetPropertyValueAsUntyped(ConvertKey(key));
 		}
+		void IDynamicAccessorUntyped.SetIndex(int key, object value)
+		{
+			SetPropertyValueAsUntyped(ConvertKey(key), value);
+		}
 		object IDynamicAccessorUntyped.GetIndex(object key)
 		{
 			return GetPropertyValueAsUntyped(ConvertKey(key));
+		}
+		void IDynamicAccessorUntyped.SetIndex(object key, object value)
+		{
+			SetPropertyValueAsUntyped(ConvertKey(key), value);
+		}
+		bool IDynamicAccessorUntyped.HasMember(string name)
+		{
+			return this.ContainsKey(name);
+		}
+		bool IDynamicAccessorUntyped.HasMember(string name, ref uint hint)
+		{
+			return this.ContainsKey(name);
+		}
+		bool IDynamicAccessorUntyped.DeleteMember(string name)
+		{
+			return this.Remove(name);
+		}
+		bool IDynamicAccessorUntyped.HasIndex(int key)
+		{
+			return this.ContainsKey(ConvertKey(key));
+		}
+		bool IDynamicAccessorUntyped.DeleteIndex(int key)
+		{
+			return this.Remove(ConvertKey(key));
+		}
+		bool IDynamicAccessorUntyped.HasIndex(object key)
+		{
+			return this.ContainsKey(ConvertKey(key));
+		}
+		bool IDynamicAccessorUntyped.DeleteIndex(object key)
+		{
+			return this.Remove(ConvertKey(key));
 		}
 		#endregion
 		#region IDynamicAccessor implementation
@@ -721,12 +743,12 @@ namespace Amf
 
 		bool IDynamicClass.__DeleteDynamicValue(object name)
 		{
-			return DeleteMember(ConvertKey(name));
+			return Remove(ConvertKey(name));
 		}
 
 		bool IDynamicClass.__HasDynamicValue(string name)
 		{
-			return HasMember(name);
+			return ContainsKey(name);
 		}
 
 		IEnumerable IDynamicClass.__GetDynamicNames()

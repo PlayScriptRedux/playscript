@@ -60,10 +60,10 @@ namespace PlayScript.DynamicRuntime
 				return value;
 			}
 
-			// fallback on object accessor
-			var objectAccessor = o as IDynamicAccessor<object>;
-			if (objectAccessor != null) {
-				objectAccessor.SetMember(mName, ref mNameHint, (object)value);
+			// fallback on untyped accessor
+			var untypedAccessor = o as IDynamicAccessorUntyped;
+			if (untypedAccessor != null) {
+				untypedAccessor.SetMember(mName, ref mNameHint, (object)value);
 				return value;
 			}
 

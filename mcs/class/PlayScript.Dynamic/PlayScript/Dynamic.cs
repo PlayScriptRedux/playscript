@@ -488,7 +488,7 @@ namespace PlayScript
 			if (IsNullOrUndefined(o)) return false;
 
 			// handle dynamic objects
-			var dynamicObject = o as IDynamicHasProperty;
+			var dynamicObject = o as IDynamicAccessorUntyped;
 			if (dynamicObject != null) {
 				return dynamicObject.HasMember(name);
 			}
