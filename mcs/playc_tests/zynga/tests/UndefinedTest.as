@@ -131,10 +131,13 @@ package
 			var d3:Dictionary = new Dictionary();
 			var s:String = d3["missing"];
 			if (s !== null)
-				return 1;
+				return 33;
 			s = String(d3["missing"]);
 			if (s != "undefined")
-				return 2;
+				return 34;
+			s = d3["missing"] as String;
+			if (s !== null)
+				return 35;
 
 			return 0;
 		}
