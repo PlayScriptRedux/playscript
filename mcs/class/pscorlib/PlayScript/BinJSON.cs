@@ -1455,7 +1455,7 @@ namespace playscript.utils {
 		internal static bool _useJson = false;
 		internal static bool _dumpBinary = false;
 		internal static string _dumpBinaryPath = "";
-		internal static bool _loadFromBinary = false;
+		internal static bool _registeredHandlers = false;
 
 		private static System.Text.StringBuilder _log = new System.Text.StringBuilder();
 
@@ -1472,39 +1472,43 @@ namespace playscript.utils {
 		/// <param name="url">The original relative load url from which the file was loaded.</param>
 		public static dynamic parse(string json, string url = null) 
 		{
-
-//			#if DEBUG
-			System.Diagnostics.Stopwatch sw = new Stopwatch ();
-			Process proc = Process.GetCurrentProcess();
-			long memStart = proc.WorkingSet64;
-			sw.Reset ();
-			sw.Start ();
-//			#endif
-
 			object ret;
 
-			if (_useJson) {
+			if (_useJson || json.StartsWith ("binjson$$")) {
+
+				// Do just ordinary JSON parsing..
 				ret = _root.JSON.parse (json);
+			
 			} else {
+
+//				#if DEBUG
+				System.Diagnostics.Stopwatch sw = new Stopwatch ();
+				Process proc = Process.GetCurrentProcess ();
+				long memStart = proc.WorkingSet64;
+				sw.Reset ();
+				sw.Start ();
+//				#endif
+
+
 				_useFloat32 = _numberSize == NumberSize.Float32;
 				if (json == null) {
 					throw new ArgumentNullException ("json");
 				}
-				ret = Parser.Parse(json);
-			}
+				ret = Parser.Parse (json);
 
-//			#if DEBUG
-			sw.Stop ();
-			trace("** " + (_useJson ? "JSON" : "BINJSON") + ": Parse '" + (url != null ? url : "<unknown>") + "': " + 
-			            sw.ElapsedMilliseconds + "ms memUsed: " + (proc.WorkingSet64 - memStart) + 
-			      		" totalMem: " + proc.WorkingSet64);
-//			#endif
+//				#if DEBUG
+				sw.Stop ();
+				trace ("** " + (_useJson ? "JSON" : "BINJSON") + ": Parse '" + (url != null ? url : "<unknown>") + "': " + 
+					sw.ElapsedMilliseconds + "ms memUsed: " + (proc.WorkingSet64 - memStart) + 
+					" totalMem: " + proc.WorkingSet64);
+//				#endif
 
-			// Dump binary
-			if (_dumpBinary && !_loadFromBinary && url != null) {
-				string saveUrl = url.Replace (".json", ".binj");
-				var data = ((BinJsonObject)ret).Document.ToArray();
-				System.IO.File.WriteAllBytes (_dumpBinaryPath + saveUrl, data);
+				// Dump binary
+				if (_dumpBinary && !_registeredHandlers && url != null) {
+					string saveUrl = url.Replace (".json", ".binj");
+					var data = ((BinJsonObject)ret).Document.ToArray ();
+					System.IO.File.WriteAllBytes (_dumpBinaryPath + saveUrl, data);
+				}
 			}
 
 			return ret;
@@ -1523,30 +1527,37 @@ namespace playscript.utils {
 			return doc.GetRootObject ();
 		}
 
+
+
 		/// <summary>
-		/// True to load json data from binary cached.
+		/// Registers the load handlers for the .binj and .binj.z file extensions when .json files are encountered.
 		/// </summary>
-		/// <value><c>true</c> if load from binary; otherwise, <c>false</c>.</value>
-		public static bool loadFromBinary {
-			get {
-				return _loadFromBinary;
-			}
-			set {
-				_loadFromBinary = value;
+		public static void registerLoadHandlers ()
+		{
+			if (_registeredHandlers == false) {
+				flash.net.URLLoader.addLoaderHandler (".json", ".binj.z", (Func<string, flash.utils.ByteArray,flash.utils.ByteArray>)BinJsonLoaderHandler);
+				flash.net.URLLoader.addLoaderHandler (".json", ".binj", (Func<string, flash.utils.ByteArray,flash.utils.ByteArray>)BinJsonLoaderHandler);
+				_registeredHandlers = true;
 			}
 		}
 
-		/// <summary>
-		/// Converts .json url to .binj url conditional on BinJSON.loadFromBinary being true.
-		/// </summary>
-		/// <returns>The converted url.</returns>
-		/// <param name="url">The original url.</param>
-		public static string convertUrl(string url)
+		private static flash.utils.ByteArray BinJsonLoaderHandler(string path, flash.utils.ByteArray byteArray) 
 		{
-			if (_loadFromBinary) {
-				return url.replace (".json", ".binj");
-			}
-			return url;
+			string key = "binjson$$" + path;
+
+			// uncompress data
+			if (path.EndsWith(".z"))
+				byteArray.uncompress();
+
+			// create function to do parsing
+			Func<string,dynamic> func = delegate(string jsonKey) { 
+				return BinJSON.parseBinary(byteArray);
+			};
+
+			// store parse function in json translator
+			JSON.storeJsonParseFunc(key, func);
+
+			return flash.utils.ByteArray.fromArray(System.Text.Encoding.UTF8.GetBytes(key));
 		}
 
 		/// <summary>
