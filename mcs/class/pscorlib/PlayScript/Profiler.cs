@@ -126,6 +126,9 @@ namespace PlayScript
 		// this should be called at the beginning of a frame
 		public static void OnBeginFrame()
 		{
+			if (!Enabled)
+				return;
+
 			if (ProfileLoading && !sHasProfiledLoading) {
 				// begin session for loading
 				StartSession("Loading", int.MaxValue, 0);
