@@ -287,6 +287,10 @@ namespace PlayScript
 
 			// box value types to number and cache boxed object in our reference
 			switch (mType) {
+			case TypeCode.Undefined:
+				// return default value
+				mObject = defaultValue;
+				break;
 			case TypeCode.Boolean:
 				mObject = mBoolValue ? sBoolTrue : sBoolFalse;
 				break;
@@ -308,8 +312,7 @@ namespace PlayScript
 				break;
 			}
 
-			// return default value
-			return defaultValue;
+			return mObject;
 		}
 
 		public int AsInt(int defaultValue = 0)
@@ -434,8 +437,9 @@ namespace PlayScript
 			}
 			switch (mType) {
 			case TypeCode.Undefined:
-			case TypeCode.Null:
 				return defaultValue;
+			case TypeCode.Null:
+				return null;
 			case TypeCode.Boolean:
 				return mBoolValue ? "true" : "false";
 			case TypeCode.Int:
