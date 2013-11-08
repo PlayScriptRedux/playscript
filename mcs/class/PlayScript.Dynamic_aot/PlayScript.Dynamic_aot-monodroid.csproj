@@ -13,6 +13,7 @@
     <AndroidResgenClass>Resource</AndroidResgenClass>
     <MonoAndroidResourcePrefix>Resources</MonoAndroidResourcePrefix>
     <MonoAndroidAssetsPrefix>Assets</MonoAndroidAssetsPrefix>
+    <AssemblyName>PlayScript.Dynamic_monodroid</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -26,7 +27,6 @@
     <ConsolePause>false</ConsolePause>
     <NoWarn>618</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <AssemblyName>PlayScript.Dynamic_monodroid</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Optimize>true</Optimize>
@@ -38,7 +38,6 @@
     <DefineConstants>PLATFORM_MONODROID</DefineConstants>
     <NoWarn>618</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <AssemblyName>PlayScript.Dynamic_monodroid</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'QE|AnyCPU' ">
     <Optimize>true</Optimize>
@@ -50,7 +49,6 @@
     <DefineConstants>PLATFORM_MONODROID</DefineConstants>
     <NoWarn>618</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <AssemblyName>PlayScript.Dynamic_monodroid</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
