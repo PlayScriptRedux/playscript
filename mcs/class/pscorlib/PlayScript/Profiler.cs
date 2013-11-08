@@ -123,7 +123,24 @@ namespace PlayScript
 			NextFramesElapsed = 1;
 		}
 
-		public static void OnFrame()
+		// this should be called at the beginning of a frame
+		public static void OnBeginFrame()
+		{
+			if (!Enabled)
+				return;
+
+			if (ProfileLoading && !sHasProfiledLoading) {
+				// begin session for loading
+				StartSession("Loading", int.MaxValue, 0);
+				sHasProfiledLoading = true;
+			}
+
+			LastTelemetryFrameSpanStart = Telemetry.Session.BeginSpan();
+			Profiler.Begin("frame");
+		}
+
+		// this should be called at the end of a frame
+		public static void OnEndFrame()
 		{
 			if (!Enabled)
 				return;
@@ -141,12 +158,6 @@ namespace PlayScript
 				}
 			}
 			Profiler.End("frame");
-
-			if (ProfileLoading && !sHasProfiledLoading) {
-				// begin session for loading
-				StartSession("Loading", int.MaxValue, 1);
-				sHasProfiledLoading = true;
-			}
 
 #if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			if (ProfileGPU) {
@@ -207,9 +218,6 @@ namespace PlayScript
 					OnStartReport();
 				}
 			}
-
-			LastTelemetryFrameSpanStart = Telemetry.Session.BeginSpan();
-			Profiler.Begin("frame");
 		}
 
 		/// <summary>

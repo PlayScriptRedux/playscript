@@ -28,6 +28,7 @@ using System.Text;
 using _root;
 using System.Reflection;
 using PlayScript;
+using System.Runtime.CompilerServices;
 
 namespace Amf
 {
@@ -35,8 +36,9 @@ namespace Amf
     {
 		private static readonly Amf.DataConverter conv = Amf.DataConverter.BigEndian;
 
-        private Stream stream;
-		private readonly byte[] tempData = new byte[8];
+		private byte[] 	mData;
+		private int 	mPosition;
+		private int		mLength;
 
         private List<string> stringTable = new List<string>();
         private List<object> objectTable = new List<object>();
@@ -58,11 +60,16 @@ namespace Amf
 		public static bool UseExpandoAsDefault = true;
 
         public Amf3Parser(Stream stream, bool autoSetCapacity = true)
+			: this(stream.Read((int)stream.Length), 0, (int)stream.Length, autoSetCapacity)	// read stream into byte array
         {
-            if (stream == null)
-                throw new ArgumentNullException("stream");
+		}
 
-            this.stream = stream;
+		public Amf3Parser(byte[] data, int offset, int length, bool autoSetCapacity = true)
+		{
+			// set data source
+			mData   = data;
+			mPosition = offset;
+			mLength = length;
 
 			// set default serializer
 			if (UseExpandoAsDefault) {
@@ -73,24 +80,29 @@ namespace Amf
 
 			if (autoSetCapacity) 
 			{
-				// use some simple tests to set capacity automatically
-				if (stream.Length > 1024 * 1024)
-				{
-					// large file
-					SetCapacity(4096, 64 * 1024, 256);
-				} 
-				else if (stream.Length > 128 * 1024)
-				{
-					// medium file
-					SetCapacity(2048, 16 * 1024, 128);
-				} 
-				else 
-				{
-					// small file
-					SetCapacity(1024, 4 * 1024, 64);
-				}
+				AutoSetCapacity();
 			}
-        }
+		}
+
+		public void AutoSetCapacity()
+		{
+			// use some simple tests to set capacity automatically
+			if (mLength > 1024 * 1024)
+			{
+				// large file
+				SetCapacity(32 * 1024, 80 * 1024, 1024);
+			} 
+			else if (mLength > 128 * 1024)
+			{
+				// medium file
+				SetCapacity(2048, 16 * 1024, 128);
+			} 
+			else 
+			{
+				// small file
+				SetCapacity(1024, 4 * 1024, 64);
+			}
+		}
 
 		public void SetCapacity(int stringTableCapacity, int objectTableCapacity, int traitTableCapacity)
 		{
@@ -99,12 +111,20 @@ namespace Amf
 			traitTable.Capacity = traitTableCapacity;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		private byte ReadByte()
+		{
+			if (mPosition >= mLength) {
+				throw new EndOfStreamException();
+			}
+
+			return mData[mPosition++];
+		}
+
+
         public object ReadNextObject()
         {
-            int b = stream.ReadByte();
-
-            if (b < 0)
-                throw new EndOfStreamException();
+            byte b = ReadByte();
 
             Amf3TypeCode type = (Amf3TypeCode) b;
 
@@ -175,11 +195,7 @@ namespace Amf
 		// this avoids unnecessary boxing/unboxing of value types and speeds up deserialization
 		public void ReadNextObject(ref Variant value)
         {
-            int b = stream.ReadByte();
-
-            if (b < 0)
-                throw new EndOfStreamException();
-
+			byte b = ReadByte();
 			Amf3TypeCode type = (Amf3TypeCode) b;
             switch (type) {
             case Amf3TypeCode.Undefined:
@@ -255,9 +271,7 @@ namespace Amf
             int seen = 0;
 
             for (;;) {
-                int b = stream.ReadByte();
-                if (b < 0)
-                    throw new EndOfStreamException();
+                int b = (int)ReadByte();
 
                 if (seen == 3) {
                     integer = (integer << 8) | b;
@@ -281,20 +295,23 @@ namespace Amf
 
 		public int ReadInt32()
 		{
-			stream.Read(tempData, 0, sizeof(Int32));
-			return conv.GetInt32(tempData, 0);
+			int value = conv.GetInt32(mData, mPosition);
+			mPosition += sizeof(Int32);
+			return value;
 		}
 
 		public uint ReadUInt32()
 		{
-			stream.Read(tempData, 0, sizeof(UInt32));
-			return conv.GetUInt32(tempData, 0);
+			uint value = conv.GetUInt32(mData, mPosition);
+			mPosition += sizeof(UInt32);
+			return value;
 		}
 
         public double ReadNumber()
         {
-			stream.Read(tempData, 0, sizeof(double));
-            return conv.GetDouble(tempData, 0);
+			double value = conv.GetDouble(mData, mPosition);
+			mPosition += sizeof(double);
+			return value;
         }
 
         private static T GetTableEntry<T>(IList<T> table, int index)
@@ -317,7 +334,9 @@ namespace Amf
                 return GetTableEntry(stringTable, num >> 1);
             }
 
-            string str = Encoding.UTF8.GetString(stream.Read(num >> 1));
+			int count = num >> 1;
+            string str = Encoding.UTF8.GetString(mData, mPosition, count);
+			mPosition += count;
 
             if (str != "")
                 stringTable.Add(str);
@@ -380,7 +399,7 @@ namespace Amf
 			}
 
 			num >>= 1;
-			bool isFixed = stream.ReadByteOrThrow() != 0;
+			bool isFixed = ReadByte() != 0;
 			var vector = new Vector<double>((uint)num, isFixed);
 
 			objectTable.Add(vector);
@@ -402,7 +421,7 @@ namespace Amf
 			}
 
 			num >>= 1;
-			bool isFixed = stream.ReadByteOrThrow() != 0;
+			bool isFixed = ReadByte() != 0;
 			var vector = new Vector<int>((uint)num, isFixed);
 
 			objectTable.Add(vector);
@@ -424,7 +443,7 @@ namespace Amf
 			}
 
 			num >>= 1;
-			bool isFixed = stream.ReadByteOrThrow() != 0;
+			bool isFixed = ReadByte() != 0;
 			var vector = new Vector<uint>((uint)num, isFixed);
 
 			objectTable.Add(vector);
@@ -445,7 +464,7 @@ namespace Amf
 			}
 
 			num >>= 1;
-			bool isFixed = stream.ReadByteOrThrow() != 0;
+			bool isFixed = ReadByte() != 0;
 
 			// read object type name
 			// this class definition is not known until the first object has been read, but we don't need it here
@@ -485,7 +504,9 @@ namespace Amf
 
 			// read all data into byte array
 			byte[] data = new byte[num];
-			stream.ReadFully(data, 0, num);
+			for (int i=0; i < num; i++) {
+				data[i] = ReadByte();
+			}
 
 			var array = flash.utils.ByteArray.fromArray(data);
 			objectTable.Add(array);
@@ -502,7 +523,7 @@ namespace Amf
 			num >>= 1;
 
 			// weak keys?
-			bool weakKeys = stream.ReadByteOrThrow()!=0;
+			bool weakKeys = ReadByte()!=0;
 
 			// create dictionary
 			var dict = new flash.utils.Dictionary(weakKeys);

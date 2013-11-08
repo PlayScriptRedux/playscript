@@ -770,6 +770,7 @@ namespace PlayScript
 		// runs until graphics have been presented through Stage3D
 		public void RunUntilPresent(RectangleF bounds, Action onPresent = null)
 		{
+			Profiler.OnBeginFrame();
 			Telemetry.Session.OnBeginFrame();
 
 			// set context3D callback
@@ -802,8 +803,7 @@ namespace PlayScript
 			}
 
 			Telemetry.Session.OnEndFrame();
-
-			Profiler.OnFrame();
+			Profiler.OnEndFrame();
 		}
 		
 

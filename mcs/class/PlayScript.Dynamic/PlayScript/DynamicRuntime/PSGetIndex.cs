@@ -37,6 +37,60 @@ namespace PlayScript.DynamicRuntime
 			return result;
 		}
 
+		public dynamic GetIndexAsObject(object o, int index)
+		{
+			var result = GetIndexAs<object>(o, index);
+			// Need to check for undefined if we're not returning AsUntyped
+			if (Dynamic.IsUndefined (result))
+				result = null;
+			return result;
+		}
+
+		public dynamic GetIndexAsObject(object o, uint index)
+		{
+			var result = GetIndexAs<object>(o, index);
+			// Need to check for undefined if we're not returning AsUntyped
+			if (Dynamic.IsUndefined (result))
+				result = null;
+			return result;
+		}
+
+		public dynamic GetIndexAsObject(object o, long index)
+		{
+			var result = GetIndexAs<object>(o, index);
+			// Need to check for undefined if we're not returning AsUntyped
+			if (Dynamic.IsUndefined (result))
+				result = null;
+			return result;
+		}
+
+		public dynamic GetIndexAsObject(object o, float index)
+		{
+			var result = GetIndexAs<object>(o, index);
+			// Need to check for undefined if we're not returning AsUntyped
+			if (Dynamic.IsUndefined (result))
+				result = null;
+			return result;
+		}
+
+		public dynamic GetIndexAsObject(object o, double index)
+		{
+			var result = GetIndexAs<object>(o, index);
+			// Need to check for undefined if we're not returning AsUntyped
+			if (Dynamic.IsUndefined (result))
+				result = null;
+			return result;
+		}
+
+		public dynamic GetIndexAsObject(object o, string index)
+		{
+			var result = GetIndexAs<object>(o, index);
+			// Need to check for undefined if we're not returning AsUntyped
+			if (Dynamic.IsUndefined (result))
+				result = null;
+			return result;
+		}
+
 		[return: AsUntyped]
 		public dynamic GetIndexAsUntyped(object o, object index)
 		{
@@ -46,6 +100,42 @@ namespace PlayScript.DynamicRuntime
 				return accessor.GetIndex(index);
 			}
 
+			return GetIndexAs<object>(o, index);
+		}
+
+		[return: AsUntyped]
+		public dynamic GetIndexAsUntyped(object o, int index)
+		{
+			return GetIndexAs<object>(o, index);
+		}
+
+		[return: AsUntyped]
+		public dynamic GetIndexAsUntyped(object o, uint index)
+		{
+			return GetIndexAs<object>(o, index);
+		}
+
+		[return: AsUntyped]
+		public dynamic GetIndexAsUntyped(object o, long index)
+		{
+			return GetIndexAs<object>(o, index);
+		}
+
+		[return: AsUntyped]
+		public dynamic GetIndexAsUntyped(object o, float index)
+		{
+			return GetIndexAs<object>(o, index);
+		}
+
+		[return: AsUntyped]
+		public dynamic GetIndexAsUntyped(object o, double index)
+		{
+			return GetIndexAs<object>(o, index);
+		}
+
+		[return: AsUntyped]
+		public dynamic GetIndexAsUntyped(object o, string index)
+		{
 			return GetIndexAs<object>(o, index);
 		}
 
