@@ -8,7 +8,7 @@ namespace PlayScript
 	// this interface prevents any unnecessary boxing of value types as objects
 	public interface IDynamicAccessor<T> 
 	{
-		T		GetMember(string name, ref uint hint);
+		T		GetMember(string name, ref uint hint, T defaultValue);
 		void	SetMember(string name, ref uint hint, T value);
 		T		GetIndex(string key);
 		void	SetIndex(string key, T value);
@@ -23,7 +23,7 @@ namespace PlayScript
 	public interface IDynamicAccessorUntyped
 	{
 		// these methods get/set objects that may be undefined (PlayScript.Undefined._undefined)
-		object	GetMember(string name, ref uint hint);
+		object	GetMember(string name, ref uint hint, object defaultValue);
 		void	SetMember(string name, ref uint hint, object value);
 		object	GetIndex(string key);
 		void	SetIndex(string key, object value);
@@ -49,6 +49,21 @@ namespace PlayScript
 		int		Count {get;}
 	}
 
+	// Typed public accessors
+	public interface IDynamicAccessorTyped
+	{
+		string GetMemberString (string key, ref uint hint, string defaultValue);
+		void SetMemberString (string key, string value);
+		int GetMemberInt (string key, ref uint hint, int defaultValue);
+		void SetMemberInt (string key, int value);
+		uint GetMemberUInt (string key, ref uint hint, uint defaultValue);
+		void SetMemberUInt (string key, uint value);
+		double GetMemberNumber (string key, ref uint hint, double defaultValue);
+		void SetMemberNumber (string key, double value);
+		bool GetMemberBool (string key, ref uint hint, bool defaultValue);
+		void SetMemberBool (string key, bool value);
+	}
+
 	// this interface combines all the most common interfaces together into one dynamic object
 	// Expando, Dictionary, Array, Vector, BinJson, AmfObject all could implement this
 	public interface IDynamicObject
@@ -61,10 +76,12 @@ namespace PlayScript
 			IDynamicAccessor<string>, 
 			IDynamicAccessor<object>, 
 			IDynamicAccessorUntyped,
+			IDynamicAccessorTyped,
 			IKeyEnumerable, 
 			IEnumerable,
 			IEnumerable< KeyValuePair<string, object> >
 	{ 
+
 	}
 
 	public interface IDynamicClass

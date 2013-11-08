@@ -278,7 +278,7 @@ namespace PlayScript
 
 		// returns a boxed object
 		// will return null if undefined
-		public object AsObject()
+		public object AsObject(object defaultValue = null)
 		{
 			// return referenced or boxed object if we have it
 			if (mObject != null) {
@@ -308,11 +308,11 @@ namespace PlayScript
 				break;
 			}
 
-			// return boxed value
-			return mObject;
+			// return default value
+			return defaultValue;
 		}
 
-		public int AsInt()
+		public int AsInt(int defaultValue = 0)
 		{
 			if (mType == TypeCode.Int) {
 				return mIntValue;
@@ -324,7 +324,7 @@ namespace PlayScript
 				return (int)UIntValue;
 			}
 			if (mType == TypeCode.Undefined) {
-				return 0;
+				return defaultValue;
 			}
 			if (mType == TypeCode.String) {
 				string s =(string)mObject;
@@ -338,7 +338,7 @@ namespace PlayScript
 			throw new InvalidCastException("Cannot cast to Int");
 		}
 
-		public uint AsUInt()
+		public uint AsUInt(uint defaultValue = 0)
 		{
 			if (mType == TypeCode.UInt) {
 				return UIntValue;
@@ -350,7 +350,7 @@ namespace PlayScript
 				return (uint)mNumberValue;
 			}
 			if (mType == TypeCode.Undefined) {
-				return 0;
+				return defaultValue;
 			}
 			if (mType == TypeCode.String) {
 				string s =(string)mObject;
@@ -364,16 +364,16 @@ namespace PlayScript
 			throw new InvalidCastException("Cannot cast to UInt");
 		}
 
-		public bool AsBoolean()
+		public bool AsBoolean(bool defaultValue = false)
 		{
 			if (mType == TypeCode.Boolean) {
 				return mBoolValue;
 			}
 			if (mType == TypeCode.Null) {
-				return false;
+				return defaultValue;
 			}
 			if (mType == TypeCode.Undefined) {
-				return false;
+				return defaultValue;
 			}
 			if (mType == TypeCode.Int) {
 				return mIntValue != 0;
@@ -387,7 +387,7 @@ namespace PlayScript
 			throw new InvalidCastException("Cannot cast to Boolean");
 		}
 
-		public double AsNumber()
+		public double AsNumber(double defaultValue = 0.0)
 		{
 			if (mType == TypeCode.Number) {
 				return (double)mNumberValue;
@@ -396,7 +396,7 @@ namespace PlayScript
 				return (double)mIntValue;
 			}
 			if (mType == TypeCode.Undefined) {
-				return 0.0;
+				return defaultValue;
 			}
 			if (mType == TypeCode.String) {
 				return double.Parse((string)mObject);
@@ -407,7 +407,7 @@ namespace PlayScript
 			throw new InvalidCastException("Cannot cast to Number");
 		}
 
-		public float AsFloat()
+		public float AsFloat(float defaultValue = 0.0f)
 		{
 			if (mType == TypeCode.Number) {
 				return (float)mNumberValue;
@@ -416,7 +416,7 @@ namespace PlayScript
 				return (float)mIntValue;
 			}
 			if (mType == TypeCode.Undefined) {
-				return 0.0f;
+				return defaultValue;
 			}
 			if (mType == TypeCode.String) {
 				return float.Parse((string)mObject);
@@ -427,7 +427,7 @@ namespace PlayScript
 			throw new InvalidCastException("Cannot cast to float");
 		}
 
-		public string AsString()
+		public string AsString(string defaultValue = null)
 		{
 			if (mType == TypeCode.String) {
 				return (string)mObject;
@@ -435,7 +435,7 @@ namespace PlayScript
 			switch (mType) {
 			case TypeCode.Undefined:
 			case TypeCode.Null:
-				return null;
+				return defaultValue;
 			case TypeCode.Boolean:
 				return mBoolValue ? "true" : "false";
 			case TypeCode.Int:

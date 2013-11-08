@@ -57,7 +57,7 @@ namespace PlayScript.DynamicRuntime
 			// get accessor for untyped 
 			var accessor = o as IDynamicAccessorUntyped;
 			if (accessor != null) {
-				return accessor.GetMember(mName, ref mNameHint);
+				return accessor.GetMember(mName, ref mNameHint, null);
 			}
 
 			return GetMember<object>(o);
@@ -77,13 +77,13 @@ namespace PlayScript.DynamicRuntime
 			// get accessor for value type T
 			var accessor = o as IDynamicAccessor<T>;
 			if (accessor != null) {
-				return accessor.GetMember(mName, ref mNameHint);
+				return accessor.GetMember(mName, ref mNameHint, default(T));
 			}
 
 			// fallback on object accessor and cast it to T
 			var untypedAccessor = o as IDynamicAccessorUntyped;
 			if (untypedAccessor != null) {
-				object value = untypedAccessor.GetMember(mName, ref mNameHint);
+				object value = untypedAccessor.GetMember(mName, ref mNameHint, default(T));
 				if (value == null) return default(T);
 				if (value is T) {
 					return (T)value;
