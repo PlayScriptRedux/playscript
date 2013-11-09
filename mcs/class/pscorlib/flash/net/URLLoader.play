@@ -18,6 +18,7 @@ package flash.net {
 
 	import System.*;
 	import System.IO.*;
+	import System.Collections.Generic.*;
 	import flash.events.EventDispatcher;
 	import flash.events.Event;
 	import flash.events.TimerEvent;
@@ -44,9 +45,6 @@ package flash.net {
 
  	 	public property dataFormat : String { get; set; }
 
-		// playscript extension to load json resources with amf data instead
-		public property loadJsonAsAmf:Boolean {get; set;}
-
 		// Used for trace accurate metrics (has to be there even if it is not defined) - Shared for both loading and dispatch
 		public var startLoadTime : long;
 		public var endLoadTime : long;
@@ -60,9 +58,6 @@ package flash.net {
 		public function URLLoader(request:URLRequest = null) {
 			dataFormat = URLLoaderDataFormat.TEXT;
 			mRequest = request;
-
-			// get global setting for loading json as amf (defaults to false)
-			this.loadJsonAsAmf = PlayScript.Player.LoadJsonAsAmf;
 		}
  	 	
 		public function close():void {
@@ -401,15 +396,22 @@ package flash.net {
 			// handle file loading
 			var path:String = null;
 
-			if (this.loadJsonAsAmf && mRequest.url.EndsWith(".json")) {
-				// see if a compressed amf version exists and load it instead
-				path = PlayScript.Player.TryResolveResourcePath(mRequest.url + ".amf.z");
-				if (path != null) {
-					trace("URLLoader: loading amf instead of json: " + path);
+			// check any registered loader handlers
+			var curLoadHandler:LoaderHandler = null;
+			if (sLoaderHandlers != null) {
+				for each (var loadHandler:LoaderHandler in sLoaderHandlers) {
+					if (mRequest.url.EndsWith(loadHandler.sourceExt)) {
+						var foundPath:String = PlayScript.Player.TryResolveResourcePath(mRequest.url.Replace(loadHandler.sourceExt, loadHandler.targetExt));
+						if (foundPath != null) {
+							path = foundPath;
+							curLoadHandler = loadHandler;
+							trace("URLLoader: loading " + path + " instead of " + mRequest.url);
+						}
+					}
 				}
 			}
 
-			if (path ==null) {
+			if (path == null) {
 				path = PlayScript.Player.TryResolveResourcePath(mRequest.url);
 			}
 
@@ -420,13 +422,16 @@ package flash.net {
 				this.dispatchEvent(new IOErrorEvent(IOErrorEvent.IO_ERROR));
 				return;
 			}
-		
 
 #if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
 			// file exists. read it
-			var fileData:byte[] = File.ReadAllBytes(path);
+			var fileData:Byte[] = File.ReadAllBytes(path);
+//			var file:FileStream = new FileStream(path, FileMode.Open);
+//			var len:int = int(file.Length);
+//			var fileData:byte[] = new byte[len];
+//			await file.ReadAsync(fileData, 0, len);
+//			file.Close();
 #elif PLATFORM_MONODROID 
-
 			var dest:MemoryStream = new MemoryStream();
 			var src:Stream;
 
@@ -445,47 +450,30 @@ package flash.net {
 
 			src.CopyTo(dest);
 			var fileData:byte[] = dest.ToArray();
-
 #else
 			var fileData:byte[] = new byte[0];
 #endif
 
-			if (this.loadJsonAsAmf && path.EndsWith(".json.amf.z")) {
-				var amfKey:String =  "json$$" + path;
-
-				// create byte array for amf data
-				var amfData:ByteArray = ByteArray.fromArray(fileData);
-				// uncompress data
-				amfData.uncompress();
-
-				// create function to do amf parsing
-				var func:Func.<String, Object> = function(key:String):Object { 
-					amfData.position = 0;
-					// read object from amf stream
-					var obj:Object = amfData.readObject();
-					return obj;
-				};
-
-				// store parse function in json translator
-				JSON.storeJsonParseFunc(amfKey, func);
-				// return the key we generated, it will be used by json parse
-				fileData = System.Text.Encoding.UTF8.GetBytes(amfKey);
-			} 
+			if (curLoadHandler != null) {
+				var callback:Func.<String,ByteArray,ByteArray> = Func.<String,ByteArray,ByteArray>(curLoadHandler.handler);
+				var outBytes:ByteArray = callback(path, ByteArray.fromArray(fileData)) as ByteArray;
+				fileData = outBytes.getRawArray();
+			}
 
 			switch (dataFormat)
 			{
 				case URLLoaderDataFormat.BINARY: {
-					var ba:ByteArray = ByteArray.fromArray(fileData);
-					this.data = ba;
-					break;
-				}
+				var ba:ByteArray = ByteArray.fromArray(fileData);
+				this.data = ba;
+				break;
+			}
 				case URLLoaderDataFormat.TEXT: {
-					var text:String =  System.Text.Encoding.UTF8.GetString(fileData);
-					this.data = text;
-					break;
-				}
+				var text:String =  System.Text.Encoding.UTF8.GetString(fileData);
+				this.data = text;
+				break;
+			}
 				default:
-					throw new System.NotImplementedException();
+				throw new System.NotImplementedException();
 			}
 
 			// update bytes loaded
@@ -559,17 +547,39 @@ package flash.net {
 					return;
 			}
 		}
+		
+		public static function addLoaderHandler(sourceExt:String, targetExt:String, handler:Function):void {
+			if (sLoaderHandlers == null) {
+				sLoaderHandlers = new System.Collections.Generic.List.<LoaderHandler>();
+			}
+			sLoaderHandlers.Add(new LoaderHandler(sourceExt, targetExt, handler));
+		}
 
 		// request for this loader
 		private var mRequest:URLRequest;
 		// unique request id
 		private var mId:int;
 
+		public class LoaderHandler {
+
+			public var sourceExt:String;
+			public var targetExt:String;
+			public var handler:Function;
+
+				public function LoaderHandler(sourceExt:String, targetExt:String, handler:Function)
+				{
+					this.sourceExt = sourceExt;
+					this.targetExt = targetExt;
+					this.handler = handler;
+				}
+		}
+
 		// url loader queue (to be processed each frame)
 		private static var sQueue:Vector.<System.Action> = new Vector.<System.Action>();
 		private static var sNextRequestId:int = 1;
 		private static var sTelemetryRequestUrl:Telemetry.Value = new Telemetry.Value(".network.requesturl");
 		private static var sTelemetryRequestId:Telemetry.Value = new Telemetry.Value(".network.request.id");
+		private static var sLoaderHandlers:System.Collections.Generic.List.<LoaderHandler> = null;
 	}
 
 }

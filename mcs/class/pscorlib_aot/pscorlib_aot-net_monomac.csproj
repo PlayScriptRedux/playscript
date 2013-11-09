@@ -31,7 +31,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
-    <DefineConstants>PLATFORM_MONOMAC;OPENGL</DefineConstants>
+    <DefineConstants>PLATFORM_MONOMAC;OPENGL;PERFORMANCE_MODE</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>219</NoWarn>
@@ -903,6 +903,9 @@
     </Compile>
     <Compile Include="..\pscorlib\PlayScript\ParamsDelegateTypes.cs">
       <Link>PlayScript\ParamsDelegateTypes.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\PlayScript\BinJSON.cs">
+      <Link>PlayScript\BinJSON.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\display\BitmapData.cs">
       <Link>flash\display\BitmapData.cs</Link>

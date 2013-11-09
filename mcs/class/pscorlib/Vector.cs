@@ -435,9 +435,11 @@ namespace _root {
 				mArray = newArray;
 			}
 		}
-		
+
+		// NOTE: This method should not be public!  However intializers depend on it and so it 
+		// still has to be public for now.
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public void Add(T value) 
+ 	    public void Add(T value) 
 		{
 			this.push (value);
 		}
@@ -502,7 +504,7 @@ namespace _root {
 			}
 			
 			foreach (var item in items) {
-				this.Add ((T)item);
+				this.push ((T)item);
 			}
 		}
 
@@ -514,7 +516,7 @@ namespace _root {
 			}
 		
 			foreach (var item in items) {
-				this.Add (item);
+				this.push (item);
 			}
 		}
 

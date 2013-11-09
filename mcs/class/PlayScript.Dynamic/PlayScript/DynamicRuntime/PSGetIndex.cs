@@ -94,6 +94,12 @@ namespace PlayScript.DynamicRuntime
 		[return: AsUntyped]
 		public dynamic GetIndexAsUntyped(object o, object index)
 		{
+			// get untyped accessor
+			var accessor = o as IDynamicAccessorUntyped;
+			if (accessor != null) {
+				return accessor.GetIndex(index);
+			}
+
 			return GetIndexAs<object>(o, index);
 		}
 
@@ -137,6 +143,24 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.GetIndexBinderInvoked);
 			Stats.Increment(StatsCounter.GetIndexBinder_Int_Invoked);
+
+			// get accessor for value type T
+			var accessor = o as IDynamicAccessor<T>;
+			if (accessor != null) {
+				return accessor.GetIndex(index);
+			}
+
+			// fallback on object accessor and cast it to T
+			var untypedAccessor = o as IDynamicAccessorUntyped;
+			if (untypedAccessor != null) {
+				object value = untypedAccessor.GetIndex(index);
+				if (value == null) return default(T);
+				if (value is T) {
+					return (T)value;
+				} else {
+					return PlayScript.Dynamic.ConvertValue<T>(value);
+				}
+			}
 
 			var l = o as IList<T>;
 			if (l != null) {
@@ -197,6 +221,24 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.GetIndexBinderInvoked);
 			Stats.Increment(StatsCounter.GetIndexBinder_Key_Invoked);
+
+			// get accessor for value type T
+			var accessor = o as IDynamicAccessor<T>;
+			if (accessor != null) {
+				return accessor.GetIndex(key);
+			}
+
+			// fallback on object accessor and cast it to T
+			var untypedAccessor = o as IDynamicAccessorUntyped;
+			if (untypedAccessor != null) {
+				object value = untypedAccessor.GetIndex(key);
+				if (value == null) return default(T);
+				if (value is T) {
+					return (T)value;
+				} else {
+					return PlayScript.Dynamic.ConvertValue<T>(value);
+				}
+			}
 
 			// handle dictionaries
 			var dict = o as IDictionary;

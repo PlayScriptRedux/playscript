@@ -35,6 +35,7 @@ namespace PlayScript.DynamicRuntime
 			if (name != mName)
 			{
 				mName = name;
+				mNameHint = 0; // invalidate name hint when name changes
 				mType = null;
 			}
 
@@ -53,6 +54,12 @@ namespace PlayScript.DynamicRuntime
 		[return: AsUntyped]
 		public dynamic GetMemberAsUntyped(object o)
 		{
+			// get accessor for untyped 
+			var accessor = o as IDynamicAccessorUntyped;
+			if (accessor != null) {
+				return accessor.GetMember(mName, ref mNameHint, null);
+			}
+
 			return GetMember<object>(o);
 		}
 
@@ -66,6 +73,24 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.GetMemberBinderInvoked);
 
 			TypeLogger.LogType(o);
+
+			// get accessor for value type T
+			var accessor = o as IDynamicAccessor<T>;
+			if (accessor != null) {
+				return accessor.GetMember(mName, ref mNameHint, default(T));
+			}
+
+			// fallback on object accessor and cast it to T
+			var untypedAccessor = o as IDynamicAccessorUntyped;
+			if (untypedAccessor != null) {
+				object value = untypedAccessor.GetMember(mName, ref mNameHint, default(T));
+				if (value == null) return default(T);
+				if (value is T) {
+					return (T)value;
+				} else {
+					return PlayScript.Dynamic.ConvertValue<T>(value);
+				}
+			}
 
 			// resolve as dictionary (this is usually an expando)
 			var dict = o as IDictionary<string, object>;
@@ -246,6 +271,7 @@ namespace PlayScript.DynamicRuntime
 
 
 		private string			mName;
+		private uint 			mNameHint;
 		private Type			mType;
 		private PropertyInfo	mProperty;
 		private FieldInfo		mField;
