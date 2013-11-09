@@ -3707,6 +3707,18 @@ namespace Mono.CSharp
 					}
 
 					//
+					// PlayScript supports comparison between objects other than numeric types
+					//
+					if ((oper & Operator.ComparisonMask) != 0 && (oper & Operator.EqualityMask) == 0) {
+						if (!BuiltinTypeSpec.IsPrimitiveType (left.Type) || !BuiltinTypeSpec.IsPrimitiveType (right.Type)) {
+							var args = new Arguments (2);
+							args.Add (new Argument (left));
+							args.Add (new Argument (right));
+							return new DynamicBinaryExpression (oper, this.GetOperatorExpressionTypeName (), args, loc).Resolve (ec);
+						}
+					}
+
+					//
 					// Delegate to PlayScript.Dynamic.IsNullOrUndefined where possible
 					//
 					if (Oper == Operator.Equality || Oper == Operator.Inequality) {

@@ -8,6 +8,7 @@
 ../PlayScript.Dynamic/PlayScript/DynamicClassAttribute.cs
 ../PlayScript.Dynamic/PlayScript/DynamicProperties.cs
 ../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSBinaryArithmetic.cs
+../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSBinaryComparison.cs
 ../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSBinaryOperation.cs
 ../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSConverter.cs
 ../PlayScript.Dynamic/PlayScript/DynamicRuntime/PSGetIndex.cs
