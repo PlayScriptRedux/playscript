@@ -373,7 +373,11 @@ namespace playscript.utils {
 		}
 
 		public object CloneToExpando() {
+#if DYNAMIC_SUPPORT
+			IDictionary<string, object> expando = new PlayScript.Expando.ExpandoObject ();
+#else
 			var expando = new PlayScript.Expando.ExpandoObject ();
+#endif
 			KeyCrcPairs keyPairs = this.KeyPairs;
 			int len = keyPairs.length;
 			IDynamicAccessor<object> getMemProv = (IDynamicAccessor<object>)this;
