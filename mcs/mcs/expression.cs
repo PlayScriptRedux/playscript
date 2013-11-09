@@ -3708,9 +3708,11 @@ namespace Mono.CSharp
 
 					//
 					// PlayScript supports comparison between objects other than numeric types
+					// and strings.
 					//
 					if ((oper & Operator.ComparisonMask) != 0 && (oper & Operator.EqualityMask) == 0) {
-						if (!BuiltinTypeSpec.IsPrimitiveType (left.Type) || !BuiltinTypeSpec.IsPrimitiveType (right.Type)) {
+						if ((!BuiltinTypeSpec.IsPrimitiveType (left.Type) || !BuiltinTypeSpec.IsPrimitiveType (right.Type)) &&
+							!(left.Type.BuiltinType == BuiltinTypeSpec.Type.String && right.Type.BuiltinType == BuiltinTypeSpec.Type.String)) {
 							var args = new Arguments (2);
 							args.Add (new Argument (left));
 							args.Add (new Argument (right));
