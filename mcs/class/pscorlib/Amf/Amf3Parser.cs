@@ -609,34 +609,58 @@ namespace Amf
 				}
 			}
 
-			// create object instance using serializer
-			object obj = serializer.NewInstance(classDef);
+			// fast path the Amf3Object serializer
+			if (serializer is Amf3Object.Serializer) {
+				var obj = new Amf3Object(classDef);
 
-			// add to object table
-            objectTable.Add(obj);
+				// add to object table
+				objectTable.Add(obj);
 
-			// begin property remapping
-			var reader = classDef.CreatePropertyReader();
-			reader.BeginRead(this);
-			// read object using serializer
-			serializer.ReadObject(reader, obj);
-			// end property remapping
-			classDef.ReleasePropertyReader(reader);
-
-			// read dynamic properties
-			if (classDef.Dynamic) {
-				var dc = obj as PlayScript.IDynamicClass;
-				string key = ReadString();
-				while (key != "") {
-					var value  = ReadNextObject();
-					if (dc != null) {
-						dc.__SetDynamicValue(key, value);
-					}
-					key = ReadString();
+				// read all properties into object
+				int count = classDef.Properties.Length;
+				for(int i=0; i < count; i++) {
+					ReadNextObject(ref obj.Values[i]);
 				}
-			}
+				
+				// read dynamic properties
+				if (classDef.Dynamic) {
+					string key = ReadString();
+					while (key != "") {
+						var value  = ReadNextObject();
+						obj.SetPropertyValueAsObject(key, value);
+						key = ReadString();
+					}
+				}
+				return obj;
+			} else {
+				// create object instance using serializer
+				object obj = serializer.NewInstance(classDef);
 
-            return obj;
+				// add to object table
+	            objectTable.Add(obj);
+
+				// begin property remapping
+				var reader = classDef.CreatePropertyReader();
+				reader.BeginRead(this);
+				// read object using serializer
+				serializer.ReadObject(reader, obj);
+				// end property remapping
+				classDef.ReleasePropertyReader(reader);
+
+				// read dynamic properties
+				if (classDef.Dynamic) {
+					var dc = obj as PlayScript.IDynamicClass;
+					string key = ReadString();
+					while (key != "") {
+						var value  = ReadNextObject();
+						if (dc != null) {
+							dc.__SetDynamicValue(key, value);
+						}
+						key = ReadString();
+					}
+				}
+				return obj;
+			}
         }
 
 		// returns all the class definitions that have been found while parsing
