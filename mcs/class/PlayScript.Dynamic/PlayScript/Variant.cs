@@ -375,7 +375,7 @@ namespace PlayScript
 				return mBoolValue;
 			}
 			if (mType == TypeCode.Null) {
-				return defaultValue;
+				return false;
 			}
 			if (mType == TypeCode.Undefined) {
 				return defaultValue;
