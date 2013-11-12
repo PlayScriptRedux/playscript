@@ -208,6 +208,9 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSBinaryArithmetic.cs">
       <DependentUpon>PlayScript\DynamicRuntime\PSBinaryArithmetic.tt</DependentUpon>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSBinaryComparison.cs">
+      <DependentUpon>PSBinaryComparison.tt</DependentUpon>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -223,6 +226,10 @@
     <None Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSBinaryArithmetic.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>PlayScript\DynamicRuntime\PSBinaryArithmetic.cs</LastGenOutput>
+    </None>
+    <None Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSBinaryComparison.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>PSBinaryComparison.cs</LastGenOutput>
     </None>
   </ItemGroup>
 </Project>
