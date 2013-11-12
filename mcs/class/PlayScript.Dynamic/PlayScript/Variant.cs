@@ -288,9 +288,11 @@ namespace PlayScript
 			// box value types to number and cache boxed object in our reference
 			switch (mType) {
 			case TypeCode.Undefined:
-				// return default value
-				mObject = defaultValue;
-				break;
+				// return default value (do not cache it)
+				return defaultValue;
+			case TypeCode.Null:
+				// return null (do not return default value)
+				return null;
 			case TypeCode.Boolean:
 				mObject = mBoolValue ? sBoolTrue : sBoolFalse;
 				break;
