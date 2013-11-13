@@ -24,15 +24,20 @@ namespace PlayScript
 	public interface IDynamicAccessorUntyped
 	{
 		// these methods get/set objects that may be undefined (PlayScript.Undefined._undefined)
+		[return: AsUntyped]
 		object	GetMember(string name, ref uint hint);
-		object	GetMemberOrDefault(string name, ref uint hint, object defaultValue);
-		void	SetMember(string name, ref uint hint, object value);
+		[return: AsUntyped]
+		object	GetMemberOrDefault(string name, ref uint hint, [AsUntyped] object defaultValue);
+		void	SetMember(string name, ref uint hint, [AsUntyped] object value);
+		[return: AsUntyped]
 		object	GetIndex(string key);
-		void	SetIndex(string key, object value);
+		void	SetIndex(string key, [AsUntyped] object value);
+		[return: AsUntyped]
 		object	GetIndex(int key);
-		void	SetIndex(int key, object value);
-		object	GetIndex(object key);
-		void	SetIndex(object key, object value);
+		void	SetIndex(int key, [AsUntyped] object value);
+		[return: AsUntyped]
+		object	GetIndex([AsUntyped] object key);
+		void	SetIndex([AsUntyped] object key, [AsUntyped] object value);
 
 		// these are for string keys (object)
 		bool	HasMember(string name);
@@ -54,16 +59,21 @@ namespace PlayScript
 	// Typed public accessors
 	public interface IDynamicAccessorTyped
 	{
+		object GetMemberObject (string key, ref uint hint, object defaultValue);
+		void SetMemberObject (string key, ref uint hint, object value);
+		[return: AsUntyped]
+		object GetMemberUntyped (string key, ref uint hint, [AsUntyped] object defaultValue);
+		void SetMemberUntyped (string key, ref uint hint, [AsUntyped] object value);
 		string GetMemberString (string key, ref uint hint, string defaultValue);
-		void SetMemberString (string key, string value);
+		void SetMemberString (string key, ref uint hint, string value);
 		int GetMemberInt (string key, ref uint hint, int defaultValue);
-		void SetMemberInt (string key, int value);
+		void SetMemberInt (string key, ref uint hint, int value);
 		uint GetMemberUInt (string key, ref uint hint, uint defaultValue);
-		void SetMemberUInt (string key, uint value);
+		void SetMemberUInt (string key, ref uint hint, uint value);
 		double GetMemberNumber (string key, ref uint hint, double defaultValue);
-		void SetMemberNumber (string key, double value);
+		void SetMemberNumber (string key, ref uint hint, double value);
 		bool GetMemberBool (string key, ref uint hint, bool defaultValue);
-		void SetMemberBool (string key, bool value);
+		void SetMemberBool (string key, ref uint hint, bool value);
 	}
 
 	// this interface combines all the most common interfaces together into one dynamic object
@@ -83,7 +93,6 @@ namespace PlayScript
 			IEnumerable,
 			IEnumerable< KeyValuePair<string, object> >
 	{ 
-
 	}
 
 	public interface IDynamicClass

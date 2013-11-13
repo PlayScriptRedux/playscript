@@ -25,8 +25,8 @@ using PlayScript;
 namespace _root
 {
 
-	// Interface implemented by static array backing store providers (like BinJsonArray)
-	public interface IStaticArray : IEnumerable
+	// Interface implemented by immutable array backing store providers (like BinJsonArray)
+	public interface IImmutableArray : IEnumerable
 	{
 		uint length { get; }
 		string getStringAt (uint index);
@@ -144,7 +144,7 @@ namespace _root
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		void ICollection.CopyTo(System.Array array, int index)
 		{
-			if (mStaticArray != null)
+			if (mImmutableArray != null)
 				throw new InvalidOperationException ();
 			System.Array.Copy(mArray, 0, array, index, mCount);
 		}
@@ -182,7 +182,7 @@ namespace _root
 
 		private object[] mArray;
 		private uint mCount;
-		private IStaticArray mStaticArray;
+		private IImmutableArray mImmutableArray;
 		private PlayScript.IDynamicClass __dynamicProps = null;		// By default it is not created as it is not commonly used (nor a good practice).
 																	// We create it only if there is a dynamic set.
 
@@ -195,9 +195,9 @@ namespace _root
 		public uint length
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
-			get { return (mStaticArray != null) ? mStaticArray.length : mCount; } 
+			get { return (mImmutableArray != null) ? mImmutableArray.length : mCount; } 
 			set { 
-				if (mStaticArray != null)
+				if (mImmutableArray != null)
 					throw new InvalidOperationException ();
 				if (value == 0) {
 					System.Array.Clear (mArray, 0, (int)mCount);
@@ -224,8 +224,8 @@ namespace _root
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array(Array a)
 		{
-			if (a.mStaticArray != null) {
-				mStaticArray = a.mStaticArray;
+			if (a.mImmutableArray != null) {
+				mImmutableArray = a.mImmutableArray;
 			} else {
 				mArray = new object[a.length];
 				this.append((IEnumerable)a);
@@ -290,9 +290,21 @@ namespace _root
 			this.append((IEnumerable)a);
 		}
 
-		public Array(IStaticArray staticArray)
+		public Array(IImmutableArray staticArray)
 		{
-			mStaticArray = staticArray;
+			mImmutableArray = staticArray;
+		}
+
+		private void ConvertToMutable () {
+			if (mImmutableArray == null)
+				throw new InvalidOperationException ();
+			uint len = mImmutableArray.length;
+			mArray = new object[len];
+			for (uint i = 0; i < len; i++) {
+				mArray [i] = mImmutableArray.getObjectAt (i);
+			}
+			this.mCount = len;
+			mImmutableArray = null;
 		}
 
 		public dynamic this[int i]
@@ -300,8 +312,8 @@ namespace _root
 			[return: AsUntyped]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
-				if (mStaticArray != null)
-					return mStaticArray.getObjectAt ((uint)i);
+				if (mImmutableArray != null)
+					return mImmutableArray.getObjectAt ((uint)i);
 				#if PERFORMANCE_MODE && DEBUG
 				if ((i >= mCount) || (i < 0))
 				{
@@ -319,8 +331,8 @@ namespace _root
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
-				if (mStaticArray != null)
-					throw new InvalidOperationException ();
+				if (mImmutableArray != null)
+					ConvertToMutable ();
 				#if PERFORMANCE_MODE && DEBUG
 				if (i >= mCount) {
 					throw new IndexOutOfRangeException();
@@ -340,8 +352,8 @@ namespace _root
 			[return: AsUntyped]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
-				if (mStaticArray != null)
-					return mStaticArray.getObjectAt ((uint)i);
+				if (mImmutableArray != null)
+					return mImmutableArray.getObjectAt ((uint)i);
 				#if PERFORMANCE_MODE && DEBUG
 				if (i >= mCount)
 				{
@@ -359,8 +371,8 @@ namespace _root
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
-				if (mStaticArray != null)
-					throw new InvalidOperationException ();
+				if (mImmutableArray != null)
+					ConvertToMutable ();
 				#if PERFORMANCE_MODE && DEBUG
 				if (i >= mCount) {
 					throw new IndexOutOfRangeException();
@@ -380,16 +392,12 @@ namespace _root
 			[return: AsUntyped]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
-				if (mStaticArray != null)
-					return mStaticArray.getObjectAt ((uint)l);
 				return this [(int)l];
 
 			}
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
-				if (mStaticArray != null)
-					throw new InvalidOperationException ();
 				this [(int)l] = value;
 			}
 		}
@@ -415,8 +423,8 @@ namespace _root
 				if (TryParseIndex (name, out index)) {
 					return mArray [index];
 				}
-				if (mStaticArray != null)
-					return mStaticArray.getObjectAt ((uint)index);
+				if (mImmutableArray != null)
+					return mImmutableArray.getObjectAt ((uint)index);
 				// Otherwise this is a dynamic property.
 				if (__dynamicProps == null) {
 					return PlayScript.Undefined._undefined;
@@ -426,8 +434,8 @@ namespace _root
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
-				if (mStaticArray != null)
-					throw new InvalidOperationException ();
+				if (mImmutableArray != null)
+					ConvertToMutable ();
 				// If we can convert the string to an index, then it is an indexed access.
 				int index;
 				if (TryParseIndex (name, out index)) {
@@ -451,15 +459,11 @@ namespace _root
 			[return: AsUntyped]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
-				if (mStaticArray != null)
-					return mStaticArray.getObjectAt ((uint)d);
 				return this [d.ToString ()];
 			}
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
-				if (mStaticArray != null)
-					throw new InvalidOperationException ();
 				this [d.ToString ()] = value;
 			}
 		}
@@ -473,15 +477,11 @@ namespace _root
 			[return: AsUntyped]
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
-				if (mStaticArray != null)
-					return mStaticArray.getObjectAt ((uint)f);
 				return this [f.ToString ()];
 			}
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
-				if (mStaticArray != null)
-					throw new InvalidOperationException ();
 				this [f.ToString ()] = value;
 			}
 		}
@@ -490,11 +490,11 @@ namespace _root
 		public object[] ToArray()
 		{
 			object[] ret;
-			if (mStaticArray != null) {
-				int len = (int)mStaticArray.length;
+			if (mImmutableArray != null) {
+				int len = (int)mImmutableArray.length;
 				ret = new object[len];
 				for (var i = 0; i < len; i++) {
-					ret [i] = mStaticArray.getObjectAt ((uint)i);
+					ret [i] = mImmutableArray.getObjectAt ((uint)i);
 				}
 			} else {
 				ret = new object[mCount];
@@ -506,16 +506,16 @@ namespace _root
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public object[] _GetInnerArray()
 		{
-			if (mStaticArray != null)
-				return null;
+			if (mImmutableArray != null)
+				ConvertToMutable ();
 			return mArray;
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void _TrimCapacity()
 		{
-			if (mStaticArray != null)
-				throw new InvalidOperationException ();
+			if (mImmutableArray != null)
+				return;
 			if (mCount < mArray.Length) {
 				mArray = ToArray();
 			}
@@ -570,6 +570,8 @@ namespace _root
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void expand(uint newSize) 
 		{
+			if (mImmutableArray != null)
+				ConvertToMutable ();
 			EnsureCapacity(newSize);
 			if (mCount < newSize)
 				mCount = newSize;
@@ -578,6 +580,9 @@ namespace _root
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void append(Array vec)
 		{
+			if (mImmutableArray != null)
+				ConvertToMutable ();
+
 			EnsureCapacity(mCount + vec.mCount);
 			System.Array.Copy (vec.mArray, 0, mArray, mCount, vec.mCount);
 			mCount += vec.mCount;
@@ -585,6 +590,9 @@ namespace _root
 
 		public void append(IEnumerable items)
 		{
+			if (mImmutableArray != null)
+				ConvertToMutable ();
+
 			if (items == null) {
 				return;
 			}
@@ -600,6 +608,9 @@ namespace _root
 
 		public void append(IEnumerable<object> items)
 		{
+			if (mImmutableArray != null)
+				ConvertToMutable ();
+
 			if (items is IList<object>) {
 				var list = (items as IList<object>);
 				EnsureCapacity(mCount + (uint)list.Count);
@@ -612,8 +623,8 @@ namespace _root
 
 		public Array concat(params object[] args) 
 		{
-			if (mStaticArray != null)
-				throw new InvalidOperationException ();
+			if (mImmutableArray != null)
+				ConvertToMutable ();
 
 			Array v = new Array();
 			// add this vector
@@ -632,10 +643,11 @@ namespace _root
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void copyTo(Array dest, int sourceIndex, int destIndex, int count) {
-			if (mStaticArray != null) {
+			if (mImmutableArray != null) {
 				throw new NotImplementedException ();
-			} else
-				System.Array.Copy(this.mArray, sourceIndex, dest.mArray, destIndex, count);
+			} else {
+				System.Array.Copy (this.mArray, sourceIndex, dest.mArray, destIndex, count);
+			}
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -668,16 +680,16 @@ namespace _root
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array sort(Delegate sortBehavior)
 		{
-			if (mStaticArray != null)
-				throw new NotImplementedException ();
+			if (mImmutableArray != null)
+				ConvertToMutable ();
 			return sortInternal(sortBehavior);
 		}
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public Array sort(object sortBehavior = null) 
 		{
-			if (mStaticArray != null)
-				throw new NotImplementedException ();
+			if (mImmutableArray != null)
+				ConvertToMutable ();
 			return sortInternal(sortBehavior);
 		}
 
@@ -857,8 +869,8 @@ namespace _root
 				return this;
 			}
 
-			if (mStaticArray != null)
-				throw new NotImplementedException ();
+			if (mImmutableArray != null)
+				ConvertToMutable ();
 
 			// Reference doc:
 			// http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/Array.html#sortOn%28%29
@@ -898,7 +910,7 @@ namespace _root
 		public int indexOf(object searchElement, int fromIndex = 0)
 		{
 			object elem = null;
-			if (mStaticArray != null) {
+			if (mImmutableArray != null) {
 				for (var i = fromIndex; i < this.length; i++) {
 					elem = this [i];
 					if (elem == searchElement || (elem != null && elem.Equals (searchElement))) {
@@ -920,9 +932,9 @@ namespace _root
 		{
 			var sb = new System.Text.StringBuilder();
 			bool needsSeperator = false;
-			if (mStaticArray != null) {
-				for (var i = 0; i < mStaticArray.length; i++) {
-					var item = mStaticArray.getObjectAt((uint)i);
+			if (mImmutableArray != null) {
+				for (var i = 0; i < mImmutableArray.length; i++) {
+					var item = mImmutableArray.getObjectAt((uint)i);
 					if (needsSeperator) {
 						sb.Append(sep);
 					}
@@ -951,7 +963,7 @@ namespace _root
 			object elem = null;
 			if (fromIndex >= (int)this.length)
 				fromIndex = (int)this.length - 1;
-			if (mStaticArray != null) {
+			if (mImmutableArray != null) {
 				for (var i = fromIndex; i >= 0; i--) {
 					elem = this [i];
 					if (elem == searchElement || (elem != null && elem.Equals (searchElement))) {
@@ -977,8 +989,9 @@ namespace _root
 		[return: AsUntyped]
 		public dynamic pop() 
 		{
-			if (mStaticArray != null)
-				throw new InvalidOperationException ();
+			if (mImmutableArray != null)
+				ConvertToMutable ();
+
 			if (mCount == 0) {
 				return PlayScript.Undefined._undefined;
 			}
@@ -990,8 +1003,9 @@ namespace _root
 
 		public uint push(object value)
 		{
-			if (mStaticArray != null)
-				throw new InvalidOperationException ();
+			if (mImmutableArray != null)
+				ConvertToMutable ();
+
 			if (mCount >= mArray.Length)
 				EnsureCapacity((uint)(1.25 * (mCount + 1)));
 			mArray[mCount] = value;
@@ -1001,8 +1015,9 @@ namespace _root
 
 		public uint push(object value, params object[] args) 
 		{
-			if (mStaticArray != null)
-				throw new InvalidOperationException ();
+			if (mImmutableArray != null)
+				ConvertToMutable ();
+
 			uint len = (uint)args.Length;
 			if (mArray.Length < mCount + 1 + len)
 				EnsureCapacity((uint)(1.25 * (mCount + len)));
@@ -1014,8 +1029,9 @@ namespace _root
 
 		public Array reverse() 
 		{
-			if (mStaticArray != null)
-				throw new NotImplementedException ();
+			if (mImmutableArray != null)
+				ConvertToMutable ();
+
 			System.Array.Reverse(mArray, 0, (int)mCount);
 			return this;
 		}
@@ -1023,8 +1039,9 @@ namespace _root
 		[return: AsUntyped]
 		public dynamic shift() 
 		{
-			if (mStaticArray != null)
-				throw new InvalidOperationException ();
+			if (mImmutableArray != null)
+				ConvertToMutable ();
+
 			if (mCount == 0) {
 				return PlayScript.Undefined._undefined;
 			}
@@ -1035,22 +1052,43 @@ namespace _root
 
 		public Array slice(int startIndex = 0, int endIndex = 16777215) 
 		{
-			if (mStaticArray != null)
-				throw new InvalidOperationException ();
+			Array result = null;
+			int count;
 
 			if (startIndex < 0) 
 				throw new InvalidOperationException("splice error");
 
-			if (endIndex < 0) endIndex = (int)mCount + endIndex;		// If negative, starts from the end
+			if (mImmutableArray != null) {
+				uint immutableCount = mImmutableArray.length;
 
-			if (endIndex > (int)mCount) endIndex = (int)mCount;
+				if (endIndex < 0)
+					endIndex = (int)immutableCount + endIndex;		// If negative, starts from the end
 
-			int count = endIndex - startIndex;
-			if (count < 0)
-				count = 0;
+				if (endIndex > (int)immutableCount)
+					endIndex = (int)immutableCount;
 
-			var result = new Array((uint)count);
-			System.Array.Copy(mArray, startIndex, result.mArray, 0, count);
+				count = endIndex - startIndex;
+				if (count < 0)
+					count = 0;
+
+				result = new Array ((uint)count);
+				for (var i = 0; i < count; i++)
+					result.mArray [i] = mImmutableArray.getObjectAt ((uint)(i + startIndex));
+			} else {
+				if (endIndex < 0)
+					endIndex = (int)mCount + endIndex;		// If negative, starts from the end
+
+				if (endIndex > (int)mCount)
+					endIndex = (int)mCount;
+
+				count = endIndex - startIndex;
+				if (count < 0)
+					count = 0;
+
+				result = new Array ((uint)count);
+				System.Array.Copy (mArray, startIndex, result.mArray, 0, count);
+			}
+
 			return result;
 		}
 
@@ -1140,8 +1178,8 @@ namespace _root
 
 		public Array splice(int startIndex = 0, uint deleteCount = 4294967295) 
 		{
-			if (mStaticArray != null)
-				throw new InvalidOperationException ();
+			if (mImmutableArray != null)
+				ConvertToMutable ();
 
 			Array removed = null;
 
@@ -1176,8 +1214,8 @@ namespace _root
 
 		public Array splice(int startIndex, uint deleteCount = 4294967295, params object[] items) 
 		{
-			if (mStaticArray != null)
-				throw new InvalidOperationException ();
+			if (mImmutableArray != null)
+				ConvertToMutable ();
 
 			Array removed = null;
 
@@ -1244,8 +1282,9 @@ namespace _root
 
 		public uint unshift(object item) 
 		{
-			if (mStaticArray != null)
-				throw new InvalidOperationException ();
+			if (mImmutableArray != null)
+				ConvertToMutable ();
+
 			if (mCount >= mArray.Length)
 				EnsureCapacity(mCount + 1);
 			if (mCount > 0)
@@ -1257,6 +1296,9 @@ namespace _root
 
 		public uint unshift(object item, params object[] args) 
 		{
+			if (mImmutableArray != null)
+				ConvertToMutable ();
+
 			uint argsLen = (uint)args.Length;
 			EnsureCapacity(mCount + 1 + argsLen);
 			if (mCount > 0)
