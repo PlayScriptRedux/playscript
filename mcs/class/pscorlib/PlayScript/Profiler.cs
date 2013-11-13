@@ -1,3 +1,8 @@
+// List of features that are enabled / disabled to save memory in the runtime structures.
+//#define ENABLE_GC_COUNTS
+//#define ENABLE_USED_MEM
+
+
 using System;
 using System.Diagnostics;
 using System.Collections.Generic;
@@ -39,6 +44,8 @@ namespace PlayScript
 		private static bool sHasProfiledLoading = false;		// set to true after loading has been profiled
 		private static string sFilterPrefix;
 
+		private static SectionHistory ZeroSectionHistory = new SectionHistory();
+
 		// if telemetryName is provided then it will be used for the name sent to telemetry when this section is entered
 		public static string Begin(string name, string telemetryName = null)
 		{
@@ -64,12 +71,16 @@ namespace PlayScript
 			}
 
 			section.Stats.Subtract(PlayScript.Stats.CurrentInstance);
+#if ENABLE_GC_COUNTS
 			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
 				section.GCCounts[i] -= System.GC.CollectionCount(i);
 			}
+#endif
+#if ENABLE_USED_MEM
 			if (ProfileMemory) {
 				section.CurrentUsedMemory -= mono_gc_get_used_size();
 			}
+#endif
 			if (section.Span != null)
 				section.Span.Begin();
 			section.Timer.Start();
@@ -91,9 +102,12 @@ namespace PlayScript
 			if (section.Span != null)
 				section.Span.End();
 			section.Stats.Add(PlayScript.Stats.CurrentInstance);
+#if ENABLE_GC_COUNTS
 			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
 				section.GCCounts[i] += System.GC.CollectionCount(i);
 			}
+#endif
+#if ENABLE_USED_MEM
 			if (ProfileMemory) {
 				section.CurrentUsedMemory += mono_gc_get_used_size();
 				if (section.CurrentUsedMemory > 0) {
@@ -102,6 +116,7 @@ namespace PlayScript
 				}
 			}
 			section.CurrentUsedMemory = 0;
+#endif
 		}
 
 		public static void Reset()
@@ -178,20 +193,24 @@ namespace PlayScript
 				{
 					// pad with zeros if necessary
 					while (section.History.Count < sFrameCount) {
-						section.History.Add(new SectionHistory());
+						section.History.Add(ZeroSectionHistory);
 					}
 
 					var history = new SectionHistory();
 					history.Time = section.Timer.Elapsed;
 					history.NumberOfCalls = section.NumberOfCalls;
+#if ENABLE_GC_COUNTS
 					for (int i = sGCMinGeneration ; i < Profiler.sGCMaxGeneration ; ++i) {
 						history.GCCounts[i] = section.GCCounts[i];
 					}
+#endif
 					section.History.Add(history);
 				}
+#if ENABLE_GC_COUNTS
 				for (int i = sGCMinGeneration ; i < Profiler.sGCMaxGeneration ; ++i) {
 					section.GCCounts[i] = 0;
 				}
+#endif
 				section.Timer.Reset();
 				section.NumberOfCalls = 0;
 			}
@@ -314,6 +333,11 @@ namespace PlayScript
 				// get history in milliseconds, sorted
 				var history = section.History.Where(a=>a.NumberOfCalls > 0).Select(a => a.Time.TotalMilliseconds).OrderBy(a => a).ToList();
 
+				long usedMem = 0;
+#if ENABLE_USED_MEM
+				usedMem = section.UsedMemory / 1024;
+#endif
+
 				// do we have a history?
 				if (history.Count > 0) {
 					// get min/max/median
@@ -322,10 +346,17 @@ namespace PlayScript
 					var medianTime = history[history.Count / 2];
 
 					// Gather all the GCCounts from the history
+					int GC0 = 0, GC1 = 0;
+
+#if ENABLE_GC_COUNTS
 					for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i)
 					{
 						section.GCCounts[i] = section.History.Sum(a => a.GCCounts[i]);
 					}
+
+					GC0 = section.GCCounts[sGCMinGeneration];
+					GC1 = section.GCCounts[sGCMaxGeneration-1]
+#endif
 
 					tw.WriteLine("{0,-40} total:{1,6} average:{2,6:0.00}ms average/call:{3,6:0.00}ms min:{4,6:0.00}ms max:{5,6:0.00}ms median:{6,6:0.00}ms #GC0: {7} #GC1: {8} UsedMem: {9}Kb",
 					             section.Name,
@@ -335,11 +366,10 @@ namespace PlayScript
 					             minTime,
 					             maxTime,
 					             medianTime,
-					             section.GCCounts[sGCMinGeneration],
-					             section.GCCounts[sGCMaxGeneration-1],
-					             section.UsedMemory / 1024
+					             GC0,
+					             GC1,
+					             usedMem
 					             );
-
 				} else {
 
 					tw.WriteLine("{0,-40} total:{1,6} average/frame:{2,6:0.00}ms average/call:{3,6:0.00}ms UsedMem: {4}Kb",
@@ -347,7 +377,7 @@ namespace PlayScript
 				             total,
 				             average,
 				             averagePerCall,
-					         section.UsedMemory / 1024
+					         usedMem
 				             );
 				}
 			}
@@ -393,12 +423,14 @@ namespace PlayScript
 
 					var history = section.History[frame];
 					string collect = "";
+#if ENABLE_GC_COUNTS
 					for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
 						if (history.GCCounts[i] > 0) {
 							collect += i.ToString();
 						}
 						gcCounts[i] += history.GCCounts[i];
 					}
+#endif
 					string numberOfCalls = (history.NumberOfCalls > 1) ? history.NumberOfCalls.ToString() + "x" : "";
 					tw.Write("{3,6}{0,6:0.00}{1,3}{2} ", history.Time.TotalMilliseconds, (collect != string.Empty) ? "*" + collect : "", c, numberOfCalls);
 					++c;
@@ -641,10 +673,12 @@ namespace PlayScript
 			PrintPercentageOfFrames(tw, "frame", "% Fast Frames", a => (a <= performanceFrameData.FastFrame), string.Format("<={0:0.00}ms", performanceFrameData.FastFrame));
 			PrintPercentageOfFrames(tw, "frame", "% Slow frames", a => (a >= performanceFrameData.SlowFrame), string.Format(">={0:0.00}ms", performanceFrameData.SlowFrame));
 			PrintAverageNWorst(tw, "frame", 10);
+#if ENABLE_GC_COUNTS
 			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i)
 			{
 				tw.WriteLine("GC {0} Count:      {1}", i, sReportGCCounts[i]);
 			}
+#endif
 
 			if (SessionData != null) {
 				// write extra data about session
@@ -688,10 +722,12 @@ namespace PlayScript
 			// enable the report
 			sDoReport = true;
 
+#if ENABLE_GC_COUNTS
 			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i)
 			{
 				sReportGCCounts[i] = System.GC.CollectionCount(i);
 			}
+#endif
 
 			// start global timer
 			sReportTime = Stopwatch.StartNew();
@@ -725,9 +761,11 @@ namespace PlayScript
 
 			sReportTime.Stop();
 
+#if ENABLE_GC_COUNTS
 			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
 				sReportGCCounts[i] = System.GC.CollectionCount(i) - sReportGCCounts[i];
 			}
+#endif
 
 			var recording = Telemetry.Session.EndRecording();
 			if (recording != null) {
@@ -809,7 +847,9 @@ namespace PlayScript
 		{
 			public TimeSpan Time;
 			public int		NumberOfCalls;
+#if ENABLE_GC_COUNTS
 			public int[]	GCCounts = new int[Profiler.sGCMaxGeneration];
+#endif
 		};
 
 		// info for a single section
@@ -820,9 +860,13 @@ namespace PlayScript
 			public TimeSpan				TotalTime;
 			public List<SectionHistory>	History = new List<SectionHistory>();
 			public Stats 				Stats = new PlayScript.Stats();	
+#if ENABLE_GC_COUNTS
 			public int[]				GCCounts = new int[Profiler.sGCMaxGeneration];
+#endif
+#if ENABLE_USED_MEM
 			public Int64				UsedMemory;
 			public Int64				CurrentUsedMemory;
+#endif
 			public Telemetry.Span		Span;
 			public bool					Skipped;
 			public int					NumberOfCalls;
@@ -848,10 +892,15 @@ namespace PlayScript
 		private static StringBuilder temporaryStringBuilder = new StringBuilder();
 		private const int sGCMinGeneration = 0;
 		private readonly static int sGCMaxGeneration = System.GC.MaxGeneration + 1;		// +1 as it seems that's System.GC.MaxGeneration is the index to get oldest collections of the oldest generation
+#if ENABLE_GC_COUNT
 		private static int[] sReportGCCounts = new int[sGCMaxGeneration];
+#endif
 
+#if ENABLE_USED_MEM
 		[DllImport ("__Internal", EntryPoint="mono_gc_get_used_size")]
 		extern static Int64 mono_gc_get_used_size ();
+#endif
+
 		#endregion
 
 		public class PerformanceFrameData
