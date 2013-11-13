@@ -444,11 +444,15 @@ namespace flash.display3D {
 
 		}
  	 	
-		public void setDepthTest (bool depthMask, string passCompareMode)
+		public void setDepthTest (bool depthMask, string passCompareMode, bool depthTestEnabled = true)
 		{
-			if ( StateCache.updateDepthTestEnabled(true) ) 
+			if ( StateCache.updateDepthTestEnabled(depthTestEnabled) ) 
 			{
-				GL.Enable (EnableCap.DepthTest);
+				if (depthTestEnabled) {
+					GL.Enable (EnableCap.DepthTest);
+				} else {
+					GL.Disable (EnableCap.DepthTest);
+				}
 			}
 
 			if ( StateCache.updateDepthTestMask(depthMask) )
