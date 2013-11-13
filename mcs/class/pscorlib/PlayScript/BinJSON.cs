@@ -642,9 +642,9 @@ namespace playscript.utils {
 				case DATA_TYPE.FALSE:
 				return "false";
 				case DATA_TYPE.NULL:
-				return "null";
-				case DATA_TYPE.OBJARRAY:
 				return null;
+				case DATA_TYPE.OBJARRAY:
+				throw new NotImplementedException ();
 			}
 			return null;
 		}
@@ -653,8 +653,13 @@ namespace playscript.utils {
 		{
 			int i;
 			switch (elemType) {
-				case DATA_TYPE.STRING:
-				int.TryParse (GetValueString (elemType, data, dataElem), out i);
+			case DATA_TYPE.STRING:
+				string s = GetValueString (elemType, data, dataElem);
+				if (s.Length > 2 && s [0] == '0' && s [1] == 'x') {
+					i = Convert.ToInt32 (s, 16);
+				} else {
+					int.TryParse (s, out i);
+				}
 				return i;
 				case DATA_TYPE.INT:
 				return dataElem->intValue;
@@ -677,7 +682,12 @@ namespace playscript.utils {
 			uint i;
 			switch (elemType) {
 				case DATA_TYPE.STRING:
-				uint.TryParse (GetValueString (elemType, data, dataElem), out i);
+				string s = GetValueString (elemType, data, dataElem);
+				if (s.Length > 2 && s [0] == '0' && s [1] == 'x') {
+					i = Convert.ToUInt32 (s, 16);
+				} else {
+					uint.TryParse (s, out i);
+				}
 				return i;
 				case DATA_TYPE.INT:
 				return dataElem->offset;
@@ -1216,6 +1226,32 @@ namespace playscript.utils {
 
 		#region HasMember & HasIndex Methods
 
+		// Note: method assumes we know this is an object, not an array
+		private DataElem* FindDataElem(uint crc, uint len)
+		{
+			DataElem* firstElem = (DataElem*)(list + 8);
+			DataElem* dataElem = firstElem + (crc % len);
+			if ((dataElem->id & 0x1FFFFFFF) != crc) {
+				DataElem* lastElem = firstElem + len;
+				DataElem* startElem = dataElem;
+				DataElem* curElem = dataElem;
+				while (true) {
+					curElem++;
+					if (curElem >= lastElem)
+						curElem = firstElem;
+					if (curElem == startElem)
+						return null;
+					uint curCrc = curElem->id & 0x1FFFFFFF;
+					if (curCrc == crc) {
+						return curElem;
+					} else if (curCrc == 0) { // Fast out if key is not in obj
+						return null;
+					}
+				}
+			}
+			return dataElem;
+		}
+
 		public bool HasMember(string key, ref uint crc) 
 		{
 			if (expando != null)
@@ -1234,28 +1270,7 @@ namespace playscript.utils {
 						crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
 					}
 				}
-				DataElem* firstElem = (DataElem*)(list + 8);
-				DataElem* dataElem = firstElem + (crc % len);
-				if ((dataElem->id & 0x1FFFFFFF) != crc) {
-					DataElem* lastElem = firstElem + len;
-					DataElem* startElem = dataElem;
-					DataElem* curElem = dataElem;
-					while (true) {
-						curElem++;
-						if (curElem >= lastElem)
-							curElem = firstElem;
-						if (curElem == startElem)
-							return false;
-						uint curCrc = curElem->id & 0x1FFFFFFF;
-						if (curCrc == crc) {
-							dataElem = curElem;
-							break;
-						} else if (curCrc == 0) {
-							return false;
-						}
-					}
-				}
-				return true;
+				return FindDataElem (crc, len) != null;
 			} else {
 				return false;
 			}
@@ -1316,27 +1331,9 @@ namespace playscript.utils {
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
-				DataElem* firstElem = (DataElem*)(list + 8);
-				DataElem* dataElem = firstElem + (crc % len);
-				if ((dataElem->id & 0x1FFFFFFF) != crc) {
-					DataElem* lastElem = firstElem + len;
-					DataElem* startElem = dataElem;
-					DataElem* curElem = dataElem;
-					while (true) {
-						curElem++;
-						if (curElem >= lastElem)
-							curElem = firstElem;
-						if (curElem == startElem)
-							return null;
-						uint curCrc = curElem->id & 0x1FFFFFFF;
-						if (curCrc == crc) {
-							dataElem = curElem;
-							break;
-						} else if (curCrc == 0) {
-							return null;
-						}
-					}
-				}
+				DataElem* dataElem = FindDataElem (crc, len);
+				if (dataElem == null)
+					return null;
 				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
 				return GetValueString (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
@@ -1362,27 +1359,9 @@ namespace playscript.utils {
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
-				DataElem* firstElem = (DataElem*)(list + 8);
-				DataElem* dataElem = firstElem + (crc % len);
-				if ((dataElem->id & 0x1FFFFFFF) != crc) {
-					DataElem* lastElem = firstElem + len;
-					DataElem* startElem = dataElem;
-					DataElem* curElem = dataElem;
-					while (true) {
-						curElem++;
-						if (curElem >= lastElem)
-							curElem = firstElem;
-						if (curElem == startElem)
-							return defaultValue;
-						uint curCrc = curElem->id & 0x1FFFFFFF;
-						if (curCrc == crc) {
-							dataElem = curElem;
-							break;
-						} else if (curCrc == 0) {
-							return defaultValue;
-						}
-					}
-				}
+				DataElem* dataElem = FindDataElem (crc, len);
+				if (dataElem == null)
+					return defaultValue;
 				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
 				return GetValueString (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
@@ -1415,27 +1394,9 @@ namespace playscript.utils {
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
-				DataElem* firstElem = (DataElem*)(list + 8);
-				DataElem* dataElem = firstElem + (crc % len);
-				if ((dataElem->id & 0x1FFFFFFF) != crc) {
-					DataElem* lastElem = firstElem + len;
-					DataElem* startElem = dataElem;
-					DataElem* curElem = dataElem;
-					while (true) {
-						curElem++;
-						if (curElem >= lastElem)
-							curElem = firstElem;
-						if (curElem == startElem)
-							return 0;
-						uint curCrc = curElem->id & 0x1FFFFFFF;
-						if (curCrc == crc) {
-							dataElem = curElem;
-							break;
-						} else if (curCrc == 0) { // Fast out if key is not in obj
-							return 0;
-						}
-					}
-				}
+				DataElem* dataElem = FindDataElem (crc, len);
+				if (dataElem == null)
+					return 0;
 				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
 				return GetValueInt (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
@@ -1461,27 +1422,9 @@ namespace playscript.utils {
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
-				DataElem* firstElem = (DataElem*)(list + 8);
-				DataElem* dataElem = firstElem + (crc % len);
-				if ((dataElem->id & 0x1FFFFFFF) != crc) {
-					DataElem* lastElem = firstElem + len;
-					DataElem* startElem = dataElem;
-					DataElem* curElem = dataElem;
-					while (true) {
-						curElem++;
-						if (curElem >= lastElem)
-							curElem = firstElem;
-						if (curElem == startElem)
-							return defaultValue;
-						uint curCrc = curElem->id & 0x1FFFFFFF;
-						if (curCrc == crc) {
-							dataElem = curElem;
-							break;
-						} else if (curCrc == 0) { // Fast out if key is not in obj
-							return defaultValue;
-						}
-					}
-				}
+				DataElem* dataElem = FindDataElem (crc, len);
+				if (dataElem == null)
+					return defaultValue;
 				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
 				return GetValueInt (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
@@ -1514,27 +1457,9 @@ namespace playscript.utils {
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
-				DataElem* firstElem = (DataElem*)(list + 8);
-				DataElem* dataElem = firstElem + (crc % len);
-				if ((dataElem->id & 0x1FFFFFFF) != crc) {
-					DataElem* lastElem = firstElem + len;
-					DataElem* startElem = dataElem;
-					DataElem* curElem = dataElem;
-					while (true) {
-						curElem++;
-						if (curElem >= lastElem)
-							curElem = firstElem;
-						if (curElem == startElem)
-							return double.NaN;
-						uint curCrc = curElem->id & 0x1FFFFFFF;
-						if (curCrc == crc) {
-							dataElem = curElem;
-							break;
-						} else if (curCrc == 0) { // Fast out if key is not in obj
-							return double.NaN;
-						}
-					}
-				}
+				DataElem* dataElem = FindDataElem (crc, len);
+				if (dataElem == null)
+					return double.NaN;
 				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
 				return GetValueDouble (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
@@ -1560,27 +1485,9 @@ namespace playscript.utils {
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
-				DataElem* firstElem = (DataElem*)(list + 8);
-				DataElem* dataElem = firstElem + (crc % len);
-				if ((dataElem->id & 0x1FFFFFFF) != crc) {
-					DataElem* lastElem = firstElem + len;
-					DataElem* startElem = dataElem;
-					DataElem* curElem = dataElem;
-					while (true) {
-						curElem++;
-						if (curElem >= lastElem)
-							curElem = firstElem;
-						if (curElem == startElem)
-							return defaultValue;
-						uint curCrc = curElem->id & 0x1FFFFFFF;
-						if (curCrc == crc) {
-							dataElem = curElem;
-							break;
-						} else if (curCrc == 0) { // Fast out if key is not in obj
-							return defaultValue;
-						}
-					}
-				}
+				DataElem* dataElem = FindDataElem (crc, len);
+				if (dataElem == null)
+					return defaultValue;
 				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
 				return GetValueDouble (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
@@ -1613,27 +1520,9 @@ namespace playscript.utils {
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
-				DataElem* firstElem = (DataElem*)(list + 8);
-				DataElem* dataElem = firstElem + (crc % len);
-				if ((dataElem->id & 0x1FFFFFFF) != crc) {
-					DataElem* lastElem = firstElem + len;
-					DataElem* startElem = dataElem;
-					DataElem* curElem = dataElem;
-					while (true) {
-						curElem++;
-						if (curElem >= lastElem)
-							curElem = firstElem;
-						if (curElem == startElem)
-							return 0u;
-						uint curCrc = curElem->id & 0x1FFFFFFF;
-						if (curCrc == crc) {
-							dataElem = curElem;
-							break;
-						} else if (curCrc == 0) { // Fast out if key is not in obj
-							return 0u;
-						}
-					}
-				}
+				DataElem* dataElem = FindDataElem (crc, len);
+				if (dataElem == null)
+					return 0u;
 				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
 				return GetValueUInt (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
@@ -1659,27 +1548,9 @@ namespace playscript.utils {
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
-				DataElem* firstElem = (DataElem*)(list + 8);
-				DataElem* dataElem = firstElem + (crc % len);
-				if ((dataElem->id & 0x1FFFFFFF) != crc) {
-					DataElem* lastElem = firstElem + len;
-					DataElem* startElem = dataElem;
-					DataElem* curElem = dataElem;
-					while (true) {
-						curElem++;
-						if (curElem >= lastElem)
-							curElem = firstElem;
-						if (curElem == startElem)
-							return defaultValue;
-						uint curCrc = curElem->id & 0x1FFFFFFF;
-						if (curCrc == crc) {
-							dataElem = curElem;
-							break;
-						} else if (curCrc == 0) { // Fast out if key is not in obj
-							return defaultValue;
-						}
-					}
-				}
+				DataElem* dataElem = FindDataElem (crc, len);
+				if (dataElem == null)
+					return defaultValue;
 				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
 				return GetValueUInt (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
@@ -1712,27 +1583,9 @@ namespace playscript.utils {
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
-				DataElem* firstElem = (DataElem*)(list + 8);
-				DataElem* dataElem = firstElem + (crc % len);
-				if ((dataElem->id & 0x1FFFFFFF) != crc) {
-					DataElem* lastElem = firstElem + len;
-					DataElem* startElem = dataElem;
-					DataElem* curElem = dataElem;
-					while (true) {
-						curElem++;
-						if (curElem >= lastElem)
-							curElem = firstElem;
-						if (curElem == startElem)
-							return false;
-						uint curCrc = curElem->id & 0x1FFFFFFF;
-						if (curCrc == crc) {
-							dataElem = curElem;
-							break;
-						} else if (curCrc == 0) { // Fast out if key is not in obj
-							return false;
-						}
-					}
-				}
+				DataElem* dataElem = FindDataElem (crc, len);
+				if (dataElem == null)
+					return false;
 				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
 				return GetValueBool (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
@@ -1758,27 +1611,9 @@ namespace playscript.utils {
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
-				DataElem* firstElem = (DataElem*)(list + 8);
-				DataElem* dataElem = firstElem + (crc % len);
-				if ((dataElem->id & 0x1FFFFFFF) != crc) {
-					DataElem* lastElem = firstElem + len;
-					DataElem* startElem = dataElem;
-					DataElem* curElem = dataElem;
-					while (true) {
-						curElem++;
-						if (curElem >= lastElem)
-							curElem = firstElem;
-						if (curElem == startElem)
-							return defaultValue;
-						uint curCrc = curElem->id & 0x1FFFFFFF;
-						if (curCrc == crc) {
-							dataElem = curElem;
-							break;
-						} else if (curCrc == 0) { // Fast out if key is not in obj
-							return defaultValue;
-						}
-					}
-				}
+				DataElem* dataElem = FindDataElem (crc, len);
+				if (dataElem == null)
+					return defaultValue;
 				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
 				return GetValueBool (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
@@ -1811,27 +1646,9 @@ namespace playscript.utils {
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
-				DataElem* firstElem = (DataElem*)(list + 8);
-				DataElem* dataElem = firstElem + (crc % len);
-				if ((dataElem->id & 0x1FFFFFFF) != crc) {
-					DataElem* lastElem = firstElem + len;
-					DataElem* startElem = dataElem;
-					DataElem* curElem = dataElem;
-					while (true) {
-						curElem++;
-						if (curElem >= lastElem)
-							curElem = firstElem;
-						if (curElem == startElem)
-							return defaultValue;
-						uint curCrc = curElem->id & 0x1FFFFFFF;
-						if (curCrc == crc) {
-							dataElem = curElem;
-							break;
-						} else if (curCrc == 0) { // Fast out if key is not in obj
-							return defaultValue;
-						}
-					}
-				}
+				DataElem* dataElem = FindDataElem (crc, len);
+				if (dataElem == null)
+					return defaultValue;
 				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
 				return GetValueObject (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
@@ -1840,6 +1657,71 @@ namespace playscript.utils {
 		}
 
 		public object GetMember(string key, ref uint crc)
+		{
+			if (expando != null)
+				return expando [key];
+			uint len = *(uint*)(list + 4);
+			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+			len &= 0xFFFFFF;
+			if (len == 0)
+				return null;
+			if (crc == 0) {
+				if (System.Object.ReferenceEquals (key, _lastKeyString)) {
+					crc = _lastCrc;
+				} else {
+					_lastKeyString = key;
+					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+				}				
+			}
+			if (listType == LIST_TYPE.OBJECT && len > 0) {
+				DataElem* dataElem = FindDataElem (crc, len);
+				if (dataElem == null)
+					return null;
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				return GetValueObject (dataType, doc.data + *(uint*)list, dataElem);
+			} else {
+				return null;
+			}
+		}
+
+		public void SetMember(string key, ref uint crc, object value)
+		{
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [key] = value;
+		}
+
+		[return: AsUntyped]
+		object IDynamicAccessorUntyped.GetMemberOrDefault(string key, ref uint crc, [AsUntyped] object defaultValue)
+		{
+			if (expando != null)
+				return expando [key];
+			uint len = *(uint*)(list + 4);
+			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+			len &= 0xFFFFFF;
+			if (len == 0)
+				return defaultValue;
+			if (crc == 0) {
+				if (System.Object.ReferenceEquals (key, _lastKeyString)) {
+					crc = _lastCrc;
+				} else {
+					_lastKeyString = key;
+					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+				}				
+			}
+			if (listType == LIST_TYPE.OBJECT && len > 0) {
+				DataElem* dataElem = FindDataElem (crc, len);
+				if (dataElem == null)
+					return defaultValue;
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				return GetValueObject (dataType, doc.data + *(uint*)list, dataElem);
+			} else {
+				return defaultValue;
+			}
+		}
+
+		[return: AsUntyped]
+		object IDynamicAccessorUntyped.GetMember(string key, ref uint crc)
 		{
 			if (expando != null)
 				return expando [key];
@@ -1857,27 +1739,9 @@ namespace playscript.utils {
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
-				DataElem* firstElem = (DataElem*)(list + 8);
-				DataElem* dataElem = firstElem + (crc % len);
-				if ((dataElem->id & 0x1FFFFFFF) != crc) {
-					DataElem* lastElem = firstElem + len;
-					DataElem* startElem = dataElem;
-					DataElem* curElem = dataElem;
-					while (true) {
-						curElem++;
-						if (curElem >= lastElem)
-							curElem = firstElem;
-						if (curElem == startElem)
-							return PlayScript.Undefined._undefined;
-						uint curCrc = curElem->id & 0x1FFFFFFF;
-						if (curCrc == crc) {
-							dataElem = curElem;
-							break;
-						} else if (curCrc == 0) { // Fast out if key is not in obj
-							return PlayScript.Undefined._undefined;
-						}
-					}
-				}
+				DataElem* dataElem = FindDataElem (crc, len);
+				if (dataElem == null)
+					return PlayScript.Undefined._undefined;
 				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
 				return GetValueObject (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
@@ -1885,12 +1749,13 @@ namespace playscript.utils {
 			}
 		}
 
-		public void SetMember(string key, ref uint crc, object value)
+		void IDynamicAccessorUntyped.SetMember(string key, ref uint crc, [AsUntyped] object value)
 		{
 			if (expando == null)
 				CloneToInnerExpando ();
 			expando [key] = value;
 		}
+
 
 		// Handle .NET types that aren't commonly used in AS but can come up in interop..
 
@@ -1917,10 +1782,10 @@ namespace playscript.utils {
 
 		public object GetMemberObject (string key, ref uint hint, object defaultValue)
 		{
-			return ((IDynamicAccessor<object>)this).GetMemberOrDefault(key, ref hint, defaultValue);
+			return GetMemberOrDefault(key, ref hint, defaultValue);
 		}
 
-		public void SetMemberObject (string key, object value)
+		public void SetMemberObject (string key, ref uint hint, object value)
 		{
 			if (expando == null)
 				CloneToInnerExpando ();
@@ -1933,7 +1798,7 @@ namespace playscript.utils {
 			return ((IDynamicAccessor<object>)this).GetMemberOrDefault(key, ref hint, defaultValue);
 		}
 
-		public void SetMemberUntyped (string key, [AsUntyped] object value)
+		public void SetMemberUntyped (string key, ref uint hint, [AsUntyped] object value)
 		{
 			if (expando == null)
 				CloneToInnerExpando ();
@@ -1945,7 +1810,7 @@ namespace playscript.utils {
 			return ((IDynamicAccessor<string>)this).GetMemberOrDefault(key, ref hint, defaultValue);
 		}
 
-		public void SetMemberString (string key, string value)
+		public void SetMemberString (string key, ref uint hint, string value)
 		{
 			if (expando == null)
 				CloneToInnerExpando ();
@@ -1957,7 +1822,7 @@ namespace playscript.utils {
 			return ((IDynamicAccessor<int>)this).GetMemberOrDefault(key, ref hint, defaultValue);
 		}
 
-		public void SetMemberInt (string key, int value)
+		public void SetMemberInt (string key, ref uint hint, int value)
 		{
 			if (expando == null)
 				CloneToInnerExpando ();
@@ -1969,7 +1834,7 @@ namespace playscript.utils {
 			return ((IDynamicAccessor<uint>)this).GetMemberOrDefault(key, ref hint, defaultValue);
 		}
 
-		public void SetMemberUInt (string key, uint value)
+		public void SetMemberUInt (string key, ref uint hint, uint value)
 		{
 			if (expando == null)
 				CloneToInnerExpando ();
@@ -1981,7 +1846,7 @@ namespace playscript.utils {
 			return ((IDynamicAccessor<double>)this).GetMemberOrDefault(key, ref hint, defaultValue);
 		}
 
-		public void SetMemberNumber (string key, double value)
+		public void SetMemberNumber (string key, ref uint hint, double value)
 		{
 			if (expando == null)
 				CloneToInnerExpando ();
@@ -1993,7 +1858,7 @@ namespace playscript.utils {
 			return ((IDynamicAccessor<bool>)this).GetMemberOrDefault(key, ref hint, defaultValue);
 		}
 
-		public void SetMemberBool (string key, bool value)
+		public void SetMemberBool (string key, ref uint hint, bool value)
 		{
 			if (expando == null)
 				CloneToInnerExpando ();
@@ -2029,7 +1894,7 @@ namespace playscript.utils {
 			value = null;
 			if (this.HasMember (key)) {
 				uint crc = 0;
-				value = this.GetMemberOrDefault(key, ref crc, null); 
+				value = this.GetMemberOrDefault (key, ref crc, null); 
 				return true;
 			}
 			return false;
@@ -2038,7 +1903,7 @@ namespace playscript.utils {
 		object IDictionary<string, object>.this [string index] {
 			get {
 				uint crc = 0;
-				return this.GetMemberOrDefault(index, ref crc, null);
+				return this.GetMemberOrDefault (index, ref crc, null);
 			}
 			set {
 				uint crc = 0;
@@ -2142,7 +2007,7 @@ namespace playscript.utils {
 				uint crc = 0;
 				BinJsonObject._lastKeyString = key = _pairs.keys [_index];
 				BinJsonObject._lastCrc = crc = _pairs.crcs [_index];
-				value = _jsonObj.GetMemberOrDefault(key, ref crc, null);
+				value = _jsonObj.GetMemberOrDefault (key, ref crc, null);
 				return true;
 			}
 
@@ -2222,7 +2087,7 @@ namespace playscript.utils {
 		object IDictionary.this [object key] {
 			get {
 				uint crc = 0;
-				return this.GetMemberOrDefault(key.ToString (), ref crc, null);
+				return this.GetMemberOrDefault (key.ToString (), ref crc, null);
 			}
 			set {
 				uint crc = 0;
@@ -2258,7 +2123,7 @@ namespace playscript.utils {
 		dynamic IDynamicClass.__GetDynamicValue (string name)
 		{
 			uint crc = 0;
-			return this.GetMemberObject(name, ref crc, PlayScript.Undefined._undefined);
+			return this.GetMemberOrDefault (name, ref crc, PlayScript.Undefined._undefined);
 		}
 
 		bool IDynamicClass.__TryGetDynamicValue (string name, out object value)
@@ -2266,7 +2131,7 @@ namespace playscript.utils {
 			value = null;
 			if (this.HasMember (name)) {
 				uint crc = 0;
-				value = this.GetMemberObject(name, ref crc, PlayScript.Undefined._undefined);
+				value = this.GetMemberOrDefault (name, ref crc, PlayScript.Undefined._undefined);
 				return true;
 			}
 			return false;
@@ -3371,12 +3236,20 @@ namespace playscript.utils {
 							case 't':
 							d = (byte)'\t';
 							break;
-							case 'u':  // NOTE: Not optimized.. hopefully not too many of these in a normal file!
-							var hex = new char[4];
-							for (int i=0; i< 4; i++) {
-								hex[i] = *src++;
-							}
-							d = (byte)Convert.ToInt32(new string(hex), 16);
+						case 'u':
+							if (src + 4 > srcEnd)
+								throw new InvalidOperationException ("Invalid unicode literal");
+							// Regular JSON parser seems to be parsing to HTML literals.. duplicate this behavior..
+							if (tempDataPtr + 8 >= tempDataEnd)
+								ExpandTempData ();
+							*tempDataPtr++ = (byte)'&';
+							*tempDataPtr++ = (byte)'#';
+							*tempDataPtr++ = (byte)'x';
+							*tempDataPtr++ = (byte)*src++;
+							*tempDataPtr++ = (byte)*src++;
+							*tempDataPtr++ = (byte)*src++;
+							*tempDataPtr++ = (byte)*src++;
+							d = (byte)';';
 							break;
 						}
 						break;

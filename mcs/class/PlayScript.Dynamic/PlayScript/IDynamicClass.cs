@@ -60,20 +60,20 @@ namespace PlayScript
 	public interface IDynamicAccessorTyped
 	{
 		object GetMemberObject (string key, ref uint hint, object defaultValue);
-		void SetMemberObject (string key, object value);
+		void SetMemberObject (string key, ref uint hint, object value);
 		[return: AsUntyped]
 		object GetMemberUntyped (string key, ref uint hint, [AsUntyped] object defaultValue);
-		void SetMemberUntyped (string key, [AsUntyped] object value);
+		void SetMemberUntyped (string key, ref uint hint, [AsUntyped] object value);
 		string GetMemberString (string key, ref uint hint, string defaultValue);
-		void SetMemberString (string key, string value);
+		void SetMemberString (string key, ref uint hint, string value);
 		int GetMemberInt (string key, ref uint hint, int defaultValue);
-		void SetMemberInt (string key, int value);
+		void SetMemberInt (string key, ref uint hint, int value);
 		uint GetMemberUInt (string key, ref uint hint, uint defaultValue);
-		void SetMemberUInt (string key, uint value);
+		void SetMemberUInt (string key, ref uint hint, uint value);
 		double GetMemberNumber (string key, ref uint hint, double defaultValue);
-		void SetMemberNumber (string key, double value);
+		void SetMemberNumber (string key, ref uint hint, double value);
 		bool GetMemberBool (string key, ref uint hint, bool defaultValue);
-		void SetMemberBool (string key, bool value);
+		void SetMemberBool (string key, ref uint hint, bool value);
 	}
 
 	// this interface combines all the most common interfaces together into one dynamic object

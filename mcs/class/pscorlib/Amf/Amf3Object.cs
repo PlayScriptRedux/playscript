@@ -934,7 +934,7 @@ namespace Amf
 			return GetPropertyValue (key).AsObject(defaultValue);
 		}
 
-		void IDynamicAccessorTyped.SetMemberObject (string key, object value)
+		void IDynamicAccessorTyped.SetMemberObject (string key, ref uint hint, object value)
 		{
 			SetPropertyValue (key, Variant.FromAnyType(value));
 		}
@@ -945,7 +945,7 @@ namespace Amf
 			return GetPropertyValue (key).AsObject(defaultValue);
 		}
 
-		void IDynamicAccessorTyped.SetMemberUntyped (string key, [AsUntyped] object value)
+		void IDynamicAccessorTyped.SetMemberUntyped (string key, ref uint hint, [AsUntyped] object value)
 		{
 			SetPropertyValue (key, Variant.FromAnyType(value));
 		}
@@ -956,7 +956,7 @@ namespace Amf
 			return GetPropertyValue (key).AsString (defaultValue);
 		}
 
-		void IDynamicAccessorTyped.SetMemberString (string key, string value)
+		void IDynamicAccessorTyped.SetMemberString (string key, ref uint hint, string value)
 		{
 			SetPropertyValue (key, value);
 		}
@@ -966,7 +966,7 @@ namespace Amf
 			return GetPropertyValue (key).AsInt (defaultValue);
 		}
 
-		void IDynamicAccessorTyped.SetMemberInt (string key, int value)
+		void IDynamicAccessorTyped.SetMemberInt (string key, ref uint hint, int value)
 		{
 			SetPropertyValue (key, value);
 		}
@@ -976,7 +976,7 @@ namespace Amf
 			return GetPropertyValue (key).AsUInt (defaultValue);
 		}
 
-		void IDynamicAccessorTyped.SetMemberUInt (string key, uint value)
+		void IDynamicAccessorTyped.SetMemberUInt (string key, ref uint hint, uint value)
 		{
 			SetPropertyValue (key, value);
 		}
@@ -986,7 +986,7 @@ namespace Amf
 			return GetPropertyValue (key).AsNumber (defaultValue);
 		}
 
-		void IDynamicAccessorTyped.SetMemberNumber (string key, double value)
+		void IDynamicAccessorTyped.SetMemberNumber (string key, ref uint hint, double value)
 		{
 			SetPropertyValue (key, value);
 		}
@@ -996,7 +996,7 @@ namespace Amf
 			return GetPropertyValue (key).AsBoolean (defaultValue);
 		}
 
-		void IDynamicAccessorTyped.SetMemberBool (string key, bool value)
+		void IDynamicAccessorTyped.SetMemberBool (string key, ref uint hint, bool value)
 		{
 			SetPropertyValue (key, value);
 		}
