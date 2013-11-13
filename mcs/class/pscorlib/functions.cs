@@ -87,7 +87,8 @@ namespace _root
 
 		public static double Number (object o)
 		{
-			if (o == null) return double.NaN;
+			if (o == null) return 0.0;
+			if (o == PlayScript.Undefined._undefined) return double.NaN;
 
 			double d;
 
