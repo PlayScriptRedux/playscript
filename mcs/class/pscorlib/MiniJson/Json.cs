@@ -709,13 +709,13 @@ namespace MiniJson {
 			{
 				serializeString( Convert.ToString( (char)value ), builder );
 			}
-			else if( value is IDictionary )
-			{
-				serializeObject( (IDictionary)value, builder, depth );
-			}
 			else if( value is IEnumerable< KeyValuePair<string, object> > )
 			{
 				serializeObject( (IEnumerable< KeyValuePair<string, object> >)value, builder, depth );
+			}
+			else if( value is IDictionary )
+			{
+				serializeObject( (IDictionary)value, builder, depth );
 			}
 			else if( value is IList )
 			{

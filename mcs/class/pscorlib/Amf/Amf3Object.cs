@@ -951,6 +951,16 @@ namespace Amf
 
 		#region IDynamicAccessorTyped implementation
 
+		object IDynamicAccessorTyped.GetMemberObject (string key, ref uint hint, object defaultValue)
+		{
+			return GetPropertyValue (key).AsObject(defaultValue);
+		}
+
+		void IDynamicAccessorTyped.SetMemberObject (string key, object value)
+		{
+			SetPropertyValue (key, Variant.FromAnyType(value));
+		}
+
 		string IDynamicAccessorTyped.GetMemberString (string key, ref uint hint, string defaultValue)
 		{
 			return GetPropertyValue (key).AsString (defaultValue);

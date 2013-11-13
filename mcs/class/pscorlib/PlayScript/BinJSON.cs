@@ -232,14 +232,17 @@ namespace playscript.utils {
 	[DebuggerDisplay("{value}", Name = "{key}", Type = "{ValueTypeName}")]
 	internal class KeyValuePairDebugView
 	{
-		public string key   {get { return _key; }}
+		public string key   { get { return _key; }}
 		public object value 
 		{
 			get {
 				uint crc = 0;
 				return ((IDynamicAccessor<object>)_binObj).GetMember(_key, ref crc, null);
 			}
-			set { }
+			set { 
+				uint crc = 0;
+				((IDynamicAccessor<object>)_binObj).SetMember(_key, ref crc, value);
+			}
 		}
 
 		public KeyValuePairDebugView(BinJsonObject binObj, string key)
@@ -281,17 +284,17 @@ namespace playscript.utils {
 		{
 			get
 			{
-				var keyPairs = binObj.KeyPairs;
-
-				var keys = new KeyValuePairDebugView[keyPairs.length];
+				var keys = binObj.GetKeys ();
+				var dbgKeys = new KeyValuePairDebugView[keys.Count];
 
 				int i = 0;
-				foreach(string key in binObj.KeyPairs.keys)
+				foreach(string key in keys)
 				{
-					keys[i] = new KeyValuePairDebugView(binObj, key);
+					dbgKeys[i] = new KeyValuePairDebugView(binObj, key);
 					i++;
 				}
-				return keys;
+
+				return dbgKeys;
 			}
 		}
 	}
@@ -300,11 +303,13 @@ namespace playscript.utils {
 	// get member that accellerate the dynamic runtime.
 	[DebuggerDisplay ("Count = {Count}")]
 	[DebuggerTypeProxy (typeof (BinJsonObjectDebugView))]
-	public unsafe class BinJsonObject : _root.Object, IDynamicObject, IDynamicAccessorTyped
+	public unsafe class BinJsonObject : _root.Object, IDynamicObject, IDynamicAccessorTyped, 
+		IDictionary<string,object>, IDictionary, IDynamicClass
 	{
 		protected BinJsonDocument doc;
 		protected byte* list;
 		protected WeakReference<KeyCrcPairs> keyPairs;
+		protected PlayScript.Expando.ExpandoObject expando;
 
 		internal static string _lastKeyString;
 		internal static uint _lastCrc;
@@ -320,6 +325,8 @@ namespace playscript.utils {
 
 		public int Count {
 			get { 
+				if (expando != null)
+					return expando.Count;
 				return KeyPairs.length;
 			}
 		}
@@ -372,17 +379,41 @@ namespace playscript.utils {
 			}
 		}
 
-		public object CloneToExpando() {
-			var expando = new PlayScript.Expando.ExpandoObject ();
+		internal ICollection<string> GetKeys()
+		{
+			if (expando != null)
+				return ((IDictionary<string,object>)expando).Keys;
+			else
+				return KeyPairs.keys;
+		}
+
+		internal object[] GetValues()
+		{
+			object[] values = new object[this.Count];
+			var enumerator = ((IEnumerator<KeyValuePair<string,object>>)this);
+			int i = 0;
+			while (enumerator.MoveNext()) {
+				values [i] = enumerator.Current.Value;
+				i++;
+			}
+			return values;
+		}
+
+		public PlayScript.Expando.ExpandoObject CloneToExpando() {
+			var newExpando = new PlayScript.Expando.ExpandoObject ();
 			KeyCrcPairs keyPairs = this.KeyPairs;
 			int len = keyPairs.length;
 			IDynamicAccessor<object> getMemProv = (IDynamicAccessor<object>)this;
 			for (var i = 0; i < len; i++) {
 				string key = keyPairs.keys [i];
 				uint crc = keyPairs.crcs [i];
-				expando.Add (key, getMemProv.GetMember (key, ref crc, null));
+				newExpando.Add (key, getMemProv.GetMember (key, ref crc, null));
 			}
-			return expando;
+			return newExpando;
+		}
+
+		public void CloneToInnerExpando() {
+			expando = CloneToExpando ();
 		}
 
 		#region IKeyEnumerable implementation
@@ -428,7 +459,10 @@ namespace playscript.utils {
 
 		IEnumerator IKeyEnumerable.GetKeyEnumerator ()
 		{
-			return new KeyEnumerator (this.KeyPairs);
+			if (expando != null)
+				return ((IKeyEnumerable)expando).GetKeyEnumerator ();
+			else
+				return new KeyEnumerator (this.KeyPairs);
 		}
 
 		#endregion
@@ -467,20 +501,22 @@ namespace playscript.utils {
 					// We store the last string and crc in the PSGetIndex so it can short path to using them during a loop over
 					// keys in an object.
 					uint crc;
-					BinJsonObject._lastKeyString = _pairs.keys [_index];
+					string key;
+					BinJsonObject._lastKeyString = key = _pairs.keys [_index];
 					BinJsonObject._lastCrc = crc = _pairs.crcs [_index];
-					return _jsonObj.GetMember(null, ref crc, null);
+					return _jsonObj.GetMember(key, ref crc, null);
 				}
 			}
 
 			#endregion
 		}
 
-
-
 		IEnumerator IEnumerable.GetEnumerator ()
 		{
-			return new ValueEnumerator (this, this.KeyPairs);
+			if (expando != null)
+				return ((IEnumerable)expando).GetEnumerator ();
+			else
+				return new ValueEnumerator (this, this.KeyPairs);
 		}
 
 		#endregion
@@ -526,7 +562,7 @@ namespace playscript.utils {
 					uint crc;
 					BinJsonObject._lastKeyString = key = _pairs.keys [_index];
 					BinJsonObject._lastCrc = crc = _pairs.crcs [_index];
-					return new KeyValuePair<string, object>(key, _jsonObj.GetMember(null, ref crc, null));
+					return new KeyValuePair<string, object>(key, _jsonObj.GetMember(key, ref crc, null));
 				}
 			}
 
@@ -538,7 +574,7 @@ namespace playscript.utils {
 					uint crc;
 					BinJsonObject._lastKeyString = key = _pairs.keys [_index];
 					BinJsonObject._lastCrc = crc = _pairs.crcs [_index];
-					return new KeyValuePair<string, object>(key, _jsonObj.GetMember(null, ref crc, null));
+					return new KeyValuePair<string, object>(key, _jsonObj.GetMember(key, ref crc, null));
 				}
 			}
 
@@ -548,7 +584,10 @@ namespace playscript.utils {
 
 		IEnumerator<KeyValuePair<string,object>> IEnumerable<KeyValuePair<string,object>>.GetEnumerator ()
 		{
-			return new KeyValuePairEnumerator (this, this.KeyPairs);
+			if (expando != null)
+				return ((IEnumerable<KeyValuePair<string,object>>)expando).GetEnumerator ();
+			else
+				return new KeyValuePairEnumerator (this, this.KeyPairs);
 		}
 
 		#endregion
@@ -732,7 +771,7 @@ namespace playscript.utils {
 				case LIST_TYPE.OBJECT:
 					return new BinJsonObject (doc, list);
 				case LIST_TYPE.ARRAY:
-					return new _root.Array ((IStaticArray)new BinJsonArray (doc, list));
+					return new _root.Array ((IImmutableArray)new BinJsonArray (doc, list));
 				}
 				return null;
 			}
@@ -1179,6 +1218,8 @@ namespace playscript.utils {
 
 		public bool HasMember(string key, ref uint crc) 
 		{
+			if (expando != null)
+				return expando.ContainsKey (key);
 			uint len = *(uint*)(list + 4);
 			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
 			if (listType == LIST_TYPE.OBJECT) {
@@ -1228,17 +1269,19 @@ namespace playscript.utils {
 
 		public bool DeleteMember(string key)
 		{
-			throw new NotImplementedException();
+			if (expando != null)
+				CloneToInnerExpando ();
+			return expando.Remove (key);
 		}
 
 		public bool HasIndex(int key) 
 		{
-			throw new NotImplementedException ();
+			return HasMember (key.ToString ());
 		}
 
 		public bool DeleteIndex(int key)
 		{
-			throw new NotImplementedException ();
+			return DeleteMember (key.ToString ());
 		}
 
 		public bool HasIndex(object key)
@@ -1248,7 +1291,7 @@ namespace playscript.utils {
 
 		public bool DeleteIndex(object key)
 		{
-			throw new NotImplementedException ();
+			return DeleteMember (key.ToString ());
 		}
 
 		#endregion
@@ -1257,6 +1300,8 @@ namespace playscript.utils {
 
 		string IDynamicAccessor<string>.GetMember(string key, ref uint crc, string defaultValue)
 		{
+			if (expando != null)
+				return expando [key];
 			uint len = *(uint*)(list + 4);
 			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
 			len &= 0xFFFFFF;
@@ -1301,11 +1346,15 @@ namespace playscript.utils {
 
 		void IDynamicAccessor<string>.SetMember(string key, ref uint crc, string value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [key] = value;
 		}
 
 		int IDynamicAccessor<int>.GetMember(string key, ref uint crc, int defaultValue)
 		{
+			if (expando != null)
+				return expando [key];
 			uint len = *(uint*)(list + 4);
 			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
 			len &= 0xFFFFFF;
@@ -1350,11 +1399,15 @@ namespace playscript.utils {
 
 		void IDynamicAccessor<int>.SetMember(string key, ref uint crc, int value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [key] = value;
 		}
 
 		double IDynamicAccessor<double>.GetMember(string key, ref uint crc, double defaultValue)
 		{
+			if (expando != null)
+				return expando [key];
 			uint len = *(uint*)(list + 4);
 			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
 			len &= 0xFFFFFF;
@@ -1399,11 +1452,15 @@ namespace playscript.utils {
 
 		void IDynamicAccessor<double>.SetMember(string key, ref uint crc, double value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [key] = value;
 		}
 
 		uint IDynamicAccessor<uint>.GetMember(string key, ref uint crc, uint defaultValue)
 		{
+			if (expando != null)
+				return expando [key];
 			uint len = *(uint*)(list + 4);
 			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
 			len &= 0xFFFFFF;
@@ -1448,11 +1505,15 @@ namespace playscript.utils {
 
 		void IDynamicAccessor<uint>.SetMember(string key, ref uint crc, uint value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [key] = value;
 		}
 
 		bool IDynamicAccessor<bool>.GetMember(string key, ref uint crc, bool defaultValue)
 		{
+			if (expando != null)
+				return expando [key];
 			uint len = *(uint*)(list + 4);
 			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
 			len &= 0xFFFFFF;
@@ -1497,11 +1558,15 @@ namespace playscript.utils {
 
 		void IDynamicAccessor<bool>.SetMember(string key, ref uint crc, bool value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [key] = value;
 		}
 
 		public object GetMember(string key, ref uint crc, object defaultValue)
 		{
+			if (expando != null)
+				return expando [key];
 			uint len = *(uint*)(list + 4);
 			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
 			len &= 0xFFFFFF;
@@ -1546,7 +1611,9 @@ namespace playscript.utils {
 
 		public void SetMember(string key, ref uint crc, object value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [key] = value;
 		}
 
 		// Handle .NET types that aren't commonly used in AS but can come up in interop..
@@ -1558,12 +1625,26 @@ namespace playscript.utils {
 		
 		void IDynamicAccessor<float>.SetMember(string key, ref uint crc, float value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [key] = value;
 		}
 
 		#endregion
 
 		#region IDynamicAccessorTyped implementation
+
+		public object GetMemberObject(string key, ref uint hint, object defaultValue)
+		{
+			return ((IDynamicAccessor<object>)this).GetMember (key, ref hint, defaultValue);
+		}
+
+		public void SetMemberObject (string key, object value)
+		{
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [key] = value;
+		}
 
 		public string GetMemberString (string key, ref uint hint, string defaultValue)
 		{
@@ -1572,7 +1653,9 @@ namespace playscript.utils {
 
 		public void SetMemberString (string key, string value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [key] = value;
 		}
 
 		public int GetMemberInt (string key, ref uint hint, int defaultValue)
@@ -1582,7 +1665,9 @@ namespace playscript.utils {
 
 		public void SetMemberInt (string key, int value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [key] = value;
 		}
 
 		public uint GetMemberUInt (string key, ref uint hint, uint defaultValue)
@@ -1592,7 +1677,9 @@ namespace playscript.utils {
 
 		public void SetMemberUInt (string key, uint value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [key] = value;
 		}
 
 		public double GetMemberNumber (string key, ref uint hint, double defaultValue)
@@ -1602,7 +1689,9 @@ namespace playscript.utils {
 
 		public void SetMemberNumber (string key, double value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [key] = value;
 		}
 
 		public bool GetMemberBool (string key, ref uint hint, bool defaultValue)
@@ -1612,24 +1701,323 @@ namespace playscript.utils {
 
 		public void SetMemberBool (string key, bool value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [key] = value;
 		}
 
 		#endregion
 
+		#region IDictionary implementation
+
+		void IDictionary<string, object>.Add (string key, object value)
+		{
+			uint crc = 0;
+			this.SetMember (key, ref crc, value);
+		}
+
+		bool IDictionary<string, object>.ContainsKey (string key)
+		{
+			return this.HasMember (key);
+		}
+
+		bool IDictionary<string, object>.Remove (string key)
+		{
+			if (this.HasMember (key)) {
+				this.DeleteMember (key);
+				return true;
+			}
+			return false;
+		}
+
+		bool IDictionary<string, object>.TryGetValue (string key, out object value)
+		{
+			value = null;
+			if (this.HasMember (key)) {
+				uint crc = 0;
+				value = this.GetMember (key, ref crc, null); 
+				return true;
+			}
+			return false;
+		}
+
+		object IDictionary<string, object>.this [string index] {
+			get {
+				uint crc = 0;
+				return this.GetMember (index, ref crc, null);
+			}
+			set {
+				uint crc = 0;
+				this.SetMember (index, ref crc, value);
+			}
+		}
+
+		ICollection<string> IDictionary<string, object>.Keys {
+			get {
+				return GetKeys ();
+			}
+		}
+		ICollection<object> IDictionary<string, object>.Values {
+			get {
+				return GetValues ();
+			}
+		}
+
+		#endregion
+
+		#region ICollection implementation
+
+		void ICollection<KeyValuePair<string, object>>.Add (KeyValuePair<string, object> item)
+		{
+			uint crc = 0;
+			this.SetMember (item.Key, ref crc, item.Value);
+		}
+
+		void ICollection<KeyValuePair<string, object>>.Clear ()
+		{
+			if (expando == null)
+				expando = new PlayScript.Expando.ExpandoObject ();
+		}
+
+		bool ICollection<KeyValuePair<string, object>>.Contains (KeyValuePair<string, object> item)
+		{
+			return this.HasMember (item.Key);
+		}
+
+		void ICollection<KeyValuePair<string, object>>.CopyTo (KeyValuePair<string, object>[] array, int arrayIndex)
+		{
+			throw new NotImplementedException ();
+		}
+
+		bool ICollection<KeyValuePair<string, object>>.Remove (KeyValuePair<string, object> item)
+		{
+			if (this.HasMember (item.Key)) {
+				this.DeleteMember(item.Key);
+				return true;
+			}
+			return false;
+		}
+
+		bool ICollection<KeyValuePair<string, object>>.IsReadOnly {
+			get {
+				return false;
+			}
+		}
+
+		#endregion
+
+		#region IDictionary implementation
+
+		void IDictionary.Add (object key, object value)
+		{
+			uint crc = 0;
+			this.SetMember (key.ToString(), ref crc, value);
+		}
+
+		void IDictionary.Clear ()
+		{
+			if (expando == null)
+				expando = new PlayScript.Expando.ExpandoObject ();
+		}
+
+		private class DictionaryEnumerator : IDictionaryEnumerator {
+
+			private IDynamicAccessor<object> _jsonObj;
+			private KeyCrcPairs _pairs;
+			private int _index;
+			private string key;
+			private object value;
+
+			public DictionaryEnumerator(IDynamicAccessor<object> jsonObj, KeyCrcPairs pairs) {
+				_jsonObj = jsonObj;
+				_pairs = pairs;
+				_index = -1;
+			}
+
+			#region IEnumerator implementation
+
+			public void Dispose()
+			{
+			}
+
+			public bool MoveNext ()
+			{
+				if (_index + 1 >= _pairs.length)
+					return false;
+				_index++;
+				uint crc = 0;
+				BinJsonObject._lastKeyString = key = _pairs.keys [_index];
+				BinJsonObject._lastCrc = crc = _pairs.crcs [_index];
+				value = _jsonObj.GetMember(key, ref crc, null);
+				return true;
+			}
+
+			public void Reset ()
+			{
+				_index = -1;
+			}
+
+			public object Current {
+				get {
+					return new DictionaryEntry(key, value);
+				}
+			}
+
+			#endregion
+
+			#region IDictionaryEnumerator implementation
+
+			public DictionaryEntry Entry {
+				get {
+					return new DictionaryEntry(key, value);
+				}
+			}
+
+			public object Key {
+				get {
+					return key;
+				}
+			}
+
+			public object Value {
+				get {
+					return value;
+				}
+			}
+
+			#endregion
+		}
+
+		IDictionaryEnumerator IDictionary.GetEnumerator ()
+		{
+			if (expando != null)
+				return ((IDictionary)expando).GetEnumerator ();
+			else
+				return new DictionaryEnumerator (this, this.KeyPairs);
+		}
+
+		void IDictionary.Remove (object key)
+		{
+			this.DeleteMember (key.ToString ());
+		}
+
+		bool IDictionary.IsFixedSize {
+			get {
+				return false;
+			}
+		}
+
+		ICollection IDictionary.Keys {
+			get {
+				return this.KeyPairs.keys;
+			}
+		}
+
+		ICollection IDictionary.Values {
+			get {
+				return GetValues ();
+			}
+		}
+
+		bool IDictionary.IsReadOnly {
+			get {
+				return false;
+			}
+		}
+
+		object IDictionary.this [object key] {
+			get {
+				uint crc = 0;
+				return this.GetMember (key.ToString (), ref crc, null);
+			}
+			set {
+				uint crc = 0;
+				this.SetMember (key.ToString (), ref crc, value);
+			}
+		}
+
+		#endregion
+
+		#region ICollection implementation
+
+		void ICollection.CopyTo (System.Array array, int index)
+		{
+			throw new NotImplementedException ();
+		}
+
+		bool ICollection.IsSynchronized {
+			get {
+				return false;
+			}
+		}
+
+		object ICollection.SyncRoot {
+			get {
+				return this;
+			}
+		}
+
+		#endregion
+
+		#region IDynamicClass implementation
+
+		dynamic IDynamicClass.__GetDynamicValue (string name)
+		{
+			uint crc = 0;
+			return this.GetMember (name, ref crc, null);
+		}
+
+		bool IDynamicClass.__TryGetDynamicValue (string name, out object value)
+		{
+			value = null;
+			if (this.HasMember (name)) {
+				uint crc = 0;
+				value = this.GetMember (name, ref crc, null);
+				return true;
+			}
+			return false;
+		}
+
+		void IDynamicClass.__SetDynamicValue (string name, object value)
+		{
+			uint crc = 0;
+			this.SetMember (name, ref crc, value);
+		}
+
+		bool IDynamicClass.__DeleteDynamicValue (object name)
+		{
+			string key = name.ToString ();
+			if (this.HasMember (key)) {
+				this.DeleteMember (key);
+				return true;
+			}
+			return false;
+		}
+
+		bool IDynamicClass.__HasDynamicValue (string name)
+		{
+			return this.HasMember (name);
+		}
+
+		IEnumerable IDynamicClass.__GetDynamicNames ()
+		{
+			return this.KeyPairs.keys;
+		}
+
+		#endregion
 	}
 
 	//
-	// Implements IStaticArray interface for BinJSON static data buffers.  Allows Array objects to
+	// Implements IImmutableArray interface for BinJSON static data buffers.  Allows Array objects to
 	// use this binary data as it's backing store.
 	//
 
-	internal unsafe class BinJsonArray : BinJsonObject, IEnumerable, IStaticArray
+	internal unsafe class BinJsonArray : BinJsonObject, IEnumerable, IImmutableArray
 	{
 		public BinJsonArray(BinJsonDocument doc, byte* list) : base(doc, list) {
 		}
 
-		#region IStaticArray implementation
+		#region IImmutableArray implementation
 
 		public string getStringAt(uint index)
 		{

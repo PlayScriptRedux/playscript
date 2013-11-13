@@ -52,6 +52,8 @@ namespace PlayScript
 	// Typed public accessors
 	public interface IDynamicAccessorTyped
 	{
+		object GetMemberObject (string key, ref uint hint, object defaultValue);
+		void SetMemberObject (string key, object value);
 		string GetMemberString (string key, ref uint hint, string defaultValue);
 		void SetMemberString (string key, string value);
 		int GetMemberInt (string key, ref uint hint, int defaultValue);
@@ -81,7 +83,6 @@ namespace PlayScript
 			IEnumerable,
 			IEnumerable< KeyValuePair<string, object> >
 	{ 
-
 	}
 
 	public interface IDynamicClass
