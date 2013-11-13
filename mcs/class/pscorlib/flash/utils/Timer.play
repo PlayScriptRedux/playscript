@@ -36,6 +36,10 @@ package flash.utils {
  	 	public property repeatCount : int { get; set; }
  	 	public property running : Boolean { get { return mRunning; } }
 
+		// We can actually have a static version of these are timers dispatches are not reentrant.
+		private static var _timerEventTimer:TimerEvent = new TimerEvent(TimerEvent.TIMER);
+		private static var _timerEventTimerComplete:TimerEvent = new TimerEvent(TimerEvent.TIMER_COMPLETE);
+
  	 	//
  	 	// Methods
  	 	//
@@ -92,17 +96,13 @@ package flash.utils {
 					mRunning = false;
 				}
 
-
 				// dispatch timer event
-				var e:Event = new TimerEvent(TimerEvent.TIMER);
-				this.dispatchEvent(e);
-				
+				this.dispatchEvent(_timerEventTimer);
+
 				if (!mRunning)
 				{
-
 					// dispatch timer complete event
-					var ec:Event = new TimerEvent(TimerEvent.TIMER_COMPLETE);
-					this.dispatchEvent(ec);
+					this.dispatchEvent(_timerEventTimerComplete);
 				}
 			}
 		}
@@ -114,7 +114,7 @@ package flash.utils {
 			// iterate through all timers and advance their time
 			// note that we clone the active timers here to deal with timers that add timers or timers that must be removed
 			// (and note that timers can be added from other threads too).
-			for each (var timer:Timer in CloneActiveTimers())
+			for each (var timer:Timer in ActiveTimers())
 			{
 				// advance time
 				timer.advanceTime(deltaTimeMS);
@@ -161,7 +161,7 @@ package flash.utils {
 										if (arguments.length == 0) {
 											closure();
 										} else {
-											closure.DynamicInvoke(arguments);
+											closure.DynamicInvoke(arguments._GetInnerArray());
 										}
 									} );
 			timer.start();

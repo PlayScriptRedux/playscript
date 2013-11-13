@@ -28,21 +28,8 @@ using System.Linq;
 
 namespace Amf
 {
-    public class Amf3ClassDef : IEquatable<Amf3ClassDef>
+    public sealed class Amf3ClassDef : IEquatable<Amf3ClassDef>
     {
-		// registered class info (type, callbacks, etcs)
-		public class ClassInfo
-		{
-			public string 					Alias;
-			public System.Type				Type;
-			public System.Type				VectorType;
-			public Amf3ObjectConstructor	Constructor;
-			public Amf3ObjectVectorConstructor	VectorConstructor;
-			public Amf3ObjectSerializer		Serializer;
-			public Amf3ObjectDeserializer	Deserializer;
-			public Amf3ClassDef				DeserializerClassDef;
-		};
-
         public static readonly Amf3ClassDef Anonymous =
             new Amf3ClassDef("", new string[0], true, false);
 
@@ -50,21 +37,16 @@ namespace Amf
 		public readonly string				Name;
 		public readonly bool				Dynamic;
 		public readonly bool				Externalizable;
-		public ClassInfo Info
-		{
-			get 
-			{
-				if (mInfo == null) {
-					mInfo = GetOrCreateClassInfo(Name);
-				}
-				return mInfo;
-			}
-		}
+		public IAmf3Serializer				Serializer;			// cached serializer to use for this class definition
+		private  string 					mHash;				// cached class hash (backs Hash property)
+		private  Amf3Reader 				mReaderPool;		// singly linked list of readers in pool
 
-		private ClassInfo					mInfo;
-		private Amf3ClassDef				mRemapClassDef; 
-		private int[]						mRemapTable;
+		private Dictionary<string, int>		mLookup;			// cached name -> index lookup  (could use custom hash table for this)
+		private string 						mLastLookupKey;		// cached last key that was looked up
+		private int 						mLastLookupIndex;
 
+		internal Amf3Writer					mWriter;			// the last writer to write this object
+		internal int 						mId;				// the id associated with this object
 
 		public Amf3ClassDef(string name, string[] properties, bool dynamic = false, bool externalizable = false)
         {
@@ -77,93 +59,122 @@ namespace Amf
             Externalizable = externalizable;
         }
 
-		public int[] GetRemapTable(Amf3ClassDef serializerClassDef)
+		// this is a unique hash for this class definition (contains class name and property names)
+		// the hash is generated the first time this is accessed
+		public string Hash
 		{
-			// has the serializer class definition changed?
-			if (mRemapClassDef != serializerClassDef)	{
-				// if so, create remap table
-				// create remap table from the serializer properties to our properties
-				mRemapTable = new int[serializerClassDef.Properties.Length];
-				for (int i=0; i < serializerClassDef.Properties.Length; i++) 
-				{
-					// get out property index
-					int remapIndex = GetPropertyIndex(serializerClassDef.Properties[i]);
-					// store in remap table
-					mRemapTable[i] = remapIndex + 1; // we add one here to make 0 be the 'missing' property
+			get 
+			{
+				if (mHash == null) {
+					// hash properties as one string
+					var sb = new System.Text.StringBuilder();
+					sb.Append(Name);
+					if (Dynamic) sb.Append('*');
+					if (Externalizable) sb.Append('>');
+					sb.Append(':');
+					bool delimiter = false;
+					foreach (var prop in Properties) {
+						if (delimiter) sb.Append(',');
+						sb.Append(prop);
+						delimiter = true;
+					}
+					mHash = sb.ToString();
 				}
-				// cache class definition
-				mRemapClassDef = serializerClassDef;
+				return mHash;
 			}
-			// return remap table
-			return mRemapTable;
+		}
+
+		// creates a property reader that can read ordered or named properties from an amf stream 
+		public Amf3Reader CreatePropertyReader()
+		{
+			var reader = mReaderPool;
+			if (reader == null) {
+				// create new property reader if pool is empty
+				reader = new Amf3Reader(this);
+				return reader;
+			}
+
+			// use next property reader from pool
+			mReaderPool = mReaderPool.NextReader;
+			return reader;
+		}
+
+		// release a property reader back to the pool
+		public void ReleasePropertyReader(Amf3Reader reader)
+		{
+			reader.EndRead();
+			// add reader to pool
+			reader.NextReader = mReaderPool;
+			mReaderPool = reader;
 		}
 
 		public int GetPropertyIndex(string name)
 		{
-			for (int i=0; i < Properties.Length; i++) {
-				if (Properties[i] == name) {
-					return i;
+			// do a quick comparison against the last lookup that weas performed
+			if (mLastLookupKey == name) {
+				return mLastLookupIndex;
+			}
+
+			if (mLookup == null) {
+				// build lookup table
+				mLookup = new Dictionary<string, int>(Properties.Length);
+				for (int i=0; i < Properties.Length; i++) {
+					mLookup[Properties[i]] = i;
 				}
 			}
-			return -1;
+
+			mLastLookupKey = name;
+
+			int value;
+			if (mLookup.TryGetValue(name, out value)) {
+				// found key
+				mLastLookupIndex = value;
+				return value;
+			} else {
+				// did not find key
+				mLastLookupIndex = -1;
+				return -1;
+			}
 		}
 
-		public object CreateInstance()
+		// enumerates all properties of this class definition
+		public IEnumerator GetKeyEnumerator()
 		{
-			// get class info
-			ClassInfo info = this.Info;
-
-			if (info.Constructor != null) {
-				// invoke provided constructor delegate if we have one
-				return info.Constructor();
+			// enumerate class properties
+			for (int i=0; i < Properties.Length; i++) {
+				string key = Properties[i];
+				// cache last key since its likely to be read next
+				mLastLookupKey    = key;
+				mLastLookupIndex  = i;
+				yield return key;
 			}
-
-			if (info.Type == null) {
-				// no type registered? use an expando object 
-				return new PlayScript.Expando.ExpandoObject(this.Properties.Length);
-			}
-
-			// construct object using reflection (slower)
-
-			// First, we look the default constrcutor
-			ConstructorInfo constructor = info.Type.GetConstructor(Type.EmptyTypes);
-			if (constructor != null)
-			{
-				return constructor.Invoke(null);
-			}
-
-			// If there was no default constructor, use a constructor that only has default values
-			ConstructorInfo[] allConstructors = info.Type.GetConstructors();
-			foreach (ConstructorInfo oneConstructor in allConstructors)
-			{
-				ParameterInfo[] parameters = oneConstructor.GetParameters();
-				if (parameters.Length == 0) {
-					// Why did we not get this with the default constructor?
-					// In any case, handle the case gracefully
-				} else if (parameters[0].IsOptional) {
-					// First parameter is optional, so all others are too, this constructor is good enough
-				} else {
-					// We can't use this constructor, try the next one
-					continue;
-				}
-
-				object[] arguments = new object[parameters.Length];
-				for (int i = 0 ; i < parameters.Length ; ++i) {
-					arguments[i] = parameters[i].DefaultValue;
-				}
-
-				return oneConstructor.Invoke(arguments);
-			}
-
-			// Did we miss something?
-			throw new NotSupportedException();
 		}
+
+		// enumerates all properties of this class definition
+		public IEnumerator GetKeyEnumerator(IEnumerable<string> dynamicProperties)
+		{
+			// enumerate dynamic properties
+			foreach (var key in dynamicProperties) {
+				// invalidate last key since its not in this class definition
+				mLastLookupKey    = key;
+				mLastLookupIndex  = -1;
+				yield return key;
+			}
+
+			// enumerate class properties
+			for (int i=0; i < Properties.Length; i++) {
+				string key = Properties[i];
+				// cache last key since its likely to be read next
+				mLastLookupKey    = key;
+				mLastLookupIndex  = i;
+				yield return key;
+			}
+		}
+
 
         public override int GetHashCode()
         {
-            return Name.GetHashCode() ^
-                (Dynamic ? 1 : 0) ^
-                (Externalizable ? 2 : 0);
+            return Hash.GetHashCode();
         }
 
         public override bool Equals(object obj)
@@ -179,184 +190,142 @@ namespace Amf
             if (object.ReferenceEquals(this, other))
                 return true;
 
-            if (Name             != other.Name ||
-                Dynamic          != other.Dynamic ||
-                Externalizable   != other.Externalizable ||
-			    Properties.Length != other.Properties.Length)
-                return false;
-
-			for (int i = 0; i < Properties.Length; i++)
-            {
-                if (Properties[i] != other.Properties[i])
-                    return false;
-            }
-
-            return true;
+			return this.Hash == other.Hash;
         }
+
+		public override string ToString()
+		{
+			return string.Format("[Amf3ClassDef: {0}]", Hash);
+		}
 
 		//
 		// class registration 
 		//
 
+
 		// gets system type associated with class alias
-		public static System.Type GetClassType(string aliasName)
+		public static System.Type GetTypeFromAlias(string aliasName, bool searchRuntimeTypes = false)
 		{
-			lock (sClassInfo)
+			lock (sAliasToType)
 			{
-				ClassInfo info = null;
-				if (!sClassInfo.TryGetValue(aliasName, out info)) {
-					return null;
+				Type type = null;
+				sAliasToType.TryGetValue(aliasName, out type);
+				if (type != null) {
+					return type;
 				}
-				return info.Type;
 			}
+
+			if (searchRuntimeTypes) {
+				// search all assemblies
+				foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) {
+					var type = assembly.GetType(aliasName);
+					if (type != null) {
+						// register and return it
+						RegisterTypeAlias(type.FullName, type);
+						return type;
+					}
+				}
+			}
+			return null;
 		}
 
-		// get all class information for all registered classes
-		public static ClassInfo[] GetAllRegisteredClasses()
+		// gets the alias associated with a system type
+		public static string GetAliasFromType(System.Type type)
 		{
-			lock (sClassInfo)
+			lock (sTypeToAlias)
 			{
-				return sClassInfo.Values.ToArray();
+				string alias = null;
+				sTypeToAlias.TryGetValue(type, out alias);
+				return alias;
 			}
 		}
 
-		
-		public static IList CreateObjectVector(string aliasName, uint num, bool isFixed)
+		// gets registered serializer associated with class alias
+		public static IAmf3Serializer GetSerializerFromAlias(string aliasName)
 		{
-			// get class info
-			var info = GetOrCreateClassInfo(aliasName);
-
-			if (info.VectorConstructor != null) {
-				// invoke vector constructor if we have one
-				return info.VectorConstructor(num, isFixed);
+			lock (sAliasToSerializer)
+			{
+				IAmf3Serializer serializer = null;
+				sAliasToSerializer.TryGetValue(aliasName, out serializer);
+				return serializer;
 			}
-
-			if (info.Type == null) {
-				// use dynamic type 
-				return new _root.Vector<dynamic>(num, isFixed);
-			}
-
-			if (info.VectorType == null) {
-				info.VectorType = typeof(_root.Vector<>).MakeGenericType(new Type[1] {info.Type});
-			}
-
-			// We use IList so it works for all types, regardless of objectTypeName (cast works because _root.Vector<> implements IList)
-			IList vector = (IList)Activator.CreateInstance(info.VectorType, num, isFixed);
-			return vector;
 		}
 
-		private static object GetStaticMethod<T>(System.Type type, string name) where T:class
+		// get all registered types
+		public static KeyValuePair<string, Type>[] GetAllRegisteredTypes()
 		{
-			MethodInfo method = type.GetMethod(name, BindingFlags.Static | BindingFlags.Public);
-			if (method != null) {
-				return Delegate.CreateDelegate(typeof(T), method);
-			} else {
-				return null;
+			lock (sAliasToType)
+			{
+				return sAliasToType.ToArray();
 			}
 		}
 
 		// registers a system type to be associated with a class alias
-		// this type typically implements IAmf3Serializable or has delegates that do the serialization
-		public static void RegisterClassType(string aliasName, System.Type type) {
-			var info = GetOrCreateClassInfo(aliasName);
-			info.Type = type;
-
-			// register static helper delegates from this type
-			RegisterHelperDelegates(aliasName, type);
-
-//			Console.WriteLine("AMF: Registered class {0} => {1}", aliasName, type.FullName);
-		}
-
-		// registers a system type and a serializer to be associated with a class alias
-		// the serializer is typically a static class which implements ObjectSerializer/ObjectDeserializer/etc
-		public static void RegisterExternalSerializer(string aliasName, System.Type serializerType, System.Type targetType) {
-			var info = GetOrCreateClassInfo(aliasName);
-			info.Type = targetType;
-
-			// register static helper delegates from serializer type
-			RegisterHelperDelegates(aliasName, serializerType);
-
-//			Console.WriteLine("AMF: Registered external serializer {0} => {1} => {2}", aliasName, serializerType.FullName, targetType.FullName);
-		}
-
-		// registers any static helper delegates that are found on the class type
-		public static void RegisterHelperDelegates(string aliasName, System.Type type)
+		public static void RegisterTypeAlias(string aliasName, System.Type type) 
 		{
-			var info = GetOrCreateClassInfo(aliasName);
-
-			// resolve static methods as delegates
-			var constructor = GetStaticMethod<Amf3ObjectConstructor>(type, "ObjectConstructor");
-			if (constructor != null) {
-				info.Constructor = (Amf3ObjectConstructor)constructor;
+			lock (sTypeToAlias)
+			{
+				sTypeToAlias[type] = aliasName;
 			}
 
-			var vectorConstructor = GetStaticMethod<Amf3ObjectVectorConstructor>(type, "VectorObjectConstructor");
-			if (vectorConstructor != null) {
-				info.VectorConstructor = (Amf3ObjectVectorConstructor)vectorConstructor;
+			lock (sAliasToType)
+			{
+				sAliasToType[aliasName] = type;
 			}
 
-			var serializer = GetStaticMethod<Amf3ObjectSerializer>(type, "ObjectSerializer");
-			if (serializer != null) {
-				info.Serializer = (Amf3ObjectSerializer)serializer;
-			}
-
-			var deserializer = GetStaticMethod<Amf3ObjectDeserializer>(type, "ObjectDeserializer");
-			if (deserializer != null) {
-				info.Deserializer = (Amf3ObjectDeserializer)deserializer;
-			}
+//			Console.WriteLine("AMF: Registered class alias {0} => {1}", aliasName, type.FullName);
 		}
 
-		// register all classes in assembly that have the Amf3Serializable attribute
-		public static void RegisterAllClassesInAssembly(Assembly assembly)
+		// register all serializers in assembly
+		public static void RegisterAllSerializersInAssembly(Assembly assembly)
 		{
 			foreach (var type in assembly.GetTypes()) {
 				var attr = Attribute.GetCustomAttribute(type, typeof(Amf3SerializableAttribute)) as Amf3SerializableAttribute;
 				if (attr != null) { 
-					RegisterClassType(attr.ClassName, type);
+					// register alias
+					RegisterTypeAlias(attr.ClassName, type);
 				}
 
-				var externalAttr = Attribute.GetCustomAttribute(type, typeof(Amf3ExternalSerializerAttribute)) as Amf3ExternalSerializerAttribute;
-				if (externalAttr != null) { 
-					RegisterExternalSerializer(externalAttr.ClassName, type, externalAttr.TargetType);
+				var serializerAttr = Attribute.GetCustomAttribute(type, typeof(Amf3SerializerAttribute)) as Amf3SerializerAttribute;
+				if (serializerAttr != null) { 
+					// register alias
+					RegisterTypeAlias(serializerAttr.ClassName, serializerAttr.TargetType);
+
+					// create instance of serializer
+					var serializer = Activator.CreateInstance(type) as IAmf3Serializer;
+					if (serializer != null) {
+						// register serializer
+						RegisterSerializer(serializerAttr.ClassName, serializer);
+					}
 				}
 			}
 		}
 
-		// register all classes in the current domain that have the Amf3Serializable attribute
-		public static void RegisterAllClasses()
+		// register all serializers in the current domain
+		public static void RegisterAllSerializers()
 		{
 			foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) {
-				RegisterAllClassesInAssembly(assembly);
+				RegisterAllSerializersInAssembly(assembly);
 			}
 		}
 
-		private static ClassInfo GetOrCreateClassInfo(string aliasName)
+		public static void RegisterSerializer(string aliasName, IAmf3Serializer serializer)
 		{
-			lock (sClassInfo)
+			lock (sAliasToSerializer)
 			{
-				ClassInfo info;
-				if (!sClassInfo.TryGetValue(aliasName, out info))
-				{
-					info = new ClassInfo();
-					info.Alias = aliasName;
-					sClassInfo.Add(aliasName, info);
-				}
-				return info;
+				sAliasToSerializer[aliasName] = serializer;
 			}
 		}
 
 		static Amf3ClassDef()
 		{
-			// register all AMF serializable classes we can find
-			RegisterAllClasses();
+			// register all AMF serializers we can find
+			RegisterAllSerializers();
 		}
 
-		// the last writer to write this object
-		internal Amf3Writer				mWriter;
-		// the id associated with this object
-		internal int 					mId;
-
-		// class info registration
-		private static readonly Dictionary<string, ClassInfo> sClassInfo = new Dictionary<string, ClassInfo>();
+		// serializer registration
+		private static readonly Dictionary<string, IAmf3Serializer> sAliasToSerializer = new Dictionary<string, IAmf3Serializer>();
+		private static readonly Dictionary<Type, string> sTypeToAlias = new Dictionary<Type, string>();
+		private static readonly Dictionary<string, Type> sAliasToType = new Dictionary<string, Type>();
     }
 }

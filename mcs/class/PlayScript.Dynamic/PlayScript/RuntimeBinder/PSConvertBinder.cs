@@ -19,34 +19,25 @@ using PlayScript;
 
 namespace PlayScript.RuntimeBinder
 {
-
 	class PSConvertBinder : CallSiteBinder
 	{
 		private static Dictionary<Type, object> delegates = new Dictionary<Type, object>();
 
-	//	readonly Type type;
-	//	readonly CSharpBinderFlags flags;
-	//	readonly Type context;
-		
 		public PSConvertBinder (Type type, Type context, CSharpBinderFlags flags)
 		{
-	//		this.type = type;
-	//		this.flags = flags;
-	//		this.context = context;
 		}
 
 		public static int ConvertToInt (CallSite site, object o)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.ConvertBinderInvoked);
-#endif
+
 			if (o is int) {
 				return (int)o;
 			} 
 			if (o is uint) {
 				return (int)(uint)o;
 			} 
-			if (o == null || o == PlayScript.Undefined._undefined) {
+			if (PlayScript.Dynamic.IsNullOrUndefined (o)) {
 				return 0;
 			}
 
@@ -78,16 +69,15 @@ namespace PlayScript.RuntimeBinder
 
 		public static uint ConvertToUInt (CallSite site, object o)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.ConvertBinderInvoked);
-#endif
+
 			if (o is uint) {
 				return (uint)o;
 			} 
 			if (o is int) {
 				return (uint)(int)o;
 			} 
-			if (o == null || o == PlayScript.Undefined._undefined) {
+			if (PlayScript.Dynamic.IsNullOrUndefined (o)) {
 				return 0;
 			}
 
@@ -112,16 +102,15 @@ namespace PlayScript.RuntimeBinder
 
 		public static double ConvertToDouble (CallSite site, object o)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.ConvertBinderInvoked);
-#endif
+
 			if (o is double) {
 				return (double)o;
 			} 
 			if (o is float) {
 				return (double)(float)o;
 			} 
-			if (o == null || o == PlayScript.Undefined._undefined) {
+			if (PlayScript.Dynamic.IsNullOrUndefined (o)) {
 				return 0.0;
 			}
 
@@ -146,13 +135,12 @@ namespace PlayScript.RuntimeBinder
 
 		public static bool ConvertToBool (CallSite site, object o)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.ConvertBinderInvoked);
-#endif
+
 			if (o is bool) {
 				return (bool)o;
 			} 
-			if (o == null || o == PlayScript.Undefined._undefined) {
+			if (PlayScript.Dynamic.IsNullOrUndefined (o)) {
 				return false;
 			}
 
@@ -175,10 +163,9 @@ namespace PlayScript.RuntimeBinder
 
 		public static string ConvertToString (CallSite site, object o)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.ConvertBinderInvoked);
-#endif
-			if (o == null || o == PlayScript.Undefined._undefined) {
+
+			if (PlayScript.Dynamic.IsNullOrUndefined (o)) {
 				return null;
 			} else if  (o is string) {
 				return (string)o;
@@ -189,9 +176,12 @@ namespace PlayScript.RuntimeBinder
 
 		public static object ConvertToObj (CallSite site, object o)
 		{
-#if BINDERS_RUNTIME_STATS
 			Stats.Increment(StatsCounter.ConvertBinderInvoked);
-#endif
+
+			if (o == PlayScript.Undefined._undefined) {
+				return null; // only type "*" can be undefined
+			}
+
 			return o;
 		}
 

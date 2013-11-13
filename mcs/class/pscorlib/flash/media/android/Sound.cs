@@ -20,6 +20,7 @@ using flash.events;
 using Android.Media;
 using Android.App;
 using Android.Content.Res;
+using Java.IO;
 
 namespace flash.media {
 
@@ -90,6 +91,10 @@ namespace flash.media {
 
         }
 
+		public static void AsyncDispatchEvents()
+		{
+		}
+
 		public class ZMediaPlayer : MediaPlayer, MediaPlayer.IOnCompletionListener {
 
 			private String url;
@@ -119,8 +124,21 @@ namespace flash.media {
 			public void Initialize()
 			{				
 				Reset ();
-				AssetFileDescriptor afd = Application.Context.Assets.OpenFd (url);
-				SetDataSource (afd.FileDescriptor, afd.StartOffset, afd.Length);
+				try
+				{
+				    AssetFileDescriptor afd = Application.Context.Assets.OpenFd (url);
+					SetDataSource (afd.FileDescriptor, afd.StartOffset, afd.Length);
+				}
+				#pragma warning disable 0168
+				catch(Java.IO.FileNotFoundException ex) 
+				#pragma warning restore 0168
+				{
+					File fSnd = new File(url);
+					FileInputStream fileIS = new FileInputStream(fSnd);
+					SetDataSource(fileIS.FD, 0, fSnd.Length());
+				}
+
+
 				SetVolume (100, 100);
 				Prepare ();
 

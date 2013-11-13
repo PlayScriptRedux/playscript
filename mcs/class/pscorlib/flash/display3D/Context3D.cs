@@ -249,6 +249,9 @@ namespace flash.display3D {
 			if (status != FramebufferErrorCode.FramebufferComplete) {
 				Console.Error.WriteLine("FrameBuffer configuration error: {0}", status);
 			}
+
+			// clear the settings cache
+			StateCache.clearSettings ();
 		}
 	
 		public CubeTexture createCubeTexture(int size, string format, bool optimizeForRenderToTexture, int streamingLevels = 0) {

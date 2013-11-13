@@ -16,7 +16,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;BINDERS_RUNTIME_STATS</DefineConstants>
+    <DefineConstants>DEBUG;PLATFORM_GENERIC;BINDERS_RUNTIME_STATS</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
@@ -29,7 +29,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
-    <DefineConstants>BINDERS_RUNTIME_STATS</DefineConstants>
+    <DefineConstants>PLATFORM_GENERIC;BINDERS_RUNTIME_STATS</DefineConstants>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
@@ -37,10 +37,6 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AssemblyInfo.cs" />
-    <Compile Include="..\PlayScript.Dynamic\System\Runtime\CompilerServices\DynamicAttribute.cs">
-      <Link>System\Runtime\CompilerServices\DynamicAttribute.cs</Link>
-    </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\CallSite.cs">
       <Link>PlayScript\CallSite.cs</Link>
     </Compile>
@@ -101,38 +97,32 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpBinderFlags.cs">
       <Link>PlayScript\RuntimeBinder\CSharpBinderFlags.cs</Link>
     </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpConvertBinder.cs">
-      <Link>PlayScript\RuntimeBinder\CSharpConvertBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpGetIndexBinder.cs">
-      <Link>PlayScript\RuntimeBinder\CSharpGetIndexBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpGetMemberBinder.cs">
-      <Link>PlayScript\RuntimeBinder\CSharpGetMemberBinder.cs</Link>
-    </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpInvokeBinder.cs">
       <Link>PlayScript\RuntimeBinder\CSharpInvokeBinder.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpInvokeConstructorBinder.cs">
       <Link>PlayScript\RuntimeBinder\CSharpInvokeConstructorBinder.cs</Link>
     </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpInvokeMemberBinder.cs">
-      <Link>PlayScript\RuntimeBinder\CSharpInvokeMemberBinder.cs</Link>
-    </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpIsEventBinder.cs">
       <Link>PlayScript\RuntimeBinder\CSharpIsEventBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpSetIndexBinder.cs">
-      <Link>PlayScript\RuntimeBinder\CSharpSetIndexBinder.cs</Link>
-    </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpSetMemberBinder.cs">
-      <Link>PlayScript\RuntimeBinder\CSharpSetMemberBinder.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpUnaryOperationBinder.cs">
       <Link>PlayScript\RuntimeBinder\CSharpUnaryOperationBinder.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\System\Runtime\CompilerServices\DynamicAttribute.cs">
+      <Link>System\Runtime\CompilerServices\DynamicAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\AssemblyInfo.cs">
+      <Link>AssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\AsUntypedAttribute.cs">
+      <Link>PlayScript\AsUntypedAttribute.cs</Link>
+    </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\Undefined.cs">
       <Link>PlayScript\Undefined.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\Variant.cs">
+      <Link>PlayScript\Variant.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\Dynamic.cs">
       <Link>PlayScript\Dynamic.cs</Link>
@@ -164,11 +154,11 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\PSInvokeMemberBinder.cs">
       <Link>PlayScript\RuntimeBinder\PSInvokeMemberBinder.cs</Link>
     </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpBinaryOperationBinder2.cs">
-      <Link>PlayScript\RuntimeBinder\CSharpBinaryOperationBinder2.cs</Link>
-    </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\MethodBinder.cs">
       <Link>PlayScript\MethodBinder.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\CSharpBinaryOperationBinder2.cs">
+      <Link>PlayScript\RuntimeBinder\CSharpBinaryOperationBinder2.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\PSIsEventBinder.cs">
       <Link>PlayScript\RuntimeBinder\PSIsEventBinder.cs</Link>
@@ -176,23 +166,17 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\IKeyEnumerable.cs">
       <Link>PlayScript\IKeyEnumerable.cs</Link>
     </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSBinaryOperation.cs">
-      <Link>PlayScript\DynamicRuntime\PSBinaryOperation.cs</Link>
-    </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSConverter.cs">
       <Link>PlayScript\DynamicRuntime\PSConverter.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSBinaryOperation.cs">
+      <Link>PlayScript\DynamicRuntime\PSBinaryOperation.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSGetIndex.cs">
       <Link>PlayScript\DynamicRuntime\PSGetIndex.cs</Link>
     </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\Invoker.cs">
-      <Link>PlayScript\Invoker.cs</Link>
-    </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSGetMember.cs">
       <Link>PlayScript\DynamicRuntime\PSGetMember.cs</Link>
-    </Compile>
-    <Compile Include="..\PlayScript.Dynamic\PlayScript\ActionCreator.cs">
-      <Link>PlayScript\ActionCreator.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSSetIndex.cs">
       <Link>PlayScript\DynamicRuntime\PSSetIndex.cs</Link>
@@ -202,6 +186,12 @@
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\Stats.cs">
       <Link>PlayScript\Stats.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\Invoker.cs">
+      <Link>PlayScript\Invoker.cs</Link>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\ActionCreator.cs">
+      <Link>PlayScript\ActionCreator.cs</Link>
     </Compile>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSUnaryOperation.cs">
       <Link>PlayScript\DynamicRuntime\PSUnaryOperation.cs</Link>
@@ -215,6 +205,12 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\TypeLogger.cs">
       <Link>PlayScript\DynamicRuntime\TypeLogger.cs</Link>
     </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSBinaryArithmetic.cs">
+      <DependentUpon>PlayScript\DynamicRuntime\PSBinaryArithmetic.tt</DependentUpon>
+    </Compile>
+    <Compile Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSBinaryComparison.cs">
+      <DependentUpon>PSBinaryComparison.tt</DependentUpon>
+    </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -226,6 +222,14 @@
     <None Include="PlayScript.Dynamic_aot.dll.sources" />
     <None Include="..\PlayScript.Dynamic\PlayScript.Dynamic.dll.sources">
       <Link>PlayScript.Dynamic.dll.sources</Link>
+    </None>
+    <None Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSBinaryArithmetic.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>PlayScript\DynamicRuntime\PSBinaryArithmetic.cs</LastGenOutput>
+    </None>
+    <None Include="..\PlayScript.Dynamic\PlayScript\DynamicRuntime\PSBinaryComparison.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>PSBinaryComparison.cs</LastGenOutput>
     </None>
   </ItemGroup>
 </Project>

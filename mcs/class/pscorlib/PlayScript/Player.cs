@@ -36,6 +36,8 @@ using Android.App;
 
 namespace PlayScript
 {
+	public delegate string ResourcePathConverter(string origPath);
+
 	public class Player
 	{
 		public string Title
@@ -62,6 +64,17 @@ namespace PlayScript
 
 		// desired content scale for application (1.0=nonretina, 2.0=retina)
 		public static double?       ApplicationContentScale {get;set;}
+
+		public static ResourcePathConverter RemotePathConverter {get;set;}
+
+		// if true, any local .json will attempt to be loaded as AMF if a file exists with the ".json.amf.z" extension
+		public static bool LoadJsonAsAmf {get; set;}
+
+		// maximum time spent running event loop until present is done
+		public static double MaxRunTimeUntilPresent = 100.0;
+
+		// time to sleep between frames if no present occurs
+		public static int SleepTimeBetweenFrames = 1;
 
 		static Player()
 		{
@@ -244,7 +257,19 @@ namespace PlayScript
 					var jsonText = System.IO.File.ReadAllText(newPath);
 #elif PLATFORM_MONODROID
 					var jsonText = "";
-					Stream stream = Application.Context.Assets.Open(path);
+				    Stream stream;
+				    try
+				    {
+					    stream = Application.Context.Assets.Open(path);
+				    }
+				    // if cannot load as assets, try loading it as plain file
+				    // disable the ex defined but not used "warning as error"
+					#pragma warning disable 0168
+					catch (Java.IO.FileNotFoundException ex)
+					#pragma warning restore 0168
+					{
+					    stream = File.OpenRead(path);
+					}
 					using (StreamReader sr = new System.IO.StreamReader(stream))
 					{
 						jsonText = sr.ReadToEnd();
@@ -261,6 +286,14 @@ namespace PlayScript
 			}
 		}
 
+		public static string ToRemotePath(string path)
+		{
+			if (RemotePathConverter != null)
+				return RemotePathConverter(path);
+			else
+				return path;
+		}
+
 		public static string ResolveResourcePath(string path)
 		{
 			string altPath = TryResolveResourcePath(path);
@@ -269,6 +302,39 @@ namespace PlayScript
 				throw new System.IO.FileNotFoundException("File does not exist: " + path + "\nMake sure that it has been added with build action of BundledResource, or add a new search directory with AddResourceDirectory()\n" );
 			}
 			return altPath;
+		}
+
+		private static string normalizePath(string path)
+		{
+			string[] pathParts = path.Split(Path.DirectorySeparatorChar);
+			List<string> result = new List<string>();
+			int skip = 0;
+
+			for(int i = pathParts.Length - 1; i >= 0; i--)
+			{
+				string p = pathParts[i];
+				if(p == "" || p == ".")
+				{
+					continue;
+				}
+
+				if(p == "..")
+				{
+					skip++;
+					continue;
+				}
+
+				if(skip != 0)
+				{
+					skip--;
+					continue;
+				}
+
+				result.Insert(0, p);
+			}
+
+			string separator = new string(Path.DirectorySeparatorChar, 1);
+			return string.Join(separator, result);
 		}
 
 		public static string TryResolveResourcePath(string path)
@@ -291,15 +357,17 @@ namespace PlayScript
 			}
 
 #if PLATFORM_MONODROID
+			string npath = normalizePath(path);
 			try {
-				Application.Context.Assets.Open(path);
-			} catch (Java.IO.FileNotFoundException e)
+				Application.Context.Assets.Open(npath);
+			} 
+			catch (Java.IO.FileNotFoundException e)
 			{
-				Console.WriteLine("File does not exists for " + path + " " + e.Message);
-				return null;
+			    Console.WriteLine("File does not exists for " + path + " " + e.Message);
+			    return null;
 			}
 
-			return path;
+			return npath;
 #else
 
 			// try all resource directories 
@@ -700,8 +768,9 @@ namespace PlayScript
 
 
 		// runs until graphics have been presented through Stage3D
-		public void RunUntilPresent(RectangleF bounds, Action onPresent = null, double maxTimeMs = 100.0)
+		public void RunUntilPresent(RectangleF bounds, Action onPresent = null)
 		{
+			Profiler.OnBeginFrame();
 			Telemetry.Session.OnBeginFrame();
 
 			// set context3D callback
@@ -721,14 +790,20 @@ namespace PlayScript
 				OnFrame(bounds);
 
 				// dont let us run too long waiting for a present
-				if (timer.ElapsedMilliseconds > maxTimeMs) {
+				if (timer.ElapsedMilliseconds > MaxRunTimeUntilPresent) {
 					break;
+				} else {
+					if (SleepTimeBetweenFrames > 0) {
+						// sleep between frames
+						Profiler.Begin("sleep", ".player.condition.wait");
+						System.Threading.Thread.Sleep(SleepTimeBetweenFrames);
+						Profiler.End("sleep");
+					}
 				}
 			}
 
 			Telemetry.Session.OnEndFrame();
-
-			Profiler.OnFrame();
+			Profiler.OnEndFrame();
 		}
 		
 

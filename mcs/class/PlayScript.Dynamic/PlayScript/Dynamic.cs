@@ -423,13 +423,31 @@ namespace PlayScript
 		{
 			Stats.Increment(StatsCounter.Dynamic_IsNullOrUndefinedInvoked);
 
-			// false implicitly converts to null in ActionScript, but not C#. Check for it here.
-			if (value is bool && (bool)value == false)
-				return true;
-
 			// NOTE: using Object.ReferenceEquals to avoid invoking PSBinaryOperation,
 			// which does more work than necessary
 			return (value == null || Object.ReferenceEquals(value, PlayScript.Undefined._undefined));
+		}
+
+		public static bool IsUndefined(object value)
+		{
+			Stats.Increment(StatsCounter.Dynamic_IsUndefinedInvoked);
+
+			// NOTE: using Object.ReferenceEquals to avoid invoking PSBinaryOperation,
+			// which does more work than necessary
+			return Object.ReferenceEquals(value, PlayScript.Undefined._undefined);
+		}
+
+		// returns the undefined value for a type
+		// this casts from undefined to T
+		public static T GetUndefinedValue<T>()
+		{
+			if (typeof(T) == typeof(double)) {
+				return (T)(object) double.NaN;
+			} else if (typeof(T) == typeof(float)) {
+				return (T)(object) float.NaN;
+			} else {
+				return default(T);
+			}
 		}
 
 		/// <summary>
@@ -460,6 +478,39 @@ namespace PlayScript
 			return key;
 		}
 
+		// converts an object key to a string for use by get/set member
+		// this differs from FormatKeyForAs in that it will return the key as a string instead of the key as an object
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static string ConvertKey(object key)
+		{
+			#if !DISABLE_NULL_KEYS
+			if (key == null)
+				return "null";
+			if (Object.ReferenceEquals(key, PlayScript.Undefined._undefined))
+				return "undefined";
+			#endif
+			return key.ToString();
+		}
+
+		// converts an integer key to a string for use by get/set member
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static string ConvertKey(int key)
+		{
+			return key.ToString();
+		}
+
+		// converts an string key to a string for use by get/set member
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static string ConvertKey(string key)
+		{
+			#if !DISABLE_NULL_KEYS
+			if (key == null)
+				return "null";
+			#endif
+			return key;
+		}
+
+
 		public static bool hasOwnProperty(object o, object name)
 		{
 			name = FormatKeyForAs (name);
@@ -481,6 +532,12 @@ namespace PlayScript
 			Stats.Increment(StatsCounter.Dynamic_HasOwnPropertyInvoked);
 
 			if (IsNullOrUndefined(o)) return false;
+
+			// handle dynamic objects
+			var dynamicObject = o as IDynamicAccessorUntyped;
+			if (dynamicObject != null) {
+				return dynamicObject.HasMember(name);
+			}
 
 			// handle dictionaries
 			var dict = o as IDictionary<string, object>;

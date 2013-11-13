@@ -815,27 +815,22 @@ namespace flash.display3D
 						map.Add(sampler, RegisterUsage.Sampler2D);
 #elif PLATFORM_MONODROID
 						sr1.sourceMask = 0x3;
+						sb.AppendFormat("{0} = texture2D({2}, {1}); // tex", dr.ToGLSL(), sr1.ToGLSL(), sampler.ToGLSL() ); 
+						sb.AppendLine();
+
 						int mask = dr.mask;
 
-						dr.mask = mask & 7;
+						dr.mask = mask & 8;
 						if (dr.mask != 0)
 						{
-							sb.AppendFormat("{0} = texture2D({2}, {1}).rgb; // tex", dr.ToGLSL(), sr1.ToGLSL(), sampler.ToGLSL() ); 
-
-						}
-
-						dr.mask = mask & 8;
-						if ( dr.mask != 0 )
-						{
+							sb.AppendFormat("if ( {0} == 1.0 ) {{ ", dr.ToGLSL() ); 
 							sb.AppendLine();
-							sb.Append("\t");
-							sb.AppendFormat("{0} = texture2D({2}_alpha, {1}).r; // tex ", dr.ToGLSL(), sr1.ToGLSL(), sampler.ToGLSL() ); 
-							map.Add(sampler, RegisterUsage.Sampler2DAlpha);
+							sb.AppendFormat("{0} = texture2D({2}_alpha, {1}).r; // tex \n", dr.ToGLSL(), sr1.ToGLSL(), sampler.ToGLSL() ); 
+							sb.AppendLine();
+							sb.AppendFormat("}}");
 						}
-						else {
-							map.Add(sampler, RegisterUsage.Sampler2D);
-						}
-						
+
+						map.Add(sampler, RegisterUsage.Sampler2DAlpha);										
 #endif
 						break;
 					case 1: // cube texture

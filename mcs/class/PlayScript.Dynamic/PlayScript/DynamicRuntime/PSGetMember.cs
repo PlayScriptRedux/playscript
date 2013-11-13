@@ -30,19 +30,36 @@ namespace PlayScript.DynamicRuntime
 			mName = name;
 		}
 
-		public T GetNamedMember<T>(object o, string name )
+		public T GetNamedMember<T>(object o, string name)
 		{
 			if (name != mName)
 			{
 				mName = name;
+				mNameHint = 0; // invalidate name hint when name changes
 				mType = null;
 			}
 
 			return GetMember<T>(o);
 		}
 
-		public object GetMemberAsObject(object o)
+		public dynamic GetMemberAsObject(object o)
 		{
+			var result = GetMember<object>(o);
+			// Need to check for undefined if we're not returning AsUntyped
+			if (Dynamic.IsUndefined (result))
+				result = null;
+			return result;
+		}
+
+		[return: AsUntyped]
+		public dynamic GetMemberAsUntyped(object o)
+		{
+			// get accessor for untyped 
+			var accessor = o as IDynamicAccessorUntyped;
+			if (accessor != null) {
+				return accessor.GetMember(mName, ref mNameHint);
+			}
+
 			return GetMember<object>(o);
 		}
 
@@ -56,6 +73,29 @@ namespace PlayScript.DynamicRuntime
 			Stats.Increment(StatsCounter.GetMemberBinderInvoked);
 
 			TypeLogger.LogType(o);
+
+			// get accessor for value type T
+			var accessor = o as IDynamicAccessor<T>;
+			if (accessor != null) {
+				return accessor.GetMember(mName, ref mNameHint);
+			}
+
+			// fallback on object accessor and cast it to T
+			var untypedAccessor = o as IDynamicAccessorUntyped;
+			if (untypedAccessor != null) {
+				// value can be null, undefined, or of type T
+				object value = untypedAccessor.GetMember(mName, ref mNameHint);
+				// convert value to T
+				if (value == null) {
+					return default(T);
+				} else if (value is T) {
+					return (T)value;
+				} else if (Dynamic.IsUndefined(value)) {
+					 return Dynamic.GetUndefinedValue<T>();
+				} else {
+					return PlayScript.Dynamic.ConvertValue<T>(value);
+				}
+			}
 
 			// resolve as dictionary (this is usually an expando)
 			var dict = o as IDictionary<string, object>;
@@ -75,11 +115,11 @@ namespace PlayScript.DynamicRuntime
 				}
 
 				// key not found
-				return default(T);
+				return Dynamic.GetUndefinedValue<T>();
 			}
 
-			if (o == null) {
-				return default(T);
+			if (PlayScript.Dynamic.IsNullOrUndefined(o)) {
+				return Dynamic.GetUndefinedValue<T>();
 			}
 
 			// determine if this is a instance member or a static member
@@ -231,11 +271,12 @@ namespace PlayScript.DynamicRuntime
 				return PlayScript.Dynamic.ConvertValue<T>(result);
 			}
 
-			return default(T);
+			return Dynamic.GetUndefinedValue<T>();
 		}
 
 
 		private string			mName;
+		private uint 			mNameHint;
 		private Type			mType;
 		private PropertyInfo	mProperty;
 		private FieldInfo		mField;

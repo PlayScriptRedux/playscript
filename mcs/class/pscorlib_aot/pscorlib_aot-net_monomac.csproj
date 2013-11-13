@@ -31,7 +31,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
-    <DefineConstants>PLATFORM_MONOMAC;OPENGL</DefineConstants>
+    <DefineConstants>PLATFORM_MONOMAC;OPENGL;PERFORMANCE_MODE</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>219</NoWarn>
@@ -45,9 +45,6 @@
     <Reference Include="System.Drawing" />
     <Reference Include="ICSharpCode.SharpZipLib" />
     <Reference Include="System.Web" />
-    <Reference Include="System.Json">
-      <HintPath>..\lib\net_4_5\System.Json.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
@@ -901,20 +898,32 @@
     <Compile Include="..\pscorlib\Amf\Amf3Reader.cs">
       <Link>Amf\Amf3Reader.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\Amf\Amf3Variant.cs">
-      <Link>Amf\Amf3Variant.cs</Link>
-    </Compile>
     <Compile Include="..\pscorlib\flash\display3D\GLUtils.cs">
       <Link>flash\display3D\GLUtils.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\PlayScript\ParamsDelegateTypes.cs">
       <Link>PlayScript\ParamsDelegateTypes.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\PlayScript\BinJSON.cs">
+      <Link>PlayScript\BinJSON.cs</Link>
+    </Compile>
     <Compile Include="..\pscorlib\flash\display\BitmapData.cs">
       <Link>flash\display\BitmapData.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\PlayScript\ProfilerData.cs">
+      <Link>PlayScript\ProfilerData.cs</Link>
+    </Compile>
     <Compile Include="..\pscorlib\flash\display3D\Context3DStateCache.cs">
       <Link>flash\display3D\Context3DStateCache.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Utils.cs">
+      <Link>Amf\Amf3Utils.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\ExpandoSerializer.cs">
+      <Link>Amf\ExpandoSerializer.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\ReflectionSerializer.cs">
+      <Link>Amf\ReflectionSerializer.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

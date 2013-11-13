@@ -36,26 +36,29 @@ namespace Amf
 	{
 		public string ClassName { get; private set; }
 
-		public Amf3SerializableAttribute(string className)
+		public Amf3SerializableAttribute(string className = null)
 		{
 			ClassName = className;
 		}
 	}
 
-	// the Amf3ExternalSerializer attribute is applied to a static class that performs serialization of another "target" class via static methods
-	// this pattern is useful if the class to be serialized is in another library that you dont have source code to
-	// [Amf3ExternalSerializer("MyClass", typeof(MyClass)]
-	// public class MySerializerClass {
-	//		public static void ObjectSerializer(object o, Amf3Writer writer) { ... }
-	//		public static void ObjectDeserializer(object o, Amf3Reader reader) { ... }
+	// the Amf3Serializer attribute is applied to a class implementing the IAmf3Serializer interfaces
+	// this class can be used to serialize another class by providing read/write/construct methods 
+	// [Amf3Serializer("MyClass", typeof(MyClass)]
+	// public class MySerializerClass : IAmf3Serializer {
+	//	public object NewInstance(Amf3ClassDef classDef);
+	// 	public IList  NewVector(uint num, bool isFixed);
+	// 	public void   WriteObject(Amf3Writer writer, object obj);
+	// 	public void   ReadObject(Amf3Parser parser, Amf3ClassDef classDef, object obj);	
 	// }
+
 	[AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
-	public class Amf3ExternalSerializerAttribute : Attribute
+	public class Amf3SerializerAttribute : Attribute
 	{
 		public string ClassName { get; private set; }
 		public Type TargetType { get; private set; }
 
-		public Amf3ExternalSerializerAttribute(string className, Type targetType)
+		public Amf3SerializerAttribute(string className, Type targetType)
 		{
 			ClassName = className;
 			TargetType = targetType;

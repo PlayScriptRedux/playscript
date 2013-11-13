@@ -36,7 +36,7 @@
     <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
     <ConsolePause>false</ConsolePause>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DefineConstants>PLATFORM_MONODROID;OPENGL</DefineConstants>
+    <DefineConstants>PLATFORM_MONODROID;OPENGL;PERFORMANCE_MODE</DefineConstants>
     <NoWarn>219</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
@@ -847,6 +847,9 @@
     <Compile Include="..\pscorlib\Amf\Amf3CodeGen.cs">
       <Link>Amf\Amf3CodeGen.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Utils.cs">
+      <Link>Amf\Amf3Utils.cs</Link>
+    </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3Object.cs">
       <Link>Amf\Amf3Object.cs</Link>
     </Compile>
@@ -855,9 +858,6 @@
     </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3Reader.cs">
       <Link>Amf\Amf3Reader.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\Amf\Amf3Variant.cs">
-      <Link>Amf\Amf3Variant.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3TypeCode.cs">
       <Link>Amf\Amf3TypeCode.cs</Link>
@@ -937,8 +937,20 @@
     <Compile Include="..\pscorlib\flash\display\BitmapData.cs">
       <Link>flash\display\BitmapData.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\PlayScript\ProfilerData.cs">
+      <Link>PlayScript\ProfilerData.cs</Link>
+    </Compile>
     <Compile Include="..\pscorlib\flash\display3D\Context3DStateCache.cs">
       <Link>flash\display3D\Context3DStateCache.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\ExpandoSerializer.cs">
+      <Link>Amf\ExpandoSerializer.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\ReflectionSerializer.cs">
+      <Link>Amf\ReflectionSerializer.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\PlayScript\BinJSON.cs">
+      <Link>PlayScript\BinJSON.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

@@ -17,13 +17,17 @@ namespace PlayScript
 		public dynamic __GetDynamicValue(string name)
 		{
 			object value;
-			this.TryGetValue(name, out value);
+			__TryGetDynamicValue (name, out value);
 			return value;
 		}
 
 		public bool __TryGetDynamicValue(string name, out object value)
 		{
-			return this.TryGetValue(name, out value);
+			if (!this.TryGetValue (name, out value)) {
+				value = PlayScript.Undefined._undefined;
+				return false;
+			}
+			return true;
 		}
 
 		public void __SetDynamicValue(string name, object value)

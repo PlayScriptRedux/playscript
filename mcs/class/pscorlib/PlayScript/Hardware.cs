@@ -125,17 +125,11 @@ namespace PlayScript
 			{
 				if (UIDevice.CurrentDevice.Model.Contains("iPhone"))
 				{
-					if(UIScreen.MainScreen.Scale > 1.5f)
-						return IOSHardware.iPhoneRetinaSimulator;
-					else
-						return IOSHardware.iPhoneSimulator;
+					return IOSHardware.iPhoneSimulator;
 				}
 				else
 				{
-					if(UIScreen.MainScreen.Scale > 1.5f)
-						return IOSHardware.iPadRetinaSimulator;
-					else
-						return IOSHardware.iPadSimulator;
+					return IOSHardware.iPadSimulator;
 				}
 			}
 

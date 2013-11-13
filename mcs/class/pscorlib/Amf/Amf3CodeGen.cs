@@ -43,15 +43,13 @@ namespace Amf
 
 		public static void EmitAllSerializerCode(TextWriter tw, Func<System.Type, Mode> modeSelector)
 		{
-			var classInfos = Amf3ClassDef.GetAllRegisteredClasses();
-			foreach (var info in classInfos)
+			var list = Amf3ClassDef.GetAllRegisteredTypes();
+			foreach (var kvp in list)
 			{
-				if (info.Type != null) {
-					// apply filter
-					var mode = modeSelector(info.Type);
-					if (mode != Mode.Skip) {
-						EmitSerializerCode(tw, mode, info.Alias, info.Type);
-					}
+				// apply filter
+				var mode = modeSelector(kvp.Value);
+				if (mode != Mode.Skip) {
+					EmitSerializerCode(tw, mode, kvp.Key, kvp.Value);
 				}
 			}
 		}
@@ -86,26 +84,28 @@ namespace Amf
 
 			tw.WriteLine("using Amf;");
 
-			var propertyTypes = new Dictionary<string, string>();
+//			var propertyTypes = new Dictionary<string, string>();
 
 			if (mode == Mode.PartialClass) {
 				tw.WriteLine("[Amf3Serializable({0})]", Quote(classAlias));
 				tw.WriteLine("public partial class {0} : IAmf3Serializable", className);
 			} else {
-				tw.WriteLine("[Amf3ExternalSerializer({0}, typeof({1}))]", Quote(classAlias), className);
-				tw.WriteLine("public static class AmfSerializer_{0}", className);
+				tw.WriteLine("[Amf3Serializer({0}, typeof({1}))]", Quote(classAlias), className);
+				tw.WriteLine("public class AmfSerializer_{0} : IAmf3Serializer", className);
 			}
 			tw.Write("{");
 			Indent(tw); 
 
 			if (mode == Mode.PartialClass) 
 				tw.WriteLine("#region IAmf3Serializable implementation");
+			else 
+				tw.WriteLine("#region IAmf3Serializer implementation");
 
 				// generate serialization writer
 			if (mode == Mode.PartialClass) {
 				tw.Write("public void Serialize(Amf3Writer writer) {");
 			} else {
-				tw.Write("public static void ObjectSerializer(object o, Amf3Writer writer) {");
+				tw.Write("public void WriteObject(Amf3Writer writer, object o) {");
 			}
 
 			Indent(tw);
@@ -124,7 +124,7 @@ namespace Amf
 			if (mode == Mode.PartialClass) {
 				tw.Write("public void Serialize(Amf3Reader reader) {");
 			} else { 
-				tw.Write("public static void ObjectDeserializer(object o, Amf3Reader reader) {");
+				tw.Write("public void ReadObject(Amf3Reader reader, object o) {");
 			}
 			Indent(tw);
 			if (mode == Mode.ExternalClass) 
@@ -132,33 +132,33 @@ namespace Amf
 			tw.Write("reader.ReadObjectHeader(ClassDef);");
 			foreach (var field in fields) {
 				tw.WriteLine();
-				tw.Write("reader.Read(out {0});", fieldPrefix + field);
+				tw.Write("reader.Read(ref {0});", fieldPrefix + field);
 			}
 			UnIndent(tw);
 			tw.WriteLine("}");
+			tw.WriteLine();
+
+			if (mode == Mode.ExternalClass)  {
+				// generate class constructor
+				tw.Write("public object NewInstance(Amf3ClassDef classDef) {");
+				Indent(tw);
+				tw.Write("return new {0}();", className);
+				UnIndent(tw);
+				tw.WriteLine("}");
+				tw.WriteLine();
+
+				// generate class vector constructor
+				tw.Write("public System.Collections.IList NewVector(uint len, bool isFixed) {");
+				Indent(tw);
+				tw.Write("return new _root.Vector<{0}>(len, isFixed);", className);
+				UnIndent(tw);
+				tw.WriteLine("}");
+				tw.WriteLine();
+			}
 
 			// end region
-			if (mode == Mode.PartialClass) 
-				tw.WriteLine("#endregion");
+			tw.WriteLine("#endregion");
 			tw.WriteLine();
-
-
-			// generate class constructor
-			tw.Write("public static object ObjectConstructor() {");
-			Indent(tw);
-			tw.Write("return new {0}();", className);
-			UnIndent(tw);
-			tw.WriteLine("}");
-			tw.WriteLine();
-
-			// generate class vector constructor
-			tw.Write("public static System.Collections.IList VectorObjectConstructor(uint len, bool isFixed) {");
-			Indent(tw);
-			tw.Write("return new _root.Vector<{0}>(len, isFixed);", className);
-			UnIndent(tw);
-			tw.WriteLine("}");
-			tw.WriteLine();
-
 
 			// write class definition
 			string names = "{";

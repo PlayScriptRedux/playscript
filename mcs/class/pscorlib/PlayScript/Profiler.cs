@@ -1,3 +1,8 @@
+// List of features that are enabled / disabled to save memory in the runtime structures.
+//#define ENABLE_GC_COUNTS
+//#define ENABLE_USED_MEM
+
+
 using System;
 using System.Diagnostics;
 using System.Collections.Generic;
@@ -26,13 +31,25 @@ namespace PlayScript
  		public static bool Enabled = true;
 		public static bool ProfileGPU = false;
 		public static bool ProfileMemory = false;			// Profile memory usage, it is very slow though...
+		public static bool ProfileLoading = false;			// set to true to profile loading
+		public static string LoadingEndMilestone = "interactive";
+		public static bool EmitSlowFrames = false;			// emit slow frame sections
 		public static bool DisableTraces = true;			// set to true to disable traces during profiling session
 		public static long LastTelemetryFrameSpanStart = long.MaxValue;
+		public static Dictionary<string, string> SessionData = new Dictionary<string, string>(); // additional profiling session data to be printed in reports
+
+		public static bool FrameSkippingEnabled = false;
+		public static int  NextFramesElapsed = 1;
+		public static int  MaxNumberOfFramesElapsed = 0;
+		private static bool sHasProfiledLoading = false;		// set to true after loading has been profiled
+		private static string sFilterPrefix;
+
+		private static SectionHistory ZeroSectionHistory = new SectionHistory();
 
 		// if telemetryName is provided then it will be used for the name sent to telemetry when this section is entered
 		public static string Begin(string name, string telemetryName = null)
 		{
-			if (!Enabled)
+			if (!Enabled || filter(name))
 				return name;
 
 			Section section;
@@ -40,8 +57,10 @@ namespace PlayScript
 				section = new Section();
 				section.Name = name;
 				if (telemetryName != null) {
-					// use provided telemetry name
-					section.Span = new Telemetry.Span(telemetryName);
+					if (telemetryName != "") {
+						// use provided telemetry name
+						section.Span = new Telemetry.Span(telemetryName);
+					}
 				} else if (name != "swap" && name != "frame") {
 					// use section name for telemetry data
 					section.Span = new Telemetry.Span(name);
@@ -52,12 +71,16 @@ namespace PlayScript
 			}
 
 			section.Stats.Subtract(PlayScript.Stats.CurrentInstance);
+#if ENABLE_GC_COUNTS
 			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
 				section.GCCounts[i] -= System.GC.CollectionCount(i);
 			}
+#endif
+#if ENABLE_USED_MEM
 			if (ProfileMemory) {
 				section.CurrentUsedMemory -= mono_gc_get_used_size();
 			}
+#endif
 			if (section.Span != null)
 				section.Span.Begin();
 			section.Timer.Start();
@@ -66,7 +89,7 @@ namespace PlayScript
 		
 		public static void End(string name)
 		{
-			if (!Enabled)
+			if (!Enabled || filter(name))
 				return;
 
 			Section section;
@@ -75,12 +98,16 @@ namespace PlayScript
 			}
 
 			section.Timer.Stop();
+			section.NumberOfCalls += 1;
 			if (section.Span != null)
 				section.Span.End();
 			section.Stats.Add(PlayScript.Stats.CurrentInstance);
+#if ENABLE_GC_COUNTS
 			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
 				section.GCCounts[i] += System.GC.CollectionCount(i);
 			}
+#endif
+#if ENABLE_USED_MEM
 			if (ProfileMemory) {
 				section.CurrentUsedMemory += mono_gc_get_used_size();
 				if (section.CurrentUsedMemory > 0) {
@@ -89,6 +116,7 @@ namespace PlayScript
 				}
 			}
 			section.CurrentUsedMemory = 0;
+#endif
 		}
 
 		public static void Reset()
@@ -106,14 +134,33 @@ namespace PlayScript
 
 			// reset all counters
 			sFrameCount = 0;
+			MaxNumberOfFramesElapsed = 0;
+			NextFramesElapsed = 1;
 		}
 
-		public static void OnFrame()
+		// this should be called at the beginning of a frame
+		public static void OnBeginFrame()
 		{
 			if (!Enabled)
 				return;
 
-			if (LastTelemetryFrameSpanStart != long.MaxValue)
+			if (ProfileLoading && !sHasProfiledLoading) {
+				// begin session for loading
+				StartSession("Loading", int.MaxValue, 0);
+				sHasProfiledLoading = true;
+			}
+
+			LastTelemetryFrameSpanStart = Telemetry.Session.BeginSpan();
+			Profiler.Begin("frame");
+		}
+
+		// this should be called at the end of a frame
+		public static void OnEndFrame()
+		{
+			if (!Enabled)
+				return;
+
+			if (EmitSlowFrames && LastTelemetryFrameSpanStart != long.MaxValue)
 			{
 				long endFrameTime = Stopwatch.GetTimestamp();
 				long spanTimeInTicks = endFrameTime - LastTelemetryFrameSpanStart;
@@ -136,6 +183,9 @@ namespace PlayScript
 			}
 #endif
 
+			sFrameCount += NextFramesElapsed;
+			MaxNumberOfFramesElapsed = Math.Max(MaxNumberOfFramesElapsed, NextFramesElapsed);
+
 			// update all sections
 			foreach (Section section in sSectionList) {
 				section.TotalTime += section.Timer.Elapsed;
@@ -143,23 +193,28 @@ namespace PlayScript
 				{
 					// pad with zeros if necessary
 					while (section.History.Count < sFrameCount) {
-						section.History.Add(new SectionHistory());
+						section.History.Add(ZeroSectionHistory);
 					}
 
 					var history = new SectionHistory();
 					history.Time = section.Timer.Elapsed;
+					history.NumberOfCalls = section.NumberOfCalls;
+#if ENABLE_GC_COUNTS
 					for (int i = sGCMinGeneration ; i < Profiler.sGCMaxGeneration ; ++i) {
 						history.GCCounts[i] = section.GCCounts[i];
 					}
+#endif
 					section.History.Add(history);
 				}
+#if ENABLE_GC_COUNTS
 				for (int i = sGCMinGeneration ; i < Profiler.sGCMaxGeneration ; ++i) {
 					section.GCCounts[i] = 0;
 				}
+#endif
 				section.Timer.Reset();
+				section.NumberOfCalls = 0;
 			}
 
-			sFrameCount++;
 			if (!sDoReport) {
 				// normal profiling, just print out every so often
 				if ((sPrintFrameCount!=0) && (sFrameCount >= sPrintFrameCount)) {
@@ -182,9 +237,6 @@ namespace PlayScript
 					OnStartReport();
 				}
 			}
-		
-			LastTelemetryFrameSpanStart = Telemetry.Session.BeginSpan();
-			Profiler.Begin("frame");
 		}
 
 		/// <summary>
@@ -192,11 +244,20 @@ namespace PlayScript
 		/// </summary>
 		public static void LoadMilestone(string name)
 		{
+			if (Enabled) {
+				Console.WriteLine("Loading milestone {0} {1}", name, sGlobalTimer.Elapsed);
+
+				// end profiling session for loading
+				if ((LoadingEndMilestone!=null) && name.Contains(LoadingEndMilestone)) {
+					EndSession();
+				}
+			}
+
 			// store load complete time
 			sLoadMilestones[name] = sGlobalTimer.Elapsed;
 		}
 
-		public static void StartSession(string reportName, int frameCount, int reportStartDelay = 5)
+		public static void StartSession(string reportName, int frameCount, int reportStartDelay = 5, string filterPrefix = null)
 		{
 			if (!Enabled)
 				return;
@@ -204,8 +265,27 @@ namespace PlayScript
 			sReportName = reportName;
 			sReportFrameCount = frameCount;
 			sReportStartDelay = reportStartDelay;
+			MaxNumberOfFramesElapsed = 0;
+			NextFramesElapsed = 1;
+			sFilterPrefix = filterPrefix;
 
 			Console.WriteLine("Starting profiling session: {0} frames:{1} frameDelay:", reportName, frameCount, reportStartDelay);
+
+			if (sReportStartDelay == 0) {
+				// start report immediately
+				OnStartReport();
+			}
+
+		}
+
+		public static void EndSession()
+		{
+			sReportFrameCount = sFrameCount;
+		}
+
+		private static bool filter(string name)
+		{
+			return sFilterPrefix != null && !name.StartsWith (sFilterPrefix);
 		}
 
 		
@@ -214,6 +294,8 @@ namespace PlayScript
 			temporaryStringBuilder.Length = 0;
 			temporaryStringBuilder.Append("profiler: ");
 			foreach (Section section in sSectionList) {
+				if (filter (section.Name))
+					continue;
 				double timeToDisplay = section.TotalTime.TotalMilliseconds / sFrameCount;
 				if (timeToDisplay < 0.01) {
 					continue;
@@ -229,7 +311,8 @@ namespace PlayScript
 		public static void PrintFullTimes(TextWriter tw)
 		{
 			foreach (Section section in sSectionList.OrderBy(a => -a.TotalTime)) {
-
+				if (filter (section.Name))
+					continue;
 				var total = section.TotalTime;
 				if (total.TotalMilliseconds < 0.01) {
 					// Skip negligible times
@@ -237,41 +320,64 @@ namespace PlayScript
 					continue;
 				}
 
+				var callCount = section.History.Select(a=>a.NumberOfCalls).Sum();
+				if (callCount == 0) {
+					// Skip no calls
+					section.Skipped = true;
+					continue;
+				}
+
 				var average = total.TotalMilliseconds / sFrameCount;
+				var averagePerCall = total.TotalMilliseconds / callCount;
+
+				// get history in milliseconds, sorted
+				var history = section.History.Where(a=>a.NumberOfCalls > 0).Select(a => a.Time.TotalMilliseconds).OrderBy(a => a).ToList();
+
+				long usedMem = 0;
+#if ENABLE_USED_MEM
+				usedMem = section.UsedMemory / 1024;
+#endif
 
 				// do we have a history?
-				if (section.History.Count > 0) {
-					// get history in milliseconds, sorted
-					var history = section.History.Select(a => a.Time.TotalMilliseconds).OrderBy(a => a).ToList();
+				if (history.Count > 0) {
 					// get min/max/median
 					var minTime = history.First();
 					var maxTime = history.Last();
 					var medianTime = history[history.Count / 2];
 
 					// Gather all the GCCounts from the history
+					int GC0 = 0, GC1 = 0;
+
+#if ENABLE_GC_COUNTS
 					for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i)
 					{
 						section.GCCounts[i] = section.History.Sum(a => a.GCCounts[i]);
 					}
 
-					tw.WriteLine("{0,-40} total:{1,6} average:{2,6:0.00}ms min:{3,6:0.00}ms max:{4,6:0.00}ms median:{5,6:0.00}ms #GC0: {6} UsedMem: {7}Kb",
+					GC0 = section.GCCounts[sGCMinGeneration];
+					GC1 = section.GCCounts[sGCMaxGeneration-1]
+#endif
+
+					tw.WriteLine("{0,-40} total:{1,6} average:{2,6:0.00}ms average/call:{3,6:0.00}ms min:{4,6:0.00}ms max:{5,6:0.00}ms median:{6,6:0.00}ms #GC0: {7} #GC1: {8} UsedMem: {9}Kb",
 					             section.Name,
 					             total,
 					             average,
+					             averagePerCall,
 					             minTime,
 					             maxTime,
 					             medianTime,
-					             section.GCCounts[sGCMinGeneration],
-					             section.UsedMemory / 1024
+					             GC0,
+					             GC1,
+					             usedMem
 					             );
-
 				} else {
 
-					tw.WriteLine("{0,-40} total:{1,6} average:{2,6:0.00}ms UsedMem: {3}Kb",
+					tw.WriteLine("{0,-40} total:{1,6} average/frame:{2,6:0.00}ms average/call:{3,6:0.00}ms UsedMem: {4}Kb",
 				             section.Name,
 				             total,
 				             average,
-					         section.UsedMemory / 1024
+				             averagePerCall,
+					         usedMem
 				             );
 				}
 			}
@@ -280,13 +386,17 @@ namespace PlayScript
 		public static void PrintHistory(TextWriter tw)
 		{
 			tw.Write("{0,4} ", "");
-			foreach (Section section in sSectionList.OrderBy(a => -a.TotalTime)) 
+
+			var sortedSections = sSectionList.OrderBy(a => -a.TotalTime);
+			char c = 'a';	// Shorthand so we can reference numbers more easily
+			foreach (Section section in sortedSections)
 			{
-				if (section.Skipped) {
+				if (section.Skipped || filter(section.Name)) {
 					continue;
 				}
 
-				tw.Write("{0,12}{1} ", section.Name, ' ');
+				tw.Write("{0,12}{1}{2} ", section.Name, ' ', c);
+				++c;
 
 				// pad history with zeros if necessary
 				while (section.History.Count < sFrameCount) {
@@ -296,25 +406,34 @@ namespace PlayScript
 			tw.WriteLine();
 
 			tw.WriteLine("---------------------------");
-			int numberOfFramesToPrint = Math.Min(sFrameCount, MaxNumberOfFramesPrintedInHistory);
 			int[] gcCounts = new int[sGCMaxGeneration];
-			for (int frame=0; frame < numberOfFramesToPrint; frame++)
+			for (int frame=0; frame < sFrameCount; frame++)
 			{
 				tw.Write("{0,4}:", frame);
 				for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
 					gcCounts[i] = 0;
 				}
-				foreach (Section section in sSectionList) 
+
+				c = 'a';	// Shorthand so we can reference numbers more easily
+				foreach (Section section in sortedSections) 
 				{
+					if (section.Skipped || filter(section.Name)) {
+						continue;
+					}
+
 					var history = section.History[frame];
 					string collect = "";
+#if ENABLE_GC_COUNTS
 					for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
 						if (history.GCCounts[i] > 0) {
 							collect += i.ToString();
 						}
 						gcCounts[i] += history.GCCounts[i];
 					}
-					tw.Write("{0,12:0.00}{1,3} ", history.Time.TotalMilliseconds, (collect != string.Empty) ? "*" + collect : "" );
+#endif
+					string numberOfCalls = (history.NumberOfCalls > 1) ? history.NumberOfCalls.ToString() + "x" : "";
+					tw.Write("{3,6}{0,6:0.00}{1,3}{2} ", history.Time.TotalMilliseconds, (collect != string.Empty) ? "*" + collect : "", c, numberOfCalls);
+					++c;
 				}
 				if (gcCounts[sGCMaxGeneration - 1] > 0) {
 					tw.Write("    <=== GC max occurred");
@@ -326,6 +445,8 @@ namespace PlayScript
 		public static void PrintStats(TextWriter tw)
 		{
 			foreach (Section section in sSectionList) {
+				if (filter (section.Name))
+					continue;
 				var dict = section.Stats.ToDictionary(true);
 				if (dict.Count > 0) {
 					tw.WriteLine("---------- {0} ----------", section.Name);
@@ -349,20 +470,25 @@ namespace PlayScript
 		}
 
 
-		private static void PrintHistogram(TextWriter tw, double bucketSize, List<double> history, double minRange, double maxRange, double splitThreshold)
+		private static void PrintHistogram(TextWriter tw, double bucketSize, List<SectionHistory> history, double minRange, double maxRange, double splitThreshold)
 		{
 			var counts = new List<int>();
-			foreach (var time in history) {
+			var callCounts = new List<int>();
+			foreach (var h in history) {
+				var time = h.Time.TotalMilliseconds;
 				if (time >= minRange && time <= maxRange) {
 					// find bucket
 					int i = (int)Math.Floor( (time - minRange) / bucketSize);
 
 					// resize counts
-					while (i >= counts.Count)
-						counts.Add(0);
+					while (i >= counts.Count) {
+						counts.Add (0);
+						callCounts.Add (0);
+					}
 
 					// increment histogram
 					counts[i]++;
+					callCounts[i] += h.NumberOfCalls;
 				}
 			}
 
@@ -376,8 +502,8 @@ namespace PlayScript
 					if ((percent <= splitThreshold) || (bucketSize <= 0.1))
 					{
 						// print counts for this range
-						tw.WriteLine("{0,4}ms->{1,4}ms {2,5} {3,5:0.0}% {4}", 
-						             startTime, endTime, counts[i], percent, new string('=', (int)Math.Ceiling(percent) ) );
+						tw.WriteLine("{0,4}ms->{1,4}ms {2,5} {3,5} {4,5:0.0}% {5}", 
+						             startTime, endTime, counts[i], callCounts[i], percent, new string('=', (int)Math.Ceiling(percent) ) );
 					}
 					else
 					{
@@ -396,8 +522,16 @@ namespace PlayScript
 		{
 			foreach (var section in sSectionList)
 			{
-				var history = section.History.Select(h => h.Time.TotalMilliseconds).OrderBy(h=>h).ToList();
+				if (filter (section.Name))
+					continue;
+
+				var history = section.History.Where(h=>h.NumberOfCalls > 0).OrderBy(h => h.Time.TotalMilliseconds).ToList();
 				if (history.Count == 0)
+					continue;
+
+				// skip if it was called once or less
+				var callCount = history.Select(a=>a.NumberOfCalls).Sum();
+				if (callCount <= 1)
 					continue;
 
 				tw.WriteLine(" --- {0} ---", section.Name);
@@ -413,19 +547,16 @@ namespace PlayScript
 			}
 		}
 
-		#region Private
-		private static double GetFpsFromMs(double value)
-		{
-			return (value <= 0.0) ? double.NaN : (1000.0 / value);
-		}
-
-		private static void PrintAverageClamped(TextWriter tw, string key, double minimumClampedValue)
+		public static bool GetAverageClampedInMs (string key, double minimumClampedValue, out double value)
 		{
 			Section section;
-			if (sSections.TryGetValue(key, out section) == false)
+			if ((sFrameCount == 0) || (sSections.TryGetValue(key, out section) == false)
+			    || (section.History.Count == 0))
 			{
-				return;
+				value = 0.0;
+				return false;
 			}
+
 			double sum = 0;
 			for (int frame=0; frame < sFrameCount; frame++)
 			{
@@ -434,7 +565,29 @@ namespace PlayScript
 				sum += milliseconds;
 			}
 			sum /= sFrameCount;
-			tw.WriteLine("Avg (clamped):{0,6:0.00}ms - {1, 12:0.0} fps        min {2:0.00}ms", sum, GetFpsFromMs(sum), minimumClampedValue);
+			value = sum;
+
+			return true;
+		}
+
+		public static Dictionary<string, TimeSpan> LoadMilestones
+		{
+			get { return sLoadMilestones; }
+		}
+
+		#region Private
+		private static double GetFpsFromMs(double value)
+		{
+			return (value <= 0.0) ? double.NaN : (1000.0 / value);
+		}
+
+		private static void PrintAverageClamped(TextWriter tw, string key, double minimumClampedValue)
+		{
+			double sum;
+			if (GetAverageClampedInMs (key, minimumClampedValue, out sum)) {
+				tw.WriteLine ("Avg (clamped):{0,6:0.00}ms - {1, 12:0.0} fps        min {2:0.00}ms",
+				              sum, GetFpsFromMs (sum), minimumClampedValue);
+			}
 		}
 
 		private static void PrintAverageNWorst(TextWriter tw, string key, int NWorst)
@@ -486,7 +639,7 @@ namespace PlayScript
 			tw.WriteLine("{0}: {1,4:0.0}%                             {2}", text, (double)(100.0 * matchingFrames) / (double)sFrameCount, additionalText);
 		}
 
-		private static void PrintReport(TextWriter tw)
+		private static void PrintReport(TextWriter tw, bool full)
 		{
 			tw.WriteLine("******** Profiling report *********");
 			tw.WriteLine("ReportName:    {0}", sReportName);
@@ -503,17 +656,35 @@ namespace PlayScript
 
 			tw.WriteLine("************* Session *************");
 
-			tw.WriteLine("Total Frames:  {0}", sFrameCount);
+			tw.WriteLine("Total Frames:  {0}", sReportFrameCount);
+			tw.WriteLine("Real Frames:   {0}", sFrameCount);
 			tw.WriteLine("Total Time:    {0}", sReportTime.Elapsed);
+			if (FrameSkippingEnabled)
+			{
+				tw.WriteLine("Frame Skipping:Yes - Max Frame skipped: {0}", MaxNumberOfFramesElapsed - 1);		// -1 because the first frame is not really skipped.
+			}
+			else
+			{
+				tw.WriteLine("Frame Skipping:No");
+			}
 			PerformanceFrameData performanceFrameData = GetPerformanceFrameData();
 			PrintAverageClamped(tw, "frame", performanceFrameData.FastFrame);
 			PrintPercentile(tw, "frame", 95);
 			PrintPercentageOfFrames(tw, "frame", "% Fast Frames", a => (a <= performanceFrameData.FastFrame), string.Format("<={0:0.00}ms", performanceFrameData.FastFrame));
 			PrintPercentageOfFrames(tw, "frame", "% Slow frames", a => (a >= performanceFrameData.SlowFrame), string.Format(">={0:0.00}ms", performanceFrameData.SlowFrame));
 			PrintAverageNWorst(tw, "frame", 10);
+#if ENABLE_GC_COUNTS
 			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i)
 			{
 				tw.WriteLine("GC {0} Count:      {1}", i, sReportGCCounts[i]);
+			}
+#endif
+
+			if (SessionData != null) {
+				// write extra data about session
+				foreach (var kvp in SessionData) {
+					tw.WriteLine("{0}:  {1}", kvp.Key, kvp.Value);
+				}
 			}
 
 			tw.WriteLine("*********** Timing (ms) ***********");
@@ -525,8 +696,11 @@ namespace PlayScript
 			tw.WriteLine("***** Dynamic Runtime Stats ******");
 			PrintStats(tw);
 
-			tw.WriteLine("************ History *************");
-			PrintHistory(tw);
+			if (full)
+			{
+				tw.WriteLine("************ History *************");
+				PrintHistory(tw);
+			}
 
 			tw.WriteLine("**********************************");
 		}
@@ -548,10 +722,12 @@ namespace PlayScript
 			// enable the report
 			sDoReport = true;
 
+#if ENABLE_GC_COUNTS
 			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i)
 			{
 				sReportGCCounts[i] = System.GC.CollectionCount(i);
 			}
+#endif
 
 			// start global timer
 			sReportTime = Stopwatch.StartNew();
@@ -576,7 +752,7 @@ namespace PlayScript
 
 
 		/// <summary>
-		/// This is called when a profilng report is ended
+		/// This is called when a profiling report is ended
 		/// </summary>
 		private static void OnEndReport()
 		{
@@ -585,9 +761,11 @@ namespace PlayScript
 
 			sReportTime.Stop();
 
+#if ENABLE_GC_COUNTS
 			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
 				sReportGCCounts[i] = System.GC.CollectionCount(i) - sReportGCCounts[i];
 			}
+#endif
 
 			var recording = Telemetry.Session.EndRecording();
 			if (recording != null) {
@@ -601,7 +779,7 @@ namespace PlayScript
 				var path = Path.Combine(profileLogDir, "profile-" + id + ".log");
 				Console.WriteLine("Writing profiling report to: {0}", path);
 				using (var sw = new StreamWriter(path)) {
-					PrintReport(sw);
+					PrintReport(sw, true);
 				}
 
 				if (recording != null)	{
@@ -612,11 +790,25 @@ namespace PlayScript
 				}
 			}
 
-			// print to console 
-			PrintReport(System.Console.Out);
+			// print to console (not the full version though)
+			PrintReport(System.Console.Out, false);
+
+			InvokeReportDelegate ();
 		}
 
-		private static PerformanceFrameData GetPerformanceFrameData()
+		public static void InvokeReportDelegate ()
+		{
+			if (ReporterDelegate == null) {
+				return;
+			}
+
+			ProfilerData profilerData = new ProfilerData ();
+
+
+			ReporterDelegate (profilerData);
+		}
+
+		public static PerformanceFrameData GetPerformanceFrameData()
 		{
 			if (sCurrentPerformanceFrameData == null)
 			{
@@ -648,25 +840,36 @@ namespace PlayScript
 			return sCurrentPerformanceFrameData;
 		}
 
-		class SectionHistory
+		public delegate void ReportDelegate (ProfilerData report);
+		public static ReportDelegate ReporterDelegate { get; set; }
+
+		public class SectionHistory
 		{
 			public TimeSpan Time;
+			public int		NumberOfCalls;
+#if ENABLE_GC_COUNTS
 			public int[]	GCCounts = new int[Profiler.sGCMaxGeneration];
+#endif
 		};
 
 		// info for a single section
-		class Section
+		public class Section
 		{
 			public string               Name;
 			public Stopwatch 			Timer = new Stopwatch();
 			public TimeSpan				TotalTime;
 			public List<SectionHistory>	History = new List<SectionHistory>();
 			public Stats 				Stats = new PlayScript.Stats();	
+#if ENABLE_GC_COUNTS
 			public int[]				GCCounts = new int[Profiler.sGCMaxGeneration];
+#endif
+#if ENABLE_USED_MEM
 			public Int64				UsedMemory;
 			public Int64				CurrentUsedMemory;
+#endif
 			public Telemetry.Span		Span;
 			public bool					Skipped;
+			public int					NumberOfCalls;
 		};
 
 		private static Stopwatch sGlobalTimer = Stopwatch.StartNew();
@@ -676,7 +879,6 @@ namespace PlayScript
 		// ordered list of sections
 		private static List<Section> sSectionList = new List<Section>();
 		private static int sFrameCount  = 0;
-		public static int MaxNumberOfFramesPrintedInHistory = 1000;
 
 		// the frequency to print profiiling info
 		private static int sPrintFrameCount  = 60;
@@ -690,13 +892,18 @@ namespace PlayScript
 		private static StringBuilder temporaryStringBuilder = new StringBuilder();
 		private const int sGCMinGeneration = 0;
 		private readonly static int sGCMaxGeneration = System.GC.MaxGeneration + 1;		// +1 as it seems that's System.GC.MaxGeneration is the index to get oldest collections of the oldest generation
+#if ENABLE_GC_COUNT
 		private static int[] sReportGCCounts = new int[sGCMaxGeneration];
+#endif
 
+#if ENABLE_USED_MEM
 		[DllImport ("__Internal", EntryPoint="mono_gc_get_used_size")]
 		extern static Int64 mono_gc_get_used_size ();
+#endif
+
 		#endregion
 
-		class PerformanceFrameData
+		public class PerformanceFrameData
 		{
 			public PerformanceFrameData(double fastFrame, double slowFrame, double autoProfileFrame)
 			{

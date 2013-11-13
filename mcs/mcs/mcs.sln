@@ -11,8 +11,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pscorlib_aot-net_monomac", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mono.Optimization", "..\class\Mono.Optimization\Mono.Optimization.csproj", "{4069FC26-5839-4E53-B50C-B7AAF7CD3227}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pscorlib_aot-monodroid", "..\class\pscorlib_aot\pscorlib_aot-monodroid.csproj", "{B5CEE056-4092-477A-82B8-6494EA651287}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlayScript.Dynamic_aot-monodroid", "..\class\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monodroid.csproj", "{4973150C-B48B-4A3B-987F-230517E1DF86}"
 EndProject
 Global
@@ -64,16 +62,6 @@ Global
 		{B5782FD5-CBC6-4194-BF51-A20D55CEBE78}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B5782FD5-CBC6-4194-BF51-A20D55CEBE78}.Release|x86.ActiveCfg = Release|Any CPU
 		{B5782FD5-CBC6-4194-BF51-A20D55CEBE78}.Release|x86.Build.0 = Release|Any CPU
-		{B5CEE056-4092-477A-82B8-6494EA651287}.Debug - AST|Any CPU.ActiveCfg = Debug|Any CPU
-		{B5CEE056-4092-477A-82B8-6494EA651287}.Debug - AST|Any CPU.Build.0 = Debug|Any CPU
-		{B5CEE056-4092-477A-82B8-6494EA651287}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B5CEE056-4092-477A-82B8-6494EA651287}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B5CEE056-4092-477A-82B8-6494EA651287}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{B5CEE056-4092-477A-82B8-6494EA651287}.Debug|x86.Build.0 = Debug|Any CPU
-		{B5CEE056-4092-477A-82B8-6494EA651287}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B5CEE056-4092-477A-82B8-6494EA651287}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B5CEE056-4092-477A-82B8-6494EA651287}.Release|x86.ActiveCfg = Release|Any CPU
-		{B5CEE056-4092-477A-82B8-6494EA651287}.Release|x86.Build.0 = Release|Any CPU
 		{D4A01C5B-A1B5-48F5-BB5B-D2E1BD236E56}.Debug - AST|Any CPU.ActiveCfg = Debug - AST|Any CPU
 		{D4A01C5B-A1B5-48F5-BB5B-D2E1BD236E56}.Debug - AST|Any CPU.Build.0 = Debug - AST|Any CPU
 		{D4A01C5B-A1B5-48F5-BB5B-D2E1BD236E56}.Debug|Any CPU.ActiveCfg = Debug|Any CPU

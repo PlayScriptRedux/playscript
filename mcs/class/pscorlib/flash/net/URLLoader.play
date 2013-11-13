@@ -16,7 +16,9 @@
 
 package flash.net {
 
+	import System.*;
 	import System.IO.*;
+	import System.Collections.Generic.*;
 	import flash.events.EventDispatcher;
 	import flash.events.Event;
 	import flash.events.TimerEvent;
@@ -26,6 +28,7 @@ package flash.net {
 
 #if PLATFORM_MONODROID
 	import Android.App.*;
+	import Android.Content.*;
 #endif
 
 	public class URLLoader extends EventDispatcher {
@@ -64,8 +67,8 @@ package flash.net {
 		public function load(request:URLRequest, synchronous:Boolean = false):void {
 			mRequest = request;
 
-			var url:String = request.url.ToLowerInvariant();
-			if (url.EndsWith(".swf")) {
+			var lowerCaseUrl:String = request.url.ToLowerInvariant();
+			if (lowerCaseUrl.EndsWith(".swf")) {
 				// SWF files are not supported by PlayScript. There is no reason to try to load them.
 				skipSwfLoad(synchronous);
 				return;
@@ -76,36 +79,60 @@ package flash.net {
 
 			// send data to telemetry
 			Telemetry.Session.WriteTime(".network.request.time");
-			sTelemetryRequestUrl.WriteValue(url);
+			sTelemetryRequestUrl.WriteValue(lowerCaseUrl);
 			sTelemetryRequestId.WriteValue(mId);
 
-			if (url.StartsWith("http:") || url.StartsWith("https:")) {
+			if (lowerCaseUrl.StartsWith("http:") || lowerCaseUrl.StartsWith("https:")) {
 				// handle a http load
 				// load with a delay
 
-				if (PlayScript.Player.Offline) {
-					// load from offline cache
-					if (synchronous) {
-						doLoadFromOfflineCache();
-					} else {
-						// this must be done on the 'next' frame
-						enqueueAction(doLoadFromOfflineCache);
-					}
-				} else 
+				doRemoteLoad(synchronous);
+			} else
+			{
+				var localPath = PlayScript.Player.TryResolveResourcePath(request.url);
+				if (localPath == null)
 				{
+					// doesn't exist locally, so try to load it remotely.
+					var url = PlayScript.Player.ToRemotePath(request.url);
+					if (url != mRequest.url)
+					{
+						mRequest.url = url;
+						doRemoteLoad(synchronous);
+					}
+					else
+					{
+						trace("URLLoader: could not load ", mRequest.url);
+						// io error, file not found
+						this.dispatchEvent(new IOErrorEvent(IOErrorEvent.IO_ERROR));
+						return;
+					}
+				} else {
 					if (synchronous) {
-						doHttpLoadSynchronous();
+						doLocalLoad();
 					} else {
-						doHttpLoadAsynchronous();
+						// load with a delay
+						enqueueAction(doLocalLoad);
 					}
 				}
+			}
+		}
 
-			} else {
+		private function doRemoteLoad(synchronous:Boolean = false):void
+		{
+			if (PlayScript.Player.Offline) {
+				// load from offline cache
 				if (synchronous) {
-					doLocalLoad();
+					doLoadFromOfflineCache();
 				} else {
-					// load with a delay
-					enqueueAction(doLocalLoad);
+					// this must be done on the 'next' frame
+					enqueueAction(doLoadFromOfflineCache);
+				}
+			} else 
+			{
+				if (synchronous) {
+					doHttpLoadSynchronous();
+				} else {
+					doHttpLoadAsynchronous();
 				}
 			}
 		}
@@ -221,6 +248,9 @@ package flash.net {
 			trace("URLLoader: http load ", mRequest.url);
 
 			TraceAccurateMetricsStartLoading();
+			if (PlayScript.Profiler.ProfileLoading) {
+				PlayScript.Profiler.Begin("load:" + mRequest.url, "");
+			}
 
 			var method:String = "GET";
 			if (mRequest.method != null) {
@@ -313,6 +343,10 @@ package flash.net {
 			dataStream.Close ();
 			response.Close ();
 
+			if (PlayScript.Profiler.ProfileLoading) {
+				PlayScript.Profiler.End("load:" + mRequest.url);
+			}
+
 			TraceAccurateMetricsEndLoading();
 
 			trace("URLLoader: http load complete length:", this.bytesLoaded, mRequest.url);
@@ -327,6 +361,10 @@ package flash.net {
 
 		private function dispatchCompleteEvent():void {
 
+			if (PlayScript.Profiler.ProfileLoading) {
+				PlayScript.Profiler.Begin("dispatch:" + mRequest.url, "");
+			}
+
 			TraceAccurateMetricsStartDispatching();
 
 			// TODO:addEventListener Find a way to make sure this event is dispatched in the main thread
@@ -335,6 +373,9 @@ package flash.net {
 
 			TraceAccurateMetricsEndDispatching();
 
+			if (PlayScript.Profiler.ProfileLoading) {
+				PlayScript.Profiler.End("dispatch:" + mRequest.url);
+			}
 		}
 
 		private function dispatchErrorEvent():void {
@@ -344,13 +385,36 @@ package flash.net {
 
 		private function doLocalLoad():void {
 			trace("URLLoader: local load ", mRequest.url);
+			if (PlayScript.Profiler.ProfileLoading) {
+				PlayScript.Profiler.Begin("load:" + mRequest.url, "");
+			}
 
 			var span = Telemetry.Session.BeginSpan();
 
 			TraceAccurateMetricsStartLoading();
 
 			// handle file loading
-			var path:String = PlayScript.Player.TryResolveResourcePath(mRequest.url);
+			var path:String = null;
+
+			// check any registered loader handlers
+			var curLoadHandler:LoaderHandler = null;
+			if (sLoaderHandlers != null) {
+				for each (var loadHandler:LoaderHandler in sLoaderHandlers) {
+					if (mRequest.url.EndsWith(loadHandler.sourceExt)) {
+						var foundPath:String = PlayScript.Player.TryResolveResourcePath(mRequest.url.Replace(loadHandler.sourceExt, loadHandler.targetExt));
+						if (foundPath != null) {
+							path = foundPath;
+							curLoadHandler = loadHandler;
+							trace("URLLoader: loading " + path + " instead of " + mRequest.url);
+						}
+					}
+				}
+			}
+
+			if (path == null) {
+				path = PlayScript.Player.TryResolveResourcePath(mRequest.url);
+			}
+
 			if (path == null)
 			{
 				trace("URLLoader: could not load ", mRequest.url);
@@ -361,32 +425,55 @@ package flash.net {
 
 #if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
 			// file exists. read it
-			var fileData:byte[] = File.ReadAllBytes(path);
+			var fileData:Byte[] = File.ReadAllBytes(path);
+//			var file:FileStream = new FileStream(path, FileMode.Open);
+//			var len:int = int(file.Length);
+//			var fileData:byte[] = new byte[len];
+//			await file.ReadAsync(fileData, 0, len);
+//			file.Close();
 #elif PLATFORM_MONODROID 
-			var src:Stream;
-			src = Application.Context.Assets.Open(path);
 			var dest:MemoryStream = new MemoryStream();
+			var src:Stream;
+
+			try
+			{
+				src = Application.Context.Assets.Open(path);
+			}
+			// if cannot load as assets, try loading it as plain file
+			// disable the ex defined but not used "warning as error"
+			#pragma warning disable 0168
+			catch (ex:Java.IO.FileNotFoundException)
+			#pragma warning restore 0168
+			{
+				src = File.OpenRead(path);
+			}
+
 			src.CopyTo(dest);
 			var fileData:byte[] = dest.ToArray();
-
 #else
 			var fileData:byte[] = new byte[0];
 #endif
 
+			if (curLoadHandler != null) {
+				var callback:Func.<String,ByteArray,ByteArray> = Func.<String,ByteArray,ByteArray>(curLoadHandler.handler);
+				var outBytes:ByteArray = callback(path, ByteArray.fromArray(fileData)) as ByteArray;
+				fileData = outBytes.getRawArray();
+			}
+
 			switch (dataFormat)
 			{
 				case URLLoaderDataFormat.BINARY: {
-					var ba:ByteArray = ByteArray.fromArray(fileData);
-					this.data = ba;
-					break;
-				}
+				var ba:ByteArray = ByteArray.fromArray(fileData);
+				this.data = ba;
+				break;
+			}
 				case URLLoaderDataFormat.TEXT: {
-					var text:String =  System.Text.Encoding.UTF8.GetString(fileData);
-					this.data = text;
-					break;
-				}
+				var text:String =  System.Text.Encoding.UTF8.GetString(fileData);
+				this.data = text;
+				break;
+			}
 				default:
-					throw new System.NotImplementedException();
+				throw new System.NotImplementedException();
 			}
 
 			// update bytes loaded
@@ -394,6 +481,9 @@ package flash.net {
 			this.bytesTotal  = fileData.Length;
 
 			TraceAccurateMetricsEndLoading();
+			if (PlayScript.Profiler.ProfileLoading) {
+				PlayScript.Profiler.End("load:" + mRequest.url);
+			}
 
 			// dispatch complete event
 			dispatchCompleteEvent();
@@ -457,17 +547,39 @@ package flash.net {
 					return;
 			}
 		}
+		
+		public static function addLoaderHandler(sourceExt:String, targetExt:String, handler:Function):void {
+			if (sLoaderHandlers == null) {
+				sLoaderHandlers = new System.Collections.Generic.List.<LoaderHandler>();
+			}
+			sLoaderHandlers.Add(new LoaderHandler(sourceExt, targetExt, handler));
+		}
 
 		// request for this loader
 		private var mRequest:URLRequest;
 		// unique request id
 		private var mId:int;
 
+		public class LoaderHandler {
+
+			public var sourceExt:String;
+			public var targetExt:String;
+			public var handler:Function;
+
+				public function LoaderHandler(sourceExt:String, targetExt:String, handler:Function)
+				{
+					this.sourceExt = sourceExt;
+					this.targetExt = targetExt;
+					this.handler = handler;
+				}
+		}
+
 		// url loader queue (to be processed each frame)
 		private static var sQueue:Vector.<System.Action> = new Vector.<System.Action>();
 		private static var sNextRequestId:int = 1;
 		private static var sTelemetryRequestUrl:Telemetry.Value = new Telemetry.Value(".network.requesturl");
 		private static var sTelemetryRequestId:Telemetry.Value = new Telemetry.Value(".network.request.id");
+		private static var sLoaderHandlers:System.Collections.Generic.List.<LoaderHandler> = null;
 	}
 
 }

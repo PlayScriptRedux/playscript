@@ -26,6 +26,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Reflection;
 using _root;
 using PlayScript.Expando;
 
@@ -38,6 +39,8 @@ namespace Amf
         public Stream Stream { get; private set; }
 
 		public bool TrackArrayReferences { get; set; }
+		public bool WriteDoublesAsInts {get; set;}
+		public bool WriteZerosAsNulls {get; set;}
 
         private Dictionary<string, int> stringTable = new Dictionary<string, int>();
 
@@ -55,6 +58,8 @@ namespace Amf
 
 		private readonly Amf3ClassDef anonClassDef = new Amf3ClassDef("*", new string[0], true, false);
 
+		private readonly Dictionary<Type, IAmf3Serializer> typeToSerializer = new Dictionary<Type, IAmf3Serializer>();
+
         public Amf3Writer(Stream stream)
         {
             if (stream == null)
@@ -64,6 +69,10 @@ namespace Amf
 
 			// track array references by default
 			TrackArrayReferences = true;
+			// write doubles as integers by default
+			WriteDoublesAsInts = true;
+			// dont write zeros as nulls by default (non-standard?)
+			WriteZerosAsNulls = false;
         }
 
         private bool CheckObjectTable(object obj)
@@ -87,10 +96,44 @@ namespace Amf
 			objectTableIndex++;
 		}
 
+		private IAmf3Serializer GetSerializerForType(System.Type type)
+		{
+			IAmf3Serializer serializer;
+			if (!typeToSerializer.TryGetValue(type, out serializer)) {
+				var alias = Amf3ClassDef.GetAliasFromType(type);
+				if (alias != null) {
+					serializer = Amf3ClassDef.GetSerializerFromAlias(alias);
+					if (serializer == null) {
+						// create reflection serializer
+						serializer = new ReflectionSerializer(alias, type, true, false);
+						// automatically register it
+						Amf3ClassDef.RegisterSerializer(alias, serializer);
+					}
+				} else {
+					// create anonymous serializer
+					serializer = new ReflectionSerializer("*", type, true, false);
+				}
+				// store serializer in our local cache
+				typeToSerializer.Add(type, serializer);
+			}
+			return serializer;
+		}
+
         private void Write(Amf3TypeCode type)
         {
             Stream.WriteByte((byte)type);
         }
+
+
+		public void WriteDefaultObjectForType(Type type)
+		{
+			// get serializer
+			IAmf3Serializer serializer = GetSerializerForType(type);
+			// create default instance
+			var defaultInstance = serializer.NewInstance(null);
+			// write object using serializer
+			serializer.WriteObject(this, defaultInstance);
+		}
 
         public void Write(object obj)
         {
@@ -147,8 +190,8 @@ namespace Amf
 				return;
 			}
 
-            if (obj is _root.Array) {
-				Write((_root.Array)obj);
+            if (obj is IList) {
+				Write((IList)obj);
                 return;
             }
 
@@ -156,6 +199,121 @@ namespace Amf
 				Write((flash.utils.ByteArray)obj);
 				return;
 			}
+
+			if (obj is flash.utils.Dictionary) {
+				Write((flash.utils.Dictionary)obj);
+				return;
+			}
+
+			if (obj is byte ||
+			    obj is sbyte ||
+			    obj is short ||
+			    obj is ushort) {
+				Write(Convert.ToInt32(obj));
+				return;
+			}
+
+			// get serializer from type
+			var type = obj.GetType();
+			IAmf3Serializer serializer = GetSerializerForType(type);
+			// write object using serializer
+			serializer.WriteObject(this, obj);
+        }
+
+        public void Write(bool boolean)
+        {
+            Write(boolean ? Amf3TypeCode.True : Amf3TypeCode.False);
+        }
+
+        public void Write(byte integer)
+        {
+            Write((int)integer);
+        }
+
+        public void Write(sbyte integer)
+        {
+            Write((int)integer);
+        }
+
+        public void Write(short integer)
+        {
+            Write((int)integer);
+        }
+
+        public void Write(ushort integer)
+        {
+            Write((int)integer);
+        }
+
+        public void Write(uint integer)
+        {
+            Write(checked((int)integer));
+        }
+
+        public void Write(int integer)
+        {
+			if (WriteZerosAsNulls && integer == 0) {
+				Write(Amf3TypeCode.Null);
+				return;
+			}
+
+			if (integer > amfIntMaxValue || integer < amfIntMinValue) {
+				// write large integers as doubles
+				Write((double)integer);
+				return;
+			}
+
+            Write(Amf3TypeCode.Integer);
+            TypelessWrite(integer);
+        }
+
+        public void Write(double number)
+        {
+			// is number within range of an integer?
+			if (WriteDoublesAsInts && !double.IsNaN(number) && (number >= amfIntMinValue) && (number <= amfIntMaxValue)) {
+				// write number as integer if we can 
+				int numberInt = (int)number;
+				if (((double)numberInt) == number) {
+					// write as integer
+					Write(numberInt);
+					return;
+				}
+			}
+
+            Write(Amf3TypeCode.Number);
+            TypelessWrite(number);
+        }
+
+        public void Write(string str)
+        {
+            Write(Amf3TypeCode.String);
+            TypelessWrite(str);
+        }
+
+		public void Write(Amf3String str)
+		{
+			Write(Amf3TypeCode.String);
+			TypelessWrite(str);
+		}
+
+        public void Write(_root.Date date)
+        {
+            Write(Amf3TypeCode.Date);
+            TypelessWrite(date);
+        }
+
+        public void Write(IList obj)
+        {
+			if (obj == null) {
+				Write(Amf3TypeCode.Null);
+				return;
+			}
+
+			if (obj is _root.Array) {
+				Write(Amf3TypeCode.Array);
+				TypelessWriteArray((_root.Array)obj);
+				return;
+			} 
 
 			if (obj is Vector<uint>) {
 				Write((Vector<uint>)obj);
@@ -192,86 +350,15 @@ namespace Amf
 				return;
 			}
 
-			if (obj is flash.utils.Dictionary) {
-				Write((flash.utils.Dictionary)obj);
+			// check for a typed vector, example: Vector<MyClass>
+			var objType = obj.GetType();
+			if (objType.Name == "Vector`1")	{
+				Write(Amf3TypeCode.VectorObject);
+				TypelessWriteVectorObject(obj);
 				return;
 			}
 
-			if (obj is byte ||
-			    obj is sbyte ||
-			    obj is short ||
-			    obj is ushort) {
-				Write(Convert.ToInt32(obj));
-				return;
-			}
-
-            throw new ArgumentException("Cannot serialize object of type " + obj.GetType().FullName);
-        }
-
-        public void Write(bool boolean)
-        {
-            Write(boolean ? Amf3TypeCode.True : Amf3TypeCode.False);
-        }
-
-        public void Write(byte integer)
-        {
-            Write((int)integer);
-        }
-
-        public void Write(sbyte integer)
-        {
-            Write((int)integer);
-        }
-
-        public void Write(short integer)
-        {
-            Write((int)integer);
-        }
-
-        public void Write(ushort integer)
-        {
-            Write((int)integer);
-        }
-
-        public void Write(uint integer)
-        {
-            Write(checked((int)integer));
-        }
-
-        public void Write(int integer)
-        {
-            Write(Amf3TypeCode.Integer);
-            TypelessWrite(integer);
-        }
-
-        public void Write(double number)
-        {
-            Write(Amf3TypeCode.Number);
-            TypelessWrite(number);
-        }
-
-        public void Write(string str)
-        {
-            Write(Amf3TypeCode.String);
-            TypelessWrite(str);
-        }
-
-		public void Write(Amf3String str)
-		{
-			Write(Amf3TypeCode.String);
-			TypelessWrite(str);
-		}
-
-        public void Write(_root.Date date)
-        {
-            Write(Amf3TypeCode.Date);
-            TypelessWrite(date);
-        }
-
-        public void Write(_root.Array array)
-        {
-            Write(Amf3TypeCode.Array);
-            TypelessWrite(array);
+			throw new ArgumentException("Cannot serialize object of type " + objType.FullName);
         }
 
 		public void Write(flash.utils.ByteArray byteArray)
@@ -328,12 +415,6 @@ namespace Amf
 			Write(Amf3TypeCode.VectorDouble);
 			TypelessWrite(vector);
 		}
-
-        public void Write(Amf3Object obj)
-        {
-            Write(Amf3TypeCode.Object);
-            TypelessWrite(obj);
-        }
 
 		public void Write(ExpandoObject obj)
 		{
@@ -475,7 +556,7 @@ namespace Amf
             TypelessWrite("");
         }
 
-        public void TypelessWrite(_root.Array array)
+        public void TypelessWriteArray(_root.Array array)
         {
 			if (TrackArrayReferences) {
 				if (CheckObjectTable(array))
@@ -495,6 +576,28 @@ namespace Amf
                 Write(i);
             }
         }
+
+		public void TypelessWriteVectorObject(IList vector)
+		{
+			if (WriteVectorHeader(vector, (uint)vector.Count, true))
+				return;
+
+			// get type of vector element
+			Type elementType = vector.GetType().GetGenericArguments()[0];
+			// get class info for type
+			string alias = Amf3ClassDef.GetAliasFromType(elementType);
+			// get alias of vector element from info
+			if (alias == null) {
+				alias = elementType.FullName;
+			}
+			// write vector element class alias
+			TypelessWrite(alias);
+
+			foreach (object i in vector) {
+				Write(i);
+			}
+		}
+
 
 		public void TypelessWrite(flash.utils.ByteArray byteArray)
 		{
@@ -703,42 +806,15 @@ namespace Amf
 			}
 		}
 
-        public void TypelessWrite(Amf3Object obj)
-        {
-            if (CheckObjectTable(obj))
-                return;
-
-			TypelessWrite(obj.ClassDef);
-
-			StoreObject(obj);
-
-            if (obj.ClassDef.Externalizable) {
-                Write(obj["inner"]);
-                return;
-            }
-
-            foreach (string i in obj.ClassDef.Properties) {
-                Write(obj[i]);
-            }
-
-            if (obj.ClassDef.Dynamic) {
-                var dynamicProperties =
-                    from i in obj.Properties
-                    where !obj.ClassDef.Properties.Contains(i.Key)
-                    select i;
-
-                foreach (var i in dynamicProperties) {
-                    TypelessWrite(i.Key);
-                    Write(i.Value);
-                }
-
-                TypelessWrite("");
-            }
-        }
-
-
 		public void TypelessWrite(ExpandoObject obj)
 		{
+			// this allows for the sharing of expando values easily
+			var redirect = obj.ClassDefinition as ExpandoObject;
+			if (redirect != null) {
+				TypelessWrite(redirect);
+				return;
+			}
+
 			if (CheckObjectTable(obj))
 				return;
 
@@ -765,11 +841,11 @@ namespace Amf
 			}
 		}
 
-		public void WriteObjectHeader(Amf3ClassDef classDef)
+		public void WriteObjectHeader(Amf3ClassDef classDef, object obj = null)
 		{
 			Write(Amf3TypeCode.Object);
 			TypelessWrite(classDef);
-			StoreObject(null);
+			StoreObject(obj);
 		}
     }
 }
