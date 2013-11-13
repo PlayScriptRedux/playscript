@@ -154,9 +154,13 @@ namespace PlayScript.DynamicRuntime
 			var untypedAccessor = o as IDynamicAccessorUntyped;
 			if (untypedAccessor != null) {
 				object value = untypedAccessor.GetIndex(index);
-				if (value == null) return default(T);
-				if (value is T) {
+				// convert value to T
+				if (value == null) {
+					return default(T);
+				} else if (value is T) {
 					return (T)value;
+				} else if (Dynamic.IsUndefined(value)) {
+					return Dynamic.GetUndefinedValue<T>();
 				} else {
 					return PlayScript.Dynamic.ConvertValue<T>(value);
 				}
@@ -199,7 +203,7 @@ namespace PlayScript.DynamicRuntime
 				}
 			}
 
-			return default(T);
+			return Dynamic.GetUndefinedValue<T>();
 		}
 
 		public T GetIndexAs<T> (object o, uint index)

@@ -267,6 +267,7 @@ namespace PlayScript
 		}
 
 		// returns an object or a reference to undefined
+		[return: AsUntyped]
 		public object AsUntyped()
 		{
 			if (mType == TypeCode.Undefined) {
@@ -392,7 +393,7 @@ namespace PlayScript
 			throw new InvalidCastException("Cannot cast to Boolean");
 		}
 
-		public double AsNumber(double defaultValue = 0.0)
+		public double AsNumber(double defaultValue = double.NaN)
 		{
 			if (mType == TypeCode.Number) {
 				return (double)mNumberValue;
@@ -412,7 +413,7 @@ namespace PlayScript
 			throw new InvalidCastException("Cannot cast to Number");
 		}
 
-		public float AsFloat(float defaultValue = 0.0f)
+		public float AsFloat(float defaultValue = float.NaN)
 		{
 			if (mType == TypeCode.Number) {
 				return (float)mNumberValue;

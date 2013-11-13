@@ -57,7 +57,7 @@ namespace PlayScript.DynamicRuntime
 			// get accessor for untyped 
 			var accessor = o as IDynamicAccessorUntyped;
 			if (accessor != null) {
-				return accessor.GetMember(mName, ref mNameHint, null);
+				return accessor.GetMember(mName, ref mNameHint);
 			}
 
 			return GetMember<object>(o);
@@ -77,16 +77,21 @@ namespace PlayScript.DynamicRuntime
 			// get accessor for value type T
 			var accessor = o as IDynamicAccessor<T>;
 			if (accessor != null) {
-				return accessor.GetMember(mName, ref mNameHint, default(T));
+				return accessor.GetMember(mName, ref mNameHint);
 			}
 
 			// fallback on object accessor and cast it to T
 			var untypedAccessor = o as IDynamicAccessorUntyped;
 			if (untypedAccessor != null) {
-				object value = untypedAccessor.GetMember(mName, ref mNameHint, default(T));
-				if (value == null) return default(T);
-				if (value is T) {
+				// value can be null, undefined, or of type T
+				object value = untypedAccessor.GetMember(mName, ref mNameHint);
+				// convert value to T
+				if (value == null) {
+					return default(T);
+				} else if (value is T) {
 					return (T)value;
+				} else if (Dynamic.IsUndefined(value)) {
+					 return Dynamic.GetUndefinedValue<T>();
 				} else {
 					return PlayScript.Dynamic.ConvertValue<T>(value);
 				}
@@ -110,11 +115,11 @@ namespace PlayScript.DynamicRuntime
 				}
 
 				// key not found
-				return default(T);
+				return Dynamic.GetUndefinedValue<T>();
 			}
 
 			if (PlayScript.Dynamic.IsNullOrUndefined(o)) {
-				return default(T);
+				return Dynamic.GetUndefinedValue<T>();
 			}
 
 			// determine if this is a instance member or a static member
@@ -266,7 +271,7 @@ namespace PlayScript.DynamicRuntime
 				return PlayScript.Dynamic.ConvertValue<T>(result);
 			}
 
-			return default(T);
+			return Dynamic.GetUndefinedValue<T>();
 		}
 
 

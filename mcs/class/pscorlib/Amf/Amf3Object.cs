@@ -87,35 +87,14 @@ namespace Amf
 			return false;
 		}
 
-		private string ConvertKey(string key)
-		{
-			if (key == null)
-				return "null";
-			return key;
-		}
-
-		private string ConvertKey(int key)
-		{
-			return key.ToString();
-		}
-
-		private string ConvertKey(object key)
-		{
-			if (key == null)
-				return "null";
-			if (Object.ReferenceEquals(key, PlayScript.Undefined._undefined))
-				return "undefined";
-			return key.ToString();
-		}
-
 		public Variant GetPropertyValue(object key)
 		{
-			return GetPropertyValue(ConvertKey(key));
+			return GetPropertyValue(Dynamic.ConvertKey(key));
 		}
 
 		public Variant GetPropertyValue(int key)
 		{
-			return GetPropertyValue(ConvertKey(key));
+			return GetPropertyValue(Dynamic.ConvertKey(key));
 		}
 
 		public Variant GetPropertyValue(string key)
@@ -141,86 +120,38 @@ namespace Amf
 			return Variant.Undefined;
 		}
 
-		public Variant GetPropertyValue(string key, Variant defaultValue)
+		public bool TryGetPropertyValue(string key, out Variant value)
 		{
 			// lookup index of value from class definition
 			int index = ClassDef.GetPropertyIndex(key);
 			// does value exist in the class?
 			if (index >= 0) {
 				// return value from class property
-				return Values[index];
+				value = Values[index];
+				return value.IsDefined;
 			} 
 
 			// lookup value from dynamic properties 
 			if (DynamicProperties != null) {
-				Variant dynamicValue;
-				if (DynamicProperties.TryGetValue(key, out dynamicValue)) {
+				if (DynamicProperties.TryGetValue(key, out value)) {
 					// return value from dynamic properties if we have them
-					return dynamicValue;
+					return value.IsDefined;
 				}
 			}
 
 			// not found, return undefined
-			return defaultValue;
+			value = Variant.Undefined;
+			return false;
 		}
-
-		public object GetPropertyValueAsObject(string key)
-		{
-			// lookup index of value from class definition
-			int index = ClassDef.GetPropertyIndex(key);
-			// does value exist in the class?
-			if (index >= 0) {
-				// return value from class property
-				// we do this AsObject here so that the boxed value will be cached
-				return Values[index].AsObject();
-			} 
-
-			// lookup value from dynamic properties 
-			if (DynamicProperties != null) {
-				Variant dynamicValue;
-				if (DynamicProperties.TryGetValue(key, out dynamicValue)) {
-					// return value from dynamic properties if we have them
-					return dynamicValue.AsObject();
-				}
-			}
-
-			// not found, return null
-			return null;
-		}
-
-		public object GetPropertyValueAsUntyped(string key)
-		{
-			// lookup index of value from class definition
-			int index = ClassDef.GetPropertyIndex(key);
-			// does value exist in the class?
-			if (index >= 0) {
-				// return value from class property
-				// we do this AsObject here so that the boxed value will be cached
-				return Values[index].AsUntyped();
-			} 
-
-			// lookup value from dynamic properties 
-			if (DynamicProperties != null) {
-				Variant dynamicValue;
-				if (DynamicProperties.TryGetValue(key, out dynamicValue)) {
-					// return value from dynamic properties if we have them
-					return dynamicValue.AsUntyped();
-				}
-			}
-
-			// not found, return undefined
-			return PlayScript.Undefined._undefined;
-		}
-
 
 		public void SetPropertyValue(object key, Variant value)
 		{
-			SetPropertyValue(ConvertKey(key), value);
+			SetPropertyValue(Dynamic.ConvertKey(key), value);
 		}
 
 		public void SetPropertyValue(int key, Variant value)
 		{
-			SetPropertyValue(ConvertKey(key), value);
+			SetPropertyValue(Dynamic.ConvertKey(key), value);
 		}
 
 		public void SetPropertyValue(string key, Variant value)
@@ -408,9 +339,14 @@ namespace Amf
 
 		#region IDynamicAccessorUntyped implementation
 
-		object IDynamicAccessorUntyped.GetMember(string name, ref uint hint, object defaultValue)
+		object IDynamicAccessorUntyped.GetMember(string name, ref uint hint)
 		{
-			return GetPropertyValueAsUntyped(name) ?? defaultValue;
+			return GetPropertyValue(name).AsUntyped();
+		}
+
+		object IDynamicAccessorUntyped.GetMemberOrDefault(string name, ref uint hint, object defaultValue)
+		{
+			return GetPropertyValue(name).AsObject(defaultValue);
 		}
 
 		void IDynamicAccessorUntyped.SetMember(string name, ref uint hint, object value)
@@ -420,7 +356,7 @@ namespace Amf
 
 		object IDynamicAccessorUntyped.GetIndex(string key)
 		{
-			return GetPropertyValueAsUntyped(key);
+			return GetPropertyValue(key).AsUntyped();
 		}
 
 		void IDynamicAccessorUntyped.SetIndex(string key, object value)
@@ -430,22 +366,22 @@ namespace Amf
 
 		object IDynamicAccessorUntyped.GetIndex(int key)
 		{
-			return GetPropertyValueAsUntyped(ConvertKey(key));
+			return GetPropertyValue(key).AsUntyped();
 		}
 
 		void IDynamicAccessorUntyped.SetIndex(int key, object value)
 		{
-			SetPropertyValueAsUntyped(ConvertKey(key), value);
+			SetPropertyValueAsUntyped(Dynamic.ConvertKey(key), value);
 		}
 
 		object IDynamicAccessorUntyped.GetIndex(object key)
 		{
-			return GetPropertyValueAsUntyped(ConvertKey(key));
+			return GetPropertyValue(key).AsUntyped();
 		}
 
 		void IDynamicAccessorUntyped.SetIndex(object key, object value)
 		{
-			SetPropertyValueAsUntyped(ConvertKey(key), value);
+			SetPropertyValueAsUntyped(Dynamic.ConvertKey(key), value);
 		}
 
 		bool IDynamicAccessorUntyped.HasMember(string name)
@@ -465,31 +401,36 @@ namespace Amf
 
 		bool IDynamicAccessorUntyped.HasIndex(int key)
 		{
-			return this.ContainsKey(ConvertKey(key));
+			return this.ContainsKey(Dynamic.ConvertKey(key));
 		}
 
 		bool IDynamicAccessorUntyped.DeleteIndex(int key)
 		{
-			return this.Remove(ConvertKey(key));
+			return this.Remove(Dynamic.ConvertKey(key));
 		}
 
 		bool IDynamicAccessorUntyped.HasIndex(object key)
 		{
-			return this.ContainsKey(ConvertKey(key));
+			return this.ContainsKey(Dynamic.ConvertKey(key));
 		}
 
 		bool IDynamicAccessorUntyped.DeleteIndex(object key)
 		{
-			return this.Remove(ConvertKey(key));
+			return this.Remove(Dynamic.ConvertKey(key));
 		}
 
 		#endregion
 
 		#region IDynamicAccessor implementation
 
-		object IDynamicAccessor<object>.GetMember(string name, ref uint hint, object defaultValue)
+		object IDynamicAccessor<object>.GetMember(string name, ref uint hint)
 		{
-			return GetPropertyValueAsObject(name) ?? defaultValue;
+			return GetPropertyValue(name).AsObject();
+		}
+
+		object IDynamicAccessor<object>.GetMemberOrDefault(string name, ref uint hint, object defaultValue)
+		{
+			return GetPropertyValue(name).AsObject(defaultValue);
 		}
 
 		void IDynamicAccessor<object>.SetMember(string name, ref uint hint, object value)
@@ -499,7 +440,7 @@ namespace Amf
 
 		object IDynamicAccessor<object>.GetIndex(string key)
 		{
-			return GetPropertyValueAsObject(key);
+			return GetPropertyValue(key).AsObject();
 		}
 
 		void IDynamicAccessor<object>.SetIndex(string key, object value)
@@ -509,28 +450,34 @@ namespace Amf
 
 		object IDynamicAccessor<object>.GetIndex(int key)
 		{
-			return GetPropertyValueAsObject(ConvertKey(key));
+			return GetPropertyValue(key).AsObject();
 		}
 
 		void IDynamicAccessor<object>.SetIndex(int key, object value)
 		{
-			SetPropertyValueAsObject(ConvertKey(key), value);
+			SetPropertyValueAsObject(Dynamic.ConvertKey(key), value);
 		}
 
 		object IDynamicAccessor<object>.GetIndex(object key)
 		{
-			return GetPropertyValueAsObject(ConvertKey(key));
+			return GetPropertyValue(key).AsObject();
 		}
+
 		void IDynamicAccessor<object>.SetIndex(object key, object value)
 		{
-			SetPropertyValueAsObject(ConvertKey(key), value);
+			SetPropertyValueAsObject(Dynamic.ConvertKey(key), value);
 		}
 
 		#endregion
 
 		#region IDynamicAccessor implementation
 
-		string IDynamicAccessor<string>.GetMember(string name, ref uint hint, string defaultValue)
+		string IDynamicAccessor<string>.GetMember(string name, ref uint hint)
+		{
+			return GetPropertyValue(name).AsString();
+		}
+
+		string IDynamicAccessor<string>.GetMemberOrDefault(string name, ref uint hint, string defaultValue)
 		{
 			return GetPropertyValue(name).AsString(defaultValue);
 		}
@@ -574,7 +521,12 @@ namespace Amf
 
 		#region IDynamicAccessor implementation
 
-		double IDynamicAccessor<double>.GetMember(string name, ref uint hint, double defaultValue)
+		double IDynamicAccessor<double>.GetMember(string name, ref uint hint)
+		{
+			return GetPropertyValue(name).AsNumber();
+		}
+
+		double IDynamicAccessor<double>.GetMemberOrDefault(string name, ref uint hint, double defaultValue)
 		{
 			return GetPropertyValue(name).AsNumber(defaultValue);
 		}
@@ -618,7 +570,12 @@ namespace Amf
 
 		#region IDynamicAccessor implementation
 
-		float IDynamicAccessor<float>.GetMember(string name, ref uint hint, float defaultValue)
+		float IDynamicAccessor<float>.GetMember(string name, ref uint hint)
+		{
+			return GetPropertyValue(name).AsFloat();
+		}
+
+		float IDynamicAccessor<float>.GetMemberOrDefault(string name, ref uint hint, float defaultValue)
 		{
 			return GetPropertyValue(name).AsFloat(defaultValue);
 		}
@@ -661,7 +618,12 @@ namespace Amf
 
 		#region IDynamicAccessor implementation
 
-		uint IDynamicAccessor<uint>.GetMember(string name, ref uint hint, uint defaultValue)
+		uint IDynamicAccessor<uint>.GetMember(string name, ref uint hint)
+		{
+			return GetPropertyValue(name).AsUInt();
+		}
+
+		uint IDynamicAccessor<uint>.GetMemberOrDefault(string name, ref uint hint, uint defaultValue)
 		{
 			return GetPropertyValue(name).AsUInt(defaultValue);
 		}
@@ -705,9 +667,14 @@ namespace Amf
 
 		#region IDynamicAccessor implementation
 
-		int IDynamicAccessor<int>.GetMember(string name, ref uint hint, int defaultValue)
+		int IDynamicAccessor<int>.GetMember(string name, ref uint hint)
 		{
 			return GetPropertyValue(name).AsInt();
+		}
+
+		int IDynamicAccessor<int>.GetMemberOrDefault(string name, ref uint hint, int defaultValue)
+		{
+			return GetPropertyValue(name).AsInt(defaultValue);
 		}
 
 		void IDynamicAccessor<int>.SetMember(string name, ref uint hint, int value)
@@ -749,7 +716,12 @@ namespace Amf
 
 		#region IDynamicAccessor implementation
 
-		bool IDynamicAccessor<bool>.GetMember(string name, ref uint hint, bool defaultValue)
+		bool IDynamicAccessor<bool>.GetMember(string name, ref uint hint)
+		{
+			return GetPropertyValue(name).AsBoolean();
+		}
+
+		bool IDynamicAccessor<bool>.GetMemberOrDefault(string name, ref uint hint, bool defaultValue)
 		{
 			return GetPropertyValue(name).AsBoolean(defaultValue);
 		}
@@ -793,9 +765,15 @@ namespace Amf
 
 		#region IDynamicAccessor implementation
 
-		Variant IDynamicAccessor<Variant>.GetMember(string name, ref uint hint, Variant defaultValue)
+		Variant IDynamicAccessor<Variant>.GetMember(string name, ref uint hint)
 		{
-			return GetPropertyValue(name, defaultValue);
+			return GetPropertyValue(name);
+		}
+
+		Variant IDynamicAccessor<Variant>.GetMemberOrDefault(string name, ref uint hint, Variant defaultValue)
+		{
+			Variant value = GetPropertyValue(name);
+			return (value.IsDefined) ? value : defaultValue;
 		}
 
 		void IDynamicAccessor<Variant>.SetMember(string name, ref uint hint, Variant value)
@@ -861,7 +839,7 @@ namespace Amf
 
 		bool IDynamicClass.__DeleteDynamicValue(object name)
 		{
-			return Remove(ConvertKey(name));
+			return Remove(Dynamic.ConvertKey(name));
 		}
 
 		bool IDynamicClass.__HasDynamicValue(string name)

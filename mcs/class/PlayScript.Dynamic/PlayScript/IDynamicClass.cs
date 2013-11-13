@@ -8,7 +8,8 @@ namespace PlayScript
 	// this interface prevents any unnecessary boxing of value types as objects
 	public interface IDynamicAccessor<T> 
 	{
-		T		GetMember(string name, ref uint hint, T defaultValue);
+		T		GetMember(string name, ref uint hint);
+		T		GetMemberOrDefault(string name, ref uint hint, T defaultValue);
 		void	SetMember(string name, ref uint hint, T value);
 		T		GetIndex(string key);
 		void	SetIndex(string key, T value);
@@ -23,7 +24,8 @@ namespace PlayScript
 	public interface IDynamicAccessorUntyped
 	{
 		// these methods get/set objects that may be undefined (PlayScript.Undefined._undefined)
-		object	GetMember(string name, ref uint hint, object defaultValue);
+		object	GetMember(string name, ref uint hint);
+		object	GetMemberOrDefault(string name, ref uint hint, object defaultValue);
 		void	SetMember(string name, ref uint hint, object value);
 		object	GetIndex(string key);
 		void	SetIndex(string key, object value);
