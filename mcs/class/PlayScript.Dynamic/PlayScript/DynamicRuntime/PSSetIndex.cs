@@ -80,7 +80,7 @@ namespace PlayScript.DynamicRuntime
 				return value;
 			}
 
-			return default(T);
+			return value;
 		}
 
 		public T SetIndexAs<T> (object o, uint index, T value)

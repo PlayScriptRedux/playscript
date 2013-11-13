@@ -267,6 +267,7 @@ namespace PlayScript
 		}
 
 		// returns an object or a reference to undefined
+		[return: AsUntyped]
 		public object AsUntyped()
 		{
 			if (mType == TypeCode.Undefined) {
@@ -287,6 +288,12 @@ namespace PlayScript
 
 			// box value types to number and cache boxed object in our reference
 			switch (mType) {
+			case TypeCode.Undefined:
+				// return default value (do not cache it)
+				return defaultValue;
+			case TypeCode.Null:
+				// return null (do not return default value)
+				return null;
 			case TypeCode.Boolean:
 				mObject = mBoolValue ? sBoolTrue : sBoolFalse;
 				break;
@@ -308,8 +315,7 @@ namespace PlayScript
 				break;
 			}
 
-			// return default value
-			return defaultValue;
+			return mObject;
 		}
 
 		public int AsInt(int defaultValue = 0)
@@ -370,7 +376,7 @@ namespace PlayScript
 				return mBoolValue;
 			}
 			if (mType == TypeCode.Null) {
-				return defaultValue;
+				return false;
 			}
 			if (mType == TypeCode.Undefined) {
 				return defaultValue;
@@ -387,7 +393,7 @@ namespace PlayScript
 			throw new InvalidCastException("Cannot cast to Boolean");
 		}
 
-		public double AsNumber(double defaultValue = 0.0)
+		public double AsNumber(double defaultValue = double.NaN)
 		{
 			if (mType == TypeCode.Number) {
 				return (double)mNumberValue;
@@ -407,7 +413,7 @@ namespace PlayScript
 			throw new InvalidCastException("Cannot cast to Number");
 		}
 
-		public float AsFloat(float defaultValue = 0.0f)
+		public float AsFloat(float defaultValue = float.NaN)
 		{
 			if (mType == TypeCode.Number) {
 				return (float)mNumberValue;
@@ -434,8 +440,9 @@ namespace PlayScript
 			}
 			switch (mType) {
 			case TypeCode.Undefined:
-			case TypeCode.Null:
 				return defaultValue;
+			case TypeCode.Null:
+				return null;
 			case TypeCode.Boolean:
 				return mBoolValue ? "true" : "false";
 			case TypeCode.Int:

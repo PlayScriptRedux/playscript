@@ -437,6 +437,19 @@ namespace PlayScript
 			return Object.ReferenceEquals(value, PlayScript.Undefined._undefined);
 		}
 
+		// returns the undefined value for a type
+		// this casts from undefined to T
+		public static T GetUndefinedValue<T>()
+		{
+			if (typeof(T) == typeof(double)) {
+				return (T)(object) double.NaN;
+			} else if (typeof(T) == typeof(float)) {
+				return (T)(object) float.NaN;
+			} else {
+				return default(T);
+			}
+		}
+
 		/// <summary>
 		///   In ActionScript, using null or undefined as a key converts to a string value
 		/// </summary>
@@ -464,6 +477,39 @@ namespace PlayScript
 #endif
 			return key;
 		}
+
+		// converts an object key to a string for use by get/set member
+		// this differs from FormatKeyForAs in that it will return the key as a string instead of the key as an object
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static string ConvertKey(object key)
+		{
+			#if !DISABLE_NULL_KEYS
+			if (key == null)
+				return "null";
+			if (Object.ReferenceEquals(key, PlayScript.Undefined._undefined))
+				return "undefined";
+			#endif
+			return key.ToString();
+		}
+
+		// converts an integer key to a string for use by get/set member
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static string ConvertKey(int key)
+		{
+			return key.ToString();
+		}
+
+		// converts an string key to a string for use by get/set member
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static string ConvertKey(string key)
+		{
+			#if !DISABLE_NULL_KEYS
+			if (key == null)
+				return "null";
+			#endif
+			return key;
+		}
+
 
 		public static bool hasOwnProperty(object o, object name)
 		{

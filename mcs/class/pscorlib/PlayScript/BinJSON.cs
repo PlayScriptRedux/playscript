@@ -237,7 +237,7 @@ namespace playscript.utils {
 		{
 			get {
 				uint crc = 0;
-				return ((IDynamicAccessor<object>)_binObj).GetMember(_key, ref crc, null);
+				return ((IDynamicAccessor<object>)_binObj).GetMemberOrDefault(_key, ref crc, null);
 			}
 			set { 
 				uint crc = 0;
@@ -407,7 +407,7 @@ namespace playscript.utils {
 			for (var i = 0; i < len; i++) {
 				string key = keyPairs.keys [i];
 				uint crc = keyPairs.crcs [i];
-				newExpando.Add (key, getMemProv.GetMember (key, ref crc, null));
+				newExpando.Add (key, getMemProv.GetMemberOrDefault (key, ref crc, null));
 			}
 			return newExpando;
 		}
@@ -504,7 +504,7 @@ namespace playscript.utils {
 					string key;
 					BinJsonObject._lastKeyString = key = _pairs.keys [_index];
 					BinJsonObject._lastCrc = crc = _pairs.crcs [_index];
-					return _jsonObj.GetMember(key, ref crc, null);
+					return _jsonObj.GetMemberOrDefault(key, ref crc, null);
 				}
 			}
 
@@ -562,7 +562,7 @@ namespace playscript.utils {
 					uint crc;
 					BinJsonObject._lastKeyString = key = _pairs.keys [_index];
 					BinJsonObject._lastCrc = crc = _pairs.crcs [_index];
-					return new KeyValuePair<string, object>(key, _jsonObj.GetMember(key, ref crc, null));
+					return new KeyValuePair<string, object>(key, _jsonObj.GetMemberOrDefault(key, ref crc, null));
 				}
 			}
 
@@ -574,7 +574,7 @@ namespace playscript.utils {
 					uint crc;
 					BinJsonObject._lastKeyString = key = _pairs.keys [_index];
 					BinJsonObject._lastCrc = crc = _pairs.crcs [_index];
-					return new KeyValuePair<string, object>(key, _jsonObj.GetMember(key, ref crc, null));
+					return new KeyValuePair<string, object>(key, _jsonObj.GetMemberOrDefault(key, ref crc, null));
 				}
 			}
 
@@ -814,7 +814,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<string>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<string>)this).GetMember(index.ToString(), ref crc, null);
+					return ((IDynamicAccessor<string>)this).GetMemberOrDefault(index.ToString(), ref crc, null);
 				}
 			}
 			return null;
@@ -834,7 +834,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<string>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<string>)this).GetMember(index.ToString(), ref crc, null);
+					return ((IDynamicAccessor<string>)this).GetMemberOrDefault(index.ToString(), ref crc, null);
 				}
 			}
 			return null;
@@ -877,7 +877,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<int>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<int>)this).GetMember(index.ToString(), ref crc, 0);
+					return ((IDynamicAccessor<int>)this).GetMember(index.ToString(), ref crc);
 				}
 			}
 			return 0;
@@ -897,7 +897,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<int>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<int>)this).GetMember(index.ToString(), ref crc, 0);
+					return ((IDynamicAccessor<int>)this).GetMember(index.ToString(), ref crc);
 				}
 			}
 			return 0;
@@ -940,7 +940,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<double>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<double>)this).GetMember(index.ToString(), ref crc, 0.0);
+					return ((IDynamicAccessor<double>)this).GetMember(index.ToString(), ref crc);
 				}
 			}
 			return 0.0;
@@ -960,7 +960,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<double>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<double>)this).GetMember(index.ToString(), ref crc, 0.0);
+					return ((IDynamicAccessor<double>)this).GetMember(index.ToString(), ref crc);
 				}
 			}
 			return 0.0;
@@ -1003,7 +1003,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<uint>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<uint>)this).GetMember(index.ToString(), ref crc, 0u);
+					return ((IDynamicAccessor<uint>)this).GetMember(index.ToString(), ref crc);
 				}
 			}
 			return 0u;
@@ -1023,7 +1023,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<uint>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<uint>)this).GetMember(index.ToString(), ref crc, 0u);
+					return ((IDynamicAccessor<uint>)this).GetMember(index.ToString(), ref crc);
 				}
 			}
 			return 0u;
@@ -1066,7 +1066,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<bool>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<bool>)this).GetMember(index.ToString(), ref crc, false);
+					return ((IDynamicAccessor<bool>)this).GetMember(index.ToString(), ref crc);
 				}
 			}
 			return false;
@@ -1086,7 +1086,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<bool>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<bool>)this).GetMember(index.ToString(), ref crc, false);
+					return ((IDynamicAccessor<bool>)this).GetMember(index.ToString(), ref crc);
 				}
 			}
 			return false;
@@ -1129,7 +1129,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<object>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<object>)this).GetMember(index.ToString(), ref crc, null);
+					return ((IDynamicAccessor<object>)this).GetMember(index.ToString(), ref crc);
 				}
 			}
 			return null;
@@ -1149,7 +1149,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<object>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<object>)this).GetMember(index.ToString(), ref crc, null);
+					return ((IDynamicAccessor<object>)this).GetMember(index.ToString(), ref crc);
 				}
 			}
 			return null;
@@ -1181,7 +1181,7 @@ namespace playscript.utils {
 					return (float)((IDynamicAccessor<double>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return (float)((IDynamicAccessor<double>)this).GetMember(index.ToString(), ref crc, 0.0);
+					return (float)((IDynamicAccessor<double>)this).GetMember(index.ToString(), ref crc);
 				}
 			}
 			return 0.0f;
@@ -1201,7 +1201,7 @@ namespace playscript.utils {
 					return (float)((IDynamicAccessor<double>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return (float)((IDynamicAccessor<double>)this).GetMember(index.ToString(), ref crc, 0.0);
+					return (float)((IDynamicAccessor<double>)this).GetMember(index.ToString(), ref crc);
 				}
 			}
 			return 0.0f;
@@ -1298,7 +1298,53 @@ namespace playscript.utils {
 
 		#region Member Accessors
 
-		string IDynamicAccessor<string>.GetMember(string key, ref uint crc, string defaultValue)
+		string IDynamicAccessor<string>.GetMember(string key, ref uint crc)
+		{
+			if (expando != null)
+				return expando [key];
+			uint len = *(uint*)(list + 4);
+			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+			len &= 0xFFFFFF;
+			if (len == 0)
+				return null;
+			if (crc == 0) {
+				if (System.Object.ReferenceEquals (key, _lastKeyString)) {
+					crc = _lastCrc;
+				} else {
+					_lastKeyString = key;
+					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+				}				
+			}
+			if (listType == LIST_TYPE.OBJECT && len > 0) {
+				DataElem* firstElem = (DataElem*)(list + 8);
+				DataElem* dataElem = firstElem + (crc % len);
+				if ((dataElem->id & 0x1FFFFFFF) != crc) {
+					DataElem* lastElem = firstElem + len;
+					DataElem* startElem = dataElem;
+					DataElem* curElem = dataElem;
+					while (true) {
+						curElem++;
+						if (curElem >= lastElem)
+							curElem = firstElem;
+						if (curElem == startElem)
+							return null;
+						uint curCrc = curElem->id & 0x1FFFFFFF;
+						if (curCrc == crc) {
+							dataElem = curElem;
+							break;
+						} else if (curCrc == 0) {
+							return null;
+						}
+					}
+				}
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				return GetValueString (dataType, doc.data + *(uint*)list, dataElem);
+			} else {
+				return null;
+			}
+		}
+
+		string IDynamicAccessor<string>.GetMemberOrDefault(string key, ref uint crc, string defaultValue)
 		{
 			if (expando != null)
 				return expando [key];
@@ -1351,7 +1397,53 @@ namespace playscript.utils {
 			expando [key] = value;
 		}
 
-		int IDynamicAccessor<int>.GetMember(string key, ref uint crc, int defaultValue)
+		int IDynamicAccessor<int>.GetMember(string key, ref uint crc)
+		{
+			if (expando != null)
+				return expando [key];
+			uint len = *(uint*)(list + 4);
+			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+			len &= 0xFFFFFF;
+			if (len == 0)
+				return 0;
+			if (crc == 0) {
+				if (System.Object.ReferenceEquals (key, _lastKeyString)) {
+					crc = _lastCrc;
+				} else {
+					_lastKeyString = key;
+					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+				}				
+			}
+			if (listType == LIST_TYPE.OBJECT && len > 0) {
+				DataElem* firstElem = (DataElem*)(list + 8);
+				DataElem* dataElem = firstElem + (crc % len);
+				if ((dataElem->id & 0x1FFFFFFF) != crc) {
+					DataElem* lastElem = firstElem + len;
+					DataElem* startElem = dataElem;
+					DataElem* curElem = dataElem;
+					while (true) {
+						curElem++;
+						if (curElem >= lastElem)
+							curElem = firstElem;
+						if (curElem == startElem)
+							return 0;
+						uint curCrc = curElem->id & 0x1FFFFFFF;
+						if (curCrc == crc) {
+							dataElem = curElem;
+							break;
+						} else if (curCrc == 0) { // Fast out if key is not in obj
+							return 0;
+						}
+					}
+				}
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				return GetValueInt (dataType, doc.data + *(uint*)list, dataElem);
+			} else {
+				return 0;
+			}
+		}
+
+		int IDynamicAccessor<int>.GetMemberOrDefault(string key, ref uint crc, int defaultValue)
 		{
 			if (expando != null)
 				return expando [key];
@@ -1404,7 +1496,53 @@ namespace playscript.utils {
 			expando [key] = value;
 		}
 
-		double IDynamicAccessor<double>.GetMember(string key, ref uint crc, double defaultValue)
+		double IDynamicAccessor<double>.GetMember(string key, ref uint crc)
+		{
+			if (expando != null)
+				return expando [key];
+			uint len = *(uint*)(list + 4);
+			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+			len &= 0xFFFFFF;
+			if (len == 0)
+				return double.NaN;
+			if (crc == 0) {
+				if (System.Object.ReferenceEquals (key, _lastKeyString)) {
+					crc = _lastCrc;
+				} else {
+					_lastKeyString = key;
+					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+				}				
+			}
+			if (listType == LIST_TYPE.OBJECT && len > 0) {
+				DataElem* firstElem = (DataElem*)(list + 8);
+				DataElem* dataElem = firstElem + (crc % len);
+				if ((dataElem->id & 0x1FFFFFFF) != crc) {
+					DataElem* lastElem = firstElem + len;
+					DataElem* startElem = dataElem;
+					DataElem* curElem = dataElem;
+					while (true) {
+						curElem++;
+						if (curElem >= lastElem)
+							curElem = firstElem;
+						if (curElem == startElem)
+							return double.NaN;
+						uint curCrc = curElem->id & 0x1FFFFFFF;
+						if (curCrc == crc) {
+							dataElem = curElem;
+							break;
+						} else if (curCrc == 0) { // Fast out if key is not in obj
+							return double.NaN;
+						}
+					}
+				}
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				return GetValueDouble (dataType, doc.data + *(uint*)list, dataElem);
+			} else {
+				return double.NaN;
+			}
+		}
+
+		double IDynamicAccessor<double>.GetMemberOrDefault(string key, ref uint crc, double defaultValue)
 		{
 			if (expando != null)
 				return expando [key];
@@ -1457,7 +1595,53 @@ namespace playscript.utils {
 			expando [key] = value;
 		}
 
-		uint IDynamicAccessor<uint>.GetMember(string key, ref uint crc, uint defaultValue)
+		uint IDynamicAccessor<uint>.GetMember(string key, ref uint crc)
+		{
+			if (expando != null)
+				return expando [key];
+			uint len = *(uint*)(list + 4);
+			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+			len &= 0xFFFFFF;
+			if (len == 0)
+				return 0u;
+			if (crc == 0) {
+				if (System.Object.ReferenceEquals (key, _lastKeyString)) {
+					crc = _lastCrc;
+				} else {
+					_lastKeyString = key;
+					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+				}				
+			}
+			if (listType == LIST_TYPE.OBJECT && len > 0) {
+				DataElem* firstElem = (DataElem*)(list + 8);
+				DataElem* dataElem = firstElem + (crc % len);
+				if ((dataElem->id & 0x1FFFFFFF) != crc) {
+					DataElem* lastElem = firstElem + len;
+					DataElem* startElem = dataElem;
+					DataElem* curElem = dataElem;
+					while (true) {
+						curElem++;
+						if (curElem >= lastElem)
+							curElem = firstElem;
+						if (curElem == startElem)
+							return 0u;
+						uint curCrc = curElem->id & 0x1FFFFFFF;
+						if (curCrc == crc) {
+							dataElem = curElem;
+							break;
+						} else if (curCrc == 0) { // Fast out if key is not in obj
+							return 0u;
+						}
+					}
+				}
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				return GetValueUInt (dataType, doc.data + *(uint*)list, dataElem);
+			} else {
+				return 0u;
+			}
+		}
+
+		uint IDynamicAccessor<uint>.GetMemberOrDefault(string key, ref uint crc, uint defaultValue)
 		{
 			if (expando != null)
 				return expando [key];
@@ -1510,7 +1694,53 @@ namespace playscript.utils {
 			expando [key] = value;
 		}
 
-		bool IDynamicAccessor<bool>.GetMember(string key, ref uint crc, bool defaultValue)
+		bool IDynamicAccessor<bool>.GetMember(string key, ref uint crc)
+		{
+			if (expando != null)
+				return expando [key];
+			uint len = *(uint*)(list + 4);
+			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+			len &= 0xFFFFFF;
+			if (len == 0)
+				return false;
+			if (crc == 0) {
+				if (System.Object.ReferenceEquals (key, _lastKeyString)) {
+					crc = _lastCrc;
+				} else {
+					_lastKeyString = key;
+					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+				}				
+			}
+			if (listType == LIST_TYPE.OBJECT && len > 0) {
+				DataElem* firstElem = (DataElem*)(list + 8);
+				DataElem* dataElem = firstElem + (crc % len);
+				if ((dataElem->id & 0x1FFFFFFF) != crc) {
+					DataElem* lastElem = firstElem + len;
+					DataElem* startElem = dataElem;
+					DataElem* curElem = dataElem;
+					while (true) {
+						curElem++;
+						if (curElem >= lastElem)
+							curElem = firstElem;
+						if (curElem == startElem)
+							return false;
+						uint curCrc = curElem->id & 0x1FFFFFFF;
+						if (curCrc == crc) {
+							dataElem = curElem;
+							break;
+						} else if (curCrc == 0) { // Fast out if key is not in obj
+							return false;
+						}
+					}
+				}
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				return GetValueBool (dataType, doc.data + *(uint*)list, dataElem);
+			} else {
+				return false;
+			}
+		}
+
+		bool IDynamicAccessor<bool>.GetMemberOrDefault(string key, ref uint crc, bool defaultValue)
 		{
 			if (expando != null)
 				return expando [key];
@@ -1563,7 +1793,7 @@ namespace playscript.utils {
 			expando [key] = value;
 		}
 
-		public object GetMember(string key, ref uint crc, object defaultValue)
+		public object GetMemberOrDefault(string key, ref uint crc, object defaultValue)
 		{
 			if (expando != null)
 				return expando [key];
@@ -1609,6 +1839,52 @@ namespace playscript.utils {
 			}
 		}
 
+		public object GetMember(string key, ref uint crc)
+		{
+			if (expando != null)
+				return expando [key];
+			uint len = *(uint*)(list + 4);
+			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+			len &= 0xFFFFFF;
+			if (len == 0)
+				return PlayScript.Undefined._undefined;
+			if (crc == 0) {
+				if (System.Object.ReferenceEquals (key, _lastKeyString)) {
+					crc = _lastCrc;
+				} else {
+					_lastKeyString = key;
+					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+				}				
+			}
+			if (listType == LIST_TYPE.OBJECT && len > 0) {
+				DataElem* firstElem = (DataElem*)(list + 8);
+				DataElem* dataElem = firstElem + (crc % len);
+				if ((dataElem->id & 0x1FFFFFFF) != crc) {
+					DataElem* lastElem = firstElem + len;
+					DataElem* startElem = dataElem;
+					DataElem* curElem = dataElem;
+					while (true) {
+						curElem++;
+						if (curElem >= lastElem)
+							curElem = firstElem;
+						if (curElem == startElem)
+							return PlayScript.Undefined._undefined;
+						uint curCrc = curElem->id & 0x1FFFFFFF;
+						if (curCrc == crc) {
+							dataElem = curElem;
+							break;
+						} else if (curCrc == 0) { // Fast out if key is not in obj
+							return PlayScript.Undefined._undefined;
+						}
+					}
+				}
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				return GetValueObject (dataType, doc.data + *(uint*)list, dataElem);
+			} else {
+				return PlayScript.Undefined._undefined;
+			}
+		}
+
 		public void SetMember(string key, ref uint crc, object value)
 		{
 			if (expando == null)
@@ -1617,10 +1893,15 @@ namespace playscript.utils {
 		}
 
 		// Handle .NET types that aren't commonly used in AS but can come up in interop..
-		
-		float IDynamicAccessor<float>.GetMember(string key, ref uint crc, float defaultValue)
+
+		float IDynamicAccessor<float>.GetMember(string key, ref uint crc)
 		{
-			return (float)((IDynamicAccessor<double>)this).GetMember (key, ref crc, (double)defaultValue);
+			return (float)((IDynamicAccessor<double>)this).GetMember (key, ref crc);
+		}
+
+		float IDynamicAccessor<float>.GetMemberOrDefault(string key, ref uint crc, float defaultValue)
+		{
+			return (float)((IDynamicAccessor<double>)this).GetMemberOrDefault(key, ref crc, (double)defaultValue);
 		}
 		
 		void IDynamicAccessor<float>.SetMember(string key, ref uint crc, float value)
@@ -1634,9 +1915,9 @@ namespace playscript.utils {
 
 		#region IDynamicAccessorTyped implementation
 
-		public object GetMemberObject(string key, ref uint hint, object defaultValue)
+		public object GetMemberObject (string key, ref uint hint, object defaultValue)
 		{
-			return ((IDynamicAccessor<object>)this).GetMember (key, ref hint, defaultValue);
+			return ((IDynamicAccessor<object>)this).GetMemberOrDefault(key, ref hint, defaultValue);
 		}
 
 		public void SetMemberObject (string key, object value)
@@ -1646,9 +1927,22 @@ namespace playscript.utils {
 			expando [key] = value;
 		}
 
+		[return: AsUntyped]
+		public object GetMemberUntyped (string key, ref uint hint, [AsUntyped] object defaultValue)
+		{
+			return ((IDynamicAccessor<object>)this).GetMemberOrDefault(key, ref hint, defaultValue);
+		}
+
+		public void SetMemberUntyped (string key, [AsUntyped] object value)
+		{
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [key] = value;
+		}
+
 		public string GetMemberString (string key, ref uint hint, string defaultValue)
 		{
-			return ((IDynamicAccessor<string>)this).GetMember (key, ref hint, defaultValue);
+			return ((IDynamicAccessor<string>)this).GetMemberOrDefault(key, ref hint, defaultValue);
 		}
 
 		public void SetMemberString (string key, string value)
@@ -1660,7 +1954,7 @@ namespace playscript.utils {
 
 		public int GetMemberInt (string key, ref uint hint, int defaultValue)
 		{
-			return ((IDynamicAccessor<int>)this).GetMember (key, ref hint, defaultValue);
+			return ((IDynamicAccessor<int>)this).GetMemberOrDefault(key, ref hint, defaultValue);
 		}
 
 		public void SetMemberInt (string key, int value)
@@ -1672,7 +1966,7 @@ namespace playscript.utils {
 
 		public uint GetMemberUInt (string key, ref uint hint, uint defaultValue)
 		{
-			return ((IDynamicAccessor<uint>)this).GetMember (key, ref hint, defaultValue);
+			return ((IDynamicAccessor<uint>)this).GetMemberOrDefault(key, ref hint, defaultValue);
 		}
 
 		public void SetMemberUInt (string key, uint value)
@@ -1684,7 +1978,7 @@ namespace playscript.utils {
 
 		public double GetMemberNumber (string key, ref uint hint, double defaultValue)
 		{
-			return ((IDynamicAccessor<double>)this).GetMember (key, ref hint, defaultValue);
+			return ((IDynamicAccessor<double>)this).GetMemberOrDefault(key, ref hint, defaultValue);
 		}
 
 		public void SetMemberNumber (string key, double value)
@@ -1696,7 +1990,7 @@ namespace playscript.utils {
 
 		public bool GetMemberBool (string key, ref uint hint, bool defaultValue)
 		{
-			return ((IDynamicAccessor<bool>)this).GetMember (key, ref hint, defaultValue);
+			return ((IDynamicAccessor<bool>)this).GetMemberOrDefault(key, ref hint, defaultValue);
 		}
 
 		public void SetMemberBool (string key, bool value)
@@ -1735,7 +2029,7 @@ namespace playscript.utils {
 			value = null;
 			if (this.HasMember (key)) {
 				uint crc = 0;
-				value = this.GetMember (key, ref crc, null); 
+				value = this.GetMemberOrDefault(key, ref crc, null); 
 				return true;
 			}
 			return false;
@@ -1744,7 +2038,7 @@ namespace playscript.utils {
 		object IDictionary<string, object>.this [string index] {
 			get {
 				uint crc = 0;
-				return this.GetMember (index, ref crc, null);
+				return this.GetMemberOrDefault(index, ref crc, null);
 			}
 			set {
 				uint crc = 0;
@@ -1848,7 +2142,7 @@ namespace playscript.utils {
 				uint crc = 0;
 				BinJsonObject._lastKeyString = key = _pairs.keys [_index];
 				BinJsonObject._lastCrc = crc = _pairs.crcs [_index];
-				value = _jsonObj.GetMember(key, ref crc, null);
+				value = _jsonObj.GetMemberOrDefault(key, ref crc, null);
 				return true;
 			}
 
@@ -1928,7 +2222,7 @@ namespace playscript.utils {
 		object IDictionary.this [object key] {
 			get {
 				uint crc = 0;
-				return this.GetMember (key.ToString (), ref crc, null);
+				return this.GetMemberOrDefault(key.ToString (), ref crc, null);
 			}
 			set {
 				uint crc = 0;
@@ -1964,7 +2258,7 @@ namespace playscript.utils {
 		dynamic IDynamicClass.__GetDynamicValue (string name)
 		{
 			uint crc = 0;
-			return this.GetMember (name, ref crc, null);
+			return this.GetMemberObject(name, ref crc, PlayScript.Undefined._undefined);
 		}
 
 		bool IDynamicClass.__TryGetDynamicValue (string name, out object value)
@@ -1972,7 +2266,7 @@ namespace playscript.utils {
 			value = null;
 			if (this.HasMember (name)) {
 				uint crc = 0;
-				value = this.GetMember (name, ref crc, null);
+				value = this.GetMemberObject(name, ref crc, PlayScript.Undefined._undefined);
 				return true;
 			}
 			return false;

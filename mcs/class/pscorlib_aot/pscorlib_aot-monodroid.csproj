@@ -949,6 +949,9 @@
     <Compile Include="..\pscorlib\Amf\ReflectionSerializer.cs">
       <Link>Amf\ReflectionSerializer.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\PlayScript\BinJSON.cs">
+      <Link>PlayScript\BinJSON.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monodroid.csproj">

@@ -8,7 +8,8 @@ namespace PlayScript
 	// this interface prevents any unnecessary boxing of value types as objects
 	public interface IDynamicAccessor<T> 
 	{
-		T		GetMember(string name, ref uint hint, T defaultValue);
+		T		GetMember(string name, ref uint hint);
+		T		GetMemberOrDefault(string name, ref uint hint, T defaultValue);
 		void	SetMember(string name, ref uint hint, T value);
 		T		GetIndex(string key);
 		void	SetIndex(string key, T value);
@@ -23,14 +24,20 @@ namespace PlayScript
 	public interface IDynamicAccessorUntyped
 	{
 		// these methods get/set objects that may be undefined (PlayScript.Undefined._undefined)
-		object	GetMember(string name, ref uint hint, object defaultValue);
-		void	SetMember(string name, ref uint hint, object value);
+		[return: AsUntyped]
+		object	GetMember(string name, ref uint hint);
+		[return: AsUntyped]
+		object	GetMemberOrDefault(string name, ref uint hint, [AsUntyped] object defaultValue);
+		void	SetMember(string name, ref uint hint, [AsUntyped] object value);
+		[return: AsUntyped]
 		object	GetIndex(string key);
-		void	SetIndex(string key, object value);
+		void	SetIndex(string key, [AsUntyped] object value);
+		[return: AsUntyped]
 		object	GetIndex(int key);
-		void	SetIndex(int key, object value);
-		object	GetIndex(object key);
-		void	SetIndex(object key, object value);
+		void	SetIndex(int key, [AsUntyped] object value);
+		[return: AsUntyped]
+		object	GetIndex([AsUntyped] object key);
+		void	SetIndex([AsUntyped] object key, [AsUntyped] object value);
 
 		// these are for string keys (object)
 		bool	HasMember(string name);
@@ -54,6 +61,9 @@ namespace PlayScript
 	{
 		object GetMemberObject (string key, ref uint hint, object defaultValue);
 		void SetMemberObject (string key, object value);
+		[return: AsUntyped]
+		object GetMemberUntyped (string key, ref uint hint, [AsUntyped] object defaultValue);
+		void SetMemberUntyped (string key, [AsUntyped] object value);
 		string GetMemberString (string key, ref uint hint, string defaultValue);
 		void SetMemberString (string key, string value);
 		int GetMemberInt (string key, ref uint hint, int defaultValue);
