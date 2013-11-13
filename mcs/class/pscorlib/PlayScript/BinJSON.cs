@@ -2588,8 +2588,14 @@ namespace playscript.utils {
 			// Unique string dictionary
 			UniqueStringDictionary stringTable = new UniqueStringDictionary();
 
+
+#if PLATFORM_MONOTOUCH || PLATFORM_MONODROID
+			[DllImport ("__Internal", EntryPoint="strtod")]
+			public static extern double strtod (byte* start, byte* end);
+#else
 			[DllImport ("__Internal", EntryPoint="mono_strtod")]
 			public static extern double strtod (byte* start, byte* end);
+#endif
 
 			Parser(string jsonString) 
 			{
