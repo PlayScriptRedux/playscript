@@ -112,6 +112,7 @@ namespace PlayScript
 		R Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6, P7 a7, P8 a8);
 	}
 
+	[DebuggerStepThrough]
 	public abstract class InvokerBase
 	{
 		/// <summary>
@@ -173,6 +174,7 @@ namespace PlayScript
 		public abstract string GetDebugName(); 
 	}
 
+	[DebuggerStepThrough]
 	public class DynamicInvoker : InvokerBase
 	{
 		MethodInfo mMethod;
@@ -280,6 +282,7 @@ namespace PlayScript
 	/// 
 	/// TODO: It seems we could change this implementation to actually use delegate invoke instead of a dynamic invoke, if return type is void.
 	/// </summary>
+	[DebuggerStepThrough]
 	public class DynamicInvokerVariadic : InvokerBase
 	{
 		MethodInfo mMethod;
@@ -294,11 +297,15 @@ namespace PlayScript
 			PlayScript.DynamicRuntime.TypeLogger.LogType(mTarget);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override void SetArguments(object[] arguments)
 		{
 			mArguments = arguments;
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override object Invoke()
 		{
 			PlayScript.DynamicRuntime.TypeLogger.LogType(mTarget);
@@ -306,6 +313,8 @@ namespace PlayScript
 			return mMethod.Invoke(mTarget, mArguments);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override void InvokeOverrideA1(object a1)
 		{
 			PlayScript.DynamicRuntime.TypeLogger.LogType(mTarget);
@@ -316,6 +325,8 @@ namespace PlayScript
 			mMethod.Invoke(mTarget, mArguments);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override object SafeInvokeWith(object[] args)
 		{
 			PlayScript.DynamicRuntime.TypeLogger.LogType(mTarget);
@@ -327,6 +338,8 @@ namespace PlayScript
 			throw new InvalidOperationException("Could not convert parameters for method " + mMethod.ToString());
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override object UnsafeInvokeWith(object[] args)
 		{
 			PlayScript.DynamicRuntime.TypeLogger.LogType(mTarget);
@@ -334,6 +347,8 @@ namespace PlayScript
 			return mMethod.Invoke(mTarget, args);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override InvokerBase TryUpdate(object target)
 		{
 			if (mTarget.GetType() == target.GetType())
@@ -345,6 +360,8 @@ namespace PlayScript
 			return null;
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override InvokerBase TryUpdate(object target, MethodInfo methodInfo)
 		{
 			mTarget = target;
@@ -361,11 +378,14 @@ namespace PlayScript
 		private static object[] sTemp = new object[1];
 	}
 
+	[DebuggerStepThrough]
 	public abstract class InvokerBase<D> : InvokerBase
 		where D : class											// Can't have Delegate as generic constraints
 	{
 		protected D mDelegate;
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override InvokerBase TryUpdate(object target)
 		{
 			PlayScript.DynamicRuntime.TypeLogger.LogType(target);
@@ -384,6 +404,8 @@ namespace PlayScript
 			return null;
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override InvokerBase TryUpdate(object target, MethodInfo methodInfo)
 		{
 			PlayScript.DynamicRuntime.TypeLogger.LogType(target);
@@ -404,11 +426,13 @@ namespace PlayScript
 		}
 	}
 
+	[DebuggerStepThrough]
 	public abstract class InvokerParamBase<D> : InvokerBase<D>
 		where D : class
 	{
 	}
 
+	[DebuggerStepThrough]
 	public abstract class InvokerParamBase<D, P1> : InvokerBase<D>
 		where D : class
 	{
@@ -455,6 +479,7 @@ namespace PlayScript
 		}
 	}
 
+	[DebuggerStepThrough]
 	public abstract class InvokerParamBase<D, P1,P2> : InvokerBase<D>
 		where D : class
 	{
@@ -504,6 +529,7 @@ namespace PlayScript
 		}
 	}
 
+	[DebuggerStepThrough]
 	public abstract class InvokerParamBase<D, P1, P2, P3> : InvokerBase<D>
 		where D : class
 	{
@@ -556,6 +582,7 @@ namespace PlayScript
 		}
 	}
 
+	[DebuggerStepThrough]
 	public abstract class InvokerParamBase<D, P1, P2, P3, P4> : InvokerBase<D>
 		where D : class
 	{
@@ -611,6 +638,7 @@ namespace PlayScript
 		}
 	}
 
+	[DebuggerStepThrough]
 	public abstract class InvokerParamBase<D, P1, P2, P3, P4, P5> : InvokerBase<D>
 		where D : class
 	{
@@ -669,6 +697,7 @@ namespace PlayScript
 		}
 	}
 
+	[DebuggerStepThrough]
 	public abstract class InvokerParamBase<D, P1, P2, P3, P4, P5, P6> : InvokerBase<D>
 		where D : class
 	{
@@ -730,6 +759,7 @@ namespace PlayScript
 		}
 	}
 
+	[DebuggerStepThrough]
 	public abstract class InvokerParamBase<D, P1, P2, P3, P4, P5, P6, P7> : InvokerBase<D>
 		where D : class
 	{
@@ -794,6 +824,7 @@ namespace PlayScript
 		}
 	}
 
+	[DebuggerStepThrough]
 	public abstract class InvokerParamBase<D, P1, P2, P3, P4, P5, P6, P7, P8> : InvokerBase<D>
 		where D : class
 	{
@@ -863,6 +894,7 @@ namespace PlayScript
 
 	// List of actions
 
+	[DebuggerStepThrough]
 	public class InvokerA : InvokerParamBase<Action>, ICallerA
 	{
 		public InvokerA(Action action)
@@ -928,6 +960,7 @@ namespace PlayScript
 		}
 	}
 
+	[DebuggerStepThrough]
 	public class InvokerA<P1> : InvokerParamBase<Action<P1>, P1>, ICallerA, ICallerA<P1>
 	{
 		public InvokerA(Action<P1> action)
@@ -1001,6 +1034,7 @@ namespace PlayScript
 		}
 	}
 
+	[DebuggerStepThrough]
 	public class InvokerA<P1, P2> : InvokerParamBase<Action<P1, P2>, P1, P2>, ICallerA, ICallerA<P1>, ICallerA<P1, P2>
 	{
 		public InvokerA(Action<P1, P2> action)
@@ -1073,6 +1107,7 @@ namespace PlayScript
 		}
 	}
 
+	[DebuggerStepThrough]
 	public class InvokerA<P1, P2, P3> : InvokerParamBase<Action<P1, P2, P3>, P1, P2, P3>, ICallerA, ICallerA<P1>, ICallerA<P1, P2>, ICallerA<P1, P2, P3>
 	{
 		public InvokerA(Action<P1, P2, P3> action)
@@ -1152,6 +1187,7 @@ namespace PlayScript
 		}
 	}
 
+	[DebuggerStepThrough]
 	public class InvokerA<P1, P2, P3, P4> : InvokerParamBase<Action<P1, P2, P3, P4>, P1, P2, P3, P4>, ICallerA, ICallerA<P1>, ICallerA<P1, P2>, ICallerA<P1, P2, P3>, ICallerA<P1, P2, P3, P4>
 	{
 		public InvokerA(Action<P1, P2, P3, P4> action)
@@ -1238,6 +1274,7 @@ namespace PlayScript
 		}
 	}
 
+	[DebuggerStepThrough]
 	public class InvokerA<P1, P2, P3, P4, P5> : InvokerParamBase<Action<P1, P2, P3, P4, P5>, P1, P2, P3, P4, P5>, ICallerA, ICallerA<P1>, ICallerA<P1, P2>, ICallerA<P1, P2, P3>, ICallerA<P1, P2, P3, P4>, ICallerA<P1, P2, P3, P4, P5>
 	{
 		public InvokerA(Action<P1, P2, P3, P4, P5> action)
@@ -1331,6 +1368,7 @@ namespace PlayScript
 		}
 	}
 
+	[DebuggerStepThrough]
 	public class InvokerA<P1, P2, P3, P4, P5, P6> : InvokerParamBase<Action<P1, P2, P3, P4, P5, P6>, P1, P2, P3, P4, P5, P6>, ICallerA, ICallerA<P1>, ICallerA<P1, P2>, ICallerA<P1, P2, P3>,
 													ICallerA<P1, P2, P3, P4>, ICallerA<P1, P2, P3, P4, P5>, ICallerA<P1, P2, P3, P4, P5, P6>
 	{
@@ -1432,6 +1470,7 @@ namespace PlayScript
 		}
 	}
 
+	[DebuggerStepThrough]
 	public class InvokerA<P1, P2, P3, P4, P5, P6, P7> : InvokerParamBase<Action<P1, P2, P3, P4, P5, P6, P7>, P1, P2, P3, P4, P5, P6, P7>, ICallerA, ICallerA<P1>, ICallerA<P1, P2>, ICallerA<P1, P2, P3>,
 														ICallerA<P1, P2, P3, P4>, ICallerA<P1, P2, P3, P4, P5>, ICallerA<P1, P2, P3, P4, P5, P6>, ICallerA<P1, P2, P3, P4, P5, P6, P7>
 	{
@@ -1449,6 +1488,8 @@ namespace PlayScript
 			mDelegate = (Action<P1, P2, P3, P4, P5, P6, P7>)Delegate.CreateDelegate(typeof(Action<P1, P2, P3, P4, P5, P6, P7>), target, methodInfo);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override void SetArguments(object[] arguments)
 		{
 			if (arguments.Length != 7) {
@@ -1464,23 +1505,31 @@ namespace PlayScript
 			mArgument7 = (P7)arguments[7];
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override object Invoke()
 		{
 			mDelegate(mArgument1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6, mArgument7);
 			return null;
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override void InvokeOverrideA1(object a1)
 		{
 			mDelegate((P1)a1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6, mArgument7);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override object SafeInvokeWith(object[] args)
 		{
 			mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6]);
 			return null;
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override object UnsafeInvokeWith(object[] args)
 		{
 			mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6]);
@@ -1492,48 +1541,64 @@ namespace PlayScript
 			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA.Call()
 		{
 			CheckDefaultArguments(0, mDelegate.Method);
 			mDelegate(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4,mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA<P1>.Call(P1 a1)
 		{
 			CheckDefaultArguments(1, mDelegate.Method);
 			mDelegate(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA<P1, P2>.Call(P1 a1, P2 a2)
 		{
 			CheckDefaultArguments(2, mDelegate.Method);
 			mDelegate(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA<P1, P2, P3>.Call(P1 a1, P2 a2, P3 a3)
 		{
 			CheckDefaultArguments(3, mDelegate.Method);
 			mDelegate(a1, a2, a3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA<P1, P2, P3, P4>.Call(P1 a1, P2 a2, P3 a3, P4 a4)
 		{
 			CheckDefaultArguments(4, mDelegate.Method);
 			mDelegate(a1, a2, a3, a4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA<P1, P2, P3, P4, P5>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5)
 		{
 			CheckDefaultArguments(5, mDelegate.Method);
 			mDelegate(a1, a2, a3, a4, a5, mDefaultArgument6, mDefaultArgument7);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA<P1, P2, P3, P4, P5, P6>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6)
 		{
 			CheckDefaultArguments(6, mDelegate.Method);
 			mDelegate(a1, a2, a3, a4, a5, a6, mDefaultArgument7);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA<P1, P2, P3, P4, P5, P6, P7>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6, P7 a7)
 		{
 			mDelegate(a1, a2, a3, a4, a5, a6, a7);
@@ -1558,6 +1623,8 @@ namespace PlayScript
 			mDelegate = (Action<P1, P2, P3, P4, P5, P6, P7, P8>)Delegate.CreateDelegate(typeof(Action<P1, P2, P3, P4, P5, P6, P7, P8>), target, methodInfo);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override void SetArguments(object[] arguments)
 		{
 			if (arguments.Length != 8) {
@@ -1574,23 +1641,31 @@ namespace PlayScript
 			mArgument8 = (P8)arguments[7];
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override object Invoke()
 		{
 			mDelegate(mArgument1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6, mArgument7, mArgument8);
 			return null;
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override void InvokeOverrideA1(object a1)
 		{
 			mDelegate((P1)a1, mArgument2, mArgument3, mArgument4, mArgument5, mArgument6, mArgument7, mArgument8);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override object SafeInvokeWith(object[] args)
 		{
 			mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6], (P8)args[7]);
 			return null;
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override object UnsafeInvokeWith(object[] args)
 		{
 			mDelegate((P1)args[0], (P2)args[1], (P3)args[2], (P4)args[3], (P5)args[4], (P6)args[5], (P7)args[6], (P8)args[7]);
@@ -1602,54 +1677,72 @@ namespace PlayScript
 			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA.Call()
 		{
 			CheckDefaultArguments(0, mDelegate.Method);
 			mDelegate(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4,mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA<P1>.Call(P1 a1)
 		{
 			CheckDefaultArguments(1, mDelegate.Method);
 			mDelegate(a1, mDefaultArgument2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA<P1, P2>.Call(P1 a1, P2 a2)
 		{
 			CheckDefaultArguments(2, mDelegate.Method);
 			mDelegate(a1, a2, mDefaultArgument3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA<P1, P2, P3>.Call(P1 a1, P2 a2, P3 a3)
 		{
 			CheckDefaultArguments(3, mDelegate.Method);
 			mDelegate(a1, a2, a3, mDefaultArgument4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA<P1, P2, P3, P4>.Call(P1 a1, P2 a2, P3 a3, P4 a4)
 		{
 			CheckDefaultArguments(4, mDelegate.Method);
 			mDelegate(a1, a2, a3, a4, mDefaultArgument5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA<P1, P2, P3, P4, P5>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5)
 		{
 			CheckDefaultArguments(5, mDelegate.Method);
 			mDelegate(a1, a2, a3, a4, a5, mDefaultArgument6, mDefaultArgument7, mDefaultArgument8);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA<P1, P2, P3, P4, P5, P6>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6)
 		{
 			CheckDefaultArguments(6, mDelegate.Method);
 			mDelegate(a1, a2, a3, a4, a5, a6, mDefaultArgument7, mDefaultArgument8);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA<P1, P2, P3, P4, P5, P6, P7>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6, P7 a7)
 		{
 			CheckDefaultArguments(7, mDelegate.Method);
 			mDelegate(a1, a2, a3, a4, a5, a6, a7, mDefaultArgument8);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA<P1, P2, P3, P4, P5, P6, P7, P8>.Call(P1 a1, P2 a2, P3 a3, P4 a4, P5 a5, P6 a6, P7 a7, P8 a8)
 		{
 			mDelegate(a1, a2, a3, a4, a5, a6, a7, a8);
@@ -1676,6 +1769,8 @@ namespace PlayScript
 			mDelegate = (Func<R>)Delegate.CreateDelegate(typeof(Func<R>), target, methodInfo);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override void SetArguments(object[] arguments)
 		{
 			if ((arguments != null) && (arguments.Length != 0)) {
@@ -1683,16 +1778,22 @@ namespace PlayScript
 			}
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override object Invoke()
 		{
 			return mDelegate();
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override void InvokeOverrideA1(object a1)
 		{
 			throw new InvalidOperationException();
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override object SafeInvokeWith(object[] args)
 		{
 			if ((args != null) && (args.Length != 0))
@@ -1702,6 +1803,8 @@ namespace PlayScript
 			return mDelegate();
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override object UnsafeInvokeWith(object[] args)
 		{
 			if ((args != null) && (args.Length != 0))
@@ -1716,11 +1819,15 @@ namespace PlayScript
 			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		R ICallerF<R>.Call()
 		{
 			return mDelegate();
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA.Call()
 		{
 			mDelegate();
@@ -1748,6 +1855,8 @@ namespace PlayScript
 			mDelegate = (Func<P1, R>)del;
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override void SetArguments(object[] arguments)
 		{
 			if (arguments.Length != 1) {
@@ -1757,21 +1866,29 @@ namespace PlayScript
 			mArgument1 = (P1)arguments[0];
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override object Invoke()
 		{
 			return mDelegate(mArgument1);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override void InvokeOverrideA1(object a1)
 		{
 			mDelegate((P1)a1);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override object SafeInvokeWith(object[] args)
 		{
 			return mDelegate((P1)args[0]);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override object UnsafeInvokeWith(object[] args)
 		{
 			return mDelegate((P1)args[0]);
@@ -1782,23 +1899,31 @@ namespace PlayScript
 			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		R ICallerF<R>.Call()
 		{
 			CheckDefaultArguments(0, mDelegate.Method);
 			return mDelegate(mDefaultArgument1);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA.Call()
 		{
 			CheckDefaultArguments(0, mDelegate.Method);
 			mDelegate(mDefaultArgument1);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		R ICallerF<P1, R>.Call(P1 a1)
 		{
 			return mDelegate(a1);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA<P1>.Call(P1 a1)
 		{
 			mDelegate(a1);
@@ -1821,6 +1946,8 @@ namespace PlayScript
 			mDelegate = (Func<P1, P2, R>)Delegate.CreateDelegate(typeof(Func<P1, P2, R>), target, methodInfo);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override void SetArguments(object[] arguments)
 		{
 			if (arguments.Length != 2) {
@@ -1831,21 +1958,29 @@ namespace PlayScript
 			mArgument2 = (P2)arguments[1];
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override object Invoke()
 		{
 			return mDelegate(mArgument1, mArgument2);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override void InvokeOverrideA1(object a1)
 		{
 			mDelegate((P1)a1, mArgument2);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override object SafeInvokeWith(object[] args)
 		{
 			return mDelegate((P1)args[0], (P2)args[1]);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override object UnsafeInvokeWith(object[] args)
 		{
 			return mDelegate((P1)args[0], (P2)args[1]);
@@ -1856,35 +1991,47 @@ namespace PlayScript
 			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		R ICallerF<R>.Call()
 		{
 			CheckDefaultArguments(0, mDelegate.Method);
 			return mDelegate(mDefaultArgument1, mDefaultArgument2);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA.Call()
 		{
 			CheckDefaultArguments(0, mDelegate.Method);
 			mDelegate(mDefaultArgument1, mDefaultArgument2);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		R ICallerF<P1, R>.Call(P1 a1)
 		{
 			CheckDefaultArguments(1, mDelegate.Method);
 			return mDelegate(a1, mDefaultArgument2);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA<P1>.Call(P1 a1)
 		{
 			CheckDefaultArguments(1, mDelegate.Method);
 			mDelegate(a1, mDefaultArgument2);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		R ICallerF<P1, P2, R>.Call(P1 a1, P2 a2)
 		{
 			return mDelegate(a1, a2);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA<P1, P2>.Call(P1 a1, P2 a2)
 		{
 			mDelegate(a1, a2);
@@ -1908,6 +2055,8 @@ namespace PlayScript
 			mDelegate = (Func<P1, P2, P3, R>)Delegate.CreateDelegate(typeof(Func<P1, P2, P3, R>), target, methodInfo);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override void SetArguments(object[] arguments)
 		{
 			if (arguments.Length != 3) {
@@ -1919,21 +2068,29 @@ namespace PlayScript
 			mArgument3 = (P3)arguments[2];
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override object Invoke()
 		{
 			return mDelegate(mArgument1, mArgument2, mArgument3);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override void InvokeOverrideA1(object a1)
 		{
 			mDelegate((P1)a1, mArgument2, mArgument3);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override object SafeInvokeWith(object[] args)
 		{
 			return mDelegate((P1)args[0], (P2)args[1], (P3)args[2]);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public override object UnsafeInvokeWith(object[] args)
 		{
 			return mDelegate((P1)args[0], (P2)args[1], (P3)args[2]);
@@ -1944,47 +2101,63 @@ namespace PlayScript
 			return mDelegate.Method.DeclaringType.FullName + "." + mDelegate.Method.Name;
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		R ICallerF<R>.Call()
 		{
 			CheckDefaultArguments(0, mDelegate.Method);
 			return mDelegate(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA.Call()
 		{
 			CheckDefaultArguments(0, mDelegate.Method);
 			mDelegate(mDefaultArgument1, mDefaultArgument2, mDefaultArgument3);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		R ICallerF<P1, R>.Call(P1 a1)
 		{
 			CheckDefaultArguments(1, mDelegate.Method);
 			return mDelegate(a1, mDefaultArgument2, mDefaultArgument3);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA<P1>.Call(P1 a1)
 		{
 			CheckDefaultArguments(1, mDelegate.Method);
 			mDelegate(a1, mDefaultArgument2, mDefaultArgument3);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		R ICallerF<P1, P2, R>.Call(P1 a1, P2 a2)
 		{
 			CheckDefaultArguments(2, mDelegate.Method);
 			return mDelegate(a1, a2, mDefaultArgument3);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA<P1, P2>.Call(P1 a1, P2 a2)
 		{
 			CheckDefaultArguments(2, mDelegate.Method);
 			mDelegate(a1, a2, mDefaultArgument3);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		R ICallerF<P1, P2, P3, R>.Call(P1 a1, P2 a2, P3 a3)
 		{
 			return mDelegate(a1, a2, a3);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		void ICallerA<P1, P2, P3>.Call(P1 a1, P2 a2, P3 a3)
 		{
 			mDelegate(a1, a2, a3);
