@@ -69,6 +69,28 @@ namespace PlayScript.Expando {
 		public ExpandoObject(int capacity) : base() {
 		}
 
+		public int Count {
+            get {
+                #warning PlayScript.Expando.Count is not implemented
+                throw new NotImplementedException();
+            }
+		}
+
+        public void Add (string key, object value) {
+            #warning PlayScript.Expando.Add is not implemented
+            throw new NotImplementedException();
+        }
+
+        public bool Remove (string key) {
+            #warning PlayScript.Expando.Remove is not implemented
+            throw new NotImplementedException();
+        }
+
+        public bool ContainsKey (string key) {
+            #warning PlayScript.Expando.ContainsKey is not implemented
+            throw new NotImplementedException();
+        }
+
         #region Get/Set/Delete Helpers
 
         /// <summary>
