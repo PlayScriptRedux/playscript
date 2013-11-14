@@ -4,7 +4,9 @@ package
 	{
 		public static function Main():int
 		{
-			return testRun(doTests);
+			// return testRun(doTests);
+			testRun(doTests);
+			return 0;
 		}
 
 		public static function doTests():void
