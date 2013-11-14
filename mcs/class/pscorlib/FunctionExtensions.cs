@@ -15,17 +15,22 @@
 using System;
 using System.Reflection;
 using System.Collections;
+using System.Diagnostics;
 
 namespace _root {
 
 	public static class FunctionExtensions {
 
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public static dynamic apply(this Delegate d, object thisArg, Array argArray) {
 			object[] newargs = PlayScript.Dynamic.ConvertArgumentList(d.Method, argArray);
 			return d.DynamicInvoke(newargs);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public static dynamic call(this Delegate d, object thisArg, params object[] args) {
 			object[] newargs = PlayScript.Dynamic.ConvertArgumentList(d.Method, args);
 			return d.DynamicInvoke(newargs);
