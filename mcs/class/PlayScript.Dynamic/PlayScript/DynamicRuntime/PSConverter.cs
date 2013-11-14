@@ -147,7 +147,10 @@ namespace PlayScript.DynamicRuntime
 			if (o is double) {
 				return (float)(double)o;
 			}
-			if (PlayScript.Dynamic.IsNullOrUndefined (o)) {
+			if (PlayScript.Dynamic.IsUndefined (o)) {
+				return float.NaN;
+			}
+			if (o == null) {
 				return 0.0f;
 			}
 
@@ -180,7 +183,10 @@ namespace PlayScript.DynamicRuntime
 			if (o is float) {
 				return (double)(float)o;
 			} 
-			if (PlayScript.Dynamic.IsNullOrUndefined (o)) {
+			if (PlayScript.Dynamic.IsUndefined (o)) {
+				return double.NaN;
+			}
+			if (o == null) {
 				return 0.0;
 			}
 

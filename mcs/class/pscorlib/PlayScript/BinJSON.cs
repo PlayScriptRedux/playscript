@@ -324,7 +324,7 @@ namespace playscript.utils {
 		}
 
 		public int Count {
-			get { 
+			get {
 				if (expando != null)
 					return expando.Count;
 				return KeyPairs.length;
@@ -459,10 +459,15 @@ namespace playscript.utils {
 
 		IEnumerator IKeyEnumerable.GetKeyEnumerator ()
 		{
+#if DYNAMIC_SUPPORT
+			#warning BinJSON.GetKeyEnumerator is not implemented
+			throw new NotImplementedException();
+#else
 			if (expando != null)
 				return ((IKeyEnumerable)expando).GetKeyEnumerator ();
 			else
 				return new KeyEnumerator (this.KeyPairs);
+#endif
 		}
 
 		#endregion
@@ -2091,10 +2096,15 @@ namespace playscript.utils {
 
 		IDictionaryEnumerator IDictionary.GetEnumerator ()
 		{
+#if DYNAMIC_SUPPORT
+			#warning BinJSON.GetEnumerator is not implemented
+			throw new NotImplementedException();
+#else
 			if (expando != null)
 				return ((IDictionary)expando).GetEnumerator ();
 			else
 				return new DictionaryEnumerator (this, this.KeyPairs);
+#endif
 		}
 
 		void IDictionary.Remove (object key)

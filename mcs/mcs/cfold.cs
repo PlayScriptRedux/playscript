@@ -314,7 +314,11 @@ namespace Mono.CSharp {
 				//
 				// In PlayScript, null has the string value "null". In C#, it is the empty string.
 				//
+#if !DISABLE_AS3_NULL_STRINGS
 				var nullString = ec.FileType == SourceFileType.PlayScript ? "null" : "";
+#else
+				var nullString = "";
+#endif
 
 				//
 				// If both sides are strings, then concatenate

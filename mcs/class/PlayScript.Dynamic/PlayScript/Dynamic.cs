@@ -456,7 +456,7 @@ namespace PlayScript
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static object FormatKeyForAs(object key)
 		{
-#if !DISABLE_NULL_KEYS
+#if !DISABLE_AS3_NULL_STRINGS
 			if (key == null)
 				return "null";
 			if (Object.ReferenceEquals(key, PlayScript.Undefined._undefined))
@@ -471,7 +471,7 @@ namespace PlayScript
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static string FormatKeyForAs(string key)
 		{
-#if !DISABLE_NULL_KEYS
+#if !DISABLE_AS3_NULL_STRINGS
 			if (key == null)
 				return "null";
 #endif
@@ -483,12 +483,12 @@ namespace PlayScript
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static string ConvertKey(object key)
 		{
-			#if !DISABLE_NULL_KEYS
+#if !DISABLE_AS3_NULL_STRINGS
 			if (key == null)
 				return "null";
 			if (Object.ReferenceEquals(key, PlayScript.Undefined._undefined))
 				return "undefined";
-			#endif
+#endif
 			return key.ToString();
 		}
 
@@ -503,10 +503,10 @@ namespace PlayScript
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static string ConvertKey(string key)
 		{
-			#if !DISABLE_NULL_KEYS
+#if !DISABLE_AS3_NULL_STRINGS
 			if (key == null)
 				return "null";
-			#endif
+#endif
 			return key;
 		}
 

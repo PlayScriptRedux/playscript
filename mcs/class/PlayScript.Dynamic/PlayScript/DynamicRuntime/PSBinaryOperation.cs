@@ -77,8 +77,11 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
 
-			if (b == null)
-				b = "null";
+#if !DISABLE_AS3_NULL_STRINGS
+			b = b ?? "null";
+#else
+			b = b ?? "";
+#endif
 
 			return a + b.ToString();
 		}
@@ -87,8 +90,11 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.BinaryOperationBinderInvoked);
 
-			if (a == null)
-				a = "null";
+#if !DISABLE_AS3_NULL_STRINGS
+			a = a ?? "null";
+#else
+			a = a ?? "";
+#endif
 
 			return a.ToString() + b;
 		}

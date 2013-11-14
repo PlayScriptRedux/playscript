@@ -6888,7 +6888,13 @@ namespace Mono.CSharp
 					// perform cast to type expression here using argument 0
 					// note its important to resolve argument 0 or else the cast will fail
 					// this cast supports the Vector.<T>([1,2,3]) syntax with Arguments[0] being an AsArrayInitializer
-					return (new Cast (member_expr, Arguments[0].Expr.Resolve(ec), loc)).Resolve (ec);
+					var cast_expr = Arguments [0].Expr.Resolve (ec);
+#if !DISABLE_AS3_NULL_STRINGS
+					// In PlayScript, the string value of null is "null"
+					if (cast_expr.IsNull && member_expr.Type != null && member_expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
+						return new StringConstant (ec.BuiltinTypes, "null", loc);
+#endif
+					return (new Cast (member_expr, cast_expr, loc)).Resolve (ec);
 				} 
 			}
 

@@ -16,7 +16,7 @@ package
 			for each (var i:* in o)
 				trace(i);
 			o = false;
-			for each (var i:* in o)
+			for each (i in o)
 				trace(i);
 
 			var key:*;
@@ -60,7 +60,7 @@ package
 			if (d[key] != 4)
 				return 15;
 
-			var a:Array = []
+			var a:Array = [];
 			key = "undefined";
 			if (a[key])
 				return 16;
@@ -138,6 +138,14 @@ package
 			s = d3["missing"] as String;
 			if (s !== null)
 				return 35;
+
+			var o7:* = undefined;
+			var n:Number = o7;
+			if (n === null || !isNaN(n))
+				return 36;
+			n = Number(o7);
+			if (n === null || !isNaN(n))
+				return 37;
 
 			return 0;
 		}
