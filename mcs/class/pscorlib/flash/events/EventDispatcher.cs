@@ -102,8 +102,6 @@ namespace flash.events
             }
 		}
 
-		[DebuggerHidden]
-		[DebuggerStepThrough]
 		public virtual bool dispatchEvent (Event ev)
 		{
 			ev._target = _evTarget;
