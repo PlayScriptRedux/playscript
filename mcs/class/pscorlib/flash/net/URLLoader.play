@@ -401,11 +401,13 @@ package flash.net {
 			if (sLoaderHandlers != null) {
 				for each (var loadHandler:LoaderHandler in sLoaderHandlers) {
 					if (mRequest.url.EndsWith(loadHandler.sourceExt)) {
-						var foundPath:String = PlayScript.Player.TryResolveResourcePath(mRequest.url.Replace(loadHandler.sourceExt, loadHandler.targetExt));
-						if (foundPath != null) {
-							path = foundPath;
-							curLoadHandler = loadHandler;
-							trace("URLLoader: loading " + path + " instead of " + mRequest.url);
+						if (loadHandler.matcher == null || (Func.<String,Boolean>(loadHandler.matcher))(mRequest.url)) {
+							var foundPath:String = PlayScript.Player.TryResolveResourcePath(mRequest.url.Replace(loadHandler.sourceExt, loadHandler.targetExt));
+							if (foundPath != null) {
+								path = foundPath;
+								curLoadHandler = loadHandler;
+								trace("URLLoader: loading " + path + " instead of " + mRequest.url);
+							}
 						}
 					}
 				}
@@ -548,11 +550,11 @@ package flash.net {
 			}
 		}
 		
-		public static function addLoaderHandler(sourceExt:String, targetExt:String, handler:Function):void {
+		public static function addLoaderHandler(sourceExt:String, targetExt:String, handler:Function, matcher:Function = null):void {
 			if (sLoaderHandlers == null) {
 				sLoaderHandlers = new System.Collections.Generic.List.<LoaderHandler>();
 			}
-			sLoaderHandlers.Add(new LoaderHandler(sourceExt, targetExt, handler));
+			sLoaderHandlers.Add(new LoaderHandler(sourceExt, targetExt, handler, matcher));
 		}
 
 		// request for this loader
@@ -565,13 +567,15 @@ package flash.net {
 			public var sourceExt:String;
 			public var targetExt:String;
 			public var handler:Function;
+			public var matcher:Function;
 
-				public function LoaderHandler(sourceExt:String, targetExt:String, handler:Function)
-				{
-					this.sourceExt = sourceExt;
-					this.targetExt = targetExt;
-					this.handler = handler;
-				}
+			public function LoaderHandler(sourceExt:String, targetExt:String, handler:Function, matcher:Function)
+			{
+				this.sourceExt = sourceExt;
+				this.targetExt = targetExt;
+				this.handler = handler;
+				this.matcher = matcher;
+			}
 		}
 
 		// url loader queue (to be processed each frame)

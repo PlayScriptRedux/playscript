@@ -23,6 +23,7 @@ using System.Diagnostics;
 
 namespace PlayScript.DynamicRuntime
 {
+	[DebuggerStepThrough]
 	public class PSInvoke
 	{
 		// As we are single threaded, we can actually share the same args array for all callers with the same number of parameters.
@@ -35,6 +36,8 @@ namespace PlayScript.DynamicRuntime
 		{
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public void InvokeAction0 (object d)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -57,7 +60,9 @@ namespace PlayScript.DynamicRuntime
 			Debug.Assert(canConvert, "Could not convert parameters");
 			del.DynamicInvoke (mConvertedArgs);
 		}
-		
+
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public void InvokeAction1<A1> (object d, A1 a1)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -81,7 +86,9 @@ namespace PlayScript.DynamicRuntime
 			Debug.Assert(canConvert, "Could not convert parameters");
 			del.DynamicInvoke (mConvertedArgs);
 		}
-		
+
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public void InvokeAction2<A1, A2> (object d, A1 a1, A2 a2)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -104,7 +111,9 @@ namespace PlayScript.DynamicRuntime
 			Debug.Assert(canConvert, "Could not convert parameters");
 			del.DynamicInvoke (mConvertedArgs);
 		}
-		
+
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public void InvokeAction3<A1, A2, A3> (object d, A1 a1, A2 a2, A3 a3)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -130,7 +139,9 @@ namespace PlayScript.DynamicRuntime
 			Debug.Assert(canConvert, "Could not convert parameters");
 			del.DynamicInvoke (mConvertedArgs);
 		}
-		
+
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public void InvokeAction4<A1, A2, A3, A4> (object d, A1 a1, A2 a2, A3 a3, A4 a4)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -157,7 +168,9 @@ namespace PlayScript.DynamicRuntime
 			Debug.Assert(canConvert, "Could not convert parameters");
 			del.DynamicInvoke (mConvertedArgs);
 		}
-		
+
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public void InvokeAction5<A1, A2, A3, A4, A5> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -185,7 +198,9 @@ namespace PlayScript.DynamicRuntime
 			Debug.Assert(canConvert, "Could not convert parameters");
 			del.DynamicInvoke (mConvertedArgs);
 		}
-		
+
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public void InvokeAction6<A1, A2, A3, A4, A5, A6> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -214,7 +229,9 @@ namespace PlayScript.DynamicRuntime
 			Debug.Assert(canConvert, "Could not convert parameters");
 			del.DynamicInvoke (mConvertedArgs);
 		}
-		
+
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public void InvokeAction7<A1, A2, A3, A4, A5, A6, A7> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -244,7 +261,9 @@ namespace PlayScript.DynamicRuntime
 			Debug.Assert(canConvert, "Could not convert parameters");
 			del.DynamicInvoke (mConvertedArgs);
 		}
-		
+
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public void InvokeAction8<A1, A2, A3, A4, A5, A6, A7, A8> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -275,7 +294,9 @@ namespace PlayScript.DynamicRuntime
 			Debug.Assert(canConvert, "Could not convert parameters");
 			del.DynamicInvoke (mConvertedArgs);
 		}
-		
+
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public void InvokeAction9<A1, A2, A3, A4, A5, A6, A7, A8, A9> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -308,6 +329,8 @@ namespace PlayScript.DynamicRuntime
 			del.DynamicInvoke (mConvertedArgs);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public TR InvokeFunc0<TR> (object d)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -330,6 +353,8 @@ namespace PlayScript.DynamicRuntime
 			return (TR)del.DynamicInvoke (mConvertedArgs);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public TR InvokeFunc1<A1, TR> (object d, A1 a1)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -353,6 +378,8 @@ namespace PlayScript.DynamicRuntime
 			return (TR)del.DynamicInvoke (mConvertedArgs);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public TR InvokeFunc2<A1, A2, TR> (object d, A1 a1, A2 a2)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -377,6 +404,8 @@ namespace PlayScript.DynamicRuntime
 			return (TR)del.DynamicInvoke (mConvertedArgs);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public TR InvokeFunc3<A1, A2, A3, TR> (object d, A1 a1, A2 a2, A3 a3)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -402,6 +431,8 @@ namespace PlayScript.DynamicRuntime
 			return (TR)del.DynamicInvoke (mConvertedArgs);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public TR InvokeFunc4<A1, A2, A3, A4, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -428,6 +459,8 @@ namespace PlayScript.DynamicRuntime
 			return (TR)del.DynamicInvoke (mConvertedArgs);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public TR InvokeFunc5<A1, A2, A3, A4, A5, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -455,6 +488,8 @@ namespace PlayScript.DynamicRuntime
 			return (TR)del.DynamicInvoke (mConvertedArgs);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public TR InvokeFunc6<A1, A2, A3, A4, A5, A6, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -483,6 +518,8 @@ namespace PlayScript.DynamicRuntime
 			return (TR)del.DynamicInvoke (mConvertedArgs);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public TR InvokeFunc7<A1, A2, A3, A4, A5, A6, A7, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -512,6 +549,8 @@ namespace PlayScript.DynamicRuntime
 			return (TR)del.DynamicInvoke (mConvertedArgs);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public TR InvokeFunc8<A1, A2, A3, A4, A5, A6, A7, A8, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);
@@ -542,6 +581,8 @@ namespace PlayScript.DynamicRuntime
 			return (TR)del.DynamicInvoke (mConvertedArgs);
 		}
 
+		[DebuggerHidden]
+		[DebuggerStepThrough]
 		public TR InvokeFunc9<A1, A2, A3, A4, A5, A6, A7, A8, A9, TR> (object d, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9)
 		{
 			Stats.Increment(StatsCounter.InvokeBinderInvoked);

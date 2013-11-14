@@ -812,7 +812,9 @@ namespace playscript.utils {
 
 		void IDynamicAccessor<string>.SetIndex(int index, string value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [index] = value;
 		}
 
 		string IDynamicAccessor<string>.GetIndex(object index)
@@ -832,7 +834,9 @@ namespace playscript.utils {
 
 		void IDynamicAccessor<string>.SetIndex(object index, string value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [index] = value;
 		}
 
 		string IDynamicAccessor<string>.GetIndex(string index)
@@ -852,7 +856,9 @@ namespace playscript.utils {
 
 		void IDynamicAccessor<string>.SetIndex(string index, string value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [index] = value;
 		}
 
 		int IDynamicAccessor<int>.GetIndex(int index)
@@ -875,7 +881,9 @@ namespace playscript.utils {
 
 		void IDynamicAccessor<int>.SetIndex(int index, int value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [index] = value;
 		}
 
 		int IDynamicAccessor<int>.GetIndex(object index)
@@ -895,7 +903,9 @@ namespace playscript.utils {
 
 		void IDynamicAccessor<int>.SetIndex(object index, int value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [index] = value;
 		}
 
 		int IDynamicAccessor<int>.GetIndex(string index)
@@ -915,7 +925,9 @@ namespace playscript.utils {
 
 		void IDynamicAccessor<int>.SetIndex(string index, int value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [index] = value;
 		}
 
 		double IDynamicAccessor<double>.GetIndex(int index)
@@ -938,7 +950,9 @@ namespace playscript.utils {
 
 		void IDynamicAccessor<double>.SetIndex(int index, double value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [index] = value;
 		}
 
 		double IDynamicAccessor<double>.GetIndex(object index)
@@ -958,7 +972,9 @@ namespace playscript.utils {
 
 		void IDynamicAccessor<double>.SetIndex(object index, double value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [index] = value;
 		}
 
 		double IDynamicAccessor<double>.GetIndex(string index)
@@ -978,7 +994,9 @@ namespace playscript.utils {
 
 		void IDynamicAccessor<double>.SetIndex(string index, double value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [index] = value;
 		}
 
 		uint IDynamicAccessor<uint>.GetIndex(int index)
@@ -1001,7 +1019,9 @@ namespace playscript.utils {
 
 		void IDynamicAccessor<uint>.SetIndex(int index, uint value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [index] = value;
 		}
 
 		uint IDynamicAccessor<uint>.GetIndex(object index)
@@ -1021,7 +1041,9 @@ namespace playscript.utils {
 
 		void IDynamicAccessor<uint>.SetIndex(object index, uint value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [index] = value;
 		}
 
 		uint IDynamicAccessor<uint>.GetIndex(string index)
@@ -1041,7 +1063,9 @@ namespace playscript.utils {
 
 		void IDynamicAccessor<uint>.SetIndex(string index, uint value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [index] = value;
 		}
 
 		bool IDynamicAccessor<bool>.GetIndex(int index)
@@ -1064,7 +1088,9 @@ namespace playscript.utils {
 
 		void IDynamicAccessor<bool>.SetIndex(int index, bool value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [index] = value;
 		}
 
 		bool IDynamicAccessor<bool>.GetIndex(object index)
@@ -1084,7 +1110,9 @@ namespace playscript.utils {
 
 		void IDynamicAccessor<bool>.SetIndex(object index, bool value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [index] = value;
 		}
 
 		bool IDynamicAccessor<bool>.GetIndex(string index)
@@ -1104,7 +1132,9 @@ namespace playscript.utils {
 
 		void IDynamicAccessor<bool>.SetIndex(string index, bool value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [index] = value;
 		}
 
 		public object GetIndex(int index)
@@ -1127,7 +1157,9 @@ namespace playscript.utils {
 
 		public void SetIndex(int index, object value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [index] = value;
 		}
 
 		public object GetIndex(object index)
@@ -1147,7 +1179,9 @@ namespace playscript.utils {
 
 		public void SetIndex(object index, object value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [index] = value;
 		}
 
 		public object GetIndex(string index)
@@ -1167,7 +1201,9 @@ namespace playscript.utils {
 
 		public void SetIndex(string index, object value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [index] = value;
 		}
 
 		// Handle .NET types that aren't commonly used in AS but can come up in interop..
@@ -1179,7 +1215,9 @@ namespace playscript.utils {
 
 		void IDynamicAccessor<float>.SetIndex(int index, float value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [index] = value;
 		}
 
 		float IDynamicAccessor<float>.GetIndex(object index)
@@ -1199,7 +1237,9 @@ namespace playscript.utils {
 
 		void IDynamicAccessor<float>.SetIndex(object index, float value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [index] = value;
 		}
 
 		float IDynamicAccessor<float>.GetIndex(string index)
@@ -1219,7 +1259,9 @@ namespace playscript.utils {
 
 		void IDynamicAccessor<float>.SetIndex(string index, float value)
 		{
-			throw new NotImplementedException ();
+			if (expando == null)
+				CloneToInnerExpando ();
+			expando [index] = value;
 		}
 
 		#endregion
@@ -2328,6 +2370,10 @@ namespace playscript.utils {
 		internal static string _dumpBinaryPath = "";
 		internal static bool _registeredHandlers = false;
 
+		internal static HashSet<string> _mappedUrls = new HashSet<string> ();
+		internal static List<string> _mappedPrefixUrls = new List<string> ();
+		internal static List<string> _mappedSuffixUrls = new List<string> ();
+
 		private static System.Text.StringBuilder _log = new System.Text.StringBuilder();
 
 		public static void trace(string msg)
@@ -2345,21 +2391,14 @@ namespace playscript.utils {
 		{
 			object ret;
 
-			if (_useJson || json.StartsWith ("binjson$$")) {
+			if (_useJson || json.StartsWith ("$binjson$")) {
 
 				// Do just ordinary JSON parsing..
 				ret = _root.JSON.parse (json);
 			
 			} else {
 
-//				#if DEBUG
-				System.Diagnostics.Stopwatch sw = new Stopwatch ();
-				Process proc = Process.GetCurrentProcess ();
-				long memStart = proc.WorkingSet64;
-				sw.Reset ();
-				sw.Start ();
-//				#endif
-
+				Profiler.Begin ("binjson-parse");
 
 				_useFloat32 = _numberSize == NumberSize.Float32;
 				if (json == null) {
@@ -2367,12 +2406,7 @@ namespace playscript.utils {
 				}
 				ret = Parser.Parse (json);
 
-//				#if DEBUG
-				sw.Stop ();
-				trace ("** " + (_useJson ? "JSON" : "BINJSON") + ": Parse '" + (url != null ? url : "<unknown>") + "': " + 
-					sw.ElapsedMilliseconds + "ms memUsed: " + (proc.WorkingSet64 - memStart) + 
-					" totalMem: " + proc.WorkingSet64);
-//				#endif
+				Profiler.End ("binjson-parse");
 
 				// Dump binary
 				if (_dumpBinary && !_registeredHandlers && url != null) {
@@ -2398,32 +2432,86 @@ namespace playscript.utils {
 			return doc.GetRootObject ();
 		}
 
-
-
 		/// <summary>
 		/// Registers the load handlers for the .binj and .binj.z file extensions when .json files are encountered.
 		/// </summary>
-		public static void registerLoadHandlers ()
+		public static void registerLoadHandlers (bool loadBinary)
 		{
 			if (_registeredHandlers == false) {
-				flash.net.URLLoader.addLoaderHandler (".json", ".binj.z", (Func<string, flash.utils.ByteArray,flash.utils.ByteArray>)BinJsonLoaderHandler);
-				flash.net.URLLoader.addLoaderHandler (".json", ".binj", (Func<string, flash.utils.ByteArray,flash.utils.ByteArray>)BinJsonLoaderHandler);
+				flash.net.URLLoader.addLoaderHandler (".json", ".json", (Func<string, flash.utils.ByteArray,flash.utils.ByteArray>)BinJsonLoaderHandler, (Func<string, bool>)BinJsonLoaderUrlMatcher);
+				if (loadBinary) {
+					flash.net.URLLoader.addLoaderHandler (".json", ".binj", (Func<string, flash.utils.ByteArray,flash.utils.ByteArray>)BinJsonLoaderHandler);
+					flash.net.URLLoader.addLoaderHandler (".json", ".binj.z", (Func<string, flash.utils.ByteArray,flash.utils.ByteArray>)BinJsonLoaderHandler);
+				}
 				_registeredHandlers = true;
 			}
 		}
 
+		/// <summary>
+		/// Adds a url with an optional wildcard '*' suffix or prefix that will be loaded with BinJSON.parse() instead of JSON.parse().
+		/// </summary>
+		/// <param name="urls">Comma delmited URLs with optional prefix/suffix '*' wildcard.</param>
+		public static void addMappedUrls(string urls)
+		{
+			string[] urlList = urls.Split (',');
+			foreach (var url in urlList) {
+				if (string.IsNullOrEmpty (url) || url == ",")
+					continue;
+				if (url.StartsWith ("*"))
+					_mappedSuffixUrls.Add (url.Substring (1));
+				else if (url.EndsWith ("*"))
+					_mappedPrefixUrls.Add (url.Substring (0, url.Length - 1));
+				else
+					_mappedUrls.Add (url);
+			}
+		}
+
+		// Returns "true" if a url has been mapped to use BinJSON
+		private static bool BinJsonLoaderUrlMatcher(string url)
+		{
+			var assetPrefixes = new string[] { "assets/", "assets_ios/", "assets_android/" };
+			foreach (var assetPrefix in assetPrefixes) {
+				if (url.StartsWith (assetPrefix)) {
+					url = url.Substring (assetPrefix.Length);
+					break;
+				}
+			}
+
+			if (_mappedUrls.Contains (url))
+				return true;
+			foreach (var suffix in _mappedSuffixUrls) {
+				if (url.EndsWith (suffix))
+					return true;
+			}
+			foreach (var prefix in _mappedPrefixUrls) {
+				if (url.StartsWith (prefix))
+					return true;
+			}
+
+			return false;
+		}
+
 		private static flash.utils.ByteArray BinJsonLoaderHandler(string path, flash.utils.ByteArray byteArray) 
 		{
-			string key = "binjson$$" + path;
+			string key = "$binjson$" + path;
 
 			// uncompress data
-			if (path.EndsWith(".z"))
-				byteArray.uncompress();
+			if (path.EndsWith (".z")) {
+				byteArray.uncompress ();
+			}
 
-			// create function to do parsing
-			Func<string,dynamic> func = delegate(string jsonKey) { 
-				return BinJSON.parseBinary(byteArray);
-			};
+			Func<string,dynamic> func = null;
+			if (path.EndsWith (".binj")) {
+				// create function to do parsing
+				func = delegate(string jsonKey) { 
+					return BinJSON.parseBinary (byteArray);
+				};
+			} else {
+				// create function to do parsing
+				func = delegate(string jsonKey) { 
+					return BinJSON.parse (byteArray.toString());
+				};
+			}
 
 			// store parse function in json translator
 			JSON.storeJsonParseFunc(key, func);
