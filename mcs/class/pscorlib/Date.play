@@ -24,11 +24,15 @@ package {
 		{
 			if (a is int) {
 				mDate = new System.DateTime(int(a));
+			} else if (a is Number)
+			{
+				setTime(a as Number);
 			} else if (a != null) {
 				throw new System.NotImplementedException(); 
+			} else
+			{
+				mDate = System.DateTime.Now;
 			}
-
-			mDate = System.DateTime.Now;
 		}
 
 		private static var mTickFactor:long = 10 * 1000;
@@ -39,9 +43,13 @@ package {
 		public function get fullYear():Number { throw new System.NotImplementedException();  }
 		public function get month():Number { throw new System.NotImplementedException();  }
 		public function get day():Number { throw new System.NotImplementedException();  }
-		public function get dayUTC(): Number { throw new System.NotImplementedException(); }
+		public function get dayUTC(): Number { 
+			return mDate.ToUniversalTime().DayOfWeek as Number;
+		}
 		public function get hours():Number { throw new System.NotImplementedException();  }
-		public function get hoursUTC():Number { throw new System.NotImplementedException();  }
+		public function get hoursUTC():Number { 
+			return mDate.ToUniversalTime().Hour as Number;
+		}
 		public function get minutes():Number { throw new System.NotImplementedException();  }
 		public function get seconds():Number { throw new System.NotImplementedException();  }
 
