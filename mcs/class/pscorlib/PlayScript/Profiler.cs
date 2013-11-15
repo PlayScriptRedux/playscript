@@ -248,7 +248,7 @@ namespace PlayScript
 				Console.WriteLine("Loading milestone {0} {1}", name, sGlobalTimer.Elapsed);
 
 				// end profiling session for loading
-				if ((LoadingEndMilestone!=null) && name.Contains(LoadingEndMilestone)) {
+				if ((LoadingEndMilestone!=null) && name.Contains(LoadingEndMilestone) && sReportName == "Loading") {
 					EndSession();
 				}
 			}
@@ -681,6 +681,7 @@ namespace PlayScript
 #endif
 
 			if (SessionData != null) {
+				tw.WriteLine("********* Session Settings ********");
 				// write extra data about session
 				foreach (var kvp in SessionData) {
 					tw.WriteLine("{0}:  {1}", kvp.Key, kvp.Value);
