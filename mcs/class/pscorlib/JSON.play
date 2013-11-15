@@ -35,7 +35,7 @@ package {
 					return obj;
 				} else {
 					throw new InvalidOperationException("The amf or BinJSON URL for " + text + 
-					                                    " has already been parsed.  Are you trying to parse it twice?");
+					                                    " wasn't found.  Are you trying to parse amf/binjson data twice?");
 				}
 			}
 
