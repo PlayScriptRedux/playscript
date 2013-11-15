@@ -72,7 +72,7 @@ package flash.display {
 			var span = Telemetry.Session.BeginSpan();
 
 			// TODO: this code also only does synchronous loading from local paths (need to support async and http)
-			var resource:Object = PlayScript.Player.LoadResource(mRequest.url);
+			var resource:Object = PlayScript.Player.LoadResource(mRequest.url, mRequest.contentType);
 			
 			// set as content
 			mContent = resource as flash.display.DisplayObject;
