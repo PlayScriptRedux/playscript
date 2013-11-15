@@ -819,7 +819,7 @@ namespace playscript.utils {
 		{
 			if (expando == null)
 				CloneToInnerExpando ();
-			expando [index] = value;
+			expando [PlayScript.Dynamic.ConvertKey(index)] = value;
 		}
 
 		string IDynamicAccessor<string>.GetIndex(object index)
@@ -831,7 +831,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<string>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<string>)this).GetMemberOrDefault(index.ToString(), ref crc, null);
+					return ((IDynamicAccessor<string>)this).GetMemberOrDefault(PlayScript.Dynamic.ConvertKey(index), ref crc, null);
 				}
 			}
 			return null;
@@ -841,7 +841,7 @@ namespace playscript.utils {
 		{
 			if (expando == null)
 				CloneToInnerExpando ();
-			expando [index] = value;
+			expando [PlayScript.Dynamic.ConvertKey(index)] = value;
 		}
 
 		string IDynamicAccessor<string>.GetIndex(string index)
@@ -853,7 +853,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<string>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<string>)this).GetMemberOrDefault(index.ToString(), ref crc, null);
+					return ((IDynamicAccessor<string>)this).GetMemberOrDefault(PlayScript.Dynamic.ConvertKey(index), ref crc, null);
 				}
 			}
 			return null;
@@ -888,7 +888,7 @@ namespace playscript.utils {
 		{
 			if (expando == null)
 				CloneToInnerExpando ();
-			expando [index] = value;
+			expando [PlayScript.Dynamic.ConvertKey(index)] = value;
 		}
 
 		int IDynamicAccessor<int>.GetIndex(object index)
@@ -900,7 +900,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<int>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<int>)this).GetMember(index.ToString(), ref crc);
+					return ((IDynamicAccessor<int>)this).GetMember(PlayScript.Dynamic.ConvertKey(index), ref crc);
 				}
 			}
 			return 0;
@@ -910,7 +910,7 @@ namespace playscript.utils {
 		{
 			if (expando == null)
 				CloneToInnerExpando ();
-			expando [index] = value;
+			expando [PlayScript.Dynamic.ConvertKey(index)] = value;
 		}
 
 		int IDynamicAccessor<int>.GetIndex(string index)
@@ -922,7 +922,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<int>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<int>)this).GetMember(index.ToString(), ref crc);
+					return ((IDynamicAccessor<int>)this).GetMember(PlayScript.Dynamic.ConvertKey(index), ref crc);
 				}
 			}
 			return 0;
@@ -957,7 +957,7 @@ namespace playscript.utils {
 		{
 			if (expando == null)
 				CloneToInnerExpando ();
-			expando [index] = value;
+			expando [PlayScript.Dynamic.ConvertKey(index)] = value;
 		}
 
 		double IDynamicAccessor<double>.GetIndex(object index)
@@ -969,7 +969,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<double>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<double>)this).GetMember(index.ToString(), ref crc);
+					return ((IDynamicAccessor<double>)this).GetMember(PlayScript.Dynamic.ConvertKey(index), ref crc);
 				}
 			}
 			return 0.0;
@@ -979,7 +979,7 @@ namespace playscript.utils {
 		{
 			if (expando == null)
 				CloneToInnerExpando ();
-			expando [index] = value;
+			expando [PlayScript.Dynamic.ConvertKey(index)] = value;
 		}
 
 		double IDynamicAccessor<double>.GetIndex(string index)
@@ -991,7 +991,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<double>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<double>)this).GetMember(index.ToString(), ref crc);
+					return ((IDynamicAccessor<double>)this).GetMember(PlayScript.Dynamic.ConvertKey(index), ref crc);
 				}
 			}
 			return 0.0;
@@ -1026,7 +1026,7 @@ namespace playscript.utils {
 		{
 			if (expando == null)
 				CloneToInnerExpando ();
-			expando [index] = value;
+			expando [PlayScript.Dynamic.ConvertKey(index)] = value;
 		}
 
 		uint IDynamicAccessor<uint>.GetIndex(object index)
@@ -1038,7 +1038,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<uint>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<uint>)this).GetMember(index.ToString(), ref crc);
+					return ((IDynamicAccessor<uint>)this).GetMember(PlayScript.Dynamic.ConvertKey(index), ref crc);
 				}
 			}
 			return 0u;
@@ -1048,7 +1048,7 @@ namespace playscript.utils {
 		{
 			if (expando == null)
 				CloneToInnerExpando ();
-			expando [index] = value;
+			expando [PlayScript.Dynamic.ConvertKey(index)] = value;
 		}
 
 		uint IDynamicAccessor<uint>.GetIndex(string index)
@@ -1060,7 +1060,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<uint>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<uint>)this).GetMember(index.ToString(), ref crc);
+					return ((IDynamicAccessor<uint>)this).GetMember(PlayScript.Dynamic.ConvertKey(index), ref crc);
 				}
 			}
 			return 0u;
@@ -1095,7 +1095,7 @@ namespace playscript.utils {
 		{
 			if (expando == null)
 				CloneToInnerExpando ();
-			expando [index] = value;
+			expando [PlayScript.Dynamic.ConvertKey(index)] = value;
 		}
 
 		bool IDynamicAccessor<bool>.GetIndex(object index)
@@ -1107,7 +1107,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<bool>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<bool>)this).GetMember(index.ToString(), ref crc);
+					return ((IDynamicAccessor<bool>)this).GetMember(PlayScript.Dynamic.ConvertKey(index), ref crc);
 				}
 			}
 			return false;
@@ -1117,7 +1117,7 @@ namespace playscript.utils {
 		{
 			if (expando == null)
 				CloneToInnerExpando ();
-			expando [index] = value;
+			expando [PlayScript.Dynamic.ConvertKey(index)] = value;
 		}
 
 		bool IDynamicAccessor<bool>.GetIndex(string index)
@@ -1129,7 +1129,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<bool>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<bool>)this).GetMember(index.ToString(), ref crc);
+					return ((IDynamicAccessor<bool>)this).GetMember(PlayScript.Dynamic.ConvertKey(index), ref crc);
 				}
 			}
 			return false;
@@ -1164,7 +1164,7 @@ namespace playscript.utils {
 		{
 			if (expando == null)
 				CloneToInnerExpando ();
-			expando [index] = value;
+			expando [PlayScript.Dynamic.ConvertKey(index)] = value;
 		}
 
 		public object GetIndex(object index)
@@ -1176,7 +1176,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<object>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<object>)this).GetMember(index.ToString(), ref crc);
+					return ((IDynamicAccessor<object>)this).GetMember(PlayScript.Dynamic.ConvertKey(index), ref crc);
 				}
 			}
 			return null;
@@ -1186,7 +1186,7 @@ namespace playscript.utils {
 		{
 			if (expando == null)
 				CloneToInnerExpando ();
-			expando [index] = value;
+			expando [PlayScript.Dynamic.ConvertKey(index)] = value;
 		}
 
 		public object GetIndex(string index)
@@ -1198,7 +1198,7 @@ namespace playscript.utils {
 					return ((IDynamicAccessor<object>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return ((IDynamicAccessor<object>)this).GetMember(index.ToString(), ref crc);
+					return ((IDynamicAccessor<object>)this).GetMember(PlayScript.Dynamic.ConvertKey(index), ref crc);
 				}
 			}
 			return null;
@@ -1222,7 +1222,7 @@ namespace playscript.utils {
 		{
 			if (expando == null)
 				CloneToInnerExpando ();
-			expando [index] = value;
+			expando [PlayScript.Dynamic.ConvertKey(index)] = value;
 		}
 
 		float IDynamicAccessor<float>.GetIndex(object index)
@@ -1234,7 +1234,7 @@ namespace playscript.utils {
 					return (float)((IDynamicAccessor<double>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return (float)((IDynamicAccessor<double>)this).GetMember(index.ToString(), ref crc);
+					return (float)((IDynamicAccessor<double>)this).GetMember(PlayScript.Dynamic.ConvertKey(index), ref crc);
 				}
 			}
 			return 0.0f;
@@ -1244,7 +1244,7 @@ namespace playscript.utils {
 		{
 			if (expando == null)
 				CloneToInnerExpando ();
-			expando [index] = value;
+			expando [PlayScript.Dynamic.ConvertKey(index)] = value;
 		}
 
 		float IDynamicAccessor<float>.GetIndex(string index)
@@ -1256,7 +1256,7 @@ namespace playscript.utils {
 					return (float)((IDynamicAccessor<double>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
 					uint crc = 0;
-					return (float)((IDynamicAccessor<double>)this).GetMember(index.ToString(), ref crc);
+					return (float)((IDynamicAccessor<double>)this).GetMember(PlayScript.Dynamic.ConvertKey(index), ref crc);
 				}
 			}
 			return 0.0f;
@@ -2378,11 +2378,6 @@ namespace playscript.utils {
 		internal static bool _useJson = false;
 		internal static bool _dumpBinary = false;
 		internal static string _dumpBinaryPath = "";
-		internal static bool _registeredHandlers = false;
-
-		internal static HashSet<string> _mappedUrls = new HashSet<string> ();
-		internal static List<string> _mappedPrefixUrls = new List<string> ();
-		internal static List<string> _mappedSuffixUrls = new List<string> ();
 
 		private static System.Text.StringBuilder _log = new System.Text.StringBuilder();
 
@@ -2419,7 +2414,7 @@ namespace playscript.utils {
 				Profiler.End ("binjson-parse");
 
 				// Dump binary
-				if (_dumpBinary && !_registeredHandlers && url != null) {
+				if (_dumpBinary && url != null) {
 					string saveUrl = url.Replace (".json", ".binj");
 					var data = ((BinJsonObject)ret).Document.ToArray ();
 					System.IO.File.WriteAllBytes (_dumpBinaryPath + saveUrl, data);
@@ -2440,93 +2435,6 @@ namespace playscript.utils {
 			byte* data = (byte*)gch.AddrOfPinnedObject().ToPointer();
 			BinJsonDocument doc = new BinJsonDocument (data);
 			return doc.GetRootObject ();
-		}
-
-		/// <summary>
-		/// Registers the load handlers for the .binj and .binj.z file extensions when .json files are encountered.
-		/// </summary>
-		public static void registerLoadHandlers (bool loadBinary)
-		{
-			if (_registeredHandlers == false) {
-				flash.net.URLLoader.addLoaderHandler (".json", ".json", (Func<string, flash.utils.ByteArray,flash.utils.ByteArray>)BinJsonLoaderHandler, (Func<string, bool>)BinJsonLoaderUrlMatcher);
-				if (loadBinary) {
-					flash.net.URLLoader.addLoaderHandler (".json", ".binj", (Func<string, flash.utils.ByteArray,flash.utils.ByteArray>)BinJsonLoaderHandler);
-					flash.net.URLLoader.addLoaderHandler (".json", ".binj.z", (Func<string, flash.utils.ByteArray,flash.utils.ByteArray>)BinJsonLoaderHandler);
-				}
-				_registeredHandlers = true;
-			}
-		}
-
-		/// <summary>
-		/// Adds a url with an optional wildcard '*' suffix or prefix that will be loaded with BinJSON.parse() instead of JSON.parse().
-		/// </summary>
-		/// <param name="urls">Comma delmited URLs with optional prefix/suffix '*' wildcard.</param>
-		public static void addMappedUrls(string urls)
-		{
-			string[] urlList = urls.Split (',');
-			foreach (var url in urlList) {
-				if (string.IsNullOrEmpty (url) || url == ",")
-					continue;
-				if (url.StartsWith ("*"))
-					_mappedSuffixUrls.Add (url.Substring (1));
-				else if (url.EndsWith ("*"))
-					_mappedPrefixUrls.Add (url.Substring (0, url.Length - 1));
-				else
-					_mappedUrls.Add (url);
-			}
-		}
-
-		// Returns "true" if a url has been mapped to use BinJSON
-		private static bool BinJsonLoaderUrlMatcher(string url)
-		{
-			var assetPrefixes = new string[] { "assets/", "assets_ios/", "assets_android/" };
-			foreach (var assetPrefix in assetPrefixes) {
-				if (url.StartsWith (assetPrefix)) {
-					url = url.Substring (assetPrefix.Length);
-					break;
-				}
-			}
-
-			if (_mappedUrls.Contains (url))
-				return true;
-			foreach (var suffix in _mappedSuffixUrls) {
-				if (url.EndsWith (suffix))
-					return true;
-			}
-			foreach (var prefix in _mappedPrefixUrls) {
-				if (url.StartsWith (prefix))
-					return true;
-			}
-
-			return false;
-		}
-
-		private static flash.utils.ByteArray BinJsonLoaderHandler(string path, flash.utils.ByteArray byteArray) 
-		{
-			string key = "$binjson$" + path;
-
-			// uncompress data
-			if (path.EndsWith (".z")) {
-				byteArray.uncompress ();
-			}
-
-			Func<string,dynamic> func = null;
-			if (path.EndsWith (".binj")) {
-				// create function to do parsing
-				func = delegate(string jsonKey) { 
-					return BinJSON.parseBinary (byteArray);
-				};
-			} else {
-				// create function to do parsing
-				func = delegate(string jsonKey) { 
-					return BinJSON.parse (byteArray.toString());
-				};
-			}
-
-			// store parse function in json translator
-			JSON.storeJsonParseFunc(key, func);
-
-			return flash.utils.ByteArray.fromArray(System.Text.Encoding.UTF8.GetBytes(key));
 		}
 
 		/// <summary>
