@@ -54,8 +54,17 @@ namespace playscript.utils {
 			Table = createTable;
 		}
 
+		#if DEBUG
+		private static int numCrcs = 0;
+		#endif
+
 		public static uint Calculate(string buffer)
 		{
+			#if DEBUG
+				numCrcs++;
+				if (numCrcs % 1000 == 0) 
+					_root.trace_fn.trace("Number generated CRC's is: " + numCrcs);
+			#endif
 			if (buffer == null)
 				return 0;
 			if (Table == null)
@@ -81,6 +90,14 @@ namespace playscript.utils {
 		public int intValue;
 		[FieldOffset(4)]
 		public float floatValue;
+
+		public DATA_TYPE ElemType {
+			get { return (DATA_TYPE)(id >> 29); }
+		}
+
+		public uint Crc {
+			get { return id & 0x1FFFFFFF; }
+		}
 	}
 
 	// String table element
@@ -308,7 +325,7 @@ namespace playscript.utils {
 	{
 		protected BinJsonDocument doc;
 		protected byte* list;
-		protected WeakReference<KeyCrcPairs> keyPairs;
+		protected KeyCrcPairs keyPairs;
 		protected PlayScript.Expando.ExpandoObject expando;
 
 		internal static string _lastKeyString;
@@ -319,15 +336,37 @@ namespace playscript.utils {
 			this.list = list;
 		}
 
-		public int ListCount {
+		internal int ListCount {
 			get { return (int)(*(uint*)(list + 4) & 0xFFFFFF); }
+		}
+
+		internal DataElem* List {
+			get { return (DataElem*)(list + 8); }
+		}
+
+		internal byte* Data {
+			get { return doc.data + *(uint*)list; }
 		}
 
 		public int Count {
 			get {
 				if (expando != null)
 					return expando.Count;
-				return KeyPairs.length;
+
+				if (keyPairs != null)
+					return keyPairs.length;
+
+				// Count up non empty slots (this 
+				int listCount = this.ListCount;
+				int len = 0;
+				DataElem* dataElem = this.List;
+				for (var i = 0; i < listCount; i++) {
+					uint id = dataElem->id;
+					if (id != 0)
+						len++;
+					dataElem++;
+				}
+				return len;
 			}
 		}
 
@@ -337,28 +376,19 @@ namespace playscript.utils {
 
 		internal KeyCrcPairs KeyPairs {
 			get {
-				KeyCrcPairs pairs = null;
-				if (keyPairs != null)
-					keyPairs.TryGetTarget (out pairs);
+				KeyCrcPairs pairs = keyPairs;
 				if (pairs == null) {
 					int i;
+					int count = this.Count;
 					int listCount = this.ListCount;
-					int len = 0;
-					DataElem* dataElem = (DataElem*)(list + 8);
-					for (i = 0; i < listCount; i++) {
-						uint id = dataElem->id;
-						if (id != 0)
-							len++;
-						dataElem++;
-					}
 					pairs = new KeyCrcPairs ();
-					pairs.length = len;
-					string[] keyArray = new string[len];
+					pairs.length = count;
+					string[] keyArray = new string[count];
 					pairs.keys = keyArray;
-					uint[] crcArray = new uint[len];
+					uint[] crcArray = new uint[count];
 					pairs.crcs = crcArray;
 					Dictionary<uint,string> crcStrTable = doc.KeyTable;
-					dataElem = (DataElem*)(list + 8);
+					DataElem* dataElem = this.List;
 					int pos = 0;
 					for (i = 0; i < listCount; i++) {
 						uint crc = dataElem->id & 0x1FFFFFFF;
@@ -371,9 +401,9 @@ namespace playscript.utils {
 						dataElem++;
 					}
 					if (keyPairs == null)
-						keyPairs = new WeakReference<KeyCrcPairs> (pairs);
+						keyPairs = pairs;
 					else 
-						keyPairs.SetTarget (pairs);
+						keyPairs = pairs;
 				}
 				return pairs;
 			}
@@ -399,6 +429,53 @@ namespace playscript.utils {
 			return values;
 		}
 
+		public object Clone() {
+			if (expando == null) {
+				return new BinJsonObject (doc, list);
+			} else {
+				return RecursivelyCloneExpando (expando);
+			}
+		}
+
+		private PlayScript.Expando.ExpandoObject RecursivelyCloneExpando (PlayScript.Expando.ExpandoObject expando) {
+			var newExpando = new PlayScript.Expando.ExpandoObject ();
+			IDictionary<string, object> expandoDict = (IDictionary<string,object>)expando;
+			foreach (var pair in expandoDict) {
+				var key = pair.Key;
+				var value = pair.Value;
+				if (value is _root.Array) {
+					newExpando [key] = RecursivelyCloneArray ((_root.Array)value);
+				} else if (value is PlayScript.Expando.ExpandoObject) {
+					newExpando [key] = RecursivelyCloneExpando ((PlayScript.Expando.ExpandoObject)value);
+				} else if (value is BinJsonObject) {
+					var binJsonObj = (BinJsonObject)value;
+					newExpando [key] = new BinJsonObject (binJsonObj.doc, binJsonObj.list);
+				} else {
+					newExpando [key] = value;
+				}
+			}
+			return newExpando;
+		}
+
+		private _root.Array RecursivelyCloneArray (_root.Array array) {
+			var newArray = array.clone ();
+			int len = (int)newArray.length;
+			for (var i = 0; i < len; i++) {
+				var value = newArray [i];
+				if (value is _root.Array) {
+					newArray [i] = RecursivelyCloneArray ((_root.Array)value);
+				} else if (value is PlayScript.Expando.ExpandoObject) {
+					newArray [i] = RecursivelyCloneExpando ((PlayScript.Expando.ExpandoObject)value);
+				} else if (value is BinJsonObject) {
+					var binJsonObj = (BinJsonObject)value;
+					newArray [i] = new BinJsonObject (binJsonObj.doc, binJsonObj.list);
+				} else {
+					newArray [i] = value;
+				}
+			}
+			return newArray;
+		}
+
 		public PlayScript.Expando.ExpandoObject CloneToExpando() {
 			var newExpando = new PlayScript.Expando.ExpandoObject ();
 			KeyCrcPairs keyPairs = this.KeyPairs;
@@ -418,39 +495,49 @@ namespace playscript.utils {
 
 		#region IKeyEnumerable implementation
 
-		private class KeyEnumerator : IEnumerator {
+		private unsafe class KeyEnumerator : IEnumerator {
 
-			private KeyCrcPairs _pairs;
-			private int _index;
+			private BinJsonObject _obj;
+			private Dictionary<uint,string> _keys;
+			private DataElem* _curElem;
+			private DataElem* _endElem;
+			private string _curKey;
 
-			public KeyEnumerator(KeyCrcPairs pairs) {
-				_pairs = pairs;
-				_index = -1;
+			public KeyEnumerator(BinJsonObject obj) {
+				_obj = obj;
+				_keys = obj.doc.KeyTable;
+				int len = obj.ListCount;
+				_curElem = obj.List - 1;
+				_endElem = obj.List + len;
 			}
 
 			#region IEnumerator implementation
 
 			public bool MoveNext ()
 			{
-				if (_index + 1 >= _pairs.length)
-					return false;
-				_index++;
+				do {
+					if (_curElem + 1 >= _endElem) {
+						_curKey = null;
+						return false;
+					}
+					_curElem++;
+				} while (_curElem->id == 0);
+				BinJsonObject._lastCrc = _curElem->id & 0x1FFFFFFF;
+				BinJsonObject._lastKeyString = _curKey = _keys [BinJsonObject._lastCrc];
 				return true;
 			}
 
 			public void Reset ()
 			{
-				_index = -1;
+				_curElem = _obj.List - 1;
+				_curKey = null;
 			}
 
 			public object Current {
 				get {
-					string key;
 					// We store the last string and crc in the PSGetIndex so it can short path to using them during a loop over
 					// keys in an object.
-					BinJsonObject._lastKeyString = key = _pairs.keys [_index];
-					BinJsonObject._lastCrc = _pairs.crcs [_index];
-					return key;
+					return _curKey;
 				}
 			}
 
@@ -466,7 +553,7 @@ namespace playscript.utils {
 			if (expando != null)
 				return ((IKeyEnumerable)expando).GetKeyEnumerator ();
 			else
-				return new KeyEnumerator (this.KeyPairs);
+				return new KeyEnumerator (this);
 #endif
 		}
 
@@ -474,42 +561,46 @@ namespace playscript.utils {
 
 		#region IEnumerable implementation
 
-		private class ValueEnumerator : IEnumerator {
+		private unsafe class ValueEnumerator : IEnumerator {
 
-			private IDynamicAccessor<object> _jsonObj;
-			private KeyCrcPairs _pairs;
-			private int _index;
+			private BinJsonObject _obj;
+			private DataElem* _curElem;
+			private DataElem* _endElem;
+			private object _curValue;
 
-			public ValueEnumerator(IDynamicAccessor<object> jsonObj, KeyCrcPairs pairs) {
-				_jsonObj = jsonObj;
-				_pairs = pairs;
-				_index = -1;
+			public ValueEnumerator(BinJsonObject obj) {
+				_obj = obj;
+				int len = obj.ListCount;
+				_curElem = obj.List - 1;
+				_endElem = obj.List + len;
 			}
 
 			#region IEnumerator implementation
 
 			public bool MoveNext ()
 			{
-				if (_index + 1 >= _pairs.length)
-					return false;
-				_index++;
+				do {
+					if (_curElem + 1 >= _endElem) {
+						_curValue = null;
+						return false;
+					}
+					_curElem++;
+				} while (_curElem->id == 0);
+				_curValue = _obj.GetValueObject (_curElem->ElemType, _obj.Data, _curElem);
 				return true;
 			}
 
 			public void Reset ()
 			{
-				_index = -1;
+				_curElem = _obj.List - 1;
+				_curValue = null;
 			}
 
 			public object Current {
 				get {
 					// We store the last string and crc in the PSGetIndex so it can short path to using them during a loop over
 					// keys in an object.
-					uint crc;
-					string key;
-					BinJsonObject._lastKeyString = key = _pairs.keys [_index];
-					BinJsonObject._lastCrc = crc = _pairs.crcs [_index];
-					return _jsonObj.GetMemberOrDefault(key, ref crc, null);
+					return _curValue;
 				}
 			}
 
@@ -521,70 +612,81 @@ namespace playscript.utils {
 			if (expando != null)
 				return ((IEnumerable)expando).GetEnumerator ();
 			else
-				return new ValueEnumerator (this, this.KeyPairs);
+				return new ValueEnumerator (this);
 		}
 
 		#endregion
 
 		#region IEnumerable<KeyValuePair> implementation
 
-		private class KeyValuePairEnumerator : IEnumerator<KeyValuePair<string,object>> {
+		private unsafe class KeyValuePairEnumerator : IEnumerator<KeyValuePair<string,object>> {
 
-			private IDynamicAccessor<object> _jsonObj;
-			private KeyCrcPairs _pairs;
-			private int _index;
+			private BinJsonObject _obj;
+			private Dictionary<uint,string> _keys;
+			private DataElem* _curElem;
+			private DataElem* _endElem;
+			private KeyValuePair<string,object> _curPair;
 
-			public KeyValuePairEnumerator(IDynamicAccessor<object> jsonObj, KeyCrcPairs pairs) {
-				_jsonObj = jsonObj;
-				_pairs = pairs;
-				_index = -1;
+			public KeyValuePairEnumerator(BinJsonObject obj) {
+				_obj = obj;
+				_keys = obj.doc.KeyTable;
+				int len = obj.ListCount;
+				_curElem = obj.List - 1;
+				_endElem = obj.List + len;
 			}
 
 			#region IEnumerator implementation
 
-			public void Dispose()
-			{
-			}
-
 			public bool MoveNext ()
 			{
-				if (_index + 1 >= _pairs.length)
-					return false;
-				_index++;
+				do {
+					if (_curElem + 1 >= _endElem) {
+						_curPair = new KeyValuePair<string,object>(null, null);
+						return false;
+					}
+					_curElem++;
+				} while (_curElem->id == 0);
+				BinJsonObject._lastCrc = _curElem->id & 0x1FFFFFFF;
+				string key;
+				BinJsonObject._lastKeyString = key = _keys [BinJsonObject._lastCrc];
+				object value = _obj.GetValueObject(_curElem->ElemType, _obj.Data, _curElem);
+				_curPair = new KeyValuePair<string,object> (key, value);
 				return true;
 			}
 
 			public void Reset ()
 			{
-				_index = -1;
+				_curElem = _obj.List - 1;
+				_curPair = new KeyValuePair<string,object>(null, null);
 			}
 
 			public KeyValuePair<string,object> Current {
 				get {
 					// We store the last string and crc in the PSGetIndex so it can short path to using them during a loop over
 					// keys in an object.
-					string key;
-					uint crc;
-					BinJsonObject._lastKeyString = key = _pairs.keys [_index];
-					BinJsonObject._lastCrc = crc = _pairs.crcs [_index];
-					return new KeyValuePair<string, object>(key, _jsonObj.GetMemberOrDefault(key, ref crc, null));
-				}
-			}
-
-			object IEnumerator.Current {
-				get {
-					// We store the last string and crc in the PSGetIndex so it can short path to using them during a loop over
-					// keys in an object.
-					string key;
-					uint crc;
-					BinJsonObject._lastKeyString = key = _pairs.keys [_index];
-					BinJsonObject._lastCrc = crc = _pairs.crcs [_index];
-					return new KeyValuePair<string, object>(key, _jsonObj.GetMemberOrDefault(key, ref crc, null));
+					return _curPair;
 				}
 			}
 
 			#endregion
 
+			#region IDisposable implementation
+
+			void IDisposable.Dispose ()
+			{
+			}
+
+			#endregion
+
+			#region IEnumerator implementation
+
+			object IEnumerator.Current {
+				get {
+					return _curPair;
+				}
+			}
+
+			#endregion
 		}
 
 		IEnumerator<KeyValuePair<string,object>> IEnumerable<KeyValuePair<string,object>>.GetEnumerator ()
@@ -592,7 +694,7 @@ namespace playscript.utils {
 			if (expando != null)
 				return ((IEnumerable<KeyValuePair<string,object>>)expando).GetEnumerator ();
 			else
-				return new KeyValuePairEnumerator (this, this.KeyPairs);
+				return new KeyValuePairEnumerator (this);
 		}
 
 		#endregion
@@ -602,7 +704,7 @@ namespace playscript.utils {
 
 		public int Ptr { get { return (int)(list - doc.data); } }
 
-		public byte[] Data { 
+		public byte[] DataValues { 
 			get {
 				byte[] data = new byte[100];
 				for (var i = 0; i < 100; i++) 
@@ -2026,46 +2128,54 @@ namespace playscript.utils {
 				expando = new PlayScript.Expando.ExpandoObject ();
 		}
 
-		private class DictionaryEnumerator : IDictionaryEnumerator {
+		private unsafe class DictionaryEnumerator : IDictionaryEnumerator {
 
-			private IDynamicAccessor<object> _jsonObj;
-			private KeyCrcPairs _pairs;
-			private int _index;
-			private string key;
-			private object value;
+			private BinJsonObject _obj;
+			private Dictionary<uint,string> _keys;
+			private DataElem* _curElem;
+			private DataElem* _endElem;
+			private DictionaryEntry _curPair;
 
-			public DictionaryEnumerator(IDynamicAccessor<object> jsonObj, KeyCrcPairs pairs) {
-				_jsonObj = jsonObj;
-				_pairs = pairs;
-				_index = -1;
+			public DictionaryEnumerator(BinJsonObject obj) {
+				_obj = obj;
+				_keys = obj.doc.KeyTable;
+				int len = obj.ListCount;
+				_curElem = obj.List - 1;
+				_endElem = obj.List + len;
 			}
 
 			#region IEnumerator implementation
 
-			public void Dispose()
-			{
-			}
-
 			public bool MoveNext ()
 			{
-				if (_index + 1 >= _pairs.length)
-					return false;
-				_index++;
-				uint crc = 0;
-				BinJsonObject._lastKeyString = key = _pairs.keys [_index];
-				BinJsonObject._lastCrc = crc = _pairs.crcs [_index];
-				value = _jsonObj.GetMemberOrDefault (key, ref crc, null);
+				do {
+					if (_curElem + 1 >= _endElem) {
+						_curPair = new DictionaryEntry(null, null);
+						return false;
+					}
+					_curElem++;
+				} while (_curElem->id == 0);
+				BinJsonObject._lastCrc = _curElem->id & 0x1FFFFFFF;
+				string key;
+				BinJsonObject._lastKeyString = key = _keys [BinJsonObject._lastCrc];
+				object value = _obj.GetValueObject(_curElem->ElemType, _obj.Data, _curElem);
+				_curPair = new DictionaryEntry(key, value);
 				return true;
 			}
 
 			public void Reset ()
 			{
-				_index = -1;
+				_curElem = _obj.List - 1;
+				_curPair = new DictionaryEntry(null, null);
 			}
 
-			public object Current {
+			#endregion
+
+			#region IEnumerator implementation
+
+			object IEnumerator.Current {
 				get {
-					return new DictionaryEntry(key, value);
+					return _curPair;
 				}
 			}
 
@@ -2075,19 +2185,19 @@ namespace playscript.utils {
 
 			public DictionaryEntry Entry {
 				get {
-					return new DictionaryEntry(key, value);
+					return _curPair;
 				}
 			}
 
 			public object Key {
 				get {
-					return key;
+					return _curPair.Key;
 				}
 			}
 
 			public object Value {
 				get {
-					return value;
+					return _curPair.Value;
 				}
 			}
 
@@ -2103,7 +2213,7 @@ namespace playscript.utils {
 			if (expando != null)
 				return ((IDictionary)expando).GetEnumerator ();
 			else
-				return new DictionaryEnumerator (this, this.KeyPairs);
+				return new DictionaryEnumerator (this);
 #endif
 		}
 

@@ -27,6 +27,8 @@ namespace PlayScript.DynamicRuntime
 	public class PSGetIndex
 	{
 		private PSGetMember			  mGetMember;
+		private string				  mLastKey;
+		private uint				  mLastHint;
 
 		public dynamic GetIndexAsObject(object o, object index)
 		{
@@ -229,13 +231,19 @@ namespace PlayScript.DynamicRuntime
 			// get accessor for value type T
 			var accessor = o as IDynamicAccessor<T>;
 			if (accessor != null) {
-				return accessor.GetIndex(key);
+				if (key != mLastKey)
+					mLastHint = 0;
+				mLastKey = key;
+				return accessor.GetMember(key, ref mLastHint);
 			}
 
 			// fallback on object accessor and cast it to T
 			var untypedAccessor = o as IDynamicAccessorUntyped;
 			if (untypedAccessor != null) {
-				object value = untypedAccessor.GetIndex(key);
+				if (key != mLastKey)
+					mLastHint = 0;
+				mLastKey = key;
+				object value = untypedAccessor.GetMember(key, ref mLastHint);
 				if (value == null) return default(T);
 				if (value is T) {
 					return (T)value;

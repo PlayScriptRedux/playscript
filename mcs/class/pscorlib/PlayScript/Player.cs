@@ -743,6 +743,16 @@ namespace PlayScript
 			// these are done here because they must be done smoothly and incrementally, spread out over time
 			DispatchScrollWheelEvents();
 
+			// Call all deferred invokes
+			if (sDeferredInvokes.Count > 0) {
+				Profiler.Begin ("deferredInvokes", ".player.deferredInvokes");
+				foreach (var action in sDeferredInvokes) {
+					action ();
+				}
+				sDeferredInvokes.Clear ();
+				Profiler.End ("deferredInvokes");
+			}
+
 			// stage enter frame
 			Profiler.Begin("enterFrame", ".player.enterframe");
 			mStage.onEnterFrame ();
@@ -910,6 +920,10 @@ namespace PlayScript
 			}
 		}
 
+		public static void DeferredInvoke(Action action) 
+		{
+			sDeferredInvokes.Add(action);
+		}
 
 		private flash.display.Stage    mStage;
 		private float mScrollDelta;
@@ -921,6 +935,8 @@ namespace PlayScript
 		private bool mDidPresent = false;
 
 		private static List<string> sResourceDirectories = new List<string>();
+
+		private static List<Action> sDeferredInvokes = new List<Action> ();
 
 		private readonly Telemetry.Span mSpanPlayerKeyDown = new Telemetry.Span(".player.key.down");
 		private readonly Telemetry.Span mSpanPlayerKeyUp = new Telemetry.Span(".player.key.up");
