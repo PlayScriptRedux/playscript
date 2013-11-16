@@ -21,6 +21,7 @@ using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using PlayScript;
+using PlayScript.DynamicRuntime;
 
 namespace _root
 {
@@ -913,14 +914,14 @@ namespace _root
 			if (mImmutableArray != null) {
 				for (var i = fromIndex; i < this.length; i++) {
 					elem = this [i];
-					if (elem == searchElement || (elem != null && elem.Equals (searchElement))) {
+					if (elem == searchElement || (elem != null && PSBinaryOperation.EqualityObjObj (elem, searchElement))) {
 						return i;
 					}
 				}
 			} else {
 				for (var i = fromIndex; i < mCount; i++) {
 					elem = mArray [i];
-					if (elem == searchElement || (elem != null && elem.Equals (searchElement))) {
+					if (elem == searchElement || (elem != null && PSBinaryOperation.EqualityObjObj (elem, searchElement))) {
 						return i;
 					}
 				}
