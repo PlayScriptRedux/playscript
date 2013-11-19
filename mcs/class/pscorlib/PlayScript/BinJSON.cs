@@ -54,13 +54,13 @@ namespace playscript.utils {
 			Table = createTable;
 		}
 
-		#if DEBUG
+		#if DEBUG_BINJSON
 		private static int numCrcs = 0;
 		#endif
 
 		public static uint Calculate(string buffer)
 		{
-			#if DEBUG
+			#if DEBUG_BINJSON
 				numCrcs++;
 				if (numCrcs % 1000 == 0) 
 					_root.trace_fn.trace("Number generated CRC's is: " + numCrcs);
@@ -92,11 +92,11 @@ namespace playscript.utils {
 		public float floatValue;
 
 		public DATA_TYPE ElemType {
-			get { return (DATA_TYPE)(id >> 29); }
+			get { return (DATA_TYPE)(id >> BinJSON.TYPE_SHIFT); }
 		}
 
 		public uint Crc {
-			get { return id & 0x1FFFFFFF; }
+			get { return id & BinJSON.ID_MASK; }
 		}
 	}
 
@@ -206,7 +206,7 @@ namespace playscript.utils {
 			return array;
 		}
 
-		#if DEBUG
+		#if DEBUG_BINJSON
 
 		public byte[] Data { 
 			get {
@@ -391,7 +391,7 @@ namespace playscript.utils {
 					DataElem* dataElem = this.List;
 					int pos = 0;
 					for (i = 0; i < listCount; i++) {
-						uint crc = dataElem->id & 0x1FFFFFFF;
+						uint crc = dataElem->id & BinJSON.ID_MASK;
 						if (crc != 0) {
 							string key = crcStrTable [crc];
 							keyArray [pos] = key;
@@ -522,7 +522,7 @@ namespace playscript.utils {
 					}
 					_curElem++;
 				} while (_curElem->id == 0);
-				BinJsonObject._lastCrc = _curElem->id & 0x1FFFFFFF;
+				BinJsonObject._lastCrc = _curElem->id & BinJSON.ID_MASK;
 				BinJsonObject._lastKeyString = _curKey = _keys [BinJsonObject._lastCrc];
 				return true;
 			}
@@ -646,7 +646,7 @@ namespace playscript.utils {
 					}
 					_curElem++;
 				} while (_curElem->id == 0);
-				BinJsonObject._lastCrc = _curElem->id & 0x1FFFFFFF;
+				BinJsonObject._lastCrc = _curElem->id & BinJSON.ID_MASK;
 				string key;
 				BinJsonObject._lastKeyString = key = _keys [BinJsonObject._lastCrc];
 				object value = _obj.GetValueObject(_curElem->ElemType, _obj.Data, _curElem);
@@ -700,7 +700,7 @@ namespace playscript.utils {
 		#endregion
 
 
-		#if DEBUG
+		#if DEBUG_BINJSON
 
 		public int Ptr { get { return (int)(list - doc.data); } }
 
@@ -883,7 +883,7 @@ namespace playscript.utils {
 				return null;
 				case DATA_TYPE.OBJARRAY:
 				byte* list = doc.data + *(uint*)(data + dataElem->offset);
-				LIST_TYPE listType = (LIST_TYPE)(*(uint*)(list + 4) & 0xFF000000);
+				LIST_TYPE listType = (LIST_TYPE)(*(uint*)(list + 4) & BinJSON.OBJ_TYPE_MASK);
 				switch (listType) {
 				case LIST_TYPE.OBJECT:
 					return new BinJsonObject (doc, list);
@@ -902,12 +902,12 @@ namespace playscript.utils {
 		string IDynamicAccessor<string>.GetIndex(int index)
 		{
 			uint len = *(uint*)(list + 4);
-			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+			LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
 			if (listType == LIST_TYPE.ARRAY) {
-				len &= 0xFFFFFF;
+				len &= BinJSON.LENGTH_MASK;
 				if (index < len) {
 					DataElem* dataElem = ((DataElem*)(list + 8)) + index;
-					DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+					DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 					return GetValueString (dataType, doc.data + *(uint*)list, dataElem);
 				} else {
 					return null;
@@ -928,7 +928,7 @@ namespace playscript.utils {
 		{
 			if (index != null) {
 				uint len = *(uint*)(list + 4);
-				LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+				LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
 				if (listType == LIST_TYPE.ARRAY) {
 					return ((IDynamicAccessor<string>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
@@ -950,7 +950,7 @@ namespace playscript.utils {
 		{
 			if (index != null) {
 				uint len = *(uint*)(list + 4);
-				LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+				LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
 				if (listType == LIST_TYPE.ARRAY) {
 					return ((IDynamicAccessor<string>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
@@ -971,12 +971,12 @@ namespace playscript.utils {
 		int IDynamicAccessor<int>.GetIndex(int index)
 		{
 			uint len = *(uint*)(list + 4);
-			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+			LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
 			if (listType == LIST_TYPE.ARRAY) {
-				len &= 0xFFFFFF;
+				len &= BinJSON.LENGTH_MASK;
 				if (index < len) {
 					DataElem* dataElem = ((DataElem*)(list + 8)) + index;
-					DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+					DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 					return GetValueInt (dataType, doc.data + *(uint*)list, dataElem);
 				} else {
 					return 0;
@@ -997,7 +997,7 @@ namespace playscript.utils {
 		{
 			if (index != null) {
 				uint len = *(uint*)(list + 4);
-				LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+				LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
 				if (listType == LIST_TYPE.ARRAY) {
 					return ((IDynamicAccessor<int>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
@@ -1019,7 +1019,7 @@ namespace playscript.utils {
 		{
 			if (index != null) {
 				uint len = *(uint*)(list + 4);
-				LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+				LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
 				if (listType == LIST_TYPE.ARRAY) {
 					return ((IDynamicAccessor<int>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
@@ -1040,12 +1040,12 @@ namespace playscript.utils {
 		double IDynamicAccessor<double>.GetIndex(int index)
 		{
 			uint len = *(uint*)(list + 4);
-			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+			LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
 			if (listType == LIST_TYPE.ARRAY) { 
-				len &= 0xFFFFFF;
+				len &= BinJSON.LENGTH_MASK;
 				if (index < len) {
 					DataElem* dataElem = ((DataElem*)(list + 8)) + index;
-					DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+					DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 					return GetValueDouble (dataType, doc.data + *(uint*)(list), dataElem);
 				} else {
 					return 0.0;
@@ -1066,7 +1066,7 @@ namespace playscript.utils {
 		{
 			if (index != null) {
 				uint len = *(uint*)(list + 4);
-				LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+				LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
 				if (listType == LIST_TYPE.ARRAY) {
 					return ((IDynamicAccessor<double>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
@@ -1088,7 +1088,7 @@ namespace playscript.utils {
 		{
 			if (index != null) {
 				uint len = *(uint*)(list + 4);
-				LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+				LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
 				if (listType == LIST_TYPE.ARRAY) {
 					return ((IDynamicAccessor<double>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
@@ -1109,12 +1109,12 @@ namespace playscript.utils {
 		uint IDynamicAccessor<uint>.GetIndex(int index)
 		{
 			uint len = *(uint*)(list + 4);
-			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+			LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
 			if (listType == LIST_TYPE.ARRAY) {
-				len &= 0xFFFFFF;
+				len &= BinJSON.LENGTH_MASK;
 				if (index < len) {
 					DataElem* dataElem = ((DataElem*)(list + 8)) + index;
-					DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+					DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 					return GetValueUInt (dataType, doc.data + *(uint*)list, dataElem);
 				} else {
 					return 0u;
@@ -1135,7 +1135,7 @@ namespace playscript.utils {
 		{
 			if (index != null) {
 				uint len = *(uint*)(list + 4);
-				LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+				LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
 				if (listType == LIST_TYPE.ARRAY) {
 					return ((IDynamicAccessor<uint>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
@@ -1157,7 +1157,7 @@ namespace playscript.utils {
 		{
 			if (index != null) {
 				uint len = *(uint*)(list + 4);
-				LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+				LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
 				if (listType == LIST_TYPE.ARRAY) {
 					return ((IDynamicAccessor<uint>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
@@ -1178,12 +1178,12 @@ namespace playscript.utils {
 		bool IDynamicAccessor<bool>.GetIndex(int index)
 		{
 			uint len = *(uint*)(list + 4);
-			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+			LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
 			if (listType == LIST_TYPE.ARRAY) {
-				len &= 0xFFFFFF;
+				len &= BinJSON.LENGTH_MASK;
 				if (index < len) {
 					DataElem* dataElem = ((DataElem*)(list + 8)) + index;
-					DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+					DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 					return GetValueBool (dataType, doc.data + *(uint*)list, dataElem);
 				} else {
 					return false;
@@ -1204,7 +1204,7 @@ namespace playscript.utils {
 		{
 			if (index != null) {
 				uint len = *(uint*)(list + 4);
-				LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+				LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
 				if (listType == LIST_TYPE.ARRAY) {
 					return ((IDynamicAccessor<bool>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
@@ -1226,7 +1226,7 @@ namespace playscript.utils {
 		{
 			if (index != null) {
 				uint len = *(uint*)(list + 4);
-				LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+				LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
 				if (listType == LIST_TYPE.ARRAY) {
 					return ((IDynamicAccessor<bool>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
@@ -1247,12 +1247,12 @@ namespace playscript.utils {
 		public object GetIndex(int index)
 		{
 			uint len = *(uint*)(list + 4);
-			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+			LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
 			if (listType == LIST_TYPE.ARRAY) {
-				len &= 0xFFFFFF;
+				len &= BinJSON.LENGTH_MASK;
 				if (index < len) {
 					DataElem* dataElem = ((DataElem*)(list + 8)) + index;
-					DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+					DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 					return GetValueObject (dataType, doc.data + *(uint*)list, dataElem);
 				} else {
 					return null;
@@ -1273,7 +1273,7 @@ namespace playscript.utils {
 		{
 			if (index != null) {
 				uint len = *(uint*)(list + 4);
-				LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+				LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
 				if (listType == LIST_TYPE.ARRAY) {
 					return ((IDynamicAccessor<object>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
@@ -1295,7 +1295,7 @@ namespace playscript.utils {
 		{
 			if (index != null) {
 				uint len = *(uint*)(list + 4);
-				LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+				LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
 				if (listType == LIST_TYPE.ARRAY) {
 					return ((IDynamicAccessor<object>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
@@ -1331,7 +1331,7 @@ namespace playscript.utils {
 		{
 			if (index != null) {
 				uint len = *(uint*)(list + 4);
-				LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+				LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
 				if (listType == LIST_TYPE.ARRAY) {
 					return (float)((IDynamicAccessor<double>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
@@ -1353,7 +1353,7 @@ namespace playscript.utils {
 		{
 			if (index != null) {
 				uint len = *(uint*)(list + 4);
-				LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+				LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
 				if (listType == LIST_TYPE.ARRAY) {
 					return (float)((IDynamicAccessor<double>)this).GetIndex(PlayScript.DynamicRuntime.PSConverter.ConvertToInt(index));
 				} else {
@@ -1380,7 +1380,7 @@ namespace playscript.utils {
 		{
 			DataElem* firstElem = (DataElem*)(list + 8);
 			DataElem* dataElem = firstElem + (crc % len);
-			if ((dataElem->id & 0x1FFFFFFF) != crc) {
+			if ((dataElem->id & BinJSON.ID_MASK) != crc) {
 				DataElem* lastElem = firstElem + len;
 				DataElem* startElem = dataElem;
 				DataElem* curElem = dataElem;
@@ -1390,7 +1390,7 @@ namespace playscript.utils {
 						curElem = firstElem;
 					if (curElem == startElem)
 						return null;
-					uint curCrc = curElem->id & 0x1FFFFFFF;
+					uint curCrc = curElem->id & BinJSON.ID_MASK;
 					if (curCrc == crc) {
 						return curElem;
 					} else if (curCrc == 0) { // Fast out if key is not in obj
@@ -1406,9 +1406,9 @@ namespace playscript.utils {
 			if (expando != null)
 				return expando.ContainsKey (key);
 			uint len = *(uint*)(list + 4);
-			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+			LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
 			if (listType == LIST_TYPE.OBJECT) {
-				len &= 0xFFFFFF;
+				len &= BinJSON.LENGTH_MASK;
 				if (len == 0)
 					return false;
 				if (crc == 0) {
@@ -1416,7 +1416,7 @@ namespace playscript.utils {
 						crc = _lastCrc;
 					} else {
 						_lastKeyString = key;
-						crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+						crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & BinJSON.ID_MASK;
 					}
 				}
 				return FindDataElem (crc, len) != null;
@@ -1467,8 +1467,8 @@ namespace playscript.utils {
 			if (expando != null)
 				return expando [key];
 			uint len = *(uint*)(list + 4);
-			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
-			len &= 0xFFFFFF;
+			LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
+			len &= BinJSON.LENGTH_MASK;
 			if (len == 0)
 				return null;
 			if (crc == 0) {
@@ -1476,14 +1476,14 @@ namespace playscript.utils {
 					crc = _lastCrc;
 				} else {
 					_lastKeyString = key;
-					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & BinJSON.ID_MASK;
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
 				DataElem* dataElem = FindDataElem (crc, len);
 				if (dataElem == null)
 					return null;
-				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 				return GetValueString (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
 				return null;
@@ -1495,8 +1495,8 @@ namespace playscript.utils {
 			if (expando != null)
 				return expando [key];
 			uint len = *(uint*)(list + 4);
-			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
-			len &= 0xFFFFFF;
+			LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
+			len &= BinJSON.LENGTH_MASK;
 			if (len == 0)
 				return defaultValue;
 			if (crc == 0) {
@@ -1504,14 +1504,14 @@ namespace playscript.utils {
 					crc = _lastCrc;
 				} else {
 					_lastKeyString = key;
-					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & BinJSON.ID_MASK;
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
 				DataElem* dataElem = FindDataElem (crc, len);
 				if (dataElem == null)
 					return defaultValue;
-				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 				return GetValueString (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
 				return defaultValue;
@@ -1530,8 +1530,8 @@ namespace playscript.utils {
 			if (expando != null)
 				return expando [key];
 			uint len = *(uint*)(list + 4);
-			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
-			len &= 0xFFFFFF;
+			LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
+			len &= BinJSON.LENGTH_MASK;
 			if (len == 0)
 				return 0;
 			if (crc == 0) {
@@ -1539,14 +1539,14 @@ namespace playscript.utils {
 					crc = _lastCrc;
 				} else {
 					_lastKeyString = key;
-					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & BinJSON.ID_MASK;
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
 				DataElem* dataElem = FindDataElem (crc, len);
 				if (dataElem == null)
 					return 0;
-				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 				return GetValueInt (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
 				return 0;
@@ -1558,8 +1558,8 @@ namespace playscript.utils {
 			if (expando != null)
 				return expando [key];
 			uint len = *(uint*)(list + 4);
-			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
-			len &= 0xFFFFFF;
+			LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
+			len &= BinJSON.LENGTH_MASK;
 			if (len == 0)
 				return defaultValue;
 			if (crc == 0) {
@@ -1567,14 +1567,14 @@ namespace playscript.utils {
 					crc = _lastCrc;
 				} else {
 					_lastKeyString = key;
-					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & BinJSON.ID_MASK;
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
 				DataElem* dataElem = FindDataElem (crc, len);
 				if (dataElem == null)
 					return defaultValue;
-				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 				return GetValueInt (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
 				return defaultValue;
@@ -1593,8 +1593,8 @@ namespace playscript.utils {
 			if (expando != null)
 				return expando [key];
 			uint len = *(uint*)(list + 4);
-			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
-			len &= 0xFFFFFF;
+			LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
+			len &= BinJSON.LENGTH_MASK;
 			if (len == 0)
 				return double.NaN;
 			if (crc == 0) {
@@ -1602,14 +1602,14 @@ namespace playscript.utils {
 					crc = _lastCrc;
 				} else {
 					_lastKeyString = key;
-					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & BinJSON.ID_MASK;
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
 				DataElem* dataElem = FindDataElem (crc, len);
 				if (dataElem == null)
 					return double.NaN;
-				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 				return GetValueDouble (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
 				return double.NaN;
@@ -1621,8 +1621,8 @@ namespace playscript.utils {
 			if (expando != null)
 				return expando [key];
 			uint len = *(uint*)(list + 4);
-			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
-			len &= 0xFFFFFF;
+			LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
+			len &= BinJSON.LENGTH_MASK;
 			if (len == 0)
 				return defaultValue;
 			if (crc == 0) {
@@ -1630,14 +1630,14 @@ namespace playscript.utils {
 					crc = _lastCrc;
 				} else {
 					_lastKeyString = key;
-					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & BinJSON.ID_MASK;
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
 				DataElem* dataElem = FindDataElem (crc, len);
 				if (dataElem == null)
 					return defaultValue;
-				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 				return GetValueDouble (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
 				return defaultValue;
@@ -1656,8 +1656,8 @@ namespace playscript.utils {
 			if (expando != null)
 				return expando [key];
 			uint len = *(uint*)(list + 4);
-			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
-			len &= 0xFFFFFF;
+			LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
+			len &= BinJSON.LENGTH_MASK;
 			if (len == 0)
 				return 0u;
 			if (crc == 0) {
@@ -1665,14 +1665,14 @@ namespace playscript.utils {
 					crc = _lastCrc;
 				} else {
 					_lastKeyString = key;
-					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & BinJSON.ID_MASK;
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
 				DataElem* dataElem = FindDataElem (crc, len);
 				if (dataElem == null)
 					return 0u;
-				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 				return GetValueUInt (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
 				return 0u;
@@ -1684,8 +1684,8 @@ namespace playscript.utils {
 			if (expando != null)
 				return expando [key];
 			uint len = *(uint*)(list + 4);
-			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
-			len &= 0xFFFFFF;
+			LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
+			len &= BinJSON.LENGTH_MASK;
 			if (len == 0)
 				return defaultValue;
 			if (crc == 0) {
@@ -1693,14 +1693,14 @@ namespace playscript.utils {
 					crc = _lastCrc;
 				} else {
 					_lastKeyString = key;
-					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & BinJSON.ID_MASK;
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
 				DataElem* dataElem = FindDataElem (crc, len);
 				if (dataElem == null)
 					return defaultValue;
-				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 				return GetValueUInt (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
 				return defaultValue;
@@ -1719,8 +1719,8 @@ namespace playscript.utils {
 			if (expando != null)
 				return expando [key];
 			uint len = *(uint*)(list + 4);
-			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
-			len &= 0xFFFFFF;
+			LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
+			len &= BinJSON.LENGTH_MASK;
 			if (len == 0)
 				return false;
 			if (crc == 0) {
@@ -1728,14 +1728,14 @@ namespace playscript.utils {
 					crc = _lastCrc;
 				} else {
 					_lastKeyString = key;
-					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & BinJSON.ID_MASK;
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
 				DataElem* dataElem = FindDataElem (crc, len);
 				if (dataElem == null)
 					return false;
-				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 				return GetValueBool (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
 				return false;
@@ -1747,8 +1747,8 @@ namespace playscript.utils {
 			if (expando != null)
 				return expando [key];
 			uint len = *(uint*)(list + 4);
-			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
-			len &= 0xFFFFFF;
+			LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
+			len &= BinJSON.LENGTH_MASK;
 			if (len == 0)
 				return defaultValue;
 			if (crc == 0) {
@@ -1756,14 +1756,14 @@ namespace playscript.utils {
 					crc = _lastCrc;
 				} else {
 					_lastKeyString = key;
-					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & BinJSON.ID_MASK;
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
 				DataElem* dataElem = FindDataElem (crc, len);
 				if (dataElem == null)
 					return defaultValue;
-				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 				return GetValueBool (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
 				return defaultValue;
@@ -1782,8 +1782,8 @@ namespace playscript.utils {
 			if (expando != null)
 				return expando [key];
 			uint len = *(uint*)(list + 4);
-			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
-			len &= 0xFFFFFF;
+			LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
+			len &= BinJSON.LENGTH_MASK;
 			if (len == 0)
 				return defaultValue;
 			if (crc == 0) {
@@ -1791,14 +1791,14 @@ namespace playscript.utils {
 					crc = _lastCrc;
 				} else {
 					_lastKeyString = key;
-					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & BinJSON.ID_MASK;
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
 				DataElem* dataElem = FindDataElem (crc, len);
 				if (dataElem == null)
 					return defaultValue;
-				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 				return GetValueObject (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
 				return defaultValue;
@@ -1810,8 +1810,8 @@ namespace playscript.utils {
 			if (expando != null)
 				return expando [key];
 			uint len = *(uint*)(list + 4);
-			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
-			len &= 0xFFFFFF;
+			LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
+			len &= BinJSON.LENGTH_MASK;
 			if (len == 0)
 				return null;
 			if (crc == 0) {
@@ -1819,14 +1819,14 @@ namespace playscript.utils {
 					crc = _lastCrc;
 				} else {
 					_lastKeyString = key;
-					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & BinJSON.ID_MASK;
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
 				DataElem* dataElem = FindDataElem (crc, len);
 				if (dataElem == null)
 					return null;
-				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 				return GetValueObject (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
 				return null;
@@ -1846,8 +1846,8 @@ namespace playscript.utils {
 			if (expando != null)
 				return expando [key];
 			uint len = *(uint*)(list + 4);
-			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
-			len &= 0xFFFFFF;
+			LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
+			len &= BinJSON.LENGTH_MASK;
 			if (len == 0)
 				return defaultValue;
 			if (crc == 0) {
@@ -1855,14 +1855,14 @@ namespace playscript.utils {
 					crc = _lastCrc;
 				} else {
 					_lastKeyString = key;
-					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & BinJSON.ID_MASK;
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
 				DataElem* dataElem = FindDataElem (crc, len);
 				if (dataElem == null)
 					return defaultValue;
-				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 				return GetValueObject (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
 				return defaultValue;
@@ -1875,8 +1875,8 @@ namespace playscript.utils {
 			if (expando != null)
 				return expando [key];
 			uint len = *(uint*)(list + 4);
-			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
-			len &= 0xFFFFFF;
+			LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
+			len &= BinJSON.LENGTH_MASK;
 			if (len == 0)
 				return PlayScript.Undefined._undefined;
 			if (crc == 0) {
@@ -1884,14 +1884,14 @@ namespace playscript.utils {
 					crc = _lastCrc;
 				} else {
 					_lastKeyString = key;
-					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & 0x1FFFFFFF;
+					crc = _lastCrc = BinJsonCrc32.Calculate ((string)key) & BinJSON.ID_MASK;
 				}				
 			}
 			if (listType == LIST_TYPE.OBJECT && len > 0) {
 				DataElem* dataElem = FindDataElem (crc, len);
 				if (dataElem == null)
 					return PlayScript.Undefined._undefined;
-				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 				return GetValueObject (dataType, doc.data + *(uint*)list, dataElem);
 			} else {
 				return PlayScript.Undefined._undefined;
@@ -2155,7 +2155,7 @@ namespace playscript.utils {
 					}
 					_curElem++;
 				} while (_curElem->id == 0);
-				BinJsonObject._lastCrc = _curElem->id & 0x1FFFFFFF;
+				BinJsonObject._lastCrc = _curElem->id & BinJSON.ID_MASK;
 				string key;
 				BinJsonObject._lastKeyString = key = _keys [BinJsonObject._lastCrc];
 				object value = _obj.GetValueObject(_curElem->ElemType, _obj.Data, _curElem);
@@ -2345,7 +2345,7 @@ namespace playscript.utils {
 			uint len = *(uint*)(list + 4) & 0xFFFFFF;
 			if (index < len) {
 				DataElem* dataElem = ((DataElem*)(list + 8)) + index;
-				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 				return GetValueString(dataType, doc.data + *(int*)list, dataElem);
 			} else {
 				return null;
@@ -2355,10 +2355,10 @@ namespace playscript.utils {
 		public int getIntAt(uint index)
 		{
 			uint len = *(uint*)(list + 4) & 0xFFFFFF;
-			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+			LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
 			if (index < len) {
 				DataElem* dataElem = ((DataElem*)(list + 8)) + index;
-				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 				return GetValueInt(dataType, doc.data + *(int*)list, dataElem);
 			} else {
 				return 0;
@@ -2368,10 +2368,10 @@ namespace playscript.utils {
 		public double getDoubleAt(uint index)
 		{
 			uint len = *(uint*)(list + 4) & 0xFFFFFF;
-			LIST_TYPE listType = (LIST_TYPE)(len & 0xFF000000);
+			LIST_TYPE listType = (LIST_TYPE)(len & BinJSON.OBJ_TYPE_MASK);
 			if (index < len) {
 				DataElem* dataElem = ((DataElem*)(list + 8)) + index;
-				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 				return GetValueDouble(dataType, doc.data + *(int*)list, dataElem);
 			} else {
 				return double.NaN;
@@ -2383,7 +2383,7 @@ namespace playscript.utils {
 			uint len = *(uint*)(list + 4) & 0xFFFFFF;
 			if (index < len) {
 				DataElem* dataElem = ((DataElem*)(list + 8)) + index;
-				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 				return GetValueUInt(dataType, doc.data + *(int*)list, dataElem);
 			} else {
 				return 0u;
@@ -2395,7 +2395,7 @@ namespace playscript.utils {
 			uint len = *(uint*)(list + 4) & 0xFFFFFF;
 			if (index < len) {
 				DataElem* dataElem = ((DataElem*)(list + 8)) + index;
-				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 				return GetValueBool(dataType, doc.data + *(int*)list, dataElem);
 			} else {
 				return false;
@@ -2407,7 +2407,7 @@ namespace playscript.utils {
 			uint len = *(uint*)(list + 4) & 0xFFFFFF;
 			if (index < len) {
 				DataElem* dataElem = ((DataElem*)(list + 8)) + index;
-				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> 29);
+				DATA_TYPE dataType = (DATA_TYPE)(dataElem->id >> BinJSON.TYPE_SHIFT);
 				return GetValueObject(dataType, doc.data + *(int*)list, dataElem);
 			} else {
 				return null;
@@ -2488,6 +2488,11 @@ namespace playscript.utils {
 		internal static bool _useJson = false;
 		internal static bool _dumpBinary = false;
 		internal static string _dumpBinaryPath = "";
+
+		internal const uint OBJ_TYPE_MASK = 0xFF000000;
+		internal const int LENGTH_MASK = 0x00FFFFFF;
+		internal const int TYPE_SHIFT = 29;
+		internal const int ID_MASK = 0x1FFFFFFF;
 
 		private static System.Text.StringBuilder _log = new System.Text.StringBuilder();
 
@@ -2621,13 +2626,13 @@ namespace playscript.utils {
 		/// <param name="key">The key string.</param>
 		public static uint crcId(string key)
 		{
-			return BinJsonCrc32.Calculate (key) & 0x1FFFFFFF;
+			return BinJsonCrc32.Calculate (key) & BinJSON.ID_MASK;
 		}
 
 		private sealed unsafe class Parser : IDisposable {
 
 			// Maximum number of unique key strings
-			public const int MAX_NUM_UNIQUE_KEYS = 0x1FFFFFFF;  // Top 3 bits reserved for data type.. 8192 unique key strings
+			public const int MAX_NUM_UNIQUE_KEYS = BinJSON.ID_MASK;  // Top 3 bits reserved for data type.. 8192 unique key strings
 
 			// Default pointer size
 			public const int OFFSET_SIZE = sizeof(uint);
@@ -2705,7 +2710,7 @@ namespace playscript.utils {
 			UniqueStringDictionary stringTable = new UniqueStringDictionary();
 
 
-#if PLATFORM_MONOTOUCH || PLATFORM_MONODROID
+#if PLATFORM_MONOTOUCH || PLATFORM_MONODROID || PLATFORM_GENERIC
 			[DllImport ("__Internal", EntryPoint="strtod")]
 			public static extern double strtod (byte* start, byte* end);
 #else
@@ -2763,8 +2768,6 @@ namespace playscript.utils {
 			}
 
 			public static object Parse(string jsonString) {
-				uint crc1 = BinJsonCrc32.Calculate ("saveAtLocation");
-				uint crc2 = BinJsonCrc32.Calculate ("save");
 				using (var instance = new Parser(jsonString)) {
 					if (BinJsonCrc32.Table == null)
 						BinJsonCrc32.InitializeTable ();
@@ -2779,7 +2782,7 @@ namespace playscript.utils {
 				json = null;
 			}
 
-			#if DEBUG
+			#if DEBUG_BINJSON
 
 			//
 			// Some properties for figuring out what's going on inside the binary data
@@ -2947,7 +2950,7 @@ namespace playscript.utils {
 				*(uint*)dataPtr = *(uint*)ptr;  // data offset
 				dataPtr += 4;
 				ptr += 4;
-				*(uint*)dataPtr = (*(uint*)ptr & 0xFF000000) | (uint)hashlen;  // length & type
+				*(uint*)dataPtr = (*(uint*)ptr & BinJSON.OBJ_TYPE_MASK) | (uint)hashlen;  // length & type
 				dataPtr += 4;
 				ptr += 4;
 
@@ -2960,7 +2963,7 @@ namespace playscript.utils {
 					for (i = 0; i < hashlen; i++)
 						firstElem[i].id = firstElem[i].offset = 0;  // Make sure table is clear
 					for (i = 0; i < len; i++) {
-						uint crc = srcElem->id & 0x1FFFFFFF;
+						uint crc = srcElem->id & BinJSON.ID_MASK;
 						uint slot = crc % (uint)hashlen;
 						DataElem* startElem = firstElem + slot;
 						DataElem* curElem = startElem;
@@ -3483,7 +3486,7 @@ namespace playscript.utils {
 					crc = (crc >> 8) ^ BinJsonCrc32.Table[(byte)d ^ (byte)crc & 0xff];
 				}
 
-				crc = ~crc & 0x1FFFFFFFu; // top 3 bits 0 to allow for type bits
+				crc = ~crc & BinJSON.ID_MASK; // top 3 bits 0 to allow for type bits
 
 				// Add null terminator
 				if (dataPtr + 1 >= dataEnd)
