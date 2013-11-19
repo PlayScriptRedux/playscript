@@ -29,17 +29,25 @@ using PTRINT = System.UInt32;
 namespace playscript.utils {
 
 	// CRC32 calculator
-	internal static class BinJsonCrc32
+	internal unsafe static class BinJsonCrc32
 	{
 		public const uint DefaultPolynomial = 0xedb88320u;
 		public const uint DefaultSeed = 0xffffffffu;
 
+		#if !UNSAFE_CRC
 		public static uint[] Table;
+		#else
+		public static uint* Table;
+		#endif
 
 		public static void InitializeTable()
 		{
 			uint polynomial = DefaultPolynomial;
+			#if !UNSAFE_CRC
 			var createTable = new uint[256];
+			#else
+			var createTable = (uint*)Marshal.AllocHGlobal(256 * 4);
+			#endif
 			for (var i = 0; i < 256; i++)
 			{
 				var entry = (uint)i;
@@ -65,6 +73,7 @@ namespace playscript.utils {
 				if (numCrcs % 1000 == 0) 
 					_root.trace_fn.trace("Number generated CRC's is: " + numCrcs);
 			#endif
+			#if !UNSAFE_CRC
 			if (buffer == null)
 				return 0;
 			if (Table == null)
@@ -74,6 +83,17 @@ namespace playscript.utils {
 			for (var i = 0; i < size; i++)
 				crc = (crc >> 8) ^ Table[(byte)buffer[i] ^ (byte)crc & 0xff];
 			return ~crc;
+			#else
+			fixed (char * c = buffer) {
+				char * cc = c;
+				char * end = cc + buffer.Length;
+				uint crc = DefaultSeed;
+				for (;cc < end; cc++) {
+					crc = (crc >> 8) ^ Table[(byte)*cc ^ (byte)crc & 0xff];
+				}
+				return crc;
+			}
+			#endif
 		}
 
 	}
