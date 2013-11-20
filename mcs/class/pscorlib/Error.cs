@@ -18,6 +18,7 @@ using System.Runtime.Serialization;
 
 namespace _root
 {
+	#if MATT_S_FIXES_THIS
 	[Serializable]
 	public partial class Error : System.Exception, ISerializable
 	{
@@ -36,4 +37,5 @@ namespace _root
 			info.AddValue("stackTrace", _stackTrace, typeof(System.Diagnostics.StackTrace));
 		}
 	}
+	#endif
 }
