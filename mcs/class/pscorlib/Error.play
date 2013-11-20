@@ -12,17 +12,18 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-package {
+import System.Diagnostics.StackTrace;
 
-	public class Error extends System.Exception
+package {
+	public partial class Error extends System.Exception
 	{
 		//
 		// Internal
 		//
-
 		private var _errorID : int;
 		private var _name : String;
 		private var _message : String;
+		private var _stackTrace : StackTrace;
 
 		//
 		// Properties
@@ -65,19 +66,29 @@ package {
 		//
 		// Methods
 		//
+		public function Error(ex:System.Exception) {
+			super(ex.Message, ex);
+			HResult = ex.HResult;
+			_stackTrace = new System.Diagnostics.StackTrace(ex, true);
+		}
 
 		public function Error(message:String = "", id:int = 0) {
 			super(message);
+			_stackTrace = new System.Diagnostics.StackTrace(this, true);
 			_errorID = id;
 		}
 
 		public function getStackTrace():String {
-			var stack:System.Diagnostics.StackTrace = new System.Diagnostics.StackTrace(true);
-			var max:int = System.Math.Min(stack.FrameCount, 16);
-			var result:String = "";
+			var max:int = _stackTrace.FrameCount;
+			var result:String = "TypeError: Error #" + HResult.ToString() + ": " + Message + "\n";
 			for (var i:int = 0 ; i < max ; ++i) {
-				var sf:System.Diagnostics.StackFrame = stack.GetFrame(i);
-				result += sf.GetFileName() + "(" + sf.GetFileLineNumber() + ")\n";
+				var sf:System.Diagnostics.StackFrame = _stackTrace.GetFrame(i);
+				var funcNameSpace:String = sf.GetMethod().DeclaringType.Namespace;
+				var funcClassName:String = sf.GetMethod().DeclaringType.Name;
+				var funcName:String = sf.GetMethod().Name;
+				var file:String = sf.GetFileName();
+				var line:int = sf.GetFileLineNumber();
+				result += "at " + funcNameSpace + "::" + funcClassName + "/" + funcName + "()[" + file + ":" + line.ToString() + "]\n";
 			}
 
 			return result;
