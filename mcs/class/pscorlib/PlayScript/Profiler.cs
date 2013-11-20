@@ -834,7 +834,7 @@ namespace PlayScript
 			return new ScreenData (new RectangleF(0, 0, metrics.WidthPixels, metrics.HeightPixels),
 			                       metrics.ScaledDensity);
 #else
-			return new ScreenData (RectangleF.Empty, 0.0);
+			return new ScreenData (RectangleF.Empty, 0);
 #endif
 		}
 
