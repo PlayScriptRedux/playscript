@@ -4,6 +4,7 @@
 
 
 using System;
+using System.Drawing;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
@@ -818,6 +819,25 @@ namespace PlayScript
 			InvokeReportDelegate ();
 		}
 
+		private static ScreenData GetScreenData ()
+		{
+#if PLATFORM_MONOTOUCH
+			return new ScreenData (UIScreen.MainScreen.Bounds,
+			                       UIScreen.MainScreen.Scale);
+#elif PLATFORM_MONODROID
+			Context ctx = Android.App.Application.Context;
+			IWindowManager wm = ctx.GetSystemService(Context.WindowService).JavaCast<IWindowManager>();
+			Display display = wm.DefaultDisplay;
+			DisplayMetrics metrics = new DisplayMetrics();
+			display.GetMetrics(metrics);
+
+			return new ScreenData (new RectangleF(0, 0, metrics.WidthPixels, metrics.HeightPixels),
+			                       metrics.ScaledDensity);
+#else
+			return new ScreenData (RectangleF.Empty, 0.0);
+#endif
+		}
+
 		public static void InvokeReportDelegate ()
 		{
 			if (ReporterDelegate == null) {
@@ -826,13 +846,20 @@ namespace PlayScript
 
 			var pd = new ProfilerData();
 
-			#if PLATFORM_MONOTOUCH
 			pd.ReportName = sReportName;
+			pd.Screen = GetScreenData();
+
+			#if PLATFORM_MONOTOUCH
 			pd.Device = UIDevice.CurrentDevice.Name;
 			pd.Model = IOSDeviceHardware.Version.ToString ();
 			pd.SystemVersion = UIDevice.CurrentDevice.SystemVersion;
-			pd.Screen = new ScreenData (UIScreen.MainScreen.Bounds,
-			                            UIScreen.MainScreen.Scale);
+			#elif PLATFORM_MONODROID
+			// Note: stock Android does not provide a way to set the device's name,
+			// so won't be as meaningful as iOS.
+			pd.Device = Build.Display;
+			pd.Model = Build.Model;
+			pd.SystemVersion = Build.VERSION.Release;
+
 			#endif
 
 			// loading section
