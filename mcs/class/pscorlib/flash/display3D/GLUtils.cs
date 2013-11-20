@@ -13,6 +13,7 @@
 //      limitations under the License.
 
 using System;
+using System.Diagnostics;
 
 #if PLATFORM_MONOMAC
 using MonoMac.OpenGL;
@@ -27,6 +28,8 @@ namespace flash.display3D {
 
 	public class GLUtils {
 
+		// Comment the following line if you want the GL Error check in release mode on device
+		[Conditional("DEBUG")]
 		public static void CheckGLError()
 		{
 			#if PLATFORM_MONOTOUCH || PLATFORM_MONODROID

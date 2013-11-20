@@ -205,6 +205,9 @@ namespace PlayScript
 					throw new NotImplementedException();	// This case should not actually happen, did we miss something in the URL loader implementation?
 				}
 
+				if (mimeType != null && mimeType.StartsWith("image/"))
+					return new flash.display.Bitmap(flash.display.BitmapData.loadFromByteArray(dataAsByteArray));
+
 				switch (ext)
 				{
 				case ".bmp":

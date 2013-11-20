@@ -40,6 +40,18 @@
     <NoWarn>219</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'QE|AnyCPU' ">
+    <Optimize>true</Optimize>
+    <OutputPath>bin\QE</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
+    <ConsolePause>false</ConsolePause>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>PLATFORM_MONODROID;OPENGL;PERFORMANCE_MODE</DefineConstants>
+    <NoWarn>219</NoWarn>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -951,6 +963,9 @@
     </Compile>
     <Compile Include="..\pscorlib\PlayScript\BinJSON.cs">
       <Link>PlayScript\BinJSON.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Error.cs">
+      <Link>Error.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>

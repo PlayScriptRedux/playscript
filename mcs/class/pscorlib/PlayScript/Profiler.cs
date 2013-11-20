@@ -4,6 +4,7 @@
 
 
 using System;
+using System.Drawing;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,6 +23,12 @@ using OpenTK.Graphics.ES20;
 #elif PLATFORM_MONODROID
 using OpenTK.Graphics;
 using OpenTK.Graphics.ES20;
+using Android.Views;
+using Android.Content;
+using Android.Graphics;
+using Android.Util;
+using Android.Runtime;
+using Android.OS;
 #endif
 
 namespace PlayScript
@@ -248,7 +255,7 @@ namespace PlayScript
 				Console.WriteLine("Loading milestone {0} {1}", name, sGlobalTimer.Elapsed);
 
 				// end profiling session for loading
-				if ((LoadingEndMilestone!=null) && name.Contains(LoadingEndMilestone)) {
+				if ((LoadingEndMilestone!=null) && name.Contains(LoadingEndMilestone) && sReportName == "Loading") {
 					EndSession();
 				}
 			}
@@ -650,6 +657,21 @@ namespace PlayScript
 			tw.WriteLine("SystemVersion: {0}", UIDevice.CurrentDevice.SystemVersion);
 			tw.WriteLine("Screen Size:   {0}", UIScreen.MainScreen.Bounds);
 			tw.WriteLine("Screen Scale:  {0}", UIScreen.MainScreen.Scale);
+			#elif PLATFORM_MONODROID
+			// Note: stock Android does not provide a way to set the device's name,
+			// so won't be as meaningful as iOS.
+			tw.WriteLine("Device:        {0}", Build.Display);
+			tw.WriteLine("Model:         {0}", Build.Model);
+			tw.WriteLine("SystemVersion: {0}", Build.VERSION.Release);
+
+			Context ctx = Android.App.Application.Context;
+			IWindowManager wm = ctx.GetSystemService(Context.WindowService).JavaCast<IWindowManager>();
+			Display display = wm.DefaultDisplay;
+			DisplayMetrics metrics = new DisplayMetrics();
+			display.GetMetrics(metrics);
+
+			tw.WriteLine("Screen Size:   {0}x{1}", metrics.WidthPixels, metrics.HeightPixels);
+			tw.WriteLine("Screen Scale:  {0}", metrics.ScaledDensity);
 			#endif
 			tw.WriteLine("************* Loading *************");
 			PrintLoading(tw);
@@ -681,6 +703,7 @@ namespace PlayScript
 #endif
 
 			if (SessionData != null) {
+				tw.WriteLine("********* Session Settings ********");
 				// write extra data about session
 				foreach (var kvp in SessionData) {
 					tw.WriteLine("{0}:  {1}", kvp.Key, kvp.Value);
@@ -776,7 +799,7 @@ namespace PlayScript
 			var profileLogDir = GetProfileLogDir();
 			if (profileLogDir != null) {
 				string id = DateTime.Now.ToString("u").Replace(' ', '-').Replace(':', '-');
-				var path = Path.Combine(profileLogDir, "profile-" + id + ".log");
+				var path = System.IO.Path.Combine(profileLogDir, "profile-" + id + ".log");
 				Console.WriteLine("Writing profiling report to: {0}", path);
 				using (var sw = new StreamWriter(path)) {
 					PrintReport(sw, true);
@@ -784,7 +807,7 @@ namespace PlayScript
 
 				if (recording != null)	{
 					// write telemetry data to file
-					var telemetryPath = Path.Combine(profileLogDir, "telemetry-" + id + ".flm");
+					var telemetryPath = System.IO.Path.Combine(profileLogDir, "telemetry-" + id + ".flm");
 					Telemetry.Session.SaveRecordingToFile(recording, telemetryPath);
 //					Telemetry.Parser.ParseFile(telemetryPath, telemetryPath + ".txt");
 				}
@@ -796,16 +819,146 @@ namespace PlayScript
 			InvokeReportDelegate ();
 		}
 
+		private static ScreenData GetScreenData ()
+		{
+#if PLATFORM_MONOTOUCH
+			return new ScreenData (UIScreen.MainScreen.Bounds,
+			                       UIScreen.MainScreen.Scale);
+#elif PLATFORM_MONODROID
+			Context ctx = Android.App.Application.Context;
+			IWindowManager wm = ctx.GetSystemService(Context.WindowService).JavaCast<IWindowManager>();
+			Display display = wm.DefaultDisplay;
+			DisplayMetrics metrics = new DisplayMetrics();
+			display.GetMetrics(metrics);
+
+			return new ScreenData (new RectangleF(0, 0, metrics.WidthPixels, metrics.HeightPixels),
+			                       metrics.ScaledDensity);
+#else
+			return new ScreenData (RectangleF.Empty, 0);
+#endif
+		}
+
 		public static void InvokeReportDelegate ()
 		{
 			if (ReporterDelegate == null) {
 				return;
 			}
 
-			ProfilerData profilerData = new ProfilerData ();
+			var pd = new ProfilerData();
+
+			pd.ReportName = sReportName;
+			pd.Screen = GetScreenData();
+
+			#if PLATFORM_MONOTOUCH
+			pd.Device = UIDevice.CurrentDevice.Name;
+			pd.Model = IOSDeviceHardware.Version.ToString ();
+			pd.SystemVersion = UIDevice.CurrentDevice.SystemVersion;
+			#elif PLATFORM_MONODROID
+			// Note: stock Android does not provide a way to set the device's name,
+			// so won't be as meaningful as iOS.
+			pd.Device = Build.Display;
+			pd.Model = Build.Model;
+			pd.SystemVersion = Build.VERSION.Release;
+
+			#endif
+
+			// loading section
+			pd.Loading = new LoadingData (PlayScript.Player.Offline);
+			foreach (var milestone in sLoadMilestones) {
+				pd.Loading.AddMilestone(milestone.Key, milestone.Value);
+			}
+
+			// session section
+			pd.Session = new SessionData();
+			pd.Session.TotalFrames = sReportFrameCount;
+			pd.Session.TotalTime = sReportTime.Elapsed;
+
+			PerformanceFrameData performanceFrameData = GetPerformanceFrameData();
+
+			string key = "frame";
+			double minimumClampedValue = performanceFrameData.FastFrame;
+			double sum;
+
+			if (GetAverageClampedInMs ("frame", minimumClampedValue, out sum)) {
+				pd.Session.AverageFrameRateInMs = (float)sum;
+				pd.Session.AverageFrameRateInFps = (float)GetFpsFromMs (sum);
+				pd.Session.AverageMinimumFrameRate = (float)minimumClampedValue;
+			}
+
+			Section section;
+			if (sSections.TryGetValue(key, out section) == true) {
+				List<double> history = section.History.Select(a => a.Time.TotalMilliseconds).OrderBy(a => a).ToList();
+				int percentile = 95;
+				int index = (history.Count * percentile) / 100;
+				double pTime = history[index];
+
+				pd.Session.NinetyFivePercentInMiliseconds = pTime;
+				pd.Session.NinetyFivePercentInFramesPerSecond = GetFpsFromMs (pTime);
+			}
+
+			// TODO: convert this to a method. See PrintPercentageOfFrames
+			if (sSections.TryGetValue(key, out section) == true) {
+				int matchingFrames = 0;
+				for (int frame = 0 ; frame < sFrameCount ; frame++)
+				{
+					var history = section.History[frame];
+					if (history.Time.TotalMilliseconds <= performanceFrameData.FastFrame)
+					{
+						matchingFrames++;
+					}
+				}
+
+				pd.Session.FastFramePercentage = (double)(100.0 * matchingFrames) / (double)sFrameCount;
+			}
+
+			// TODO: convert this to a method. See PrintPercentageOfFrames
+			if (sSections.TryGetValue(key, out section) == true) {
+				int matchingFrames = 0;
+				for (int frame = 0 ; frame < sFrameCount ; frame++)
+				{
+					var history = section.History[frame];
+					if (history.Time.TotalMilliseconds >= performanceFrameData.SlowFrame)
+					{
+						matchingFrames++;
+					}
+				}
+
+				pd.Session.SlowFramePercentage = (double)(100.0 * matchingFrames) / (double)sFrameCount;
+			}
+
+			// TODO: missing in ProfilerData
+//			PrintAverageNWorst(tw, "frame", 10);
+
+#if ENABLE_GC_COUNT
+			// TODO: use a loop instead. Search for sGCMinGeneration and sGCMaxGeneration
+			pd.Session.GarbageCollection0Count = sReportGCCounts[0];
+			pd.Session.GarbageCollection1Count = sReportGCCounts[1];
+#endif
+
+			var t = new TimingData();
+			t.Name = "frame";
+			t.TotalTime = TimeSpan.Parse("00:01:58.8786507");
+			t.Average = 36.58;
+			t.Minimum = 9.37;
+			t.Maximum = 915.04;
+			t.Median = 30.64;
+			t.GarbageCollection0Count = 453;
+			t.UsedMemoryInKiloBytes = 0;
+			pd.Timings.Add(t);
+
+			t = new TimingData();
+			t.Name = "enterFrame";
+			t.TotalTime = TimeSpan.Parse("00:01:43.6920595");
+			t.Average = 31.91;
+			t.Minimum = 7.45;
+			t.Maximum = 912.19;
+			t.Median = 25.52;
+			t.GarbageCollection0Count = 431;
+			t.UsedMemoryInKiloBytes = 0;
+			pd.Timings.Add(t);
 
 
-			ReporterDelegate (profilerData);
+			ReporterDelegate (pd);
 		}
 
 		public static PerformanceFrameData GetPerformanceFrameData()
@@ -919,7 +1072,7 @@ namespace PlayScript
 		private static PerformanceFrameData sCurrentPerformanceFrameData;
 		private static PerformanceFrameData sDefaultPerformanceFrameData = new PerformanceFrameData(fastFrame: 1000.0/60.0, slowFrame: 1000.0/15.0, autoProfileFrame: 1000.0/45.0);
 #if PLATFORM_MONOTOUCH
-		private static PerformanceFrameData sSlowPerformanceFrameData = new PerformanceFrameData(fastFrame: 1000.0/30.0, slowFrame: 1000.0/10.0, autoProfileFrame: 1000.0/20.0);
+		private static PerformanceFrameData sSlowPerformanceFrameData = new PerformanceFrameData(fastFrame: 1000.0/60.0, slowFrame: 1000.0/10.0, autoProfileFrame: 1000.0/20.0);
 #endif
 	}
 }
