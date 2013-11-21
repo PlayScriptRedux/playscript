@@ -1787,6 +1787,11 @@ namespace _root
 			((ICollection)mList).CopyTo(array,index);
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public Array clone() {
+			return new Array(this);
+		}
+
 		int ICollection.Count {
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
