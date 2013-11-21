@@ -12,8 +12,6 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-import System.Diagnostics.StackTrace;
-
 package {
 	public partial class Error extends System.Exception
 	{
@@ -23,7 +21,7 @@ package {
 		private var _errorID : int;
 		private var _name : String;
 		private var _message : String;
-		private var _stackTrace : StackTrace;
+		private var _stackTrace : System.Diagnostics.StackTrace;
 
 		//
 		// Properties
@@ -60,6 +58,14 @@ package {
 			set
 			{
 				_name = value;
+			}
+		}
+
+		public property stackTraceObject : System.Diagnostics.StackTrace
+		{
+			set
+			{
+				_stackTrace = value;
 			}
 		}
 
