@@ -60,15 +60,13 @@ We currently recommend that if you wish to use the current alpha versions of the
 
 #### Building From Source
 
-PlayScript is simply part of the regular Mono build and the MCS compiler build by Mono will compile ActionScript and PlayScript .as and .play files.
-
-See the MONO build instructions below.
-
 Mac:
 
-http://www.mono-project.com/Compiling_Mono_on_OSX
+https://github.com/playscript/playscript-dist/wiki/Developer-Setup
 
 Windows:
+
+***We don't have specific instructions for building on Windows. However, PlayScript is simply part of the regular Mono build and the MCS compiler build by Mono will compile ActionScript and PlayScript .as and .play files. See the MONO build instructions below.***
 
 http://www.mono-project.com/Compiling_Mono_on_Windows
 
