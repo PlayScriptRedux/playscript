@@ -20,28 +20,22 @@ package {
 
 	public static class JSON {
 
+		// TODO: This is retaining
 		private static var sParseFuncLookup:System.Collections.Generic.Dictionary.<String,Func.<String, Object>> = 
 			new System.Collections.Generic.Dictionary.<String,Func.<String, Object>>();
-
-		// This is a weak dictionary to store the key/value json pairs..
-		private static var sJsonLookup:System.Runtime.CompilerServices.ConditionalWeakTable.<Object,WeakReference> = 
-			new System.Runtime.CompilerServices.ConditionalWeakTable.<Object,WeakReference>();
 	
 		public static function parse(text:String, reviver:Function = null):Object {
 
+			// Check to see if we should use a different JSON provider (like AMF or BinJSON).  First char will be '$'.
 			var parseFunc:Func.<String, Object>;
-			if (sParseFuncLookup.TryGetValue(text, out parseFunc)) {
-				sParseFuncLookup.Remove(text);
-				var obj:Object = parseFunc(text);
-				sJsonLookup.Add(text, new WeakReference(obj));
-				sJsonLookup.Add(obj, new WeakReference(text));
-				return obj;
-			}
-
-			var weakRef:WeakReference;
-			if (sJsonLookup.TryGetValue(text, out weakRef)) {
-				if (weakRef.IsAlive) {
-					return weakRef.Target;
+			if (text.StartsWith("$")) {
+				if (sParseFuncLookup.TryGetValue(text, out parseFunc)) {
+					sParseFuncLookup.Remove(text);
+					var obj:Object = parseFunc(text);
+					return obj;
+				} else {
+					throw new InvalidOperationException("The amf or BinJSON URL for " + text + 
+					                                    " wasn't found.  Are you trying to parse amf/binjson data twice?");
 				}
 			}
 
@@ -53,13 +47,6 @@ package {
 
 		public static function stringify(value:Object, replacer:* = null, space:* = null):String {
 
-			var weakRef:WeakReference;
-			if (sJsonLookup.TryGetValue(value, out weakRef)) {
-				if (weakRef.IsAlive) {
-					return String(weakRef.Target);
-				}
-			}
-
 			PlayScript.Profiler.Begin("json-stringify");
 			var s:String = MiniJson.Json.Stringify(value);
 			PlayScript.Profiler.End("json-stringify");
@@ -67,8 +54,10 @@ package {
 		}
 
 		public static function storeJsonParseFunc(jsonKey:String, func:Func.<String, Object>):void {
+			if (!jsonKey.StartsWith("$"))
+				throw new Error("Invalid json key");
 			// store key -> parse function data
-			sParseFuncLookup[jsonKey] = func;
+			sParseFuncLookup.Add(jsonKey, func);
 		}
 
 	}

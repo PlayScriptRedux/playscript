@@ -44,10 +44,12 @@ namespace PlayScript
 		GetMemberBinderCreated,
 		GetMemberBinderInvoked,
 		GetMemberBinder_Resolve_Invoked,
+		GetMemberBinder_Resolve_Time,
 		GetMemberBinder_Expando,
 		SetMemberBinderCreated,
 		SetMemberBinderInvoked,
 		SetMemberBinder_Resolve_Invoked,
+		SetMemberBinder_Resolve_Time,
 		InvokeBinderCreated,
 		InvokeBinderInvoked,
 		InvokeBinderInvoked_Fast,
@@ -93,7 +95,9 @@ namespace PlayScript
 	/// </summary>
 	public class Stats
 	{
-		public int[] Counters = new int[(int)StatsCounter.Total];
+		public double[] Counters = new double[(int)StatsCounter.Total];
+
+		private Stopwatch stopWatch = new Stopwatch();
 
 		public void Add(Stats other)
 		{
@@ -129,13 +133,13 @@ namespace PlayScript
 		public void Reset()
 		{
 			for (int i=0; i < Counters.Length; i++) {
-				Counters[i] = 0;
+				Counters[i] = 0.0;
 			}
 		}
 
-		public Dictionary<string, int> ToDictionary(bool skipZeros)
+		public Dictionary<string, double> ToDictionary(bool skipZeros)
 		{
-			var d = new Dictionary<string, int>();
+			var d = new Dictionary<string, double>();
 			for (int i=0; i < Counters.Length; i++) {
 				var value = Counters[i];
 				if (!skipZeros || (value != 0)) {
@@ -157,7 +161,46 @@ namespace PlayScript
 		[Conditional("BINDERS_RUNTIME_STATS")]
 		public static void Increment(StatsCounter counter)
 		{
-			CurrentInstance.Counters[(int)counter]++;
+			CurrentInstance.Counters[(int)counter] += 1.0;
+		}
+
+		/// <summary>
+		/// Starts millisecond timer (only one can be active at a time).
+		/// 
+		/// Note that this method is conditionally compiled, so there is no need to use #if BINDERS_RUNTIME_STATS around its usage.
+		/// </summary>
+		/// <param name="counter">The stat counter to increment.</param>
+		[Conditional("BINDERS_RUNTIME_STATS")]
+		public static void Start(StatsCounter counter)
+		{
+			CurrentInstance.stopWatch.Reset ();
+			CurrentInstance.stopWatch.Start ();
+		}
+
+		/// <summary>
+		/// Stops millisecond timer.
+		/// 
+		/// Note that this method is conditionally compiled, so there is no need to use #if BINDERS_RUNTIME_STATS around its usage.
+		/// </summary>
+		/// <param name="counter">The stat counter to increment.</param>
+		[Conditional("BINDERS_RUNTIME_STATS")]
+		public static void Stop(StatsCounter counter)
+		{
+			CurrentInstance.stopWatch.Stop ();
+			CurrentInstance.Counters[(int)counter] += CurrentInstance.stopWatch.Elapsed.TotalMilliseconds;
+		}
+
+		/// <summary>
+		/// Dumps current stats to console.
+		/// </summary>
+		/// <param name="skipZeros">If set to <c>true</c> skip zeros.</param>
+		public static void Dump(bool skipZeros = false)
+		{
+			System.Console.WriteLine ("-------- Dynamic Stats ----------");
+			var dict = CurrentInstance.ToDictionary (skipZeros);
+			foreach (var pair in dict) {
+				System.Console.WriteLine (pair.Key + ": " + pair.Value);			}
+			System.Console.WriteLine ("---------------------------------");
 		}
 	}
 }

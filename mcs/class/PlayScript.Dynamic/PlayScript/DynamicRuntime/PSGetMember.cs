@@ -176,6 +176,7 @@ namespace PlayScript.DynamicRuntime
 
 			// resolve name
 			Stats.Increment(StatsCounter.GetMemberBinder_Resolve_Invoked);
+			Stats.Start(StatsCounter.GetMemberBinder_Resolve_Time);
 
 			// The constructor is a special synthetic property - we have to handle this for AS compatibility
 			if (mName == "constructor") {
@@ -187,6 +188,7 @@ namespace PlayScript.DynamicRuntime
 				mField = null;
 				mMethod = null;
 				mTargetType = typeof(Type);
+				Stats.Stop(StatsCounter.GetMemberBinder_Resolve_Time);
 				return PlayScript.Dynamic.ConvertValue<T> (otype);
 			}
 
@@ -209,6 +211,7 @@ namespace PlayScript.DynamicRuntime
 					mField    = null;
 					mMethod   = null;
 					mTargetType = property.PropertyType;
+					Stats.Stop(StatsCounter.GetMemberBinder_Resolve_Time);
 					return PlayScript.Dynamic.ConvertValue<T>(mPropertyGetter.Invoke(o, null));
 				}
 			}
@@ -229,6 +232,7 @@ namespace PlayScript.DynamicRuntime
 					mField    = field;
 					mMethod   = null;
 					mTargetType = field.FieldType;
+					Stats.Stop(StatsCounter.GetMemberBinder_Resolve_Time);
 					return PlayScript.Dynamic.ConvertValue<T>(field.GetValue(o));
 				}
 			}
@@ -251,10 +255,7 @@ namespace PlayScript.DynamicRuntime
 				mField    = null;
 				mMethod   = method;
 				mTargetType = PlayScript.Dynamic.GetDelegateTypeForMethod(mMethod);
-				if (mTargetType == null) {
-				}
-
-				// construct method delegate
+				Stats.Stop(StatsCounter.GetMemberBinder_Resolve_Time);
 				return PlayScript.Dynamic.ConvertValue<T>(Delegate.CreateDelegate(mTargetType, o, mMethod));
 			}
 
@@ -268,8 +269,11 @@ namespace PlayScript.DynamicRuntime
 				mField    = null;
 				mMethod   = null;
 				object result = ((IDynamicClass)o).__GetDynamicValue(mName);
+				Stats.Stop(StatsCounter.GetMemberBinder_Resolve_Time);
 				return PlayScript.Dynamic.ConvertValue<T>(result);
 			}
+
+			Stats.Stop(StatsCounter.GetMemberBinder_Resolve_Time);
 
 			return Dynamic.GetUndefinedValue<T>();
 		}

@@ -925,6 +925,9 @@
     <Compile Include="..\pscorlib\Amf\ReflectionSerializer.cs">
       <Link>Amf\ReflectionSerializer.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\Error.cs">
+      <Link>Error.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="flash\external\" />

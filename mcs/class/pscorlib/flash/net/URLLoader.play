@@ -51,6 +51,9 @@ package flash.net {
 		public var startDispatchTime : long;
 		public var endDispatchTime : long;
 
+		// An optional loader handler used to switch url loader to load from an alternate source
+		private var loaderHandler:LoaderHandler;
+
 		//
 		// Methods
 		//
@@ -89,7 +92,7 @@ package flash.net {
 				doRemoteLoad(synchronous);
 			} else
 			{
-				var localPath = PlayScript.Player.TryResolveResourcePath(request.url);
+				var localPath = resolvePath(request.url);
 				if (localPath == null)
 				{
 					// doesn't exist locally, so try to load it remotely.
@@ -394,27 +397,7 @@ package flash.net {
 			TraceAccurateMetricsStartLoading();
 
 			// handle file loading
-			var path:String = null;
-
-			// check any registered loader handlers
-			var curLoadHandler:LoaderHandler = null;
-			if (sLoaderHandlers != null) {
-				for each (var loadHandler:LoaderHandler in sLoaderHandlers) {
-					if (mRequest.url.EndsWith(loadHandler.sourceExt)) {
-						var foundPath:String = PlayScript.Player.TryResolveResourcePath(mRequest.url.Replace(loadHandler.sourceExt, loadHandler.targetExt));
-						if (foundPath != null) {
-							path = foundPath;
-							curLoadHandler = loadHandler;
-							trace("URLLoader: loading " + path + " instead of " + mRequest.url);
-						}
-					}
-				}
-			}
-
-			if (path == null) {
-				path = PlayScript.Player.TryResolveResourcePath(mRequest.url);
-			}
-
+			var path:String = resolvePath(mRequest.url);
 			if (path == null)
 			{
 				trace("URLLoader: could not load ", mRequest.url);
@@ -454,8 +437,8 @@ package flash.net {
 			var fileData:byte[] = new byte[0];
 #endif
 
-			if (curLoadHandler != null) {
-				var callback:Func.<String,ByteArray,ByteArray> = Func.<String,ByteArray,ByteArray>(curLoadHandler.handler);
+			if (loaderHandler != null) {
+				var callback:Func.<String,ByteArray,ByteArray> = Func.<String,ByteArray,ByteArray>(loaderHandler.handler);
 				var outBytes:ByteArray = callback(path, ByteArray.fromArray(fileData)) as ByteArray;
 				fileData = outBytes.getRawArray();
 			}
@@ -547,12 +530,41 @@ package flash.net {
 					return;
 			}
 		}
+
+		// Resolve actual real path to our resource.  If we have a special handler for a particular extension, apply it.
+		private function resolvePath(url:String):String {
+
+			var path:String = null;
+
+			// check any registered loader handlers
+			this.loaderHandler = null;
+			if (sLoaderHandlers != null) {
+				for each (var handler:LoaderHandler in sLoaderHandlers) {
+					if (mRequest.url.EndsWith(handler.sourceExt)) {
+						if (handler.matcher == null || (Func.<String,Boolean>(handler.matcher))(mRequest.url)) {
+							var foundPath:String = PlayScript.Player.TryResolveResourcePath(mRequest.url.Replace(handler.sourceExt, handler.targetExt));
+							if (foundPath != null) {
+								path = foundPath;
+								this.loaderHandler = handler;
+								trace("URLLoader: loading " + path + " instead of " + mRequest.url);
+							}
+						}
+					}
+				}
+			}
+
+			if (path == null) {
+				path = PlayScript.Player.TryResolveResourcePath(mRequest.url);
+			}
+
+			return path;
+		}
 		
-		public static function addLoaderHandler(sourceExt:String, targetExt:String, handler:Function):void {
+		public static function addLoaderHandler(sourceExt:String, targetExt:String, handler:Function, matcher:Function = null):void {
 			if (sLoaderHandlers == null) {
 				sLoaderHandlers = new System.Collections.Generic.List.<LoaderHandler>();
 			}
-			sLoaderHandlers.Add(new LoaderHandler(sourceExt, targetExt, handler));
+			sLoaderHandlers.Add(new LoaderHandler(sourceExt, targetExt, handler, matcher));
 		}
 
 		// request for this loader
@@ -565,13 +577,15 @@ package flash.net {
 			public var sourceExt:String;
 			public var targetExt:String;
 			public var handler:Function;
+			public var matcher:Function;
 
-				public function LoaderHandler(sourceExt:String, targetExt:String, handler:Function)
-				{
-					this.sourceExt = sourceExt;
-					this.targetExt = targetExt;
-					this.handler = handler;
-				}
+			public function LoaderHandler(sourceExt:String, targetExt:String, handler:Function, matcher:Function)
+			{
+				this.sourceExt = sourceExt;
+				this.targetExt = targetExt;
+				this.handler = handler;
+				this.matcher = matcher;
+			}
 		}
 
 		// url loader queue (to be processed each frame)

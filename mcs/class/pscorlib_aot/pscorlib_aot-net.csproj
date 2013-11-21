@@ -917,6 +917,9 @@
     <Compile Include="..\pscorlib\Amf\ExpandoSerializer.cs">
       <Link>Amf\ExpandoSerializer.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\PlayScript\BinJSON.cs">
+      <Link>PlayScript\BinJSON.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="flash\external\" />

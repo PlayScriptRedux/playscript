@@ -913,7 +913,6 @@ namespace PlayScript
 			}
 		}
 
-
 		private flash.display.Stage    mStage;
 		private float mScrollDelta;
 		private int   mFrameCount;

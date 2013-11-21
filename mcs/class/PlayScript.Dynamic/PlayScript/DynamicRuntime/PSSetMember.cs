@@ -131,6 +131,7 @@ namespace PlayScript.DynamicRuntime
 
 			// resolve name
 			Stats.Increment(StatsCounter.SetMemberBinder_Resolve_Invoked);
+			Stats.Start(StatsCounter.SetMemberBinder_Resolve_Time);
 
 			// resolve as property
 			// TODO: we allow access to non-public properties for simplicity,
@@ -152,6 +153,7 @@ namespace PlayScript.DynamicRuntime
 
 					mArgs[0] = PlayScript.Dynamic.ConvertValue(value, property.PropertyType);
 					mPropertySetter.Invoke(o, mArgs);
+					Stats.Stop(StatsCounter.SetMemberBinder_Resolve_Time);
 					return value;
 				}
 			}
@@ -174,6 +176,7 @@ namespace PlayScript.DynamicRuntime
 					// resolve conversion function
 					object newValue = PlayScript.Dynamic.ConvertValue(value, mField.FieldType);
 					mField.SetValue(o, newValue);
+					Stats.Stop(StatsCounter.SetMemberBinder_Resolve_Time);
 					return value;
 				}
 			}
@@ -187,8 +190,11 @@ namespace PlayScript.DynamicRuntime
 				mPreviousAction = null;
 				mPreviousTarget = null;
 				((IDynamicClass)o).__SetDynamicValue(mName, value);
+				Stats.Stop(StatsCounter.SetMemberBinder_Resolve_Time);
 				return value;
 			}		
+
+			Stats.Stop(StatsCounter.SetMemberBinder_Resolve_Time);
 
 			// failed
 			return default(T);
