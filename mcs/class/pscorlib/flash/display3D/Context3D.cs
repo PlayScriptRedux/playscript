@@ -1015,38 +1015,38 @@ namespace flash.display3D {
 							texture.setSamplerState(Context3D.DefaultSamplerState);
 						}
 						
-						#if PLATFORM_MONODROID
-						// set alpha texture
-						if (texture.alphaTexture != null) {
-
-							if (StateCache.updateActiveTextureSample(4 + sampler)) 
-							{
-								GL.ActiveTexture (TextureUnit.Texture4 + sampler);
-								GLUtils.CheckGLError ();
-							}
-
-							TextureBase alphaTexture = texture.alphaTexture;
-							var alphaTarget = alphaTexture.textureTarget;
-							GL.BindTexture (alphaTarget, alphaTexture.textureId);
-							GLUtils.CheckGLError ();
-
-							if (state != null) {
-								alphaTexture.setSamplerState (state);
-							} else {
-								alphaTexture.setSamplerState (Context3D.DefaultSamplerState);
-							}
-						} 
-						else {
-
-							if (StateCache.updateActiveTextureSample(4 + sampler)) 
-							{
-								GL.ActiveTexture (TextureUnit.Texture4 + sampler);
-								GLUtils.CheckGLError ();
-							}
-
-							GL.BindTexture( target, texture.textureId);
-						}
-						#endif
+//						#if PLATFORM_MONODROID
+//						// set alpha texture
+//						if (texture.alphaTexture != null) {
+//
+//							if (StateCache.updateActiveTextureSample(4 + sampler)) 
+//							{
+//								GL.ActiveTexture (TextureUnit.Texture4 + sampler);
+//								GLUtils.CheckGLError ();
+//							}
+//
+//							TextureBase alphaTexture = texture.alphaTexture;
+//							var alphaTarget = alphaTexture.textureTarget;
+//							GL.BindTexture (alphaTarget, alphaTexture.textureId);
+//							GLUtils.CheckGLError ();
+//
+//							if (state != null) {
+//								alphaTexture.setSamplerState (state);
+//							} else {
+//								alphaTexture.setSamplerState (Context3D.DefaultSamplerState);
+//							}
+//						} 
+//						else {
+//
+//							if (StateCache.updateActiveTextureSample(4 + sampler)) 
+//							{
+//								GL.ActiveTexture (TextureUnit.Texture4 + sampler);
+//								GLUtils.CheckGLError ();
+//							}
+//
+//							GL.BindTexture( target, texture.textureId);
+//						}
+//						#endif
 
 					} else {
 						// texture is null so unbind texture

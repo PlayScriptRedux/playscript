@@ -345,8 +345,38 @@ namespace flash.display3D.textures {
 			trackMemoryUsage(memUsage);
 		}
 		
-		public void uploadFromByteArray(ByteArray data, uint byteArrayOffset, uint miplevel = 0) {
-			throw new NotImplementedException();
+		public unsafe void uploadFromByteArray(ByteArray data, uint byteArrayOffset, uint miplevel = 0) {
+			int memUsage = (mWidth * mHeight) * 4;
+			sMemoryUsedForTextures += memUsage;
+			Console.WriteLine("Texture.uploadFromByteArray() - " + mWidth + "x" + mHeight + " - Mem: " + (memUsage / 1024) + " KB - Total Mem: " + (sMemoryUsedForTextures / 1024) + " KB");
+
+			// Bind the texture
+			GL.BindTexture (textureTarget, textureId);
+			GLUtils.CheckGLError ();
+
+			#if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH
+			// pin pointer to byte array data
+			fixed (byte *bytePtr = data.getRawArray()) {
+				IntPtr ptr = (IntPtr)bytePtr;
+				GL.TexImage2D(textureTarget, (int)miplevel, PixelInternalFormat.Rgba, mWidth, mHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte, ptr);
+			}
+			mAllocated = true;
+			#elif PLATFORM_MONODROID
+			fixed(byte *ptr = data.getRawArray()) 
+			{
+				var address = new IntPtr(ptr + data.position);
+				GL.TexImage2D(textureTarget, (int)miplevel, (int)PixelInternalFormat.Rgba, (int)mWidth, (int)mHeight, 0, PixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)address);
+			}
+			GLUtils.CheckGLError ();
+			mAllocated = true;
+			#endif
+
+			// unbind texture and pixel buffer
+			GL.BindTexture (textureTarget, 0);
+			GLUtils.CheckGLError ();
+
+			// store memory usaged by texture
+			trackMemoryUsage(memUsage);
 		}
 
 		public int width 	{ get { return mWidth; } }
