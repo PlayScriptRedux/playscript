@@ -328,8 +328,10 @@ namespace flash.display3D.textures {
 			#endif
 
 			#if PLATFORM_MONOTOUCH || PLATFORM_MONODROID
-            	GL.GenerateMipmap(textureTarget);
-				GLUtils.CheckGLError ();
+				if (generateMipmap) {
+	            	GL.GenerateMipmap(textureTarget);
+					GLUtils.CheckGLError ();
+				}
 			#endif
 
 			// unbind texture and pixel buffer

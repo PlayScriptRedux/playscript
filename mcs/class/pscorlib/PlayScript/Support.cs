@@ -24,7 +24,7 @@ namespace PlayScript
 
 		// Perform non static "is" check with target type
 		public static bool IsCheck(object value, object type) {
-			if (value == null) {
+			if (PlayScript.Dynamic.IsNullOrUndefined (value)) {
 				return false;
 			}
 			return ((Type)type).IsAssignableFrom (value.GetType ());
@@ -32,7 +32,7 @@ namespace PlayScript
 
 		// Perform non static "as" operation with target type
 		public static dynamic DynamicAs(object value, object type) {
-			if (value == null) {
+			if (PlayScript.Dynamic.IsNullOrUndefined (value)) {
 				return null;
 			}
 			if (type == null) {
@@ -42,7 +42,8 @@ namespace PlayScript
 		}
 
 		public static bool DynamicIn(object value, object key) {
-			if (value == null || key == null) {
+			key = PlayScript.Dynamic.FormatKeyForAs (key);
+			if (PlayScript.Dynamic.IsNullOrUndefined (value) || key == null) {
 				return false;
 			}
 			string keyStr = key as string;

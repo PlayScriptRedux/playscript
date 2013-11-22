@@ -525,7 +525,58 @@ namespace MiniJson {
 				return false;
 			}
 		}
-		
+
+		protected static bool serializeObject( IEnumerable< KeyValuePair<string, object> > anObject, StringBuilder builder , int depth )
+		{
+			String tabs;
+			String tabsEntry;
+			if( depth >= 0 ) {
+				tabs = getTabs(depth);
+				tabsEntry = getTabs (depth+1);
+				builder.Append( "{\n" );
+			} else {
+				tabs = "";
+				tabsEntry = "";
+				builder.Append( "{" );
+			}
+
+			bool first = true;
+			foreach (var kvp in anObject)
+			{
+				string key = kvp.Key;
+				object value = kvp.Value;
+
+				if( !first )
+				{
+					builder.Append( ", " );
+					if( depth >= 0 ) {
+						builder.Append( "\n" );
+					}
+				}
+
+				if( depth >= 0  ) {
+					builder.Append( tabsEntry );
+				}
+				serializeString( key, builder );
+				builder.Append( ": " );
+				int newDepth = ( depth >= 0 ) ? depth + 1 : depth;
+				if( !serializeValue( value, builder, newDepth) )
+				{
+					return false;
+				}
+
+				first = false;
+			}
+
+			if( depth >= 0 ) {
+				builder.Append( "\n" );
+				builder.Append( tabs );
+			}
+			builder.Append( "}" );
+			return true;
+		}
+
+
 		protected static bool serializeObject( IDictionary anObject, StringBuilder builder , int depth )
 		{
 			String tabs;
@@ -657,6 +708,10 @@ namespace MiniJson {
 			else if( value is Char )
 			{
 				serializeString( Convert.ToString( (char)value ), builder );
+			}
+			else if( value is IEnumerable< KeyValuePair<string, object> > )
+			{
+				serializeObject( (IEnumerable< KeyValuePair<string, object> >)value, builder, depth );
 			}
 			else if( value is IDictionary )
 			{

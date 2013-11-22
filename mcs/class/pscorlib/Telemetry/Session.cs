@@ -172,6 +172,13 @@ namespace Telemetry
 			WriteValue(".swf.height", height);
 			WriteValue(".swf.playerversion", version);
 			WriteValue(".swf.size", size);
+
+			// create flashvars as url variables
+			var vars = new flash.net.URLVariables();
+			foreach (var kvp in PlayScript.Profiler.SessionData) {
+				vars[kvp.Key] = kvp.Value;
+			}
+			WriteValue(".swf.flashvars", vars.toString());
 		}
 
 		private static void WriteCategoryEnabled(string category, bool enabled)

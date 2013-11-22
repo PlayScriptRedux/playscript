@@ -19,30 +19,45 @@ namespace flash.utils {
 
 		private static void AddToActiveTimerList(Timer timer) {
 			lock (sLock) {
-				sLockedActiveTimerList.Add(timer);
+				sLockedTimerListToAdd.Add(timer);
 			}
 		}
 
 		private static void RemoveFromActiveTimerList(Timer timer) {
 			lock (sLock) {
-				sLockedActiveTimerList.Remove(timer);
+				sLockedTimerListToRemove.Add(timer);
 			}
 		}
 
-		private static Timer[] CloneActiveTimers() {
+		private static List<Timer> ActiveTimers() {
 			lock (sLock) {
-				return sLockedActiveTimerList.ToArray();
+				// Update the active timer list
+				sActiveTimers.AddRange(sLockedTimerListToAdd);
+				sLockedTimerListToAdd.Clear();
+
+				foreach (Timer timer in sLockedTimerListToRemove)
+				{
+					sActiveTimers.Remove(timer);
+				}
+				sLockedTimerListToRemove.Clear();
 			}
+
+			return sActiveTimers;
 		}
 
 		private static object sLock = new object();
 
-		// list of all active timers that need per-frame processing
-		// It seems that only active timer list needs to be locked,
-		// as they can be created from another thread to inject functions in the main thread (like http load).
-		private static List<Timer> sLockedActiveTimerList = new List<Timer>();
+		// List of all timers that need to be added
+		private static List<Timer> sLockedTimerListToAdd = new List<Timer>();
+		// List of all timers that need to be removed
+		private static List<Timer> sLockedTimerListToRemove = new List<Timer>();
+		// List of all active timers
+		private static List<Timer> sActiveTimers = new List<Timer>();
 
-
+		// Note that we currently only have active timers.
+		// If there is no listeners, there is actually no reason to go through them every time.
+		// (it might from a time point of view, but other than that, it iw wasted CPU cycles).
+		// TODO: Improve this so the timers with no listeners have a lower CPU cost.
 	}
 
 }

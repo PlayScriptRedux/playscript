@@ -31,6 +31,20 @@ namespace PlayScript.DynamicRuntime
 
 			TypeLogger.LogType(o);
 
+			// get accessor for value type T
+			var accessor = o as IDynamicAccessor<T>;
+			if (accessor != null) {
+				accessor.SetIndex(index, value);
+				return value;
+			}
+
+			// fallback on untyped accessor
+			var untypedAccessor = o as IDynamicAccessorUntyped;
+			if (untypedAccessor != null) {
+				untypedAccessor.SetIndex(index, (object)value);
+				return value;
+			}
+
 			var l = o as IList<T>;
 			if (l != null) {
 				l [index] = value;
@@ -66,7 +80,7 @@ namespace PlayScript.DynamicRuntime
 				return value;
 			}
 
-			return default(T);
+			return value;
 		}
 
 		public T SetIndexAs<T> (object o, uint index, T value)
@@ -88,6 +102,20 @@ namespace PlayScript.DynamicRuntime
 		{
 			Stats.Increment(StatsCounter.SetIndexBinderInvoked);
 			Stats.Increment(StatsCounter.SetIndexBinder_Key_Invoked);
+
+			// get accessor for value type T
+			var accessor = o as IDynamicAccessor<T>;
+			if (accessor != null) {
+				accessor.SetIndex(key, value);
+				return value;
+			}
+
+			// fallback on untyped accessor
+			var untypedAccessor = o as IDynamicAccessorUntyped;
+			if (untypedAccessor != null) {
+				untypedAccessor.SetIndex(key, (object)value);
+				return value;
+			}
 
 			// handle dictionaries
 			var dict = o as IDictionary;

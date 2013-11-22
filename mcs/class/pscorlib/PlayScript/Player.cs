@@ -73,6 +73,9 @@ namespace PlayScript
 		// maximum time spent running event loop until present is done
 		public static double MaxRunTimeUntilPresent = 100.0;
 
+		// time to sleep between frames if no present occurs
+		public static int SleepTimeBetweenFrames = 1;
+
 		static Player()
 		{
 			// add resource directories in static constructor
@@ -202,6 +205,9 @@ namespace PlayScript
 					throw new NotImplementedException();	// This case should not actually happen, did we miss something in the URL loader implementation?
 				}
 
+				if (mimeType != null && mimeType.StartsWith("image/"))
+					return new flash.display.Bitmap(flash.display.BitmapData.loadFromByteArray(dataAsByteArray));
+
 				switch (ext)
 				{
 				case ".bmp":
@@ -301,6 +307,39 @@ namespace PlayScript
 			return altPath;
 		}
 
+		private static string normalizePath(string path)
+		{
+			string[] pathParts = path.Split(Path.DirectorySeparatorChar);
+			List<string> result = new List<string>();
+			int skip = 0;
+
+			for(int i = pathParts.Length - 1; i >= 0; i--)
+			{
+				string p = pathParts[i];
+				if(p == "" || p == ".")
+				{
+					continue;
+				}
+
+				if(p == "..")
+				{
+					skip++;
+					continue;
+				}
+
+				if(skip != 0)
+				{
+					skip--;
+					continue;
+				}
+
+				result.Insert(0, p);
+			}
+
+			string separator = new string(Path.DirectorySeparatorChar, 1);
+			return string.Join(separator, result);
+		}
+
 		public static string TryResolveResourcePath(string path)
 		{
 			if (File.Exists(path))
@@ -321,8 +360,9 @@ namespace PlayScript
 			}
 
 #if PLATFORM_MONODROID
+			string npath = normalizePath(path);
 			try {
-				Application.Context.Assets.Open(path);
+				Application.Context.Assets.Open(npath);
 			} 
 			catch (Java.IO.FileNotFoundException e)
 			{
@@ -330,7 +370,7 @@ namespace PlayScript
 			    return null;
 			}
 
-			return path;
+			return npath;
 #else
 
 			// try all resource directories 
@@ -733,6 +773,7 @@ namespace PlayScript
 		// runs until graphics have been presented through Stage3D
 		public void RunUntilPresent(RectangleF bounds, Action onPresent = null)
 		{
+			Profiler.OnBeginFrame();
 			Telemetry.Session.OnBeginFrame();
 
 			// set context3D callback
@@ -754,12 +795,18 @@ namespace PlayScript
 				// dont let us run too long waiting for a present
 				if (timer.ElapsedMilliseconds > MaxRunTimeUntilPresent) {
 					break;
+				} else {
+					if (SleepTimeBetweenFrames > 0) {
+						// sleep between frames
+						Profiler.Begin("sleep", ".player.condition.wait");
+						System.Threading.Thread.Sleep(SleepTimeBetweenFrames);
+						Profiler.End("sleep");
+					}
 				}
 			}
 
 			Telemetry.Session.OnEndFrame();
-
-			Profiler.OnFrame();
+			Profiler.OnEndFrame();
 		}
 		
 
@@ -865,7 +912,6 @@ namespace PlayScript
 				response.position = 0;
 			}
 		}
-
 
 		private flash.display.Stage    mStage;
 		private float mScrollDelta;

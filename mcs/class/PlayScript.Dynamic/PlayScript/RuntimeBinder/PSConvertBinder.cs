@@ -165,10 +165,8 @@ namespace PlayScript.RuntimeBinder
 		{
 			Stats.Increment(StatsCounter.ConvertBinderInvoked);
 
-			if (o == null) {
-				return "null";
-			} else if (o == PlayScript.Undefined._undefined) {
-				return "undefined";
+			if (PlayScript.Dynamic.IsNullOrUndefined (o)) {
+				return null;
 			} else if  (o is string) {
 				return (string)o;
 			} else {

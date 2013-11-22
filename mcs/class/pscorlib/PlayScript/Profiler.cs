@@ -1,4 +1,10 @@
+// List of features that are enabled / disabled to save memory in the runtime structures.
+//#define ENABLE_GC_COUNTS
+//#define ENABLE_USED_MEM
+
+
 using System;
+using System.Drawing;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +23,12 @@ using OpenTK.Graphics.ES20;
 #elif PLATFORM_MONODROID
 using OpenTK.Graphics;
 using OpenTK.Graphics.ES20;
+using Android.Views;
+using Android.Content;
+using Android.Graphics;
+using Android.Util;
+using Android.Runtime;
+using Android.OS;
 #endif
 
 namespace PlayScript
@@ -38,6 +50,8 @@ namespace PlayScript
 		public static int  MaxNumberOfFramesElapsed = 0;
 		private static bool sHasProfiledLoading = false;		// set to true after loading has been profiled
 		private static string sFilterPrefix;
+
+		private static SectionHistory ZeroSectionHistory = new SectionHistory();
 
 		// if telemetryName is provided then it will be used for the name sent to telemetry when this section is entered
 		public static string Begin(string name, string telemetryName = null)
@@ -64,12 +78,16 @@ namespace PlayScript
 			}
 
 			section.Stats.Subtract(PlayScript.Stats.CurrentInstance);
+#if ENABLE_GC_COUNTS
 			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
 				section.GCCounts[i] -= System.GC.CollectionCount(i);
 			}
+#endif
+#if ENABLE_USED_MEM
 			if (ProfileMemory) {
 				section.CurrentUsedMemory -= mono_gc_get_used_size();
 			}
+#endif
 			if (section.Span != null)
 				section.Span.Begin();
 			section.Timer.Start();
@@ -91,9 +109,12 @@ namespace PlayScript
 			if (section.Span != null)
 				section.Span.End();
 			section.Stats.Add(PlayScript.Stats.CurrentInstance);
+#if ENABLE_GC_COUNTS
 			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
 				section.GCCounts[i] += System.GC.CollectionCount(i);
 			}
+#endif
+#if ENABLE_USED_MEM
 			if (ProfileMemory) {
 				section.CurrentUsedMemory += mono_gc_get_used_size();
 				if (section.CurrentUsedMemory > 0) {
@@ -102,6 +123,7 @@ namespace PlayScript
 				}
 			}
 			section.CurrentUsedMemory = 0;
+#endif
 		}
 
 		public static void Reset()
@@ -123,7 +145,24 @@ namespace PlayScript
 			NextFramesElapsed = 1;
 		}
 
-		public static void OnFrame()
+		// this should be called at the beginning of a frame
+		public static void OnBeginFrame()
+		{
+			if (!Enabled)
+				return;
+
+			if (ProfileLoading && !sHasProfiledLoading) {
+				// begin session for loading
+				StartSession("Loading", int.MaxValue, 0);
+				sHasProfiledLoading = true;
+			}
+
+			LastTelemetryFrameSpanStart = Telemetry.Session.BeginSpan();
+			Profiler.Begin("frame");
+		}
+
+		// this should be called at the end of a frame
+		public static void OnEndFrame()
 		{
 			if (!Enabled)
 				return;
@@ -141,12 +180,6 @@ namespace PlayScript
 				}
 			}
 			Profiler.End("frame");
-
-			if (ProfileLoading && !sHasProfiledLoading) {
-				// begin session for loading
-				StartSession("Loading", int.MaxValue, 1);
-				sHasProfiledLoading = true;
-			}
 
 #if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			if (ProfileGPU) {
@@ -167,20 +200,24 @@ namespace PlayScript
 				{
 					// pad with zeros if necessary
 					while (section.History.Count < sFrameCount) {
-						section.History.Add(new SectionHistory());
+						section.History.Add(ZeroSectionHistory);
 					}
 
 					var history = new SectionHistory();
 					history.Time = section.Timer.Elapsed;
 					history.NumberOfCalls = section.NumberOfCalls;
+#if ENABLE_GC_COUNTS
 					for (int i = sGCMinGeneration ; i < Profiler.sGCMaxGeneration ; ++i) {
 						history.GCCounts[i] = section.GCCounts[i];
 					}
+#endif
 					section.History.Add(history);
 				}
+#if ENABLE_GC_COUNTS
 				for (int i = sGCMinGeneration ; i < Profiler.sGCMaxGeneration ; ++i) {
 					section.GCCounts[i] = 0;
 				}
+#endif
 				section.Timer.Reset();
 				section.NumberOfCalls = 0;
 			}
@@ -207,9 +244,6 @@ namespace PlayScript
 					OnStartReport();
 				}
 			}
-
-			LastTelemetryFrameSpanStart = Telemetry.Session.BeginSpan();
-			Profiler.Begin("frame");
 		}
 
 		/// <summary>
@@ -221,7 +255,7 @@ namespace PlayScript
 				Console.WriteLine("Loading milestone {0} {1}", name, sGlobalTimer.Elapsed);
 
 				// end profiling session for loading
-				if ((LoadingEndMilestone!=null) && name.Contains(LoadingEndMilestone)) {
+				if ((LoadingEndMilestone!=null) && name.Contains(LoadingEndMilestone) && sReportName == "Loading") {
 					EndSession();
 				}
 			}
@@ -306,6 +340,11 @@ namespace PlayScript
 				// get history in milliseconds, sorted
 				var history = section.History.Where(a=>a.NumberOfCalls > 0).Select(a => a.Time.TotalMilliseconds).OrderBy(a => a).ToList();
 
+				long usedMem = 0;
+#if ENABLE_USED_MEM
+				usedMem = section.UsedMemory / 1024;
+#endif
+
 				// do we have a history?
 				if (history.Count > 0) {
 					// get min/max/median
@@ -314,10 +353,17 @@ namespace PlayScript
 					var medianTime = history[history.Count / 2];
 
 					// Gather all the GCCounts from the history
+					int GC0 = 0, GC1 = 0;
+
+#if ENABLE_GC_COUNTS
 					for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i)
 					{
 						section.GCCounts[i] = section.History.Sum(a => a.GCCounts[i]);
 					}
+
+					GC0 = section.GCCounts[sGCMinGeneration];
+					GC1 = section.GCCounts[sGCMaxGeneration-1]
+#endif
 
 					tw.WriteLine("{0,-40} total:{1,6} average:{2,6:0.00}ms average/call:{3,6:0.00}ms min:{4,6:0.00}ms max:{5,6:0.00}ms median:{6,6:0.00}ms #GC0: {7} #GC1: {8} UsedMem: {9}Kb",
 					             section.Name,
@@ -327,11 +373,10 @@ namespace PlayScript
 					             minTime,
 					             maxTime,
 					             medianTime,
-					             section.GCCounts[sGCMinGeneration],
-					             section.GCCounts[sGCMaxGeneration-1],
-					             section.UsedMemory / 1024
+					             GC0,
+					             GC1,
+					             usedMem
 					             );
-
 				} else {
 
 					tw.WriteLine("{0,-40} total:{1,6} average/frame:{2,6:0.00}ms average/call:{3,6:0.00}ms UsedMem: {4}Kb",
@@ -339,7 +384,7 @@ namespace PlayScript
 				             total,
 				             average,
 				             averagePerCall,
-					         section.UsedMemory / 1024
+					         usedMem
 				             );
 				}
 			}
@@ -385,12 +430,14 @@ namespace PlayScript
 
 					var history = section.History[frame];
 					string collect = "";
+#if ENABLE_GC_COUNTS
 					for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
 						if (history.GCCounts[i] > 0) {
 							collect += i.ToString();
 						}
 						gcCounts[i] += history.GCCounts[i];
 					}
+#endif
 					string numberOfCalls = (history.NumberOfCalls > 1) ? history.NumberOfCalls.ToString() + "x" : "";
 					tw.Write("{3,6}{0,6:0.00}{1,3}{2} ", history.Time.TotalMilliseconds, (collect != string.Empty) ? "*" + collect : "", c, numberOfCalls);
 					++c;
@@ -610,6 +657,21 @@ namespace PlayScript
 			tw.WriteLine("SystemVersion: {0}", UIDevice.CurrentDevice.SystemVersion);
 			tw.WriteLine("Screen Size:   {0}", UIScreen.MainScreen.Bounds);
 			tw.WriteLine("Screen Scale:  {0}", UIScreen.MainScreen.Scale);
+			#elif PLATFORM_MONODROID
+			// Note: stock Android does not provide a way to set the device's name,
+			// so won't be as meaningful as iOS.
+			tw.WriteLine("Device:        {0}", Build.Display);
+			tw.WriteLine("Model:         {0}", Build.Model);
+			tw.WriteLine("SystemVersion: {0}", Build.VERSION.Release);
+
+			Context ctx = Android.App.Application.Context;
+			IWindowManager wm = ctx.GetSystemService(Context.WindowService).JavaCast<IWindowManager>();
+			Display display = wm.DefaultDisplay;
+			DisplayMetrics metrics = new DisplayMetrics();
+			display.GetMetrics(metrics);
+
+			tw.WriteLine("Screen Size:   {0}x{1}", metrics.WidthPixels, metrics.HeightPixels);
+			tw.WriteLine("Screen Scale:  {0}", metrics.ScaledDensity);
 			#endif
 			tw.WriteLine("************* Loading *************");
 			PrintLoading(tw);
@@ -633,12 +695,15 @@ namespace PlayScript
 			PrintPercentageOfFrames(tw, "frame", "% Fast Frames", a => (a <= performanceFrameData.FastFrame), string.Format("<={0:0.00}ms", performanceFrameData.FastFrame));
 			PrintPercentageOfFrames(tw, "frame", "% Slow frames", a => (a >= performanceFrameData.SlowFrame), string.Format(">={0:0.00}ms", performanceFrameData.SlowFrame));
 			PrintAverageNWorst(tw, "frame", 10);
+#if ENABLE_GC_COUNTS
 			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i)
 			{
 				tw.WriteLine("GC {0} Count:      {1}", i, sReportGCCounts[i]);
 			}
+#endif
 
 			if (SessionData != null) {
+				tw.WriteLine("********* Session Settings ********");
 				// write extra data about session
 				foreach (var kvp in SessionData) {
 					tw.WriteLine("{0}:  {1}", kvp.Key, kvp.Value);
@@ -680,10 +745,12 @@ namespace PlayScript
 			// enable the report
 			sDoReport = true;
 
+#if ENABLE_GC_COUNTS
 			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i)
 			{
 				sReportGCCounts[i] = System.GC.CollectionCount(i);
 			}
+#endif
 
 			// start global timer
 			sReportTime = Stopwatch.StartNew();
@@ -717,9 +784,11 @@ namespace PlayScript
 
 			sReportTime.Stop();
 
+#if ENABLE_GC_COUNTS
 			for (int i = sGCMinGeneration ; i < sGCMaxGeneration ; ++i) {
 				sReportGCCounts[i] = System.GC.CollectionCount(i) - sReportGCCounts[i];
 			}
+#endif
 
 			var recording = Telemetry.Session.EndRecording();
 			if (recording != null) {
@@ -730,7 +799,7 @@ namespace PlayScript
 			var profileLogDir = GetProfileLogDir();
 			if (profileLogDir != null) {
 				string id = DateTime.Now.ToString("u").Replace(' ', '-').Replace(':', '-');
-				var path = Path.Combine(profileLogDir, "profile-" + id + ".log");
+				var path = System.IO.Path.Combine(profileLogDir, "profile-" + id + ".log");
 				Console.WriteLine("Writing profiling report to: {0}", path);
 				using (var sw = new StreamWriter(path)) {
 					PrintReport(sw, true);
@@ -738,7 +807,7 @@ namespace PlayScript
 
 				if (recording != null)	{
 					// write telemetry data to file
-					var telemetryPath = Path.Combine(profileLogDir, "telemetry-" + id + ".flm");
+					var telemetryPath = System.IO.Path.Combine(profileLogDir, "telemetry-" + id + ".flm");
 					Telemetry.Session.SaveRecordingToFile(recording, telemetryPath);
 //					Telemetry.Parser.ParseFile(telemetryPath, telemetryPath + ".txt");
 				}
@@ -750,16 +819,146 @@ namespace PlayScript
 			InvokeReportDelegate ();
 		}
 
+		private static ScreenData GetScreenData ()
+		{
+#if PLATFORM_MONOTOUCH
+			return new ScreenData (UIScreen.MainScreen.Bounds,
+			                       UIScreen.MainScreen.Scale);
+#elif PLATFORM_MONODROID
+			Context ctx = Android.App.Application.Context;
+			IWindowManager wm = ctx.GetSystemService(Context.WindowService).JavaCast<IWindowManager>();
+			Display display = wm.DefaultDisplay;
+			DisplayMetrics metrics = new DisplayMetrics();
+			display.GetMetrics(metrics);
+
+			return new ScreenData (new RectangleF(0, 0, metrics.WidthPixels, metrics.HeightPixels),
+			                       metrics.ScaledDensity);
+#else
+			return new ScreenData (RectangleF.Empty, 0);
+#endif
+		}
+
 		public static void InvokeReportDelegate ()
 		{
 			if (ReporterDelegate == null) {
 				return;
 			}
 
-			ProfilerData profilerData = new ProfilerData ();
+			var pd = new ProfilerData();
+
+			pd.ReportName = sReportName;
+			pd.Screen = GetScreenData();
+
+			#if PLATFORM_MONOTOUCH
+			pd.Device = UIDevice.CurrentDevice.Name;
+			pd.Model = IOSDeviceHardware.Version.ToString ();
+			pd.SystemVersion = UIDevice.CurrentDevice.SystemVersion;
+			#elif PLATFORM_MONODROID
+			// Note: stock Android does not provide a way to set the device's name,
+			// so won't be as meaningful as iOS.
+			pd.Device = Build.Display;
+			pd.Model = Build.Model;
+			pd.SystemVersion = Build.VERSION.Release;
+
+			#endif
+
+			// loading section
+			pd.Loading = new LoadingData (PlayScript.Player.Offline);
+			foreach (var milestone in sLoadMilestones) {
+				pd.Loading.AddMilestone(milestone.Key, milestone.Value);
+			}
+
+			// session section
+			pd.Session = new SessionData();
+			pd.Session.TotalFrames = sReportFrameCount;
+			pd.Session.TotalTime = sReportTime.Elapsed;
+
+			PerformanceFrameData performanceFrameData = GetPerformanceFrameData();
+
+			string key = "frame";
+			double minimumClampedValue = performanceFrameData.FastFrame;
+			double sum;
+
+			if (GetAverageClampedInMs ("frame", minimumClampedValue, out sum)) {
+				pd.Session.AverageFrameRateInMs = (float)sum;
+				pd.Session.AverageFrameRateInFps = (float)GetFpsFromMs (sum);
+				pd.Session.AverageMinimumFrameRate = (float)minimumClampedValue;
+			}
+
+			Section section;
+			if (sSections.TryGetValue(key, out section) == true) {
+				List<double> history = section.History.Select(a => a.Time.TotalMilliseconds).OrderBy(a => a).ToList();
+				int percentile = 95;
+				int index = (history.Count * percentile) / 100;
+				double pTime = history[index];
+
+				pd.Session.NinetyFivePercentInMiliseconds = pTime;
+				pd.Session.NinetyFivePercentInFramesPerSecond = GetFpsFromMs (pTime);
+			}
+
+			// TODO: convert this to a method. See PrintPercentageOfFrames
+			if (sSections.TryGetValue(key, out section) == true) {
+				int matchingFrames = 0;
+				for (int frame = 0 ; frame < sFrameCount ; frame++)
+				{
+					var history = section.History[frame];
+					if (history.Time.TotalMilliseconds <= performanceFrameData.FastFrame)
+					{
+						matchingFrames++;
+					}
+				}
+
+				pd.Session.FastFramePercentage = (double)(100.0 * matchingFrames) / (double)sFrameCount;
+			}
+
+			// TODO: convert this to a method. See PrintPercentageOfFrames
+			if (sSections.TryGetValue(key, out section) == true) {
+				int matchingFrames = 0;
+				for (int frame = 0 ; frame < sFrameCount ; frame++)
+				{
+					var history = section.History[frame];
+					if (history.Time.TotalMilliseconds >= performanceFrameData.SlowFrame)
+					{
+						matchingFrames++;
+					}
+				}
+
+				pd.Session.SlowFramePercentage = (double)(100.0 * matchingFrames) / (double)sFrameCount;
+			}
+
+			// TODO: missing in ProfilerData
+//			PrintAverageNWorst(tw, "frame", 10);
+
+#if ENABLE_GC_COUNT
+			// TODO: use a loop instead. Search for sGCMinGeneration and sGCMaxGeneration
+			pd.Session.GarbageCollection0Count = sReportGCCounts[0];
+			pd.Session.GarbageCollection1Count = sReportGCCounts[1];
+#endif
+
+			var t = new TimingData();
+			t.Name = "frame";
+			t.TotalTime = TimeSpan.Parse("00:01:58.8786507");
+			t.Average = 36.58;
+			t.Minimum = 9.37;
+			t.Maximum = 915.04;
+			t.Median = 30.64;
+			t.GarbageCollection0Count = 453;
+			t.UsedMemoryInKiloBytes = 0;
+			pd.Timings.Add(t);
+
+			t = new TimingData();
+			t.Name = "enterFrame";
+			t.TotalTime = TimeSpan.Parse("00:01:43.6920595");
+			t.Average = 31.91;
+			t.Minimum = 7.45;
+			t.Maximum = 912.19;
+			t.Median = 25.52;
+			t.GarbageCollection0Count = 431;
+			t.UsedMemoryInKiloBytes = 0;
+			pd.Timings.Add(t);
 
 
-			ReporterDelegate (profilerData);
+			ReporterDelegate (pd);
 		}
 
 		public static PerformanceFrameData GetPerformanceFrameData()
@@ -801,7 +1000,9 @@ namespace PlayScript
 		{
 			public TimeSpan Time;
 			public int		NumberOfCalls;
+#if ENABLE_GC_COUNTS
 			public int[]	GCCounts = new int[Profiler.sGCMaxGeneration];
+#endif
 		};
 
 		// info for a single section
@@ -812,9 +1013,13 @@ namespace PlayScript
 			public TimeSpan				TotalTime;
 			public List<SectionHistory>	History = new List<SectionHistory>();
 			public Stats 				Stats = new PlayScript.Stats();	
+#if ENABLE_GC_COUNTS
 			public int[]				GCCounts = new int[Profiler.sGCMaxGeneration];
+#endif
+#if ENABLE_USED_MEM
 			public Int64				UsedMemory;
 			public Int64				CurrentUsedMemory;
+#endif
 			public Telemetry.Span		Span;
 			public bool					Skipped;
 			public int					NumberOfCalls;
@@ -840,10 +1045,15 @@ namespace PlayScript
 		private static StringBuilder temporaryStringBuilder = new StringBuilder();
 		private const int sGCMinGeneration = 0;
 		private readonly static int sGCMaxGeneration = System.GC.MaxGeneration + 1;		// +1 as it seems that's System.GC.MaxGeneration is the index to get oldest collections of the oldest generation
+#if ENABLE_GC_COUNT
 		private static int[] sReportGCCounts = new int[sGCMaxGeneration];
+#endif
 
+#if ENABLE_USED_MEM
 		[DllImport ("__Internal", EntryPoint="mono_gc_get_used_size")]
 		extern static Int64 mono_gc_get_used_size ();
+#endif
+
 		#endregion
 
 		public class PerformanceFrameData
@@ -862,7 +1072,7 @@ namespace PlayScript
 		private static PerformanceFrameData sCurrentPerformanceFrameData;
 		private static PerformanceFrameData sDefaultPerformanceFrameData = new PerformanceFrameData(fastFrame: 1000.0/60.0, slowFrame: 1000.0/15.0, autoProfileFrame: 1000.0/45.0);
 #if PLATFORM_MONOTOUCH
-		private static PerformanceFrameData sSlowPerformanceFrameData = new PerformanceFrameData(fastFrame: 1000.0/30.0, slowFrame: 1000.0/10.0, autoProfileFrame: 1000.0/20.0);
+		private static PerformanceFrameData sSlowPerformanceFrameData = new PerformanceFrameData(fastFrame: 1000.0/60.0, slowFrame: 1000.0/10.0, autoProfileFrame: 1000.0/20.0);
 #endif
 	}
 }

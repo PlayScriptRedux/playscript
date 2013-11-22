@@ -69,6 +69,8 @@ MCS_OPTS		+= /psstrict-
 MCS_OPTS		+= /define:DEBUG
 MCS_OPTS		+= /t:exe
 
+RUN_OPTS        = --debug
+
 ALL_AS_TEST_FILES	?= $(shell find tests -name '*.as')
 BAD_AS_TEST_FILES	:= 
 AS_TEST_FILES		:= $(filter-out $(BAD_AS_TEST_FILES),$(ALL_AS_TEST_FILES))
@@ -128,10 +130,10 @@ $(DESTDIR)/$(1).exe: $(1).$(2) $(MCS_LIBS) $(MCS) $(MONO_WRAPPER)
 $(DESTDIR)/$(1).exe: $(MCS_LIB_NAMES:%=$(DESTDIR)/$(dir $(1))%)
 $(DESTDIR)/$(1).exe:
 	@mkdir -p $$(dir $$@)
-	rm -f $$@
-	$(MONO_WRAPPER) $(MCS) \
+	@rm -f $$@
+	@$(MONO_WRAPPER) $(MCS) \
 $(MCS_OPTS:%=\${\n}		%) \${\n}		/out:$$@ \
-		$(1).$(2) Assert.as Utils.as print.as
+		$(1).$(2) Assert.as Utils.as print.as test.as
 	test -e $$@
 
 endef
@@ -168,7 +170,7 @@ define define_run_test
 run-test: run-$(1)
 run-$(1): $(DESTDIR)/$(1).exe
 run-$(1):
-	mono $(DESTDIR)/$(1).exe
+	mono $(RUN_OPTS) $(DESTDIR)/$(1).exe
 endef
 
 $(foreach test,$(ALL_TEST_FILE_NAMES),$(eval $(call define_run_test,$(test))))

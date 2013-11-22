@@ -937,6 +937,9 @@
     <Compile Include="..\pscorlib\PlayScript\ProfilerData.cs">
       <Link>PlayScript\ProfilerData.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\PlayScript\BinJSON.cs">
+      <Link>PlayScript\BinJSON.cs</Link>
+    </Compile>
     <Compile Include="..\pscorlib\Amf\ExpandoSerializer.cs">
       <Link>Amf\ExpandoSerializer.cs</Link>
     </Compile>

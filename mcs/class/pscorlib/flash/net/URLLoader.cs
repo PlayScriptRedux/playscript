@@ -25,9 +25,15 @@ namespace flash.net {
 			Action wrapperAction = () =>
 			{
 				request.BeginGetResponse(new AsyncCallback((iar) =>
-				                                           {
-					var response = (HttpWebResponse)((WebRequest)iar.AsyncState).EndGetResponse(iar);
-					responseAction(response);
+				{
+					try {
+						var response = (HttpWebResponse)((WebRequest)iar.AsyncState).EndGetResponse(iar);
+						responseAction(response);
+					} catch(System.Net.WebException e)
+					{
+						Console.WriteLine(e.Message + " Method:"  + request.Method + " RequestUri:" + request.RequestUri);
+						throw e;
+					}
 				}), request);
 			};
 			wrapperAction.BeginInvoke(new AsyncCallback((iar) =>

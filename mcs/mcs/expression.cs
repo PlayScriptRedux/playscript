@@ -1842,7 +1842,16 @@ namespace Mono.CSharp
 				if (etype.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
 					return this;
 				}
-				
+
+				// Special case for as check with strings in PlayScript, since there is an implicit
+				// conversion from everything to string.
+				if (isPlayScript && type.BuiltinType == BuiltinTypeSpec.Type.String) {
+					var arguments = new Arguments (2);
+					arguments.Add (new Argument (expr));
+					arguments.Add (new Argument (new TypeOf (new TypeExpression (ec.BuiltinTypes.String, expr.Location), expr.Location)));
+					return new Invocation (new MemberAccess (new MemberAccess (new SimpleName ("PlayScript", loc), "Support", loc), "DynamicAs", loc), arguments).Resolve (ec);
+				}
+
 				Expression e = Convert.ImplicitConversionStandard (ec, expr, type, loc);
 				if (e != null) {
 					e = EmptyCast.Create (e, type, ec);
@@ -3694,6 +3703,20 @@ namespace Mono.CSharp
 						if (!(left.Type.IsNumeric || left.Type.IsAsUntyped) || !(right.Type.IsNumeric || right.Type.IsAsUntyped)) {
 							Error_OperatorCannotBeApplied (ec, left, right, oper, loc);
 							return null;
+						}
+					}
+
+					//
+					// PlayScript supports comparison between objects other than numeric types
+					// and strings.
+					//
+					if ((oper & Operator.ComparisonMask) != 0 && (oper & Operator.EqualityMask) == 0) {
+						if ((!BuiltinTypeSpec.IsPrimitiveType (left.Type) || !BuiltinTypeSpec.IsPrimitiveType (right.Type)) &&
+							!(left.Type.BuiltinType == BuiltinTypeSpec.Type.String && right.Type.BuiltinType == BuiltinTypeSpec.Type.String)) {
+							var args = new Arguments (2);
+							args.Add (new Argument (left));
+							args.Add (new Argument (right));
+							return new DynamicBinaryExpression (oper, this.GetOperatorExpressionTypeName (), args, loc).Resolve (ec);
 						}
 					}
 
@@ -6865,7 +6888,13 @@ namespace Mono.CSharp
 					// perform cast to type expression here using argument 0
 					// note its important to resolve argument 0 or else the cast will fail
 					// this cast supports the Vector.<T>([1,2,3]) syntax with Arguments[0] being an AsArrayInitializer
-					return (new Cast (member_expr, Arguments[0].Expr.Resolve(ec), loc)).Resolve (ec);
+					var cast_expr = Arguments [0].Expr.Resolve (ec);
+#if !DISABLE_AS3_NULL_STRINGS
+					// In PlayScript, the string value of null is "null"
+					if (cast_expr.IsNull && member_expr.Type != null && member_expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
+						return new StringConstant (ec.BuiltinTypes, "null", loc);
+#endif
+					return (new Cast (member_expr, cast_expr, loc)).Resolve (ec);
 				} 
 			}
 

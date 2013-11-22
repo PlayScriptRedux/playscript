@@ -51,6 +51,5 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="test.as" />
-    <Compile Include="test.cs" />
   </ItemGroup>
 </Project>
