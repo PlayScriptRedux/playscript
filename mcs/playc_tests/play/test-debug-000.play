@@ -1,0 +1,12 @@
+package
+{
+	public class Test
+	{
+		public static function Main():int {
+			trace("Hello PlayScript");
+			return 0;
+		}
+	}
+
+}
+

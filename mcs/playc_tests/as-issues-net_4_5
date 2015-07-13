@@ -1,0 +1,6 @@
+# This file contains test files which cause any type of error.
+
+# This file supports extended syntax
+# csXXXX.as		: test case causes error
+# csXXXX.as IGNORE 	: adds test to ignore list
+

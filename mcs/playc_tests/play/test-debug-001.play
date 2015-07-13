@@ -1,0 +1,39 @@
+package
+{
+	// Test PlayScript specific class, statement extensions.
+
+	[Partial]
+	public class Test
+	{
+		public function bar():void
+		{
+			trace("bar");
+		}
+	}
+
+	public class Bar {
+
+		public function Bar(b:int):void {
+
+		}
+	}
+
+	public class BarBar {
+
+		var _a:int = 100;
+
+		public function BarBar() {
+			var b:int = 200;
+			super(b);
+		}
+	}
+
+    public class Test
+    {
+        static var i:int = 2;
+        public static function Main():int {
+
+            return 0;
+        }
+    }
+}

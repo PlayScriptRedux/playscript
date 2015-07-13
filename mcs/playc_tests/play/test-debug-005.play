@@ -1,0 +1,23 @@
+package
+{
+	// Test various object and array literal functionality.
+
+	public class Test 
+	{
+		public static function foo(o:Object):void {
+			trace("hello");
+		}
+	
+	
+		public static function Main():int {
+			
+			// Test simple object literal
+			var o1:Object = { "aaa":100, "bbb":200.0, "ccc":true };
+		
+			//var o2:
+
+            return 0;
+		}
+	}
+
+}

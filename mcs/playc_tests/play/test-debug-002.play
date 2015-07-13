@@ -1,0 +1,38 @@
+package
+{
+	// Test calling super constructor from base constructor.
+
+    // TODO: Need to fix CS1729, legal in actionscript
+    // error CS1729: The type `_root.Object' does not contain a constructor that takes `2' arguments
+
+
+	public class Foo {
+		
+		public function Foo(a:int, b:int):void {
+			trace(a);
+			trace(b);
+		}
+	}
+	
+	public class Bar {
+		
+		public var _a:int = 100;
+		
+		public function Bar() {
+			// We should be able to use local vars and class vars in super call
+			var b:int = 200;
+			super(_a, b);
+		}
+	}
+
+	public class Test 
+	{
+		public static function Main():int {
+
+			var b:Bar = new Bar();
+
+            return 0;
+		}
+	}
+
+}

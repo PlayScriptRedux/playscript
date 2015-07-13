@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--This file contains expected IL and metadata produced by compiler for each test-->
+<tests>
+  <test name="play/test-debug-000.play">
+    <type name="_root.Test">
+      <method name="Int32 Main()" attrs="150">
+        <size>20</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="play/test-debug-003.play">
+    <type name="_root.Foo">
+      <method name="Void .ctor(Int32, Int32)" attrs="6278">
+        <size>30</size>
+      </method>
+    </type>
+    <type name="_root.Bar">
+      <method name="Void .ctor()" attrs="6278">
+        <size>62</size>
+      </method>
+    </type>
+    <type name="_root.Test">
+      <method name="Int32 Main()" attrs="150">
+        <size>16</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="play/test-debug-005.play">
+    <type name="_root.Test">
+      <method name="Void foo(System.Object)" attrs="150">
+        <size>12</size>
+      </method>
+      <method name="Int32 Main()" attrs="150">
+        <size>141</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="play/test-debug-007.play">
+    <type name="_root.Test">
+      <method name="Int32 Main()" attrs="150">
+        <size>873</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="play/test-debug-008.play">
+    <type name="_root.Test">
+      <method name="Int32 Main()" attrs="150">
+        <size>59</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="play/test-debug-009.play">
+    <type name="_root.Test">
+      <method name="Int32 Main()" attrs="150">
+        <size>10</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+</tests>

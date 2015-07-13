@@ -1,0 +1,50 @@
+package
+{
+	// Test config optional compilation
+
+	// Config block around import should work
+	PLATFORM::IOS {
+		import blah.blah.blah;
+	}
+
+	// Config prefix to import should work
+	PLATFORM::IOS
+	import blah.blah;
+
+	// Config prefix for function should work
+	PLATFORM::IOS
+	public function foo():void {
+
+	}
+
+	// Config prefix for interfaces should work
+	PLATFORM::IOS
+	public interface IBlah {
+		
+		function boo():void;
+				
+	}
+
+	public class Test 
+	{
+		// Config for class methods should work
+		PLATFORM::IOS 
+		{
+			public function foo():void {
+
+			}
+		}
+
+		public static function Main():int {
+
+			// Config block for method statements should work
+			PLATFORM::IOS 
+			{
+				trace("boo!");
+			}
+
+            return 0;
+		}
+	}
+
+}

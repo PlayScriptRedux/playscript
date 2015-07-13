@@ -1,0 +1,54 @@
+package
+{
+	// Casting tests.
+
+	public class Test 
+	{
+		// Test casts
+
+		public static function foo(u:uint):int {
+			trace(u);
+			return 100;
+		}
+
+		public static function bar(i:int):uint {
+			trace(i);
+			return 100;
+		}
+
+		public static function Main():int {
+			var i:int;
+			var u:uint;
+			var b:Boolean;
+			var n:Number;
+
+			foo(i);
+			bar(u);
+
+			// Assignment conversions
+			i = -50;
+			i = -100;
+			i = 200.22;
+
+			u = -50;
+			u = 100;
+			u = 200.22;
+
+			b = -50;
+			b = 100;
+			b = 200.22;
+
+			n = -50;
+			n = 100;
+			n = 200.22;
+
+			// Expression conversions
+
+            // TODO: missing in original test?
+
+            return 0;
+		}
+
+	}
+
+}

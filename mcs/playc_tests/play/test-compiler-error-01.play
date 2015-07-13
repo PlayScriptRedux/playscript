@@ -1,0 +1,21 @@
+package {
+
+    // error CS0163: Control cannot fall through from one case label to another
+    public class Test {
+        // Test switch pass through (should generate error).
+        static var i:int = 2;
+
+        public static function Main():int {
+            switch (i) {
+                case 1:
+                    trace(1);
+                case 2:
+                    trace(2);
+                default:
+                    trace(3);
+            }
+
+            return 0;
+        }
+    }
+}

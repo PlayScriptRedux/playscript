@@ -1,0 +1,37 @@
+package
+{
+	// Test calling super constructor from base constructor.
+
+	public class Foo {
+		
+		public function Foo(a:int, b:int):void {
+			trace(a);
+			trace(b);
+		}
+	}
+	
+	public class Bar extends Foo {
+		
+		public var _a:int = 100;
+		
+		public function Bar() {
+			// We should be able to use local vars and class vars in super call
+			var b:int = 200;
+			if (b == 200) {
+				super(_a, b);
+			} else {
+				super(100, 300);
+			}
+		}
+	}
+
+	public class Test 
+	{
+		public static function Main():int {
+			var b:Bar = new Bar();
+
+            return 0;
+		}
+	}
+
+}
