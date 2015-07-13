@@ -2489,6 +2489,7 @@ namespace Mono.CSharp
 			const Modifiers nv = (Modifiers.NEW | Modifiers.VIRTUAL);
 			bool ok = true;
 			var flags = mc.ModFlags;
+            var isPlay = this.Location.SourceFile != null && this.Location.SourceFile.FileType == SourceFileType.PlayScript;
 			
 			//
 			// At most one of static, virtual or override
@@ -2536,8 +2537,11 @@ namespace Mono.CSharp
 				}
 			}
 
-			if ((flags & Modifiers.PRIVATE) != 0){
+            if (!isPlay && (flags & Modifiers.PRIVATE) != 0){
 				if ((flags & vao) != 0){
+//                    Console.WriteLine("flags:\t" + flags);
+//                    Console.WriteLine("vao:\t" + vao);
+//                    Console.WriteLine("play:\t" + isPlay);
 					Report.Error (621, mc.Location, "`{0}': virtual or abstract members cannot be private", mc.GetSignatureForError ());
 					ok = false;
 				}
