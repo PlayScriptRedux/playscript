@@ -118,6 +118,9 @@
     <Compile Include="..\pscorlib\Dynamic.play">
       <Link>Dynamic.play</Link>
     </Compile>
+    <Compile Include="..\pscorlib\DotNetError.play">
+      <Link>DotNetError.play</Link>
+    </Compile>
     <Compile Include="..\pscorlib\Error.play">
       <Link>Error.play</Link>
     </Compile>
