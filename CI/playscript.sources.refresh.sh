@@ -2,14 +2,18 @@
 #
 # Stand-alone files
 #
-git diff --name-only mono-3.2.6..playscript-3.2.6001 |grep "Mono.PlayScript"
-git diff --name-only mono-3.2.6..playscript-3.2.6001 |grep "PlayScript.Core"
-git diff --name-only mono-3.2.6..playscript-3.2.6001 |grep "PlayScript.Dynamic\/"
-git diff --name-only mono-3.2.6..playscript-3.2.6001 |grep "PlayScript.Dynamic_aot"
-git diff --name-only mono-3.2.6..playscript-3.2.6001 |grep "pscorlib"|grep -v "pscorlib_aot"
-git diff --name-only mono-3.2.6..playscript-3.2.6001 |grep "pscorlib_aot"
-git diff --name-only mono-3.2.6..playscript-3.2.6001 |grep "mcs\/playc"|grep -v "_tests"
-git diff --name-only mono-3.2.6..playscript-3.2.6001 |grep "mcs\/playc_tests"
+
+CurrectBranch=`git rev-parse --abbrev-ref HEAD`
+CompareBranch=mono-3.2.6
+
+git diff --name-only ${CompareBranch}..${CurrentBranch} |grep "Mono.PlayScript"
+git diff --name-only ${CompareBranch}..${CurrentBranch} |grep "PlayScript.Core"
+git diff --name-only ${CompareBranch}..${CurrentBranch} |grep "PlayScript.Dynamic\/"
+git diff --name-only ${CompareBranch}..${CurrentBranch} |grep "PlayScript.Dynamic_aot"
+git diff --name-only ${CompareBranch}..${CurrentBranch} |grep "pscorlib"|grep -v "pscorlib_aot"
+git diff --name-only ${CompareBranch}..${CurrentBranch} |grep "pscorlib_aot"
+git diff --name-only ${CompareBranch}..${CurrentBranch} |grep "mcs\/playc"|grep -v "_tests"
+git diff --name-only ${CompareBranch}..${CurrentBranch} |grep "mcs\/playc_tests"
 #
 # Makefile files
 read -d '' makefile_files <<- EOF
@@ -76,7 +80,7 @@ echo "$project_files"
 #
 # C# Shared files with Mono
 # Note: hack, manually remove the two cross-merged files; see commit 6f1e4b547af11cf5c26a8846b2af8c24c0765fcd
-git diff --name-only mono-3.2.6..playscript-3.2.6001 |grep "mcs\/mcs\/" | grep "\.cs" |grep -v "mcs/mcs/complete.cs"|grep -v "mcs/mcs/cs-tokenizer.cs"
+git diff --name-only ${CompareBranch}..${CurrentBranch} |grep "mcs\/mcs\/" | grep "\.cs" |grep -v "mcs/mcs/complete.cs"|grep -v "mcs/mcs/cs-tokenizer.cs"
 #
 # Solution/Project files
 read -d '' misc_files <<- EOF
@@ -113,11 +117,19 @@ EOF
 echo "$misc_files"
 
 # Regresstion testing  files
-read -d '' test_fies <<- EOF
+read -d '' test_files <<- EOF
 mcs/tools/compiler-tester/CompilerTester.sln
 mcs/tools/compiler-tester/CompilerTester.csproj
 mcs/tools/compiler-tester/compiler-tester.cs
 EOF
 echo "$test_files"
 
+read -d '' license_files <<- EOF
+CONTRIBUTING.md
+LICENSE
+LICENSE.Mono
+mcs/LICENSE
+mcs/LICENSE.Mono
+EOF
+echo "$license_files"
 

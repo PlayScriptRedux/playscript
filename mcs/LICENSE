@@ -1,36 +1,19 @@
+Copyright 2015 Playscript Redux by SushiHangover/RobertN
 
-The Mono code under the mcs/ directory is licensed under various
-different licenses:
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
 
-	GNU GPL: details avaliable in the file LICENSE.GPL
-	GNU LGPL: details available in the file LICENSE.LGPL
-	MIT X11: text available in the file MIT.X11
-	MPL: text available in the file LICENSE.MPL
+     http://www.apache.org/licenses/LICENSE-2.0
 
-	For your convenience copies of the GNU GPL and GNU LGPL are
-	located in the file COPYING and COPYING.LIB.
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
 
-	* Class Libraries:
+This software is based of the original PlayScript that was also released under the Apache License.
 
-		All of the core classes licensed under the terms of
-		the MIT X11 license.
-
-		Third party libraries that we distribute for
-		convenience reasons are distributed under their own
-		terms (all of them allow development of proprietary
-		applications with them).
-
-		Third party libraries include: ByteFX.Data,
-		ICSharpCode.SharpZipLib, Npgsql, MicrosoftAjaxLibrary.
-
-		The Microsoft.JScript assembly is covered by the
-		MIT X11 and the Mozilla MPL license as it contains
-		ported pieces of code from Rhino, the Mozilla JavaScript
-		implementations
-
-	* Mono C# compiler: Dual licensed MIT X11 and GNU GPL.
-
-	* Mono Basic compiler: GNU GPL.
-
-	* Various tools in the `tools' directory: GNU GPL.
+Please review all the LICENSE files including LICENSE.Mono as this code is based off
+of that work.
 
