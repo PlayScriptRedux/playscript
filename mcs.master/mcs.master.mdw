@@ -1,0 +1,6 @@
+<WorkspaceItem ctype="Workspace">
+  <Items>
+    <Item>../mcs/tools/playshell/PlayShell.sln</Item>
+    <Item>../mcs/tools/csharp/csharp.sln</Item>
+  </Items>
+</WorkspaceItem>
