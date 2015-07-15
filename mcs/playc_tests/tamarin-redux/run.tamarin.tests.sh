@@ -36,6 +36,8 @@ python ./runtests.py \
  --exclude ${EXCLUDEDIRS} \
  --html \
  --threads 2
+
+mv *.html ../../../regressions
 popd
 
 
