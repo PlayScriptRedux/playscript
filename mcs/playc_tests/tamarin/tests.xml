@@ -1,5 +1,0 @@
-<tests>
-  <folder path="./as3/Definitions/Classes/ClassDef">
-  	<test testName="PublicClass" expectedFailed="3" />
-  </folder>
-</tests>
