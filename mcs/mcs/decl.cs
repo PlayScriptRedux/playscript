@@ -292,7 +292,13 @@ namespace Mono.CSharp {
 		/// <value>The type of the file.</value>
 		public virtual bool PsExtended { 
 			get {
-				return member_name.Location.SourceFile != null ? member_name.Location.SourceFile.PsExtended : false;
+				// member_name will be null if we are running in the repl;
+				// TODO: Determine if REPL should allow Extended PlayScript language, 
+				// for now to run Tamarin tests, only ActionScript
+				if (member_name != null)
+					return member_name.Location.SourceFile != null ? member_name.Location.SourceFile.PsExtended : false;
+				else
+					return false;
 			}
 		}
 

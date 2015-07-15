@@ -3,14 +3,12 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{D9F458AE-7290-4246-8E89-967D41C838CF}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Mono.PlayScript</RootNamespace>
     <AssemblyName>Mono.PlayScript</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
@@ -32,49 +30,32 @@
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
     <TargetFrameworkProfile />
+    <ReleaseVersion>1.0</ReleaseVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;NET_4_0</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NET_4_0;PLAYSCRIPT_REPL;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;NET_4_0</DefineConstants>
+    <DefineConstants>TRACE;NET_4_0;PLAYSCRIPT_REPL;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.XML" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\class\corlib\Mono.Security.Cryptography\CryptoConvert.cs">
-      <Link>CryptoConvert.cs</Link>
-    </Compile>
-    <Compile Include="..\..\class\Mono.CompilerServices.SymbolWriter\MonoSymbolFile.cs">
-      <Link>MonoSymbolFile.cs</Link>
-    </Compile>
-    <Compile Include="..\..\class\Mono.CompilerServices.SymbolWriter\MonoSymbolTable.cs">
-      <Link>MonoSymbolTable.cs</Link>
-    </Compile>
-    <Compile Include="..\..\class\Mono.CompilerServices.SymbolWriter\MonoSymbolWriter.cs">
-      <Link>MonoSymbolWriter.cs</Link>
-    </Compile>
-    <Compile Include="..\..\class\Mono.CompilerServices.SymbolWriter\SourceMethodBuilder.cs">
-      <Link>SourceMethodBuilder.cs</Link>
-    </Compile>
     <Compile Include="..\..\mcs\anonymous.cs">
       <Link>anonymous.cs</Link>
     </Compile>
@@ -117,17 +98,17 @@
     <Compile Include="..\..\mcs\convert.cs">
       <Link>convert.cs</Link>
     </Compile>
-    <Compile Include="..\..\mcs\cs-tokenizer.cs">
-      <Link>cs-tokenizer.cs</Link>
+    <Compile Include="..\..\mcs\ps-parser.cs">
+      <Link>ps-parser.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\ps-tokenizer.cs">
+      <Link>ps-tokenizer.cs</Link>
     </Compile>
     <Compile Include="..\..\mcs\decl.cs">
       <Link>decl.cs</Link>
     </Compile>
     <Compile Include="..\..\mcs\delegate.cs">
       <Link>delegate.cs</Link>
-    </Compile>
-    <Compile Include="..\..\mcs\doc-bootstrap.cs">
-      <Link>doc-bootstrap.cs</Link>
     </Compile>
     <Compile Include="..\..\mcs\doc.cs">
       <Link>doc.cs</Link>
@@ -143,9 +124,6 @@
     </Compile>
     <Compile Include="..\..\mcs\enum.cs">
       <Link>enum.cs</Link>
-    </Compile>
-    <Compile Include="..\..\mcs\eval.cs">
-      <Link>eval.cs</Link>
     </Compile>
     <Compile Include="..\..\mcs\expression.cs">
       <Link>expression.cs</Link>
@@ -231,27 +209,60 @@
     <Compile Include="..\..\tools\monop\outline.cs">
       <Link>outline.cs</Link>
     </Compile>
-    <Compile Include="cs-parser.cs" />
+    <Compile Include="..\..\mcs\ps-lang.cs">
+      <Link>ps-lang.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\ps-codegen.cs">
+      <Link>ps-codegen.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\cxx-emit.cs">
+      <Link>cxx-emit.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\cxx-target.cs">
+      <Link>cxx-target.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\inliner.cs">
+      <Link>inliner.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\intrinsics.cs">
+      <Link>intrinsics.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\js-emit.cs">
+      <Link>js-emit.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\js-target.cs">
+      <Link>js-target.cs</Link>
+    </Compile>
+    <Compile Include="..\..\build\common\Consts.cs">
+      <Link>Consts.cs</Link>
+    </Compile>
+    <Compile Include="Assembly\AssemblyInfo.cs">
+      <Link>AssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\cs-parser.cs">
+      <Link>cs-parser.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\cs-tokenizer.cs">
+      <Link>cs-tokenizer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\eval.cs">
+      <Link>eval.cs</Link>
+    </Compile>
+    <Compile Include="..\Mono.CompilerServices.SymbolWriter\MonoSymbolFile.cs">
+      <Link>MonoSymbolFile.cs</Link>
+    </Compile>
+    <Compile Include="..\Mono.CompilerServices.SymbolWriter\MonoSymbolTable.cs">
+      <Link>MonoSymbolTable.cs</Link>
+    </Compile>
+    <Compile Include="..\Mono.CompilerServices.SymbolWriter\SourceMethodBuilder.cs">
+      <Link>SourceMethodBuilder.cs</Link>
+    </Compile>
+    <Compile Include="..\Mono.Security\Mono.Security.Cryptography\CryptoConvert.cs">
+      <Link>CryptoConvert.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
-  </ItemGroup>
-  <ItemGroup>
-    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
-      <Install>false</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
-      <Visible>False</Visible>
-      <ProductName>.NET Framework 3.5 SP1</ProductName>
-      <Install>true</Install>
-    </BootstrapperPackage>
-    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
-      <Visible>False</Visible>
-      <ProductName>Windows Installer 3.1</ProductName>
-      <Install>true</Install>
-    </BootstrapperPackage>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
@@ -264,4 +275,9 @@
   <PropertyGroup>
     <PreBuildEvent>"$(ProjectDir)..\..\jay\jay" -cvt &lt; "$(ProjectDir)..\..\jay\skeleton.cs" "$(ProjectDir)..\..\mcs\cs-parser.jay" &gt; "$(ProjectDir)cs-parser.cs"</PreBuildEvent>
   </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\..\mcs\ps-eval.cs">
+      <Link>ps-eval.cs</Link>
+    </None>
+  </ItemGroup>
 </Project>

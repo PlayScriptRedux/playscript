@@ -18,6 +18,7 @@ per_profile_dirs = \
 net_4_0_dirs := \
 	$(per_profile_dirs) \
 	csharp		\
+	playshell	\
 	corcompare	\
 	compiler-tester	\
 	mono-xmltool	\

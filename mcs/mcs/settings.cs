@@ -251,6 +251,12 @@ namespace Mono.CSharp {
 		public bool PsStrictMode = true;
 
 		//
+		// Whether to enable PlayScript compiler only mode. Defaults to false.
+		//
+
+		public bool PsOnlyMode = false;
+
+		//
 		// Inlining mode for source level inliner (none, explicit, any)
 		//
 
@@ -1168,8 +1174,16 @@ namespace Mono.CSharp {
 			case "/psstrict+":
 				settings.PsStrictMode = true;
 				return ParseResult.Success;
+                    
+            case "/psonlymode-":
+				settings.PsOnlyMode = false;
+                return ParseResult.Success;
 
-			case "/warnaserror":
+            case "/psonlymode+":
+				settings.PsOnlyMode = true;
+                return ParseResult.Success;
+
+				case "/warnaserror":
 			case "/warnaserror+":
 				if (value.Length == 0) {
 					settings.WarningsAreErrors = true;

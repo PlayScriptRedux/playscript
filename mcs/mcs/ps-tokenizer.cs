@@ -538,7 +538,12 @@ namespace Mono.PlayScript
 		public Tokenizer (SeekableStreamReader input, CompilationSourceFile file, ParserSession session)
 		{
 			this.source_file = file;
-			this.parsing_playscript = file.SourceFile.PsExtended;
+			// SourceFile will be null if we are running in the repl;
+			// TODO: Determine if REPL should allow Extended PlayScript language, 
+			// for now to run Tamarin tests, only ActionScript
+			if (file.SourceFile != null) {
+				this.parsing_playscript = file.SourceFile.PsExtended;
+			}
 			this.context = file.Compiler;
 			this.current_source = file.SourceFile;
 			this.identifiers = session.Identifiers;

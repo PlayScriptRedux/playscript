@@ -3,8 +3,6 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{817CE046-07E8-409D-84BF-A6EA4F2879DE}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
@@ -32,6 +30,8 @@
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
     <TargetFrameworkProfile />
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -54,27 +54,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
-    <Reference Include="System.XML" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\class\corlib\Mono.Security.Cryptography\CryptoConvert.cs">
-      <Link>CryptoConvert.cs</Link>
-    </Compile>
-    <Compile Include="..\..\class\Mono.CompilerServices.SymbolWriter\MonoSymbolFile.cs">
-      <Link>MonoSymbolFile.cs</Link>
-    </Compile>
-    <Compile Include="..\..\class\Mono.CompilerServices.SymbolWriter\MonoSymbolTable.cs">
-      <Link>MonoSymbolTable.cs</Link>
-    </Compile>
-    <Compile Include="..\..\class\Mono.CompilerServices.SymbolWriter\MonoSymbolWriter.cs">
-      <Link>MonoSymbolWriter.cs</Link>
-    </Compile>
-    <Compile Include="..\..\class\Mono.CompilerServices.SymbolWriter\SourceMethodBuilder.cs">
-      <Link>SourceMethodBuilder.cs</Link>
-    </Compile>
     <Compile Include="..\..\mcs\anonymous.cs">
       <Link>anonymous.cs</Link>
     </Compile>
@@ -125,9 +108,6 @@
     </Compile>
     <Compile Include="..\..\mcs\delegate.cs">
       <Link>delegate.cs</Link>
-    </Compile>
-    <Compile Include="..\..\mcs\doc-bootstrap.cs">
-      <Link>doc-bootstrap.cs</Link>
     </Compile>
     <Compile Include="..\..\mcs\doc.cs">
       <Link>doc.cs</Link>
@@ -231,7 +211,57 @@
     <Compile Include="..\..\tools\monop\outline.cs">
       <Link>outline.cs</Link>
     </Compile>
-    <Compile Include="cs-parser.cs" />
+    <Compile Include="..\..\mcs\ps-lang.cs">
+      <Link>ps-lang.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\ps-tokenizer.cs">
+      <Link>ps-tokenizer.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\ps-codegen.cs">
+      <Link>ps-codegen.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\cxx-emit.cs">
+      <Link>cxx-emit.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\cxx-target.cs">
+      <Link>cxx-target.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\inliner.cs">
+      <Link>inliner.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\intrinsics.cs">
+      <Link>intrinsics.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\js-emit.cs">
+      <Link>js-emit.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\js-target.cs">
+      <Link>js-target.cs</Link>
+    </Compile>
+    <Compile Include="..\..\build\common\Consts.cs">
+      <Link>Consts.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\cs-parser.cs">
+      <Link>cs-parser.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\ps-parser.cs">
+      <Link>ps-parser.cs</Link>
+    </Compile>
+    <Compile Include="Assembly\AssemblyInfo.cs">
+      <Link>AssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\Mono.CompilerServices.SymbolWriter\MonoSymbolFile.cs">
+      <Link>MonoSymbolFile.cs</Link>
+    </Compile>
+    <Compile Include="..\Mono.CompilerServices.SymbolWriter\MonoSymbolTable.cs">
+      <Link>MonoSymbolTable.cs</Link>
+    </Compile>
+    <Compile Include="..\Mono.CompilerServices.SymbolWriter\SourceMethodBuilder.cs">
+      <Link>SourceMethodBuilder.cs</Link>
+    </Compile>
+    <Compile Include="..\Mono.Security\Mono.Security.Cryptography\CryptoConvert.cs">
+      <Link>CryptoConvert.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
