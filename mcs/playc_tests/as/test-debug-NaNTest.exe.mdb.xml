@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<symbols>
+  <files>
+    <file id="1" name="test-debug-NaNTest.as" checksum="3c482abdc6b379d50eca7ed9b15cd1b9" />
+  </files>
+  <methods>
+    <method token="0x6000001">
+      <sequencepoints />
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000002">
+      <sequencepoints>
+        <entry il="0x0" row="9" col="9" file_ref="1" hidden="false" />
+        <entry il="0x1" row="10" col="10" file_ref="1" hidden="false" />
+        <entry il="0xb" row="11" col="4" file_ref="1" hidden="false" />
+        <entry il="0x22" row="11" col="11" file_ref="1" hidden="false" />
+        <entry il="0x28" row="12" col="4" file_ref="1" hidden="false" />
+        <entry il="0x3c" row="12" col="11" file_ref="1" hidden="false" />
+        <entry il="0x42" row="13" col="10" file_ref="1" hidden="false" />
+        <entry il="0x51" row="14" col="4" file_ref="1" hidden="false" />
+        <entry il="0x5e" row="14" col="42" file_ref="1" hidden="false" />
+        <entry il="0x68" row="14" col="11" file_ref="1" hidden="false" />
+        <entry il="0x6e" row="15" col="4" file_ref="1" hidden="false" />
+        <entry il="0x7b" row="15" col="43" file_ref="1" hidden="false" />
+        <entry il="0x85" row="15" col="11" file_ref="1" hidden="false" />
+        <entry il="0x8b" row="16" col="4" file_ref="1" hidden="false" />
+        <entry il="0x92" row="17" col="3" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals>
+        <entry name="a" il_index="0" scope_ref="0" />
+        <entry name="b" il_index="1" scope_ref="0" />
+      </locals>
+      <scopes />
+    </method>
+  </methods>
+</symbols>

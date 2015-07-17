@@ -1,0 +1,184 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<symbols>
+  <files>
+    <file id="1" name="test-debug-EqualityTest.as" checksum="59b369f82323f86c1090ecd7b1cfd58d" />
+  </files>
+  <methods>
+    <method token="0x6000001">
+      <sequencepoints />
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000002">
+      <sequencepoints />
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000003">
+      <sequencepoints />
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000004">
+      <sequencepoints />
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000005">
+      <sequencepoints>
+        <entry il="0x0" row="13" col="3" file_ref="1" hidden="false" />
+        <entry il="0x1" row="14" col="11" file_ref="1" hidden="false" />
+        <entry il="0x9" row="15" col="11" file_ref="1" hidden="false" />
+        <entry il="0xf" row="16" col="4" file_ref="1" hidden="false" />
+        <entry il="0x1c" row="16" col="47" file_ref="1" hidden="false" />
+        <entry il="0x26" row="16" col="11" file_ref="1" hidden="false" />
+        <entry il="0x2c" row="17" col="4" file_ref="1" hidden="false" />
+        <entry il="0x39" row="17" col="47" file_ref="1" hidden="false" />
+        <entry il="0x43" row="17" col="11" file_ref="1" hidden="false" />
+        <entry il="0x49" row="18" col="11" file_ref="1" hidden="false" />
+        <entry il="0x58" row="19" col="11" file_ref="1" hidden="false" />
+        <entry il="0x5e" row="20" col="4" file_ref="1" hidden="false" />
+        <entry il="0x6b" row="20" col="46" file_ref="1" hidden="false" />
+        <entry il="0x75" row="20" col="11" file_ref="1" hidden="false" />
+        <entry il="0x7b" row="21" col="4" file_ref="1" hidden="false" />
+        <entry il="0x88" row="21" col="46" file_ref="1" hidden="false" />
+        <entry il="0x92" row="21" col="11" file_ref="1" hidden="false" />
+        <entry il="0x98" row="22" col="4" file_ref="1" hidden="false" />
+        <entry il="0xad" row="22" col="50" file_ref="1" hidden="false" />
+        <entry il="0xb7" row="22" col="11" file_ref="1" hidden="false" />
+        <entry il="0xbd" row="23" col="4" file_ref="1" hidden="false" />
+        <entry il="0xd2" row="23" col="50" file_ref="1" hidden="false" />
+        <entry il="0xdc" row="23" col="11" file_ref="1" hidden="false" />
+        <entry il="0xe2" row="26" col="4" file_ref="1" hidden="false" />
+        <entry il="0xf3" row="26" col="70" file_ref="1" hidden="false" />
+        <entry il="0xf8" row="26" col="56" file_ref="1" hidden="false" />
+        <entry il="0x102" row="26" col="11" file_ref="1" hidden="false" />
+        <entry il="0x108" row="29" col="13" file_ref="1" hidden="false" />
+        <entry il="0x113" row="30" col="4" file_ref="1" hidden="false" />
+        <entry il="0x11e" row="31" col="13" file_ref="1" hidden="false" />
+        <entry il="0x129" row="32" col="4" file_ref="1" hidden="false" />
+        <entry il="0x141" row="32" col="11" file_ref="1" hidden="false" />
+        <entry il="0x147" row="33" col="4" file_ref="1" hidden="false" />
+        <entry il="0x160" row="33" col="56" file_ref="1" hidden="false" />
+        <entry il="0x16a" row="33" col="11" file_ref="1" hidden="false" />
+        <entry il="0x170" row="34" col="4" file_ref="1" hidden="false" />
+        <entry il="0x186" row="34" col="11" file_ref="1" hidden="false" />
+        <entry il="0x18c" row="35" col="13" file_ref="1" hidden="false" />
+        <entry il="0x18f" row="36" col="4" file_ref="1" hidden="false" />
+        <entry il="0x1a6" row="36" col="11" file_ref="1" hidden="false" />
+        <entry il="0x1ac" row="37" col="4" file_ref="1" hidden="false" />
+        <entry il="0x1c5" row="37" col="56" file_ref="1" hidden="false" />
+        <entry il="0x1cf" row="37" col="11" file_ref="1" hidden="false" />
+        <entry il="0x1d5" row="38" col="14" file_ref="1" hidden="false" />
+        <entry il="0x1d8" row="39" col="4" file_ref="1" hidden="false" />
+        <entry il="0x1ef" row="39" col="11" file_ref="1" hidden="false" />
+        <entry il="0x1f5" row="40" col="4" file_ref="1" hidden="false" />
+        <entry il="0x20e" row="40" col="58" file_ref="1" hidden="false" />
+        <entry il="0x218" row="40" col="11" file_ref="1" hidden="false" />
+        <entry il="0x21e" row="41" col="4" file_ref="1" hidden="false" />
+        <entry il="0x22f" row="41" col="11" file_ref="1" hidden="false" />
+        <entry il="0x235" row="42" col="4" file_ref="1" hidden="false" />
+        <entry il="0x246" row="42" col="11" file_ref="1" hidden="false" />
+        <entry il="0x24c" row="43" col="4" file_ref="1" hidden="false" />
+        <entry il="0x261" row="43" col="56" file_ref="1" hidden="false" />
+        <entry il="0x26b" row="43" col="11" file_ref="1" hidden="false" />
+        <entry il="0x271" row="44" col="4" file_ref="1" hidden="false" />
+        <entry il="0x281" row="44" col="48" file_ref="1" hidden="false" />
+        <entry il="0x28e" row="44" col="11" file_ref="1" hidden="false" />
+        <entry il="0x294" row="45" col="4" file_ref="1" hidden="false" />
+        <entry il="0x2aa" row="45" col="50" file_ref="1" hidden="false" />
+        <entry il="0x2b4" row="45" col="11" file_ref="1" hidden="false" />
+        <entry il="0x2ba" row="46" col="4" file_ref="1" hidden="false" />
+        <entry il="0x2d1" row="46" col="56" file_ref="1" hidden="false" />
+        <entry il="0x2db" row="46" col="11" file_ref="1" hidden="false" />
+        <entry il="0x2e1" row="47" col="4" file_ref="1" hidden="false" />
+        <entry il="0x2f2" row="47" col="11" file_ref="1" hidden="false" />
+        <entry il="0x2f8" row="48" col="4" file_ref="1" hidden="false" />
+        <entry il="0x30f" row="48" col="58" file_ref="1" hidden="false" />
+        <entry il="0x319" row="48" col="11" file_ref="1" hidden="false" />
+        <entry il="0x31f" row="49" col="4" file_ref="1" hidden="false" />
+        <entry il="0x333" row="49" col="11" file_ref="1" hidden="false" />
+        <entry il="0x339" row="50" col="4" file_ref="1" hidden="false" />
+        <entry il="0x350" row="50" col="50" file_ref="1" hidden="false" />
+        <entry il="0x35a" row="50" col="11" file_ref="1" hidden="false" />
+        <entry il="0x360" row="51" col="4" file_ref="1" hidden="false" />
+        <entry il="0x371" row="51" col="64" file_ref="1" hidden="false" />
+        <entry il="0x37b" row="51" col="11" file_ref="1" hidden="false" />
+        <entry il="0x381" row="52" col="4" file_ref="1" hidden="false" />
+        <entry il="0x392" row="52" col="65" file_ref="1" hidden="false" />
+        <entry il="0x39c" row="52" col="11" file_ref="1" hidden="false" />
+        <entry il="0x3a2" row="53" col="14" file_ref="1" hidden="false" />
+        <entry il="0x3a7" row="53" col="23" file_ref="1" hidden="false" />
+        <entry il="0x3ae" row="54" col="4" file_ref="1" hidden="false" />
+        <entry il="0x3bb" row="54" col="56" file_ref="1" hidden="false" />
+        <entry il="0x3c5" row="54" col="11" file_ref="1" hidden="false" />
+        <entry il="0x3cb" row="55" col="4" file_ref="1" hidden="false" />
+        <entry il="0x3d8" row="55" col="57" file_ref="1" hidden="false" />
+        <entry il="0x3e5" row="55" col="11" file_ref="1" hidden="false" />
+        <entry il="0x3eb" row="56" col="4" file_ref="1" hidden="false" />
+        <entry il="0x3fc" row="56" col="64" file_ref="1" hidden="false" />
+        <entry il="0x406" row="56" col="11" file_ref="1" hidden="false" />
+        <entry il="0x40c" row="57" col="4" file_ref="1" hidden="false" />
+        <entry il="0x41d" row="57" col="66" file_ref="1" hidden="false" />
+        <entry il="0x427" row="57" col="11" file_ref="1" hidden="false" />
+        <entry il="0x42d" row="58" col="4" file_ref="1" hidden="false" />
+        <entry il="0x43e" row="58" col="66" file_ref="1" hidden="false" />
+        <entry il="0x448" row="58" col="11" file_ref="1" hidden="false" />
+        <entry il="0x44e" row="59" col="4" file_ref="1" hidden="false" />
+        <entry il="0x463" row="59" col="76" file_ref="1" hidden="false" />
+        <entry il="0x46d" row="59" col="11" file_ref="1" hidden="false" />
+        <entry il="0x473" row="60" col="13" file_ref="1" hidden="false" />
+        <entry il="0x47b" row="61" col="13" file_ref="1" hidden="false" />
+        <entry il="0x48b" row="62" col="4" file_ref="1" hidden="false" />
+        <entry il="0x49a" row="62" col="56" file_ref="1" hidden="false" />
+        <entry il="0x4a4" row="62" col="11" file_ref="1" hidden="false" />
+        <entry il="0x4aa" row="63" col="4" file_ref="1" hidden="false" />
+        <entry il="0x4bd" row="63" col="50" file_ref="1" hidden="false" />
+        <entry il="0x4c7" row="63" col="11" file_ref="1" hidden="false" />
+        <entry il="0x4cd" row="64" col="22" file_ref="1" hidden="false" />
+        <entry il="0x4d4" row="65" col="22" file_ref="1" hidden="false" />
+        <entry il="0x4db" row="66" col="4" file_ref="1" hidden="false" />
+        <entry il="0x4ea" row="66" col="56" file_ref="1" hidden="false" />
+        <entry il="0x4f4" row="66" col="11" file_ref="1" hidden="false" />
+        <entry il="0x4fa" row="67" col="4" file_ref="1" hidden="false" />
+        <entry il="0x50a" row="67" col="56" file_ref="1" hidden="false" />
+        <entry il="0x517" row="67" col="11" file_ref="1" hidden="false" />
+        <entry il="0x51d" row="68" col="4" file_ref="1" hidden="false" />
+        <entry il="0x53b" row="68" col="58" file_ref="1" hidden="false" />
+        <entry il="0x545" row="68" col="11" file_ref="1" hidden="false" />
+        <entry il="0x54b" row="70" col="19" file_ref="1" hidden="false" />
+        <entry il="0x552" row="71" col="20" file_ref="1" hidden="false" />
+        <entry il="0x559" row="72" col="19" file_ref="1" hidden="false" />
+        <entry il="0x560" row="73" col="19" file_ref="1" hidden="false" />
+        <entry il="0x567" row="76" col="4" file_ref="1" hidden="false" />
+        <entry il="0x57d" row="76" col="11" file_ref="1" hidden="false" />
+        <entry il="0x583" row="77" col="4" file_ref="1" hidden="false" />
+        <entry il="0x599" row="77" col="11" file_ref="1" hidden="false" />
+        <entry il="0x59f" row="81" col="4" file_ref="1" hidden="false" />
+        <entry il="0x5b5" row="81" col="11" file_ref="1" hidden="false" />
+        <entry il="0x5bb" row="86" col="4" file_ref="1" hidden="false" />
+        <entry il="0x5c3" row="87" col="3" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals>
+        <entry name="o1" il_index="0" scope_ref="0" />
+        <entry name="o2" il_index="1" scope_ref="0" />
+        <entry name="o3" il_index="2" scope_ref="0" />
+        <entry name="o4" il_index="3" scope_ref="0" />
+        <entry name="num1" il_index="4" scope_ref="0" />
+        <entry name="num2" il_index="5" scope_ref="0" />
+        <entry name="int1" il_index="6" scope_ref="0" />
+        <entry name="uint1" il_index="7" scope_ref="0" />
+        <entry name="undef" il_index="8" scope_ref="0" />
+        <entry name="obj1" il_index="9" scope_ref="0" />
+        <entry name="obj2" il_index="10" scope_ref="0" />
+        <entry name="obj3" il_index="11" scope_ref="0" />
+        <entry name="obj4" il_index="12" scope_ref="0" />
+        <entry name="a" il_index="13" scope_ref="0" />
+        <entry name="a2" il_index="14" scope_ref="0" />
+        <entry name="b" il_index="15" scope_ref="0" />
+        <entry name="c" il_index="16" scope_ref="0" />
+      </locals>
+      <scopes />
+    </method>
+  </methods>
+</symbols>

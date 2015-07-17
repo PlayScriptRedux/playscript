@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<symbols>
+  <files>
+    <file id="1" name="test-debug-008.as" checksum="e6cb9dfd6a18bb3cc94c1f2ff46fbe6b" />
+  </files>
+  <methods>
+    <method token="0x6000001">
+      <sequencepoints />
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000002">
+      <sequencepoints>
+        <entry il="0x0" row="9" col="43" file_ref="1" hidden="false" />
+        <entry il="0x1" row="11" col="13" file_ref="1" hidden="false" />
+        <entry il="0x8" row="12" col="9" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals />
+      <scopes />
+    </method>
+  </methods>
+</symbols>

@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<symbols>
+  <files>
+    <file id="1" name="test-debug-AsUntypedTest.as" checksum="226a9662aac2c6346e8bc573d9b75255" />
+  </files>
+  <methods>
+    <method token="0x6000001">
+      <sequencepoints />
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000002">
+      <sequencepoints>
+        <entry il="0x0" row="9" col="3" file_ref="1" hidden="false" />
+        <entry il="0x1" row="10" col="19" file_ref="1" hidden="false" />
+        <entry il="0x7" row="10" col="21" file_ref="1" hidden="false" />
+        <entry il="0x2f" row="11" col="10" file_ref="1" hidden="false" />
+        <entry il="0x54" row="12" col="4" file_ref="1" hidden="false" />
+        <entry il="0x5a" row="13" col="5" file_ref="1" hidden="false" />
+        <entry il="0x61" row="14" col="11" file_ref="1" hidden="false" />
+        <entry il="0x87" row="15" col="4" file_ref="1" hidden="false" />
+        <entry il="0x89" row="15" col="8" file_ref="1" hidden="false" />
+        <entry il="0x93" row="16" col="5" file_ref="1" hidden="false" />
+        <entry il="0x9a" row="17" col="11" file_ref="1" hidden="false" />
+        <entry il="0xc0" row="18" col="4" file_ref="1" hidden="false" />
+        <entry il="0xc2" row="18" col="8" file_ref="1" hidden="false" />
+        <entry il="0xcc" row="19" col="5" file_ref="1" hidden="false" />
+        <entry il="0xd3" row="20" col="10" file_ref="1" hidden="false" />
+        <entry il="0xd4" row="20" col="23" file_ref="1" hidden="false" />
+        <entry il="0xdb" row="22" col="10" file_ref="1" hidden="false" />
+        <entry il="0x14b" row="23" col="4" file_ref="1" hidden="false" />
+        <entry il="0x14d" row="23" col="10" file_ref="1" hidden="false" />
+        <entry il="0x158" row="24" col="5" file_ref="1" hidden="false" />
+        <entry il="0x15f" row="26" col="4" file_ref="1" hidden="false" />
+        <entry il="0x166" row="27" col="3" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals>
+        <entry name="o" il_index="0" scope_ref="0" />
+        <entry name="s" il_index="2" scope_ref="0" />
+        <entry name="o2" il_index="4" scope_ref="0" />
+        <entry name="o3" il_index="5" scope_ref="0" />
+        <entry name="d" il_index="6" scope_ref="0" />
+        <entry name="f" il_index="7" scope_ref="0" />
+        <entry name="a" il_index="8" scope_ref="0" />
+      </locals>
+      <scopes />
+    </method>
+  </methods>
+</symbols>

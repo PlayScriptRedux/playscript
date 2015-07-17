@@ -1,4 +1,4 @@
-// Compiler options: -r:../class/lib/net_4_5/pscorlib_aot.dll
+// Comiler options: -r:../class/lib/net_4_5/pscorlib.dll
 package {
 
     import System.*;

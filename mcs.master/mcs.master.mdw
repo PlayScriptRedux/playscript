@@ -2,5 +2,7 @@
   <Items>
     <Item>../mcs/tools/playshell/PlayShell.sln</Item>
     <Item>../mcs/tools/csharp/csharp.sln</Item>
+    <Item>../mcs/tools/compiler-tester/CompilerTester.sln</Item>
+    <Item>../mcs/tools/playc-tester/PlayCompilerTester.sln</Item>
   </Items>
 </WorkspaceItem>

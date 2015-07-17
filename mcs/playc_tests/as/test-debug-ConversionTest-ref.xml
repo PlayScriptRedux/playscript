@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<symbols>
+  <files>
+    <file id="1" name="test-debug-ConversionTest.as" checksum="507d2a540177b31963d961afe26e7468" />
+  </files>
+  <methods>
+    <method token="0x6000001">
+      <sequencepoints />
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000002">
+      <sequencepoints>
+        <entry il="0x0" row="9" col="3" file_ref="1" hidden="false" />
+        <entry il="0x1" row="10" col="26" file_ref="1" hidden="false" />
+        <entry il="0xb" row="11" col="19" file_ref="1" hidden="false" />
+        <entry il="0x11" row="12" col="25" file_ref="1" hidden="false" />
+        <entry il="0x13" row="13" col="30" file_ref="1" hidden="false" />
+        <entry il="0x19" row="16" col="13" file_ref="1" hidden="false" />
+        <entry il="0x2a" row="16" col="20" file_ref="1" hidden="false" />
+        <entry il="0x30" row="17" col="13" file_ref="1" hidden="false" />
+        <entry il="0x41" row="17" col="20" file_ref="1" hidden="false" />
+        <entry il="0x47" row="20" col="13" file_ref="1" hidden="false" />
+        <entry il="0x58" row="20" col="20" file_ref="1" hidden="false" />
+        <entry il="0x5e" row="21" col="13" file_ref="1" hidden="false" />
+        <entry il="0x6f" row="21" col="20" file_ref="1" hidden="false" />
+        <entry il="0x75" row="23" col="4" file_ref="1" hidden="false" />
+        <entry il="0x7d" row="24" col="3" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals>
+        <entry name="nanValue" il_index="0" scope_ref="0" />
+        <entry name="u" il_index="1" scope_ref="0" />
+        <entry name="nullObj" il_index="2" scope_ref="0" />
+        <entry name="obj" il_index="3" scope_ref="0" />
+      </locals>
+      <scopes />
+    </method>
+  </methods>
+</symbols>
