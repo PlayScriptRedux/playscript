@@ -1,5 +1,8 @@
+// Compiler options: -newdynamic+ -r:./play/Assert.dll
 package
 {
+    import com.adobe.test.Assert;
+
 	public dynamic class test
 	{
 		public static function Main():int
@@ -20,19 +23,14 @@ package
 		{
 			var m:test = new test ();
 			m["Prop"] = 500;
-			if (m.Prop != 500)
-				return 1;
-
-			if (m["Prop"] != 500)
-				return 2;
-
-			if (m.Prop != 500)
-				return 3;
-
-			m.Prop = 300;
-			if (m.Prop != 300)
-				return 4;
-			
+            m.Prop = 400;
+            trace(m.Prop);
+            Assert.expectEq( "m.Prop == 500", true, m.Prop == 500 );
+            Assert.expectEq( "m['Prop'] == 500", true, m["Prop"] == 500 );
+            m.Prop = 100;
+            Assert.expectEq( "m['Prop'] == 100", true, m["Prop"] == 100 );
+			m["Prop"] = 300;
+            Assert.expectEq( "m.Prop != 300", true, m.Prop == 300 );
 			return 0;
 		}
 		
@@ -53,7 +51,7 @@ package
 			if (m.Prop != 300)
 				return 4;
 				
-			return 0;
+			return Assert.errcount;
 		}
 	}
 }

@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<symbols>
+  <files>
+    <file id="1" name="test-debug-003.play" checksum="20b8c223da1a89123b47c9aa47718b0d" />
+  </files>
+  <methods>
+    <method token="0x6000001">
+      <sequencepoints>
+        <entry il="0x0" row="7" col="19" file_ref="1" hidden="false" />
+        <entry il="0x6" row="7" col="42" file_ref="1" hidden="false" />
+        <entry il="0x7" row="8" col="4" file_ref="1" hidden="false" />
+        <entry il="0xd" row="8" col="4" file_ref="1" hidden="false" />
+        <entry il="0x12" row="9" col="4" file_ref="1" hidden="false" />
+        <entry il="0x18" row="9" col="4" file_ref="1" hidden="false" />
+        <entry il="0x1d" row="10" col="3" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000002">
+      <sequencepoints>
+        <entry il="0x0" row="15" col="17" file_ref="1" hidden="false" />
+        <entry il="0x8" row="17" col="25" file_ref="1" hidden="false" />
+        <entry il="0x9" row="19" col="10" file_ref="1" hidden="false" />
+        <entry il="0xf" row="20" col="4" file_ref="1" hidden="false" />
+        <entry il="0x1a" row="20" col="18" file_ref="1" hidden="false" />
+        <entry il="0x1b" row="21" col="5" file_ref="1" hidden="false" />
+        <entry il="0x28" row="22" col="4" file_ref="1" hidden="false" />
+        <entry il="0x2e" row="22" col="11" file_ref="1" hidden="false" />
+        <entry il="0x2f" row="23" col="5" file_ref="1" hidden="false" />
+        <entry il="0x3c" row="24" col="4" file_ref="1" hidden="false" />
+        <entry il="0x3d" row="25" col="3" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals>
+        <entry name="b" il_index="0" scope_ref="0" />
+      </locals>
+      <scopes>
+        <entry index="0" start="0x1b" end="0x28" />
+        <entry index="1" start="0x2f" end="0x3c" />
+      </scopes>
+    </method>
+    <method token="0x6000003">
+      <sequencepoints />
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000004">
+      <sequencepoints>
+        <entry il="0x0" row="30" col="37" file_ref="1" hidden="false" />
+        <entry il="0x1" row="31" col="16" file_ref="1" hidden="false" />
+        <entry il="0x7" row="33" col="13" file_ref="1" hidden="false" />
+        <entry il="0xe" row="34" col="3" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals>
+        <entry name="b" il_index="0" scope_ref="0" />
+      </locals>
+      <scopes />
+    </method>
+  </methods>
+</symbols>

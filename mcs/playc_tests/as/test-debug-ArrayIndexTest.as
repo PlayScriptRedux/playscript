@@ -7,6 +7,7 @@ package
 	{
 		public static function Main():int
 		{
+            Assert.errcount = 0;
             var r:Boolean;
             var a1:Array = [ 11.0, 22.0, 33.0, 44.0];
             var i1:int = a1.indexOf(33);
@@ -19,8 +20,7 @@ package
             Assert.expectEq("a1[2] == 33.0", 33.0, a1[2]);
             Assert.expectEq("a1[3] == 44.0", 44.0, a1[3]);
             Assert.expectEq("a1[4] == null", null, a1[4]);
-            if (Assert.error) return 1;
-			return 0;
+            return Assert.errcount;
 		}
     }
 }

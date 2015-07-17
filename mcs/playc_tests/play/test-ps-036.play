@@ -1,3 +1,4 @@
+// Compiler options: -psstrict-
 package
 {
 	public class Fields
@@ -42,6 +43,7 @@ package
 			vs8 = 80;
 			if (cs8 != 8) {
 				trace (cs8);
+                trace (vs8);
 				return 15;
 			}
 			if (cs9 != null)

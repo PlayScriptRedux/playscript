@@ -1672,8 +1672,8 @@ namespace TestRunner {
 				files.AddRange (Directory.GetFiles ("./play", positive ? "test*.play" : "cs*.play"));
                 break;
             case "playscript":
-                files.AddRange (Directory.GetFiles ("./as", positive ? "test*.play" : "cs*.play"));
-				files.AddRange (Directory.GetFiles ("./play", positive ? "test*.as" : "cs*.as"));
+                files.AddRange (Directory.GetFiles ("./play", positive ? "test*.play" : "cs*.play"));
+				files.AddRange (Directory.GetFiles ("./as", positive ? "test*.as" : "cs*.as"));
                 break;
 			case "v1":
 				files.AddRange (Directory.GetFiles (".", positive ? "test*.cs" : "cs*.cs"));

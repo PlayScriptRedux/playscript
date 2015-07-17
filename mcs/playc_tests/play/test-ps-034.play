@@ -1,3 +1,4 @@
+// Compiler options: -psstrict-
 package
 {
 	public class UninitializedValuesTest

@@ -13,9 +13,9 @@ package
 	{
 		public static var field:int = 4;
 
-		Go ();	
+		Go ();
 		field -= 6;
-		
+
 		public function ClassA ()
 		{
 			if (field != -2)

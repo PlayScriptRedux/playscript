@@ -1,5 +1,3 @@
-// Compiler options: test-ps-009-2.play
-
 package
 {
 	public class inheritance extends base

@@ -1,18 +1,39 @@
 package 
 {
+    // internal access modifier allows Classes sharing this package access
+    // protected access modifier allows subclasses access
+    // protected access modifier allows subclasses access
+    // private access modifier allows no external access
+
+    // Note: In AS3, the protected and private access modifiers are only allowed to be used for
+    // a Class’ properties and methods, not the Class itself.
+
+
+    // The default access modifier is internal
+
+//    ./play/test-ps-038.play(23,6): error CS0122: `_root.Test.F1()' is inaccessible due to its protection level
+//        ./play/test-ps-038.play(31,18): (Location of the symbol related to previous error)
+
 	public class DefaultAccessModifiers
 	{
 		public static function Main():int
 		{
 			var t:Test = new Test ();
 			t.F1 ();
+
+            t.F2 ();
+
 			return 0;
 		}
 	}
 	
 	public class Test
 	{
-		function F1 ():void
+        function F1 ():void
+        {
+        }
+
+        internal function F2 ():void
 		{
 		}
 	}
