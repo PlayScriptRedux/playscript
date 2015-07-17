@@ -6,6 +6,7 @@
 CurrectBranch=`git rev-parse --abbrev-ref HEAD`
 CompareBranch=mono-3.2.6
 
+git diff --name-only ${CompareBranch}..${CurrentBranch} |grep "playshell"
 git diff --name-only ${CompareBranch}..${CurrentBranch} |grep "Mono.PlayScript"
 git diff --name-only ${CompareBranch}..${CurrentBranch} |grep "PlayScript.Core"
 git diff --name-only ${CompareBranch}..${CurrentBranch} |grep "PlayScript.Dynamic\/"
@@ -17,6 +18,9 @@ git diff --name-only ${CompareBranch}..${CurrentBranch} |grep "mcs\/playc_tests"
 #
 # Makefile files
 read -d '' makefile_files <<- EOF
+mcs.master/mcs.master.mdw
+mcs/tools/Makefile
+mcs/tools/playshell/Makefile
 mcs/Makefile
 mcs/class/Makefile
 mcs/class/Mono.Optimization/Makefile

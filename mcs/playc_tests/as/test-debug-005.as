@@ -1,5 +1,5 @@
 package {
-// Test expressions.
+    // Test expressions.
 
     class Foo {
         public function Foo() {
@@ -18,14 +18,19 @@ package {
             var i:int = 0;
             i = i + i;
             i = i - i;
-            trace(i);
+
             // TODO: System.DivideByZeroException: Division by zero
-            i = i / i;
+            // Moved to separate test : test-debug-DivideByZeroTest.as
+            // i = i / i;
+
             i = i * i;
             i = i << i;
             i = i >>> i;
             i = i >> i;
-            i = i % i;
+
+            // Moved to separate test : test-debug-DivideByZeroTest.as
+            // i = i % i;
+
             i = i | i;
             i = i & i;
             i = i ^ i;

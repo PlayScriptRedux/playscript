@@ -26,7 +26,7 @@ pushd tests/acceptance
 # spidermonkey
 # versioning
 export EXCLUDEDIRS='abcasm,generated,misc,mmgc,mops,recursion,regress,spidermonkey,versioning,e4x'
-export EXCLUDEDIRS='abcasm,generated,misc,mmgc,mops,recursion,regress,spidermonkey,versioning,e4x,ecma3'
+#export EXCLUDEDIRS='abcasm,generated,misc,mmgc,mops,recursion,regress,spidermonkey,versioning,e4x,ecma3'
 
 #   --aotsdk        location of the AOT sdk used to compile tests to standalone executables.
 #   --ascoutput     output the asc commands to ascoutput.log. Does not compile or run any tests.
@@ -35,9 +35,9 @@ export EXCLUDEDIRS='abcasm,generated,misc,mmgc,mops,recursion,regress,spidermonk
 python ./runtests.py \
  --exclude ${EXCLUDEDIRS} \
  --html \
- --threads 2
+ --threads 2 
 
-mv *.html ../../../regressions
+cp *.html ../../../regressions
 popd
 
 

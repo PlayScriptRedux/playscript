@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<symbols>
+  <files>
+    <file id="1" name="test-debug-013.as" checksum="5ea798d45e231ac410786cdf848cb3a5" />
+  </files>
+  <methods>
+    <method token="0x6000001">
+      <sequencepoints>
+        <entry il="0x0" row="7" col="25" file_ref="1" hidden="false" />
+        <entry il="0x6" row="7" col="55" file_ref="1" hidden="false" />
+        <entry il="0x7" row="8" col="13" file_ref="1" hidden="false" />
+        <entry il="0xd" row="8" col="24" file_ref="1" hidden="false" />
+        <entry il="0x13" row="8" col="28" file_ref="1" hidden="false" />
+        <entry il="0x1d" row="8" col="13" file_ref="1" hidden="false" />
+        <entry il="0x22" row="9" col="9" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000002">
+      <sequencepoints />
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000003">
+      <sequencepoints>
+        <entry il="0x0" row="16" col="47" file_ref="1" hidden="false" />
+        <entry il="0x1" row="18" col="33" file_ref="1" hidden="false" />
+        <entry il="0x3" row="18" col="45" file_ref="1" hidden="false" />
+        <entry il="0x9" row="19" col="9" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals>
+        <entry name="dyn" il_index="0" scope_ref="0" />
+        <entry name="successResponse" il_index="1" scope_ref="0" />
+      </locals>
+      <scopes />
+    </method>
+    <method token="0x6000004">
+      <sequencepoints>
+        <entry il="0x0" row="21" col="43" file_ref="1" hidden="false" />
+        <entry il="0x1" row="22" col="13" file_ref="1" hidden="false" />
+        <entry il="0x6" row="24" col="13" file_ref="1" hidden="false" />
+        <entry il="0xd" row="25" col="9" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals />
+      <scopes />
+    </method>
+  </methods>
+</symbols>

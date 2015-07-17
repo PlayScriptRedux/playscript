@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<symbols>
+  <files>
+    <file id="1" name="test-debug-012.as" checksum="3f0acb0556a09c6a074a59cdef1b319b" />
+    <file id="2" name="support-test-012a.as" checksum="7429a499140eb9e973c4d806d2379956" />
+    <file id="3" name="support-test-012b.as" checksum="0c043167d02a8ee834a32c154fe30870" />
+    <file id="4" name="support-test-012c.as" checksum="2ebec69fd56170f3e85df70d6d93393d" />
+  </files>
+  <methods>
+    <method token="0x6000001">
+      <sequencepoints />
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000002">
+      <sequencepoints>
+        <entry il="0x0" row="11" col="43" file_ref="1" hidden="false" />
+        <entry il="0x1" row="12" col="13" file_ref="1" hidden="false" />
+        <entry il="0x8" row="13" col="9" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000003">
+      <sequencepoints />
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000004">
+      <sequencepoints />
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000005">
+      <sequencepoints>
+        <entry il="0x0" row="7" col="36" file_ref="4" hidden="false" />
+        <entry il="0x1" row="9" col="9" file_ref="4" hidden="false" />
+      </sequencepoints>
+      <locals>
+        <entry name="q" il_index="0" scope_ref="0" />
+      </locals>
+      <scopes />
+    </method>
+  </methods>
+</symbols>
