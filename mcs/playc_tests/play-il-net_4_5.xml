@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <!--This file contains expected IL and metadata produced by compiler for each test-->
 <tests>
-  <test name="play/test-debug-000.play">
+  <test name="./play/test-debug-000.play">
     <type name="_root.Test">
       <method name="Int32 Main()" attrs="150">
         <size>20</size>
@@ -11,7 +11,53 @@
       </method>
     </type>
   </test>
-  <test name="play/test-debug-003.play">
+  <test name="./play/test-debug-001.play">
+    <type name="_root.Test">
+      <method name="Int32 testbar()" attrs="454">
+        <size>11</size>
+      </method>
+      <method name="Int32 Main()" attrs="150">
+        <size>92</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+      <method name="Void .cctor()" attrs="6289">
+        <size>8</size>
+      </method>
+    </type>
+    <type name="_root.Bar">
+      <method name="Void .ctor(Int32)" attrs="6278">
+        <size>50</size>
+      </method>
+    </type>
+    <type name="_root.BarBar">
+      <method name="Void .ctor()" attrs="6278">
+        <size>20</size>
+      </method>
+    </type>
+  </test>
+  <test name="./play/test-debug-002.play">
+    <type name="_root.Foo">
+      <method name="Void .ctor(Int32, Int32)" attrs="6278">
+        <size>65</size>
+      </method>
+    </type>
+    <type name="_root.Bar">
+      <method name="Void .ctor()" attrs="6278">
+        <size>29</size>
+      </method>
+    </type>
+    <type name="_root.Test">
+      <method name="Int32 Main()" attrs="150">
+        <size>20</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./play/test-debug-003.play">
     <type name="_root.Foo">
       <method name="Void .ctor(Int32, Int32)" attrs="6278">
         <size>30</size>
@@ -31,7 +77,7 @@
       </method>
     </type>
   </test>
-  <test name="play/test-debug-005.play">
+  <test name="./play/test-debug-005.play">
     <type name="_root.Test">
       <method name="Void foo(System.Object)" attrs="150">
         <size>12</size>
@@ -44,7 +90,7 @@
       </method>
     </type>
   </test>
-  <test name="play/test-debug-007.play">
+  <test name="./play/test-debug-007.play">
     <type name="_root.Test">
       <method name="Int32 Main()" attrs="150">
         <size>873</size>
@@ -54,7 +100,7 @@
       </method>
     </type>
   </test>
-  <test name="play/test-debug-008.play">
+  <test name="./play/test-debug-008.play">
     <type name="_root.Test">
       <method name="Int32 Main()" attrs="150">
         <size>59</size>
@@ -64,10 +110,1007 @@
       </method>
     </type>
   </test>
-  <test name="play/test-debug-009.play">
+  <test name="./play/test-debug-009.play">
     <type name="_root.Test">
       <method name="Int32 Main()" attrs="150">
         <size>10</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./play/test-ps-001.play">
+    <type name="_root.HelloWorld">
+      <method name="Void Main()" attrs="150">
+        <size>12</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./play/test-ps-002.play">
+    <type name="_root.Test">
+      <method name="Int32 Main()" attrs="150">
+        <size>22</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+    <type name="_root.testFunction_fn">
+      <method name="Boolean testFunction(System.Object, System.Type)" attrs="150">
+        <size>10</size>
+      </method>
+    </type>
+  </test>
+  <test name="./play/test-ps-003.play">
+    <type name="_root.BasicTypes">
+      <method name="Void Main()" attrs="150">
+        <size>33</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>76</size>
+      </method>
+    </type>
+  </test>
+  <test name="./play/test-ps-005.play">
+    <type name="_root.test">
+      <method name="Int32 Main()" attrs="150">
+        <size>54</size>
+      </method>
+      <method name="Double max(Double, Double)" attrs="147">
+        <size>16</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./play/test-ps-007.play">
+    <type name="_root.test">
+      <method name="Int32 Main()" attrs="150">
+        <size>12</size>
+      </method>
+      <method name="Void foo()" attrs="129">
+        <size>10</size>
+      </method>
+      <method name="Void dynamic(Int32)" attrs="129">
+        <size>2</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./play/test-ps-009.play">
+    <type name="_root.inheritance">
+      <method name="Int32 Main()" attrs="150">
+        <size>44</size>
+      </method>
+      <method name="System.String F1()" attrs="198">
+        <size>14</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+    <type name="_root.base">
+      <method name="System.String F1()" attrs="454">
+        <size>14</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>8</size>
+      </method>
+    </type>
+  </test>
+  <test name="./play/test-ps-011.play">
+    <type name="_root.TestClass">
+      <method name="Void Main()" attrs="150">
+        <size>10</size>
+      </method>
+      <method name="Void .ctor(UInt32, String)" attrs="6278">
+        <size>182</size>
+      </method>
+    </type>
+    <type name="_root.BaseClass">
+      <method name="Void .ctor(UInt32, String)" attrs="6278">
+        <size>30</size>
+      </method>
+    </type>
+  </test>
+  <test name="./play/test-ps-012.play">
+    <type name="_root.ArrayInitialization">
+      <method name="Int32 Main()" attrs="150">
+        <size>88</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./play/test-ps-013.play">
+    <type name="_root.TestVector">
+      <method name="Int32 Main()" attrs="150">
+        <size>234</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./play/test-ps-014.play">
+    <type name="_root.BinaryOperations">
+      <method name="Int32 Main()" attrs="150">
+        <size>77</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./play/test-ps-015.play">
+    <type name="_root.TestClass">
+      <method name="Int32 Main()" attrs="150">
+        <size>163</size>
+      </method>
+      <method name="Int32 test1(System.Object[])" attrs="150">
+        <size>40</size>
+      </method>
+      <method name="Void test2(System.Object[])" attrs="150">
+        <size>9</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./play/test-ps-028.play">
+    <type name="_root.OverrideTest">
+      <method name="Int32 get_Prop()" attrs="2246">
+        <size>18</size>
+      </method>
+      <method name="System.String run()" attrs="198">
+        <size>25</size>
+      </method>
+      <method name="Int32 Main()" attrs="150">
+        <size>80</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+    <type name="_root.BaseClass">
+      <method name="Int32 get_Prop()" attrs="2502">
+        <size>10</size>
+      </method>
+      <method name="System.String run()" attrs="454">
+        <size>14</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./play/test-ps-031.play">
+    <type name="_root.InterfaceTest">
+      <method name="Int32 get_P1()" attrs="2502">
+        <size>10</size>
+      </method>
+      <method name="System.String M1()" attrs="454">
+        <size>10</size>
+      </method>
+      <method name="Int32 Main()" attrs="150">
+        <size>39</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./play/test-ps-032.play">
+    <type name="_root.ExpressionConstructorTest">
+      <method name="Int32 Main()" attrs="150">
+        <size>404</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+    <type name="_root.ClassA">
+      <method name="Void .ctor(Int32)" attrs="6278">
+        <size>8</size>
+      </method>
+    </type>
+    <type name="_root.ClassB">
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./play/test-ps-035.play">
+    <type name="_root.ConstantComplexValueTest">
+      <method name="Boolean isNaN(Double)" attrs="150">
+        <size>15</size>
+      </method>
+      <method name="Boolean isNaN2(Double)" attrs="150">
+        <size>15</size>
+      </method>
+      <method name="Int32 Main()" attrs="150">
+        <size>62</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./play/test-ps-039.play">
+    <type name="_root.PrivateVirtual">
+      <method name="Void M1()" attrs="449">
+        <size>2</size>
+      </method>
+      <method name="Void Main()" attrs="150">
+        <size>2</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-003.as">
+    <type name="_root.Foo">
+      <method name="Void .ctor(Int32, Int32)" attrs="6278">
+        <size>30</size>
+      </method>
+    </type>
+    <type name="_root.Bar">
+      <method name="Void .ctor()" attrs="6278">
+        <size>62</size>
+      </method>
+    </type>
+    <type name="_root.Test">
+      <method name="Int32 Main()" attrs="150">
+        <size>16</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-004.as">
+    <type name="_root.inlineAttribute">
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+    <type name="_root.Texture">
+      <method name="Int32 get_value()" attrs="2502">
+        <size>10</size>
+      </method>
+      <method name="Int32 get_value2()" attrs="2502">
+        <size>10</size>
+      </method>
+      <method name="Double get_valueF()" attrs="2502">
+        <size>15</size>
+      </method>
+      <method name="Void set_valueF(Double)" attrs="2502">
+        <size>9</size>
+      </method>
+      <method name="Int32 t0()" attrs="454">
+        <size>26</size>
+      </method>
+      <method name="Int32 t1()" attrs="454">
+        <size>26</size>
+      </method>
+      <method name="Int32 t2()" attrs="454">
+        <size>26</size>
+      </method>
+      <method name="Void testCoalescing()" attrs="454">
+        <size>539</size>
+      </method>
+      <method name="Void foo()" attrs="454">
+        <size>34</size>
+      </method>
+      <method name="Void testInvoke3Instance(Int32, System.String)" attrs="454">
+        <size>14</size>
+      </method>
+      <method name="Void testInvoke3Static(Int32, System.String)" attrs="150">
+        <size>14</size>
+      </method>
+      <method name="Void testInvoke(Int32, System.String)" attrs="454">
+        <size>14</size>
+      </method>
+      <method name="Void testInvoke2(System.Object)" attrs="454">
+        <size>8</size>
+      </method>
+      <method name="Int32 testFunc(Int32)" attrs="454">
+        <size>12</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>15</size>
+      </method>
+    </type>
+    <type name="_root.Texture2">
+      <method name="Int32 get_value()" attrs="2246">
+        <size>10</size>
+      </method>
+      <method name="Int32 get_value_inlinable()" attrs="2502">
+        <size>10</size>
+      </method>
+      <method name="Void foo()" attrs="198">
+        <size>2</size>
+      </method>
+      <method name="Void inlinable()" attrs="454">
+        <size>2</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+    <type name="_root.Texture3">
+      <method name="Void set_value_inlinable(Int32)" attrs="2502">
+        <size>2</size>
+      </method>
+      <method name="Void foo()" attrs="198">
+        <size>2</size>
+      </method>
+      <method name="Void inlinable()" attrs="454">
+        <size>2</size>
+      </method>
+      <method name="Void .ctor(Int32, Double)" attrs="6278">
+        <size>8</size>
+      </method>
+    </type>
+    <type name="_root.Test">
+      <method name="Int32 getSize(System.Object)" attrs="150">
+        <size>11</size>
+      </method>
+      <method name="Void setSubstituter()" attrs="150">
+        <size>58</size>
+      </method>
+      <method name="Void TestConvert()" attrs="150">
+        <size>98</size>
+      </method>
+      <method name="Void testIterator()" attrs="150">
+        <size>900</size>
+      </method>
+      <method name="Void Main()" attrs="150">
+        <size>7</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+      <method name="Void .cctor()" attrs="6289">
+        <size>17</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-005.as">
+    <type name="_root.Test">
+      <method name="Void foo(System.Object)" attrs="150">
+        <size>12</size>
+      </method>
+      <method name="Int32 Main()" attrs="150">
+        <size>141</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-006.as">
+    <type name="_root.Foo">
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+      <method name="Void .cctor()" attrs="6289">
+        <size>121</size>
+      </method>
+    </type>
+    <type name="_root.Test">
+      <method name="Int32 Main()" attrs="150">
+        <size>78</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-007.as">
+    <type name="_root.Test">
+      <method name="Int32 Main()" attrs="150">
+        <size>873</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-008.as">
+    <type name="_root.Test">
+      <method name="Int32 Main()" attrs="150">
+        <size>59</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-009.as">
+    <type name="_root.Test">
+      <method name="Int32 Main()" attrs="150">
+        <size>10</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-010.as">
+    <type name="_root.Foo">
+      <method name="Double get_y()" attrs="2502">
+        <size>15</size>
+      </method>
+      <method name="Void set_y(Double)" attrs="2502">
+        <size>9</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>37</size>
+      </method>
+    </type>
+    <type name="_root.Test">
+      <method name="Int32 Main()" attrs="150">
+        <size>252</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-011.as">
+    <type name="_root.Foo">
+      <method name="Void bar()" attrs="150">
+        <size>2</size>
+      </method>
+      <method name="Void blah()" attrs="454">
+        <size>7</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+    <type name="_root.Test">
+      <method name="Int32 Main()" attrs="150">
+        <size>21</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-012.as">
+    <type name="_root.Test">
+      <method name="Int32 Main()" attrs="150">
+        <size>10</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+    <type name="components.items.BaseItem">
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+    <type name="game.components.gameitems.OtherItem">
+      <method name="Void bar()" attrs="454">
+        <size>2</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-013.as">
+    <type name="_root.EvilClass">
+      <method name="Void .ctor(Object, Object)" attrs="6278">
+        <size>35</size>
+      </method>
+    </type>
+    <type name="_root.Test">
+      <method name="Void invalid()" attrs="150">
+        <size>10</size>
+      </method>
+      <method name="Int32 Main()" attrs="150">
+        <size>15</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-014.as">
+    <type name="_root.Test">
+      <method name="Void foo(_root.Array)" attrs="150">
+        <size>53</size>
+      </method>
+      <method name="Int32 Main()" attrs="150">
+        <size>37</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-ArrayIndexTest.as">
+    <type name="_root.ArrayIndexTest">
+      <method name="Int32 Main()" attrs="150">
+        <size>443</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-AsUntypedTest.as">
+    <type name="_root.Test">
+      <method name="Int32 Main()" attrs="150">
+        <size>360</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-AttributeTest.as">
+    <type name="_root.AttributeTest">
+      <method name="Int32 Main()" attrs="150">
+        <size>10</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-ClassPropertyIndexerTest.as">
+    <type name="_root.ClassPropertyIndexerTest">
+      <method name="System.String GetLetterE()" attrs="454">
+        <size>14</size>
+      </method>
+      <method name="Int32 RunTest()" attrs="454">
+        <size>439</size>
+      </method>
+      <method name="Int32 Main()" attrs="150">
+        <size>23</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>14</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-CollectionsTest.as">
+    <type name="_root.CollectionsTest">
+      <method name="Int32 Main()" attrs="150">
+        <size>1194</size>
+      </method>
+      <method name="Boolean ContainsKey(IDictionary, System.Object)" attrs="150">
+        <size>53</size>
+      </method>
+      <method name="Boolean CompareArrays(_root.Array, _root.Array)" attrs="150">
+        <size>143</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-ConversionTest.as">
+    <type name="_root.ConversionTest">
+      <method name="Int32 Main()" attrs="150">
+        <size>128</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-DynamicBinaryArithmeticTest.as">
+    <type name="_root.DynamicBinaryArithmeticTest">
+      <method name="Int32 Main()" attrs="150">
+        <size>208</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-DynamicBinaryComparisonTest.as">
+    <type name="_root.DynamicBinaryComparisonTest">
+      <method name="Int32 Main()" attrs="150">
+        <size>504</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+    <type name="_root.____as_test_debug_DynamicBinaryComparisonTest_as.A">
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-EqualityTest.as">
+    <type name="_root.ClassA">
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+    <type name="_root.ClassB">
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+    <type name="_root.ClassC">
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+    <type name="_root.EqualityTest">
+      <method name="Int32 Main()" attrs="150">
+        <size>1478</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-EventHandlerTest.as">
+    <type name="_root.EventHandlerTest">
+      <method name="Int32 Main()" attrs="150">
+        <size>246</size>
+      </method>
+      <method name="_root.____as_test_debug_EventHandlerTest_as.EventHandler handle(System.String, System.Delegate, System.String, System.Delegate, System.String, System.Delegate, System.String, System.Delegate)" attrs="145">
+        <size>56</size>
+      </method>
+      <method name="Void onComplete(flash.events.Event)" attrs="145">
+        <size>8</size>
+      </method>
+      <method name="Void onError(flash.events.Event)" attrs="145">
+        <size>8</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+      <method name="Void .cctor()" attrs="6289">
+        <size>13</size>
+      </method>
+    </type>
+    <type name="_root.____as_test_debug_EventHandlerTest_as.EventHandler">
+      <method name="Int32 get_priority()" attrs="2502">
+        <size>15</size>
+      </method>
+      <method name="Void set_priority(Int32)" attrs="2502">
+        <size>30</size>
+      </method>
+      <method name="Boolean get_useWeakReferences()" attrs="2502">
+        <size>15</size>
+      </method>
+      <method name="Void set_useWeakReferences(Boolean)" attrs="2502">
+        <size>30</size>
+      </method>
+      <method name="System.Object get_source()" attrs="2502">
+        <size>15</size>
+      </method>
+      <method name="Void set_source(System.Object)" attrs="2502">
+        <size>30</size>
+      </method>
+      <method name="Boolean get_enabled()" attrs="2502">
+        <size>15</size>
+      </method>
+      <method name="Void set_enabled(Boolean)" attrs="2502">
+        <size>82</size>
+      </method>
+      <method name="Void destroy()" attrs="454">
+        <size>227</size>
+      </method>
+      <method name="_root.____as_test_debug_EventHandlerTest_as.EventHandler once()" attrs="454">
+        <size>37</size>
+      </method>
+      <method name="_root.____as_test_debug_EventHandlerTest_as.EventHandler addHandler(System.String, System.Delegate)" attrs="454">
+        <size>311</size>
+      </method>
+      <method name="Boolean hasHandler(System.String, System.Delegate)" attrs="454">
+        <size>247</size>
+      </method>
+      <method name="Void addHandlers(_root.Array)" attrs="129">
+        <size>294</size>
+      </method>
+      <method name="_root.____as_test_debug_EventHandlerTest_as.EventHandler removeHandler(System.String, System.Delegate)" attrs="454">
+        <size>263</size>
+      </method>
+      <method name="Void removeHandlers(_root.Array)" attrs="129">
+        <size>270</size>
+      </method>
+      <method name="Void oneTimeHandler(System.Object)" attrs="452">
+        <size>165</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>40</size>
+      </method>
+    </type>
+    <type name="_root.____as_test_debug_EventHandlerTest_as.Utils">
+      <method name="_root.Array getKeys(System.Object)" attrs="150">
+        <size>171</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-FunctionTest.as">
+    <type name="_root.FunctionTest">
+      <method name="System.String aMethod(System.Object[])" attrs="150">
+        <size>22</size>
+      </method>
+      <method name="Int32 Main()" attrs="150">
+        <size>51</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-ImplicitStringConversionTest.as">
+    <type name="_root.ImplicitStringConversionTest">
+      <method name="Int32 Main()" attrs="150">
+        <size>124</size>
+      </method>
+      <method name="System.Object Print(System.String)" attrs="145">
+        <size>20</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-InternalClassTest.as">
+    <type name="_root.InternalClassTest">
+      <method name="Int32 Main()" attrs="150">
+        <size>10</size>
+      </method>
+      <method name="Void .ctor(StaticLock1)" attrs="6278">
+        <size>8</size>
+      </method>
+      <method name="Void .ctor(StaticLock2)" attrs="6278">
+        <size>8</size>
+      </method>
+    </type>
+    <type name="_root.____as_test_debug_InternalClassTest_as.StaticLock1">
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+    <type name="_root.____as_test_debug_InternalClassTest_as.StaticLock2">
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-NaNTest.as">
+    <type name="_root.NaNTest">
+      <method name="Int32 Main()" attrs="150">
+        <size>148</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-NullStringTest.as">
+    <type name="_root.NullStringTest">
+      <method name="Int32 Main()" attrs="150">
+        <size>171</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-NumberIsFloatTest.as">
+    <type name="_root.NumberIsFloatTest">
+      <method name="Single get_value()" attrs="2502">
+        <size>15</size>
+      </method>
+      <method name="Void set_value(Single)" attrs="2502">
+        <size>9</size>
+      </method>
+      <method name="Single easeOut(Single, Single, Single, Single)" attrs="150">
+        <size>166</size>
+      </method>
+      <method name="Void update(Single)" attrs="454">
+        <size>2</size>
+      </method>
+      <method name="Void Main()" attrs="150">
+        <size>85</size>
+      </method>
+      <method name="Single printNumber(Single)" attrs="145">
+        <size>17</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>22</size>
+      </method>
+      <method name="Void .cctor()" attrs="6289">
+        <size>15</size>
+      </method>
+    </type>
+    <type name="_root.____as_test_debug_NumberIsFloatTest_as.DoubleLogger">
+      <method name="Double printNumber(Double)" attrs="150">
+        <size>31</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+    <type name="_root.____as_test_debug_NumberIsFloatTest_as.FloatLogger">
+      <method name="Single printNumber(Single)" attrs="150">
+        <size>21</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-RegExpTest.as">
+    <type name="_root.RegExpTest">
+      <method name="Int32 Main()" attrs="150">
+        <size>883</size>
+      </method>
+      <method name="System.String swapMatches(System.Object[])" attrs="150">
+        <size>90</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-ScalarConstructorTest.as">
+    <type name="_root.ScalarConstructorTest">
+      <method name="Void Main()" attrs="150">
+        <size>65</size>
+      </method>
+      <method name="Double GetNumber()" attrs="150">
+        <size>18</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-UndefinedTest.as">
+    <type name="_root.UndefinedTest">
+      <method name="Int32 Main()" attrs="150">
+        <size>2551</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+    <type name="_root.____as_test_debug_UndefinedTest_as.A">
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-UntypedParameterTest.as">
+    <type name="_root.UntypedParameterTest">
+      <method name="Void RunTest(System.Object)" attrs="150">
+        <size>141</size>
+      </method>
+      <method name="Void RunTest2(System.Object)" attrs="454">
+        <size>35</size>
+      </method>
+      <method name="Void RunTest3(System.Object)" attrs="454">
+        <size>63</size>
+      </method>
+      <method name="Int32 Main()" attrs="150">
+        <size>57</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-UntypedReturnTypeTest.as">
+    <type name="_root.UntypedReturnTypeTest">
+      <method name="System.Object get_ClassName()" attrs="2198">
+        <size>14</size>
+      </method>
+      <method name="Void set_ClassName(System.Object)" attrs="2198">
+        <size>13</size>
+      </method>
+      <method name="System.Object get_SomeProperty()" attrs="2502">
+        <size>10</size>
+      </method>
+      <method name="Void set_SomeProperty(System.Object)" attrs="2502">
+        <size>2</size>
+      </method>
+      <method name="System.Object F1()" attrs="150">
+        <size>16</size>
+      </method>
+      <method name="System.Object F2(Int32)" attrs="150">
+        <size>33</size>
+      </method>
+      <method name="System.Object F3(Int32)" attrs="150">
+        <size>33</size>
+      </method>
+      <method name="System.Object F4(Int32)" attrs="150">
+        <size>33</size>
+      </method>
+      <method name="Int32 Main()" attrs="150">
+        <size>256</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+      <method name="Void .cctor()" attrs="6289">
+        <size>11</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-VarArgsTest.as">
+    <type name="_root.VarArgsTest">
+      <method name="Double RunTest(Double, Double, System.Object[])" attrs="150">
+        <size>65</size>
+      </method>
+      <method name="Int32 Main()" attrs="150">
+        <size>194</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-ps-issue-119.as">
+    <type name="_root.Program">
+      <method name="UInt32 foo(Int32)" attrs="454">
+        <size>10</size>
+      </method>
+      <method name="Int32 Main()" attrs="150">
+        <size>135</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-ps-issue-144.as">
+    <type name="_root.Test">
+      <method name="Boolean filterPickObject(flash.display.Bitmap, System.Object)" attrs="454">
+        <size>114</size>
+      </method>
+      <method name="Int32 Main()" attrs="150">
+        <size>10</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-ps-issue-157.as">
+    <type name="_root.Program">
+      <method name="Int32 Main()" attrs="150">
+        <size>77</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-ps-issue-207.as">
+    <type name="_root.Program">
+      <method name="Int32 Main()" attrs="150">
+        <size>38</size>
       </method>
       <method name="Void .ctor()" attrs="6278">
         <size>7</size>

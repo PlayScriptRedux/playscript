@@ -1,0 +1,2 @@
+#!/bin/bash
+MONO_RUNTIME='/Users/administrator/code/playscript/playscriptredux/runtime/mono-wrapper' MONO_PATH="./../class/lib/net_4_5::$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/runtime/mono-wrapper ./../class/lib/build/mcs.exe -d:"NET_4_0;NET_4_5" -r:../class/lib/net_4_5/Playscript.Dynamic_aot.dll -r:../class/lib/net_4_5/pscorlib_aot.dll "$@"

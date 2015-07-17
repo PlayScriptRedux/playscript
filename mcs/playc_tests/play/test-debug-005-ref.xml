@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<symbols>
+  <files>
+    <file id="1" name="test-debug-005.play" checksum="714f5139262d7dbe6f30387caeb89b2b" />
+  </files>
+  <methods>
+    <method token="0x6000001">
+      <sequencepoints />
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000002">
+      <sequencepoints>
+        <entry il="0x0" row="7" col="45" file_ref="1" hidden="false" />
+        <entry il="0x1" row="8" col="4" file_ref="1" hidden="false" />
+        <entry il="0x6" row="8" col="4" file_ref="1" hidden="false" />
+        <entry il="0xb" row="9" col="3" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000003">
+      <sequencepoints>
+        <entry il="0x0" row="12" col="37" file_ref="1" hidden="false" />
+        <entry il="0x1" row="15" col="20" file_ref="1" hidden="false" />
+        <entry il="0x7" row="15" col="22" file_ref="1" hidden="false" />
+        <entry il="0x2e" row="15" col="36" file_ref="1" hidden="false" />
+        <entry il="0x5c" row="15" col="52" file_ref="1" hidden="false" />
+        <entry il="0x84" row="19" col="13" file_ref="1" hidden="false" />
+        <entry il="0x8b" row="20" col="3" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals>
+        <entry name="o1" il_index="0" scope_ref="0" />
+      </locals>
+      <scopes />
+    </method>
+  </methods>
+</symbols>

@@ -1,4 +1,4 @@
-// Compiler options: tamarin-redux/tests/acceptance/Utils.as as/print.as -target:library -out:Assert.dll -psstrict-
+// Compiler options: com.adobe.test/Utils.as as/print.as -target:library -psstrict-
 
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,7 +15,9 @@ package com.adobe.test
 	 */
     public class Assert
     {
-        private static const PASSED = " PASSED!"
+        public static var error:Boolean = false;
+        public static var errcount:int = 0;
+        private static const PASSED = " PASSED!";
         private static const FAILED = " FAILED! expected: ";
         
         /**
@@ -197,10 +199,16 @@ package com.adobe.test
                 description += PASSED;
             } else if (result == "false") {
                 description += FAILED + expected + " got: " + actual;
+                error = true;
+                errcount++;
             } else if (result == "type error") {
                 description += FAILED + expected + " Type Mismatch - Expected Type: "+ typeof(expected) + ", Result Type: "+ typeof(actual);
+                error = true;
+                errcount++;
             } else { //should never happen
                 description += FAILED + " UNEXPECTED ERROR - see Assert.as:printResult()"
+                error = true;
+                errcount++;
             }
             
             print(description);

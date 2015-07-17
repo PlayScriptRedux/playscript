@@ -3,9 +3,50 @@
 # This file supports extended syntax
 # csXXXX.as		: test case causes error
 # csXXXX.as IGNORE 	: adds test to ignore list
-play/test-compiler-error-01.play
-play/test-debug-001.play
-play/test-debug-002.play
-play/test-debug-004.play
-play/test-debug-006.play
+
+# The following two tests run correctly indivudually but not run as a group?
+# missing a reference? blows up in safe-execution mode also
+# they run fine from the cmd line mono XXXXX.exe reports the proper return code of 0
+./as/test-debug-001.as
+./as/test-debug-002.as
+# ~~~~~~~~~
+
+# IL REGRESSION: _root.Foo: Int32 get_q() has a duplicate
+# IL REGRESSION: _root.Foo: Void set_q(Int32) has a duplicate
+# IL REGRESSION: _root.Foo: Void a() has a duplicate
+# IL REGRESSION: _root.Bar: Void b() has a duplicate
+# the following test is fine, the il verify can not handle mutiple object/func
+# with same name
+./as/test-debug-015.as IGNORE
+
+./play/test-debug-004.play
+./play/test-debug-006.play
+./play/test-ps-004.play
+./play/test-ps-006.play
+./play/test-ps-008.play
+./play/test-ps-010.play
+./play/test-ps-016.play
+./play/test-ps-017.play
+./play/test-ps-018.play
+./play/test-ps-019.play
+./play/test-ps-020.play
+./play/test-ps-021.play
+./play/test-ps-022.play
+./play/test-ps-023.play
+./play/test-ps-024.play
+./play/test-ps-025.play
+./play/test-ps-026.play
+./play/test-ps-027.play
+./play/test-ps-029.play
+./play/test-ps-030.play
+./play/test-ps-033.play
+./play/test-ps-034.play
+./play/test-ps-036.play
+./play/test-ps-037.play
+./play/test-ps-038.play
+./play/test-ps-040.play
+
+./as/test-debug-DivideByZeroTest.as
+./as/test-debug-UntypedVariableTest.as
+./as/test-debug-AllowDynamics.as
 

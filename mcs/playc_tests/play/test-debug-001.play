@@ -1,39 +1,52 @@
+// Compiler options: -r:./play/Assert.dll
 package
 {
-	// Test PlayScript specific class, statement extensions.
+    import com.adobe.test.Assert;
+
+    // Test PlayScript specific class, statement extensions.
 
 	[Partial]
 	public class Test
 	{
-		public function bar():void
+		public function testbar():int
 		{
-			trace("bar");
-		}
-	}
-
-	public class Bar {
-
-		public function Bar(b:int):void {
-
-		}
-	}
-
-	public class BarBar {
-
-		var _a:int = 100;
-
-		public function BarBar() {
-			var b:int = 200;
-			super(b);
+            return 77;
 		}
 	}
 
     public class Test
     {
-        static var i:int = 2;
+        static var i:int = 100;
+
         public static function Main():int {
 
-            return 0;
+            var bar = new BarBar();
+            var test = new Test();
+            var i = test.testbar();
+            Assert.expectEq( "i == 0", true, i == 77 );
+            Assert.expectEq( "bar.barb == 99", true, bar.barb == 99 );
+            return Assert.errcount;
         }
     }
+
+	public class Bar {
+
+        public var barb:int = 100;
+
+		public function Bar(b:int):void {
+            barb = b;
+            Assert.expectEq( "b == 99", true, b == 99 );
+		}
+	}
+
+	public class BarBar extends Bar {
+
+		var _a:int = 100;
+
+		public function BarBar() {
+			var b:int = 99;
+			super(b);
+		}
+	}
+
 }

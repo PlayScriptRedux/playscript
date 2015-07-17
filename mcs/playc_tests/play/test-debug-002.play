@@ -1,20 +1,19 @@
+// Compiler options: -r:./play/Assert.dll
 package
 {
+    import com.adobe.test.Assert;
+
 	// Test calling super constructor from base constructor.
-
-    // TODO: Need to fix CS1729, legal in actionscript
-    // error CS1729: The type `_root.Object' does not contain a constructor that takes `2' arguments
-
 
 	public class Foo {
 		
 		public function Foo(a:int, b:int):void {
-			trace(a);
-			trace(b);
+            Assert.expectEq("_a->a == 100", true, a == 100);
+            Assert.expectEq("b->b == 200", true, b == 200);
 		}
 	}
 	
-	public class Bar {
+	public class Bar extends Foo {
 		
 		public var _a:int = 100;
 		
@@ -31,7 +30,7 @@ package
 
 			var b:Bar = new Bar();
 
-            return 0;
+            return Assert.errcount;
 		}
 	}
 

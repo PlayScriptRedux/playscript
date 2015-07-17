@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <symbols>
   <files>
-    <file id="1" name="test-debug-ArrayIndexTest.as" checksum="edac54d5c374ec8c415fc468dab44a9c" />
+    <file id="1" name="test-debug-ArrayIndexTest.as" checksum="a90e06798e14e686950fcd75bf9953a3" />
   </files>
   <methods>
     <method token="0x6000001">
@@ -12,32 +12,31 @@
     <method token="0x6000002">
       <sequencepoints>
         <entry il="0x0" row="9" col="3" file_ref="1" hidden="false" />
-        <entry il="0x1" row="11" col="20" file_ref="1" hidden="false" />
-        <entry il="0x12" row="11" col="28" file_ref="1" hidden="false" />
-        <entry il="0x18" row="12" col="20" file_ref="1" hidden="false" />
-        <entry il="0x21" row="12" col="29" file_ref="1" hidden="false" />
-        <entry il="0x27" row="13" col="13" file_ref="1" hidden="false" />
-        <entry il="0x3e" row="13" col="20" file_ref="1" hidden="false" />
-        <entry il="0x44" row="14" col="13" file_ref="1" hidden="false" />
-        <entry il="0x5b" row="14" col="20" file_ref="1" hidden="false" />
-        <entry il="0x61" row="15" col="13" file_ref="1" hidden="false" />
-        <entry il="0x75" row="15" col="20" file_ref="1" hidden="false" />
-        <entry il="0x7b" row="16" col="13" file_ref="1" hidden="false" />
-        <entry il="0x92" row="16" col="20" file_ref="1" hidden="false" />
-        <entry il="0x98" row="17" col="13" file_ref="1" hidden="false" />
-        <entry il="0xcb" row="17" col="20" file_ref="1" hidden="false" />
-        <entry il="0xd1" row="18" col="13" file_ref="1" hidden="false" />
-        <entry il="0x104" row="18" col="20" file_ref="1" hidden="false" />
-        <entry il="0x10a" row="19" col="13" file_ref="1" hidden="false" />
-        <entry il="0x13d" row="19" col="20" file_ref="1" hidden="false" />
-        <entry il="0x143" row="20" col="13" file_ref="1" hidden="false" />
-        <entry il="0x176" row="20" col="20" file_ref="1" hidden="false" />
-        <entry il="0x17c" row="21" col="13" file_ref="1" hidden="false" />
-        <entry il="0x1a2" row="21" col="20" file_ref="1" hidden="false" />
-        <entry il="0x1a8" row="22" col="13" file_ref="1" hidden="false" />
-        <entry il="0x1b2" row="22" col="31" file_ref="1" hidden="false" />
-        <entry il="0x1b9" row="23" col="4" file_ref="1" hidden="false" />
-        <entry il="0x1c0" row="24" col="3" file_ref="1" hidden="false" />
+        <entry il="0x1" row="10" col="13" file_ref="1" hidden="false" />
+        <entry il="0x7" row="12" col="20" file_ref="1" hidden="false" />
+        <entry il="0x18" row="12" col="28" file_ref="1" hidden="false" />
+        <entry il="0x1e" row="13" col="20" file_ref="1" hidden="false" />
+        <entry il="0x27" row="13" col="29" file_ref="1" hidden="false" />
+        <entry il="0x2d" row="14" col="13" file_ref="1" hidden="false" />
+        <entry il="0x44" row="14" col="20" file_ref="1" hidden="false" />
+        <entry il="0x4a" row="15" col="13" file_ref="1" hidden="false" />
+        <entry il="0x61" row="15" col="20" file_ref="1" hidden="false" />
+        <entry il="0x67" row="16" col="13" file_ref="1" hidden="false" />
+        <entry il="0x7b" row="16" col="20" file_ref="1" hidden="false" />
+        <entry il="0x81" row="17" col="13" file_ref="1" hidden="false" />
+        <entry il="0x98" row="17" col="20" file_ref="1" hidden="false" />
+        <entry il="0x9e" row="18" col="13" file_ref="1" hidden="false" />
+        <entry il="0xd1" row="18" col="20" file_ref="1" hidden="false" />
+        <entry il="0xd7" row="19" col="13" file_ref="1" hidden="false" />
+        <entry il="0x10a" row="19" col="20" file_ref="1" hidden="false" />
+        <entry il="0x110" row="20" col="13" file_ref="1" hidden="false" />
+        <entry il="0x143" row="20" col="20" file_ref="1" hidden="false" />
+        <entry il="0x149" row="21" col="13" file_ref="1" hidden="false" />
+        <entry il="0x17c" row="21" col="20" file_ref="1" hidden="false" />
+        <entry il="0x182" row="22" col="13" file_ref="1" hidden="false" />
+        <entry il="0x1a8" row="22" col="20" file_ref="1" hidden="false" />
+        <entry il="0x1ae" row="23" col="13" file_ref="1" hidden="false" />
+        <entry il="0x1b9" row="24" col="3" file_ref="1" hidden="false" />
       </sequencepoints>
       <locals>
         <entry name="r" il_index="0" scope_ref="0" />

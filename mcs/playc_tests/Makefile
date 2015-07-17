@@ -10,7 +10,7 @@ DISTFILES = $(wildcard dlls/**/*.cs) $(wildcard dlls/*.cs) $(wildcard dlls/*.inc
 DISTFILES += $(wildcard *.cs) $(wildcard *.il) $(wildcard *.xml) $(wildcard *.inc) $(wildcard *.snk)
 DISTFILE += (wildcard play-issues-*) (wildcard as-issues-*)
 
-with_mono_path = MONO_PATH="$(topdir)/class/lib/$(PROFILE)$(PLATFORM_PATH_SEPARATOR)$$MONO_PATH"
+with_mono_path = MONO_PATH="$(topdir)/class/lib/$(PROFILE)$(PLATFORM_PATH_SEPARATOR)$$MONO_PATH"/
 
 ilasm = $(topdir)/class/lib/$(PROFILE)/ilasm.exe
 ILASM = MONO_PATH="$(topdir)/class/lib/$(PROFILE)$(PLATFORM_PATH_SEPARATOR)$$MONO_PATH" $(RUNTIME) $(RUNTIME_FLAGS) $(ilasm)
@@ -52,7 +52,7 @@ endif
 
 LOCAL_RUNTIME_FLAGS =
 COMPILER = $(topdir)/class/lib/$(BUILD_TOOLS_PROFILE)/mcs.exe
-TESTER = MONO_RUNTIME='$(RUNTIME)' $(TEST_RUNTIME) $(RUNTIME_FLAGS) $(LOCAL_RUNTIME_FLAGS) $(topdir)/class/lib/$(PROFILE)/compiler-tester.exe -verbose $(UPDATEIL)
+TESTER = MONO_RUNTIME='$(RUNTIME)' $(TEST_RUNTIME) $(RUNTIME_FLAGS) $(LOCAL_RUNTIME_FLAGS) $(topdir)/class/lib/$(PROFILE)/playc-tester.exe $(UPDATEIL) $(VERBOSE) $(UPDATEREF)
 
 TEST_ILS := $(wildcard *-lib.il)
 
@@ -60,31 +60,41 @@ build-compiler-lib:
 	cd ../class/Mono.CSharp && $(MAKE) NO_DIR_CHECK=yes
 
 qcheck: build-compiler-lib qcheck2
-	
-astest:
-	@$(TESTER) -mode:pos -files:"as" -compiler:$(COMPILER) -issues:as-issues-$(PROFILE) -log:as-$(PROFILE).log -il:as-il-$(PROFILE).xml $(DEFINES) $(TOPTIONS) 
 
-playtest:
+as/Assert.dll:
+	$(CSCOMPILE) -t:library -d:"NET_4_0;NET_4_5" -r:../class/lib/net_4_5/pscorlib_aot.dll -r:../class/lib/net_4_5/Playscript.Dynamic_aot.dll -psstrict- -out:as/Assert.dll com.adobe.test/Assert.as com.adobe.test/Utils.as com.adobe.test/print.as
+
+play/Assert.dll:
+	$(CSCOMPILE) -t:library -d:"NET_4_0;NET_4_5" -r:../class/lib/net_4_5/pscorlib_aot.dll -r:../class/lib/net_4_5/Playscript.Dynamic_aot.dll -psstrict- -out:play/Assert.dll com.adobe.test/Assert.as com.adobe.test/Utils.as com.adobe.test/print.as
+
+%.play: setup
+	$(TESTER) -mode:pos -files:$@ -compiler:$(COMPILER) $(DEFINES) $(TOPTIONS) -log:play-$(PROFILE).log -il:play-il-$(PROFILE).xml $(DEFINES) $(TOPTIONS)
+
+%.as: setup 
+	$(TESTER) -mode:pos -files:$@ -compiler:$(COMPILER) $(DEFINES) $(TOPTIONS) -log:play-$(PROFILE).log -il:play-il-$(PROFILE).xml $(DEFINES) $(TOPTIONS)
+
+astest: setup
+	$(TESTER) -mode:pos -files:"as" -compiler:$(COMPILER) -issues:play-issues-$(PROFILE) -log:play-$(PROFILE).log -il:play-il-$(PROFILE).xml $(DEFINES) $(TOPTIONS) 
+
+playtest: setup
 	$(TESTER) -mode:pos -files:"play" -compiler:$(COMPILER) -issues:play-issues-$(PROFILE) -log:play-$(PROFILE).log -il:play-il-$(PROFILE).xml $(DEFINES) $(TOPTIONS) 
 
-playscript:
-	$(TESTER) -mode:pos -files:"playscript" -compiler:$(COMPILER) -issues:playscript-issues-$(PROFILE) -log:playscript-$(PROFILE).log -il:playscript-il-$(PROFILE).xml $(DEFINES) $(TOPTIONS) 
+playscript: setup
+	$(TESTER) -mode:pos -files:"playscript" -compiler:$(COMPILER) -issues:play-issues-$(PROFILE) -log:play-$(PROFILE).log -il:play-il-$(PROFILE).xml $(DEFINES) $(TOPTIONS) 
 
-qcheck2: tplay tas
+qcheck2: playscript
 
 test-local:
 	@:
 
-run-test-local: $(TEST_ILS:.il=.dll) setup qcheck
+run-test-local: setup qcheck
 
 check: run-test-local
 
 endif
 
 clean-local:
-	#rm -R dir-*
 	rm -R */*.exe */*.dll */*.mdb *.log
-	rm -R */xml-*.xml
 
 dist-local: dist-default
 	rm -f $(distdir)/casts.cs
@@ -97,6 +107,6 @@ csproj-local:
 %-lib.dll: %-lib.il
 	$(ILASM) /dll /out:$@ $<
 
-setup:
-	$(CSCOMPILE) -t:library dlls/test-679-2/test-679-lib-2.cs
-	$(CSCOMPILE) -t:library dlls/test-679-1/test-679-lib.cs -r:dlls/test-679-2/test-679-lib-2.dll
+setup: as/Assert.dll play/Assert.dll
+
+#	$(CSCOMPILE) -t:library 

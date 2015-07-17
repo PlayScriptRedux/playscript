@@ -121,3 +121,6 @@ mono.spec
 mono-core.spec
 tmpinst-dir.stamp
 
+# Idea IDE / Tamarin testing
+.idea/
+
