@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{5F7F9AF6-CE83-4F13-A25F-355DB2861D43}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>PlayScript.Dynamic</RootNamespace>
+    <AssemblyName>PlayScript.Dynamic</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <UseMSBuildEngine>False</UseMSBuildEngine>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>True</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>False</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;DYNAMIC_SUPPORT;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>False</ConsolePause>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>none</DebugType>
+    <Optimize>True</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>False</ConsolePause>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+  </ItemGroup>
+  <ItemGroup>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Folder Include="PlayScript\" />
+    <Folder Include="System\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.cs">
+      <Link>AssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\ActionCreator.cs">
+      <Link>ActionCreator.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\AsUntypedAttribute.cs">
+      <Link>AsUntypedAttribute.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\CallSite.cs">
+      <Link>CallSite.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\CallSiteBinder.cs">
+      <Link>CallSiteBinder.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\Dynamic.cs">
+      <Link>Dynamic.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\DynamicClassAttribute.cs">
+      <Link>DynamicClassAttribute.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\DynamicProperties.cs">
+      <Link>DynamicProperties.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\DynamicRuntime\PSBinaryArithmetic.cs">
+      <Link>PSBinaryArithmetic.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\DynamicRuntime\PSBinaryComparison.cs">
+      <Link>PSBinaryComparison.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\DynamicRuntime\PSBinaryOperation.cs">
+      <Link>PSBinaryOperation.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\DynamicRuntime\PSConverter.cs">
+      <Link>PSConverter.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\DynamicRuntime\PSGetIndex.cs">
+      <Link>PSGetIndex.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\DynamicRuntime\PSGetMember.cs">
+      <Link>PSGetMember.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\DynamicRuntime\PSInvoke.cs">
+      <Link>PSInvoke.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\DynamicRuntime\PSInvokeMember.cs">
+      <Link>PSInvokeMember.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\DynamicRuntime\PSSetIndex.cs">
+      <Link>PSSetIndex.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\DynamicRuntime\PSSetMember.cs">
+      <Link>PSSetMember.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\DynamicRuntime\PSUnaryOperation.cs">
+      <Link>PSUnaryOperation.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\DynamicRuntime\TypeLogger.cs">
+      <Link>TypeLogger.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\Expando\BindingRestrictionsEx.cs">
+      <Link>BindingRestrictionsEx.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\Expando\CacheDict.cs">
+      <Link>CacheDict.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\Expando\CollectionDebuggerView.cs">
+      <Link>CollectionDebuggerView.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\Expando\ContractUtils.cs">
+      <Link>ContractUtils.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\Expando\ExceptionFactory.Generated.cs">
+      <Link>ExceptionFactory.Generated.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\Expando\ExpandoClass.cs">
+      <Link>ExpandoClass.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\Expando\ExpandoObject.cs">
+      <Link>ExpandoObject.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\Expando\Hashtable.cs">
+      <Link>Hashtable.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\Expando\TypeExtensions.cs">
+      <Link>TypeExtensions.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\Expando\TypeUtils.cs">
+      <Link>TypeUtils.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\ExpressionType.cs">
+      <Link>ExpressionType.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\ExtensionAttribute.cs">
+      <Link>ExtensionAttribute.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\IDynamicClass.cs">
+      <Link>IDynamicClass.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\IKeyEnumerable.cs">
+      <Link>IKeyEnumerable.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\Invoker.cs">
+      <Link>Invoker.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\MethodBinder.cs">
+      <Link>MethodBinder.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\NumberIsFloatAttribute.cs">
+      <Link>NumberIsFloatAttribute.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\Binder.cs">
+      <Link>Binder.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\CSharpArgumentInfo.cs">
+      <Link>CSharpArgumentInfo.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\CSharpArgumentInfoFlags.cs">
+      <Link>CSharpArgumentInfoFlags.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\CSharpBinaryOperationBinder.cs">
+      <Link>CSharpBinaryOperationBinder.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\CSharpBinder.cs">
+      <Link>CSharpBinder.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\CSharpBinderFlags.cs">
+      <Link>CSharpBinderFlags.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\CSharpConvertBinder.cs">
+      <Link>CSharpConvertBinder.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\CSharpGetIndexBinder.cs">
+      <Link>CSharpGetIndexBinder.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\CSharpGetMemberBinder.cs">
+      <Link>CSharpGetMemberBinder.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\CSharpInvokeBinder.cs">
+      <Link>CSharpInvokeBinder.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\CSharpInvokeConstructorBinder.cs">
+      <Link>CSharpInvokeConstructorBinder.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\CSharpInvokeMemberBinder.cs">
+      <Link>CSharpInvokeMemberBinder.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\CSharpIsEventBinder.cs">
+      <Link>CSharpIsEventBinder.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\CSharpSetIndexBinder.cs">
+      <Link>CSharpSetIndexBinder.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\CSharpSetMemberBinder.cs">
+      <Link>CSharpSetMemberBinder.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\CSharpUnaryOperationBinder.cs">
+      <Link>CSharpUnaryOperationBinder.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\DynamicContext.cs">
+      <Link>DynamicContext.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\ErrorPrinter.cs">
+      <Link>ErrorPrinter.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\Extensions.cs">
+      <Link>Extensions.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\PSConvertBinder.cs">
+      <Link>PSConvertBinder.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\PSGetIndexBinder.cs">
+      <Link>PSGetIndexBinder.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\PSGetMemberBinder.cs">
+      <Link>PSGetMemberBinder.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\PSInvokeMemberBinder.cs">
+      <Link>PSInvokeMemberBinder.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\PSIsEventBinder.cs">
+      <Link>PSIsEventBinder.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\PSSetIndexBinder.cs">
+      <Link>PSSetIndexBinder.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\PSSetMemberBinder.cs">
+      <Link>PSSetMemberBinder.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\RuntimeBinderContext.cs">
+      <Link>RuntimeBinderContext.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\RuntimeBinderException.cs">
+      <Link>RuntimeBinderException.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\RuntimeBinder\RuntimeBinderInternalCompilerException.cs">
+      <Link>RuntimeBinderInternalCompilerException.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\Stats.cs">
+      <Link>Stats.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\Undefined.cs">
+      <Link>Undefined.cs</Link>
+    </Compile>
+    <Compile Include="PlayScript\Variant.cs">
+      <Link>Variant.cs</Link>
+    </Compile>
+    <Compile Include="System\Runtime\CompilerServices\DynamicAttribute.cs">
+      <Link>DynamicAttribute.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Mono.CSharp\Mono.CSharp-net_4_5.csproj">
+      <Project>{D8ECB9E8-884D-4BC4-8854-BA89701C9FC3}</Project>
+      <Name>Mono.CSharp-net_4_5</Name>
+    </ProjectReference>
+  </ItemGroup>
+</Project>

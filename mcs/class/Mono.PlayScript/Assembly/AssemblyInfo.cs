@@ -56,7 +56,7 @@ using System.Runtime.Versioning;
 
 [assembly: AssemblyKeyFile ("../mono.pub")]
 
-[assembly: TargetFramework (".NETFramework,Version=v4.0", FrameworkDisplayName=".NET Framework 4")]
+//[assembly: TargetFramework (".NETFramework,Version=v4.0", FrameworkDisplayName=".NET Framework 4")]
 
 [assembly: ComVisible (false)]
 

@@ -3,9 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>10.0.0</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{EDBAC91B-2817-479E-8DDF-B24ADDA563A6}</ProjectGuid>
+    <ProjectGuid>{EDBAC91B-2817-479E-8DDF-B24ADDA563A7}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>_root</RootNamespace>
     <AssemblyName>pscorlib_aot</AssemblyName>
@@ -933,12 +931,6 @@
     <Folder Include="Telemetry\" />
     <Folder Include="mx\" />
     <Folder Include="flash\media\mac\" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net.csproj">
-      <Project>{0BACBE20-34DD-4E24-8B91-87970E8A23B9}</Project>
-      <Name>PlayScript.Dynamic_aot-net</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

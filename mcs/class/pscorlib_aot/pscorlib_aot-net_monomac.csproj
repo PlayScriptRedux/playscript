@@ -3,12 +3,13 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>10.0.0</ProductVersion>
+    <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{EDBAC91B-2817-479E-8DDF-B24ADDA563A6}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>_root</RootNamespace>
     <AssemblyName>pscorlib_monomac</AssemblyName>
+    <UseMSBuildEngine>False</UseMSBuildEngine>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -38,21 +39,20 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="Mono.CSharp" />
     <Reference Include="System.Core" />
-    <Reference Include="MonoMac" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Drawing" />
     <Reference Include="ICSharpCode.SharpZipLib" />
     <Reference Include="System.Web" />
+    <Reference Include="Microsoft.CSharp">
+      <HintPath>..\lib\net_4_5\Microsoft.CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="MonoMac, Version=0.0.0.0, Culture=neutral" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Compile Include="..\pscorlib\Array.cs">
       <Link>Array.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\AssemblyInfo.cs">
-      <Link>AssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Boolean.cs">
       <Link>Boolean.cs</Link>
@@ -924,6 +924,27 @@
     </Compile>
     <Compile Include="..\pscorlib\Amf\ReflectionSerializer.cs">
       <Link>Amf\ReflectionSerializer.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\media\android\Sound.cs">
+      <Link>Sound.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\media\android\SoundChannel.cs">
+      <Link>SoundChannel.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\media\ios\Sound.cs">
+      <Link>Sound.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\media\ios\SoundChannel.cs">
+      <Link>SoundChannel.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\PartialAttribute.cs">
+      <Link>PartialAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\PlayScript\Hardware.cs">
+      <Link>Hardware.cs</Link>
+    </Compile>
+    <Compile Include="AssemblyInfo.cs">
+      <Link>AssemblyInfo.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>
