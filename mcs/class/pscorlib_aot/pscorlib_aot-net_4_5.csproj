@@ -5,23 +5,24 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{876BFFD1-CEFA-44DD-9243-A50958EF65DD}</ProjectGuid>
-    <ProjectTypeGuids>{6BC8ED88-2882-458C-8E55-DFD12B67127B};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <ProjectGuid>{EDBAC91B-2817-479E-8DDF-B24ADDA563A6}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>pscorlib_aotmonotouch</RootNamespace>
-    <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
-    <AssemblyName>pscorlib_monotouch</AssemblyName>
+    <RootNamespace>_root</RootNamespace>
+    <AssemblyName>pscorlib_monomac</AssemblyName>
+    <UseMSBuildEngine>False</UseMSBuildEngine>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>False</Optimize>
     <OutputPath>bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;PLATFORM_MONOTOUCH;OPENGL;PERFORMANCE_MODE</DefineConstants>
+    <DefineConstants>DEBUG;PLATFORM_MONOMAC;OPENGL;PERFORMANCE_MODE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>219</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -31,34 +32,26 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
-    <DefineConstants>PLATFORM_MONOTOUCH;OPENGL;PERFORMANCE_MODE</DefineConstants>
+    <DefineConstants>PLATFORM_MONOMAC;OPENGL;PERFORMANCE_MODE</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <NoWarn>219</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>219</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml" />
-    <Reference Include="monotouch, Version=0.0.0.0, Culture=neutral, PublicKeyToken=84e04ff9cfb79065">
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="OpenTK-1.0, Version=0.0.0.0, Culture=neutral, PublicKeyToken=84e04ff9cfb79065">
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="System.Json, Version=2.0.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35">
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="System.Web.Services, Version=2.0.5.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="System.Drawing" />
+    <Reference Include="ICSharpCode.SharpZipLib" />
+    <Reference Include="System.Web" />
+    <Reference Include="Microsoft.CSharp">
+      <HintPath>..\lib\net_4_5\Microsoft.CSharp.dll</HintPath>
     </Reference>
   </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Compile Include="..\pscorlib\Array.cs">
       <Link>Array.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\AssemblyInfo.cs">
-      <Link>AssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Boolean.cs">
       <Link>Boolean.cs</Link>
@@ -580,7 +573,7 @@
       <Link>Vector.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\events\ContextMenuEvent.as">
-      <Link>flash\events\ContextMenuEvent.as</Link>
+      <Link>flash\events\ContextMenuEvent.play</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\events\SecurityErrorEvent.play">
       <Link>flash\events\SecurityErrorEvent.play</Link>
@@ -654,59 +647,128 @@
     <Compile Include="..\pscorlib\flash\display3D\textures\SamplerState.cs">
       <Link>flash\display3D\textures\SamplerState.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\PlayScript\Player.cs">
-      <Link>PlayScript\Player.cs</Link>
+    <Compile Include="..\pscorlib\BindableAttribute.cs">
+      <Link>BindableAttribute.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\PlayScript\EmbedLoader.cs">
       <Link>PlayScript\EmbedLoader.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\PlayScript\Player.cs">
+      <Link>PlayScript\Player.cs</Link>
+    </Compile>
     <Compile Include="..\pscorlib\PlayScript\Support.cs">
       <Link>PlayScript\Support.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\PlayScript\ParamsDelegateTypes.cs">
-      <Link>PlayScript\ParamsDelegateTypes.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\net\URLRequestMethod.play">
-      <Link>flash\net\URLRequestMethod.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\events\HTTPStatusEvent.play">
-      <Link>flash\events\HTTPStatusEvent.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\Date.play">
-      <Link>Date.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\globalization\Collator.play">
-      <Link>flash\globalization\Collator.play</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\external\ExternalInterface.play">
       <Link>flash\external\ExternalInterface.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\events\UncaughtErrorEvent.play">
-      <Link>flash\events\UncaughtErrorEvent.play</Link>
+    <Compile Include="..\pscorlib\Date.play">
+      <Link>Date.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\net\URLRequestMethod.play">
+      <Link>flash\net\URLRequestMethod.play</Link>
+      <DependentUpon>URLRequestDefaults.play</DependentUpon>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\events\HTTPStatusEvent.play">
+      <Link>flash\events\HTTPStatusEvent.play</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\media\SoundMixer.play">
       <Link>flash\media\SoundMixer.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\events\FocusEvent.play">
-      <Link>flash\events\FocusEvent.play</Link>
+    <Compile Include="..\pscorlib\flash\events\UncaughtErrorEvent.play">
+      <Link>flash\events\UncaughtErrorEvent.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\events\FullScreenEvent.play">
-      <Link>flash\events\FullScreenEvent.play</Link>
+    <Compile Include="..\pscorlib\flash\utils\Proxy.play">
+      <Link>flash\utils\Proxy.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\events\StatusEvent.play">
-      <Link>flash\events\StatusEvent.play</Link>
+    <Compile Include="..\pscorlib\flash\globalization\Collator.play">
+      <Link>flash\globalization\Collator.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\events\TextEvent.play">
-      <Link>flash\events\TextEvent.play</Link>
+    <Compile Include="..\pscorlib\flash\net\Socket.play">
+      <Link>flash\net\Socket.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\filters\BitmapFilterQuality.play">
+      <Link>flash\filters\BitmapFilterQuality.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\Debugger.play" />
+    <Compile Include="..\pscorlib\flash\display\SimpleButton.play">
+      <Link>flash\display\SimpleButton.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\net\LocalConnection.play">
+      <Link>flash\net\LocalConnection.play</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\events\ThrottleEvent.play">
       <Link>flash\events\ThrottleEvent.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\PlayScript\Profiler.cs">
-      <Link>PlayScript\Profiler.cs</Link>
+    <Compile Include="..\pscorlib\InlineAttribute.cs" />
+    <Compile Include="..\pscorlib\flash\events\FullScreenEvent.play">
+      <Link>flash\events\FullScreenEvent.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\net\LocalConnection.play">
-      <Link>flash\net\LocalConnection.play</Link>
+    <Compile Include="..\pscorlib\flash\display\PixelSnapping.play">
+      <Link>flash\display\PixelSnapping.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\display\PNGEncoderOptions.play">
+      <Link>flash\display\PNGEncoderOptions.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\events\FocusEvent.play">
+      <Link>flash\events\FocusEvent.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\events\StatusEvent.play">
+      <Link>flash\events\StatusEvent.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\LabelButton.play">
+      <Link>fl\controls\LabelButton.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\Button.play">
+      <Link>fl\controls\Button.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\BaseButton.play">
+      <Link>fl\controls\BaseButton.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\core\UIComponent.play">
+      <Link>fl\core\UIComponent.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\TextArea.play">
+      <Link>fl\controls\TextArea.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\CheckBox.play">
+      <Link>fl\controls\CheckBox.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\NumericStepper.play">
+      <Link>fl\controls\NumericStepper.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\ComboBox.play">
+      <Link>fl\controls\ComboBox.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\Label.play">
+      <Link>fl\controls\Label.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\ScrollBar.play">
+      <Link>fl\controls\ScrollBar.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\UIScrollBar.play">
+      <Link>fl\controls\UIScrollBar.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\SelectableList.play">
+      <Link>fl\controls\SelectableList.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\List.play">
+      <Link>fl\controls\List.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\containers\ScrollPane.play">
+      <Link>fl\containers\ScrollPane.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\containers\BaseScrollPane.play">
+      <Link>fl\containers\BaseScrollPane.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\fl\controls\TextInput.play">
+      <Link>fl\controls\TextInput.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\globalization\DateTimeFormatter.play">
+      <Link>flash\globalization\DateTimeFormatter.play</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\net\URLRequestHeader.play">
+      <Link>flash\net\URLRequestHeader.play</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\net\net_functions.play">
       <Link>flash\net\net_functions.play</Link>
@@ -717,50 +779,18 @@
     <Compile Include="..\pscorlib\flash\net\SharedObjectFlushStatus.play">
       <Link>flash\net\SharedObjectFlushStatus.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\net\Socket.play">
-      <Link>flash\net\Socket.play</Link>
+    <Compile Include="..\pscorlib\DefaultPropertyAttribute.cs" />
+    <Compile Include="..\pscorlib\flash\events\TextEvent.play">
+      <Link>flash\events\TextEvent.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\net\URLRequestHeader.play">
-      <Link>flash\net\URLRequestHeader.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\utils\Proxy.play">
-      <Link>flash\utils\Proxy.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\Debugger.play">
-      <Link>flash\Debugger.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\display\PixelSnapping.play">
-      <Link>flash\display\PixelSnapping.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\display\PNGEncoderOptions.play">
-      <Link>flash\display\PNGEncoderOptions.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\display\SimpleButton.play">
-      <Link>flash\display\SimpleButton.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\filters\BitmapFilterQuality.play">
-      <Link>flash\filters\BitmapFilterQuality.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\InlineAttribute.cs">
-      <Link>InlineAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\globalization\DateTimeFormatter.play">
-      <Link>flash\globalization\DateTimeFormatter.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\BindableAttribute.cs">
-      <Link>BindableAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\DefaultPropertyAttribute.cs">
-      <Link>DefaultPropertyAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\PartialAttribute.cs">
-      <Link>PartialAttribute.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\utils\Timer.cs">
-      <Link>flash\utils\Timer.cs</Link>
+    <Compile Include="..\pscorlib\PlayScript\Profiler.cs">
+      <Link>PlayScript\Profiler.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\net\URLLoader.cs">
       <Link>flash\net\URLLoader.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\utils\Timer.cs">
+      <Link>flash\utils\Timer.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\events\GestureEvent.play">
       <Link>flash\events\GestureEvent.play</Link>
@@ -768,59 +798,11 @@
     <Compile Include="..\pscorlib\flash\events\TransformGestureEvent.play">
       <Link>flash\events\TransformGestureEvent.play</Link>
     </Compile>
-    <Compile Include="..\pscorlib\fl\containers\BaseScrollPane.play">
-      <Link>fl\containers\BaseScrollPane.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\fl\containers\ScrollPane.play">
-      <Link>fl\containers\ScrollPane.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\fl\controls\BaseButton.play">
-      <Link>fl\controls\BaseButton.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\fl\controls\Button.play">
-      <Link>fl\controls\Button.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\fl\controls\CheckBox.play">
-      <Link>fl\controls\CheckBox.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\fl\controls\ComboBox.play">
-      <Link>fl\controls\ComboBox.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\fl\controls\Label.play">
-      <Link>fl\controls\Label.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\fl\controls\LabelButton.play">
-      <Link>fl\controls\LabelButton.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\fl\controls\List.play">
-      <Link>fl\controls\List.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\fl\controls\NumericStepper.play">
-      <Link>fl\controls\NumericStepper.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\fl\controls\ScrollBar.play">
-      <Link>fl\controls\ScrollBar.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\fl\controls\SelectableList.play">
-      <Link>fl\controls\SelectableList.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\fl\controls\TextArea.play">
-      <Link>fl\controls\TextArea.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\fl\controls\TextInput.play">
-      <Link>fl\controls\TextInput.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\fl\controls\UIScrollBar.play">
-      <Link>fl\controls\UIScrollBar.play</Link>
+    <Compile Include="..\pscorlib\fl\events\ComponentEvent.play">
+      <Link>fl\events\ComponentEvent.play</Link>
     </Compile>
     <Compile Include="..\pscorlib\fl\controls\listClasses\CellRenderer.play">
       <Link>fl\controls\listClasses\CellRenderer.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\fl\core\UIComponent.play">
-      <Link>fl\core\UIComponent.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\fl\events\ComponentEvent.play">
-      <Link>fl\events\ComponentEvent.play</Link>
     </Compile>
     <Compile Include="..\pscorlib\AllowDynamicAttribute.cs">
       <Link>AllowDynamicAttribute.cs</Link>
@@ -849,26 +831,17 @@
     <Compile Include="..\pscorlib\Amf\Amf3Writer.cs">
       <Link>Amf\Amf3Writer.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\Amf\Amf3Reader.cs">
-      <Link>Amf\Amf3Reader.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\Amf\Amf3CodeGen.cs">
-      <Link>Amf\Amf3CodeGen.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\Amf\Amf3Utils.cs">
-      <Link>Amf\Amf3Utils.cs</Link>
-    </Compile>
     <Compile Include="..\pscorlib\Amf\DataConverter.cs">
       <Link>Amf\DataConverter.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\Amf\Rocks.cs">
-      <Link>Amf\Rocks.cs</Link>
+    <Compile Include="..\pscorlib\Amf\IAmf3Serializable.cs">
+      <Link>Amf\IAmf3Serializable.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Amf\ReferenceEqualityComparer.cs">
       <Link>Amf\ReferenceEqualityComparer.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\Amf\IAmf3Serializable.cs">
-      <Link>Amf\IAmf3Serializable.cs</Link>
+    <Compile Include="..\pscorlib\Amf\Rocks.cs">
+      <Link>Amf\Rocks.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3String.cs">
       <Link>Amf\Amf3String.cs</Link>
@@ -900,17 +873,14 @@
     <Compile Include="..\pscorlib\Telemetry\SymbolTable.cs">
       <Link>Telemetry\SymbolTable.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\PlayScript\Hardware.cs">
-      <Link>PlayScript\Hardware.cs</Link>
-    </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3SerializableAttribute.cs">
       <Link>Amf\Amf3SerializableAttribute.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\media\ios\Sound.cs">
-      <Link>flash\media\ios\Sound.cs</Link>
+    <Compile Include="..\pscorlib\flash\media\mac\Sound.cs">
+      <Link>flash\media\mac\Sound.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\media\ios\SoundChannel.cs">
-      <Link>flash\media\ios\SoundChannel.cs</Link>
+    <Compile Include="..\pscorlib\flash\media\mac\SoundChannel.cs">
+      <Link>flash\media\mac\SoundChannel.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\mx\graphics\codec\IImageEncoder.play">
       <Link>mx\graphics\codec\IImageEncoder.play</Link>
@@ -921,20 +891,32 @@
     <Compile Include="..\pscorlib\mx\graphics\codec\PNGEncoder.play">
       <Link>mx\graphics\codec\PNGEncoder.play</Link>
     </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3CodeGen.cs">
+      <Link>Amf\Amf3CodeGen.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Reader.cs">
+      <Link>Amf\Amf3Reader.cs</Link>
+    </Compile>
     <Compile Include="..\pscorlib\flash\display3D\GLUtils.cs">
       <Link>flash\display3D\GLUtils.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\PlayScript\ParamsDelegateTypes.cs">
+      <Link>PlayScript\ParamsDelegateTypes.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\PlayScript\BinJSON.cs">
+      <Link>PlayScript\BinJSON.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\flash\display\BitmapData.cs">
       <Link>flash\display\BitmapData.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\display3D\Context3DStateCache.cs">
-      <Link>flash\display3D\Context3DStateCache.cs</Link>
-    </Compile>
     <Compile Include="..\pscorlib\PlayScript\ProfilerData.cs">
       <Link>PlayScript\ProfilerData.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\PlayScript\BinJSON.cs">
-      <Link>PlayScript\BinJSON.cs</Link>
+    <Compile Include="..\pscorlib\flash\display3D\Context3DStateCache.cs">
+      <Link>flash\display3D\Context3DStateCache.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Utils.cs">
+      <Link>Amf\Amf3Utils.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Amf\ExpandoSerializer.cs">
       <Link>Amf\ExpandoSerializer.cs</Link>
@@ -942,17 +924,45 @@
     <Compile Include="..\pscorlib\Amf\ReflectionSerializer.cs">
       <Link>Amf\ReflectionSerializer.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\flash\media\android\Sound.cs">
+      <Link>Sound.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\media\android\SoundChannel.cs">
+      <Link>SoundChannel.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\media\ios\Sound.cs">
+      <Link>Sound.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\media\ios\SoundChannel.cs">
+      <Link>SoundChannel.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\PartialAttribute.cs">
+      <Link>PartialAttribute.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\PlayScript\Hardware.cs">
+      <Link>Hardware.cs</Link>
+    </Compile>
+    <Compile Include="AssemblyInfo.cs">
+      <Link>AssemblyInfo.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monotouch.csproj">
-      <Project>{CC73D545-B7C7-4FB4-996A-C76E8B0D5B81}</Project>
-      <Name>PlayScript.Dynamic_aot-monotouch</Name>
+    <Folder Include="flash\external\" />
+    <Folder Include="flash\globalization\" />
+    <Folder Include="fl\" />
+    <Folder Include="fl\core\" />
+    <Folder Include="fl\controls\" />
+    <Folder Include="fl\containers\" />
+    <Folder Include="fl\events\" />
+    <Folder Include="fl\controls\listClasses\" />
+    <Folder Include="Telemetry\" />
+    <Folder Include="mx\" />
+    <Folder Include="flash\media\mac\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net_4_5.csproj">
+      <Project>{0BACBE20-34DD-4E24-8B91-87970E8A23B9}</Project>
+      <Name>PlayScript.Dynamic_aot-net_4_5</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\pscorlib\pscorlib.dll.sources">
-      <Link>pscorlib.dll.sources</Link>
-    </None>
-  </ItemGroup>
-  <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.MonoTouch.CSharp.targets" />
 </Project>

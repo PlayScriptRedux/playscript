@@ -31,6 +31,7 @@
     <BootstrapperEnabled>true</BootstrapperEnabled>
     <TargetFrameworkProfile />
     <ReleaseVersion>1.0</ReleaseVersion>
+    <UseMSBuildEngine>False</UseMSBuildEngine>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -57,7 +58,9 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="Mono.Management" />
+    <Reference Include="Mono.Management">
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\class\corlib\Mono\DataConverter.cs">
@@ -98,6 +101,14 @@
     <ProjectReference Include="..\..\class\Mono.PlayScript\Mono.PlayScript.csproj">
       <Project>{D9F458AE-7290-4246-8E89-967D41C838CF}</Project>
       <Name>Mono.PlayScript</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\class\PlayScript.Dynamic\PlayScript.Dynamic-net_4_5.csproj">
+      <Project>{5F7F9AF6-CE83-4F13-A25F-355DB2861D43}</Project>
+      <Name>PlayScript.Dynamic-net_4_5</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\class\pscorlib\pscorlib-net_4_5.csproj">
+      <Project>{EDBACFCB-2817-4A2E-8DDF-B24AEFA56352}</Project>
+      <Name>pscorlib-net_4_5</Name>
     </ProjectReference>
   </ItemGroup>
 </Project>
