@@ -47,8 +47,3 @@ rm libgc/aclocal.m4
 make EXTERNAL_MCS=${PWD}/mcs/class/lib/monolite/gmcs.exe
 make install
 
-ROOT=${PWD}
-pushd mcs/tests
-make qcheck 2>&1 | tee -a ${ROOT}/regressions/`git log -n 1 --date=short --pretty=format:"%cd-%h"`
-popd
-

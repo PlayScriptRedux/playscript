@@ -247,12 +247,12 @@ namespace _root {
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
-#if PERFORMANCE_MODE && DEBUG
+#if PERFORMANCE_MODEz && DEBUG
 				if ((i >= mCount) || (i < 0))
 				{
 					throw new IndexOutOfRangeException();
 				}
-#elif PERFORMANCE_MODE
+#elif PERFORMANCE_MODEz
 #else
 				if ((i >= mCount) || (i < 0))
 				{
@@ -264,11 +264,11 @@ namespace _root {
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
-#if PERFORMANCE_MODE && DEBUG
+#if PERFORMANCE_MODEz && DEBUG
 				if (i >= mCount) {
 					throw new IndexOutOfRangeException();
 				}
-#elif PERFORMANCE_MODE
+#elif PERFORMANCE_MODEz
 #else
 				if (i >= mCount) {
 					expand((uint)(i+1));
@@ -298,11 +298,11 @@ namespace _root {
 			}
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
-#if PERFORMANCE_MODE && DEBUG
+#if PERFORMANCE_MODEz && DEBUG
 				if (i >= mCount) {
 					throw new IndexOutOfRangeException();
 				}
-#elif PERFORMANCE_MODE
+#elif PERFORMANCE_MODEz
 #else
 				if (i >= mCount) {
 					expand((uint)(i+1));
@@ -810,7 +810,7 @@ namespace _root {
 			return this;
 		}
 
-#if true
+#if false
 		public Vector<T> splice(int startIndex, uint deleteCount = 4294967295) 
 		{
 			Vector<T> removed = null;

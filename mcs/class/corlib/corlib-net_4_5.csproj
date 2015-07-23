@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.30729</ProductVersion>
+    <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{07C1F58B-9E99-47F8-A847-79EDA5157DA8}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -13,16 +13,14 @@
     <NoConfig>True</NoConfig>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>
-    </RootNamespace>
     <AssemblyName>mscorlib</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <UseMSBuildEngine>False</UseMSBuildEngine>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <NoWarn>612,618,1699</NoWarn>
     <Optimize>false</Optimize>
     <DefineConstants>DEBUG;TRACE;INSIDE_CORLIB;LIBC;NET_1_1;NET_2_0;NET_3_0;NET_3_5;NET_4_0;NET_4_5</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -30,7 +28,6 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
-    <NoWarn>612,618,1699</NoWarn>
     <Optimize>true</Optimize>
     <DefineConstants>INSIDE_CORLIB;LIBC;NET_1_1;NET_2_0;NET_3_0;NET_3_5;NET_4_0;NET_4_5</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -1684,7 +1681,8 @@
     <Compile Include="System\Void.cs" />
     <Compile Include="System\WeakReference.cs" />
     <Compile Include="System\WeakReference_T.cs" />
-    <Compile Include="System\WindowsConsoleDriver.cs" />  </ItemGroup>
+    <Compile Include="System\WindowsConsoleDriver.cs" />
+  </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
@@ -1694,7 +1692,6 @@
   -->
   <PropertyGroup>
     <PreBuildEvent>
-
     </PreBuildEvent>
     <PostBuildEvent>
       xcopy $(TargetName).* $(ProjectDir)..\lib\net_4_5\ /Y /R /D
@@ -1706,25 +1703,25 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="resources/collation.core.bin">
+    <EmbeddedResource Include="resources\collation.core.bin">
       <LogicalName>collation.core.bin</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources/collation.tailoring.bin">
+    <EmbeddedResource Include="resources\collation.tailoring.bin">
       <LogicalName>collation.tailoring.bin</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources/collation.cjkCHS.bin">
+    <EmbeddedResource Include="resources\collation.cjkCHS.bin">
       <LogicalName>collation.cjkCHS.bin</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources/collation.cjkCHT.bin">
+    <EmbeddedResource Include="resources\collation.cjkCHT.bin">
       <LogicalName>collation.cjkCHT.bin</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources/collation.cjkJA.bin">
+    <EmbeddedResource Include="resources\collation.cjkJA.bin">
       <LogicalName>collation.cjkJA.bin</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources/collation.cjkKO.bin">
+    <EmbeddedResource Include="resources\collation.cjkKO.bin">
       <LogicalName>collation.cjkKO.bin</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources/collation.cjkKOlv2.bin">
+    <EmbeddedResource Include="resources\collation.cjkKOlv2.bin">
       <LogicalName>collation.cjkKOlv2.bin</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
