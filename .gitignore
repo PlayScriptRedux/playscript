@@ -124,3 +124,5 @@ tmpinst-dir.stamp
 # Idea IDE / Tamarin testing
 .idea/
 
+.dirstamp
+support/minizip/*.lo

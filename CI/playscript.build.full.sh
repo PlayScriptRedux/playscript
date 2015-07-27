@@ -6,6 +6,9 @@ else
   echo ${PlayInstallPath}
 fi
 
+# use ccache
+export PATH=/usr/local/opt/ccache/libexec:${PATH}
+
 #export MONO_USE_LLVM=1
 #export PATH=${PlayInstallPath}/bin:$PATH
 
@@ -22,11 +25,17 @@ if [ -f configure.ac ]; then
 	sed -i 'bak' 's|-stack_size,0x800000||g' configure.ac
 fi
 
+
+# If rebuilding and you fail, you can not do a make clean as it trys to rebuild 
+# the basic.exe bootstrap compiler which causes it just to fail again..., 
+# so manually delete the jay generated .cs files to prevent other build failures
+find . -name "*.jay" |  while read f; do dn="$(dirname "$f")"; fn="$(basename "$f" ".jay")"; echo $dn/$fn.cs | xargs -I genfile rm genfile ; done
+
 ./autogen.sh \
 	 --with-tls=posix \
 	 --enable-nls=no \
-	 --with-profile2=no \
-	 --with-profile4=no \
+	 --with-profile2=yes \
+	 --with-profile4=yes \
 	 --with-profile4_5=yes \
 	 --with-moonlight=no \
   	 --host=x86_64-apple-darwin10 \
@@ -44,6 +53,5 @@ fi
 # Fix for 2.2.4 vs 2.4.6 glibtool
 rm libgc/aclocal.m4
 
-make EXTERNAL_MCS=${PWD}/mcs/class/lib/monolite/gmcs.exe
-make install
+make EXTERNAL_MCS=${PWD}/mcs/class/lib/monolite/basic.exe
 
