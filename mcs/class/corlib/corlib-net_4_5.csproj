@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -25,6 +25,7 @@
     <DefineConstants>DEBUG;TRACE;INSIDE_CORLIB;LIBC;NET_1_1;NET_2_0;NET_3_0;NET_3_5;NET_4_0;NET_4_5</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <OutputPath>..\lib\net_4_5</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -32,6 +33,7 @@
     <DefineConstants>INSIDE_CORLIB;LIBC;NET_1_1;NET_2_0;NET_3_0;NET_3_5;NET_4_0;NET_4_5</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <OutputPath>..\lib\net_4_5</OutputPath>
   </PropertyGroup>
   <!-- Set AddAdditionalExplicitAssemblyReferences to false, otherwise if targetting .NET4.0, 
   Microsoft.NETFramework.props will force a dependency on the assembly System.Core. This
@@ -493,6 +495,8 @@
     <Compile Include="System.Resources\SatelliteContractVersionAttribute.cs" />
     <Compile Include="System.Resources\UltimateResourceFallbackLocation.cs" />
     <Compile Include="System.Resources\Win32Resources.cs" />
+    <Compile Include="System.Runtime.CompilerServices\SpecialNameAttribute.cs" />
+    <Compile Include="System.Runtime.CompilerServices\StringFreezingAttribute.cs" />
     <Compile Include="System.Runtime.CompilerServices\AccessedThroughPropertyAttribute.cs" />
     <Compile Include="System.Runtime.CompilerServices\AsyncStateMachineAttribute.cs" />
     <Compile Include="System.Runtime.CompilerServices\AsyncTaskMethodBuilder.cs" />
@@ -555,9 +559,7 @@
     <Compile Include="System.Runtime.CompilerServices\RuntimeHelpers.cs" />
     <Compile Include="System.Runtime.CompilerServices\RuntimeWrappedException.cs" />
     <Compile Include="System.Runtime.CompilerServices\ScopelessEnumAttribute.cs" />
-    <Compile Include="System.Runtime.CompilerServices\SpecialNameAttribute.cs" />
     <Compile Include="System.Runtime.CompilerServices\StateMachineAttribute.cs" />
-    <Compile Include="System.Runtime.CompilerServices\StringFreezingAttribute.cs" />
     <Compile Include="System.Runtime.CompilerServices\SuppressIldasmAttribute.cs" />
     <Compile Include="System.Runtime.CompilerServices\TaskAwaiter.cs" />
     <Compile Include="System.Runtime.CompilerServices\TaskAwaiter_T.cs" />
@@ -1194,7 +1196,6 @@
     <Compile Include="System.Security.Permissions\EnvironmentPermission.cs" />
     <Compile Include="System.Security.Permissions\EnvironmentPermissionAccess.cs" />
     <Compile Include="System.Security.Permissions\EnvironmentPermissionAttribute.cs" />
-    <Compile Include="System.Security.Permissions\FileDialogPermission.cs" />
     <Compile Include="System.Security.Permissions\FileDialogPermissionAccess.cs" />
     <Compile Include="System.Security.Permissions\FileDialogPermissionAttribute.cs" />
     <Compile Include="System.Security.Permissions\FileIOPermission.cs" />
@@ -1207,7 +1208,6 @@
     <Compile Include="System.Security.Permissions\HostProtectionResource.cs" />
     <Compile Include="System.Security.Permissions\IBuiltInPermission.cs" />
     <Compile Include="System.Security.Permissions\IsolatedStorageContainment.cs" />
-    <Compile Include="System.Security.Permissions\IsolatedStorageFilePermission.cs" />
     <Compile Include="System.Security.Permissions\IsolatedStorageFilePermissionAttribute.cs" />
     <Compile Include="System.Security.Permissions\IsolatedStoragePermission.cs" />
     <Compile Include="System.Security.Permissions\IsolatedStoragePermissionAttribute.cs" />
@@ -1220,10 +1220,8 @@
     <Compile Include="System.Security.Permissions\KeyContainerPermissionFlags.cs" />
     <Compile Include="System.Security.Permissions\PermissionSetAttribute.cs" />
     <Compile Include="System.Security.Permissions\PermissionState.cs" />
-    <Compile Include="System.Security.Permissions\PrincipalPermission.cs" />
     <Compile Include="System.Security.Permissions\PrincipalPermissionAttribute.cs" />
     <Compile Include="System.Security.Permissions\PublisherIdentityPermission.cs" />
-    <Compile Include="System.Security.Permissions\PublisherIdentityPermissionAttribute.cs" />
     <Compile Include="System.Security.Permissions\ReflectionPermission.cs" />
     <Compile Include="System.Security.Permissions\ReflectionPermissionAttribute.cs" />
     <Compile Include="System.Security.Permissions\ReflectionPermissionFlag.cs" />
@@ -1235,12 +1233,10 @@
     <Compile Include="System.Security.Permissions\SecurityPermission.cs" />
     <Compile Include="System.Security.Permissions\SecurityPermissionAttribute.cs" />
     <Compile Include="System.Security.Permissions\SecurityPermissionFlag.cs" />
-    <Compile Include="System.Security.Permissions\SiteIdentityPermission.cs" />
     <Compile Include="System.Security.Permissions\SiteIdentityPermissionAttribute.cs" />
     <Compile Include="System.Security.Permissions\StrongNameIdentityPermission.cs" />
     <Compile Include="System.Security.Permissions\StrongNamePermissionAttribute.cs" />
     <Compile Include="System.Security.Permissions\StrongNamePublicKeyBlob.cs" />
-    <Compile Include="System.Security.Permissions\UIPermission.cs" />
     <Compile Include="System.Security.Permissions\UIPermissionAttribute.cs" />
     <Compile Include="System.Security.Permissions\UIPermissionClipboard.cs" />
     <Compile Include="System.Security.Permissions\UIPermissionWindow.cs" />
@@ -1682,6 +1678,13 @@
     <Compile Include="System\WeakReference.cs" />
     <Compile Include="System\WeakReference_T.cs" />
     <Compile Include="System\WindowsConsoleDriver.cs" />
+    <Compile Include="System.Reflection\MonoParameterInfo.cs" />
+    <Compile Include="System.Security.Permissions\FileDialogPermission.cs" />
+    <Compile Include="System.Security.Permissions\IsolatedStorageFilePermission.cs" />
+    <Compile Include="System.Security.Permissions\PrincipalPermission.cs" />
+    <Compile Include="System.Security.Permissions\PublisherIdentityPermissionAttribute.cs" />
+    <Compile Include="System.Security.Permissions\SiteIdentityPermission.cs" />
+    <Compile Include="System.Security.Permissions\UIPermission.cs" />
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

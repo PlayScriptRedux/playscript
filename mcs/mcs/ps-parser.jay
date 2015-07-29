@@ -3550,7 +3550,7 @@ type_parameter
 	: opt_attributes opt_type_parameter_variance IDENTIFIER
 	  {
 		var lt = (LocatedToken)$3;
-		$$ = new TypeParameter (new MemberName (lt.Value, lt.Location), (Attributes)$1, (Variance) $2);
+		$$ = new TypeParameter (new MemberName (lt.Value, lt.Location), (Attributes)$1, (VarianceDecl) $2);
   	  }
   	| error
   	  {
@@ -3559,7 +3559,7 @@ type_parameter
 		else
 			Error_SyntaxError (yyToken);
 			
-  	  	$$ = new TypeParameter (MemberName.Null, null, Variance.None);
+  	  	$$ = new TypeParameter (MemberName.Null, null, null);
   	  }
  	;
 

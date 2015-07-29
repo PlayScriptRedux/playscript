@@ -83,7 +83,7 @@ namespace Mono.CSharp
 			if (ext.ToLower() == ".as") {
 				FileType = SourceFileType.PlayScript;
 				PsExtended = false;
-			} else if (ext.ToLower() == ".play" || ext.ToLower() == ".asx") {
+			} else if (ext.ToLower() == ".play") {
 				FileType = SourceFileType.PlayScript;
 				PsExtended = true;
 			} else {

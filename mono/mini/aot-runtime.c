@@ -908,6 +908,12 @@ decode_method_ref_with_target (MonoAotModule *module, MethodRef *ref, MonoMethod
 				if (!m)
 					return FALSE;
 				ref->method = mono_marshal_get_synchronized_inner_wrapper (m);
+			} else if (subtype == WRAPPER_SUBTYPE_ARRAY_ACCESSOR) {
+				MonoMethod *m = decode_resolve_method_ref (module, p, &p);
+
+				if (!m)
+					return FALSE;
+				ref->method = mono_marshal_get_array_accessor_wrapper (m);
 			} else if (subtype == WRAPPER_SUBTYPE_GSHAREDVT_IN) {
 				ref->method = mono_marshal_get_gsharedvt_in_wrapper ();
 			} else if (subtype == WRAPPER_SUBTYPE_GSHAREDVT_OUT) {
@@ -1042,6 +1048,7 @@ decode_method_ref_with_target (MonoAotModule *module, MethodRef *ref, MonoMethod
 		case MONO_WRAPPER_DELEGATE_BEGIN_INVOKE:
 		case MONO_WRAPPER_DELEGATE_END_INVOKE: {
 			gboolean is_inflated = decode_value (p, &p);
+			WrapperSubtype subtype;
 
 			if (is_inflated) {
 				MonoClass *klass;
@@ -1079,6 +1086,19 @@ decode_method_ref_with_target (MonoAotModule *module, MethodRef *ref, MonoMethod
 				if (!target)
 					return FALSE;
 
+				if (wrapper_type == MONO_WRAPPER_DELEGATE_INVOKE) {
+					WrapperInfo *info;
+
+					subtype = decode_value (p, &p);
+					info = mono_marshal_get_wrapper_info (target);
+					if (info) {
+						if (info->subtype != subtype)
+							return FALSE;
+					} else {
+						if (subtype != WRAPPER_SUBTYPE_NONE)
+							return FALSE;
+					}
+				}
 				if (sig_matches_target (module, target, p, &p))
 					ref->method = target;
 				else
@@ -1640,6 +1660,7 @@ load_aot_module (MonoAssembly *assembly, gpointer user_data)
 	/* Sanity check */
 	g_assert (info->double_align == align_double);
 	g_assert (info->long_align == align_int64);
+	g_assert (info->generic_tramp_num == MONO_TRAMPOLINE_NUM);
 
 	blob = info->blob;
 

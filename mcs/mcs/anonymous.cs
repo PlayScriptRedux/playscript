@@ -964,6 +964,12 @@ namespace Mono.CSharp {
 			}
 		}
 
+		public override bool IsSideEffectFree {
+			get {
+				return true;
+			}
+		}
+
 		public ParametersCompiled Parameters {
 			get {
 				return Block.Parameters;
@@ -1015,9 +1021,9 @@ namespace Mono.CSharp {
 			return null;
 		}
 
-		protected bool VerifyExplicitParameters (ResolveContext ec, TypeSpec delegate_type, AParametersCollection parameters)
+		protected bool VerifyExplicitParameters (ResolveContext ec, TypeInferenceContext tic, TypeSpec delegate_type, AParametersCollection parameters)
 		{
-			if (VerifyParameterCompatibility (ec, delegate_type, parameters, ec.IsInProbingMode))
+			if (VerifyParameterCompatibility (ec, tic, delegate_type, parameters, ec.IsInProbingMode))
 				return true;
 
 			if (!ec.IsInProbingMode)
@@ -1028,7 +1034,7 @@ namespace Mono.CSharp {
 			return false;
 		}
 
-		protected bool VerifyParameterCompatibility (ResolveContext ec, TypeSpec delegate_type, AParametersCollection invoke_pd, bool ignore_errors)
+		protected bool VerifyParameterCompatibility (ResolveContext ec, TypeInferenceContext tic, TypeSpec delegate_type, AParametersCollection invoke_pd, bool ignore_errors)
 		{
 			if (Parameters.Count != invoke_pd.Count) {
 				if (ignore_errors)
@@ -1061,14 +1067,11 @@ namespace Mono.CSharp {
 					continue;
 
 				TypeSpec type = invoke_pd.Types [i];
+
+				if (tic != null)
+					type = tic.InflateGenericArgument (ec, type);
 				
-				//
-				// Assumes that generic mvar parameters are always inflated
-				//
-				if (ImplicitDelegateCreation.ContainsMethodTypeParameter (type))
-					continue;
-				
-				if (!TypeSpecComparer.IsEqual (invoke_pd.Types [i], Parameters.Types [i])) {
+				if (!TypeSpecComparer.IsEqual (type, Parameters.Types [i])) {
 					if (ignore_errors)
 						return false;
 					
@@ -1086,7 +1089,7 @@ namespace Mono.CSharp {
 		//
 		// Infers type arguments based on explicit arguments
 		//
-		public bool ExplicitTypeInference (ResolveContext ec, TypeInferenceContext type_inference, TypeSpec delegate_type)
+		public bool ExplicitTypeInference (TypeInferenceContext type_inference, TypeSpec delegate_type)
 		{
 			if (!HasExplicitParameters)
 				return false;
@@ -1300,7 +1303,7 @@ namespace Mono.CSharp {
 				return ParametersCompiled.CreateFullyResolved (fixedpars, delegate_parameters.Types);
 			}
 
-			if (!VerifyExplicitParameters (ec, delegate_type, delegate_parameters)) {
+			if (!VerifyExplicitParameters (ec, tic, delegate_type, delegate_parameters)) {
 				return null;
 			}
 
@@ -1681,7 +1684,7 @@ namespace Mono.CSharp {
 						// enough. No hoisted variables only 'this' and don't need to
 						// propagate this to value type state machine.
 						//
-						StateMachine sm_parent = null;
+						StateMachine sm_parent;
 						var pb = src_block.ParametersBlock;
 						do {
 							sm_parent = pb.StateMachine;
@@ -1693,7 +1696,7 @@ namespace Mono.CSharp {
 						} else if (sm_parent.Kind == MemberKind.Struct) {
 							//
 							// Special case where parent class is used to emit instance method
-							// because currect storey is of value type (async host). We cannot
+							// because currect storey is of value type (async host) and we cannot
 							// use ldftn on non-boxed instances either to share mutated state
 							//
 							parent = sm_parent.Parent.PartialContainer;
@@ -1827,12 +1830,8 @@ namespace Mono.CSharp {
 				// Special case for value type storey where this is not lifted but
 				// droped off to parent class
 				//
-				for (var b = Block.Parent; b != null; b = b.Parent) {
-					if (b.ParametersBlock.StateMachine != null) {
-						ec.Emit (OpCodes.Ldfld, b.ParametersBlock.StateMachine.HoistedThis.Field.Spec);
-						break;
-					}
-				}
+				if (ec.CurrentAnonymousMethod != null && ec.AsyncTaskStorey != null)
+					ec.Emit (OpCodes.Ldfld, ec.AsyncTaskStorey.HoistedThis.Field.Spec);
 			}
 
 			var delegate_method = method.Spec;
@@ -2011,7 +2010,7 @@ namespace Mono.CSharp {
 
 			Method tostring = new Method (this, new TypeExpression (Compiler.BuiltinTypes.String, loc),
 				Modifiers.PUBLIC | Modifiers.OVERRIDE | Modifiers.DEBUGGER_HIDDEN, new MemberName ("ToString", loc),
-				Mono.CSharp.ParametersCompiled.EmptyReadOnlyParameters, null);
+				ParametersCompiled.EmptyReadOnlyParameters, null);
 
 			ToplevelBlock equals_block = new ToplevelBlock (Compiler, equals.ParameterInfo, loc);
 
@@ -2120,7 +2119,7 @@ namespace Mono.CSharp {
 			Method hashcode = new Method (this, new TypeExpression (Compiler.BuiltinTypes.Int, loc),
 				Modifiers.PUBLIC | Modifiers.OVERRIDE | Modifiers.DEBUGGER_HIDDEN,
 				new MemberName ("GetHashCode", loc),
-				Mono.CSharp.ParametersCompiled.EmptyReadOnlyParameters, null);
+				ParametersCompiled.EmptyReadOnlyParameters, null);
 
 			//
 			// Modified FNV with good avalanche behavior and uniform

@@ -446,7 +446,7 @@ namespace Mono.CSharp {
 				"MIT X11 or GNU GPL licenses\n\n" +
 
 				"For more information on PlayScript, visit the project Web site\n" +
-				"   http://www.playscriptlang.com\n\n" +
+				"   http://playscriptredux.github.io/\n\n" +
 
 				"For more information on Mono, visit the project Web site\n" +
 				"   http://www.mono-project.com\n\n" +

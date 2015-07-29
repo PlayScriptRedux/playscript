@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>10.0.20506</ProductVersion>
+    <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{D4A01C5B-A1B5-48F5-BB5B-D2E1BD236E56}</ProjectGuid>
     <OutputType>Exe</OutputType>
@@ -18,14 +18,15 @@
     <DebugSymbols>True</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>False</Optimize>
-    <OutputPath>.</OutputPath>
-    <DefineConstants>TRACE;DEBUG;NET_4_0;STATIC;NO_SYMBOL_WRITER;NO_AUTHENTICODE</DefineConstants>
+    <OutputPath>..\class\pscorlib_aot</OutputPath>
+    <DefineConstants>TRACE;DEBUG;NET_4_0;STATIC;NO_SYMBOL_WRITER;NO_AUTHENTICODE;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <Commandlineparameters>@options.rsp</Commandlineparameters>
     <additionalargs>/newdynamic-</additionalargs>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Externalconsole>true</Externalconsole>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Optimize>True</Optimize>
@@ -33,12 +34,12 @@
     <ErrorReport>prompt</ErrorReport>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <OutputPath>.</OutputPath>
+    <OutputPath>..\class\pscorlib_aot</OutputPath>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug - AST|AnyCPU'">
     <DebugSymbols>True</DebugSymbols>
-    <OutputPath>.</OutputPath>
+    <OutputPath>..\class\pscorlib_aot</OutputPath>
     <DefineConstants>TRACE;DEBUG;NET_4_0;STATIC;NO_SYMBOL_WRITER;NO_AUTHENTICODE;FULL_AST</DefineConstants>
     <DebugType>full</DebugType>
     <CodeAnalysisLogFile>mcs.exe.CodeAnalysisLog.xml</CodeAnalysisLogFile>
@@ -55,11 +56,6 @@
     <WarningLevel>4</WarningLevel>
     <Optimize>False</Optimize>
   </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Core" />
-  </ItemGroup>
   <ItemGroup>
     <Compile Include="..\build\common\Consts.cs">
     </Compile>
@@ -139,9 +135,6 @@
     <Compile Include="namespace.cs">
     </Compile>
     <Compile Include="nullable.cs" />
-    <Compile Include="..\tools\monop\outline.cs">
-      <Link>outline.cs</Link>
-    </Compile>
     <Compile Include="parameter.cs" />
     <Compile Include="pending.cs" />
     <Compile Include="property.cs" />
@@ -171,6 +164,9 @@
     <Compile Include="ps-codegen.cs" />
     <Compile Include="intrinsics.cs" />
     <Compile Include="inliner.cs" />
+    <Compile Include="..\tools\monop\outline.cs">
+      <Link>outline.cs</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup Label="IKVM.Reflection">
     <Compile Include="..\..\external\ikvm\reflect\*.cs">
@@ -210,6 +206,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ps-parser.jay" />
-    <None Include="options.rsp" />
+    <None Include="options.rsp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Xml">
+      <HintPath>..\class\lib\build\System.Xml.dll</HintPath>
+    </Reference>
+    <Reference Include="System">
+      <HintPath>..\class\lib\build\System.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>

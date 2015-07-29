@@ -126,7 +126,15 @@ namespace {1} {{
 			}
 
 			string fileStr = os.ToString();
-			var path = System.IO.Path.Combine (System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(module.Compiler.Settings.OutputFile)), "dynamic.g.cs");
+			String path;
+			try {
+//			if (module.Compiler.Settings.OutputFile.Length > 0) {
+				path = System.IO.Path.Combine (System.IO.Path.GetDirectoryName (System.IO.Path.GetFullPath (module.Compiler.Settings.OutputFile)), "dynamic.g.cs");
+			} catch { //
+				path = System.IO.Path.Combine (System.IO.Path.GetTempPath (), "dynamic.g.cs");
+				Console.WriteLine ("! Compiler.Settings.OutputFile is not set: {0}", module.Compiler.Settings.OutputFile);
+				Console.WriteLine ("! Setting to: {0}", path);
+			}
 			System.IO.File.WriteAllText(path, fileStr);
 
 			byte[] byteArray = Encoding.ASCII.GetBytes( fileStr );

@@ -1226,7 +1226,7 @@ namespace Mono.CSharp {
 			var ctype = ctx.CurrentType;
 
 			if (ma == Modifiers.PRIVATE) {
-				if (ctype == null)
+				if (ctype == null || parentType == null)
 					return false;
 				//
 				// It's only accessible to the current class or children
@@ -1292,7 +1292,7 @@ namespace Mono.CSharp {
 			return (state & StateFlags.CLSCompliant) != 0;
 		}
 
-		public bool IsConditionallyExcluded (IMemberContext ctx, Location loc)
+		public bool IsConditionallyExcluded (IMemberContext ctx)
 		{
 			if ((Kind & (MemberKind.Class | MemberKind.Method)) == 0)
 				return false;

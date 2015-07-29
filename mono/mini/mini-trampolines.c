@@ -12,6 +12,7 @@
 #include <mono/metadata/tabledefs.h>
 #include <mono/utils/mono-counters.h>
 #include <mono/utils/mono-error-internals.h>
+#include <mono/utils/mono-membar.h>
 
 #include "mini.h"
 #include "debug-mini.h"
@@ -525,7 +526,7 @@ common_call_trampoline (mgreg_t *regs, guint8 *code, MonoMethod *m, guint8* tram
 			actual_method = vt->klass->vtable [displacement];
 		}
 
-		if (method_inst) {
+		if (method_inst || m->wrapper_type) {
 			MonoGenericContext context = { NULL, NULL };
 
 			if (m->is_inflated)
@@ -1129,6 +1130,11 @@ gpointer
 mono_create_handler_block_trampoline (void)
 {
 	static gpointer code;
+	if (code) {
+		mono_memory_barrier ();
+		return code;
+	}
+
 
 	if (mono_aot_only) {
 		g_assert (0);
@@ -1137,9 +1143,11 @@ mono_create_handler_block_trampoline (void)
 
 	mono_trampolines_lock ();
 
-	if (!code)
-		code = mono_arch_create_handler_block_trampoline ();
-
+	if (!code) {
+		gpointer tmp = mono_arch_create_handler_block_trampoline ();
+		mono_memory_barrier ();
+		code = tmp;
+	}
 	mono_trampolines_unlock ();
 
 	return code;
@@ -1675,15 +1683,11 @@ static const char*tramp_names [MONO_TRAMPOLINE_NUM] = {
 	"aot_plt",
 	"delegate",
 	"restore_stack_prot",
-#ifndef DISABLE_REMOTING
 	"generic_virtual_remoting",
-#endif
 	"monitor_enter",
 	"monitor_exit",
 	"vcall",
-#ifdef MONO_ARCH_HAVE_HANDLER_BLOCK_GUARD
 	"handler_block_guard"
-#endif
 };
 
 /*

@@ -3,11 +3,11 @@ package {
     // Test embed support..
 
     public class Test {
-        [Embed(source="Makefile")]
+//        [Embed(source="phony-image")]
         public static var data:Class;
 
         public static function Main():int {
-            //var d:Object = new data();
+            var d:Object = new data();
             return 0;
         }
 

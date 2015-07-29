@@ -2,6 +2,7 @@
 <symbols>
   <files>
     <file id="1" name="test-debug-007.as" checksum="ba309cfc25e5a38c9fff6d4b21cce75b" />
+    <file id="2" name="dynamic.g.cs" checksum="5d70f1848f28ed4f324221d8548cc722" />
   </files>
   <methods>
     <method token="0x6000001">
@@ -25,20 +26,110 @@
     </method>
     <method token="0x6000003">
       <sequencepoints />
-      <locals />
-      <scopes />
+      <locals>
+        <entry name="value" il_index="0" scope_ref="0" />
+      </locals>
+      <scopes>
+        <entry index="0" start="0xd" end="0x1a" />
+      </scopes>
     </method>
     <method token="0x6000004">
       <sequencepoints />
       <locals />
-      <scopes />
+      <scopes>
+        <entry index="0" start="0xb" end="0x1e" />
+        <entry index="1" start="0x1e" end="0x2c" />
+      </scopes>
     </method>
     <method token="0x6000005">
       <sequencepoints />
       <locals />
-      <scopes />
+      <scopes>
+        <entry index="0" start="0xb" end="0x17" />
+      </scopes>
     </method>
     <method token="0x6000006">
+      <sequencepoints />
+      <locals />
+      <scopes>
+        <entry index="0" start="0xb" end="0x1d" />
+      </scopes>
+    </method>
+    <method token="0x6000007">
+      <sequencepoints />
+      <locals />
+      <scopes>
+        <entry index="0" start="0xb" end="0x1d" />
+      </scopes>
+    </method>
+    <method token="0x6000008">
+      <sequencepoints />
+      <locals />
+      <scopes>
+        <entry index="0" start="0xb" end="0x1c" />
+      </scopes>
+    </method>
+    <method token="0x6000009">
+      <sequencepoints />
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x600000a">
+      <sequencepoints />
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x600000b">
+      <sequencepoints />
+      <locals>
+        <entry name="value" il_index="0" scope_ref="0" />
+      </locals>
+      <scopes>
+        <entry index="0" start="0xd" end="0x1a" />
+      </scopes>
+    </method>
+    <method token="0x600000c">
+      <sequencepoints />
+      <locals />
+      <scopes>
+        <entry index="0" start="0xb" end="0x1e" />
+        <entry index="1" start="0x1e" end="0x2c" />
+      </scopes>
+    </method>
+    <method token="0x600000d">
+      <sequencepoints />
+      <locals />
+      <scopes>
+        <entry index="0" start="0xb" end="0x17" />
+      </scopes>
+    </method>
+    <method token="0x600000e">
+      <sequencepoints />
+      <locals />
+      <scopes>
+        <entry index="0" start="0xb" end="0x1d" />
+      </scopes>
+    </method>
+    <method token="0x600000f">
+      <sequencepoints />
+      <locals />
+      <scopes>
+        <entry index="0" start="0xb" end="0x1d" />
+      </scopes>
+    </method>
+    <method token="0x6000010">
+      <sequencepoints />
+      <locals />
+      <scopes>
+        <entry index="0" start="0xb" end="0x1c" />
+      </scopes>
+    </method>
+    <method token="0x6000011">
+      <sequencepoints />
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000012">
       <sequencepoints>
         <entry il="0x0" row="23" col="43" file_ref="1" hidden="false" />
         <entry il="0x1" row="25" col="25" file_ref="1" hidden="false" />

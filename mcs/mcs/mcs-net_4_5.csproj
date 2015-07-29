@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -11,7 +11,6 @@
     <OutputPath>bin\Debug\mcs-net_4_5</OutputPath>
     <NoStdLib>True</NoStdLib>
     <NoConfig>True</NoConfig>
-    
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>
     </RootNamespace>
@@ -108,7 +107,38 @@
     <Compile Include="support.cs" />
     <Compile Include="typemanager.cs" />
     <Compile Include="typespec.cs" />
-    <Compile Include="visit.cs" />  </ItemGroup>
+    <Compile Include="visit.cs" />
+    <Compile Include="ps-lang.cs">
+      <Link>ps-lang.cs</Link>
+    </Compile>
+    <Compile Include="ps-tokenizer.cs">
+      <Link>ps-tokenizer.cs</Link>
+    </Compile>
+    <Compile Include="ps-codegen.cs">
+      <Link>ps-codegen.cs</Link>
+    </Compile>
+    <Compile Include="cxx-emit.cs">
+      <Link>cxx-emit.cs</Link>
+    </Compile>
+    <Compile Include="cxx-target.cs">
+      <Link>cxx-target.cs</Link>
+    </Compile>
+    <Compile Include="inliner.cs">
+      <Link>inliner.cs</Link>
+    </Compile>
+    <Compile Include="intrinsics.cs">
+      <Link>intrinsics.cs</Link>
+    </Compile>
+    <Compile Include="js-emit.cs">
+      <Link>js-emit.cs</Link>
+    </Compile>
+    <Compile Include="js-target.cs">
+      <Link>js-target.cs</Link>
+    </Compile>
+    <Compile Include="">
+      <Link></Link>
+    </Compile>
+  </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
@@ -118,7 +148,7 @@
   -->
   <PropertyGroup>
     <PreBuildEvent>
-$(ProjectDir)\..\jay\jay.exe -ct &lt; $(ProjectDir)\..\jay\skeleton.cs $(ProjectDir)\cs-parser.jay > $(ProjectDir)\cs-parser.cs
+$(ProjectDir)\..\jay\jay.exe -ct &lt; $(ProjectDir)\..\jay\skeleton.cs $(ProjectDir)\cs-parser.jay &gt; $(ProjectDir)\cs-parser.cs
 
     </PreBuildEvent>
     <PostBuildEvent>

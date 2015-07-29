@@ -37,7 +37,7 @@ namespace Mono.CSharp
 	// This includes properties, indexers, and events
 	public abstract class PropertyBasedMember : InterfaceMemberBase
 	{
-		public PropertyBasedMember (TypeDefinition parent, FullNamedExpression type, Modifiers mod, Modifiers allowed_mod, MemberName name, Attributes attrs)
+		protected PropertyBasedMember (TypeDefinition parent, FullNamedExpression type, Modifiers mod, Modifiers allowed_mod, MemberName name, Attributes attrs)
 			: base (parent, type, mod, allowed_mod, name, attrs)
 		{
 		}
@@ -772,6 +772,10 @@ namespace Mono.CSharp
 			}
 		}
 
+		static readonly string[] attribute_target_auto = new string[] { "property", "field" };
+
+		Field backing_field;
+
 		public Property (TypeDefinition parent, FullNamedExpression type, Modifiers mod,
 				 MemberName name, Attributes attrs)
 			: base (parent, type, mod,
@@ -793,19 +797,28 @@ namespace Mono.CSharp
 					Set.Accept (visitor);
 			}
 		}
-		
+
+		public override void ApplyAttributeBuilder (Attribute a, MethodSpec ctor, byte[] cdata, PredefinedAttributes pa)
+		{
+			if (a.Target == AttributeTargets.Field) {
+				backing_field.ApplyAttributeBuilder (a, ctor, cdata, pa);
+				return;
+			}
+
+			base.ApplyAttributeBuilder (a, ctor, cdata, pa);
+		}
 
 		void CreateAutomaticProperty ()
 		{
 			// Create backing field
-			Field field = new BackingField (this);
-			if (!field.Define ())
+			backing_field = new BackingField (this);
+			if (!backing_field.Define ())
 				return;
 
-			Parent.PartialContainer.Members.Add (field);
+			Parent.PartialContainer.Members.Add (backing_field);
 
-			FieldExpr fe = new FieldExpr (field, Location);
-			if ((field.ModFlags & Modifiers.STATIC) == 0)
+			FieldExpr fe = new FieldExpr (backing_field, Location);
+			if ((backing_field.ModFlags & Modifiers.STATIC) == 0)
 				fe.InstanceExpression = new CompilerGeneratedThis (Parent.CurrentType, Location);
 
 			//
@@ -894,6 +907,13 @@ namespace Mono.CSharp
 			jec.Buf.Write ("\tenumerable: true,\n\tconfigurable: true\n");
 			jec.Buf.Unindent ();
 			jec.Buf.Write ("\t});\n");
+		}
+
+		public override string[] ValidAttributeTargets {
+			get {
+				return Get != null && ((Get.ModFlags & Modifiers.COMPILER_GENERATED) != 0) ?
+					attribute_target_auto : base.ValidAttributeTargets;
+			}
 		}
 	}
 

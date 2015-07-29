@@ -1,4 +1,4 @@
-// Compiler options: -newdynamic+
+// xxxCompiler options: -newdynamic+
 //
 // test-ps-issue-18.as(12,13): error CS7655: Illegal use of dynamic: 'GetMember,Invoke'
 // test-ps-issue-18.as(14,20): error CS7655: Illegal use of dynamic: 'Convert,GetIndex'

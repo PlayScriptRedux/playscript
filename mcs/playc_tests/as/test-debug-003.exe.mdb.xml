@@ -159,9 +159,9 @@
         <entry name="o" il_index="2" scope_ref="0" />
         <entry name="i" il_index="3" scope_ref="0" />
         <entry name="v" il_index="4" scope_ref="0" />
-        <entry name="ii" il_index="6" scope_ref="0" />
+        <entry name="ii" il_index="6" scope_ref="18" />
         <entry name="o2" il_index="8" scope_ref="0" />
-        <entry name="o3" il_index="11" scope_ref="0" />
+        <entry name="o3" il_index="11" scope_ref="24" />
       </locals>
       <scopes>
         <entry index="0" start="0x4" end="0xe" />
@@ -178,21 +178,25 @@
         <entry index="11" start="0x104" end="0x122" />
         <entry index="12" start="0x10a" end="0x11c" />
         <entry index="13" start="0x117" end="0x11c" />
-        <entry index="14" start="0x14e" end="0x15b" />
-        <entry index="15" start="0x14f" end="0x15a" />
-        <entry index="16" start="0x18b" end="0x198" />
-        <entry index="17" start="0x18c" end="0x197" />
-        <entry index="18" start="0x213" end="0x21c" />
-        <entry index="19" start="0x214" end="0x21b" />
-        <entry index="20" start="0x2ad" end="0x2b6" />
-        <entry index="21" start="0x2ae" end="0x2b5" />
-        <entry index="22" start="0x2e4" end="0x2ef" />
-        <entry index="23" start="0x2f7" end="0x302" />
-        <entry index="24" start="0x30a" end="0x30a" />
-        <entry index="25" start="0x30a" end="0x33d" />
-        <entry index="26" start="0x33d" end="0x350" />
-        <entry index="27" start="0x350" end="0x363" />
-        <entry index="28" start="0x363" end="0x3a0" />
+        <entry index="14" start="0x12b" end="0x167" />
+        <entry index="15" start="0x14e" end="0x15b" />
+        <entry index="16" start="0x14f" end="0x15a" />
+        <entry index="17" start="0x167" end="0x1a4" />
+        <entry index="18" start="0x18b" end="0x198" />
+        <entry index="19" start="0x18c" end="0x197" />
+        <entry index="20" start="0x1aa" end="0x244" />
+        <entry index="21" start="0x213" end="0x21c" />
+        <entry index="22" start="0x214" end="0x21b" />
+        <entry index="23" start="0x244" end="0x2de" />
+        <entry index="24" start="0x2ad" end="0x2b6" />
+        <entry index="25" start="0x2ae" end="0x2b5" />
+        <entry index="26" start="0x2e4" end="0x2ef" />
+        <entry index="27" start="0x2f7" end="0x302" />
+        <entry index="28" start="0x30a" end="0x30a" />
+        <entry index="29" start="0x30a" end="0x33d" />
+        <entry index="30" start="0x33d" end="0x350" />
+        <entry index="31" start="0x350" end="0x363" />
+        <entry index="32" start="0x363" end="0x3a0" />
       </scopes>
     </method>
   </methods>

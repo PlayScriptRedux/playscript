@@ -1074,7 +1074,7 @@ namespace Mono.CSharp {
 				cdata = encoder.ToArray ();
 			}
 
-			if (!ctor.DeclaringType.IsConditionallyExcluded (context, Location)) {
+			if (!ctor.DeclaringType.IsConditionallyExcluded (context)) {
 				try {
 					foreach (Attributable target in targets)
 						target.ApplyAttributeBuilder (this, ctor, cdata, predefined);
@@ -1160,7 +1160,7 @@ namespace Mono.CSharp {
 
 		public Attributes (List<Attribute> attrs)
 		{
-			Attrs = attrs;
+			Attrs = attrs ?? new List<Attribute> ();
 		}
 
 		public void AddAttribute (Attribute attr)

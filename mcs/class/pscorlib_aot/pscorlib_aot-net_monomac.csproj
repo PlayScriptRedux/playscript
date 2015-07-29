@@ -44,10 +44,10 @@
     <Reference Include="System.Drawing" />
     <Reference Include="ICSharpCode.SharpZipLib" />
     <Reference Include="System.Web" />
+    <Reference Include="MonoMac, Version=0.0.0.0, Culture=neutral" />
     <Reference Include="Microsoft.CSharp">
       <HintPath>..\lib\net_4_5\Microsoft.CSharp.dll</HintPath>
     </Reference>
-    <Reference Include="MonoMac, Version=0.0.0.0, Culture=neutral" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

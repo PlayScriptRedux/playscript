@@ -166,7 +166,12 @@ class TestIfaces<T> : ITest<T>
 	}
 }
 
-public class Tests : TestsBase
+public interface ITest2
+{
+	int invoke_iface ();
+}
+
+public class Tests : TestsBase, ITest2
 {
 #pragma warning disable 0414
 	int field_i;
@@ -193,6 +198,7 @@ public class Tests : TestsBase
 	public AStruct field_struct;
 	public object field_boxed_struct;
 	public GStruct<int> generic_field_struct;
+	public KeyValuePair<int, object> boxed_struct_field;
 	[ThreadStatic]
 	public static int tls_i;
 	public static bool is_attached = Debugger.IsAttached;
@@ -498,7 +504,7 @@ public class Tests : TestsBase
 	}
 
 	public static void vtypes () {
-		Tests t = new Tests () { field_struct = new AStruct () { i = 42, s = "S", k = 43 }, generic_field_struct = new GStruct<int> () { i = 42 }, field_boxed_struct = new AStruct () { i = 42 }};
+		Tests t = new Tests () { field_struct = new AStruct () { i = 42, s = "S", k = 43 }, generic_field_struct = new GStruct<int> () { i = 42 }, field_boxed_struct = new AStruct () { i = 42 }, boxed_struct_field = new KeyValuePair<int, object> (1, (long)42 ) };
 		AStruct s = new AStruct { i = 44, s = "T", k = 45 };
 		AStruct[] arr = new AStruct[] { 
 			new AStruct () { i = 1, s = "S1" },
@@ -553,7 +559,9 @@ public class Tests : TestsBase
 	}
 
 	[MethodImplAttribute (MethodImplOptions.NoInlining)]
+#if NET_4_5
 	[StateMachine (typeof (int))]
+#endif
 	public static void locals2<T> (string[] args, int arg, T t, ref string rs) {
 		long i = 42;
 		string s = "AB";
@@ -566,6 +574,7 @@ public class Tests : TestsBase
 		}
 		rs = "A";
 	}
+
 
 	[MethodImplAttribute (MethodImplOptions.NoInlining)]
 	public static void locals3 () {
@@ -807,6 +816,10 @@ public class Tests : TestsBase
 
 	public static void invoke_throws () {
 		throw new Exception ();
+	}
+
+	public int invoke_iface () {
+		return 42;
 	}
 
 	[MethodImplAttribute (MethodImplOptions.NoInlining)]

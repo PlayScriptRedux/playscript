@@ -1043,7 +1043,7 @@ namespace TestRunner {
 						} catch (Exception e) {
 							if (debug_mdb_update) {
 								Console.WriteLine ("Updating: {0}", ref_file);
-								File.Copy (mdb_xml_file, ref_file);	
+								File.Copy (mdb_xml_file, ref_file, true);	
 							}
 							HandleFailure (filename, TestResult.DebugError, e.Message);
 							return false;

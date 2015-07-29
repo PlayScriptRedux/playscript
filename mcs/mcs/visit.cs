@@ -80,6 +80,11 @@ namespace Mono.CSharp
 				VisitTypeContainer (ns);
 		}
 
+		public virtual void Visit (CompilationSourceFile csf)
+		{
+			VisitTypeContainer (csf);
+		}
+
 		public virtual void Visit (Class c)
 		{
 			if (!AutoVisit)
