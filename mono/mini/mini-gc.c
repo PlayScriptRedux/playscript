@@ -590,7 +590,6 @@ thread_suspend_func (gpointer user_data, void *sigctx, MonoContext *ctx)
 
 	if (!tls) {
 		/* Happens during startup */
-		tls->unwind_state.valid = FALSE;
 		return;
 	}
 
@@ -599,7 +598,11 @@ thread_suspend_func (gpointer user_data, void *sigctx, MonoContext *ctx)
 		gboolean res;
 
 		g_assert (tls->info);
+#ifdef TARGET_WIN32
+		return;
+#else
 		res = mono_thread_state_init_from_handle (&tls->unwind_state, (MonoNativeThreadId)tls->tid, tls->info->native_handle);
+#endif
 	} else {
 		tls->unwind_state.unwind_data [MONO_UNWIND_DATA_LMF] = mono_get_lmf ();
 		if (sigctx) {
@@ -882,8 +885,8 @@ conservative_pass (TlsData *tls, guint8 *stack_start, guint8 *stack_end)
 		 * Debugging aid to control the number of frames scanned precisely
 		 */
 		if (!precise_frame_limit_inited) {
-			if (getenv ("MONO_PRECISE_COUNT"))
-				precise_frame_limit = atoi (getenv ("MONO_PRECISE_COUNT"));
+			if (g_getenv ("MONO_PRECISE_COUNT"))
+				precise_frame_limit = atoi (g_getenv ("MONO_PRECISE_COUNT"));
 			precise_frame_limit_inited = TRUE;
 		}
 				
@@ -1238,10 +1241,10 @@ mini_gc_init_gc_map (MonoCompile *cfg)
 		static int precise_count;
 
 		precise_count ++;
-		if (getenv ("MONO_GCMAP_COUNT")) {
-			if (precise_count == atoi (getenv ("MONO_GCMAP_COUNT")))
+		if (g_getenv ("MONO_GCMAP_COUNT")) {
+			if (precise_count == atoi (g_getenv ("MONO_GCMAP_COUNT")))
 				printf ("LAST: %s\n", mono_method_full_name (cfg->method, TRUE));
-			if (precise_count > atoi (getenv ("MONO_GCMAP_COUNT")))
+			if (precise_count > atoi (g_getenv ("MONO_GCMAP_COUNT")))
 				return;
 		}
 	}
@@ -2440,9 +2443,9 @@ static void
 parse_debug_options (void)
 {
 	char **opts, **ptr;
-	char *env;
+	const char *env;
 
-	env = getenv ("MONO_GCMAP_DEBUG");
+	env = g_getenv ("MONO_GCMAP_DEBUG");
 	if (!env)
 		return;
 

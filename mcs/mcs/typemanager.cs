@@ -197,7 +197,9 @@ namespace Mono.CSharp
 		public readonly PredefinedType IsVolatile;
 		public readonly PredefinedType IEnumeratorGeneric;
 		public readonly PredefinedType IListGeneric;
+		public readonly PredefinedType IReadOnlyListGeneric;
 		public readonly PredefinedType ICollectionGeneric;
+		public readonly PredefinedType IReadOnlyCollectionGeneric;
 		public readonly PredefinedType IEnumerableGeneric;
 		public readonly PredefinedType IDictionaryGeneric;
 		public readonly PredefinedType IList;
@@ -298,7 +300,9 @@ namespace Mono.CSharp
 			IsVolatile = new PredefinedType (module, MemberKind.Class, "System.Runtime.CompilerServices", "IsVolatile");
 			IEnumeratorGeneric = new PredefinedType (module, MemberKind.Interface, "System.Collections.Generic", "IEnumerator", 1);
 			IListGeneric = new PredefinedType (module, MemberKind.Interface, "System.Collections.Generic", "IList", 1);
+			IReadOnlyListGeneric = new PredefinedType (module, MemberKind.Interface, "System.Collections.Generic", "IReadOnlyList", 1);
 			ICollectionGeneric = new PredefinedType (module, MemberKind.Interface, "System.Collections.Generic", "ICollection", 1);
+			IReadOnlyCollectionGeneric = new PredefinedType (module, MemberKind.Interface, "System.Collections.Generic", "IReadOnlyCollection", 1);
 			IEnumerableGeneric = new PredefinedType (module, MemberKind.Interface, "System.Collections.Generic", "IEnumerable", 1);
 			IDictionaryGeneric = new PredefinedType (module, MemberKind.Interface, "System.Collections.Generic", "IDictionary", 2);
 			IList = new PredefinedType (module, MemberKind.Interface, "System.Collections", "IList");
@@ -379,13 +383,19 @@ namespace Mono.CSharp
 				ArgIterator.TypeSpec.IsSpecialRuntimeType = true;
 
 			if (IEnumerableGeneric.Define ())
-				IEnumerableGeneric.TypeSpec.IsGenericIterateInterface = true;
+				IEnumerableGeneric.TypeSpec.IsArrayGenericInterface = true;
 
 			if (IListGeneric.Define ())
-				IListGeneric.TypeSpec.IsGenericIterateInterface = true;
+				IListGeneric.TypeSpec.IsArrayGenericInterface = true;
+
+			if (IReadOnlyListGeneric.Define ())
+				IReadOnlyListGeneric.TypeSpec.IsArrayGenericInterface = true;
 
 			if (ICollectionGeneric.Define ())
-				ICollectionGeneric.TypeSpec.IsGenericIterateInterface = true;
+				ICollectionGeneric.TypeSpec.IsArrayGenericInterface = true;
+
+			if (IReadOnlyCollectionGeneric.Define ())
+				IReadOnlyCollectionGeneric.TypeSpec.IsArrayGenericInterface = true;
 
 			if (Nullable.Define ())
 				Nullable.TypeSpec.IsNullableType = true;

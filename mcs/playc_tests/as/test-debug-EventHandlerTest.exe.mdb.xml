@@ -243,13 +243,14 @@
       </sequencepoints>
       <locals>
         <entry name="eventTypes" il_index="0" scope_ref="1" />
-        <entry name="eventType" il_index="1" scope_ref="1" />
-        <entry name="handlers" il_index="3" scope_ref="3" />
+        <entry name="eventType" il_index="1" scope_ref="2" />
+        <entry name="handlers" il_index="3" scope_ref="4" />
       </locals>
       <scopes>
         <entry index="0" start="0x19" end="0xe1" />
-        <entry index="1" start="0x45" end="0xce" />
-        <entry index="2" start="0x46" end="0xcd" />
+        <entry index="1" start="0x25" end="0xda" />
+        <entry index="2" start="0x45" end="0xce" />
+        <entry index="3" start="0x46" end="0xcd" />
       </scopes>
     </method>
     <method token="0x6000011">
@@ -329,13 +330,14 @@
       </sequencepoints>
       <locals>
         <entry name="result" il_index="0" scope_ref="0" />
-        <entry name="activeType" il_index="1" scope_ref="0" />
-        <entry name="activeHandlers" il_index="3" scope_ref="2" />
+        <entry name="activeType" il_index="1" scope_ref="1" />
+        <entry name="activeHandlers" il_index="3" scope_ref="3" />
       </locals>
       <scopes>
-        <entry index="0" start="0x76" end="0xc6" />
-        <entry index="1" start="0x77" end="0xc5" />
-        <entry index="2" start="0xbe" end="0xc5" />
+        <entry index="0" start="0x1" end="0xec" />
+        <entry index="1" start="0x76" end="0xc6" />
+        <entry index="2" start="0x77" end="0xc5" />
+        <entry index="3" start="0xbe" end="0xc5" />
       </scopes>
     </method>
     <method token="0x6000014">
@@ -369,17 +371,19 @@
         <entry il="0x125" row="254" col="2" file_ref="1" hidden="false" />
       </sequencepoints>
       <locals>
-        <entry name="addEventType" il_index="0" scope_ref="0" />
-        <entry name="addHandlers" il_index="2" scope_ref="4" />
-        <entry name="addHandler" il_index="3" scope_ref="4" />
+        <entry name="addEventType" il_index="0" scope_ref="1" />
+        <entry name="addHandlers" il_index="2" scope_ref="5" />
+        <entry name="addHandler" il_index="3" scope_ref="6" />
       </locals>
       <scopes>
-        <entry index="0" start="0x21" end="0x119" />
-        <entry index="1" start="0x22" end="0x118" />
-        <entry index="2" start="0x2e" end="0x78" />
-        <entry index="3" start="0x7f" end="0x117" />
-        <entry index="4" start="0xcb" end="0x10b" />
-        <entry index="5" start="0xcc" end="0x10a" />
+        <entry index="0" start="0x1" end="0x125" />
+        <entry index="1" start="0x21" end="0x119" />
+        <entry index="2" start="0x22" end="0x118" />
+        <entry index="3" start="0x2e" end="0x78" />
+        <entry index="4" start="0x7f" end="0x117" />
+        <entry index="5" start="0xaa" end="0x117" />
+        <entry index="6" start="0xcb" end="0x10b" />
+        <entry index="7" start="0xcc" end="0x10a" />
       </scopes>
     </method>
     <method token="0x6000015">
@@ -450,17 +454,19 @@
         <entry il="0x10d" row="306" col="2" file_ref="1" hidden="false" />
       </sequencepoints>
       <locals>
-        <entry name="removeEventType" il_index="0" scope_ref="0" />
-        <entry name="removeHandlers" il_index="2" scope_ref="4" />
-        <entry name="removeHandler" il_index="3" scope_ref="4" />
+        <entry name="removeEventType" il_index="0" scope_ref="1" />
+        <entry name="removeHandlers" il_index="2" scope_ref="5" />
+        <entry name="removeHandler" il_index="3" scope_ref="6" />
       </locals>
       <scopes>
-        <entry index="0" start="0x21" end="0x101" />
-        <entry index="1" start="0x22" end="0x100" />
-        <entry index="2" start="0x2e" end="0x6c" />
-        <entry index="3" start="0x73" end="0xff" />
-        <entry index="4" start="0xbf" end="0xf3" />
-        <entry index="5" start="0xc0" end="0xf2" />
+        <entry index="0" start="0x1" end="0x10d" />
+        <entry index="1" start="0x21" end="0x101" />
+        <entry index="2" start="0x22" end="0x100" />
+        <entry index="3" start="0x2e" end="0x6c" />
+        <entry index="4" start="0x73" end="0xff" />
+        <entry index="5" start="0x9e" end="0xff" />
+        <entry index="6" start="0xbf" end="0xf3" />
+        <entry index="7" start="0xc0" end="0xf2" />
       </scopes>
     </method>
     <method token="0x6000017">
@@ -482,11 +488,12 @@
       </sequencepoints>
       <locals>
         <entry name="handlers" il_index="0" scope_ref="0" />
-        <entry name="handler" il_index="1" scope_ref="0" />
+        <entry name="handler" il_index="1" scope_ref="1" />
       </locals>
       <scopes>
-        <entry index="0" start="0x6f" end="0x92" />
-        <entry index="1" start="0x70" end="0x91" />
+        <entry index="0" start="0x4f" end="0x9e" />
+        <entry index="1" start="0x6f" end="0x92" />
+        <entry index="2" start="0x70" end="0x91" />
       </scopes>
     </method>
     <method token="0x6000018">
@@ -514,11 +521,12 @@
       </sequencepoints>
       <locals>
         <entry name="keys" il_index="0" scope_ref="0" />
-        <entry name="key" il_index="1" scope_ref="0" />
+        <entry name="key" il_index="1" scope_ref="1" />
       </locals>
       <scopes>
-        <entry index="0" start="0x72" end="0x7c" />
-        <entry index="1" start="0x73" end="0x7b" />
+        <entry index="0" start="0x7" end="0xa0" />
+        <entry index="1" start="0x72" end="0x7c" />
+        <entry index="2" start="0x73" end="0x7b" />
       </scopes>
     </method>
   </methods>

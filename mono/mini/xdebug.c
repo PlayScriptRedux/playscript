@@ -105,7 +105,7 @@ struct jit_descriptor
 /* GDB puts a breakpoint in this function.  */
 void MONO_NOINLINE __jit_debug_register_code(void);
 
-#if !defined(MONO_LLVM_LOADED) && defined(ENABLE_LLVM)
+#if !defined(MONO_LLVM_LOADED) && defined(ENABLE_LLVM) && !defined(MONO_CROSS_COMPILE)
 
 /* LLVM already defines these */
 
@@ -134,7 +134,7 @@ static int il_file_line_index;
 static GHashTable *xdebug_syms;
 
 void
-mono_xdebug_init (char *options)
+mono_xdebug_init (const char *options)
 {
 	MonoImageWriter *w;
 	char **args, **ptr;
@@ -369,7 +369,7 @@ mono_save_trampoline_xdebug_info (MonoTrampInfo *info)
 #else /* !defined(DISABLE_AOT) && !defined(DISABLE_JIT) */
 
 void
-mono_xdebug_init (char *options)
+mono_xdebug_init (const char *options)
 {
 }
 

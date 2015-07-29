@@ -214,7 +214,6 @@ namespace System.Threading.Tasks
 		internal void RunSynchronouslyCore (TaskScheduler scheduler)
 		{
 			SetupScheduler (scheduler);
-			var saveStatus = status;
 			Status = TaskStatus.WaitingToRun;
 
 			try {
@@ -224,7 +223,6 @@ namespace System.Threading.Tasks
 				throw new TaskSchedulerException (inner);
 			}
 
-			Status = saveStatus;
 			Schedule ();
 			Wait ();
 		}
@@ -960,7 +958,7 @@ namespace System.Threading.Tasks
 				throw new ArgumentOutOfRangeException ("millisecondsDelay");
 
 			var task = new Task (TaskActionInvoker.Delay, millisecondsDelay, cancellationToken, TaskCreationOptions.None, null, TaskConstants.Finished);
-			task.SetupScheduler (TaskScheduler.Current);
+			task.SetupScheduler (TaskScheduler.Default);
 			
 			if (millisecondsDelay != Timeout.Infinite)
 				task.scheduler.QueueTask (task);

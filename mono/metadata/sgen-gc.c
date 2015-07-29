@@ -1048,6 +1048,10 @@ mono_gc_clear_domain (MonoDomain * domain)
 
 	LOCK_GC;
 
+	binary_protocol_domain_unload_begin (domain);
+
+	sgen_stop_world (0);
+
 	if (concurrent_collection_in_progress)
 		sgen_perform_collection (0, GENERATION_OLD, "clear domain", TRUE);
 	g_assert (!concurrent_collection_in_progress);
@@ -1111,6 +1115,10 @@ mono_gc_clear_domain (MonoDomain * domain)
 			sgen_pin_stats_print_class_stats ();
 		sgen_object_layout_dump (stdout);
 	}
+
+	sgen_restart_world (0, NULL);
+
+	binary_protocol_domain_unload_end (domain);
 
 	UNLOCK_GC;
 }
@@ -3255,6 +3263,9 @@ major_do_collection (const char *reason)
 	TV_DECLARE (all_btv);
 	int old_next_pin_slot;
 
+	if (disable_major_collections)
+		return FALSE;
+
 	if (major_collector.get_and_reset_num_major_objects_marked) {
 		long long num_marked = major_collector.get_and_reset_num_major_objects_marked ();
 		g_assert (!num_marked);
@@ -3276,13 +3287,15 @@ major_do_collection (const char *reason)
 	return bytes_pinned_from_failed_allocation > 0;
 }
 
-static gboolean major_do_collection (const char *reason);
-
 static void
 major_start_concurrent_collection (const char *reason)
 {
-	long long num_objects_marked = major_collector.get_and_reset_num_major_objects_marked ();
+	long long num_objects_marked;
 
+	if (disable_major_collections)
+		return;
+
+	num_objects_marked = major_collector.get_and_reset_num_major_objects_marked ();
 	g_assert (num_objects_marked == 0);
 
 	MONO_GC_CONCURRENT_START_BEGIN (GENERATION_OLD);
@@ -3382,6 +3395,9 @@ sgen_ensure_free_space (size_t size)
 	sgen_perform_collection (size, generation_to_collect, reason, FALSE);
 }
 
+/*
+ * LOCKING: Assumes the GC lock is held.
+ */
 void
 sgen_perform_collection (size_t requested_size, int generation_to_collect, const char *reason, gboolean wait_to_finish)
 {
@@ -4151,7 +4167,15 @@ sgen_thread_unregister (SgenThreadInfo *p)
 	LOCK_GC;
 #else
 	while (!TRYLOCK_GC) {
-		if (!sgen_park_current_thread_if_doing_handshake (p))
+		SgenThreadInfo *current = mono_thread_info_current ();
+		if (current)
+			SGEN_ASSERT (0, current == p, "If there's a current thread info, it must be correct.");
+		/*
+		 * If we have a current thread info, the signal
+		 * handler will eventually suspend us.  If not, we
+		 * need to do it by hand.
+		 */
+		if (current || !sgen_park_current_thread_if_doing_handshake (p))
 			g_usleep (50);
 	}
 	MONO_GC_LOCKED ();
@@ -4794,7 +4818,7 @@ void
 mono_gc_base_init (void)
 {
 	MonoThreadInfoCallbacks cb;
-	char *env;
+	const char *env;
 	char **opts, **ptr;
 	char *major_collector_opt = NULL;
 	char *minor_collector_opt = NULL;
@@ -4846,7 +4870,7 @@ mono_gc_base_init (void)
 
 	init_user_copy_or_mark_key ();
 
-	if ((env = getenv (MONO_GC_PARAMS_NAME))) {
+	if ((env = g_getenv (MONO_GC_PARAMS_NAME))) {
 		opts = g_strsplit (env, ",", -1);
 		for (ptr = opts; *ptr; ++ptr) {
 			char *opt = *ptr;
@@ -4865,6 +4889,7 @@ mono_gc_base_init (void)
 	init_stats ();
 	sgen_init_internal_allocator ();
 	sgen_init_nursery_allocator ();
+	sgen_init_fin_weak_hash ();
 
 	sgen_register_fixed_internal_mem_type (INTERNAL_MEM_SECTION, SGEN_SIZEOF_GC_MEM_SECTION);
 	sgen_register_fixed_internal_mem_type (INTERNAL_MEM_FINALIZE_READY_ENTRY, sizeof (FinalizeReadyEntry));
@@ -5071,6 +5096,10 @@ mono_gc_base_init (void)
 			}
 
 			if (!strcmp (opt, "cementing")) {
+				if (major_collector.is_parallel) {
+					sgen_env_var_error (MONO_GC_PARAMS_NAME, "Ignoring.", "`cementing` is not supported for the parallel major collector.");
+					continue;
+				}
 				cement_enabled = TRUE;
 				continue;
 			}
@@ -5115,10 +5144,12 @@ mono_gc_base_init (void)
 		g_strfreev (opts);
 	}
 
-	if (major_collector.is_parallel)
+	if (major_collector.is_parallel) {
+		cement_enabled = FALSE;
 		sgen_workers_init (num_workers);
-	else if (major_collector.is_concurrent)
+	} else if (major_collector.is_concurrent) {
 		sgen_workers_init (1);
+	}
 
 	if (major_collector_opt)
 		g_free (major_collector_opt);
@@ -5130,7 +5161,7 @@ mono_gc_base_init (void)
 
 	sgen_cement_init (cement_enabled);
 
-	if ((env = getenv (MONO_GC_DEBUG_NAME))) {
+	if ((env = g_getenv (MONO_GC_DEBUG_NAME))) {
 		gboolean usage_printed = FALSE;
 
 		opts = g_strsplit (env, ",", -1);

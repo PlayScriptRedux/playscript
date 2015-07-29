@@ -36,7 +36,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="Microsoft.CSharp">
+    <Reference Include="Microsoft">
       <HintPath>..\lib\net_4_5\Microsoft.CSharp.dll</HintPath>
     </Reference>
   </ItemGroup>

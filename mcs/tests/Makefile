@@ -51,7 +51,7 @@ TEST_PATTERN = 'v4'
 DEFINES = -compiler-options:"-d:NET_4_0;NET_4_5"
 endif
 
-LOCAL_RUNTIME_FLAGS =
+LOCAL_RUNTIME_FLAGS = --verify-all
 COMPILER = $(topdir)/class/lib/$(BUILD_TOOLS_PROFILE)/mcs.exe
 TESTER = MONO_RUNTIME='$(RUNTIME)' $(TEST_RUNTIME) $(RUNTIME_FLAGS) $(LOCAL_RUNTIME_FLAGS) $(topdir)/class/lib/$(PROFILE)/compiler-tester.exe
 

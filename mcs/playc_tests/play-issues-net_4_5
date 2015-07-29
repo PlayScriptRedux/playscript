@@ -5,7 +5,6 @@
 # csXXXX.as IGNORE 	: adds test to ignore list
 
 # The following two tests run correctly indivudually but not run as a group?
-# missing a reference? blows up in safe-execution mode also
 # they run fine from the cmd line mono XXXXX.exe reports the proper return code of 0
 ./as/test-debug-001.as
 ./as/test-debug-002.as
@@ -15,6 +14,7 @@
 # IL REGRESSION: _root.Foo: Void set_q(Int32) has a duplicate
 # IL REGRESSION: _root.Foo: Void a() has a duplicate
 # IL REGRESSION: _root.Bar: Void b() has a duplicate
+
 # the following test is fine, the il verify can not handle mutiple object/func
 # with same name
 ./as/test-debug-015.as IGNORE
@@ -46,7 +46,6 @@
 ./play/test-ps-038.play
 ./play/test-ps-040.play
 
-./as/test-debug-DivideByZeroTest.as
 ./as/test-debug-UntypedVariableTest.as
 ./as/test-debug-AllowDynamics.as
 

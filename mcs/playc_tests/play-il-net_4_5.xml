@@ -179,6 +179,24 @@
       <method name="Void dynamic(Int32)" attrs="129">
         <size>2</size>
       </method>
+      <method name="System.Object PlayScript.IDynamicClass.__GetDynamicValue(System.String)" attrs="481">
+        <size>35</size>
+      </method>
+      <method name="Boolean PlayScript.IDynamicClass.__TryGetDynamicValue(System.String, System.Object ByRef)" attrs="481">
+        <size>46</size>
+      </method>
+      <method name="Void PlayScript.IDynamicClass.__SetDynamicValue(System.String, System.Object)" attrs="481">
+        <size>37</size>
+      </method>
+      <method name="Boolean PlayScript.IDynamicClass.__DeleteDynamicValue(System.Object)" attrs="481">
+        <size>38</size>
+      </method>
+      <method name="Boolean PlayScript.IDynamicClass.__HasDynamicValue(System.String)" attrs="481">
+        <size>38</size>
+      </method>
+      <method name="IEnumerable PlayScript.IDynamicClass.__GetDynamicNames()" attrs="481">
+        <size>37</size>
+      </method>
       <method name="Void .ctor()" attrs="6278">
         <size>7</size>
       </method>
@@ -352,6 +370,26 @@
       </method>
       <method name="Void Main()" attrs="150">
         <size>2</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./play/test-ps-041.play">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>149</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-as-001.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>149</size>
       </method>
       <method name="Void .ctor()" attrs="6278">
         <size>7</size>
@@ -715,6 +753,16 @@
       </method>
     </type>
   </test>
+  <test name="./as/test-debug-DivideByZeroTest.as">
+    <type name="DivideByZero.CollectionsTest">
+      <method name="Int32 Main()" attrs="150">
+        <size>100</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
   <test name="./as/test-debug-DynamicBinaryArithmeticTest.as">
     <type name="_root.DynamicBinaryArithmeticTest">
       <method name="Int32 Main()" attrs="150">
@@ -735,6 +783,39 @@
       </method>
     </type>
     <type name="_root.____as_test_debug_DynamicBinaryComparisonTest_as.A">
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-DynamicClass.as">
+    <type name="Sushi.Protean">
+      <method name="System.Object PlayScript.IDynamicClass.__GetDynamicValue(System.String)" attrs="481">
+        <size>35</size>
+      </method>
+      <method name="Boolean PlayScript.IDynamicClass.__TryGetDynamicValue(System.String, System.Object ByRef)" attrs="481">
+        <size>46</size>
+      </method>
+      <method name="Void PlayScript.IDynamicClass.__SetDynamicValue(System.String, System.Object)" attrs="481">
+        <size>37</size>
+      </method>
+      <method name="Boolean PlayScript.IDynamicClass.__DeleteDynamicValue(System.Object)" attrs="481">
+        <size>38</size>
+      </method>
+      <method name="Boolean PlayScript.IDynamicClass.__HasDynamicValue(System.String)" attrs="481">
+        <size>38</size>
+      </method>
+      <method name="IEnumerable PlayScript.IDynamicClass.__GetDynamicNames()" attrs="481">
+        <size>37</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>46</size>
+      </method>
+    </type>
+    <type name="Sushi.Program">
+      <method name="Int32 Main()" attrs="150">
+        <size>184</size>
+      </method>
       <method name="Void .ctor()" attrs="6278">
         <size>7</size>
       </method>

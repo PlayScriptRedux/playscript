@@ -693,7 +693,7 @@ namespace Mono.CSharp {
 						if (pending_implementations [i].optional)
 							continue;
 
-						MethodSpec candidate = null;
+						MethodSpec candidate;
 						if (base_implements_type || BaseImplements (type, mi, out candidate))
 							continue;
 

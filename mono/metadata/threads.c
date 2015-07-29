@@ -814,10 +814,12 @@ mono_thread_create (MonoDomain *domain, gpointer func, gpointer arg)
 static __inline__ __attribute__((always_inline))
 /* This is not defined by gcc */
 unsigned long long
-__readfsdword (unsigned long long offset)
+__readfsdword (unsigned long offset)
 {
-	unsigned long long value;
-	__asm__("movl %%fs:%a[offset], %k[value]" : [value] "=q" (value) : [offset] "irm" (offset));
+	unsigned long value;
+	//	__asm__("movl %%fs:%a[offset], %k[value]" : [value] "=q" (value) : [offset] "irm" (offset));
+   __asm__ volatile ("movl    %%fs:%1,%0"
+     : "=r" (value) ,"=m" ((*(volatile long *) offset)));
 	return value;
 }
 #endif
@@ -831,16 +833,8 @@ __readfsdword (unsigned long long offset)
 void
 mono_thread_get_stack_bounds (guint8 **staddr, size_t *stsize)
 {
-#if defined(HAVE_PTHREAD_GET_STACKSIZE_NP) && defined(HAVE_PTHREAD_GET_STACKADDR_NP)
-	*staddr = (guint8*)pthread_get_stackaddr_np (pthread_self ());
-	*stsize = pthread_get_stacksize_np (pthread_self ());
-
-	/* staddr points to the start of the stack, not the end */
-	*staddr -= *stsize;
-	*staddr = (guint8*)((gssize)*staddr & ~(mono_pagesize () - 1));
-	return;
-	/* FIXME: simplify the mess below */
-#elif defined(HOST_WIN32)
+#if defined(HOST_WIN32)
+	/* Windows */
 	/* http://en.wikipedia.org/wiki/Win32_Thread_Information_Block */
 	void* tib = (void*)__readfsdword(0x18);
 	guint8 *stackTop = (guint8*)*(int*)((char*)tib + 4);
@@ -849,7 +843,22 @@ mono_thread_get_stack_bounds (guint8 **staddr, size_t *stsize)
 	*staddr = stackBottom;
 	*stsize = stackTop - stackBottom;
 	return;
-#else
+
+#elif defined(HAVE_PTHREAD_GET_STACKSIZE_NP) && defined(HAVE_PTHREAD_GET_STACKADDR_NP)
+	/* Mac OS X */
+	*staddr = (guint8*)pthread_get_stackaddr_np (pthread_self());
+	*stsize = pthread_get_stacksize_np (pthread_self());
+
+	/* staddr points to the start of the stack, not the end */
+	*staddr -= *stsize;
+
+	/* When running under emacs, sometimes staddr is not aligned to a page size */
+	*staddr = (guint8*)((gssize)*staddr & ~(mono_pagesize() - 1));
+	return;
+
+#elif (defined(HAVE_PTHREAD_GETATTR_NP) || defined(HAVE_PTHREAD_ATTR_GET_NP)) && defined(HAVE_PTHREAD_ATTR_GETSTACK)
+	/* Linux, BSD */
+
 	pthread_attr_t attr;
 	guint8 *current = (guint8*)&attr;
 
@@ -857,15 +866,41 @@ mono_thread_get_stack_bounds (guint8 **staddr, size_t *stsize)
 	*stsize = (size_t)-1;
 
 	pthread_attr_init (&attr);
-#  ifdef HAVE_PTHREAD_GETATTR_NP
+
+#if     defined(HAVE_PTHREAD_GETATTR_NP)
+	/* Linux */
 	pthread_getattr_np (pthread_self(), &attr);
-#  else
-#    ifdef HAVE_PTHREAD_ATTR_GET_NP
+
+#elif   defined(HAVE_PTHREAD_ATTR_GET_NP)
+	/* BSD */
 	pthread_attr_get_np (pthread_self(), &attr);
-#    elif defined(sun)
+
+#else
+#error 	Cannot determine which API is needed to retrieve pthread attributes.
+#endif
+
+	pthread_attr_getstack (&attr, (void**)staddr, stsize);
+	pthread_attr_destroy (&attr);
+
+	if (*staddr)
+		g_assert ((current > *staddr) && (current < *staddr + *stsize));
+
+	/* When running under emacs, sometimes staddr is not aligned to a page size */
+	*staddr = (guint8*)((gssize)*staddr & ~(mono_pagesize () - 1));
+	return;
+
+#elif defined(__OpenBSD__)
+	/* OpenBSD */
+	/* TODO :   Determine if this code is actually still needed. It may already be covered by the case above. */
+
+	pthread_attr_t attr;
+	guint8 *current = (guint8*)&attr;
+
 	*staddr = NULL;
-	pthread_attr_getstacksize (&attr, &stsize);
-#    elif defined(__OpenBSD__)
+	*stsize = (size_t)-1;
+
+	pthread_attr_init (&attr);
+
 	stack_t ss;
 	int rslt;
 
@@ -874,29 +909,33 @@ mono_thread_get_stack_bounds (guint8 **staddr, size_t *stsize)
 
 	*staddr = (guint8*)((size_t)ss.ss_sp - ss.ss_size);
 	*stsize = ss.ss_size;
-#    else
-	*staddr = NULL;
-	*stsize = 0;
-	return;
-#    endif
-#  endif
-
-#  if !defined(sun)
-#    if defined(__native_client__)
-	*staddr = NULL;
-	pthread_attr_getstacksize (&attr, &stsize);
-#    elif !defined(__OpenBSD__)
-	pthread_attr_getstack (&attr, (void**)staddr, stsize);
-#    endif
-	if (*staddr)
-		g_assert ((current > *staddr) && (current < *staddr + *stsize));
-#  endif
 
 	pthread_attr_destroy (&attr);
-#endif
+
+	if (*staddr)
+		g_assert ((current > *staddr) && (current < *staddr + *stsize));
 
 	/* When running under emacs, sometimes staddr is not aligned to a page size */
 	*staddr = (guint8*)((gssize)*staddr & ~(mono_pagesize () - 1));
+	return;
+
+#elif defined(sun) || defined(__native_client__)
+	/* Solaris/Illumos, NaCl */
+	pthread_attr_t attr;
+	pthread_attr_init (&attr);
+	pthread_attr_getstacksize (&attr, &stsize);
+	pthread_attr_destroy (&attr);
+	*staddr = NULL;
+	return;
+
+#else
+	/* FIXME:   It'd be better to use the 'error' preprocessor macro here so we know
+		    at compile-time if the target platform isn't supported. */
+#warning "Unable to determine how to retrieve a thread's stack-bounds for this platform in 'mono_thread_get_stack_bounds()'."
+	*staddr = NULL;
+	*stsize = 0;
+	return;
+#endif
 }
 
 MonoThread *
@@ -1955,19 +1994,18 @@ ves_icall_System_Threading_Interlocked_CompareExchange_Double (gdouble *location
 gint64 
 ves_icall_System_Threading_Interlocked_CompareExchange_Long (gint64 *location, gint64 value, gint64 comparand)
 {
-#if SIZEOF_VOID_P == 8
-	return (gint64)InterlockedCompareExchangePointer((gpointer *) location, (gpointer)value, (gpointer)comparand);
-#else
-	gint64 old;
-
-	mono_interlocked_lock ();
-	old = *location;
-	if (old == comparand)
-		*location = value;
-	mono_interlocked_unlock ();
-	
-	return old;
+#if SIZEOF_VOID_P == 4
+	if ((size_t)location & 0x7) {
+		gint64 old;
+		mono_interlocked_lock ();
+		old = *location;
+		if (old == comparand)
+			*location = value;
+		mono_interlocked_unlock ();
+		return old;
+	}
 #endif
+	return InterlockedCompareExchange64 (location, value, comparand);
 }
 
 MonoObject*
@@ -2492,7 +2530,11 @@ ves_icall_System_Threading_Thread_VolatileRead4 (void *ptr)
 gint64
 ves_icall_System_Threading_Thread_VolatileRead8 (void *ptr)
 {
+#if SIZEOF_VOID_P == 8
 	return *((volatile gint64 *) (ptr));
+#else
+	return InterlockedCompareExchange64 (ptr, 0, 0); /*Must ensure atomicity of the operation. */
+#endif
 }
 
 void *
@@ -3683,12 +3725,22 @@ mono_free_static_data (gpointer* static_data, gboolean threadlocal)
 {
 	int i;
 	for (i = 1; i < NUM_STATIC_DATA_IDX; ++i) {
-		if (!static_data [i])
+		gpointer p = static_data [i];
+		if (!p)
 			continue;
+		/*
+		 * At this point, the static data pointer array is still registered with the
+		 * GC, so must ensure that mark_tls_slots() will not encounter any invalid
+		 * data.  Freeing the individual arrays without first nulling their slots
+		 * would make it possible for mark_tls_slots() to encounter a pointer to
+		 * such an already freed array.  See bug #13813.
+		 */
+		static_data [i] = NULL;
+		mono_memory_write_barrier ();
 		if (mono_gc_user_markers_supported () && threadlocal)
-			g_free (static_data [i]);
+			g_free (p);
 		else
-			mono_gc_free_fixed (static_data [i]);
+			mono_gc_free_fixed (p);
 	}
 	mono_gc_free_fixed (static_data);
 }
@@ -4636,6 +4688,7 @@ transition_to_suspended (MonoInternalThread *thread)
 	} else {
 		thread->state &= ~ThreadState_SuspendRequested;
 		thread->state |= ThreadState_Suspended;
+		mono_thread_info_finish_suspend ();
 	}
 	LeaveCriticalSection (thread->synch_cs);
 }

@@ -305,6 +305,16 @@ namespace Mono.CSharp
 #endif
 		}
 
+		public void BeginCompilerScope ()
+		{
+			if ((flags & Options.OmitDebugInfo) != 0)
+				return;
+
+#if NET_4_0
+			methodSymbols.StartBlock (CodeBlockEntry.Type.CompilerGenerated, ig.ILOffset);
+#endif
+		}
+
 		public void EndExceptionBlock ()
 		{
 			ig.EndExceptionBlock ();
@@ -965,7 +975,7 @@ namespace Mono.CSharp
 		public void Emit (EmitContext ec, MethodSpec method, Arguments Arguments, Location loc)
 		{
 			// Speed up the check by not doing it on not allowed targets
-			if (method.ReturnType.Kind == MemberKind.Void && method.IsConditionallyExcluded (ec.MemberContext, loc))
+			if (method.ReturnType.Kind == MemberKind.Void && method.IsConditionallyExcluded (ec.MemberContext))
 				return;
 
 			EmitPredefined (ec, method, Arguments, loc);

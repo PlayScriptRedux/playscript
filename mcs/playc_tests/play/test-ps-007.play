@@ -1,3 +1,4 @@
+// Compiler options: -newdynamic+
 package
 {
 	public dynamic class test

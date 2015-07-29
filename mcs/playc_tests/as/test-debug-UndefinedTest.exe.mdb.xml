@@ -227,7 +227,7 @@
       </sequencepoints>
       <locals>
         <entry name="o" il_index="0" scope_ref="0" />
-        <entry name="i" il_index="2" scope_ref="0" />
+        <entry name="i" il_index="2" scope_ref="1" />
         <entry name="key" il_index="7" scope_ref="0" />
         <entry name="d" il_index="8" scope_ref="0" />
         <entry name="a" il_index="9" scope_ref="0" />
@@ -247,8 +247,10 @@
         <entry name="n" il_index="23" scope_ref="0" />
       </locals>
       <scopes>
-        <entry index="0" start="0xbf" end="0xc5" />
-        <entry index="1" start="0x15a" end="0x160" />
+        <entry index="0" start="0x59" end="0xeb" />
+        <entry index="1" start="0xbf" end="0xc5" />
+        <entry index="2" start="0xf2" end="0x188" />
+        <entry index="3" start="0x15a" end="0x160" />
       </scopes>
     </method>
     <method token="0x6000003">

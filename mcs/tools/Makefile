@@ -21,6 +21,7 @@ net_4_0_dirs := \
 	playshell	\
 	corcompare	\
 	compiler-tester	\
+	playc-tester	\
 	mono-xmltool	\
 	mono-shlib-cop	\
 	sgen		\

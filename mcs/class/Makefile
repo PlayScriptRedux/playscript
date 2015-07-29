@@ -68,6 +68,7 @@ common_dirs := \
 	Novell.Directory.Ldap		\
 	Mono.Security.Win32		\
 	System.DirectoryServices	\
+	System.DirectoryServices.Protocols	\
 	RabbitMQ.Client			\
 	Mono.Messaging			\
 	System.Messaging	        \
@@ -105,7 +106,6 @@ net_2_0_dirs := \
 	System.Web.Extensions.Design	\
 	System.ComponentModel.DataAnnotations	\
 	System.Web.DynamicData		\
-	System.ServiceModel.Web		\
 	System.Web.Mvc2			\
 	Mono.C5				\
 	Mono.Management			\
@@ -123,9 +123,10 @@ net_2_0_only_dirs := \
 	System.Web.Extensions.Design_1.0	\
 	Compat.ICSharpCode.SharpZipLib	\
 	WindowsBase			\
+	System.ServiceModel.Web \
 	System.Data.Services.Client	\
 	System.Data.Services		\
-	System.Web.Mvc			
+	System.Web.Mvc \
 
 mobile_dirs := \
 	corlib	\
@@ -164,33 +165,7 @@ monodroid_dirs := \
 	System.Net.Http
 
 monotouch_runtime_dirs := \
-	corlib \
-	System \
-	System.XML	\
-	Mono.Posix \
-	System.Core \
-	Mono.Security			\
-	System \
-	System.Security			\
-	System.Configuration		\
-	System				\
-	System.XML			\
-	$(resgen_dir)			\
-	System.Drawing			\
-	System.Transactions		\
-	System.EnterpriseServices	\
-	Mono.Data.Tds			\
-	System.Data			\
-	Accessibility			\
-	Mono.WebBrowser			\
-	System.Runtime.Serialization.Formatters.Soap \
-	Managed.Windows.Forms		\
-	Mono.Data.Sqlite		\
-	System.Web.ApplicationServices	\
-	System.Web \
-	Mono.Web \
-	System.Web.Services \
-	System.Web
+	corlib
 
 net_3_5_only_dirs := \
 	Microsoft.Build.Framework	\
@@ -205,6 +180,8 @@ net_4_0_dirs := \
 	System.Windows.Forms.DataVisualization	\
 	System.Xaml \
 	WindowsBase \
+	System.ServiceModel.Activation \
+	System.ServiceModel \
 	System.ServiceModel.Routing \
 	System.ServiceModel.Discovery \
 	System.Runtime.Caching \
@@ -222,10 +199,10 @@ net_4_0_dirs := \
 	System.Reactive.Debugger \
 	Microsoft.Web.Infrastructure \
 	WebMatrix.Data \
+	System.ServiceModel.Web \
 	System.Data.Services.Client	\
 	System.Data.Services \
 	System.Json.Microsoft \
-	Mono.Optimization \
 	monodoc
 	
 net_4_0_only_dirs := \
@@ -253,6 +230,7 @@ net_4_5_dirs := \
 	System.Windows \
 	System.Xml.Serialization \
 	Mono.PlayScript \
+	Mono.Optimization \
 	PlayScript.Dynamic \
 	PlayScript.Dynamic_aot \
 	pscorlib \
@@ -263,6 +241,7 @@ net_2_0_SUBDIRS := $(common_dirs) $(net_2_0_dirs) $(net_2_0_only_dirs) aot-compi
 monodroid_SUBDIRS := $(mobile_dirs) $(monodroid_dirs)
 monotouch_SUBDIRS := $(mobile_dirs)
 monotouch_runtime_SUBDIRS := $(monotouch_runtime_dirs)
+mobile_static_SUBDIRS := $(mobile_dirs)
 mobile_SUBDIRS := $(mobile_dirs)
 net_3_5_SUBDIRS := $(net_3_5_only_dirs)
 net_4_0_SUBDIRS := $(common_dirs) $(net_2_0_dirs) $(net_4_0_dirs) $(net_4_0_only_dirs)

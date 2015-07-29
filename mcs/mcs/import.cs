@@ -195,7 +195,7 @@ namespace Mono.CSharp
 
 		public FieldSpec CreateField (FieldInfo fi, TypeSpec declaringType)
 		{
-			Modifiers mod = 0;
+			Modifiers mod;
 			var fa = fi.Attributes;
 			switch (fa & FieldAttributes.FieldAccessMask) {
 				case FieldAttributes.Public:
@@ -367,10 +367,9 @@ namespace Mono.CSharp
 					//    IFoo<A<T>> foo;	// A<T> is definition in this case
 					// }
 					//
-					// TODO: Is full logic from CreateType needed here as well?
-					//
 					if (!IsMissingType (type) && type.IsGenericTypeDefinition) {
-						var targs = CreateGenericArguments (0, type.GetGenericArguments (), dtype);
+						var start_pos = spec.DeclaringType == null ? 0 : spec.DeclaringType.MemberDefinition.TypeParametersCount;
+						var targs = CreateGenericArguments (start_pos, type.GetGenericArguments (), dtype);
 						spec = spec.MakeGenericType (module, targs);
 					}
 				}
@@ -903,9 +902,10 @@ namespace Mono.CSharp
 
 				if (kind == MemberKind.Class) {
 					if ((ma & TypeAttributes.Sealed) != 0) {
-						mod |= Modifiers.SEALED;
 						if ((ma & TypeAttributes.Abstract) != 0)
 							mod |= Modifiers.STATIC;
+						else
+							mod |= Modifiers.SEALED;
 					} else if ((ma & TypeAttributes.Abstract) != 0) {
 						mod |= Modifiers.ABSTRACT;
 					}
@@ -2009,7 +2009,7 @@ namespace Mono.CSharp
 
 				var caller = missing[i].Caller;
 				if (caller.Kind != MemberKind.MissingType)
-					report.SymbolRelatedToPreviousError (missing[i].Caller);
+					report.SymbolRelatedToPreviousError (caller);
 
 				if (t.MemberDefinition.DeclaringAssembly == ctx.Module.DeclaringAssembly) {
 					report.Error (1683, loc,
@@ -2203,7 +2203,13 @@ namespace Mono.CSharp
 						if (get == null && set == null)
 							continue;
 
-						imported = importer.CreateProperty (p, declaringType, get, set);
+						try {
+							imported = importer.CreateProperty (p, declaringType, get, set);
+						} catch (Exception ex) {
+							throw new InternalErrorException (ex, "Could not import property `{0}' inside `{1}'",
+								p.Name, declaringType.GetSignatureForError ());
+						}
+
 						if (imported == null)
 							continue;
 
