@@ -1,0 +1,744 @@
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:gtest-464-lib.dll gtest-464-lib.il
+Assembling 'gtest-464-lib.il' , no listing file, to dll --> 'gtest-464-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:gtest-583-lib.dll gtest-583-lib.il
+Assembling 'gtest-583-lib.il' , no listing file, to dll --> 'gtest-583-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:gtest-exmethod-45-lib.dll gtest-exmethod-45-lib.il
+Assembling 'gtest-exmethod-45-lib.il' , no listing file, to dll --> 'gtest-exmethod-45-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-377-lib.dll test-377-lib.il
+Assembling 'test-377-lib.il' , no listing file, to dll --> 'test-377-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-483-lib.dll test-483-lib.il
+Assembling 'test-483-lib.il' , no listing file, to dll --> 'test-483-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-531-lib.dll test-531-lib.il
+Assembling 'test-531-lib.il' , no listing file, to dll --> 'test-531-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-661-lib.dll test-661-lib.il
+Assembling 'test-661-lib.il' , no listing file, to dll --> 'test-661-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-759-lib.dll test-759-lib.il
+Assembling 'test-759-lib.il' , no listing file, to dll --> 'test-759-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-760-lib.dll test-760-lib.il
+Assembling 'test-760-lib.il' , no listing file, to dll --> 'test-760-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-792-lib.dll test-792-lib.il
+Assembling 'test-792-lib.il' , no listing file, to dll --> 'test-792-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-805-lib.dll test-805-lib.il
+Assembling 'test-805-lib.il' , no listing file, to dll --> 'test-805-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-810-lib.dll test-810-lib.il
+Assembling 'test-810-lib.il' , no listing file, to dll --> 'test-810-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-823-lib.dll test-823-lib.il
+Assembling 'test-823-lib.il' , no listing file, to dll --> 'test-823-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-846-lib.dll test-846-lib.il
+Assembling 'test-846-lib.il' , no listing file, to dll --> 'test-846-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-851-lib.dll test-851-lib.il
+Assembling 'test-851-lib.il' , no listing file, to dll --> 'test-851-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-858-lib.dll test-858-lib.il
+Assembling 'test-858-lib.il' , no listing file, to dll --> 'test-858-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-com-02-lib.dll test-com-02-lib.il
+Assembling 'test-com-02-lib.il' , no listing file, to dll --> 'test-com-02-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-com-03-lib.dll test-com-03-lib.il
+Assembling 'test-com-03-lib.il' , no listing file, to dll --> 'test-com-03-lib.dll'
+
+Operation completed successfully
+MCS     [net_4_5] setup
+MCS     [net_4_5] setup
+cd ../class/Mono.CSharp && /Applications/Xcode.app/Contents/Developer/usr/bin/make NO_DIR_CHECK=yes
+/Applications/Xcode.app/Contents/Developer/usr/bin/make all-local
+make[2]: Nothing to be done for `all-local'.
+MONO_RUNTIME='/Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper' MONO_PATH="./../class/lib/net_4_5::$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper --debug  --verify-all ./../class/lib/net_4_5/compiler-tester.exe -mode:pos -files:'v4' -compiler:./../class/lib/build/mcs.exe -issues:known-issues-net_4_5 -log:net_4_5.log -il:ver-il-net_4_5.xml -compiler-options:"-d:NET_4_0;NET_4_5" 
+Loading ./../class/lib/build/mcs.exe ...
+Loading verification data from `ver-il-net_4_5.xml' ...
+gtest-230.cs...	KNOWN ISSUE (Compilation error)
+   at System.Environment.get_StackTrace() in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System/Environment.cs:line 261
+   at Mono.CSharp.Expression.Error_UnexpectedKind(IMemberContext ctx, Mono.CSharp.Expression memberExpr, System.String expected, System.String was, Location loc)
+   at Mono.CSharp.SimpleName.Error_TypeOrNamespaceNotFound(IMemberContext ctx)
+   at Mono.CSharp.SimpleName.ResolveAsTypeOrNamespace(IMemberContext mc)
+   at Mono.CSharp.FullNamedExpression.ResolveAsType(IMemberContext mc)
+   at Mono.CSharp.Attribute.ResolveAttributeType(Boolean comparisonOnly)
+   at Mono.CSharp.Attribute.Resolve()
+   at Mono.CSharp.Attribute.Emit(System.Collections.Generic.Dictionary`2 allEmitted)
+   at Mono.CSharp.Attributes.Emit()
+   at Mono.CSharp.AbstractPropertyEventMethod.Emit(Mono.CSharp.TypeDefinition parent)
+   at Mono.CSharp.PropertyBase.Emit()
+   at Mono.CSharp.Property.Emit()
+   at Mono.CSharp.TypeDefinition.Emit()
+   at Mono.CSharp.ClassOrStruct.Emit()
+   at Mono.CSharp.Class.Emit()
+   at Mono.CSharp.TypeDefinition.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.NamespaceContainer.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.ModuleContainer.EmitContainer()
+   at Mono.CSharp.AssemblyDefinition.Emit()
+   at Mono.CSharp.AssemblyDefinitionStatic.Emit()
+   at Mono.CSharp.Driver.Compile()
+   at Mono.CSharp.CompilerCallableEntryPoint.InvokeCompiler(System.String[] args, System.IO.TextWriter error)
+   at System.Reflection.MonoMethod.InternalInvoke(System.Reflection.MonoMethod , System.Object , System.Object[] , System.Exception ByRef )
+   at System.Reflection.MonoMethod.Invoke(System.Object obj, BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MonoMethod.cs:line 230
+   at System.Reflection.MethodBase.Invoke(System.Object obj, System.Object[] parameters) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MethodBase.cs:line 114
+   at TestRunner.ReflectionTester.Invoke(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 85
+   at TestRunner.Checker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 601
+   at TestRunner.PositiveChecker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 934
+   at TestRunner.Checker.Do(System.String filename) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 584
+   at TestRunner.Tester.Main(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 1690
+   at System.Environment.get_StackTrace() in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System/Environment.cs:line 261
+   at Mono.CSharp.Expression.Error_UnexpectedKind(IMemberContext ctx, Mono.CSharp.Expression memberExpr, System.String expected, System.String was, Location loc)
+   at Mono.CSharp.SimpleName.Error_TypeOrNamespaceNotFound(IMemberContext ctx)
+   at Mono.CSharp.SimpleName.ResolveAsTypeOrNamespace(IMemberContext mc)
+   at Mono.CSharp.FullNamedExpression.ResolveAsType(IMemberContext mc)
+   at Mono.CSharp.Attribute.ResolveAttributeType(Boolean comparisonOnly)
+   at Mono.CSharp.Attribute.Resolve()
+   at Mono.CSharp.Attribute.Emit(System.Collections.Generic.Dictionary`2 allEmitted)
+   at Mono.CSharp.Attributes.Emit()
+   at Mono.CSharp.AbstractPropertyEventMethod.Emit(Mono.CSharp.TypeDefinition parent)
+   at Mono.CSharp.PropertyBase.Emit()
+   at Mono.CSharp.Property.Emit()
+   at Mono.CSharp.TypeDefinition.Emit()
+   at Mono.CSharp.ClassOrStruct.Emit()
+   at Mono.CSharp.Class.Emit()
+   at Mono.CSharp.TypeDefinition.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.NamespaceContainer.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.ModuleContainer.EmitContainer()
+   at Mono.CSharp.AssemblyDefinition.Emit()
+   at Mono.CSharp.AssemblyDefinitionStatic.Emit()
+   at Mono.CSharp.Driver.Compile()
+   at Mono.CSharp.CompilerCallableEntryPoint.InvokeCompiler(System.String[] args, System.IO.TextWriter error)
+   at System.Reflection.MonoMethod.InternalInvoke(System.Reflection.MonoMethod , System.Object , System.Object[] , System.Exception ByRef )
+   at System.Reflection.MonoMethod.Invoke(System.Object obj, BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MonoMethod.cs:line 230
+   at System.Reflection.MethodBase.Invoke(System.Object obj, System.Object[] parameters) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MethodBase.cs:line 114
+   at TestRunner.ReflectionTester.Invoke(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 85
+   at TestRunner.Checker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 601
+   at TestRunner.PositiveChecker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 934
+   at TestRunner.Checker.Do(System.String filename) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 584
+   at TestRunner.Tester.Main(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 1690
+   at System.Environment.get_StackTrace() in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System/Environment.cs:line 261
+   at Mono.CSharp.Expression.Error_UnexpectedKind(IMemberContext ctx, Mono.CSharp.Expression memberExpr, System.String expected, System.String was, Location loc)
+   at Mono.CSharp.SimpleName.Error_TypeOrNamespaceNotFound(IMemberContext ctx)
+   at Mono.CSharp.SimpleName.ResolveAsTypeOrNamespace(IMemberContext mc)
+   at Mono.CSharp.FullNamedExpression.ResolveAsType(IMemberContext mc)
+   at Mono.CSharp.Attribute.ResolveAttributeType(Boolean comparisonOnly)
+   at Mono.CSharp.Attribute.Resolve()
+   at Mono.CSharp.Attribute.Emit(System.Collections.Generic.Dictionary`2 allEmitted)
+   at Mono.CSharp.Attributes.Emit()
+   at Mono.CSharp.AbstractPropertyEventMethod.Emit(Mono.CSharp.TypeDefinition parent)
+   at Mono.CSharp.PropertyBase.Emit()
+   at Mono.CSharp.Property.Emit()
+   at Mono.CSharp.TypeDefinition.Emit()
+   at Mono.CSharp.ClassOrStruct.Emit()
+   at Mono.CSharp.Class.Emit()
+   at Mono.CSharp.TypeDefinition.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.NamespaceContainer.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.ModuleContainer.EmitContainer()
+   at Mono.CSharp.AssemblyDefinition.Emit()
+   at Mono.CSharp.AssemblyDefinitionStatic.Emit()
+   at Mono.CSharp.Driver.Compile()
+   at Mono.CSharp.CompilerCallableEntryPoint.InvokeCompiler(System.String[] args, System.IO.TextWriter error)
+   at System.Reflection.MonoMethod.InternalInvoke(System.Reflection.MonoMethod , System.Object , System.Object[] , System.Exception ByRef )
+   at System.Reflection.MonoMethod.Invoke(System.Object obj, BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MonoMethod.cs:line 230
+   at System.Reflection.MethodBase.Invoke(System.Object obj, System.Object[] parameters) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MethodBase.cs:line 114
+   at TestRunner.ReflectionTester.Invoke(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 85
+   at TestRunner.Checker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 601
+   at TestRunner.PositiveChecker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 934
+   at TestRunner.Checker.Do(System.String filename) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 584
+   at TestRunner.Tester.Main(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 1690
+   at System.Environment.get_StackTrace() in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System/Environment.cs:line 261
+   at Mono.CSharp.Expression.Error_UnexpectedKind(IMemberContext ctx, Mono.CSharp.Expression memberExpr, System.String expected, System.String was, Location loc)
+   at Mono.CSharp.FullNamedExpression.ResolveAsType(IMemberContext mc)
+   at Mono.CSharp.Attribute.ResolveAttributeType(Boolean comparisonOnly)
+   at Mono.CSharp.Attribute.Resolve()
+   at Mono.CSharp.Attribute.Emit(System.Collections.Generic.Dictionary`2 allEmitted)
+   at Mono.CSharp.Attributes.Emit()
+   at Mono.CSharp.TypeDefinition.Emit()
+   at Mono.CSharp.TypeDefinition.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.NamespaceContainer.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.NamespaceContainer.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.ModuleContainer.EmitContainer()
+   at Mono.CSharp.AssemblyDefinition.Emit()
+   at Mono.CSharp.AssemblyDefinitionStatic.Emit()
+   at Mono.CSharp.Driver.Compile()
+   at Mono.CSharp.CompilerCallableEntryPoint.InvokeCompiler(System.String[] args, System.IO.TextWriter error)
+   at System.Reflection.MonoMethod.InternalInvoke(System.Reflection.MonoMethod , System.Object , System.Object[] , System.Exception ByRef )
+   at System.Reflection.MonoMethod.Invoke(System.Object obj, BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MonoMethod.cs:line 230
+   at System.Reflection.MethodBase.Invoke(System.Object obj, System.Object[] parameters) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MethodBase.cs:line 114
+   at TestRunner.ReflectionTester.Invoke(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 85
+   at TestRunner.Checker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 601
+   at TestRunner.PositiveChecker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 934
+   at TestRunner.Checker.Do(System.String filename) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 584
+   at TestRunner.Tester.Main(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 1690
+test-695.cs...	REGRESSION (SUCCESS -> COMPILATION ERROR)
+error CS0006: Metadata file `../class/lib/net_2_0/Mono.Cecil.dll' could not be found
+
+test-814.cs...	REGRESSION (SUCCESS -> COMPILATION ERROR)
+error CS0006: Metadata file `../class/lib/net_2_0/Mono.Cecil.dll' could not be found
+
+test-debug-11.cs...	REGRESSION (SUCCESS -> SYMBOL FILE ERROR)
+Expected node: <entry name="a" il_index="0" scope_ref="1" />
+test-debug-28.cs...	REGRESSION (SUCCESS -> SYMBOL FILE ERROR)
+Expected node: <entry name="v" il_index="0" scope_ref="1" />
+Done
+
+2232 test cases passed (99.78%)
+1 known issue(s)
+
+The latest changes caused regression in 4 file(s)
+test-695.cs
+test-814.cs
+test-debug-11.cs
+test-debug-28.cs
+make: *** [qcheck2] Error 1
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:gtest-464-lib.dll gtest-464-lib.il
+Assembling 'gtest-464-lib.il' , no listing file, to dll --> 'gtest-464-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:gtest-583-lib.dll gtest-583-lib.il
+Assembling 'gtest-583-lib.il' , no listing file, to dll --> 'gtest-583-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:gtest-exmethod-45-lib.dll gtest-exmethod-45-lib.il
+Assembling 'gtest-exmethod-45-lib.il' , no listing file, to dll --> 'gtest-exmethod-45-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-377-lib.dll test-377-lib.il
+Assembling 'test-377-lib.il' , no listing file, to dll --> 'test-377-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-483-lib.dll test-483-lib.il
+Assembling 'test-483-lib.il' , no listing file, to dll --> 'test-483-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-531-lib.dll test-531-lib.il
+Assembling 'test-531-lib.il' , no listing file, to dll --> 'test-531-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-661-lib.dll test-661-lib.il
+Assembling 'test-661-lib.il' , no listing file, to dll --> 'test-661-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-759-lib.dll test-759-lib.il
+Assembling 'test-759-lib.il' , no listing file, to dll --> 'test-759-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-760-lib.dll test-760-lib.il
+Assembling 'test-760-lib.il' , no listing file, to dll --> 'test-760-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-792-lib.dll test-792-lib.il
+Assembling 'test-792-lib.il' , no listing file, to dll --> 'test-792-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-805-lib.dll test-805-lib.il
+Assembling 'test-805-lib.il' , no listing file, to dll --> 'test-805-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-810-lib.dll test-810-lib.il
+Assembling 'test-810-lib.il' , no listing file, to dll --> 'test-810-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-823-lib.dll test-823-lib.il
+Assembling 'test-823-lib.il' , no listing file, to dll --> 'test-823-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-846-lib.dll test-846-lib.il
+Assembling 'test-846-lib.il' , no listing file, to dll --> 'test-846-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-851-lib.dll test-851-lib.il
+Assembling 'test-851-lib.il' , no listing file, to dll --> 'test-851-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-858-lib.dll test-858-lib.il
+Assembling 'test-858-lib.il' , no listing file, to dll --> 'test-858-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-com-02-lib.dll test-com-02-lib.il
+Assembling 'test-com-02-lib.il' , no listing file, to dll --> 'test-com-02-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-com-03-lib.dll test-com-03-lib.il
+Assembling 'test-com-03-lib.il' , no listing file, to dll --> 'test-com-03-lib.dll'
+
+Operation completed successfully
+MCS     [net_4_5] setup
+MCS     [net_4_5] setup
+cd ../class/Mono.CSharp && /Applications/Xcode.app/Contents/Developer/usr/bin/make NO_DIR_CHECK=yes
+/Applications/Xcode.app/Contents/Developer/usr/bin/make all-local
+make[2]: Nothing to be done for `all-local'.
+MONO_RUNTIME='/Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper' MONO_PATH="./../class/lib/net_4_5::$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper --debug  --verify-all ./../class/lib/net_4_5/compiler-tester.exe -mode:pos -files:'v4' -compiler:./../class/lib/build/mcs.exe -issues:known-issues-net_4_5 -log:net_4_5.log -il:ver-il-net_4_5.xml -compiler-options:"-d:NET_4_0;NET_4_5" 
+Loading ./../class/lib/build/mcs.exe ...
+Loading verification data from `ver-il-net_4_5.xml' ...
+gtest-230.cs...	KNOWN ISSUE (Compilation error)
+   at System.Environment.get_StackTrace() in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System/Environment.cs:line 261
+   at Mono.CSharp.Expression.Error_UnexpectedKind(IMemberContext ctx, Mono.CSharp.Expression memberExpr, System.String expected, System.String was, Location loc)
+   at Mono.CSharp.SimpleName.Error_TypeOrNamespaceNotFound(IMemberContext ctx)
+   at Mono.CSharp.SimpleName.ResolveAsTypeOrNamespace(IMemberContext mc)
+   at Mono.CSharp.FullNamedExpression.ResolveAsType(IMemberContext mc)
+   at Mono.CSharp.Attribute.ResolveAttributeType(Boolean comparisonOnly)
+   at Mono.CSharp.Attribute.Resolve()
+   at Mono.CSharp.Attribute.Emit(System.Collections.Generic.Dictionary`2 allEmitted)
+   at Mono.CSharp.Attributes.Emit()
+   at Mono.CSharp.AbstractPropertyEventMethod.Emit(Mono.CSharp.TypeDefinition parent)
+   at Mono.CSharp.PropertyBase.Emit()
+   at Mono.CSharp.Property.Emit()
+   at Mono.CSharp.TypeDefinition.Emit()
+   at Mono.CSharp.ClassOrStruct.Emit()
+   at Mono.CSharp.Class.Emit()
+   at Mono.CSharp.TypeDefinition.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.NamespaceContainer.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.ModuleContainer.EmitContainer()
+   at Mono.CSharp.AssemblyDefinition.Emit()
+   at Mono.CSharp.AssemblyDefinitionStatic.Emit()
+   at Mono.CSharp.Driver.Compile()
+   at Mono.CSharp.CompilerCallableEntryPoint.InvokeCompiler(System.String[] args, System.IO.TextWriter error)
+   at System.Reflection.MonoMethod.InternalInvoke(System.Reflection.MonoMethod , System.Object , System.Object[] , System.Exception ByRef )
+   at System.Reflection.MonoMethod.Invoke(System.Object obj, BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MonoMethod.cs:line 230
+   at System.Reflection.MethodBase.Invoke(System.Object obj, System.Object[] parameters) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MethodBase.cs:line 114
+   at TestRunner.ReflectionTester.Invoke(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 85
+   at TestRunner.Checker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 601
+   at TestRunner.PositiveChecker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 934
+   at TestRunner.Checker.Do(System.String filename) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 584
+   at TestRunner.Tester.Main(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 1690
+   at System.Environment.get_StackTrace() in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System/Environment.cs:line 261
+   at Mono.CSharp.Expression.Error_UnexpectedKind(IMemberContext ctx, Mono.CSharp.Expression memberExpr, System.String expected, System.String was, Location loc)
+   at Mono.CSharp.SimpleName.Error_TypeOrNamespaceNotFound(IMemberContext ctx)
+   at Mono.CSharp.SimpleName.ResolveAsTypeOrNamespace(IMemberContext mc)
+   at Mono.CSharp.FullNamedExpression.ResolveAsType(IMemberContext mc)
+   at Mono.CSharp.Attribute.ResolveAttributeType(Boolean comparisonOnly)
+   at Mono.CSharp.Attribute.Resolve()
+   at Mono.CSharp.Attribute.Emit(System.Collections.Generic.Dictionary`2 allEmitted)
+   at Mono.CSharp.Attributes.Emit()
+   at Mono.CSharp.AbstractPropertyEventMethod.Emit(Mono.CSharp.TypeDefinition parent)
+   at Mono.CSharp.PropertyBase.Emit()
+   at Mono.CSharp.Property.Emit()
+   at Mono.CSharp.TypeDefinition.Emit()
+   at Mono.CSharp.ClassOrStruct.Emit()
+   at Mono.CSharp.Class.Emit()
+   at Mono.CSharp.TypeDefinition.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.NamespaceContainer.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.ModuleContainer.EmitContainer()
+   at Mono.CSharp.AssemblyDefinition.Emit()
+   at Mono.CSharp.AssemblyDefinitionStatic.Emit()
+   at Mono.CSharp.Driver.Compile()
+   at Mono.CSharp.CompilerCallableEntryPoint.InvokeCompiler(System.String[] args, System.IO.TextWriter error)
+   at System.Reflection.MonoMethod.InternalInvoke(System.Reflection.MonoMethod , System.Object , System.Object[] , System.Exception ByRef )
+   at System.Reflection.MonoMethod.Invoke(System.Object obj, BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MonoMethod.cs:line 230
+   at System.Reflection.MethodBase.Invoke(System.Object obj, System.Object[] parameters) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MethodBase.cs:line 114
+   at TestRunner.ReflectionTester.Invoke(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 85
+   at TestRunner.Checker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 601
+   at TestRunner.PositiveChecker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 934
+   at TestRunner.Checker.Do(System.String filename) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 584
+   at TestRunner.Tester.Main(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 1690
+   at System.Environment.get_StackTrace() in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System/Environment.cs:line 261
+   at Mono.CSharp.Expression.Error_UnexpectedKind(IMemberContext ctx, Mono.CSharp.Expression memberExpr, System.String expected, System.String was, Location loc)
+   at Mono.CSharp.SimpleName.Error_TypeOrNamespaceNotFound(IMemberContext ctx)
+   at Mono.CSharp.SimpleName.ResolveAsTypeOrNamespace(IMemberContext mc)
+   at Mono.CSharp.FullNamedExpression.ResolveAsType(IMemberContext mc)
+   at Mono.CSharp.Attribute.ResolveAttributeType(Boolean comparisonOnly)
+   at Mono.CSharp.Attribute.Resolve()
+   at Mono.CSharp.Attribute.Emit(System.Collections.Generic.Dictionary`2 allEmitted)
+   at Mono.CSharp.Attributes.Emit()
+   at Mono.CSharp.AbstractPropertyEventMethod.Emit(Mono.CSharp.TypeDefinition parent)
+   at Mono.CSharp.PropertyBase.Emit()
+   at Mono.CSharp.Property.Emit()
+   at Mono.CSharp.TypeDefinition.Emit()
+   at Mono.CSharp.ClassOrStruct.Emit()
+   at Mono.CSharp.Class.Emit()
+   at Mono.CSharp.TypeDefinition.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.NamespaceContainer.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.ModuleContainer.EmitContainer()
+   at Mono.CSharp.AssemblyDefinition.Emit()
+   at Mono.CSharp.AssemblyDefinitionStatic.Emit()
+   at Mono.CSharp.Driver.Compile()
+   at Mono.CSharp.CompilerCallableEntryPoint.InvokeCompiler(System.String[] args, System.IO.TextWriter error)
+   at System.Reflection.MonoMethod.InternalInvoke(System.Reflection.MonoMethod , System.Object , System.Object[] , System.Exception ByRef )
+   at System.Reflection.MonoMethod.Invoke(System.Object obj, BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MonoMethod.cs:line 230
+   at System.Reflection.MethodBase.Invoke(System.Object obj, System.Object[] parameters) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MethodBase.cs:line 114
+   at TestRunner.ReflectionTester.Invoke(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 85
+   at TestRunner.Checker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 601
+   at TestRunner.PositiveChecker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 934
+   at TestRunner.Checker.Do(System.String filename) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 584
+   at TestRunner.Tester.Main(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 1690
+   at System.Environment.get_StackTrace() in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System/Environment.cs:line 261
+   at Mono.CSharp.Expression.Error_UnexpectedKind(IMemberContext ctx, Mono.CSharp.Expression memberExpr, System.String expected, System.String was, Location loc)
+   at Mono.CSharp.FullNamedExpression.ResolveAsType(IMemberContext mc)
+   at Mono.CSharp.Attribute.ResolveAttributeType(Boolean comparisonOnly)
+   at Mono.CSharp.Attribute.Resolve()
+   at Mono.CSharp.Attribute.Emit(System.Collections.Generic.Dictionary`2 allEmitted)
+   at Mono.CSharp.Attributes.Emit()
+   at Mono.CSharp.TypeDefinition.Emit()
+   at Mono.CSharp.TypeDefinition.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.NamespaceContainer.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.NamespaceContainer.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.ModuleContainer.EmitContainer()
+   at Mono.CSharp.AssemblyDefinition.Emit()
+   at Mono.CSharp.AssemblyDefinitionStatic.Emit()
+   at Mono.CSharp.Driver.Compile()
+   at Mono.CSharp.CompilerCallableEntryPoint.InvokeCompiler(System.String[] args, System.IO.TextWriter error)
+   at System.Reflection.MonoMethod.InternalInvoke(System.Reflection.MonoMethod , System.Object , System.Object[] , System.Exception ByRef )
+   at System.Reflection.MonoMethod.Invoke(System.Object obj, BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MonoMethod.cs:line 230
+   at System.Reflection.MethodBase.Invoke(System.Object obj, System.Object[] parameters) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MethodBase.cs:line 114
+   at TestRunner.ReflectionTester.Invoke(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 85
+   at TestRunner.Checker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 601
+   at TestRunner.PositiveChecker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 934
+   at TestRunner.Checker.Do(System.String filename) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 584
+   at TestRunner.Tester.Main(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 1690
+test-debug-11.cs...	REGRESSION (SUCCESS -> SYMBOL FILE ERROR)
+Expected node: <entry name="a" il_index="0" scope_ref="1" />
+test-debug-28.cs...	REGRESSION (SUCCESS -> SYMBOL FILE ERROR)
+Expected node: <entry name="v" il_index="0" scope_ref="1" />
+Done
+
+2234 test cases passed (99.87%)
+1 known issue(s)
+
+The latest changes caused regression in 2 file(s)
+test-debug-11.cs
+test-debug-28.cs
+make: *** [qcheck2] Error 1
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:gtest-464-lib.dll gtest-464-lib.il
+Assembling 'gtest-464-lib.il' , no listing file, to dll --> 'gtest-464-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:gtest-583-lib.dll gtest-583-lib.il
+Assembling 'gtest-583-lib.il' , no listing file, to dll --> 'gtest-583-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:gtest-exmethod-45-lib.dll gtest-exmethod-45-lib.il
+Assembling 'gtest-exmethod-45-lib.il' , no listing file, to dll --> 'gtest-exmethod-45-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-377-lib.dll test-377-lib.il
+Assembling 'test-377-lib.il' , no listing file, to dll --> 'test-377-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-483-lib.dll test-483-lib.il
+Assembling 'test-483-lib.il' , no listing file, to dll --> 'test-483-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-531-lib.dll test-531-lib.il
+Assembling 'test-531-lib.il' , no listing file, to dll --> 'test-531-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-661-lib.dll test-661-lib.il
+Assembling 'test-661-lib.il' , no listing file, to dll --> 'test-661-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-759-lib.dll test-759-lib.il
+Assembling 'test-759-lib.il' , no listing file, to dll --> 'test-759-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-760-lib.dll test-760-lib.il
+Assembling 'test-760-lib.il' , no listing file, to dll --> 'test-760-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-792-lib.dll test-792-lib.il
+Assembling 'test-792-lib.il' , no listing file, to dll --> 'test-792-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-805-lib.dll test-805-lib.il
+Assembling 'test-805-lib.il' , no listing file, to dll --> 'test-805-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-810-lib.dll test-810-lib.il
+Assembling 'test-810-lib.il' , no listing file, to dll --> 'test-810-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-823-lib.dll test-823-lib.il
+Assembling 'test-823-lib.il' , no listing file, to dll --> 'test-823-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-846-lib.dll test-846-lib.il
+Assembling 'test-846-lib.il' , no listing file, to dll --> 'test-846-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-851-lib.dll test-851-lib.il
+Assembling 'test-851-lib.il' , no listing file, to dll --> 'test-851-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-858-lib.dll test-858-lib.il
+Assembling 'test-858-lib.il' , no listing file, to dll --> 'test-858-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-com-02-lib.dll test-com-02-lib.il
+Assembling 'test-com-02-lib.il' , no listing file, to dll --> 'test-com-02-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-com-03-lib.dll test-com-03-lib.il
+Assembling 'test-com-03-lib.il' , no listing file, to dll --> 'test-com-03-lib.dll'
+
+Operation completed successfully
+MCS     [net_4_5] setup
+MCS     [net_4_5] setup
+cd ../class/Mono.CSharp && /Applications/Xcode.app/Contents/Developer/usr/bin/make NO_DIR_CHECK=yes
+/Applications/Xcode.app/Contents/Developer/usr/bin/make all-local
+make[2]: Nothing to be done for `all-local'.
+MONO_RUNTIME='/Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper' MONO_PATH="./../class/lib/net_4_5::$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper --debug  --verify-all ./../class/lib/net_4_5/compiler-tester.exe -mode:pos -files:'v4' -compiler:./../class/lib/build/mcs.exe -issues:known-issues-net_4_5 -log:net_4_5.log -il:ver-il-net_4_5.xml -compiler-options:"-d:NET_4_0;NET_4_5" 
+Loading ./../class/lib/build/mcs.exe ...
+Loading verification data from `ver-il-net_4_5.xml' ...
+gtest-230.cs...	KNOWN ISSUE (Compilation error)
+   at System.Environment.get_StackTrace() in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System/Environment.cs:line 261
+   at Mono.CSharp.Expression.Error_UnexpectedKind(IMemberContext ctx, Mono.CSharp.Expression memberExpr, System.String expected, System.String was, Location loc)
+   at Mono.CSharp.SimpleName.Error_TypeOrNamespaceNotFound(IMemberContext ctx)
+   at Mono.CSharp.SimpleName.ResolveAsTypeOrNamespace(IMemberContext mc)
+   at Mono.CSharp.FullNamedExpression.ResolveAsType(IMemberContext mc)
+   at Mono.CSharp.Attribute.ResolveAttributeType(Boolean comparisonOnly)
+   at Mono.CSharp.Attribute.Resolve()
+   at Mono.CSharp.Attribute.Emit(System.Collections.Generic.Dictionary`2 allEmitted)
+   at Mono.CSharp.Attributes.Emit()
+   at Mono.CSharp.AbstractPropertyEventMethod.Emit(Mono.CSharp.TypeDefinition parent)
+   at Mono.CSharp.PropertyBase.Emit()
+   at Mono.CSharp.Property.Emit()
+   at Mono.CSharp.TypeDefinition.Emit()
+   at Mono.CSharp.ClassOrStruct.Emit()
+   at Mono.CSharp.Class.Emit()
+   at Mono.CSharp.TypeDefinition.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.NamespaceContainer.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.ModuleContainer.EmitContainer()
+   at Mono.CSharp.AssemblyDefinition.Emit()
+   at Mono.CSharp.AssemblyDefinitionStatic.Emit()
+   at Mono.CSharp.Driver.Compile()
+   at Mono.CSharp.CompilerCallableEntryPoint.InvokeCompiler(System.String[] args, System.IO.TextWriter error)
+   at System.Reflection.MonoMethod.InternalInvoke(System.Reflection.MonoMethod , System.Object , System.Object[] , System.Exception ByRef )
+   at System.Reflection.MonoMethod.Invoke(System.Object obj, BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MonoMethod.cs:line 230
+   at System.Reflection.MethodBase.Invoke(System.Object obj, System.Object[] parameters) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MethodBase.cs:line 114
+   at TestRunner.ReflectionTester.Invoke(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 85
+   at TestRunner.Checker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 601
+   at TestRunner.PositiveChecker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 934
+   at TestRunner.Checker.Do(System.String filename) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 584
+   at TestRunner.Tester.Main(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 1690
+   at System.Environment.get_StackTrace() in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System/Environment.cs:line 261
+   at Mono.CSharp.Expression.Error_UnexpectedKind(IMemberContext ctx, Mono.CSharp.Expression memberExpr, System.String expected, System.String was, Location loc)
+   at Mono.CSharp.SimpleName.Error_TypeOrNamespaceNotFound(IMemberContext ctx)
+   at Mono.CSharp.SimpleName.ResolveAsTypeOrNamespace(IMemberContext mc)
+   at Mono.CSharp.FullNamedExpression.ResolveAsType(IMemberContext mc)
+   at Mono.CSharp.Attribute.ResolveAttributeType(Boolean comparisonOnly)
+   at Mono.CSharp.Attribute.Resolve()
+   at Mono.CSharp.Attribute.Emit(System.Collections.Generic.Dictionary`2 allEmitted)
+   at Mono.CSharp.Attributes.Emit()
+   at Mono.CSharp.AbstractPropertyEventMethod.Emit(Mono.CSharp.TypeDefinition parent)
+   at Mono.CSharp.PropertyBase.Emit()
+   at Mono.CSharp.Property.Emit()
+   at Mono.CSharp.TypeDefinition.Emit()
+   at Mono.CSharp.ClassOrStruct.Emit()
+   at Mono.CSharp.Class.Emit()
+   at Mono.CSharp.TypeDefinition.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.NamespaceContainer.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.ModuleContainer.EmitContainer()
+   at Mono.CSharp.AssemblyDefinition.Emit()
+   at Mono.CSharp.AssemblyDefinitionStatic.Emit()
+   at Mono.CSharp.Driver.Compile()
+   at Mono.CSharp.CompilerCallableEntryPoint.InvokeCompiler(System.String[] args, System.IO.TextWriter error)
+   at System.Reflection.MonoMethod.InternalInvoke(System.Reflection.MonoMethod , System.Object , System.Object[] , System.Exception ByRef )
+   at System.Reflection.MonoMethod.Invoke(System.Object obj, BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MonoMethod.cs:line 230
+   at System.Reflection.MethodBase.Invoke(System.Object obj, System.Object[] parameters) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MethodBase.cs:line 114
+   at TestRunner.ReflectionTester.Invoke(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 85
+   at TestRunner.Checker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 601
+   at TestRunner.PositiveChecker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 934
+   at TestRunner.Checker.Do(System.String filename) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 584
+   at TestRunner.Tester.Main(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 1690
+   at System.Environment.get_StackTrace() in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System/Environment.cs:line 261
+   at Mono.CSharp.Expression.Error_UnexpectedKind(IMemberContext ctx, Mono.CSharp.Expression memberExpr, System.String expected, System.String was, Location loc)
+   at Mono.CSharp.SimpleName.Error_TypeOrNamespaceNotFound(IMemberContext ctx)
+   at Mono.CSharp.SimpleName.ResolveAsTypeOrNamespace(IMemberContext mc)
+   at Mono.CSharp.FullNamedExpression.ResolveAsType(IMemberContext mc)
+   at Mono.CSharp.Attribute.ResolveAttributeType(Boolean comparisonOnly)
+   at Mono.CSharp.Attribute.Resolve()
+   at Mono.CSharp.Attribute.Emit(System.Collections.Generic.Dictionary`2 allEmitted)
+   at Mono.CSharp.Attributes.Emit()
+   at Mono.CSharp.AbstractPropertyEventMethod.Emit(Mono.CSharp.TypeDefinition parent)
+   at Mono.CSharp.PropertyBase.Emit()
+   at Mono.CSharp.Property.Emit()
+   at Mono.CSharp.TypeDefinition.Emit()
+   at Mono.CSharp.ClassOrStruct.Emit()
+   at Mono.CSharp.Class.Emit()
+   at Mono.CSharp.TypeDefinition.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.NamespaceContainer.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.ModuleContainer.EmitContainer()
+   at Mono.CSharp.AssemblyDefinition.Emit()
+   at Mono.CSharp.AssemblyDefinitionStatic.Emit()
+   at Mono.CSharp.Driver.Compile()
+   at Mono.CSharp.CompilerCallableEntryPoint.InvokeCompiler(System.String[] args, System.IO.TextWriter error)
+   at System.Reflection.MonoMethod.InternalInvoke(System.Reflection.MonoMethod , System.Object , System.Object[] , System.Exception ByRef )
+   at System.Reflection.MonoMethod.Invoke(System.Object obj, BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MonoMethod.cs:line 230
+   at System.Reflection.MethodBase.Invoke(System.Object obj, System.Object[] parameters) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MethodBase.cs:line 114
+   at TestRunner.ReflectionTester.Invoke(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 85
+   at TestRunner.Checker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 601
+   at TestRunner.PositiveChecker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 934
+   at TestRunner.Checker.Do(System.String filename) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 584
+   at TestRunner.Tester.Main(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 1690
+   at System.Environment.get_StackTrace() in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System/Environment.cs:line 261
+   at Mono.CSharp.Expression.Error_UnexpectedKind(IMemberContext ctx, Mono.CSharp.Expression memberExpr, System.String expected, System.String was, Location loc)
+   at Mono.CSharp.FullNamedExpression.ResolveAsType(IMemberContext mc)
+   at Mono.CSharp.Attribute.ResolveAttributeType(Boolean comparisonOnly)
+   at Mono.CSharp.Attribute.Resolve()
+   at Mono.CSharp.Attribute.Emit(System.Collections.Generic.Dictionary`2 allEmitted)
+   at Mono.CSharp.Attributes.Emit()
+   at Mono.CSharp.TypeDefinition.Emit()
+   at Mono.CSharp.TypeDefinition.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.NamespaceContainer.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.NamespaceContainer.EmitContainer()
+   at Mono.CSharp.TypeContainer.EmitContainer()
+   at Mono.CSharp.ModuleContainer.EmitContainer()
+   at Mono.CSharp.AssemblyDefinition.Emit()
+   at Mono.CSharp.AssemblyDefinitionStatic.Emit()
+   at Mono.CSharp.Driver.Compile()
+   at Mono.CSharp.CompilerCallableEntryPoint.InvokeCompiler(System.String[] args, System.IO.TextWriter error)
+   at System.Reflection.MonoMethod.InternalInvoke(System.Reflection.MonoMethod , System.Object , System.Object[] , System.Exception ByRef )
+   at System.Reflection.MonoMethod.Invoke(System.Object obj, BindingFlags invokeAttr, System.Reflection.Binder binder, System.Object[] parameters, System.Globalization.CultureInfo culture) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MonoMethod.cs:line 230
+   at System.Reflection.MethodBase.Invoke(System.Object obj, System.Object[] parameters) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/class/corlib/System.Reflection/MethodBase.cs:line 114
+   at TestRunner.ReflectionTester.Invoke(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 85
+   at TestRunner.Checker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 601
+   at TestRunner.PositiveChecker.Check(TestRunner.TestCase test) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 934
+   at TestRunner.Checker.Do(System.String filename) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 584
+   at TestRunner.Tester.Main(System.String[] args) in /Users/administrator/Documents/Code/playscript/playscriptredux/playscript/mcs/tools/compiler-tester/compiler-tester.cs:line 1690
+test-debug-11.cs...	REGRESSION (SUCCESS -> SYMBOL FILE ERROR)
+Expected node: <entry name="a" il_index="0" scope_ref="1" />
+test-debug-28.cs...	REGRESSION (SUCCESS -> SYMBOL FILE ERROR)
+Expected node: <entry name="v" il_index="0" scope_ref="1" />
+Done
+
+2234 test cases passed (99.87%)
+1 known issue(s)
+
+The latest changes caused regression in 2 file(s)
+test-debug-11.cs
+test-debug-28.cs
+make: *** [qcheck2] Error 1
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:gtest-464-lib.dll gtest-464-lib.il
+Assembling 'gtest-464-lib.il' , no listing file, to dll --> 'gtest-464-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:gtest-583-lib.dll gtest-583-lib.il
+Assembling 'gtest-583-lib.il' , no listing file, to dll --> 'gtest-583-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:gtest-exmethod-45-lib.dll gtest-exmethod-45-lib.il
+Assembling 'gtest-exmethod-45-lib.il' , no listing file, to dll --> 'gtest-exmethod-45-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-377-lib.dll test-377-lib.il
+Assembling 'test-377-lib.il' , no listing file, to dll --> 'test-377-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-483-lib.dll test-483-lib.il
+Assembling 'test-483-lib.il' , no listing file, to dll --> 'test-483-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-531-lib.dll test-531-lib.il
+Assembling 'test-531-lib.il' , no listing file, to dll --> 'test-531-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-661-lib.dll test-661-lib.il
+Assembling 'test-661-lib.il' , no listing file, to dll --> 'test-661-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-759-lib.dll test-759-lib.il
+Assembling 'test-759-lib.il' , no listing file, to dll --> 'test-759-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-760-lib.dll test-760-lib.il
+Assembling 'test-760-lib.il' , no listing file, to dll --> 'test-760-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-792-lib.dll test-792-lib.il
+Assembling 'test-792-lib.il' , no listing file, to dll --> 'test-792-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-805-lib.dll test-805-lib.il
+Assembling 'test-805-lib.il' , no listing file, to dll --> 'test-805-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-810-lib.dll test-810-lib.il
+Assembling 'test-810-lib.il' , no listing file, to dll --> 'test-810-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-823-lib.dll test-823-lib.il
+Assembling 'test-823-lib.il' , no listing file, to dll --> 'test-823-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-846-lib.dll test-846-lib.il
+Assembling 'test-846-lib.il' , no listing file, to dll --> 'test-846-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-851-lib.dll test-851-lib.il
+Assembling 'test-851-lib.il' , no listing file, to dll --> 'test-851-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-858-lib.dll test-858-lib.il
+Assembling 'test-858-lib.il' , no listing file, to dll --> 'test-858-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-com-02-lib.dll test-com-02-lib.il
+Assembling 'test-com-02-lib.il' , no listing file, to dll --> 'test-com-02-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-com-03-lib.dll test-com-03-lib.il
+Assembling 'test-com-03-lib.il' , no listing file, to dll --> 'test-com-03-lib.dll'
+
+Operation completed successfully
+MCS     [net_4_5] setup
+MCS     [net_4_5] setup
+cd ../class/Mono.CSharp && /Applications/Xcode.app/Contents/Developer/usr/bin/make NO_DIR_CHECK=yes
+/Applications/Xcode.app/Contents/Developer/usr/bin/make all-local
+make[2]: Nothing to be done for `all-local'.
+MONO_RUNTIME='/Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper' MONO_PATH="./../class/lib/net_4_5::$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper --debug  --verify-all ./../class/lib/net_4_5/compiler-tester.exe -mode:pos -files:'v4' -compiler:./../class/lib/build/mcs.exe -issues:known-issues-net_4_5 -log:net_4_5.log -il:ver-il-net_4_5.xml -compiler-options:"-d:NET_4_0;NET_4_5" 
+Loading ./../class/lib/build/mcs.exe ...
+Loading verification data from `ver-il-net_4_5.xml' ...
+gtest-230.cs...	KNOWN ISSUE (Compilation error)
+Done
+
+2236 test cases passed (99.96%)
+1 known issue(s)

@@ -14,15 +14,19 @@ export PATH=/usr/local/opt/ccache/libexec:${PATH}
 
 echo "Building PlayScript mono framework to ${PlayInstallPath} folder"
 
+# libtool: Version mismatch error.  This is libtool 2.4.6, but the
+# libtool: definition of this LT_INIT comes from libtool 2.4.2.
+# libtool: You should recreate aclocal.m4 with macros from libtool 2.4.6
+
 # Fix for 2.2.4 vs 2.4.6 glibtool
-#rm libgc/aclocal.m4
+rm libgc/aclocal.m4
 
 # Fix for newest versions of clang compiling older monos
 if [ -f configure.in ]; then
-	sed -i 'bak' 's|-stack_size,0x800000||g' configure.in
+	sed -i '.bak' 's|-stack_size,0x800000||g' configure.in
 fi
 if [ -f configure.ac ]; then
-	sed -i 'bak' 's|-stack_size,0x800000||g' configure.ac
+	sed -i '.bak' 's|-stack_size,0x800000||g' configure.ac
 fi
 
 
@@ -51,7 +55,7 @@ if [ ! -f ${PWD}/mcs/class/lib/monolite/basic.exe ]; then
 fi
 
 # Fix for 2.2.4 vs 2.4.6 glibtool
-# rm libgc/aclocal.m4
+rm libgc/aclocal.m4
 
 make EXTERNAL_MCS=${PWD}/mcs/class/lib/monolite/basic.exe
 
