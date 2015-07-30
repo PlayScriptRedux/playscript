@@ -1,5 +1,6 @@
+#if NET_4_5
 //
-// BuildTaskPropertyGroup.cs
+// IActivationFactory.cs
 //
 // Author:
 //       Martin Baulig <martin.baulig@xamarin.com>
@@ -23,36 +24,15 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
-
 using System;
-using System.Collections.Generic;
-using System.Xml;
+using System.Runtime.CompilerServices;
 
-namespace Microsoft.Build.BuildEngine {
-	
-	internal class BuildTaskPropertyGroup : BuildPropertyGroup, IBuildTask {
-		
-		public bool ContinueOnError {
-			get; set;
-		}
-		
-		internal BuildTaskPropertyGroup (XmlElement element, Target target)
-			: base (element, target.Project, null, false, true)
-		{
-		}
-		
-		public bool Execute ()
-		{
-			Evaluate ();
-			return true;
-		}
-
-		IEnumerable<string> IBuildTask.GetAttributes ()
-		{
-			return GetAttributes ();
-		}
-		
+namespace System.Runtime.InteropServices.WindowsRuntime
+{
+	[Guid("00000035-0000-0000-C000-000000000046")]
+	public interface IActivationFactory
+	{
+		object ActivateInstance ();
 	}
 }
-
+#endif

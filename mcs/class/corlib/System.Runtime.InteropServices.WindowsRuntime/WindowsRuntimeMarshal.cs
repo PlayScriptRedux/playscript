@@ -1,5 +1,6 @@
+#if NET_4_5
 //
-// BuildTaskPropertyGroup.cs
+// WindowsRuntimeMarshal.cs
 //
 // Author:
 //       Martin Baulig <martin.baulig@xamarin.com>
@@ -23,36 +24,49 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
-
 using System;
-using System.Collections.Generic;
-using System.Xml;
+using System.Runtime.CompilerServices;
 
-namespace Microsoft.Build.BuildEngine {
-	
-	internal class BuildTaskPropertyGroup : BuildPropertyGroup, IBuildTask {
-		
-		public bool ContinueOnError {
-			get; set;
-		}
-		
-		internal BuildTaskPropertyGroup (XmlElement element, Target target)
-			: base (element, target.Project, null, false, true)
+namespace System.Runtime.InteropServices.WindowsRuntime
+{
+	[MonoTODO]
+	public static class WindowsRuntimeMarshal
+	{
+		public static void AddEventHandler<T> (	Func<T, EventRegistrationToken> addMethod, Action<EventRegistrationToken> removeMethod, T handler)
 		{
-		}
-		
-		public bool Execute ()
-		{
-			Evaluate ();
-			return true;
+			throw new NotImplementedException ();
 		}
 
-		IEnumerable<string> IBuildTask.GetAttributes ()
+		public static void FreeHString (IntPtr ptr)
 		{
-			return GetAttributes ();
+			throw new NotImplementedException ();
 		}
-		
+
+		public static IActivationFactory GetActivationFactory (Type type)
+		{
+			throw new NotImplementedException ();
+		}
+
+		public static string PtrToStringHString (IntPtr ptr)
+		{
+			throw new NotImplementedException ();
+		}
+
+		public static void RemoveAllEventHandlers(Action<EventRegistrationToken> removeMethod)
+		{
+			throw new NotImplementedException ();
+		}
+
+		public static void RemoveEventHandler<T> (Action<EventRegistrationToken> removeMethod, T handler)
+		{
+			throw new NotImplementedException ();
+		}
+
+		public static IntPtr StringToHString (string s)
+		{
+			throw new NotImplementedException ();
+		}
 	}
 }
+#endif
 

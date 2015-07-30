@@ -403,6 +403,11 @@ namespace MonoTests.Microsoft.Build.BuildEngine {
 
 		void ItemGroupInsideTarget (string xml, params string[] messages)
 		{
+			ItemGroupInsideTarget (xml, 1, messages);
+		}
+
+		void ItemGroupInsideTarget (string xml, int expectedTargetCount, params string[] messages)
+		{
 			var logger = CreateLogger (xml);
 			
 			try
@@ -412,8 +417,8 @@ namespace MonoTests.Microsoft.Build.BuildEngine {
 					logger.CheckLoggedMessageHead (messages [i], i.ToString ());
 				Assert.AreEqual(0, logger.NormalMessageCount, "Extra messages found");
 				
-				Assert.AreEqual(1, logger.TargetStarted, "TargetStarted count");
-				Assert.AreEqual(1, logger.TargetFinished, "TargetFinished count");
+				Assert.AreEqual(expectedTargetCount, logger.TargetStarted, "TargetStarted count");
+				Assert.AreEqual(expectedTargetCount, logger.TargetFinished, "TargetFinished count");
 				Assert.AreEqual(messages.Length, logger.TaskStarted, "TaskStarted count");
 				Assert.AreEqual(messages.Length, logger.TaskFinished, "TaskFinished count");
 			}
@@ -727,6 +732,59 @@ namespace MonoTests.Microsoft.Build.BuildEngine {
 					</Target>
 				</Project>", "Sun", "Rain");
 		}
+
+		[Test]
+		public void PropertyGroupInsideTarget_Condition ()
+		{
+			ItemGroupInsideTarget (
+				@"<Project xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"" ToolsVersion=""4.0"">
+					<ItemGroup>
+						<Shells Include=""/bin/sh;/bin/bash;/bin/false"" />
+					</ItemGroup>
+
+					<Target Name='Main'>
+						<PropertyGroup>
+							<HasBash Condition=""'%(Shells.Filename)' == 'bash'"">true</HasBash>
+						</PropertyGroup>
+
+						<ItemGroup Condition=""'$(HasBash)' == 'true'"">
+							<Weather Include='Rain' />
+						</ItemGroup>
+						<Message Text='%(Weather.Identity)' />
+					</Target>
+				</Project>", "Rain");
+		}
+
+		[Test]
+		// Bug #14661
+		public void ItemGroupInsideTarget_Expression_in_Metadata ()
+		{
+			ItemGroupInsideTarget (
+			@"<Project xmlns=""http://schemas.microsoft.com/developer/msbuild/2003"" ToolsVersion=""4.0"">
+				<ItemGroup>
+					<Foo Include='output1'>
+						<Inputs>input1a;input1b</Inputs>
+					</Foo>
+					<Foo Include='output2'>
+						<Inputs>input2a;input2b</Inputs>
+					</Foo>
+				</ItemGroup>
+
+				<Target Name='Main' DependsOnTargets='_PrepareItems' Inputs='@(_Foo)' Outputs='%(Result)'>
+					<Message Text='COMPILE: @(_Foo) - %(_Foo.Result)' />
+				</Target>
+
+				<Target Name='_PrepareItems'>
+					<ItemGroup>
+						<_Foo Include='%(Foo.Inputs)'>
+							<Result>%(Foo.Identity)</Result>
+						</_Foo>
+					</ItemGroup>
+				</Target>
+			</Project>",
+			3, "COMPILE: input1a;input1b - output1", "COMPILE: input2a;input2b - output2");
+		}
+
 		#endif
 
 		[Test]
@@ -904,6 +962,27 @@ namespace MonoTests.Microsoft.Build.BuildEngine {
 			Assert.AreEqual (2, logger.WarningsCount, "Expected warnings not raised");
 		}
 #endif
+
+		[Test]
+		public void TestTargetReturns ()
+		{
+			engine = new Engine (Consts.BinPath);
+			project = engine.CreateNewProject ();
+			project.Load (Path.Combine ("Test", "resources", "TestReturns.csproj"));
+
+			var logger = new TestMessageLogger ();
+			engine.RegisterLogger (logger);
+
+			bool result = project.Build ("Main");
+			if (!result) {
+				logger.DumpMessages ();
+				Assert.Fail ("Build failed");
+			}
+
+			logger.CheckLoggedMessageHead ("Result: Bar", "A1");
+
+			Assert.AreEqual (0, logger.NormalMessageCount, "Unexpected extra messages found");
+		}
 
 	}
 }

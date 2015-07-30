@@ -1,5 +1,6 @@
+#if NET_4_5
 //
-// BuildTaskPropertyGroup.cs
+// InterfaceImplementedInVersionAttribute.cs
 //
 // Author:
 //       Martin Baulig <martin.baulig@xamarin.com>
@@ -23,36 +24,48 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
-
 using System;
-using System.Collections.Generic;
-using System.Xml;
+using System.Runtime.CompilerServices;
 
-namespace Microsoft.Build.BuildEngine {
+namespace System.Runtime.InteropServices.WindowsRuntime
+{
+	[AttributeUsageAttribute(AttributeTargets.Class|AttributeTargets.Interface, AllowMultiple = false, Inherited = false)]
+	public sealed class InterfaceImplementedInVersionAttribute : Attribute
+	{
+		public InterfaceImplementedInVersionAttribute (Type interfaceType, byte majorVersion, byte minorVersion,
+			byte buildVersion, byte revisionVersion)
+		{
+			InterfaceType = interfaceType;
+			MajorVersion = majorVersion;
+			MinorVersion = minorVersion;
+			BuildVersion = buildVersion;
+			RevisionVersion = revisionVersion;
+		}
+
+		public byte BuildVersion {
+			get;
+			private set;
+		}
+
+		public Type InterfaceType {
+			get;
+			private set;
+		}
+
+		public byte MajorVersion {
+			get;
+			private set;
+		}
+
+		public byte MinorVersion {
+			get;
+			private set;
+		}
 	
-	internal class BuildTaskPropertyGroup : BuildPropertyGroup, IBuildTask {
-		
-		public bool ContinueOnError {
-			get; set;
+		public byte RevisionVersion {
+			get;
+			private set;
 		}
-		
-		internal BuildTaskPropertyGroup (XmlElement element, Target target)
-			: base (element, target.Project, null, false, true)
-		{
-		}
-		
-		public bool Execute ()
-		{
-			Evaluate ();
-			return true;
-		}
-
-		IEnumerable<string> IBuildTask.GetAttributes ()
-		{
-			return GetAttributes ();
-		}
-		
 	}
 }
-
+#endif
