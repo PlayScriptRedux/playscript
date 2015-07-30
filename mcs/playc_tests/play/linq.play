@@ -1,0 +1,19 @@
+// Compiler options: -r:./play/Assert.dll
+package
+{
+	import com.adobe.test.Assert;
+	import system.linq;
+
+		public static function Main():int
+		{
+			Assert.errcount = 0;
+			myArray = new Array("value1","value2","value3");
+			myLinq = from l in myArray where l.EndsWith("2") select l;
+			for (var item in myLinq)
+			{
+				trace(item);
+			}		 
+			return Assert.errcount;
+		}
+	}
+}

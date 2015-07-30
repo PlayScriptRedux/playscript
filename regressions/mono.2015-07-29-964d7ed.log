@@ -1,0 +1,85 @@
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:gtest-464-lib.dll gtest-464-lib.il
+Assembling 'gtest-464-lib.il' , no listing file, to dll --> 'gtest-464-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:gtest-583-lib.dll gtest-583-lib.il
+Assembling 'gtest-583-lib.il' , no listing file, to dll --> 'gtest-583-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:gtest-exmethod-45-lib.dll gtest-exmethod-45-lib.il
+Assembling 'gtest-exmethod-45-lib.il' , no listing file, to dll --> 'gtest-exmethod-45-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-377-lib.dll test-377-lib.il
+Assembling 'test-377-lib.il' , no listing file, to dll --> 'test-377-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-483-lib.dll test-483-lib.il
+Assembling 'test-483-lib.il' , no listing file, to dll --> 'test-483-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-531-lib.dll test-531-lib.il
+Assembling 'test-531-lib.il' , no listing file, to dll --> 'test-531-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-661-lib.dll test-661-lib.il
+Assembling 'test-661-lib.il' , no listing file, to dll --> 'test-661-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-759-lib.dll test-759-lib.il
+Assembling 'test-759-lib.il' , no listing file, to dll --> 'test-759-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-760-lib.dll test-760-lib.il
+Assembling 'test-760-lib.il' , no listing file, to dll --> 'test-760-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-792-lib.dll test-792-lib.il
+Assembling 'test-792-lib.il' , no listing file, to dll --> 'test-792-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-805-lib.dll test-805-lib.il
+Assembling 'test-805-lib.il' , no listing file, to dll --> 'test-805-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-810-lib.dll test-810-lib.il
+Assembling 'test-810-lib.il' , no listing file, to dll --> 'test-810-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-823-lib.dll test-823-lib.il
+Assembling 'test-823-lib.il' , no listing file, to dll --> 'test-823-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-846-lib.dll test-846-lib.il
+Assembling 'test-846-lib.il' , no listing file, to dll --> 'test-846-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-851-lib.dll test-851-lib.il
+Assembling 'test-851-lib.il' , no listing file, to dll --> 'test-851-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-858-lib.dll test-858-lib.il
+Assembling 'test-858-lib.il' , no listing file, to dll --> 'test-858-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-com-02-lib.dll test-com-02-lib.il
+Assembling 'test-com-02-lib.il' , no listing file, to dll --> 'test-com-02-lib.dll'
+
+Operation completed successfully
+MONO_PATH="./../class/lib/net_4_5:$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper  ./../class/lib/net_4_5/ilasm.exe /dll /out:test-com-03-lib.dll test-com-03-lib.il
+Assembling 'test-com-03-lib.il' , no listing file, to dll --> 'test-com-03-lib.dll'
+
+Operation completed successfully
+MCS     [net_4_5] setup
+MCS     [net_4_5] setup
+cd ../class/Mono.CSharp && /Applications/Xcode.app/Contents/Developer/usr/bin/make NO_DIR_CHECK=yes
+/Applications/Xcode.app/Contents/Developer/usr/bin/make all-local
+make[2]: Nothing to be done for `all-local'.
+MONO_RUNTIME='/Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper' MONO_PATH="./../class/lib/net_4_5::$MONO_PATH" /Users/administrator/code/playscript/playscriptredux/playscript/runtime/mono-wrapper --debug  --verify-all ./../class/lib/net_4_5/compiler-tester.exe -mode:pos -files:'v4' -compiler:./../class/lib/build/mcs.exe -issues:known-issues-net_4_5 -log:net_4_5.log -il:ver-il-net_4_5.xml -compiler-options:"-d:NET_4_0;NET_4_5" 
+Loading ./../class/lib/build/mcs.exe ...
+Loading verification data from `ver-il-net_4_5.xml' ...
+gtest-230.cs...	KNOWN ISSUE (Compilation error)
+Done
+
+2236 test cases passed (99.96%)
+1 known issue(s)

@@ -19,10 +19,10 @@ rm libgc/aclocal.m4
 
 # Fix for newest versions of clang compiling older monos
 if [ -f configure.in ]; then
-	sed -i 'bak' 's|-stack_size,0x800000||g' configure.in
+	sed -i '.bak' 's|-stack_size,0x800000||g' configure.in
 fi
 if [ -f configure.ac ]; then
-	sed -i 'bak' 's|-stack_size,0x800000||g' configure.ac
+	sed -i '.bak' 's|-stack_size,0x800000||g' configure.ac
 fi
 
 
