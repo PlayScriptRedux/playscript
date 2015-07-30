@@ -1,5 +1,6 @@
+#if NET_4_5
 //
-// BuildTaskPropertyGroup.cs
+// DesignerNamespaceResolveEventArgs.cs
 //
 // Author:
 //       Martin Baulig <martin.baulig@xamarin.com>
@@ -23,36 +24,30 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
-
 using System;
-using System.Collections.Generic;
-using System.Xml;
+using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
 
-namespace Microsoft.Build.BuildEngine {
-	
-	internal class BuildTaskPropertyGroup : BuildPropertyGroup, IBuildTask {
-		
-		public bool ContinueOnError {
-			get; set;
-		}
-		
-		internal BuildTaskPropertyGroup (XmlElement element, Target target)
-			: base (element, target.Project, null, false, true)
+namespace System.Runtime.InteropServices.WindowsRuntime
+{
+	[ComVisibleAttribute(false)]
+	public class DesignerNamespaceResolveEventArgs : EventArgs
+	{
+		public DesignerNamespaceResolveEventArgs (string namespaceName)
 		{
-		}
-		
-		public bool Execute ()
-		{
-			Evaluate ();
-			return true;
+			NamespaceName = namespaceName;
+			ResolvedAssemblyFiles = new Collection<string> ();
 		}
 
-		IEnumerable<string> IBuildTask.GetAttributes ()
-		{
-			return GetAttributes ();
+		public string NamespaceName {
+			get;
+			private set;
 		}
-		
+
+		public Collection<string> ResolvedAssemblyFiles {
+			get;
+			private set;
+		}
 	}
 }
-
+#endif

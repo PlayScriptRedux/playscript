@@ -1,5 +1,6 @@
+#if NET_4_5
 //
-// BuildTaskPropertyGroup.cs
+// WindowsRuntimeMetadata.cs
 //
 // Author:
 //       Martin Baulig <martin.baulig@xamarin.com>
@@ -23,36 +24,30 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
-
 using System;
 using System.Collections.Generic;
-using System.Xml;
+using System.Runtime.CompilerServices;
 
-namespace Microsoft.Build.BuildEngine {
-	
-	internal class BuildTaskPropertyGroup : BuildPropertyGroup, IBuildTask {
-		
-		public bool ContinueOnError {
-			get; set;
-		}
-		
-		internal BuildTaskPropertyGroup (XmlElement element, Target target)
-			: base (element, target.Project, null, false, true)
+namespace System.Runtime.InteropServices.WindowsRuntime
+{
+	[MonoTODO]
+	public static class WindowsRuntimeMetadata
+	{
+		public static IEnumerable<string> ResolveNamespace (string namespaceName, IEnumerable<string> packageGraphFilePaths)
 		{
-		}
-		
-		public bool Execute ()
-		{
-			Evaluate ();
-			return true;
+			throw new NotImplementedException ();
 		}
 
-		IEnumerable<string> IBuildTask.GetAttributes ()
+		public static IEnumerable<string> ResolveNamespace (string namespaceName, string windowsSdkFilePath, IEnumerable<string> packageGraphFilePaths)
 		{
-			return GetAttributes ();
+			throw new NotImplementedException ();
 		}
 		
+#pragma warning disable 0067
+		public static event EventHandler<DesignerNamespaceResolveEventArgs> DesignerNamespaceResolve;
+		public static event EventHandler<NamespaceResolveEventArgs> ReflectionOnlyNamespaceResolve;
+#pragma warning restore 0067
 	}
 }
+#endif
 

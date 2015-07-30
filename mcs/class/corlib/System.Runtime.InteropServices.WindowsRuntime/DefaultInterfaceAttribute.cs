@@ -1,5 +1,6 @@
+#if NET_4_5
 //
-// BuildTaskPropertyGroup.cs
+// DefaultInterfaceAttribute.cs
 //
 // Author:
 //       Martin Baulig <martin.baulig@xamarin.com>
@@ -23,36 +24,23 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
-
 using System;
-using System.Collections.Generic;
-using System.Xml;
+using System.Runtime.CompilerServices;
 
-namespace Microsoft.Build.BuildEngine {
-	
-	internal class BuildTaskPropertyGroup : BuildPropertyGroup, IBuildTask {
-		
-		public bool ContinueOnError {
-			get; set;
-		}
-		
-		internal BuildTaskPropertyGroup (XmlElement element, Target target)
-			: base (element, target.Project, null, false, true)
-		{
-		}
-		
-		public bool Execute ()
-		{
-			Evaluate ();
-			return true;
+namespace System.Runtime.InteropServices.WindowsRuntime
+{
+	[AttributeUsageAttribute(AttributeTargets.Class|AttributeTargets.Interface, AllowMultiple = false, Inherited = false)]
+	public sealed class DefaultInterfaceAttribute : Attribute
+	{
+		public Type DefaultInterface {
+			get;
+			private set;
 		}
 
-		IEnumerable<string> IBuildTask.GetAttributes ()
+		public DefaultInterfaceAttribute (Type defaultInterface)
 		{
-			return GetAttributes ();
+			DefaultInterface = defaultInterface;
 		}
-		
 	}
 }
-
+#endif

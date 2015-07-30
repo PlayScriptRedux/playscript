@@ -1,5 +1,6 @@
+#if NET_4_5
 //
-// BuildTaskPropertyGroup.cs
+// EventRegistrationToken.cs
 //
 // Author:
 //       Martin Baulig <martin.baulig@xamarin.com>
@@ -23,36 +24,36 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
-
 using System;
-using System.Collections.Generic;
-using System.Xml;
+using System.Runtime.CompilerServices;
 
-namespace Microsoft.Build.BuildEngine {
-	
-	internal class BuildTaskPropertyGroup : BuildPropertyGroup, IBuildTask {
-		
-		public bool ContinueOnError {
-			get; set;
-		}
-		
-		internal BuildTaskPropertyGroup (XmlElement element, Target target)
-			: base (element, target.Project, null, false, true)
+namespace System.Runtime.InteropServices.WindowsRuntime
+{
+	public struct EventRegistrationToken
+	{
+#pragma warning disable 0649
+		long value;
+#pragma warning restore 0649
+
+		public static bool operator == (EventRegistrationToken left, EventRegistrationToken right)
 		{
-		}
-		
-		public bool Execute ()
-		{
-			Evaluate ();
-			return true;
+			return left.value == right.value;
 		}
 
-		IEnumerable<string> IBuildTask.GetAttributes ()
+		public static bool operator != (EventRegistrationToken left, EventRegistrationToken right)
 		{
-			return GetAttributes ();
+			return left.value != right.value;
 		}
-		
+
+		public override bool Equals (object obj)
+		{
+			return ((EventRegistrationToken)obj).value == value;
+		}
+
+		public override int GetHashCode ()
+		{
+			return unchecked ((int)value);
+		}
 	}
 }
-
+#endif

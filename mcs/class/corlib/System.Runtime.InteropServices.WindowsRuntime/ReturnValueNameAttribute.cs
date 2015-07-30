@@ -1,5 +1,5 @@
 //
-// BuildTaskPropertyGroup.cs
+// ReturnValueNameAttribute.cs
 //
 // Author:
 //       Martin Baulig <martin.baulig@xamarin.com>
@@ -23,36 +23,22 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
-
 using System;
-using System.Collections.Generic;
-using System.Xml;
+using System.Runtime.CompilerServices;
 
-namespace Microsoft.Build.BuildEngine {
-	
-	internal class BuildTaskPropertyGroup : BuildPropertyGroup, IBuildTask {
-		
-		public bool ContinueOnError {
-			get; set;
-		}
-		
-		internal BuildTaskPropertyGroup (XmlElement element, Target target)
-			: base (element, target.Project, null, false, true)
+namespace System.Runtime.InteropServices.WindowsRuntime
+{
+	[AttributeUsageAttribute(AttributeTargets.Delegate|AttributeTargets.ReturnValue, AllowMultiple = false, Inherited = false)]
+	public sealed class ReturnValueNameAttribute : Attribute
+	{
+		public ReturnValueNameAttribute (string name)
 		{
-		}
-		
-		public bool Execute ()
-		{
-			Evaluate ();
-			return true;
+			Name = name;
 		}
 
-		IEnumerable<string> IBuildTask.GetAttributes ()
-		{
-			return GetAttributes ();
+		public string Name {
+			get;
+			private set;
 		}
-		
 	}
 }
-
