@@ -234,11 +234,16 @@ namespace Telemetry
 
 #if PLATFORM_MONOMAC || PLATFORM_MONOTOUCH || PLATFORM_MONODROID
 			// write gpu info
-			WriteValue(".platform.gpu.vendor", GL.GetString(StringName.Vendor));
-			WriteValue(".platform.gpu.renderer", GL.GetString(StringName.Renderer));
-			WriteValue(".platform.gpu.version", GL.GetString(StringName.Version));
-			WriteValue(".platform.gpu.shadinglanguageversion", GL.GetString(StringName.ShadingLanguageVersion));
-			WriteValue(".platform.gpu.extensions", GL.GetString(StringName.Extensions));
+//			WriteValue(".platform.gpu.vendor", GL.GetString(StringName.Vendor));
+//			WriteValue(".platform.gpu.renderer", GL.GetString(StringName.Renderer));
+//			WriteValue(".platform.gpu.version", GL.GetString(StringName.Version));
+//			WriteValue(".platform.gpu.shadinglanguageversion", GL.GetString(StringName.ShadingLanguageVersion));
+//			WriteValue(".platform.gpu.extensions", GL.GetString(StringName.Extensions));
+			WriteValue(".platform.gpu.vendor", "Dummy");
+			WriteValue(".platform.gpu.renderer", "Dummy");
+			WriteValue(".platform.gpu.version", "Dummy");
+			WriteValue(".platform.gpu.shadinglanguageversion", "Dummy");
+			WriteValue(".platform.gpu.extensions", "Dummy");
 #endif
 
 			// write memory stats
