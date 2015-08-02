@@ -312,7 +312,14 @@ namespace PlayScript
 				temporaryStringBuilder.AppendFormat("{0:0.00}", timeToDisplay);
 				temporaryStringBuilder.Append(' ');
 			}
-			tw.WriteLine(temporaryStringBuilder.ToString());
+			var tmpString = temporaryStringBuilder.ToString ();
+			tw.WriteLine(tmpString);
+			//TODO : Create a 'real' redirect textwriter class so we can:
+	//	consoleTextWriter = Console.Out;
+	//	this.OnWrite += delegate(string text) { consoleTextWriter.Write(text); };
+	//	Console.SetOut(this);
+			Telemetry.Session.WriteTrace(tmpString);
+
 		}
 
 		public static void PrintFullTimes(TextWriter tw)
