@@ -25,8 +25,9 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-using Microsoft.Build.Framework;
 using System;
+using System.Globalization;
+using Microsoft.Build.Framework;
 
 namespace Microsoft.Build.Logging
 {
@@ -62,7 +63,7 @@ namespace Microsoft.Build.Logging
 
 		#region INodeLogger implementation
 
-		public void Initialize (IEventSource eventSource, int nodeCount)
+		public virtual void Initialize (IEventSource eventSource, int nodeCount)
 		{
 			throw new NotImplementedException ();
 		}
@@ -72,11 +73,6 @@ namespace Microsoft.Build.Logging
 		#region ILogger implementation
 
 		public virtual void Initialize (IEventSource eventSource)
-		{
-			throw new NotImplementedException ();
-		}
-		
-		public virtual void Initialize (IEventSource eventSource, int nodeCount)
 		{
 			throw new NotImplementedException ();
 		}
@@ -117,11 +113,14 @@ namespace Microsoft.Build.Logging
 			if (Verbosity == LoggerVerbosity.Quiet || Verbosity == LoggerVerbosity.Minimal)
 				return;
 
-			build_started = e.Timestamp;
 			set_color (ConsoleColor.White);
 			write (e.Message);
 			write ("");
-			write (string.Format ("Time elapsed {0}", e.Timestamp - build_started)); // .NET doesn't care if BuildStarted is actually invoked.
+			write ("");
+			write ("");
+			// .NET doesn't care if BuildStarted is actually invoked.
+			write (string.Format ("Time Elapsed {0}", (e.Timestamp - build_started).ToString ("hh\\:mm\\:ss\\.ff")));
+			write ("");
 			reset_color ();
 		}
 
@@ -132,7 +131,8 @@ namespace Microsoft.Build.Logging
 
 			build_started = e.Timestamp;
 			set_color (ConsoleColor.White);
-			write (string.Format ("Build started {0}", e.Timestamp));
+			write (string.Format ("Build started {0}.", e.Timestamp.ToString ("yyyy/MM/dd HH:mm:ss")));
+			write ("");
 			reset_color ();
 		}
 
@@ -157,7 +157,7 @@ namespace Microsoft.Build.Logging
 					col = columnNumber.ToString ();
 			}
 			string loc = line != null ? line + (col != null ? "," + col : null) : null;
-			return loc;
+			return string.IsNullOrEmpty (loc) ? string.Empty : '(' + loc + ')';
 		}
 		
 		public void ErrorHandler (object sender, BuildErrorEventArgs e)
@@ -167,7 +167,8 @@ namespace Microsoft.Build.Logging
 
 			set_color (ConsoleColor.Red);
 			string loc = GetLocation (e.LineNumber, e.ColumnNumber, e.EndLineNumber, e.EndColumnNumber);
-			write (string.Format ("{0}({1}): {2} error {3}: {4}", e.File, loc, e.Subcategory, e.Code, e.Message));
+			write (string.Format ("{0}{1} : {2} error {3}: {4}", e.File, loc, e.Subcategory, e.Code, e.Message));
+			write ("");
 			reset_color ();
 		}
 		
@@ -193,6 +194,9 @@ namespace Microsoft.Build.Logging
 
 			set_color (ConsoleColor.Cyan);
 			write (e.Message);
+			write ("");
+			write ("");
+			write ("");
 			reset_color ();
 		}
 		
@@ -202,8 +206,12 @@ namespace Microsoft.Build.Logging
 				return;
 
 			set_color (ConsoleColor.Cyan);
-			write ("__________________________________________________" + Environment.NewLine);
-			write (string.Format ("Project \"{0}\" ({1} target(s))" + Environment.NewLine, e.ProjectFile, e.TargetNames));
+			write ("__________________________________________________");
+			write ("");
+			write (string.Format ("Project \"{0}\" ({1} target(s)):", e.ProjectFile, e.TargetNames));
+			write ("");
+			write ("");
+			write ("");
 			reset_color ();
 		}
 		
@@ -214,6 +222,9 @@ namespace Microsoft.Build.Logging
 
 			set_color (ConsoleColor.Cyan);
 			write (e.Message);
+			write ("");
+			write ("");
+			write ("");
 			reset_color ();
 		}
 
@@ -224,10 +235,11 @@ namespace Microsoft.Build.Logging
 
 			string message = Verbosity == LoggerVerbosity.Detailed ?
 				string.Format ("Target \"{0}\":", e.TargetName) :
-				string.Format ("Target \"{0}\" in file {1}:", e.TargetName, e.TargetFile);
+				string.Format ("Target \"{0}\" in file \"{1}\":", e.TargetName, e.TargetFile);
 
 			set_color (ConsoleColor.Cyan);
 			write (message);
+			write ("");
 			reset_color ();
 		}
 		
@@ -237,7 +249,8 @@ namespace Microsoft.Build.Logging
 				return;
 
 			set_color (ConsoleColor.Cyan);
-			write (e.Message);
+			write ("  " + e.Message);
+			write ("");
 			reset_color ();
 		}
 
@@ -247,7 +260,8 @@ namespace Microsoft.Build.Logging
 				return;
 
 			set_color (ConsoleColor.Cyan);
-			write (e.Message);
+			write ("  " + e.Message);
+			write ("");
 			reset_color ();
 		}
 		
@@ -258,7 +272,8 @@ namespace Microsoft.Build.Logging
 
 			set_color (ConsoleColor.Yellow);
 			string loc = GetLocation (e.LineNumber, e.ColumnNumber, e.EndLineNumber, e.EndColumnNumber);
-			write (string.Format ("{0}({1}): {2} error {3}: {4}", e.File, loc, e.Subcategory, e.Code, e.Message));
+			write (string.Format ("{0}{1} : {2} warning {3}: {4}", e.File, loc, e.Subcategory, e.Code, e.Message));
+			write ("");
 			reset_color ();
 		}
 	}

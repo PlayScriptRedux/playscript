@@ -1,11 +1,10 @@
 //
-// BuildFinishedEventArgs.cs: Provides data for the Microsoft.Build.Framework.
-// IEventSource.BuildFinished event.
+// LazyFormattedBuildEventArgs.cs
 //
 // Author:
-//   Marek Sieradzki (marek.sieradzki@gmail.com)
-//
-// (C) 2005 Marek Sieradzki
+//   Atsushi Enomoto <atsushi@xamarin.com>
+// 
+// (C) 2013 Xamarin Inc.
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -26,52 +25,31 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#if NET_2_0
-
 using System;
+using System.Threading;
 
-namespace Microsoft.Build.Framework {
-	[Serializable]
-	public class BuildFinishedEventArgs : BuildStatusEventArgs {
-	
-		bool succeeded;
+namespace Microsoft.Build.Framework
+{
+	[Serializable]		
+	public abstract class LazyFormattedBuildEventArgs : BuildEventArgs
+	{
 		
-		protected BuildFinishedEventArgs ()
+		protected LazyFormattedBuildEventArgs ()
+			: this (null, null, null)
 		{
 		}
 
-		public BuildFinishedEventArgs (string message,
-						  string helpKeyword,
-						  bool succeeded)
-			: this (message, helpKeyword, succeeded, DateTime.Now)
+		protected LazyFormattedBuildEventArgs (string message, string helpKeyword,
+					  string senderName)
+			: this (message, helpKeyword, senderName, DateTime.Now)
 		{
 		}
 
-		public BuildFinishedEventArgs (string message,
-						  string helpKeyword,
-						  bool succeeded,
-						  DateTime eventTimestamp)
-			: base (message, helpKeyword, null, eventTimestamp)
+		protected LazyFormattedBuildEventArgs (string message, string helpKeyword,
+					  string senderName, DateTime eventTimestamp,
+					  params object [] messageArgs)
+			: base (string.Format (message, messageArgs), helpKeyword, senderName, eventTimestamp)
 		{
-			this.succeeded = succeeded;
-		}
-
-		public BuildFinishedEventArgs (string message,
-						  string helpKeyword,
-						  bool succeeded,
-						  DateTime eventTimestamp,
-						  params object [] messageArgs)
-			: base (message, helpKeyword, null, eventTimestamp, messageArgs)
-		{
-			this.succeeded = succeeded;
-		}
-
-		public bool Succeeded {
-			get {
-				return succeeded;
-			}
 		}
 	}
 }
-
-#endif
