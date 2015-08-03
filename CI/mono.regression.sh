@@ -6,7 +6,7 @@ ROOT=${PWD}
 mkdir mcs/class/lib/net_2_0
 cp -n mcs/class/lib/net_4_5/Mono.Cecil.* mcs/class/lib/net_2_0
 
-pushd mcs/tests
+cd mcs/tests
 make clean
 make run-test-local 2>&1 | tee -a ${ROOT}/regressions/mono.`git log -n 1 --date=short --pretty=format:"%cd-%h"`.log
 

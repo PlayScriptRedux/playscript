@@ -1,6 +1,8 @@
 #!/bin/bash
 set -ev
 
-brew update
-brew install autoconf automake libtool pkg-config
-
+if [ -z ${TRAVIS+x} ]
+then
+  brew update
+  brew install autoconf automake libtool pkg-config
+fi
