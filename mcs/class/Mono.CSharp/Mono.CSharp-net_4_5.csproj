@@ -154,4 +154,21 @@
   <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\corlib\corlib-net_4_5.csproj">
+      <Project>{07C1F58B-9E99-47F8-A847-79EDA5157DA8}</Project>
+      <Name>corlib-net_4_5</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Xml">
+      <HintPath>..\lib\net_4_5\System.Xml.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.CSharp">
+      <HintPath>..\lib\net_4_5\Microsoft.CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="System">
+      <HintPath>..\lib\net_4_5\System.dll</HintPath>
+    </Reference>
+  </ItemGroup>
 </Project>
