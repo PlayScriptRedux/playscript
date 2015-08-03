@@ -2480,8 +2480,6 @@ thread_interrupt (DebuggerTlsData *tls, MonoThreadInfo *info, void *sigctx, Mono
 				/* Already terminated */
 				return TRUE;
 
-			tls->context.valid = FALSE;
-
 			/*
 			 * We are in a difficult position: we want to be able to provide stack
 			 * traces for this thread, but we can't use the current ctx+lmf, since
@@ -2515,9 +2513,9 @@ thread_interrupt (DebuggerTlsData *tls, MonoThreadInfo *info, void *sigctx, Mono
 				tls->async_state.unwind_data [MONO_UNWIND_DATA_LMF] = data.lmf;
 				tls->async_state.unwind_data [MONO_UNWIND_DATA_JIT_TLS] = tls->thread->jit_data;
 			} else {
-				/* No managed frames */
 				tls->async_state.valid = FALSE;
 			}
+
 			mono_memory_barrier ();
 
 			tls->suspended = TRUE;
@@ -4428,7 +4426,7 @@ clear_breakpoints_for_domain (MonoDomain *domain)
 /*
  * ss_update:
  *
- * Return FALSE if single stepping needs to continue because we are at the same line.
+ * Return FALSE if single stepping needs to continue.
  */
 static gboolean
 ss_update (SingleStepReq *req, MonoJitInfo *ji, SeqPoint *sp)
@@ -4437,6 +4435,14 @@ ss_update (SingleStepReq *req, MonoJitInfo *ji, SeqPoint *sp)
 	MonoDebugSourceLocation *loc = NULL;
 	gboolean hit = TRUE;
 	MonoMethod *method;
+
+	if (req->depth == STEP_DEPTH_OVER && (sp->flags & MONO_SEQ_POINT_FLAG_NONEMPTY_STACK)) {
+		/*
+		 * These seq points are inserted by the JIT after calls, step over needs to skip them.
+		 */
+		DEBUG (1, fprintf (log_file, "[%p] Seq point at nonempty stack %x while stepping over, continuing single stepping.\n", (gpointer)GetCurrentThreadId (), sp->il_offset));
+		return FALSE;
+	}
 
 	if (req->size != STEP_SIZE_LINE)
 		return TRUE;
