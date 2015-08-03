@@ -181,7 +181,7 @@ namespace Mono.CSharp
 			}
 
 			TypeSpec expr_type = e.Type;
-
+			
 			switch (Oper){
 			case Operator.UnaryPlus:
 				// Unary numeric promotions
@@ -502,8 +502,7 @@ namespace Mono.CSharp
 				if (ec.FileType == SourceFileType.PlayScript && Oper == Operator.LogicalNot) {
 					// PlayScript: Call the "Boolean()" static method to convert a dynamic to a bool.  EXPENSIVE, but hey..
 					Arguments args = new Arguments (1);
-					args.Add (new Argument(EmptyCast.RemoveDynamic(ec, Expr)));
-//					ec.Report.Warning (7164, 1, loc, "Expensive reference conversion to bool");
+					args.Add (new Argument(EmptyCast.RemoveDynamic(ec, Expr)));					ec.Report.Warning (7164, 1, loc, "Expensive reference conversion to bool");
 					Expr = new Invocation(new MemberAccess(new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, loc), "Boolean_fn", loc), "Boolean", loc), args).Resolve (ec);
 				} else {
 					Arguments args = new Arguments (1);
@@ -868,12 +867,6 @@ namespace Mono.CSharp
 
 			return ret;
 		}
-
-//		public override bool IsSideEffectFree {
-//			get {
-//				return Expr.IsSideEffectFree;
-//			}
-//		}
 
 	}
 
@@ -1489,9 +1482,9 @@ namespace Mono.CSharp
 					}
 					as_probe_type_expr = null;
 				} else if (as_probe_type_expr.Type.BuiltinType != BuiltinTypeSpec.Type.Type && 
-				           as_probe_type_expr.Type.BuiltinType != BuiltinTypeSpec.Type.Dynamic) {
+					as_probe_type_expr.Type.BuiltinType != BuiltinTypeSpec.Type.Dynamic) {
 					ec.Report.Error (7345, loc, "The `{0}' operator cannot be applied to an expression which is not a Class type",
-					                 OperatorName);
+						OperatorName);
 				}
 			} else {
 				probe_type_expr = ProbeType.ResolveAsType (ec);
@@ -1508,7 +1501,7 @@ namespace Mono.CSharp
 					ec.Report.Error (-244, loc, "The `{0}' operator cannot be applied to an operand of a static type",
 						OperatorName);
 				}
-				
+
 				if (expr.Type.IsPointer || probe_type_expr.IsPointer) {
 					ec.Report.Error (244, loc, "The `{0}' operator cannot be applied to an operand of pointer type",
 						OperatorName);
@@ -1852,7 +1845,7 @@ namespace Mono.CSharp
 					arguments.Add (new Argument (new TypeOf (new TypeExpression (ec.BuiltinTypes.String, expr.Location), expr.Location)));
 					return new Invocation (new MemberAccess (new MemberAccess (new SimpleName ("PlayScript", loc), "Support", loc), "DynamicAs", loc), arguments).Resolve (ec);
 				}
-
+			
 				Expression e = Convert.ImplicitConversionStandard (ec, expr, type, loc);
 				if (e != null) {
 					e = EmptyCast.Create (e, type, ec);
@@ -2624,7 +2617,7 @@ namespace Mono.CSharp
 			SubtractionMask	= 1 << 13,
 			RelationalMask	= 1 << 14,
 			AsE4xMask		= 1 << 15,
-			
+
 			DecomposedMask	= 1 << 19,
 			NullableMask	= 1 << 20,
 		}
@@ -2961,16 +2954,14 @@ namespace Mono.CSharp
 				else
 					opcode = OpCodes.Shr;
 				break;
-				
 			case Operator.AsURightShift:
 				if (!(right is IntConstant)) {
 					ec.EmitInt (GetShiftMask (l));
 					ec.Emit (OpCodes.And);
 				}
-			
 				opcode = OpCodes.Shr_Un;
 				break;
-
+				
 			case Operator.LeftShift:
 				if (!(right is IntConstant)) {
 					ec.EmitInt (GetShiftMask (l));
@@ -3154,7 +3145,7 @@ namespace Mono.CSharp
 					}
 				}
 			}
-
+			
 			//
 			// Equality operators are more complicated
 			//
@@ -3317,7 +3308,6 @@ namespace Mono.CSharp
 			};
 
 		}
-		
 		public static PredefinedOperator[] CreateAsStandardOperatorsTable (BuiltinTypes types)
 		{
 			TypeSpec bool_type = types.Bool;
@@ -3361,7 +3351,6 @@ namespace Mono.CSharp
 			};
 
 		}
-		
 		public static PredefinedOperator[] CreateStandardLiftedOperatorsTable (ModuleContainer module)
 		{
 			var nullable = module.PredefinedTypes.Nullable.TypeSpec;
@@ -3502,9 +3491,9 @@ namespace Mono.CSharp
 			Expression expr;
 
 			if (isPlayScript && (lb == BuiltinTypeSpec.Type.Bool || rb == BuiltinTypeSpec.Type.Bool) &&
-			    (Oper == Operator.LogicalAnd || Oper == Operator.LogicalOr || 
-			     Oper == Operator.Equality || Oper == Operator.Inequality || 
-			     Oper == Operator.AsStrictEquality || Oper == Operator.AsStrictInequality)) {
+				(Oper == Operator.LogicalAnd || Oper == Operator.LogicalOr || 
+					Oper == Operator.Equality || Oper == Operator.Inequality || 
+					Oper == Operator.AsStrictEquality || Oper == Operator.AsStrictInequality)) {
 				// PlayScript - Convert left/right operands to bool if logical op
 				type = rc.BuiltinTypes.Bool;
 			} else if (lb == BuiltinTypeSpec.Type.Decimal || rb == BuiltinTypeSpec.Type.Decimal) {
@@ -3541,7 +3530,7 @@ namespace Mono.CSharp
 					expr = ConvertSignedConstant (rc, right, type);
 					if (expr == null)
 						type = rc.BuiltinTypes.Long;
-					}
+				}
 			} else {
 				type = rc.BuiltinTypes.Int;
 			}
@@ -3600,7 +3589,7 @@ namespace Mono.CSharp
 				return null;
 
 			return c.ConvertImplicitly (type, rc);
-			}
+		}
 
 		static Expression PromoteExpression (ResolveContext rc, Expression expr, TypeSpec type)
 		{
@@ -3610,7 +3599,7 @@ namespace Mono.CSharp
 			}
 
 			var c = expr as Constant;
-				if (c != null)
+			if (c != null)
 				return c.ConvertImplicitly (type, rc);
 
 			return Convert.ImplicitNumericConversion (expr, type, rc);
@@ -3660,7 +3649,7 @@ namespace Mono.CSharp
 
 			// Handle || operator applied to reference types in PlayScript..
 			if (ec.FileType == SourceFileType.PlayScript && oper == Operator.LogicalOr &&
-			    (left.Type.IsClass || left.Type.IsInterface)) {
+				(left.Type.IsClass || left.Type.IsInterface)) {
 				if (typeHint != ec.BuiltinTypes.Bool) {
 					return new Nullable.NullCoalescingOperator (left, right).Resolve (ec);
 				}
@@ -3735,7 +3724,7 @@ namespace Mono.CSharp
 					}
 
 					if ((typeHint != ec.BuiltinTypes.Bool) && (oper == Operator.LogicalOr || oper == Operator.LogicalAnd) && 
-					    (left.Type.BuiltinType != BuiltinTypeSpec.Type.Bool || right.Type.BuiltinType != Mono.CSharp.BuiltinTypeSpec.Type.Bool)) {
+						(left.Type.BuiltinType != BuiltinTypeSpec.Type.Bool || right.Type.BuiltinType != Mono.CSharp.BuiltinTypeSpec.Type.Bool)) {
 						Expression leftExpr = left;
 						Expression rightExpr = right;
 						if (left.Type != right.Type) {
@@ -3746,7 +3735,7 @@ namespace Mono.CSharp
 							return new Conditional (new Cast(new TypeExpression(ec.BuiltinTypes.Bool, loc), left, loc), leftExpr, rightExpr, loc).Resolve (ec);
 						} else {
 							return new Conditional (new Unary(Unary.Operator.LogicalNot, 
-							       new Cast(new TypeExpression(ec.BuiltinTypes.Bool, loc), left, loc), loc), leftExpr, rightExpr, loc).Resolve (ec);
+								new Cast(new TypeExpression(ec.BuiltinTypes.Bool, loc), left, loc), loc), leftExpr, rightExpr, loc).Resolve (ec);
 						}
 					} else if (oper == Operator.AsStrictEquality || oper == Operator.AsStrictInequality) {
 						// The rules for strict equality are somewhat complicated, so we let the
@@ -3756,7 +3745,7 @@ namespace Mono.CSharp
 						args.Add (new Argument (right));
 						return new DynamicBinaryExpression (oper, this.GetOperatorExpressionTypeName (), args, loc).Resolve (ec);
 					} else if (left.Type == ec.Module.PredefinedTypes.AsUndefined.Resolve () ||
-					           right.Type == ec.Module.PredefinedTypes.AsUndefined.Resolve ()) {
+						right.Type == ec.Module.PredefinedTypes.AsUndefined.Resolve ()) {
 						// The undefined keyword has special behavior, so we let the dynamic
 						// runtime handle it.
 						var args = new Arguments(2);
@@ -3841,7 +3830,27 @@ namespace Mono.CSharp
 				CheckOutOfRangeComparison (ec, rc, left.Type);
 			}
 
-			if (left.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic || right.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
+			if (left.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic || right.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic)
+				return DoResolveDynamic (ec);
+
+			//
+			// We provide a mechanism to use single precision floats instead of
+			// doubles for the PlayScript Number type via the [NumberIsFloat]
+			// attribute. By casting doubles to floats here, we allow the constant
+			// folding to do its thing and remove any unnecessary coversions.
+			//
+			if (ec.PsNumberIsFloat) {
+				if (left.Type != null && left.Type.BuiltinType == BuiltinTypeSpec.Type.Double)
+					left = new Cast (new TypeExpression (ec.BuiltinTypes.Float, left.Location), left, left.Location).Resolve (ec);
+				if (right.Type != null && right.Type.BuiltinType == BuiltinTypeSpec.Type.Double)
+					right = new Cast (new TypeExpression (ec.BuiltinTypes.Float, right.Location), right, right.Location).Resolve (ec);
+			}
+
+				return DoResolveCore (ec, left, right);
+			}
+
+			Expression DoResolveDynamic (ResolveContext ec)
+			{
 				var lt = left.Type;
 				var rt = right.Type;
 				if (lt.Kind == MemberKind.Void || lt == InternalType.MethodGroup || lt == InternalType.AnonymousMethod ||
@@ -3920,26 +3929,10 @@ namespace Mono.CSharp
 					return new Conditional (expr, cond_left, cond_right, loc).Resolve (ec);
 				}
 
-				args = new Arguments(2);
-				args.Add(new Argument(left));
-				args.Add(new Argument(right));
-				return new DynamicBinaryExpression (this.oper, this.GetOperatorExpressionTypeName(), args, loc).Resolve(ec);
-			}
-
-			//
-			// We provide a mechanism to use single precision floats instead of
-			// doubles for the PlayScript Number type via the [NumberIsFloat]
-			// attribute. By casting doubles to floats here, we allow the constant
-			// folding to do its thing and remove any unnecessary coversions.
-			//
-			if (ec.PsNumberIsFloat) {
-				if (left.Type != null && left.Type.BuiltinType == BuiltinTypeSpec.Type.Double)
-					left = new Cast (new TypeExpression (ec.BuiltinTypes.Float, left.Location), left, left.Location).Resolve (ec);
-				if (right.Type != null && right.Type.BuiltinType == BuiltinTypeSpec.Type.Double)
-					right = new Cast (new TypeExpression (ec.BuiltinTypes.Float, right.Location), right, right.Location).Resolve (ec);
-			}
-
-			return DoResolveCore (ec, left, right);
+			args = new Arguments(2);
+			args.Add(new Argument(left));
+			args.Add(new Argument(right));
+			return new DynamicBinaryExpression (this.oper, this.GetOperatorExpressionTypeName(), args, loc).Resolve(ec);
 		}
 
 		Expression DoResolveCore (ResolveContext ec, Expression left_orig, Expression right_orig)
@@ -4117,7 +4110,7 @@ namespace Mono.CSharp
 					return this;
 				}
 			}
-			
+
 			//
 			// Now try lifted version of predefined operator
 			//
@@ -4128,7 +4121,7 @@ namespace Mono.CSharp
 
 					expr = Convert.ImplicitConversion (rc, left, lifted_type, loc);
 					if (expr != null) {
-					left = expr;
+						left = expr;
 						right = Convert.ImplicitConversion (rc, right, lifted_type, loc);
 					}
 
@@ -4140,14 +4133,14 @@ namespace Mono.CSharp
 							return Nullable.LiftedNull.CreateFromExpression (rc, this);
 
 						return CreateLiftedValueTypeResult (rc, rtype);
-				}
+					}
 
 					if (expr != null) {
 						var lifted = new Nullable.LiftedBinaryOperator (this);
 						lifted.Left = expr;
 						lifted.Right = right;
 						return lifted.Resolve (rc);
-				}
+					}
 				} else if (lenum && !rtype.IsNullableType) {
 					var lifted_type = nullable_type.MakeGenericType (rc.Module, new[] { ltype });
 
@@ -4155,7 +4148,7 @@ namespace Mono.CSharp
 					if (expr != null) {
 						right = expr;
 						left = Convert.ImplicitConversion (rc, left, lifted_type, loc);
-						}
+					}
 
 					if ((oper & Operator.BitwiseMask) != 0)
 						type = lifted_type;
@@ -4172,7 +4165,7 @@ namespace Mono.CSharp
 						lifted.Left = left;
 						lifted.Right = expr;
 						return lifted.Resolve (rc);
-				}
+					}
 				} else if (rtype.IsNullableType && Nullable.NullableInfo.GetUnderlyingType (rtype).IsEnum) {
 					if (left.IsNull) {
 						if (rc.HasSet (ResolveContext.Options.ExpressionTreeConversion))
@@ -4211,7 +4204,7 @@ namespace Mono.CSharp
 
 						// Equality operators are valid between E? and null
 						expr = right;
-				} else {
+					} else {
 						expr = Convert.ImplicitConversion (rc, right, Nullable.NullableInfo.GetUnderlyingType (ltype), loc);
 						if (expr == null)
 							return null;
@@ -4223,11 +4216,11 @@ namespace Mono.CSharp
 						lifted.Right = expr;
 						return lifted.Resolve (rc);
 					}
-					}
 				}
-
-				return null;
 			}
+
+			return null;
+		}
 
 		static Expression ConvertEnumOperandToUnderlyingType (ResolveContext rc, Expression expr)
 		{
@@ -4260,7 +4253,7 @@ namespace Mono.CSharp
 				return expr;
 
 			return EmptyCast.Create (expr, underlying_type, rc);
-			}
+		}
 
 		Expression ResolveEnumOperators (ResolveContext rc, bool lenum, bool renum, TypeSpec ltype, TypeSpec rtype)
 		{
@@ -4296,7 +4289,7 @@ namespace Mono.CSharp
 					AddEnumResultCast (expr.Type);
 
 					return expr;
-			}
+				}
 
 				enum_type = rc.Module.PredefinedTypes.Nullable.TypeSpec.MakeGenericType (rc.Module, new[] { enum_type });
 			}
@@ -4311,7 +4304,7 @@ namespace Mono.CSharp
 				AddEnumResultCast (expr.Type);
 			}
 
-				return expr;
+			return expr;
 		}
 
 		static Expression ConvertEnumAdditionalResult (Expression expr, TypeSpec enumType, ResolveContext rc)
@@ -4329,10 +4322,10 @@ namespace Mono.CSharp
 			if (left.Type == right.Type) {
 				var c = right as EnumConstant;
 				if (c != null && c.IsZeroInteger) {
-			//
+					//
 					// LAMESPEC: This is quite unexpected for expression E - 0 the return type is
 					// E which is not what expressions E - 1 or 0 - E return
-			//
+					//
 					result_type = left.Type;
 				} else {
 					result_type = left.Type.IsNullableType ?
@@ -4378,7 +4371,7 @@ namespace Mono.CSharp
 		}
 
 		//
-		// Equality operators rules (<-- heh looks like "Equality operators RULE!")
+		// Equality operators rules
 		//
 		Expression ResolveEquality (ResolveContext ec, TypeSpec l, TypeSpec r, bool primitives_only)
 		{
@@ -4400,9 +4393,9 @@ namespace Mono.CSharp
 				var tparam_l = l as TypeParameterSpec;
 				var tparam_r = r as TypeParameterSpec;
 				if (tparam_l != null) {
-						if (right is NullLiteral) {
-							if (tparam_l.GetEffectiveBase ().BuiltinType == BuiltinTypeSpec.Type.ValueType)
-								return null;
+					if (right is NullLiteral) {
+						if (tparam_l.GetEffectiveBase ().BuiltinType == BuiltinTypeSpec.Type.ValueType)
+							return null;
 
 						left = new BoxedCast (left, ec.BuiltinTypes.Object);
 						return this;
@@ -4414,17 +4407,17 @@ namespace Mono.CSharp
 					l = tparam_l.GetEffectiveBase ();
 					left = new BoxedCast (left, l);
 				} else if (left is NullLiteral && tparam_r == null) {
-						if (TypeSpec.IsReferenceType (r))
-							return this;
+					if (TypeSpec.IsReferenceType (r))
+						return this;
 
-						if (r.Kind == MemberKind.InternalCompilerType)
+					if (r.Kind == MemberKind.InternalCompilerType)
 						return null;
 				}
 
 				if (tparam_r != null) {
-						if (left is NullLiteral) {
-							if (tparam_r.GetEffectiveBase ().BuiltinType == BuiltinTypeSpec.Type.ValueType)
-								return null;
+					if (left is NullLiteral) {
+						if (tparam_r.GetEffectiveBase ().BuiltinType == BuiltinTypeSpec.Type.ValueType)
+							return null;
 
 						right = new BoxedCast (right, ec.BuiltinTypes.Object);
 						return this;
@@ -4436,10 +4429,10 @@ namespace Mono.CSharp
 					r = tparam_r.GetEffectiveBase ();
 					right = new BoxedCast (right, r);
 				} else if (right is NullLiteral) {
-						if (TypeSpec.IsReferenceType (l))
-							return this;
+					if (TypeSpec.IsReferenceType (l))
+						return this;
 
-						if (l.Kind == MemberKind.InternalCompilerType)
+					if (l.Kind == MemberKind.InternalCompilerType)
 						return null;
 				}
 
@@ -4501,7 +4494,6 @@ namespace Mono.CSharp
 						return result;
 				}
 
-	
 				//
 				// The == and != operators permit one operand to be a value of a nullable
 				// type and the other to be the null literal, even if no predefined or user-defined
@@ -4540,28 +4532,26 @@ namespace Mono.CSharp
 				ret = null;
 
 			if (ret != null) {
-			  if (l.BuiltinType == BuiltinTypeSpec.Type.String || l.BuiltinType == BuiltinTypeSpec.Type.Delegate || MemberCache.GetUserOperator (l, CSharp.Operator.OpType.Equality, false) != null)
-				ec.Report.Warning (253, 2, loc,
-					"Possible unintended reference comparison. Consider casting the right side expression to type `{0}' to get value comparison",
-					l.GetSignatureForError ());
+				if (l.BuiltinType == BuiltinTypeSpec.Type.String || l.BuiltinType == BuiltinTypeSpec.Type.Delegate || MemberCache.GetUserOperator (l, CSharp.Operator.OpType.Equality, false) != null)
+					ec.Report.Warning (253, 2, loc,
+						"Possible unintended reference comparison. Consider casting the right side expression to type `{0}' to get value comparison",
+						l.GetSignatureForError ());
 
-			  if (r.BuiltinType == BuiltinTypeSpec.Type.String || r.BuiltinType == BuiltinTypeSpec.Type.Delegate || MemberCache.GetUserOperator (r, CSharp.Operator.OpType.Equality, false) != null)
-				ec.Report.Warning (252, 2, loc,
-					"Possible unintended reference comparison. Consider casting the left side expression to type `{0}' to get value comparison",
-					r.GetSignatureForError ());
+				if (r.BuiltinType == BuiltinTypeSpec.Type.String || r.BuiltinType == BuiltinTypeSpec.Type.Delegate || MemberCache.GetUserOperator (r, CSharp.Operator.OpType.Equality, false) != null)
+					ec.Report.Warning (252, 2, loc,
+						"Possible unintended reference comparison. Consider casting the left side expression to type `{0}' to get value comparison",
+						r.GetSignatureForError ());
 			}
-
 			//
 			// PlayScript - Try equality with any PlayScript/ActionScript implicit conversions
 			//
 			if (ret == null && ec.FileType == SourceFileType.PlayScript && 
-			   (!TypeSpec.IsReferenceType (l) || !TypeSpec.IsReferenceType (r))) {
+				(!TypeSpec.IsReferenceType (l) || !TypeSpec.IsReferenceType (r))) {
 				ret = ResolveOperatorPredefined (ec, ec.BuiltinTypes.AsOperatorsBinaryEquality, no_arg_conv);
 			}
 
 			return ret;
 		}
-
 
 		Expression ResolveOperatorPointer (ResolveContext ec, TypeSpec l, TypeSpec r)
 		{
@@ -4649,31 +4639,31 @@ namespace Mono.CSharp
 			return expr;
 		}
 
-			//
-			// Optimize &/&& constant expressions with 0 value
-			//
+		//
+		// Optimize &/&& constant expressions with 0 value
+		//
 		Expression OptimizeAndOperation (Expression expr)
 		{
-				Constant rc = right as Constant;
-				Constant lc = left as Constant;
+			Constant rc = right as Constant;
+			Constant lc = left as Constant;
 			if ((lc != null && lc.IsDefaultValue) || (rc != null && rc.IsDefaultValue)) {
-					//
-					// The result is a constant with side-effect
-					//
-					Constant side_effect = rc == null ?
-						new SideEffectConstant (lc, right, loc) :
-						new SideEffectConstant (rc, left, loc);
+				//
+				// The result is a constant with side-effect
+				//
+				Constant side_effect = rc == null ?
+					new SideEffectConstant (lc, right, loc) :
+					new SideEffectConstant (rc, left, loc);
 
-					return ReducedExpression.Create (side_effect, expr);
-				}
+				return ReducedExpression.Create (side_effect, expr);
+			}
 
-				return expr;
+			return expr;
 		}
 
-			//
+		//
 		// Value types can be compared with the null literal because of the lifting
 		// language rules. However the result is always true or false.
-			//
+		//
 		public Expression CreateLiftedValueTypeResult (ResolveContext rc, TypeSpec valueType)
 		{
 			if (rc.HasSet (ResolveContext.Options.ExpressionTreeConversion)) {
@@ -4765,8 +4755,8 @@ namespace Mono.CSharp
 				res = new OverloadResolver (lifted_methods, restr | OverloadResolver.Restrictions.ProbingOnly, loc);
 
 				oper_method = res.ResolveOperator (rc, ref args);
-			if (oper_method == null)
-				return null;
+				if (oper_method == null)
+					return null;
 
 				MethodSpec best_original = null;
 				foreach (MethodSpec ms in left_operators) {
@@ -4819,7 +4809,7 @@ namespace Mono.CSharp
 
 				if (right.Type.IsNullableType && !ptypes[1].IsNullableType) {
 					lifted.UnwrapRight = new Nullable.Unwrap (right);
-			}
+				}
 
 				lifted.Left = Convert.ImplicitConversion (rc, lifted.UnwrapLeft ?? left, ptypes[0], left.Location);
 				lifted.Right = Convert.ImplicitConversion (rc, lifted.UnwrapRight ?? right, ptypes[1], right.Location);
@@ -4835,8 +4825,8 @@ namespace Mono.CSharp
 				oper_expr = new UserOperatorCall (oper_method, args, CreateExpressionTree, loc);
 			}
 
-				this.left = larg.Expr;
-				this.right = rarg.Expr;
+			this.left = larg.Expr;
+			this.right = rarg.Expr;
 
 			return oper_expr;
 		}
@@ -5922,8 +5912,8 @@ namespace Mono.CSharp
 		{
 			expr = expr.Resolve (ec);
 
-			if (true_expr == null || false_expr == null || expr == null)
-				return null;
+//			if (true_expr == null || false_expr == null || expr == null)
+//				return null;
 
 			//
 			// Unreachable code needs different resolve path. For instance for await
@@ -5950,6 +5940,9 @@ namespace Mono.CSharp
 				true_expr = true_expr.Resolve (ec);
 				false_expr = false_expr.Resolve (ec);
 			}
+
+			if (true_expr == null || false_expr == null || expr == null)
+				return null;
 
 			eclass = ExprClass.Value;
 			TypeSpec true_type = true_expr.Type;
@@ -6109,12 +6102,6 @@ namespace Mono.CSharp
 			target.true_expr = true_expr.Clone (clonectx);
 			target.false_expr = false_expr.Clone (clonectx);
 		}
-
-//		public override bool IsSideEffectFree {
-//			get {
-//				return expr.IsSideEffectFree && true_expr.IsSideEffectFree && false_expr.IsSideEffectFree;
-//			}
-//		}
 	}
 
 	public abstract partial class VariableReference : Expression, IAssignMethod, IMemoryLocation, IVariableReference
@@ -6800,11 +6787,11 @@ namespace Mono.CSharp
 
 			// Handle inline javascript/cpp code.
 			if (ec.Target == Target.JavaScript && expr is SimpleName && ((SimpleName)expr).Name == "__js__" && 
-			    arguments.Count == 1 && arguments[0].Expr is StringLiteral) {
+				arguments.Count == 1 && arguments[0].Expr is StringLiteral) {
 				return this;
 			}
 			if (ec.Target == Target.Cpp && expr is SimpleName && ((SimpleName)expr).Name == "__cpp__" && 
-			    arguments.Count == 1 && arguments[0].Expr is StringLiteral) {
+				arguments.Count == 1 && arguments[0].Expr is StringLiteral) {
 				return this;
 			}
 
@@ -6849,23 +6836,23 @@ namespace Mono.CSharp
 					switch (castType) {
 					case BuiltinTypeSpec.Type.Int:
 						if (cbt == BuiltinTypeSpec.Type.String ||
-						    cbt == BuiltinTypeSpec.Type.Object)
+							cbt == BuiltinTypeSpec.Type.Object)
 							atn = new SimpleName ("int", Location);
 						break;
 					case BuiltinTypeSpec.Type.UInt:
 						if (cbt == BuiltinTypeSpec.Type.String ||
-						    cbt == BuiltinTypeSpec.Type.Object)
+							cbt == BuiltinTypeSpec.Type.Object)
 							atn = new SimpleName ("uint", Location);
 						break;
 					case BuiltinTypeSpec.Type.Double:
 						if (cbt == BuiltinTypeSpec.Type.String ||
-						    cbt == BuiltinTypeSpec.Type.Object)
+							cbt == BuiltinTypeSpec.Type.Object)
 							atn = new SimpleName ("Number", Location);
 						break;
 					case BuiltinTypeSpec.Type.Bool:
 						if (cbt == BuiltinTypeSpec.Type.String ||
-						    cbt == BuiltinTypeSpec.Type.Object ||
-						    ct.IsClass)
+							cbt == BuiltinTypeSpec.Type.Object ||
+							ct.IsClass)
 							atn = new SimpleName ("Boolean", Location);
 						break;
 					case BuiltinTypeSpec.Type.String:
@@ -6910,11 +6897,11 @@ namespace Mono.CSharp
 					// note its important to resolve argument 0 or else the cast will fail
 					// this cast supports the Vector.<T>([1,2,3]) syntax with Arguments[0] being an AsArrayInitializer
 					var cast_expr = Arguments [0].Expr.Resolve (ec);
-#if !DISABLE_AS3_NULL_STRINGS
+					#if !DISABLE_AS3_NULL_STRINGS
 					// In PlayScript, the string value of null is "null"
 					if (cast_expr.IsNull && member_expr.Type != null && member_expr.Type.BuiltinType == BuiltinTypeSpec.Type.String)
 						return new StringConstant (ec.BuiltinTypes, "null", loc);
-#endif
+					#endif
 					return (new Cast (member_expr, cast_expr, loc)).Resolve (ec);
 				} 
 			}
@@ -6988,16 +6975,16 @@ namespace Mono.CSharp
 			}
 
 			IsSpecialMethodInvocation (ec, method, loc);
-
+			
 			// Check for Mono.Optimization intrinsics.
 			if (method != null && mg.BestCandidate.DeclaringType.Name == "Msil" && 
-			    method.DeclaringType.MemberDefinition.Namespace == "Mono.Optimization") {
+				method.DeclaringType.MemberDefinition.Namespace == "Mono.Optimization") {
 				return new MsilIntrinsic(expr, arguments, mg).Resolve (ec);
 			}
 
 			// Attempt to do inlining..
 			if (method != null && ec.Module.Compiler.Settings.Inlining != InliningMode.None && 
-			    (method.MemberDefinition as IMethodData) != null && ((IMethodData)method.MemberDefinition).IsInlinable) {
+				(method.MemberDefinition as IMethodData) != null && ((IMethodData)method.MemberDefinition).IsInlinable) {
 				var inliner = new Inliner (this);
 				var inlinedExpr = inliner.TryInline (ec);
 				if (inlinedExpr != this) {
@@ -7128,7 +7115,7 @@ namespace Mono.CSharp
 		{
 			// Write JS literal code for __js__() invocation.
 			if (expr is SimpleName && ((SimpleName)expr).Name == "__js__" && 
-			    arguments.Count == 1 && arguments[0].Expr is StringLiteral) {
+				arguments.Count == 1 && arguments[0].Expr is StringLiteral) {
 				jec.Buf.Write (((StringLiteral)arguments[0].Expr).Value);
 				return;
 			}
@@ -7142,7 +7129,7 @@ namespace Mono.CSharp
 			}
 			mg.EmitCallJs (jec, arguments);
 		}
-		
+
 		public override void EmitStatementJs (JsEmitContext jec)
 		{
 			jec.Buf.Write ("\t", Location);
@@ -7344,7 +7331,7 @@ namespace Mono.CSharp
 				} else if (reqExpr is TypeOf) {
 					type = ((TypeOf)reqExpr).TypeArgument;
 				} else if (reqExpr.Type.BuiltinType == BuiltinTypeSpec.Type.Type ||
-				           reqExpr.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic){
+					reqExpr.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic){
 					if (arguments != null) {
 						arguments.Resolve (ec, out dynamic);
 					}
@@ -7598,7 +7585,7 @@ namespace Mono.CSharp
 				arguments.EmitJs (jec);
 			jec.Buf.Write(")");
 		}
-		
+
 		public override void EmitStatementJs (JsEmitContext jec)
 		{
 			jec.Buf.Write ("\t", Location);
@@ -9982,8 +9969,8 @@ namespace Mono.CSharp
 
 							// PlayScript E4X: Handle XML child elements.
 							if (AccessorType == Accessor.Member &&
-							    expr.Type.MemberDefinition.Namespace == PsConsts.PsRootNamespace &&
-							    (expr.Type.Name == "XML" || expr.Type.Name == "XMLList")) {
+								expr.Type.MemberDefinition.Namespace == PsConsts.PsRootNamespace &&
+								(expr.Type.Name == "XML" || expr.Type.Name == "XMLList")) {
 
 								return MakeE4xInvocation(rc, "elements", Name).Resolve (rc);
 
@@ -10118,8 +10105,8 @@ namespace Mono.CSharp
 
 				// Lookup ClassName_fn function classes (if PlayScript)
 				SourceFileType ft = (rc is ResolveContext ? ((ResolveContext)rc).FileType : 
-				                    (rc is MemberCore ? ((MemberCore)rc).FileType : 
-				 					       SourceFileType.CSharp));
+					(rc is MemberCore ? ((MemberCore)rc).FileType : 
+						SourceFileType.CSharp));
 				if (retval == null && ft == SourceFileType.PlayScript) {
 					retval = ns.LookupTypeOrNamespace (rc, Name + "_fn", Arity, LookupMode.Normal, loc);
 					if (retval == null) {
@@ -10267,7 +10254,7 @@ namespace Mono.CSharp
 			jec.Buf.Write (".");
 			jec.Buf.Write (Name);
 		}
-
+		
 		public override object Accept (StructuralVisitor visitor)
 		{
 			var ret = visitor.Visit (this);
@@ -11066,7 +11053,7 @@ namespace Mono.CSharp
 
 			eclass = ExprClass.IndexerAccess;
 
-			bool dynamic = false;
+			bool dynamic;
 			arguments.Resolve (rc, out dynamic);
 
 			if (indexers == null && (InstanceExpression.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic || InstanceExpression.Type.IsAsDynamicClass)) {
@@ -11106,7 +11093,7 @@ namespace Mono.CSharp
 
 				best_candidate = null;
 				return new DynamicIndexBinder (args, loc);
-			} 
+			}
 
 			if (best_candidate == null) {
 				return null;
@@ -12039,7 +12026,7 @@ namespace Mono.CSharp
 
 		protected Assign assign;
 		protected Argument argument;
-		
+
 		public static readonly CollectionOrObjectInitializers Empty = 
 			new CollectionOrObjectInitializers (Array.AsReadOnly (new Expression [0]), Location.Null);
 
