@@ -1,0 +1,32 @@
+# Travis-CI Build for playscript
+# see travis-ci.org for details
+
+language: c
+
+os:
+ - osx
+
+before_install
+ - date -u
+ - uname -a
+ - env | sort
+
+# Make sure CMake and Mono are installed
+install: ./CI/travis.${TRAVIS_OS_NAME}.install.deps.sh
+
+# Build playscript and run the regressions tests for both mono and playscript
+script:
+ - ./CI/play.osx.build.small.i386.sh
+ - ./CI/mono.regression.sh
+ - ./CI/play.regression.sh
+
+# Only watch the development branch
+branches:
+ only:
+   - playscript
+
+# Notify of build changes
+notifications:
+ email:
+  - sushihangover@outlook.com
+

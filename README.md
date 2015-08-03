@@ -1,6 +1,16 @@
- ![logo](https://raw.github.com/playscript/playscript-mono/master/PlayscriptLogo.png) 
+ ![logo](https://raw.githubusercontent.com/PlayScriptRedux/playscript/playscript/PlayscriptLogo.png) 
 
 # PLAYSCRIPT
+
+## Current project status
+
+The CI builds are generously hosted and run on [Travis][travis]
+
+| Git Branch |  Mac OS X |
+| :------ | :------: | :------: |
+| **playscript** | [![master nix][master-nix-badge]][master-nix] |
+
+
 
 ## What is PlayScript?
 
@@ -801,3 +811,8 @@ This is Mono.
 =============================
 
 Read documentation at http://mono-project.com/Git_Submodule_Maintenance
+
+ [travis]: https://travis-ci.org/
+
+ [master-nix-badge]: https://travis-ci.org/PlayScriptRedux/playscript.svg?branch=playscript
+ [master-nix]: https://travis-ci.org/PlayScriptRedux/playscript/branches
