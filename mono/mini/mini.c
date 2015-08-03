@@ -3777,6 +3777,8 @@ mono_save_seq_point_info (MonoCompile *cfg)
 
 		sp->il_offset = ins->inst_imm;
 		sp->native_offset = ins->inst_offset;
+		if (ins->flags & MONO_INST_NONEMPTY_STACK)
+			sp->flags |= MONO_SEQ_POINT_FLAG_NONEMPTY_STACK;
 
 		/* Used below */
 		ins->backend.size = i;
@@ -5627,7 +5629,7 @@ void
 mono_emit_jit_map (MonoJitInfo *jinfo)
 {
 	if (perf_map_file) {
-		char *name = mono_method_full_name (jinfo->method, TRUE);
+		char *name = mono_method_full_name (jinfo_get_method (jinfo), TRUE);
 		mono_emit_jit_tramp (jinfo->code_start, jinfo->code_size, name);
 		g_free (name);
 	}
