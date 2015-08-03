@@ -5,18 +5,30 @@ language: c
 
 os:
  - osx
+ - linux
 
-before_install
+before_install:
  - date -u
  - uname -a
  - env | sort
+
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    - autoconf 
+    - libtool 
+    - automake 
+    - build-essential 
+    - mono-devel 
+    - gettext
 
 # Make sure CMake and Mono are installed
 install: ./CI/travis.${TRAVIS_OS_NAME}.install.deps.sh
 
 # Build playscript and run the regressions tests for both mono and playscript
 script:
- - ./CI/play.osx.build.small.i386.sh
+ - ./CI/play.${TRAVIS_OS_NAME}.build.small.i386.sh
  - ./CI/mono.regression.sh
  - ./CI/play.regression.sh
 
