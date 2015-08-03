@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 #AC_PREREQ([2.62])
 
-AC_INIT(mono, [3.2.6001],
+AC_INIT(mono, [3.2.6002],
         [http://bugzilla.xamarin.com/enter_bug.cgi?classification=Mono])
 
 AC_CONFIG_SRCDIR([LICENSE])
@@ -1031,6 +1031,11 @@ case "x$gc" in
 		LIBGC_STATIC_LIBS='$(top_builddir)/libgc/libmonogc-static.la'
 
 		BOEHM_DEFINES="-DHAVE_BOEHM_GC -DHAVE_GC_H -DUSE_INCLUDED_LIBGC -DHAVE_GC_GCJ_MALLOC -DHAVE_GC_ENABLE"
+
+		if test x$target_win32 = xyes; then
+			BOEHM_DEFINES="$BOEHM_DEFINES -DGC_NOT_DLL"
+			CFLAGS_FOR_LIBGC="$CFLAGS_FOR_LIBGC -DGC_BUILD -DGC_NOT_DLL"
+		fi
 
 		gc_msg="bundled Boehm GC with typed GC"
 		if test x$enable_parallel_mark = xyes; then
