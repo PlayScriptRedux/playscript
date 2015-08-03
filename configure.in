@@ -2120,6 +2120,7 @@ else
 		])
 	])
 	AC_CHECK_FUNCS(GetProcessId)
+	AC_CHECK_DECLS(InterlockedCompareExchange64, [], [], [[#include <windows.h>]])
 fi
 
 dnl socklen_t check
