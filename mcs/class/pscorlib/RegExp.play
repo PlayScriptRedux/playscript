@@ -84,7 +84,7 @@ package {
 		}
 
 		public function exec(str:String):Object {
-			var m = mRegex.Match(str, mLastIndex);
+			var m = mRegex.Match(str, int(mLastIndex));
 			if (m.Success) {
 				if (mGlobal) {
 					mLastIndex = m.Index + m.Value.Length;
@@ -101,7 +101,7 @@ package {
 		}
  	 	
 		public function test(str:String):Boolean {
-			var m = mRegex.Match(str, mLastIndex);
+			var m = mRegex.Match(str, int(mLastIndex));
 			if (m.Success) {
 				if (mGlobal) {
 					mLastIndex = m.Index + m.Value.Length;

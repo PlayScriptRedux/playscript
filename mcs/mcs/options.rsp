@@ -1,8 +1,8 @@
 -noconfig 
 -nostdlib
 -unsafe+
--d:"DEBUG;PLATFORM_GENERIC;"
--target:libraray
+-d:"DEBUG;PLATFORM_GENERIC"
+-target:library
 -out:delete_me.dll
 -r:../lib/net_4_5/mscorlib.dll
 -r:../lib/net_4_5/System.dll
@@ -14,6 +14,8 @@
 -r:../lib/net_4_5/System.Configuration.dll
 -r:../lib/net_4_5/Mono.Security.dll
 -r:../lib/net_4_5/PlayScript.Dynamic_aot.dll
+-r:../lib/net_4_5/Mono.CSharp.dll
+-r:../lib/net_4_5/Microsoft.CSharp.dll
 ../pscorlib/Date.play
 ./AssemblyInfo.cs
 ../pscorlib/AllowDynamicAttribute.cs

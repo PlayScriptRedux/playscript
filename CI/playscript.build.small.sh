@@ -38,6 +38,7 @@ find . -name "*.jay" |  while read f; do dn="$(dirname "$f")"; fn="$(basename "$
 ./autogen.sh \
 	 --with-tls=posix \
 	 --enable-nls=no \
+	 --with-mcs-docs=no \
 	 --with-profile2=no \
 	 --with-profile4=no \
 	 --with-profile4_5=yes \

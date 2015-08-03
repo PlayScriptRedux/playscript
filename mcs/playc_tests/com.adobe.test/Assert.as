@@ -206,7 +206,7 @@ package com.adobe.test
                 error = true;
                 errcount++;
             } else { //should never happen
-                description += FAILED + " UNEXPECTED ERROR - see Assert.as:printResult()"
+                description += FAILED + " UNEXPECTED ERROR - see Assert.as:printResult()";
                 error = true;
                 errcount++;
             }

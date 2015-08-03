@@ -13,6 +13,7 @@
     <FileAlignment>512</FileAlignment>
     <PlatformTarget>x86</PlatformTarget>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <UseMSBuildEngine>False</UseMSBuildEngine>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>
@@ -23,7 +24,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <Commandlineparameters>@options.rsp</Commandlineparameters>
+    <Commandlineparameters>@options-asset-test.rsp</Commandlineparameters>
     <additionalargs>/newdynamic-</additionalargs>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Externalconsole>true</Externalconsole>
@@ -207,6 +208,9 @@
   <ItemGroup>
     <None Include="ps-parser.jay" />
     <None Include="options.rsp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="options-asset-test.rsp">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
