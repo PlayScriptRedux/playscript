@@ -82,7 +82,7 @@ namespace Microsoft.Build.Tasks {
 						result &= CompileResourceFile (sourceFile, outputFile);
 
 					ITaskItem newItem = new TaskItem (source);
-					newItem.ItemSpec = outputFile;
+					source.ItemSpec = outputFile;
 
 					temporaryFilesWritten.Add (newItem);
 				}

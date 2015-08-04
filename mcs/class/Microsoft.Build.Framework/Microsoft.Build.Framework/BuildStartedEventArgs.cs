@@ -29,7 +29,6 @@
 #if NET_2_0
 
 using System;
-using System.Collections.Generic;
 
 namespace Microsoft.Build.Framework {
 	[Serializable]
@@ -41,31 +40,7 @@ namespace Microsoft.Build.Framework {
 
 		public BuildStartedEventArgs (string message,
 					      string helpKeyword)
-			: this (message, helpKeyword, DateTime.Now)
-		{
-		}
-
-		public BuildStartedEventArgs (string message,
-					      string helpKeyword,
-					      IDictionary<string, string> environmentOfBuild)
 			: base (message, helpKeyword, null)
-		{
-			// deal with environmentOfBuild
-			throw new NotImplementedException ();
-		}
-
-		public BuildStartedEventArgs (string message,
-					      string helpKeyword,
-					      DateTime eventTimestamp)
-			: base (message, helpKeyword, null, eventTimestamp)
-		{
-		}
-
-		public BuildStartedEventArgs (string message,
-					      string helpKeyword,
-					      DateTime eventTimestamp,
-					      params object [] messageArgs)
-			: base (message, helpKeyword, null, eventTimestamp, messageArgs)
 		{
 		}
 	}

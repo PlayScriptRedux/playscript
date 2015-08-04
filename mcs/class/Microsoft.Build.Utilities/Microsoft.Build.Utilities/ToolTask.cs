@@ -464,25 +464,13 @@ namespace Microsoft.Build.Utilities
 			}
 		}
 
-		// Keep in sync with mcs/class/System/Microsoft.CSharp/CSharpCodeCompiler.cs
-		const string ErrorRegexPattern = @"
-			^
-			(\s*(?<file>[^\(]+)                         # filename (optional)
-			 (\((?<line>\d*)(,(?<column>\d*[\+]*))?\))? # line+column (optional)
-			 :\s+)?
-			(?<level>\w+)                               # error|warning
-			\s+
-			(?<number>[^:]*\d)                          # CS1234
-			:
-			\s*
-			(?<message>.*)$";
-
+		// Snatched from our codedom code, with some changes to make it compatible with csc
+		// (the line+column group is optional is csc)
 		static Regex errorRegex;
 		static Regex CscErrorRegex {
 			get {
 				if (errorRegex == null)
-					errorRegex = new Regex (ErrorRegexPattern,
-							RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace);
+					errorRegex = new Regex (@"^(\s*(?<file>[^\(]+)(\((?<line>\d*)(,(?<column>\d*[\+]*))?\))?:\s+)*(?<level>\w+)\s+(?<number>.*\d):\s*(?<message>.*)", RegexOptions.Compiled | RegexOptions.ExplicitCapture);
 				return errorRegex;
 			}
 		}

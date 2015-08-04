@@ -26,26 +26,11 @@
 //
 
 using System;
-using Microsoft.Build.Framework;
 
 namespace Microsoft.Build.Logging
 {
-	public class FileLogger : ConsoleLogger
-	{
-		public override void Initialize (IEventSource eventSource)
-		{
-			throw new NotImplementedException ();
-		}
-
-		public override void Initialize (IEventSource eventSource, int nodeCount)
-		{
-			throw new NotImplementedException ();
-		}
-
-		public override void Shutdown ()
-		{
-			throw new NotImplementedException ();
-		}
-	}
+        public class FileLogger
+        {
+        }
 }
 

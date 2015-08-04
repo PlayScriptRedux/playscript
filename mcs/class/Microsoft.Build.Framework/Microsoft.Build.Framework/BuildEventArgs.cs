@@ -49,18 +49,12 @@ namespace Microsoft.Build.Framework
 
 		protected BuildEventArgs (string message, string helpKeyword,
 					  string senderName)
-			: this (message, helpKeyword, senderName, DateTime.Now)
-		{
-		}
-
-		protected BuildEventArgs (string message, string helpKeyword,
-					  string senderName, DateTime eventTimestamp)
 		{
 			this.message = message;
 			this.helpKeyword = helpKeyword;
 			this.senderName = senderName;
 			this.threadId = Thread.CurrentThread.GetHashCode ();
-			this.timestamp = eventTimestamp;
+			this.timestamp = DateTime.Now;
 		}
 
 		public string HelpKeyword {
