@@ -38,6 +38,9 @@ using Mono.Cecil;
 namespace Mono.Tuner {
 
 	public class AdjustVisibility : BaseStep {
+
+		static readonly object internalized_key = new object ();
+
 		protected override void ProcessAssembly (AssemblyDefinition assembly)
 		{
 			if (Annotations.GetAction (assembly) != AssemblyAction.Link)

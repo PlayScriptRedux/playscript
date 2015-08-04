@@ -2,7 +2,6 @@ using System;
 using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using System.IO;
 
 using Mono.CompilerServices.SymbolWriter;
@@ -16,11 +15,6 @@ class Settings
 	public string OutputDirectory { get; set; }
 	public string InputPattern { get; set; }
 	public string OutputPattern { get; set; }
-	public bool InputPatternIsRegex { get; set; }
-	public bool FileNamesOnly { get; set; }
-	public bool Verbose { get; set; }
-
-	Regex inputPatternRegex;
 
 	public bool Validate ()
 	{
@@ -29,15 +23,8 @@ class Settings
 
 	public string Replace (string input)
 	{
-		if (InputPatternIsRegex) {
-			if (inputPatternRegex == null)
-				inputPatternRegex = new Regex (InputPattern);
-			return inputPatternRegex.Replace (input, OutputPattern);
-		} else {
-			if (input.StartsWith (InputPattern))
-				return OutputPattern + input.Substring (InputPattern.Length);
-		}
-
+		if (input.StartsWith (InputPattern))
+			return input.Replace (InputPattern, OutputPattern);
 		return input;
 	}
 }
@@ -59,14 +46,7 @@ class MdbRebase
 		var output = new MonoSymbolFile ();
 
 		foreach (var s in input.Sources) {
-			var newFileName = settings.FileNamesOnly
-				? Path.Combine (Path.GetDirectoryName (s.FileName), settings.Replace (Path.GetFileName (s.FileName)))
-				: settings.Replace (s.FileName);
-
-			if (settings.Verbose)
-				Console.WriteLine ("{0} -> {1}", s.FileName, newFileName);
-
-			s.FileName = newFileName;
+			s.FileName = settings.Replace (s.FileName);
 			output.AddSource (s);
 		}
 
@@ -117,9 +97,6 @@ class Driver {
 
 		var p = new OptionSet () {
 			{ "d=|output=",  "Output directory to the mdb file, replace existing one if ommited", v => s.OutputDirectory = v },
-			{ "v|verbose", "Be verbose with output (show individual path rewrites)", v => s.Verbose = true },
-			{ "f|filenames", "Only operate on file names, not full absolute paths", v => s.FileNamesOnly = true },
-			{ "r|regex", "Input pattern is a regular expression", v => s.InputPatternIsRegex = true },
 			{ "i=|input-pattern=", "Input pattern to replace (must not be a prefix to output-pattern)(required)", v => s.InputPattern = v },
 			{ "o=|output-pattern=", "Output pattern to replace (required)", v => s.OutputPattern = v },
 			{ "h|?|help", v => showHelp = true },
