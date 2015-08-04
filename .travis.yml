@@ -8,9 +8,9 @@ os:
  - linux
 
 # Current merge path to mono 3.2.7 is failing on Linux
-matrix:
-  allow_failures:
-    - os: linux
+# matrix:
+#  allow_failures:
+#    - os: linux
 
 before_install:
  - date -u
