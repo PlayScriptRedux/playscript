@@ -640,6 +640,10 @@ arch_init (MonoAotCompile *acfg)
 	g_string_append (acfg->llc_args, "-mattr=-avx");
 #endif
 
+#if defined(TARGET_AMD64)
+	g_string_append (acfg->llc_args, " -march=x86-64");
+#endif
+
 #ifdef TARGET_ARM
 	if (acfg->aot_opts.mtriple && strstr (acfg->aot_opts.mtriple, "darwin")) {
 		g_string_append (acfg->llc_args, "-mattr=+v6");
@@ -8816,10 +8820,10 @@ mono_compile_assembly (MonoAssembly *ass, guint32 opts, const char *aot_options)
 				int i = g_file_open_tmp ("mono_aot_XXXXXX", &acfg->tmpfname, NULL);
 				acfg->fp = fdopen (i, "w+");
 			}
-			if (acfg->fp == 0) {
-				fprintf (stderr, "Unable to open file '%s': %s\n", acfg->tmpfname, strerror (errno));
-				return 1;
-			}
+		}
+		if (acfg->fp == 0) {
+			fprintf (stderr, "Unable to open file '%s': %s\n", acfg->tmpfname, strerror (errno));
+			return 1;
 		}
 		acfg->w = img_writer_create (acfg->fp, FALSE);
 		

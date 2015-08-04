@@ -47,7 +47,7 @@ test-casts: boot-casts.out mcs-casts.out
 
 ifeq (net_4_5, $(PROFILE))
 TEST_PATTERN = '*.as'
-DEFINES = -compiler-options:"-d:NET_4_0;NET_4_5 -r:../class/lib/net_4_5/Playscript.Dynamic_aot.dll -r:../class/lib/net_4_5/pscorlib_aot.dll"
+DEFINES = -compiler-options:"-d:NET_4_0;NET_4_5 -r:../class/lib/net_4_5/PlayScript.Dynamic_aot.dll -r:../class/lib/net_4_5/pscorlib_aot.dll"
 endif
 
 LOCAL_RUNTIME_FLAGS =
@@ -62,10 +62,10 @@ build-compiler-lib:
 qcheck: build-compiler-lib qcheck2
 
 as/Assert.dll:
-	$(CSCOMPILE) -t:library -d:"NET_4_0;NET_4_5" -r:../class/lib/net_4_5/pscorlib_aot.dll -r:../class/lib/net_4_5/Playscript.Dynamic_aot.dll -psstrict- -out:as/Assert.dll com.adobe.test/Assert.as com.adobe.test/Utils.as com.adobe.test/print.as
+	$(CSCOMPILE) -t:library -d:"NET_4_0;NET_4_5" -r:../class/lib/net_4_5/pscorlib_aot.dll -r:../class/lib/net_4_5/PlayScript.Dynamic_aot.dll -psstrict- -out:as/Assert.dll com.adobe.test/Assert.as com.adobe.test/Utils.as com.adobe.test/print.as
 
 play/Assert.dll:
-	$(CSCOMPILE) -t:library -d:"NET_4_0;NET_4_5" -r:../class/lib/net_4_5/pscorlib_aot.dll -r:../class/lib/net_4_5/Playscript.Dynamic_aot.dll -psstrict- -out:play/Assert.dll com.adobe.test/Assert.as com.adobe.test/Utils.as com.adobe.test/print.as
+	$(CSCOMPILE) -t:library -d:"NET_4_0;NET_4_5" -r:../class/lib/net_4_5/pscorlib_aot.dll -r:../class/lib/net_4_5/PlayScript.Dynamic_aot.dll -psstrict- -out:play/Assert.dll com.adobe.test/Assert.as com.adobe.test/Utils.as com.adobe.test/print.as
 
 %.play: setup
 	$(TESTER) -mode:pos -files:$@ -compiler:$(COMPILER) $(DEFINES) $(TOPTIONS) -log:play-$(PROFILE).log -il:play-il-$(PROFILE).xml $(DEFINES) $(TOPTIONS)
