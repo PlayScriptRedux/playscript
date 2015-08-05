@@ -2600,7 +2600,7 @@ namespace Mono.PlayScript
 		/// <summary>
 		/// Handles #pragma directive
 		/// </summary>
-		void ParsePragmaDirective (string arg)
+		void ParsePragmaDirective ()
 		{
 			int c;
 			int length = TokenizePreprocessorIdentifier (out c);
@@ -3068,7 +3068,7 @@ namespace Mono.PlayScript
 					Report.FeatureIsNotAvailable (context, Location, "#pragma");
 				}
 
-				ParsePragmaDirective (arg);
+				ParsePragmaDirective ();
 				return true;
 
 			case PreprocessorDirective.Line:

@@ -366,7 +366,7 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public void Error_TypeArgumentsCannotBeUsed (IMemberContext context, string exprType, string name, Location loc)
+		public static void Error_TypeArgumentsCannotBeUsed (IMemberContext context, string exprType, string name, Location loc)
 		{
 			context.Module.Compiler.Report.Error (307, loc, "The {0} `{1}' cannot be used with type arguments",
 				exprType, name);
@@ -1041,7 +1041,7 @@ namespace Mono.CSharp {
 		/// <summary>
 		///   Reports that we were expecting `expr' to be of class `expected'
 		/// </summary>
-		public void Error_UnexpectedKind (IMemberContext ctx, Expression memberExpr, string expected, string was, Location loc)
+		public static void Error_UnexpectedKind (IMemberContext ctx, Expression memberExpr, string expected, string was, Location loc)
 		{
 			var name = memberExpr.GetSignatureForError ();
 
@@ -2569,7 +2569,7 @@ namespace Mono.CSharp {
 			if (ctx.CurrentType != null) {
 				var member = MemberLookup (ctx, false, ctx.CurrentType, Name, 0, MemberLookupRestrictions.ExactArity, loc) as MemberExpr;
 				if (member != null) {
-					member.Error_UnexpectedKind (ctx, member, "type", member.KindName, loc);
+					Error_UnexpectedKind (ctx, member, "type", member.KindName, loc);
 					return;
 				}
 			}
@@ -2944,7 +2944,7 @@ namespace Mono.CSharp {
 						} else {
 							var me = MemberLookup (rc, false, rc.CurrentType, name, Arity, restrictions & ~MemberLookupRestrictions.InvocableOnly, loc) as MemberExpr;
 							if (me != null) {
-								me.Error_UnexpectedKind (rc, me, "method group", me.KindName, loc);
+								Error_UnexpectedKind (rc, me, "method group", me.KindName, loc);
 								return ErrorExpression.Instance;
 							}
 						}
@@ -2989,12 +2989,15 @@ namespace Mono.CSharp {
 			if (e == null)
 				return null;
 
-			if (right_side != null) {
+			// Skip : error CS0118: 'xxx' is a `type' but a `variable' was expected
+			if (ec.FileType != SourceFileType.PlayScript) {
 				if (e is FullNamedExpression && e.eclass != ExprClass.Unresolved) {
-					e.Error_UnexpectedKind (ec, e, "variable", e.ExprClassName, loc);
-					return null;
+					Error_UnexpectedKind (ec, e, "variable", e.ExprClassName, loc);
+					return e;
 				}
+			}
 
+			if (right_side != null) {
 				e = e.ResolveLValue (ec, right_side);
 			} else {
 				e = e.Resolve (ec);
@@ -3052,7 +3055,7 @@ namespace Mono.CSharp {
 
 			TypeExpr te = fne as TypeExpr;
 			if (te == null) {
-				fne.Error_UnexpectedKind (mc, fne, "type", fne.ExprClassName, loc);
+				Error_UnexpectedKind (mc, fne, "type", fne.ExprClassName, loc);
 				return null;
 			}
 
@@ -3784,8 +3787,7 @@ namespace Mono.CSharp {
 
 		public override bool IsSideEffectFree {
 			get {
-				return InstanceExpression != null ?
-					InstanceExpression.IsSideEffectFree : true;
+				return InstanceExpression == null || InstanceExpression.IsSideEffectFree;
 			}
 		}
 
@@ -5281,8 +5283,7 @@ namespace Mono.CSharp {
 						}
 
 						// Restore expanded arguments
-						if (candidate_args != args)
-							candidate_args = args;
+						candidate_args = args;
 					}
 				} while (best_candidate_rate != 0 && (type_members = base_provider.GetBaseMembers (type_members[0].DeclaringType.BaseType)) != null);
 
@@ -7058,7 +7059,7 @@ namespace Mono.CSharp {
 			// Don't capture temporary variables except when using
 			// state machine redirection and block yields
 			//
-			if (ec.CurrentAnonymousMethod != null && ec.CurrentAnonymousMethod is StateMachineInitializer &&
+			if (ec.CurrentAnonymousMethod is StateMachineInitializer &&
 				(ec.CurrentBlock.Explicit.HasYield || ec.CurrentBlock.Explicit.HasAwait) &&
 				ec.IsVariableCapturingRequired) {
 				AnonymousMethodStorey storey = li.Block.Explicit.CreateAnonymousMethodStorey (ec);

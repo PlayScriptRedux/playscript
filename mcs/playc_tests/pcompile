@@ -1,2 +1,2 @@
 #!/bin/bash
-MONO_RUNTIME='./../../runtime/mono-wrapper' MONO_PATH="./../class/lib/net_4_5::$MONO_PATH" ./../../runtime/mono-wrapper ./../class/lib/build/mcs.exe --stacktrace -d:"NET_4_0;NET_4_5" -r:../class/lib/net_4_5/PlayScript.Dynamic_aot.dll -r:../class/lib/net_4_5/pscorlib_aot.dll "$@"
+MONO_RUNTIME='./../../runtime/mono-wrapper' MONO_PATH="./../class/lib/net_4_5::$MONO_PATH" ./../../runtime/mono-wrapper ./../class/lib/build/mcs.exe --stacktrace -d:"NET_4_0;NET_4_5" -r:../class/lib/net_4_5/mscorlib.dll -r:../class/lib/net_4_5/PlayScript.Dynamic_aot.dll -r:../class/lib/net_4_5/pscorlib_aot.dll "$@"

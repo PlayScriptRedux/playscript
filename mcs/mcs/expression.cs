@@ -1445,7 +1445,7 @@ namespace Mono.CSharp
 		// ActionScript type expressions can be "Type" objects too.
 		protected Expression as_probe_type_expr;
 		
-		public Probe (Expression expr, Expression probe_type, Location l)
+		protected Probe (Expression expr, Expression probe_type, Location l)
 		{
 			ProbeType = probe_type;
 			loc = l;
@@ -3177,7 +3177,7 @@ namespace Mono.CSharp
 
 		// at least one of 'left' or 'right' is an enumeration constant (EnumConstant or SideEffectConstant or ...)
 		// if 'left' is not an enumeration constant, create one from the type of 'right'
-		Constant EnumLiftUp (ResolveContext ec, Constant left, Constant right, Location loc)
+		Constant EnumLiftUp (ResolveContext ec, Constant left, Constant right)
 		{
 			switch (oper) {
 			case Operator.BitwiseOr:
@@ -3804,9 +3804,9 @@ namespace Mono.CSharp
 
 			// The conversion rules are ignored in enum context but why
 			if (!ec.HasSet (ResolveContext.Options.EnumScope) && lc != null && rc != null && (left.Type.IsEnum || right.Type.IsEnum)) {
-				lc = EnumLiftUp (ec, lc, rc, loc);
+				lc = EnumLiftUp (ec, lc, rc);
 				if (lc != null)
-					rc = EnumLiftUp (ec, rc, lc, loc);
+					rc = EnumLiftUp (ec, rc, lc);
 			}
 
 			if (rc != null && lc != null) {
@@ -5611,7 +5611,7 @@ namespace Mono.CSharp
 
 	public class PointerArithmetic : Expression {
 		Expression left, right;
-		Binary.Operator op;
+		readonly Binary.Operator op;
 
 		//
 		// We assume that `l' is always a pointer
@@ -6931,7 +6931,7 @@ namespace Mono.CSharp
 				} else {
 					if (member_expr is RuntimeValueExpression) {
 						ec.Report.Error (Report.RuntimeErrorId, loc, "Cannot invoke a non-delegate type `{0}'",
-							member_expr.Type.GetSignatureForError ()); ;
+							member_expr.Type.GetSignatureForError ());
 						return null;
 					}
 
@@ -7814,7 +7814,7 @@ namespace Mono.CSharp
 		protected List<Expression> arguments;
 		
 		protected TypeSpec array_element_type;
-		int num_arguments = 0;
+		int num_arguments;
 		protected int dimensions;
 		protected readonly ComposedTypeSpecifier rank;
 		Expression first_emit;
@@ -10200,7 +10200,7 @@ namespace Mono.CSharp
 
 			var any_other_member = MemberLookup (rc, false, expr_type, Name, 0, MemberLookupRestrictions.None, loc);
 			if (any_other_member != null) {
-				any_other_member.Error_UnexpectedKind (rc, any_other_member, "type", any_other_member.ExprClassName, loc);
+				Error_UnexpectedKind (rc, any_other_member, "type", any_other_member.ExprClassName, loc);
 				return;
 			}
 
@@ -10218,7 +10218,7 @@ namespace Mono.CSharp
 			if (ec.Module.Compiler.Settings.Version > LanguageVersion.ISO_2 && !ec.IsRuntimeBinder && MethodGroupExpr.IsExtensionMethodArgument (expr)) {
 				ec.Report.SymbolRelatedToPreviousError (type);
 
-				var cand = ec.Module.GlobalRootNamespace.FindExtensionMethodNamespaces (ec, type, name, Arity);
+				var cand = ec.Module.GlobalRootNamespace.FindExtensionMethodNamespaces (ec, name, Arity);
 				string missing;
 				// a using directive or an assembly reference
 				if (cand != null) {
@@ -12492,11 +12492,6 @@ namespace Mono.CSharp
 			method = (MethodSpec) MemberCache.FindMember (type, MemberFilter.Constructor (null), BindingRestriction.DeclaredOnly);
 			eclass = ExprClass.Value;
 			return this;
-		}
-
-		public override void EmitStatement (EmitContext ec)
-		{
-			base.EmitStatement (ec);
 		}
 		
 		public override object Accept (StructuralVisitor visitor)

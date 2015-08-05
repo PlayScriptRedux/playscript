@@ -33,7 +33,7 @@ namespace Mono.CSharp {
 		/// <summary>
 		///   Resolves the statement, true means that all sub-statements
 		///   did resolve ok.
-		//  </summary>
+		///  </summary>
 		public virtual bool Resolve (BlockContext bc)
 		{
 			return true;
@@ -950,7 +950,7 @@ namespace Mono.CSharp {
 
 		public StatementList (Statement first, Statement second)
 		{
-			statements = new List<Statement> () { first, second };
+			statements = new List<Statement> { first, second };
 		}
 
 		#region Properties
@@ -4408,7 +4408,7 @@ namespace Mono.CSharp {
 				return true;
 			}
 
-			converted = c.ImplicitConversionRequired (rc, rc.Switch.SwitchType, loc);
+			converted = c.ImplicitConversionRequired (rc, rc.Switch.SwitchType);
 			return converted != null;
 		}
 
@@ -5967,7 +5967,7 @@ namespace Mono.CSharp {
 		{
 			LocalVariable pinned_string;
 
-			public StringEmitter (Expression expr, LocalVariable li, Location loc)
+			public StringEmitter (Expression expr, LocalVariable li)
 				: base (expr, li)
 			{
 			}
@@ -6090,7 +6090,7 @@ namespace Mono.CSharp {
 				// Case 2: string
 				//
 				if (initializer.Type.BuiltinType == BuiltinTypeSpec.Type.String) {
-					return new StringEmitter (initializer, li, loc).Resolve (bc);
+					return new StringEmitter (initializer, li).Resolve (bc);
 				}
 
 				// Case 3: fixed buffer

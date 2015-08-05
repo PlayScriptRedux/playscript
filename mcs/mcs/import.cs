@@ -65,10 +65,10 @@ namespace Mono.CSharp
 			//
 			// Returns true when object at local position has dynamic attribute flag
 			//
-			public bool IsDynamicObject (MetadataImporter importer)
+			public bool IsDynamicObject ()
 			{
 				if (provider != null)
-					ReadAttribute (importer);
+					ReadAttribute ();
 
 				return flags != null && Position < flags.Length && (flags [Position] & TypeFlags.Dynamic) != 0;
 			}
@@ -76,10 +76,10 @@ namespace Mono.CSharp
 			//
 			// Returns true when DynamicAttribute exists
 			//
-			public bool HasDynamicAttribute (MetadataImporter importer)
+			public bool HasDynamicAttribute ()
 			{
 				if (provider != null)
-					ReadAttribute (importer);
+					ReadAttribute ();
 
 				return flags != null;
 			}
@@ -90,12 +90,12 @@ namespace Mono.CSharp
 			public bool IsAsUntypedObject (MetadataImporter importer)
 			{
 				if (provider != null)
-					ReadAttribute (importer);
+					ReadAttribute ();
 
 				return flags != null && Position < flags.Length && (flags [Position] & TypeFlags.AsUntyped) != 0;
 			}
 
-			void ReadAttribute (MetadataImporter importer)
+			void ReadAttribute ()
 			{
 				IList<CustomAttributeData> cad;
 				if (provider is MemberInfo) {
@@ -759,7 +759,7 @@ namespace Mono.CSharp
 					if (dtype.IsAsUntypedObject (this))
 						return module.Compiler.BuiltinTypes.AsUntyped;
 
-					if (dtype.IsDynamicObject (this))
+					if (dtype.IsDynamicObject ())
 						return module.Compiler.BuiltinTypes.Dynamic;
 
 					return spec;
@@ -768,7 +768,7 @@ namespace Mono.CSharp
 				if (!spec.IsGeneric || type.IsGenericTypeDefinition)
 					return spec;
 
-				if (!dtype.HasDynamicAttribute (this))
+				if (!dtype.HasDynamicAttribute ())
 					return spec;
 
 				// We've found same object in the cache but this one has a dynamic custom attribute
@@ -1447,7 +1447,7 @@ namespace Mono.CSharp
 		protected AttributesBag cattrs;
 		protected readonly MetadataImporter importer;
 
-		public ImportedDefinition (MemberInfo provider, MetadataImporter importer)
+		protected ImportedDefinition (MemberInfo provider, MetadataImporter importer)
 		{
 			this.provider = provider;
 			this.importer = importer;
@@ -2186,7 +2186,7 @@ namespace Mono.CSharp
 						if (possible_accessors == null)
 							continue;
 
-						var p = (PropertyInfo)member;
+						var p = (PropertyInfo) member;
 						//
 						// Links possible accessors with property
 						//

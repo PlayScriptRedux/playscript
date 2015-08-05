@@ -62,7 +62,7 @@ namespace Mono.CSharp
 		// Should dynamic code be allowed in this container?
 		protected bool? allow_dynamic;
 
-		public TypeContainer (TypeContainer parent, MemberName name, Attributes attrs, MemberKind kind)
+		protected TypeContainer (TypeContainer parent, MemberName name, Attributes attrs, MemberKind kind)
 			: base (parent, name, attrs)
 		{
 			this.Kind = kind;
@@ -641,7 +641,7 @@ namespace Mono.CSharp
 		/// </remarks>
 		PendingImplementation pending;
 
-		public TypeDefinition (TypeContainer parent, MemberName name, Attributes attrs, MemberKind kind)
+		protected TypeDefinition (TypeContainer parent, MemberName name, Attributes attrs, MemberKind kind)
 			: base (parent, name, attrs, kind)
 		{
 			PartialContainer = this;
@@ -1168,7 +1168,7 @@ namespace Mono.CSharp
 					if (s == null) {
 						s = EmptyExpressionStatement.Instance;
 					} else if (!fi.IsSideEffectFree) {
-						has_complex_initializer |= true;
+						has_complex_initializer = true;
 					}
 
 					init [i] = s;
@@ -2327,29 +2327,29 @@ namespace Mono.CSharp
 					if (conflict_symbol == null && candidate == null) {
 						if ((ModFlags & Modifiers.NEW) != 0)
 							Report.Warning (109, 4, Location, "The member `{0}' does not hide an inherited member. The new keyword is not required",
-							                GetSignatureForError ());
+								GetSignatureForError ());
 					} else {
 						if ((ModFlags & Modifiers.NEW) == 0) {
 							if (candidate == null)
 								candidate = conflict_symbol;
-							
+
 							Report.SymbolRelatedToPreviousError (candidate);
 							Report.Warning (108, 2, Location, "`{0}' hides inherited member `{1}'. Use the new keyword if hiding was intended",
-							                GetSignatureForError (), candidate.GetSignatureForError ());
+								GetSignatureForError (), candidate.GetSignatureForError ());
 						}
 					}
 				}
-				
+
 				// Run constraints check on all possible generic types
 				if (base_type != null && base_type_expr != null) {
 					ConstraintChecker.Check (this, base_type, base_type_expr.Location);
 				}
-				
+
 				if (iface_exprs != null) {
 					foreach (var iface_type in iface_exprs) {
 						if (iface_type == null)
 							continue;
-						
+
 						ConstraintChecker.Check (this, iface_type, Location);	// TODO: Location is wrong
 					}
 				}
@@ -2590,9 +2590,6 @@ namespace Mono.CSharp
 
             if (!isPlay && (flags & Modifiers.PRIVATE) != 0){
 				if ((flags & vao) != 0){
-//                    Console.WriteLine("flags:\t" + flags);
-//                    Console.WriteLine("vao:\t" + vao);
-//                    Console.WriteLine("play:\t" + isPlay);
 					Report.Error (621, mc.Location, "`{0}': virtual or abstract members cannot be private", mc.GetSignatureForError ());
 					ok = false;
 				}
@@ -2802,7 +2799,7 @@ namespace Mono.CSharp
 
 		SecurityType declarative_security;
 
-		public ClassOrStruct (TypeContainer parent, MemberName name, Attributes attrs, MemberKind kind)
+		protected ClassOrStruct (TypeContainer parent, MemberName name, Attributes attrs, MemberKind kind)
 			: base (parent, name, attrs, kind)
 		{
 		}
@@ -3729,7 +3726,7 @@ namespace Mono.CSharp
 		readonly Modifiers explicit_mod_flags;
 		public MethodAttributes flags;
 
-		public InterfaceMemberBase (TypeDefinition parent, FullNamedExpression type, Modifiers mod, Modifiers allowed_mod, MemberName name, Attributes attrs)
+		protected InterfaceMemberBase (TypeDefinition parent, FullNamedExpression type, Modifiers mod, Modifiers allowed_mod, MemberName name, Attributes attrs)
 			: base (parent, type, mod, allowed_mod, Modifiers.PRIVATE, name, attrs)
 		{
 			IsInterface = parent.Kind == MemberKind.Interface;
@@ -4011,11 +4008,11 @@ namespace Mono.CSharp
 			if ((ModFlags & Modifiers.EXTERN) != 0 && !is_external_implementation && (OptAttributes == null || !OptAttributes.HasResolveError ())) {
 				if (this is Constructor) {
 					Report.Warning (824, 1, Location,
-					                "Constructor `{0}' is marked `external' but has no external implementation specified", GetSignatureForError ());
+						"Constructor `{0}' is marked `external' but has no external implementation specified", GetSignatureForError ());
 				} else {
 					Report.Warning (626, 1, Location,
-					                "`{0}' is marked as an external but has no DllImport attribute. Consider adding a DllImport attribute to specify the external implementation",
-					                GetSignatureForError ());
+						"`{0}' is marked as an external but has no DllImport attribute. Consider adding a DllImport attribute to specify the external implementation",
+						GetSignatureForError ());
 				}
 			}
 		}

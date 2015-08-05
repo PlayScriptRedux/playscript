@@ -503,7 +503,7 @@ namespace Mono.CSharp {
 					} else {
 						rc.Report.Error (1909, default_expr.Location,
 							"The DefaultParameterValue attribute is not applicable on parameters of type `{0}'",
-							default_expr.Type.GetSignatureForError ()); ;
+							default_expr.Type.GetSignatureForError ());
 					}
 
 					default_expr = null;
@@ -1348,11 +1348,6 @@ namespace Mono.CSharp {
 		public DefaultParameterValueExpression (Expression expr)
 			: base (expr)
 		{
-		}
-
-		protected override Expression DoResolve (ResolveContext rc)
-		{
-			return base.DoResolve (rc);
 		}
 
 		public void Resolve (ResolveContext rc, Parameter p)
