@@ -2147,6 +2147,12 @@ namespace Mono.CSharp {
 				this.orig_expr = orig_expr;
 			}
 
+                        public Expression OriginalExpression {
+                                get {
+                                        return orig_expr;
+                                }
+                        }
+
 			public override Constant ConvertImplicitly (TypeSpec target_type, ResolveContext opt_ec, bool upconvert_only)
 			{
 				Constant c = base.ConvertImplicitly (target_type, opt_ec, upconvert_only);
