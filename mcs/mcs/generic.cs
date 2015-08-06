@@ -2962,15 +2962,20 @@ namespace Mono.CSharp {
 
 		public void AddCommonTypeBound (TypeSpec type)
 		{
-			AddToBounds (new BoundInfo (type, BoundKind.Lower), 0);
+			AddToBounds (new BoundInfo (type, BoundKind.Lower), 0, false);
 		}
 
-		void AddToBounds (BoundInfo bound, int index)
+		public void AddCommonTypeBoundAsync (TypeSpec type)
+		{
+			AddToBounds (new BoundInfo (type, BoundKind.Lower), 0, true);
+		}
+
+		void AddToBounds (BoundInfo bound, int index, bool voidAllowed)
 		{
 			//
 			// Some types cannot be used as type arguments
 			//
-			if (bound.Type.Kind == MemberKind.Void || bound.Type.IsPointer || bound.Type.IsSpecialRuntimeType ||
+			if ((bound.Type.Kind == MemberKind.Void && !voidAllowed) || bound.Type.IsPointer || bound.Type.IsSpecialRuntimeType ||
 				bound.Type == InternalType.MethodGroup || bound.Type == InternalType.AnonymousMethod)
 				return;
 
@@ -3044,7 +3049,7 @@ namespace Mono.CSharp {
 			if (pos == -1)
 				return 0;
 
-			AddToBounds (new BoundInfo (u, BoundKind.Exact), pos);
+			AddToBounds (new BoundInfo (u, BoundKind.Exact), pos, false);
 			return 1;
 		}
 
@@ -3375,7 +3380,7 @@ namespace Mono.CSharp {
 			// If V is one of the unfixed type arguments
 			int pos = IsUnfixed (v);
 			if (pos != -1) {
-				AddToBounds (new BoundInfo (u, inversed ? BoundKind.Upper : BoundKind.Lower), pos);
+				AddToBounds (new BoundInfo (u, inversed ? BoundKind.Upper : BoundKind.Lower), pos, false);
 				return 1;
 			}			
 
