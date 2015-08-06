@@ -1598,12 +1598,14 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext ec)
 		{
+			var isPlayScript = ec.FileType == SourceFileType.PlayScript;
+
 			if (base.DoResolve (ec) == null)
 				return null;
 
 			// Check to see if right side is an expression which returns a Class (Type).  If so, generate
 			// type check code.
-			if (ec.FileType == SourceFileType.PlayScript && as_probe_type_expr != null) {
+			if (isPlayScript && as_probe_type_expr != null) {
 				var arguments = new Arguments(2);
 				arguments.Add (new Argument(expr));
 				arguments.Add (new Argument(as_probe_type_expr));
@@ -1695,13 +1697,28 @@ namespace Mono.CSharp
 						return CreateConstantResult (ec, true);
 					}
 				} else {
+					//if (Convert.ImplicitReferenceConversionExists (d, t)) {
 					if (Convert.ImplicitReferenceConversionExists (d, t, ec, false)) {
-						//
-						// Do not optimize for imported type
-						//
-						if (d.MemberDefinition.IsImported && d.BuiltinType != BuiltinTypeSpec.Type.None)
-							return this;
-						
+						if (!isPlayScript) {
+							var c = expr as Constant;
+							if (c != null)
+								return CreateConstantResult (ec, !c.IsNull);
+
+							//
+							// Do not optimize for imported type
+							//
+							if (d.MemberDefinition.IsImported && d.BuiltinType != BuiltinTypeSpec.Type.None &&
+								d.MemberDefinition.DeclaringAssembly != t.MemberDefinition.DeclaringAssembly) {
+								return this;
+							}
+						}
+
+						if (isPlayScript) {
+							if (d.MemberDefinition.IsImported && d.BuiltinType != BuiltinTypeSpec.Type.None) {
+								return this;
+							}
+						}
+
 						//
 						// Turn is check into simple null check for implicitly convertible reference types
 						//
@@ -11859,9 +11876,9 @@ namespace Mono.CSharp
 
 			var t = ec.CurrentInitializerVariable.Type;
 			if (t.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
-				Arguments args = new Arguments(1);
-				args.Add(new Argument(ec.CurrentInitializerVariable));
-				target = new DynamicMemberBinder(Name, args, loc);
+				Arguments args = new Arguments (1);
+				args.Add (new Argument (ec.CurrentInitializerVariable));
+				target = new DynamicMemberBinder (Name, args, loc);
 			} else if (ec.FileType == SourceFileType.PlayScript && (t == ec.Module.PredefinedTypes.AsExpandoObject.Resolve())) {
 				// use expando-specific element accessor
 				var arguments = new Arguments(1);

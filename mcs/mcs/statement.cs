@@ -56,6 +56,10 @@ namespace Mono.CSharp {
 
 			bool unreachable = false;
 			if (warn && !ec.UnreachableReported) {
+
+				// TODO: This is wrong, need to form of flow-analysis branch specific flag
+				// or multiple unrelared unreachable code won't be reported
+				// if (false) { // ok } if (false) { // not reported }
 				ec.UnreachableReported = true;
 				unreachable = true;
 				ec.Report.Warning (162, 2, loc, "Unreachable code detected");
@@ -212,7 +216,6 @@ namespace Mono.CSharp {
 				//
 				if (expr is Constant) {
 					bool take = !((Constant) expr).IsDefaultValue;
-
 					if (take) {
 						if (!TrueStatement.Resolve (ec))
 							return false;
