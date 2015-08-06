@@ -7130,7 +7130,7 @@ namespace Mono.CSharp {
 			get { return null; }
 		}
 
-		public override void VerifyAssigned (ResolveContext rc)
+		public override void VerifyDefiniteAssignment (ResolveContext rc)
 		{
 		}
 	}

@@ -6139,7 +6139,7 @@ namespace Mono.CSharp
 		#region Abstract
 		public abstract HoistedVariable GetHoistedVariable (AnonymousExpression ae);
 		public abstract void SetHasAddressTaken ();
-		public abstract void VerifyAssigned (ResolveContext rc);
+		public abstract void VerifyDefiniteAssignment (ResolveContext rc);
 
 		public abstract bool IsLockedByStatement { get; set; }
 
@@ -6377,9 +6377,9 @@ namespace Mono.CSharp
 
 		#endregion
 
-		public override void VerifyAssigned (ResolveContext rc)
+		public override void VerifyDefiniteAssignment (ResolveContext rc)
 		{
-			VariableInfo variable_info = local_info.VariableInfo;
+			VariableInfo variable_info = VariableInfo;
 			if (variable_info == null)
 				return;
 
@@ -6427,7 +6427,7 @@ namespace Mono.CSharp
 		{
 			local_info.SetIsUsed ();
 
-			VerifyAssigned (ec);
+			VerifyDefiniteAssignment (ec);
 
 			DoResolveBase (ec);
 			return this;
@@ -6647,24 +6647,12 @@ namespace Mono.CSharp
 			return Parameter.ExpressionTreeVariableReference ();
 		}
 
-		//
-		// Notice that for ref/out parameters, the type exposed is not the
-		// same type exposed externally.
-		//
-		// for "ref int a":
-		//   externally we expose "int&"
-		//   here we expose       "int".
-		//
-		// We record this in "is_ref".  This means that the type system can treat
-		// the type as it is expected, but when we generate the code, we generate
-		// the alternate kind of code.
-		//
 		protected override Expression DoResolve (ResolveContext ec)
 		{
 			if (!DoResolveBase (ec))
 				return null;
 
-			VerifyAssigned (ec);
+			VerifyDefiniteAssignment (ec);
 			return this;
 		}
 
@@ -6677,15 +6665,17 @@ namespace Mono.CSharp
 			return base.DoResolveLValue (ec, right_side);
 		}
 
-		public override void VerifyAssigned (ResolveContext rc)
+		public override void VerifyDefiniteAssignment (ResolveContext rc)
 		{
-			// HACK: Variables are not captured in probing mode
-			if (rc.IsInProbingMode)
+			VariableInfo variable_info = VariableInfo;
+			if (variable_info == null)
 				return;
 
-			if (HasOutModifier && !VariableInfo.IsAssigned (rc)) {
-				rc.Report.Error (269, loc, "Use of unassigned out parameter `{0}'", Name);
-			}
+			if (variable_info.IsAssigned (rc))
+				return;
+
+			rc.Report.Error (269, loc, "Use of unassigned out parameter `{0}'", Name);
+			variable_info.SetAssigned (rc);
 		}
 	}
 	
@@ -8881,7 +8871,7 @@ namespace Mono.CSharp
 			// Nothing
 		}
 
-		public override void VerifyAssigned (ResolveContext rc)
+		public override void VerifyDefiniteAssignment (ResolveContext rc)
 		{
 		}
 		
@@ -9906,7 +9896,7 @@ namespace Mono.CSharp
 				if (sn != null) {
 					var vr = expr as VariableReference;
 					if (vr != null)
-						vr.VerifyAssigned (rc);
+						vr.VerifyDefiniteAssignment (rc);
 				}
 
 				Arguments args = new Arguments (1);
@@ -9972,7 +9962,7 @@ namespace Mono.CSharp
 							if (sn != null && !errorMode) {
 								var vr = expr as VariableReference;
 								if (vr != null)
-									vr.VerifyAssigned (rc);
+									vr.VerifyDefiniteAssignment (rc);
 							}
 
 							// Handle any PlayScript extension getter right here (setters are handled in the Assign expression above)
@@ -10101,7 +10091,7 @@ namespace Mono.CSharp
 			if (sn != null && !(me is FieldExpr && TypeSpec.IsValueType (expr_type))) {
 				var vr = expr as VariableReference;
 				if (vr != null)
-					vr.VerifyAssigned (rc);
+					vr.VerifyDefiniteAssignment (rc);
 			}
 
 			// PlayScript - Add additional restrictions to overload resolution to disambiguate static/instance methods with the
