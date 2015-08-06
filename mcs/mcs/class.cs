@@ -62,6 +62,11 @@ namespace Mono.CSharp
 		// Should dynamic code be allowed in this container?
 		protected bool? allow_dynamic;
 
+		public int CounterAnonymousTypes { get; set; }
+		public int CounterAnonymousMethods { get; set; }
+		public int CounterAnonymousContainers { get; set; }
+		public int CounterSwitchTypes { get; set; }
+
 		protected TypeContainer (TypeContainer parent, MemberName name, Attributes attrs, MemberKind kind)
 			: base (parent, name, attrs)
 		{
