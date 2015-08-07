@@ -10,7 +10,7 @@ build_exit=0
 if [ $build_exit -eq 0 ]
 then
   echo "Build passed, running regressions"
-  #./CI/mono.regression.sh
+  ./CI/mono.regression.sh
   mono_exit=$? 
   ./CI/play.regression.sh
   play_exit=$?
