@@ -33,9 +33,10 @@ install: ./CI/travis.${TRAVIS_OS_NAME}.install.deps.sh
 
 # Build playscript and run the regressions tests for both mono and playscript
 script:
- - ./CI/play.${TRAVIS_OS_NAME}.build.small.i386.sh
- - ./CI/mono.regression.sh
- - ./CI/play.regression.sh
+ - ./CI/travis.regresssion.sh
+# - ./CI/play.${TRAVIS_OS_NAME}.build.small.i386.sh
+# - ./CI/mono.regression.sh
+# - ./CI/play.regression.sh
 
 # Only watch the development branch
 branches:
