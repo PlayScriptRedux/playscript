@@ -1733,7 +1733,7 @@ namespace Mono.CSharp
 					//
 					// open generic type
 					//
-					if (d is InflatedTypeSpec && InflatedTypeSpec.ContainsTypeParameter (d))
+					if ((d is InflatedTypeSpec || d.IsArray) && InflatedTypeSpec.ContainsTypeParameter (d))
 						return this;
 				}
 			}
