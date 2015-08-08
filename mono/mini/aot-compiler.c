@@ -209,6 +209,7 @@ typedef struct MonoAotCompile {
 	MonoImageWriter *w;
 	MonoDwarfWriter *dwarf;
 	FILE *fp;
+	char *tmpbasename;
 	char *tmpfname;
 	GSList *cie_program;
 	GHashTable *unwind_info_offsets;
@@ -217,6 +218,7 @@ typedef struct MonoAotCompile {
 	char *got_symbol_base;
 	char *got_symbol;
 	char *plt_symbol;
+	char *methods_symbol;
 	GHashTable *method_label_hash;
 	const char *temp_prefix;
 	const char *user_symbol_prefix;
@@ -636,11 +638,6 @@ arch_init (MonoAotCompile *acfg)
 	 */
 	acfg->llvm_label_prefix = "";
 	acfg->user_symbol_prefix = "";
-
-#if defined(TARGET_AMD64) && defined(TARGET_MACH)
-	/* osx contains an old as which doesn't support avx opcodes */
-	g_string_append (acfg->llc_args, "-mattr=-avx");
-#endif
 
 #if defined(TARGET_AMD64)
 	g_string_append (acfg->llc_args, " -march=x86-64");
@@ -6914,7 +6911,7 @@ emit_llvm_file (MonoAotCompile *acfg)
 	}
 
 
-	tempbc = g_strdup_printf ("%s.bc", acfg->tmpfname);
+	tempbc = g_strdup_printf ("%s.bc", acfg->tmpbasename);
 	mono_llvm_emit_aot_module (tempbc, acfg->final_got_size);
 	g_free (tempbc);
 
@@ -6930,12 +6927,14 @@ emit_llvm_file (MonoAotCompile *acfg)
 	 * - 'prune-eh' and 'functionattrs' depend on 'basiccg'.
 	 * The opt list below was produced by taking the output of:
 	 * llvm-as < /dev/null | opt -O2 -disable-output -debug-pass=Arguments
-	 * then removing tailcallelim + the global opts, and adding a second gvn.
+	 * then removing tailcallelim + the global opts.
+	 * strip-dead-prototypes deletes unused intrinsics definitions.
 	 */
 	opts = g_strdup ("-instcombine -simplifycfg");
-	opts = g_strdup ("-simplifycfg -domtree -domfrontier -scalarrepl -instcombine -simplifycfg -domtree -domfrontier -scalarrepl -simplify-libcalls -instcombine -simplifycfg -instcombine -simplifycfg -reassociate -domtree -loops -loop-simplify -domfrontier -loop-simplify -lcssa -loop-rotate -licm -lcssa -loop-unswitch -instcombine -scalar-evolution -loop-simplify -lcssa -iv-users -indvars -loop-deletion -loop-simplify -lcssa -loop-unroll -instcombine -memdep -gvn -memdep -memcpyopt -sccp -instcombine -domtree -memdep -dse -adce -simplifycfg -preverify -domtree -verify");
+	//opts = g_strdup ("-simplifycfg -domtree -domfrontier -scalarrepl -instcombine -simplifycfg -domtree -domfrontier -scalarrepl -simplify-libcalls -instcombine -simplifycfg -instcombine -simplifycfg -reassociate -domtree -loops -loop-simplify -domfrontier -loop-simplify -lcssa -loop-rotate -licm -lcssa -loop-unswitch -instcombine -scalar-evolution -loop-simplify -lcssa -iv-users -indvars -loop-deletion -loop-simplify -lcssa -loop-unroll -instcombine -memdep -gvn -memdep -memcpyopt -sccp -instcombine -domtree -memdep -dse -adce -simplifycfg -preverify -domtree -verify");
+	opts = g_strdup ("-targetlibinfo -no-aa -basicaa -notti -instcombine -simplifycfg -sroa -domtree -early-cse -simplify-libcalls -lazy-value-info -correlated-propagation -simplifycfg -instcombine -simplifycfg -reassociate -domtree -loops -loop-simplify -lcssa -loop-rotate -licm -lcssa -loop-unswitch -instcombine -scalar-evolution -loop-simplify -lcssa -indvars -loop-idiom -loop-deletion -loop-unroll -memdep -gvn -memdep -memcpyopt -sccp -instcombine -lazy-value-info -correlated-propagation -domtree -memdep -dse -adce -simplifycfg -instcombine -strip-dead-prototypes -preverify -domtree -verify");
 #if 1
-	command = g_strdup_printf ("%sopt -f %s -o \"%s.opt.bc\" \"%s.bc\"", acfg->aot_opts.llvm_path, opts, acfg->tmpfname, acfg->tmpfname);
+	command = g_strdup_printf ("%sopt -f %s -o \"%s.opt.bc\" \"%s.bc\"", acfg->aot_opts.llvm_path, opts, acfg->tmpbasename, acfg->tmpbasename);
 	printf ("Executing opt: %s\n", command);
 	if (system (command) != 0) {
 		exit (1);
@@ -6963,7 +6962,7 @@ emit_llvm_file (MonoAotCompile *acfg)
 #endif
 	unlink (acfg->tmpfname);
 
-	command = g_strdup_printf ("%sllc %s -disable-gnu-eh-frame -enable-mono-eh-frame -o \"%s\" \"%s.opt.bc\"", acfg->aot_opts.llvm_path, acfg->llc_args->str, acfg->tmpfname, acfg->tmpfname);
+	command = g_strdup_printf ("%sllc %s -disable-gnu-eh-frame -enable-mono-eh-frame -o \"%s\" \"%s.opt.bc\"", acfg->aot_opts.llvm_path, acfg->llc_args->str, acfg->tmpfname, acfg->tmpbasename);
 
 	printf ("Executing llc: %s\n", command);
 
@@ -6978,7 +6977,6 @@ emit_code (MonoAotCompile *acfg)
 {
 	int oindex, i, prev_index;
 	char symbol [256];
-	char end_symbol [256];
 
 #if defined(TARGET_POWERPC64)
 	sprintf (symbol, ".Lgot_addr");
@@ -6993,21 +6991,20 @@ emit_code (MonoAotCompile *acfg)
 	 * code_offsets array. It is also used to compute the memory ranges occupied by
 	 * AOT code, so it must be equal to the address of the first emitted method.
 	 */
-	sprintf (symbol, "methods");
 	emit_section_change (acfg, ".text", 0);
 	emit_alignment (acfg, 8);
 	if (acfg->llvm) {
 		for (i = 0; i < acfg->nmethods; ++i) {
 			if (acfg->cfgs [i] && acfg->cfgs [i]->compile_llvm) {
-				fprintf (acfg->fp, "\n.set methods, %s\n", acfg->cfgs [i]->asm_symbol);
+				acfg->methods_symbol = g_strdup (acfg->cfgs [i]->asm_symbol);
 				break;
 			}
 		}
-		if (i == acfg->nmethods)
-			/* No LLVM compiled methods */
-			emit_label (acfg, symbol);
-	} else {
+	}
+	if (!acfg->methods_symbol) {
+		sprintf (symbol, "methods");
 		emit_label (acfg, symbol);
+		acfg->methods_symbol = g_strdup (symbol);
 	}
 
 	/* 
@@ -7134,10 +7131,9 @@ emit_code (MonoAotCompile *acfg)
 
 		acfg->stats.offsets_size += acfg->nmethods * 4;
 
-		sprintf (end_symbol, "methods");
 		for (i = 0; i < acfg->nmethods; ++i) {
 			if (acfg->cfgs [i]) {
-				emit_symbol_diff (acfg, acfg->cfgs [i]->asm_symbol, end_symbol, 0);
+				emit_symbol_diff (acfg, acfg->cfgs [i]->asm_symbol, acfg->methods_symbol, 0);
 			} else {
 				emit_int32 (acfg, 0xffffffff);
 			}
@@ -7151,10 +7147,9 @@ emit_code (MonoAotCompile *acfg)
 
 	acfg->stats.offsets_size += acfg->nmethods * 4;
 
-	sprintf (end_symbol, "methods");
 	for (i = 0; i < acfg->nmethods; ++i) {
 		if (acfg->cfgs [i]) {
-			emit_symbol_diff (acfg, acfg->cfgs [i]->asm_symbol, end_symbol, 0);
+			emit_symbol_diff (acfg, acfg->cfgs [i]->asm_symbol, acfg->methods_symbol, 0);
 		} else {
 			emit_int32 (acfg, 0xffffffff);
 		}
@@ -7171,7 +7166,6 @@ emit_code (MonoAotCompile *acfg)
 	emit_alignment (acfg, 8);
 	emit_label (acfg, symbol);
 
-	sprintf (end_symbol, "methods");
 	prev_index = -1;
 	for (i = 0; i < acfg->nmethods; ++i) {
 		MonoCompile *cfg;
@@ -7196,7 +7190,7 @@ emit_code (MonoAotCompile *acfg)
 				else
 					fprintf (acfg->fp, "\n\tbl %s\n", symbol);
 			} else {
-				emit_symbol_diff (acfg, symbol, end_symbol, 0);
+				emit_symbol_diff (acfg, symbol, acfg->methods_symbol, 0);
 			}
 			/* Make sure the table is sorted by index */
 			g_assert (index > prev_index);
@@ -8035,7 +8029,7 @@ emit_file_info (MonoAotCompile *acfg)
 	 * various problems (i.e. arm/thumb).
 	 */
 	emit_pointer (acfg, acfg->got_symbol);
-	emit_pointer (acfg, "methods");
+	emit_pointer (acfg, acfg->methods_symbol);
 	if (acfg->llvm) {
 		/*
 		 * Emit a reference to the mono_eh_frame table created by our modified LLVM compiler.
@@ -8401,6 +8395,8 @@ compile_asm (MonoAotCompile *acfg)
 #else
 #define AS_NAME "nacl-as"
 #endif
+#elif defined(TARGET_OSX)
+#define AS_NAME "clang -c -x assembler"
 #else
 #define AS_NAME "as"
 #endif
@@ -8409,7 +8405,17 @@ compile_asm (MonoAotCompile *acfg)
 #define LD_OPTIONS ""
 #endif
 
-#define EH_LD_OPTIONS ""
+#if defined(sparc)
+#define LD_NAME "ld -shared -G"
+#elif defined(__ppc__) && defined(TARGET_MACH)
+#define LD_NAME "gcc -dynamiclib"
+#elif defined(TARGET_AMD64) && defined(TARGET_MACH)
+#define LD_NAME "clang --shared"
+#elif defined(HOST_WIN32)
+#define LD_NAME "gcc -shared --dll"
+#elif defined(TARGET_X86) && defined(TARGET_MACH) && !defined(__native_client_codegen__)
+#define LD_NAME "clang -m32 -dynamiclib"
+#endif
 
 	if (acfg->aot_opts.asm_only) {
 		printf ("Output file: '%s'.\n", acfg->tmpfname);
@@ -8450,18 +8456,10 @@ compile_asm (MonoAotCompile *acfg)
 
 	tmp_outfile_name = g_strdup_printf ("%s.tmp", outfile_name);
 
-#if defined(sparc)
-	command = g_strdup_printf ("ld -shared -G -o %s %s.o", tmp_outfile_name, acfg->tmpfname);
-#elif defined(__ppc__) && defined(TARGET_MACH)
-	command = g_strdup_printf ("gcc -dynamiclib -o %s %s.o", tmp_outfile_name, acfg->tmpfname);
-#elif defined(TARGET_AMD64) && defined(TARGET_MACH)
-	command = g_strdup_printf ("gcc --shared -o %s %s.o", tmp_outfile_name, acfg->tmpfname);
-#elif defined(HOST_WIN32)
-	command = g_strdup_printf ("gcc -shared --dll -o %s %s.o", tmp_outfile_name, acfg->tmpfname);
-#elif defined(TARGET_X86) && defined(TARGET_MACH) && !defined(__native_client_codegen__)
-	command = g_strdup_printf ("gcc -m32 -dynamiclib -o %s %s.o", tmp_outfile_name, acfg->tmpfname);
+#ifdef LD_NAME
+	command = g_strdup_printf ("%s -o %s %s.o", LD_NAME, tmp_outfile_name, acfg->tmpfname);
 #else
-	command = g_strdup_printf ("%sld %s %s -shared -o %s %s.o", tool_prefix, EH_LD_OPTIONS, LD_OPTIONS, tmp_outfile_name, acfg->tmpfname);
+	command = g_strdup_printf ("%sld %s -shared -o %s %s.o", tool_prefix, LD_OPTIONS, tmp_outfile_name, acfg->tmpfname);
 #endif
 	printf ("Executing the native linker: %s\n", command);
 	if (system (command) != 0) {
@@ -8499,7 +8497,7 @@ compile_asm (MonoAotCompile *acfg)
 
 #if defined(TARGET_MACH)
 	command = g_strdup_printf ("dsymutil %s", outfile_name);
-	printf ("Generating debug symbols: %s\n", command);
+	printf ("Executing dsymutil: %s\n", command);
 	if (system (command) != 0) {
 		return 1;
 	}
@@ -8781,12 +8779,16 @@ mono_compile_assembly (MonoAssembly *ass, guint32 opts, const char *aot_options)
 #ifdef ENABLE_LLVM
 	if (acfg->llvm) {
 		if (acfg->aot_opts.asm_only) {
-			if (acfg->aot_opts.outfile)
+			if (acfg->aot_opts.outfile) {
 				acfg->tmpfname = g_strdup_printf ("%s", acfg->aot_opts.outfile);
-			else
-				acfg->tmpfname = g_strdup_printf ("%s.s", acfg->image->name);
+				acfg->tmpbasename = g_strdup (acfg->tmpfname);
+			} else {
+				acfg->tmpbasename = g_strdup_printf ("%s", acfg->image->name);
+				acfg->tmpfname = g_strdup_printf ("%s.s", acfg->tmpbasename);
+			}
 		} else {
-			acfg->tmpfname = g_strdup ("temp.s");
+			acfg->tmpbasename = g_strdup_printf ("%s", "temp");
+			acfg->tmpfname = g_strdup_printf ("%s.s", acfg->tmpbasename);
 		}
 
 		emit_llvm_file (acfg);

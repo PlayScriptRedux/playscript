@@ -205,6 +205,12 @@ IntPtrType (void)
 	return sizeof (gpointer) == 8 ? LLVMInt64Type () : LLVMInt32Type ();
 }
 
+static LLVMTypeRef
+ObjRefType (void)
+{
+	return sizeof (gpointer) == 8 ? LLVMPointerType (LLVMInt64Type (), 0) : LLVMPointerType (LLVMInt32Type (), 0);
+}
+
 /*
  * get_vtype_size:
  *
@@ -326,14 +332,14 @@ type_to_llvm_type (EmitContext *ctx, MonoType *t)
 	case MONO_TYPE_SZARRAY:
 	case MONO_TYPE_STRING:
 	case MONO_TYPE_PTR:
-		return IntPtrType ();
+		return ObjRefType ();
 	case MONO_TYPE_VAR:
 	case MONO_TYPE_MVAR:
 		/* Because of generic sharing */
-		return IntPtrType ();
+		return ObjRefType ();
 	case MONO_TYPE_GENERICINST:
 		if (!mono_type_generic_inst_is_valuetype (t))
-			return IntPtrType ();
+			return ObjRefType ();
 		/* Fall through */
 	case MONO_TYPE_VALUETYPE:
 	case MONO_TYPE_TYPEDBYREF: {
@@ -2986,7 +2992,7 @@ process_bb (EmitContext *ctx, MonoBasicBlock *bb)
 
 			values [ins->dreg] = emit_load (ctx, bb, &builder, size, addr, dname, is_volatile);
 
-			if (!is_volatile && (ins->flags & MONO_INST_CONSTANT_LOAD)) {
+			if (!is_volatile && (ins->flags & MONO_INST_INVARIANT_LOAD)) {
 				/*
 				 * These will signal LLVM that these loads do not alias any stores, and
 				 * they can't fail, allowing them to be hoisted out of loops.
@@ -3109,23 +3115,8 @@ process_bb (EmitContext *ctx, MonoBasicBlock *bb)
 			indexes [1] = LLVMConstInt (LLVMInt32Type (), (gssize)got_offset, FALSE);
 			got_entry_addr = LLVMBuildGEP (builder, ctx->lmodule->got_var, indexes, 2, "");
 
-			// FIXME: This doesn't work right now, because it must be
-			// paired with an invariant.end, and even then, its only in effect
-			// inside its basic block
-#if 0
-			{
-				LLVMValueRef args [3];
-				LLVMValueRef ptr, val;
-
-				ptr = LLVMBuildBitCast (builder, got_entry_addr, LLVMPointerType (LLVMInt8Type (), 0), "ptr");
-
-				args [0] = LLVMConstInt (LLVMInt64Type (), sizeof (gpointer), FALSE);
-				args [1] = ptr;
-				val = LLVMBuildCall (builder, LLVMGetNamedFunction (module, "llvm.invariant.start"), args, 2, "");
-			}
-#endif
-
 			values [ins->dreg] = LLVMBuildLoad (builder, got_entry_addr, dname);
+			set_invariant_load_flag (values [ins->dreg]);
 			break;
 		}
 		case OP_NOT_REACHED:
@@ -4885,16 +4876,6 @@ add_intrinsics (LLVMModuleRef module)
 		LLVMAddFunction (module, "llvm.usub.with.overflow.i64", LLVMFunctionType (LLVMStructType (ovf_res_i64, 2, FALSE), ovf_params_i64, 2, FALSE));
 		LLVMAddFunction (module, "llvm.smul.with.overflow.i64", LLVMFunctionType (LLVMStructType (ovf_res_i64, 2, FALSE), ovf_params_i64, 2, FALSE));
 		LLVMAddFunction (module, "llvm.umul.with.overflow.i64", LLVMFunctionType (LLVMStructType (ovf_res_i64, 2, FALSE), ovf_params_i64, 2, FALSE));
-	}
-
-	{
-		LLVMTypeRef struct_ptr = LLVMPointerType (LLVMStructType (NULL, 0, FALSE), 0);
-		LLVMTypeRef invariant_start_params [] = { LLVMInt64Type (), LLVMPointerType (LLVMInt8Type (), 0) };
-		LLVMTypeRef invariant_end_params [] = { struct_ptr, LLVMInt64Type (), LLVMPointerType (LLVMInt8Type (), 0) };
-
-		LLVMAddFunction (module, "llvm.invariant.start", LLVMFunctionType (struct_ptr, invariant_start_params, 2, FALSE));
-
-		LLVMAddFunction (module, "llvm.invariant.end", LLVMFunctionType (LLVMVoidType (), invariant_end_params, 3, FALSE));
 	}
 
 	/* EH intrinsics */
