@@ -16,8 +16,6 @@ using System.Collections.Generic;
 using System.Text;
 using SLE = System.Linq.Expressions;
 using System.Linq;
-using Mono.CSharp.JavaScript;
-using Mono.CSharp.Cpp;
 
 #if STATIC
 using IKVM.Reflection;
@@ -711,12 +709,6 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public virtual void EmitJs (JsEmitContext jec)
-		{
-			jec.Report.Error (7074, this.loc, "JavaScript code generation for " + this.GetType ().Name + " expression not supported.");
-			jec.Buf.Write ("<<" + this.GetType ().Name + " expr>>");
-		}
-
 		/// <summary>
 		///   Protected constructor.  Only derivate types should
 		///   be able to be created
@@ -1300,12 +1292,6 @@ namespace Mono.CSharp {
 		{
 			EmitStatement (ec);
 		}
-
-		public virtual void EmitStatementJs (JsEmitContext jec)
-		{
-			jec.Report.Error(7072, Location, "JavaScript code generation for " + this.GetType ().Name + " statement not supported.");
-			jec.Buf.Write ("<<" + this.GetType ().Name + " stmtexpr>>");
-		}
 	}
 
 	/// <summary>
@@ -1379,12 +1365,6 @@ namespace Mono.CSharp {
 #endif
 		}
 
-		public override void EmitJs (JsEmitContext jec)
-		{
-			// JS doesn't cast anything.
-			Child.EmitJs (jec);
-		}
-
 		protected override void CloneTo (CloneContext clonectx, Expression t)
 		{
 			// Nothing to clone
@@ -1452,10 +1432,6 @@ namespace Mono.CSharp {
 			child.EmitSideEffect (ec);
 		}
 
-		public override void EmitJs (JsEmitContext jec)
-		{
-			Child.EmitJs (jec);
-		}
 	}
 
 	//
@@ -2064,12 +2040,6 @@ namespace Mono.CSharp {
 		{
 			base.Emit (ec);
 			ec.Emit (op);
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			// We do nothing here for JavaScript.. implicit casts or fail.
-			Child.EmitJs (jec);
 		}
 
 		public TypeSpec UnderlyingType {
@@ -3017,11 +2987,6 @@ namespace Mono.CSharp {
 			return e;
 		}
 
-		public override void EmitJs (JsEmitContext jec)
-		{
-			jec.Buf.Write (Name, Location);
-		}
-		
 		public override object Accept (StructuralVisitor visitor)
 		{
 			return visitor.Visit (this);
@@ -3102,12 +3067,6 @@ namespace Mono.CSharp {
 		{
 			throw new InternalErrorException ("FullNamedExpression `{0}' found in resolved tree",
 				GetSignatureForError ());
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			jec.Buf.Write (jec.MakeJsNamespaceName(type.MemberDefinition.Namespace), ".", 
-			               jec.MakeJsTypeName(type.Name), Location);
 		}
 	}
 	
@@ -3917,14 +3876,6 @@ namespace Mono.CSharp {
 			var call = new CallEmitter ();
 			call.InstanceExpression = InstanceExpression;
 			call.Emit (ec, best_candidate, arguments, loc);			
-		}
-
-		public void EmitCallJs (JsEmitContext jec, Arguments arguments)
-		{
-			jec.Buf.Write("(", Location);
-			if (arguments != null)
-				arguments.EmitJs (jec);
-			jec.Buf.Write(")");
 		}
 
 		public override void Error_ValueCannotBeConverted (ResolveContext ec, TypeSpec target, bool expl)
@@ -6300,17 +6251,6 @@ namespace Mono.CSharp {
 				base.EmitSideEffect (ec);
 		}
 
-		public override void EmitJs (JsEmitContext jec)
-		{
-			if (InstanceExpression != null) {
-				InstanceExpression.EmitJs (jec);
-				jec.Buf.Write (".");
-			} else {
-				jec.Buf.Write (DeclaringType.Name, ".", Location);
-			}
-			jec.Buf.Write (Name);
-		}
-
 		public virtual void AddressOf (EmitContext ec, AddressOp mode)
 		{
 			if ((mode & AddressOp.Store) != 0)
@@ -6602,16 +6542,6 @@ namespace Mono.CSharp {
 			if (await_source_arg != null) {
 				await_source_arg.Release (ec);
 			}
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			if (IsStatic) { 
-				jec.Buf.Write (jec.MakeJsFullTypeName (best_candidate.DeclaringType));
-			} else {
-				InstanceExpression.EmitJs (jec);
-			}
-			jec.Buf.Write (".", best_candidate.Name);
 		}
 
 		protected override Expression OverloadResolve (ResolveContext rc, Expression right_side)
@@ -7128,12 +7058,6 @@ namespace Mono.CSharp {
 			li.CreateBuilder (ec);
 
 			EmitAssign (ec, source, false, false);
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			jec.Report.Error (7074, this.loc, "JavaScript code generation for " + this.GetType ().Name + " expression not supported.");
-			jec.Buf.Write ("<<" + this.GetType ().Name + " expr>>");
 		}
 
 		public override HoistedVariable GetHoistedVariable (AnonymousExpression ae)

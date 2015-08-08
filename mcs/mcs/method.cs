@@ -20,8 +20,6 @@ using System.Text;
 using System.Linq;
 using Mono.CompilerServices.SymbolWriter;
 using System.Runtime.CompilerServices;
-using Mono.CSharp.JavaScript;
-using Mono.CSharp.Cpp;
 
 #if NET_2_1
 using XmlElement = System.Object;
@@ -167,15 +165,6 @@ namespace Mono.CSharp {
 			}
 
 			base.Emit ();
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			if ((ModFlags & Modifiers.COMPILER_GENERATED) == 0) {
-				parameters.CheckConstraints (this);
-			}
-			
-			base.EmitJs (jec);
 		}
 
 		public override bool EnableOverloadChecks (MemberCore overload)
@@ -808,26 +797,6 @@ namespace Mono.CSharp {
 
 			if ((ModFlags & Modifiers.PARTIAL) == 0)
 				Block = null;
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			base.EmitJs (jec);
-
-			if ((this.ModFlags & Modifiers.STATIC) != 0) {
-				jec.Buf.Write ("\t" + this.Parent.MemberName.Name + "." + this.MemberName.Name + " = function(", Location);
-			} else {
-				jec.Buf.Write ("\t" + this.Parent.MemberName.Name + ".prototype." + this.MemberName.Name + " = function(", Location);
-			}
-			parameters.EmitJs (jec);
-			jec.Buf.Write (") ");
-
-			if (MethodData != null)
-				MethodData.EmitJs (Parent, jec);
-
-			Block = null;
-
-			jec.Buf.Write (";\n");
 		}
 
 		protected void Error_ConditionalAttributeIsNotValid ()
@@ -1483,17 +1452,6 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public override void EmitJs (JsEmitContext jec)
-		{
-			try {
-				base.EmitJs (jec);
-			} catch {
-				Console.WriteLine ("Internal compiler error at {0}: exception caught while emitting {1}",
-				                   Location, MethodBuilder);
-				throw;
-			}
-		}
-
 		public override bool EnableOverloadChecks (MemberCore overload)
 		{
 			if (overload is Indexer)
@@ -1648,39 +1606,6 @@ namespace Mono.CSharp {
 		public override void EmitStatement (EmitContext ec)
 		{
 			Emit (ec);
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			// It can be null for static initializers
-			if (base_ctor == null)
-				return;
-
-			if (base_ctor.DeclaringType == jec.Compiler.BuiltinTypes.Object)
-				throw new Exception ("Object constructor doesn't exist.");
-
-			jec.Buf.Write ("_super.call(this, ", Location);
-			if (argument_list != null) {
-				argument_list.EmitJs (jec);
-			}
-			jec.Buf.Write (")");
-
-//			var call = new CallEmitter ();
-//			call.InstanceExpression = new CompilerGeneratedThis (type, loc); 
-//			call.EmitPredefined (ec, base_ctor, argument_list);
-		}
-		
-		public override void EmitStatementJs (JsEmitContext jec)
-		{
-			// It can be null for static initializers
-			if (base_ctor == null || base_ctor.DeclaringType == jec.Compiler.BuiltinTypes.Object)
-				return;
-
-			jec.Buf.Write ("\t", Location);
-
-			EmitJs (jec);
-
-			jec.Buf.Write (";\n");
 		}
 	}
 
@@ -1955,70 +1880,6 @@ namespace Mono.CSharp {
 #endif
 				}
 			}
-
-			block = null;
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			base.EmitJs (jec);
-
-			bool is_static = (this.ModFlags & Modifiers.STATIC) != 0;
-
-			if (!is_static) {
-				jec.Buf.Write ("\tfunction " + this.Parent.MemberName.Name + "(", Location);
-				parameters.EmitJs (jec);
-				jec.Buf.Write (") ");
-			}
-
-			BlockContext bc = new BlockContext (this, block, Compiler.BuiltinTypes.Void);
-			bc.Set (ResolveContext.Options.ConstructorScope);
-
-			bool emitted_block = false;
-
-			if (block != null) {
-				//
-				// If we use a "this (...)" constructor initializer, then
-				// do not emit field initializers, they are initialized in the other constructor
-				//
-				if (!(Initializer is ConstructorThisInitializer))
-					Parent.PartialContainer.ResolveFieldInitializers (bc);
-				
-				if (!IsStatic) {
-					if (Initializer == null) {
-						if (Parent.PartialContainer.Kind == MemberKind.Struct) {
-							//
-							// If this is a non-static `struct' constructor and doesn't have any
-							// initializer, it must initialize all of the struct's fields.
-							//
-							block.AddThisVariable (bc);
-						} else if (Parent.PartialContainer.Kind == MemberKind.Class) {
-							Initializer = new GeneratedBaseInitializer (Location);
-						}
-					}
-					
-					if (Initializer != null && 
-						!(bc.FileType == SourceFileType.PlayScript && Initializer.IsAsExplicitSuperCall)) {
-						//
-						// mdb format does not support reqions. Try to workaround this by emitting the
-						// sequence point at initializer. Any breakpoint at constructor header should
-						// be adjusted to this sequence point as it's the next one which follows.
-						//
-						block.AddScopeStatement (new StatementExpression (Initializer));
-					}
-				}
-				
-				if (block.Resolve (null, bc, this)) {
-					block.EmitBlockJs (jec, false, is_static);
-					emitted_block = true;
-				}
-			}
-
-			if (!is_static) {
-				if (!emitted_block)
-					jec.Buf.Write ("{\n\t}", Location);
-				jec.Buf.Write ("\n");
-			} 
 
 			block = null;
 		}
@@ -2397,21 +2258,6 @@ namespace Mono.CSharp {
 					EmitContext ec = method.CreateEmitContext (MethodBuilder.GetILGenerator (), debug_builder);
 
 					block.Emit (ec);
-				}
-			}
-		}
-
-		public void EmitJs (TypeDefinition parent, JsEmitContext jec)
-		{
-			var mc = (IMemberContext) method;
-
-			method.ParameterInfo.ApplyAttributes (mc, MethodBuilder);
-			
-			ToplevelBlock block = method.Block;
-			if (block != null) {
-				BlockContext bc = new BlockContext (mc, block, method.ReturnType);
-				if (block.Resolve (null, bc, method)) {
-					block.EmitBlockJs (jec, false, false);
 				}
 			}
 		}

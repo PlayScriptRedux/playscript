@@ -12,8 +12,6 @@
 
 using System;
 using System.Collections.Generic;
-using Mono.CSharp.JavaScript;
-using Mono.CSharp.Cpp;
 
 #if STATIC
 using IKVM.Reflection.Emit;
@@ -521,17 +519,6 @@ namespace Mono.CSharp
 				return new Arguments (dups);
 
 			return null;
-		}
-
-		public virtual void EmitJs (JsEmitContext jec)
-		{
-			bool first = true;
-			foreach (Argument a in args) {
-				if (!first)
-					jec.Buf.Write(", ");
-				a.Expr.EmitJs (jec);
-				first = false;
-			}
 		}
 
 		public List<Argument>.Enumerator GetEnumerator ()

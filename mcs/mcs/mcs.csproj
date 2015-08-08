@@ -19,14 +19,13 @@
     <DebugSymbols>True</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>False</Optimize>
-    <OutputPath>..\class\pscorlib_aot</OutputPath>
+    <OutputPath>.</OutputPath>
     <DefineConstants>TRACE;DEBUG;NET_4_0;STATIC;NO_SYMBOL_WRITER;NO_AUTHENTICODE;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <Commandlineparameters>@options-asset-test.rsp</Commandlineparameters>
+    <Commandlineparameters>@options-mcs.rsp</Commandlineparameters>
     <additionalargs>/newdynamic-</additionalargs>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <Externalconsole>true</Externalconsole>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -35,12 +34,12 @@
     <ErrorReport>prompt</ErrorReport>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <OutputPath>..\class\pscorlib_aot</OutputPath>
+    <OutputPath>.</OutputPath>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug - AST|AnyCPU'">
     <DebugSymbols>True</DebugSymbols>
-    <OutputPath>..\class\pscorlib_aot</OutputPath>
+    <OutputPath>.</OutputPath>
     <DefineConstants>TRACE;DEBUG;NET_4_0;STATIC;NO_SYMBOL_WRITER;NO_AUTHENTICODE;FULL_AST</DefineConstants>
     <DebugType>full</DebugType>
     <CodeAnalysisLogFile>mcs.exe.CodeAnalysisLog.xml</CodeAnalysisLogFile>
@@ -155,10 +154,6 @@
     <Compile Include="field.cs" />
     <Compile Include="typespec.cs" />
     <Compile Include="visit.cs" />
-    <Compile Include="js-target.cs" />
-    <Compile Include="cxx-target.cs" />
-    <Compile Include="cxx-emit.cs" />
-    <Compile Include="js-emit.cs" />
     <Compile Include="ps-lang.cs" />
     <Compile Include="ps-parser.cs" />
     <Compile Include="ps-tokenizer.cs" />
@@ -213,6 +208,10 @@
     <None Include="options-asset-test.rsp">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="options-mcs.rsp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="mcs.exe.sources" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Xml">

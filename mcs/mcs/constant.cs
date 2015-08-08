@@ -12,8 +12,6 @@
 
 using System;
 using System.Globalization;
-using Mono.CSharp.JavaScript;
-using Mono.CSharp.Cpp;
 
 #if STATIC
 using IKVM.Reflection.Emit;
@@ -491,10 +489,6 @@ namespace Mono.CSharp {
 			return true;
 		}
 
-		public override void EmitJs (JsEmitContext jec)
-		{
-			jec.Buf.Write (this.GetValueAsLiteral(), Location);
-		}
 	}
 
 	public abstract class IntegralConstant : Constant
@@ -1926,15 +1920,6 @@ namespace Mono.CSharp {
 			return null;
 		}
 
-		public override void EmitJs (JsEmitContext jec)
-		{
-			double d = Value;
-			if (d == System.Math.Floor (d)) {
-				jec.Buf.Write (GetValue ().ToString (), ".0", Location);
-			} else {
-				jec.Buf.Write (GetValue ().ToString (), Location);
-			}
-		}
 
 	}
 
@@ -2118,15 +2103,6 @@ namespace Mono.CSharp {
 			ec.Emit (OpCodes.Ldstr, Value);
 		}
 
-		public override void EmitJs (JsEmitContext jec)
-		{
-			if (Value != null) {
-				jec.Buf.Write ("\"", jec.Buf.EscapeString(Value), "\"", Location);
-			} else {
-				jec.Buf.Write ("\"\"", Location);
-			}
-		}
-
 		public override void EncodeAttributeValue (IMemberContext rc, AttributeEncoder enc, TypeSpec targetType)
 		{
 			// cast to object
@@ -2223,11 +2199,6 @@ namespace Mono.CSharp {
 			// Only to make verifier happy
 			if (type.IsGenericParameter)
 				ec.Emit (OpCodes.Unbox_Any, type);
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			jec.Buf.Write (GetValueAsLiteral(), Location);
 		}
 
 		public override string ExprClassName {

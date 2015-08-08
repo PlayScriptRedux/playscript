@@ -16,8 +16,6 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Mono.CompilerServices.SymbolWriter;
 using System.Linq;
-using Mono.CSharp.JavaScript;
-using Mono.CSharp.Cpp;
 
 #if STATIC
 using IKVM.Reflection;
@@ -187,8 +185,6 @@ namespace Mono.CSharp
 				return context;
 			}
 		}
-
-		public int CounterAnonymousTypes { get; set; }
 
 		public AssemblyDefinition DeclaringAssembly {
 			get {
@@ -999,27 +995,6 @@ namespace Mono.CSharp
 				foreach (var atypes in anonymous_types)
 					foreach (var at in atypes.Value)
 						at.EmitContainer ();
-			}
-		}
-
-		public override void EmitContainerJs (JsEmitContext jec)
-		{
-			if (OptAttributes != null)
-				OptAttributes.EmitJs (jec);
-
-			foreach (var tc in containers) {
-				tc.PrepareEmit ();
-			}
-			
-			base.EmitContainerJs (jec);
-
-			if (Compiler.Report.Errors == 0 && !Compiler.Settings.WriteMetadataOnly)
-				VerifyMembers ();
-			
-			if (anonymous_types != null) {
-				foreach (var atypes in anonymous_types)
-					foreach (var at in atypes.Value)
-						at.EmitContainerJs (jec);
 			}
 		}
 

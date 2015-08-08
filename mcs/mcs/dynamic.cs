@@ -13,7 +13,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using SLE = System.Linq.Expressions;
-using Mono.CSharp.JavaScript;
 
 #if NET_4_0 || MONODROID
 using System.Dynamic;
@@ -1447,11 +1446,6 @@ namespace Mono.CSharp
 			return new Invocation (GetBinder (isSet ? "SetMember" : "GetMember", loc), binder_args);
 		}
 
-		public override void EmitJs (JsEmitContext jec)
-		{
-			Arguments[0].Expr.EmitJs (jec);
-			jec.Buf.Write (".", name, Location);
-		}
 	}
 
 	//

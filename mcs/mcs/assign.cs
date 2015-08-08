@@ -13,8 +13,6 @@
 // Copyright 2011 Xamarin Inc
 //
 using System;
-using Mono.CSharp.JavaScript;
-using Mono.CSharp.Cpp;
 
 #if STATIC
 using IKVM.Reflection.Emit;
@@ -420,22 +418,6 @@ namespace Mono.CSharp {
 			Emit (ec, true);
 		}
 
-		public override void EmitJs (JsEmitContext jec)
-		{
-			Target.EmitJs (jec);
-			jec.Buf.Write (" = ");
-			Source.EmitJs (jec);
-		}
-
-		public override void EmitStatementJs (JsEmitContext jec)
-		{
-			jec.Buf.Write ("\t", Location);
-			Target.EmitJs (jec);
-			jec.Buf.Write (" = ");
-			Source.EmitJs (jec);
-			jec.Buf.Write (";\n");
-		}
-
 		protected override void CloneTo (CloneContext clonectx, Expression t)
 		{
 			Assign _target = (Assign) t;
@@ -698,11 +680,6 @@ namespace Mono.CSharp {
 			public override void Emit (EmitContext ec)
 			{
 				child.Emit (ec);
-			}
-
-			public override void EmitJs (JsEmitContext jec)
-			{
-				child.EmitJs (jec);
 			}
 
 			public override Expression EmitToField (EmitContext ec)

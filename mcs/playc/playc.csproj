@@ -60,9 +60,6 @@
   <ItemGroup>
     <Compile Include="..\build\common\Consts.cs">
     </Compile>
-    <Compile Include="..\class\corlib\Mono.Security.Cryptography\CryptoConvert.cs">
-      <Link>CryptoConvert.cs</Link>
-    </Compile>
     <Compile Include="..\class\Mono.CompilerServices.SymbolWriter\MonoSymbolFile.cs">
       <Link>MonoSymbolFile.cs</Link>
     </Compile>
@@ -103,7 +100,6 @@
     <Compile Include="..\mcs\import.cs" />
     <Compile Include="..\mcs\lambda.cs">
     </Compile>
-    <Compile Include="..\mcs\cs-parser.cs" />
     <Compile Include="..\mcs\cs-tokenizer.cs">
     </Compile>
     <Compile Include="..\mcs\decl.cs">
@@ -158,14 +154,21 @@
     <Compile Include="..\mcs\field.cs" />
     <Compile Include="..\mcs\typespec.cs" />
     <Compile Include="..\mcs\visit.cs" />
-    <Compile Include="..\mcs\js-target.cs" />
-    <Compile Include="..\mcs\cxx-target.cs" />
-    <Compile Include="..\mcs\cxx-emit.cs" />
-    <Compile Include="..\mcs\js-emit.cs" />
     <Compile Include="..\mcs\ps-lang.cs" />
-    <Compile Include="..\mcs\ps-parser.cs" />
     <Compile Include="..\mcs\ps-tokenizer.cs" />
     <Compile Include="..\mcs\ps-codegen.cs" />
+    <Compile Include="..\mcs\inliner.cs">
+      <Link>inliner.cs</Link>
+    </Compile>
+    <Compile Include="..\mcs\intrinsics.cs">
+      <Link>intrinsics.cs</Link>
+    </Compile>
+    <Compile Include="..\class\Mono.Security\Mono.Security.Cryptography\CryptoConvert.cs">
+      <Link>CryptoConvert.cs</Link>
+    </Compile>
+    <Compile Include="">
+      <Link></Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup Label="IKVM.Reflection">
     <Compile Include="..\..\external\ikvm\reflect\*.cs">

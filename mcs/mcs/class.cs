@@ -20,8 +20,6 @@ using System.Security.Permissions;
 using System.Text;
 using System.Diagnostics;
 using Mono.CompilerServices.SymbolWriter;
-using Mono.CSharp.JavaScript;
-using Mono.CSharp.Cpp;
 
 #if NET_2_1
 using XmlElement = System.Object;
@@ -379,14 +377,6 @@ namespace Mono.CSharp
 			if (containers != null) {
 				for (int i = 0; i < containers.Count; ++i)
 					containers[i].EmitContainer ();
-			}
-		}
-
-		public virtual void EmitContainerJs (JsEmitContext jec)
-		{
-			if (containers != null) {
-				for (int i = 0; i < containers.Count; ++i)
-					containers[i].EmitContainerJs (jec);
 			}
 		}
 
@@ -2406,64 +2396,6 @@ namespace Mono.CSharp
 				pending.VerifyPendingMethods ();
 		}
 
-		public override void EmitJs (JsEmitContext jec)
-		{
-			ValidateEmit ();
-
-			base.EmitJs (jec);
-
-			int i;
-			MemberCore m;
-			HashSet<MemberCore> emitted = new HashSet<MemberCore> ();
-
-			// Constructors
-			for (i = 0; i < members.Count; i++) {
-				m = members [i];
-				var c = m as Constructor;
-				if (c != null && (c.ModFlags & Modifiers.STATIC) == 0) {
-					c.EmitJs (jec);
-					emitted.Add (c);
-				}
-			}
-
-			// Static constructors
-			for (i = 0; i < members.Count; i++) {
-				m = members [i];
-				var c = m as Constructor;
-				if (c != null && (c.ModFlags & Modifiers.STATIC) != 0) {
-					c.EmitJs (jec);
-					emitted.Add (c);
-				}
-			}
-
-			// Properties
-			for (i = 0; i < members.Count; i++) {
-				m = members [i];
-				if (m is Property) {
-					m.EmitJs (jec);
-					emitted.Add (m);
-				}
-			}
-
-			// Methods
-			for (i = 0; i < members.Count; i++) {
-				m = members [i];
-				if (m is Method) {
-					m.EmitJs (jec);
-					emitted.Add (m);
-				}
-			}
-
-			// Whatever else
-			for (i = 0; i < members.Count; i++) {
-				m = members [i];
-				if (!emitted.Contains(m)) {
-					m.EmitJs (jec);
-				}
-			}
-
-		}
-
 		void CheckAttributeClsCompliance ()
 		{
 			if (!spec.IsAttribute || !IsExposedFromAssembly () || !Compiler.Settings.VerifyClsCompliance || !IsClsComplianceRequired ())
@@ -2487,14 +2419,6 @@ namespace Mono.CSharp
 				return;
 
 			Emit ();
-		}
-
-		public sealed override void EmitContainerJs (JsEmitContext jec)
-		{
-			if ((caching_flags & Flags.CloseTypeCreated) != 0)
-				return;
-			
-			EmitJs (jec);
 		}
 
 		public override void CloseContainer ()
@@ -2940,56 +2864,6 @@ namespace Mono.CSharp
 				}
 			}
 		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			if (!jec.CheckCanEmit (Location))
-				return;
-
-			if (!has_static_constructor && HasStaticFieldInitializer) {
-				var c = DefineDefaultConstructor (true);
-				c.Define ();
-			}
-
-			if (!(this.Parent is NamespaceContainer)) {
-				jec.Report.Error (7075, Location, "JavaScript code generation for nested types not supported.");
-				return;
-			}
-
-
-			Constructor constructor = null;
-
-			foreach (var member in Members) {
-				var c = member as Constructor;
-				if (c != null) {
-					if ((c.ModFlags & Modifiers.STATIC) != 0) {
-						continue;
-					} 
-					if (constructor != null) {
-						jec.Report.Error (7077, c.Location, "JavaScript generation not supported for overloaded constructors");
-						return;
-					}
-					constructor = c;
-				}
-			}
-
-			var nsc = (NamespaceContainer)this.Parent;
-			
-			jec.Buf.Write ("\tvar ", this.MemberName.Name, " = (function () {\n", Location);
-			jec.Buf.Indent ();
-
-			base.EmitJs (jec);
-
-			jec.Buf.Write ("\treturn ", this.MemberName.Name, ";\n");
-
-			jec.Buf.Unindent();
-			jec.Buf.Write ("\t})();\n");
-
-			var nsname = jec.MakeJsNamespaceName(nsc.NS.Name);
-
-			jec.Buf.Write ("\t", nsname, ".", this.MemberName.Name, " = ", this.MemberName.Name, ";\n");
-		}
-
 	}
 
 	public sealed partial class Class : ClassOrStruct
@@ -3178,11 +3052,6 @@ namespace Mono.CSharp
 			if (base_type != null && base_type.HasDynamicElement) {
 				Module.PredefinedAttributes.Dynamic.EmitAttribute (TypeBuilder, base_type, Location);
 			}
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			base.EmitJs (jec);
 		}
 
 		protected override TypeSpec[] ResolveBaseTypes (out FullNamedExpression base_class)
@@ -3497,13 +3366,6 @@ namespace Mono.CSharp
 			CheckStructCycles ();
 
 			base.Emit ();
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			CheckStructCycles ();
-			
-			base.EmitJs (jec);
 		}
 
 		public override bool IsUnmanagedType ()
@@ -4042,13 +3904,6 @@ namespace Mono.CSharp
 			CheckExternImpl ();
 
 			base.Emit ();
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			CheckExternImpl ();
-			
-			base.EmitJs (jec);
 		}
 
 		public override bool EnableOverloadChecks (MemberCore overload)

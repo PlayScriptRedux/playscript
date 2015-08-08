@@ -13,8 +13,6 @@
 
 using System;
 using System.Collections.Generic;
-using Mono.CSharp.JavaScript;
-using Mono.CSharp.Cpp;
 
 #if STATIC
 using IKVM.Reflection.Emit;
@@ -92,17 +90,6 @@ namespace Mono.CSharp {
 			}
 		}
 
-		protected virtual void DoEmitJs (JsEmitContext jec) 
-		{
-			jec.Report.Error (7072, this.loc, "JavaScript code generation for " + this.GetType ().Name + " statement not supported.");
-			jec.Buf.Write ("<<" + this.GetType ().Name + " stmnt>>");
-		}
-
-		public virtual void EmitJs (JsEmitContext jec)
-		{
-			DoEmitJs (jec);
-		}
-
 		//
 		// This routine must be overrided in derived classes and make copies
 		// of all the data that might be modified if resolved
@@ -150,15 +137,6 @@ namespace Mono.CSharp {
 		}
 
 		protected override void DoEmit (EmitContext ec)
-		{
-			throw new NotSupportedException ();
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-		}
-
-		protected override void DoEmitJs (JsEmitContext jec)
 		{
 			throw new NotSupportedException ();
 		}
@@ -298,38 +276,6 @@ namespace Mono.CSharp {
 			}
 		}
 
-		protected override void DoEmitJs (JsEmitContext jec)
-		{
-			//
-			// If we're a boolean constant, Resolve() already
-			// eliminated dead code for us.
-			//
-			Constant c = expr as Constant;
-			if (c != null) {
-
-				if (!c.IsDefaultValue)
-					TrueStatement.EmitJs (jec);
-				else if (FalseStatement != null)
-					FalseStatement.EmitJs (jec);
-				
-				return;
-			}
-
-			jec.Buf.Write ("\tif (", loc);
-			expr.EmitJs (jec);
-			jec.Buf.Write (") ");
-
-			jec.Buf.WriteBlockStatement (TrueStatement);
-
-			if (FalseStatement != null) {
-				jec.Buf.Write (" else ");
-
-				jec.Buf.WriteBlockStatement (FalseStatement);
-			}
-
-			jec.Buf.Write ("\n");
-		}
-
 		protected override void CloneTo (CloneContext clonectx, Statement t)
 		{
 			If target = (If) t;
@@ -440,17 +386,6 @@ namespace Mono.CSharp {
 
 			ec.LoopBegin = old_begin;
 			ec.LoopEnd = old_end;
-		}
-
-		protected override void DoEmitJs (JsEmitContext jec)
-		{
-			jec.Buf.Write ("\tdo ", loc);
-
-			jec.Buf.WriteBlockStatement (EmbeddedStatement);
-
-			jec.Buf.Write (" while (", expr.Location);
-			expr.EmitJs (jec);
-			jec.Buf.Write (");\n");
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Statement t)
@@ -583,29 +518,6 @@ namespace Mono.CSharp {
 
 			ec.LoopBegin = old_begin;
 			ec.LoopEnd = old_end;
-		}
-
-		protected override void DoEmitJs (JsEmitContext jec)
-		{
-			if (empty) {
-				return;
-			}
-			
-			//
-			// Inform whether we are infinite or not
-			//
-			if (expr is Constant) {
-				// expr is 'true', since the 'empty' case above handles the 'false' case
-				jec.Buf.Write ("\twhile (true) ", loc);
-			} else {
-				jec.Buf.Write ("\twhile (", loc);
-				expr.EmitJs (jec);
-				jec.Buf.Write (") ");
-			}	
-
-			jec.Buf.WriteBlockStatement (Statement);
-
-			jec.Buf.Write ("\n");
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Statement t)
@@ -773,29 +685,6 @@ namespace Mono.CSharp {
 			ec.LoopEnd = old_end;
 		}
 
-		protected override void DoEmitJs (JsEmitContext jec)
-		{
-			// NOTE: WE don't optimize for emty loop right now..
-
-			jec.Buf.Write ("\tfor (", loc);
-			jec.PushForceExpr(true);
-			if (Initializer != null)
-				Initializer.EmitJs (jec);
-			jec.Buf.Write ("; ");
-			if (Condition != null)
-				Condition.EmitJs (jec);
-			jec.Buf.Write ("; ");
-			if (Iterator != null)
-				Iterator.EmitJs (jec);
-			jec.Buf.Write (") ");
-			jec.PopForceExpr();
-
-			jec.Buf.WriteBlockStatement (Statement);
-
-			jec.Buf.Write ("\n");
-
-		}
-
 		protected override void CloneTo (CloneContext clonectx, Statement t)
 		{
 			For target = (For) t;
@@ -863,11 +752,6 @@ namespace Mono.CSharp {
 		protected override void DoEmit (EmitContext ec)
 		{
 			expr.EmitStatement (ec);
-		}
-
-		protected override void DoEmitJs (JsEmitContext jec)
-		{
-			expr.EmitStatementJs (jec);
 		}
 
 		public override bool Resolve (BlockContext ec)
@@ -1245,15 +1129,6 @@ namespace Mono.CSharp {
 			}
 		}
 
-		protected override void DoEmitJs (JsEmitContext jec)
-		{
-			if (expr != null) {
-				jec.Buf.Write ("\treturn ", loc);
-				expr.EmitJs (jec);
-				jec.Buf.Write (";\n");
-			}
-		}
-
 		void Error_ReturnFromIterator (ResolveContext rc)
 		{
 			rc.Report.Error (1622, loc,
@@ -1606,13 +1481,6 @@ namespace Mono.CSharp {
 			}
 		}
 
-		protected override void DoEmitJs (JsEmitContext jec)
-		{
-			jec.Buf.Write ("\tthrow ");
-			expr.EmitJs (jec);
-			jec.Buf.Write (";\n");
-		}
-
 		protected override void CloneTo (CloneContext clonectx, Statement t)
 		{
 			Throw target = (Throw) t;
@@ -1659,11 +1527,6 @@ namespace Mono.CSharp {
 			ec.Emit (unwind_protect ? OpCodes.Leave : OpCodes.Br, ec.LoopEnd);
 		}
 
-		protected override void DoEmitJs (JsEmitContext jec)
-		{
-			jec.Buf.Write ( "\tbreak;\n", loc);
-		}
-
 		protected override void CloneTo (CloneContext clonectx, Statement t)
 		{
 			// nothing needed
@@ -1694,11 +1557,6 @@ namespace Mono.CSharp {
 		protected override void DoEmit (EmitContext ec)
 		{
 			ec.Emit (unwind_protect ? OpCodes.Leave : OpCodes.Br, ec.LoopBegin);
-		}
-
-		protected override void DoEmitJs (JsEmitContext jec)
-		{
-			jec.Buf.Write ("\tcontinue;\n", loc);
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Statement t)
@@ -2026,29 +1884,6 @@ namespace Mono.CSharp {
 					}
 				}
 			}
-		}
-
-		protected override void DoEmitJs (JsEmitContext jec)
-		{
-			if (Initializer != null) {
-				jec.Buf.Write ("\tvar ", loc);
-				Initializer.EmitJs (jec);
-			} else {
-				jec.Buf.Write ("\tvar ", Variable.Name, loc);
-			}
-
-			if (declarators != null) {
-				foreach (var d in declarators) {
-					jec.Buf.Write (", ");
-					if (d.Initializer != null) {
-						d.Initializer.EmitJs (jec);
-					} else {
-						jec.Buf.Write (d.Variable.Name);
-					}
-				}
-			}
-
-			jec.Buf.Write (";\n");
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Statement target)
@@ -2866,55 +2701,6 @@ namespace Mono.CSharp {
 				EmitScopeInitializers (ec);
 
 			DoEmit (ec);
-		}
-
-		public void EmitBlockJs (JsEmitContext jec, bool as_statement = true, bool no_braces = false)
-		{
-			if (as_statement && statements.Count == 0 && 
-			    (scope_initializers == null || scope_initializers.Count == 0))
-				return;
-
-			if (!no_braces) {
-				if (as_statement) {
-					jec.Buf.Write ("\t{\n");
-				} else {
-					jec.Buf.Write ("{\n");
-				}
-				jec.Buf.Indent ();
-			}
-
-			if (scope_initializers != null)
-				EmitScopeInitializersJs (jec);
-
-			for (int ix = 0; ix < statements.Count; ix++) {
-				statements [ix].EmitJs (jec);
-			}
-			
-			if (!no_braces) {
-				jec.Buf.Unindent ();
-				if (as_statement) {
-					jec.Buf.Write ("\t}\n");
-				} else {
-					jec.Buf.Write ("\t}");
-				}
-			}
-		}
-
-		protected override void DoEmitJs (JsEmitContext jec)
-		{
-			EmitBlockJs (jec);
-
-		}
-		
-		public override void EmitJs (JsEmitContext jec)
-		{
-			DoEmitJs (jec);
-		}
-
-		protected void EmitScopeInitializersJs (JsEmitContext jec)
-		{
-			foreach (Statement s in scope_initializers)
-				s.EmitJs (jec);
 		}
 
 		protected void EmitScopeInitializers (EmitContext ec)
@@ -4295,28 +4081,6 @@ namespace Mono.CSharp {
 				throw new InternalErrorException (e, StartLocation);
 			}
 		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			if (Report.Errors > 0)
-				return;
-			
-#if PRODUCTION
-			try {
-#endif
-
-				base.EmitJs (jec);
-
-#if PRODUCTION
-			} catch (Exception e){
-				Console.WriteLine ("Exception caught by the compiler while emitting:");
-				Console.WriteLine ("   Block that caused the problem begin at: " + block.loc);
-				
-				Console.WriteLine (e.GetType ().FullName + ": " + e.Message);
-				throw;
-			}
-#endif
-		}
 	}
 	
 	public class SwitchLabel : Statement
@@ -5293,34 +5057,6 @@ namespace Mono.CSharp {
 			//
 			ec.LoopEnd = old_end;
 			ec.Switch = old_switch;
-		}
-
-		protected override void DoEmitJs (JsEmitContext jec)
-		{
-			// FIXME: Switch has changed..
-			base.DoEmitJs (jec);
-//			jec.Buf.Write ("\tswitch (", loc);
-//			Expr.EmitJs (jec);
-//			jec.Buf.Write (") {\n");
-//			jec.Buf.Indent ();
-//
-//			foreach (var section in Sections) {
-//				foreach (var label in section.Labels) {
-//					if (label.IsDefault) {
-//						jec.Buf.Write ("\tdefault:\n", label.Location);
-//					} else {
-//						jec.Buf.Write ("\tcase ", label.Location);
-//						label.Label.EmitJs (jec);
-//						jec.Buf.Write (":\n");
-//					}
-//				}
-//				jec.Buf.Indent ();
-//				section.Block.EmitBlockJs (jec, true, true);
-//				jec.Buf.Unindent ();
-//			}
-//
-//			jec.Buf.Unindent ();
-//			jec.Buf.Write ("\t}\n");
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Statement t)

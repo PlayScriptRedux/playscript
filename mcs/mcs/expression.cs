@@ -14,8 +14,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using SLE = System.Linq.Expressions;
-using Mono.CSharp.JavaScript;
-using Mono.CSharp.Cpp;
 
 #if STATIC
 using MetaType = IKVM.Reflection.Type;
@@ -555,18 +553,6 @@ namespace Mono.CSharp
 		public override void Emit (EmitContext ec)
 		{
 			EmitOperator (ec, type);
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			bool needsParen = jec.NeedParens (this, Expr);
-
-			jec.Buf.Write (OperName (Oper), Location);
-			if (needsParen)
-				jec.Buf.Write ("(");
-			Expr.EmitJs (jec);
-			if (needsParen)
-				jec.Buf.Write (")");
 		}
 
 		protected void EmitOperator (EmitContext ec, TypeSpec type)
@@ -1355,35 +1341,6 @@ namespace Mono.CSharp
 		public override void EmitStatement (EmitContext ec)
 		{
 			EmitCode (ec, false);
-		}
-
-		private void EmitOpJs (JsEmitContext jec)
-		{
-			if (mode == Mode.PreIncrement)
-				jec.Buf.Write ("++", Location);
-			else if (mode == Mode.PreDecrement)
-				jec.Buf.Write ("--", Location);
-
-			// NOTE: TODO - Add parentheses if child op precedence is lower.
-
-			Expr.EmitJs (jec);
-
-			if (mode == Mode.PostIncrement)
-				jec.Buf.Write ("++");
-			else if (mode == Mode.PostDecrement)
-				jec.Buf.Write ("--");
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			EmitOpJs (jec);
-		}
-
-		public override void EmitStatementJs (JsEmitContext jec)
-		{
-			jec.Buf.Write ("\t", Location);
-			EmitOpJs (jec);
-			jec.Buf.Write (";\n");
 		}
 
 		//
@@ -3721,110 +3678,108 @@ namespace Mono.CSharp
 
 			// Handle PlayScript binary operators that need to be converted to methods.
 			if (isPlayScript) {
-				if (ec.Target != Target.JavaScript) {
-					//
-					// Delegate math operations involving null or undefined to the dynamic runtime
-					// to avoid using nullable types (which do not work the way we want)
-					//
-					if ((oper & Operator.ArithmeticMask) != 0) {
-						var args = new Arguments(2);
-						args.Add (new Argument (left));
-						args.Add (new Argument (right));
-						if (left.Type.IsNumeric && PsIsNullOrUndefined (ec, right))
-							return new DynamicBinaryExpression (oper, this.GetOperatorExpressionTypeName (), args, loc).Resolve (ec);
-						else if (right.Type.IsNumeric && PsIsNullOrUndefined (ec, left))
-							return new DynamicBinaryExpression (oper, this.GetOperatorExpressionTypeName (), args, loc).Resolve (ec);
-					}
+				//
+				// Delegate math operations involving null or undefined to the dynamic runtime
+				// to avoid using nullable types (which do not work the way we want)
+				//
+				if ((oper & Operator.ArithmeticMask) != 0) {
+					var args = new Arguments(2);
+					args.Add (new Argument (left));
+					args.Add (new Argument (right));
+					if (left.Type.IsNumeric && PsIsNullOrUndefined (ec, right))
+						return new DynamicBinaryExpression (oper, this.GetOperatorExpressionTypeName (), args, loc).Resolve (ec);
+					else if (right.Type.IsNumeric && PsIsNullOrUndefined (ec, left))
+						return new DynamicBinaryExpression (oper, this.GetOperatorExpressionTypeName (), args, loc).Resolve (ec);
+				}
 
-					//
-					// Restrict math operations to numeric types
-					//
-					if ((oper & (Operator.BitwiseMask | Operator.ArithmeticMask | Operator.ShiftMask)) != 0 && oper != Operator.Addition) {
-						if (!(left.Type.IsNumeric || left.Type.IsAsUntyped) || !(right.Type.IsNumeric || right.Type.IsAsUntyped)) {
-							Error_OperatorCannotBeApplied (ec, left, right, oper, loc);
-							return null;
-						}
+				//
+				// Restrict math operations to numeric types
+				//
+				if ((oper & (Operator.BitwiseMask | Operator.ArithmeticMask | Operator.ShiftMask)) != 0 && oper != Operator.Addition) {
+					if (!(left.Type.IsNumeric || left.Type.IsAsUntyped) || !(right.Type.IsNumeric || right.Type.IsAsUntyped)) {
+						Error_OperatorCannotBeApplied (ec, left, right, oper, loc);
+						return null;
 					}
+				}
 
-					//
-					// PlayScript supports comparison between objects other than numeric types
-					// and strings.
-					//
-					if ((oper & Operator.ComparisonMask) != 0 && (oper & Operator.EqualityMask) == 0) {
-						if ((!BuiltinTypeSpec.IsPrimitiveType (left.Type) || !BuiltinTypeSpec.IsPrimitiveType (right.Type)) &&
-							!(left.Type.BuiltinType == BuiltinTypeSpec.Type.String && right.Type.BuiltinType == BuiltinTypeSpec.Type.String)) {
-							var args = new Arguments (2);
-							args.Add (new Argument (left));
-							args.Add (new Argument (right));
-							return new DynamicBinaryExpression (oper, this.GetOperatorExpressionTypeName (), args, loc).Resolve (ec);
-						}
-					}
-
-					//
-					// Delegate to PlayScript.Dynamic.IsNullOrUndefined where possible
-					//
-					if (Oper == Operator.Equality || Oper == Operator.Inequality) {
-						if (left.Type.IsDynamic && PsIsNullOrUndefined (ec, right))
-							return PsMakeIsNullOrUndefinedExpression (ec, left).Resolve (ec);
-						else if (right.Type.IsDynamic && PsIsNullOrUndefined (ec, left))
-							return PsMakeIsNullOrUndefinedExpression (ec, right).Resolve (ec);
-					}
-
-					if ((typeHint != ec.BuiltinTypes.Bool) && (oper == Operator.LogicalOr || oper == Operator.LogicalAnd) && 
-						(left.Type.BuiltinType != BuiltinTypeSpec.Type.Bool || right.Type.BuiltinType != Mono.CSharp.BuiltinTypeSpec.Type.Bool)) {
-						Expression leftExpr = left;
-						Expression rightExpr = right;
-						if (left.Type != right.Type) {
-							leftExpr = new Cast (new TypeExpression(ec.BuiltinTypes.AsUntyped, loc), left, loc);
-							rightExpr = new Cast (new TypeExpression(ec.BuiltinTypes.AsUntyped, loc), right, loc);
-						}
-						if (oper == Operator.LogicalOr) {
-							return new Conditional (new Cast(new TypeExpression(ec.BuiltinTypes.Bool, loc), left, loc), leftExpr, rightExpr, loc).Resolve (ec);
-						} else {
-							return new Conditional (new Unary(Unary.Operator.LogicalNot, 
-								new Cast(new TypeExpression(ec.BuiltinTypes.Bool, loc), left, loc), loc), leftExpr, rightExpr, loc).Resolve (ec);
-						}
-					} else if (oper == Operator.AsStrictEquality || oper == Operator.AsStrictInequality) {
-						// The rules for strict equality are somewhat complicated, so we let the
-						// dynamic runtime handle it.
-						var args = new Arguments(2);
+				//
+				// PlayScript supports comparison between objects other than numeric types
+				// and strings.
+				//
+				if ((oper & Operator.ComparisonMask) != 0 && (oper & Operator.EqualityMask) == 0) {
+					if ((!BuiltinTypeSpec.IsPrimitiveType (left.Type) || !BuiltinTypeSpec.IsPrimitiveType (right.Type)) &&
+						!(left.Type.BuiltinType == BuiltinTypeSpec.Type.String && right.Type.BuiltinType == BuiltinTypeSpec.Type.String)) {
+						var args = new Arguments (2);
 						args.Add (new Argument (left));
 						args.Add (new Argument (right));
 						return new DynamicBinaryExpression (oper, this.GetOperatorExpressionTypeName (), args, loc).Resolve (ec);
-					} else if (left.Type == ec.Module.PredefinedTypes.AsUndefined.Resolve () ||
-						right.Type == ec.Module.PredefinedTypes.AsUndefined.Resolve ()) {
-						// The undefined keyword has special behavior, so we let the dynamic
-						// runtime handle it.
-						var args = new Arguments(2);
-						args.Add (new Argument (left));
-						args.Add (new Argument (right));
-						return new DynamicBinaryExpression (oper, this.GetOperatorExpressionTypeName (), args, loc).Resolve (ec);
-					} else if (oper == Operator.AsURightShift) {
-						var bi_type = left.Type.BuiltinType;
-						if (bi_type == BuiltinTypeSpec.Type.SByte) {
-							return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.Byte, ec), right).Resolve (ec);
-						} else if (bi_type == BuiltinTypeSpec.Type.Short) {
-							return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.UShort, ec), right).Resolve (ec);
-						} else if (bi_type == BuiltinTypeSpec.Type.Int) {
-							return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.UInt, ec), right).Resolve (ec);
-						} else if (bi_type == BuiltinTypeSpec.Type.Long) {
-							return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.ULong, ec), right).Resolve (ec);
-						} else if (bi_type == BuiltinTypeSpec.Type.Float) {
-							return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.UInt, ec), right).Resolve (ec);
-						} else if (bi_type == BuiltinTypeSpec.Type.Double) {
-							return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.UInt, ec), right).Resolve (ec);
-						}
-					} else if (left.Type.BuiltinType == BuiltinTypeSpec.Type.String) {
-						if (oper == Operator.LessThan || oper == Operator.GreaterThan || oper == Operator.LessThanOrEqual || oper == Operator.GreaterThanOrEqual) {
-							// Implement string comparisons
-							return new Binary(oper, MakeStringComparison (ec).Resolve (ec), new IntLiteral(ec.BuiltinTypes, 0, loc)).Resolve (ec);
-						}
-					} else if (Oper == Operator.Division && right.Type != ec.BuiltinTypes.Double && right.Type != ec.BuiltinTypes.Float) {
-
-						// In PlayScript division always results in a double.
-						left = new Cast(new TypeExpression(ec.BuiltinTypes.Double, loc), left, loc).Resolve (ec);
-						right = new Cast(new TypeExpression(ec.BuiltinTypes.Double, loc), right, loc).Resolve (ec);
 					}
+				}
+
+				//
+				// Delegate to PlayScript.Dynamic.IsNullOrUndefined where possible
+				//
+				if (Oper == Operator.Equality || Oper == Operator.Inequality) {
+					if (left.Type.IsDynamic && PsIsNullOrUndefined (ec, right))
+						return PsMakeIsNullOrUndefinedExpression (ec, left).Resolve (ec);
+					else if (right.Type.IsDynamic && PsIsNullOrUndefined (ec, left))
+						return PsMakeIsNullOrUndefinedExpression (ec, right).Resolve (ec);
+				}
+
+				if ((typeHint != ec.BuiltinTypes.Bool) && (oper == Operator.LogicalOr || oper == Operator.LogicalAnd) && 
+					(left.Type.BuiltinType != BuiltinTypeSpec.Type.Bool || right.Type.BuiltinType != Mono.CSharp.BuiltinTypeSpec.Type.Bool)) {
+					Expression leftExpr = left;
+					Expression rightExpr = right;
+					if (left.Type != right.Type) {
+						leftExpr = new Cast (new TypeExpression(ec.BuiltinTypes.AsUntyped, loc), left, loc);
+						rightExpr = new Cast (new TypeExpression(ec.BuiltinTypes.AsUntyped, loc), right, loc);
+					}
+					if (oper == Operator.LogicalOr) {
+						return new Conditional (new Cast(new TypeExpression(ec.BuiltinTypes.Bool, loc), left, loc), leftExpr, rightExpr, loc).Resolve (ec);
+					} else {
+						return new Conditional (new Unary(Unary.Operator.LogicalNot, 
+							new Cast(new TypeExpression(ec.BuiltinTypes.Bool, loc), left, loc), loc), leftExpr, rightExpr, loc).Resolve (ec);
+					}
+				} else if (oper == Operator.AsStrictEquality || oper == Operator.AsStrictInequality) {
+					// The rules for strict equality are somewhat complicated, so we let the
+					// dynamic runtime handle it.
+					var args = new Arguments(2);
+					args.Add (new Argument (left));
+					args.Add (new Argument (right));
+					return new DynamicBinaryExpression (oper, this.GetOperatorExpressionTypeName (), args, loc).Resolve (ec);
+				} else if (left.Type == ec.Module.PredefinedTypes.AsUndefined.Resolve () ||
+					right.Type == ec.Module.PredefinedTypes.AsUndefined.Resolve ()) {
+					// The undefined keyword has special behavior, so we let the dynamic
+					// runtime handle it.
+					var args = new Arguments(2);
+					args.Add (new Argument (left));
+					args.Add (new Argument (right));
+					return new DynamicBinaryExpression (oper, this.GetOperatorExpressionTypeName (), args, loc).Resolve (ec);
+				} else if (oper == Operator.AsURightShift) {
+					var bi_type = left.Type.BuiltinType;
+					if (bi_type == BuiltinTypeSpec.Type.SByte) {
+						return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.Byte, ec), right).Resolve (ec);
+					} else if (bi_type == BuiltinTypeSpec.Type.Short) {
+						return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.UShort, ec), right).Resolve (ec);
+					} else if (bi_type == BuiltinTypeSpec.Type.Int) {
+						return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.UInt, ec), right).Resolve (ec);
+					} else if (bi_type == BuiltinTypeSpec.Type.Long) {
+						return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.ULong, ec), right).Resolve (ec);
+					} else if (bi_type == BuiltinTypeSpec.Type.Float) {
+						return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.UInt, ec), right).Resolve (ec);
+					} else if (bi_type == BuiltinTypeSpec.Type.Double) {
+						return new Binary(Binary.Operator.RightShift, EmptyCast.Create (left, ec.BuiltinTypes.UInt, ec), right).Resolve (ec);
+					}
+				} else if (left.Type.BuiltinType == BuiltinTypeSpec.Type.String) {
+					if (oper == Operator.LessThan || oper == Operator.GreaterThan || oper == Operator.LessThanOrEqual || oper == Operator.GreaterThanOrEqual) {
+						// Implement string comparisons
+						return new Binary(oper, MakeStringComparison (ec).Resolve (ec), new IntLiteral(ec.BuiltinTypes, 0, loc)).Resolve (ec);
+					}
+				} else if (Oper == Operator.Division && right.Type != ec.BuiltinTypes.Double && right.Type != ec.BuiltinTypes.Float) {
+
+					// In PlayScript division always results in a double.
+					left = new Cast(new TypeExpression(ec.BuiltinTypes.Double, loc), left, loc).Resolve (ec);
+					right = new Cast(new TypeExpression(ec.BuiltinTypes.Double, loc), right, loc).Resolve (ec);
 				}
 
 				//
@@ -5259,24 +5214,6 @@ namespace Mono.CSharp
 			return base.EmitToField (ec);
 		}
 
-		public override void EmitJs (JsEmitContext jec)
-		{
-			var leftParens = jec.NeedParens(this, Left);
-			var rightParens = jec.NeedParens(this, Right);
-
-			if (leftParens)
-				jec.Buf.Write ("(", Location);
-			Left.EmitJs (jec);
-			if (leftParens)
-				jec.Buf.Write (")");
-			jec.Buf.Write (" " + this.OperName (oper) + " ");
-			if (rightParens)
-				jec.Buf.Write ("(", Location);
-			Right.EmitJs (jec);
-			if (rightParens)
-				jec.Buf.Write (")");
-		}
-
 		protected override void CloneTo (CloneContext clonectx, Expression t)
 		{
 			Binary target = (Binary) t;
@@ -5550,18 +5487,6 @@ namespace Mono.CSharp
 			if (method != null) {
 				var call = new CallEmitter ();
 				call.EmitPredefined (ec, method, arguments);
-			}
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			bool first = true;
-			foreach (var a in arguments) {
-				if (!first) {
-					jec.Buf.Write (" + ");
-				}
-				a.Expr.EmitJs (jec);
-				first = false;
 			}
 		}
 
@@ -6227,39 +6152,6 @@ namespace Mono.CSharp
 			ec.MarkLabel (end_target);
 		}
 
-		public override void EmitJs (JsEmitContext jec)
-		{
-			bool test_parens = jec.NeedParens (this, expr);
-			bool true_parens = jec.NeedParens (this, true_expr);
-			bool false_parens = jec.NeedParens (this, false_expr);
-
-			if (test_parens) {
-				jec.Buf.Write ("(");
-				expr.EmitJs (jec);
-				jec.Buf.Write (") ? ");
-			} else {
-				expr.EmitJs (jec);
-				jec.Buf.Write (" ? ");
-			}
-
-			if (true_parens) {
-				jec.Buf.Write ("(");
-				true_expr.EmitJs (jec);
-				jec.Buf.Write (") : ");
-			} else {
-				true_expr.EmitJs (jec);
-				jec.Buf.Write (" : ");
-			}
-
-			if (false_parens) {
-				jec.Buf.Write ("(");
-				false_expr.EmitJs (jec);
-				jec.Buf.Write (")");
-			} else {
-				false_expr.EmitJs (jec);
-			}
-		}
-
 		protected override void CloneTo (CloneContext clonectx, Expression t)
 		{
 			Conditional target = (Conditional) t;
@@ -6436,11 +6328,6 @@ namespace Mono.CSharp
 			}
 
 			return base.EmitToField (ec);
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			jec.Buf.Write (Name, Location);
 		}
 
 		public HoistedVariable GetHoistedVariable (ResolveContext rc)
@@ -6953,16 +6840,6 @@ namespace Mono.CSharp
 
 			var atn = expr as ATypeNameExpression;
 
-			// Handle inline javascript/cpp code.
-			if (ec.Target == Target.JavaScript && expr is SimpleName && ((SimpleName)expr).Name == "__js__" && 
-				arguments.Count == 1 && arguments[0].Expr is StringLiteral) {
-				return this;
-			}
-			if (ec.Target == Target.Cpp && expr is SimpleName && ((SimpleName)expr).Name == "__cpp__" && 
-				arguments.Count == 1 && arguments[0].Expr is StringLiteral) {
-				return this;
-			}
-
 			// Handle special casts for dynamic types..
 			if (isPlayScript && arguments != null && arguments.Count == 1) {
 
@@ -7277,34 +7154,6 @@ namespace Mono.CSharp
 			//
 			if (type.Kind != MemberKind.Void)
 				ec.Emit (OpCodes.Pop);
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			// Write JS literal code for __js__() invocation.
-			if (expr is SimpleName && ((SimpleName)expr).Name == "__js__" && 
-				arguments.Count == 1 && arguments[0].Expr is StringLiteral) {
-				jec.Buf.Write (((StringLiteral)arguments[0].Expr).Value);
-				return;
-			}
-
-			if (expr != null) {
-				if (mg.IsStatic && expr is TypeExpr) {
-					jec.Buf.Write (jec.MakeJsFullTypeName(((TypeExpr)expr).Type), ".", Location);
-				} else {
-					expr.EmitJs (jec);
-				}
-			}
-			mg.EmitCallJs (jec, arguments);
-		}
-
-		public override void EmitStatementJs (JsEmitContext jec)
-		{
-			jec.Buf.Write ("\t", Location);
-
-			EmitJs (jec);
-
-			jec.Buf.Write (";\n");
 		}
 
 		public override SLE.Expression MakeExpression (BuilderContext ctx)
@@ -7741,24 +7590,6 @@ namespace Mono.CSharp
 
 			if (Emit (ec, v))
 				ec.Emit (OpCodes.Pop);
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			var ns = jec.MakeJsNamespaceName(Type.MemberDefinition.Namespace);
-			var typeName = jec.MakeJsTypeName(Type.Name);
-
-			jec.Buf.Write("new ",ns,".",typeName,"(", Location);
-			if (arguments != null)
-				arguments.EmitJs (jec);
-			jec.Buf.Write(")");
-		}
-
-		public override void EmitStatementJs (JsEmitContext jec)
-		{
-			jec.Buf.Write ("\t", Location);
-			EmitJs (jec);
-			jec.Buf.Write (";\n");
 		}
 
 		public void AddressOf (EmitContext ec, AddressOp mode)
@@ -10416,13 +10247,6 @@ namespace Mono.CSharp
 			target.expr = expr.Clone (clonectx);
 		}
 
-		public override void EmitJs (JsEmitContext jec)
-		{
-			expr.EmitJs (jec);
-			jec.Buf.Write (".");
-			jec.Buf.Write (Name);
-		}
-		
 		public override object Accept (StructuralVisitor visitor)
 		{
 			var ret = visitor.Visit (this);
@@ -11166,20 +10990,6 @@ namespace Mono.CSharp
 			if (await_source_arg != null) {
 				await_source_arg.Release (ec);
 			}
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			InstanceExpression.EmitJs (jec);
-			jec.Buf.Write ("[");
-			bool first = true;
-			foreach (var arg in arguments) {
-				if (!first)
-					jec.Buf.Write (", ");
-				arg.Expr.EmitJs (jec);
-				first = false;
-			}
-			jec.Buf.Write ("]");
 		}
 
 		public override string GetSignatureForError ()

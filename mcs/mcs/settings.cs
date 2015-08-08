@@ -42,7 +42,7 @@ namespace Mono.CSharp {
 
 	public enum Target
 	{
-		Library = 1, Exe = 2, Module = 4, WinExe = 8, JavaScript = 16, Cpp = 32, 
+		Library = 1, Exe = 2, Module = 4, WinExe = 8,
 		IsTextTarget = 48
 	}
 
@@ -835,22 +835,8 @@ namespace Mono.CSharp {
 					settings.TargetExt = ".netmodule";
 					break;
 
-				case "javascript":
-					settings.Target = Target.JavaScript;
-					settings.TargetExt = ".js";
-					settings.AddConditionalSymbol ("TARGET_JS");
-					is_dotnet = false;
-					break;
-
-				case "cpp":
-					settings.Target = Target.Cpp;
-					settings.TargetExt = ".cpp";
-					settings.AddConditionalSymbol ("TARGET_CPP");
-					is_dotnet = false;
-					break;
-
 				default:
-					report.Error (2019, "Invalid target type for -target. Valid options are `exe', `winexe', `library', `module', `javascript' or `cpp'");
+					report.Error (2019, "Invalid target type for -target. Valid options are `exe', `winexe', `library', `module'");
 					return ParseResult.Error;
 				}
 				if (is_dotnet) {

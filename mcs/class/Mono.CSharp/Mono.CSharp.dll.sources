@@ -16,8 +16,6 @@
 ../../mcs/constant.cs
 ../../mcs/convert.cs
 ../../mcs/context.cs
-../../mcs/cxx-emit.cs
-../../mcs/cxx-target.cs
 ../../mcs/decl.cs
 ../../mcs/delegate.cs
 ../../mcs/doc.cs
@@ -34,8 +32,6 @@
 ../../mcs/inliner.cs
 ../../mcs/intrinsics.cs
 ../../mcs/iterators.cs
-../../mcs/js-emit.cs
-../../mcs/js-target.cs
 ../../mcs/lambda.cs
 ../../mcs/linq.cs
 ../../mcs/literal.cs
