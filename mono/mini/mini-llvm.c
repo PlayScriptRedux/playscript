@@ -4709,6 +4709,8 @@ exception_cb (void *data)
 	 * with it.
 	 */
 	cfg->encoded_unwind_ops = mono_unwind_decode_fde ((guint8*)data, &cfg->encoded_unwind_ops_len, NULL, &ei, &ei_len, &type_info, &this_reg, &this_offset);
+	if (cfg->verbose_level > 1)
+		mono_print_unwind_info (cfg->encoded_unwind_ops, cfg->encoded_unwind_ops_len);
 
 	/* Count nested clauses */
 	nested_len = 0;
@@ -4886,6 +4888,7 @@ add_intrinsics (LLVMModuleRef module)
 	}
 
 	/* SSE intrinsics */
+#if defined(TARGET_X86) || defined(TARGET_AMD64)
 	{
 		LLVMTypeRef ret_type, arg_types [16];
 
@@ -5030,6 +5033,7 @@ add_intrinsics (LLVMModuleRef module)
 	}
 
 	AddFunc (module, "llvm.x86.sse2.pause", LLVMVoidType (), NULL, 0);
+#endif
 
 	/* Load/Store intrinsics */
 	{

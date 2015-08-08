@@ -394,7 +394,7 @@ mono_arch_find_jit_info (MonoDomain *domain, MonoJitTlsData *jit_tls,
 
 	if (ji != NULL) {
 		int i;
-		gssize regs [MONO_MAX_IREGS + 1];
+		gssize regs [MONO_MAX_IREGS + 1 + 8];
 		guint8 *cfa;
 		guint32 unwind_info_len;
 		guint8 *unwind_info;
@@ -406,18 +406,32 @@ mono_arch_find_jit_info (MonoDomain *domain, MonoJitTlsData *jit_tls,
 		else
 			unwind_info = mono_get_cached_unwind_info (ji->used_regs, &unwind_info_len);
 
+		/*
+		printf ("%s %p %p\n", ji->d.method->name, ji->code_start, ip);
+		mono_print_unwind_info (unwind_info, unwind_info_len);
+		*/
+
 		for (i = 0; i < 16; ++i)
 			regs [i] = new_ctx->regs [i];
+#ifdef TARGET_IOS
+		/* On IOS, d8..d15 are callee saved. They are mapped to 8..15 in unwind.c */
+		for (i = 0; i < 8; ++i)
+			regs [MONO_MAX_IREGS + i] = new_ctx->fregs [8 + i];
+#endif
 
 		mono_unwind_frame (unwind_info, unwind_info_len, ji->code_start, 
 						   (guint8*)ji->code_start + ji->code_size,
-						   ip, regs, MONO_MAX_IREGS,
+						   ip, regs, MONO_MAX_IREGS + 8,
 						   save_locations, MONO_MAX_IREGS, &cfa);
 
 		for (i = 0; i < 16; ++i)
 			new_ctx->regs [i] = regs [i];
 		new_ctx->pc = regs [ARMREG_LR];
 		new_ctx->regs [ARMREG_SP] = (gsize)cfa;
+#ifdef TARGET_IOS
+		for (i = 0; i < 8; ++i)
+			new_ctx->fregs [8 + i] = regs [MONO_MAX_IREGS + i];
+#endif
 
 		if (*lmf && (MONO_CONTEXT_GET_SP (ctx) >= (gpointer)(*lmf)->sp)) {
 			/* remove any unused lmf */
