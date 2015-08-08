@@ -6,7 +6,6 @@ mono_exit=0
 
 ./CI/play.${TRAVIS_OS_NAME}.build.small.i386.sh
 build_exit=$?
-build_exit=0
 if [ $build_exit -eq 0 ]
 then
   echo "Build passed, running regressions"
