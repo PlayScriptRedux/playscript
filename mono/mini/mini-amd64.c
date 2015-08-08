@@ -1204,15 +1204,16 @@ mono_arch_get_argument_info (MonoGenericSharingContext *gsctx, MonoMethodSignatu
 }
 
 gboolean
-mono_amd64_tail_call_supported (MonoMethodSignature *caller_sig, MonoMethodSignature *callee_sig)
+mono_arch_tail_call_supported (MonoMethodSignature *caller_sig, MonoMethodSignature *callee_sig)
 {
 	CallInfo *c1, *c2;
 	gboolean res;
+	MonoType *callee_ret;
 
 	c1 = get_call_info (NULL, NULL, caller_sig);
 	c2 = get_call_info (NULL, NULL, callee_sig);
 	res = c1->stack_usage >= c2->stack_usage;
-	MonoType *callee_ret = callee_sig->ret;
+	callee_ret = callee_sig->ret;
 	if (callee_ret && MONO_TYPE_ISSTRUCT (callee_ret) && c2->ret.storage != ArgValuetypeInReg)
 		/* An address on the callee's stack is passed as the first argument */
 		res = FALSE;
@@ -2446,7 +2447,7 @@ mono_arch_emit_call (MonoCompile *cfg, MonoCallInst *call)
 	}
 
 #ifdef HOST_WIN32
-	if (call->inst.opcode != OP_JMP && OP_TAILCALL != call->inst.opcode) {
+	if (call->inst.opcode != OP_TAILCALL) {
 		MONO_EMIT_NEW_BIALU_IMM (cfg, OP_SUB_IMM, X86_ESP, X86_ESP, 0x20);
 	}
 #endif
@@ -3642,6 +3643,39 @@ mono_amd64_emit_tls_get (guint8* code, int dreg, int tls_offset)
 		x86_prefix (code, X86_FS_PREFIX);
 		amd64_mov_reg_mem (code, dreg, tls_offset, 8);
 	}
+#endif
+	return code;
+}
+
+static guint8*
+emit_tls_get_reg (guint8* code, int dreg, int offset_reg)
+{
+#ifdef TARGET_OSX
+	// FIXME: tls_gs_offset can change too, do these when calculating the tls offset
+	if (dreg != offset_reg)
+		amd64_mov_reg_reg (code, dreg, offset_reg, sizeof (gpointer));
+	amd64_shift_reg_imm (code, X86_SHL, dreg, 3);
+	if (tls_gs_offset)
+		amd64_alu_reg_imm (code, X86_ADD, dreg, tls_gs_offset);
+	x86_prefix (code, X86_GS_PREFIX);
+	amd64_mov_reg_membase (code, dreg, dreg, 0, sizeof (gpointer));
+#elif defined(__linux__)
+	int tmpreg = -1;
+
+	if (dreg == offset_reg) {
+		/* Use a temporary reg by saving it to the redzone */
+		tmpreg = dreg == AMD64_RAX ? AMD64_RCX : AMD64_RAX;
+		amd64_mov_membase_reg (code, AMD64_RSP, -8, tmpreg, 8);
+		amd64_mov_reg_reg (code, tmpreg, offset_reg, sizeof (gpointer));
+		offset_reg = tmpreg;
+	}
+	x86_prefix (code, X86_FS_PREFIX);
+	amd64_mov_reg_mem (code, dreg, 0, 8);
+	amd64_mov_reg_memindex (code, dreg, dreg, 0, offset_reg, 0, 8);
+	if (tmpreg != -1)
+		amd64_mov_reg_membase (code, tmpreg, AMD64_RSP, -8, 8);
+#else
+	g_assert_not_reached ();
 #endif
 	return code;
 }
@@ -5573,18 +5607,8 @@ mono_arch_output_basic_block (MonoCompile *cfg, MonoBasicBlock *bb)
 			break;
 		}
 		case OP_TLS_GET_REG:
-#ifdef TARGET_OSX
-			// FIXME: tls_gs_offset can change too, do these when calculating the tls offset
-			if (ins->dreg != ins->sreg1)
-				amd64_mov_reg_reg (code, ins->dreg, ins->sreg1, sizeof (gpointer));
-			amd64_shift_reg_imm (code, X86_SHL, ins->dreg, 3);
-			if (tls_gs_offset)
-				amd64_alu_reg_imm (code, X86_ADD, ins->dreg, tls_gs_offset);
-			x86_prefix (code, X86_GS_PREFIX);
-			amd64_mov_reg_membase (code, ins->dreg, ins->dreg, 0, sizeof (gpointer));
-#else
-			g_assert_not_reached ();
-#endif
+			code = emit_tls_get_reg (code, ins->dreg, ins->sreg1);
+			break;
 			break;
 		case OP_MEMORY_BARRIER: {
 			switch (ins->backend.memory_barrier_kind) {
@@ -7150,7 +7174,7 @@ mono_arch_emit_epilog (MonoCompile *cfg)
 	if (mono_jit_trace_calls != NULL && mono_trace_eval (method))
 		code = mono_arch_instrument_epilog (cfg, mono_trace_leave_method, code, TRUE);
 
-	/* the code restoring the registers must be kept in sync with OP_JMP */
+	/* the code restoring the registers must be kept in sync with OP_TAILCALL */
 	pos = 0;
 	
 	if (method->save_lmf) {

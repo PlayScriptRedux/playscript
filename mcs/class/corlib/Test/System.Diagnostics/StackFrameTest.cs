@@ -42,6 +42,7 @@ namespace MonoTests.System.Diagnostics
 		///   Tests whether getting file name works.
 		/// </summary>
 		[Test]
+		[Category("LLVMNotWorking")]
 		public void TestGetFileName ()
 		{
 			Assert.AreEqual ("dir/someFile",
@@ -57,6 +58,7 @@ namespace MonoTests.System.Diagnostics
 		/// Tests whether getting file line number works.
 		/// </summary>
 		[Test]
+		[Category("LLVMNotWorking")]
 		public void TestGetFileLineNumber ()
 		{
 			Assert.AreEqual (13,
@@ -170,7 +172,7 @@ namespace MonoTests.System.Diagnostics
 							 frame1.GetFileLineNumber (),
 							 "Line number (1)");
 
-			Assert.AreEqual (132,
+			Assert.AreEqual (134,
 							 frame2.GetFileLineNumber (),
 							 "Line number (2)");
 
@@ -305,7 +307,7 @@ namespace MonoTests.System.Diagnostics
 							 frame1.GetFileLineNumber (),
 							 "Line number (1)");
 
-			Assert.AreEqual (260,
+			Assert.AreEqual (262,
 							 frame2.GetFileLineNumber (),
 							 "Line number (2)");
 		}
