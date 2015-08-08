@@ -1800,7 +1800,7 @@ namespace Mono.CSharp {
 			return false;
 		}
 
-		TypeParameterInflator CreateLocalInflator (IModuleContext context)
+		public TypeParameterInflator CreateLocalInflator (IModuleContext context)
 		{
 			TypeParameterSpec[] tparams_full;
 			TypeSpec[] targs_full = targs;
