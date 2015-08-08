@@ -1274,9 +1274,23 @@ set_metadata_flag (LLVMValueRef v, const char *flag_name)
 {
 	LLVMValueRef md_arg;
 	int md_kind;
-	
+
 	md_kind = LLVMGetMDKindID (flag_name, strlen (flag_name));
 	md_arg = LLVMMDString ("mono", 4);
+	LLVMSetMetadata (v, md_kind, LLVMMDNode (&md_arg, 1));
+}
+
+static void
+set_invariant_load_flag (LLVMValueRef v)
+{
+	LLVMValueRef md_arg;
+	int md_kind;
+	const char *flag_name;
+
+	// FIXME: Cache this
+	flag_name = "invariant.load";
+	md_kind = LLVMGetMDKindID (flag_name, strlen (flag_name));
+	md_arg = LLVMMDString ("<index>", strlen ("<index>"));
 	LLVMSetMetadata (v, md_kind, LLVMMDNode (&md_arg, 1));
 }
 
@@ -2025,7 +2039,6 @@ process_call (EmitContext *ctx, MonoBasicBlock *bb, LLVMBuilderRef *builder_ref,
 
 	lcall = emit_call (ctx, bb, &builder, callee, args, LLVMCountParamTypes (llvm_sig));
 
-#ifdef LLVM_MONO_BRANCH
 	/*
 	 * Modify cconv and parameter attributes to pass rgctx/imt correctly.
 	 */
@@ -2041,7 +2054,6 @@ process_call (EmitContext *ctx, MonoBasicBlock *bb, LLVMBuilderRef *builder_ref,
 		LLVMAddInstrAttribute (lcall, 1 + sinfo.rgctx_arg_pindex, LLVMInRegAttribute);
 	if (call->imt_arg_reg)
 		LLVMAddInstrAttribute (lcall, 1 + sinfo.imt_arg_pindex, LLVMInRegAttribute);
-#endif
 
 	/* Add byval attributes if needed */
 	for (i = 0; i < sig->param_count; ++i) {
@@ -2685,7 +2697,8 @@ process_bb (EmitContext *ctx, MonoBasicBlock *bb)
 		case OP_AND_IMM:
 		case OP_MUL_IMM:
 		case OP_SHL_IMM:
-		case OP_SHR_IMM: {
+		case OP_SHR_IMM:
+		case OP_SHR_UN_IMM: {
 			LLVMValueRef imm;
 
 			if (spec [MONO_INST_SRC1] == 'l') {
@@ -2761,6 +2774,7 @@ process_bb (EmitContext *ctx, MonoBasicBlock *bb)
 				values [ins->dreg] = LLVMBuildLShr (builder, lhs, imm, dname);
 				break;
 			case OP_LSHR_UN_IMM:
+			case OP_SHR_UN_IMM:
 				values [ins->dreg] = LLVMBuildLShr (builder, lhs, imm, dname);
 				break;
 			default:
@@ -2977,7 +2991,7 @@ process_bb (EmitContext *ctx, MonoBasicBlock *bb)
 				 * These will signal LLVM that these loads do not alias any stores, and
 				 * they can't fail, allowing them to be hoisted out of loops.
 				 */
-				set_metadata_flag (values [ins->dreg], "mono.noalias");
+				set_invariant_load_flag (values [ins->dreg]);
 				set_metadata_flag (values [ins->dreg], "mono.nofail.load");
 			}
 
@@ -3291,9 +3305,15 @@ process_bb (EmitContext *ctx, MonoBasicBlock *bb)
 			// 256 == GS segment register
 			LLVMTypeRef ptrtype = LLVMPointerType (IntPtrType (), 256);
 #endif
-
 			// FIXME: XEN
 			values [ins->dreg] = LLVMBuildLoad (builder, LLVMBuildIntToPtr (builder, LLVMConstInt (IntPtrType (), ins->inst_offset, TRUE), ptrtype, ""), "");
+#elif defined(TARGET_AMD64) && defined(TARGET_OSX)
+			/* See mono_amd64_emit_tls_get () */
+			int offset = mono_amd64_get_tls_gs_offset () + (ins->inst_offset * 8);
+
+			// 256 == GS segment register
+			LLVMTypeRef ptrtype = LLVMPointerType (IntPtrType (), 256);
+			values [ins->dreg] = LLVMBuildLoad (builder, LLVMBuildIntToPtr (builder, LLVMConstInt (IntPtrType (), offset, TRUE), ptrtype, ""), "");
 #else
 			LLVM_FAILURE (ctx, "opcode tls-get");
 #endif
@@ -4274,9 +4294,7 @@ mono_llvm_emit_method (MonoCompile *cfg)
 	method = LLVMAddFunction (module, method_name, method_type);
 	ctx->lmethod = method;
 
-#ifdef LLVM_MONO_BRANCH
 	LLVMSetFunctionCallConv (method, LLVMMono1CallConv);
-#endif
 	LLVMSetLinkage (method, LLVMPrivateLinkage);
 
 	LLVMAddFunctionAttr (method, LLVMUWTable);
