@@ -3689,7 +3689,7 @@ namespace Mono.CSharp
 				return null;
 
 			if ((oper == Operator.Subtraction) && (left is ParenthesizedExpression)) {
-				left = ((ParenthesizedExpression)left).Expr;
+				left = ((ParenthesizedExpression) left).Expr;
 				left = left.Resolve (ec, ResolveFlags.VariableOrValue | ResolveFlags.Type);
 				if (left == null)
 					return null;
@@ -3711,10 +3711,6 @@ namespace Mono.CSharp
 					return new Nullable.NullCoalescingOperator (left, right).Resolve (ec);
 				}
 			}
-				
-//			right = right.Resolve (ec);
-//			if (right == null)
-//				return null;
 
 			right = right.ResolveWithTypeHint (ec, typeHint);
 			if (right == null)
