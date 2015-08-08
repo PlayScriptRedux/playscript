@@ -11,16 +11,6 @@
 #ifndef _WAPI_ATOMIC_H_
 #define _WAPI_ATOMIC_H_
 
-#if defined(__NetBSD__)
-#include <sys/param.h>
-
-#if __NetBSD_Version__ > 499004000
-#include <sys/atomic.h>
-#define HAVE_ATOMIC_OPS
-#endif
-
-#endif
-
 #include "config.h"
 #include <glib.h>
 
@@ -32,7 +22,6 @@
 #if defined(__WIN32__) || defined(_WIN32)
 
 #include <windows.h>
-#define HAS_64BITS_ATOMICS 1
 
 /* mingw is missing InterlockedCompareExchange64 () from winbase.h */
 #ifndef HAVE_DECL_INTERLOCKEDCOMPAREEXCHANGE64
@@ -94,9 +83,7 @@ static inline gint32 InterlockedExchangeAdd(volatile gint32 *val, gint32 add)
 #define BROKEN_64BIT_ATOMICS_INTRINSIC 1
 #endif
 
-
 #if !defined (BROKEN_64BIT_ATOMICS_INTRINSIC)
-#define HAS_64BITS_ATOMICS 1
 
 static inline gint64 InterlockedCompareExchange64(volatile gint64 *dest, gint64 exch, gint64 comp)
 {
@@ -104,46 +91,6 @@ static inline gint64 InterlockedCompareExchange64(volatile gint64 *dest, gint64 
 }
 
 #endif
-
-
-#elif defined(__NetBSD__) && defined(HAVE_ATOMIC_OPS)
-
-static inline gint32 InterlockedCompareExchange(volatile gint32 *dest,
-       gint32 exch, gint32 comp)
-{
-       return atomic_cas_32((uint32_t*)dest, comp, exch);
-}
-
-static inline gpointer InterlockedCompareExchangePointer(volatile gpointer *dest, gpointer exch, gpointer comp)
-{
-       return atomic_cas_ptr(dest, comp, exch);
-}
-
-static inline gint32 InterlockedIncrement(volatile gint32 *val)
-{
-       return atomic_inc_32_nv((uint32_t*)val);
-}
-
-static inline gint32 InterlockedDecrement(volatile gint32 *val)
-{
-       return atomic_dec_32_nv((uint32_t*)val);
-}
-
-static inline gint32 InterlockedExchange(volatile gint32 *val, gint32 new_val)
-{
-       return atomic_swap_32((uint32_t*)val, new_val);
-}
-
-static inline gpointer InterlockedExchangePointer(volatile gpointer *val,
-               gpointer new_val)
-{
-       return atomic_swap_ptr(val, new_val);
-}
-
-static inline gint32 InterlockedExchangeAdd(volatile gint32 *val, gint32 add)
-{
-       return atomic_add_32_nv((uint32_t*)val, add) - add;
-}
 
 #elif (defined(sparc) || defined (__sparc__)) && defined(__GNUC__)
 
@@ -555,8 +502,10 @@ extern gint32 InterlockedExchangeAdd(volatile gint32 *dest, gint32 add);
 
 #endif
 
-#ifndef HAS_64BITS_ATOMICS
+#if defined (WAPI_NO_ATOMIC_ASM) || defined (BROKEN_64BIT_ATOMICS_INTRINSIC)
+
 extern gint64 InterlockedCompareExchange64(volatile gint64 *dest, gint64 exch, gint64 comp);
+
 #endif
 
 #endif /* _WAPI_ATOMIC_H_ */

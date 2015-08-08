@@ -13,7 +13,7 @@
 
 #include <mono/utils/atomic.h>
 
-#if defined (WAPI_NO_ATOMIC_ASM) || !defined (HAS_64BITS_ATOMICS)
+#if defined (WAPI_NO_ATOMIC_ASM) || defined (BROKEN_64BIT_ATOMICS_INTRINSIC)
 
 #include <pthread.h>
 
@@ -197,40 +197,13 @@ gint32 InterlockedExchangeAdd(volatile gint32 *dest, gint32 add)
 	return(ret);
 }
 
+#define NEED_64BIT_CMPXCHG_FALLBACK
+
 #endif
 
-#ifndef HAS_64BITS_ATOMICS
+#if defined (BROKEN_64BIT_ATOMICS_INTRINSIC)
 
-#if defined (TARGET_MACH) && defined (TARGET_ARM) && (defined(__ARM_ARCH_7__) || defined(__ARM_ARCH_7A__) || defined(__ARM_ARCH_7S__))
-
-gint64 InterlockedCompareExchange64(volatile gint64 *dest, gint64 exch, gint64 comp)  __attribute__ ((naked));
-
-gint64
-InterlockedCompareExchange64(volatile gint64 *dest, gint64 exch, gint64 comp)
-{
-	__asm__ (
-	"push {r4, r5, r6, r7}\n"
-	"ldr r4, [sp, #16]\n"
-	"dmb\n"
-"1:\n"
-	"ldrexd	r6, r7, [r0]\n"
-	"cmp	r7, r4\n"
-	"bne 2f\n"
-	"cmp	r6, r3\n"
-	"bne	2f\n"
-	"strexd	r5, r1, r2, [r0]\n"
-	"cmp	r5, #0\n"
-	"bne	1b\n"
-"2:\n"
-	"dmb\n"
-	"mov	r0, r6\n"
-	"mov	r1, r7\n"
-	"pop {r4, r5, r6, r7}\n"
-	"bx	lr\n"
-	);
-}
-
-#elif defined (TARGET_MACH) && (defined (TARGET_X86) || defined (TARGET_AMD64))
+#if defined (TARGET_OSX)
 
 gint64
 InterlockedCompareExchange64(volatile gint64 *dest, gint64 exch, gint64 comp)
@@ -239,6 +212,14 @@ InterlockedCompareExchange64(volatile gint64 *dest, gint64 exch, gint64 comp)
 }
 
 #else
+
+#define NEED_64BIT_CMPXCHG_FALLBACK
+
+#endif
+
+#endif
+
+#if defined (NEED_64BIT_CMPXCHG_FALLBACK)
 
 gint64
 InterlockedCompareExchange64(volatile gint64 *dest, gint64 exch, gint64 comp)
@@ -255,5 +236,4 @@ InterlockedCompareExchange64(volatile gint64 *dest, gint64 exch, gint64 comp)
 	return old;
 }
 
-#endif
 #endif
