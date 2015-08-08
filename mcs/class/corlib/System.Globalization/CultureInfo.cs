@@ -45,6 +45,7 @@ namespace System.Globalization
 		static volatile CultureInfo invariant_culture_info = new CultureInfo (InvariantCultureId, false, true);
 		static object shared_table_lock = new object ();
 		internal static int BootstrapCultureID;
+		static CultureInfo default_current_culture;
 
 #pragma warning disable 169, 649
 		bool m_isReadOnly;
@@ -124,10 +125,13 @@ namespace System.Globalization
 
 		internal static CultureInfo ConstructCurrentCulture ()
 		{
+			if (default_current_culture != null)
+				return default_current_culture;
 			CultureInfo ci = new CultureInfo ();
 			if (!ConstructInternalLocaleFromCurrentLocale (ci))
 				ci = InvariantCulture;
 			BootstrapCultureID = ci.cultureID;
+			default_current_culture = ci;
 			return ci;
 		}
 
@@ -1009,23 +1013,21 @@ namespace System.Globalization
 		}
 		
 #if NET_4_5
-		[MonoTODO]
 		public static CultureInfo DefaultThreadCurrentCulture {
 			get {
-				throw new NotImplementedException ();
+				return Thread.default_culture;
 			}
 			set {
-				throw new NotImplementedException ();
+				Thread.default_culture = value;
 			}
 		}
 		
-		[MonoTODO]
 		public static CultureInfo DefaultThreadCurrentUICulture {
 			get {
-				throw new NotImplementedException ();
+				return Thread.default_ui_culture;
 			}
 			set {
-				throw new NotImplementedException ();
+				Thread.default_ui_culture = value;
 			}
 		}
 #endif
