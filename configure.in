@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 #AC_PREREQ([2.62])
 
-AC_INIT(mono, [3.2.6002],
+AC_INIT(mono, [3.2.6003],
         [http://bugzilla.xamarin.com/enter_bug.cgi?classification=Mono])
 
 AC_CONFIG_SRCDIR([LICENSE])
@@ -2781,7 +2781,7 @@ esac
 dnl Use GCC atomic ops if they work on the target.
 if test x$GCC = "xyes"; then
 	case $TARGET in
-	X86 | AMD64 | ARM | POWERPC | POWERPC64 | MIPS)
+	X86 | AMD64 | ARM | POWERPC | POWERPC64 | MIPS | S390X)
 		AC_DEFINE(USE_GCC_ATOMIC_OPS, 1, [...])
 		;;
 	esac
