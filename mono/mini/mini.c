@@ -5211,6 +5211,8 @@ mini_method_compile (MonoMethod *method, guint32 opts, MonoDomain *domain, gbool
 	mono_handle_global_vregs (cfg);
 	if (cfg->opt & MONO_OPT_DEADCE)
 		mono_local_deadce (cfg);
+	if (cfg->opt & MONO_OPT_ALIAS_ANALYSIS)
+		mono_local_alias_analysis (cfg);
 	/* Disable this for LLVM to make the IR easier to handle */
 	if (!COMPILE_LLVM (cfg))
 		mono_if_conversion (cfg);
@@ -6446,6 +6448,7 @@ mono_jit_runtime_invoke (MonoMethod *method, void *obj, void **params, MonoObjec
 		 */
 #ifdef MONO_ARCH_DYN_CALL_SUPPORTED
 		if (mono_aot_only || debug_options.dyn_runtime_invoke) {
+			MonoType *ret_type;
 			MonoMethodSignature *sig = mono_method_signature (method);
 			gboolean supported = TRUE;
 			int i;
@@ -6466,8 +6469,9 @@ mono_jit_runtime_invoke (MonoMethod *method, void *obj, void **params, MonoObjec
 			if (supported)
 				info->dyn_call_info = mono_arch_dyn_call_prepare (sig);
 
+			ret_type = sig->ret;
 			if (info->dyn_call_info) {
-				switch (sig->ret->type) {
+				switch (ret_type->type) {
 				case MONO_TYPE_VOID:
 					break;
 				case MONO_TYPE_I1:
@@ -6484,7 +6488,7 @@ mono_jit_runtime_invoke (MonoMethod *method, void *obj, void **params, MonoObjec
 				case MONO_TYPE_CHAR:
 				case MONO_TYPE_R4:
 				case MONO_TYPE_R8:
-					info->ret_box_class = mono_class_from_mono_type (sig->ret);
+					info->ret_box_class = mono_class_from_mono_type (ret_type);
 					break;
 				case MONO_TYPE_PTR:
 					info->ret_box_class = mono_defaults.int_class;
@@ -6496,11 +6500,11 @@ mono_jit_runtime_invoke (MonoMethod *method, void *obj, void **params, MonoObjec
 				case MONO_TYPE_OBJECT:
 					break;
 				case MONO_TYPE_GENERICINST:
-					if (!MONO_TYPE_IS_REFERENCE (sig->ret))
-						info->ret_box_class = mono_class_from_mono_type (sig->ret);
+					if (!MONO_TYPE_IS_REFERENCE (ret_type))
+						info->ret_box_class = mono_class_from_mono_type (ret_type);
 					break;
 				case MONO_TYPE_VALUETYPE:
-					info->ret_box_class = mono_class_from_mono_type (sig->ret);
+					info->ret_box_class = mono_class_from_mono_type (ret_type);
 					break;
 				default:
 					g_assert_not_reached ();
@@ -6922,6 +6926,10 @@ register_jit_stats (void)
 	mono_counters_register ("Method cache lookups", MONO_COUNTER_JIT | MONO_COUNTER_INT, &mono_jit_stats.methods_lookups);
 	mono_counters_register ("Compiled CIL code size", MONO_COUNTER_JIT | MONO_COUNTER_INT, &mono_jit_stats.cil_code_size);
 	mono_counters_register ("Native code size", MONO_COUNTER_JIT | MONO_COUNTER_INT, &mono_jit_stats.native_code_size);
+	mono_counters_register ("Aliases found", MONO_COUNTER_JIT | MONO_COUNTER_INT, &mono_jit_stats.alias_found);
+	mono_counters_register ("Aliases eliminated", MONO_COUNTER_JIT | MONO_COUNTER_INT, &mono_jit_stats.alias_removed);
+	mono_counters_register ("Aliased loads eliminated", MONO_COUNTER_JIT | MONO_COUNTER_INT, &mono_jit_stats.loads_eliminated);
+	mono_counters_register ("Aliased stores eliminated", MONO_COUNTER_JIT | MONO_COUNTER_INT, &mono_jit_stats.stores_eliminated);
 }
 
 static void runtime_invoke_info_free (gpointer value);

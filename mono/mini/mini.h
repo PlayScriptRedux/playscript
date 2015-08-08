@@ -284,6 +284,10 @@ typedef struct MonoAotFileInfo
 
 	/* These are used for sanity checking object layout problems when cross-compiling */
 	guint32 double_align, long_align, generic_tramp_num;
+	/* The page size used by trampoline pages */
+	guint32 tramp_page_size;
+	/* The offset where the trampolines begin on a trampoline page */
+	guint32 tramp_page_code_offsets [MONO_AOT_TRAMP_NUM];
 } MonoAotFileInfo;
 
 /* Per-domain information maintained by the JIT */
@@ -1451,6 +1455,7 @@ typedef struct {
 	guint            compute_gc_maps : 1;
 	guint            soft_breakpoints : 1;
 	guint            arch_eh_jit_info : 1;
+	guint            has_indirection : 1;
 	gpointer         debug_info;
 	guint32          lmf_offset;
     guint16          *intvars;
@@ -1620,6 +1625,10 @@ typedef struct {
 	gint32 cas_linkdemand;
 	gint32 cas_demand_generation;
 	gint32 generic_virtual_invocations;
+	gint32 alias_found;
+	gint32 alias_removed;
+	gint32 loads_eliminated;
+	gint32 stores_eliminated;
 	int methods_with_llvm;
 	int methods_without_llvm;
 	char *max_ratio_method;
@@ -2509,6 +2518,8 @@ extern void
 mono_local_cprop (MonoCompile *cfg);
 extern void
 mono_local_deadce (MonoCompile *cfg);
+void
+mono_local_alias_analysis (MonoCompile *cfg) MONO_INTERNAL;
 
 /* CAS - stack walk */
 MonoSecurityFrame* ves_icall_System_Security_SecurityFrame_GetSecurityFrame (gint32 skip) MONO_INTERNAL;
