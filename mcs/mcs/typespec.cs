@@ -439,7 +439,7 @@ namespace Mono.CSharp
 				throw new InternalErrorException ("Modifying expanded interface list");
 
 			if (ifaces == null) {
-				ifaces = new List<TypeSpec> () { iface };
+				ifaces = new List<TypeSpec> { iface };
 				return true;
 			}
 

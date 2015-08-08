@@ -331,16 +331,19 @@ add_valuetype (MonoGenericSharingContext *gsctx, MonoMethodSignature *sig, ArgIn
 		ainfo->pair_storage [0] = ainfo->pair_storage [1] = ArgNone;
 
 		/* Special case structs with only a float member */
-		if ((info->native_size == 8) && (info->num_fields == 1) && (info->fields [0].field->type->type == MONO_TYPE_R8)) {
-			ainfo->storage = ArgValuetypeInReg;
-			ainfo->pair_storage [0] = ArgOnDoubleFpStack;
-			return;
+		if (info->num_fields == 1) {
+			int ftype = info->fields [0].field->type->type;
+			if ((info->native_size == 8) && (ftype == MONO_TYPE_R8)) {
+				ainfo->storage = ArgValuetypeInReg;
+				ainfo->pair_storage [0] = ArgOnDoubleFpStack;
+				return;
+			}
+			if ((info->native_size == 4) && (ftype == MONO_TYPE_R4)) {
+				ainfo->storage = ArgValuetypeInReg;
+				ainfo->pair_storage [0] = ArgOnFloatFpStack;
+				return;
+			}
 		}
-		if ((info->native_size == 4) && (info->num_fields == 1) && (info->fields [0].field->type->type == MONO_TYPE_R4)) {
-			ainfo->storage = ArgValuetypeInReg;
-			ainfo->pair_storage [0] = ArgOnFloatFpStack;
-			return;
-		}		
 		if ((info->native_size == 1) || (info->native_size == 2) || (info->native_size == 4) || (info->native_size == 8)) {
 			ainfo->storage = ArgValuetypeInReg;
 			ainfo->pair_storage [0] = ArgInIReg;
@@ -445,7 +448,7 @@ get_call_info_internal (MonoGenericSharingContext *gsctx, CallInfo *cinfo, MonoM
 		case MONO_TYPE_TYPEDBYREF: {
 			guint32 tmp_gr = 0, tmp_fr = 0, tmp_stacksize = 0;
 
-			add_valuetype (gsctx, sig, &cinfo->ret, sig->ret, TRUE, &tmp_gr, NULL, &tmp_fr, &tmp_stacksize);
+			add_valuetype (gsctx, sig, &cinfo->ret, ret_type, TRUE, &tmp_gr, NULL, &tmp_fr, &tmp_stacksize);
 			if (cinfo->ret.storage == ArgOnStack) {
 				cinfo->vtype_retaddr = TRUE;
 				/* The caller passes the address where the value is stored */
@@ -462,7 +465,7 @@ get_call_info_internal (MonoGenericSharingContext *gsctx, CallInfo *cinfo, MonoM
 			cinfo->ret.storage = ArgNone;
 			break;
 		default:
-			g_error ("Can't handle as return value 0x%x", sig->ret->type);
+			g_error ("Can't handle as return value 0x%x", ret_type->type);
 		}
 	}
 
@@ -704,15 +707,21 @@ mono_arch_get_argument_info (MonoGenericSharingContext *gsctx, MonoMethodSignatu
 }
 
 gboolean
-mono_x86_tail_call_supported (MonoMethodSignature *caller_sig, MonoMethodSignature *callee_sig)
+mono_arch_tail_call_supported (MonoMethodSignature *caller_sig, MonoMethodSignature *callee_sig)
 {
+	MonoType *callee_ret;
 	CallInfo *c1, *c2;
 	gboolean res;
 
 	c1 = get_call_info (NULL, NULL, caller_sig);
 	c2 = get_call_info (NULL, NULL, callee_sig);
+	/*
+	 * Tail calls with more callee stack usage than the caller cannot be supported, since
+	 * the extra stack space would be left on the stack after the tail call.
+	 */
 	res = c1->stack_usage >= c2->stack_usage;
-	if (callee_sig->ret && MONO_TYPE_ISSTRUCT (callee_sig->ret) && c2->ret.storage != ArgValuetypeInReg)
+	callee_ret = callee_sig->ret;
+	if (callee_ret && MONO_TYPE_ISSTRUCT (callee_ret) && c2->ret.storage != ArgValuetypeInReg)
 		/* An address on the callee's stack is passed as the first argument */
 		res = FALSE;
 
@@ -1187,16 +1196,18 @@ mono_arch_allocate_vars (MonoCompile *cfg)
 void
 mono_arch_create_vars (MonoCompile *cfg)
 {
+	MonoType *sig_ret;
 	MonoMethodSignature *sig;
 	CallInfo *cinfo;
 
 	sig = mono_method_signature (cfg->method);
 
 	cinfo = get_call_info (cfg->generic_sharing_context, cfg->mempool, sig);
+	sig_ret = sig->ret;
 
 	if (cinfo->ret.storage == ArgValuetypeInReg)
 		cfg->ret_var_is_local = TRUE;
-	if ((cinfo->ret.storage != ArgValuetypeInReg) && (MONO_TYPE_ISSTRUCT (sig->ret) || mini_is_gsharedvt_variable_type (cfg, sig->ret))) {
+	if ((cinfo->ret.storage != ArgValuetypeInReg) && (MONO_TYPE_ISSTRUCT (sig_ret) || mini_is_gsharedvt_variable_type (cfg, sig_ret))) {
 		cfg->vret_addr = mono_compile_create_var (cfg, &mono_defaults.int_class->byval_arg, OP_ARG);
 	}
 
@@ -1264,11 +1275,12 @@ mono_arch_get_llvm_call_info (MonoCompile *cfg, MonoMethodSignature *sig)
 	CallInfo *cinfo;
 	ArgInfo *ainfo;
 	LLVMCallInfo *linfo;
-	MonoType *t;
+	MonoType *t, *sig_ret;
 
 	n = sig->param_count + sig->hasthis;
 
 	cinfo = get_call_info (cfg->generic_sharing_context, cfg->mempool, sig);
+	sig_ret = sig->ret;
 
 	linfo = mono_mempool_alloc0 (cfg->mempool, sizeof (LLVMCallInfo) + (sizeof (LLVMArgInfo) * n));
 
@@ -1294,13 +1306,13 @@ mono_arch_get_llvm_call_info (MonoCompile *cfg, MonoMethodSignature *sig)
 		*/
 	}
 
-	if (mini_type_is_vtype (cfg, sig->ret) && cinfo->ret.storage == ArgInIReg) {
+	if (mini_type_is_vtype (cfg, sig_ret) && cinfo->ret.storage == ArgInIReg) {
 		/* Vtype returned using a hidden argument */
 		linfo->ret.storage = LLVMArgVtypeRetAddr;
 		linfo->vret_arg_index = cinfo->vret_arg_index;
 	}
 
-	if (mini_type_is_vtype (cfg, sig->ret) && cinfo->ret.storage != ArgInIReg) {
+	if (mini_type_is_vtype (cfg, sig_ret) && cinfo->ret.storage != ArgInIReg) {
 		// FIXME:
 		cfg->exception_message = g_strdup ("vtype ret in call");
 		cfg->disable_llvm = TRUE;
@@ -1386,6 +1398,7 @@ emit_gc_param_slot_def (MonoCompile *cfg, int sp_offset, MonoType *t)
 void
 mono_arch_emit_call (MonoCompile *cfg, MonoCallInst *call)
 {
+	MonoType *sig_ret;
 	MonoInst *arg, *in;
 	MonoMethodSignature *sig;
 	int i, j, n;
@@ -1394,6 +1407,7 @@ mono_arch_emit_call (MonoCompile *cfg, MonoCallInst *call)
 
 	sig = call->signature;
 	n = sig->param_count + sig->hasthis;
+	sig_ret = sig->ret;
 
 	cinfo = get_call_info (cfg->generic_sharing_context, cfg->mempool, sig);
 
@@ -1413,7 +1427,7 @@ mono_arch_emit_call (MonoCompile *cfg, MonoCallInst *call)
 		}
 	}
 
-	if (sig->ret && MONO_TYPE_ISSTRUCT (sig->ret)) {
+	if (sig_ret && MONO_TYPE_ISSTRUCT (sig_ret)) {
 		if (cinfo->ret.storage == ArgValuetypeInReg) {
 			/*
 			 * Tell the JIT to use a more efficient calling convention: call using
@@ -1472,6 +1486,8 @@ mono_arch_emit_call (MonoCompile *cfg, MonoCallInst *call)
 			arg->opcode = OP_OUTARG_VT;
 			arg->sreg1 = in->dreg;
 			arg->klass = in->klass;
+			arg->inst_p1 = mono_mempool_alloc (cfg->mempool, sizeof (ArgInfo));
+			memcpy (arg->inst_p1, ainfo, sizeof (ArgInfo));
 			sp_offset += 4;
 			MONO_ADD_INS (cfg->cbb, arg);
 		} else if ((i >= sig->hasthis) && (MONO_TYPE_ISSTRUCT(t))) {
@@ -1571,7 +1587,7 @@ mono_arch_emit_call (MonoCompile *cfg, MonoCallInst *call)
 		}
 	}
 
-	if (sig->ret && (MONO_TYPE_ISSTRUCT (sig->ret) || cinfo->vtype_retaddr)) {
+	if (sig_ret && (MONO_TYPE_ISSTRUCT (sig_ret) || cinfo->vtype_retaddr)) {
 		MonoInst *vtarg;
 
 		if (cinfo->ret.storage == ArgValuetypeInReg) {
@@ -3110,48 +3126,6 @@ mono_arch_output_basic_block (MonoCompile *cfg, MonoBasicBlock *bb)
 		case OP_MOVE:
 			x86_mov_reg_reg (code, ins->dreg, ins->sreg1, 4);
 			break;
-		case OP_JMP: {
-			/*
-			 * Note: this 'frame destruction' logic is useful for tail calls, too.
-			 * Keep in sync with the code in emit_epilog.
-			 */
-			int pos = 0;
-
-			/* FIXME: no tracing support... */
-			if (cfg->prof_options & MONO_PROFILE_ENTER_LEAVE)
-				code = mono_arch_instrument_epilog (cfg, mono_profiler_method_leave, code, FALSE);
-			/* reset offset to make max_len work */
-			offset = code - cfg->native_code;
-
-			g_assert (!cfg->method->save_lmf);
-
-			code = emit_load_volatile_arguments (cfg, code);
-
-			if (cfg->used_int_regs & (1 << X86_EBX))
-				pos -= 4;
-			if (cfg->used_int_regs & (1 << X86_EDI))
-				pos -= 4;
-			if (cfg->used_int_regs & (1 << X86_ESI))
-				pos -= 4;
-			if (pos)
-				x86_lea_membase (code, X86_ESP, X86_EBP, pos);
-	
-			if (cfg->used_int_regs & (1 << X86_ESI))
-				x86_pop_reg (code, X86_ESI);
-			if (cfg->used_int_regs & (1 << X86_EDI))
-				x86_pop_reg (code, X86_EDI);
-			if (cfg->used_int_regs & (1 << X86_EBX))
-				x86_pop_reg (code, X86_EBX);
-	
-			/* restore ESP/EBP */
-			x86_leave (code);
-			offset = code - cfg->native_code;
-			mono_add_patch_info (cfg, offset, MONO_PATCH_INFO_METHOD_JUMP, ins->inst_p0);
-			x86_jump32 (code, 0);
-
-			cfg->disable_aot = TRUE;
-			break;
-		}
 		case OP_TAILCALL: {
 			MonoCallInst *call = (MonoCallInst*)ins;
 			int pos = 0, i;
@@ -3413,6 +3387,12 @@ mono_arch_output_basic_block (MonoCompile *cfg, MonoBasicBlock *bb)
 		case OP_BR_REG:
 			x86_jump_reg (code, ins->sreg1);
 			break;
+		case OP_ICNEQ:
+		case OP_ICGE:
+		case OP_ICLE:
+		case OP_ICGE_UN:
+		case OP_ICLE_UN:
+
 		case OP_CEQ:
 		case OP_CLT:
 		case OP_CLT_UN:
@@ -3847,6 +3827,7 @@ mono_arch_output_basic_block (MonoCompile *cfg, MonoBasicBlock *bb)
 			x86_alu_reg_imm (code, X86_AND, X86_EAX, X86_FP_CC_MASK);
 			break;
 		case OP_FCEQ:
+		case OP_FCNEQ:
 			if (cfg->opt & MONO_OPT_FCMOV) {
 				/* zeroing the register at the start results in 
 				 * shorter and faster code (we can also remove the widening op)
@@ -3857,8 +3838,19 @@ mono_arch_output_basic_block (MonoCompile *cfg, MonoBasicBlock *bb)
 				x86_fstp (code, 0);
 				unordered_check = code;
 				x86_branch8 (code, X86_CC_P, 0, FALSE);
-				x86_set_reg (code, X86_CC_EQ, ins->dreg, FALSE);
-				x86_patch (unordered_check, code);
+				if (ins->opcode == OP_FCEQ) {
+					x86_set_reg (code, X86_CC_EQ, ins->dreg, FALSE);
+					x86_patch (unordered_check, code);
+				} else {
+					guchar *jump_to_end;
+					x86_set_reg (code, X86_CC_NE, ins->dreg, FALSE);
+					jump_to_end = code;
+					x86_jump8 (code, 0);
+					x86_patch (unordered_check, code);
+					x86_inc_reg (code, ins->dreg);
+					x86_patch (jump_to_end, code);
+				}
+
 				break;
 			}
 			if (ins->dreg != X86_EAX) 
@@ -3867,7 +3859,7 @@ mono_arch_output_basic_block (MonoCompile *cfg, MonoBasicBlock *bb)
 			EMIT_FPCOMPARE(code);
 			x86_alu_reg_imm (code, X86_AND, X86_EAX, X86_FP_CC_MASK);
 			x86_alu_reg_imm (code, X86_CMP, X86_EAX, 0x4000);
-			x86_set_reg (code, X86_CC_EQ, ins->dreg, TRUE);
+			x86_set_reg (code, ins->opcode == OP_FCEQ ? X86_CC_EQ : X86_CC_NE, ins->dreg, TRUE);
 			x86_widen_reg (code, ins->dreg, ins->dreg, FALSE, FALSE);
 
 			if (ins->dreg != X86_EAX) 
@@ -3919,6 +3911,44 @@ mono_arch_output_basic_block (MonoCompile *cfg, MonoBasicBlock *bb)
 			if (ins->dreg != X86_EAX) 
 				x86_pop_reg (code, X86_EAX);
 			break;
+		case OP_FCLE: {
+			guchar *unordered_check;
+			guchar *jump_to_end;
+			if (cfg->opt & MONO_OPT_FCMOV) {
+				/* zeroing the register at the start results in
+				 * shorter and faster code (we can also remove the widening op)
+				 */
+				x86_alu_reg_reg (code, X86_XOR, ins->dreg, ins->dreg);
+				x86_fcomip (code, 1);
+				x86_fstp (code, 0);
+				unordered_check = code;
+				x86_branch8 (code, X86_CC_P, 0, FALSE);
+				x86_set_reg (code, X86_CC_NB, ins->dreg, FALSE);
+				x86_patch (unordered_check, code);
+				break;
+			}
+			if (ins->dreg != X86_EAX)
+				x86_push_reg (code, X86_EAX);
+
+			EMIT_FPCOMPARE(code);
+			x86_alu_reg_imm (code, X86_AND, X86_EAX, X86_FP_CC_MASK);
+			x86_alu_reg_imm (code, X86_CMP, X86_EAX, 0x4500);
+			unordered_check = code;
+			x86_branch8 (code, X86_CC_EQ, 0, FALSE);
+
+			x86_alu_reg_imm (code, X86_CMP, X86_EAX, X86_FP_C0);
+			x86_set_reg (code, X86_CC_NE, ins->dreg, TRUE);
+			x86_widen_reg (code, ins->dreg, ins->dreg, FALSE, FALSE);
+			jump_to_end = code;
+			x86_jump8 (code, 0);
+			x86_patch (unordered_check, code);
+			x86_alu_reg_reg (code, X86_XOR, ins->dreg, ins->dreg);
+			x86_patch (jump_to_end, code);
+
+			if (ins->dreg != X86_EAX)
+				x86_pop_reg (code, X86_EAX);
+			break;
+		}
 		case OP_FCGT:
 		case OP_FCGT_UN:
 			if (cfg->opt & MONO_OPT_FCMOV) {
@@ -3962,6 +3992,44 @@ mono_arch_output_basic_block (MonoCompile *cfg, MonoBasicBlock *bb)
 			if (ins->dreg != X86_EAX) 
 				x86_pop_reg (code, X86_EAX);
 			break;
+		case OP_FCGE: {
+			guchar *unordered_check;
+			guchar *jump_to_end;
+			if (cfg->opt & MONO_OPT_FCMOV) {
+				/* zeroing the register at the start results in
+				 * shorter and faster code (we can also remove the widening op)
+				 */
+				x86_alu_reg_reg (code, X86_XOR, ins->dreg, ins->dreg);
+				x86_fcomip (code, 1);
+				x86_fstp (code, 0);
+				unordered_check = code;
+				x86_branch8 (code, X86_CC_P, 0, FALSE);
+				x86_set_reg (code, X86_CC_NA, ins->dreg, FALSE);
+				x86_patch (unordered_check, code);
+				break;
+			}
+			if (ins->dreg != X86_EAX)
+				x86_push_reg (code, X86_EAX);
+
+			EMIT_FPCOMPARE(code);
+			x86_alu_reg_imm (code, X86_AND, X86_EAX, X86_FP_CC_MASK);
+			x86_alu_reg_imm (code, X86_CMP, X86_EAX, 0x4500);
+			unordered_check = code;
+			x86_branch8 (code, X86_CC_EQ, 0, FALSE);
+
+			x86_alu_reg_imm (code, X86_CMP, X86_EAX, X86_FP_C0);
+			x86_set_reg (code, X86_CC_GE, ins->dreg, TRUE);
+			x86_widen_reg (code, ins->dreg, ins->dreg, FALSE, FALSE);
+			jump_to_end = code;
+			x86_jump8 (code, 0);
+			x86_patch (unordered_check, code);
+			x86_alu_reg_reg (code, X86_XOR, ins->dreg, ins->dreg);
+			x86_patch (jump_to_end, code);
+
+			if (ins->dreg != X86_EAX)
+				x86_pop_reg (code, X86_EAX);
+			break;
+		}
 		case OP_FBEQ:
 			if (cfg->opt & MONO_OPT_FCMOV) {
 				guchar *jump = code;
@@ -5412,7 +5480,7 @@ mono_arch_emit_epilog (MonoCompile *cfg)
 	if (mono_jit_trace_calls != NULL && mono_trace_eval (method))
 		code = mono_arch_instrument_epilog (cfg, mono_trace_leave_method, code, TRUE);
 
-	/* the code restoring the registers must be kept in sync with OP_JMP */
+	/* the code restoring the registers must be kept in sync with OP_TAILCALL */
 	pos = 0;
 	
 	if (method->save_lmf) {
@@ -6737,6 +6805,15 @@ mono_arch_get_seq_point_info (MonoDomain *domain, guint8 *code)
 {
 	NOT_IMPLEMENTED;
 	return NULL;
+}
+
+void
+mono_arch_init_lmf_ext (MonoLMFExt *ext, gpointer prev_lmf)
+{
+	ext->lmf.previous_lmf = (gsize)prev_lmf;
+	/* Mark that this is a MonoLMFExt */
+	ext->lmf.previous_lmf = (gsize)(gpointer)(((gssize)ext->lmf.previous_lmf) | 2);
+	ext->lmf.ebp = (gssize)ext;
 }
 
 #endif

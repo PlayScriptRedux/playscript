@@ -408,7 +408,7 @@ namespace Mono.CSharp
 	public class FixedField : FieldBase
 	{
 		public const string FixedElementName = "FixedElementField";
-		static int GlobalCounter = 0;
+		static int GlobalCounter;
 
 		TypeBuilder fixed_buffer_type;
 
@@ -438,7 +438,7 @@ namespace Mono.CSharp
 
 		public override Constant ConvertInitializer (ResolveContext rc, Constant expr)
 		{
-			return expr.ImplicitConversionRequired (rc, rc.BuiltinTypes.Int, Location);
+			return expr.ImplicitConversionRequired (rc, rc.BuiltinTypes.Int);
 		}
 
 		public override bool Define ()

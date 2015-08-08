@@ -15,7 +15,7 @@ export PATH=/usr/local/opt/ccache/libexec:${PATH}
 echo "Building PlayScript mono framework to ${PlayInstallPath} folder"
 
 # Fix for 2.2.4 vs 2.4.6 glibtool
-rm libgc/aclocal.m4
+# rm libgc/aclocal.m4
 
 # Fix for newest versions of clang compiling older monos
 if [ -f configure.in ]; then
@@ -51,7 +51,7 @@ if [ ! -f ${PWD}/mcs/class/lib/monolite/basic.exe ]; then
 fi
 
 # Fix for 2.2.4 vs 2.4.6 glibtool
-rm libgc/aclocal.m4
+# rm libgc/aclocal.m4
 
 make EXTERNAL_MCS=${PWD}/mcs/class/lib/monolite/basic.exe
 

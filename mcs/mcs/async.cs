@@ -234,7 +234,7 @@ namespace Mono.CSharp
 
 		public void EmitPrologue (EmitContext ec)
 		{
-			awaiter = ((AsyncTaskStorey) machine_initializer.Storey).AddAwaiter (expr.Type, loc);
+			awaiter = ((AsyncTaskStorey) machine_initializer.Storey).AddAwaiter (expr.Type);
 
 			var fe_awaiter = new FieldExpr (awaiter, loc);
 			fe_awaiter.InstanceExpression = new CompilerGeneratedThis (ec.CurrentType, loc);
@@ -422,11 +422,6 @@ namespace Mono.CSharp
 			return ctx;
 		}
 
-		public override Expression CreateExpressionTree (ResolveContext ec)
-		{
-			return base.CreateExpressionTree (ec);
-		}
-
 		public override void Emit (EmitContext ec)
 		{
 			throw new NotImplementedException ();
@@ -496,7 +491,7 @@ namespace Mono.CSharp
 
 		#endregion
 
-		public Field AddAwaiter (TypeSpec type, Location loc)
+		public Field AddAwaiter (TypeSpec type)
 		{
 			if (mutator != null)
 				type = mutator.Mutate (type);

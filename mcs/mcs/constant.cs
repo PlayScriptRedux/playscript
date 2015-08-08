@@ -72,7 +72,7 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public Constant ImplicitConversionRequired (ResolveContext ec, TypeSpec type, Location loc)
+		public Constant ImplicitConversionRequired (ResolveContext ec, TypeSpec type)
 		{
 			Constant c = ConvertImplicitly (type, ec);
 			if (c == null)

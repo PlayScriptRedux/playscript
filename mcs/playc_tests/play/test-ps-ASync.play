@@ -1,0 +1,36 @@
+// Compiler options: -r:./../class/lib/net_4_5/System.Net.Http.dll 
+package
+{
+	import System.Net.Http.HttpClient;
+	import System.Threading.Tasks.*;
+	import System.Threading.*;
+
+	public class HelloWorld 
+	{
+
+        	async function WebAsync():Task.<int>
+        	{
+			trace("Starting WebAsync");
+            		var client:HttpClient = new HttpClient();
+            		var getStringTask:Task.<String> = client.GetStringAsync("http://sushihangover.github.io");
+            		var urlContents:String = await getStringTask;
+			trace("Inside WebASync: " + urlContents.Length);
+            		return urlContents.Length;
+       		 }
+
+		public static function Main():int
+		{
+			trace ("Hello World!");
+			var webASync = new HelloWorld();
+			var t:Task.<int> = webASync.WebAsync();
+			trace(t.Status);
+			while(t.Status.ToString() != "RanToCompletion") 
+			{
+				trace(t.Status);
+				if (t.Status == TaskStatus.Faulted) break; 
+	 			Thread.Sleep(1000);
+			}
+			return 0;
+		}
+	}
+}

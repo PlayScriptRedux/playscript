@@ -346,11 +346,7 @@ mono_amd64_throw_exception (guint64 dummy1, guint64 dummy2, guint64 dummy3, guin
 							mgreg_t *regs, mgreg_t rip,
 							MonoObject *exc, gboolean rethrow)
 {
-	static void (*restore_context) (MonoContext *);
 	MonoContext ctx;
-
-	if (!restore_context)
-		restore_context = mono_get_restore_context ();
 
 	ctx.rsp = regs [AMD64_RSP];
 	ctx.rip = rip;
@@ -382,7 +378,7 @@ mono_amd64_throw_exception (guint64 dummy1, guint64 dummy2, guint64 dummy3, guin
 			ctx_cp.rip = rip - 5;
 
 			if (mono_debugger_handle_exception (&ctx_cp, exc)) {
-				restore_context (&ctx_cp);
+				mono_restore_context (&ctx_cp);
 				g_assert_not_reached ();
 			}
 		}
@@ -392,8 +388,7 @@ mono_amd64_throw_exception (guint64 dummy1, guint64 dummy2, guint64 dummy3, guin
 	ctx.rip -= 1;
 
 	mono_handle_exception (&ctx, exc);
-	restore_context (&ctx);
-
+	mono_restore_context (&ctx);
 	g_assert_not_reached ();
 }
 
@@ -621,6 +616,11 @@ mono_arch_find_jit_info (MonoDomain *domain, MonoJitTlsData *jit_tls,
 
 		frame->unwind_info = unwind_info;
 		frame->unwind_info_len = unwind_info_len;
+
+		/*
+		printf ("%s %p %p\n", ji->d.method->name, ji->code_start, ip);
+		mono_print_unwind_info (unwind_info, unwind_info_len);
+		*/
  
 		regs [AMD64_RAX] = new_ctx->rax;
 		regs [AMD64_RBX] = new_ctx->rbx;
@@ -663,7 +663,7 @@ mono_arch_find_jit_info (MonoDomain *domain, MonoJitTlsData *jit_tls,
 
 		if (*lmf && ((*lmf) != jit_tls->first_lmf) && (MONO_CONTEXT_GET_SP (ctx) >= (gpointer)(*lmf)->rsp)) {
 			/* remove any unused lmf */
-			*lmf = (gpointer)(((guint64)(*lmf)->previous_lmf) & ~3);
+			*lmf = (gpointer)(((guint64)(*lmf)->previous_lmf) & ~7);
 		}
 
 #ifndef MONO_AMD64_NO_PUSHES
@@ -687,7 +687,7 @@ mono_arch_find_jit_info (MonoDomain *domain, MonoJitTlsData *jit_tls,
 
 			memcpy (new_ctx, &ext->ctx, sizeof (MonoContext));
 
-			*lmf = (gpointer)(((guint64)(*lmf)->previous_lmf) & ~3);
+			*lmf = (gpointer)(((guint64)(*lmf)->previous_lmf) & ~7);
 
 			frame->type = FRAME_TYPE_DEBUGGER_INVOKE;
 
@@ -728,17 +728,36 @@ mono_arch_find_jit_info (MonoDomain *domain, MonoJitTlsData *jit_tls,
 		new_ctx->rbp = (*lmf)->rbp;
 		new_ctx->rsp = (*lmf)->rsp;
 
-		new_ctx->rbx = (*lmf)->rbx;
-		new_ctx->r12 = (*lmf)->r12;
-		new_ctx->r13 = (*lmf)->r13;
-		new_ctx->r14 = (*lmf)->r14;
-		new_ctx->r15 = (*lmf)->r15;
-#ifdef TARGET_WIN32
-		new_ctx->rdi = (*lmf)->rdi;
-		new_ctx->rsi = (*lmf)->rsi;
-#endif
+		if (((guint64)(*lmf)->previous_lmf) & 4) {
+			MonoLMFTramp *ext = (MonoLMFTramp*)(*lmf);
 
-		*lmf = (gpointer)(((guint64)(*lmf)->previous_lmf) & ~3);
+			/* Trampoline frame */
+			new_ctx->rbx = ext->regs [AMD64_RBX];
+			new_ctx->r12 = ext->regs [AMD64_R12];
+			new_ctx->r13 = ext->regs [AMD64_R13];
+			new_ctx->r14 = ext->regs [AMD64_R14];
+			new_ctx->r15 = ext->regs [AMD64_R15];
+#ifdef TARGET_WIN32
+			new_ctx->rdi = ext->regs [AMD64_RDI];
+			new_ctx->rsi = ext->regs [AMD64_RSI];
+#endif
+		} else {
+			/*
+			 * The registers saved in the LMF will be restored using the normal unwind info,
+			 * when the wrapper frame is processed.
+			 */
+			new_ctx->rbx = 0;
+			new_ctx->r12 = 0;
+			new_ctx->r13 = 0;
+			new_ctx->r14 = 0;
+			new_ctx->r15 = 0;
+#ifdef TARGET_WIN32
+			new_ctx->rdi = 0;
+			new_ctx->rsi = 0;
+#endif
+		}
+
+		*lmf = (gpointer)(((guint64)(*lmf)->previous_lmf) & ~7);
 
 		return TRUE;
 	}
@@ -756,10 +775,6 @@ handle_signal_exception (gpointer obj)
 {
 	MonoJitTlsData *jit_tls = mono_native_tls_get_value (mono_jit_tls_id);
 	MonoContext ctx;
-	static void (*restore_context) (MonoContext *);
-
-	if (!restore_context)
-		restore_context = mono_get_restore_context ();
 
 	memcpy (&ctx, &jit_tls->ex_ctx, sizeof (MonoContext));
 
@@ -768,7 +783,7 @@ handle_signal_exception (gpointer obj)
 
 	mono_handle_exception (&ctx, obj);
 
-	restore_context (&ctx);
+	mono_restore_context (&ctx);
 }
 
 void
@@ -783,6 +798,10 @@ mono_arch_setup_async_callback (MonoContext *ctx, void (*async_cb)(void *fun), g
 	/* The stack should be unaligned */
 	if ((sp % 16) == 0)
 		sp -= 8;
+#ifdef __linux__
+	/* Preserve the call chain to prevent crashes in the libgcc unwinder (#15969) */
+	*(guint64*)sp = ctx->rip;
+#endif
 	ctx->rsp = sp;
 	ctx->rip = (guint64)async_cb;
 }
@@ -884,22 +903,20 @@ prepare_for_guard_pages (MonoContext *mctx)
 static void
 altstack_handle_and_restore (void *sigctx, gpointer obj, gboolean stack_ovf)
 {
-	void (*restore_context) (MonoContext *);
 	MonoContext mctx;
 
-	restore_context = mono_get_restore_context ();
 	mono_arch_sigctx_to_monoctx (sigctx, &mctx);
 
 	if (mono_debugger_handle_exception (&mctx, (MonoObject *)obj)) {
 		if (stack_ovf)
 			prepare_for_guard_pages (&mctx);
-		restore_context (&mctx);
+		mono_restore_context (&mctx);
 	}
 
 	mono_handle_exception (&mctx, obj);
 	if (stack_ovf)
 		prepare_for_guard_pages (&mctx);
-	restore_context (&mctx);
+	mono_restore_context (&mctx);
 }
 
 void
@@ -1160,8 +1177,7 @@ mono_arch_exceptions_init (void)
 			MonoTrampInfo *info = l->data;
 
 			mono_register_jit_icall (info->code, g_strdup (info->name), NULL, TRUE);
-			mono_save_trampoline_xdebug_info (info);
-			mono_tramp_info_free (info);
+			mono_tramp_info_register (info);
 		}
 		g_slist_free (tramps);
 	}

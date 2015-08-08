@@ -1,10 +1,10 @@
 # Process this file with autoconf to produce a configure script.
 #AC_PREREQ([2.62])
 
-AC_INIT(mono, [3.2.6002],
+AC_INIT(mono, [3.2.7001],
         [http://bugzilla.xamarin.com/enter_bug.cgi?classification=Mono])
 
-AC_CONFIG_SRCDIR([LICENSE])
+AC_CONFIG_SRCDIR([README.md])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_SYSTEM
 AC_CANONICAL_HOST
@@ -929,7 +929,19 @@ fi
 AC_ARG_ENABLE(executables, [  --disable-executables disable the build of the runtime executables], enable_executables=$enableval, enable_executables=yes)
 AM_CONDITIONAL(DISABLE_EXECUTABLES, test x$enable_executables = xno)
 
-AC_ARG_ENABLE(extension-module, [  --enable-extension-module enables usage of the extension module], has_extension_module=$enableval, has_extension_module=no)
+has_extension_module=no
+AC_ARG_ENABLE(extension-module, [  --enable-extension-module=LIST enable the core-extensions from LIST],
+[
+	for extension in `echo "$enable_extension_module" | sed -e "s/,/ /g"`; do
+		if test x$extension = xdefault ; then
+			has_extension_module=yes;
+		fi
+	done
+	if test x$enable_extension_module = xyes; then
+		has_extension_module=yes;
+	fi
+], [])
+
 AM_CONDITIONAL([HAS_EXTENSION_MODULE], [test x$has_extension_module != xno])
 
 if test x$has_extension_module != xno ; then
@@ -1583,6 +1595,8 @@ if test x$target_win32 = xno; then
 	AC_MSG_CHECKING(for working __thread)
 	if test "x$with_tls" != "x__thread"; then
 		AC_MSG_RESULT(disabled)
+	elif test "x$cross_compiling" = "xyes"; then
+		AC_MSG_RESULT(cross compiling, assuming yes)
 	else
 		AC_TRY_RUN([
 			#if defined(__APPLE__) && defined(__clang__)
@@ -1630,6 +1644,8 @@ if test x$target_win32 = xno; then
 	AC_MSG_CHECKING(for working sigaltstack)
 	if test "x$with_sigaltstack" != "xyes"; then
 		AC_MSG_RESULT(disabled)
+	elif test "x$cross_compiling" = "xyes"; then
+		AC_MSG_RESULT(cross compiling, assuming yes)
 	else
 		AC_TRY_RUN([
 			#include <stdio.h>
@@ -2125,7 +2141,12 @@ else
 		])
 	])
 	AC_CHECK_FUNCS(GetProcessId)
+	AC_CHECK_DECLS(InterlockedExchange64, [], [], [[#include <windows.h>]])
 	AC_CHECK_DECLS(InterlockedCompareExchange64, [], [], [[#include <windows.h>]])
+	AC_CHECK_DECLS(InterlockedIncrement64, [], [], [[#include <windows.h>]])
+	AC_CHECK_DECLS(InterlockedAdd, [], [], [[#include <windows.h>]])
+	AC_CHECK_DECLS(InterlockedAdd64, [], [], [[#include <windows.h>]])
+	AC_CHECK_DECLS(__readfsdword, [], [], [[#include <windows.h>]])
 fi
 
 dnl socklen_t check
@@ -2370,10 +2391,19 @@ AC_ARG_ENABLE(llvm,[  --enable-llvm	Enable the LLVM back-end], enable_llvm=$enab
 AC_ARG_ENABLE(loadedllvm,[  --enable-loadedllvm	Load the LLVM back-end dynamically], enable_llvm=$enableval && enable_loadedllvm=$enableval, enable_loadedllvm=no)
 AC_ARG_ENABLE(llvm-version-check,[  --enable-llvm-version-check Check that the LLVM matches the version expected by mono], enable_llvm_version_check=$enableval, enable_llvm_version_check=no)
 
+AC_ARG_WITH(llvm, [  --with-llvm=<llvm prefix>    Enable the LLVM back-end], enable_llvm=yes,)
+
 if test "x$enable_llvm" = "xyes"; then
-   AC_PATH_PROG(LLVM_CONFIG, llvm-config, no)
-   if test "x$LLVM_CONFIG" = "xno"; then
-   	  AC_MSG_ERROR([llvm-config not found.])
+   if test "x$with_llvm" != "x"; then
+   	  LLVM_CONFIG=$with_llvm/bin/llvm-config
+	  if test ! -x $LLVM_CONFIG; then
+	  	 AC_MSG_ERROR([LLVM executable $LLVM_CONFIG not found.])
+      fi
+   else
+      AC_PATH_PROG(LLVM_CONFIG, llvm-config, no)
+      if test "x$LLVM_CONFIG" = "xno"; then
+   	     AC_MSG_ERROR([llvm-config not found.])
+      fi
    fi
 
    llvm_codegen="x86codegen"
@@ -2397,7 +2427,7 @@ if test "x$enable_llvm" = "xyes"; then
    fi
    LLVM_LIBS="$LLVM_LDFLAGS $LLVM_LIBS -lstdc++"
 
-   expected_llvm_version="3.3svn-mono/2c9642d"
+   expected_llvm_version="3.4svn-mono-mono/e656cac"
 
    # Should be something like '2.6' or '2.7svn'
    llvm_version=`$LLVM_CONFIG --version`
@@ -2455,10 +2485,6 @@ jit_wanted=true
 interp_wanted=false
 sgen_supported=false
 case "$host" in
-#	mips-sgi-irix5.* | mips-sgi-irix6.*)
-#		TARGET=MIPS;
-#		ACCESS_UNALIGNED="no"
-#		;;
 	mips*)
 		TARGET=MIPS;
 		arch_target=mips;
@@ -2781,7 +2807,7 @@ esac
 dnl Use GCC atomic ops if they work on the target.
 if test x$GCC = "xyes"; then
 	case $TARGET in
-	X86 | AMD64 | ARM | POWERPC | POWERPC64 | MIPS)
+	X86 | AMD64 | ARM | POWERPC | POWERPC64 | MIPS | S390X | SPARC | SPARC64)
 		AC_DEFINE(USE_GCC_ATOMIC_OPS, 1, [...])
 		;;
 	esac

@@ -943,7 +943,7 @@ namespace Mono.CSharp {
 
 				IntConstant sic = right.ConvertImplicitly (ec.BuiltinTypes.Int, ec) as IntConstant;
 				if (sic == null){
-					Binary.Error_OperatorCannotBeApplied (ec, left, right, oper, loc); ;
+					Binary.Error_OperatorCannotBeApplied (ec, left, right, oper, loc);
 					return null;
 				}
 				int rshift_val = sic.Value;

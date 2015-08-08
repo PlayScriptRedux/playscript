@@ -154,7 +154,7 @@ int mono_exc_esp_offset = 0;
 
 #define ADD_LR_PC_4 ((ARMCOND_AL << ARMCOND_SHIFT) | (1 << 25) | (1 << 23) | (ARMREG_PC << 16) | (ARMREG_LR << 12) | 4)
 #define MOV_LR_PC ((ARMCOND_AL << ARMCOND_SHIFT) | (1 << 24) | (0xa << 20) |  (ARMREG_LR << 12) | ARMREG_PC)
-#define DEBUG_IMT 0
+//#define DEBUG_IMT 0
  
 /* A variant of ARM_LDR_IMM which can handle large offsets */
 #define ARM_LDR_IMM_GENERAL(code, dreg, basereg, offset, scratch_reg) do { \
@@ -5691,30 +5691,6 @@ mono_arch_emit_epilog (MonoCompile *cfg)
 
 }
 
-/* remove once throw_exception_by_name is eliminated */
-static int
-exception_id_by_name (const char *name)
-{
-	if (strcmp (name, "IndexOutOfRangeException") == 0)
-		return MONO_EXC_INDEX_OUT_OF_RANGE;
-	if (strcmp (name, "OverflowException") == 0)
-		return MONO_EXC_OVERFLOW;
-	if (strcmp (name, "ArithmeticException") == 0)
-		return MONO_EXC_ARITHMETIC;
-	if (strcmp (name, "DivideByZeroException") == 0)
-		return MONO_EXC_DIVIDE_BY_ZERO;
-	if (strcmp (name, "InvalidCastException") == 0)
-		return MONO_EXC_INVALID_CAST;
-	if (strcmp (name, "NullReferenceException") == 0)
-		return MONO_EXC_NULL_REF;
-	if (strcmp (name, "ArrayTypeMismatchException") == 0)
-		return MONO_EXC_ARRAY_TYPE_MISMATCH;
-	if (strcmp (name, "ArgumentException") == 0)
-		return MONO_EXC_ARGUMENT;
-	g_error ("Unknown intrinsic exception %s\n", name);
-	return -1;
-}
-
 void
 mono_arch_emit_exceptions (MonoCompile *cfg)
 {
@@ -5737,7 +5713,7 @@ mono_arch_emit_exceptions (MonoCompile *cfg)
 	 */
 	for (patch_info = cfg->patch_info; patch_info; patch_info = patch_info->next) {
 		if (patch_info->type == MONO_PATCH_INFO_EXC) {
-			i = exception_id_by_name (patch_info->data.target);
+			i = mini_exception_id_by_name (patch_info->data.target);
 			if (!exc_throw_found [i]) {
 				max_epilog_size += 32;
 				exc_throw_found [i] = TRUE;
@@ -5760,7 +5736,7 @@ mono_arch_emit_exceptions (MonoCompile *cfg)
 			MonoClass *exc_class;
 			unsigned char *ip = patch_info->ip.i + cfg->native_code;
 
-			i = exception_id_by_name (patch_info->data.target);
+			i = mini_exception_id_by_name (patch_info->data.target);
 			if (exc_throw_pos [i]) {
 				arm_patch (ip, exc_throw_pos [i]);
 				patch_info->type = MONO_PATCH_INFO_NONE;
@@ -5953,7 +5929,7 @@ mono_arch_find_static_call_vtable (mgreg_t *regs, guint8 *code)
 #define CMP_SIZE (3 * 4)
 #define BRANCH_SIZE (1 * 4)
 #define CALL_SIZE (2 * 4)
-#define WMC_SIZE (5 * 4)
+#define WMC_SIZE (8 * 4)
 #define DISTANCE(A, B) (((gint32)(B)) - ((gint32)(A)))
 
 #ifdef USE_JUMP_TABLES
@@ -5989,6 +5965,15 @@ arm_emit_value_and_patch_ldr (arminstr_t *code, arminstr_t *target, guint32 valu
 }
 #endif
 
+#ifdef ENABLE_WRONG_METHOD_CHECK
+void
+mini_dump_bad_imt (int input_imt, int compared_imt, int pc)
+{
+	g_print ("BAD IMT comparing %x with expected %x at ip %x", input_imt, compared_imt, pc);
+	g_assert (0);
+}
+#endif
+
 gpointer
 mono_arch_build_imt_thunk (MonoVTable *vtable, MonoDomain *domain, MonoIMTCheckItem **imt_entries, int count,
 	gpointer fail_tramp)
@@ -6002,6 +5987,9 @@ mono_arch_build_imt_thunk (MonoVTable *vtable, MonoDomain *domain, MonoIMTCheckI
 	guint32 **constant_pool_starts;
 	arminstr_t *vtable_target = NULL;
 	int extra_space = 0;
+#endif
+#ifdef ENABLE_WRONG_METHOD_CHECK
+	char * cond;
 #endif
 
 	size = BASE_SIZE;
@@ -6057,11 +6045,11 @@ mono_arch_build_imt_thunk (MonoVTable *vtable, MonoDomain *domain, MonoIMTCheckI
 		code = mono_domain_code_reserve (domain, size);
 	start = code;
 
-#if DEBUG_IMT
-	printf ("building IMT thunk for class %s %s entries %d code size %d code at %p end %p vtable %p\n", vtable->klass->name_space, vtable->klass->name, count, size, start, ((guint8*)start) + size, vtable);
+#ifdef DEBUG_IMT
+	g_print ("Building IMT thunk for class %s %s entries %d code size %d code at %p end %p vtable %p fail_tramp %p\n", vtable->klass->name_space, vtable->klass->name, count, size, start, ((guint8*)start) + size, vtable, fail_tramp);
 	for (i = 0; i < count; ++i) {
 		MonoIMTCheckItem *item = imt_entries [i];
-		printf ("method %d (%p) %s vtable slot %p is_equals %d chunk size %d\n", i, item->key, item->key->name, &vtable->vtable [item->value.vtable_slot], item->is_equals, item->chunk_size);
+		g_print ("method %d (%p) %s vtable slot %p is_equals %d chunk size %d\n", i, item->key, ((MonoMethod*)item->key)->name, &vtable->vtable [item->value.vtable_slot], item->is_equals, item->chunk_size);
 	}
 #endif
 
@@ -6145,9 +6133,18 @@ mono_arch_build_imt_thunk (MonoVTable *vtable, MonoDomain *domain, MonoIMTCheckI
 				ARM_LDR_IMM (code, ARMREG_R1, ARMREG_PC, 0);
 #endif
 				ARM_CMP_REG_REG (code, ARMREG_R0, ARMREG_R1);
-				ARM_B_COND (code, ARMCOND_NE, 1);
+				cond = code;
+				ARM_B_COND (code, ARMCOND_EQ, 0);
 
+/* Define this if your system is so bad that gdb is failing. */
+#ifdef BROKEN_DEV_ENV
+				ARM_MOV_REG_REG (code, ARMREG_R2, ARMREG_PC);
+				ARM_BL (code, 0);
+				arm_patch (code - 1, mini_dump_bad_imt);
+#else
 				ARM_DBRK (code);
+#endif
+				arm_patch (cond, code);
 #endif
 			}
 
@@ -6267,15 +6264,15 @@ mono_arch_build_imt_thunk (MonoVTable *vtable, MonoDomain *domain, MonoIMTCheckI
 #ifdef USE_JUMP_TABLES
 			code = load_element_with_regbase_cond (code, ARMREG_R1, ARMREG_R2, IMT_METHOD_JTI (i), ARMCOND_AL);
 			ARM_CMP_REG_REG (code, ARMREG_R0, ARMREG_R1);
-			code = load_element_with_regbase_cond (code, ARMREG_R1, ARMREG_R2, JUMP_CODE_JTI (i), ARMCOND_GE);
-			ARM_BX_COND (code, ARMCOND_GE, ARMREG_R1);
+			code = load_element_with_regbase_cond (code, ARMREG_R1, ARMREG_R2, JUMP_CODE_JTI (i), ARMCOND_HS);
+			ARM_BX_COND (code, ARMCOND_HS, ARMREG_R1);
 			item->jmp_code = GUINT_TO_POINTER (JUMP_CODE_JTI (i));
 #else
 			ARM_LDR_IMM (code, ARMREG_R1, ARMREG_PC, 0);
 			ARM_CMP_REG_REG (code, ARMREG_R0, ARMREG_R1);
 
 			item->jmp_code = (guint8*)code;
-			ARM_B_COND (code, ARMCOND_GE, 0);
+			ARM_B_COND (code, ARMCOND_HS, 0);
 			++extra_space;
 #endif
 		}
@@ -6305,7 +6302,7 @@ mono_arch_build_imt_thunk (MonoVTable *vtable, MonoDomain *domain, MonoIMTCheckI
 		}
 	}
 
-#if DEBUG_IMT
+#ifdef DEBUG_IMT
 	{
 		char *buff = g_strdup_printf ("thunk_for_class_%s_%s_entries_%d", vtable->klass->name_space, vtable->klass->name, count);
 		mono_disassemble_code (NULL, (guint8*)start, size, buff);
@@ -6574,6 +6571,15 @@ mono_arch_get_seq_point_info (MonoDomain *domain, guint8 *code)
 	}
 
 	return info;
+}
+
+void
+mono_arch_init_lmf_ext (MonoLMFExt *ext, gpointer prev_lmf)
+{
+	ext->lmf.previous_lmf = prev_lmf;
+	/* Mark that this is a MonoLMFExt */
+	ext->lmf.previous_lmf = (gpointer)(((gssize)ext->lmf.previous_lmf) | 2);
+	ext->lmf.sp = (gssize)ext;
 }
 
 /*

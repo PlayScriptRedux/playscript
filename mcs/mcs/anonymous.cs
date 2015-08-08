@@ -199,14 +199,9 @@ namespace Mono.CSharp {
 				this.parent = parent;
 			}
 
-			public override bool Resolve (BlockContext bc)
-			{
-				return base.Resolve (bc);
-			}
-
 			protected override void DoEmit (EmitContext ec)
 			{
-				Expression source = EmptyExpression.Null;
+				Expression source;
 
 				if (parent == null)
 					source = new CompilerGeneratedThis (ec.CurrentType, loc);
@@ -249,11 +244,11 @@ namespace Mono.CSharp {
 		AnonymousMethodStorey hoisted_this_parent;
 
 		public AnonymousMethodStorey (ExplicitBlock block, TypeDefinition parent, MemberBase host, TypeParameters tparams, string name, MemberKind kind)
-			: base (parent, MakeMemberName (host, name, parent.Module.CounterAnonymousContainers, tparams, block.StartLocation),
+			: base (parent, MakeMemberName (host, name, parent.PartialContainer.CounterAnonymousContainers, tparams, block.StartLocation),
 				tparams, 0, kind)
 		{
 			OriginalSourceBlock = block;
-			ID = parent.Module.CounterAnonymousContainers++;
+			ID = parent.PartialContainer.CounterAnonymousContainers++;
 		}
 
 		public void AddCapturedThisField (EmitContext ec, AnonymousMethodStorey parent)
@@ -1548,7 +1543,7 @@ namespace Mono.CSharp {
 
 			var bc = ec as BlockContext;
 			if (bc != null)
-				aec.FlowOffset = bc.FlowOffset;
+				aec.AssignmentInfoOffset = bc.AssignmentInfoOffset;
 
 			var errors = ec.Report.Errors;
 
@@ -1561,10 +1556,14 @@ namespace Mono.CSharp {
 
 				//
 				// If e is synchronous the inferred return type is T
-				// If e is asynchronous the inferred return type is Task<T>
+				// If e is asynchronous and the body of F is either an expression classified as nothing
+				// or a statement block where no return statements have expressions, the inferred return type is Task
+				// If e is async and has an inferred result type T, the inferred return type is Task<T>
 				//
 				if (block.IsAsync && ReturnType != null) {
-					ReturnType = ec.Module.PredefinedTypes.TaskGeneric.TypeSpec.MakeGenericType (ec, new [] { ReturnType });
+					ReturnType = ReturnType.Kind == MemberKind.Void ?
+						ec.Module.PredefinedTypes.Task.TypeSpec :
+						ec.Module.PredefinedTypes.TaskGeneric.TypeSpec.MakeGenericType (ec, new [] { ReturnType });
 				}
 			}
 
@@ -1740,7 +1739,7 @@ namespace Mono.CSharp {
 				parent = ec.CurrentTypeDefinition.Parent.PartialContainer;
 
 			string name = CompilerGeneratedContainer.MakeName (parent != storey ? block_name : null,
-				"m", null, ec.Module.CounterAnonymousMethods++);
+				"m", null, parent.PartialContainer.CounterAnonymousMethods++);
 
 			MemberName member_name;
 			if (storey == null && ec.CurrentTypeParameters != null) {

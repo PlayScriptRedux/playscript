@@ -54,21 +54,22 @@ namespace Mono.CSharp
 				return;
 			}
 
-			using (input) {
+			using (input){
 				SeekableStreamReader reader = new SeekableStreamReader (input, ctx.Settings.Encoding);
 				var file = new CompilationSourceFile (module, sourceFile);
 
 				if (sourceFile.FileType == SourceFileType.CSharp) {
-					Tokenizer lexer = new Tokenizer (reader, file, session);
+					Tokenizer lexer = new Tokenizer (reader, file, session, ctx.Report);
 					int token, tokens = 0, errors = 0;
-	
+
 					while ((token = lexer.token ()) != Token.EOF){
 						tokens++;
 						if (token == Token.ERROR)
 							errors++;
 					}
+					Console.WriteLine ("Tokenized: " + tokens + " found " + errors + " errors");
 				} else {
-					Mono.PlayScript.Tokenizer lexer = new Mono.PlayScript.Tokenizer (reader, file, session);
+					Mono.PlayScript.Tokenizer lexer = new Mono.PlayScript.Tokenizer (reader, file, session, ctx.Report);
 					lexer.ParsingPlayScript = sourceFile.PsExtended;
 					int token, tokens = 0, errors = 0;
 	
@@ -77,6 +78,7 @@ namespace Mono.CSharp
 						if (token == Mono.PlayScript.Token.ERROR)
 							errors++;
 					}
+					Console.WriteLine ("Tokenized: " + tokens + " found " + errors + " errors");
 				}
 			}
 			
@@ -90,7 +92,7 @@ namespace Mono.CSharp
 
 			Location.Initialize (sources);
 
-			var session = new ParserSession () {
+			var session = new ParserSession {
 				UseJayGlobalArrays = true,
 				LocatedTokens = new LocatedToken[15000],
 				AsLocatedTokens = new Mono.PlayScript.LocatedToken[15000]
@@ -190,10 +192,10 @@ namespace Mono.CSharp
 			module.AddTypeContainer (file);
 
 			if (sourceFile.FileType == SourceFileType.CSharp) {
-				CSharpParser parser = new CSharpParser (reader, file, session);
+				CSharpParser parser = new CSharpParser (reader, file, report, session);
 				parser.parse ();
 			} else {
-				PlayScriptParser parser = new PlayScriptParser (reader, file, session);
+				PlayScriptParser parser = new PlayScriptParser (reader, file, report, session);
 				parser.parsing_playscript = sourceFile.PsExtended;
 				parser.parse ();
 			}
@@ -406,6 +408,7 @@ namespace Mono.CSharp
 			
 			if (Report.Errors > 0)
 				return false;
+
 
 			tr.Start (TimeReporter.TimerType.EmitTotal);
 			if (settings.Target == Target.JavaScript) {

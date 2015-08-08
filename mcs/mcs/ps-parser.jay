@@ -4787,7 +4787,10 @@ unary_expression
 	  	CheckIsPlayScript("await", GetLocation($1));
 	  	
 		if (!async_block) {
-			 if (current_anonymous_method is AnonymousMethodExpression) {
+			 if (current_anonymous_method is LambdaExpression) {
+				report.Error (4034, GetLocation ($1),
+					"The `await' operator can only be used when its containing lambda expression is marked with the `async' modifier");
+			} else if (current_anonymous_method != null) {
 				report.Error (4035, GetLocation ($1),
 					"The `await' operator can only be used when its containing anonymous method is marked with the `async' modifier");
 			} else if (interactive_async != null) {
@@ -8112,7 +8115,7 @@ public PlayScriptParser (SeekableStreamReader reader, CompilationSourceFile file
 	lang_version = settings.Version;
 	yacc_verbose_flag = settings.VerboseParserFlag;
 	doc_support = settings.DocumentationFile != null;
-	lexer = new Tokenizer (reader, file, session);
+	lexer = new Tokenizer (reader, file, session, report);
 	oob_stack = new Stack<object> ();
 	lbag = session.LocationsBag;
 	use_global_stacks = session.UseJayGlobalArrays;
