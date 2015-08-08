@@ -2730,7 +2730,13 @@ namespace Mono.CSharp
 				if (t != null && (t.IsAccessible (this) || mode == LookupMode.IgnoreAccessibility))
 					e = new TypeExpression (t, Location.Null);
 				else {
+					var errors = Compiler.Report.Errors;
 					e = Parent.LookupNamespaceOrType (name, arity, mode, absolute_ns, loc);
+
+					// TODO: LookupNamespaceOrType does more than just lookup. The result
+					// cannot be cached or the error reporting won't happen
+					if (errors != Compiler.Report.Errors)
+						return e;
 				}
 			}
 
