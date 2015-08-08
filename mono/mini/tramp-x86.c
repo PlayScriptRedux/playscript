@@ -25,8 +25,6 @@
 #include "mini.h"
 #include "mini-x86.h"
 
-static guint8* nullified_class_init_trampoline;
-
 /*
  * mono_arch_get_unbox_trampoline:
  * @m: method pointer
@@ -239,6 +237,7 @@ mono_arch_nullify_class_init_trampoline (guint8 *code, mgreg_t *regs)
 {
 	guint8 buf [16];
 	gboolean can_write = mono_breakpoint_clean_code (NULL, code, 6, buf, sizeof (buf));
+	gpointer tramp = mini_get_nullified_class_init_trampoline ();
 
 	if (!can_write)
 		return;
@@ -273,7 +272,7 @@ mono_arch_nullify_class_init_trampoline (guint8 *code, mgreg_t *regs)
 			//VALGRIND_DISCARD_TRANSLATIONS (code, 8);
 		}
 #elif defined(__native_client_codegen__)
-		mono_arch_patch_callsite (code, code + 5, nullified_class_init_trampoline);
+		mono_arch_patch_callsite (code, code + 5, tramp);
 #endif
 	} else if (code [0] == 0x90 || code [0] == 0xeb) {
 		/* Already changed by another thread */
@@ -285,7 +284,7 @@ mono_arch_nullify_class_init_trampoline (guint8 *code, mgreg_t *regs)
 		vtable_slot = get_vcall_slot_addr (code + 5, regs);
 		g_assert (vtable_slot);
 
-		*vtable_slot = nullified_class_init_trampoline;
+		*vtable_slot = tramp;
 	} else {
 			printf ("Invalid trampoline sequence: %x %x %x %x %x %x %x\n", code [0], code [1], code [2], code [3],
 				code [4], code [5], code [6]);
@@ -296,10 +295,7 @@ mono_arch_nullify_class_init_trampoline (guint8 *code, mgreg_t *regs)
 void
 mono_arch_nullify_plt_entry (guint8 *code, mgreg_t *regs)
 {
-	if (mono_aot_only && !nullified_class_init_trampoline)
-		nullified_class_init_trampoline = mono_aot_get_trampoline ("nullified_class_init_trampoline");
-
-	mono_arch_patch_plt_entry (code, NULL, regs, nullified_class_init_trampoline);
+	mono_arch_patch_plt_entry (code, NULL, regs, mini_get_nullified_class_init_trampoline ());
 }
 
 guchar*
@@ -543,11 +539,6 @@ mono_arch_create_generic_trampoline (MonoTrampolineType tramp_type, MonoTrampInf
 		g_free (tramp_name);
 	}
 
-	if (tramp_type == MONO_TRAMPOLINE_CLASS_INIT) {
-		/* Initialize the nullified class init trampoline used in the AOT case */
-		nullified_class_init_trampoline = mono_arch_get_nullified_class_init_trampoline (NULL);
-	}
-
 	return buf;
 }
 
@@ -566,9 +557,6 @@ mono_arch_get_nullified_class_init_trampoline (MonoTrampInfo **info)
 
 	if (info)
 		*info = mono_tramp_info_create ("nullified_class_init_trampoline", buf, code - buf, NULL, NULL);
-
-	if (mono_jit_map_is_enabled ())
-		mono_emit_jit_tramp (buf, code - buf, "nullified_class_init_trampoline");
 
 	return buf;
 }

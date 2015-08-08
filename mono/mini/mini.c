@@ -153,6 +153,8 @@ gboolean disable_vtypes_in_regs = FALSE;
 
 gboolean mono_dont_free_global_codeman;
 
+static GSList *tramp_infos;
+
 gpointer
 mono_realloc_native_code (MonoCompile *cfg)
 {
@@ -382,6 +384,7 @@ mono_print_method_from_ip (void *ip)
 	FindTrampUserData user_data;
 	MonoGenericSharingContext*gsctx;
 	const char *shared_type;
+	GSList *l;
 	
 	ji = mini_jit_info_table_find (domain, ip, &target_domain);
 	if (!ji) {
@@ -394,9 +397,18 @@ mono_print_method_from_ip (void *ip)
 			char *mname = mono_method_full_name (user_data.method, TRUE);
 			printf ("IP %p is a JIT trampoline for %s\n", ip, mname);
 			g_free (mname);
+			return;
 		}
-		else
-			g_print ("No method at %p\n", ip);
+		for (l = tramp_infos; l; l = l->next) {
+			MonoTrampInfo *tinfo = l->data;
+
+			if ((guint8*)ip >= tinfo->code && (guint8*)ip <= tinfo->code + tinfo->code_size) {
+				printf ("IP %p is at offset 0x%x of trampoline '%s'.\n", ip, (int)((guint8*)ip - tinfo->code), tinfo->name);
+				return;
+			}
+		}
+
+		g_print ("No method at %p\n", ip);
 		fflush (stdout);
 		return;
 	}
@@ -581,6 +593,22 @@ mono_emit_unwind_op (MonoCompile *cfg, int when, int tag, int reg, int val)
 	op->when = when;
 	
 	cfg->unwind_ops = g_slist_append_mempool (cfg->mempool, cfg->unwind_ops, op);
+	if (cfg->verbose_level > 1) {
+		switch (tag) {
+		case DW_CFA_def_cfa:
+			printf ("CFA: [%x] def_cfa: %s+0x%x\n", when, mono_arch_regname (reg), val);
+			break;
+		case DW_CFA_def_cfa_register:
+			printf ("CFA: [%x] def_cfa_reg: %s\n", when, mono_arch_regname (reg));
+			break;
+		case DW_CFA_def_cfa_offset:
+			printf ("CFA: [%x] def_cfa_offset: 0x%x\n", when, val);
+			break;
+		case DW_CFA_offset:
+			printf ("CFA: [%x] offset: %s at cfa-0x%x\n", when, mono_arch_regname (reg), -val);
+			break;
+		}
+	}
 }
 
 MonoJumpInfoToken *
@@ -634,6 +662,38 @@ mono_tramp_info_free (MonoTrampInfo *info)
 		g_free (l->data);
 	g_slist_free (info->unwind_ops);
 	g_free (info);
+}
+
+/*
+ * mono_tramp_info_register:
+ *
+ * Remember INFO for use by xdebug, mono_print_method_from_ip (), jit maps, etc.
+ * INFO can be NULL.
+ * Frees INFO.
+ */
+void
+mono_tramp_info_register (MonoTrampInfo *info)
+{
+	MonoTrampInfo *copy;
+
+	if (!info)
+		return;
+
+	copy = g_new0 (MonoTrampInfo, 1);
+	copy->code = info->code;
+	copy->code_size = info->code_size;
+	copy->name = g_strdup (info->name);
+
+	mono_loader_lock_if_inited ();
+	tramp_infos = g_slist_prepend (tramp_infos, copy);
+	mono_loader_unlock_if_inited ();
+
+	mono_save_trampoline_xdebug_info (info);
+
+	if (mono_jit_map_is_enabled ())
+		mono_emit_jit_tramp (info->code, info->code_size, info->name);
+
+	mono_tramp_info_free (info);
 }
 
 G_GNUC_UNUSED static void
@@ -2873,6 +2933,9 @@ mini_get_tls_offset (MonoTlsKey key)
 	case TLS_KEY_LMF:
 		offset = mono_get_lmf_tls_offset ();
 		break;
+	case TLS_KEY_LMF_ADDR:
+		offset = mono_get_lmf_addr_tls_offset ();
+		break;
 	default:
 		offset = mono_tls_key_get_offset (key);
 		g_assert (offset != -1);
@@ -2957,6 +3020,20 @@ mono_add_patch_info (MonoCompile *cfg, int ip, MonoJumpInfoType type, gconstpoin
 
 	ji->ip.i = ip;
 	ji->type = type;
+	ji->data.target = target;
+	ji->next = cfg->patch_info;
+
+	cfg->patch_info = ji;
+}
+
+void
+mono_add_patch_info_rel (MonoCompile *cfg, int ip, MonoJumpInfoType type, gconstpointer target, int relocation)
+{
+	MonoJumpInfo *ji = mono_mempool_alloc (cfg->mempool, sizeof (MonoJumpInfo));
+
+	ji->ip.i = ip;
+	ji->type = type;
+	ji->relocation = relocation;
 	ji->data.target = target;
 	ji->next = cfg->patch_info;
 
@@ -7179,6 +7256,8 @@ mini_init (const char *filename, const char *runtime_version)
 	register_opcode_emulation (OP_LDIV_UN, "__emul_ldiv_un", "long long long", mono_lldiv_un, "mono_lldiv_un", FALSE);
 	register_opcode_emulation (OP_LREM, "__emul_lrem", "long long long", mono_llrem, "mono_llrem", FALSE);
 	register_opcode_emulation (OP_LREM_UN, "__emul_lrem_un", "long long long", mono_llrem_un, "mono_llrem_un", FALSE);
+#endif
+#if !defined(MONO_ARCH_NO_EMULATE_LONG_MUL_OPTS) || defined(MONO_ARCH_EMULATE_LONG_MUL_OVF_OPTS)
 	register_opcode_emulation (OP_LMUL_OVF_UN, "__emul_lmul_ovf_un", "long long long", mono_llmult_ovf_un, "mono_llmult_ovf_un", FALSE);
 	register_opcode_emulation (OP_LMUL_OVF, "__emul_lmul_ovf", "long long long", mono_llmult_ovf, "mono_llmult_ovf", FALSE);
 #endif

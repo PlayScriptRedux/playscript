@@ -346,11 +346,7 @@ mono_amd64_throw_exception (guint64 dummy1, guint64 dummy2, guint64 dummy3, guin
 							mgreg_t *regs, mgreg_t rip,
 							MonoObject *exc, gboolean rethrow)
 {
-	static void (*restore_context) (MonoContext *);
 	MonoContext ctx;
-
-	if (!restore_context)
-		restore_context = mono_get_restore_context ();
 
 	ctx.rsp = regs [AMD64_RSP];
 	ctx.rip = rip;
@@ -382,7 +378,7 @@ mono_amd64_throw_exception (guint64 dummy1, guint64 dummy2, guint64 dummy3, guin
 			ctx_cp.rip = rip - 5;
 
 			if (mono_debugger_handle_exception (&ctx_cp, exc)) {
-				restore_context (&ctx_cp);
+				mono_restore_context (&ctx_cp);
 				g_assert_not_reached ();
 			}
 		}
@@ -392,8 +388,7 @@ mono_amd64_throw_exception (guint64 dummy1, guint64 dummy2, guint64 dummy3, guin
 	ctx.rip -= 1;
 
 	mono_handle_exception (&ctx, exc);
-	restore_context (&ctx);
-
+	mono_restore_context (&ctx);
 	g_assert_not_reached ();
 }
 
@@ -756,10 +751,6 @@ handle_signal_exception (gpointer obj)
 {
 	MonoJitTlsData *jit_tls = mono_native_tls_get_value (mono_jit_tls_id);
 	MonoContext ctx;
-	static void (*restore_context) (MonoContext *);
-
-	if (!restore_context)
-		restore_context = mono_get_restore_context ();
 
 	memcpy (&ctx, &jit_tls->ex_ctx, sizeof (MonoContext));
 
@@ -768,7 +759,7 @@ handle_signal_exception (gpointer obj)
 
 	mono_handle_exception (&ctx, obj);
 
-	restore_context (&ctx);
+	mono_restore_context (&ctx);
 }
 
 void
@@ -884,22 +875,20 @@ prepare_for_guard_pages (MonoContext *mctx)
 static void
 altstack_handle_and_restore (void *sigctx, gpointer obj, gboolean stack_ovf)
 {
-	void (*restore_context) (MonoContext *);
 	MonoContext mctx;
 
-	restore_context = mono_get_restore_context ();
 	mono_arch_sigctx_to_monoctx (sigctx, &mctx);
 
 	if (mono_debugger_handle_exception (&mctx, (MonoObject *)obj)) {
 		if (stack_ovf)
 			prepare_for_guard_pages (&mctx);
-		restore_context (&mctx);
+		mono_restore_context (&mctx);
 	}
 
 	mono_handle_exception (&mctx, obj);
 	if (stack_ovf)
 		prepare_for_guard_pages (&mctx);
-	restore_context (&mctx);
+	mono_restore_context (&mctx);
 }
 
 void
@@ -1160,8 +1149,7 @@ mono_arch_exceptions_init (void)
 			MonoTrampInfo *info = l->data;
 
 			mono_register_jit_icall (info->code, g_strdup (info->name), NULL, TRUE);
-			mono_save_trampoline_xdebug_info (info);
-			mono_tramp_info_free (info);
+			mono_tramp_info_register (info);
 		}
 		g_slist_free (tramps);
 	}

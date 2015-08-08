@@ -87,25 +87,13 @@ mono_exceptions_init (void)
 		MonoTrampInfo *info;
 
 		restore_context_func = mono_arch_get_restore_context (&info, FALSE);
-		if (info) {
-			mono_save_trampoline_xdebug_info (info);
-			mono_tramp_info_free (info);
-		}
+		mono_tramp_info_register (info);
 		call_filter_func = mono_arch_get_call_filter (&info, FALSE);
-		if (info) {
-			mono_save_trampoline_xdebug_info (info);
-			mono_tramp_info_free (info);
-		}
+		mono_tramp_info_register (info);
 		throw_exception_func = mono_arch_get_throw_exception (&info, FALSE);
-		if (info) {
-			mono_save_trampoline_xdebug_info (info);
-			mono_tramp_info_free (info);
-		}
+		mono_tramp_info_register (info);
 		rethrow_exception_func = mono_arch_get_rethrow_exception (&info, FALSE);
-		if (info) {
-			mono_save_trampoline_xdebug_info (info);
-			mono_tramp_info_free (info);
-		}
+		mono_tramp_info_register (info);
 	}
 #ifdef MONO_ARCH_HAVE_RESTORE_STACK_SUPPORT
 	try_more_restore_tramp = mono_create_specific_trampoline (try_more_restore, MONO_TRAMPOLINE_RESTORE_STACK_PROT, mono_domain_get (), NULL);
@@ -166,10 +154,7 @@ mono_get_throw_corlib_exception (void)
 		code = mono_aot_get_trampoline ("throw_corlib_exception");
 	else {
 		code = mono_arch_get_throw_corlib_exception (&info, FALSE);
-		if (info) {
-			mono_save_trampoline_xdebug_info (info);
-			mono_tramp_info_free (info);
-		}
+		mono_tramp_info_register (info);
 	}
 
 	mono_memory_barrier ();
@@ -1176,6 +1161,9 @@ mini_jit_info_table_find (MonoDomain *domain, char *addr, MonoDomain **out_domai
 		}
 	}
 
+	if (!t)
+		return NULL;
+
 	refs = (t->appdomain_refs) ? *(gpointer *) t->appdomain_refs : NULL;
 	for (; refs && *refs; refs++) {
 		if (*refs != domain && *refs != mono_get_root_domain ()) {
@@ -1517,7 +1505,6 @@ mono_handle_exception_internal (MonoContext *ctx, gpointer obj, gboolean resume,
 	MonoDomain *domain = mono_domain_get ();
 	MonoJitInfo *ji, *prev_ji;
 	static int (*call_filter) (MonoContext *, gpointer) = NULL;
-	static void (*restore_context) (void *);
 	MonoJitTlsData *jit_tls = mono_native_tls_get_value (mono_jit_tls_id);
 	MonoLMF *lmf = mono_get_lmf ();
 	MonoException *mono_ex;
@@ -1587,9 +1574,6 @@ mono_handle_exception_internal (MonoContext *ctx, gpointer obj, gboolean resume,
 
 	if (!call_filter)
 		call_filter = mono_get_call_filter ();
-
-	if (!restore_context)
-		restore_context = mono_get_restore_context ();
 
 	g_assert (jit_tls->end_of_stack);
 	g_assert (jit_tls->abort_func);
@@ -2493,7 +2477,6 @@ void
 mono_resume_unwind (MonoContext *ctx)
 {
 	MonoJitTlsData *jit_tls = mono_native_tls_get_value (mono_jit_tls_id);
-	static void (*restore_context) (MonoContext *);
 	MonoContext new_ctx;
 
 	MONO_CONTEXT_SET_IP (ctx, MONO_CONTEXT_GET_IP (&jit_tls->resume_state.ctx));
@@ -2502,10 +2485,7 @@ mono_resume_unwind (MonoContext *ctx)
 
 	mono_handle_exception_internal (&new_ctx, jit_tls->resume_state.ex_obj, TRUE, NULL);
 
-	if (!restore_context)
-		restore_context = mono_get_restore_context ();
-
-	restore_context (&new_ctx);
+	mono_restore_context (&new_ctx);
 }
 
 #ifdef MONO_ARCH_HAVE_HANDLER_BLOCK_GUARD
@@ -2714,11 +2694,8 @@ mono_thread_state_init_from_current (MonoThreadUnwindState *ctx)
 static void
 mono_raise_exception_with_ctx (MonoException *exc, MonoContext *ctx)
 {
-	void (*restore_context) (MonoContext *);
-	restore_context = mono_get_restore_context ();
-
 	mono_handle_exception (ctx, exc);
-	restore_context (ctx);
+	mono_restore_context (ctx);
 }
 
 /*FIXME Move all monoctx -> sigctx conversion to signal handlers once all archs support utils/mono-context */
@@ -2777,3 +2754,20 @@ mono_invoke_unhandled_exception_hook (MonoObject *exc)
 
 	g_assert_not_reached ();
 }
+
+/*
+ * mono_restore_context:
+ *
+ *   Call the architecture specific restore context function.
+ */
+void
+mono_restore_context (MonoContext *ctx)
+{
+	static void (*restore_context) (MonoContext *);
+
+	if (!restore_context)
+		restore_context = mono_get_restore_context ();
+	restore_context (ctx);
+	g_assert_not_reached ();
+}
+
