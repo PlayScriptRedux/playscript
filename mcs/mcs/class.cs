@@ -768,6 +768,12 @@ namespace Mono.CSharp
 			}
 		}
 
+		bool ITypeDefinition.IsCyclicTypeForwarder {
+			get {
+				return false;
+			}
+		}
+
 		//
 		// Returns true for secondary partial containers
 		//

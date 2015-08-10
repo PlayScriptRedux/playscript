@@ -498,6 +498,12 @@ namespace Mono.CSharp {
 			}
 		}
 
+		bool ITypeDefinition.IsCyclicTypeForwarder {
+			get {
+				return false;
+			}
+		}
+
 		public string Name {
 			get {
 				return MemberName.Name;
