@@ -1234,7 +1234,7 @@ namespace Mono.CSharp {
 				return null;
 
 			ExpressionStatement es = e as ExpressionStatement;
-			if (es == null)
+			if (es == null || e is AnonymousMethodBody)
 				Error_InvalidExpressionStatement (ec);
 
 			//
