@@ -42,7 +42,6 @@
 #ifdef HOST_WIN32
 static gint jit_tls_offset = -1;
 #endif
-static gint appdomain_tls_offset = -1;
 
 #ifdef MONO_XEN_OPT
 static gboolean optimize_for_xen = TRUE;
@@ -3668,15 +3667,12 @@ mono_amd64_emit_tls_get (guint8* code, int dreg, int tls_offset)
 static guint8*
 emit_tls_get_reg (guint8* code, int dreg, int offset_reg)
 {
+	/* offset_reg contains a value translated by mono_arch_translate_tls_offset () */
 #ifdef TARGET_OSX
-	// FIXME: tls_gs_offset can change too, do these when calculating the tls offset
 	if (dreg != offset_reg)
-		amd64_mov_reg_reg (code, dreg, offset_reg, sizeof (gpointer));
-	amd64_shift_reg_imm (code, X86_SHL, dreg, 3);
-	if (tls_gs_offset)
-		amd64_alu_reg_imm (code, X86_ADD, dreg, tls_gs_offset);
-	x86_prefix (code, X86_GS_PREFIX);
-	amd64_mov_reg_membase (code, dreg, dreg, 0, sizeof (gpointer));
+		amd64_mov_reg_reg (code, dreg, offset_reg, sizeof (mgreg_t));
+	amd64_prefix (code, X86_GS_PREFIX);
+	amd64_mov_reg_membase (code, dreg, dreg, 0, sizeof (mgreg_t));
 #elif defined(__linux__)
 	int tmpreg = -1;
 
@@ -3717,22 +3713,32 @@ amd64_emit_tls_set (guint8 *code, int sreg, int tls_offset)
 static guint8*
 amd64_emit_tls_set_reg (guint8 *code, int sreg, int offset_reg)
 {
+	/* offset_reg contains a value translated by mono_arch_translate_tls_offset () */
 #ifdef HOST_WIN32
 	g_assert_not_reached ();
 #elif defined(__APPLE__)
-	// FIXME: tls_gs_offset can change too, do these when calculating the tls offset
-	g_assert (sreg != AMD64_R11);
-	amd64_mov_reg_reg (code, AMD64_R11, offset_reg, sizeof (gpointer));
-	amd64_shift_reg_imm (code, X86_SHL, AMD64_R11, 3);
-	if (tls_gs_offset)
-		amd64_alu_reg_imm (code, X86_ADD, AMD64_R11, tls_gs_offset);
 	x86_prefix (code, X86_GS_PREFIX);
-	amd64_mov_membase_reg (code, AMD64_R11, 0, sreg, sizeof (gpointer));
+	amd64_mov_membase_reg (code, offset_reg, 0, sreg, 8);
 #else
 	x86_prefix (code, X86_FS_PREFIX);
 	amd64_mov_membase_reg (code, offset_reg, 0, sreg, 8);
 #endif
 	return code;
+}
+ 
+ /*
+ * mono_arch_translate_tls_offset:
+ *
+ *   Translate the TLS offset OFFSET computed by MONO_THREAD_VAR_OFFSET () into a format usable by OP_TLS_GET_REG/OP_TLS_SET_REG.
+ */
+int
+mono_arch_translate_tls_offset (int offset)
+{
+#ifdef __APPLE__
+	return tls_gs_offset + (offset * 8);
+#else
+	return offset;
+#endif
 }
 
 /*
@@ -8083,19 +8089,15 @@ mono_arch_finish_init (void)
 	 * We need to init this multiple times, since when we are first called, the key might not
 	 * be initialized yet.
 	 */
-	appdomain_tls_offset = mono_domain_get_tls_key ();
 	jit_tls_offset = mono_get_jit_tls_key ();
 
 	/* Only 64 tls entries can be accessed using inline code */
-	if (appdomain_tls_offset >= 64)
-		appdomain_tls_offset = -1;
 	if (jit_tls_offset >= 64)
 		jit_tls_offset = -1;
 #else
 #ifdef MONO_XEN_OPT
 	optimize_for_xen = access ("/proc/xen", F_OK) == 0;
 #endif
-	appdomain_tls_offset = mono_domain_get_tls_offset ();
 #endif
 }
 
@@ -8406,18 +8408,6 @@ gboolean
 mono_arch_print_tree (MonoInst *tree, int arity)
 {
 	return 0;
-}
-
-MonoInst* mono_arch_get_domain_intrinsic (MonoCompile* cfg)
-{
-	MonoInst* ins;
-	
-	if (appdomain_tls_offset == -1)
-		return NULL;
-	
-	MONO_INST_NEW (cfg, ins, OP_TLS_GET);
-	ins->inst_offset = appdomain_tls_offset;
-	return ins;
 }
 
 #define _CTX_REG(ctx,fld,i) ((&ctx->fld)[i])

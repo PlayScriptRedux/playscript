@@ -122,7 +122,7 @@
 #endif
 
 /* Version number of the AOT file format */
-#define MONO_AOT_FILE_VERSION 96
+#define MONO_AOT_FILE_VERSION 97
 
 //TODO: This is x86/amd64 specific.
 #define mono_simd_shuffle_mask(a,b,c,d) ((a) | ((b) << 2) | ((c) << 4) | ((d) << 6))
@@ -2294,6 +2294,7 @@ gpointer  mono_arch_get_gsharedvt_trampoline    (MonoTrampInfo **info, gboolean 
 gpointer  mono_arch_get_gsharedvt_call_info     (gpointer addr, MonoMethodSignature *normal_sig, MonoMethodSignature *gsharedvt_sig, MonoGenericSharingContext *gsctx, gboolean gsharedvt_in, gint32 vcall_offset, gboolean calli) MONO_INTERNAL;
 gboolean  mono_arch_opcode_needs_emulation      (MonoCompile *cfg, int opcode) MONO_INTERNAL;
 gboolean  mono_arch_tail_call_supported         (MonoMethodSignature *caller_sig, MonoMethodSignature *callee_sig) MONO_INTERNAL;
+int       mono_arch_translate_tls_offset        (int offset) MONO_INTERNAL;
 
 #ifdef MONO_ARCH_SOFT_FLOAT_FALLBACK
 gboolean  mono_arch_is_soft_float               (void) MONO_INTERNAL;
@@ -2359,7 +2360,6 @@ mgreg_t mono_arch_context_get_int_reg		    (MonoContext *ctx, int reg) MONO_INTE
 void     mono_arch_context_set_int_reg		    (MonoContext *ctx, int reg, mgreg_t val) MONO_INTERNAL;
 void     mono_arch_flush_register_windows       (void) MONO_INTERNAL;
 gboolean mono_arch_is_inst_imm                  (gint64 imm) MONO_INTERNAL;
-MonoInst* mono_arch_get_domain_intrinsic        (MonoCompile* cfg) MONO_INTERNAL;
 gboolean mono_arch_is_int_overflow              (void *sigctx, void *info) MONO_INTERNAL;
 void     mono_arch_invalidate_method            (MonoJitInfo *ji, void *func, gpointer func_arg) MONO_INTERNAL;
 guint32  mono_arch_get_patch_offset             (guint8 *code) MONO_INTERNAL;

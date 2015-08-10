@@ -8149,7 +8149,7 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 			/*
 			 * Making generic calls out of gsharedvt methods.
 			 */
-			if (cmethod && cfg->gsharedvt && mini_is_gsharedvt_signature (cfg, fsig)) {
+			if (cmethod && cfg->gsharedvt && mini_is_gsharedvt_variable_signature (fsig)) {
 				MonoRgctxInfoType info_type;
 
 				if (virtual) {
@@ -9814,6 +9814,7 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 			gboolean is_special_static;
 			MonoType *ftype;
 			MonoInst *store_val = NULL;
+			MonoInst *thread_ins;
 
 			op = *ip;
 			is_instance = (op == CEE_LDFLD || op == CEE_LDFLDA || op == CEE_STFLD);
@@ -10093,8 +10094,13 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 
 			is_special_static = mono_class_field_is_special_static (field);
 
+			if (is_special_static && ((gsize)addr & 0x80000000) == 0)
+				thread_ins = mono_get_thread_intrinsic (cfg);
+			else
+				thread_ins = NULL;
+
 			/* Generate IR to compute the field address */
-			if (is_special_static && ((gsize)addr & 0x80000000) == 0 && mono_get_thread_intrinsic (cfg) && !(cfg->opt & MONO_OPT_SHARED) && !context_used) {
+			if (is_special_static && ((gsize)addr & 0x80000000) == 0 && thread_ins && !(cfg->opt & MONO_OPT_SHARED) && !context_used) {
 				/*
 				 * Fast access to TLS data
 				 * Inline version of get_thread_static_data () in
@@ -10102,15 +10108,12 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 				 */
 				guint32 offset;
 				int idx, static_data_reg, array_reg, dreg;
-				MonoInst *thread_ins;
 
 				GSHAREDVT_FAILURE (op);
 
 				// offset &= 0x7fffffff;
 				// idx = (offset >> 24) - 1;
 				//	return ((char*) thread->static_data [idx]) + (offset & 0xffffff);
-
-				thread_ins = mono_get_thread_intrinsic (cfg);
 				MONO_ADD_INS (cfg->cbb, thread_ins);
 				static_data_reg = alloc_ireg (cfg);
 				MONO_EMIT_NEW_LOAD_MEMBASE (cfg, static_data_reg, thread_ins->dreg, G_STRUCT_OFFSET (MonoInternalThread, static_data));
@@ -11855,13 +11858,11 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 
 		cfg->cbb = init_localsbb;
 
-		if (! (get_domain = mono_arch_get_domain_intrinsic (cfg))) {
+		if ((get_domain = mono_get_domain_intrinsic (cfg))) {
+			MONO_ADD_INS (cfg->cbb, get_domain);
+		} else {
 			get_domain = mono_emit_jit_icall (cfg, mono_domain_get, NULL);
 		}
-		else {
-			get_domain->dreg = alloc_preg (cfg);
-			MONO_ADD_INS (cfg->cbb, get_domain);
-		}		
 		NEW_TEMPSTORE (cfg, store, cfg->domainvar->inst_c0, get_domain);
 		MONO_ADD_INS (cfg->cbb, store);
 	}
