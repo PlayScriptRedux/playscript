@@ -77,7 +77,7 @@
  * Changes which are already detected at runtime, like the addition
  * of icalls, do not require an increment.
  */
-#define MONO_CORLIB_VERSION 110
+#define MONO_CORLIB_VERSION 111
 
 typedef struct
 {
@@ -2200,23 +2200,6 @@ unload_data_unref (unload_data *data)
 }
 
 static void
-deregister_reflection_info_roots_nspace_table (gpointer key, gpointer value, gpointer image)
-{
-	guint32 index = GPOINTER_TO_UINT (value);
-	MonoClass *class = mono_class_get (image, MONO_TOKEN_TYPE_DEF | index);
-
-	g_assert (class);
-
-	mono_class_free_ref_info (class);
-}
-
-static void
-deregister_reflection_info_roots_name_space (gpointer key, gpointer value, gpointer user_data)
-{
-	g_hash_table_foreach (value, deregister_reflection_info_roots_nspace_table, user_data);
-}
-
-static void
 deregister_reflection_info_roots_from_list (MonoImage *image)
 {
 	GSList *list = image->reflection_info_unregister_classes;
@@ -2229,7 +2212,6 @@ deregister_reflection_info_roots_from_list (MonoImage *image)
 		list = list->next;
 	}
 
-	g_slist_free (image->reflection_info_unregister_classes);
 	image->reflection_info_unregister_classes = NULL;
 }
 
@@ -2238,29 +2220,28 @@ deregister_reflection_info_roots (MonoDomain *domain)
 {
 	GSList *list;
 
-	mono_loader_lock ();
 	mono_domain_assemblies_lock (domain);
 	for (list = domain->domain_assemblies; list; list = list->next) {
 		MonoAssembly *assembly = list->data;
 		MonoImage *image = assembly->image;
 		int i;
-		/*No need to take the image lock here since dynamic images are appdomain bound and at this point the mutator is gone.*/
-		if (image->dynamic && image->name_cache)
-			g_hash_table_foreach (image->name_cache, deregister_reflection_info_roots_name_space, image);
-		deregister_reflection_info_roots_from_list (image);
+
+		/*
+		 * No need to take the image lock here since dynamic images are appdomain bound and
+		 * at this point the mutator is gone.  Taking the image lock here would mean
+		 * promoting it from a simple lock to a complex lock, which we better avoid if
+		 * possible.
+		 */
+		if (image->dynamic)
+			deregister_reflection_info_roots_from_list (image);
+
 		for (i = 0; i < image->module_count; ++i) {
 			MonoImage *module = image->modules [i];
-			if (module) {
-				if (module->dynamic && module->name_cache) {
-					g_hash_table_foreach (module->name_cache,
-							deregister_reflection_info_roots_name_space, module);
-				}
+			if (module && module->dynamic)
 				deregister_reflection_info_roots_from_list (module);
-			}
 		}
 	}
 	mono_domain_assemblies_unlock (domain);
-	mono_loader_unlock ();
 }
 
 static guint32 WINAPI
