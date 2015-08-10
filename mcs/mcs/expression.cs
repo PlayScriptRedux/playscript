@@ -7129,6 +7129,9 @@ namespace Mono.CSharp
 
 		public override void FlowAnalysis (FlowAnalysisContext fc)
 		{
+			if (mg.IsConditionallyExcluded)
+				return;
+
 			mg.FlowAnalysis (fc);
 
 			if (arguments != null)
@@ -7176,6 +7179,9 @@ namespace Mono.CSharp
 
 		public override void Emit (EmitContext ec)
 		{
+			if (mg.IsConditionallyExcluded)
+				return;
+
 			mg.EmitCall (ec, arguments);
 		}
 		
