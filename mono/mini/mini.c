@@ -49,6 +49,7 @@
 #include <mono/metadata/mempool-internals.h>
 #include <mono/metadata/attach.h>
 #include <mono/metadata/runtime.h>
+#include <mono/metadata/mono-debug-debugger.h>
 #include <mono/utils/mono-math.h>
 #include <mono/utils/mono-compiler.h>
 #include <mono/utils/mono-counters.h>
@@ -71,7 +72,6 @@
 
 #include "jit-icalls.h"
 
-#include "debug-mini.h"
 #include "mini-gc.h"
 #include "debugger-agent.h"
 
@@ -2838,7 +2838,6 @@ mono_thread_start_cb (intptr_t tid, gpointer stack_start, gpointer func)
 	MonoInternalThread *thread;
 	void *jit_tls = setup_jit_tls_data (stack_start, mono_thread_abort);
 	thread = mono_thread_internal_current ();
-	mono_debugger_thread_created (tid, thread->root_domain_thread, jit_tls, func);
 	if (thread)
 		thread->jit_data = jit_tls;
 
@@ -2862,7 +2861,6 @@ mono_thread_attach_cb (intptr_t tid, gpointer stack_start)
 	MonoInternalThread *thread;
 	void *jit_tls = setup_jit_tls_data (stack_start, mono_thread_abort_dummy);
 	thread = mono_thread_internal_current ();
-	mono_debugger_thread_created (tid, thread->root_domain_thread, (MonoJitTlsData *) jit_tls, NULL);
 	if (thread)
 		thread->jit_data = jit_tls;
 	if (mono_profiler_get_events () & MONO_PROFILE_STATISTICAL)
@@ -2877,8 +2875,6 @@ mini_thread_cleanup (MonoInternalThread *thread)
 	MonoJitTlsData *jit_tls = thread->jit_data;
 
 	if (jit_tls) {
-		mono_debugger_thread_cleanup (jit_tls);
-
 		/* We can't clean up tls information if we are on another thread, it will clean up the wrong stuff
 		 * It would be nice to issue a warning when this happens outside of the shutdown sequence. but it's
 		 * not a trivial thing.
@@ -4953,7 +4949,7 @@ mini_method_compile (MonoMethod *method, guint32 opts, MonoDomain *domain, gbool
 #endif
 
 	/* The debugger has no liveness information, so avoid sharing registers/stack slots */
-	if (mono_debug_using_mono_debugger () || debug_options.mdb_optimizations) {
+	if (debug_options.mdb_optimizations) {
 		cfg->disable_reuse_registers = TRUE;
 		cfg->disable_reuse_stack_slots = TRUE;
 		/* 
@@ -5782,9 +5778,6 @@ mono_jit_compile_method_inner (MonoMethod *method, MonoDomain *target_domain, in
 		if (jinfo)
 			mono_profiler_method_end_jit (method, jinfo, MONO_PROFILE_OK);
 		return code;
-
-		//if (mono_debug_format != MONO_DEBUG_FORMAT_NONE) 
-		//mono_debug_add_wrapper (method, nm);
 	} else if ((method->iflags & METHOD_IMPL_ATTRIBUTE_RUNTIME)) {
 		const char *name = method->name;
 		char *full_name, *msg;
@@ -6169,7 +6162,6 @@ mono_jit_compile_method_with_opt (MonoMethod *method, guint32 opt, MonoException
 		if (!callinfo->wrapper) {
 			callinfo->wrapper = p;
 			mono_register_jit_icall_wrapper (callinfo, p);
-			mono_debug_add_icall_wrapper (method, callinfo);
 		}
 		mono_jit_unlock ();
 		mono_loader_unlock ();
@@ -7054,11 +7046,6 @@ mini_init (const char *filename, const char *runtime_version)
 
 	InitializeCriticalSection (&jit_mutex);
 
-#ifdef MONO_DEBUGGER_SUPPORTED
-	if (mini_debug_running_inside_mdb ())
-		mini_debugger_init ();
-#endif
-
 #ifdef MONO_HAVE_FAST_TLS
 	MONO_FAST_TLS_INIT (mono_jit_tls);
 	MONO_FAST_TLS_INIT (mono_lmf_addr);
@@ -7577,8 +7564,6 @@ mini_cleanup (MonoDomain *domain)
 #ifndef MONO_CROSS_COMPILE
 	mono_domain_free (domain, TRUE);
 #endif
-
-	mono_debugger_cleanup ();
 
 #ifdef ENABLE_LLVM
 	if (mono_use_llvm)

@@ -2491,23 +2491,12 @@ void      mono_debug_serialize_debug_info       (MonoCompile *cfg, guint8 **out_
 void      mono_debug_add_aot_method             (MonoDomain *domain,
 						 MonoMethod *method, guint8 *code_start, 
 						 guint8 *debug_info, guint32 debug_info_len) MONO_INTERNAL;
-void      mono_debug_add_icall_wrapper          (MonoMethod *method, MonoJitICallInfo* info) MONO_INTERNAL;
 MONO_API void      mono_debug_print_vars                 (gpointer ip, gboolean only_arguments);
 MONO_API void      mono_debugger_run_finally             (MonoContext *start_ctx);
 
 extern gssize mono_breakpoint_info_index [MONO_BREAKPOINT_ARRAY_SIZE];
 
 MONO_API gboolean mono_breakpoint_clean_code (guint8 *method_start, guint8 *code, int offset, guint8 *buf, int size);
-
-#ifdef MONO_DEBUGGER_SUPPORTED
-
-/* Mono Debugger support */
-void      mini_debugger_init                    (void);
-int       mini_debugger_main                    (MonoDomain *domain, MonoAssembly *assembly, int argc, char **argv);
-gboolean  mini_debug_running_inside_mdb         (void);
-void      mini_debugger_set_attach_ok           (void);
-
-#endif
 
 /* Tracing */
 MonoTraceSpec *mono_trace_parse_options         (const char *options) MONO_INTERNAL;

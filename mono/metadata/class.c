@@ -71,7 +71,6 @@ static void mono_generic_class_setup_parent (MonoClass *klass, MonoClass *gklass
 
 
 void (*mono_debugger_class_init_func) (MonoClass *klass) = NULL;
-void (*mono_debugger_class_loaded_methods_func) (MonoClass *klass) = NULL;
 
 
 /*
@@ -2169,9 +2168,6 @@ mono_class_setup_methods (MonoClass *class)
 
 	class->methods = methods;
 
-	if (mono_debugger_class_loaded_methods_func)
-		mono_debugger_class_loaded_methods_func (class);
-
 	mono_loader_unlock ();
 }
 
@@ -3616,10 +3612,6 @@ mono_class_setup_vtable_full (MonoClass *class, GList *in_setup)
 
 	if (class->vtable)
 		return;
-
-	if (mono_debug_using_mono_debugger ())
-		/* The debugger currently depends on this */
-		mono_class_setup_methods (class);
 
 	if (MONO_CLASS_IS_INTERFACE (class)) {
 		/* This sets method->slot for all methods if this is an interface */
@@ -8664,7 +8656,7 @@ mono_class_get_virtual_methods (MonoClass* klass, gpointer *iter)
 	MonoMethod** method;
 	if (!iter)
 		return NULL;
-	if (klass->methods || !MONO_CLASS_HAS_STATIC_METADATA (klass) || mono_debug_using_mono_debugger ()) {
+	if (klass->methods || !MONO_CLASS_HAS_STATIC_METADATA (klass)) {
 		if (!*iter) {
 			mono_class_setup_methods (klass);
 			/*

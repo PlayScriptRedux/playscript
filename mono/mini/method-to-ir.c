@@ -4858,7 +4858,8 @@ should_insert_brekpoint (MonoMethod *method) {
 	case MONO_BREAK_POLICY_NEVER:
 		return FALSE;
 	case MONO_BREAK_POLICY_ON_DBG:
-		return mono_debug_using_mono_debugger ();
+		g_warning ("mdb no longer supported");
+		return FALSE;
 	default:
 		g_warning ("Incorrect value returned from break policy callback");
 		return FALSE;
@@ -6689,9 +6690,6 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 		dont_verify_stloc = TRUE;
 	}
 
-	if (mono_debug_using_mono_debugger ())
-		cfg->keep_cil_nops = TRUE;
-
 	if (sig->is_inflated)
 		generic_context = mono_method_get_context (method);
 	else if (generic_container)
@@ -6878,7 +6876,7 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 
 	if (cfg->method == method) {
 		breakpoint_id = mono_debugger_method_has_breakpoint (method);
-		if (breakpoint_id && (mono_debug_format != MONO_DEBUG_FORMAT_DEBUGGER)) {
+		if (breakpoint_id) {
 			MONO_INST_NEW (cfg, ins, OP_BREAK);
 			MONO_ADD_INS (bblock, ins);
 		}
