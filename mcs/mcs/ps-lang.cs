@@ -1051,23 +1051,16 @@ namespace Mono.CSharp
 			target.VarDecl = VarDecl.Clone (clonectx) as BlockVariable;
 		}
 
+		protected override bool DoFlowAnalysis (FlowAnalysisContext fc)
+		{
+			throw new NotImplementedException ();
+		}
+			
 		protected override void DoEmit (EmitContext ec)
 		{
 		}
 
-//		public override void EmitJs (JsEmitContext jec)
-//		{
-//			jec.Buf.Write ("delete ", Location);
-//			Expr.EmitJs (jec);
-//		}
-//		
-//		public override void EmitStatementJs (JsEmitContext jec)
-//		{
-//			jec.Buf.Write ("\t", Location);
-//			EmitJs (jec);
-//			jec.Buf.Write (";\n");
-//		}
-		
+
 		public override Expression CreateExpressionTree (ResolveContext ec)
 		{
 			throw new System.NotSupportedException ();
@@ -1105,11 +1098,16 @@ namespace Mono.CSharp
 		{
 			return true;
 		}
-		
-		public override bool ResolveUnreachable (BlockContext ec, bool warn)
+
+		protected override bool DoFlowAnalysis (FlowAnalysisContext fc)
 		{
-			return true;
+			throw new NotImplementedException ();
 		}
+
+//		public override bool ResolveUnreachable (BlockContext ec, bool warn)
+//		{
+//			return true;
+//		}
 		
 		public override void Emit (EmitContext ec)
 		{
@@ -1155,6 +1153,11 @@ namespace Mono.CSharp
 			expr = expr.Resolve (bc);
 
 			return expr != null;
+		}
+
+		protected override bool DoFlowAnalysis (FlowAnalysisContext fc)
+		{
+			throw new NotImplementedException ();
 		}
 
 		protected override void DoEmit (EmitContext ec)

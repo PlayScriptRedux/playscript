@@ -731,6 +731,11 @@ namespace Mono.CSharp
 			}
 		}
 
+		public override void FlowAnalysis (FlowAnalysisContext fc)
+		{
+			arguments.FlowAnalysis (fc);
+		}
+
 		public static MemberAccess GetBinderNamespace (ResolveContext rc, Location loc)
 		{
 			if (rc.Module.PredefinedTypes.IsPlayScriptDynamicMode) {
@@ -817,6 +822,11 @@ namespace Mono.CSharp
 			using (ec.With (BuilderContext.Options.OmitDebugInfo, true)) {
 				stmt.Emit (ec);
 			}
+		}
+
+		public override void FlowAnalysis (FlowAnalysisContext fc)
+		{
+			invoke.FlowAnalysis (fc);
 		}
 	}
 

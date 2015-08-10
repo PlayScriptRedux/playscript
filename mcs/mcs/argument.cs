@@ -131,6 +131,29 @@ namespace Mono.CSharp
 			return this;
 		}
 
+		public void FlowAnalysis (FlowAnalysisContext fc)
+		{
+			if (ArgType == AType.Out) {
+				var vr = Expr as VariableReference;
+				if (vr != null) {
+					if (vr.VariableInfo != null)
+						fc.SetVariableAssigned (vr.VariableInfo);
+
+					return;
+				}
+
+				var fe = Expr as FieldExpr;
+				if (fe != null) {
+					fe.SetFieldAssigned (fc);
+					return;
+				}
+
+				return;
+			}
+
+			Expr.FlowAnalysis (fc);
+		}
+
 		public string GetSignatureForError ()
 		{
 			if (Expr.eclass == ExprClass.MethodGroup)
@@ -156,31 +179,30 @@ namespace Mono.CSharp
 
 		public void Resolve (ResolveContext ec)
 		{
-//			using (ec.With (ResolveContext.Options.DoFlowAnalysis, true)) {
+			var isPlayScript = ec.FileType == SourceFileType.PlayScript;
 
-				// Keep track of the array initializer, we need it to do array type inference when searching for
-				// a matching method.
-				if (ec.FileType == SourceFileType.PlayScript) {
-					if (Expr is AsArrayInitializer) {
-						InferArrayInitializer = (AsArrayInitializer)Expr;
-					} else if (Expr is AsObjectInitializer) {
-						InferObjInitializer = (AsObjectInitializer)Expr;
-					} else if (Expr is AnonymousMethodExpression) {
-						Expr = new Cast(new TypeExpression(ec.BuiltinTypes.Delegate, Expr.Location), Expr, Expr.Location);
-					}
+			// Keep track of the array initializer, we need it to do array type inference when searching for
+			// a matching method.
+			if (isPlayScript) {
+				if (Expr is AsArrayInitializer) {
+					InferArrayInitializer = (AsArrayInitializer)Expr;
+				} else if (Expr is AsObjectInitializer) {
+					InferObjInitializer = (AsObjectInitializer)Expr;
+				} else if (Expr is AnonymousMethodExpression) {
+					Expr = new Cast(new TypeExpression(ec.BuiltinTypes.Delegate, Expr.Location), Expr, Expr.Location);
 				}
+			}
 
-				// Verify that the argument is readable
-				if (ArgType != AType.Out)
-					Expr = Expr.Resolve (ec);
+			// Verify that the argument is readable
+			if (ArgType != AType.Out)
+				Expr = Expr.Resolve (ec);
 
-				// Verify that the argument is writeable
-				if (Expr != null && IsByRef)
-					Expr = Expr.ResolveLValue (ec, EmptyExpression.OutAccess);
+			// Verify that the argument is writeable
+			if (Expr != null && IsByRef)
+				Expr = Expr.ResolveLValue (ec, EmptyExpression.OutAccess);
 
-				if (Expr == null)
-					Expr = ErrorExpression.Instance;
-//			}
+			if (Expr == null)
+				Expr = ErrorExpression.Instance;
 		}
 	}
 
@@ -519,6 +541,12 @@ namespace Mono.CSharp
 				return new Arguments (dups);
 
 			return null;
+		}
+
+		public void FlowAnalysis (FlowAnalysisContext fc)
+		{
+			foreach (var arg in args)
+				arg.FlowAnalysis (fc);
 		}
 
 		public List<Argument>.Enumerator GetEnumerator ()

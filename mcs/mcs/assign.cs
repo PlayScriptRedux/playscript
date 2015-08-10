@@ -418,6 +418,14 @@ namespace Mono.CSharp {
 			Emit (ec, true);
 		}
 
+		public override void FlowAnalysis (FlowAnalysisContext fc)
+		{
+			source.FlowAnalysis (fc);
+
+			if (target is ArrayAccess || target is IndexerExpr || target is PropertyExpr)
+				target.FlowAnalysis (fc);
+		}
+
 		protected override void CloneTo (CloneContext clonectx, Expression t)
 		{
 			Assign _target = (Assign) t;
@@ -496,6 +504,32 @@ namespace Mono.CSharp {
 			}
 
 			return ret;
+		}
+
+		public override void FlowAnalysis (FlowAnalysisContext fc)
+		{
+			base.FlowAnalysis (fc);
+
+			var vr = target as VariableReference;
+			if (vr != null) {
+				if (vr.VariableInfo != null)
+					fc.SetVariableAssigned (vr.VariableInfo);
+
+				return;
+			}
+
+			var fe = target as FieldExpr;
+			if (fe != null) {
+				fe.SetFieldAssigned (fc);
+				return;
+			}
+		}
+
+		public override void MarkReachable (Reachability rc)
+		{
+			var es = source as ExpressionStatement;
+			if (es != null)
+				es.MarkReachable (rc);
 		}
 	}
 
@@ -624,6 +658,11 @@ namespace Mono.CSharp {
 				resolved.EmitStatement (ec);
 			else
 				base.EmitStatement (ec);
+		}
+
+		public override void FlowAnalysis (FlowAnalysisContext fc)
+		{
+			source.FlowAnalysis (fc);
 		}
 		
 		public bool IsDefaultInitializer {
@@ -813,6 +852,12 @@ namespace Mono.CSharp {
 			}
 
 			return base.DoResolve (ec);
+		}
+
+		public override void FlowAnalysis (FlowAnalysisContext fc)
+		{
+			target.FlowAnalysis (fc);
+			source.FlowAnalysis (fc);
 		}
 
 		protected override Expression ResolveConversions (ResolveContext ec)
