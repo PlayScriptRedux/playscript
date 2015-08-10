@@ -2239,7 +2239,12 @@ void ves_icall_System_Net_Sockets_Socket_SetSocketOption_internal(SOCKET sock, g
 					mreq.imr_interface = ipaddress_to_struct_in_addr (address);
 				}
 #endif /* HAVE_STRUCT_IP_MREQN */
-			
+
+#ifdef HAVE_STRUCT_IP_MREQN
+				field = mono_class_get_field_from_name(obj_val->vtable->klass, "iface_index");
+				mreq.imr_ifindex = *(gint32 *)(((char *)obj_val)+field->offset);
+#endif /* HAVE_STRUCT_IP_MREQN */
+
 				ret = _wapi_setsockopt (sock, system_level,
 							system_name, &mreq,
 							sizeof (mreq));
@@ -2277,6 +2282,23 @@ void ves_icall_System_Net_Sockets_Socket_SetSocketOption_internal(SOCKET sock, g
 			linger.l_onoff = !int_val;
 			linger.l_linger = 0;
 			ret = _wapi_setsockopt (sock, system_level, system_name, &linger, sizeof (linger));
+			break;
+		case SocketOptionName_MulticastInterface:
+#ifndef HOST_WIN32
+#ifdef HAVE_STRUCT_IP_MREQN
+			int_val = GUINT32_FROM_BE (int_val);
+			if ((int_val & 0xff000000) == 0) {
+				/* int_val is interface index */
+				struct ip_mreqn mreq = {{0}};
+				mreq.imr_ifindex = int_val;
+				ret = _wapi_setsockopt (sock, system_level, system_name, (char *) &mreq, sizeof (mreq));
+				break;
+			}
+			int_val = GUINT32_TO_BE (int_val);
+#endif /* HAVE_STRUCT_IP_MREQN */
+#endif /* HOST_WIN32 */
+			/* int_val is in_addr */
+			ret = _wapi_setsockopt (sock, system_level, system_name, (char *) &int_val, sizeof (int_val));
 			break;
 		case SocketOptionName_DontFragment:
 #ifdef HAVE_IP_MTU_DISCOVER
