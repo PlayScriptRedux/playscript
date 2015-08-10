@@ -683,7 +683,7 @@ namespace Mono.CSharp {
 	public partial class For : LoopStatement
 	{
 		bool infinite, empty, iterator_reachable, end_reachable;
-		List<DefiniteAssignmentBitSet> end_reachability;
+		List<DefiniteAssignmentBitSet> end_reachable_das;
 		
 		public For (Location l)
 			: base (null)
@@ -741,9 +741,20 @@ namespace Mono.CSharp {
 
 			Iterator.FlowAnalysis (fc);
 
+			//
+			// Special case infinite for with breaks
+			//
+			if (end_reachable_das != null) {
+				das = DefiniteAssignmentBitSet.And (end_reachable_das);
+				end_reachable_das = null;
+			}
+
 			fc.DefiniteAssignment = das;
 
-			return infinite && !end_reachable;
+			if (infinite && !end_reachable)
+				return true;
+
+			return false;
 		}
 
 		public override Reachability MarkReachable (Reachability rc)
@@ -860,10 +871,10 @@ namespace Mono.CSharp {
 			if (!infinite)
 				return;
 
-			if (end_reachability == null)
-				end_reachability = new List<DefiniteAssignmentBitSet> ();
+			if (end_reachable_das == null)
+				end_reachable_das = new List<DefiniteAssignmentBitSet> ();
 
-			end_reachability.Add (fc.DefiniteAssignment);
+			end_reachable_das.Add (fc.DefiniteAssignment);
 		}
 
 		public override void SetEndReachable ()
