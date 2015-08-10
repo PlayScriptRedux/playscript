@@ -19,14 +19,14 @@
     <DebugSymbols>True</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>False</Optimize>
-    <OutputPath>.</OutputPath>
+    <OutputPath>bin\Debug</OutputPath>
     <DefineConstants>TRACE;DEBUG;NET_4_0;STATIC;NO_SYMBOL_WRITER;NO_AUTHENTICODE;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <Commandlineparameters>@options-mcs.rsp</Commandlineparameters>
+    <Commandlineparameters>@options-test.rsp</Commandlineparameters>
     <additionalargs>/newdynamic-</additionalargs>
-    <Externalconsole>true</Externalconsole>
+    <ConsolePause>false</ConsolePause>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Optimize>True</Optimize>
@@ -34,12 +34,12 @@
     <ErrorReport>prompt</ErrorReport>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <OutputPath>.</OutputPath>
+    <OutputPath>bin\Debug</OutputPath>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug - AST|AnyCPU'">
     <DebugSymbols>True</DebugSymbols>
-    <OutputPath>.</OutputPath>
+    <OutputPath>bin\Debug</OutputPath>
     <DefineConstants>TRACE;DEBUG;NET_4_0;STATIC;NO_SYMBOL_WRITER;NO_AUTHENTICODE;FULL_AST</DefineConstants>
     <DebugType>full</DebugType>
     <CodeAnalysisLogFile>mcs.exe.CodeAnalysisLog.xml</CodeAnalysisLogFile>
@@ -205,13 +205,16 @@
     <None Include="options.rsp">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="options-asset-test.rsp">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Include="options-mcs.rsp">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="mcs.exe.sources" />
+    <None Include="options-test.rsp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="options-assert-test.rsp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System.Xml">
