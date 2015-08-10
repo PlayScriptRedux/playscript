@@ -1212,6 +1212,8 @@ namespace Mono.CSharp {
 
 		protected override bool DoResolve (BlockContext ec)
 		{
+			var isPlayScript = ec.FileType == SourceFileType.PlayScript;
+
 			var block_return_type = ec.ReturnType;
 
 			if (expr == null) {
@@ -1231,19 +1233,21 @@ namespace Mono.CSharp {
 						expr = EmptyExpression.Null;
 						return true;
 					}
+
+					if (storey.ReturnType.IsGenericTask)
+						block_return_type = storey.ReturnType.TypeArguments[0];
 				}
 
 				if (ec.CurrentIterator != null) {
 					Error_ReturnFromIterator (ec);
 				} else if (ec.ReturnType != InternalType.ErrorType) {
-					if (ec.HasNoReturnType && ec.FileType == SourceFileType.PlayScript) {
+					if (ec.HasNoReturnType && isPlayScript) {
 						expr = new MemberAccess(new MemberAccess(new SimpleName("PlayScript", loc), "Undefined", loc), "_undefined", loc).Resolve (ec);
 						return true;
-					}
-
-					ec.Report.Error (126, loc,
-						"An object of a type convertible to `{0}' is required for the return statement",
-						ec.ReturnType.GetSignatureForError ());
+					} else 
+						ec.Report.Error (126, loc,
+							"An object of a type convertible to `{0}' is required for the return statement",
+							block_return_type.GetSignatureForError ());
 				}
 
 				return false;
