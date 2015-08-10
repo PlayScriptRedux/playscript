@@ -30,11 +30,25 @@
 #error "ARM_FPU_NONE is defined while one of ARM_FPU_VFP/ARM_FPU_VFP_HARD is defined"
 #endif
 
-#if defined(MONO_ARCH_SOFT_FLOAT_FALLBACK)
+/* IS_SOFT_FLOAT: Is full software floating point used?
+ * IS_HARD_FLOAT: Is full hardware floating point used?
+ * IS_VFP: Is hardware floating point with software ABI used?
+ *
+ * These are not necessarily constants, e.g. IS_SOFT_FLOAT and
+ * IS_VFP may delegate to mono_arch_is_soft_float ().
+ */
+
+#if defined(ARM_FPU_VFP_HARD)
+#define IS_SOFT_FLOAT (FALSE)
+#define IS_HARD_FLOAT (TRUE)
+#define IS_VFP (TRUE)
+#elif defined(ARM_FPU_NONE)
 #define IS_SOFT_FLOAT (mono_arch_is_soft_float ())
+#define IS_HARD_FLOAT (FALSE)
 #define IS_VFP (!mono_arch_is_soft_float ())
 #else
 #define IS_SOFT_FLOAT (FALSE)
+#define IS_HARD_FLOAT (FALSE)
 #define IS_VFP (TRUE)
 #endif
 
@@ -364,10 +378,18 @@ emit_move_return_value (MonoCompile *cfg, MonoInst *ins, guint8 *code)
 	case OP_FCALL_MEMBASE:
 		if (IS_VFP) {
 			if (((MonoCallInst*)ins)->signature->ret->type == MONO_TYPE_R4) {
-				ARM_FMSR (code, ins->dreg, ARMREG_R0);
-				ARM_CVTS (code, ins->dreg, ins->dreg);
+				if (IS_HARD_FLOAT) {
+					ARM_CVTS (code, ins->dreg, ARM_VFP_F0);
+				} else {
+					ARM_FMSR (code, ins->dreg, ARMREG_R0);
+					ARM_CVTS (code, ins->dreg, ins->dreg);
+				}
 			} else {
-				ARM_FMDRR (code, ARMREG_R0, ARMREG_R1, ins->dreg);
+				if (IS_HARD_FLOAT) {
+					ARM_CPYD (code, ins->dreg, ARM_VFP_D0);
+				} else {
+					ARM_FMDRR (code, ARMREG_R0, ARMREG_R1, ins->dreg);
+				}
 			}
 		}
 		break;
@@ -904,6 +926,12 @@ mono_arch_is_soft_float (void)
 }
 #endif
 
+gboolean
+mono_arm_is_hard_float (void)
+{
+	return arm_fpu == MONO_ARM_FPU_VFP_HARD;
+}
+
 static gboolean
 is_regsize_var (MonoGenericSharingContext *gsctx, MonoType *t) {
 	if (t->byref)
@@ -1411,9 +1439,13 @@ get_call_info (MonoGenericSharingContext *gsctx, MonoMemPool *mp, MonoMethodSign
 		case MONO_TYPE_R4:
 		case MONO_TYPE_R8:
 			cinfo->ret.storage = RegTypeFP;
-			cinfo->ret.reg = ARMREG_R0;
-			/* FIXME: cinfo->ret.reg = ???;
-			cinfo->ret.storage = RegTypeFP;*/
+
+			if (IS_HARD_FLOAT) {
+				cinfo->ret.reg = ARM_VFP_F0;
+			} else {
+				cinfo->ret.reg = ARMREG_R0;
+			}
+
 			break;
 		case MONO_TYPE_GENERICINST:
 			if (!mono_type_generic_inst_is_valuetype (simpletype)) {
@@ -2238,6 +2270,7 @@ mono_arch_emit_setret (MonoCompile *cfg, MonoMethod *method, MonoInst *val)
 			}
 			break;
 		case MONO_ARM_FPU_VFP:
+		case MONO_ARM_FPU_VFP_HARD:
 			if (ret->type == MONO_TYPE_R8 || ret->type == MONO_TYPE_R4) {
 				MonoInst *ins;
 
@@ -4795,9 +4828,16 @@ mono_arch_output_basic_block (MonoCompile *cfg, MonoBasicBlock *bb)
 		case OP_SETFRET:
 			if (mono_method_signature (cfg->method)->ret->type == MONO_TYPE_R4) {
 				ARM_CVTD (code, ARM_VFP_F0, ins->sreg1);
-				ARM_FMRS (code, ARMREG_R0, ARM_VFP_F0);
+
+				if (!IS_HARD_FLOAT) {
+					ARM_FMRS (code, ARMREG_R0, ARM_VFP_F0);
+				}
 			} else {
-				ARM_FMRRD (code, ARMREG_R0, ARMREG_R1, ins->sreg1);
+				if (IS_HARD_FLOAT) {
+					ARM_CPYD (code, ARM_VFP_D0, ins->sreg1);
+				} else {
+					ARM_FMRRD (code, ARMREG_R0, ARMREG_R1, ins->sreg1);
+				}
 			}
 			break;
 		case OP_FCONV_TO_I1:
