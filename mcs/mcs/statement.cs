@@ -1169,9 +1169,9 @@ namespace Mono.CSharp {
 				return true;
 
 			if (fc.TryFinally != null) {
-			    fc.TryFinally.RegisterOutParametersCheck (new DefiniteAssignmentBitSet (fc.DefiniteAssignment));
+			    fc.TryFinally.RegisterForControlExitCheck (new DefiniteAssignmentBitSet (fc.DefiniteAssignment));
 			} else {
-			    fc.ParametersBlock.CheckOutParametersAssignment (fc);
+			    fc.ParametersBlock.CheckControlExit (fc);
 			}
 
 			return true;
@@ -3977,12 +3977,12 @@ namespace Mono.CSharp {
 		//
 		// Checks whether all `out' parameters have been assigned.
 		//
-		public void CheckOutParametersAssignment (FlowAnalysisContext fc)
+		public void CheckControlExit (FlowAnalysisContext fc)
 		{
-			CheckOutParametersAssignment (fc, fc.DefiniteAssignment);
+			CheckControlExit (fc, fc.DefiniteAssignment);
 		}
 
-		public void CheckOutParametersAssignment (FlowAnalysisContext fc, DefiniteAssignmentBitSet dat)
+		public virtual void CheckControlExit (FlowAnalysisContext fc, DefiniteAssignmentBitSet dat)
 		{
 			if (parameter_info == null)
 				return;
@@ -4038,7 +4038,7 @@ namespace Mono.CSharp {
 			var res = base.DoFlowAnalysis (fc);
 
 			if (HasReachableClosingBrace)
-				CheckOutParametersAssignment (fc);
+				CheckControlExit (fc);
 
 			return res;
 		}
@@ -4628,21 +4628,16 @@ namespace Mono.CSharp {
 			this_variable.PrepareAssignmentAnalysis (bc);
 		}
 
-		public bool IsThisAssigned (FlowAnalysisContext fc)
+		public override void CheckControlExit (FlowAnalysisContext fc, DefiniteAssignmentBitSet dat)
 		{
-			return this_variable == null || this_variable.IsThisAssigned (fc, this);
-		}
-
-		protected override bool DoFlowAnalysis (FlowAnalysisContext fc)
-		{
-			var res = base.DoFlowAnalysis (fc);
-
 			//
 			// If we're a non-static struct constructor which doesn't have an
 			// initializer, then we must initialize all of the struct's fields.
 			//
-			IsThisAssigned (fc);
-			return res;
+			if (this_variable != null)
+				this_variable.IsThisAssigned (fc, this);
+
+			base.CheckControlExit (fc, dat);
 		}
 
 		public override void Emit (EmitContext ec)
@@ -6999,7 +6994,7 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public void RegisterOutParametersCheck (DefiniteAssignmentBitSet vector)
+		public void RegisterForControlExitCheck (DefiniteAssignmentBitSet vector)
 		{
 			if (try_exit_dat == null)
 				try_exit_dat = new List<DefiniteAssignmentBitSet> ();
@@ -7052,7 +7047,7 @@ namespace Mono.CSharp {
 				// executed before exit
 				//
 				foreach (var try_da_part in try_exit_dat)
-					fc.ParametersBlock.CheckOutParametersAssignment (fc, fc.DefiniteAssignment | try_da_part);
+					fc.ParametersBlock.CheckControlExit (fc, fc.DefiniteAssignment | try_da_part);
 
 				try_exit_dat = null;
 			}
