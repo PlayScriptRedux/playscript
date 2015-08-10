@@ -671,7 +671,7 @@ struct _SgenMajorCollector {
 	void (*init_worker_thread) (void *data);
 	void (*reset_worker_data) (void *data);
 	gboolean (*is_valid_object) (char *object);
-	gboolean (*describe_pointer) (char *pointer);
+	MonoVTable* (*describe_pointer) (char *pointer);
 	guint8* (*get_cardtable_mod_union_for_object) (char *object);
 	long long (*get_and_reset_num_major_objects_marked) (void);
 };
@@ -790,6 +790,7 @@ gboolean sgen_is_bridge_object (MonoObject *obj) MONO_INTERNAL;
 gboolean sgen_is_bridge_class (MonoClass *class) MONO_INTERNAL;
 void sgen_mark_bridge_object (MonoObject *obj) MONO_INTERNAL;
 void sgen_bridge_register_finalized_object (MonoObject *object) MONO_INTERNAL;
+void sgen_bridge_describe_pointer (MonoObject *object) MONO_INTERNAL;
 
 void sgen_scan_togglerefs (char *start, char *end, ScanCopyContext ctx) MONO_INTERNAL;
 void sgen_process_togglerefs (void) MONO_INTERNAL;
@@ -1043,6 +1044,10 @@ sgen_dummy_use (gpointer v) {
 
 gboolean sgen_parse_environment_string_extract_number (const char *str, glong *out) MONO_INTERNAL;
 void sgen_env_var_error (const char *env_var, const char *fallback, const char *description_format, ...) MONO_INTERNAL;
+
+/* Utilities */
+
+void sgen_qsort (void *base, size_t nel, size_t width, int (*compar) (const void*, const void*)) MONO_INTERNAL;
 
 #endif /* HAVE_SGEN_GC */
 

@@ -947,7 +947,7 @@ major_is_valid_object (char *object)
 }
 
 
-static gboolean
+static MonoVTable*
 major_describe_pointer (char *ptr)
 {
 	MSBlockInfo *block;
@@ -989,10 +989,10 @@ major_describe_pointer (char *ptr)
 
 		SGEN_LOG (0, " marked %d)\n", marked ? 1 : 0);
 
-		return TRUE;
+		return vtable;
 	} END_FOREACH_BLOCK;
 
-	return FALSE;
+	return NULL;
 }
 
 static void
@@ -1916,7 +1916,7 @@ major_have_computer_minor_collection_allowance (void)
 			empty_block_arr [i++] = block;
 		SGEN_ASSERT (0, i == num_empty_blocks, "empty block count wrong");
 
-		qsort (empty_block_arr, num_empty_blocks, sizeof (void*), compare_pointers);
+		sgen_qsort (empty_block_arr, num_empty_blocks, sizeof (void*), compare_pointers);
 
 		/*
 		 * We iterate over the free blocks, trying to find MS_BLOCK_ALLOC_NUM
