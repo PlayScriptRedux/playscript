@@ -2159,7 +2159,7 @@ namespace Mono.CSharp {
 		public virtual bool Resolve (IMemberContext ec)
 		{
 			if (atypes != null)
-			    return atypes.Length != 0;
+			    return true;
 
 			int count = args.Count;
 			bool ok = true;
@@ -2190,7 +2190,7 @@ namespace Mono.CSharp {
 			}
 
 			if (!ok)
-				atypes = TypeSpec.EmptyTypes;
+				atypes = null;
 
 			return ok;
 		}
