@@ -6757,6 +6757,8 @@ namespace Mono.CSharp {
 
 				if (expr != this)
 					return expr.ResolveLValue (ec, right_side);
+			} else {
+				ResolveInstanceExpression (ec, right_side);
 			}
 
 			if (!ResolveSetter (ec))
