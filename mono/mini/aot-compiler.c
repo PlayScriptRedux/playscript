@@ -6481,7 +6481,7 @@ compile_method (MonoAotCompile *acfg, MonoMethod *method)
 	 * the runtime will not see AOT methods during AOT compilation,so it
 	 * does not need to support them by creating a fake GOT etc.
 	 */
-	cfg = mini_method_compile (method, acfg->opts, mono_get_root_domain (), FALSE, TRUE, 0);
+	cfg = mini_method_compile (method, acfg->opts, mono_get_root_domain (), acfg->aot_opts.full_aot ? (JIT_FLAG_AOT|JIT_FLAG_FULL_AOT) : (JIT_FLAG_AOT), 0);
 	mono_loader_clear_error ();
 
 	if (cfg->exception_type == MONO_EXCEPTION_GENERIC_SHARING_FAILED) {
@@ -8420,7 +8420,7 @@ compile_asm (MonoAotCompile *acfg)
 #elif defined(sparc) && SIZEOF_VOID_P == 8
 #define AS_OPTIONS "-xarch=v9"
 #elif defined(TARGET_X86) && defined(TARGET_MACH) && !defined(__native_client_codegen__)
-#define AS_OPTIONS "-arch i386 -W"
+#define AS_OPTIONS "-arch i386"
 #else
 #define AS_OPTIONS ""
 #endif

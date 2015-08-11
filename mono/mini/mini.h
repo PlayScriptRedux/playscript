@@ -1274,6 +1274,16 @@ enum {
 	MONO_OPT_LAST
 };
 
+/* Flags for mini_method_compile () */
+typedef enum {
+	/* Whenever to run cctors during JITting */
+	JIT_FLAG_RUN_CCTORS = (1 << 0),
+	/* Whenever this is an AOT compilation */
+	JIT_FLAG_AOT = (1 << 1),
+	/* Whenever this is a full AOT compilation */
+	JIT_FLAG_FULL_AOT = (1 << 2)
+} JitFlags;
+
 /* Bit-fields in the MonoBasicBlock.region */
 #define MONO_REGION_TRY       0
 #define MONO_REGION_FINALLY  16
@@ -1420,6 +1430,7 @@ typedef struct {
 	guint            run_cctors : 1;
 	guint            need_lmf_area : 1;
 	guint            compile_aot : 1;
+	guint            full_aot : 1;
 	guint            compile_llvm : 1;
 	guint            got_var_allocated : 1;
 	guint            ret_var_is_local : 1;
@@ -2007,7 +2018,7 @@ void      mono_linear_scan                  (MonoCompile *cfg, GList *vars, GLis
 void      mono_global_regalloc              (MonoCompile *cfg) MONO_INTERNAL;
 void      mono_create_jump_table            (MonoCompile *cfg, MonoInst *label, MonoBasicBlock **bbs, int num_blocks) MONO_INTERNAL;
 int       mono_compile_assembly             (MonoAssembly *ass, guint32 opts, const char *aot_options) MONO_INTERNAL;
-MonoCompile *mini_method_compile            (MonoMethod *method, guint32 opts, MonoDomain *domain, gboolean run_cctors, gboolean compile_aot, int parts) MONO_INTERNAL;
+MonoCompile *mini_method_compile            (MonoMethod *method, guint32 opts, MonoDomain *domain, JitFlags flags, int parts) MONO_INTERNAL;
 void      mono_destroy_compile              (MonoCompile *cfg) MONO_INTERNAL;
 MonoJitICallInfo *mono_find_jit_opcode_emulation (int opcode) MONO_INTERNAL;
 void	  mono_print_ins_index (int i, MonoInst *ins) MONO_INTERNAL;
@@ -2300,7 +2311,7 @@ gboolean  mono_arch_gsharedvt_sig_supported     (MonoMethodSignature *sig) MONO_
 gpointer  mono_arch_get_gsharedvt_trampoline    (MonoTrampInfo **info, gboolean aot) MONO_INTERNAL;
 gpointer  mono_arch_get_gsharedvt_call_info     (gpointer addr, MonoMethodSignature *normal_sig, MonoMethodSignature *gsharedvt_sig, MonoGenericSharingContext *gsctx, gboolean gsharedvt_in, gint32 vcall_offset, gboolean calli) MONO_INTERNAL;
 gboolean  mono_arch_opcode_needs_emulation      (MonoCompile *cfg, int opcode) MONO_INTERNAL;
-gboolean  mono_arch_tail_call_supported         (MonoMethodSignature *caller_sig, MonoMethodSignature *callee_sig) MONO_INTERNAL;
+gboolean  mono_arch_tail_call_supported         (MonoCompile *cfg, MonoMethodSignature *caller_sig, MonoMethodSignature *callee_sig) MONO_INTERNAL;
 int       mono_arch_translate_tls_offset        (int offset) MONO_INTERNAL;
 
 #ifdef MONO_ARCH_SOFT_FLOAT_FALLBACK
