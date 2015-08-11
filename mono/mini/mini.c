@@ -4596,20 +4596,43 @@ static MonoType*
 get_gsharedvt_type (MonoType *t)
 {
 	MonoGenericParam *par = t->data.generic_param;
+	MonoGenericParam *copy;
 	MonoType *res;
+	MonoImage *image = NULL;
 
 	/* 
 	 * Create an anonymous gparam with a different serial so normal gshared and gsharedvt methods have
 	 * a different instantiation.
 	 */
 	g_assert (mono_generic_param_info (par));
-	par = g_memdup (par, sizeof (MonoGenericParamFull));
-	par->owner = NULL;
+	if (par->owner) {
+		image = par->owner->image;
+
+		mono_image_lock (image);
+		if (!image->gsharedvt_types)
+			image->gsharedvt_types = g_hash_table_new (NULL, NULL);
+		res = g_hash_table_lookup (image->gsharedvt_types, par);
+		mono_image_unlock (image);
+		if (res)
+			return res;
+		copy = mono_image_alloc0 (image, sizeof (MonoGenericParamFull));
+		memcpy (copy, par, sizeof (MonoGenericParamFull));
+	} else {
+		copy = g_memdup (par, sizeof (MonoGenericParamFull));
+	}
+	copy->owner = NULL;
 	// FIXME:
-	par->image = mono_defaults.corlib;
-	par->serial = 1;
+	copy->image = mono_defaults.corlib;
+	copy->serial = 1;
 	res = mono_metadata_type_dup (NULL, t);
-	res->data.generic_param = par;
+	res->data.generic_param = copy;
+
+	if (par->owner) {
+		mono_image_lock (image);
+		/* Duplicates are ok */
+		g_hash_table_insert (image->gsharedvt_types, par, res);
+		mono_image_unlock (image);
+	}
 
 	return res;
 }
@@ -7464,7 +7487,7 @@ mini_init (const char *filename, const char *runtime_version)
 	register_icall (mono_array_new_4, "mono_array_new_4", "object ptr int int int int", FALSE);
 	register_icall (mono_get_native_calli_wrapper, "mono_get_native_calli_wrapper", "ptr ptr ptr ptr", FALSE);
 	register_icall (mono_resume_unwind, "mono_resume_unwind", "void", TRUE);
-	register_icall (mono_gsharedvt_constrained_call, "mono_gsharedvt_constrained_call", "object ptr ptr ptr ptr ptr", TRUE);
+	register_icall (mono_gsharedvt_constrained_call, "mono_gsharedvt_constrained_call", "object ptr ptr ptr ptr ptr", FALSE);
 	register_icall (mono_gsharedvt_value_copy, "mono_gsharedvt_value_copy", "void ptr ptr ptr", TRUE);
 
 	register_icall (mono_gc_wbarrier_value_copy_bitmap, "mono_gc_wbarrier_value_copy_bitmap", "void ptr ptr int int", FALSE);

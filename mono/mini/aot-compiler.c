@@ -3217,12 +3217,6 @@ add_wrappers (MonoAotCompile *acfg)
 	 * so there is only one wrapper of a given type, or inlining their contents into their
 	 * callers.
 	 */
-
-	/* 
-	 * FIXME: This depends on the fact that different wrappers have different 
-	 * names.
-	 */
-
 	for (i = 0; i < acfg->image->tables [MONO_TABLE_METHOD].rows; ++i) {
 		MonoMethod *method;
 		guint32 token = MONO_TOKEN_METHOD_DEF | (i + 1);
@@ -3235,9 +3229,6 @@ add_wrappers (MonoAotCompile *acfg)
 			(method->flags & METHOD_ATTRIBUTE_ABSTRACT))
 			skip = TRUE;
 
-		if (method->is_generic || method->klass->generic_container)
-			skip = TRUE;
-
 		/* Skip methods which can not be handled by get_runtime_invoke () */
 		sig = mono_method_signature (method);
 		if (!sig)
@@ -3245,9 +3236,13 @@ add_wrappers (MonoAotCompile *acfg)
 		if ((sig->ret->type == MONO_TYPE_PTR) ||
 			(sig->ret->type == MONO_TYPE_TYPEDBYREF))
 			skip = TRUE;
+		if (mono_class_is_open_constructed_type (sig->ret))
+			skip = TRUE;
 
 		for (j = 0; j < sig->param_count; j++) {
 			if (sig->params [j]->type == MONO_TYPE_TYPEDBYREF)
+				skip = TRUE;
+			if (mono_class_is_open_constructed_type (sig->params [j]))
 				skip = TRUE;
 		}
 
@@ -8885,7 +8880,7 @@ mono_compile_assembly (MonoAssembly *ass, guint32 opts, const char *aot_options)
 	img_writer_emit_start (acfg->w);
 
 	if (acfg->dwarf)
-		mono_dwarf_writer_emit_base_info (acfg->dwarf, mono_unwind_get_cie_program ());
+		mono_dwarf_writer_emit_base_info (acfg->dwarf, g_path_get_basename (acfg->image->name), mono_unwind_get_cie_program ());
 
 	if (acfg->thumb_mixed) {
 		char symbol [256];
