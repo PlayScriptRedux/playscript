@@ -45,6 +45,7 @@ namespace System.Web
 			mimeTypes.Add ("3dmf", "x-world/x-3dmf");
 			mimeTypes.Add ("3dm", "x-world/x-3dmf");
 			mimeTypes.Add ("aab", "application/x-authorware-bin");
+			mimeTypes.Add ("aac", "audio/mp4");
 			mimeTypes.Add ("aam", "application/x-authorware-map");
 			mimeTypes.Add ("aas", "application/x-authorware-seg");
 			mimeTypes.Add ("abc", "text/vnd.abc");
@@ -90,7 +91,7 @@ namespace System.Web
 			mimeTypes.Add ("cer", "application/pkix-cert");
 			mimeTypes.Add ("cha", "application/x-chat");
 			mimeTypes.Add ("chat", "application/x-chat");
-			mimeTypes.Add ("class", "application/java");
+			mimeTypes.Add ("class", "application/x-java-applet");
 			mimeTypes.Add ("clp", "application/x-msclip");
 			mimeTypes.Add ("cmx", "image/x-cmx");
 			mimeTypes.Add ("cod", "image/cis-cod");
@@ -118,7 +119,11 @@ namespace System.Web
 			mimeTypes.Add ("dll", "application/x-msdownload");
 			mimeTypes.Add ("dl", "video/dl");
 			mimeTypes.Add ("doc", "application/msword");
+			mimeTypes.Add ("docm", "application/vnd.ms-word.document.macroEnabled.12");
+			mimeTypes.Add ("docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
 			mimeTypes.Add ("dot", "application/msword");
+			mimeTypes.Add ("dotm", "application/vnd.ms-word.template.macroEnabled.12");
+			mimeTypes.Add ("dotx", "application/vnd.openxmlformats-officedocument.wordprocessingml.template");
 			mimeTypes.Add ("dp", "application/commonground");
 			mimeTypes.Add ("drw", "application/drafting");
 			mimeTypes.Add ("dvi", "application/x-dvi");
@@ -199,6 +204,7 @@ namespace System.Web
 			mimeTypes.Add ("ivr", "i-world/i-vrml");
 			mimeTypes.Add ("ivy", "application/x-livescreen");
 			mimeTypes.Add ("jam", "audio/x-jam");
+			mimeTypes.Add ("jar", "application/java-archive");
 			mimeTypes.Add ("java", "text/plain");
 			mimeTypes.Add ("jav", "text/plain");
 			mimeTypes.Add ("jcm", "application/x-java-commerce");
@@ -208,7 +214,7 @@ namespace System.Web
 			mimeTypes.Add ("jpe", "image/jpeg");
 			mimeTypes.Add ("jpg", "image/jpeg");
 			mimeTypes.Add ("jps", "image/x-jps");
-			mimeTypes.Add ("js", "application/x-javascript");
+			mimeTypes.Add ("js", "application/javascript");
 			mimeTypes.Add ("jut", "image/jutvision");
 			mimeTypes.Add ("kar", "audio/midi");
 			mimeTypes.Add ("ksh", "text/x-script.ksh");
@@ -256,6 +262,8 @@ namespace System.Web
 			mimeTypes.Add ("mov", "video/quicktime");
 			mimeTypes.Add ("mp2", "video/mpeg");
 			mimeTypes.Add ("mp3", "audio/mpeg3");
+			mimeTypes.Add ("mp4", "video/mp4");
+			mimeTypes.Add ("mp4a", "audio/mp4");
 			mimeTypes.Add ("mpa", "audio/mpeg");
 			mimeTypes.Add ("mpc", "application/x-project");
 			mimeTypes.Add ("mpeg", "video/mpeg");
@@ -286,6 +294,9 @@ namespace System.Web
 			mimeTypes.Add ("nws", "message/rfc822");
 			mimeTypes.Add ("oda", "application/oda");
 			mimeTypes.Add ("ods", "application/oleobject");
+			mimeTypes.Add ("oga", "audio/ogg");
+			mimeTypes.Add ("ogg", "audio/ogg");
+			mimeTypes.Add ("ogv", "video/ogg");
 			mimeTypes.Add ("omc", "application/x-omc");
 			mimeTypes.Add ("omcd", "application/x-omcdatamaker");
 			mimeTypes.Add ("omcr", "application/x-omcregerator");
@@ -324,12 +335,19 @@ namespace System.Web
 			mimeTypes.Add ("pmw", "application/x-perfmon");
 			mimeTypes.Add ("png", "image/png");
 			mimeTypes.Add ("pnm", "application/x-portable-anymap");
-			mimeTypes.Add ("pot", "application/mspowerpoint");
+			mimeTypes.Add ("pot", "application/vnd.ms-powerpoint");
+			mimeTypes.Add ("potm", "application/vnd.ms-powerpoint.template.macroEnabled.12");
+			mimeTypes.Add ("potx", "application/vnd.openxmlformats-officedocument.presentationml.template");
 			mimeTypes.Add ("pov", "model/x-pov");
 			mimeTypes.Add ("ppa", "application/vnd.ms-powerpoint");
+			mimeTypes.Add ("ppam", "application/vnd.ms-powerpoint.addin.macroEnabled.12");
 			mimeTypes.Add ("ppm", "image/x-portable-pixmap");
-			mimeTypes.Add ("pps", "application/mspowerpoint");
-			mimeTypes.Add ("ppt", "application/mspowerpoint");
+			mimeTypes.Add ("pps", "application/vnd.ms-powerpoint");
+			mimeTypes.Add ("ppsm", "application/vnd.ms-powerpoint.slideshow.macroEnabled.12");
+			mimeTypes.Add ("ppsx", "application/vnd.openxmlformats-officedocument.presentationml.slideshow");
+			mimeTypes.Add ("ppt", "application/vnd.ms-powerpoint");
+			mimeTypes.Add ("pptm", "application/vnd.ms-powerpoint.presentation.macroEnabled.12");
+			mimeTypes.Add ("pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation");
 			mimeTypes.Add ("ppz", "application/mspowerpoint");
 			mimeTypes.Add ("pre", "application/x-freelance");
 			mimeTypes.Add ("prf", "application/pics-rules");
@@ -414,6 +432,7 @@ namespace System.Web
 			mimeTypes.Add ("sv4cpio", "application/x-sv4cpio");
 			mimeTypes.Add ("sv4crc", "application/x-sv4crc");
 			mimeTypes.Add ("svf", "image/x-dwg");
+			mimeTypes.Add ("svg", "image/svg+xml");
 			mimeTypes.Add ("svr", "application/x-world");
 			mimeTypes.Add ("swf", "application/x-shockwave-flash");
 			mimeTypes.Add ("talk", "text/x-speech");
@@ -477,6 +496,7 @@ namespace System.Web
 			mimeTypes.Add ("wcm", "application/vnd.ms-works");
 			mimeTypes.Add ("wdb", "application/vnd.ms-works");
 			mimeTypes.Add ("web", "application/vnd.xara");
+			mimeTypes.Add ("webm", "video/webm");
 			mimeTypes.Add ("wiz", "application/msword");
 			mimeTypes.Add ("wk1", "application/x-123");
 			mimeTypes.Add ("wks", "application/vnd.ms-works");
@@ -485,6 +505,7 @@ namespace System.Web
 			mimeTypes.Add ("wmlsc", "application/vnd.wap.wmlscriptc");
 			mimeTypes.Add ("wmls", "text/vnd.wap.wmlscript");
 			mimeTypes.Add ("wml", "text/vnd.wap.wml");
+			mimeTypes.Add ("wmp", "video/x-ms-wmp");
 			mimeTypes.Add ("woff", "application/x-woff");
 			mimeTypes.Add ("word", "application/msword");
 			mimeTypes.Add ("wp5", "application/wordperfect");
@@ -508,7 +529,8 @@ namespace System.Web
 			mimeTypes.Add ("xdr", "video/x-amt-demorun");
 			mimeTypes.Add ("xgz", "xgl/drawing");
 			mimeTypes.Add ("xif", "image/vnd.xiff");
-			mimeTypes.Add ("xla", "application/excel");
+			mimeTypes.Add ("xla", "application/vnd.ms-excel");
+			mimeTypes.Add ("xlam", "application/vnd.ms-excel.addin.macroEnabled.12");
 			mimeTypes.Add ("xl", "application/excel");
 			mimeTypes.Add ("xlb", "application/excel");
 			mimeTypes.Add ("xlc", "application/excel");
@@ -516,8 +538,13 @@ namespace System.Web
 			mimeTypes.Add ("xlk", "application/excel");
 			mimeTypes.Add ("xll", "application/excel");
 			mimeTypes.Add ("xlm", "application/excel");
-			mimeTypes.Add ("xls", "application/excel");
-			mimeTypes.Add ("xlt", "application/excel");
+			mimeTypes.Add ("xls", "application/vnd.ms-excel");
+			mimeTypes.Add ("xlsb", "application/vnd.ms-excel.sheet.binary.macroEnabled.12");
+			mimeTypes.Add ("xlsm", "application/vnd.ms-excel.sheet.macroEnabled.12");
+			mimeTypes.Add ("xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+			mimeTypes.Add ("xlt", "application/vnd.ms-excel");
+			mimeTypes.Add ("xltm", "application/vnd.ms-excel.template.macroEnabled.12");
+			mimeTypes.Add ("xltx", "application/vnd.openxmlformats-officedocument.spreadsheetml.template");
 			mimeTypes.Add ("xlv", "application/excel");
 			mimeTypes.Add ("xlw", "application/excel");
 			mimeTypes.Add ("xm", "audio/xm");
@@ -530,6 +557,7 @@ namespace System.Web
 			mimeTypes.Add ("x-png", "image/png");
 			mimeTypes.Add ("xsd", "text/xml");
 			mimeTypes.Add ("xsl", "text/xml");
+			mimeTypes.Add ("xslt", "text/xml");
 			mimeTypes.Add ("xsr", "video/x-amt-showrun");
 			mimeTypes.Add ("xwd", "image/x-xwd");
 			mimeTypes.Add ("xyz", "chemical/x-pdb");
@@ -553,4 +581,3 @@ namespace System.Web
 		}
 	}
 }
-
