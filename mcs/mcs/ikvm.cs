@@ -287,6 +287,8 @@ namespace Mono.CSharp
 			}
 		}
 
+		public AssemblyDefinitionStatic CompiledAssembly {  get; set; }
+
 		public Universe Domain {
 			get {
 				return domain;
@@ -369,6 +371,14 @@ namespace Mono.CSharp
 
 				return version_mismatch;
 			}
+
+			//
+			// Recursive reference to compiled assembly checks name only. Any other
+			// details (PublicKey, Version, etc) are not yet known hence cannot be checked
+			//
+			ParsedAssemblyName referenced_assembly;
+			if (Fusion.ParseAssemblyName (args.Name, out referenced_assembly) == ParseAssemblyResult.OK && CompiledAssembly.Name == referenced_assembly.Name)
+				return CompiledAssembly.Builder;
 
 			// AssemblyReference has not been found in the domain
 			// create missing reference and continue
