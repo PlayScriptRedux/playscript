@@ -66,23 +66,29 @@ inner_start_thread (void *arg)
 	info = mono_thread_info_attach (&result);
 	info->runtime_thread = TRUE;
 
+	if (flags & CREATE_SUSPENDED) {
+		info->create_suspended = TRUE;
+		MONO_SEM_INIT (&info->create_suspended_sem, 0);
+	}
+
 	/* start_info is not valid after this */
 	res = MONO_SEM_POST (&(start_info->registered));
 	g_assert (!res);
 	start_info = NULL;
 
 	if (flags & CREATE_SUSPENDED) {
-		//wapi_thread_suspend (handle);
-		info->created_suspended = TRUE;
-		mono_thread_info_self_suspend ();
-		info->created_suspended = FALSE;
+		while (MONO_SEM_WAIT (&info->create_suspended_sem) != 0 &&
+			   errno == EINTR);
+		MONO_SEM_DESTROY (&info->create_suspended_sem);
 	}
 
 	/* Run the actual main function of the thread */
 	result = start_func (t_arg);
 
+	/*
 	g_assert (!mono_domain_get ());
 	mono_thread_info_dettach ();
+	*/
 
 #if defined(__native_client__)
 	nacl_shutdown_gc_thread();
@@ -152,6 +158,17 @@ mono_threads_core_create_thread (LPTHREAD_START_ROUTINE start_routine, gpointer 
 		*out_tid = thread;
 
 	return start_info.handle;
+}
+
+/*
+ * mono_threads_core_resume_created:
+ *
+ *   Resume a newly created thread created using CREATE_SUSPENDED.
+ */
+void
+mono_threads_core_resume_created (MonoThreadInfo *info, MonoNativeThreadId tid)
+{
+	MONO_SEM_POST (&info->create_suspended_sem);
 }
 
 #if !defined (__MACH__)

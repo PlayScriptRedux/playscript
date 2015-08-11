@@ -49,7 +49,7 @@ typedef pthread_t MonoNativeThreadId;
 
 typedef void* mono_native_thread_return_t;
 
-#define MONO_NATIVE_THREAD_ID_TO_UINT(tid) GPOINTER_TO_UINT((tid))
+#define MONO_NATIVE_THREAD_ID_TO_UINT(tid) (gsize)(tid)
 
 #endif /* #ifdef HOST_WIN32 */
 
@@ -103,9 +103,6 @@ typedef struct {
 	/*Tells if this thread was created by the runtime or not.*/
 	gboolean runtime_thread;
 
-	/* Whenever the thread is in its initial suspended state */
-	gboolean created_suspended;
-
 	/* suspend machinery, fields protected by suspend_semaphore */
 	MonoSemType suspend_semaphore;
 	int suspend_count;
@@ -139,6 +136,11 @@ typedef struct {
 	 * operations like locking without having to pass an 'async' parameter around.
 	 */
 	gboolean is_async_context;
+
+	gboolean create_suspended;
+
+	/* Semaphore used to implement CREATE_SUSPENDED */
+	MonoSemType create_suspended_sem;
 } MonoThreadInfo;
 
 typedef struct {
@@ -287,6 +289,7 @@ void mono_threads_core_interrupt (THREAD_INFO_TYPE *info) MONO_INTERNAL;
 void mono_threads_core_abort_syscall (THREAD_INFO_TYPE *info) MONO_INTERNAL;
 gboolean mono_threads_core_needs_abort_syscall (void) MONO_INTERNAL;
 HANDLE mono_threads_core_create_thread (LPTHREAD_START_ROUTINE start, gpointer arg, guint32 stack_size, guint32 creation_flags, MonoNativeThreadId *out_tid) MONO_INTERNAL;
+void mono_threads_core_resume_created (THREAD_INFO_TYPE *info, MonoNativeThreadId tid) MONO_INTERNAL;
 
 MonoNativeThreadId mono_native_thread_id_get (void) MONO_INTERNAL;
 

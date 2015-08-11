@@ -2387,8 +2387,8 @@ mono_domain_try_unload (MonoDomain *domain, MonoObject **exc)
 	MonoAppDomainState prev_state;
 	MonoMethod *method;
 	unload_data *thread_data;
-	MonoDomain *caller_domain = mono_domain_get ();
 	MonoNativeThreadId tid;
+	MonoDomain *caller_domain = mono_domain_get ();
 
 	/* printf ("UNLOAD STARTING FOR %s (%p) IN THREAD 0x%x.\n", domain->friendly_name, domain, GetCurrentThreadId ()); */
 

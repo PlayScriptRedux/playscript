@@ -415,10 +415,8 @@ mono_thread_info_self_suspend (void)
 
 	info->thread_state |= STATE_SELF_SUSPENDED;
 
-	if (!info->created_suspended) {
-		ret = mono_threads_get_runtime_callbacks ()->thread_state_init_from_sigctx (&info->suspend_state, NULL);
-		g_assert (ret);
-	}
+	ret = mono_threads_get_runtime_callbacks ()->thread_state_init_from_sigctx (&info->suspend_state, NULL);
+	g_assert (ret);
 
 	MONO_SEM_POST (&info->suspend_semaphore);
 
@@ -449,8 +447,16 @@ mono_thread_info_resume (MonoNativeThreadId tid)
 	gboolean result = TRUE;
 	MonoThreadHazardPointers *hp = mono_hazard_pointer_get ();	
 	MonoThreadInfo *info = mono_thread_info_lookup (tid); /*info on HP1*/
+
 	if (!info)
 		return FALSE;
+
+	if (info->create_suspended) {
+		/* Have to special case this, as the normal suspend/resume pair are racy, they don't work if he resume is received before the suspend */
+		info->create_suspended = FALSE;
+		mono_threads_core_resume_created (info, tid);
+		return TRUE;
+	}
 
 	MONO_SEM_WAIT_UNITERRUPTIBLE (&info->suspend_semaphore);
 

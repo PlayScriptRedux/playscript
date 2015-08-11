@@ -270,6 +270,8 @@ wapi_create_thread_handle (void)
 							   (gpointer *)&thread);
 	g_assert (res);
 
+	thread->handle = handle;
+
 	res = pthread_setspecific (thread_hash_key, handle);
 	if (res)
 		mono_gc_pthread_exit (NULL);
