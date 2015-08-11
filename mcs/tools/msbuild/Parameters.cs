@@ -73,7 +73,7 @@ namespace Mono.XBuild.CommandLine {
 			
 			responseFile = Path.Combine (
 					Path.GetDirectoryName (Assembly.GetExecutingAssembly ().Location),
-					"msbuild.rsp");
+					"xbuild.rsp");
 		}
 		
 		public void ParseArguments (string[] args)

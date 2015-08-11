@@ -33,8 +33,6 @@ using Microsoft.Build.Exceptions;
 using Microsoft.Build.Construction;
 using System.Xml;
 using System.Xml.Schema;
-using System.Linq;
-using System.Collections.Generic;
 
 #if NET_2_0
 
@@ -160,8 +158,7 @@ namespace Mono.XBuild.CommandLine {
 				
 				var projectInstance = new ProjectInstance (project, parameters.Properties, parameters.ToolsVersion, project_collection);
 
-				var targets = parameters.Targets.Length == 0 ? projectInstance.DefaultTargets.ToArray () : parameters.Targets;
-				result = projectInstance.Build (targets, parameters.Loggers.Count > 0 ? parameters.Loggers : project_collection.Loggers);
+				result = projectInstance.Build (parameters.Targets, parameters.Loggers);
 				//result = project_collection.BuildProjectFile (projectFile, parameters.Targets, null, null, BuildSettings.None, parameters.ToolsVersion);
 			}
 			
@@ -344,4 +341,3 @@ namespace Mono.XBuild.CommandLine {
 }
 
 #endif
-
