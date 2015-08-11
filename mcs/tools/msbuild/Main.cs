@@ -33,6 +33,8 @@ using Microsoft.Build.Exceptions;
 using Microsoft.Build.Construction;
 using System.Xml;
 using System.Xml.Schema;
+using System.Linq;
+using System.Collections.Generic;
 
 #if NET_2_0
 
@@ -154,12 +156,25 @@ namespace Mono.XBuild.CommandLine {
 							settings.Schemas.Add (XmlSchema.Read (xsdxml, null));
 				}
 
-				project = ProjectRootElement.Create (XmlReader.Create (projectFile, settings), project_collection);
-				
-				var projectInstance = new ProjectInstance (project, parameters.Properties, parameters.ToolsVersion, project_collection);
-
-				result = projectInstance.Build (parameters.Targets, parameters.Loggers);
-				//result = project_collection.BuildProjectFile (projectFile, parameters.Targets, null, null, BuildSettings.None, parameters.ToolsVersion);
+				var projectInstances = new List<ProjectInstance> ();
+				if (string.Equals (Path.GetExtension (projectFile), ".sln", StringComparison.OrdinalIgnoreCase)) {
+					var parser = new SolutionParser ();
+					var root = ProjectRootElement.Create ();
+					parser.ParseSolution (projectFile, project_collection, root, LogWarning);
+					foreach (var p in project_collection.LoadedProjects)
+						projectInstances.Add (p.CreateProjectInstance ());
+				} else {
+					project = ProjectRootElement.Create (XmlReader.Create (projectFile, settings), project_collection);
+					var pi = new ProjectInstance (project, parameters.Properties, parameters.ToolsVersion, project_collection);
+					projectInstances.Add (pi);
+				}
+				foreach (var projectInstance in projectInstances) {
+					var targets = parameters.Targets.Length == 0 ? projectInstance.DefaultTargets.ToArray () : parameters.Targets;
+					Console.WriteLine ("!!!!! {0} {1}", projectInstance.FullPath, string.Join (";", targets));
+					result = projectInstance.Build (targets, parameters.Loggers.Count > 0 ? parameters.Loggers : project_collection.Loggers);
+					if (!result)
+						break;
+				}
 			}
 			
 			catch (InvalidProjectFileException ipfe) {
@@ -179,7 +194,11 @@ namespace Mono.XBuild.CommandLine {
 
 				Environment.Exit (result ? 0 : 1);
 			}
+		}
 
+		void LogWarning (int errorNumber, string message)
+		{
+			Console.Error.WriteLine ("Warning {0}: {1}", errorNumber, message);
 		}
 	}
 
