@@ -83,7 +83,7 @@
         <size>12</size>
       </method>
       <method name="Int32 Main()" attrs="150">
-        <size>141</size>
+        <size>78</size>
       </method>
       <method name="Void .ctor()" attrs="6278">
         <size>7</size>
@@ -597,7 +597,7 @@
         <size>98</size>
       </method>
       <method name="Void testIterator()" attrs="150">
-        <size>900</size>
+        <size>858</size>
       </method>
       <method name="Void Main()" attrs="150">
         <size>7</size>
@@ -616,7 +616,7 @@
         <size>12</size>
       </method>
       <method name="Int32 Main()" attrs="150">
-        <size>141</size>
+        <size>78</size>
       </method>
       <method name="Void .ctor()" attrs="6278">
         <size>7</size>
@@ -767,20 +767,10 @@
       </method>
     </type>
   </test>
-  <test name="./as/test-debug-ArrayIndexTest.as">
-    <type name="_root.ArrayIndexTest">
-      <method name="Int32 Main()" attrs="150">
-        <size>443</size>
-      </method>
-      <method name="Void .ctor()" attrs="6278">
-        <size>7</size>
-      </method>
-    </type>
-  </test>
   <test name="./as/test-debug-AsUntypedTest.as">
     <type name="_root.Test">
       <method name="Int32 Main()" attrs="150">
-        <size>360</size>
+        <size>334</size>
       </method>
       <method name="Void .ctor()" attrs="6278">
         <size>7</size>
@@ -816,13 +806,13 @@
   <test name="./as/test-debug-CollectionsTest.as">
     <type name="_root.CollectionsTest">
       <method name="Int32 Main()" attrs="150">
-        <size>1194</size>
+        <size>1048</size>
       </method>
       <method name="Boolean ContainsKey(IDictionary, System.Object)" attrs="150">
         <size>53</size>
       </method>
       <method name="Boolean CompareArrays(_root.Array, _root.Array)" attrs="150">
-        <size>143</size>
+        <size>93</size>
       </method>
       <method name="Void .ctor()" attrs="6278">
         <size>7</size>
@@ -1134,7 +1124,7 @@
         <size>883</size>
       </method>
       <method name="System.String swapMatches(System.Object[])" attrs="150">
-        <size>90</size>
+        <size>40</size>
       </method>
       <method name="Void .ctor()" attrs="6278">
         <size>7</size>
@@ -1149,21 +1139,6 @@
       <method name="Double GetNumber()" attrs="150">
         <size>18</size>
       </method>
-      <method name="Void .ctor()" attrs="6278">
-        <size>7</size>
-      </method>
-    </type>
-  </test>
-  <test name="./as/test-debug-UndefinedTest.as">
-    <type name="_root.UndefinedTest">
-      <method name="Int32 Main()" attrs="150">
-        <size>2551</size>
-      </method>
-      <method name="Void .ctor()" attrs="6278">
-        <size>7</size>
-      </method>
-    </type>
-    <type name="_root.____as_test_debug_UndefinedTest_as.A">
       <method name="Void .ctor()" attrs="6278">
         <size>7</size>
       </method>
