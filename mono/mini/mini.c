@@ -3125,6 +3125,10 @@ mono_patch_info_dup_mp (MonoMemPool *mp, MonoJumpInfo *patch_info)
 		memcpy (res->data.rgctx_entry, patch_info->data.rgctx_entry, sizeof (MonoJumpInfoRgctxEntry));
 		res->data.rgctx_entry->data = mono_patch_info_dup_mp (mp, res->data.rgctx_entry->data);
 		break;
+	case MONO_PATCH_INFO_DELEGATE_TRAMPOLINE:
+		res->data.del_tramp = mono_mempool_alloc0 (mp, sizeof (MonoClassMethodPair));
+		memcpy (res->data.del_tramp, patch_info->data.del_tramp, sizeof (MonoClassMethodPair));
+		break;
 	case MONO_PATCH_INFO_GSHAREDVT_CALL:
 		res->data.gsharedvt = mono_mempool_alloc (mp, sizeof (MonoJumpInfoGSharedVtCall));
 		memcpy (res->data.gsharedvt, patch_info->data.gsharedvt, sizeof (MonoJumpInfoGSharedVtCall));
@@ -3187,7 +3191,6 @@ mono_patch_info_hash (gconstpointer data)
 	case MONO_PATCH_INFO_SFLDA:
 	case MONO_PATCH_INFO_SEQ_POINT_INFO:
 	case MONO_PATCH_INFO_METHOD_RGCTX:
-	case MONO_PATCH_INFO_DELEGATE_TRAMPOLINE:
 	case MONO_PATCH_INFO_SIGNATURE:
 	case MONO_PATCH_INFO_TLS_OFFSET:
 	case MONO_PATCH_INFO_METHOD_CODE_SLOT:
@@ -3215,6 +3218,8 @@ mono_patch_info_hash (gconstpointer data)
 	case MONO_PATCH_INFO_OBJC_SELECTOR_REF:
 		/* Hash on the selector name */
 		return g_str_hash (ji->data.target);
+	case MONO_PATCH_INFO_DELEGATE_TRAMPOLINE:
+		return (ji->type << 8) | (gsize)ji->data.del_tramp->klass | (gsize)ji->data.del_tramp->method;
 	default:
 		printf ("info type: %d\n", ji->type);
 		mono_print_ji (ji); printf ("\n");
@@ -3268,6 +3273,8 @@ mono_patch_info_equal (gconstpointer ka, gconstpointer kb)
 	}
 	case MONO_PATCH_INFO_GSHAREDVT_METHOD:
 		return ji1->data.gsharedvt_method->method == ji2->data.gsharedvt_method->method;
+	case MONO_PATCH_INFO_DELEGATE_TRAMPOLINE:
+		return ji1->data.del_tramp->klass == ji2->data.del_tramp->klass && ji1->data.del_tramp->method == ji2->data.del_tramp->method;
 	default:
 		if (ji1->data.target != ji2->data.target)
 			return 0;
@@ -3436,9 +3443,12 @@ mono_resolve_patch_target (MonoMethod *method, MonoDomain *domain, guint8 *code,
 		target = mono_create_class_init_trampoline (vtable);
 		break;
 	}
-	case MONO_PATCH_INFO_DELEGATE_TRAMPOLINE:
-		target = mono_create_delegate_trampoline (domain, patch_info->data.klass);
+	case MONO_PATCH_INFO_DELEGATE_TRAMPOLINE: {
+		MonoClassMethodPair *del_tramp = patch_info->data.del_tramp;
+
+		target = mono_create_delegate_trampoline_with_method (domain, del_tramp->klass, del_tramp->method);
 		break;
+	}
 	case MONO_PATCH_INFO_SFLDA: {
 		MonoVTable *vtable = mono_class_vtable (domain, patch_info->data.field->parent);
 
@@ -4499,12 +4509,24 @@ create_jit_info (MonoCompile *cfg, MonoMethod *method_to_compile)
 			MonoExceptionClause *ec = &header->clauses [i];
 			MonoJitExceptionInfo *ei = &jinfo->clauses [i];
 			MonoBasicBlock *tblock;
-			MonoInst *exvar;
+			MonoInst *exvar, *spvar;
 
 			ei->flags = ec->flags;
 
-			exvar = mono_find_exvar_for_offset (cfg, ec->handler_offset);
-			ei->exvar_offset = exvar ? exvar->inst_offset : 0;
+			/*
+			 * The spvars are needed by mono_arch_install_handler_block_guard ().
+			 */
+			if (ei->flags == MONO_EXCEPTION_CLAUSE_FINALLY) {
+				int region;
+
+				region = ((i + 1) << 8) | MONO_REGION_FINALLY | ec->flags;
+				spvar = mono_find_spvar_for_region (cfg, region);
+				g_assert (spvar);
+				ei->exvar_offset = spvar->inst_offset;
+			} else {
+				exvar = mono_find_exvar_for_offset (cfg, ec->handler_offset);
+				ei->exvar_offset = exvar ? exvar->inst_offset : 0;
+			}
 
 			if (ei->flags == MONO_EXCEPTION_CLAUSE_FILTER) {
 				tblock = cfg->cil_offset_to_bb [ec->data.filter_offset];
@@ -7024,7 +7046,24 @@ register_jit_stats (void)
 
 static void runtime_invoke_info_free (gpointer value);
 static void seq_point_info_free (gpointer value);
- 
+
+static gint
+class_method_pair_equal (gconstpointer ka, gconstpointer kb)
+{
+	const MonoClassMethodPair *apair = ka;
+	const MonoClassMethodPair *bpair = kb;
+
+	return apair->klass == bpair->klass && apair->method == bpair->method ? 1 : 0;
+}
+
+static guint
+class_method_pair_hash (gconstpointer data)
+{
+	const MonoClassMethodPair *pair = data;
+
+	return (gsize)pair->klass ^ (gsize)pair->method;
+}
+
 static void
 mini_create_jit_domain_info (MonoDomain *domain)
 {
@@ -7033,7 +7072,7 @@ mini_create_jit_domain_info (MonoDomain *domain)
 	info->class_init_trampoline_hash = g_hash_table_new (mono_aligned_addr_hash, NULL);
 	info->jump_trampoline_hash = g_hash_table_new (mono_aligned_addr_hash, NULL);
 	info->jit_trampoline_hash = g_hash_table_new (mono_aligned_addr_hash, NULL);
-	info->delegate_trampoline_hash = g_hash_table_new (mono_aligned_addr_hash, NULL);
+	info->delegate_trampoline_hash = g_hash_table_new (class_method_pair_hash, class_method_pair_equal);
 	info->llvm_vcall_trampoline_hash = g_hash_table_new (mono_aligned_addr_hash, NULL);
 	info->runtime_invoke_hash = g_hash_table_new_full (mono_aligned_addr_hash, NULL, NULL, runtime_invoke_info_free);
 	info->seq_points = g_hash_table_new_full (mono_aligned_addr_hash, NULL, NULL, seq_point_info_free);
