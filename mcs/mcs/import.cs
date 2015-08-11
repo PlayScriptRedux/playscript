@@ -93,17 +93,27 @@ namespace Mono.CSharp
 					ReadAttribute ();
 
 				return flags != null && Position < flags.Length && (flags [Position] & TypeFlags.AsUntyped) != 0;
+
+			}
+				
+			IList<CustomAttributeData> GetCustomAttributes ()
+			{
+				var mi = provider as MemberInfo;
+				if (mi != null)
+					return CustomAttributeData.GetCustomAttributes (mi);
+
+				var pi = provider as ParameterInfo;
+				if (pi != null)
+					return CustomAttributeData.GetCustomAttributes (pi);
+
+				provider = null;
+				return null;
 			}
 
 			void ReadAttribute ()
 			{
-				IList<CustomAttributeData> cad;
-				if (provider is MemberInfo) {
-					cad = CustomAttributeData.GetCustomAttributes ((MemberInfo) provider);
-				} else if (provider is ParameterInfo) {
-					cad = CustomAttributeData.GetCustomAttributes ((ParameterInfo) provider);
-				} else {
-					provider = null;
+				var cad = GetCustomAttributes ();
+				if (cad == null) {
 					return;
 				}
 
@@ -536,7 +546,7 @@ namespace Mono.CSharp
 				} else if (i == 0 && method.IsStatic && (parent.Modifiers & Modifiers.METHOD_EXTENSION) != 0 &&
 					HasAttribute (CustomAttributeData.GetCustomAttributes (method), "ExtensionAttribute", CompilerServicesNamespace)) {
 					mod = Parameter.Modifier.This;
-					types[i] = ImportType (p.ParameterType);
+					types[i] = ImportType (p.ParameterType, new DynamicTypeReader (p));
 				} else {
 					types[i] = ImportType (p.ParameterType, new DynamicTypeReader (p));
 
