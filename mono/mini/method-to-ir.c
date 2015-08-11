@@ -264,6 +264,7 @@ mono_type_to_regmove (MonoCompile *cfg, MonoType *type)
 	if (type->byref)
 		return OP_MOVE;
 
+	type = mini_type_get_underlying_type (NULL, type);
 handle_enum:
 	switch (type->type) {
 	case MONO_TYPE_I1:
@@ -646,6 +647,7 @@ type_to_eval_stack_type (MonoCompile *cfg, MonoType *type, MonoInst *inst)
 {
 	MonoClass *klass;
 
+	type = mini_type_get_underlying_type (NULL, type);
 	inst->klass = klass = mono_class_from_mono_type (type);
 	if (type->byref) {
 		inst->type = STACK_MP;
@@ -1908,7 +1910,7 @@ emit_push_lmf (MonoCompile *cfg)
 	if (!cfg->lmf_ir)
 		return;
 
-	if (cfg->lmf_ir_mono_lmf) {
+	if (cfg->lmf_ir_mono_lmf && mini_tls_get_supported (cfg, TLS_KEY_LMF)) {
 		/* Load current lmf */
 		lmf_ins = mono_get_lmf_intrinsic (cfg);
 		g_assert (lmf_ins);
@@ -1962,7 +1964,7 @@ emit_pop_lmf (MonoCompile *cfg)
  	EMIT_NEW_VARLOADA (cfg, ins, cfg->lmf_var, NULL);
  	lmf_reg = ins->dreg;
 
-	if (cfg->lmf_ir_mono_lmf) {
+	if (cfg->lmf_ir_mono_lmf && mini_tls_get_supported (cfg, TLS_KEY_LMF)) {
 		/* Load previous_lmf */
 		prev_lmf_reg = alloc_preg (cfg);
 		EMIT_NEW_LOAD_MEMBASE (cfg, ins, OP_LOAD_MEMBASE, prev_lmf_reg, lmf_reg, G_STRUCT_OFFSET (MonoLMF, previous_lmf));
@@ -2059,6 +2061,7 @@ target_type_is_incompatible (MonoCompile *cfg, MonoType *target, MonoInst *arg)
 	MonoType *simple_type;
 	MonoClass *klass;
 
+	target = mini_type_get_underlying_type (NULL, target);
 	if (target->byref) {
 		/* FIXME: check that the pointed to types match */
 		if (arg->type == STACK_MP)
@@ -2445,7 +2448,7 @@ mono_emit_call_args (MonoCompile *cfg, MonoMethodSignature *sig,
 	call->args = args;
 	call->signature = sig;
 	call->rgctx_reg = rgctx;
-	sig_ret = sig->ret;
+	sig_ret = mini_type_get_underlying_type (NULL, sig->ret);
 
 	type_to_eval_stack_type ((cfg), sig_ret, &call->inst);
 
@@ -5679,11 +5682,11 @@ emit_init_rvar (MonoCompile *cfg, int dreg, MonoType *rtype)
 {
 	static double r8_0 = 0.0;
 	MonoInst *ins;
+	int t;
 
-	int t = rtype->type;
+	rtype = mini_type_get_underlying_type (NULL, rtype);
+	t = rtype->type;
 
-	if (t == MONO_TYPE_VALUETYPE && rtype->data.klass->enumtype)
-		t = mono_class_enum_basetype (rtype->data.klass)->type;
 	if (rtype->byref) {
 		MONO_EMIT_NEW_PCONST (cfg, dreg, NULL);
 	} else if (t >= MONO_TYPE_BOOLEAN && t <= MONO_TYPE_U4) {
@@ -6361,7 +6364,7 @@ emit_optimized_ldloca_ir (MonoCompile *cfg, unsigned char *ip, unsigned char *en
 		token = read32 (ip + 2);
 		klass = mini_get_class (cfg->current_method, token, cfg->generic_context);
 		CHECK_TYPELOAD (klass);
-		type = &klass->byval_arg;
+		type = mini_type_get_underlying_type (NULL, &klass->byval_arg);
 		emit_init_local (cfg, local, type);
 		return ip + 6;
 	}
@@ -8468,7 +8471,7 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 					emit_pop_lmf (cfg);
 
 				if (cfg->ret) {
-					MonoType *ret_type = mono_method_signature (method)->ret;
+					MonoType *ret_type = mini_type_get_underlying_type (NULL, mono_method_signature (method)->ret);
 
 					if (seq_points && !sym_seq_points) {
 						/* 
