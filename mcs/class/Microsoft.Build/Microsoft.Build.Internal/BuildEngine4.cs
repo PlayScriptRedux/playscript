@@ -35,6 +35,7 @@ using System.Linq;
 using System.IO;
 using Microsoft.Build.Exceptions;
 using System.Globalization;
+using Microsoft.Build.Construction;
 
 namespace Microsoft.Build.Internal
 {
@@ -161,6 +162,7 @@ namespace Microsoft.Build.Internal
 
 			// null key is allowed and regarded as blind success(!) (as long as it could retrieve target)
 			if (!request.ProjectInstance.Targets.TryGetValue (targetName, out target))
+				// FIXME: from MSBuild.exe it is given MSB4057. Can we assign a number too?
 				throw new InvalidOperationException (string.Format ("target '{0}' was not found in project '{1}'", targetName, project.FullPath));
 			else if (!args.Project.EvaluateCondition (target.Condition)) {
 				LogMessageEvent (new BuildMessageEventArgs (string.Format ("Target '{0}' was skipped because condition '{1}' was not met.", target.Name, target.Condition), null, null, MessageImportance.Low));
@@ -225,7 +227,8 @@ namespace Microsoft.Build.Internal
 		{
 			return outputs.Where (o => !File.Exists (o.GetMetadata ("FullPath")) || inputs.Any (i => string.CompareOrdinal (i.GetMetadata ("LastModifiedTime"), o.GetMetadata ("LastModifiedTime")) > 0));
 		}
-		
+
+		// FIXME: Exception should be caught at caller site.
 		bool DoBuildTarget (ProjectTargetInstance target, TargetResult targetResult, InternalBuildArguments args)
 		{
 			var request = submission.BuildRequest;
@@ -275,7 +278,7 @@ namespace Microsoft.Build.Internal
 					if (!RunBuildTask (target, ti, targetResult, args))
 						return false;
 				}
-			} catch {
+			} catch (Exception ex) {
 				// fallback task specified by OnError element
 				foreach (var c in target.Children.OfType<ProjectOnErrorInstance> ()) {
 					if (!args.Project.EvaluateCondition (c.Condition))
@@ -283,6 +286,10 @@ namespace Microsoft.Build.Internal
 					foreach (var fallbackTarget in project.ExpandString (c.ExecuteTargets).Split (';'))
 						BuildTargetByName (fallbackTarget, args);
 				}
+				int line = target.Location != null ? target.Location.Line : 0;
+				int col = target.Location != null ? target.Location.Column : 0;
+				LogErrorEvent (new BuildErrorEventArgs (null, null, target.FullPath, line, col, 0, 0, ex.Message, null, null));
+				targetResult.Failure (ex);
 				return false;
 			} finally {
 				// restore temporary property state to the original state.

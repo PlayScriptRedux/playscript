@@ -61,7 +61,7 @@ namespace MonoTests.Microsoft.Build.Execution
 		public void TaskOutputsToLoggers ()
 		{
             string project_xml = @"<Project DefaultTargets='Foo' xmlns='http://schemas.microsoft.com/developer/msbuild/2003'>
-  <Import Project='$(MSBuildToolsPath)\Microsoft.Common.targets' />
+  <Import Project='$(MSBuildToolsPath)\Microsoft.CSharp.targets' />
   <Target Name='Foo'>
     <ItemGroup>
       <Foo Condition='$(X)' Include='foo.txt' />
@@ -124,7 +124,7 @@ namespace MonoTests.Microsoft.Build.Execution
 </Project>";
             var xml = XmlReader.Create (new StringReader (project_xml));
             var root = ProjectRootElement.Create (xml);
-			root.FullPath = "BuildSubmissionTest.TaskOutputsToLoggers.proj";
+			root.FullPath = "BuildSubmissionTest.BuildParameterLoggersExplicitlyRequired.proj";
 			var pc = new ProjectCollection ();
 			var sw = new StringWriter ();
 			pc.RegisterLogger (new ConsoleLogger (LoggerVerbosity.Diagnostic, sw.WriteLine, null, null));
