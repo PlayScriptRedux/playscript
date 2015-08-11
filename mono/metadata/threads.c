@@ -363,12 +363,16 @@ static void thread_cleanup (MonoInternalThread *thread)
 			mono_array_set (thread->cached_culture_info, MonoObject*, i, NULL);
 	}
 
-	LOCK_THREAD (thread);
+	if (thread->synch_cs)
+		LOCK_THREAD (thread);
+	else
+		g_assert (shutting_down);
 
 	thread->state |= ThreadState_Stopped;
 	thread->state &= ~ThreadState_Background;
 
-	UNLOCK_THREAD (thread);
+	if (thread->synch_cs)
+		UNLOCK_THREAD (thread);
 
 	/*
 	An interruption request has leaked to cleanup. Adjust the global counter.
@@ -753,7 +757,7 @@ create_thread (MonoThread *thread, MonoInternalThread *internal, StartInfo *star
 	if (!handle_store (thread, FALSE))
 		return FALSE;
 
-	ResumeThread (internal->handle);
+	mono_thread_info_resume (tid);
 
 	if (internal->start_notify) {
 		/*
