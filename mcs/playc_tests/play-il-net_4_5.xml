@@ -767,6 +767,16 @@
       </method>
     </type>
   </test>
+  <test name="./as/test-debug-ArrayIndexTest.as">
+    <type name="_root.ArrayIndexTest">
+      <method name="Int32 Main()" attrs="150">
+        <size>318</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
   <test name="./as/test-debug-AsUntypedTest.as">
     <type name="_root.Test">
       <method name="Int32 Main()" attrs="150">
@@ -1139,6 +1149,31 @@
       <method name="Double GetNumber()" attrs="150">
         <size>18</size>
       </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-Undef.as">
+    <type name="_root.ArrayIndexTest">
+      <method name="Void Main()" attrs="150">
+        <size>33</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-UndefinedTest.as">
+    <type name="_root.UndefinedTest">
+      <method name="Int32 Main()" attrs="150">
+        <size>2472</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+    <type name="_root.____as_test_debug_UndefinedTest_as.A">
       <method name="Void .ctor()" attrs="6278">
         <size>7</size>
       </method>

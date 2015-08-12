@@ -1206,6 +1206,7 @@ namespace Mono.CSharp
 				throw new NotImplementedException ("Unknown element type " + type.ToString ());
 			}
 
+			//PlayScript Regression area - 1b41e096fe7068d15386edf2f27ec09bd3755c6b
 			TypeSpec compiled_type;
 			if (compiled_types.TryGetValue (type, out compiled_type)) {
 				if (compiled_type.BuiltinType == BuiltinTypeSpec.Type.Object && dtype.IsDynamicObject ())

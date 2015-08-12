@@ -4,6 +4,10 @@
 # csXXXX.as		: test case causes error
 # csXXXX.as IGNORE 	: adds test to ignore list
 
+# Issue #49 : Null vs Undefined Regression
+./as/test-debug-UndefinedvsNull-1.as
+./as/test-debug-UndefinedvsNull-2.as
+
 # The following two tests run correctly indivudually but not run as a group?
 # they run fine from the cmd line mono XXXXX.exe reports the proper return code of 0
 ./as/test-debug-001.as

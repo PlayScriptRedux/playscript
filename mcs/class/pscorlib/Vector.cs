@@ -247,12 +247,14 @@ namespace _root {
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
-#if PERFORMANCE_MODEz && DEBUG
+				Console.WriteLine ("VECTOR");
+
+#if PERFORMANCE_MODE && DEBUG
 				if ((i >= mCount) || (i < 0))
 				{
 					throw new IndexOutOfRangeException();
 				}
-#elif PERFORMANCE_MODEz
+#elif PERFORMANCE_MODE
 #else
 				if ((i >= mCount) || (i < 0))
 				{
@@ -264,11 +266,11 @@ namespace _root {
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
-#if PERFORMANCE_MODEz && DEBUG
+#if PERFORMANCE_MODE && DEBUG
 				if (i >= mCount) {
 					throw new IndexOutOfRangeException();
 				}
-#elif PERFORMANCE_MODEz
+#elif PERFORMANCE_MODE
 #else
 				if (i >= mCount) {
 					expand((uint)(i+1));
@@ -298,11 +300,11 @@ namespace _root {
 			}
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
-#if PERFORMANCE_MODEz && DEBUG
+#if PERFORMANCE_MODE && DEBUG
 				if (i >= mCount) {
 					throw new IndexOutOfRangeException();
 				}
-#elif PERFORMANCE_MODEz
+#elif PERFORMANCE_MODE
 #else
 				if (i >= mCount) {
 					expand((uint)(i+1));
