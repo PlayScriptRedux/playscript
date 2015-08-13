@@ -8476,7 +8476,7 @@ namespace Mono.CSharp
 		//
 		// This always expect the top value on the stack to be the array
 		//
-		void EmitDynamicInitializers (EmitContext ec, bool emitConstants, FieldExpr stackArray)
+		void EmitDynamicInitializers (EmitContext ec, bool emitConstants, StackFieldExpr stackArray)
 		{
 			int dims = bounds.Count;
 			var current_pos = new int [dims];
@@ -8496,7 +8496,7 @@ namespace Mono.CSharp
 							e = e.EmitToField (ec);
 						}
 
-						stackArray.Emit (ec);
+						stackArray.Emit (ec, false);
 					} else {
 						ec.Emit (OpCodes.Dup);
 					}
@@ -8544,6 +8544,9 @@ namespace Mono.CSharp
 					current_pos [j] = 0;
 				}
 			}
+
+			if (stackArray != null)
+				stackArray.IsAvailableForReuse = true;
 		}
 
 		public override void Emit (EmitContext ec)
@@ -8558,7 +8561,7 @@ namespace Mono.CSharp
 				first_emit_temp.Store (ec);
 			}
 
-			FieldExpr await_stack_field;
+			StackFieldExpr await_stack_field;
 			if (ec.HasSet (BuilderContext.Options.AsyncBody) && InitializersContainAwait ()) {
 				await_stack_field = ec.GetTemporaryField (type);
 				ec.EmitThis ();
