@@ -6,6 +6,9 @@
 
 gtest-230.cs
 
+# Issue #53
+gtest-lambda-31.cs
+
 # Issue #51
 test-885.cs
 
