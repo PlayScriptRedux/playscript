@@ -1463,7 +1463,7 @@ namespace Mono.CSharp {
 				//
 				// User operator is of T?
 				//
-				if (t_x.IsNullableType && target.IsNullableType) {
+				if (t_x.IsNullableType && (target.IsNullableType || !implicitOnly)) {
 					//
 					// User operator return type does not match target type we need
 					// yet another conversion. This should happen for promoted numeric
@@ -1479,7 +1479,8 @@ namespace Mono.CSharp {
 						if (source == null)
 							return null;
 
-						source = new Nullable.LiftedConversion (source, unwrap, target).Resolve (ec);
+						if (target.IsNullableType)
+							source = new Nullable.LiftedConversion (source, unwrap, target).Resolve (ec);
 					}
 				} else {
 					source = implicitOnly ?
