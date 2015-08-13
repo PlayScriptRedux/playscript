@@ -18,7 +18,6 @@
 #include <mono/utils/mono-semaphore.h>
 #include <mono/utils/mono-threads.h>
 #include <mono/utils/mono-tls.h>
-#include <mono/utils/gc_wrapper.h>
 #include <mono/utils/mono-mmap.h>
 #include <mono/metadata/threads-types.h>
 
@@ -71,6 +70,7 @@ inner_start_thread (void *arg)
 
 	info = mono_thread_info_attach (&result);
 	info->runtime_thread = TRUE;
+	info->handle = handle;
 
 	if (flags & CREATE_SUSPENDED) {
 		info->create_suspended = TRUE;
@@ -92,7 +92,6 @@ inner_start_thread (void *arg)
 	result = start_func (t_arg);
 
 	/*
-	g_assert (!mono_domain_get ());
 	mono_thread_info_dettach ();
 	*/
 
@@ -100,11 +99,12 @@ inner_start_thread (void *arg)
 	nacl_shutdown_gc_thread();
 #endif
 
-	wapi_thread_set_exit_code (GPOINTER_TO_UINT (result), handle);
+	wapi_thread_handle_set_exited (handle, GPOINTER_TO_UINT (result));
+	/* This is needed by mono_threads_core_unregister () which is called later */
+	info->handle = NULL;
 
-	// FIXME: Why is this needed ?
-	mono_gc_pthread_exit (NULL);
-
+	g_assert (mono_threads_get_callbacks ()->thread_exit);
+	mono_threads_get_callbacks ()->thread_exit (NULL);
 	g_assert_not_reached ();
 	return result;
 }
@@ -289,6 +289,30 @@ gboolean
 mono_threads_core_yield (void)
 {
 	return sched_yield () == 0;
+}
+
+void
+mono_threads_core_exit (int exit_code)
+{
+	MonoThreadInfo *current = mono_thread_info_current ();
+
+#if defined(__native_client__)
+	nacl_shutdown_gc_thread();
+#endif
+
+	wapi_thread_handle_set_exited (current->handle, exit_code);
+
+	g_assert (mono_threads_get_callbacks ()->thread_exit);
+	mono_threads_get_callbacks ()->thread_exit (NULL);
+}
+
+void
+mono_threads_core_unregister (MonoThreadInfo *info)
+{
+	if (info->handle) {
+		wapi_thread_handle_set_exited (info->handle, 0);
+		info->handle = NULL;
+	}
 }
 
 #if !defined (__MACH__)

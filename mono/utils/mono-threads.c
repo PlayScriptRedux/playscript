@@ -168,6 +168,8 @@ unregister_thread (void *arg)
 
 	THREADS_DEBUG ("unregistering info %p\n", info);
 
+	mono_threads_core_unregister (info);
+
 	/*
 	 * TLS destruction order is not reliable so small_id might be cleaned up
 	 * before us.
@@ -744,4 +746,16 @@ void
 mono_thread_info_tls_set (THREAD_INFO_TYPE *info, MonoTlsKey key, gpointer value)
 {
 	((MonoThreadInfo*)info)->tls [key] = value;
+}
+
+/*
+ * mono_thread_info_exit:
+ *
+ *   Exit the current thread.
+ * This function doesn't return.
+ */
+void
+mono_thread_info_exit (void)
+{
+	mono_threads_core_exit (0);
 }
