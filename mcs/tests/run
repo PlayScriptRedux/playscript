@@ -1,0 +1,4 @@
+#!/bin/bash
+MONO_RUNTIME='./../../runtime/mono-wrapper' MONO_PATH="./../class/lib/net_4_5::$MONO_PATH" ./../../runtime/mono-wrapper "$@"
+exit_code=$?
+echo "Exit Code :" $exit_code
