@@ -4,6 +4,9 @@
 # csXXXX.as		: test case causes error
 # csXXXX.as IGNORE 	: adds test to ignore list
 
+# Issue #50 - Number.toPrecision : Currently System.NotImplementedException 
+./as/test-as-NumberToPrecision.as IGNORE
+
 # Issue #49 : Null vs Undefined Regression
 ./as/test-debug-UndefinedvsNull-1.as
 ./as/test-debug-UndefinedvsNull-2.as
