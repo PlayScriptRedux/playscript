@@ -92,7 +92,7 @@ inner_start_thread (void *arg)
 	result = start_func (t_arg);
 
 	/*
-	mono_thread_info_dettach ();
+	mono_thread_info_detach ();
 	*/
 
 #if defined(__native_client__)
@@ -313,6 +313,21 @@ mono_threads_core_unregister (MonoThreadInfo *info)
 		wapi_thread_handle_set_exited (info->handle, 0);
 		info->handle = NULL;
 	}
+}
+
+HANDLE
+mono_threads_core_open_handle (void)
+{
+	MonoThreadInfo *info;
+
+	info = mono_thread_info_current ();
+	g_assert (info);
+
+	if (!info->handle)
+		info->handle = wapi_create_thread_handle ();
+	else
+		wapi_ref_thread_handle (info->handle);
+	return info->handle;
 }
 
 #if !defined (__MACH__)

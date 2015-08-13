@@ -3815,6 +3815,9 @@ check_type_depth (MonoType *t, int depth)
 	return FALSE;
 }
 
+static void
+add_types_from_method_header (MonoAotCompile *acfg, MonoMethod *method);
+
 /*
  * add_generic_class:
  *
@@ -3875,9 +3878,11 @@ add_generic_class_with_depth (MonoAotCompile *acfg, MonoClass *klass, int depth,
 			continue;
 		}
 		
-		if (mono_method_is_generic_sharable_full (method, FALSE, FALSE, use_gsharedvt))
+		if (mono_method_is_generic_sharable_full (method, FALSE, FALSE, use_gsharedvt)) {
 			/* Already added */
+			add_types_from_method_header (acfg, method);
 			continue;
+		}
 
 		if (method->is_generic)
 			/* FIXME: */
@@ -4875,6 +4880,8 @@ encode_patch (MonoAotCompile *acfg, MonoJumpInfo *patch_info, guint8 *buf, guint
 	case MONO_PATCH_INFO_JIT_TLS_ID:
 	case MONO_PATCH_INFO_GC_CARD_TABLE_ADDR:
 	case MONO_PATCH_INFO_CASTCLASS_CACHE:
+	case MONO_PATCH_INFO_NURSERY_START_SHIFTED:
+	case MONO_PATCH_INFO_NURSERY_SHIFT:
 		break;
 	case MONO_PATCH_INFO_METHOD_REL:
 		encode_value ((gint)patch_info->data.offset, p, &p);

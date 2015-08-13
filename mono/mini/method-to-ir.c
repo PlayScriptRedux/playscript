@@ -2911,11 +2911,15 @@ emit_write_barrier (MonoCompile *cfg, MonoInst *ptr, MonoInst *value)
 
 	mono_gc_get_nursery (&nursery_shift_bits, &nursery_size);
 
+#ifdef MONO_ARCH_HAVE_CARD_TABLE_WBARRIER_IN_AOT
+	if (cfg->compile_aot)
+		has_card_table_wb = TRUE;
+#endif
 #ifdef MONO_ARCH_HAVE_CARD_TABLE_WBARRIER
 	has_card_table_wb = TRUE;
 #endif
 
-	if (has_card_table_wb && !cfg->compile_aot && card_table && nursery_shift_bits > 0 && !COMPILE_LLVM (cfg)) {
+	if (has_card_table_wb && card_table && nursery_shift_bits > 0 && !COMPILE_LLVM (cfg)) {
 		MonoInst *wbarrier;
 
 		MONO_INST_NEW (cfg, wbarrier, OP_CARD_TABLE_WBARRIER);
@@ -4582,6 +4586,8 @@ mono_method_check_inlining (MonoCompile *cfg, MonoMethod *method)
 		if (method->iflags & METHOD_IMPL_ATTRIBUTE_AGGRESSIVE_INLINING) {
 			vtable = mono_class_vtable (cfg->domain, method->klass);
 			if (!vtable)
+				return FALSE;
+			if (cfg->compile_aot && mono_class_needs_cctor_run (method->klass, NULL))
 				return FALSE;
 			mono_runtime_class_init (vtable);
 		} else if (method->klass->flags & TYPE_ATTRIBUTE_BEFORE_FIELD_INIT) {

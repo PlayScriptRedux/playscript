@@ -4213,7 +4213,7 @@ mono_gc_pthread_detach (pthread_t thread)
 void
 mono_gc_pthread_exit (void *retval) 
 {
-	mono_thread_info_dettach ();
+	mono_thread_info_detach ();
 	pthread_exit (retval);
 }
 
@@ -4835,9 +4835,9 @@ mono_gc_base_init (void)
 	cb.thread_detach = sgen_thread_detach;
 	cb.thread_unregister = sgen_thread_unregister;
 	cb.thread_attach = sgen_thread_attach;
-	cb.thread_exit = mono_gc_pthread_exit;
 	cb.mono_method_is_critical = (gpointer)is_critical_method;
 #ifndef HOST_WIN32
+	cb.thread_exit = mono_gc_pthread_exit;
 	cb.mono_gc_pthread_create = (gpointer)mono_gc_pthread_create;
 #endif
 
