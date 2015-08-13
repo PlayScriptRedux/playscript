@@ -154,6 +154,7 @@ namespace Mono.CSharp {
 		public int VerboseParserFlag;
 		public int FatalCounter;
 		public bool Stacktrace;
+		public bool BreakOnInternalError;
 		#endregion
 
 		public bool ShowFullPaths;
@@ -788,7 +789,8 @@ namespace Mono.CSharp {
 				"   --stacktrace       Shows stack trace at error location\n" +
 				"   --timestamp        Displays time stamps of various compiler events\n" +
 				"   -v                 Verbose parsing (for debugging the parser)\n" +
-				"   --mcs-debug X      Sets MCS debugging level to X\n");
+				"   --mcs-debug X      Sets MCS debugging level to X\n" +
+				"   --break-on-ice     Breaks compilation on internal compiler error");
 		}
 
 		//
@@ -1635,6 +1637,10 @@ namespace Mono.CSharp {
 
 			case "--metadata-only":
 				settings.WriteMetadataOnly = true;
+				return ParseResult.Success;
+
+			case "--break-on-ice":
+				settings.BreakOnInternalError = true;
 				return ParseResult.Success;
 
 			default:
