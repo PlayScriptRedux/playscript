@@ -1699,7 +1699,7 @@ namespace Mono.CSharp {
 		}
 
 //		public override Constant ConvertImplicitly (TypeSpec type)
-		public virtual Constant ConvertImplicitly (TypeSpec type, ResolveContext opt_ec, bool upconvert_only = false)
+		public override Constant ConvertImplicitly (TypeSpec type, ResolveContext opt_ec, bool upconvert_only = false)
 		{
 			if (type.BuiltinType == BuiltinTypeSpec.Type.Double)
 				return new DoubleConstant (type, DoubleValue, loc);
