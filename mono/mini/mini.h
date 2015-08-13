@@ -122,7 +122,7 @@
 #endif
 
 /* Version number of the AOT file format */
-#define MONO_AOT_FILE_VERSION 96
+#define MONO_AOT_FILE_VERSION 98
 
 //TODO: This is x86/amd64 specific.
 #define mono_simd_shuffle_mask(a,b,c,d) ((a) | ((b) << 2) | ((c) << 4) | ((d) << 6))
@@ -279,6 +279,12 @@ typedef struct MonoAotFileInfo
 	guint32 tramp_page_code_offsets [MONO_AOT_TRAMP_NUM];
 } MonoAotFileInfo;
 
+typedef struct
+{
+	MonoClass *klass;
+	MonoMethod *method;
+} MonoClassMethodPair;
+
 /* Per-domain information maintained by the JIT */
 typedef struct
 {
@@ -289,6 +295,7 @@ typedef struct
 	GHashTable *class_init_trampoline_hash;
 	GHashTable *jump_trampoline_hash;
 	GHashTable *jit_trampoline_hash;
+	/* Maps ClassMethodPair -> DelegateTrampInfo */
 	GHashTable *delegate_trampoline_hash;
 	GHashTable *static_rgctx_trampoline_hash;
 	GHashTable *llvm_vcall_trampoline_hash;
@@ -847,6 +854,10 @@ struct MonoCallInst {
 	LLVMCallInfo *cinfo;
 	int rgctx_arg_reg, imt_arg_reg;
 #endif
+#ifdef TARGET_ARM
+	/* See the comment in mini-arm.c!mono_arch_emit_call for RegTypeFP. */
+	GSList *float_args;
+#endif
 };
 
 struct MonoCallArgParm {
@@ -1128,8 +1139,8 @@ typedef struct {
 
 typedef struct {
 	MonoMethod *method;
-	/* Array of MonoRuntimeGenericContextInfoTemplate* entries */
-	GPtrArray *entries;
+	MonoRuntimeGenericContextInfoTemplate *entries;
+	int num_entries, count_entries;
 } MonoGSharedVtMethodInfo;
 
 /* This is used by gsharedvt methods to allocate locals and compute local offsets */
@@ -1211,6 +1222,7 @@ struct MonoJumpInfo {
 		MonoJumpInfoGSharedVtCall *gsharedvt;
 		MonoGSharedVtMethodInfo *gsharedvt_method;
 		MonoMethodSignature *sig;
+		MonoClassMethodPair *del_tramp;
 	} data;
 };
  
@@ -1269,6 +1281,16 @@ enum {
 #include "optflags-def.h"
 	MONO_OPT_LAST
 };
+
+/* Flags for mini_method_compile () */
+typedef enum {
+	/* Whenever to run cctors during JITting */
+	JIT_FLAG_RUN_CCTORS = (1 << 0),
+	/* Whenever this is an AOT compilation */
+	JIT_FLAG_AOT = (1 << 1),
+	/* Whenever this is a full AOT compilation */
+	JIT_FLAG_FULL_AOT = (1 << 2)
+} JitFlags;
 
 /* Bit-fields in the MonoBasicBlock.region */
 #define MONO_REGION_TRY       0
@@ -1368,6 +1390,7 @@ typedef struct {
 	MonoGenericSharingContext *generic_sharing_context;
 
 	MonoGenericSharingContext gsctx;
+	MonoGenericContext *gsctx_context;
 
 	gboolean gsharedvt;
 
@@ -1416,6 +1439,7 @@ typedef struct {
 	guint            run_cctors : 1;
 	guint            need_lmf_area : 1;
 	guint            compile_aot : 1;
+	guint            full_aot : 1;
 	guint            compile_llvm : 1;
 	guint            got_var_allocated : 1;
 	guint            ret_var_is_local : 1;
@@ -1459,6 +1483,8 @@ typedef struct {
 	guint            soft_breakpoints : 1;
 	guint            arch_eh_jit_info : 1;
 	guint            has_indirection : 1;
+	guint            has_atomic_add_new_i4 : 1;
+	guint            has_atomic_exchange_i4 : 1;
 	gpointer         debug_info;
 	guint32          lmf_offset;
     guint16          *intvars;
@@ -1979,6 +2005,7 @@ gpointer  mono_jit_compile_method           (MonoMethod *method) MONO_INTERNAL;
 MonoLMF * mono_get_lmf                      (void) MONO_INTERNAL;
 MonoLMF** mono_get_lmf_addr                 (void) MONO_INTERNAL;
 void      mono_set_lmf                      (MonoLMF *lmf) MONO_INTERNAL;
+MonoJitTlsData* mono_get_jit_tls            (void) MONO_INTERNAL;
 MONO_API MonoDomain *mono_jit_thread_attach          (MonoDomain *domain);
 MONO_API void      mono_jit_set_domain               (MonoDomain *domain);
 MonoNativeTlsKey mono_get_jit_tls_key       (void) MONO_INTERNAL;
@@ -1986,6 +2013,7 @@ gint32    mono_get_jit_tls_offset           (void) MONO_INTERNAL;
 gint32    mono_get_lmf_tls_offset           (void) MONO_INTERNAL;
 gint32    mono_get_lmf_addr_tls_offset      (void) MONO_INTERNAL;
 int       mini_get_tls_offset               (MonoTlsKey key) MONO_INTERNAL;
+gboolean  mini_tls_get_supported            (MonoCompile *cfg, MonoTlsKey key) MONO_INTERNAL;
 MonoInst* mono_create_tls_get               (MonoCompile *cfg, MonoTlsKey key) MONO_INTERNAL;
 MonoInst* mono_get_jit_tls_intrinsic        (MonoCompile *cfg) MONO_INTERNAL;
 MonoInst* mono_get_domain_intrinsic         (MonoCompile* cfg) MONO_INTERNAL;
@@ -2000,7 +2028,7 @@ void      mono_linear_scan                  (MonoCompile *cfg, GList *vars, GLis
 void      mono_global_regalloc              (MonoCompile *cfg) MONO_INTERNAL;
 void      mono_create_jump_table            (MonoCompile *cfg, MonoInst *label, MonoBasicBlock **bbs, int num_blocks) MONO_INTERNAL;
 int       mono_compile_assembly             (MonoAssembly *ass, guint32 opts, const char *aot_options) MONO_INTERNAL;
-MonoCompile *mini_method_compile            (MonoMethod *method, guint32 opts, MonoDomain *domain, gboolean run_cctors, gboolean compile_aot, int parts) MONO_INTERNAL;
+MonoCompile *mini_method_compile            (MonoMethod *method, guint32 opts, MonoDomain *domain, JitFlags flags, int parts) MONO_INTERNAL;
 void      mono_destroy_compile              (MonoCompile *cfg) MONO_INTERNAL;
 MonoJitICallInfo *mono_find_jit_opcode_emulation (int opcode) MONO_INTERNAL;
 void	  mono_print_ins_index (int i, MonoInst *ins) MONO_INTERNAL;
@@ -2155,6 +2183,7 @@ gpointer          mono_create_jit_trampoline (MonoMethod *method) MONO_INTERNAL;
 gpointer          mono_create_jit_trampoline_from_token (MonoImage *image, guint32 token) MONO_INTERNAL;
 gpointer          mono_create_jit_trampoline_in_domain (MonoDomain *domain, MonoMethod *method) MONO_LLVM_INTERNAL;
 gpointer          mono_create_delegate_trampoline (MonoDomain *domain, MonoClass *klass) MONO_INTERNAL;
+gpointer          mono_create_delegate_trampoline_with_method (MonoDomain *domain, MonoClass *klass, MonoMethod *method) MONO_INTERNAL;
 gpointer          mono_create_rgctx_lazy_fetch_trampoline (guint32 offset) MONO_INTERNAL;
 gpointer          mono_create_monitor_enter_trampoline (void) MONO_INTERNAL;
 gpointer          mono_create_monitor_exit_trampoline (void) MONO_INTERNAL;
@@ -2293,7 +2322,8 @@ gboolean  mono_arch_gsharedvt_sig_supported     (MonoMethodSignature *sig) MONO_
 gpointer  mono_arch_get_gsharedvt_trampoline    (MonoTrampInfo **info, gboolean aot) MONO_INTERNAL;
 gpointer  mono_arch_get_gsharedvt_call_info     (gpointer addr, MonoMethodSignature *normal_sig, MonoMethodSignature *gsharedvt_sig, MonoGenericSharingContext *gsctx, gboolean gsharedvt_in, gint32 vcall_offset, gboolean calli) MONO_INTERNAL;
 gboolean  mono_arch_opcode_needs_emulation      (MonoCompile *cfg, int opcode) MONO_INTERNAL;
-gboolean  mono_arch_tail_call_supported         (MonoMethodSignature *caller_sig, MonoMethodSignature *callee_sig) MONO_INTERNAL;
+gboolean  mono_arch_tail_call_supported         (MonoCompile *cfg, MonoMethodSignature *caller_sig, MonoMethodSignature *callee_sig) MONO_INTERNAL;
+int       mono_arch_translate_tls_offset        (int offset) MONO_INTERNAL;
 
 #ifdef MONO_ARCH_SOFT_FLOAT_FALLBACK
 gboolean  mono_arch_is_soft_float               (void) MONO_INTERNAL;
@@ -2359,7 +2389,6 @@ mgreg_t mono_arch_context_get_int_reg		    (MonoContext *ctx, int reg) MONO_INTE
 void     mono_arch_context_set_int_reg		    (MonoContext *ctx, int reg, mgreg_t val) MONO_INTERNAL;
 void     mono_arch_flush_register_windows       (void) MONO_INTERNAL;
 gboolean mono_arch_is_inst_imm                  (gint64 imm) MONO_INTERNAL;
-MonoInst* mono_arch_get_domain_intrinsic        (MonoCompile* cfg) MONO_INTERNAL;
 gboolean mono_arch_is_int_overflow              (void *sigctx, void *info) MONO_INTERNAL;
 void     mono_arch_invalidate_method            (MonoJitInfo *ji, void *func, gpointer func_arg) MONO_INTERNAL;
 guint32  mono_arch_get_patch_offset             (guint8 *code) MONO_INTERNAL;
@@ -2390,7 +2419,7 @@ GSList *mono_arch_get_trampolines               (gboolean aot) MONO_INTERNAL;
 
 /* Handle block guard */
 gpointer mono_arch_install_handler_block_guard (MonoJitInfo *ji, MonoJitExceptionInfo *clause, MonoContext *ctx, gpointer new_value) MONO_INTERNAL;
-gpointer mono_arch_create_handler_block_trampoline (void) MONO_INTERNAL;
+gpointer mono_arch_create_handler_block_trampoline (MonoTrampInfo **info, gboolean aot) MONO_INTERNAL;
 gpointer mono_create_handler_block_trampoline (void) MONO_INTERNAL;
 gboolean mono_install_handler_block_guard (MonoThreadUnwindState *ctx) MONO_INTERNAL;
 
@@ -2431,6 +2460,7 @@ MonoJitInfo * mono_find_jit_info                (MonoDomain *domain, MonoJitTlsD
 typedef gboolean (*MonoExceptionFrameWalk)      (MonoMethod *method, gpointer ip, size_t native_offset, gboolean managed, gpointer user_data);
 gboolean mono_exception_walk_trace              (MonoException *ex, MonoExceptionFrameWalk func, gpointer user_data);
 void mono_restore_context                       (MonoContext *ctx) MONO_INTERNAL;
+guint8* mono_jinfo_get_unwind_info              (MonoJitInfo *ji, guint32 *unwind_info_len) MONO_INTERNAL;
 
 gboolean
 mono_find_jit_info_ext (MonoDomain *domain, MonoJitTlsData *jit_tls, 
@@ -2491,23 +2521,12 @@ void      mono_debug_serialize_debug_info       (MonoCompile *cfg, guint8 **out_
 void      mono_debug_add_aot_method             (MonoDomain *domain,
 						 MonoMethod *method, guint8 *code_start, 
 						 guint8 *debug_info, guint32 debug_info_len) MONO_INTERNAL;
-void      mono_debug_add_icall_wrapper          (MonoMethod *method, MonoJitICallInfo* info) MONO_INTERNAL;
 MONO_API void      mono_debug_print_vars                 (gpointer ip, gboolean only_arguments);
 MONO_API void      mono_debugger_run_finally             (MonoContext *start_ctx);
 
 extern gssize mono_breakpoint_info_index [MONO_BREAKPOINT_ARRAY_SIZE];
 
 MONO_API gboolean mono_breakpoint_clean_code (guint8 *method_start, guint8 *code, int offset, guint8 *buf, int size);
-
-#ifdef MONO_DEBUGGER_SUPPORTED
-
-/* Mono Debugger support */
-void      mini_debugger_init                    (void);
-int       mini_debugger_main                    (MonoDomain *domain, MonoAssembly *assembly, int argc, char **argv);
-gboolean  mini_debug_running_inside_mdb         (void);
-void      mini_debugger_set_attach_ok           (void);
-
-#endif
 
 /* Tracing */
 MonoTraceSpec *mono_trace_parse_options         (const char *options) MONO_INTERNAL;
@@ -2623,6 +2642,7 @@ void mono_generic_sharing_cleanup (void) MONO_INTERNAL;
 MonoClass* mini_class_get_container_class (MonoClass *class) MONO_INTERNAL;
 MonoGenericContext* mini_class_get_context (MonoClass *class) MONO_INTERNAL;
 
+MonoType* mini_replace_type (MonoType *type) MONO_INTERNAL;
 MonoType* mini_get_basic_type_from_generic (MonoGenericSharingContext *gsctx, MonoType *type) MONO_INTERNAL;
 MonoType* mini_type_get_underlying_type (MonoGenericSharingContext *gsctx, MonoType *type) MONO_INTERNAL;
 MonoMethod* mini_get_shared_method (MonoMethod *method) MONO_INTERNAL;
@@ -2644,12 +2664,13 @@ gboolean mini_is_gsharedvt_klass (MonoCompile *cfg, MonoClass *klass); /* should
 gboolean mini_is_gsharedvt_type (MonoCompile *cfg, MonoType *t) MONO_INTERNAL;
 gboolean mini_is_gsharedvt_signature (MonoCompile *cfg, MonoMethodSignature *sig) MONO_INTERNAL;
 gboolean mini_is_gsharedvt_type_gsctx (MonoGenericSharingContext *gsctx, MonoType *t) MONO_INTERNAL;
-gboolean mini_is_gsharedvt_variable_type (MonoCompile *cfg, MonoType *t) MONO_INTERNAL;
+gboolean mini_is_gsharedvt_variable_type (MonoCompile *cfg, MonoType *t) MONO_LLVM_INTERNAL;
+gboolean mini_is_gsharedvt_variable_klass (MonoCompile *cfg, MonoClass *klass) MONO_LLVM_INTERNAL;
 gboolean mini_is_gsharedvt_sharable_method (MonoMethod *method) MONO_INTERNAL;
 gboolean mini_is_gsharedvt_variable_signature (MonoMethodSignature *sig) MONO_INTERNAL;
 gboolean mini_is_gsharedvt_sharable_inst (MonoGenericInst *inst) MONO_INTERNAL;
 gpointer mini_method_get_rgctx (MonoMethod *m) MONO_INTERNAL;
-void mini_init_gsctx (MonoGenericContext *context, MonoGenericSharingContext *gsctx) MONO_INTERNAL;
+void mini_init_gsctx (MonoDomain *domain, MonoMemPool *mp, MonoGenericContext *context, MonoGenericSharingContext *gsctx) MONO_INTERNAL;
 
 gpointer mini_get_gsharedvt_wrapper (gboolean gsharedvt_in, gpointer addr, MonoMethodSignature *normal_sig, MonoMethodSignature *gsharedvt_sig, MonoGenericSharingContext *gsctx,
 									 gint32 vcall_offset, gboolean calli) MONO_INTERNAL;
@@ -2710,6 +2731,9 @@ void        mono_simd_simplify_indirection (MonoCompile *cfg) MONO_INTERNAL;
 MonoInst*   mono_emit_simd_intrinsics (MonoCompile *cfg, MonoMethod *cmethod, MonoMethodSignature *fsig, MonoInst **args) MONO_INTERNAL;
 guint32     mono_arch_cpu_enumerate_simd_versions (void) MONO_INTERNAL;
 void        mono_simd_intrinsics_init (void) MONO_INTERNAL;
+
+MonoInst*   mono_emit_native_types_intrinsics (MonoCompile *cfg, MonoMethod *cmethod, MonoMethodSignature *fsig, MonoInst **args) MONO_INTERNAL;
+MonoType*   mini_native_type_replace_type (MonoType *type) MONO_INTERNAL;
 
 #ifdef __linux__
 /* maybe enable also for other systems? */

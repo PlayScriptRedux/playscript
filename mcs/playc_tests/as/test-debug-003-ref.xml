@@ -141,17 +141,7 @@
         <entry il="0x32d" row="108" col="21" file_ref="1" hidden="false" />
         <entry il="0x332" row="110" col="21" file_ref="1" hidden="false" />
         <entry il="0x338" row="110" col="21" file_ref="1" hidden="false" />
-        <entry il="0x33d" row="113" col="24" file_ref="1" hidden="false" />
-        <entry il="0x350" row="118" col="24" file_ref="1" hidden="false" />
-        <entry il="0x363" row="124" col="24" file_ref="1" hidden="false" />
-        <entry il="0x380" row="127" col="21" file_ref="1" hidden="false" />
-        <entry il="0x386" row="127" col="21" file_ref="1" hidden="false" />
-        <entry il="0x38b" row="128" col="21" file_ref="1" hidden="false" />
-        <entry il="0x390" row="131" col="21" file_ref="1" hidden="false" />
-        <entry il="0x396" row="131" col="21" file_ref="1" hidden="false" />
-        <entry il="0x39b" row="132" col="21" file_ref="1" hidden="false" />
-        <entry il="0x3a0" row="136" col="13" file_ref="1" hidden="false" />
-        <entry il="0x3a8" row="138" col="9" file_ref="1" hidden="false" />
+        <entry il="0x33d" row="109" col="17" file_ref="1" hidden="false" />
       </sequencepoints>
       <locals>
         <entry name="b" il_index="0" scope_ref="0" />
@@ -194,9 +184,6 @@
         <entry index="27" start="0x2f7" end="0x302" />
         <entry index="28" start="0x30a" end="0x30a" />
         <entry index="29" start="0x30a" end="0x33d" />
-        <entry index="30" start="0x33d" end="0x350" />
-        <entry index="31" start="0x350" end="0x363" />
-        <entry index="32" start="0x363" end="0x3a0" />
       </scopes>
     </method>
   </methods>

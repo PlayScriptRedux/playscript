@@ -386,7 +386,7 @@ mini_regression_step (MonoImage *image, int verbose, int *total_run, int *total,
 			run++;
 			start_time = g_timer_elapsed (timer, NULL);
 			comp_time -= start_time;
-			cfg = mini_method_compile (method, mono_get_optimizations_for_method (method, opt_flags), mono_get_root_domain (), TRUE, FALSE, 0);
+			cfg = mini_method_compile (method, mono_get_optimizations_for_method (method, opt_flags), mono_get_root_domain (), JIT_FLAG_RUN_CCTORS, 0);
 			comp_time += g_timer_elapsed (timer, NULL);
 			if (cfg->exception_type == MONO_EXCEPTION_NONE) {
 				if (verbose >= 2)
@@ -935,7 +935,7 @@ compile_all_methods_thread_main_inner (CompileAllThreadArgs *args)
 			g_print ("Compiling %d %s\n", count, desc);
 			g_free (desc);
 		}
-		cfg = mini_method_compile (method, mono_get_optimizations_for_method (method, args->opts), mono_get_root_domain (), FALSE, FALSE, 0);
+		cfg = mini_method_compile (method, mono_get_optimizations_for_method (method, args->opts), mono_get_root_domain (), 0, 0);
 		if (cfg->exception_type != MONO_EXCEPTION_NONE) {
 			printf ("Compilation of %s failed with exception '%s':\n", mono_method_full_name (cfg->method, TRUE), cfg->exception_message);
 			fail_count ++;
@@ -1286,9 +1286,6 @@ static const char info[] =
 #ifdef MONO_BIG_ARRAYS
 	"bigarrays "
 #endif
-#ifdef MONO_DEBUGGER_SUPPORTED
-	"debugger "
-#endif
 #if defined(MONO_ARCH_SOFT_DEBUG_SUPPORTED) && !defined(DISABLE_SOFT_DEBUG)
 	"softdebug "
 #endif
@@ -1545,7 +1542,7 @@ mono_main (int argc, char* argv[])
 			char *build = mono_get_runtime_build_info ();
 			char *gc_descr;
 
-			g_print ("Mono JIT compiler version %s\nCopyright (C) 2002-2012 Novell, Inc, Xamarin Inc and Contributors. www.mono-project.com\n", build);
+			g_print ("Mono JIT compiler version %s\nCopyright (C) 2002-2014 Novell, Inc, Xamarin Inc and Contributors. www.mono-project.com\n", build);
 			g_free (build);
 			g_print (info);
 			gc_descr = mono_gc_get_description ();
@@ -1857,9 +1854,6 @@ mono_main (int argc, char* argv[])
 #endif
 #endif
 
-	if ((action == DO_EXEC) && mono_debug_using_mono_debugger ())
-		action = DO_DEBUGGER;
-
 	if (mono_compile_aot || action == DO_EXEC || action == DO_DEBUGGER) {
 		g_set_prgname (argv[i]);
 	}
@@ -1888,22 +1882,10 @@ mono_main (int argc, char* argv[])
 
 	if (action == DO_DEBUGGER) {
 		enable_debugging = TRUE;
-
-#ifdef MONO_DEBUGGER_SUPPORTED
-		mono_debug_init (MONO_DEBUG_FORMAT_DEBUGGER);
-#else
-		g_print ("The Mono Debugger is not supported on this platform.\n");
+		g_print ("The Mono Debugger is no longer supported.\n");
 		return 1;
-#endif
 	} else if (enable_debugging)
 		mono_debug_init (MONO_DEBUG_FORMAT_MONO);
-
-#ifdef MONO_DEBUGGER_SUPPORTED
-	if (enable_debugging) {
-		if ((opt & MONO_OPT_GSHARED) == 0)
-			mini_debugger_set_attach_ok ();
-	}
-#endif
 
 #ifdef HOST_WIN32
 	if (mixed_mode)
@@ -2063,22 +2045,7 @@ mono_main (int argc, char* argv[])
 		mini_cleanup (domain);
 		return 0;
 	} else if (action == DO_DEBUGGER) {
-#ifdef MONO_DEBUGGER_SUPPORTED
-		const char *error;
-
-		error = mono_check_corlib_version ();
-		if (error) {
-			fprintf (stderr, "Corlib not in sync with this runtime: %s\n", error);
-			fprintf (stderr, "Download a newer corlib or a newer runtime at http://www.go-mono.com/daily.\n");
-			exit (1);
-		}
-
-		mini_debugger_main (domain, assembly, argc - i, argv + i);
-		mini_cleanup (domain);
-		return 0;
-#else
 		return 1;
-#endif
 	}
 	desc = mono_method_desc_new (mname, 0);
 	if (!desc) {
@@ -2119,10 +2086,10 @@ mono_main (int argc, char* argv[])
 			(method->flags & METHOD_ATTRIBUTE_PINVOKE_IMPL)) {
 			MonoMethod *nm;
 			nm = mono_marshal_get_native_wrapper (method, TRUE, FALSE);
-			cfg = mini_method_compile (nm, opt, mono_get_root_domain (), FALSE, FALSE, part);
+			cfg = mini_method_compile (nm, opt, mono_get_root_domain (), 0, part);
 		}
 		else
-			cfg = mini_method_compile (method, opt, mono_get_root_domain (), FALSE, FALSE, part);
+			cfg = mini_method_compile (method, opt, mono_get_root_domain (), 0, part);
 		if ((mono_graph_options & MONO_GRAPH_CFG_SSA) && !(cfg->comp_done & MONO_COMP_SSA)) {
 			g_warning ("no SSA info available (use -O=deadce)");
 			return 1;
@@ -2154,7 +2121,7 @@ mono_main (int argc, char* argv[])
 				opt = opt_sets [i];
 				g_timer_start (timer);
 				for (j = 0; j < count; ++j) {
-					cfg = mini_method_compile (method, opt, mono_get_root_domain (), FALSE, FALSE, 0);
+					cfg = mini_method_compile (method, opt, mono_get_root_domain (), 0, 0);
 					mono_destroy_compile (cfg);
 				}
 				g_timer_stop (timer);
@@ -2177,12 +2144,12 @@ mono_main (int argc, char* argv[])
 					(method->flags & METHOD_ATTRIBUTE_PINVOKE_IMPL))
 					method = mono_marshal_get_native_wrapper (method, TRUE, FALSE);
 
-				cfg = mini_method_compile (method, opt, mono_get_root_domain (), FALSE, FALSE, 0);
+				cfg = mini_method_compile (method, opt, mono_get_root_domain (), 0, 0);
 				mono_destroy_compile (cfg);
 			}
 		}
 	} else {
-		cfg = mini_method_compile (method, opt, mono_get_root_domain (), FALSE, FALSE, 0);
+		cfg = mini_method_compile (method, opt, mono_get_root_domain (), 0, 0);
 		mono_destroy_compile (cfg);
 	}
 #endif

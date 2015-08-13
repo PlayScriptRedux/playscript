@@ -46,4 +46,4 @@
 [assembly: System.Runtime.CompilerServices.TypeForwardedToAttribute(typeof(System.Runtime.CompilerServices.CallSiteBinder))]
 [assembly: System.Runtime.CompilerServices.TypeForwardedToAttribute(typeof(System.Runtime.CompilerServices.CallSiteHelpers))]
 [assembly: System.Runtime.CompilerServices.TypeForwardedToAttribute(typeof(System.Runtime.CompilerServices.DynamicAttribute))]
-
+[assembly: System.Runtime.CompilerServices.TypeForwardedToAttribute(typeof(System.Runtime.CompilerServices.ConditionalWeakTable<,>))]

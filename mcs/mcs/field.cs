@@ -15,7 +15,6 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using Mono.CSharp.Cpp;
 
 #if STATIC
 using MetaType = IKVM.Reflection.Type;

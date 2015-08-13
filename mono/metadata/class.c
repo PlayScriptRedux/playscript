@@ -71,7 +71,6 @@ static void mono_generic_class_setup_parent (MonoClass *klass, MonoClass *gklass
 
 
 void (*mono_debugger_class_init_func) (MonoClass *klass) = NULL;
-void (*mono_debugger_class_loaded_methods_func) (MonoClass *klass) = NULL;
 
 
 /*
@@ -2169,9 +2168,6 @@ mono_class_setup_methods (MonoClass *class)
 
 	class->methods = methods;
 
-	if (mono_debugger_class_loaded_methods_func)
-		mono_debugger_class_loaded_methods_func (class);
-
 	mono_loader_unlock ();
 }
 
@@ -3616,10 +3612,6 @@ mono_class_setup_vtable_full (MonoClass *class, GList *in_setup)
 
 	if (class->vtable)
 		return;
-
-	if (mono_debug_using_mono_debugger ())
-		/* The debugger currently depends on this */
-		mono_class_setup_methods (class);
 
 	if (MONO_CLASS_IS_INTERFACE (class)) {
 		/* This sets method->slot for all methods if this is an interface */
@@ -5494,7 +5486,7 @@ mono_class_setup_parent (MonoClass *class, MonoClass *parent)
  *  - supertypes: array of classes: each element has a class in the hierarchy
  *    starting from @class up to System.Object
  * 
- * LOCKING: this assumes the loader lock is held
+ * LOCKING: This function is atomic, in case of contention we waste memory.
  */
 void
 mono_class_setup_supertypes (MonoClass *class)
@@ -5502,7 +5494,8 @@ mono_class_setup_supertypes (MonoClass *class)
 	int ms;
 	MonoClass **supertypes;
 
-	if (class->supertypes)
+	mono_atomic_load_acquire (supertypes, void*, &class->supertypes);
+	if (supertypes)
 		return;
 
 	if (class->parent && !class->parent->supertypes)
@@ -6647,6 +6640,9 @@ mono_class_data_size (MonoClass *klass)
 {	
 	if (!klass->inited)
 		mono_class_init (klass);
+	/* This can happen with dynamically created types */
+	if (!klass->fields_inited)
+		mono_class_setup_fields_locking (klass);
 
 	/* in arrays, sizes.class_size is unioned with element_size
 	 * and arrays have no static fields
@@ -8013,6 +8009,10 @@ mono_class_implement_interface_slow (MonoClass *target, MonoClass *candidate)
 			}
 		} else {
 			/*setup_interfaces don't mono_class_init anything*/
+			/*FIXME this doesn't handle primitive type arrays.
+			ICollection<sbyte> x byte [] won't work because candidate->interfaces, for byte[], won't have IList<sbyte>.
+			A possible way to fix this would be to move that to setup_interfaces from setup_interface_offsets.
+			*/
 			mono_class_setup_interfaces (candidate, &error);
 			if (!mono_error_ok (&error)) {
 				mono_error_cleanup (&error);
@@ -8058,7 +8058,34 @@ mono_class_is_assignable_from_slow (MonoClass *target, MonoClass *candidate)
  	if (target->delegate && mono_class_has_variant_generic_params (target))
 		return mono_class_is_variant_compatible (target, candidate, FALSE);
 
-	/*FIXME properly handle nullables and arrays */
+	if (target->rank) {
+		MonoClass *eclass, *eoclass;
+
+		if (target->rank != candidate->rank)
+			return FALSE;
+
+		/* vectors vs. one dimensional arrays */
+		if (target->byval_arg.type != candidate->byval_arg.type)
+			return FALSE;
+
+		eclass = target->cast_class;
+		eoclass = candidate->cast_class;
+
+		/*
+		 * a is b does not imply a[] is b[] when a is a valuetype, and
+		 * b is a reference type.
+		 */
+
+		if (eoclass->valuetype) {
+			if ((eclass == mono_defaults.enum_class) ||
+				(eclass == mono_defaults.enum_class->parent) ||
+				(eclass == mono_defaults.object_class))
+				return FALSE;
+		}
+
+		return mono_class_is_assignable_from_slow (target->cast_class, candidate->cast_class);
+	}
+	/*FIXME properly handle nullables */
 	/*FIXME properly handle (M)VAR */
 	return FALSE;
 }
@@ -8664,7 +8691,7 @@ mono_class_get_virtual_methods (MonoClass* klass, gpointer *iter)
 	MonoMethod** method;
 	if (!iter)
 		return NULL;
-	if (klass->methods || !MONO_CLASS_HAS_STATIC_METADATA (klass) || mono_debug_using_mono_debugger ()) {
+	if (klass->methods || !MONO_CLASS_HAS_STATIC_METADATA (klass)) {
 		if (!*iter) {
 			mono_class_setup_methods (klass);
 			/*

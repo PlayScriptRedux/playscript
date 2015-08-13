@@ -3178,6 +3178,8 @@ enum_declaration
 	  }
 	  opt_enum_member_declarations
 	  {
+		lexer.parsing_modifiers = true;
+
 	  	// here will be evaluated after CLOSE_BLACE is consumed.
 		if (doc_support)
 			Lexer.doc_state = XmlCommentState.Allowed;
@@ -6981,12 +6983,15 @@ try_statement
 	  }
 	| TRY block FINALLY block
 	  {
-		$$ = new TryFinally ((Statement) $2, (Block) $4, GetLocation ($1));
+	    //$$ = new TryFinally ((Statement) $2, (Block) $4, GetLocation ($1));
+		$$ = new TryFinally ((Statement) $2, (ExplicitBlock) $4, GetLocation ($1));
 		lbag.AddStatement ($$, GetLocation ($3));
 	  }
 	| TRY block catch_clauses FINALLY block
 	  {
-		$$ = new TryFinally (new TryCatch ((Block) $2, (List<Catch>) $3, Location.Null, true), (Block) $5, GetLocation ($1));
+		//$$ = new TryFinally (new TryCatch ((Block) $2, (List<Catch>) $3, Location.Null, true), (Block) $5, GetLocation ($1));
+        //lbag.AddStatement ($$, GetLocation ($4));
+		$$ = new TryFinally (new TryCatch ((Block) $2, (List<Catch>) $3, Location.Null, true), (ExplicitBlock) $5, GetLocation ($1));		
 		lbag.AddStatement ($$, GetLocation ($4));
 	  }
 	| TRY block error
@@ -7021,7 +7026,8 @@ catch_clauses
 catch_clause 
 	: CATCH block
 	  {
-		$$ = new Catch ((Block) $2, GetLocation ($1));
+	  	//$$ = new Catch ((Block) $2, GetLocation ($1));
+		$$ = new Catch ((ExplicitBlock) $2, GetLocation ($1));
 	  }
 	| CATCH open_parens_any IDENTIFIER opt_type CLOSE_PARENS
 	  {
@@ -7039,7 +7045,8 @@ catch_clause
 		if (type.Type != null && type.Type.IsDynamic)
 			type = new UntypedExceptionExpression (lt.Location);
 
-		var c = new Catch (current_block, GetLocation ($1));
+		//var c = new Catch (current_block, GetLocation ($1));
+		var c = new Catch ((ExplicitBlock) current_block, GetLocation ($1));
 		c.TypeExpression = type;
 		c.Variable = new LocalVariable (current_block, lt.Value, lt.Location);
 		c.Variable.TypeExpr = c.TypeExpression;

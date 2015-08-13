@@ -611,7 +611,7 @@ mono_arch_create_generic_trampoline (MonoTrampolineType tramp_type, MonoTrampInf
 	amd64_call_reg (code, AMD64_R11);
 
 	/* Save lmf_addr */
-	amd64_mov_membase_reg (code, AMD64_RBP, lmf_offset + G_STRUCT_OFFSET (MonoLMF, lmf_addr), AMD64_RAX, sizeof(gpointer));
+	amd64_mov_membase_reg (code, AMD64_RBP, lmf_offset + G_STRUCT_OFFSET (MonoLMFTramp, lmf_addr), AMD64_RAX, sizeof(gpointer));
 	/* Save previous_lmf */
 	/* Set the lowest bit to signal that this LMF has the ip field set */
 	/* Set the third lowest bit to signal that this is a MonoLMFTramp structure */
@@ -666,7 +666,7 @@ mono_arch_create_generic_trampoline (MonoTrampolineType tramp_type, MonoTrampInf
 	/* Restore LMF */
 	amd64_mov_reg_membase (code, AMD64_RCX, AMD64_RBP, lmf_offset + G_STRUCT_OFFSET (MonoLMF, previous_lmf), sizeof(gpointer));
 	amd64_alu_reg_imm_size (code, X86_SUB, AMD64_RCX, 0x5, sizeof(gpointer));
-	amd64_mov_reg_membase (code, AMD64_R11, AMD64_RBP, lmf_offset + G_STRUCT_OFFSET (MonoLMF, lmf_addr), sizeof(gpointer));
+	amd64_mov_reg_membase (code, AMD64_R11, AMD64_RBP, lmf_offset + G_STRUCT_OFFSET (MonoLMFTramp, lmf_addr), sizeof(gpointer));
 	amd64_mov_membase_reg (code, AMD64_R11, 0, AMD64_RCX, sizeof(gpointer));
 
 	/* 
@@ -1216,11 +1216,16 @@ handler_block_trampoline_helper (gpointer *ptr)
 }
 
 gpointer
-mono_arch_create_handler_block_trampoline (void)
+mono_arch_create_handler_block_trampoline (MonoTrampInfo **info, gboolean aot)
 {
 	guint8 *tramp = mono_get_trampoline_code (MONO_TRAMPOLINE_HANDLER_BLOCK_GUARD);
 	guint8 *code, *buf;
 	int tramp_size = 64;
+	MonoJumpInfo *ji = NULL;
+	GSList *unwind_ops = NULL;
+
+	g_assert (!aot);
+
 	code = buf = mono_global_codeman_reserve (tramp_size);
 
 	/*
@@ -1244,8 +1249,8 @@ mono_arch_create_handler_block_trampoline (void)
 	mono_arch_flush_icache (buf, code - buf);
 	g_assert (code - buf <= tramp_size);
 
-	if (mono_jit_map_is_enabled ())
-		mono_emit_jit_tramp (buf, code - buf, "handler_block_trampoline");
+	if (info)
+		*info = mono_tramp_info_create ("handler_block_trampoline", buf, code - buf, ji, unwind_ops);
 
 	return buf;
 }

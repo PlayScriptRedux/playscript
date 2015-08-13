@@ -401,6 +401,7 @@ sgen_safe_name (void* obj)
  * ######################################################################
  */
 LOCK_DECLARE (gc_mutex);
+gboolean sgen_try_free_some_memory;
 
 #define SCAN_START_SIZE	SGEN_SCAN_START_SIZE
 
@@ -2902,8 +2903,8 @@ major_copy_or_mark_from_roots (int *old_next_pin_slot, gboolean finish_up_concur
 				continue;
 			}
 			sgen_los_pin_object (bigobj->data);
-			/* FIXME: only enqueue if object has references */
-			GRAY_OBJECT_ENQUEUE (WORKERS_DISTRIBUTE_GRAY_QUEUE, bigobj->data);
+			if (SGEN_OBJECT_HAS_REFERENCES (bigobj->data))
+				GRAY_OBJECT_ENQUEUE (WORKERS_DISTRIBUTE_GRAY_QUEUE, bigobj->data);
 			if (G_UNLIKELY (do_pin_stats))
 				sgen_pin_stats_register_object ((char*) bigobj->data, safe_object_get_size ((MonoObject*) bigobj->data));
 			SGEN_LOG (6, "Marked large object %p (%s) size: %lu from roots", bigobj->data, safe_name (bigobj->data), (unsigned long)sgen_los_object_size (bigobj));
@@ -3089,6 +3090,13 @@ major_start_collection (gboolean concurrent, int *old_next_pin_slot)
 static void
 wait_for_workers_to_finish (void)
 {
+	while (!sgen_workers_all_done ())
+		g_usleep (200);
+}
+
+static void
+join_workers (void)
+{
 	if (concurrent_collection_in_progress || major_collector.is_parallel) {
 		gray_queue_redirect (&gray_queue);
 		sgen_workers_join ();
@@ -3111,13 +3119,13 @@ major_finish_collection (const char *reason, int old_next_pin_slot, gboolean sca
 	TV_GETTIME (btv);
 
 	if (concurrent_collection_in_progress || major_collector.is_parallel)
-		wait_for_workers_to_finish ();
+		join_workers ();
 
 	if (concurrent_collection_in_progress) {
 		current_object_ops = major_collector.major_concurrent_ops;
 
 		major_copy_or_mark_from_roots (NULL, TRUE, scan_mod_union);
-		wait_for_workers_to_finish ();
+		join_workers ();
 
 		g_assert (sgen_gray_object_queue_is_empty (&gray_queue));
 
@@ -3324,18 +3332,29 @@ major_update_or_finish_concurrent_collection (gboolean force_finish)
 
 	g_assert (sgen_gray_object_queue_is_empty (&gray_queue));
 
-	major_collector.update_cardtable_mod_union ();
-	sgen_los_update_cardtable_mod_union ();
-
 	if (!force_finish && !sgen_workers_all_done ()) {
+		major_collector.update_cardtable_mod_union ();
+		sgen_los_update_cardtable_mod_union ();
+
 		MONO_GC_CONCURRENT_UPDATE_END (GENERATION_OLD, major_collector.get_and_reset_num_major_objects_marked ());
 		return FALSE;
 	}
 
-	if (mod_union_consistency_check)
-		sgen_check_mod_union_consistency ();
+	/*
+	 * The major collector can add global remsets which are processed in the finishing
+	 * nursery collection, below.  That implies that the workers must have finished
+	 * marking before the nursery collection is allowed to run, otherwise we might miss
+	 * some remsets.
+	 */
+	wait_for_workers_to_finish ();
+
+	major_collector.update_cardtable_mod_union ();
+	sgen_los_update_cardtable_mod_union ();
 
 	collect_nursery (&unpin_queue, TRUE);
+
+	if (mod_union_consistency_check)
+		sgen_check_mod_union_consistency ();
 
 	current_collection_generation = GENERATION_OLD;
 	major_finish_collection ("finishing", -1, TRUE);
@@ -4047,6 +4066,9 @@ ptr_on_stack (void *ptr)
 static void*
 sgen_thread_register (SgenThreadInfo* info, void *addr)
 {
+	size_t stsize = 0;
+	guint8 *staddr = NULL;
+
 #ifndef HAVE_KW_THREAD
 	info->tlab_start = info->tlab_next = info->tlab_temp_end = info->tlab_real_end = NULL;
 
@@ -4074,48 +4096,16 @@ sgen_thread_register (SgenThreadInfo* info, void *addr)
 
 	binary_protocol_thread_register ((gpointer)mono_thread_info_get_tid (info));
 
-	// FIXME: Unift with mono_thread_get_stack_bounds ()
-	/* try to get it with attributes first */
-#if (defined(HAVE_PTHREAD_GETATTR_NP) || defined(HAVE_PTHREAD_ATTR_GET_NP)) && defined(HAVE_PTHREAD_ATTR_GETSTACK)
-  {
-     size_t size;
-     void *sstart;
-     pthread_attr_t attr;
-
-#if defined(HAVE_PTHREAD_GETATTR_NP)
-    /* Linux */
-    pthread_getattr_np (pthread_self (), &attr);
-#elif defined(HAVE_PTHREAD_ATTR_GET_NP)
-    /* BSD */
-    pthread_attr_init (&attr);
-    pthread_attr_get_np (pthread_self (), &attr);
-#else
-#error Cannot determine which API is needed to retrieve pthread attributes.
-#endif
-
-     pthread_attr_getstack (&attr, &sstart, &size);
-     info->stack_start_limit = sstart;
-     info->stack_end = (char*)sstart + size;
-     pthread_attr_destroy (&attr);
-  }
-#elif defined(HAVE_PTHREAD_GET_STACKSIZE_NP) && defined(HAVE_PTHREAD_GET_STACKADDR_NP)
-	{
-		size_t stsize = 0;
-		guint8 *staddr = NULL;
-
-		mono_thread_get_stack_bounds (&staddr, &stsize);
+	mono_thread_info_get_stack_bounds (&staddr, &stsize);
+	if (staddr) {
 		info->stack_start_limit = staddr;
 		info->stack_end = staddr + stsize;
-	}
-#else
-	{
-		/* FIXME: we assume the stack grows down */
+	} else {
 		gsize stack_bottom = (gsize)addr;
 		stack_bottom += 4095;
 		stack_bottom &= ~4095;
 		info->stack_end = (char*)stack_bottom;
 	}
-#endif
 
 #ifdef HAVE_KW_THREAD
 	stack_end = info->stack_end;
@@ -5476,7 +5466,7 @@ mono_gc_get_write_barrier (void)
 	res = mono_mb_create_method (mb, sig, 16);
 	mono_mb_free (mb);
 
-	mono_loader_lock ();
+	LOCK_GC;
 	if (write_barrier_method) {
 		/* Already created */
 		mono_free_method (res);
@@ -5485,7 +5475,7 @@ mono_gc_get_write_barrier (void)
 		mono_memory_barrier ();
 		write_barrier_method = res;
 	}
-	mono_loader_unlock ();
+	UNLOCK_GC;
 
 	return write_barrier_method;
 }
@@ -5562,7 +5552,12 @@ sgen_gc_lock (void)
 void
 sgen_gc_unlock (void)
 {
-	UNLOCK_GC;
+	gboolean try_free = sgen_try_free_some_memory;
+	sgen_try_free_some_memory = FALSE;
+	mono_mutex_unlock (&gc_mutex);
+	MONO_GC_UNLOCKED ();
+	if (try_free)
+		mono_thread_hazardous_try_free_some ();
 }
 
 void

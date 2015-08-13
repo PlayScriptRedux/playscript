@@ -17,8 +17,6 @@ const.cs
 constant.cs
 convert.cs
 context.cs
-cxx-emit.cs
-cxx-target.cs
 decl.cs
 delegate.cs
 doc.cs
@@ -36,8 +34,6 @@ inliner.cs
 intrinsics.cs
 iterators.cs
 ikvm.cs
-js-emit.cs
-js-target.cs
 lambda.cs
 linq.cs
 literal.cs

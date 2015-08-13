@@ -14,8 +14,6 @@
 
 using System;
 using System.Collections.Generic;
-using Mono.CSharp.JavaScript;
-using Mono.CSharp.Cpp;
 
 #if STATIC
 using IKVM.Reflection;
@@ -190,15 +188,6 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext rc)
 		{
-//			BEN: This won't work because the returned type won't pass Mono's type checkers.
-//			if (rc.Target == Target.JavaScript) {
-//				this.type = rc.BuiltinTypes.Dynamic;
-//				this.eclass = ExprClass.Value;
-//				foreach (ElementInitializer elem in Elements)
-//					elem.Resolve (rc);
-//				return this;
-//			}
-
 			// ActionScript - Always use dynamic "expando" object.
 			TypeExpression type = new TypeExpression (rc.Module.PredefinedTypes.AsExpandoObject.Resolve(), Location);
 
@@ -209,22 +198,6 @@ namespace Mono.CSharp
 		public override void Emit (EmitContext ec)
 		{
 			throw new InternalErrorException ("Missing Resolve call");
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			jec.Buf.Write ("{", Location);
-
-			bool first = true;
-			foreach (ElementInitializer elem in Elements) {
-				if (!first)
-					jec.Buf.Write (", ");
-				jec.Buf.Write ("\"", elem.Name, "\":");
-				elem.Source.EmitJs (jec);
-				first = false;
-			}
-
-			jec.Buf.Write ("}");
 		}
 
 		public override object Accept (StructuralVisitor visitor)
@@ -298,15 +271,6 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext rc)
 		{
-//			BEN: This won't work because the returned type won't pass Mono's type checkers.
-//			if (rc.Target == Target.JavaScript) {
-//				this.type = rc.Module.PredefinedTypes.AsArray.Resolve();
-//				this.eclass = ExprClass.Value;
-//				foreach (var elem in Elements)
-//					elem.Resolve (rc);
-//				return this;
-//			}
-
 			// Attempt to build simple const initializer
 			bool is_const_init = false;
 			TypeSpec const_type = null;
@@ -375,21 +339,6 @@ namespace Mono.CSharp
 			}
 		}
 
-		public override void EmitJs (JsEmitContext jec)
-		{
-			jec.Buf.Write ("[", Location);
-			
-			bool first = true;
-			foreach (var elem in Elements) {
-				if (!first)
-					jec.Buf.Write (", ");
-				elem.EmitJs (jec);
-				first = false;
-			}
-			
-			jec.Buf.Write ("]");
-		}
-
 		public override object Accept (StructuralVisitor visitor)
 		{
 			var ret = visitor.Visit (this);
@@ -441,12 +390,6 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext ec)
 		{
-			if (ec.Target == Target.JavaScript) {
-				type = ec.BuiltinTypes.Dynamic;
-				eclass = ExprClass.Value;
-				return this;
-			}
-
 			if (Expr is ElementAccess) {
 
 				var elem_access = Expr as ElementAccess;
@@ -466,11 +409,6 @@ namespace Mono.CSharp
 					return null;
 				}
 
-				if (ec.Target == Target.JavaScript) {
-					Expr = Expr.Resolve(ec);
-					return this;
-				}
-
 				if (!expr.Type.IsAsDynamicClass && (expr.Type.BuiltinType != BuiltinTypeSpec.Type.Dynamic))
 				{
 					ec.Report.Error (7021, loc, "delete statement only allowed on dynamic types or dynamic classes");
@@ -483,11 +421,6 @@ namespace Mono.CSharp
 				return removeExpr.Resolve (ec);
 
 			} else if (Expr is MemberAccess) {
-
-				if (ec.Target == Target.JavaScript) {
-					Expr = Expr.Resolve(ec);
-					return this;
-				}
 
 				var memb_access = Expr as MemberAccess;
 
@@ -530,19 +463,6 @@ namespace Mono.CSharp
 		public override void EmitStatement (EmitContext ec)
 		{
 			throw new System.NotImplementedException ();
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			jec.Buf.Write ("delete ", Location);
-			Expr.EmitJs (jec);
-		}
-
-		public override void EmitStatementJs (JsEmitContext jec)
-		{
-			jec.Buf.Write ("\t", Location);
-			EmitJs (jec);
-			jec.Buf.Write (";\n");
 		}
 
 		public override Expression CreateExpressionTree (ResolveContext ec)
@@ -609,12 +529,6 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext ec)
 		{
-			if (ec.Target == Target.JavaScript) {
-				type = ec.BuiltinTypes.Dynamic;
-				eclass = ExprClass.Value;
-				return this;
-			}
-
 			if (Expr is AsArrayInitializer)
 				return Expr.Resolve (ec);
 
@@ -694,19 +608,6 @@ namespace Mono.CSharp
 			throw new System.NotImplementedException ();
 		}
 		
-		public override void EmitJs (JsEmitContext jec)
-		{
-			jec.Buf.Write ("new ", Location);
-			Expr.EmitJs (jec);
-		}
-		
-		public override void EmitStatementJs (JsEmitContext jec)
-		{
-			jec.Buf.Write ("\t", Location);
-			EmitJs (jec);
-			jec.Buf.Write (";\n");
-		}
-		
 		public override Expression CreateExpressionTree (ResolveContext ec)
 		{
 			return newExpr.CreateExpressionTree(ec);
@@ -759,12 +660,6 @@ namespace Mono.CSharp
 		
 		protected override Expression DoResolve (ResolveContext ec)
 		{
-			if (ec.Target == Target.JavaScript) {
-				type = ec.BuiltinTypes.Dynamic;
-				eclass = ExprClass.Value;
-				return this;
-			}
-
 			if (loc.SourceFile != null && loc.SourceFile.PsExtended) {
 				ec.Report.Error (7101, loc, "'typeof' operator not supported in ASX.'");
 				return null;
@@ -792,19 +687,6 @@ namespace Mono.CSharp
 		public override void EmitStatement (EmitContext ec)
 		{
 			throw new System.NotImplementedException ();
-		}
-		
-		public override void EmitJs (JsEmitContext jec)
-		{
-			jec.Buf.Write ("new ", Location);
-			Expr.EmitJs (jec);
-		}
-		
-		public override void EmitStatementJs (JsEmitContext jec)
-		{
-			jec.Buf.Write ("\t", Location);
-			EmitJs (jec);
-			jec.Buf.Write (";\n");
 		}
 		
 		public override Expression CreateExpressionTree (ResolveContext ec)
@@ -891,12 +773,6 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext rc)
 		{
-			if (rc.Target == Target.JavaScript) {
-				type = rc.Module.PredefinedTypes.AsRegExp.Resolve();
-				eclass = ExprClass.Value;
-				return this;
-			}
-
 			var args = new Arguments(2);
 			args.Add (new Argument(new StringLiteral(rc.BuiltinTypes, Regex, this.Location)));
 			args.Add (new Argument(new StringLiteral(rc.BuiltinTypes, Options, this.Location)));
@@ -908,11 +784,6 @@ namespace Mono.CSharp
 		public override void Emit (EmitContext ec)
 		{
 			throw new NotSupportedException ();
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			jec.Buf.Write (GetValue () as String, Location);
 		}
 
 #if FULL_AST
@@ -996,11 +867,6 @@ namespace Mono.CSharp
 			throw new NotSupportedException ();
 		}
 		
-		public override void EmitJs (JsEmitContext jec)
-		{
-			jec.Buf.Write (GetValue () as String, Location);
-		}
-		
 #if FULL_AST
 		public char[] ParsedValue { get; set; }
 #endif
@@ -1050,14 +916,6 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext ec)
 		{
-			if (ec.Target == Target.JavaScript) {
-				expr = Expr.Resolve (ec);
-				objExpr = objExpr.Resolve (ec);
-				type = ec.BuiltinTypes.Bool;
-				eclass = ExprClass.Value;
-				return this;
-			}
-
 			var objExpRes = objExpr.Resolve (ec);
 
 			var args = new Arguments (1);
@@ -1090,13 +948,6 @@ namespace Mono.CSharp
 		public override void Emit (EmitContext ec)
 		{
 			throw new InternalErrorException ("Missing Resolve call");
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			Expr.EmitJs (jec);
-			jec.Buf.Write (" in ");
-			ObjectExpression.EmitJs (jec);
 		}
 
 		public override object Accept (StructuralVisitor visitor)
@@ -1146,12 +997,6 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext ec)
 		{
-			if (ec.Target == Target.JavaScript) {
-				type = ec.BuiltinTypes.Dynamic;
-				eclass = ExprClass.Value;
-				return this;
-			}
-
 			return new MemberAccess(new TypeExpression(ec.Module.PredefinedTypes.AsUndefined.Resolve(), loc), 
 			                        "_undefined", loc).Resolve (ec);
 		}
@@ -1163,11 +1008,6 @@ namespace Mono.CSharp
 		public override void Emit (EmitContext ec)
 		{
 			throw new InternalErrorException ("Missing Resolve call");
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			jec.Buf.Write ("undefined", Location);
 		}
 
 		public override object Accept (StructuralVisitor visitor)
@@ -1211,23 +1051,16 @@ namespace Mono.CSharp
 			target.VarDecl = VarDecl.Clone (clonectx) as BlockVariable;
 		}
 
+		protected override bool DoFlowAnalysis (FlowAnalysisContext fc)
+		{
+			throw new NotImplementedException ();
+		}
+			
 		protected override void DoEmit (EmitContext ec)
 		{
 		}
 
-//		public override void EmitJs (JsEmitContext jec)
-//		{
-//			jec.Buf.Write ("delete ", Location);
-//			Expr.EmitJs (jec);
-//		}
-//		
-//		public override void EmitStatementJs (JsEmitContext jec)
-//		{
-//			jec.Buf.Write ("\t", Location);
-//			EmitJs (jec);
-//			jec.Buf.Write (";\n");
-//		}
-		
+
 		public override Expression CreateExpressionTree (ResolveContext ec)
 		{
 			throw new System.NotSupportedException ();
@@ -1265,20 +1098,21 @@ namespace Mono.CSharp
 		{
 			return true;
 		}
-		
-		public override bool ResolveUnreachable (BlockContext ec, bool warn)
+
+		protected override bool DoFlowAnalysis (FlowAnalysisContext fc)
 		{
-			return true;
+			throw new NotImplementedException ();
 		}
+
+//		public override bool ResolveUnreachable (BlockContext ec, bool warn)
+//		{
+//			return true;
+//		}
 		
 		public override void Emit (EmitContext ec)
 		{
 		}
 		
-		public override void EmitJs (JsEmitContext jec)
-		{
-		}
-
 		protected override void DoEmit (EmitContext ec)
 		{
 			throw new NotSupportedException ();
@@ -1321,21 +1155,16 @@ namespace Mono.CSharp
 			return expr != null;
 		}
 
+		protected override bool DoFlowAnalysis (FlowAnalysisContext fc)
+		{
+			throw new NotImplementedException ();
+		}
+
 		protected override void DoEmit (EmitContext ec)
 		{
 			if (!expr.IsSideEffectFree) {
 				expr.EmitSideEffect (ec);
 			}
-		}
-
-		protected override void DoEmitJs (JsEmitContext jec) 
-		{
-			expr.EmitJs (jec);
-		}
-		
-		public override void EmitJs (JsEmitContext jec)
-		{
-			DoEmitJs (jec);
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Statement target)

@@ -214,6 +214,11 @@ namespace Mono.CSharp {
 				hoisted_this.EmitAssign (ec, source, false, false);
 			}
 
+			protected override bool DoFlowAnalysis (FlowAnalysisContext fc)
+			{
+				return false;
+			}
+
 			protected override void CloneTo (CloneContext clonectx, Statement target)
 			{
 				// Nothing to clone
@@ -1326,6 +1331,8 @@ namespace Mono.CSharp {
 
 		protected override Expression DoResolve (ResolveContext ec)
 		{
+			var isPlayScript = ec.FileType == SourceFileType.PlayScript;
+
 			if (ec.HasSet (ResolveContext.Options.ConstantScope)) {
 				ec.Report.Error (1706, loc, "Anonymous methods and lambda expressions cannot be used in the current context");
 				return null;
@@ -1347,19 +1354,22 @@ namespace Mono.CSharp {
 			if (!DoResolveParameters (ec))
 				return null;
 
-#if !STATIC
-			// FIXME: The emitted code isn't very careful about reachability
-			// so, ensure we have a 'ret' at the end
-			BlockContext bc = ec as BlockContext;
-			if (bc != null && bc.CurrentBranching != null && bc.CurrentBranching.CurrentUsageVector.IsUnreachable)
-				bc.NeedReturnLabel ();
-#endif
-
+//<<<<<<< HEAD
+//#if !STATIC
+//			// FIXME: The emitted code isn't very careful about reachability
+//			// so, ensure we have a 'ret' at the end
+//			BlockContext bc = ec as BlockContext;
+//			if (bc != null && bc.CurrentBranching != null && bc.CurrentBranching.CurrentUsageVector.IsUnreachable)
+//				bc.NeedReturnLabel ();
+//#endif
+//
 			// Cast to Delgate for PlayScript (forces implicit conversion to Func<> or Action<> delegate types).
-			if (ec.FileType == SourceFileType.PlayScript) {
+			if (isPlayScript) {
 				return new Cast(new TypeExpression(ec.BuiltinTypes.Delegate, this.Location), this, this.Location).Resolve (ec);
 			}
 
+//=======
+//>>>>>>> d12330eda7746321b4611865d11e932e53ac55b8
 			return this;
 		}
 
@@ -1542,12 +1552,28 @@ namespace Mono.CSharp {
 			}
 
 			var bc = ec as BlockContext;
-			if (bc != null)
+
+			if (bc != null) {
 				aec.AssignmentInfoOffset = bc.AssignmentInfoOffset;
+				aec.EnclosingLoop = bc.EnclosingLoop;
+				aec.EnclosingLoopOrSwitch = bc.EnclosingLoopOrSwitch;
+				aec.Switch = bc.Switch;
+			}
 
 			var errors = ec.Report.Errors;
 
-			bool res = Block.Resolve (ec.CurrentBranching, aec, null);
+			bool res = Block.Resolve (aec);
+
+			if (res && errors == ec.Report.Errors) {
+				MarkReachable (new Reachability ());
+
+				if (!CheckReachableExit (ec.Report)) {
+					return null;
+				}
+
+				if (bc != null)
+					bc.AssignmentInfoOffset = aec.AssignmentInfoOffset;
+			}
 
 			if (am != null && am.ReturnTypeInference != null) {
 				am.ReturnTypeInference.FixAllTypes (ec);
@@ -1576,6 +1602,47 @@ namespace Mono.CSharp {
 		public override bool ContainsEmitWithAwait ()
 		{
 			return false;
+		}
+
+		bool CheckReachableExit (Report report)
+		{
+			if (block.HasReachableClosingBrace && ReturnType.Kind != MemberKind.Void) {
+				// FIXME: Flow-analysis on MoveNext generated code
+				if (!IsIterator) {
+					report.Error (1643, StartLocation,
+							"Not all code paths return a value in anonymous method of type `{0}'", GetSignatureForError ());
+
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		public override void FlowAnalysis (FlowAnalysisContext fc)
+		{
+			// We are reachable, mark block body reachable too
+			MarkReachable (new Reachability ());
+
+			CheckReachableExit (fc.Report);
+
+			var das = fc.BranchDefiniteAssignment ();
+			var prev_pb = fc.ParametersBlock;
+			fc.ParametersBlock = Block;
+			var da_ontrue = fc.DefiniteAssignmentOnTrue;
+			var da_onfalse = fc.DefiniteAssignmentOnFalse;
+
+			block.FlowAnalysis (fc);
+
+			fc.ParametersBlock = prev_pb;
+			fc.DefiniteAssignment = das;
+			fc.DefiniteAssignmentOnTrue = da_ontrue;
+			fc.DefiniteAssignmentOnFalse = da_onfalse;
+		}
+
+		public override void MarkReachable (Reachability rc)
+		{
+			block.MarkReachable (rc);
 		}
 
 		public void SetHasThisAccess ()

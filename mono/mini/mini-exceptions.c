@@ -50,7 +50,6 @@
 #include <mono/utils/mono-logger-internal.h>
 
 #include "mini.h"
-#include "debug-mini.h"
 #include "trace.h"
 #include "debugger-agent.h"
 
@@ -1434,8 +1433,6 @@ mono_handle_exception_internal_first_pass (MonoContext *ctx, gpointer obj, gint3
 #ifndef DISABLE_PERFCOUNTERS
 					mono_perfcounters->exceptions_filters++;
 #endif
-					mono_debugger_call_exception_handler (ei->data.filter, MONO_CONTEXT_GET_SP (ctx), ex_obj);
-
 					/*
 					Here's the thing, if this is a filter clause done by a wrapper like runtime invoke, we don't want to
 					trim the stackframe since if it returns FALSE we lose information.
@@ -1512,7 +1509,7 @@ mono_handle_exception_internal (MonoContext *ctx, gpointer obj, gboolean resume,
 	MonoContext initial_ctx;
 	MonoMethod *method;
 	int frame_count = 0;
-	gint32 filter_idx, first_filter_idx;
+	gint32 filter_idx, first_filter_idx = 0;
 	int i;
 	MonoObject *ex_obj;
 	MonoObject *non_exception = NULL;
@@ -1796,7 +1793,6 @@ mono_handle_exception_internal (MonoContext *ctx, gpointer obj, gboolean resume,
 					jit_tls->orig_ex_ctx_set = TRUE;
 					mono_profiler_exception_clause_handler (method, ei->flags, i);
 					jit_tls->orig_ex_ctx_set = FALSE;
-					mono_debugger_call_exception_handler (ei->handler_start, MONO_CONTEXT_GET_SP (ctx), ex_obj);
 					MONO_CONTEXT_SET_IP (ctx, ei->handler_start);
 					*(mono_get_lmf_addr ()) = lmf;
 #ifndef DISABLE_PERFCOUNTERS
@@ -1814,7 +1810,6 @@ mono_handle_exception_internal (MonoContext *ctx, gpointer obj, gboolean resume,
 					jit_tls->orig_ex_ctx_set = TRUE;
 					mono_profiler_exception_clause_handler (method, ei->flags, i);
 					jit_tls->orig_ex_ctx_set = FALSE;
-					mono_debugger_call_exception_handler (ei->handler_start, MONO_CONTEXT_GET_SP (ctx), ex_obj);
 					call_filter (ctx, ei->handler_start);
 				}
 				if (is_address_protected (ji, ei, MONO_CONTEXT_GET_IP (ctx)) &&
@@ -1824,7 +1819,6 @@ mono_handle_exception_internal (MonoContext *ctx, gpointer obj, gboolean resume,
 					jit_tls->orig_ex_ctx_set = TRUE;
 					mono_profiler_exception_clause_handler (method, ei->flags, i);
 					jit_tls->orig_ex_ctx_set = FALSE;
-					mono_debugger_call_exception_handler (ei->handler_start, MONO_CONTEXT_GET_SP (ctx), ex_obj);
 #ifndef DISABLE_PERFCOUNTERS
 					mono_perfcounters->exceptions_finallys++;
 #endif
@@ -1863,72 +1857,6 @@ mono_handle_exception_internal (MonoContext *ctx, gpointer obj, gboolean resume,
 	}
 
 	g_assert_not_reached ();
-}
-
-/*
- * mono_debugger_handle_exception:
- *
- *  Notify the debugger about exceptions.  Returns TRUE if the debugger wants us to stop
- *  at the exception and FALSE to resume with the normal exception handling.
- *
- *  The arch code is responsible to setup @ctx in a way that MONO_CONTEXT_GET_IP () and
- *  MONO_CONTEXT_GET_SP () point to the throw instruction; ie. before executing the
- *  `callq throw' instruction.
- */
-gboolean
-mono_debugger_handle_exception (MonoContext *ctx, MonoObject *obj)
-{
-	MonoDebuggerExceptionAction action;
-
-	if (!mono_debug_using_mono_debugger ())
-		return FALSE;
-
-	if (!obj) {
-		MonoException *ex = mono_get_exception_null_reference ();
-		MONO_OBJECT_SETREF (ex, message, mono_string_new (mono_domain_get (), "Object reference not set to an instance of an object"));
-		obj = (MonoObject *)ex;
-	}
-
-	action = _mono_debugger_throw_exception (MONO_CONTEXT_GET_IP (ctx), MONO_CONTEXT_GET_SP (ctx), obj);
-
-	if (action == MONO_DEBUGGER_EXCEPTION_ACTION_STOP) {
-		/*
-		 * The debugger wants us to stop on the `throw' instruction.
-		 * By the time we get here, it already inserted a breakpoint there.
-		 */
-		return TRUE;
-	} else if (action == MONO_DEBUGGER_EXCEPTION_ACTION_STOP_UNHANDLED) {
-		MonoContext ctx_cp = *ctx;
-		MonoJitInfo *ji = NULL;
-		gboolean ret;
-
-		/*
-		 * The debugger wants us to stop only if this exception is user-unhandled.
-		 */
-
-		ret = mono_handle_exception_internal_first_pass (&ctx_cp, obj, NULL, &ji, NULL, NULL);
-		if (ret && (ji != NULL) && (jinfo_get_method (ji)->wrapper_type == MONO_WRAPPER_RUNTIME_INVOKE)) {
-			/*
-			 * The exception is handled in a runtime-invoke wrapper, that means that it's unhandled
-			 * inside the method being invoked, so we handle it like a user-unhandled exception.
-			 */
-			ret = FALSE;
-		}
-
-		if (!ret) {
-			/*
-			 * The exception is user-unhandled - tell the debugger to stop.
-			 */
-			return _mono_debugger_unhandled_exception (MONO_CONTEXT_GET_IP (ctx), MONO_CONTEXT_GET_SP (ctx), obj);
-		}
-
-		/*
-		 * The exception is catched somewhere - resume with the normal exception handling and don't
-		 * stop in the debugger.
-		 */
-	}
-
-	return FALSE;
 }
 
 /**
@@ -2005,7 +1933,7 @@ mono_setup_altstack (MonoJitTlsData *tls)
 	if (mono_running_on_valgrind ())
 		return;
 
-	mono_thread_get_stack_bounds (&staddr, &stsize);
+	mono_thread_info_get_stack_bounds (&staddr, &stsize);
 
 	g_assert (staddr);
 
@@ -2180,6 +2108,7 @@ typedef struct {
 	int count;
 } PrintOverflowUserData;
 
+#ifdef MONO_ARCH_HAVE_SIGCTX_TO_MONOCTX
 static gboolean
 print_overflow_stack_frame (StackFrameInfo *frame, MonoContext *ctx, gpointer data)
 {
@@ -2218,12 +2147,15 @@ print_overflow_stack_frame (StackFrameInfo *frame, MonoContext *ctx, gpointer da
 
 	return FALSE;
 }
+#endif
 
 void
 mono_handle_hard_stack_ovf (MonoJitTlsData *jit_tls, MonoJitInfo *ji, void *ctx, guint8* fault_addr)
 {
+#ifdef MONO_ARCH_HAVE_SIGCTX_TO_MONOCTX
 	PrintOverflowUserData ud;
 	MonoContext mctx;
+#endif
 
 	/* we don't do much now, but we can warn the user with a useful message */
 	mono_runtime_printf_err ("Stack overflow: IP: %p, fault addr: %p", mono_arch_ip_from_context (ctx), fault_addr);
@@ -2305,8 +2237,14 @@ mono_handle_native_sigsegv (int signal, void *ctx)
 
 	if (mini_get_debug_options ()->suspend_on_sigsegv) {
 		mono_runtime_printf_err ("Received SIGSEGV, suspending...");
+#ifdef HOST_WIN32
 		while (1)
 			;
+#else
+		while (1) {
+			sleep (0);
+		}
+#endif
 	}
 
 	/* To prevent infinite loops when the stack walk causes a crash */
@@ -2337,7 +2275,7 @@ mono_handle_native_sigsegv (int signal, void *ctx)
 	/* Try to get more meaningful information using gdb */
 
 #if !defined(HOST_WIN32) && defined(HAVE_SYS_SYSCALL_H) && defined(SYS_fork)
-	if (!mini_get_debug_options ()->no_gdb_backtrace && !mono_debug_using_mono_debugger ()) {
+	if (!mini_get_debug_options ()->no_gdb_backtrace) {
 		/* From g_spawn_command_line_sync () in eglib */
 		pid_t pid;
 		int status;
@@ -2771,3 +2709,16 @@ mono_restore_context (MonoContext *ctx)
 	g_assert_not_reached ();
 }
 
+/*
+ * mono_jinfo_get_unwind_info:
+ *
+ *   Return the unwind info for JI.
+ */
+guint8*
+mono_jinfo_get_unwind_info (MonoJitInfo *ji, guint32 *unwind_info_len)
+{
+	if (ji->from_aot)
+		return mono_aot_get_unwind_info (ji, unwind_info_len);
+	else
+		return mono_get_cached_unwind_info (ji->used_regs, unwind_info_len);
+}

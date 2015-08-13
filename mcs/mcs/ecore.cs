@@ -16,8 +16,6 @@ using System.Collections.Generic;
 using System.Text;
 using SLE = System.Linq.Expressions;
 using System.Linq;
-using Mono.CSharp.JavaScript;
-using Mono.CSharp.Cpp;
 
 #if STATIC
 using IKVM.Reflection;
@@ -711,12 +709,6 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public virtual void EmitJs (JsEmitContext jec)
-		{
-			jec.Report.Error (7074, this.loc, "JavaScript code generation for " + this.GetType ().Name + " expression not supported.");
-			jec.Buf.Write ("<<" + this.GetType ().Name + " expr>>");
-		}
-
 		/// <summary>
 		///   Protected constructor.  Only derivate types should
 		///   be able to be created
@@ -750,13 +742,20 @@ namespace Mono.CSharp {
 		{
 			var ctors = MemberCache.FindMembers (type, Constructor.ConstructorName, true);
 			if (ctors == null) {
-				rc.Report.SymbolRelatedToPreviousError (type);
-				if (type.IsStruct) {
+				switch (type.Kind) {
+				case MemberKind.Struct:
+					rc.Report.SymbolRelatedToPreviousError (type);
 					// Report meaningful error for struct as they always have default ctor in C# context
 					OverloadResolver.Error_ConstructorMismatch (rc, type, args == null ? 0 : args.Count, loc);
-				} else {
+					break;
+				case MemberKind.MissingType:
+				case MemberKind.InternalCompilerType:
+					break;
+				default:
+					rc.Report.SymbolRelatedToPreviousError (type);
 					rc.Report.Error (143, loc, "The class `{0}' has no constructors defined",
 						type.GetSignatureForError ());
+					break;
 				}
 
 				return null;
@@ -975,6 +974,10 @@ namespace Mono.CSharp {
 			ec.Report.Error (1944, loc, "An expression tree cannot contain an unsafe pointer operation");
 		}
 
+		public virtual void FlowAnalysis (FlowAnalysisContext fc)
+		{
+		}
+
 		/// <summary>
 		///   Returns an expression that can be used to invoke operator true
 		///   on the expression if it exists.
@@ -1099,7 +1102,7 @@ namespace Mono.CSharp {
 		//
 		// Converts `source' to an int, uint, long or ulong.
 		//
-		protected Expression ConvertExpressionToArrayIndex (ResolveContext ec, Expression source)
+		protected Expression ConvertExpressionToArrayIndex (ResolveContext ec, Expression source, bool pointerArray = false)
 		{
 			var btypes = ec.BuiltinTypes;
 
@@ -1125,6 +1128,9 @@ namespace Mono.CSharp {
 					return null;
 				}
 			}
+
+			if (pointerArray)
+				return converted;
 
 			//
 			// Only positive constants are allowed at compile time
@@ -1227,6 +1233,10 @@ namespace Mono.CSharp {
 	/// </summary>
 	public abstract partial class ExpressionStatement : Expression
 	{
+		public virtual void MarkReachable (Reachability rc)
+		{
+		}
+
 		public ExpressionStatement ResolveStatement (BlockContext ec)
 		{
 			Expression e = Resolve (ec);
@@ -1234,7 +1244,7 @@ namespace Mono.CSharp {
 				return null;
 
 			ExpressionStatement es = e as ExpressionStatement;
-			if (es == null)
+			if (es == null || e is AnonymousMethodBody)
 				Error_InvalidExpressionStatement (ec);
 
 			//
@@ -1300,12 +1310,6 @@ namespace Mono.CSharp {
 		{
 			EmitStatement (ec);
 		}
-
-		public virtual void EmitStatementJs (JsEmitContext jec)
-		{
-			jec.Report.Error(7072, Location, "JavaScript code generation for " + this.GetType ().Name + " statement not supported.");
-			jec.Buf.Write ("<<" + this.GetType ().Name + " stmtexpr>>");
-		}
 	}
 
 	/// <summary>
@@ -1368,6 +1372,11 @@ namespace Mono.CSharp {
 			child.Emit (ec);
 		}
 
+		public override void FlowAnalysis (FlowAnalysisContext fc)
+		{
+			child.FlowAnalysis (fc);
+		}
+
 		public override SLE.Expression MakeExpression (BuilderContext ctx)
 		{
 #if STATIC
@@ -1377,12 +1386,6 @@ namespace Mono.CSharp {
 				SLE.Expression.ConvertChecked (child.MakeExpression (ctx), type.GetMetaInfo ()) :
 				SLE.Expression.Convert (child.MakeExpression (ctx), type.GetMetaInfo ());
 #endif
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			// JS doesn't cast anything.
-			Child.EmitJs (jec);
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Expression t)
@@ -1452,10 +1455,6 @@ namespace Mono.CSharp {
 			child.EmitSideEffect (ec);
 		}
 
-		public override void EmitJs (JsEmitContext jec)
-		{
-			Child.EmitJs (jec);
-		}
 	}
 
 	//
@@ -2066,12 +2065,6 @@ namespace Mono.CSharp {
 			ec.Emit (op);
 		}
 
-		public override void EmitJs (JsEmitContext jec)
-		{
-			// We do nothing here for JavaScript.. implicit casts or fail.
-			Child.EmitJs (jec);
-		}
-
 		public TypeSpec UnderlyingType {
 			get { return child.Type; }
 		}
@@ -2231,6 +2224,11 @@ namespace Mono.CSharp {
 			{
 				stm.EmitStatement (ec);
 			}
+
+			public override void FlowAnalysis (FlowAnalysisContext fc)
+			{
+				stm.FlowAnalysis (fc);
+			}
 		}
 
 		readonly Expression expr, orig_expr;
@@ -2334,6 +2332,11 @@ namespace Mono.CSharp {
 			expr.EmitBranchable (ec, target, on_true);
 		}
 
+		public override void FlowAnalysis (FlowAnalysisContext fc)
+		{
+			expr.FlowAnalysis (fc);
+		}
+
 		public override SLE.Expression MakeExpression (BuilderContext ctx)
 		{
 			return orig_expr.MakeExpression (ctx);
@@ -2429,7 +2432,38 @@ namespace Mono.CSharp {
 		{
 			throw new InternalErrorException ("Missing Resolve call");
 		}
+	}
 
+	public class UnreachableExpression : Expression
+	{
+		public UnreachableExpression (Expression expr)
+		{
+			this.loc = expr.Location;
+		}
+
+		public override Expression CreateExpressionTree (ResolveContext ec)
+		{
+			// TODO: is it ok
+			throw new NotImplementedException ();
+		}
+
+		protected override Expression DoResolve (ResolveContext rc)
+		{
+			throw new NotSupportedException ();
+		}
+
+		public override void FlowAnalysis (FlowAnalysisContext fc)
+		{
+			fc.Report.Warning (429, 4, loc, "Unreachable expression code detected");
+		}
+
+		public override void Emit (EmitContext ec)
+		{
+		}
+
+		public override void EmitBranchable (EmitContext ec, Label target, bool on_true)
+		{
+		}
 	}
 
 	//
@@ -2560,14 +2594,7 @@ namespace Mono.CSharp {
 
 		protected override Expression DoResolve (ResolveContext rc)
 		{
-			var e = SimpleNameResolve (rc, null);
-
-			var fe = e as FieldExpr;
-			if (fe != null) {
-				fe.VerifyAssignedStructField (rc, null);
-			}
-
-			return e;
+			return SimpleNameResolve (rc, null);
 		}
 
 		public override Expression DoResolveLValue (ResolveContext ec, Expression right_side)
@@ -3017,11 +3044,6 @@ namespace Mono.CSharp {
 			return e;
 		}
 
-		public override void EmitJs (JsEmitContext jec)
-		{
-			jec.Buf.Write (Name, Location);
-		}
-		
 		public override object Accept (StructuralVisitor visitor)
 		{
 			return visitor.Visit (this);
@@ -3102,12 +3124,6 @@ namespace Mono.CSharp {
 		{
 			throw new InternalErrorException ("FullNamedExpression `{0}' found in resolved tree",
 				GetSignatureForError ());
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			jec.Buf.Write (jec.MakeJsNamespaceName(type.MemberDefinition.Namespace), ".", 
-			               jec.MakeJsTypeName(type.Name), Location);
 		}
 	}
 	
@@ -3402,6 +3418,12 @@ namespace Mono.CSharp {
 				member.GetSignatureForError (), qualifier.GetSignatureForError (), rc.CurrentType.GetSignatureForError ());
 		}
 
+		public override void FlowAnalysis (FlowAnalysisContext fc)
+		{
+			if (InstanceExpression != null)
+				InstanceExpression.FlowAnalysis (fc);
+		}
+
 		public bool ResolveInstanceExpression (ResolveContext rc, Expression rhs)
 		{
 			if (!ResolveInstanceExpressionCore (rc, rhs))
@@ -3504,15 +3526,7 @@ namespace Mono.CSharp {
 						DeclaringType.GetSignatureForError (), rc.CurrentType.GetSignatureForError ());
 				}
 
-				InstanceExpression = new This (loc);
-				if (this is FieldExpr && rc.CurrentBlock.ParametersBlock.TopBlock.ThisVariable != null) {
-					using (rc.Set (ResolveContext.Options.OmitStructFlowAnalysis)) {
-						InstanceExpression = InstanceExpression.Resolve (rc);
-					}
-				} else {
-					InstanceExpression = InstanceExpression.Resolve (rc);
-				}
-
+				InstanceExpression = new This (loc).Resolve (rc);
 				return false;
 			}
 
@@ -3520,27 +3534,15 @@ namespace Mono.CSharp {
 			if (me != null) {
 				me.ResolveInstanceExpressionCore (rc, rhs);
 
-				// Using this check to detect probing instance expression resolve
-				if (!rc.OmitStructFlowAnalysis) {
-					var fe = me as FieldExpr;
-					if (fe != null && fe.IsMarshalByRefAccess (rc)) {
-						rc.Report.SymbolRelatedToPreviousError (me.DeclaringType);
-						rc.Report.Warning (1690, 1, loc,
-							"Cannot call methods, properties, or indexers on `{0}' because it is a value type member of a marshal-by-reference class",
-							me.GetSignatureForError ());
-					}
+				var fe = me as FieldExpr;
+				if (fe != null && fe.IsMarshalByRefAccess (rc)) {
+					rc.Report.SymbolRelatedToPreviousError (me.DeclaringType);
+					rc.Report.Warning (1690, 1, loc,
+						"Cannot call methods, properties, or indexers on `{0}' because it is a value type member of a marshal-by-reference class",
+						me.GetSignatureForError ());
 				}
 
 				return true;
-			}
-
-			//
-			// Run member-access postponed check once we know that
-			// the expression is not field expression which is the only
-			// expression which can use uninitialized this
-			//
-			if (InstanceExpression is This && !(this is FieldExpr) && rc.CurrentBlock.ParametersBlock.TopBlock.ThisVariable != null) {
-				((This)InstanceExpression).CheckStructThisDefiniteAssignment (rc);
 			}
 
 			//
@@ -3769,6 +3771,8 @@ namespace Mono.CSharp {
 	/// </summary>
 	public partial class MethodGroupExpr : MemberExpr, OverloadResolver.IBaseMembersProvider
 	{
+		static readonly MemberSpec[] Excluded = new MemberSpec[0];
+
 		protected IList<MemberSpec> Methods;
 		MethodSpec best_candidate;
 		TypeSpec best_candidate_return;
@@ -3815,6 +3819,12 @@ namespace Mono.CSharp {
 		protected override TypeSpec DeclaringType {
 			get {
 				return queried_type;
+			}
+		}
+
+		public bool IsConditionallyExcluded {
+			get {
+				return Methods == Excluded;
 			}
 		}
 
@@ -3887,7 +3897,7 @@ namespace Mono.CSharp {
 				return null;
 			}
 
-			if (best_candidate.IsConditionallyExcluded (ec))
+			if (IsConditionallyExcluded)
 				ec.Report.Error (765, loc,
 					"Partial methods with only a defining declaration or removed conditional methods cannot be used in an expression tree");
 			
@@ -3917,14 +3927,6 @@ namespace Mono.CSharp {
 			var call = new CallEmitter ();
 			call.InstanceExpression = InstanceExpression;
 			call.Emit (ec, best_candidate, arguments, loc);			
-		}
-
-		public void EmitCallJs (JsEmitContext jec, Arguments arguments)
-		{
-			jec.Buf.Write("(", Location);
-			if (arguments != null)
-				arguments.EmitJs (jec);
-			jec.Buf.Write(")");
 		}
 
 		public override void Error_ValueCannotBeConverted (ResolveContext ec, TypeSpec target, bool expl)
@@ -4019,6 +4021,10 @@ namespace Mono.CSharp {
 				ec.Report.SymbolRelatedToPreviousError (best_candidate);
 				ErrorIsInaccesible (ec, best_candidate.GetSignatureForError (), loc);
 			}
+
+			// Speed up the check by not doing it on disallowed targets
+			if (best_candidate_return.Kind == MemberKind.Void && best_candidate.IsConditionallyExcluded (ec))
+				Methods = Excluded;
 
 			return this;
 		}
@@ -5977,18 +5983,14 @@ namespace Mono.CSharp {
 					// "a.b" is initialized, not whether the whole struct "a" is initialized.
 
 					if (lvalue_instance) {
-						using (ec.With (ResolveContext.Options.DoFlowAnalysis, false)) {
-							bool out_access = rhs == EmptyExpression.OutAccess || rhs == EmptyExpression.LValueMemberOutAccess;
+						bool out_access = rhs == EmptyExpression.OutAccess || rhs == EmptyExpression.LValueMemberOutAccess;
 
-							Expression right_side =
-								out_access ? EmptyExpression.LValueMemberOutAccess : EmptyExpression.LValueMemberAccess;
+						Expression right_side =
+							out_access ? EmptyExpression.LValueMemberOutAccess : EmptyExpression.LValueMemberAccess;
 
-							InstanceExpression = InstanceExpression.ResolveLValue (ec, right_side);
-						}
+						InstanceExpression = InstanceExpression.ResolveLValue (ec, right_side);
 					} else {
-						using (ec.With (ResolveContext.Options.DoFlowAnalysis, false)) {
-							InstanceExpression = InstanceExpression.Resolve (ec, ResolveFlags.VariableOrValue);
-						}
+						InstanceExpression = InstanceExpression.Resolve (ec, ResolveFlags.VariableOrValue);
 					}
 
 					if (InstanceExpression == null)
@@ -6000,10 +6002,6 @@ namespace Mono.CSharp {
 
 			var fb = spec as FixedFieldSpec;
 			IVariableReference var = InstanceExpression as IVariableReference;
-
-			if (lvalue_instance && var != null && var.VariableInfo != null) {
-				var.VariableInfo.SetStructFieldAssigned (ec, Name);
-			}
 
 			if (fb != null) {
 				IFixedExpression fe = InstanceExpression as IFixedExpression;
@@ -6028,15 +6026,61 @@ namespace Mono.CSharp {
 			//
 			if (var != null && var.VariableInfo != null && InstanceExpression.Type.IsStruct) {
 				variable_info = var.VariableInfo.GetStructFieldInfo (Name);
-				if (rhs != null && variable_info != null)
-					variable_info.SetStructFieldAssigned (ec, Name);
 			}
 
 			eclass = ExprClass.Variable;
 			return this;
 		}
 
-		public void VerifyAssignedStructField (ResolveContext rc, Expression rhs)
+		public void SetFieldAssigned (FlowAnalysisContext fc)
+		{
+			if (!IsInstance)
+				return;
+
+			bool lvalue_instance = spec.DeclaringType.IsStruct;
+			if (lvalue_instance) {
+				var var = InstanceExpression as IVariableReference;
+				if (var != null && var.VariableInfo != null) {
+					fc.SetStructFieldAssigned (var.VariableInfo, Name);
+				}
+			}
+
+			var fe = InstanceExpression as FieldExpr;
+			if (fe != null) {
+				Expression instance;
+
+				do {
+					instance = fe.InstanceExpression;
+					var fe_instance = instance as FieldExpr;
+					if ((fe_instance != null && !fe_instance.IsStatic) || instance is LocalVariableReference) {
+						if (TypeSpec.IsReferenceType (fe.Type) && instance.Type.IsStruct) {
+							var var = InstanceExpression as IVariableReference;
+							if (var != null && var.VariableInfo == null) {
+								var var_inst = instance as IVariableReference;
+								if (var_inst == null || (var_inst.VariableInfo != null && !fc.IsDefinitelyAssigned (var_inst.VariableInfo)))
+									fc.Report.Warning (1060, 1, fe.loc, "Use of possibly unassigned field `{0}'", fe.Name);
+							}
+						}
+
+						if (fe_instance != null) {
+							fe = fe_instance;
+							continue;
+						}
+					}
+
+					break;
+				} while (true);
+
+				if (instance != null && TypeSpec.IsReferenceType (instance.Type))
+					instance.FlowAnalysis (fc);
+			} else {
+				if (TypeSpec.IsReferenceType (InstanceExpression.Type))
+					InstanceExpression.FlowAnalysis (fc);
+			}
+		}
+
+
+		public void VerifyAssignedStructField (FlowAnalysisContext fc)
 		{
 			var fe = this;
 
@@ -6045,14 +6089,8 @@ namespace Mono.CSharp {
 				if (var != null) {
 					var vi = var.VariableInfo;
 
-					if (vi != null && !vi.IsStructFieldAssigned (rc, fe.Name) && (rhs == null || !fe.type.IsStruct)) {
-						if (rhs != null) {
-							rc.Report.Warning (1060, 1, fe.loc, "Use of possibly unassigned field `{0}'", fe.Name);
-						} else {
-							rc.Report.Error (170, fe.loc, "Use of possibly unassigned field `{0}'", fe.Name);
-						}
-
-						return;
+					if (vi != null && !fc.IsStructFieldDefinitelyAssigned (vi, fe.Name) && !fe.type.IsStruct) {
+						fc.Report.Warning (1060, 1, fe.loc, "Use of possibly unassigned field `{0}'", fe.Name);
 					}
 				}
 
@@ -6090,7 +6128,6 @@ namespace Mono.CSharp {
 					rc.Report.Error (1649, loc, "Members of readonly field `{0}' cannot be passed ref or out (except in a constructor)",
 						GetSignatureForError ());
 				}
-
 				return null;
 			}
 
@@ -6154,6 +6191,23 @@ namespace Mono.CSharp {
 
 			eclass = ExprClass.Variable;
 			return this;
+		}
+
+		public override void FlowAnalysis (FlowAnalysisContext fc)
+		{
+			var var = InstanceExpression as IVariableReference;
+			if (var != null) {
+				var vi = var.VariableInfo;
+				if (vi != null && !fc.IsStructFieldDefinitelyAssigned (vi, Name)) {
+					fc.Report.Error (170, loc, "Use of possibly unassigned field `{0}'", Name);
+					return;
+				}
+
+				if (TypeSpec.IsValueType (InstanceExpression.Type))
+					return;
+			}
+
+			base.FlowAnalysis (fc);
 		}
 
 		public override int GetHashCode ()
@@ -6298,17 +6352,6 @@ namespace Mono.CSharp {
 
 			if (is_volatile) // || is_marshal_by_ref ())
 				base.EmitSideEffect (ec);
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			if (InstanceExpression != null) {
-				InstanceExpression.EmitJs (jec);
-				jec.Buf.Write (".");
-			} else {
-				jec.Buf.Write (DeclaringType.Name, ".", Location);
-			}
-			jec.Buf.Write (Name);
 		}
 
 		public virtual void AddressOf (EmitContext ec, AddressOp mode)
@@ -6604,16 +6647,6 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public override void EmitJs (JsEmitContext jec)
-		{
-			if (IsStatic) { 
-				jec.Buf.Write (jec.MakeJsFullTypeName (best_candidate.DeclaringType));
-			} else {
-				InstanceExpression.EmitJs (jec);
-			}
-			jec.Buf.Write (".", best_candidate.Name);
-		}
-
 		protected override Expression OverloadResolve (ResolveContext rc, Expression right_side)
 		{
 			eclass = ExprClass.PropertyAccess;
@@ -6735,6 +6768,8 @@ namespace Mono.CSharp {
 
 				if (expr != this)
 					return expr.ResolveLValue (ec, right_side);
+			} else {
+				ResolveInstanceExpression (ec, right_side);
 			}
 
 			if (!ResolveSetter (ec))
@@ -7058,6 +7093,11 @@ namespace Mono.CSharp {
 				DoEmit (ec);
 			}
 
+			protected override bool DoFlowAnalysis (FlowAnalysisContext fc)
+			{
+				return false;
+			}
+
 			protected override void CloneTo (CloneContext clonectx, Statement target)
 			{
 				// Nothing
@@ -7130,12 +7170,6 @@ namespace Mono.CSharp {
 			EmitAssign (ec, source, false, false);
 		}
 
-		public override void EmitJs (JsEmitContext jec)
-		{
-			jec.Report.Error (7074, this.loc, "JavaScript code generation for " + this.GetType ().Name + " expression not supported.");
-			jec.Buf.Write ("<<" + this.GetType ().Name + " expr>>");
-		}
-
 		public override HoistedVariable GetHoistedVariable (AnonymousExpression ae)
 		{
 			return li.HoistedVariant;
@@ -7164,10 +7198,6 @@ namespace Mono.CSharp {
 
 		public override VariableInfo VariableInfo {
 			get { return null; }
-		}
-
-		public override void VerifyDefiniteAssignment (ResolveContext rc)
-		{
 		}
 	}
 

@@ -1227,7 +1227,7 @@ handle_enum:
 			mono_method_signature (method)->ret->type);
 	}
 
-	ip = ((gint64) __builtin_return_address (0));
+	ip = ((gint64) __builtin_extract_return_addr (__builtin_return_address (0)));
 	printf (" ip: %p\n", (gpointer) ip);
 }
 
@@ -5710,31 +5710,6 @@ mono_arch_regalloc_cost (MonoCompile *cfg, MonoMethodVar *vmv)
 {
 	/* FIXME: */
 	return 2;
-}
-
-/*========================= End of Function ========================*/
-
-/*------------------------------------------------------------------*/
-/*                                                                  */
-/* Name		- mono_arch_get_domain_intrinsic                    */
-/*                                                                  */
-/* Function	- 						    */
-/*		                               			    */
-/* Returns	-     						    */
-/*                                                                  */
-/*------------------------------------------------------------------*/
-
-MonoInst * 
-mono_arch_get_domain_intrinsic (MonoCompile* cfg)
-{
-	MonoInst *ins;
-
-	if (appdomain_tls_offset == -1)
-		return NULL;
-	
-	MONO_INST_NEW (cfg, ins, OP_TLS_GET);
-	ins->inst_offset = appdomain_tls_offset;
-	return (ins);
 }
 
 /*========================= End of Function ========================*/

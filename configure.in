@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 #AC_PREREQ([2.62])
 
-AC_INIT(mono, [3.2.7001],
+AC_INIT(mono, [3.2.7003],
         [http://bugzilla.xamarin.com/enter_bug.cgi?classification=Mono])
 
 AC_CONFIG_SRCDIR([README.md])
@@ -214,6 +214,9 @@ case "$host" in
 		# Bionic doesn't provide S_IWRITE; breaks io-layer/io.c
 		CFLAGS="$CFLAGS -DPAGE_SIZE=4096 -DS_IWRITE=S_IWUSR"
 		CXXFLAGS="$CXXFLAGS -DPAGE_SIZE=4096 -DS_IWRITE=S_IWUSR"
+
+		# The configure check can't detect this
+		AC_DEFINE(HAVE_LARGE_FILE_SUPPORT, 1, [Have large file support])
 
 		# to bypass the underscore linker check, can't work when cross-compiling
 		mono_cv_uscore=yes
@@ -949,6 +952,15 @@ if test x$has_extension_module != xno ; then
 	AC_MSG_NOTICE([Enabling mono extension module.])
 fi
 
+AC_ARG_ENABLE(gsharing, [  --enable-gsharing Enable gsharing], enable_gsharing=$enableval, enable_gsharing=no)
+if test x$enable_gsharing = xyes; then
+	AC_DEFINE(MONO_GSHARING,1,[Gsharing])
+fi
+
+AC_ARG_ENABLE(native-types, [  --enable-native-types Enable native types], enable_native_types=$enableval, enable_native_types=no)
+if test x$enable_native_types = xyes; then
+	AC_DEFINE(MONO_NATIVE_TYPES,1,[native types])
+fi
 
 AC_MSG_CHECKING(for visibility __attribute__)
 AC_COMPILE_IFELSE([
@@ -1836,9 +1848,9 @@ if test x$target_win32 = xno; then
 	fi
 
 	havekqueue=no
-        AC_CHECK_FUNCS(kqueue, , AC_MSG_CHECKING(for kqueue in sys/event.h)
-                AC_TRY_LINK([#include <sys/event.h>], 
-                [ kqueue(); ],[havekqueue=yes],[]))
+
+	AC_CHECK_HEADERS(sys/event.h)
+	AC_CHECK_FUNCS(kqueue, [havekqueue=yes], )
 
 	dnl **************************************
 	dnl * Darwin has a race that prevents us from using reliably:
@@ -1847,7 +1859,7 @@ if test x$target_win32 = xno; then
 	dnl * and very few folks run Mono on large web servers on OSX, falling
 	dnl * back 
 	dnl **************************************
-	if test x$havekqueue = xyes; then
+	if test "x$havekqueue" = "xyes" -a "x$ac_cv_header_sys_event_h" = "xyes"; then
 		if x$platform_darwin = xno; then
 			AC_DEFINE(USE_KQUEUE_FOR_THREADPOOL, 1, [Use kqueue for the threadpool])
 		fi
@@ -2006,6 +2018,7 @@ if test x$target_win32 = xno; then
 	AC_CHECK_FUNCS(futimens utimensat)
 	AC_CHECK_FUNCS(fstatat mknodat readlinkat)
 	AC_CHECK_FUNCS(readv writev preadv pwritev)
+	AC_CHECK_FUNCS(setpgid)
 	AC_CHECK_SIZEOF(size_t)
 	AC_CHECK_TYPES([blksize_t], [AC_DEFINE(HAVE_BLKSIZE_T)], , 
 		[#include <sys/types.h>
@@ -2143,6 +2156,7 @@ else
 	AC_CHECK_FUNCS(GetProcessId)
 	AC_CHECK_DECLS(InterlockedExchange64, [], [], [[#include <windows.h>]])
 	AC_CHECK_DECLS(InterlockedCompareExchange64, [], [], [[#include <windows.h>]])
+	AC_CHECK_DECLS(InterlockedDecrement64, [], [], [[#include <windows.h>]])
 	AC_CHECK_DECLS(InterlockedIncrement64, [], [], [[#include <windows.h>]])
 	AC_CHECK_DECLS(InterlockedAdd, [], [], [[#include <windows.h>]])
 	AC_CHECK_DECLS(InterlockedAdd64, [], [], [[#include <windows.h>]])
@@ -2973,39 +2987,6 @@ if test "x$TARGET" = "xAMD64" -o "x$TARGET" = "xX86"; then
 	fi
 fi
 
-mono_debugger_supported=no
-AC_ARG_ENABLE(mono-debugger, [  --disable-mono-debugger disable support for the mdb debugger], try_mono_debugger=$enableval, try_mono_debugger=yes)
-if test "x$try_mono_debugger" = "xyes"; then
-	if test "x$TARGET" = "xAMD64" -o "x$TARGET" = "xX86" -o "x$TARGET" = "xS390x"; then
-		if test x$use_included_gc = xyes; then
-			case "$host" in
-			*-*-*linux*)
-				mono_debugger_supported=yes
-				;;
-			*86-apple-darwin*)
-				mono_debugger_supported=yes
-				;;		
-			esac
-		fi
-	fi
-fi
-
-# disable the debugger entirely when building with moonlight
-if test "x$with_moonlight" != "xno"; then
-	mono_debugger_supported=no
-fi
-
-# mdb support for sgen is broken, disable it until further notice.
-mono_debugger_supported=no
-
-AC_MSG_CHECKING(if the Mono Debugger is supported on this platform)
-if test "x$mono_debugger_supported" = "xyes"; then
-	BOEHM_DEFINES="$BOEHM_DEFINES -DMONO_DEBUGGER_SUPPORTED"
-	CPPFLAGS_FOR_LIBGC="$CPPFLAGS_FOR_LIBGC -DMONO_DEBUGGER_SUPPORTED"
-fi
-AM_CONDITIONAL(MONO_DEBUGGER_SUPPORTED, test x$mono_debugger_supported = xyes)
-AC_MSG_RESULT($mono_debugger_supported)
-
 AC_ARG_ENABLE(icall-symbol-map,[  --enable-icall-symbol-map Generate tables which map icall functions to their C symbols], icall_symbol_map=$enableval, icall_symbol_map=no)
 if test "x$icall_symbol_map" = "xyes"; then
    AC_DEFINE(ENABLE_ICALL_SYMBOL_MAP, 1, [Icall symbol map enabled])
@@ -3109,6 +3090,8 @@ if test ${TARGET} = ARM; then
 		return 0;
 	], [
 		arm_v5=yes
+
+		arm_ver=ARMv5
 	], [])
 
 	AC_TRY_COMPILE([], [
@@ -3119,6 +3102,8 @@ if test ${TARGET} = ARM; then
 	], [
 		arm_v5=yes
 		arm_v6=yes
+
+		arm_ver=ARMv6
 	], [])
 
 	AC_TRY_COMPILE([], [
@@ -3130,7 +3115,11 @@ if test ${TARGET} = ARM; then
 		arm_v5=yes
 		arm_v6=yes
 		arm_v7=yes
+
+		arm_ver=ARMv7
 	], [])
+
+	AC_MSG_RESULT($arm_ver)
 
 	if test x$arm_v5 = xyes; then
 		AC_DEFINE(HAVE_ARMV5, 1, [ARM v5])
@@ -3190,7 +3179,7 @@ AC_ARG_WITH(profile4,  [  --with-profile4=yes,no          If you want to install
 AC_ARG_WITH(profile4_5,[  --with-profile4_5=yes,no        If you want to install the 4.5 FX (defaults to yes)],                [], [with_profile4_5=yes])
 AC_ARG_WITH(monodroid, [  --with-monodroid=yes,no         If you want to build the MonoDroid assemblies (defaults to no)],     [], [with_monodroid=no])
 AC_ARG_WITH(monotouch, [  --with-monotouch=yes,no,only    If you want to build the MonoTouch assemblies (defaults to no)],     [], [with_monotouch=no])
-AC_ARG_WITH(mobile,    [  --with-mobile=yes,no            If you want to build the Mobile assemblies (defaults to no)],        [], [with_mobile=no])
+AC_ARG_WITH(xammac,    [  --with-xammac=yes,no,only       If you want to build the Xamarin.Mac assemblies (defaults to no)],   [], [with_xammac=no])
 
 OPROFILE=no
 AC_ARG_WITH(oprofile,[  --with-oprofile=no,<oprofile install dir>   Enable oprofile support (defaults to no)],[
@@ -3266,6 +3255,7 @@ if test x$cross_compiling = xyes -o x$enable_mcs_build = xno; then
    with_profile4_5=no
    with_monodroid=no
    with_monotouch=no
+   with_xammac=no
 fi
 
 if test x$DISABLE_MCS_DOCS = xyes; then
@@ -3289,8 +3279,9 @@ AM_CONDITIONAL(INSTALL_4_0, [test "x$with_profile4" = xyes])
 AM_CONDITIONAL(INSTALL_4_5, [test "x$with_profile4_5" = xyes])
 AM_CONDITIONAL(INSTALL_MONODROID, [test "x$with_monodroid" != "xno"])
 AM_CONDITIONAL(INSTALL_MONOTOUCH, [test "x$with_monotouch" != "xno"])
-AM_CONDITIONAL(INSTALL_MOBILE, [test "x$with_mobile" = xyes])
+AM_CONDITIONAL(INSTALL_XAMMAC, [test "x$with_xammac" != "xno"])
 AM_CONDITIONAL(ONLY_MONOTOUCH, [test "x$with_monotouch" = "xonly"])
+AM_CONDITIONAL(ONLY_XAMMAC, [test "x$with_xammac" = "xonly"])
 
 AM_CONDITIONAL(MIPS_GCC, test ${TARGET}${ac_cv_prog_gcc} = MIPSyes)
 AM_CONDITIONAL(MIPS_SGI, test ${TARGET}${ac_cv_prog_gcc} = MIPSno)
@@ -3683,6 +3674,9 @@ fi
     if test -z "$INSTALL_MONOTOUCH_TRUE"; then :
   		default_profile=monotouch
     fi
+	if test -z "$INSTALL_XAMMAC_TRUE"; then :
+  		default_profile=xammac
+	fi
     if test -z "$INSTALL_4_5_TRUE"; then :
   		default_profile=net_4_5
     fi
@@ -3734,6 +3728,7 @@ echo "
 	.NET 4.5:      $with_profile4_5
 	MonoDroid:     $with_monodroid
 	MonoTouch:     $with_monotouch
+	Xamarin.Mac:   $with_xammac
 	JNI support:   $jdk_headers_found
 	libgdiplus:    $libgdiplus_msg
 	zlib:          $zlib_msg

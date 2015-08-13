@@ -153,10 +153,7 @@ struct _GCMemSection {
 		MONO_GC_LOCKED ();				\
 	} while (0)
 #define TRYLOCK_GC (mono_mutex_trylock (&gc_mutex) == 0)
-#define UNLOCK_GC do {						\
-		mono_mutex_unlock (&gc_mutex);			\
-		MONO_GC_UNLOCKED ();				\
-	} while (0)
+#define UNLOCK_GC do { sgen_gc_unlock (); } while (0)
 
 extern LOCK_DECLARE (sgen_interruption_mutex);
 
@@ -274,19 +271,19 @@ extern int sgen_nursery_bits MONO_INTERNAL;
 extern char *sgen_nursery_start MONO_INTERNAL;
 extern char *sgen_nursery_end MONO_INTERNAL;
 
-static MONO_ALWAYS_INLINE gboolean
+static inline MONO_ALWAYS_INLINE gboolean
 sgen_ptr_in_nursery (void *p)
 {
 	return SGEN_PTR_IN_NURSERY ((p), DEFAULT_NURSERY_BITS, sgen_nursery_start, sgen_nursery_end);
 }
 
-static MONO_ALWAYS_INLINE char*
+static inline MONO_ALWAYS_INLINE char*
 sgen_get_nursery_start (void)
 {
 	return sgen_nursery_start;
 }
 
-static MONO_ALWAYS_INLINE char*
+static inline MONO_ALWAYS_INLINE char*
 sgen_get_nursery_end (void)
 {
 	return sgen_nursery_end;
@@ -671,7 +668,7 @@ struct _SgenMajorCollector {
 	void (*init_worker_thread) (void *data);
 	void (*reset_worker_data) (void *data);
 	gboolean (*is_valid_object) (char *object);
-	gboolean (*describe_pointer) (char *pointer);
+	MonoVTable* (*describe_pointer) (char *pointer);
 	guint8* (*get_cardtable_mod_union_for_object) (char *object);
 	long long (*get_and_reset_num_major_objects_marked) (void);
 };
@@ -790,6 +787,7 @@ gboolean sgen_is_bridge_object (MonoObject *obj) MONO_INTERNAL;
 gboolean sgen_is_bridge_class (MonoClass *class) MONO_INTERNAL;
 void sgen_mark_bridge_object (MonoObject *obj) MONO_INTERNAL;
 void sgen_bridge_register_finalized_object (MonoObject *object) MONO_INTERNAL;
+void sgen_bridge_describe_pointer (MonoObject *object) MONO_INTERNAL;
 
 void sgen_scan_togglerefs (char *start, char *end, ScanCopyContext ctx) MONO_INTERNAL;
 void sgen_process_togglerefs (void) MONO_INTERNAL;
@@ -973,6 +971,7 @@ extern int degraded_mode;
 extern int default_nursery_size;
 extern guint32 tlab_size;
 extern NurseryClearPolicy nursery_clear_policy;
+extern gboolean sgen_try_free_some_memory;
 
 extern LOCK_DECLARE (gc_mutex);
 
@@ -1043,6 +1042,10 @@ sgen_dummy_use (gpointer v) {
 
 gboolean sgen_parse_environment_string_extract_number (const char *str, glong *out) MONO_INTERNAL;
 void sgen_env_var_error (const char *env_var, const char *fallback, const char *description_format, ...) MONO_INTERNAL;
+
+/* Utilities */
+
+void sgen_qsort (void *base, size_t nel, size_t width, int (*compar) (const void*, const void*)) MONO_INTERNAL;
 
 #endif /* HAVE_SGEN_GC */
 

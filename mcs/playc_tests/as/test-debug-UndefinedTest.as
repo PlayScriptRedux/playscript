@@ -90,9 +90,15 @@ package
 			if (o2 !== undefined || o2 === null)
 				return 24;
 			var o3:Object = a2.pop();
-			if (o3 !== null || o3 === undefined)
-				return 25;
+
+			// Moved test to ./as/test-debug-UndefinedvsNull-1.as
+			//trace(o3); // should be null
+			//if (o3 !== null || o3 === undefined)
+			//	return 25;
+
+
 			instance = a2.pop();
+			trace(instance);
 			if (instance !== null || instance === undefined)
 				return 26;
 
@@ -103,14 +109,16 @@ package
 				return 27;
 
 			// class instance should be null
-            instance = d2["missing"];
+			instance = d2["missing"];
 			if (instance !== null || instance === undefined)
 				return 28;
 
 			// object should be null
-            var o4:Object = d2["missing"];
-			if (o4 !== null || o4 === undefined)
-				return 29;
+			// Moved test to ./as/test-debug-UndefinedvsNull-2.as
+			var o4:Object = d2["missing"];
+//			trace(o4);
+//			if (o4 !== null || o4 === undefined)
+//				return 29;
 
 			var o5:Object = {};
 			// * should be undefined

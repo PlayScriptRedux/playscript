@@ -37,7 +37,6 @@
 #include "mini.h"
 #include "mini-amd64.h"
 #include "tasklets.h"
-#include "debug-mini.h"
 
 #define ALIGN_TO(val,align) (((val) + ((align) - 1)) & ~((align) - 1))
 
@@ -47,13 +46,13 @@ static MonoW32ExceptionHandler ill_handler;
 static MonoW32ExceptionHandler segv_handler;
 
 LPTOP_LEVEL_EXCEPTION_FILTER mono_old_win_toplevel_exception_filter;
-guint64 mono_win_vectored_exception_handle;
+void *mono_win_vectored_exception_handle;
 extern gboolean mono_win_chained_exception_needs_run;
 
 #define W32_SEH_HANDLE_EX(_ex) \
 	if (_ex##_handler) _ex##_handler(0, ep, sctx)
 
-LONG CALLBACK seh_unhandled_exception_filter(EXCEPTION_POINTERS* ep)
+static LONG CALLBACK seh_unhandled_exception_filter(EXCEPTION_POINTERS* ep)
 {
 #ifndef MONO_CROSS_COMPILE
 	if (mono_old_win_toplevel_exception_filter) {
@@ -70,7 +69,7 @@ LONG CALLBACK seh_unhandled_exception_filter(EXCEPTION_POINTERS* ep)
  * Unhandled Exception Filter
  * Top-level per-process exception handler.
  */
-LONG CALLBACK seh_vectored_exception_handler(EXCEPTION_POINTERS* ep)
+static LONG CALLBACK seh_vectored_exception_handler(EXCEPTION_POINTERS* ep)
 {
 	EXCEPTION_RECORD* er;
 	CONTEXT* ctx;
@@ -161,9 +160,9 @@ void win32_seh_init()
 
 void win32_seh_cleanup()
 {
-	if (mono_old_win_toplevel_exception_filter) SetUnhandledExceptionFilter(mono_old_win_toplevel_exception_filter);
-
 	guint32 ret = 0;
+
+	if (mono_old_win_toplevel_exception_filter) SetUnhandledExceptionFilter(mono_old_win_toplevel_exception_filter);
 
 	ret = RemoveVectoredExceptionHandler (mono_win_vectored_exception_handle);
 	g_assert (ret);
@@ -225,16 +224,17 @@ mono_arch_get_restore_context (MonoTrampInfo **info, gboolean aot)
 	amd64_mov_reg_membase (code, AMD64_R15, AMD64_R11,  G_STRUCT_OFFSET (MonoContext, r15), 8);
 #endif
 
-	if (mono_running_on_valgrind ()) {
-		/* Prevent 'Address 0x... is just below the stack ptr.' errors */
-		amd64_mov_reg_membase (code, AMD64_R8, AMD64_R11,  G_STRUCT_OFFSET (MonoContext, rsp), 8);
-		amd64_mov_reg_membase (code, AMD64_R11, AMD64_R11,  G_STRUCT_OFFSET (MonoContext, rip), 8);
-		amd64_mov_reg_reg (code, AMD64_RSP, AMD64_R8, 8);
-	} else {
-		amd64_mov_reg_membase (code, AMD64_RSP, AMD64_R11,  G_STRUCT_OFFSET (MonoContext, rsp), 8);
-		/* get return address */
-		amd64_mov_reg_membase (code, AMD64_R11, AMD64_R11,  G_STRUCT_OFFSET (MonoContext, rip), 8);
-	}
+	/*
+	 * The context resides on the stack, in the stack frame of the
+	 * caller of this function.  The stack pointer that we need to
+	 * restore is potentially many stack frames higher up, so the
+	 * distance between them can easily be more than the red zone
+	 * size.  Hence the stack pointer can be restored only after
+	 * we have finished loading everything from the context.
+	 */
+	amd64_mov_reg_membase (code, AMD64_R8, AMD64_R11,  G_STRUCT_OFFSET (MonoContext, rsp), 8);
+	amd64_mov_reg_membase (code, AMD64_R11, AMD64_R11,  G_STRUCT_OFFSET (MonoContext, rip), 8);
+	amd64_mov_reg_reg (code, AMD64_RSP, AMD64_R8, 8);
 
 	/* jump to the saved IP */
 	amd64_jump_reg (code, AMD64_R11);
@@ -366,22 +366,6 @@ mono_amd64_throw_exception (guint64 dummy1, guint64 dummy2, guint64 dummy3, guin
 		MonoException *mono_ex = (MonoException*)exc;
 		if (!rethrow)
 			mono_ex->stack_trace = NULL;
-	}
-
-	if (mono_debug_using_mono_debugger ()) {
-		guint8 buf [16];
-
-		mono_breakpoint_clean_code (NULL, (gpointer)rip, 8, buf, sizeof (buf));
-
-		if (buf [3] == 0xe8) {
-			MonoContext ctx_cp = ctx;
-			ctx_cp.rip = rip - 5;
-
-			if (mono_debugger_handle_exception (&ctx_cp, exc)) {
-				mono_restore_context (&ctx_cp);
-				g_assert_not_reached ();
-			}
-		}
 	}
 
 	/* adjust eip so that it point into the call instruction */
@@ -609,10 +593,7 @@ mono_arch_find_jit_info (MonoDomain *domain, MonoJitTlsData *jit_tls,
 
 		frame->type = FRAME_TYPE_MANAGED;
 
-		if (ji->from_aot)
-			unwind_info = mono_aot_get_unwind_info (ji, &unwind_info_len);
-		else
-			unwind_info = mono_get_cached_unwind_info (ji->used_regs, &unwind_info_len);
+		unwind_info = mono_jinfo_get_unwind_info (ji, &unwind_info_len);
 
 		frame->unwind_info = unwind_info;
 		frame->unwind_info_len = unwind_info_len;
@@ -778,9 +759,6 @@ handle_signal_exception (gpointer obj)
 
 	memcpy (&ctx, &jit_tls->ex_ctx, sizeof (MonoContext));
 
-	if (mono_debugger_handle_exception (&ctx, (MonoObject *)obj))
-		return;
-
 	mono_handle_exception (&ctx, obj);
 
 	mono_restore_context (&ctx);
@@ -837,9 +815,6 @@ mono_arch_handle_exception (void *sigctx, gpointer obj)
 	MonoContext mctx;
 
 	mono_arch_sigctx_to_monoctx (sigctx, &mctx);
-
-	if (mono_debugger_handle_exception (&mctx, (MonoObject *)obj))
-		return TRUE;
 
 	mono_handle_exception (&mctx, obj);
 
@@ -906,12 +881,6 @@ altstack_handle_and_restore (void *sigctx, gpointer obj, gboolean stack_ovf)
 	MonoContext mctx;
 
 	mono_arch_sigctx_to_monoctx (sigctx, &mctx);
-
-	if (mono_debugger_handle_exception (&mctx, (MonoObject *)obj)) {
-		if (stack_ovf)
-			prepare_for_guard_pages (&mctx);
-		mono_restore_context (&mctx);
-	}
 
 	mono_handle_exception (&mctx, obj);
 	if (stack_ovf)
@@ -1372,7 +1341,7 @@ mono_arch_unwindinfo_get_size (gpointer monoui)
 		(sizeof (UNWIND_CODE) * (MONO_MAX_UNWIND_CODES - unwindinfo->unwindInfo.CountOfCodes));
 }
 
-PRUNTIME_FUNCTION
+static PRUNTIME_FUNCTION
 MONO_GET_RUNTIME_FUNCTION_CALLBACK ( DWORD64 ControlPc, IN PVOID Context )
 {
 	MonoJitInfo *ji;

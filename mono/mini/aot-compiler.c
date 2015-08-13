@@ -3217,12 +3217,6 @@ add_wrappers (MonoAotCompile *acfg)
 	 * so there is only one wrapper of a given type, or inlining their contents into their
 	 * callers.
 	 */
-
-	/* 
-	 * FIXME: This depends on the fact that different wrappers have different 
-	 * names.
-	 */
-
 	for (i = 0; i < acfg->image->tables [MONO_TABLE_METHOD].rows; ++i) {
 		MonoMethod *method;
 		guint32 token = MONO_TOKEN_METHOD_DEF | (i + 1);
@@ -3235,9 +3229,6 @@ add_wrappers (MonoAotCompile *acfg)
 			(method->flags & METHOD_ATTRIBUTE_ABSTRACT))
 			skip = TRUE;
 
-		if (method->is_generic || method->klass->generic_container)
-			skip = TRUE;
-
 		/* Skip methods which can not be handled by get_runtime_invoke () */
 		sig = mono_method_signature (method);
 		if (!sig)
@@ -3245,9 +3236,13 @@ add_wrappers (MonoAotCompile *acfg)
 		if ((sig->ret->type == MONO_TYPE_PTR) ||
 			(sig->ret->type == MONO_TYPE_TYPEDBYREF))
 			skip = TRUE;
+		if (mono_class_is_open_constructed_type (sig->ret))
+			skip = TRUE;
 
 		for (j = 0; j < sig->param_count; j++) {
 			if (sig->params [j]->type == MONO_TYPE_TYPEDBYREF)
+				skip = TRUE;
+			if (mono_class_is_open_constructed_type (sig->params [j]))
 				skip = TRUE;
 		}
 
@@ -3408,7 +3403,7 @@ add_wrappers (MonoAotCompile *acfg)
 #endif
 
 		/* JIT icall wrappers */
-		/* FIXME: locking */
+		/* FIXME: locking - this is "safe" as full-AOT threads don't mutate the icall hash*/
 		g_hash_table_foreach (mono_get_jit_icall_info (), add_jit_icall_wrapper, acfg);
 	}
 
@@ -4697,16 +4692,51 @@ emit_and_reloc_code (MonoAotCompile *acfg, MonoMethod *method, guint8 *code, gui
 /*
  * sanitize_symbol:
  *
- *   Modify SYMBOL so it only includes characters permissible in symbols.
+ *   Return a modified version of S which only includes characters permissible in symbols.
  */
-static void
-sanitize_symbol (char *symbol)
+static char*
+sanitize_symbol (MonoAotCompile *acfg, char *s)
 {
-	int i, len = strlen (symbol);
+	gboolean process = FALSE;
+	int i, len;
+	GString *gs;
+	char *res;
 
+	if (!s)
+		return s;
+
+	len = strlen (s);
 	for (i = 0; i < len; ++i)
-		if (!isalnum (symbol [i]) && (symbol [i] != '_'))
-			symbol [i] = '_';
+		if (!(s [i] <= 0x7f && (isalnum (s [i]) || s [i] == '_')))
+			process = TRUE;
+	if (!process)
+		return s;
+
+	gs = g_string_sized_new (len);
+	for (i = 0; i < len; ++i) {
+		guint8 c = s [i];
+		if (c <= 0x7f && (isalnum (c) || c == '_')) {
+			g_string_append_c (gs, c);
+		} else if (c > 0x7f) {
+			/* multi-byte utf8 */
+			g_string_append_printf (gs, "_0x%x", c);
+			i ++;
+			c = s [i];
+			while (c >> 6 == 0x2) {
+				g_string_append_printf (gs, "%x", c);
+				i ++;
+				c = s [i];
+			}
+			g_string_append_printf (gs, "_");
+			i --;
+		} else {
+			g_string_append_c (gs, '_');
+		}
+	}
+
+	res = mono_mempool_strdup (acfg->mempool, gs->str);
+	g_string_free (gs, TRUE);
+	return res;
 }
 
 static char*
@@ -4863,6 +4893,7 @@ encode_patch (MonoAotCompile *acfg, MonoJumpInfo *patch_info, guint8 *buf, guint
 	case MONO_PATCH_INFO_METHOD_JUMP:
 	case MONO_PATCH_INFO_ICALL_ADDR:
 	case MONO_PATCH_INFO_METHOD_RGCTX:
+	case MONO_PATCH_INFO_METHOD_CODE_SLOT:
 		encode_method_ref (acfg, patch_info->data.method, p, &p);
 		break;
 	case MONO_PATCH_INFO_INTERNAL_METHOD:
@@ -4915,11 +4946,17 @@ encode_patch (MonoAotCompile *acfg, MonoJumpInfo *patch_info, guint8 *buf, guint
 	case MONO_PATCH_INFO_CLASS:
 	case MONO_PATCH_INFO_IID:
 	case MONO_PATCH_INFO_ADJUSTED_IID:
+	case MONO_PATCH_INFO_CLASS_INIT:
 		encode_klass_ref (acfg, patch_info->data.klass, p, &p);
 		break;
-	case MONO_PATCH_INFO_CLASS_INIT:
 	case MONO_PATCH_INFO_DELEGATE_TRAMPOLINE:
-		encode_klass_ref (acfg, patch_info->data.klass, p, &p);
+		encode_klass_ref (acfg, patch_info->data.del_tramp->klass, p, &p);
+		if (patch_info->data.del_tramp->method) {
+			encode_value (1, p, &p);
+			encode_method_ref (acfg, patch_info->data.del_tramp->method, p, &p);
+		} else {
+			encode_value (0, p, &p);
+		}
 		break;
 	case MONO_PATCH_INFO_FIELD:
 	case MONO_PATCH_INFO_SFLDA:
@@ -4983,9 +5020,9 @@ encode_patch (MonoAotCompile *acfg, MonoJumpInfo *patch_info, guint8 *buf, guint
 		int i;
 
 		encode_method_ref (acfg, info->method, p, &p);
-		encode_value (info->entries->len, p, &p);
-		for (i = 0; i < info->entries->len; ++i) {
-			MonoRuntimeGenericContextInfoTemplate *template = g_ptr_array_index (info->entries, i);
+		encode_value (info->num_entries, p, &p);
+		for (i = 0; i < info->num_entries; ++i) {
+			MonoRuntimeGenericContextInfoTemplate *template = &info->entries [i];
 
 			encode_value (template->info_type, p, &p);
 			switch (mini_rgctx_info_type_to_patch_info_type (template->info_type)) {
@@ -5532,6 +5569,7 @@ static char*
 get_plt_entry_debug_sym (MonoAotCompile *acfg, MonoJumpInfo *ji, GHashTable *cache)
 {
 	char *debug_sym = NULL;
+	char *s;
 
 	switch (ji->type) {
 	case MONO_PATCH_INFO_METHOD:
@@ -5541,8 +5579,9 @@ get_plt_entry_debug_sym (MonoAotCompile *acfg, MonoJumpInfo *ji, GHashTable *cac
 		debug_sym = g_strdup_printf ("plt__jit_icall_%s", ji->data.name);
 		break;
 	case MONO_PATCH_INFO_CLASS_INIT:
-		debug_sym = g_strdup_printf ("plt__class_init_%s", mono_type_get_name (&ji->data.klass->byval_arg));
-		sanitize_symbol (debug_sym);
+		s = mono_type_get_name (&ji->data.klass->byval_arg);
+		debug_sym = g_strdup_printf ("plt__class_init_%s", s);
+		g_free (s);
 		break;
 	case MONO_PATCH_INFO_RGCTX_FETCH:
 		debug_sym = g_strdup_printf ("plt__rgctx_fetch_%d", acfg->label_generator ++);
@@ -5564,7 +5603,7 @@ get_plt_entry_debug_sym (MonoAotCompile *acfg, MonoJumpInfo *ji, GHashTable *cac
 		break;
 	}
 
-	return debug_sym;
+	return sanitize_symbol (acfg, debug_sym);
 }
 
 /*
@@ -6357,7 +6396,8 @@ can_encode_patch (MonoAotCompile *acfg, MonoJumpInfo *patch_info)
 {
 	switch (patch_info->type) {
 	case MONO_PATCH_INFO_METHOD:
-	case MONO_PATCH_INFO_METHODCONST: {
+	case MONO_PATCH_INFO_METHODCONST:
+	case MONO_PATCH_INFO_METHOD_CODE_SLOT: {
 		MonoMethod *method = patch_info->data.method;
 
 		return can_encode_method (acfg, method);
@@ -6447,7 +6487,7 @@ compile_method (MonoAotCompile *acfg, MonoMethod *method)
 	 * the runtime will not see AOT methods during AOT compilation,so it
 	 * does not need to support them by creating a fake GOT etc.
 	 */
-	cfg = mini_method_compile (method, acfg->opts, mono_get_root_domain (), FALSE, TRUE, 0);
+	cfg = mini_method_compile (method, acfg->opts, mono_get_root_domain (), acfg->aot_opts.full_aot ? (JIT_FLAG_AOT|JIT_FLAG_FULL_AOT) : (JIT_FLAG_AOT), 0);
 	mono_loader_clear_error ();
 
 	if (cfg->exception_type == MONO_EXCEPTION_GENERIC_SHARING_FAILED) {
@@ -8352,7 +8392,7 @@ compile_methods (MonoAotCompile *acfg)
 			user_data [1] = acfg;
 			user_data [2] = frag;
 			
-			handle = mono_create_thread (NULL, 0, (gpointer)compile_thread_main, user_data, 0, NULL);
+			handle = mono_threads_create_thread ((gpointer)compile_thread_main, user_data, 0, 0, NULL);
 			g_ptr_array_add (threads, handle);
 		}
 		g_free (methods);
@@ -8386,7 +8426,7 @@ compile_asm (MonoAotCompile *acfg)
 #elif defined(sparc) && SIZEOF_VOID_P == 8
 #define AS_OPTIONS "-xarch=v9"
 #elif defined(TARGET_X86) && defined(TARGET_MACH) && !defined(__native_client_codegen__)
-#define AS_OPTIONS "-arch i386 -W"
+#define AS_OPTIONS "-arch i386"
 #else
 #define AS_OPTIONS ""
 #endif
@@ -8618,7 +8658,7 @@ mono_compile_assembly (MonoAssembly *ass, guint32 opts, const char *aot_options)
 	TV_DECLARE (atv);
 	TV_DECLARE (btv);
 
-#if !defined(MONO_ARCH_GSHAREDVT_SUPPORTED) || (!defined(MONO_EXTENSIONS) && !defined(MONOTOUCH))
+#if !defined(MONO_ARCH_GSHAREDVT_SUPPORTED) || !defined(MONO_GSHARING)
 	if (opts & MONO_OPT_GSHAREDVT) {
 		fprintf (stderr, "-O=gsharedvt not supported on this platform.\n");
 		exit (1);
@@ -8669,7 +8709,7 @@ mono_compile_assembly (MonoAssembly *ass, guint32 opts, const char *aot_options)
 		opt->mdb_optimizations = TRUE;
 		opt->gen_seq_points = TRUE;
 
-		if (mono_debug_format == MONO_DEBUG_FORMAT_NONE) {
+		if (!mono_debug_enabled ()) {
 			fprintf (stderr, "The soft-debug AOT option requires the --debug option.\n");
 			return 1;
 		}
@@ -8868,12 +8908,14 @@ mono_compile_assembly (MonoAssembly *ass, guint32 opts, const char *aot_options)
 	if (acfg->aot_opts.dwarf_debug && acfg->aot_opts.asm_only && acfg->aot_opts.gnu_asm) {
 		/*
 		 * CLANG supports GAS .file/.loc directives, so emit line number information this way
+		 * FIXME: CLANG only emits line number info for .loc directives followed by assembly, not
+		 * .byte directives.
 		 */
-		acfg->gas_line_numbers = TRUE;
+		//acfg->gas_line_numbers = TRUE;
 	}
 
 	if (!acfg->aot_opts.nodebug || acfg->aot_opts.dwarf_debug) {
-		if (acfg->aot_opts.dwarf_debug && mono_debug_format == MONO_DEBUG_FORMAT_NONE) {
+		if (acfg->aot_opts.dwarf_debug && !mono_debug_enabled ()) {
 			fprintf (stderr, "The dwarf AOT option requires the --debug option.\n");
 			return 1;
 		}
@@ -8883,7 +8925,7 @@ mono_compile_assembly (MonoAssembly *ass, guint32 opts, const char *aot_options)
 	img_writer_emit_start (acfg->w);
 
 	if (acfg->dwarf)
-		mono_dwarf_writer_emit_base_info (acfg->dwarf, mono_unwind_get_cie_program ());
+		mono_dwarf_writer_emit_base_info (acfg->dwarf, g_path_get_basename (acfg->image->name), mono_unwind_get_cie_program ());
 
 	if (acfg->thumb_mixed) {
 		char symbol [256];

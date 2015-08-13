@@ -47,7 +47,7 @@ struct sigcontext {
 	guint64 eip;
 };
 
-typedef void (* MonoW32ExceptionHandler) (int _dummy, EXCEPTION_RECORD *info, void *context);
+typedef void (* MonoW32ExceptionHandler) (int _dummy, EXCEPTION_POINTERS *info, void *context);
 void win32_seh_init(void);
 void win32_seh_cleanup(void);
 void win32_seh_set_handler(int type, MonoW32ExceptionHandler handler);
@@ -167,7 +167,9 @@ struct MonoLMF {
 	 * If the third lowest bit is set, then this is a MonoLMFTramp structure.
 	 */
 	gpointer    previous_lmf;
+#ifdef HOST_WIN32
 	gpointer    lmf_addr;
+#endif
 #if defined(__default_codegen__) || defined(HOST_WIN32)
 	guint64     rip;
 #elif defined(__native_client_codegen__)
@@ -192,6 +194,7 @@ struct MonoLMF {
 typedef struct {
 	struct MonoLMF lmf;
 	guint64 *regs;
+	gpointer lmf_addr;
 } MonoLMFTramp;
 
 typedef struct MonoCompileArch {
@@ -339,9 +342,7 @@ typedef struct MonoCompileArch {
 #define MONO_ARCH_HAVE_IS_INT_OVERFLOW 1
 
 #define MONO_ARCH_ENABLE_REGALLOC_IN_EH_BLOCKS 1
-#if !defined(__APPLE__)
 #define MONO_ARCH_ENABLE_MONO_LMF_VAR 1
-#endif
 #define MONO_ARCH_HAVE_INVALIDATE_METHOD 1
 #define MONO_ARCH_HAVE_CREATE_DELEGATE_TRAMPOLINE 1
 #define MONO_ARCH_HAVE_ATOMIC_ADD 1
@@ -402,6 +403,7 @@ typedef struct MonoCompileArch {
 #define MONO_ARCH_HAVE_SETUP_ASYNC_CALLBACK 1
 #define MONO_ARCH_HAVE_CREATE_LLVM_NATIVE_THUNK 1
 #define MONO_ARCH_HAVE_OP_TAIL_CALL 1
+#define MONO_ARCH_HAVE_TRANSLATE_TLS_OFFSET 1
 
 #if defined(TARGET_OSX) || defined(__linux__)
 #define MONO_ARCH_HAVE_TLS_GET_REG 1

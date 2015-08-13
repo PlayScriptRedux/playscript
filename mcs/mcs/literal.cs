@@ -19,8 +19,6 @@
 // types yet) while constants are created only after types have been loaded
 // and are fully resolved when born.
 //
-using Mono.CSharp.JavaScript;
-using Mono.CSharp.Cpp;
 
 #if STATIC
 using IKVM.Reflection.Emit;
@@ -330,11 +328,6 @@ namespace Mono.CSharp
 		public override object Accept (StructuralVisitor visitor)
 		{
 			return visitor.Visit (this);
-		}
-
-		public override void EmitJs (JsEmitContext jec)
-		{
-			jec.Buf.Write ("\"", jec.Buf.EscapeString(Value), "\"", loc);
 		}
 	}
 }

@@ -13,8 +13,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Mono.CompilerServices.SymbolWriter;
-using Mono.CSharp.JavaScript;
-using Mono.CSharp.Cpp;
 
 namespace Mono.CSharp {
 
@@ -842,13 +840,6 @@ namespace Mono.CSharp {
 			base.PrepareEmit ();
 		}
 
-		public override void EmitContainerJs (JsEmitContext jec)
-		{
-			jec.Buf.Write ("// File: ", this.FileName, "\n");
-
-			base.EmitContainerJs (jec);
-		}
-
 		//
 		// Creates symbol file index in debug symbol file
 		//
@@ -1123,29 +1114,6 @@ namespace Mono.CSharp {
 			VerifyClsCompliance ();
 
 			base.EmitContainer ();
-		}
-
-		public override void EmitContainerJs (JsEmitContext jec)
-		{
-			VerifyClsCompliance ();
-
-			var name = jec.MakeJsNamespaceName (this.NS.Name);
-			bool is_global_ns = String.IsNullOrEmpty (name);
-
-			if (!is_global_ns) {
-				jec.Buf.Write ("\tvar ", name, ";\n",
-				               "\t(function (", name, ") {\n", Location);
-				jec.Buf.Indent ();
-
-				jec.MarkNamespaceDefined (NS.Name);
-			}
-
-			base.EmitContainerJs (jec);
-
-			if (!is_global_ns) {
-				jec.Buf.Unindent ();
-				jec.Buf.Write ("\t})(", name, " || (", name, " = {});\n");
-			}
 		}
 
 		public ExtensionMethodCandidates LookupExtensionMethod (IMemberContext invocationContext, TypeSpec extensionType, string name, int arity, int position)

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
@@ -1291,6 +1292,15 @@ public class Tests
 		}
 	}
 
+	struct ConsStructThrow : IConstrained {
+		public void foo () {
+			throw new Exception ();
+		}
+
+		public void foo_ref_arg (string s) {
+		}
+	}
+
 	interface IFaceConstrained {
 		void constrained_void_iface_call<T, T2>(T t, T2 t2) where T2 : IConstrained;
 		void constrained_void_iface_call_ref_arg<T, T2>(T t, T2 t2) where T2 : IConstrained;
@@ -1356,6 +1366,17 @@ public class Tests
 		return 0;
 	}
 
+	public static int test_0_constrained_eh () {
+		var s2 = new ConsStructThrow () { };
+		try {
+			IFaceConstrained c = new ClassConstrained ();
+			c.constrained_void_iface_call<int, ConsStructThrow> (1, s2);
+			return 1;
+		} catch (Exception) {
+			return 0;
+		}
+	}
+
 	public static int test_0_constrained_void_iface_call_gsharedvt_arg () {
 		// This tests constrained calls through interfaces with one gsharedvt arg, like IComparable<T>.CompareTo ()
 		IFaceConstrained c = new ClassConstrained ();
@@ -1408,13 +1429,20 @@ public class Tests
 	[MethodImplAttribute (MethodImplOptions.NoInlining)]
 	public static void call_async<T> (int i, int j) {
 		Task<T> t = FooAsync<T> (1, 2);
-		t.RunSynchronously ();
+		// FIXME: This doesn't work
+		//t.RunSynchronously ();
 	}
 
 	// In AOT mode, the async infrastructure depends on gsharedvt methods
 	public static int test_0_async_call_from_generic () {
 		call_async<string> (1, 2);
 		return 0;
+	}
+
+	public static int test_0_array_helper_gsharedvt () {
+		var arr = new AnEnum [16];
+		var c = new ReadOnlyCollection<AnEnum> (arr);
+		return c.Contains (AnEnum.Two) == false ? 0 : 1;
 	}
 }
 

@@ -20,8 +20,6 @@ using System.Security.Cryptography;
 using System.Security.Permissions;
 using Mono.Security.Cryptography;
 using Mono.CompilerServices.SymbolWriter;
-using Mono.CSharp.JavaScript;
-using Mono.CSharp.Cpp;
 
 #if STATIC
 using IKVM.Reflection;
@@ -56,6 +54,7 @@ namespace Mono.CSharp
 		bool is_cls_compliant;
 		bool wrap_non_exception_throws;
 		bool wrap_non_exception_throws_custom;
+		bool has_user_debuggable;
 
 		protected ModuleContainer module;
 		readonly string name;
@@ -76,8 +75,6 @@ namespace Mono.CSharp
 		Dictionary<ITypeDefinition, Attribute> emitted_forwarders;
 		AssemblyAttributesPlaceholder module_target_attrs;
 
-		private JsEmitContext jec;
-		
 		// Win32 version info values
 		string vi_product, vi_product_version, vi_company, vi_copyright, vi_trademark;
 
@@ -370,6 +367,8 @@ namespace Mono.CSharp
 				vi_copyright = a.GetString ();
 			} else if (a.Type == pa.AssemblyTrademark) {
 				vi_trademark = a.GetString ();
+			} else if (a.Type == pa.Debuggable) {
+				has_user_debuggable = true;
 			}
 
 			SetCustomAttribute (ctor, cdata);
@@ -477,6 +476,17 @@ namespace Mono.CSharp
 			}
 
 			if (!IsSatelliteAssembly) {
+				if (!has_user_debuggable && Compiler.Settings.GenerateDebugInfo) {
+					var pa = module.PredefinedAttributes.Debuggable;
+					if (pa.IsDefined) {
+						var modes = System.Diagnostics.DebuggableAttribute.DebuggingModes.IgnoreSymbolStoreSequencePoints;
+						if (!Compiler.Settings.Optimize)
+							modes |= System.Diagnostics.DebuggableAttribute.DebuggingModes.DisableOptimizations;
+
+						pa.EmitAttribute (Builder, modes);
+					}
+				}
+
 				if (!wrap_non_exception_throws_custom) {
 					PredefinedAttribute pa = module.PredefinedAttributes.RuntimeCompatibility;
 					if (pa.IsDefined && pa.ResolveBuilder ()) {
@@ -503,15 +513,6 @@ namespace Mono.CSharp
 			CheckReferencesPublicToken ();
 
 			SetEntryPoint ();
-		}
-
-		public virtual void EmitJs ()
-		{
-			jec = new JsEmitContext (module);
-
-			jec.Buf.Write ("// Module: ", this.Name, ".js\n");
-
-			module.EmitContainerJs (jec);
 		}
 
 		public byte[] GetPublicKeyToken ()
@@ -888,13 +889,6 @@ namespace Mono.CSharp
 		protected virtual void SaveModule (PortableExecutableKinds pekind, ImageFileMachine machine)
 		{
 			Report.RuntimeMissingSupport (Location.Null, "-target:module");
-		}
-
-		public void SaveJs ()
-		{
-			var s = jec.Buf.Stream.ToString ();
-//			System.Console.WriteLine (s);
-			System.IO.File.WriteAllText (file_name, s);
 		}
 
 		void SetCustomAttribute (MethodSpec ctor, byte[] data)

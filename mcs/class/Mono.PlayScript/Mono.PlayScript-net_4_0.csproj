@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -95,22 +95,6 @@
     <Compile Include="..\..\mcs\visit.cs" />
     <Compile Include="..\..\tools\monop\outline.cs" />
     <Compile Include="Assembly\AssemblyInfo.cs" />
-    <Compile Include="..\corlib\Mono.Security.Cryptography\CryptoConvert.cs" />
-    <Compile Include="..\Mono.CompilerServices.SymbolWriter\MonoSymbolFile.cs" />
-    <Compile Include="..\Mono.CompilerServices.SymbolWriter\MonoSymbolTable.cs" />
-    <Compile Include="..\Mono.CompilerServices.SymbolWriter\SourceMethodBuilder.cs" />
-    <Compile Include="..\..\mcs\cxx-target.cs">
-      <Link>cxx-target.cs</Link>
-    </Compile>
-    <Compile Include="..\..\mcs\js-target.cs">
-      <Link>js-target.cs</Link>
-    </Compile>
-    <Compile Include="..\..\mcs\cxx-emit.cs">
-      <Link>cxx-emit.cs</Link>
-    </Compile>
-    <Compile Include="..\..\mcs\js-emit.cs">
-      <Link>js-emit.cs</Link>
-    </Compile>
     <Compile Include="..\..\mcs\ps-lang.cs">
       <Link>ps-lang.cs</Link>
     </Compile>
@@ -125,6 +109,21 @@
     </Compile>
     <Compile Include="..\..\mcs\intrinsics.cs">
       <Link>intrinsics.cs</Link>
+    </Compile>
+    <Compile Include="..\..\mcs\inliner.cs">
+      <Link>inliner.cs</Link>
+    </Compile>
+    <Compile Include="..\..\class\Mono.CompilerServices.SymbolWriter\MonoSymbolFile.cs">
+      <Link>MonoSymbolFile.cs</Link>
+    </Compile>
+    <Compile Include="..\..\class\Mono.CompilerServices.SymbolWriter\MonoSymbolTable.cs">
+      <Link>MonoSymbolTable.cs</Link>
+    </Compile>
+    <Compile Include="..\..\class\Mono.CompilerServices.SymbolWriter\SourceMethodBuilder.cs">
+      <Link>SourceMethodBuilder.cs</Link>
+    </Compile>
+    <Compile Include="..\..\class\Mono.Security\Mono.Security.Cryptography\CryptoConvert.cs">
+      <Link>CryptoConvert.cs</Link>
     </Compile>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

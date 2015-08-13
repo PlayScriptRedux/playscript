@@ -220,23 +220,11 @@
     <Compile Include="..\..\mcs\ps-codegen.cs">
       <Link>ps-codegen.cs</Link>
     </Compile>
-    <Compile Include="..\..\mcs\cxx-emit.cs">
-      <Link>cxx-emit.cs</Link>
-    </Compile>
-    <Compile Include="..\..\mcs\cxx-target.cs">
-      <Link>cxx-target.cs</Link>
-    </Compile>
     <Compile Include="..\..\mcs\inliner.cs">
       <Link>inliner.cs</Link>
     </Compile>
     <Compile Include="..\..\mcs\intrinsics.cs">
       <Link>intrinsics.cs</Link>
-    </Compile>
-    <Compile Include="..\..\mcs\js-emit.cs">
-      <Link>js-emit.cs</Link>
-    </Compile>
-    <Compile Include="..\..\mcs\js-target.cs">
-      <Link>js-target.cs</Link>
     </Compile>
     <Compile Include="..\..\build\common\Consts.cs">
       <Link>Consts.cs</Link>
@@ -250,16 +238,16 @@
     <Compile Include="Assembly\AssemblyInfo.cs">
       <Link>AssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="..\Mono.CompilerServices.SymbolWriter\MonoSymbolFile.cs">
+    <Compile Include="..\..\class\Mono.CompilerServices.SymbolWriter\MonoSymbolFile.cs">
       <Link>MonoSymbolFile.cs</Link>
     </Compile>
-    <Compile Include="..\Mono.CompilerServices.SymbolWriter\MonoSymbolTable.cs">
+    <Compile Include="..\..\class\Mono.CompilerServices.SymbolWriter\MonoSymbolTable.cs">
       <Link>MonoSymbolTable.cs</Link>
     </Compile>
-    <Compile Include="..\Mono.CompilerServices.SymbolWriter\SourceMethodBuilder.cs">
+    <Compile Include="..\..\class\Mono.CompilerServices.SymbolWriter\SourceMethodBuilder.cs">
       <Link>SourceMethodBuilder.cs</Link>
     </Compile>
-    <Compile Include="..\Mono.Security\Mono.Security.Cryptography\CryptoConvert.cs">
+    <Compile Include="..\..\class\Mono.Security\Mono.Security.Cryptography\CryptoConvert.cs">
       <Link>CryptoConvert.cs</Link>
     </Compile>
   </ItemGroup>

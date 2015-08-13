@@ -324,10 +324,11 @@ namespace _root
 				#else
 				if ((i >= mCount) || (i < 0))
 				{
-					return PlayScript.Undefined._undefined;
+					Console.WriteLine ("undef : " + Undefined._undefined);
+					return Undefined._undefined;
 				}
 				#endif
-				return mArray[i];
+				return i >= mCount ? null : mArray [i]; 
 			}
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -336,6 +337,8 @@ namespace _root
 					ConvertToMutable ();
 				#if PERFORMANCE_MODE && DEBUG
 				if (i >= mCount) {
+//					return Undefined._undefined;
+					// TODO : Fix this (?)
 					throw new IndexOutOfRangeException();
 				}
 				#elif PERFORMANCE_MODE
@@ -358,7 +361,9 @@ namespace _root
 				#if PERFORMANCE_MODE && DEBUG
 				if (i >= mCount)
 				{
-					throw new IndexOutOfRangeException();
+					return Undefined._undefined;
+					// TODO : Fix this (?)
+					//throw new IndexOutOfRangeException();
 				}
 				#elif PERFORMANCE_MODE
 				#else
@@ -376,7 +381,9 @@ namespace _root
 					ConvertToMutable ();
 				#if PERFORMANCE_MODE && DEBUG
 				if (i >= mCount) {
-					throw new IndexOutOfRangeException();
+					return Undefined._undefined;
+					// TODO : Fix this (?)
+					//throw new IndexOutOfRangeException();
 				}
 				#elif PERFORMANCE_MODE
 				#else

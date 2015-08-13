@@ -47,7 +47,7 @@ test-casts: boot-casts.out mcs-casts.out
 
 ifeq (net_4_5, $(PROFILE))
 TEST_PATTERN = '*.as'
-DEFINES = -compiler-options:"-d:NET_4_0;NET_4_5 -r:../class/lib/net_4_5/PlayScript.Dynamic_aot.dll -r:../class/lib/net_4_5/pscorlib_aot.dll"
+DEFINES = -compiler-options:"-d:NET_4_0;NET_4_5 -debug -r:../class/lib/net_4_5/PlayScript.Dynamic_aot.dll -r:../class/lib/net_4_5/pscorlib_aot.dll"
 endif
 
 LOCAL_RUNTIME_FLAGS =
@@ -58,6 +58,11 @@ TEST_ILS := $(wildcard *-lib.il)
 
 build-compiler-lib:
 	cd ../class/Mono.CSharp && $(MAKE) NO_DIR_CHECK=yes
+	cd ../mcs && $(MAKE) NO_DIR_CHECK=yes
+	cd ../class/pscorlib_aot && $(MAKE) NO_DIR_CHECK=yes
+	cd ../class/pscorlib && $(MAKE) NO_DIR_CHECK=yes
+	cd ../class/PlayScript.Dynamic_aot && $(MAKE) NO_DIR_CHECK=yes
+	cd ../class/PlayScript.Dynamic && $(MAKE) NO_DIR_CHECK=yes
 
 qcheck: build-compiler-lib qcheck2
 

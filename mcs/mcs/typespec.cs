@@ -12,7 +12,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Mono.CSharp.Cpp;
 using System.Linq;
 
 #if STATIC
@@ -1479,6 +1478,7 @@ namespace Mono.CSharp
 		bool IsPartial { get; }
 		bool IsComImport { get; }
 		bool IsTypeForwarder { get; }
+		bool IsCyclicTypeForwarder { get; }
 		int TypeParametersCount { get; }
 		TypeParameterSpec[] TypeParameters { get; }
 
@@ -1561,6 +1561,12 @@ namespace Mono.CSharp
 		}
 
 		bool ITypeDefinition.IsTypeForwarder {
+			get {
+				return false;
+			}
+		}
+
+		bool ITypeDefinition.IsCyclicTypeForwarder {
 			get {
 				return false;
 			}
@@ -1703,6 +1709,12 @@ namespace Mono.CSharp
 		}
 
 		bool ITypeDefinition.IsTypeForwarder {
+			get {
+				return false;
+			}
+		}
+
+		bool ITypeDefinition.IsCyclicTypeForwarder {
 			get {
 				return false;
 			}

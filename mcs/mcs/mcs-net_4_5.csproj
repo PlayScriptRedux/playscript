@@ -117,26 +117,15 @@
     <Compile Include="ps-codegen.cs">
       <Link>ps-codegen.cs</Link>
     </Compile>
-    <Compile Include="cxx-emit.cs">
-      <Link>cxx-emit.cs</Link>
-    </Compile>
-    <Compile Include="cxx-target.cs">
-      <Link>cxx-target.cs</Link>
-    </Compile>
     <Compile Include="inliner.cs">
       <Link>inliner.cs</Link>
     </Compile>
     <Compile Include="intrinsics.cs">
       <Link>intrinsics.cs</Link>
     </Compile>
-    <Compile Include="js-emit.cs">
-      <Link>js-emit.cs</Link>
-    </Compile>
-    <Compile Include="js-target.cs">
-      <Link>js-target.cs</Link>
-    </Compile>
     <Compile Include="">
-      <Link></Link>
+      <Link>
+      </Link>
     </Compile>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
