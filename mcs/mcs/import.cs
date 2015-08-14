@@ -390,6 +390,9 @@ namespace Mono.CSharp
 					}
 				}
 
+				if (spec == null)
+					return null;
+
 				++dtype.Position;
 				tspec[index] = spec;
 			}
@@ -809,6 +812,8 @@ namespace Mono.CSharp
 					return spec;
 
 				var targs = CreateGenericArguments (0, type.GetGenericArguments (), dtype);
+				if (targs == null)
+					return null;
 				if (declaringType == null) {
 					// Simple case, no nesting
 					spec = CreateType (type_def, null, new DynamicTypeReader (), canImportBaseType);
