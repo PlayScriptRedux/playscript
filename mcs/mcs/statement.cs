@@ -3086,12 +3086,7 @@ namespace Mono.CSharp {
 			if (rc.IsUnreachable)
 				return rc;
 
-			base.MarkReachable (rc);
-
-			if (scope_initializers != null) {
-				foreach (var si in scope_initializers)
-					si.MarkReachable (rc);
-			}
+			MarkReachableScope (rc);
 
 			foreach (var s in statements) {
 				rc = s.MarkReachable (rc);
@@ -3106,6 +3101,16 @@ namespace Mono.CSharp {
 			flags |= Flags.ReachableEnd;
 
 			return rc;
+		}
+
+		public void MarkReachableScope (Reachability rc)
+		{
+			base.MarkReachable (rc);
+
+			if (scope_initializers != null) {
+				foreach (var si in scope_initializers)
+					si.MarkReachable (rc);
+			}
 		}
 
 		public override bool Resolve (BlockContext bc)
@@ -5588,6 +5593,8 @@ namespace Mono.CSharp {
 				return rc;
 
 			base.MarkReachable (rc);
+
+			block.MarkReachableScope (rc);
 
 			if (block.Statements.Count == 0)
 				return rc;
