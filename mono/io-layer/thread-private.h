@@ -30,7 +30,6 @@ typedef enum {
 
 struct _WapiHandle_thread
 {
-	guint has_apc : 1;
 	pthread_t id;
 	GPtrArray *owned_mutexes;
 	/* 
@@ -41,6 +40,8 @@ struct _WapiHandle_thread
 	 */
 	gpointer wait_handle;
 };
+
+typedef struct _WapiHandle_thread WapiHandle_thread;
 
 typedef struct
 {

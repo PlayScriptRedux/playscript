@@ -744,7 +744,15 @@ namespace MonoTests.System.Net {
 		[Test]
 		public void BindToSingleInterface ()
 		{
-			var machineAddress = Dns.GetHostAddresses (Dns.GetHostName ());
+			IPAddress [] machineAddress = null;
+
+			try {
+				machineAddress = Dns.GetHostAddresses (Dns.GetHostName ());
+			} catch (SocketException){
+				// The build hosts sometimes can not resolve the hostname
+				Assert.Ignore ("Hostname couldn't be resolved.");
+			}
+			
 			int port = 61234;
 			var h = new HttpListener ();
 			h.Prefixes.Add ("http://" + machineAddress [0] + ":" + port + "/");
