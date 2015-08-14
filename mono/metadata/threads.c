@@ -2520,17 +2520,16 @@ void mono_thread_init (MonoThreadStartCB start_cb,
 void mono_thread_cleanup (void)
 {
 #if !defined(HOST_WIN32) && !defined(RUN_IN_SUBTHREAD)
+	MonoThreadInfo *info;
+
 	/* The main thread must abandon any held mutexes (particularly
 	 * important for named mutexes as they are shared across
 	 * processes, see bug 74680.)  This will happen when the
 	 * thread exits, but if it's not running in a subthread it
 	 * won't exit in time.
 	 */
-	/* Using non-w32 API is a nasty kludge, but I couldn't find
-	 * anything in the documentation that would let me do this
-	 * here yet still be safe to call on windows.
-	 */
-	_wapi_thread_signal_self (mono_environment_exitcode_get ());
+	info = mono_thread_info_current ();
+	wapi_thread_handle_set_exited (info->handle, mono_environment_exitcode_get ());
 #endif
 
 #if 0
@@ -2713,7 +2712,7 @@ static void build_wait_tids (gpointer key, gpointer value, gpointer user)
 			return;
 		}
 
-		handle = OpenThread (THREAD_ALL_ACCESS, TRUE, thread->tid);
+		handle = mono_threads_open_thread_handle (thread->handle, (MonoNativeThreadId)thread->tid);
 		if (handle == NULL) {
 			THREAD_DEBUG (g_message ("%s: ignoring unopenable thread %"G_GSIZE_FORMAT, __func__, (gsize)thread->tid));
 			return;
@@ -2753,7 +2752,7 @@ remove_and_abort_threads (gpointer key, gpointer value, gpointer user)
 	if (thread->tid != self && (thread->state & ThreadState_Background) != 0 &&
 		!(thread->flags & MONO_THREAD_FLAG_DONT_MANAGE)) {
 	
-		handle = OpenThread (THREAD_ALL_ACCESS, TRUE, thread->tid);
+		handle = mono_threads_open_thread_handle (thread->handle, (MonoNativeThreadId)thread->tid);
 		if (handle == NULL)
 			return FALSE;
 
@@ -2937,7 +2936,7 @@ collect_threads_for_suspend (gpointer key, gpointer value, gpointer user_data)
 		return;
 
 	if (wait->num<MAXIMUM_WAIT_OBJECTS) {
-		handle = OpenThread (THREAD_ALL_ACCESS, TRUE, thread->tid);
+		handle = mono_threads_open_thread_handle (thread->handle, (MonoNativeThreadId)thread->tid);
 		if (handle == NULL)
 			return;
 
@@ -3099,7 +3098,7 @@ collect_threads (gpointer key, gpointer value, gpointer user_data)
 	HANDLE handle;
 
 	if (wait->num<MAXIMUM_WAIT_OBJECTS) {
-		handle = OpenThread (THREAD_ALL_ACCESS, TRUE, thread->tid);
+		handle = mono_threads_open_thread_handle (thread->handle, (MonoNativeThreadId)thread->tid);
 		if (handle == NULL)
 			return;
 
@@ -3393,7 +3392,7 @@ collect_appdomain_thread (gpointer key, gpointer value, gpointer user_data)
 		/* printf ("ABORTING THREAD %p BECAUSE IT REFERENCES DOMAIN %s.\n", thread->tid, domain->friendly_name); */
 
 		if(data->wait.num<MAXIMUM_WAIT_OBJECTS) {
-			HANDLE handle = OpenThread (THREAD_ALL_ACCESS, TRUE, thread->tid);
+			HANDLE handle = mono_threads_open_thread_handle (thread->handle, (MonoNativeThreadId)thread->tid);
 			if (handle == NULL)
 				return;
 			data->wait.handles [data->wait.num] = handle;

@@ -622,7 +622,7 @@ is_xdomain_ref_allowed (gpointer *ptr, char *obj, MonoDomain *domain)
 		return TRUE;
 
 #ifndef DISABLE_REMOTING
-	if (mono_class_has_parent_fast (o->vtable->klass, mono_defaults.real_proxy_class) &&
+	if (mono_defaults.real_proxy_class->supertypes && mono_class_has_parent_fast (o->vtable->klass, mono_defaults.real_proxy_class) &&
 			offset == G_STRUCT_OFFSET (MonoRealProxy, unwrapped_server))
 		return TRUE;
 #endif
@@ -897,7 +897,7 @@ process_object_for_domain_clearing (char *start, MonoDomain *domain)
 	/* The object could be a proxy for an object in the domain
 	   we're deleting. */
 #ifndef DISABLE_REMOTING
-	if (mono_class_has_parent_fast (vt->klass, mono_defaults.real_proxy_class)) {
+	if (mono_defaults.real_proxy_class->supertypes && mono_class_has_parent_fast (vt->klass, mono_defaults.real_proxy_class)) {
 		MonoObject *server = ((MonoRealProxy*)start)->unwrapped_server;
 
 		/* The server could already have been zeroed out, so
@@ -1932,7 +1932,7 @@ finish_gray_stack (int generation, GrayQueue *queue)
 		++ephemeron_rounds;
 	} while (!done_with_ephemerons);
 
-	sgen_scan_togglerefs (start_addr, end_addr, ctx);
+	sgen_mark_togglerefs (start_addr, end_addr, ctx);
 
 	if (sgen_need_bridge_processing ()) {
 		sgen_collect_bridge_objects (generation, ctx);
@@ -1945,6 +1945,8 @@ finish_gray_stack (int generation, GrayQueue *queue)
 	If we don't make sure it is empty we might wrongly see a live object as dead.
 	*/
 	sgen_drain_gray_stack (-1, ctx);
+
+	sgen_clear_togglerefs (start_addr, end_addr, ctx);
 
 	/*
 	We must clear weak links that don't track resurrection before processing object ready for
@@ -5019,6 +5021,11 @@ mono_gc_base_init (void)
 				sgen_register_test_bridge_callbacks (g_strdup (opt));
 				continue;
 			}
+			if (g_str_has_prefix (opt, "toggleref-test")) {
+				sgen_register_test_toggleref_callback ();
+				continue;
+			}
+
 #ifdef USER_CONFIG
 			if (g_str_has_prefix (opt, "nursery-size=")) {
 				long val;
