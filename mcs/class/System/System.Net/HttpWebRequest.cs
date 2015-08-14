@@ -1115,7 +1115,7 @@ namespace System.Net
 			if (e != null)
 				throw e;
 
-			//contentLength = -1;
+			contentLength = -1;
 			//bodyBufferLength = 0;
 			//bodyBuffer = null;
 			uriString = webResponse.Headers ["Location"];
@@ -1286,7 +1286,7 @@ namespace System.Net
 			writeStream.SetHeadersAsync (requestHeaders, result);
 		}
 
-		void SetWriteStreamCB(IAsyncResult ar)
+		void SetWriteStreamCB (IAsyncResult ar)
 		{
 			WebAsyncResult result = ar as WebAsyncResult;
 
