@@ -168,6 +168,8 @@ namespace Mono.CSharp {
 
 		public RuntimeVersion StdLibRuntimeVersion;
 
+		public string RuntimeMetadataVersion;
+
 		public bool WriteMetadataOnly;
 
 		readonly Dictionary<string,string> conditional_symbols;
@@ -1396,6 +1398,15 @@ namespace Mono.CSharp {
 					}
 					return ParseResult.Error;
 				}
+				return ParseResult.Success;
+
+			case "runtimemetadataversion":
+				if (value.Length == 0) {
+					Error_RequiresArgument (option);
+					return ParseResult.Error;
+				}
+
+				settings.RuntimeMetadataVersion = value;
 				return ParseResult.Success;
 
 			default:
