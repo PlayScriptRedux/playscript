@@ -2610,6 +2610,7 @@ static void wait_for_tids (struct wait_data *wait, guint32 timeout)
 		/*
 		 * On !win32, when the thread handle becomes signalled, it just means the thread has exited user code,
 		 * it can still run io-layer etc. code. So wait for it to really exit.
+		 * FIXME: This won't join threads which are not in the joinable_hash yet.
 		 */
 		mono_thread_join ((gpointer)tid);
 
@@ -4773,6 +4774,7 @@ mono_thread_join (gpointer tid)
 {
 #ifndef HOST_WIN32
 	pthread_t thread;
+	gboolean found = FALSE;
 
 	joinable_threads_lock ();
 	if (!joinable_threads)
@@ -4780,8 +4782,11 @@ mono_thread_join (gpointer tid)
 	if (g_hash_table_lookup (joinable_threads, tid)) {
 		g_hash_table_remove (joinable_threads, tid);
 		joinable_thread_count --;
+		found = TRUE;
 	}
 	joinable_threads_unlock ();
+	if (!found)
+		return;
 	thread = (pthread_t)tid;
 	pthread_join (thread, NULL);
 #endif
