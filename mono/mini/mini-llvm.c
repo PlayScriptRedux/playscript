@@ -36,8 +36,11 @@ typedef struct {
 	const char *got_symbol;
 	GHashTable *plt_entries;
 	char **bb_names;
+	int bb_names_len;
 	GPtrArray *used;
 	LLVMTypeRef ptr_type;
+	MonoEERef *mono_ee;
+	LLVMExecutionEngineRef ee;
 } MonoLLVMModule;
 
 /*
@@ -91,6 +94,8 @@ typedef struct {
 	gboolean *is_dead;
 	gboolean *unreachable;
 	int *pindexes;
+	LLVMValueRef imt_rgctx_loc;
+	GHashTable *llvm_types;
 
 	char temp_name [32];
 } EmitContext;
@@ -192,16 +197,14 @@ static LLVMRealPredicate fpcond_to_llvm_cond [] = {
 	LLVMRealUGT,
 };
 
-static LLVMExecutionEngineRef ee;
 static MonoNativeTlsKey current_cfg_tls_id;
 
-static MonoLLVMModule jit_module, aot_module;
-static gboolean jit_module_inited;
+static MonoLLVMModule aot_module;
 static int memset_param_count, memcpy_param_count;
 static const char *memset_func_name;
 static const char *memcpy_func_name;
 
-static void init_jit_module (void);
+static void init_jit_module (MonoDomain *domain);
 
 /*
  * IntPtrType:
@@ -368,6 +371,7 @@ type_to_llvm_type (EmitContext *ctx, MonoType *t)
 
 		if (klass->enumtype)
 			return type_to_llvm_type (ctx, mono_class_enum_basetype (klass));
+
 		ltype = g_hash_table_lookup (ctx->lmodule->llvm_types, klass);
 		if (!ltype) {
 			int i, size;
@@ -385,6 +389,7 @@ type_to_llvm_type (EmitContext *ctx, MonoType *t)
 			LLVMStructSetBody (ltype, eltypes, size, FALSE);
 			g_hash_table_insert (ctx->lmodule->llvm_types, klass, ltype);
 			g_free (eltypes);
+			g_free (name);
 		}
 		return ltype;
 	}
@@ -863,8 +868,10 @@ get_bb (EmitContext *ctx, MonoBasicBlock *bb)
 			sprintf (bb_name_buf, "EH_CLAUSE%d_BB%d", clause_index, bb->block_num);
 			bb_name = bb_name_buf;
 		} else if (bb->block_num < 256) {
-			if (!ctx->lmodule->bb_names)
-				ctx->lmodule->bb_names = g_new0 (char*, 256);
+			if (!ctx->lmodule->bb_names) {
+				ctx->lmodule->bb_names_len = 256;
+				ctx->lmodule->bb_names = g_new0 (char*, ctx->lmodule->bb_names_len);
+			}
 			if (!ctx->lmodule->bb_names [bb->block_num]) {
 				char *n;
 
@@ -1538,7 +1545,7 @@ emit_cond_system_exception (EmitContext *ctx, MonoBasicBlock *bb, const char *ex
 			 * - On x86, LLVM generated code doesn't push the arguments
 			 * - The trampoline takes the throw address as an arguments, not a pc offset.
 			 */
-			LLVMAddGlobalMapping (ee, callee, resolve_patch (ctx->cfg, MONO_PATCH_INFO_INTERNAL_METHOD, icall_name));
+			LLVMAddGlobalMapping (ctx->lmodule->ee, callee, resolve_patch (ctx->cfg, MONO_PATCH_INFO_INTERNAL_METHOD, icall_name));
 		}
 
 		mono_memory_barrier ();
@@ -1664,6 +1671,19 @@ emit_vtype_to_reg (EmitContext *ctx, LLVMBuilderRef builder, MonoType *t, LLVMVa
 }
 
 static LLVMValueRef
+build_alloca_llvm_type (EmitContext *ctx, LLVMTypeRef t, int align)
+{
+	/*
+	 * Have to place all alloca's at the end of the entry bb, since otherwise they would
+	 * get executed every time control reaches them.
+	 */
+	LLVMPositionBuilder (ctx->alloca_builder, get_bb (ctx, ctx->cfg->bb_entry), ctx->last_alloca);
+
+	ctx->last_alloca = mono_llvm_build_alloca (ctx->alloca_builder, t, NULL, align, "");
+	return ctx->last_alloca;
+}
+
+static LLVMValueRef
 build_alloca (EmitContext *ctx, MonoType *t)
 {
 	MonoClass *k = mono_class_from_mono_type (t);
@@ -1678,14 +1698,7 @@ build_alloca (EmitContext *ctx, MonoType *t)
 	while (mono_is_power_of_two (align) == -1)
 		align ++;
 
-	/*
-	 * Have to place all alloca's at the end of the entry bb, since otherwise they would
-	 * get executed every time control reaches them.
-	 */
-	LLVMPositionBuilder (ctx->alloca_builder, get_bb (ctx, ctx->cfg->bb_entry), ctx->last_alloca);
-
-	ctx->last_alloca = mono_llvm_build_alloca (ctx->alloca_builder, type_to_llvm_type (ctx, t), NULL, align, "");
-	return ctx->last_alloca;
+	return build_alloca_llvm_type (ctx, type_to_llvm_type (ctx, t), align);
 }
 
 /*
@@ -1926,7 +1939,7 @@ process_call (EmitContext *ctx, MonoBasicBlock *bb, LLVMBuilderRef *builder_ref,
 				target =
 					mono_create_jit_trampoline_in_domain (mono_domain_get (),
 														  call->method);
-				LLVMAddGlobalMapping (ee, callee, target);
+				LLVMAddGlobalMapping (ctx->lmodule->ee, callee, target);
 			}
 		}
 
@@ -1954,7 +1967,7 @@ process_call (EmitContext *ctx, MonoBasicBlock *bb, LLVMBuilderRef *builder_ref,
 			} else {
 				callee = LLVMAddFunction (module, "", llvm_sig);
 				target = (gpointer)mono_icall_get_wrapper (info);
-				LLVMAddGlobalMapping (ee, callee, target);
+				LLVMAddGlobalMapping (ctx->lmodule->ee, callee, target);
 			}
 		} else {
 			if (cfg->compile_aot) {
@@ -1984,11 +1997,11 @@ process_call (EmitContext *ctx, MonoBasicBlock *bb, LLVMBuilderRef *builder_ref,
 							LLVM_FAILURE (ctx, "trampoline with own cconv");
 #endif
 						target = mono_resolve_patch_target (cfg->method, cfg->domain, NULL, abs_ji, FALSE);
-						LLVMAddGlobalMapping (ee, callee, target);
+						LLVMAddGlobalMapping (ctx->lmodule->ee, callee, target);
 					}
 				}
 				if (!target)
-					LLVMAddGlobalMapping (ee, callee, (gpointer)call->fptr);
+					LLVMAddGlobalMapping (ctx->lmodule->ee, callee, (gpointer)call->fptr);
 			}
 		}
 	}
@@ -2020,12 +2033,31 @@ process_call (EmitContext *ctx, MonoBasicBlock *bb, LLVMBuilderRef *builder_ref,
 	if (call->rgctx_arg_reg) {
 		g_assert (values [call->rgctx_arg_reg]);
 		g_assert (sinfo.rgctx_arg_pindex < nargs);
+		/*
+		 * On ARM, the imt/rgctx argument is passed in a caller save register, but some of our trampolines etc. clobber it, leading to
+		 * problems is LLVM moves the arg assignment earlier. To work around this, save the argument into a stack slot and load
+		 * it using a volatile load.
+		 */
+#ifdef TARGET_ARM
+		if (!ctx->imt_rgctx_loc)
+			ctx->imt_rgctx_loc = build_alloca_llvm_type (ctx, ctx->lmodule->ptr_type, sizeof (gpointer));
+		LLVMBuildStore (builder, convert (ctx, ctx->values [call->rgctx_arg_reg], ctx->lmodule->ptr_type), ctx->imt_rgctx_loc);
+		args [sinfo.rgctx_arg_pindex] = mono_llvm_build_load (builder, ctx->imt_rgctx_loc, "", TRUE);
+#else
 		args [sinfo.rgctx_arg_pindex] = convert (ctx, values [call->rgctx_arg_reg], ctx->lmodule->ptr_type);
+#endif
 	}
 	if (call->imt_arg_reg) {
 		g_assert (values [call->imt_arg_reg]);
 		g_assert (sinfo.imt_arg_pindex < nargs);
+#ifdef TARGET_ARM
+		if (!ctx->imt_rgctx_loc)
+			ctx->imt_rgctx_loc = build_alloca_llvm_type (ctx, ctx->lmodule->ptr_type, sizeof (gpointer));
+		LLVMBuildStore (builder, convert (ctx, ctx->values [call->imt_arg_reg], ctx->lmodule->ptr_type), ctx->imt_rgctx_loc);
+		args [sinfo.imt_arg_pindex] = mono_llvm_build_load (builder, ctx->imt_rgctx_loc, "", TRUE);
+#else
 		args [sinfo.imt_arg_pindex] = convert (ctx, values [call->imt_arg_reg], ctx->lmodule->ptr_type);
+#endif
 	}
 
 	if (vretaddr) {
@@ -2202,7 +2234,7 @@ process_bb (EmitContext *ctx, MonoBasicBlock *bb)
 		} else {
 			personality = LLVMGetNamedFunction (module, "mono_personality");
 			if (InterlockedCompareExchange (&mapping_inited, 1, 0) == 0)
-				LLVMAddGlobalMapping (ee, personality, mono_personality);
+				LLVMAddGlobalMapping (ctx->lmodule->ee, personality, mono_personality);
 		}
 
 		i8ptr = LLVMPointerType (LLVMInt8Type (), 0);
@@ -2245,7 +2277,7 @@ process_bb (EmitContext *ctx, MonoBasicBlock *bb)
 
 			type_info = LLVMAddGlobal (module, i8ptr, ti_name);
 
-			LLVMAddGlobalMapping (ee, type_info, ti);
+			LLVMAddGlobalMapping (ctx->lmodule->ee, type_info, ti);
 		}
 
 		{
@@ -2356,6 +2388,15 @@ process_bb (EmitContext *ctx, MonoBasicBlock *bb)
 			break;
 		case OP_R4CONST:
 			values [ins->dreg] = LLVMConstFPExt (LLVMConstReal (LLVMFloatType (), *(float*)ins->inst_p0), LLVMDoubleType ());
+			break;
+		case OP_DUMMY_ICONST:
+			values [ins->dreg] = LLVMConstInt (LLVMInt32Type (), 0, FALSE);
+			break;
+		case OP_DUMMY_I8CONST:
+			values [ins->dreg] = LLVMConstInt (LLVMInt64Type (), 0, FALSE);
+			break;
+		case OP_DUMMY_R8CONST:
+			values [ins->dreg] = LLVMConstReal (LLVMDoubleType (), 0.0f);
 			break;
 		case OP_BR:
 			LLVMBuildBr (builder, get_bb (ctx, ins->inst_target_bb));
@@ -3427,6 +3468,8 @@ process_bb (EmitContext *ctx, MonoBasicBlock *bb)
 			LLVMBuildCall (builder, LLVMGetNamedFunction (module, memset_func_name), args, memset_param_count, "");
 			break;
 		}
+		case OP_DUMMY_VZERO:
+			break;
 
 		case OP_STOREV_MEMBASE:
 		case OP_LOADV_MEMBASE:
@@ -4053,9 +4096,9 @@ process_bb (EmitContext *ctx, MonoBasicBlock *bb)
 					 * LLVM doesn't push the exception argument, so we need a different
 					 * trampoline.
 					 */
-					LLVMAddGlobalMapping (ee, callee, resolve_patch (cfg, MONO_PATCH_INFO_INTERNAL_METHOD, rethrow ? "llvm_rethrow_exception_trampoline" : "llvm_throw_exception_trampoline"));
+					LLVMAddGlobalMapping (ctx->lmodule->ee, callee, resolve_patch (cfg, MONO_PATCH_INFO_INTERNAL_METHOD, rethrow ? "llvm_rethrow_exception_trampoline" : "llvm_throw_exception_trampoline"));
 #else
-					LLVMAddGlobalMapping (ee, callee, resolve_patch (cfg, MONO_PATCH_INFO_INTERNAL_METHOD, icall_name));
+					LLVMAddGlobalMapping (ctx->lmodule->ee, callee, resolve_patch (cfg, MONO_PATCH_INFO_INTERNAL_METHOD, icall_name));
 #endif
 				}
 
@@ -4202,6 +4245,8 @@ mono_llvm_check_method_supported (MonoCompile *cfg)
 		cfg->exception_message = g_strdup ("lmf");
 		cfg->disable_llvm = TRUE;
 	}
+	if (cfg->disable_llvm)
+		return;
 
 #if 1
 	for (i = 0; i < header->num_clauses; ++i) {
@@ -4213,8 +4258,11 @@ mono_llvm_check_method_supported (MonoCompile *cfg)
 			 */
 			cfg->exception_message = g_strdup ("nested clauses");
 			cfg->disable_llvm = TRUE;
+			break;
 		}
 	}
+	if (cfg->disable_llvm)
+		return;
 #endif
 
 	/* FIXME: */
@@ -4222,6 +4270,8 @@ mono_llvm_check_method_supported (MonoCompile *cfg)
 		cfg->exception_message = g_strdup ("dynamic.");
 		cfg->disable_llvm = TRUE;
 	}
+	if (cfg->disable_llvm)
+		return;
 }
 
 /*
@@ -4292,11 +4342,11 @@ mono_llvm_emit_method (MonoCompile *cfg)
 		method_name = mono_aot_get_method_name (cfg);
 		cfg->llvm_method_name = g_strdup (method_name);
 	} else {
-		init_jit_module ();
-		ctx->lmodule = &jit_module;
+		init_jit_module (cfg->domain);
+		ctx->lmodule = domain_jit_info (cfg->domain)->llvm_module;
 		method_name = mono_method_full_name (cfg->method, TRUE);
 	}
-	
+
 	module = ctx->module = ctx->lmodule->module;
 
 	if (cfg->gsharedvt)
@@ -4551,6 +4601,9 @@ mono_llvm_emit_method (MonoCompile *cfg)
 				g_assert (LLVMTypeOf (ctx->addresses [sreg1]) == LLVMTypeOf (values [phi->dreg]));
 				LLVMAddIncoming (values [phi->dreg], &ctx->addresses [sreg1], &in_bb, 1);
 			} else {
+				if (LLVMTypeOf (values [sreg1]) != LLVMTypeOf (values [phi->dreg]))
+					// FIXME:
+					LLVM_FAILURE (ctx, "incoming phi arg type mismatch");
 				g_assert (LLVMTypeOf (values [sreg1]) == LLVMTypeOf (values [phi->dreg]));
 				LLVMAddIncoming (values [phi->dreg], &values [sreg1], &in_bb, 1);
 			}
@@ -4596,12 +4649,12 @@ mono_llvm_emit_method (MonoCompile *cfg)
 
 		//LLVMVerifyFunction(method, 0);
 	} else {
-		mono_llvm_optimize_method (method);
+		mono_llvm_optimize_method (ctx->lmodule->mono_ee, method);
 
 		if (cfg->verbose_level > 1)
 			mono_llvm_dump_value (method);
 
-		cfg->native_code = LLVMGetPointerToGlobal (ee, method);
+		cfg->native_code = LLVMGetPointerToGlobal (ctx->lmodule->ee, method);
 
 		/* Set by emit_cb */
 		g_assert (cfg->code_len);
@@ -4851,6 +4904,8 @@ dlsym_cb (const char *name, void **symbol)
 		g_assert (current);
 
 		err = mono_dl_symbol (current, name, symbol);
+
+		mono_dl_close (current);
 	}
 #ifdef MONO_ARCH_HAVE_CREATE_LLVM_NATIVE_THUNK
 	*symbol = (char*)mono_arch_create_llvm_native_thunk (mono_domain_get (), (guint8*)(*symbol));
@@ -5134,34 +5189,43 @@ mono_llvm_init (void)
 }
 
 static void
-init_jit_module (void)
+init_jit_module (MonoDomain *domain)
 {
 	MonoJitICallInfo *info;
+	MonoJitDomainInfo *dinfo;
+	MonoLLVMModule *module;
+	char *name;
 
-	if (jit_module_inited)
+	dinfo = domain_jit_info (domain);
+	if (dinfo->llvm_module)
 		return;
 
 	mono_loader_lock ();
 
-	if (jit_module_inited) {
+	if (dinfo->llvm_module) {
 		mono_loader_unlock ();
 		return;
 	}
 
-	jit_module.module = LLVMModuleCreateWithName ("mono");
+	module = g_new0 (MonoLLVMModule, 1);
 
-	ee = mono_llvm_create_ee (LLVMCreateModuleProviderForExistingModule (jit_module.module), alloc_cb, emitted_cb, exception_cb, dlsym_cb);
+	name = g_strdup_printf ("mono-%s", domain->friendly_name);
+	module->module = LLVMModuleCreateWithName (name);
 
-	add_intrinsics (jit_module.module);
-	add_types (&jit_module);
+	module->mono_ee = mono_llvm_create_ee (LLVMCreateModuleProviderForExistingModule (module->module), alloc_cb, emitted_cb, exception_cb, dlsym_cb, &module->ee);
 
-	jit_module.llvm_types = g_hash_table_new (NULL, NULL);
+	add_intrinsics (module->module);
+	add_types (module);
+
+	module->llvm_types = g_hash_table_new (NULL, NULL);
 
 	info = mono_find_jit_icall_by_name ("llvm_resume_unwind_trampoline");
 	g_assert (info);
-	LLVMAddGlobalMapping (ee, LLVMGetNamedFunction (jit_module.module, "llvm_resume_unwind_trampoline"), (void*)info->func);
+	LLVMAddGlobalMapping (module->ee, LLVMGetNamedFunction (module->module, "llvm_resume_unwind_trampoline"), (void*)info->func);
 
-	jit_module_inited = TRUE;
+	mono_memory_barrier ();
+
+	dinfo->llvm_module = module;
 
 	mono_loader_unlock ();
 }
@@ -5169,16 +5233,37 @@ init_jit_module (void)
 void
 mono_llvm_cleanup (void)
 {
-	if (ee)
-		mono_llvm_dispose_ee (ee);
-
-	if (jit_module.llvm_types)
-		g_hash_table_destroy (jit_module.llvm_types);
-
 	if (aot_module.module)
 		LLVMDisposeModule (aot_module.module);
 
 	LLVMContextDispose (LLVMGetGlobalContext ());
+}
+
+void
+mono_llvm_free_domain_info (MonoDomain *domain)
+{
+	MonoJitDomainInfo *info = domain_jit_info (domain);
+	MonoLLVMModule *module = info->llvm_module;
+	int i;
+
+	if (!module)
+		return;
+
+	if (module->llvm_types)
+		g_hash_table_destroy (module->llvm_types);
+
+	mono_llvm_dispose_ee (module->mono_ee);
+
+	if (module->bb_names) {
+		for (i = 0; i < module->bb_names_len; ++i)
+			g_free (module->bb_names [i]);
+		g_free (module->bb_names);
+	}
+	//LLVMDisposeModule (module->module);
+
+	g_free (module);
+
+	info->llvm_module = NULL;
 }
 
 void

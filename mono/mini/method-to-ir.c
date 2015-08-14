@@ -1934,11 +1934,24 @@ emit_push_lmf (MonoCompile *cfg)
 		if (!cfg->lmf_addr_var)
 			cfg->lmf_addr_var = mono_compile_create_var (cfg, &mono_defaults.int_class->byval_arg, OP_LOCAL);
 
+#ifdef HOST_WIN32
+		ins = mono_get_jit_tls_intrinsic (cfg);
+		if (ins) {
+			int jit_tls_dreg = ins->dreg;
+
+			MONO_ADD_INS (cfg->cbb, ins);
+			lmf_reg = alloc_preg (cfg);
+			EMIT_NEW_BIALU_IMM (cfg, lmf_ins, OP_PADD_IMM, lmf_reg, jit_tls_dreg, G_STRUCT_OFFSET (MonoJitTlsData, lmf));
+		} else {
+			lmf_ins = mono_emit_jit_icall (cfg, mono_get_lmf_addr, NULL);
+		}
+#else
 		lmf_ins = mono_get_lmf_addr_intrinsic (cfg);
 		if (lmf_ins) 
 			MONO_ADD_INS (cfg->cbb, lmf_ins);
 		else
 			lmf_ins = mono_emit_jit_icall (cfg, mono_get_lmf_addr, NULL);
+#endif
 		lmf_ins->dreg = cfg->lmf_addr_var->dreg;
 
 		EMIT_NEW_VARLOADA (cfg, ins, cfg->lmf_var, NULL);
@@ -3963,6 +3976,21 @@ mini_class_has_reference_variant_generic_argument (MonoCompile *cfg, MonoClass *
 // FIXME: This doesn't work yet (class libs tests fail?)
 #define is_complex_isinst(klass) (TRUE || (klass->flags & TYPE_ATTRIBUTE_INTERFACE) || klass->rank || mono_class_is_nullable (klass) || mono_class_is_marshalbyref (klass) || (klass->flags & TYPE_ATTRIBUTE_SEALED) || klass->byval_arg.type == MONO_TYPE_VAR || klass->byval_arg.type == MONO_TYPE_MVAR)
 
+static MonoInst*
+emit_castclass_with_cache (MonoCompile *cfg, MonoClass *klass, MonoInst **args, MonoBasicBlock **out_bblock)
+{
+	MonoMethod *mono_castclass;
+	MonoInst *res;
+
+	mono_castclass = mono_marshal_get_castclass_with_cache ();
+
+	save_cast_details (cfg, klass, args [0]->dreg, TRUE, out_bblock);
+	res = mono_emit_method_call (cfg, mono_castclass, args, NULL);
+	reset_cast_details (cfg);
+
+	return res;
+}
+
 /*
  * Returns NULL and set the cfg exception on error.
  */
@@ -3978,7 +4006,6 @@ handle_castclass (MonoCompile *cfg, MonoClass *klass, MonoInst *src, int context
 		MonoInst *args [3];
 
 		if(mini_class_has_reference_variant_generic_argument (cfg, klass, context_used) || is_complex_isinst (klass)) {
-			MonoMethod *mono_castclass = mono_marshal_get_castclass_with_cache ();
 			MonoInst *cache_ins;
 
 			cache_ins = emit_get_rgctx_klass (cfg, context_used, klass, MONO_RGCTX_INFO_CAST_CACHE);
@@ -3992,7 +4019,7 @@ handle_castclass (MonoCompile *cfg, MonoClass *klass, MonoInst *src, int context
 			/* cache */
 			args [2] = cache_ins;
 
-			return mono_emit_method_call (cfg, mono_castclass, args, NULL);
+			return emit_castclass_with_cache (cfg, klass, args, NULL);
 		}
 
 		klass_inst = emit_get_rgctx_klass (cfg, context_used, klass, MONO_RGCTX_INFO_KLASS);
@@ -4588,7 +4615,8 @@ mono_method_check_inlining (MonoCompile *cfg, MonoMethod *method)
 			vtable = mono_class_vtable (cfg->domain, method->klass);
 			if (!vtable)
 				return FALSE;
-			mono_runtime_class_init (vtable);
+			if (!cfg->compile_aot)
+				mono_runtime_class_init (vtable);
 		} else if (method->klass->flags & TYPE_ATTRIBUTE_BEFORE_FIELD_INIT) {
 			if (cfg->run_cctors && method->klass->has_cctor) {
 				/*FIXME it would easier and lazier to just use mono_class_try_get_vtable */
@@ -5749,7 +5777,34 @@ emit_init_rvar (MonoCompile *cfg, int dreg, MonoType *rtype)
 }
 
 static void
-emit_init_local (MonoCompile *cfg, int local, MonoType *type)
+emit_dummy_init_rvar (MonoCompile *cfg, int dreg, MonoType *rtype)
+{
+	int t;
+
+	rtype = mini_replace_type (rtype);
+	t = rtype->type;
+
+	if (rtype->byref) {
+		MONO_EMIT_NEW_DUMMY_INIT (cfg, dreg, OP_DUMMY_PCONST);
+	} else if (t >= MONO_TYPE_BOOLEAN && t <= MONO_TYPE_U4) {
+		MONO_EMIT_NEW_DUMMY_INIT (cfg, dreg, OP_DUMMY_ICONST);
+	} else if (t == MONO_TYPE_I8 || t == MONO_TYPE_U8) {
+		MONO_EMIT_NEW_DUMMY_INIT (cfg, dreg, OP_DUMMY_I8CONST);
+	} else if (t == MONO_TYPE_R4 || t == MONO_TYPE_R8) {
+		MONO_EMIT_NEW_DUMMY_INIT (cfg, dreg, OP_DUMMY_R8CONST);
+	} else if ((t == MONO_TYPE_VALUETYPE) || (t == MONO_TYPE_TYPEDBYREF) ||
+		   ((t == MONO_TYPE_GENERICINST) && mono_type_generic_inst_is_valuetype (rtype))) {
+		MONO_EMIT_NEW_DUMMY_INIT (cfg, dreg, OP_DUMMY_VZERO);
+	} else if (((t == MONO_TYPE_VAR) || (t == MONO_TYPE_MVAR)) && mini_type_var_is_vt (cfg, rtype)) {
+		MONO_EMIT_NEW_DUMMY_INIT (cfg, dreg, OP_DUMMY_VZERO);
+	} else {
+		emit_init_rvar (cfg, dreg, rtype);
+	}
+}
+
+/* If INIT is FALSE, emit dummy initialization statements to keep the IR valid */
+static void
+emit_init_local (MonoCompile *cfg, int local, MonoType *type, gboolean init)
 {
 	MonoInst *var = cfg->locals [local];
 	if (COMPILE_SOFT_FLOAT (cfg)) {
@@ -5758,7 +5813,10 @@ emit_init_local (MonoCompile *cfg, int local, MonoType *type)
 		emit_init_rvar (cfg, reg, type);
 		EMIT_NEW_LOCSTORE (cfg, store, local, cfg->cbb->last_ins);
 	} else {
-		emit_init_rvar (cfg, var->dreg, type);
+		if (init)
+			emit_init_rvar (cfg, var->dreg, type);
+		else
+			emit_dummy_init_rvar (cfg, var->dreg, type);
 	}
 }
 
@@ -6404,7 +6462,7 @@ emit_optimized_ldloca_ir (MonoCompile *cfg, unsigned char *ip, unsigned char *en
 		klass = mini_get_class (cfg->current_method, token, cfg->generic_context);
 		CHECK_TYPELOAD (klass);
 		type = mini_replace_type (&klass->byval_arg);
-		emit_init_local (cfg, local, type);
+		emit_init_local (cfg, local, type, TRUE);
 		return ip + 6;
 	}
 load_error:
@@ -6685,7 +6743,6 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 	cfg->cil_start = ip;
 	end = ip + header->code_size;
 	cfg->stat_cil_code_size += header->code_size;
-	init_locals = header->init_locals;
 
 	seq_points = cfg->gen_seq_points && cfg->method == method;
 #ifdef PLATFORM_ANDROID
@@ -6719,9 +6776,14 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 
 	/* 
 	 * Methods without init_locals set could cause asserts in various passes
-	 * (#497220).
+	 * (#497220). To work around this, we emit dummy initialization opcodes
+	 * (OP_DUMMY_ICONST etc.) which generate no code. These are only supported
+	 * on some platforms.
 	 */
-	init_locals = TRUE;
+	if ((cfg->opt & MONO_OPT_UNSAFE) && ARCH_HAVE_DUMMY_INIT)
+		init_locals = header->init_locals;
+	else
+		init_locals = TRUE;
 
 	method_definition = method;
 	while (method_definition->is_inflated) {
@@ -6967,21 +7029,16 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 		}
 	}
 	
-	if ((init_locals || (cfg->method == method && (cfg->opt & MONO_OPT_SHARED))) || cfg->compile_aot || security || pinvoke) {
-		/* we use a separate basic block for the initialization code */
-		NEW_BBLOCK (cfg, init_localsbb);
-		cfg->bb_init = init_localsbb;
-		init_localsbb->real_offset = cfg->real_offset;
-		start_bblock->next_bb = init_localsbb;
-		init_localsbb->next_bb = bblock;
-		link_bblock (cfg, start_bblock, init_localsbb);
-		link_bblock (cfg, init_localsbb, bblock);
+	/* we use a separate basic block for the initialization code */
+	NEW_BBLOCK (cfg, init_localsbb);
+	cfg->bb_init = init_localsbb;
+	init_localsbb->real_offset = cfg->real_offset;
+	start_bblock->next_bb = init_localsbb;
+	init_localsbb->next_bb = bblock;
+	link_bblock (cfg, start_bblock, init_localsbb);
+	link_bblock (cfg, init_localsbb, bblock);
 		
-		cfg->cbb = init_localsbb;
-	} else {
-		start_bblock->next_bb = bblock;
-		link_bblock (cfg, start_bblock, bblock);
-	}
+	cfg->cbb = init_localsbb;
 
 	if (cfg->gsharedvt && cfg->method == method) {
 		MonoGSharedVtMethodInfo *info;
@@ -9504,7 +9561,6 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 			context_used = mini_class_check_context_used (cfg, klass);
 
 			if (!context_used && mini_class_has_reference_variant_generic_argument (cfg, klass, context_used)) {
-				MonoMethod *mono_castclass = mono_marshal_get_castclass_with_cache ();
 				MonoInst *args [3];
 
 				/* obj */
@@ -9521,9 +9577,7 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 
 				/*The wrapper doesn't inline well so the bloat of inlining doesn't pay off.*/
 
-				save_cast_details (cfg, klass, sp [0]->dreg, TRUE, &bblock);
-				*sp++ = mono_emit_method_call (cfg, mono_castclass, args, NULL);
-				reset_cast_details (cfg);
+				*sp++ = emit_castclass_with_cache (cfg, klass, args, &bblock);
 				ip += 5;
 				inline_costs += 2;
 			} else if (!context_used && (mono_class_is_marshalbyref (klass) || klass->flags & TYPE_ATTRIBUTE_INTERFACE)) {
@@ -9642,7 +9696,6 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 			if (generic_class_is_reference_type (cfg, klass)) {
 				/* CASTCLASS FIXME kill this huge slice of duplicated code*/
 				if (!context_used && mini_class_has_reference_variant_generic_argument (cfg, klass, context_used)) {
-					MonoMethod *mono_castclass = mono_marshal_get_castclass_with_cache ();
 					MonoInst *args [3];
 
 					/* obj */
@@ -9658,8 +9711,8 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 					else
 						EMIT_NEW_PCONST (cfg, args [2], mono_domain_alloc0 (cfg->domain, sizeof (gpointer)));
 
-					/*The wrapper doesn't inline well so the bloat of inlining doesn't pay off.*/
-					*sp++ = mono_emit_method_call (cfg, mono_castclass, args, NULL);
+					/* The wrapper doesn't inline well so the bloat of inlining doesn't pay off. */
+					*sp++ = emit_castclass_with_cache (cfg, klass, args, &bblock);
 					ip += 5;
 					inline_costs += 2;
 				} else if (!context_used && (mono_class_is_marshalbyref (klass) || klass->flags & TYPE_ATTRIBUTE_INTERFACE)) {
@@ -11924,11 +11977,11 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 	if (cfg->method == method && cfg->got_var)
 		mono_emit_load_got_addr (cfg);
 
-	if (init_locals) {
+	if (init_localsbb) {
 		cfg->cbb = init_localsbb;
 		cfg->ip = NULL;
 		for (i = 0; i < header->num_locals; ++i) {
-			emit_init_local (cfg, i, header->locals [i]);
+			emit_init_local (cfg, i, header->locals [i], init_locals);
 		}
 	}
 

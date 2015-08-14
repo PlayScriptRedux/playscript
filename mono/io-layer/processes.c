@@ -142,6 +142,7 @@ static void mono_processes_cleanup (void);
 
 static mono_once_t process_current_once=MONO_ONCE_INIT;
 static gpointer current_process=NULL;
+static char *cli_launcher;
 
 static mono_once_t process_ops_once=MONO_ONCE_INIT;
 
@@ -380,6 +381,9 @@ gboolean ShellExecuteEx (WapiShellExecuteInfo *sei)
 				SetLastError (ERROR_INVALID_DATA);
 			return FALSE;
 		}
+		/* Shell exec should not return a process handle when it spawned a GUI thing, like a browser. */
+		CloseHandle (process_info.hProcess);
+		process_info.hProcess = NULL;
 	}
 	
 	if (sei->fMask & SEE_MASK_NOCLOSEPROCESS) {
@@ -803,10 +807,13 @@ gboolean CreateProcess (const gunichar2 *appname, const gunichar2 *cmdline,
 	 * them using the same mono binary that started us.
 	 */
 	if (is_managed_binary (prog)) {
-		gunichar2 *newapp, *newcmd;
+		gunichar2 *newapp = NULL, *newcmd;
 		gsize bytes_ignored;
 
-		newapp = mono_unicode_from_external ("mono", &bytes_ignored);
+		if (cli_launcher)
+			newapp = mono_unicode_from_external (cli_launcher, &bytes_ignored);
+		else
+			newapp = mono_unicode_from_external ("mono", &bytes_ignored);
 
 		if (newapp != NULL) {
 			if (appname != NULL) {
@@ -2257,6 +2264,42 @@ retry:
 	return ret;
 }
 
+/*
+ * wapi_process_get_path:
+ *
+ *   Return the full path of the executable of the process PID, or NULL if it cannot be determined.
+ * Returns malloc-ed memory.
+ */
+gchar*
+wapi_process_get_path (pid_t pid)
+{
+#if defined(PLATFORM_MACOSX) && !defined(__mono_ppc__) && defined(TARGET_OSX)
+	gchar buf [PROC_PIDPATHINFO_MAXSIZE];
+	int res;
+
+	res = proc_pidpath (pid, buf, sizeof (buf));
+	if (res <= 0)
+		return NULL;
+	if (buf [0] == '\0')
+		return NULL;
+	return g_strdup (buf);
+#else
+	return get_process_name_from_proc (pid);
+#endif
+}
+
+/*
+ * wapi_process_set_cli_launcher:
+ *
+ *   Set the full path of the runtime executable used to launch managed exe's.
+ */
+void
+wapi_process_set_cli_launcher (char *path)
+{
+	g_free (cli_launcher);
+	cli_launcher = path ? g_strdup (path) : NULL;
+}
+
 static guint32 get_module_name (gpointer process, gpointer module,
 				gunichar2 *basename, guint32 size,
 				gboolean base)
@@ -2898,7 +2941,7 @@ static guint32 process_wait (gpointer handle, guint32 timeout, gboolean alertabl
 	gboolean spin;
 	gpointer current_thread;
 
-	current_thread = _wapi_thread_handle_from_id (pthread_self ());
+	current_thread = wapi_get_current_thread_handle ();
 	if (current_thread == NULL) {
 		SetLastError (ERROR_INVALID_HANDLE);
 		return WAIT_FAILED;
@@ -3022,3 +3065,8 @@ static guint32 process_wait (gpointer handle, guint32 timeout, gboolean alertabl
 	return WAIT_OBJECT_0;
 }
 
+void
+wapi_processes_cleanup (void)
+{
+	g_free (cli_launcher);
+}

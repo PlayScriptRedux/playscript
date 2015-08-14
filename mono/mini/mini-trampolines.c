@@ -58,19 +58,24 @@ rgctx_tramp_info_hash (gconstpointer data)
 	return GPOINTER_TO_UINT (info->m) ^ GPOINTER_TO_UINT (info->addr);
 }
 
-/*
+/**
  * mono_create_static_rgctx_trampoline:
+ * @m: the mono method to create a trampoline for
+ * @addr: the address to jump to (where the compiled code for M lives)
  *
- *   Return a static rgctx trampoline for M which branches to ADDR which should
+ * Creates a static rgctx trampoline for M which branches to ADDR which should
  * point to the compiled code of M.
  *
- *   Static rgctx trampolines are used when a shared generic method which doesn't
+ * Static rgctx trampolines are used when a shared generic method which doesn't
  * have a this argument is called indirectly, ie. from code which can't pass in
  * the rgctx argument. The trampoline sets the rgctx argument and jumps to the
  * methods code. These trampolines are similar to the unbox trampolines, they
  * perform the same task as the static rgctx wrappers, but they are smaller/faster,
  * and can be made to work with full AOT.
+ *
  * On PPC addr should be an ftnptr and the return value is an ftnptr too.
+ *
+ * Returns the generated static rgctx trampoline.
  */
 gpointer
 mono_create_static_rgctx_trampoline (MonoMethod *m, gpointer addr)
@@ -274,12 +279,19 @@ mini_jit_info_is_gsharedvt (MonoJitInfo *ji)
 		return FALSE;
 }
 
-/*
+/**
  * mini_add_method_trampoline:
+ * @orig_method: the method the caller originally called i.e. an iface method, or NULL.
+ * @m: 
+ * @compiled_method:
+ * @add_static_rgctx_tramp: adds a static rgctx trampoline
+ * @add_unbox_tramp: adds an unboxing trampoline
  *
- *   Add static rgctx/gsharedvt_in/unbox trampolines to M/COMPILED_METHOD if needed. Return the trampoline address, or
- * COMPILED_METHOD if no trampoline is needed.
- * ORIG_METHOD is the method the caller originally called i.e. an iface method, or NULL.
+ * Add static rgctx/gsharedvt_in/unbox trampolines to
+ * M/COMPILED_METHOD if needed.
+ *
+ * Returns the trampoline address, or COMPILED_METHOD if no trampoline
+ * is needed.
  */
 gpointer
 mini_add_method_trampoline (MonoMethod *orig_method, MonoMethod *m, gpointer compiled_method, gboolean add_static_rgctx_tramp, gboolean add_unbox_tramp)
@@ -417,6 +429,8 @@ common_call_trampoline (mgreg_t *regs, guint8 *code, MonoMethod *m, guint8* tram
 			vtable_slot_to_patch = NULL;
 		} else {
 			gboolean lookup_aot;
+
+			mono_class_interface_offset_with_variance (vt->klass, m->klass, &variance_used);
 
 			if (m->is_inflated && ((MonoMethodInflated*)m)->context.method_inst) {
 				/* Generic virtual method */
@@ -693,7 +707,7 @@ common_call_trampoline (mgreg_t *regs, guint8 *code, MonoMethod *m, guint8* tram
 /**
  * mono_magic_trampoline:
  *
- *   This trampoline handles normal calls from JITted code.
+ * This trampoline handles normal calls from JITted code.
  */
 gpointer
 mono_magic_trampoline (mgreg_t *regs, guint8 *code, gpointer arg, guint8* tramp)
@@ -703,10 +717,10 @@ mono_magic_trampoline (mgreg_t *regs, guint8 *code, gpointer arg, guint8* tramp)
 	return common_call_trampoline (regs, code, arg, tramp, NULL, NULL, FALSE);
 }
 
-/*
+/**
  * mono_vcall_trampoline:
  *
- *   This trampoline handles virtual calls.
+ * This trampoline handles virtual calls.
  */
 static gpointer
 mono_vcall_trampoline (mgreg_t *regs, guint8 *code, int slot, guint8 *tramp)
@@ -817,10 +831,10 @@ mono_generic_virtual_remoting_trampoline (mgreg_t *regs, guint8 *code, MonoMetho
 }
 #endif
 
-/*
+/**
  * mono_aot_trampoline:
  *
- *   This trampoline handles calls made from AOT code. We try to bypass the 
+ * This trampoline handles calls made from AOT code. We try to bypass the 
  * normal JIT compilation logic to avoid loading the metadata for the method.
  */
 #ifdef MONO_ARCH_AOT_SUPPORTED
@@ -972,6 +986,7 @@ typedef struct {
 	gpointer impl_this;
 	gpointer impl_nothis;
 	MonoMethod *method;
+	MonoMethodSignature *invoke_sig;
 	MonoMethodSignature *sig;
 	gboolean need_rgctx_tramp;
 } DelegateTrampInfo;
@@ -993,6 +1008,7 @@ create_delegate_trampoline_data (MonoDomain *domain, MonoClass *klass, MonoMetho
 
 	tramp_data = mono_domain_alloc (domain, sizeof (DelegateTrampInfo));
 	tramp_data->invoke = invoke;
+	tramp_data->invoke_sig = mono_method_signature (invoke);
 	tramp_data->impl_this = mono_arch_get_delegate_invoke_impl (mono_method_signature (invoke), TRUE);
 	tramp_data->impl_nothis = mono_arch_get_delegate_invoke_impl (mono_method_signature (invoke), FALSE);
 	tramp_data->method = method;
@@ -1019,7 +1035,7 @@ mono_delegate_trampoline (mgreg_t *regs, guint8 *code, gpointer *arg, guint8* tr
 	MonoJitInfo *ji;
 	MonoMethod *m;
 	MonoMethod *method = NULL;
-	gboolean multicast, callvirt = FALSE;
+	gboolean multicast, callvirt = FALSE, closed_over_null = FALSE;
 	gboolean need_rgctx_tramp = FALSE;
 	gboolean need_unbox_tramp = FALSE;
 	gboolean enable_caching = TRUE;
@@ -1087,6 +1103,25 @@ mono_delegate_trampoline (mgreg_t *regs, guint8 *code, gpointer *arg, guint8* tr
 		}
 
 		callvirt = !delegate->target && sig->hasthis;
+		if (callvirt)
+			closed_over_null = tramp_info->invoke_sig->param_count == sig->param_count;
+
+		if (callvirt && !closed_over_null) {
+			/*
+			 * The delegate needs to make a virtual call to the target method using its
+			 * first argument as the receiver. This is hard to support in full-aot, so
+			 * optimize it in some cases if possible.
+			 * If the target method is not virtual or is in a sealed class,
+			 * the vcall will call it directly.
+			 * If the call doesn't return a valuetype, then the vcall uses the same calling
+			 * convention as a normal call.
+			 */
+			if (((method->klass->flags & TYPE_ATTRIBUTE_SEALED) || !(method->flags & METHOD_ATTRIBUTE_VIRTUAL)) && !MONO_TYPE_ISSTRUCT (sig->ret)) {
+				callvirt = FALSE;
+				enable_caching = FALSE;
+			}
+		}
+
 		if (delegate->target && 
 			method->flags & METHOD_ATTRIBUTE_VIRTUAL && 
 			method->flags & METHOD_ATTRIBUTE_ABSTRACT &&

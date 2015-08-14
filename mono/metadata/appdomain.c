@@ -2196,7 +2196,7 @@ zero_static_data (MonoVTable *vtable)
 	void *data;
 
 	if (klass->has_static_refs && (data = mono_vtable_get_static_field_data (vtable)))
-		mono_gc_bzero (data, mono_class_data_size (klass));
+		mono_gc_bzero_aligned (data, mono_class_data_size (klass));
 }
 
 typedef struct unload_data {
@@ -2217,7 +2217,7 @@ unload_data_unref (unload_data *data)
 			g_free (data);
 			return;
 		}
-	} while (InterlockedCompareExchange (&data->refcount, count, count - 1) != count);
+	} while (InterlockedCompareExchange (&data->refcount, count - 1, count) != count);
 }
 
 static void

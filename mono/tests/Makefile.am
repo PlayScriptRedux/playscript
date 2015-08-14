@@ -389,11 +389,13 @@ BASE_TEST_CS_SRC=		\
 	bug-6148.cs	\
 	assembly_append_ordering.cs	\
 	bug-10127.cs	\
+	bug-18026.cs	\
 	allow-synchronous-major.cs	\
 	unload-appdomain-on-shutdown.cs	\
 	block_guard_restore_aligment_on_exit.cs	\
 	finally_block_ending_in_dead_bb.cs	\
-	thread_static_gc_layout.cs
+	thread_static_gc_layout.cs \
+	sleep.cs
 
 TEST_CS_SRC_DIST=	\
 	$(BASE_TEST_CS_SRC)	\
@@ -700,9 +702,13 @@ endif
 if NACL_CODEGEN
 test-messages:
 else
+if HOST_WIN32
+test-messages:
+else
 test-messages: w32message.exe
 	> test_messages.zero
 	$(with_mono_path) $(JITTEST_PROG_RUN) w32message.exe >& w32message.allout && cmp test_messages.zero w32message.allout
+endif
 endif
 
 if AMD64
@@ -890,7 +896,7 @@ debug-casts:
 	@$(MCS) -r:TestDriver.dll $(srcdir)/debug-casts.cs
 	@$(RUNTIME) --debug=casts debug-casts.exe
 
-EXTRA_DIST += sgen-bridge.cs sgen-descriptors.cs sgen-gshared-vtype.cs sgen-bridge-major-fragmentation.cs sgen-domain-unload.cs sgen-weakref-stress.cs sgen-cementing-stress.cs sgen-case-23400.cs 	finalizer-wait.cs critical-finalizers.cs sgen-domain-unload-2.cs sgen-suspend.cs sgen-new-threads-dont-join-stw.cs
+EXTRA_DIST += sgen-bridge.cs sgen-descriptors.cs sgen-gshared-vtype.cs sgen-bridge-major-fragmentation.cs sgen-domain-unload.cs sgen-weakref-stress.cs sgen-cementing-stress.cs sgen-case-23400.cs 	finalizer-wait.cs critical-finalizers.cs sgen-domain-unload-2.cs sgen-suspend.cs sgen-new-threads-dont-join-stw.cs sgen-bridge-xref.cs bug-17590.cs sgen-toggleref.cs
 
 
 #those are actually configurations, eg plain_sgen-descriptors.exe
@@ -905,7 +911,8 @@ SGEN_TESTS =	\
 	sgen-weakref-stress.exe	\
 	sgen-cementing-stress.exe	\
 	sgen-case-23400.exe	\
-	sgen-new-threads-dont-join-stw.exe
+	sgen-new-threads-dont-join-stw.exe	\
+	bug-17590.exe
 
 SGEN_CONFIGURATIONS =	\
 	"|plain"	\
@@ -945,7 +952,7 @@ sgen-regular-tests: $(SGEN_TESTS)
 	if [ $${failed} != 0 ]; then echo -e "\nFailed tests:\n"; \
 	  for i in $${failed_tests}; do echo $${i}; done; exit 1; fi
 
-sgen-bridge-tests: sgen-bridge.exe sgen-bridge-major-fragmentation.exe
+sgen-bridge-tests1: sgen-bridge.exe sgen-bridge-major-fragmentation.exe
 	@failed=0; \
 	passed=0; \
 	failed_tests="";\
@@ -969,7 +976,57 @@ sgen-bridge-tests: sgen-bridge.exe sgen-bridge-major-fragmentation.exe
 	if [ $${failed} != 0 ]; then echo -e "\nFailed tests:\n"; \
 	  for i in $${failed_tests}; do echo $${i}; done; exit 1; fi
 
-sgen-tests: sgen-regular-tests sgen-bridge-tests
+sgen-bridge-tests2: sgen-bridge-xref.exe
+	@failed=0; \
+	passed=0; \
+	failed_tests="";\
+	for test in $+; do	\
+		echo "...$$test";	\
+		for conf in $(SGEN_BRIDGE_CONFIGURATIONS); do 	\
+			name=`echo $$conf | cut -d\| -f 2`;	\
+			params=`echo $$conf | cut -d\| -f 1`;	\
+			test_name="$${test}|$${name}";	\
+			if MONO_GC_PARAMS="bridge=2Bridge$${params}" MONO_ENV_OPTIONS="--gc=sgen" $(srcdir)/test-driver '$(with_mono_path) $(JITTEST_PROG_RUN)' $$test_name "$(DISABLED_TESTS_SGEN)" 'dump-output' $(RUNTIME_ARGS);	\
+			then \
+				passed=`expr $${passed} + 1`; \
+			else \
+				if [ $$? = 2 ]; then break; fi; \
+				failed=`expr $${failed} + 1`; \
+				failed_tests="$${failed_tests} $$test_name"; \
+			fi \
+		done	\
+	done;	\
+	echo "$${passed} test(s) passed. $${failed} test(s) did not pass."; \
+	if [ $${failed} != 0 ]; then echo -e "\nFailed tests:\n"; \
+	  for i in $${failed_tests}; do echo $${i}; done; exit 1; fi
+
+sgen-toggleref-tests: sgen-toggleref.exe
+	@failed=0; \
+	passed=0; \
+	failed_tests="";\
+	for test in $+; do	\
+		echo "...$$test";	\
+		for conf in $(SGEN_CONFIGURATIONS); do 	\
+			name=`echo $$conf | cut -d\| -f 2`;	\
+			params=`echo $$conf | cut -d\| -f 1`;	\
+			test_name="$${test}|$${name}";	\
+			if MONO_GC_PARAMS="toggleref-test,$$params" MONO_ENV_OPTIONS="--gc=sgen" $(srcdir)/test-driver '$(with_mono_path) $(JITTEST_PROG_RUN)' $$test_name "$(DISABLED_TESTS_SGEN)" 'dump-output' $(RUNTIME_ARGS);	\
+			then \
+				passed=`expr $${passed} + 1`; \
+			else \
+				if [ $$? = 2 ]; then break; fi; \
+				failed=`expr $${failed} + 1`; \
+				failed_tests="$${failed_tests} $$test_name"; \
+			fi \
+		done	\
+	done;	\
+	echo "$${passed} test(s) passed. $${failed} test(s) did not pass."; \
+	if [ $${failed} != 0 ]; then echo -e "\nFailed tests:\n"; \
+	  for i in $${failed_tests}; do echo $${i}; done; exit 1; fi
+
+sgen-bridge-tests: sgen-bridge-tests1 sgen-bridge-tests2
+
+sgen-tests: sgen-regular-tests sgen-bridge-tests sgen-toggleref-tests
 
 AOT_CONFIGURATIONS=	\
 	"|regular"	\

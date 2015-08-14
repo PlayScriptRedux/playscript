@@ -76,6 +76,8 @@ namespace System.Threading.Tasks
 		CancellationToken token;
 		CancellationTokenRegistration? cancellationRegistration;
 
+		ExecutionContext ec;
+
 		internal const TaskCreationOptions WorkerTaskNotSupportedOptions = TaskCreationOptions.LongRunning | TaskCreationOptions.PreferFairness;
 
 		const TaskCreationOptions MaxTaskCreationOptions =
@@ -158,6 +160,8 @@ namespace System.Threading.Tasks
 
 			if (token.CanBeCanceled && !ignoreCancellation)
 				cancellationRegistration = token.Register (l => ((Task) l).CancelReal (), this);
+
+			ec = ExecutionContext.Capture (false, true);
 		}
 
 		static bool HasFlag (TaskCreationOptions opt, TaskCreationOptions member)
@@ -186,7 +190,7 @@ namespace System.Threading.Tasks
 				throw new InvalidOperationException ("Start may not be called on a promise-style task");
 
 			SetupScheduler (scheduler);
-			Schedule ();
+			Schedule (true);
 		}
 
 		internal void SetupScheduler (TaskScheduler scheduler)
@@ -214,10 +218,10 @@ namespace System.Threading.Tasks
 			if (IsPromise)
 				throw new InvalidOperationException ("RunSynchronously may not be called on a promise-style task");
 
-			RunSynchronouslyCore (scheduler);
+			RunSynchronouslyCore (scheduler, true);
 		}
 
-		internal void RunSynchronouslyCore (TaskScheduler scheduler)
+		internal void RunSynchronouslyCore (TaskScheduler scheduler, bool throwException)
 		{
 			SetupScheduler (scheduler);
 			Status = TaskStatus.WaitingToRun;
@@ -228,10 +232,13 @@ namespace System.Threading.Tasks
 			} catch (Exception inner) {
 				var ex = new TaskSchedulerException (inner);
 				TrySetException (new AggregateException (ex), false, true);
-				throw ex;
+				if (throwException)
+					throw ex;
+
+				return;
 			}
 
-			Schedule ();
+			Schedule (throwException);
 			WaitCore (Timeout.Infinite, CancellationToken.None, false);
 		}
 		#endregion
@@ -381,10 +388,17 @@ namespace System.Threading.Tasks
 		#endregion
 		
 		#region Internal and protected thingies
-		internal void Schedule ()
+		internal void Schedule (bool throwException)
 		{
 			Status = TaskStatus.WaitingToRun;
-			scheduler.QueueTask (this);
+			try {
+				scheduler.QueueTask (this);
+			} catch (Exception inner) {
+				var ex = new TaskSchedulerException (inner);
+				TrySetException (new AggregateException (ex), false, true);
+				if (throwException)
+					throw ex;
+			}
 		}
 		
 		void ThreadStart ()
@@ -418,7 +432,10 @@ namespace System.Threading.Tasks
 				status = TaskStatus.Running;
 				
 				try {
-					InnerInvoke ();
+					if (ec != null)
+						ExecutionContext.Run (ec, l => ((Task) l).InnerInvoke (), this);
+					else
+						InnerInvoke ();
 				} catch (OperationCanceledException oce) {
 					if (token != CancellationToken.None && oce.CancellationToken == token)
 						CancelReal ();
@@ -687,8 +704,13 @@ namespace System.Threading.Tasks
 				return true;
 
 			// If the task is ready to be run and we were supposed to wait on it indefinitely without cancellation, just run it
-			if (runInline && Status == TaskStatus.WaitingToRun && millisecondsTimeout == Timeout.Infinite && scheduler != null && !cancellationToken.CanBeCanceled)
-				scheduler.RunInline (this, true);
+			if (runInline && Status == TaskStatus.WaitingToRun && millisecondsTimeout == Timeout.Infinite && scheduler != null && !cancellationToken.CanBeCanceled) {
+				try {
+					scheduler.RunInline (this, true);
+				} catch (Exception e) {
+					throw new TaskSchedulerException (e);
+				}
+			}
 
 			bool result = true;
 

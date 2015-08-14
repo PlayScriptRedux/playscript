@@ -21,6 +21,11 @@
 		<ProjectDir Condition="'$(ProjectDir)' == ''">$(MSBuildProjectDirectory)\</ProjectDir>
 	</PropertyGroup>
 
+	<!-- MSBuild defines this even outside of VS, and F# projects depend on it -->
+	<PropertyGroup>
+		<VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
+	</PropertyGroup>
+
 	<PropertyGroup>
 		<AssemblyName Condition="'$(AssemblyName)' == ''">$(MSBuildProjectName)</AssemblyName>
 		<OutputPath Condition="'$(OutputPath)' != '' and !HasTrailingSlash('$(OutputPath)')">$(OutputPath)\</OutputPath>
@@ -275,7 +280,7 @@
 
 		<ResolveAssemblyReference
 			Assemblies="@(_Reference)"
-			AssemblyFiles="@(ChildProjectReferences)"
+			AssemblyFiles="@(ChildProjectReferences);@(_ExplicitReference)"
 			SearchPaths="$(AssemblySearchPaths)"
 			CandidateAssemblyFiles="@(Content);@(None)"
 			TargetFrameworkDirectories="$(TargetFrameworkDirectory)"

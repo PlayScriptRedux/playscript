@@ -147,6 +147,14 @@ namespace MonoTests.System.Globalization
 		}
 
 		[Test]
+		public void ClearCachedData ()
+		{
+			var dt = DateTime.Now;
+			old_culture.ClearCachedData (); // It can be any culture instance as the method should be static
+			dt = DateTime.Now;
+		}
+
+		[Test]
 		public void CreateSpecificCulture ()
 		{
 			var ci = CultureInfo.CreateSpecificCulture ("en");
@@ -604,9 +612,9 @@ namespace MonoTests.System.Globalization
 		CountdownEvent barrier = new CountdownEvent (3);
 		AutoResetEvent[] evt = new AutoResetEvent [] { new AutoResetEvent (false), new AutoResetEvent (false), new AutoResetEvent (false)};
 
-		CultureInfo[] initial_culture = new CultureInfo[3];
-		CultureInfo[] changed_culture = new CultureInfo[3];
-		CultureInfo[] changed_culture2 = new CultureInfo[3];
+		CultureInfo[] initial_culture = new CultureInfo[4];
+		CultureInfo[] changed_culture = new CultureInfo[4];
+		CultureInfo[] changed_culture2 = new CultureInfo[4];
 		CultureInfo alternative_culture = new CultureInfo("pt-BR");
 
 		void StepAllPhases (int index)
@@ -631,16 +639,16 @@ namespace MonoTests.System.Globalization
 		}
 
 		void ThreadWithoutChange () {
-			StepAllPhases (0);
+			StepAllPhases (1);
 		}
 
 		void ThreadWithChange () {
 			Thread.CurrentThread.CurrentCulture = alternative_culture;
-			StepAllPhases (1);
+			StepAllPhases (2);
 		}
 
 		void ThreadPoolWithoutChange () {
-			StepAllPhases (2);
+			StepAllPhases (3);
 		}
 
 		[Test]
@@ -650,7 +658,7 @@ namespace MonoTests.System.Globalization
 
 			// The test doesn't work if the current culture is already set
 			if (orig_culture != CultureInfo.InvariantCulture)
-				return;
+				Assert.Ignore ("The test doesn't work if the current culture is already set.");
 
 			/* Phase 0 - warm up */
 			new Thread (ThreadWithoutChange).Start ();
@@ -686,17 +694,20 @@ namespace MonoTests.System.Globalization
 
 			CultureInfo.DefaultThreadCurrentCulture = null;
 
-			Assert.AreEqual (orig_culture, initial_culture [0], "#2");
-			Assert.AreEqual (alternative_culture, initial_culture [1], "#3");
-			Assert.AreEqual (orig_culture, initial_culture [2], "#4");
+			Assert.AreEqual (orig_culture, initial_culture [0], "#1");
+			Assert.AreEqual (orig_culture, initial_culture [1], "#2");
+			Assert.AreEqual (alternative_culture, initial_culture [2], "#3");
+			Assert.AreEqual (orig_culture, initial_culture [3], "#4");
 
-			Assert.AreEqual (new_culture, changed_culture [0], "#6");
-			Assert.AreEqual (alternative_culture, changed_culture [1], "#7");
-			Assert.AreEqual (new_culture, changed_culture [2], "#8");
+			Assert.AreEqual (new_culture, changed_culture [0], "#5");
+			Assert.AreEqual (new_culture, changed_culture [1], "#6");
+			Assert.AreEqual (alternative_culture, changed_culture [2], "#7");
+			Assert.AreEqual (new_culture, changed_culture [3], "#8");
 
-			Assert.AreEqual (orig_culture, changed_culture2 [0], "#10");
-			Assert.AreEqual (alternative_culture, changed_culture2 [1], "#11");
-			Assert.AreEqual (orig_culture, changed_culture2 [2], "#12");
+			Assert.AreEqual (orig_culture, changed_culture [0], "#9");
+			Assert.AreEqual (orig_culture, changed_culture2 [1], "#10");
+			Assert.AreEqual (alternative_culture, changed_culture2 [2], "#11");
+			Assert.AreEqual (orig_culture, changed_culture2 [3], "#12");
 		}
 
 		[Test]

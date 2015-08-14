@@ -5,10 +5,11 @@
  *   Dietmar Maurer (dietmar@ximian.com)
  *   Paolo Molaro (lupus@ximian.com)
  *	 Patrik Torstensson (patrik.torstensson@labs2.com)
+ *   Marek Safar (marek.safar@gmail.com)
  *
  * Copyright 2001-2003 Ximian, Inc (http://www.ximian.com)
  * Copyright 2004-2009 Novell, Inc (http://www.novell.com)
- * Copyright 2011-2012 Xamarin Inc (http://www.xamarin.com).
+ * Copyright 2011-2014 Xamarin Inc (http://www.xamarin.com).
  */
 
 #include <config.h>
@@ -240,7 +241,7 @@ ves_icall_System_Array_SetValueImpl (MonoArray *this, MonoObject *value, guint32
 	}
 
 	if (!value) {
-		mono_gc_bzero (ea, esize);
+		mono_gc_bzero_atomic (ea, esize);
 		return;
 	}
 
@@ -303,7 +304,7 @@ ves_icall_System_Array_SetValueImpl (MonoArray *this, MonoObject *value, guint32
 		if (ec->has_references)
 			mono_value_copy (ea, (char*)value + sizeof (MonoObject), ec);
 		else
-			mono_gc_memmove (ea, (char *)value + sizeof (MonoObject), esize);
+			mono_gc_memmove_atomic (ea, (char *)value + sizeof (MonoObject), esize);
 		return;
 	}
 
@@ -687,7 +688,7 @@ ICALL_EXPORT void
 ves_icall_System_Array_ClearInternal (MonoArray *arr, int idx, int length)
 {
 	int sz = mono_array_element_size (mono_object_class (arr));
-	mono_gc_bzero (mono_array_addr_with_size_fast (arr, sz, idx), length * sz);
+	mono_gc_bzero_atomic (mono_array_addr_with_size_fast (arr, sz, idx), length * sz);
 }
 
 ICALL_EXPORT gboolean
@@ -745,7 +746,7 @@ ves_icall_System_Array_FastCopy (MonoArray *source, int source_idx, MonoArray* d
 			mono_value_copy_array (dest, dest_idx, source_addr, length);
 		} else {
 			dest_addr = mono_array_addr_with_size_fast (dest, element_size, dest_idx);
-			mono_gc_memmove (dest_addr, source_addr, element_size * length);
+			mono_gc_memmove_atomic (dest_addr, source_addr, element_size * length);
 		}
 	} else {
 		mono_array_memcpy_refs_fast (dest, dest_idx, source, source_idx, length);
@@ -770,7 +771,7 @@ ves_icall_System_Array_GetGenericValueImpl (MonoObject *this, guint32 pos, gpoin
 	esize = mono_array_element_size (ac);
 	ea = (gpointer*)((char*)ao->vector + (pos * esize));
 
-	mono_gc_memmove (value, ea, esize);
+	mono_gc_memmove_atomic (value, ea, esize);
 }
 
 ICALL_EXPORT void
@@ -799,7 +800,7 @@ ves_icall_System_Array_SetGenericValueImpl (MonoObject *this, guint32 pos, gpoin
 		if (ec->has_references)
 			mono_gc_wbarrier_value_copy (ea, value, 1, ec);
 		else
-			mono_gc_memmove (ea, value, esize);
+			mono_gc_memmove_atomic (ea, value, esize);
 	}
 }
 
@@ -963,7 +964,7 @@ ves_icall_System_ValueType_InternalGetHashCode (MonoObject *this, MonoArray **fi
 	MonoObject **values = NULL;
 	MonoObject *o;
 	int count = 0;
-	gint32 result = 0;
+	gint32 result = (int)(gsize)mono_defaults.int32_class;
 	MonoClassField* field;
 	gpointer iter;
 
@@ -972,7 +973,7 @@ ves_icall_System_ValueType_InternalGetHashCode (MonoObject *this, MonoArray **fi
 	klass = mono_object_class (this);
 
 	if (mono_class_num_fields (klass) == 0)
-		return mono_object_hash (this);
+		return result;
 
 	/*
 	 * Compute the starting value of the hashcode for fields of primitive
@@ -3134,14 +3135,6 @@ ves_icall_System_Enum_compare_value_to (MonoObject *this, MonoObject *other)
 		return me > other ? 1 : -1; \
 	} while (0)
 
-#define COMPARE_ENUM_VALUES_RANGE(ENUM_TYPE) do { \
-		ENUM_TYPE me = *((ENUM_TYPE*)tdata); \
-		ENUM_TYPE other = *((ENUM_TYPE*)odata); \
-		if (me == other) \
-			return 0; \
-		return me - other; \
-	} while (0)
-
 	switch (basetype->type) {
 		case MONO_TYPE_U1:
 			COMPARE_ENUM_VALUES (guint8);
@@ -3149,7 +3142,7 @@ ves_icall_System_Enum_compare_value_to (MonoObject *this, MonoObject *other)
 			COMPARE_ENUM_VALUES (gint8);
 		case MONO_TYPE_CHAR:
 		case MONO_TYPE_U2:
-			COMPARE_ENUM_VALUES_RANGE (guint16);
+			COMPARE_ENUM_VALUES (guint16);
 		case MONO_TYPE_I2:
 			COMPARE_ENUM_VALUES (gint16);
 		case MONO_TYPE_U4:
@@ -3163,7 +3156,6 @@ ves_icall_System_Enum_compare_value_to (MonoObject *this, MonoObject *other)
 		default:
 			g_error ("Implement type 0x%02x in get_hashcode", basetype->type);
 	}
-#undef COMPARE_ENUM_VALUES_RANGE
 #undef COMPARE_ENUM_VALUES
 	return 0;
 }
@@ -3887,6 +3879,21 @@ handle_parent:
 	return NULL;
 }
 
+static guint
+event_hash (gconstpointer data)
+{
+	MonoEvent *event = (MonoEvent*)data;
+
+	return g_str_hash (event->name);
+}
+
+static gboolean
+event_equal (MonoEvent *event1, MonoEvent *event2)
+{
+	// Events are hide-by-name
+	return g_str_equal (event1->name, event2->name);
+}
+
 ICALL_EXPORT MonoArray*
 ves_icall_Type_GetEvents_internal (MonoReflectionType *type, guint32 bflags, MonoReflectionType *reftype)
 {
@@ -3899,7 +3906,7 @@ ves_icall_Type_GetEvents_internal (MonoReflectionType *type, guint32 bflags, Mon
 	MonoEvent *event;
 	int i, match;
 	gpointer iter;
-	
+	GHashTable *events = NULL;
 	MonoPtrArray tmp_array;
 
 	MONO_ARCH_SAVE_REGS;
@@ -3915,6 +3922,7 @@ ves_icall_Type_GetEvents_internal (MonoReflectionType *type, guint32 bflags, Mon
 		return mono_array_new_cached (domain, System_Reflection_EventInfo, 0);
 	klass = startklass = mono_class_from_mono_type (type->type);
 
+	events = g_hash_table_new (event_hash, (GEqualFunc)event_equal);
 handle_parent:
 	mono_class_setup_vtable (klass);
 	if (klass->exception_type != MONO_EXCEPTION_NONE || mono_loader_get_last_error ())
@@ -3958,10 +3966,18 @@ handle_parent:
 				match ++;
 		if (!match)
 			continue;
+
+		if (g_hash_table_lookup (events, event))
+			continue;
+
 		mono_ptr_array_append (tmp_array, mono_event_get_object (domain, startklass, event));
+
+		g_hash_table_insert (events, event, event);
 	}
 	if (!(bflags & BFLAGS_DeclaredOnly) && (klass = klass->parent))
 		goto handle_parent;
+
+	g_hash_table_destroy (events);
 
 	res = mono_array_new_cached (domain, System_Reflection_EventInfo, mono_ptr_array_size (tmp_array));
 
@@ -6102,14 +6118,6 @@ ves_icall_System_CurrentSystemTimeZone_GetTimeZoneData (guint32 year, MonoArray 
 #endif
 }
 
-ICALL_EXPORT gpointer
-ves_icall_System_Object_obj_address (MonoObject *this) 
-{
-	MONO_ARCH_SAVE_REGS;
-
-	return this;
-}
-
 /* System.Buffer */
 
 static inline gint32 
@@ -6199,7 +6207,7 @@ ves_icall_System_Buffer_BlockCopyInternal (MonoArray *src, gint32 src_offset, Mo
 	if (src != dest)
 		memcpy (dest_buf, src_buf, count);
 	else
-		mono_gc_memmove (dest_buf, src_buf, count); /* Source and dest are the same array */
+		memmove (dest_buf, src_buf, count); /* Source and dest are the same array */
 
 	return TRUE;
 }

@@ -2194,10 +2194,10 @@ namespace MonoTests.System
 		public void Kind ()
 		{
 			if (DateTime.Now == DateTime.UtcNow)
-				return; // This test does not make sense.
+				Assert.Ignore (); // This test does not make sense.
 			if (TimeZone.CurrentTimeZone.GetUtcOffset (DateTime.UtcNow)
 				!= TimeZone.CurrentTimeZone.GetUtcOffset (DateTime.Now))
-				return; // In this case it does not satisfy the test premises.
+				Assert.Ignore (); // In this case it does not satisfy the test premises.
 
 			Assert.AreEqual (DateTimeKind.Local, DateTime.Now.Kind, "#A1");
 			Assert.AreEqual (DateTimeKind.Local, DateTime.Today.Kind, "#A2");
@@ -2553,6 +2553,18 @@ namespace MonoTests.System
 			var ci = new CultureInfo ("ru-RU");
 			var dt = new DateTime (2012, 9, 15);
 			Assert.AreEqual ("15 сентября", dt.ToString ("m", ci));
+		}
+
+		[Test]
+		public void Parse_ThaiCalendar ()
+		{
+			var culture = CultureInfo.GetCultureInfo ("th-TH");
+			Assert.IsTrue (culture.Calendar is ThaiBuddhistCalendar);
+			var dt = DateTime.Now.Date;
+			var s = dt.ToString (culture);
+			var parsed = DateTime.Parse (s, culture);
+
+			Assert.AreEqual (dt, parsed, "#1");
 		}
 	}
 }

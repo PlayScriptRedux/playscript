@@ -21,6 +21,7 @@
 #include <mono/metadata/metadata-internals.h>
 #include <mono/metadata/marshal.h>
 #include <mono/metadata/runtime.h>
+#include <mono/metadata/sgen-toggleref.h>
 #include <mono/utils/atomic.h>
 #include <mono/utils/mono-logger-internal.h>
 #include <mono/utils/mono-memory-model.h>
@@ -53,6 +54,10 @@ static mono_mutex_t mono_gc_lock;
 
 static void*
 boehm_thread_register (MonoThreadInfo* info, void *baseptr);
+static void
+boehm_thread_unregister (MonoThreadInfo *p);
+static void
+register_test_toggleref_callback (void);
 
 static void
 mono_gc_warning (char *msg, GC_word arg)
@@ -170,6 +175,9 @@ mono_gc_base_init (void)
 					exit (1);
 				}
 				continue;
+			} else if (g_str_has_prefix (opt, "toggleref-test")) {
+				register_test_toggleref_callback ();
+				continue;
 			} else {
 				/* Could be a parameter for sgen */
 				/*
@@ -184,8 +192,10 @@ mono_gc_base_init (void)
 
 	memset (&cb, 0, sizeof (cb));
 	cb.thread_register = boehm_thread_register;
+	cb.thread_unregister = boehm_thread_unregister;
 	cb.mono_method_is_critical = (gpointer)mono_runtime_is_critical_method;
 #ifndef HOST_WIN32
+	cb.thread_exit = mono_gc_pthread_exit;
 	cb.mono_gc_pthread_create = (gpointer)mono_gc_pthread_create;
 #endif
 	
@@ -356,6 +366,16 @@ boehm_thread_register (MonoThreadInfo* info, void *baseptr)
 	return NULL;
 #endif
 #endif
+}
+
+static void
+boehm_thread_unregister (MonoThreadInfo *p)
+{
+	MonoNativeThreadId tid;
+
+	tid = mono_thread_info_get_tid (p);
+
+	mono_threads_add_joinable_thread ((gpointer)tid);
 }
 
 gboolean
@@ -622,7 +642,7 @@ mono_gc_wbarrier_set_arrayref (MonoArray *arr, gpointer slot_ptr, MonoObject* va
 void
 mono_gc_wbarrier_arrayref_copy (gpointer dest_ptr, gpointer src_ptr, int count)
 {
-	mono_gc_memmove (dest_ptr, src_ptr, count * sizeof (gpointer));
+	mono_gc_memmove_aligned (dest_ptr, src_ptr, count * sizeof (gpointer));
 }
 
 void
@@ -645,14 +665,14 @@ mono_gc_wbarrier_generic_nostore (gpointer ptr)
 void
 mono_gc_wbarrier_value_copy (gpointer dest, gpointer src, int count, MonoClass *klass)
 {
-	mono_gc_memmove (dest, src, count * mono_class_value_size (klass, NULL));
+	mono_gc_memmove_atomic (dest, src, count * mono_class_value_size (klass, NULL));
 }
 
 void
 mono_gc_wbarrier_object_copy (MonoObject* obj, MonoObject *src)
 {
 	/* do not copy the sync state */
-	mono_gc_memmove ((char*)obj + sizeof (MonoObject), (char*)src + sizeof (MonoObject),
+	mono_gc_memmove_aligned ((char*)obj + sizeof (MonoObject), (char*)src + sizeof (MonoObject),
 			mono_object_class (obj)->instance_size - sizeof (MonoObject));
 }
 
@@ -1269,6 +1289,43 @@ gboolean
 mono_gc_set_allow_synchronous_major (gboolean flag)
 {
 	return flag;
+}
+/* Toggleref support */
+
+void
+mono_gc_toggleref_add (MonoObject *object, mono_bool strong_ref)
+{
+	GC_toggleref_add ((GC_PTR)object, (int)strong_ref);
+}
+
+void
+mono_gc_toggleref_register_callback (MonoToggleRefStatus (*proccess_toggleref) (MonoObject *obj))
+{
+	GC_toggleref_register_callback ((int (*) (GC_PTR obj)) proccess_toggleref);
+}
+
+/* Test support code */
+
+static MonoToggleRefStatus
+test_toggleref_callback (MonoObject *obj)
+{
+	static MonoClassField *mono_toggleref_test_field;
+	int status = MONO_TOGGLE_REF_DROP;
+
+	if (!mono_toggleref_test_field) {
+		mono_toggleref_test_field = mono_class_get_field_from_name (mono_object_get_class (obj), "__test");
+		g_assert (mono_toggleref_test_field);
+	}
+
+	mono_field_get_value (obj, mono_toggleref_test_field, &status);
+	printf ("toggleref-cb obj %d\n", status);
+	return status;
+}
+
+static void
+register_test_toggleref_callback (void)
+{
+	mono_gc_toggleref_register_callback (test_toggleref_callback);
 }
 
 #endif /* no Boehm GC */

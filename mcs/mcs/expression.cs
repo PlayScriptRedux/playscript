@@ -5631,7 +5631,7 @@ namespace Mono.CSharp
 			AParametersCollection pd = oper.Parameters;
 			if (!TypeSpecComparer.IsEqual (type, pd.Types[0]) || !TypeSpecComparer.IsEqual (type, pd.Types[1])) {
 				ec.Report.Error (217, loc,
-					"A user-defined operator `{0}' must have parameters and return values of the same type in order to be applicable as a short circuit operator",
+					"A user-defined operator `{0}' must have each parameter type and return type of the same type in order to be applicable as a short circuit operator",
 					oper.GetSignatureForError ());
 				return null;
 			}
@@ -8476,7 +8476,7 @@ namespace Mono.CSharp
 		//
 		// This always expect the top value on the stack to be the array
 		//
-		void EmitDynamicInitializers (EmitContext ec, bool emitConstants, FieldExpr stackArray)
+		void EmitDynamicInitializers (EmitContext ec, bool emitConstants, StackFieldExpr stackArray)
 		{
 			int dims = bounds.Count;
 			var current_pos = new int [dims];
@@ -8496,7 +8496,7 @@ namespace Mono.CSharp
 							e = e.EmitToField (ec);
 						}
 
-						stackArray.Emit (ec);
+						stackArray.EmitLoad (ec);
 					} else {
 						ec.Emit (OpCodes.Dup);
 					}
@@ -8508,26 +8508,8 @@ namespace Mono.CSharp
 					// If we are dealing with a struct, get the
 					// address of it, so we can store it.
 					//
-					if (dims == 1 && etype.IsStruct) {
-						switch (etype.BuiltinType) {
-						case BuiltinTypeSpec.Type.Byte:
-						case BuiltinTypeSpec.Type.SByte:
-						case BuiltinTypeSpec.Type.Bool:
-						case BuiltinTypeSpec.Type.Short:
-						case BuiltinTypeSpec.Type.UShort:
-						case BuiltinTypeSpec.Type.Char:
-						case BuiltinTypeSpec.Type.Int:
-						case BuiltinTypeSpec.Type.UInt:
-						case BuiltinTypeSpec.Type.Long:
-						case BuiltinTypeSpec.Type.ULong:
-						case BuiltinTypeSpec.Type.Float:
-						case BuiltinTypeSpec.Type.Double:
-							break;
-						default:
-							ec.Emit (OpCodes.Ldelema, etype);
-							break;
-						}
-					}
+					if (dims == 1 && etype.IsStruct && !BuiltinTypeSpec.IsPrimitiveType (etype))
+						ec.Emit (OpCodes.Ldelema, etype);
 
 					e.Emit (ec);
 
@@ -8544,6 +8526,9 @@ namespace Mono.CSharp
 					current_pos [j] = 0;
 				}
 			}
+
+			if (stackArray != null)
+				stackArray.PrepareCleanup (ec);
 		}
 
 		public override void Emit (EmitContext ec)
@@ -8558,7 +8543,7 @@ namespace Mono.CSharp
 				first_emit_temp.Store (ec);
 			}
 
-			FieldExpr await_stack_field;
+			StackFieldExpr await_stack_field;
 			if (ec.HasSet (BuilderContext.Options.AsyncBody) && InitializersContainAwait ()) {
 				await_stack_field = ec.GetTemporaryField (type);
 				ec.EmitThis ();
@@ -9699,7 +9684,7 @@ namespace Mono.CSharp
 		public override FullNamedExpression ResolveAsTypeOrNamespace (IMemberContext ec)
 		{
 			if (alias == GlobalAlias) {
-				expr = ec.Module.GlobalRootNamespace;
+				expr = new NamespaceExpression (ec.Module.GlobalRootNamespace, loc);
 				return base.ResolveAsTypeOrNamespace (ec);
 			}
 
@@ -9939,7 +9924,7 @@ namespace Mono.CSharp
 			if (expr == null)
 				return null;
 
-			Namespace ns = expr as Namespace;
+			var ns = expr as NamespaceExpression;
 			if (ns != null) {
 				var retval = ns.LookupTypeOrNamespace (rc, Name, Arity, LookupMode.Normal, loc);
 
@@ -9955,7 +9940,7 @@ namespace Mono.CSharp
 				}
 
 				if (retval == null) {
-					ns.Error_NamespaceDoesNotExist (rc, Name, Arity, loc);
+					ns.Error_NamespaceDoesNotExist (rc, Name, Arity);
 					return null;
 				}
 
@@ -10173,7 +10158,7 @@ namespace Mono.CSharp
 			if (expr_resolved == null)
 				return null;
 
-			Namespace ns = expr_resolved as Namespace;
+			var ns = expr_resolved as NamespaceExpression;
 			if (ns != null) {
 				FullNamedExpression retval = ns.LookupTypeOrNamespace (rc, Name, Arity, LookupMode.Normal, loc);
 
@@ -10189,7 +10174,7 @@ namespace Mono.CSharp
 				}
 
 				if (retval == null) {
-					ns.Error_NamespaceDoesNotExist (rc, Name, Arity, loc);
+					ns.Error_NamespaceDoesNotExist (rc, Name, Arity);
 				} else if (HasTypeArguments) {
 					retval = new GenericTypeExpr (retval.Type, targs, loc);
 					if (retval.ResolveAsType (rc) == null)

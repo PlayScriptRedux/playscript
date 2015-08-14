@@ -32,72 +32,94 @@ using Microsoft.Scripting.Runtime;
 using Microsoft.Scripting.Utils;
 
 namespace Microsoft.Scripting.Interpreter {
-    internal abstract class ShlInstruction : Instruction {
+    internal abstract class ShlInstruction : ArithmeticInstruction {
         private static Instruction _Int16, _Int32, _Int64, _UInt16, _UInt32, _UInt64;
-
-        public override int ConsumedStack { get { return 2; } }
-        public override int ProducedStack { get { return 1; } }
+        private static Instruction _Int16Lifted, _Int32Lifted, _Int64Lifted, _UInt16Lifted, _UInt32Lifted, _UInt64Lifted;
 
         private ShlInstruction() {
         }
 
         internal sealed class ShlInt32 : ShlInstruction {
-            public override int Run(InterpretedFrame frame) {
-                object l = frame.Data[frame.StackIndex - 2];
-                object r = frame.Data[frame.StackIndex - 1];
-                frame.Data[frame.StackIndex - 2] = ScriptingRuntimeHelpers.Int32ToObject((Int32)l << (Int32)r);
-                frame.StackIndex--;
-                return 1;
+            protected override object Calculate (object l, object r)
+            {
+                return ScriptingRuntimeHelpers.Int32ToObject((Int32)l << (Int32)r);
             }
         }
 
         internal sealed class ShlInt16 : ShlInstruction {
-            public override int Run(InterpretedFrame frame) {
-                object l = frame.Data[frame.StackIndex - 2];
-                object r = frame.Data[frame.StackIndex - 1];
-                frame.Data[frame.StackIndex - 2] = (Int32)((Int16)l << (Int32)r);
-                frame.StackIndex--;
-                return 1;
+            protected override object Calculate (object l, object r)
+            {
+                return (Int32)((Int16)l << (Int32)r);
             }
         }
 
         internal sealed class ShlInt64 : ShlInstruction {
-            public override int Run(InterpretedFrame frame) {
-                object l = frame.Data[frame.StackIndex - 2];
-                object r = frame.Data[frame.StackIndex - 1];
-                frame.Data[frame.StackIndex - 2] = (Int64)((Int64)l << (Int32)r);
-                frame.StackIndex--;
-                return 1;
+            protected override object Calculate (object l, object r)
+            {
+                return (Int64)((Int64)l << (Int32)r);
             }
         }
 
         internal sealed class ShlUInt16 : ShlInstruction {
-            public override int Run(InterpretedFrame frame) {
-                object l = frame.Data[frame.StackIndex - 2];
-                object r = frame.Data[frame.StackIndex - 1];
-                frame.Data[frame.StackIndex - 2] = (Int32)((UInt16)l << (Int32)r);
-                frame.StackIndex--;
-                return 1;
+            protected override object Calculate (object l, object r)
+            {
+                return (Int32)((UInt16)l << (Int32)r);
             }
         }
 
         internal sealed class ShlUInt32 : ShlInstruction {
-            public override int Run(InterpretedFrame frame) {
-                object l = frame.Data[frame.StackIndex - 2];
-                object r = frame.Data[frame.StackIndex - 1];
-                frame.Data[frame.StackIndex - 2] = (UInt32)((UInt32)l << (Int32)r);
-                frame.StackIndex--;
-                return 1;
+            protected override object Calculate (object l, object r)
+            {
+                return (UInt32)((UInt32)l << (Int32)r);
             }
         }
 
         internal sealed class ShlUInt64 : ShlInstruction {
-            public override int Run(InterpretedFrame frame) {
-                object l = frame.Data[frame.StackIndex - 2];
-                object r = frame.Data[frame.StackIndex - 1];
-                frame.Data[frame.StackIndex - 2] = (UInt64)((UInt64)l << (Int32)r);
-                frame.StackIndex--;
-                return 1;
+            protected override object Calculate (object l, object r)
+            {
+                return (UInt64)((UInt64)l << (Int32)r);
+            }
+        }
+
+        internal sealed class ShlInt32Lifted : ShlInstruction {
+            protected override object Calculate (object l, object r)
+            {
+                return (Int32?)((Int32?)l << (Int32?)r);
+            }
+        }
+
+        internal sealed class ShlInt16Lifted : ShlInstruction {
+            protected override object Calculate (object l, object r)
+            {
+                return (Int32)((Int16?)l << (Int32?)r);
+            }
+        }
+
+        internal sealed class ShlInt64Lifted : ShlInstruction {
+            protected override object Calculate (object l, object r)
+            {
+                return  (Int64?)((Int64?)l << (Int32?)r);
+            }
+        }
+
+        internal sealed class ShlUInt16Lifted : ShlInstruction {
+            protected override object Calculate (object l, object r)
+            {
+                return (Int32?)((UInt16?)l << (Int32?)r);
+            }
+        }
+
+        internal sealed class ShlUInt32Lifted : ShlInstruction {
+            protected override object Calculate (object l, object r)
+            {
+                return (UInt32?)((UInt32?)l << (Int32?)r);
+            }
+        }
+
+        internal sealed class ShlUInt64Lifted : ShlInstruction {
+            protected override object Calculate (object l, object r)
+            {
+                return (UInt64?)((UInt64?)l << (Int32?)r);
             }
         }
 
@@ -110,6 +132,21 @@ namespace Microsoft.Scripting.Interpreter {
                 case TypeCode.UInt16: return _UInt16 ?? (_UInt16 = new ShlUInt16());
                 case TypeCode.UInt32: return _UInt32 ?? (_UInt32 = new ShlUInt32());
                 case TypeCode.UInt64: return _UInt64 ?? (_UInt64 = new ShlUInt64());
+
+                default:
+                    throw Assert.Unreachable;
+            }
+        }
+
+        public static Instruction CreateLifted(Type type) {
+            Debug.Assert(!type.IsEnum());
+            switch (type.GetTypeCode()) {
+                case TypeCode.Int16: return _Int16Lifted ?? (_Int16Lifted = new ShlInt16Lifted());
+                case TypeCode.Int32: return _Int32Lifted ?? (_Int32Lifted = new ShlInt32Lifted());
+                case TypeCode.Int64: return _Int64Lifted ?? (_Int64Lifted = new ShlInt64Lifted());
+                case TypeCode.UInt16: return _UInt16Lifted ?? (_UInt16Lifted = new ShlUInt16Lifted());
+                case TypeCode.UInt32: return _UInt32Lifted ?? (_UInt32Lifted = new ShlUInt32Lifted());
+                case TypeCode.UInt64: return _UInt64Lifted ?? (_UInt64Lifted = new ShlUInt64Lifted());
 
                 default:
                     throw Assert.Unreachable;

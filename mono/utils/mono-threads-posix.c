@@ -18,9 +18,9 @@
 #include <mono/utils/mono-semaphore.h>
 #include <mono/utils/mono-threads.h>
 #include <mono/utils/mono-tls.h>
-#include <mono/utils/gc_wrapper.h>
 #include <mono/utils/mono-mmap.h>
 #include <mono/metadata/threads-types.h>
+#include <limits.h>
 
 #include <errno.h>
 
@@ -34,6 +34,7 @@ size_t pthread_get_stacksize_np(pthread_t);
 #endif
 
 #if defined(_POSIX_VERSION) || defined(__native_client__)
+#include <sys/resource.h>
 #include <signal.h>
 
 #if defined(__native_client__)
@@ -69,13 +70,9 @@ inner_start_thread (void *arg)
 	}
 	start_info->handle = handle;
 
-	if (!(flags & CREATE_NO_DETACH)) {
-		res = mono_gc_pthread_detach (pthread_self ());
-		g_assert (!res);
-	}
-
 	info = mono_thread_info_attach (&result);
 	info->runtime_thread = TRUE;
+	info->handle = handle;
 
 	if (flags & CREATE_SUSPENDED) {
 		info->create_suspended = TRUE;
@@ -97,19 +94,19 @@ inner_start_thread (void *arg)
 	result = start_func (t_arg);
 
 	/*
-	g_assert (!mono_domain_get ());
-	mono_thread_info_dettach ();
+	mono_thread_info_detach ();
 	*/
 
 #if defined(__native_client__)
 	nacl_shutdown_gc_thread();
 #endif
 
-	wapi_thread_set_exit_code (GPOINTER_TO_UINT (result), handle);
+	wapi_thread_handle_set_exited (handle, GPOINTER_TO_UINT (result));
+	/* This is needed by mono_threads_core_unregister () which is called later */
+	info->handle = NULL;
 
-	// FIXME: Why is this needed ?
-	mono_gc_pthread_exit (NULL);
-
+	g_assert (mono_threads_get_callbacks ()->thread_exit);
+	mono_threads_get_callbacks ()->thread_exit (NULL);
 	g_assert_not_reached ();
 	return result;
 }
@@ -155,8 +152,8 @@ mono_threads_core_create_thread (LPTHREAD_START_ROUTINE start_routine, gpointer 
 	/* Actually start the thread */
 	res = mono_threads_get_callbacks ()->mono_gc_pthread_create (&thread, &attr, inner_start_thread, &start_info);
 	if (res) {
-		// FIXME:
-		g_assert_not_reached ();
+		MONO_SEM_DESTROY (&(start_info.registered));
+		return NULL;
 	}
 
 	/* Wait until the thread register itself in various places */
@@ -294,6 +291,67 @@ gboolean
 mono_threads_core_yield (void)
 {
 	return sched_yield () == 0;
+}
+
+void
+mono_threads_core_exit (int exit_code)
+{
+	MonoThreadInfo *current = mono_thread_info_current ();
+
+#if defined(__native_client__)
+	nacl_shutdown_gc_thread();
+#endif
+
+	wapi_thread_handle_set_exited (current->handle, exit_code);
+
+	g_assert (mono_threads_get_callbacks ()->thread_exit);
+	mono_threads_get_callbacks ()->thread_exit (NULL);
+}
+
+void
+mono_threads_core_unregister (MonoThreadInfo *info)
+{
+	if (info->handle) {
+		wapi_thread_handle_set_exited (info->handle, 0);
+		info->handle = NULL;
+	}
+}
+
+HANDLE
+mono_threads_core_open_handle (void)
+{
+	MonoThreadInfo *info;
+
+	info = mono_thread_info_current ();
+	g_assert (info);
+
+	if (!info->handle)
+		info->handle = wapi_create_thread_handle ();
+	else
+		wapi_ref_thread_handle (info->handle);
+	return info->handle;
+}
+
+int
+mono_threads_get_max_stack_size (void)
+{
+	struct rlimit lim;
+
+	/* If getrlimit fails, we don't enforce any limits. */
+	if (getrlimit (RLIMIT_STACK, &lim))
+		return INT_MAX;
+	/* rlim_t is an unsigned long long on 64bits OSX but we want an int response. */
+	if (lim.rlim_max > (rlim_t)INT_MAX)
+		return INT_MAX;
+	return (int)lim.rlim_max;
+}
+
+HANDLE
+mono_threads_core_open_thread_handle (HANDLE handle, MonoNativeThreadId tid)
+{
+	wapi_ref_thread_handle (handle);
+
+	return handle;
 }
 
 #if !defined (__MACH__)

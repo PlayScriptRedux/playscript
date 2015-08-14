@@ -22,104 +22,113 @@ using Microsoft.Scripting.Runtime;
 using Microsoft.Scripting.Utils;
 
 namespace Microsoft.Scripting.Interpreter {
-    internal abstract class NotEqualInstruction : Instruction {
+    internal abstract class NotEqualInstruction : ComparisonInstruction {
         // Perf: EqualityComparer<T> but is 3/2 to 2 times slower.
         private static Instruction _Reference, _Boolean, _SByte, _Int16, _Char, _Int32, _Int64, _Byte, _UInt16, _UInt32, _UInt64, _Single, _Double;
-
-        public override int ConsumedStack { get { return 2; } }
-        public override int ProducedStack { get { return 1; } }
+        private static Instruction _BooleanLifted, _SByteLifted, _Int16Lifted, _CharLifted, _Int32Lifted, _Int64Lifted,
+            _ByteLifted, _UInt16Lifted, _UInt32Lifted, _UInt64Lifted, _SingleLifted, _DoubleLifted;
 
         private NotEqualInstruction() {
         }
 
+        protected override object DoNullComparison (object l, object r)
+        {
+            return LiftedToNull ? (object) null : (object) l != r;
+        }
+
         internal sealed class NotEqualBoolean : NotEqualInstruction {
-            public override int Run(InterpretedFrame frame) {
-                frame.Push(((Boolean)frame.Pop()) != ((Boolean)frame.Pop()));
-                return +1;
+            protected override object DoCalculate (object l, object r)
+            {
+                return (Boolean)l != (Boolean)r;
             }
         }
 
         internal sealed class NotEqualSByte : NotEqualInstruction {
-            public override int Run(InterpretedFrame frame) {
-                frame.Push(((SByte)frame.Pop()) != ((SByte)frame.Pop()));
-                return +1;
+            protected override object DoCalculate (object l, object r)
+            {
+                return (SByte)l != (SByte)r;
             }
         }
 
         internal sealed class NotEqualInt16 : NotEqualInstruction {
-            public override int Run(InterpretedFrame frame) {
-                frame.Push(((Int16)frame.Pop()) != ((Int16)frame.Pop()));
-                return +1;
+            protected override object DoCalculate (object l, object r)
+            {
+                return (Int16)l != (Int16)r;
             }
         }
 
         internal sealed class NotEqualChar : NotEqualInstruction {
-            public override int Run(InterpretedFrame frame) {
-                frame.Push(((Char)frame.Pop()) != ((Char)frame.Pop()));
-                return +1;
+            protected override object DoCalculate (object l, object r)
+            {
+                return (Char)l != (Char)r;
             }
         }
 
         internal sealed class NotEqualInt32 : NotEqualInstruction {
-            public override int Run(InterpretedFrame frame) {
-                frame.Push(((Int32)frame.Pop()) != ((Int32)frame.Pop()));
-                return +1;
+            protected override object DoCalculate (object l, object r)
+            {
+                return (Int32)l != (Int32)r;
             }
         }
 
         internal sealed class NotEqualInt64 : NotEqualInstruction {
-            public override int Run(InterpretedFrame frame) {
-                frame.Push(((Int64)frame.Pop()) != ((Int64)frame.Pop()));
-                return +1;
+            protected override object DoCalculate (object l, object r)
+            {
+                return (Int64)l != (Int64)r;
             }
         }
 
         internal sealed class NotEqualByte : NotEqualInstruction {
-            public override int Run(InterpretedFrame frame) {
-                frame.Push(((Byte)frame.Pop()) != ((Byte)frame.Pop()));
-                return +1;
+            protected override object DoCalculate (object l, object r)
+            {
+                return (Byte)l != (Byte)r;
             }
         }
 
         internal sealed class NotEqualUInt16 : NotEqualInstruction {
-            public override int Run(InterpretedFrame frame) {
-                frame.Push(((UInt16)frame.Pop()) != ((UInt16)frame.Pop()));
-                return +1;
+            protected override object DoCalculate (object l, object r)
+            {
+                return (UInt16)l != (UInt16)r;
             }
         }
 
         internal sealed class NotEqualUInt32 : NotEqualInstruction {
-            public override int Run(InterpretedFrame frame) {
-                frame.Push(((UInt32)frame.Pop()) != ((UInt32)frame.Pop()));
-                return +1;
+            protected override object DoCalculate (object l, object r)
+            {
+                return (UInt32)l != (UInt32)r;
             }
         }
 
         internal sealed class NotEqualUInt64 : NotEqualInstruction {
-            public override int Run(InterpretedFrame frame) {
-                frame.Push(((UInt64)frame.Pop()) != ((UInt64)frame.Pop()));
-                return +1;
+            protected override object DoCalculate (object l, object r)
+            {
+                return (UInt64)l != (UInt64)r;
             }
         }
 
         internal sealed class NotEqualSingle : NotEqualInstruction {
-            public override int Run(InterpretedFrame frame) {
-                frame.Push(((Single)frame.Pop()) != ((Single)frame.Pop()));
-                return +1;
+            protected override object DoCalculate (object l, object r)
+            {
+                return (Single)l != (Single)r;
             }
         }
 
         internal sealed class NotEqualDouble : NotEqualInstruction {
-            public override int Run(InterpretedFrame frame) {
-                frame.Push(((Double)frame.Pop()) != ((Double)frame.Pop()));
-                return +1;
+            protected override object DoCalculate (object l, object r)
+            {
+                return (Double)l != (Double)r;
             }
         }
 
         internal sealed class NotEqualReference : NotEqualInstruction {
-            public override int Run(InterpretedFrame frame) {
-                frame.Push(frame.Pop() != frame.Pop());
-                return +1;
+            protected override object Calculate (object l, object r)
+            {
+                return l != r;
+            }
+
+            protected override object DoCalculate (object l, object r)
+            {
+                throw Assert.Unreachable;
             }
         }
 
@@ -151,6 +160,29 @@ namespace Microsoft.Scripting.Interpreter {
 
                 default:
                     throw new NotImplementedException();
+            }
+        }
+
+        public static Instruction CreateLifted(Type type) {
+            // Boxed enums can be unboxed as their underlying types:
+            switch ((type.IsEnum() ? Enum.GetUnderlyingType(type) : type).GetTypeCode()) {
+                case TypeCode.Boolean: return _BooleanLifted ?? (_BooleanLifted = new NotEqualBoolean() { LiftedToNull = true });
+                case TypeCode.SByte: return _SByteLifted ?? (_SByteLifted = new NotEqualSByte() { LiftedToNull = true });
+                case TypeCode.Byte: return _ByteLifted ?? (_ByteLifted = new NotEqualByte() { LiftedToNull = true });
+                case TypeCode.Char: return _CharLifted ?? (_CharLifted = new NotEqualChar() { LiftedToNull = true });
+                case TypeCode.Int16: return _Int16Lifted ?? (_Int16Lifted = new NotEqualInt16() { LiftedToNull = true });
+                case TypeCode.Int32: return _Int32Lifted ?? (_Int32Lifted = new NotEqualInt32() { LiftedToNull = true });
+                case TypeCode.Int64: return _Int64Lifted ?? (_Int64Lifted = new NotEqualInt64() { LiftedToNull = true });
+
+                case TypeCode.UInt16: return _UInt16Lifted ?? (_UInt16Lifted = new NotEqualInt16() { LiftedToNull = true });
+                case TypeCode.UInt32: return _UInt32Lifted ?? (_UInt32Lifted = new NotEqualInt32() { LiftedToNull = true });
+                case TypeCode.UInt64: return _UInt64Lifted ?? (_UInt64Lifted = new NotEqualInt64() { LiftedToNull = true });
+
+                case TypeCode.Single: return _SingleLifted ?? (_SingleLifted = new NotEqualSingle() { LiftedToNull = true });
+                case TypeCode.Double: return _DoubleLifted ?? (_DoubleLifted = new NotEqualDouble() { LiftedToNull = true });
+
+                default:
+                    throw Assert.Unreachable;
             }
         }
 

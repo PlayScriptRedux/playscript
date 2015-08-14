@@ -676,7 +676,7 @@ alloc_handle (HandleData *handles, MonoObject *obj, gboolean track)
 			gpointer *entries;
 
 			entries = mono_gc_alloc_fixed (sizeof (gpointer) * new_size, make_root_descr_all_refs (new_size, handles->type == HANDLE_PINNED));
-			mono_gc_memmove (entries, handles->entries, sizeof (gpointer) * handles->size);
+			mono_gc_memmove_aligned (entries, handles->entries, sizeof (gpointer) * handles->size);
 
 			mono_gc_free_fixed (handles->entries);
 			handles->entries = entries;
@@ -1101,6 +1101,8 @@ finalizer_thread (gpointer unused)
 		 */
 		mono_gc_invoke_finalizers ();
 
+		mono_threads_join_threads ();
+
 		reference_queue_proccess_all ();
 
 		SetEvent (pending_done_event);
@@ -1116,7 +1118,7 @@ static
 void
 mono_gc_init_finalizer_thread (void)
 {
-	gc_thread = mono_thread_create_internal (mono_domain_get (), finalizer_thread, NULL, FALSE, TRUE, 0);
+	gc_thread = mono_thread_create_internal (mono_domain_get (), finalizer_thread, NULL, FALSE, 0);
 	ves_icall_System_Threading_Thread_SetName_internal (gc_thread, mono_string_new (mono_domain_get (), "Finalizer"));
 }
 
@@ -1207,14 +1209,7 @@ mono_gc_cleanup (void)
 				ret = WaitForSingleObjectEx (gc_thread->handle, INFINITE, TRUE);
 				g_assert (ret == WAIT_OBJECT_0);
 
-#ifndef HOST_WIN32
-				/*
-				 * The above wait only waits for the exited event to be signalled, the thread might still be running. To fix this race, we
-				 * create the finalizer thread without calling pthread_detach () on it, so we can wait for it manually.
-				 */
-				ret = pthread_join ((MonoNativeThreadId)(gpointer)(gsize)gc_thread->tid, NULL);
-				g_assert (ret == 0);
-#endif
+				mono_thread_join ((gpointer)gc_thread->tid);
 			}
 		}
 		gc_thread = NULL;

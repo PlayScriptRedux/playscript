@@ -622,7 +622,7 @@ is_xdomain_ref_allowed (gpointer *ptr, char *obj, MonoDomain *domain)
 		return TRUE;
 
 #ifndef DISABLE_REMOTING
-	if (mono_class_has_parent_fast (o->vtable->klass, mono_defaults.real_proxy_class) &&
+	if (mono_defaults.real_proxy_class->supertypes && mono_class_has_parent_fast (o->vtable->klass, mono_defaults.real_proxy_class) &&
 			offset == G_STRUCT_OFFSET (MonoRealProxy, unwrapped_server))
 		return TRUE;
 #endif
@@ -897,7 +897,7 @@ process_object_for_domain_clearing (char *start, MonoDomain *domain)
 	/* The object could be a proxy for an object in the domain
 	   we're deleting. */
 #ifndef DISABLE_REMOTING
-	if (mono_class_has_parent_fast (vt->klass, mono_defaults.real_proxy_class)) {
+	if (mono_defaults.real_proxy_class->supertypes && mono_class_has_parent_fast (vt->klass, mono_defaults.real_proxy_class)) {
 		MonoObject *server = ((MonoRealProxy*)start)->unwrapped_server;
 
 		/* The server could already have been zeroed out, so
@@ -1932,7 +1932,7 @@ finish_gray_stack (int generation, GrayQueue *queue)
 		++ephemeron_rounds;
 	} while (!done_with_ephemerons);
 
-	sgen_scan_togglerefs (start_addr, end_addr, ctx);
+	sgen_mark_togglerefs (start_addr, end_addr, ctx);
 
 	if (sgen_need_bridge_processing ()) {
 		sgen_collect_bridge_objects (generation, ctx);
@@ -1982,6 +1982,13 @@ finish_gray_stack (int generation, GrayQueue *queue)
 	 * We pass the copy func so we can figure out if an array was promoted or not.
 	 */
 	clear_unreachable_ephemerons (ctx);
+
+	/*
+	 * We clear togglerefs only after all possible chances of revival are done. 
+	 * This is semantically more inline with what users expect and it allows for
+	 * user finalizers to correctly interact with TR objects.
+	*/
+	sgen_clear_togglerefs (start_addr, end_addr, ctx);
 
 	TV_GETTIME (btv);
 	SGEN_LOG (2, "Finalize queue handling scan for %s generation: %d usecs %d ephemeron rounds", generation_name (generation), TV_ELAPSED (atv, btv), ephemeron_rounds);
@@ -4096,7 +4103,10 @@ sgen_thread_register (SgenThreadInfo* info, void *addr)
 
 	binary_protocol_thread_register ((gpointer)mono_thread_info_get_tid (info));
 
+	/* On win32, stack_start_limit should be 0, since the stack can grow dynamically */
+#ifndef HOST_WIN32
 	mono_thread_info_get_stack_bounds (&staddr, &stsize);
+#endif
 	if (staddr) {
 		info->stack_start_limit = staddr;
 		info->stack_end = staddr + stsize;
@@ -4134,8 +4144,13 @@ sgen_thread_detach (SgenThreadInfo *p)
 static void
 sgen_thread_unregister (SgenThreadInfo *p)
 {
-	binary_protocol_thread_unregister ((gpointer)mono_thread_info_get_tid (p));
-	SGEN_LOG (3, "unregister thread %p (%p)", p, (gpointer)mono_thread_info_get_tid (p));
+	MonoNativeThreadId tid;
+
+	tid = mono_thread_info_get_tid (p);
+	binary_protocol_thread_unregister ((gpointer)tid);
+	SGEN_LOG (3, "unregister thread %p (%p)", p, (gpointer)tid);
+
+	mono_threads_add_joinable_thread ((gpointer)tid);
 
 	if (gc_callbacks.thread_detach_func) {
 		gc_callbacks.thread_detach_func (p->runtime_data);
@@ -4205,7 +4220,7 @@ mono_gc_pthread_detach (pthread_t thread)
 void
 mono_gc_pthread_exit (void *retval) 
 {
-	mono_thread_info_dettach ();
+	mono_thread_info_detach ();
 	pthread_exit (retval);
 }
 
@@ -4259,7 +4274,7 @@ mono_gc_wbarrier_arrayref_copy (gpointer dest_ptr, gpointer src_ptr, int count)
 	HEAVY_STAT (++stat_wbarrier_arrayref_copy);
 	/*This check can be done without taking a lock since dest_ptr array is pinned*/
 	if (ptr_in_nursery (dest_ptr) || count <= 0) {
-		mono_gc_memmove (dest_ptr, src_ptr, count * sizeof (gpointer));
+		mono_gc_memmove_aligned (dest_ptr, src_ptr, count * sizeof (gpointer));
 		return;
 	}
 
@@ -4438,7 +4453,7 @@ mono_gc_wbarrier_value_copy (gpointer dest, gpointer src, int count, MonoClass *
 	if (ptr_in_nursery (dest) || ptr_on_stack (dest) || !SGEN_CLASS_HAS_REFERENCES (klass)) {
 		size_t element_size = mono_class_value_size (klass, NULL);
 		size_t size = count * element_size;
-		mono_gc_memmove (dest, src, size);		
+		mono_gc_memmove_atomic (dest, src, size);		
 		return;
 	}
 
@@ -4471,7 +4486,7 @@ mono_gc_wbarrier_object_copy (MonoObject* obj, MonoObject *src)
 
 	if (ptr_in_nursery (obj) || ptr_on_stack (obj)) {
 		size = mono_object_class (obj)->instance_size;
-		mono_gc_memmove ((char*)obj + sizeof (MonoObject), (char*)src + sizeof (MonoObject),
+		mono_gc_memmove_aligned ((char*)obj + sizeof (MonoObject), (char*)src + sizeof (MonoObject),
 				size - sizeof (MonoObject));
 		return;	
 	}
@@ -4829,6 +4844,7 @@ mono_gc_base_init (void)
 	cb.thread_attach = sgen_thread_attach;
 	cb.mono_method_is_critical = (gpointer)is_critical_method;
 #ifndef HOST_WIN32
+	cb.thread_exit = mono_gc_pthread_exit;
 	cb.mono_gc_pthread_create = (gpointer)mono_gc_pthread_create;
 #endif
 
@@ -5010,6 +5026,11 @@ mono_gc_base_init (void)
 				sgen_register_test_bridge_callbacks (g_strdup (opt));
 				continue;
 			}
+			if (g_str_has_prefix (opt, "toggleref-test")) {
+				sgen_register_test_toggleref_callback ();
+				continue;
+			}
+
 #ifdef USER_CONFIG
 			if (g_str_has_prefix (opt, "nursery-size=")) {
 				long val;
@@ -5596,8 +5617,14 @@ sgen_get_remset (void)
 guint
 mono_gc_get_vtable_bits (MonoClass *class)
 {
-	if (sgen_need_bridge_processing () && sgen_is_bridge_class (class))
+	/* FIXME move this to the bridge code */
+	if (!sgen_need_bridge_processing ())
+		return 0;
+	switch (sgen_bridge_class_kind (class)) {
+	case GC_BRIDGE_TRANSPARENT_BRIDGE_CLASS:
+	case GC_BRIDGE_OPAQUE_BRIDGE_CLASS:
 		return SGEN_GC_BIT_BRIDGE_OBJECT;
+	}
 	return 0;
 }
 

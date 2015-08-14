@@ -301,7 +301,7 @@ namespace Mono.CSharp
 				return context.LookupNamespaceOrType (mn.Name, mn.Arity, LookupMode.Probing, absolute_ns, Location.Null);
 
 			var left = ResolveMemberName (context, mn.Left);
-			var ns = left as Namespace;
+			var ns = left as NamespaceExpression;
 			if (ns != null)
 				return ns.LookupTypeOrNamespace (context, mn.Name, mn.Arity, LookupMode.Probing, Location.Null);
 
@@ -387,7 +387,7 @@ namespace Mono.CSharp
 					} else if (ParsedName.Left != null) {
 						fne = ResolveMemberName (mc, ParsedName.Left);
 						if (fne != null) {
-							var ns = fne as Namespace;
+							var ns = fne as NamespaceExpression;
 							if (ns != null) {
 								fne = ns.LookupTypeOrNamespace (mc, ParsedName.Name, ParsedName.Arity, LookupMode.Probing, Location.Null);
 								if (fne != null) {

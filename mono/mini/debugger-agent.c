@@ -2199,6 +2199,7 @@ decode_ptr_id (guint8 *buf, guint8 **endbuf, guint8 *limit, IdType type, MonoDom
 	mono_loader_unlock ();
 
 	if (res->domain == NULL) {
+		DEBUG (0, fprintf (log_file, "ERR_UNLOADED, id=%d, type=%d.\n", id, type));
 		*err = ERR_UNLOADED;
 		return NULL;
 	}
@@ -6020,7 +6021,7 @@ set_var (MonoType *t, MonoDebugVarInfo *var, MonoContext *ctx, MonoDomain *domai
 
 			if (addr) {
 				// FIXME: Write barriers
-				mono_gc_memmove (addr, val, size);
+				mono_gc_memmove_atomic (addr, val, size);
 			}
 			break;
 		}
@@ -6078,7 +6079,7 @@ set_var (MonoType *t, MonoDebugVarInfo *var, MonoContext *ctx, MonoDomain *domai
 		}
 			
 		// FIXME: Write barriers
-		mono_gc_memmove (addr, val, size);
+		mono_gc_memmove_atomic (addr, val, size);
 		break;
 	case MONO_DEBUG_VAR_ADDRESS_MODE_REGOFFSET_INDIR:
 		/* Same as regoffset, but with an indirection */
@@ -6088,7 +6089,7 @@ set_var (MonoType *t, MonoDebugVarInfo *var, MonoContext *ctx, MonoDomain *domai
 		gaddr = *(gpointer*)addr;
 		g_assert (gaddr);
 		// FIXME: Write barriers
-		mono_gc_memmove (gaddr, val, size);
+		mono_gc_memmove_atomic (gaddr, val, size);
 		break;
 	case MONO_DEBUG_VAR_ADDRESS_MODE_DEAD:
 		NOT_IMPLEMENTED;

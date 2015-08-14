@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 #AC_PREREQ([2.62])
 
-AC_INIT(mono, [3.2.7003],
+AC_INIT(mono, [3.4.1001],
         [http://bugzilla.xamarin.com/enter_bug.cgi?classification=Mono])
 
 AC_CONFIG_SRCDIR([README.md])
@@ -516,6 +516,9 @@ if test x"$GCC" = xyes; then
 		# The runtime code does not respect ANSI C strict aliasing rules
 		CFLAGS="$CFLAGS -fno-strict-aliasing"
 
+		# We rely on signed overflow to behave
+		CFLAGS="$CFLAGS -fwrapv"
+
 		ORIG_CFLAGS=$CFLAGS
 		CFLAGS="$CFLAGS -Wdeclaration-after-statement"
 		AC_MSG_CHECKING(for -Wdeclaration-after-statement option to gcc)
@@ -954,7 +957,7 @@ fi
 
 AC_ARG_ENABLE(gsharing, [  --enable-gsharing Enable gsharing], enable_gsharing=$enableval, enable_gsharing=no)
 if test x$enable_gsharing = xyes; then
-	AC_DEFINE(MONO_GSHARING,1,[Gsharing])
+	AC_DEFINE(ENABLE_GSHAREDVT,1,[Gsharing])
 fi
 
 AC_ARG_ENABLE(native-types, [  --enable-native-types Enable native types], enable_native_types=$enableval, enable_native_types=no)
@@ -2433,13 +2436,15 @@ if test "x$enable_llvm" = "xyes"; then
    # from LLVM classes.
    LLVM_CXXFLAGS="`$LLVM_CONFIG --cxxflags` -fno-rtti"
    LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
+   # This might include empty lines
+   LLVM_SYSTEM_LIBS=`$LLVM_CONFIG --system-libs 2>/dev/null | grep -- -`
    if test "x$host" != "x$target"; then
       # No need for jit libs
       LLVM_LIBS=`$LLVM_CONFIG --libs core bitwriter`
    else
       LLVM_LIBS=`$LLVM_CONFIG --libs core bitwriter jit mcjit $llvm_codegen`
    fi
-   LLVM_LIBS="$LLVM_LDFLAGS $LLVM_LIBS -lstdc++"
+   LLVM_LIBS="$LLVM_LIBS $LLVM_LDFLAGS $LLVM_SYSTEM_LIBS -lstdc++"
 
    expected_llvm_version="3.4svn-mono-mono/e656cac"
 
@@ -2948,8 +2953,9 @@ case "$host" in
 	;;
     *-*-*linux*)
 	AC_PATH_X
+	dlsearch_path=`(libtool --config ; echo eval echo \\$sys_lib_dlsearch_path_spec) | sh`
 	AC_MSG_CHECKING(for the soname of libX11.so)
-	for i in $x_libraries /usr/lib /usr/lib64; do
+	for i in $x_libraries $dlsearch_path; do
 		for r in 4 5 6; do
 			if test -f $i/libX11.so.$r; then
 				X11=libX11.so.$r
@@ -3529,6 +3535,7 @@ mono/tests/cas/inheritance/Makefile
 mono/tests/cas/linkdemand/Makefile
 mono/tests/cas/threads/Makefile
 mono/tests/gc-descriptors/Makefile
+mono/unit-tests/Makefile
 mono/benchmark/Makefile
 mono/monograph/Makefile
 mono/io-layer/Makefile

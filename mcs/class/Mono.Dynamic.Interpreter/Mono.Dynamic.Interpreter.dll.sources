@@ -42,8 +42,11 @@ Assembly/AssemblyInfo.cs
 
 ../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/AddInstruction.cs
 ../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/AndInstruction.cs
+../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/ArithmeticInstruction.cs
 ../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/ArrayOperations.cs
 ../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/CallInstruction.cs
+../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/ComparisonInstruction.cs
+../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/ConstantInstruction.cs
 ../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/CallInstruction.Generated.cs
 ../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/ControlFlowInstructions.cs
 ../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/DivInstruction.cs
@@ -53,11 +56,13 @@ Assembly/AssemblyInfo.cs
 ../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/EqualInstruction.cs
 ../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/FieldOperations.cs
 ../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/GreaterThanInstruction.cs
+../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/GreaterThanOrEqualInstruction.cs
 ../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/Instruction.cs
 ../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/InstructionFactory.cs
 ../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/InstructionList.cs
 ../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/LabelInfo.cs
 ../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/LessThanInstruction.cs
+../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/LessThanOrEqualInstruction.cs
 ../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/LocalAccess.cs
 ../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/ModInstruction.cs
 ../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/MulInstruction.cs
@@ -73,7 +78,6 @@ Assembly/AssemblyInfo.cs
 ../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/TypeOperations.cs
 ../dlr/Runtime/Microsoft.Dynamic/Interpreter/Instructions/XorInstruction.cs
 
-../dlr/Runtime/Microsoft.Dynamic/Math/BigIntegerV4.cs
 ../dlr/Runtime/Microsoft.Dynamic/Math/Complex64.cs
 
 ../dlr/Runtime/Microsoft.Dynamic/Runtime/ArgumentArray.cs

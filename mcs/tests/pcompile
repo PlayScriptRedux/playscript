@@ -1,0 +1,2 @@
+#!/bin/bash
+MONO_RUNTIME='./../../runtime/mono-wrapper' MONO_PATH="./../class/lib/net_4_5::$MONO_PATH" ./../../runtime/mono-wrapper ./../class/lib/build/mcs.exe -nostdlib --stacktrace -d:"NET_4_0;NET_4_5" -r:../class/lib/net_4_5/mscorlib.dll -r:../class/lib/net_4_5/System.Core.dll "$@"

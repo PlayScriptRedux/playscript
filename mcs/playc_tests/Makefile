@@ -64,7 +64,7 @@ build-compiler-lib:
 	cd ../class/PlayScript.Dynamic_aot && $(MAKE) NO_DIR_CHECK=yes
 	cd ../class/PlayScript.Dynamic && $(MAKE) NO_DIR_CHECK=yes
 
-qcheck: build-compiler-lib qcheck2
+qcheck: build-compiler-lib setup qcheck2
 
 as/Assert.dll:
 	$(CSCOMPILE) -t:library -d:"NET_4_0;NET_4_5" -r:../class/lib/net_4_5/pscorlib_aot.dll -r:../class/lib/net_4_5/PlayScript.Dynamic_aot.dll -psstrict- -out:as/Assert.dll com.adobe.test/Assert.as com.adobe.test/Utils.as com.adobe.test/print.as
@@ -92,7 +92,7 @@ qcheck2: playscript
 test-local:
 	@:
 
-run-test-local: setup qcheck
+run-test-local: qcheck
 
 check: run-test-local
 

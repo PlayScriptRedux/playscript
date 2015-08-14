@@ -48,6 +48,7 @@ typedef struct _SgenThreadInfo SgenThreadInfo;
 #include <mono/metadata/sgen-descriptor.h>
 #include <mono/metadata/sgen-gray.h>
 #include <mono/metadata/sgen-hash-table.h>
+#include <mono/metadata/sgen-bridge.h>
 
 /* The method used to clear the nursery */
 /* Clearing at nursery collections is the safest, but has bad interactions with caches.
@@ -228,6 +229,8 @@ extern int num_ready_finalizers;
 #define SGEN_ALLOC_ALIGN		8
 #define SGEN_ALLOC_ALIGN_BITS	3
 
+/* s must be non-negative */
+#define SGEN_CAN_ALIGN_UP(s)		((s) <= SIZE_MAX - (SGEN_ALLOC_ALIGN - 1))
 #define SGEN_ALIGN_UP(s)		(((s)+(SGEN_ALLOC_ALIGN-1)) & ~(SGEN_ALLOC_ALIGN-1))
 
 /*
@@ -784,13 +787,16 @@ void sgen_bridge_processing_stw_step (void) MONO_INTERNAL;
 void sgen_bridge_processing_finish (int generation) MONO_INTERNAL;
 void sgen_register_test_bridge_callbacks (const char *bridge_class_name) MONO_INTERNAL;
 gboolean sgen_is_bridge_object (MonoObject *obj) MONO_INTERNAL;
-gboolean sgen_is_bridge_class (MonoClass *class) MONO_INTERNAL;
+MonoGCBridgeObjectKind sgen_bridge_class_kind (MonoClass *class) MONO_INTERNAL;
 void sgen_mark_bridge_object (MonoObject *obj) MONO_INTERNAL;
 void sgen_bridge_register_finalized_object (MonoObject *object) MONO_INTERNAL;
 void sgen_bridge_describe_pointer (MonoObject *object) MONO_INTERNAL;
 
-void sgen_scan_togglerefs (char *start, char *end, ScanCopyContext ctx) MONO_INTERNAL;
+void sgen_mark_togglerefs (char *start, char *end, ScanCopyContext ctx) MONO_INTERNAL;
+void sgen_clear_togglerefs (char *start, char *end, ScanCopyContext ctx) MONO_INTERNAL;
+
 void sgen_process_togglerefs (void) MONO_INTERNAL;
+void sgen_register_test_toggleref_callback (void) MONO_INTERNAL;
 
 typedef mono_bool (*WeakLinkAlivePredicateFunc) (MonoObject*, void*);
 
