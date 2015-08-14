@@ -11327,6 +11327,10 @@ namespace Mono.CSharp
 			loc = Location.Null;
 		}
 
+		protected override void CloneTo (CloneContext clonectx, Expression target)
+		{
+		}
+
 		public override bool ContainsEmitWithAwait ()
 		{
 			return false;

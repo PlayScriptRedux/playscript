@@ -1773,6 +1773,7 @@ namespace Mono.CSharp {
 				return e;
 
 			source.Error_ValueCannotBeConverted (ec, target_type, false);
+
 			return null;
 		}
 

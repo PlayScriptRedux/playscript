@@ -335,7 +335,7 @@ namespace Mono.CSharp {
 						
 			if (source == null) {
 				ok = false;
-				source = EmptyExpression.Null;
+				source = ErrorExpression.Instance;
 			}
 
 			target = target.ResolveLValue (ec, source);
@@ -621,6 +621,12 @@ namespace Mono.CSharp {
 
 		public int AssignmentOffset { get; private set; }
 
+		public FieldBase Field {
+			get {
+				return mc;
+			}
+		}
+
 		public override Location StartLocation {
 			get {
 				return loc;
@@ -633,8 +639,8 @@ namespace Mono.CSharp {
 			if (source == null)
 				return null;
 
-			var bc = (BlockContext) rc;
 			if (resolved == null) {
+				var bc = (BlockContext) rc;
 				var ctx = new FieldInitializerContext (mc, bc);
 				resolved = base.DoResolve (ctx) as ExpressionStatement;
 				AssignmentOffset = ctx.AssignmentInfoOffset - bc.AssignmentInfoOffset;

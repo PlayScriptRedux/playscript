@@ -24,7 +24,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <Commandlineparameters>@options-test.rsp</Commandlineparameters>
+    <Commandlineparameters>@options-pscorlib.rsp</Commandlineparameters>
     <additionalargs>/newdynamic-</additionalargs>
     <ConsolePause>false</ConsolePause>
   </PropertyGroup>
@@ -213,6 +213,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="options-assert-test.rsp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="options-pscorlib.rsp">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

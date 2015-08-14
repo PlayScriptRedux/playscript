@@ -593,8 +593,8 @@ namespace Mono.CSharp
 		
 		protected override void CloneTo (CloneContext clonectx, Expression t)
 		{
-			var target = (AsDelete) t;
-			
+			var target = (AsNew) t;
+
 			target.Expr = Expr.Clone (clonectx);
 		}
 		
