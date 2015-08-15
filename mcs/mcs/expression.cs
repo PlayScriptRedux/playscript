@@ -6031,7 +6031,8 @@ namespace Mono.CSharp
 					type = false_type;
 
 					if (false_type.BuiltinType != BuiltinTypeSpec.Type.Dynamic) {
-						var conv_false_expr = Convert.ImplicitConversion (ec, false_expr, true_type, loc);
+						// The following needs to be up converted to prevent a CS0172 in ActionScript
+						var conv_false_expr = Convert.ImplicitConversion (ec, false_expr, true_type, loc, true);
 						//
 						// LAMESPEC: There seems to be hardcoded promotition to int type when
 						// both sides are numeric constants and one side is int constant and
