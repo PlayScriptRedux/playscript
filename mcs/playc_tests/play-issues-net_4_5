@@ -4,8 +4,16 @@
 # csXXXX.as		: test case causes error
 # csXXXX.as IGNORE 	: adds test to ignore list
 
-# Issue #57
-./as/test-as-CS0173.as
+
+# Issue #62 - XML.attributes - Implement function - Currently System.NotImplementedException 
+./as/test-as-XML-Attributes-Access.as IGNORE
+./as/test-as-XML-Attributes-Operator.as IGNORE
+
+# Issue #63 - XML - Implement xml["@id"] style attribute accessor
+./as/test-as-XML-Attr-Access-3.as IGNORE
+
+# Issue #57 - Conditional expression cannot be determined / no implicit conversion on classes 
+./as/test-as-CS0173.as IGNORE
 
 # Issue #50 - Number.toPrecision : Currently System.NotImplementedException 
 ./as/test-as-NumberToPrecision.as IGNORE

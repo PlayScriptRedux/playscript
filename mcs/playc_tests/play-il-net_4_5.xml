@@ -570,6 +570,36 @@
       </method>
     </type>
   </test>
+  <test name="./as/test-as-XML-Attr-Access-2.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>113</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-as-XML-Attr-Access.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>67</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-as-XMLAttributeName.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>75</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
   <test name="./as/test-debug-003.as">
     <type name="_root.Foo">
       <method name="Void .ctor(Int32, Int32)" attrs="6278">

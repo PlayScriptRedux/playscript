@@ -9808,7 +9808,7 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext rc)
 		{
-			var isPlayScript = rc.FileType != SourceFileType.PlayScript;
+			var isPlayScript = rc.FileType == SourceFileType.PlayScript;
 
 			// PlayScript E4X: Handle E4x accesors.
 			if (isPlayScript && AccessorType != Accessor.Member) {
@@ -9934,7 +9934,7 @@ namespace Mono.CSharp
 
 				// PlayScript - Search for _fn or _ns types for bare functions or namespace classes
 				bool foundFnType = false;
-				if (retval == null && rc.FileType == SourceFileType.PlayScript) {
+				if (isPlayScript && retval == null) {
 					retval = ns.LookupTypeOrNamespace (rc, Name + "_fn", Arity, LookupMode.Normal, loc);
 					if (retval != null) {
 						foundFnType = true;
