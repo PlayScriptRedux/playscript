@@ -24,7 +24,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <Commandlineparameters>@options-pscorlib.rsp</Commandlineparameters>
+    <Commandlineparameters>@options-test.rsp</Commandlineparameters>
     <additionalargs>/newdynamic-</additionalargs>
     <ConsolePause>false</ConsolePause>
   </PropertyGroup>
@@ -216,6 +216,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="options-pscorlib.rsp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="options-away3d-core-monomac.rsp">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

@@ -3803,8 +3803,10 @@ namespace Mono.CSharp
 				//
 				if ((oper & (Operator.BitwiseMask | Operator.ArithmeticMask | Operator.ShiftMask)) != 0 && oper != Operator.Addition) {
 					if (!(left.Type.IsNumeric || left.Type.IsAsUntyped) || !(right.Type.IsNumeric || right.Type.IsAsUntyped)) {
-						Error_OperatorCannotBeApplied (ec, left, right, oper, loc);
-						return null;
+						if (!(isPlayScript && (left.Type.IsDynamic || right.Type.IsDynamic))) {
+							Error_OperatorCannotBeApplied (ec, left, right, oper, loc);
+							return null;
+						}
 					}
 				}
 

@@ -23,4 +23,4 @@
 -r:../../../class/lib/net_4_5/pscorlib_aot.dll
 -r:../../../class/lib/net_4_5/System.Net.Http.dll
 
-../../../playc_tests/as/test-debug-Undef.as
+../../../playc_tests/as/test-as-DoubleTimesDynamic-CS0019.as

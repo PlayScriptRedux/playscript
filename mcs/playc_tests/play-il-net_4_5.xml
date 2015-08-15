@@ -445,10 +445,40 @@
       </method>
     </type>
   </test>
+  <test name="./as/test-as-CS0172-IntDoubleConditional.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>75</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-as-CS0172-UIntDoubleConditional.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>79</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
   <test name="./as/test-as-CS0172.as">
     <type name="_root.Foo">
       <method name="Int32 Main()" attrs="150">
         <size>55</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-as-DoubleTimesDynamic-CS0019.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>92</size>
       </method>
       <method name="Void .ctor()" attrs="6278">
         <size>7</size>
