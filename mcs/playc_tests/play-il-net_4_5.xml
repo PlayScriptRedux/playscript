@@ -429,14 +429,19 @@
   </test>
   <test name="./as/test-as-AsNonAssignStatementExpression.as">
     <type name="_root.Flow">
-      <method name="Void play(System.String, IAnimator, Double)" attrs="454">
-        <size>2</size>
-      </method>
       <method name="Int32 Main()" attrs="150">
-        <size>37</size>
+        <size>87</size>
       </method>
       <method name="Void .ctor()" attrs="6278">
         <size>7</size>
+      </method>
+    </type>
+    <type name="_root.____as_test_as_AsNonAssignStatementExpression_as.A">
+      <method name="Int32 get_B()" attrs="2502">
+        <size>35</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>14</size>
       </method>
     </type>
   </test>

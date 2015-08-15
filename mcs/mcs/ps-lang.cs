@@ -1157,7 +1157,8 @@ namespace Mono.CSharp
 
 		protected override bool DoFlowAnalysis (FlowAnalysisContext fc)
 		{
-			throw new NotImplementedException ();
+			// TODO: Is it ok to short-circuit the flow analysis for a getter that has no assignment?...
+			return true;
 		}
 
 		protected override void DoEmit (EmitContext ec)
