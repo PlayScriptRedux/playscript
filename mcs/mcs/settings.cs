@@ -278,8 +278,7 @@ namespace Mono.CSharp {
 			StdLibRuntimeVersion = RuntimeVersion.v4;
 			WarningLevel = 4;
 
-			// turn it on by default?
-//			SetNewDynamicRuntimeEnable(false);
+			// Turn Dynamic Runtime on by default
 			SetNewDynamicRuntimeEnable(true);
 
 			// Default to 1 or mdb files would be platform speficic
