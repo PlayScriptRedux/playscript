@@ -427,6 +427,29 @@
       </method>
     </type>
   </test>
+  <test name="./as/test-as-AsNonAssignStatementExpression.as">
+    <type name="_root.Flow">
+      <method name="Void play(System.String, IAnimator, Double)" attrs="454">
+        <size>2</size>
+      </method>
+      <method name="Int32 Main()" attrs="150">
+        <size>37</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-as-CS0172.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>55</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
   <test name="./as/test-as-Error.as">
     <type name="_root.Foo">
       <method name="Int32 Main()" attrs="150">
@@ -441,6 +464,16 @@
     <type name="_root.NumberTest">
       <method name="Int32 Main()" attrs="150">
         <size>90</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-as-TestTemplate.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>10</size>
       </method>
       <method name="Void .ctor()" attrs="6278">
         <size>7</size>

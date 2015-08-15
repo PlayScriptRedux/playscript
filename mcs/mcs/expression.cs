@@ -6020,9 +6020,10 @@ namespace Mono.CSharp
 			//
 			// First, if an implicit conversion exists from true_expr
 			// to false_expr, then the result type is of type false_expr.Type
-			//
+			// 
 			if (!TypeSpecComparer.IsEqual (true_type, false_type)) {
-				Expression conv = Convert.ImplicitConversion (ec, true_expr, false_type, loc);
+				// The following needs to be up converted to prevent a CS0172 in ActionScript
+				Expression conv = Convert.ImplicitConversion (ec, true_expr, false_type, loc, true);
 				if (conv != null && true_type.BuiltinType != BuiltinTypeSpec.Type.Dynamic) {
 					//
 					// Check if both can convert implicitly to each other's type

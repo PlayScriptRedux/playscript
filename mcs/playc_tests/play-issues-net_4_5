@@ -4,6 +4,9 @@
 # csXXXX.as		: test case causes error
 # csXXXX.as IGNORE 	: adds test to ignore list
 
+# Issue #57
+./as/test-as-CS0173.as
+
 # Issue #50 - Number.toPrecision : Currently System.NotImplementedException 
 ./as/test-as-NumberToPrecision.as IGNORE
 
