@@ -3775,6 +3775,7 @@ namespace Mono.CSharp
 				}
 			}
 
+
 			right = right.ResolveWithTypeHint (ec, typeHint);
 			if (right == null)
 				return null;
@@ -3784,6 +3785,15 @@ namespace Mono.CSharp
 
 			// Handle PlayScript binary operators that need to be converted to methods.
 			if (isPlayScript) {
+
+				if (oper == Operator.LogicalAnd || oper == Operator.LogicalOr) {
+					// Handle logical operation on Number/double; i.e. ( x:Number && y:Number)
+					if (left.Type.BuiltinType == BuiltinTypeSpec.Type.Double || 
+							right.Type.BuiltinType == BuiltinTypeSpec.Type.Double ) {
+						typeHint = null;
+					}
+				}
+
 				//
 				// Delegate math operations involving null or undefined to the dynamic runtime
 				// to avoid using nullable types (which do not work the way we want)
@@ -3835,7 +3845,7 @@ namespace Mono.CSharp
 				}
 
 				if ((typeHint != ec.BuiltinTypes.Bool) && (oper == Operator.LogicalOr || oper == Operator.LogicalAnd) && 
-					(left.Type.BuiltinType != BuiltinTypeSpec.Type.Bool || right.Type.BuiltinType != Mono.CSharp.BuiltinTypeSpec.Type.Bool)) {
+					(left.Type.BuiltinType != BuiltinTypeSpec.Type.Bool || right.Type.BuiltinType != BuiltinTypeSpec.Type.Bool)) {
 					Expression leftExpr = left;
 					Expression rightExpr = right;
 					if (left.Type != right.Type) {

@@ -1368,6 +1368,110 @@
       </method>
     </type>
   </test>
+  <test name="./as/test-debug-as-I64-2.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>52</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+      <method name="Void .cctor()" attrs="6289">
+        <size>15</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-as-I64-3.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>43</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+      <method name="Void .cctor()" attrs="6289">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-as-I64-4.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>43</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+      <method name="Void .cctor()" attrs="6289">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-as-I64-5.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>68</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+      <method name="Void .cctor()" attrs="6289">
+        <size>13</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-as-I64-6.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>102</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+      <method name="Void .cctor()" attrs="6289">
+        <size>21</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-as-I64-7.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>96</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+      <method name="Void .cctor()" attrs="6289">
+        <size>29</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-as-I64-8.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>155</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+      <method name="Void .cctor()" attrs="6289">
+        <size>21</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-as-I64.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>96</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+      <method name="Void .cctor()" attrs="6289">
+        <size>29</size>
+      </method>
+    </type>
+  </test>
   <test name="./as/test-ps-issue-119.as">
     <type name="_root.Program">
       <method name="UInt32 foo(Int32)" attrs="454">
