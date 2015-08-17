@@ -209,6 +209,16 @@ namespace System.Net {
 			return o_stream;
 		}
 
+		internal Socket Hijack ()
+		{
+			// TODO: disable normal request/response.
+			RemoveConnection ();
+			var s = sock;
+			sock = null;
+			o_stream = null;
+			return s;
+		}
+
 		static void OnRead (IAsyncResult ares)
 		{
 			HttpConnection cnc = (HttpConnection) ares.AsyncState;
