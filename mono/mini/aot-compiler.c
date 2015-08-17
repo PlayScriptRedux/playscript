@@ -128,6 +128,7 @@ typedef struct MonoAotOptions {
 	gboolean dwarf_debug;
 	gboolean soft_debug;
 	gboolean log_generics;
+	gboolean log_instances;
 	gboolean direct_pinvoke;
 	gboolean direct_icalls;
 	gboolean no_direct_calls;
@@ -146,11 +147,12 @@ typedef struct MonoAotOptions {
 	gboolean autoreg;
 	char *mtriple;
 	char *llvm_path;
+	char *instances_logfile_path;
 } MonoAotOptions;
 
 typedef struct MonoAotStats {
 	int ccount, mcount, lmfcount, abscount, gcount, ocount, genericcount;
-	int code_size, info_size, ex_info_size, unwind_info_size, got_size, class_info_size, got_info_size;
+	int code_size, info_size, ex_info_size, unwind_info_size, got_size, class_info_size, got_info_size, plt_size;
 	int methods_without_got_slots, direct_calls, all_calls, llvm_count;
 	int got_slots, offsets_size;
 	int got_slot_types [MONO_PATCH_INFO_NONE];
@@ -240,6 +242,7 @@ typedef struct MonoAotCompile {
 	int objc_selector_index, objc_selector_index_2;
 	GPtrArray *objc_selectors;
 	GHashTable *objc_selector_to_index;
+	FILE *instances_logfile;
 } MonoAotCompile;
 
 typedef struct {
@@ -925,6 +928,7 @@ arch_emit_plt_entry (MonoAotCompile *acfg, int index)
 		emit_symbol_diff (acfg, acfg->got_symbol, ".", ((acfg->plt_got_offset_base + index) * sizeof (gpointer)) -4);
 		/* Used by mono_aot_get_plt_info_offset */
 		emit_int32 (acfg, acfg->plt_got_info_offsets [index]);
+		acfg->stats.plt_size += 10;
 #elif defined(__native_client_codegen__)
 		guint8 buf [256];
 		guint8 *buf_aligned = ALIGN_TO(buf, kNaClAlignment);
@@ -6283,6 +6287,11 @@ mono_aot_parse_options (const char *aot_options, MonoAotOptions *opts)
 			opts->no_instances = TRUE;
 		} else if (str_begins_with (arg, "log-generics")) {
 			opts->log_generics = TRUE;
+		} else if (str_begins_with (arg, "log-instances=")) {
+			opts->log_instances = TRUE;
+			opts->instances_logfile_path = g_strdup (arg + strlen ("log-instances="));
+		} else if (str_begins_with (arg, "log-instances")) {
+			opts->log_instances = TRUE;
 		} else if (str_begins_with (arg, "mtriple=")) {
 			opts->mtriple = g_strdup (arg + strlen ("mtriple="));
 		} else if (str_begins_with (arg, "llvm-path=")) {
@@ -6602,6 +6611,13 @@ compile_method (MonoAotCompile *acfg, MonoMethod *method)
 		mono_destroy_compile (cfg);
 		mono_acfg_unlock (acfg);
 		return;
+	}
+
+	if (method->is_inflated && acfg->aot_opts.log_instances) {
+		if (acfg->instances_logfile)
+			fprintf (acfg->instances_logfile, "%s ### %d\n", mono_method_full_name (method, TRUE), cfg->code_size);
+		else
+			printf ("%s ### %d\n", mono_method_full_name (method, TRUE), cfg->code_size);
 	}
 
 	/* Adds generic instances referenced by this method */
@@ -7246,16 +7262,16 @@ emit_code (MonoAotCompile *acfg)
 		method = cfg->orig_method;
 
 		if (acfg->aot_opts.full_aot && cfg->orig_method->klass->valuetype) {
+			int call_size;
+
 			index = get_method_index (acfg, method);
 			sprintf (symbol, "ut_%d", index);
 
 			emit_int32 (acfg, index);
 			if (acfg->direct_method_addresses) {
-				emit_unset_mode (acfg);
-				if (acfg->thumb_mixed && cfg->compile_llvm)
-					fprintf (acfg->fp, "\n\tblx %s\n", symbol);
-				else
-					fprintf (acfg->fp, "\n\tbl %s\n", symbol);
+#ifdef MONO_ARCH_AOT_SUPPORTED
+				arch_emit_direct_call (acfg, symbol, FALSE, acfg->thumb_mixed && cfg->compile_llvm, NULL, &call_size);
+#endif
 			} else {
 				emit_symbol_diff (acfg, symbol, acfg->methods_symbol, 0);
 			}
@@ -8677,7 +8693,7 @@ int
 mono_compile_assembly (MonoAssembly *ass, guint32 opts, const char *aot_options)
 {
 	MonoImage *image = ass->image;
-	int i, res;
+	int i, res, all_sizes;
 	MonoAotCompile *acfg;
 	char *outfile_name, *tmp_outfile_name, *p;
 	char llvm_stats_msg [256];
@@ -8755,6 +8771,14 @@ mono_compile_assembly (MonoAssembly *ass, guint32 opts, const char *aot_options)
 
 	if (acfg->aot_opts.full_aot)
 		acfg->flags |= MONO_AOT_FILE_FLAG_FULL_AOT;
+
+	if (acfg->aot_opts.instances_logfile_path) {
+		acfg->instances_logfile = fopen (acfg->aot_opts.instances_logfile_path, "w");
+		if (!acfg->instances_logfile) {
+			fprintf (stderr, "Unable to create logfile: '%s'.\n", acfg->aot_opts.instances_logfile_path);
+			exit (1);
+		}
+	}
 
 	load_profile_files (acfg);
 
@@ -9027,7 +9051,19 @@ mono_compile_assembly (MonoAssembly *ass, guint32 opts, const char *aot_options)
 		sprintf (llvm_stats_msg, ", LLVM: %d (%d%%)", acfg->stats.llvm_count, acfg->stats.mcount ? (acfg->stats.llvm_count * 100) / acfg->stats.mcount : 100);
 	else
 		strcpy (llvm_stats_msg, "");
-	printf ("Code: %d Info: %d Ex Info: %d Unwind Info: %d Class Info: %d PLT: %d GOT Info: %d GOT: %d Offsets: %d\n", acfg->stats.code_size, acfg->stats.info_size, acfg->stats.ex_info_size, acfg->stats.unwind_info_size, acfg->stats.class_info_size, acfg->plt_offset, acfg->stats.got_info_size, (int)(acfg->got_offset * sizeof (gpointer)), acfg->stats.offsets_size);
+
+	all_sizes = acfg->stats.code_size + acfg->stats.info_size + acfg->stats.ex_info_size + acfg->stats.unwind_info_size + acfg->stats.class_info_size + acfg->stats.got_info_size + acfg->stats.offsets_size + acfg->stats.plt_size;
+
+	printf ("Code: %d(%d%%) Info: %d(%d%%) Ex Info: %d(%d%%) Unwind Info: %d(%d%%) Class Info: %d(%d%%) PLT: %d(%d%%) GOT Info: %d(%d%%) Offsets: %d(%d%%) GOT: %d\n",
+			acfg->stats.code_size, acfg->stats.code_size * 100 / all_sizes,
+			acfg->stats.info_size, acfg->stats.info_size * 100 / all_sizes,
+			acfg->stats.ex_info_size, acfg->stats.ex_info_size * 100 / all_sizes,
+			acfg->stats.unwind_info_size, acfg->stats.unwind_info_size * 100 / all_sizes,
+			acfg->stats.class_info_size, acfg->stats.class_info_size * 100 / all_sizes,
+			acfg->stats.plt_size ? acfg->stats.plt_size : acfg->plt_offset, acfg->stats.plt_size ? acfg->stats.plt_size * 100 / all_sizes : 0,
+			acfg->stats.got_info_size, acfg->stats.got_info_size * 100 / all_sizes,
+			acfg->stats.offsets_size, acfg->stats.offsets_size * 100 / all_sizes,
+			(int)(acfg->got_offset * sizeof (gpointer)));
 	printf ("Compiled: %d/%d (%d%%)%s, No GOT slots: %d (%d%%), Direct calls: %d (%d%%)\n", 
 			acfg->stats.ccount, acfg->stats.mcount, acfg->stats.mcount ? (acfg->stats.ccount * 100) / acfg->stats.mcount : 100,
 			llvm_stats_msg,
