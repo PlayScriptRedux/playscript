@@ -306,8 +306,9 @@ namespace flash.display3D.textures {
 		{
 			int memUsage = (mWidth * mHeight) * 4;
 			sMemoryUsedForTextures += memUsage;
+			#if DEBUG
 			Console.WriteLine("Texture.uploadFromBitmapData() - " + mWidth + "x" + mHeight + " - Mem: " + (memUsage / 1024) + " KB - Total Mem: " + (sMemoryUsedForTextures / 1024) + " KB");
-
+			#endif
 			// Bind the texture
 			GL.BindTexture (textureTarget, textureId);
 			GLUtils.CheckGLError ();
