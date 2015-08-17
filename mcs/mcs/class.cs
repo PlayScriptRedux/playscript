@@ -806,6 +806,8 @@ namespace Mono.CSharp
 			}
 		}
 
+		public ParametersCompiled PrimaryConstructorParameters { get; set; }
+
 		public TypeParameters TypeParametersAll {
 			get {
 				return all_type_parameters;
@@ -923,6 +925,9 @@ namespace Mono.CSharp
 			if (symbol is TypeParameter) {
 				Report.Error (692, symbol.Location,
 					"Duplicate type parameter `{0}'", symbol.GetSignatureForError ());
+			} else if (symbol is PrimaryConstructorField && mc is TypeParameter) {
+				Report.Error (9003, symbol.Location, "Primary constructor of type `{0}' has parameter of same name as type parameter `{1}'",
+					symbol.Parent.GetSignatureForError (), symbol.GetSignatureForError ());
 			} else {
 				Report.Error (102, symbol.Location,
 					"The type `{0}' already contains a definition for `{1}'",
@@ -1732,6 +1737,14 @@ namespace Mono.CSharp
 						PartialContainer.containers = new List<TypeContainer> ();
 
 					PartialContainer.containers.AddRange (containers);
+				}
+
+				if (PrimaryConstructorParameters != null) {
+					if (PartialContainer.PrimaryConstructorParameters != null) {
+						Report.Error (9001, Location, "Only one part of a partial type can declare primary constructor parameters");
+					} else {
+						PartialContainer.PrimaryConstructorParameters = PrimaryConstructorParameters;
+					}
 				}
 
 				members_defined = members_defined_ok = true;
@@ -2761,11 +2774,14 @@ namespace Mono.CSharp
 		public const TypeAttributes StaticClassAttribute = TypeAttributes.Abstract | TypeAttributes.Sealed;
 
 		SecurityType declarative_security;
+		protected Constructor generated_primary_constructor;
 
 		protected ClassOrStruct (TypeContainer parent, MemberName name, Attributes attrs, MemberKind kind)
 			: base (parent, name, attrs, kind)
 		{
 		}
+
+		public Arguments PrimaryConstructorBaseArguments { get; set; }
 
 		protected override TypeAttributes TypeAttr {
 			get {
@@ -2792,6 +2808,12 @@ namespace Mono.CSharp
 					Report.Error (694, symbol.Location,
 						"Type parameter `{0}' has same name as containing type, or method",
 						symbol.GetSignatureForError ());
+					return;
+				}
+
+				if (symbol is PrimaryConstructorField) {
+					Report.Error (9004, symbol.Location, "Primary constructor of type `{0}' has parameter of same name as containing type",
+						symbol.Parent.GetSignatureForError ());
 					return;
 				}
 			
@@ -2844,11 +2866,15 @@ namespace Mono.CSharp
 				mods = ((ModFlags & Modifiers.ABSTRACT) != 0) ? Modifiers.PROTECTED : Modifiers.PUBLIC;
 			}
 
-			var c = new Constructor (this, MemberName.Name, mods, null, ParametersCompiled.EmptyReadOnlyParameters, Location);
-			c.Initializer = new GeneratedBaseInitializer (Location);
+			var c = new Constructor (this, MemberName.Name, mods, null, PrimaryConstructorParameters ?? ParametersCompiled.EmptyReadOnlyParameters, Location);
+			if (Kind == MemberKind.Class)
+				c.Initializer = new GeneratedBaseInitializer (Location, PrimaryConstructorBaseArguments);
+
+			if (PrimaryConstructorParameters != null)
+				c.IsPrimaryConstructor = true;
 			
 			AddConstructor (c, true);
-			c.Block = new ToplevelBlock (Compiler, ParametersCompiled.EmptyReadOnlyParameters, Location) {
+			c.Block = new ToplevelBlock (Compiler, c.ParameterInfo, Location) {
 				IsCompilerGenerated = true
 			};
 
@@ -2858,6 +2884,19 @@ namespace Mono.CSharp
 		protected override bool DoDefineMembers ()
 		{
 			CheckProtectedModifier ();
+
+			if (PrimaryConstructorParameters != null) {
+				foreach (Parameter p in PrimaryConstructorParameters.FixedParameters) {
+					if ((p.ModFlags & Parameter.Modifier.RefOutMask) != 0)
+						continue;
+
+					var f = new PrimaryConstructorField (this, p);
+					AddField (f);
+
+					generated_primary_constructor.Block.AddStatement (
+						new StatementExpression (new PrimaryConstructorAssign (f, p), p.Location));
+				}
+			}
 
 			base.DoDefineMembers ();
 
@@ -2897,7 +2936,7 @@ namespace Mono.CSharp
 			Modifiers.SEALED |
 			Modifiers.STATIC |
 			Modifiers.UNSAFE;
-
+			
 		public Class (TypeContainer parent, MemberName name, Modifiers mod, Attributes attrs)
 			: base (parent, name, attrs, MemberKind.Class)
 		{
@@ -3027,6 +3066,11 @@ namespace Mono.CSharp
 			}
 
 			if (IsStatic) {
+				if (PrimaryConstructorParameters != null) {
+					Report.Error (-800, Location, "`{0}': Static classes cannot have primary constructor", GetSignatureForError ());
+					PrimaryConstructorParameters = null;
+				}
+
 				foreach (var m in Members) {
 					if (m is Operator) {
 						Report.Error (715, m.Location, "`{0}': Static classes cannot contain user-defined operators", m.GetSignatureForError ());
@@ -3054,8 +3098,8 @@ namespace Mono.CSharp
 					Report.Error (708, m.Location, "`{0}': cannot declare instance members in a static class", m.GetSignatureForError ());
 				}
 			} else {
-				if (!PartialContainer.HasInstanceConstructor)
-					DefineDefaultConstructor (false);
+				if (!PartialContainer.HasInstanceConstructor || PrimaryConstructorParameters != null)
+					generated_primary_constructor = DefineDefaultConstructor (false);
 			}
 
 			return base.DoDefineMembers ();
@@ -3389,6 +3433,14 @@ namespace Mono.CSharp
 				return true;
 
 			return fts.CheckStructCycles ();
+		}
+
+		protected override bool DoDefineMembers ()
+		{
+			if (PrimaryConstructorParameters != null)
+				generated_primary_constructor = DefineDefaultConstructor (false);
+
+			return base.DoDefineMembers ();
 		}
 
 		public override void Emit ()

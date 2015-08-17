@@ -1633,8 +1633,8 @@ namespace Mono.CSharp {
 	}
 
 	class GeneratedBaseInitializer: ConstructorBaseInitializer {
-		public GeneratedBaseInitializer (Location loc):
-			base (null, loc)
+		public GeneratedBaseInitializer (Location loc, Arguments arguments)
+			: base (arguments, loc)
 		{
 		}
 	}
@@ -1693,6 +1693,8 @@ namespace Mono.CSharp {
 		        return false;
 		    }
 		}
+
+		public bool IsPrimaryConstructor { get; set; }
 
 		
 		MethodBase IMethodDefinition.Metadata {
@@ -1787,6 +1789,16 @@ namespace Mono.CSharp {
 			if (!CheckBase ())
 				return false;
 
+			if (Parent.PrimaryConstructorParameters != null && !IsPrimaryConstructor) {
+				if (Parent.Kind == MemberKind.Struct) {
+					Report.Error (9009, Location, "`{0}': Structs with primary constructor cannot have explicit constructor",
+						GetSignatureForError ());
+				} else if (Initializer == null || Initializer is ConstructorBaseInitializer) {
+					Report.Error (9002, Location, "`{0}': Instance constructor of type with primary constructor must specify `this' constructor initializer",
+						GetSignatureForError ());
+				}
+			}
+
 			var ca = ModifiersExtensions.MethodAttr (ModFlags) | MethodAttributes.RTSpecialName | MethodAttributes.SpecialName;
 
 			ConstructorBuilder = Parent.TypeBuilder.DefineConstructor (
@@ -1863,7 +1875,7 @@ namespace Mono.CSharp {
 							//
 							block.AddThisVariable (bc);
 						} else if (Parent.PartialContainer.Kind == MemberKind.Class) {
-							Initializer = new GeneratedBaseInitializer (Location);
+							Initializer = new GeneratedBaseInitializer (Location, null);
 						}
 					}
 
