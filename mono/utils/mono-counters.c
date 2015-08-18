@@ -61,6 +61,10 @@ mono_counters_register (const char* name, int type, void *addr)
 	MonoCounter *counter;
 	if (!(type & valid_mask))
 		return;
+
+	if ((type & MONO_COUNTER_VARIANCE_MASK) == 0)
+		type |= MONO_COUNTER_MONOTONIC;
+
 	counter = malloc (sizeof (MonoCounter));
 	if (!counter)
 		return;
@@ -83,7 +87,9 @@ mono_counters_register (const char* name, int type, void *addr)
 }
 
 typedef int (*IntFunc) (void);
+typedef guint (*UIntFunc) (void);
 typedef gint64 (*LongFunc) (void);
+typedef guint64 (*ULongFunc) (void);
 typedef gssize (*PtrFunc) (void);
 typedef double (*DoubleFunc) (void);
 typedef char* (*StrFunc) (void);
@@ -92,7 +98,9 @@ typedef char* (*StrFunc) (void);
 static void
 dump_counter (MonoCounter *counter, FILE *outfile) {
 	int intval;
+	guint uintval;
 	gint64 int64val;
+	guint64 uint64val;
 	gssize wordval;
 	double dval;
 	const char *str;
@@ -104,6 +112,13 @@ dump_counter (MonoCounter *counter, FILE *outfile) {
 		      intval = *(int*)counter->addr;
 	      fprintf (outfile, ENTRY_FMT "%d\n", counter->name, intval);
 	      break;
+	case MONO_COUNTER_UINT:
+	      if (counter->type & MONO_COUNTER_CALLBACK)
+		      uintval = ((UIntFunc)counter->addr) ();
+	      else
+		      uintval = *(guint*)counter->addr;
+	      fprintf (outfile, ENTRY_FMT "%u\n", counter->name, uintval);
+	      break;
 	case MONO_COUNTER_LONG:
 	      if (counter->type & MONO_COUNTER_CALLBACK)
 		      int64val = ((LongFunc)counter->addr) ();
@@ -113,6 +128,13 @@ dump_counter (MonoCounter *counter, FILE *outfile) {
 		      fprintf (outfile, ENTRY_FMT "%.2f ms\n", counter->name, (double)int64val / 10000.0);
 	      else
 		      fprintf (outfile, ENTRY_FMT "%lld\n", counter->name, (long long)int64val);
+	      break;
+	case MONO_COUNTER_ULONG:
+	      if (counter->type & MONO_COUNTER_CALLBACK)
+		      uint64val = ((ULongFunc)counter->addr) ();
+	      else
+		      uint64val = *(guint64*)counter->addr;
+	      fprintf (outfile, ENTRY_FMT "%llu\n", counter->name, (unsigned long long)uint64val);
 	      break;
 	case MONO_COUNTER_WORD:
 	      if (counter->type & MONO_COUNTER_CALLBACK)
@@ -135,9 +157,26 @@ dump_counter (MonoCounter *counter, FILE *outfile) {
 		      str = *(char**)counter->addr;
 	      fprintf (outfile, ENTRY_FMT "%s\n", counter->name, str);
 	      break;
+	case MONO_COUNTER_TIME_INTERVAL:
+		if (counter->type & MONO_COUNTER_CALLBACK)
+			int64val = ((LongFunc)counter->addr) ();
+		else
+			int64val = *(gint64*)counter->addr;
+		fprintf (outfile, ENTRY_FMT "%.2f ms\n", counter->name, (double)int64val / 1000.0);
+		break;
 	}
 }
 
+
+/**
+ * mono_counters_foreach:
+ * @cb: The callback that will be called for each counter.
+ * @user_data: Value passed as second argument of the callback.
+ *
+ * Iterate over all counters and call @cb for each one of them. Stop iterating if
+ * the callback returns FALSE.
+ *
+ */
 void
 mono_counters_foreach (CountersEnumCallback cb, gpointer user_data)
 {
@@ -165,7 +204,7 @@ mono_counters_dump_section (int section, FILE *outfile)
 {
 	MonoCounter *counter = counters;
 	while (counter) {
-		if (counter->type & section && mono_counter_get_variance (counter) == MONO_COUNTER_MONOTONIC)
+		if ((counter->type & section) && (mono_counter_get_variance (counter) & section))
 			dump_counter (counter, outfile);
 		counter = counter->next;
 	}
@@ -177,6 +216,8 @@ mono_counters_dump_section (int section, FILE *outfile)
  * @outfile: a FILE to dump the results to
  *
  * Displays the counts of all the enabled counters registered. 
+ * To filter by variance, you can OR one or more variance with the specific section you want.
+ * Use MONO_COUNTER_SECTION_MASK to dump all categories of a specific variance.
  */
 void
 mono_counters_dump (int section_mask, FILE *outfile)
@@ -185,10 +226,15 @@ mono_counters_dump (int section_mask, FILE *outfile)
 	section_mask &= valid_mask;
 	if (!counters)
 		return;
+
+	/* If no variance mask is supplied, we default to all kinds. */
+	if (!(section_mask & MONO_COUNTER_VARIANCE_MASK))
+		section_mask |= MONO_COUNTER_VARIANCE_MASK;
+
 	for (j = 0, i = MONO_COUNTER_JIT; i < MONO_COUNTER_LAST_SECTION; j++, i <<= 1) {
 		if ((section_mask & i) && (set_mask & i)) {
 			fprintf (outfile, "\n%s statistics\n", section_names [j]);
-			mono_counters_dump_section (i, outfile);
+			mono_counters_dump_section (i | (section_mask & MONO_COUNTER_VARIANCE_MASK), outfile);
 		}
 	}
 
