@@ -5316,6 +5316,8 @@ mono_gc_get_vtable_bits (MonoClass *class)
 	case GC_BRIDGE_TRANSPARENT_BRIDGE_CLASS:
 	case GC_BRIDGE_OPAQUE_BRIDGE_CLASS:
 		return SGEN_GC_BIT_BRIDGE_OBJECT;
+	case GC_BRIDGE_OPAQUE_CLASS:
+		return SGEN_GC_BIT_BRIDGE_OPAQUE_OBJECT;
 	}
 	return 0;
 }
