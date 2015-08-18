@@ -6919,6 +6919,7 @@ namespace Mono.CSharp {
 				ec.MarkLabel (end);
 				ec.Emit (OpCodes.Endfilter);
 				ec.BeginFilterHandler ();
+				ec.Emit (OpCodes.Pop);
 			}
 
 			protected override bool DoFlowAnalysis (FlowAnalysisContext fc)
