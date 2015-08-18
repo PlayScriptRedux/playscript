@@ -1,0 +1,10 @@
+// Compiler options: -psstrict-
+package {
+    public class Foo {
+        public static function Main():int {
+		var await:String = new String("");
+		var SS:int = await.Length;
+		return 0;
+        }
+    }
+}
