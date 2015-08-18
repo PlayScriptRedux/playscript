@@ -67,6 +67,10 @@ NurseryClearPolicy sgen_get_nursery_clear_policy (void) MONO_INTERNAL;
 #define SGEN_TV_ELAPSED(start,end) (int)((end-start))
 #define SGEN_TV_ELAPSED_MS(start,end) ((SGEN_TV_ELAPSED((start),(end)) + 5000) / 10000)
 
+#if !defined(__MACH__) && !MONO_MACH_ARCH_SUPPORTED && defined(HAVE_PTHREAD_KILL)
+#define SGEN_POSIX_STW 1
+#endif
+
 /* eventually share with MonoThread? */
 /*
  * This structure extends the MonoThreadInfo structure.
@@ -97,11 +101,12 @@ struct _SgenThreadInfo {
 	char **tlab_real_end_addr;
 	gpointer runtime_data;
 
-	/* Only used on POSIX platforms */
+#ifdef SGEN_POSIX_STW
+	/* This is -1 until the first suspend. */
 	int signal;
-	/* Ditto */
 	/* FIXME: kill this, we only use signals on systems that have rt-posix, which doesn't have issues with duplicates. */
 	unsigned int stop_count; /* to catch duplicate signals. */
+#endif
 
 	gpointer stopped_ip;	/* only valid if the thread is stopped */
 	MonoDomain *stopped_domain; /* dsto */
