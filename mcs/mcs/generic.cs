@@ -2166,6 +2166,8 @@ namespace Mono.CSharp {
 
 			atypes = new TypeSpec [count];
 
+			var errors = ec.Module.Compiler.Report.Errors;
+
 			for (int i = 0; i < count; i++){
 				var te = args[i].ResolveAsType (ec);
 				if (te == null) {
@@ -2189,7 +2191,7 @@ namespace Mono.CSharp {
 				}
 			}
 
-			if (!ok)
+			if (!ok || errors != ec.Module.Compiler.Report.Errors)
 				atypes = null;
 
 			return ok;
@@ -2409,6 +2411,8 @@ namespace Mono.CSharp {
 				return null;
 
 			TypeSpec[] atypes = args.Arguments;
+			if (atypes == null)
+				return null;
 
 			//
 			// Now bind the parameters
