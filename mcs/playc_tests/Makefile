@@ -56,9 +56,10 @@ TESTER = MONO_RUNTIME='$(RUNTIME)' $(TEST_RUNTIME) $(RUNTIME_FLAGS) $(LOCAL_RUNT
 
 TEST_ILS := $(wildcard *-lib.il)
 
+# Make mcs first in-order to generate .jay to .cs
 build-compiler-lib:
-	cd ../class/Mono.CSharp && $(MAKE) NO_DIR_CHECK=yes
 	cd ../mcs && $(MAKE) NO_DIR_CHECK=yes
+	cd ../class/Mono.CSharp && $(MAKE) NO_DIR_CHECK=yes
 	cd ../class/pscorlib_aot && $(MAKE) NO_DIR_CHECK=yes
 	cd ../class/pscorlib && $(MAKE) NO_DIR_CHECK=yes
 	cd ../class/PlayScript.Dynamic_aot && $(MAKE) NO_DIR_CHECK=yes
