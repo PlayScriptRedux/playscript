@@ -40,8 +40,6 @@ echo "$makefile_files"
 #
 # Solution/Project files
 read -d '' project_files <<- EOF
-mcs/class/ICSharpCode.SharpZipLib/ICSharpCode.SharpZipLib-monotouch.csproj
-mcs/class/Mono.CSharp/Mono.CSharp-net_4_0.csproj
 mcs/class/Mono.Optimization/Mono.Optimization.csproj
 mcs/class/Mono.PlayScript/Mono.PlayScript-net_2_0.csproj
 mcs/class/Mono.PlayScript/Mono.PlayScript-net_4_0.csproj

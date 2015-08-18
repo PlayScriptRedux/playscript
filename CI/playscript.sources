@@ -1,4 +1,4 @@
-mcs/class/Mono.PlayScript/.gitignore
+/mcs/class/Mono.PlayScript/.gitignore
 mcs/class/Mono.PlayScript/Assembly/AssemblyInfo.cs
 mcs/class/Mono.PlayScript/Assembly/ChangeLog
 mcs/class/Mono.PlayScript/ChangeLog
@@ -8661,8 +8661,6 @@ mcs/playc/Makefile
 mcs/playc_tests/zynga/Makefile
 mcs/tests/Makefile
 scripts/Makefile.am
-mcs/class/ICSharpCode.SharpZipLib/ICSharpCode.SharpZipLib-monotouch.csproj
-mcs/class/Mono.CSharp/Mono.CSharp-net_4_0.csproj
 mcs/class/Mono.Optimization/Mono.Optimization.csproj
 mcs/class/Mono.PlayScript/Mono.PlayScript-net_2_0.csproj
 mcs/class/Mono.PlayScript/Mono.PlayScript-net_4_0.csproj
