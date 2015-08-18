@@ -1170,9 +1170,6 @@ namespace Mono.CSharp
 				return true;
 			}
 
-			if (Add.IsInterfaceImplementation)
-				SetIsUsed ();
-
 			backing_field = new Field (Parent,
 				new TypeExpression (MemberType, Location),
 				Modifiers.BACKING_FIELD | Modifiers.COMPILER_GENERATED | Modifiers.PRIVATE | (ModFlags & (Modifiers.STATIC | Modifiers.UNSAFE)),
