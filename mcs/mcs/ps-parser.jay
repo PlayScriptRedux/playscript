@@ -7020,7 +7020,8 @@ catch_clauses
 		var l = (List<Catch>) $1;
 		
 		Catch c = (Catch) $2;
-		if (l [l.Count - 1].IsGeneral) {
+		var prev_catch = l [l.Count - 1];
+		if (prev_catch.IsGeneral && prev_catch.Filter == null) {
 			report.Error (1017, c.loc, "Try statement already has an empty catch block");
 		}
 		
@@ -7030,10 +7031,13 @@ catch_clauses
 	;
 
 catch_clause 
-	: CATCH block
+	: CATCH opt_catch_filter block
 	  {
 	  	//$$ = new Catch ((Block) $2, GetLocation ($1));
-		$$ = new Catch ((ExplicitBlock) $2, GetLocation ($1));
+		//$$ = new Catch ((ExplicitBlock) $2, GetLocation ($1));
+		var c = new Catch ((ExplicitBlock) $3, GetLocation ($1));
+		c.Filter = (CatchFilterExpression) $2;
+		$$ = c;
 	  }
 	| CATCH open_parens_any IDENTIFIER opt_type CLOSE_PARENS
 	  {
@@ -7061,8 +7065,9 @@ catch_clause
 		lbag.AddLocation (c, GetLocation ($2), GetLocation ($5));
 		$$ = c;
 	  }
-	  block_prepared
+	  opt_catch_filter block_prepared
 	  {
+	 	((Catch) $6).Filter = (CatchFilterExpression) $7;
 		$$ = $6;
 	  }
 	| CATCH open_parens_any error
@@ -7075,6 +7080,18 @@ catch_clause
 		}
 		
 		$$ = new Catch (null, GetLocation ($1));
+	  }
+	;
+
+opt_catch_filter
+	: /* empty */
+	| IF open_parens_any expression CLOSE_PARENS
+	  {
+		if (lang_version <= LanguageVersion.V_5)
+			FeatureIsNotAvailable (GetLocation ($1), "exception filter");
+
+	  	$$ = new CatchFilterExpression ((Expression) $3, GetLocation ($1));
+	  	lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
 	  }
 	;
 
