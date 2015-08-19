@@ -2026,6 +2026,11 @@ namespace Mono.CSharp
 
 			return ac;
 		}
+
+		public override List<MissingTypeSpecReference> ResolveMissingDependencies (MemberSpec caller)
+		{
+			return Element.ResolveMissingDependencies (caller);
+		}
 	}
 
 	class ReferenceContainer : ElementTypeSpec
