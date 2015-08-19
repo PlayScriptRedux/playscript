@@ -7728,12 +7728,12 @@ namespace Mono.CSharp {
 				}
 			}
 
-			base.Resolve (ec);
+			var ok = base.Resolve (ec);
 
 			if (vr != null)
 				vr.IsLockedByStatement = vr_locked;
 
-			return true;
+			return ok;
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Statement t)
@@ -8525,11 +8525,7 @@ namespace Mono.CSharp {
 				}
 			}
 
-			//return statement.Resolve (ec);
-			//d12330eda7746321b4611865d11e932e53ac55b8
-
-			base.Resolve (ec);
-			return true;
+			return base.Resolve (ec);
 		}
 
 		protected override void DoEmit (EmitContext ec)
