@@ -1532,30 +1532,6 @@ if test x$target_win32 = xno; then
 
 	AC_CHECK_FUNCS(inet_pton inet_aton)
 
-	dnl ***********************************************
-	dnl *** Checks for size of sockaddr_un.sun_path ***
-	dnl ***********************************************
-	# AC_CHECK_SIZEOF can't cope with struct members :-(
-	AC_MSG_CHECKING(size of sockaddr_un.sun_path)
-	AC_CACHE_VAL(mono_cv_sizeof_sunpath,
-		[AC_TRY_RUN([
-			#include <sys/types.h>
-			#include <stdio.h>
-			#include <sys/un.h>
-
-			int main(void) {
-				struct sockaddr_un sock_un;
-				FILE *f=fopen("conftestval", "w");
-				if(!f) exit(1);
-				fprintf(f, "%d\n", sizeof(sock_un.sun_path));
-				exit(0);
-			}
-		], mono_cv_sizeof_sunpath=`cat conftestval`,
-		   mono_cv_sizeof_sunpath=0,
-		   mono_cv_sizeof_sunpath=0)])dnl
-	AC_MSG_RESULT($mono_cv_sizeof_sunpath)
-	AC_DEFINE_UNQUOTED(MONO_SIZEOF_SUNPATH, $mono_cv_sizeof_sunpath, [Sizeof sock_un.sun_path])
-
 	dnl *****************************
 	dnl *** Checks for libxnet    ***
 	dnl *****************************
@@ -3029,25 +3005,6 @@ esac
 
 
 AC_SUBST(libsuffix)
-
-if test "x$TARGET" = "xAMD64" -o "x$TARGET" = "xX86"; then
-	if test "x$with_tls" = "x__thread"; then
-		#
-		# On some linux distributions, TLS works in executables, but linking 
-		# against a shared library containing TLS fails with:
-		# undefined reference to `__tls_get_addr'
-		#
-		rm -f conftest.c conftest.so conftest
-		echo "static __thread int foo; int main () { foo = 5; return 0; }" > conftest.c
-		$CC -fPIC --shared -o conftest.so conftest.c > /dev/null 2>&1
-		$CC -o conftest conftest.so > /dev/null 2>&1
-		if test ! -f conftest; then
-		   AC_MSG_WARN([Disabling usage of __thread.]);
-		   with_tls=pthread
-		fi
-		rm -f conftest.c conftest.so conftest
-	fi
-fi
 
 AC_ARG_ENABLE(icall-symbol-map,[  --enable-icall-symbol-map Generate tables which map icall functions to their C symbols], icall_symbol_map=$enableval, icall_symbol_map=no)
 if test "x$icall_symbol_map" = "xyes"; then

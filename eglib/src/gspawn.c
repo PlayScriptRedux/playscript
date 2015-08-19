@@ -35,10 +35,11 @@
 #include <glib.h>
 
 #ifdef HAVE_UNISTD_H
-#ifndef __USE_GNU
-#define __USE_GNU
-#endif
 #include <unistd.h>
+#endif
+
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
 #endif
 
 #ifdef HAVE_SYS_TIME_H
