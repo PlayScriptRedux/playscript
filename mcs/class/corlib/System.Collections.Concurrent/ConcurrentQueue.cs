@@ -132,24 +132,14 @@ namespace System.Collections.Concurrent
 		
 		public bool TryPeek (out T result)
 		{
-			result = default (T);
-			bool update = true;
-			
-			while (update)
-			{
-				Node oldHead = head;
-				Node oldNext = oldHead.Next;
+			Node first = head.Next;	
 
-				if (oldNext == null) {
-					result = default (T);
-					return false;
-				}
-
-				result = oldNext.Value;
-				
-				//check if head has been updated
-				update = head != oldHead;
+			if (first == null) {
+				result = default (T);
+				return false;
 			}
+
+			result = first.Value;
 			return true;
 		}
 		

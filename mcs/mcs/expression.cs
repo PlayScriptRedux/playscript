@@ -4526,6 +4526,8 @@ namespace Mono.CSharp
 		//
 		Expression ResolveEquality (ResolveContext ec, TypeSpec l, TypeSpec r, bool primitives_only)
 		{
+			var isPlayScript = ec.FileType == SourceFileType.PlayScript;
+
 			Expression result;
 			type = ec.BuiltinTypes.Bool;
 			bool no_arg_conv = false;
@@ -4682,22 +4684,20 @@ namespace Mono.CSharp
 			if (!TypeSpec.IsReferenceType (l) || !TypeSpec.IsReferenceType (r))
 				ret = null;
 
-			if (ret != null) {
-				if (l.BuiltinType == BuiltinTypeSpec.Type.String || l.BuiltinType == BuiltinTypeSpec.Type.Delegate || MemberCache.GetUserOperator (l, CSharp.Operator.OpType.Equality, false) != null)
-					ec.Report.Warning (253, 2, loc,
-						"Possible unintended reference comparison. Consider casting the right side expression to type `{0}' to get value comparison",
-						l.GetSignatureForError ());
+			if (l.BuiltinType == BuiltinTypeSpec.Type.String || l.BuiltinType == BuiltinTypeSpec.Type.Delegate || l.IsDelegate || MemberCache.GetUserOperator (l, CSharp.Operator.OpType.Equality, false) != null)
+				ec.Report.Warning (253, 2, loc,
+					"Possible unintended reference comparison. Consider casting the right side expression to type `{0}' to get value comparison",
+					l.GetSignatureForError ());
 
-				if (r.BuiltinType == BuiltinTypeSpec.Type.String || r.BuiltinType == BuiltinTypeSpec.Type.Delegate || MemberCache.GetUserOperator (r, CSharp.Operator.OpType.Equality, false) != null)
-					ec.Report.Warning (252, 2, loc,
-						"Possible unintended reference comparison. Consider casting the left side expression to type `{0}' to get value comparison",
-						r.GetSignatureForError ());
-			}
+			if (r.BuiltinType == BuiltinTypeSpec.Type.String || r.BuiltinType == BuiltinTypeSpec.Type.Delegate || r.IsDelegate || MemberCache.GetUserOperator (r, CSharp.Operator.OpType.Equality, false) != null)
+				ec.Report.Warning (252, 2, loc,
+					"Possible unintended reference comparison. Consider casting the left side expression to type `{0}' to get value comparison",
+					r.GetSignatureForError ());
+
 			//
 			// PlayScript - Try equality with any PlayScript/ActionScript implicit conversions
 			//
-			if (ret == null && ec.FileType == SourceFileType.PlayScript && 
-				(!TypeSpec.IsReferenceType (l) || !TypeSpec.IsReferenceType (r))) {
+			if (ret == null && isPlayScript && (!TypeSpec.IsReferenceType (l) || !TypeSpec.IsReferenceType (r))) {
 				ret = ResolveOperatorPredefined (ec, ec.BuiltinTypes.AsOperatorsBinaryEquality, no_arg_conv);
 			}
 
