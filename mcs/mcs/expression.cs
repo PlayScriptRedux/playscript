@@ -1763,7 +1763,6 @@ namespace Mono.CSharp
 
 						if (d.BuiltinType == BuiltinTypeSpec.Type.Dynamic)
 							return this;
-
 						//
 						// Turn is check into simple null check for implicitly convertible reference types
 						//

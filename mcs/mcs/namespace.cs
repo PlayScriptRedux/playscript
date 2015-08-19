@@ -1379,7 +1379,7 @@ namespace Mono.CSharp {
 						}
 						continue;
 					}
-						
+
 					var using_ns = entry.ResolvedExpression as NamespaceExpression;
 					if (using_ns == null)
 						continue;

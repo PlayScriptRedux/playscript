@@ -210,6 +210,8 @@ namespace Mono.CSharp
 			}
 		}
 
+		public LocalVariable AsyncThrowVariable { get; set; }
+
 		#endregion
 
 		public void AddStatementEpilog (IExpressionCleanup cleanupExpression)

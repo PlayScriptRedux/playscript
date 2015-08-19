@@ -1048,20 +1048,6 @@ namespace Mono.CSharp {
 			if (effective_base != null)
 				return effective_base;
 
-//<<<<<<< ours
-//			for (int i = 0; i < types.Length - 1; ++i) {
-//				types [i] = types [i].BaseType;
-//			}
-//
-//				types [types.Length - 1] = BaseType;
-//			} else {
-//				types = types.Select (l => l.BaseType).ToArray ();
-//			}
-//
-//			if (types != null) {
-//				return Convert.FindMostEncompassedType (types, null);
-//			}
-//=======
 			var types = new TypeSpec [HasTypeConstraint ? targs.Length + 1 : targs.Length];
 
 			for (int i = 0; i < targs.Length; ++i) {
@@ -1078,8 +1064,6 @@ namespace Mono.CSharp {
 
 			if (HasTypeConstraint)
 				types [types.Length - 1] = BaseType;
-//>>>>>>> theirs
-
 			return effective_base = Convert.FindMostEncompassedType (types, null);
 		}
 

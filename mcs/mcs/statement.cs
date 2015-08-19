@@ -1924,9 +1924,20 @@ namespace Mono.CSharp {
 			
 		protected override void DoEmit (EmitContext ec)
 		{
-			if (expr == null)
-				ec.Emit (OpCodes.Rethrow);
-			else {
+			if (expr == null) {
+				var atv = ec.AsyncThrowVariable;
+				if (atv != null) {
+					if (atv.HoistedVariant != null) {
+						atv.HoistedVariant.Emit (ec);
+					} else {
+						atv.Emit (ec);
+					}
+
+					ec.Emit (OpCodes.Throw);
+				} else {
+					ec.Emit (OpCodes.Rethrow);
+				}
+			} else {
 				expr.Emit (ec);
 
 				ec.Emit (OpCodes.Throw);
@@ -2771,6 +2782,11 @@ namespace Mono.CSharp {
 			if ((flags & Flags.CreateBuilderMask) != 0)
 				CreateBuilder (ec);
 
+			// FIX: Hack for PlayScript .play exception filters due to upstream merge 2ab02d
+			// not creating builder in the correct spot so hack it for now
+			if (builder == null)
+				CreateBuilder (ec);
+			
 			ec.Emit (OpCodes.Stloc, builder);
 		}
 
@@ -3151,16 +3167,6 @@ namespace Mono.CSharp {
 						ErrorIllegalDynamic (bc, s.loc);
 					Statement.DynamicOps = 0;
 
-
-// FIXME : merge refactor issue
-//					if (unreachable && !(s is LabeledStatement) && !(s is SwitchLabel) && !(s is Block))
-//						statements [ix] = new EmptyStatement (s.loc);
-//
-//					unreachable = bc.CurrentBranching.CurrentUsageVector.IsUnreachable;
-//					if (unreachable) {
-//						bc.IsUnreachable = true;
-//					} else if (bc.IsUnreachable)
-//						bc.IsUnreachable = false;
 				}
 			}
 
@@ -3201,10 +3207,12 @@ namespace Mono.CSharp {
 			DoEmit (ec);
 		}
 
-		protected void EmitScopeInitializers (EmitContext ec)
+		public void EmitScopeInitializers (EmitContext ec)
 		{
 			foreach (Statement s in scope_initializers)
 				s.Emit (ec);
+
+			scope_initializers = null;
 		}
 
 		protected override bool DoFlowAnalysis (FlowAnalysisContext fc)
@@ -7023,6 +7031,14 @@ namespace Mono.CSharp {
 
 				if (li != null)
 					EmitCatchVariableStore (ec);
+
+				if (Block.HasAwait) {
+					Block.EmitScopeInitializers (ec);
+				} else {
+					Block.Emit (ec);
+				}
+
+				return;
 			} else {
 				if (IsGeneral)
 					ec.BeginCatchBlock (ec.BuiltinTypes.Object);
@@ -7038,7 +7054,7 @@ namespace Mono.CSharp {
 
 			if (psErrorLi != null)
 				psErrorLi.CreateBuilder (ec);
-
+		
 			if (!Block.HasAwait)
 				Block.Emit (ec);
 		}
@@ -7056,7 +7072,7 @@ namespace Mono.CSharp {
 				hoisted_temp = new LocalTemporary (li.Type);
 				hoisted_temp.Store (ec);
 
-				// switch to assigning from the temporary variable and not from top of the stack
+				// switch to assignment from temporary variable and not from top of the stack
 				assign.UpdateSource (hoisted_temp);
 			}
 		}
@@ -7066,10 +7082,15 @@ namespace Mono.CSharp {
 			var isPlayScript = bc.FileType == SourceFileType.PlayScript;
 
 			using (bc.Set (ResolveContext.Options.CatchScope)) {
-				if (type_expr != null) {
+				if (type_expr == null) {
+					CreateExceptionVariable (bc.Module.Compiler.BuiltinTypes.Object);
+				} else {
 					type = type_expr.ResolveAsType (bc);
 					if (type == null)
 						return false;
+
+					if (li == null)
+						CreateExceptionVariable (type);
 
 					if (type.BuiltinType != BuiltinTypeSpec.Type.Exception && !TypeSpec.IsBaseClass (type, bc.BuiltinTypes.Exception, false)) {
 						bc.Report.Error (155, loc, "The type caught or thrown must be derived from System.Exception");
@@ -7129,9 +7150,21 @@ namespace Mono.CSharp {
 			}
 		}
 
+		void CreateExceptionVariable (TypeSpec type)
+		{
+			if (!Block.HasAwait)
+				return;
+
+			// TODO: Scan the block for rethrow expression
+			//if (!Block.HasRethrow)
+			//	return;
+
+			li = LocalVariable.CreateCompilerGenerated (type, block, Location.Null);
+		}
+
 		protected override bool DoFlowAnalysis (FlowAnalysisContext fc)
 		{
-			if (li != null) {
+			if (li != null && !li.IsCompilerGenerated) {
 				fc.SetVariableAssigned (li.VariableInfo, true);
 			}
 
@@ -7425,13 +7458,20 @@ namespace Mono.CSharp {
 
 				// 0 value is default label
 				ec.MarkLabel (labels [0]);
+				ec.Emit (OpCodes.Br, end);
 
+				var atv = ec.AsyncThrowVariable;
+				Catch c = null;
 				for (int i = 0; i < catch_sm.Count; ++i) {
-					ec.Emit (OpCodes.Br, end);
+					if (c != null && c.Block.HasReachableClosingBrace)
+						ec.Emit (OpCodes.Br, end);
 
 					ec.MarkLabel (labels [i + 1]);
-					catch_sm [i].Block.Emit (ec);
+					c = catch_sm [i];
+					ec.AsyncThrowVariable = c.Variable;
+					c.Block.Emit (ec);
 				}
+				ec.AsyncThrowVariable = atv;
 
 				ec.MarkLabel (end);
 			}
