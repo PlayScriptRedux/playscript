@@ -1823,7 +1823,7 @@ dump_object (MonoObject *obj, gboolean dump_location)
 	g_assert (j < sizeof (class_name));
 	class_name [j] = 0;
 
-	fprintf (heap_dump_file, "<object class=\"%s.%s\" size=\"%d\"",
+	fprintf (heap_dump_file, "<object class=\"%s.%s\" size=\"%zd\"",
 			class->name_space, class_name,
 			safe_object_get_size (obj));
 	if (dump_location) {
@@ -3863,7 +3863,8 @@ sgen_thread_unregister (SgenThreadInfo *p)
 	binary_protocol_thread_unregister ((gpointer)tid);
 	SGEN_LOG (3, "unregister thread %p (%p)", p, (gpointer)tid);
 
-	mono_threads_add_joinable_thread ((gpointer)tid);
+	if (p->info.runtime_thread)
+		mono_threads_add_joinable_thread ((gpointer)tid);
 
 	if (gc_callbacks.thread_detach_func) {
 		gc_callbacks.thread_detach_func (p->runtime_data);
@@ -3935,6 +3936,7 @@ mono_gc_pthread_exit (void *retval)
 {
 	mono_thread_info_detach ();
 	pthread_exit (retval);
+	g_assert_not_reached ();
 }
 
 #endif /* USE_PTHREAD_INTERCEPT */
