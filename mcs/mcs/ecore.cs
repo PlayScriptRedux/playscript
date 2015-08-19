@@ -6453,7 +6453,7 @@ namespace Mono.CSharp {
 
 			source.Emit (ec);
 
-			if (leave_copy) {
+			if (leave_copy || ec.NotifyEvaluatorOnStore) {
 				ec.Emit (OpCodes.Dup);
 				if (!IsStatic) {
 					temp = new LocalTemporary (this.Type);
@@ -6470,6 +6470,16 @@ namespace Mono.CSharp {
 				ec.Emit (OpCodes.Stsfld, spec);
 			else
 				ec.Emit (OpCodes.Stfld, spec);
+
+			if (ec.NotifyEvaluatorOnStore) {
+				if (!IsStatic)
+					throw new NotImplementedException ("instance field write");
+
+				if (leave_copy)
+					ec.Emit (OpCodes.Dup);
+
+				ec.Module.Evaluator.EmitValueChangedCallback (ec, Name, type, loc);
+			}
 			
 			if (temp != null) {
 				temp.Emit (ec);
