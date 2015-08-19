@@ -32,9 +32,6 @@ mcs/class/pscorlib/Makefile
 mcs/class/pscorlib_aot/Makefile
 mcs/mcs/Makefile
 mcs/playc/Makefile
-mcs/playc_tests/zynga/Makefile
-mcs/tests/Makefile
-scripts/Makefile.am
 EOF
 echo "$makefile_files"
 #
