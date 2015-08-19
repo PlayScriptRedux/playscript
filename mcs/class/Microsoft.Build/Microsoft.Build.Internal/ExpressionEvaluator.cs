@@ -102,14 +102,6 @@ namespace Microsoft.Build.Internal.Expressions
 				throw new InvalidProjectFileException (string.Format ("failed to evaluate expression as boolean: '{0}': {1}", source, ex.Message), ex);
 			}
 		}
-
-		public IEnumerable<object> EvaluateAsStringOrItems (string unexpandedValue)
-		{
-			var exprList = new ExpressionParserManual (unexpandedValue ?? string.Empty, ExpressionValidationType.LaxString).Parse ();
-			if (exprList == null)
-				throw new ArgumentNullException ("exprList");
-			return exprList.Select (e => e.EvaluateAsString (CreateContext (unexpandedValue)));
-		}
 	}
 	
 	class EvaluationContext
@@ -428,16 +420,23 @@ namespace Microsoft.Build.Internal.Expressions
 			if (!items.Any ())
 				return null;
 			if (Application.Expressions == null)
-				return string.Join (";", items.Select (item => context.EvaluateItem (itemType, item)));
+				return string.Join (";", items.Select (item => Unwrap (context.EvaluateItem (itemType, item))));
 			else
 				return string.Join (";", items.Select (item => {
 					context.ContextItem = item;
-					var ret = string.Concat (Application.Expressions.Select (e => e.EvaluateAsString (context)));
+					var ret = Unwrap (string.Concat (Application.Expressions.Select (e => e.EvaluateAsString (context))));
 					context.ContextItem = null;
 					return ret;
 				}));
 		}
-		
+
+		static string Unwrap (string ret)
+		{
+			if (ret.Length < 2 || ret [0] != ret [ret.Length - 1] || ret [0] != '"' && ret [0] != '\'')
+				return ret;
+			return ret.Substring (1, ret.Length - 2);
+		}
+
 		public override object EvaluateAsObject (EvaluationContext context)
 		{
 			return EvaluateAsString (context);
@@ -466,7 +465,7 @@ namespace Microsoft.Build.Internal.Expressions
 			var values = items.Select (i => (i is ProjectItem) ? ((ProjectItem) i).GetMetadataValue (metadataName) : ((ProjectItemInstance) i).GetMetadataValue (metadataName)).Where (s => !string.IsNullOrEmpty (s));
 			return string.Join (";", values);
 		}
-		
+
 		public override object EvaluateAsObject (EvaluationContext context)
 		{
 			return EvaluateAsString (context);
