@@ -18,23 +18,49 @@ struct _MonoCounter {
 	const char *name;
 	void *addr;
 	int type;
+	size_t size;
 };
 
 static MonoCounter *counters = NULL;
 static int valid_mask = 0;
 static int set_mask = 0;
 
+/**
+ * mono_counter_get_variance:
+ * @counter: counter to get the variance
+ *
+ * Variance specifies how the counter value is expected to behave between any two samplings.
+ *
+ * Returns: the monotonicity of the counter.
+ */
 int
 mono_counter_get_variance (MonoCounter *counter)
 {
 	return counter->type & MONO_COUNTER_VARIANCE_MASK;
 }
 
+/**
+ * mono_counter_get_unit:
+ * @counter: counter to get the unit
+ *
+ * The unit gives a high level view of the unit that the counter is measuring.
+ *
+ * Returns: the unit of the counter.
+ */
 int
 mono_counter_get_unit (MonoCounter *counter)
 {
 	return counter->type & MONO_COUNTER_UNIT_MASK;
 }
+
+/**
+ * mono_counter_get_section:
+ * @counter: counter to get the section
+ *
+ * Sections are the unit of organization between all counters.
+ *
+ * Returns: the section of the counter.
+ */
 
 int
 mono_counter_get_section (MonoCounter *counter)
@@ -42,11 +68,28 @@ mono_counter_get_section (MonoCounter *counter)
 	return counter->type & MONO_COUNTER_SECTION_MASK;
 }
 
+/**
+ * mono_counter_get_type:
+ * @counter: counter to get the type
+ *
+ * Returns the type used to strong the value of the counter.
+ *
+ * Returns:the type of the counter.
+ */
 int
 mono_counter_get_type (MonoCounter *counter)
 {
 	return counter->type & MONO_COUNTER_TYPE_MASK;
 }
+
+/**
+ * mono_counter_get_name:
+ * @counter: counter to get the name
+ *
+ * Returns the counter name. The string should not be freed.
+ *
+ * Returns the name of the counter.
+ */
 
 const char*
 mono_counter_get_name (MonoCounter *counter)
@@ -54,28 +97,18 @@ mono_counter_get_name (MonoCounter *counter)
 	return counter->name;
 }
 
+/**
+ * mono_counter_get_size:
+ * @counter: counter to get the max size of the counter
+ *
+ * Use the returned size to create the buffer used with mono_counters_sample
+ *
+ * Returns: the max size of the counter data.
+ */
 size_t
 mono_counter_get_size (MonoCounter *counter)
 {
-	switch (mono_counter_get_type (counter)) {
-	case MONO_COUNTER_INT:
-		return sizeof (int);
-	case MONO_COUNTER_UINT:
-		return sizeof (guint);
-	case MONO_COUNTER_LONG:
-	case MONO_COUNTER_TIME_INTERVAL:
-		return sizeof (gint64);
-	case MONO_COUNTER_ULONG:
-		return sizeof (guint64);
-	case MONO_COUNTER_WORD:
-		return sizeof (gssize);
-	case MONO_COUNTER_DOUBLE:
-		return sizeof (double);
-	case MONO_COUNTER_STRING:
-		return -1; // FIXME
-	default:
-		g_assert_not_reached ();
-	}
+	return counter->size;
 }
 
 /**
@@ -100,16 +133,75 @@ mono_counters_enable (int section_mask)
  * Note that @name must be a valid string at all times until
  * mono_counters_dump () is called.
  *
+ * This function should not be used with counter types that require an explicit size such as string
+ * as the counter size will be set to zero making them effectively useless.
+ *
+ *
  * It may be a function pointer if MONO_COUNTER_CALLBACK is specified:
  * the function should return the value and take no arguments.
  */
 void 
 mono_counters_register (const char* name, int type, void *addr)
 {
+	int size;
+	switch (type & MONO_COUNTER_TYPE_MASK) {
+	case MONO_COUNTER_INT:
+		size = sizeof (int);
+		break;
+	case MONO_COUNTER_UINT:
+		size = sizeof (guint);
+		break;
+	case MONO_COUNTER_LONG:
+	case MONO_COUNTER_TIME_INTERVAL:
+		size = sizeof (gint64);
+		break;
+	case MONO_COUNTER_ULONG:
+		size = sizeof (guint64);
+		break;
+	case MONO_COUNTER_WORD:
+		size = sizeof (gssize);
+		break;
+	case MONO_COUNTER_DOUBLE:
+		size = sizeof (double);
+		break;
+	case MONO_COUNTER_STRING:
+		size = 0;
+		break;
+	default:
+		g_assert_not_reached ();
+	}
+	mono_counters_register_with_size (name, type, addr, size);
+}
+
+/**
+ * mono_counters_register_with_size:
+ * @name: The name for this counters.
+ * @type: One of the possible MONO_COUNTER types, or MONO_COUNTER_CALLBACK for a function pointer.
+ * @addr: The address to register.
+ * @size: Max size of the counter data.
+ *
+ * Register addr as the address of a counter of type @type.
+ * Note that @name must be a valid string at all times until
+ * mono_counters_dump () is called.
+ *
+ * It may be a function pointer if MONO_COUNTER_CALLBACK is specified:
+ * the function should return the value and take no arguments.
+ *
+ * The value of @size is ignored for types with fixed size such as int and long.
+ *
+ * Use @size for types that can have dynamic size such as string.
+ *
+ * If @size is negative, it's silently converted to zero.
+ */
+void
+mono_counters_register_with_size (const char *name, int type, void *addr, int size)
+{
 	MonoCounter *counter;
 
 	if ((type & MONO_COUNTER_VARIANCE_MASK) == 0)
 		type |= MONO_COUNTER_MONOTONIC;
+	if (size < 0)
+		size = 0;
 
 	counter = malloc (sizeof (MonoCounter));
 	if (!counter)
@@ -118,6 +210,7 @@ mono_counters_register (const char* name, int type, void *addr)
 	counter->type = type;
 	counter->addr = addr;
 	counter->next = NULL;
+	counter->size = size;
 
 	set_mask |= type;
 
@@ -143,74 +236,40 @@ typedef char* (*StrFunc) (void);
 #define ENTRY_FMT "%-36s: "
 static void
 dump_counter (MonoCounter *counter, FILE *outfile) {
-	int intval;
-	guint uintval;
-	gint64 int64val;
-	guint64 uint64val;
-	gssize wordval;
-	double dval;
-	const char *str;
+	void *buffer = g_malloc0 (counter->size);
+	mono_counters_sample (counter, buffer, counter->size);
+
 	switch (counter->type & MONO_COUNTER_TYPE_MASK) {
 	case MONO_COUNTER_INT:
-	      if (counter->type & MONO_COUNTER_CALLBACK)
-		      intval = ((IntFunc)counter->addr) ();
-	      else
-		      intval = *(int*)counter->addr;
-	      fprintf (outfile, ENTRY_FMT "%d\n", counter->name, intval);
-	      break;
+		fprintf (outfile, ENTRY_FMT "%d\n", counter->name, *(int*)buffer);
+		break;
 	case MONO_COUNTER_UINT:
-	      if (counter->type & MONO_COUNTER_CALLBACK)
-		      uintval = ((UIntFunc)counter->addr) ();
-	      else
-		      uintval = *(guint*)counter->addr;
-	      fprintf (outfile, ENTRY_FMT "%u\n", counter->name, uintval);
-	      break;
+		fprintf (outfile, ENTRY_FMT "%u\n", counter->name, *(guint*)buffer);
+		break;
 	case MONO_COUNTER_LONG:
-	      if (counter->type & MONO_COUNTER_CALLBACK)
-		      int64val = ((LongFunc)counter->addr) ();
-	      else
-		      int64val = *(gint64*)counter->addr;
-	      if (mono_counter_get_unit (counter) == MONO_COUNTER_TIME)
-		      fprintf (outfile, ENTRY_FMT "%.2f ms\n", counter->name, (double)int64val / 10000.0);
-	      else
-		      fprintf (outfile, ENTRY_FMT "%lld\n", counter->name, (long long)int64val);
-	      break;
-	case MONO_COUNTER_ULONG:
-	      if (counter->type & MONO_COUNTER_CALLBACK)
-		      uint64val = ((ULongFunc)counter->addr) ();
-	      else
-		      uint64val = *(guint64*)counter->addr;
-	      fprintf (outfile, ENTRY_FMT "%llu\n", counter->name, (unsigned long long)uint64val);
-	      break;
-	case MONO_COUNTER_WORD:
-	      if (counter->type & MONO_COUNTER_CALLBACK)
-		      wordval = ((PtrFunc)counter->addr) ();
-	      else
-		      wordval = *(gssize*)counter->addr;
-	      fprintf (outfile, ENTRY_FMT "%zd\n", counter->name, (gint64)wordval);
-	      break;
-	case MONO_COUNTER_DOUBLE:
-	      if (counter->type & MONO_COUNTER_CALLBACK)
-		      dval = ((DoubleFunc)counter->addr) ();
-	      else
-		      dval = *(double*)counter->addr;
-	      fprintf (outfile, ENTRY_FMT "%.4f\n", counter->name, dval);
-	      break;
-	case MONO_COUNTER_STRING:
-	      if (counter->type & MONO_COUNTER_CALLBACK)
-		      str = ((StrFunc)counter->addr) ();
-	      else
-		      str = *(char**)counter->addr;
-	      fprintf (outfile, ENTRY_FMT "%s\n", counter->name, str);
-	      break;
-	case MONO_COUNTER_TIME_INTERVAL:
-		if (counter->type & MONO_COUNTER_CALLBACK)
-			int64val = ((LongFunc)counter->addr) ();
+		if ((counter->type & MONO_COUNTER_UNIT_MASK) == MONO_COUNTER_TIME)
+			fprintf (outfile, ENTRY_FMT "%.2f ms\n", counter->name, (double)(*(gint64*)buffer) / 10000.0);
 		else
-			int64val = *(gint64*)counter->addr;
-		fprintf (outfile, ENTRY_FMT "%.2f ms\n", counter->name, (double)int64val / 1000.0);
+			fprintf (outfile, ENTRY_FMT "%lld\n", counter->name, *(gint64*)buffer);
+		break;
+	case MONO_COUNTER_ULONG:
+		fprintf (outfile, ENTRY_FMT "%llu\n", counter->name, *(guint64*)buffer);
+		break;
+	case MONO_COUNTER_WORD:
+		fprintf (outfile, ENTRY_FMT "%zd\n", counter->name, *(gssize*)buffer);
+		break;
+	case MONO_COUNTER_DOUBLE:
+		fprintf (outfile, ENTRY_FMT "%.4f\n", counter->name, *(double*)buffer);
+		break;
+	case MONO_COUNTER_STRING:
+		fprintf (outfile, ENTRY_FMT "%s\n", counter->name, (counter->size == 0) ? "(null)" : (char*)buffer);
+		break;
+	case MONO_COUNTER_TIME_INTERVAL:
+		fprintf (outfile, ENTRY_FMT "%.2f ms\n", counter->name, (double)(*(gint64*)buffer) / 1000.0);
 		break;
 	}
+
+	g_free (buffer);
 }
 
 static gint64
@@ -368,6 +427,8 @@ mono_counters_sample (MonoCounter *counter, void *buffer, int buffer_size)
 	int cb = counter->type & MONO_COUNTER_CALLBACK;
 	int size = -1;
 
+	char *strval;
+
 	switch (mono_counter_get_type (counter)) {
 	case MONO_COUNTER_INT:
 		COPY_COUNTER (int, IntFunc);
@@ -389,8 +450,16 @@ mono_counters_sample (MonoCounter *counter, void *buffer, int buffer_size)
 		COPY_COUNTER (double, DoubleFunc);
 		break;
 	case MONO_COUNTER_STRING:
-		// FIXME : add support for string sampling
-		break;
+		if (buffer_size < counter->size)
+			return -1;
+		if (counter->size == 0)
+			return 0;
+		strval = cb ? ((StrFunc)counter->addr) () : (char*)counter->addr;
+		if (!strval)
+			return 0;
+		size = counter->size;
+		strncpy (buffer, strval, size - 1);
+		((char*)buffer)[size - 1] = '\0';
 	}
 
 	return size;
@@ -408,11 +477,11 @@ section_names [][10] = {
 };
 
 static void
-mono_counters_dump_section (int section, FILE *outfile)
+mono_counters_dump_section (int section, int variance, FILE *outfile)
 {
 	MonoCounter *counter = counters;
 	while (counter) {
-		if ((counter->type & section) && (mono_counter_get_variance (counter) & section))
+		if ((counter->type & section) && (mono_counter_get_variance (counter) & variance))
 			dump_counter (counter, outfile);
 		counter = counter->next;
 	}
@@ -431,18 +500,22 @@ void
 mono_counters_dump (int section_mask, FILE *outfile)
 {
 	int i, j;
+	int variance;
 	section_mask &= valid_mask;
 	if (!counters)
 		return;
 
+	variance = section_mask & MONO_COUNTER_VARIANCE_MASK;
+
 	/* If no variance mask is supplied, we default to all kinds. */
-	if (!(section_mask & MONO_COUNTER_VARIANCE_MASK))
-		section_mask |= MONO_COUNTER_VARIANCE_MASK;
+	if (!variance)
+		variance = MONO_COUNTER_VARIANCE_MASK;
+	section_mask &= ~MONO_COUNTER_VARIANCE_MASK;
 
 	for (j = 0, i = MONO_COUNTER_JIT; i < MONO_COUNTER_LAST_SECTION; j++, i <<= 1) {
 		if ((section_mask & i) && (set_mask & i)) {
 			fprintf (outfile, "\n%s statistics\n", section_names [j]);
-			mono_counters_dump_section (i | (section_mask & MONO_COUNTER_VARIANCE_MASK), outfile);
+			mono_counters_dump_section (i, variance, outfile);
 		}
 	}
 
