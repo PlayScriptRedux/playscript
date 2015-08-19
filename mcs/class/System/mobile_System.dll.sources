@@ -526,6 +526,7 @@ System.Net/SecurityProtocolType.cs
 System.Net/ServicePoint.cs
 System.Net/ServicePointManager.cs
 System.Net/ServicePointManager.extra.cs
+System.Net/SimpleAsyncResult.cs
 System.Net/SocketAddress.cs
 System.Net/TransportContext.cs
 System.Net/TransportType.cs
@@ -558,6 +559,7 @@ System.Net/WebUtility.cs
 System.Net.WebSockets/ClientWebSocket.cs
 System.Net.WebSockets/ClientWebSocketOptions.cs
 System.Net.WebSockets/HttpListenerWebSocketContext.cs
+System.Net.WebSockets/StreamWebSocket.cs
 System.Net.WebSockets/WebSocket.cs
 System.Net.WebSockets/WebSocketCloseStatus.cs
 System.Net.WebSockets/WebSocketContext.cs
