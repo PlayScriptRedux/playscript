@@ -150,7 +150,7 @@ namespace System.Net
 		void DoCallback_private ()
 		{
 			if (callbackDone)
-				throw new InvalidOperationException ();
+				return;
 			callbackDone = true;
 			if (cb == null)
 				return;
@@ -161,10 +161,10 @@ namespace System.Net
 		{
 			if (!callbackDone && cb != null) {
 				callbackDone = true;
-				if (true || synch)
+//				if (true || synch)
 					cb (this);
-				else
-					ThreadPool.QueueUserWorkItem (CB, null);
+//				else
+//					ThreadPool.QueueUserWorkItem (CB, null);
 			}
 		}
 

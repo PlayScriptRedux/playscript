@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 #AC_PREREQ([2.62])
 
-AC_INIT(mono, [3.4.1005],
+AC_INIT(mono, [3.4.1],
         [http://bugzilla.xamarin.com/enter_bug.cgi?classification=Mono])
 
 AC_CONFIG_SRCDIR([README.md])
@@ -344,7 +344,7 @@ case "$host" in
 		use_sigposix=yes
 		;;
 	*)
-		AC_MSG_WARN([*** Please add $host to configure.in checks!])
+		AC_MSG_WARN([*** Please add $host to configure.ac checks!])
 		host_win32=no
 		libdl="-ldl"
 		;;
@@ -1142,7 +1142,7 @@ if test x$target_win32 = xno; then
 	else
 		LIBS="$LIBS $DL_LIB"
 		AC_DEFINE(HAVE_DL_LOADER,1,[dlopen-based dynamic loader available])
-		dnl from glib's configure.in
+		dnl from glib's configure.ac
 		AC_CACHE_CHECK([for preceeding underscore in symbols],
 			mono_cv_uscore,[
 			AC_TRY_RUN([#include <dlfcn.h>
