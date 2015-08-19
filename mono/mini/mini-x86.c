@@ -217,6 +217,8 @@ typedef struct {
 	/* The index of the vret arg in the argument list */
 	int vret_arg_index;
 	int vret_arg_offset;
+	/* Argument space popped by the callee */
+	int callee_stack_pop;
 	ArgInfo ret;
 	ArgInfo sig_cookie;
 	ArgInfo args [1];
@@ -591,6 +593,11 @@ get_call_info_internal (MonoGenericSharingContext *gsctx, CallInfo *cinfo, MonoM
 		cinfo->need_stack_align = TRUE;
 		cinfo->stack_align_amount = MONO_ARCH_FRAME_ALIGNMENT - (stack_size % MONO_ARCH_FRAME_ALIGNMENT);
 		stack_size += cinfo->stack_align_amount;
+	}
+
+	if (cinfo->vtype_retaddr) {
+		/* if the function returns a struct on stack, the called method already does a ret $0x4 */
+		cinfo->callee_stack_pop = 4;
 	}
 
 	cinfo->stack_usage = stack_size;
@@ -1431,6 +1438,7 @@ mono_arch_emit_call (MonoCompile *cfg, MonoCallInst *call)
 	sig_ret = mini_replace_type (sig->ret);
 
 	cinfo = get_call_info (cfg->generic_sharing_context, cfg->mempool, sig);
+	call->call_info = cinfo;
 
 	if (!sig->pinvoke && (sig->call_convention == MONO_CALL_VARARG))
 		sentinelpos = sig->sentinelpos + (sig->hasthis ? 1 : 0);
@@ -1675,8 +1683,8 @@ mono_arch_emit_call (MonoCompile *cfg, MonoCallInst *call)
 		}
 
 		/* if the function returns a struct on stack, the called method already does a ret $0x4 */
-		if (cinfo->ret.storage != ArgValuetypeInReg)
-			cinfo->stack_usage -= 4;
+		if (!cfg->arch.no_pushes)
+			cinfo->stack_usage -= cinfo->callee_stack_pop;
 	}
 
 	call->stack_usage = cinfo->stack_usage;
@@ -3322,11 +3330,55 @@ mono_arch_output_basic_block (MonoCompile *cfg, MonoBasicBlock *bb)
 		case OP_VCALL2:
 		case OP_VOIDCALL:
 		case OP_CALL:
+		case OP_FCALL_REG:
+		case OP_LCALL_REG:
+		case OP_VCALL_REG:
+		case OP_VCALL2_REG:
+		case OP_VOIDCALL_REG:
+		case OP_CALL_REG:
+		case OP_FCALL_MEMBASE:
+		case OP_LCALL_MEMBASE:
+		case OP_VCALL_MEMBASE:
+		case OP_VCALL2_MEMBASE:
+		case OP_VOIDCALL_MEMBASE:
+		case OP_CALL_MEMBASE: {
+			CallInfo *cinfo;
+
 			call = (MonoCallInst*)ins;
-			if (ins->flags & MONO_INST_HAS_METHOD)
-				code = emit_call (cfg, code, MONO_PATCH_INFO_METHOD, call->method);
-			else
-				code = emit_call (cfg, code, MONO_PATCH_INFO_ABS, call->fptr);
+			cinfo = (CallInfo*)call->call_info;
+
+			switch (ins->opcode) {
+			case OP_FCALL:
+			case OP_LCALL:
+			case OP_VCALL:
+			case OP_VCALL2:
+			case OP_VOIDCALL:
+			case OP_CALL:
+				if (ins->flags & MONO_INST_HAS_METHOD)
+					code = emit_call (cfg, code, MONO_PATCH_INFO_METHOD, call->method);
+				else
+					code = emit_call (cfg, code, MONO_PATCH_INFO_ABS, call->fptr);
+				break;
+			case OP_FCALL_REG:
+			case OP_LCALL_REG:
+			case OP_VCALL_REG:
+			case OP_VCALL2_REG:
+			case OP_VOIDCALL_REG:
+			case OP_CALL_REG:
+				x86_call_reg (code, ins->sreg1);
+				break;
+			case OP_FCALL_MEMBASE:
+			case OP_LCALL_MEMBASE:
+			case OP_VCALL_MEMBASE:
+			case OP_VCALL2_MEMBASE:
+			case OP_VOIDCALL_MEMBASE:
+			case OP_CALL_MEMBASE:
+				x86_call_membase (code, ins->sreg1, ins->inst_offset);
+				break;
+			default:
+				g_assert_not_reached ();
+				break;
+			}
 			ins->flags |= MONO_INST_GC_CALLSITE;
 			ins->backend.pc_offset = code - cfg->native_code;
 			if (call->stack_usage && !CALLCONV_IS_STDCALL (call->signature) && !cfg->arch.no_pushes) {
@@ -3350,46 +3402,13 @@ mono_arch_output_basic_block (MonoCompile *cfg, MonoBasicBlock *bb)
 				} else {
 					x86_alu_reg_imm (code, X86_ADD, X86_ESP, call->stack_usage);
 				}
+			} else if (cinfo->callee_stack_pop && cfg->arch.no_pushes) {
+				/* Have to compensate for the stack space popped by the callee */
+				x86_alu_reg_imm (code, X86_SUB, X86_ESP, cinfo->callee_stack_pop);
 			}
 			code = emit_move_return_value (cfg, ins, code);
 			break;
-		case OP_FCALL_REG:
-		case OP_LCALL_REG:
-		case OP_VCALL_REG:
-		case OP_VCALL2_REG:
-		case OP_VOIDCALL_REG:
-		case OP_CALL_REG:
-			call = (MonoCallInst*)ins;
-			x86_call_reg (code, ins->sreg1);
-			ins->flags |= MONO_INST_GC_CALLSITE;
-			ins->backend.pc_offset = code - cfg->native_code;
-			if (call->stack_usage && !CALLCONV_IS_STDCALL (call->signature) && !cfg->arch.no_pushes) {
-				if (call->stack_usage == 4)
-					x86_pop_reg (code, X86_ECX);
-				else
-					x86_alu_reg_imm (code, X86_ADD, X86_ESP, call->stack_usage);
-			}
-			code = emit_move_return_value (cfg, ins, code);
-			break;
-		case OP_FCALL_MEMBASE:
-		case OP_LCALL_MEMBASE:
-		case OP_VCALL_MEMBASE:
-		case OP_VCALL2_MEMBASE:
-		case OP_VOIDCALL_MEMBASE:
-		case OP_CALL_MEMBASE:
-			call = (MonoCallInst*)ins;
-
-			x86_call_membase (code, ins->sreg1, ins->inst_offset);
-			ins->flags |= MONO_INST_GC_CALLSITE;
-			ins->backend.pc_offset = code - cfg->native_code;
-			if (call->stack_usage && !CALLCONV_IS_STDCALL (call->signature) && !cfg->arch.no_pushes) {
-				if (call->stack_usage == 4)
-					x86_pop_reg (code, X86_ECX);
-				else
-					x86_alu_reg_imm (code, X86_ADD, X86_ESP, call->stack_usage);
-			}
-			code = emit_move_return_value (cfg, ins, code);
-			break;
+		}
 		case OP_X86_PUSH:
 			g_assert (!cfg->arch.no_pushes);
 			x86_push_reg (code, ins->sreg1);
@@ -5654,8 +5673,8 @@ mono_arch_emit_epilog (MonoCompile *cfg)
 		MonoJitArgumentInfo *arg_info = alloca (sizeof (MonoJitArgumentInfo) * (sig->param_count + 1));
 
 		stack_to_pop = mono_arch_get_argument_info (NULL, sig, sig->param_count, arg_info);
-	} else if (cinfo->vtype_retaddr && !cfg->arch.no_pushes)
-		stack_to_pop = 4;
+	} else if (cinfo->callee_stack_pop)
+		stack_to_pop = cinfo->callee_stack_pop;
 	else
 		stack_to_pop = 0;
 
