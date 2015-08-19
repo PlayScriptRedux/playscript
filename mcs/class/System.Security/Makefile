@@ -6,7 +6,9 @@ LIBRARY = System.Security.dll
 LIB_MCS_FLAGS = -nowarn:618 \
 	-d:SECURITY_DEP \
 	-r:$(corlib) -r:System.dll -r:System.Xml.dll \
-	-r:Mono.Security.dll -nowarn:414 -lib:$(secxml_libdir) -lib:$(bare_libdir)
+	-r:Mono.Security.dll -nowarn:414
+
+LOCAL_MCS_FLAGS = -lib:$(secxml_libdir) -lib:$(bare_libdir)
 
 TEST_MCS_FLAGS = $(LIB_MCS_FLAGS) -nowarn:168,169,183,219,414,1595
 
@@ -29,6 +31,8 @@ $(secxml_libdir)/System.dll:
 
 $(bare_libdir)/Mono.Security.dll:
 	(cd ../Mono.Security; $(MAKE))
+
+.NOTPARALLEL: $(secxml_libdir)/System.dll $(bare_libdir)/Mono.Security.dll
 
 # run the PKITS tests only if the data was installed/activated, otherwise ignore them
 ifeq (net_2_0, $(PROFILE))
