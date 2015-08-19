@@ -187,7 +187,6 @@ mono_gc_alloc_obj_nolock (MonoVTable *vtable, size_t size)
 	/* FIXME: handle OOM */
 	void **p;
 	char *new_next;
-	SgenThreadInfo *__thread_info__;
 	TLAB_ACCESS_INIT;
 
 	HEAVY_STAT (++stat_objects_alloced);
@@ -369,7 +368,6 @@ mono_gc_try_alloc_obj_nolock (MonoVTable *vtable, size_t size)
 {
 	void **p;
 	char *new_next;
-	SgenThreadInfo *__thread_info__;
 	TLAB_ACCESS_INIT;
 
 	size = ALIGN_UP (size);
@@ -456,13 +454,12 @@ void*
 mono_gc_alloc_obj (MonoVTable *vtable, size_t size)
 {
 	void *res;
-	SgenThreadInfo *__thread_info__;
+	TLAB_ACCESS_INIT;
 
 	if (!SGEN_CAN_ALIGN_UP (size))
 		return NULL;
 
 #ifndef DISABLE_CRITICAL_REGION
-	TLAB_ACCESS_INIT;
 
 	if (G_UNLIKELY (has_per_allocation_action)) {
 		static int alloc_count;
@@ -501,13 +498,12 @@ void*
 mono_gc_alloc_vector (MonoVTable *vtable, size_t size, uintptr_t max_length)
 {
 	MonoArray *arr;
-	SgenThreadInfo *__thread_info__;
+	TLAB_ACCESS_INIT;
 
 	if (!SGEN_CAN_ALIGN_UP (size))
 		return NULL;
 
 #ifndef DISABLE_CRITICAL_REGION
-	TLAB_ACCESS_INIT;
 	ENTER_CRITICAL_REGION;
 	arr = mono_gc_try_alloc_obj_nolock (vtable, size);
 	if (arr) {
@@ -539,13 +535,12 @@ mono_gc_alloc_array (MonoVTable *vtable, size_t size, uintptr_t max_length, uint
 {
 	MonoArray *arr;
 	MonoArrayBounds *bounds;
-	SgenThreadInfo *__thread_info__;
+	TLAB_ACCESS_INIT;
 
 	if (!SGEN_CAN_ALIGN_UP (size))
 		return NULL;
 
 #ifndef DISABLE_CRITICAL_REGION
-	TLAB_ACCESS_INIT;
 	ENTER_CRITICAL_REGION;
 	arr = mono_gc_try_alloc_obj_nolock (vtable, size);
 	if (arr) {
@@ -582,12 +577,12 @@ void*
 mono_gc_alloc_string (MonoVTable *vtable, size_t size, gint32 len)
 {
 	MonoString *str;
-	SgenThreadInfo *__thread_info__;
+	TLAB_ACCESS_INIT;
+
 	if (!SGEN_CAN_ALIGN_UP (size))
 		return NULL;
 
 #ifndef DISABLE_CRITICAL_REGION
-	TLAB_ACCESS_INIT;
 	ENTER_CRITICAL_REGION;
 	str = mono_gc_try_alloc_obj_nolock (vtable, size);
 	if (str) {
