@@ -262,8 +262,7 @@ namespace Mono.CSharp {
 					iface_found = true;
 					continue;
 				}
-
-
+					
 				var constraint_tp = type as TypeParameterSpec;
 				if (constraint_tp != null) {
 					if (tparam_types == null) {
@@ -312,6 +311,12 @@ namespace Mono.CSharp {
 									break;
 							}
 						}
+					}
+
+					if (constraint_tp.TypeArguments != null) {
+						var eb = constraint_tp.GetEffectiveBase ();
+						if (eb != null && !CheckConflictingInheritedConstraint (spec, eb, spec.BaseType, context, constraint.Location))
+							break;
 					}
 
 					if (constraint_tp.HasSpecialStruct) {
@@ -776,6 +781,7 @@ namespace Mono.CSharp {
 		int tp_pos;
 		TypeSpec[] targs;
 		TypeSpec[] ifaces_defined;
+		TypeSpec effective_base;
 
 		//
 		// Creates type owned type parameter
@@ -1039,24 +1045,42 @@ namespace Mono.CSharp {
 				return BaseType.IsStruct ? BaseType.BaseType : BaseType;
 			}
 
-			var types = targs;
-			if (HasTypeConstraint) {
-				Array.Resize (ref types, types.Length + 1);
+			if (effective_base != null)
+				return effective_base;
 
-				for (int i = 0; i < types.Length - 1; ++i) {
-					types [i] = types [i].BaseType;
+//<<<<<<< ours
+//			for (int i = 0; i < types.Length - 1; ++i) {
+//				types [i] = types [i].BaseType;
+//			}
+//
+//				types [types.Length - 1] = BaseType;
+//			} else {
+//				types = types.Select (l => l.BaseType).ToArray ();
+//			}
+//
+//			if (types != null) {
+//				return Convert.FindMostEncompassedType (types, null);
+//			}
+//=======
+			var types = new TypeSpec [HasTypeConstraint ? targs.Length + 1 : targs.Length];
+
+			for (int i = 0; i < targs.Length; ++i) {
+				var t = targs [i];
+
+				// Same issue as above, inherited constraints can be of struct type
+				if (t.IsStruct) {
+					types [i] = t.BaseType;
+					continue;
 				}
 
+				types [i] = ((TypeParameterSpec)t).GetEffectiveBase ();
+			}
+
+			if (HasTypeConstraint)
 				types [types.Length - 1] = BaseType;
-			} else {
-				types = types.Select (l => l.BaseType).ToArray ();
-			}
+//>>>>>>> theirs
 
-			if (types != null) {
-				return Convert.FindMostEncompassedType (types, null);
-			}
-
-			return BaseType;
+			return effective_base = Convert.FindMostEncompassedType (types, null);
 		}
 
 		public override string GetSignatureForDocumentation ()
