@@ -212,6 +212,8 @@ namespace Mono.CSharp
 
 		public LocalVariable AsyncThrowVariable { get; set; }
 
+		public List<TryFinally> TryFinallyUnwind { get; set; }
+
 		#endregion
 
 		public void AddStatementEpilog (IExpressionCleanup cleanupExpression)
