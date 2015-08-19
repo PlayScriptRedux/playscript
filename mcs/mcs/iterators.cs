@@ -735,7 +735,6 @@ namespace Mono.CSharp
 		// The state as we generate the machine
 		//
 		Label move_next_ok;
-		Label iterator_body_end;
 		protected Label move_next_error;
 		LocalBuilder skip_finally;
 		protected LocalBuilder current_pc;
@@ -749,11 +748,7 @@ namespace Mono.CSharp
 
 		#region Properties
 
-		public Label BodyEnd {
-			get {
-				return iterator_body_end;
-			}
-		}
+		public Label BodyEnd { get; set; }
 
 		public LocalBuilder CurrentPC
 		{
@@ -841,11 +836,11 @@ namespace Mono.CSharp
 			// We only care if the PC is zero (start executing) or non-zero (don't do anything)
 			ec.Emit (OpCodes.Brtrue, move_next_error);
 
-			iterator_body_end = ec.DefineLabel ();
+			BodyEnd = ec.DefineLabel ();
 
 			block.EmitEmbedded (ec);
 
-			ec.MarkLabel (iterator_body_end);
+			ec.MarkLabel (BodyEnd);
 
 			EmitMoveNextEpilogue (ec);
 
@@ -904,11 +899,11 @@ namespace Mono.CSharp
 
 			ec.MarkLabel (labels[0]);
 
-			iterator_body_end = ec.DefineLabel ();
+			BodyEnd = ec.DefineLabel ();
 
 			block.EmitEmbedded (ec);
 
-			ec.MarkLabel (iterator_body_end);
+			ec.MarkLabel (BodyEnd);
 
 			if (async_init != null) {
 				var catch_value = LocalVariable.CreateCompilerGenerated (ec.Module.Compiler.BuiltinTypes.Exception, block, Location);
