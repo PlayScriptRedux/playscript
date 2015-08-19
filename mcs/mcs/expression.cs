@@ -10777,6 +10777,10 @@ namespace Mono.CSharp
 		{
 			var ac = (ArrayContainer) ea.Expr.Type;
 
+			if (!has_await_args.HasValue && ec.HasSet (BuilderContext.Options.AsyncBody) && ea.Arguments.ContainsEmitWithAwait ()) {
+				LoadInstanceAndArguments (ec, false, true);
+			}
+
 			LoadInstanceAndArguments (ec, false, false);
 
 			if (ac.Element.IsGenericParameter && mode == AddressOp.Load)
