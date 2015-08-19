@@ -632,6 +632,11 @@ namespace Mono.CSharp {
 			spec.SetMetaInfo (type);
 		}
 
+		public void Define (TypeParameter tp)
+		{
+			builder = tp.builder;
+		}
+
 		public void EmitConstraints (GenericTypeParameterBuilder builder)
 		{
 			var attr = GenericParameterAttributes.None;
