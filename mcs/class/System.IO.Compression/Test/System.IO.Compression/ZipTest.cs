@@ -157,6 +157,8 @@ namespace MonoTests.System.IO.Compression
 				var entry = archive.CreateEntry("foo.txt");
 				using (var stream = entry.Open())
 				{
+					using (var streamWriter = new StreamWriter(stream))
+						streamWriter.Write("foo");
 				}
 			}
 
@@ -165,6 +167,11 @@ namespace MonoTests.System.IO.Compression
 			{
 				var entry = archive.GetEntry("foo.txt");
 				Assert.IsNotNull(entry);
+
+				var streamReader = new StreamReader(entry.Open());
+				var text = streamReader.ReadToEnd();
+
+				Assert.AreEqual("foo", text);
 			}
 		}
 
