@@ -6,6 +6,3 @@
 
 gtest-230.cs
 
-# PlayScript regression, see issue #71 
-test-77.cs
-
