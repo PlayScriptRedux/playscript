@@ -1717,27 +1717,27 @@ namespace Mono.CSharp
 						return CreateConstantResult (ec, true);
 					}
 				} else {
-					//if (Convert.ImplicitReferenceConversionExists (d, t)) {
 					if (Convert.ImplicitReferenceConversionExists (d, t, ec, false)) {
-						if (!isPlayScript) {
-							var c = expr as Constant;
-							if (c != null)
-								return CreateConstantResult (ec, !c.IsNull);
-
-							//
-							// Do not optimize for imported type
-							//
-							if (d.MemberDefinition.IsImported && d.BuiltinType != BuiltinTypeSpec.Type.None &&
-								d.MemberDefinition.DeclaringAssembly != t.MemberDefinition.DeclaringAssembly) {
-								return this;
-							}
-						}
-
 						if (isPlayScript) {
 							if (d.MemberDefinition.IsImported && d.BuiltinType != BuiltinTypeSpec.Type.None) {
 								return this;
 							}
 						}
+
+						var c = expr as Constant;
+						if (c != null)
+							return CreateConstantResult (ec, !c.IsNull);
+
+						//
+						// Do not optimize for imported type or dynamic type
+						//
+						if (d.MemberDefinition.IsImported && d.BuiltinType != BuiltinTypeSpec.Type.None &&
+							d.MemberDefinition.DeclaringAssembly != t.MemberDefinition.DeclaringAssembly) {
+							return this;
+						}
+
+						if (d.BuiltinType == BuiltinTypeSpec.Type.Dynamic)
+							return this;
 
 						//
 						// Turn is check into simple null check for implicitly convertible reference types
