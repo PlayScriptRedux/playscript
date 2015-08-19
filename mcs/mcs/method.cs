@@ -2109,7 +2109,7 @@ namespace Mono.CSharp {
 						return false;
 					}
 				} else {
-					if (implementing != null) {
+					if (implementing != null && !optional) {
 						if (!method.IsAccessor) {
 							if (implementing.IsAccessor) {
 								container.Compiler.Report.SymbolRelatedToPreviousError (implementing);
