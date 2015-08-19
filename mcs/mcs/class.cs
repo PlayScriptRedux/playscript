@@ -1899,6 +1899,10 @@ namespace Mono.CSharp
 				return;
 
 			foreach (var member in members) {
+				var pbm = member as PropertyBasedMember;
+				if (pbm != null)
+					pbm.PrepareEmit ();
+
 				var pm = member as IParametersMember;
 				if (pm != null) {
 					var mc = member as MethodOrOperator;
@@ -1911,6 +1915,7 @@ namespace Mono.CSharp
 						continue;
 
 					((ParametersCompiled) p).ResolveDefaultValues (member);
+					continue;
 				}
 
 				var c = member as Const;

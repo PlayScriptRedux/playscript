@@ -12556,6 +12556,7 @@ namespace Mono.CSharp
 			type.Define ();
 			if ((ec.Report.Errors - errors) == 0) {
 				parent.Module.AddAnonymousType (type);
+				type.PrepareEmit ();
 			}
 
 			return type;

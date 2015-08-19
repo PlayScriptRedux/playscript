@@ -6,30 +6,12 @@
   <methods>
     <method token="0x6000001">
       <sequencepoints>
-        <entry il="0x0" row="33" col="3" file_ref="1" hidden="false" />
-        <entry il="0x1" row="34" col="4" file_ref="1" hidden="false" />
-        <entry il="0xd" row="35" col="3" file_ref="1" hidden="false" />
-      </sequencepoints>
-      <locals />
-      <scopes />
-    </method>
-    <method token="0x6000002">
-      <sequencepoints>
-        <entry il="0x0" row="38" col="3" file_ref="1" hidden="false" />
-        <entry il="0x1" row="39" col="4" file_ref="1" hidden="false" />
-        <entry il="0x8" row="40" col="3" file_ref="1" hidden="false" />
-      </sequencepoints>
-      <locals />
-      <scopes />
-    </method>
-    <method token="0x6000003">
-      <sequencepoints>
         <entry il="0x0" row="10" col="22" file_ref="1" hidden="false" />
       </sequencepoints>
       <locals />
       <scopes />
     </method>
-    <method token="0x6000004">
+    <method token="0x6000002">
       <sequencepoints>
         <entry il="0x0" row="13" col="3" file_ref="1" hidden="false" />
         <entry il="0x1" row="14" col="4" file_ref="1" hidden="false" />
@@ -52,6 +34,24 @@
         <entry index="2" start="0x5f" end="0x81" />
         <entry index="3" start="0x82" end="0xa4" />
       </scopes>
+    </method>
+    <method token="0x6000003">
+      <sequencepoints>
+        <entry il="0x0" row="33" col="3" file_ref="1" hidden="false" />
+        <entry il="0x1" row="34" col="4" file_ref="1" hidden="false" />
+        <entry il="0xd" row="35" col="3" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000004">
+      <sequencepoints>
+        <entry il="0x0" row="38" col="3" file_ref="1" hidden="false" />
+        <entry il="0x1" row="39" col="4" file_ref="1" hidden="false" />
+        <entry il="0x8" row="40" col="3" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals />
+      <scopes />
     </method>
     <method token="0x6000005">
       <sequencepoints>

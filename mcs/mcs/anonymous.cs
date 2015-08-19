@@ -2207,7 +2207,6 @@ namespace Mono.CSharp {
 
 			equals.Block = equals_block;
 			equals.Define ();
-			equals.PrepareEmit ();
 			Members.Add (equals);
 
 			//
@@ -2262,7 +2261,6 @@ namespace Mono.CSharp {
 			hashcode_block.AddStatement (new Return (hash_variable, loc));
 			hashcode.Block = hashcode_top;
 			hashcode.Define ();
-			hashcode.PrepareEmit ();
 			Members.Add (hashcode);
 
 			//
@@ -2273,7 +2271,6 @@ namespace Mono.CSharp {
 			tostring_block.AddStatement (new Return (string_concat, loc));
 			tostring.Block = tostring_block;
 			tostring.Define ();
-			tostring.PrepareEmit ();
 			Members.Add (tostring);
 
 			return true;
