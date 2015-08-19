@@ -1,0 +1,23 @@
+// Compiler options: 
+//
+package {
+    import System.ApplicationException;
+
+    public class Foo {
+        public static function Main():int {
+		try {
+			var x:Boolean = true;
+			try {
+				throw new ApplicationException();
+			} catch (NullReferenceException) if (x) {
+				throw;
+			}
+		} catch (e:ApplicationException) {
+			trace("ok");
+			return 0;
+		}
+		return 1;
+        }
+    }
+}
+
