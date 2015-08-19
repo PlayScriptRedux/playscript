@@ -2,7 +2,7 @@
 // Authors
 //    Sebastien Pouliot  <sebastien@xamarin.com>
 //
-// Copyright 2013 Xamarin Inc. http://www.xamarin.com
+// Copyright 2013-2014 Xamarin Inc. http://www.xamarin.com
 // 
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -45,13 +45,15 @@ namespace Xamarin.ApiDiff {
 				return;
 
 			if (s == null) {
-				BeforeAdding ();
-				foreach (var item in t.Elements (ElementName))
+				var items = t.Elements (ElementName);
+				BeforeAdding (items);
+				foreach (var item in items)
 					Added (item);
 				AfterAdding ();
 			} else if (t == null) {
-				BeforeRemoving ();
-				foreach (var item in s.Elements (ElementName))
+				var items = s.Elements (ElementName);
+				BeforeRemoving (items);
+				foreach (var item in items)
 					Removed (item);
 				AfterRemoving ();
 			} else {
@@ -70,6 +72,11 @@ namespace Xamarin.ApiDiff {
 			return e.GetAttribute ("name") == Source.GetAttribute ("name");
 		}
 
+		XElement Find (IEnumerable<XElement> target)
+		{
+			return State.Lax ? target.FirstOrDefault (Find) : target.SingleOrDefault (Find);
+		}
+
 		public override void Compare (IEnumerable<XElement> source, IEnumerable<XElement> target)
 		{
 			removed.Clear ();
@@ -78,7 +85,7 @@ namespace Xamarin.ApiDiff {
 			foreach (var s in source) {
 				SetContext (s);
 				Source = s;
-				var t = target.SingleOrDefault (Find);
+				var t = Find (target);
 				if (t == null) {
 					// not in target, it was removed
 					removed.Add (s);
@@ -102,7 +109,7 @@ namespace Xamarin.ApiDiff {
 			foreach (var item in removed) {
 				SetContext (item);
 				if (!r) {
-					BeforeRemoving ();
+					BeforeRemoving (removed);
 					r = true;
 				}
 				Removed (item);
@@ -116,7 +123,7 @@ namespace Xamarin.ApiDiff {
 				if (State.IgnoreAdded.Any (re => re.IsMatch (GetDescription (item))))
 					continue;
 				if (!a) {
-					BeforeAdding ();
+					BeforeAdding (target);
 					a = true;
 				}
 				Added (item);
@@ -131,7 +138,7 @@ namespace Xamarin.ApiDiff {
 				if (State.IgnoreAdded.Any (re => re.IsMatch (GetDescription (item))))
 					continue;
 				if (!o) {
-					BeforeObsoleting ();
+					BeforeObsoleting (obsoleted);
 					o = true;
 				}
 				Obsoleted (item);
@@ -149,7 +156,7 @@ namespace Xamarin.ApiDiff {
 			if (o != null) {
 				sb.Append ("[Obsolete");
 				if (o.Length > 0)
-					sb.Append (" \"").Append (o).Append ("\")");
+					sb.Append (" (\"").Append (o).Append ("\")");
 				sb.AppendLine ("]");
 				for (int i = 0; i < State.Indent + 1; i++)
 					sb.Append ('\t');
@@ -173,9 +180,9 @@ namespace Xamarin.ApiDiff {
 			return (s.Length == 0 && t.Length > 0);
 		}
 
-		public virtual void BeforeAdding ()
+		public virtual void BeforeAdding (IEnumerable<XElement> list)
 		{
-			Output.WriteLine ("<p>Added {0}:</p><pre>", GroupName);
+			Output.WriteLine ("<p>Added {0}:</p><pre>", list.Count () > 1 ? GroupName : ElementName);
 		}
 
 		public override void Added (XElement target)
@@ -188,9 +195,9 @@ namespace Xamarin.ApiDiff {
 			Output.WriteLine ("</pre>");
 		}
 
-		public virtual void BeforeObsoleting ()
+		public virtual void BeforeObsoleting (IEnumerable<XElement> list)
 		{
-			Output.WriteLine ("<p>Obsoleted {0}:</p><pre>", GroupName);
+			Output.WriteLine ("<p>Obsoleted {0}:</p><pre>", list.Count () > 1 ? GroupName : ElementName);
 		}
 
 		public void Obsoleted (XElement target)
@@ -207,9 +214,9 @@ namespace Xamarin.ApiDiff {
 		{
 		}
 
-		public virtual void BeforeRemoving ()
+		public virtual void BeforeRemoving (IEnumerable<XElement> list)
 		{
-			Output.WriteLine ("<p>Removed {0}:</p><pre>", GroupName);
+			Output.WriteLine ("<p>Removed {0}:</p><pre>", list.Count () > 1 ? GroupName : ElementName);
 		}
 
 		public override void Removed (XElement source)

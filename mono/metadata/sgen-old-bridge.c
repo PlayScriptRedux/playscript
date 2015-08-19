@@ -104,7 +104,7 @@ typedef struct _SCC {
 	DynIntArray xrefs;		/* these are incoming, not outgoing */
 } SCC;
 
-static SgenHashTable hash_table = SGEN_HASH_TABLE_INIT (INTERNAL_MEM_BRIDGE_HASH_TABLE, INTERNAL_MEM_BRIDGE_HASH_TABLE_ENTRY, sizeof (HashEntry), mono_aligned_addr_hash, NULL);
+static SgenHashTable hash_table = SGEN_HASH_TABLE_INIT (INTERNAL_MEM_OLD_BRIDGE_HASH_TABLE, INTERNAL_MEM_OLD_BRIDGE_HASH_TABLE_ENTRY, sizeof (HashEntry), mono_aligned_addr_hash, NULL);
 
 static int current_time;
 
@@ -894,7 +894,7 @@ processing_after_callback (int generation)
 		}
 	}
 
-	mono_trace (G_LOG_LEVEL_INFO, MONO_TRACE_GC, "GC_BRIDGE num-objects %d num_hash_entries %d sccs size %d init %.2fms df1 %.2fms sort %.2fms dfs2 %.2fms setup-cb %.2fms free-data %.2fms links %d/%d/%d/%d dfs passes %d/%d",
+	mono_trace (G_LOG_LEVEL_INFO, MONO_TRACE_GC, "GC_OLD_BRIDGE num-objects %d num_hash_entries %d sccs size %d init %.2fms df1 %.2fms sort %.2fms dfs2 %.2fms setup-cb %.2fms free-data %.2fms links %d/%d/%d/%d dfs passes %d/%d",
 		num_registered_bridges, hash_table_size, dyn_array_scc_size (&sccs),
 		step_1 / 10000.0f,
 		step_2 / 10000.0f,
