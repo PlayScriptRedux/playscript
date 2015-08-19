@@ -86,7 +86,6 @@ read -d '' misc_files <<- EOF
 .gitignore
 PlayscriptLogo.png
 README.md
-configure.in
 mcs/class/Microsoft.CSharp/Microsoft.CSharp.RuntimeBinder/RuntimeBinderContext.cs
 mcs/class/Mono.CSharp/Mono.CSharp.dll.sources
 mcs/class/Mono.Optimization/Mono.Optimization.dll.sources
