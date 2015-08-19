@@ -6491,7 +6491,6 @@ namespace Mono.CSharp {
 				var temp = ec.GetTemporaryLocal (type);
 				ec.Emit (OpCodes.Stloc, temp);
 				ec.Emit (OpCodes.Ldloca, temp);
-				ec.FreeTemporaryLocal (temp, type);
 				return;
 			}
 
