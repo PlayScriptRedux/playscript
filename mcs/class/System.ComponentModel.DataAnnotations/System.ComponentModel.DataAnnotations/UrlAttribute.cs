@@ -1,10 +1,10 @@
 //
-// IReference.cs: Interface for Item/Metadata/Property references
+// UrlAttribute.cs
 //
-// Author:
-//   Ankit Jain (jankit@novell.com)
+// Authors:
+//	Marek Safar  <marek.safar@gmail.com>
 //
-// Copyright 2009 Novell, Inc (http://www.novell.com)
+// Copyright (C) 2014 Xamarin Inc (http://www.xamarin.com)
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -24,12 +24,29 @@
 // LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
 
-using Microsoft.Build.Framework;
+#if NET_4_5
 
-namespace Microsoft.Build.BuildEngine {
-	interface IReference {
-		string ConvertToString (Project project, ExpressionOptions options);
-		ITaskItem[] ConvertToITaskItemArray (Project project, ExpressionOptions options);
+namespace System.ComponentModel.DataAnnotations
+{
+	[AttributeUsageAttribute (AttributeTargets.Property | AttributeTargets.Field | AttributeTargets.Parameter, AllowMultiple = false)]
+	public sealed class UrlAttribute : DataTypeAttribute
+	{
+		public UrlAttribute ()
+			: base (DataType.Url)
+		{
+		}
+
+		public override bool IsValid (object value)
+		{
+			if (value == null)
+				return true;
+
+			var s = value as string;
+			return s != null && Uri.IsWellFormedUriString (s, UriKind.Absolute);
+		}
 	}
 }
+
+#endif

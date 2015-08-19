@@ -36,6 +36,7 @@ using System.IO;
 using Microsoft.Build.Exceptions;
 using System.Globalization;
 using Microsoft.Build.Construction;
+using Microsoft.Build.Internal.Expressions;
 
 namespace Microsoft.Build.Internal
 {
@@ -311,8 +312,9 @@ namespace Microsoft.Build.Internal
 			task.BuildEngine = this;
 			
 			// Prepare task parameters.
-			var evaluatedTaskParams = taskInstance.Parameters.Select (p => new KeyValuePair<string,string> (p.Key, project.ExpandString (p.Value)));
-			
+			var evaluator = new ExpressionEvaluator (project);
+			var evaluatedTaskParams = taskInstance.Parameters.Select (p => new KeyValuePair<string,string> (p.Key, project.ExpandString (evaluator, p.Value)));
+
 			var requiredProps = task.GetType ().GetProperties ()
 				.Where (p => p.CanWrite && p.GetCustomAttributes (typeof (RequiredAttribute), true).Any ());
 			var missings = requiredProps.Where (p => !evaluatedTaskParams.Any (tp => tp.Key.Equals (p.Name, StringComparison.OrdinalIgnoreCase)));
@@ -334,8 +336,7 @@ namespace Microsoft.Build.Internal
 				if (string.IsNullOrEmpty (p.Value) && !requiredProps.Contains (prop))
 					continue;
 				try {
-					var valueInstance = ConvertTo (p.Value, prop.PropertyType);
-					prop.SetValue (task, valueInstance, null);
+					prop.SetValue (task, ConvertTo (p.Value, prop.PropertyType, evaluator), null);
 				} catch (Exception ex) {
 					throw new InvalidOperationException (string.Format ("Failed to convert '{0}' for property '{1}' of type {2}", p.Value, prop.Name, prop.PropertyType), ex);
 				}
@@ -365,14 +366,29 @@ namespace Microsoft.Build.Internal
 							throw new InvalidOperationException (string.Format ("Task {0} does not have property {1} specified as TaskParameter", taskInstance.Name, toItem.TaskParameter));
 						if (!pi.CanRead)
 							throw new InvalidOperationException (string.Format ("Task {0} has property {1} specified as TaskParameter, but it is write-only", taskInstance.Name, toItem.TaskParameter));
-						var value = ConvertFrom (pi.GetValue (task, null));
+						var value = pi.GetValue (task, null);
+						var valueString = ConvertFrom (value);
 						if (toItem != null) {
-							LogMessageEvent (new BuildMessageEventArgs (string.Format ("Output Item {0} from TaskParameter {1}: {2}", toItem.ItemType, toItem.TaskParameter, value), null, null, MessageImportance.Low));
-							foreach (var item in value.Split (';'))
-								args.Project.AddItem (toItem.ItemType, item);
+							LogMessageEvent (new BuildMessageEventArgs (string.Format ("Output Item {0} from TaskParameter {1}: {2}", toItem.ItemType, toItem.TaskParameter, valueString), null, null, MessageImportance.Low));
+							Action<ITaskItem> addItem = i => {
+								var metadata = new ArrayList (i.MetadataNames).ToArray ().Cast<string> ().Select (n => new KeyValuePair<string,string> (n, i.GetMetadata (n)));
+								args.Project.AddItem (toItem.ItemType, i.ItemSpec, metadata);
+							};
+							var taskItemArray = value as ITaskItem [];
+							if (taskItemArray != null) {
+								foreach (var ti in taskItemArray)
+									addItem (ti);
+							} else {
+								var taskItem = value as ITaskItem;
+								if (taskItem != null) 
+									addItem (taskItem);
+								else
+									foreach (var item in valueString.Split (';'))
+										args.Project.AddItem (toItem.ItemType, item);
+							}
 						} else {
-							LogMessageEvent (new BuildMessageEventArgs (string.Format ("Output Property {0} from TaskParameter {1}: {2}", toProp.PropertyName, toProp.TaskParameter, value), null, null, MessageImportance.Low));
-							args.Project.SetProperty (toProp.PropertyName, value);
+							LogMessageEvent (new BuildMessageEventArgs (string.Format ("Output Property {0} from TaskParameter {1}: {2}", toProp.PropertyName, toProp.TaskParameter, valueString), null, null, MessageImportance.Low));
+							args.Project.SetProperty (toProp.PropertyName, valueString);
 						}
 					}
 				}
@@ -381,15 +397,21 @@ namespace Microsoft.Build.Internal
 			}
 			return true;
 		}
-		
-		object ConvertTo (string source, Type targetType)
+
+		object ConvertTo (string source, Type targetType, ExpressionEvaluator evaluator)
 		{
-			if (targetType == typeof(ITaskItem) || targetType.IsSubclassOf (typeof(ITaskItem)))
-				return new TargetOutputTaskItem () { ItemSpec = WindowsCompatibilityExtensions.FindMatchingPath (source.Trim ()) };
+			if (targetType == typeof (ITaskItem) || targetType.IsSubclassOf (typeof (ITaskItem))) {
+				var item = evaluator.EvaluatedTaskItems.FirstOrDefault (i => string.Equals (i.ItemSpec, source.Trim (), StringComparison.OrdinalIgnoreCase));
+				var ret = new TargetOutputTaskItem () { ItemSpec = WindowsCompatibilityExtensions.FindMatchingPath (source.Trim ()) };
+				if (item != null)
+					foreach (string name in item.MetadataNames)
+						ret.SetMetadata (name, item.GetMetadata (name));
+				return ret;
+			}
 			if (targetType.IsArray)
-				return new ArrayList (source.Split (';').Select (s => s.Trim ()).Where (s => !string.IsNullOrEmpty (s)).Select (s => ConvertTo (s, targetType.GetElementType ())).ToArray ())
+				return new ArrayList (source.Split (';').Select (s => s.Trim ()).Where (s => !string.IsNullOrEmpty (s)).Select (s => ConvertTo (s, targetType.GetElementType (), evaluator)).ToArray ())
 						.ToArray (targetType.GetElementType ());
-			if (targetType == typeof(bool)) {
+			if (targetType == typeof (bool)) {
 				switch (source != null ? source.ToLower (CultureInfo.InvariantCulture) : string.Empty) {
 				case "true":
 				case "yes":

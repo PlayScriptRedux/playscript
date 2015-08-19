@@ -1,10 +1,10 @@
 //
-// IReference.cs: Interface for Item/Metadata/Property references
+// Claim.cs
 //
-// Author:
-//   Ankit Jain (jankit@novell.com)
+// Authors:
+//  Miguel de Icaza (miguel@xamarin.com)
 //
-// Copyright 2009 Novell, Inc (http://www.novell.com)
+// Copyright 2014 Xamarin Inc
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -13,10 +13,10 @@
 // distribute, sublicense, and/or sell copies of the Software, and to
 // permit persons to whom the Software is furnished to do so, subject to
 // the following conditions:
-//
+// 
 // The above copyright notice and this permission notice shall be
 // included in all copies or substantial portions of the Software.
-//
+// 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 // EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 // MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -24,12 +24,19 @@
 // LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+using System;
 
-using Microsoft.Build.Framework;
+namespace System.Security.Claims {
 
-namespace Microsoft.Build.BuildEngine {
-	interface IReference {
-		string ConvertToString (Project project, ExpressionOptions options);
-		ITaskItem[] ConvertToITaskItemArray (Project project, ExpressionOptions options);
+	public static class AuthenticationTypes {
+		public const string Basic = "Basic";
+		public const string Federation = "Federation";
+		public const string Kerberos = "Kerberos";
+		public const string Negotiate = "Negotiate";
+		public const string Password = "Password";
+		public const string Signature = "Signature";
+		public const string Windows = "Windows";
+		public const string X509 = "X509";
 	}
 }
