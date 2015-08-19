@@ -66,8 +66,7 @@
 #include <zlib.h>
 #endif
 
-/* the architecture needs a memory fence */
-#if defined(__linux__) && (defined(__i386__) || defined(__x86_64__) || defined(__arm__)) && !defined(PLATFORM_ANDROID)
+#if defined(__linux__)
 #include <unistd.h>
 #include <sys/syscall.h>
 #include "perf_event.h"
@@ -384,7 +383,7 @@ struct _MonoProfiler {
 	StatBuffer *stat_buffers;
 	FILE* file;
 #if defined (HAVE_SYS_ZLIB)
-	gzFile *gzfile;
+	gzFile gzfile;
 #endif
 	uint64_t startup_time;
 	int pipe_output;
