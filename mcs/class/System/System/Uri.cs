@@ -90,6 +90,17 @@ namespace System {
 		private string cachedToString;
 		private string cachedLocalPath;
 		private int cachedHashCode;
+		
+#if NET_4_5
+		private static volatile bool s_IriParsing = true;
+#else
+		private static volatile bool s_IriParsing = false;
+#endif
+
+		public static bool IriParsing {
+			get { return s_IriParsing; }
+			set { s_IriParsing = value; }
+		}
 
 #if BOOTSTRAP_BASIC
 		private static readonly string hexUpperChars = "0123456789ABCDEF";
@@ -112,7 +123,11 @@ namespace System {
 		public static readonly string UriSchemeNntp = "nntp";
 		public static readonly string UriSchemeNetPipe = "net.pipe";
 		public static readonly string UriSchemeNetTcp = "net.tcp";
-		
+
+		internal static readonly string UriSchemeTelnet = "telnet";
+		internal static readonly string UriSchemeLdap = "ldap";
+		internal static readonly string UriSchemeUuid = "uuid";
+
 		private static readonly string [] knownUriSchemes =
 		{
 			UriSchemeFile,
@@ -1354,7 +1369,7 @@ namespace System {
 
 		private bool SupportsQuery ()
 		{
-			return ((scheme != Uri.UriSchemeNntp) && (scheme != Uri.UriSchemeFtp) && (scheme != Uri.UriSchemeFile));
+			return UriHelper.SupportsQuery (scheme);
 		}
 
 		//
@@ -1780,7 +1795,7 @@ namespace System {
 
 		// A variant of HexUnescape() which can decode multi-byte escaped
 		// sequences such as (e.g.) %E3%81%8B into a single character
-		private static char HexUnescapeMultiByte (string pattern, ref int index, out char surrogate) 
+		internal static char HexUnescapeMultiByte (string pattern, ref int index, out char surrogate) 
 		{
 			surrogate = char.MinValue;
 
