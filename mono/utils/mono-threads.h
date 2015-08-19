@@ -28,6 +28,7 @@ typedef HANDLE MonoNativeThreadHandle; /* unused */
 typedef DWORD mono_native_thread_return_t;
 
 #define MONO_NATIVE_THREAD_ID_TO_UINT(tid) (tid)
+#define MONO_UINT_TO_NATIVE_THREAD_ID(tid) (tid)
 
 #else
 
@@ -51,6 +52,7 @@ typedef pthread_t MonoNativeThreadId;
 typedef void* mono_native_thread_return_t;
 
 #define MONO_NATIVE_THREAD_ID_TO_UINT(tid) (gsize)(tid)
+#define MONO_UINT_TO_NATIVE_THREAD_ID(tid) (MonoNativeThreadId)(gsize)(tid)
 
 #endif /* #ifdef HOST_WIN32 */
 
@@ -182,7 +184,7 @@ typedef struct {
 typedef struct {
 	void (*setup_async_callback) (MonoContext *ctx, void (*async_cb)(void *fun), gpointer user_data);
 	gboolean (*thread_state_init_from_sigctx) (MonoThreadUnwindState *state, void *sigctx);
-	gboolean (*thread_state_init_from_handle) (MonoThreadUnwindState *tctx, MonoNativeThreadId thread_id, MonoNativeThreadHandle thread_handle);
+	gboolean (*thread_state_init_from_handle) (MonoThreadUnwindState *tctx, MonoThreadInfo *info);
 } MonoThreadInfoRuntimeCallbacks;
 
 /*
@@ -244,7 +246,13 @@ gboolean
 mono_thread_info_resume (MonoNativeThreadId tid) MONO_INTERNAL;
 
 void
-mono_thread_info_finish_suspend (void) MONO_INTERNAL;
+mono_thread_info_set_name (MonoNativeThreadId tid, const char *name) MONO_INTERNAL;
+
+void
+mono_thread_info_finish_suspend (MonoThreadInfo *info) MONO_INTERNAL;
+
+void
+mono_thread_info_finish_suspend_and_resume (MonoThreadInfo *info) MONO_INTERNAL;
 
 void
 mono_thread_info_self_suspend (void) MONO_INTERNAL;
@@ -327,6 +335,7 @@ void mono_threads_core_exit (int exit_code) MONO_INTERNAL;
 void mono_threads_core_unregister (THREAD_INFO_TYPE *info) MONO_INTERNAL;
 HANDLE mono_threads_core_open_handle (void) MONO_INTERNAL;
 HANDLE mono_threads_core_open_thread_handle (HANDLE handle, MonoNativeThreadId tid) MONO_INTERNAL;
+void mono_threads_core_set_name (MonoNativeThreadId tid, const char *name) MONO_INTERNAL;
 
 MonoNativeThreadId mono_native_thread_id_get (void) MONO_INTERNAL;
 

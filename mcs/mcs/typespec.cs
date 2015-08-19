@@ -312,6 +312,12 @@ namespace Mono.CSharp
 			}
 		}
 
+		public bool IsStructOrEnum {
+			get {
+				return (Kind & (MemberKind.Struct | MemberKind.Enum)) != 0;
+			}
+		}
+
 		public bool IsTypeBuilder {
 			get {
 #if STATIC

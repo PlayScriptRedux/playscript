@@ -1,0 +1,20 @@
+// Compiler options: 
+//
+package {
+    public class Foo {
+        public static function Main():int {
+		var x:int = 4;
+		try {
+			x = 5;
+			throw new Error("Throw");
+		} catch (e:Error) if (x < 5) {
+			trace("No Catch Please");
+			return 0;
+		} catch (myError:Error) {
+			trace("Catch Here");
+			return 0;
+		}
+		return 1;
+        }
+    }
+}

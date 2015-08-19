@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<symbols>
+  <files>
+    <file id="1" name="test-debug-as-I64.as" checksum="6286a80792d6da889efb6437ef13b23b" />
+  </files>
+  <methods>
+    <method token="0x6000001">
+      <sequencepoints />
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000002">
+      <sequencepoints>
+        <entry il="0x0" row="8" col="43" file_ref="1" hidden="false" />
+        <entry il="0x1" row="9" col="3" file_ref="1" hidden="false" />
+        <entry il="0x31" row="9" col="17" file_ref="1" hidden="false" />
+        <entry il="0x32" row="10" col="4" file_ref="1" hidden="false" />
+        <entry il="0x3c" row="10" col="4" file_ref="1" hidden="false" />
+        <entry il="0x41" row="11" col="4" file_ref="1" hidden="false" />
+        <entry il="0x4b" row="11" col="4" file_ref="1" hidden="false" />
+        <entry il="0x50" row="12" col="4" file_ref="1" hidden="false" />
+        <entry il="0x57" row="15" col="3" file_ref="1" hidden="false" />
+        <entry il="0x5e" row="16" col="9" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals />
+      <scopes>
+        <entry index="0" start="0x32" end="0x57" />
+      </scopes>
+    </method>
+    <method token="0x6000003">
+      <sequencepoints>
+        <entry il="0x0" row="5" col="15" file_ref="1" hidden="false" />
+        <entry il="0xe" row="6" col="15" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals />
+      <scopes />
+    </method>
+  </methods>
+</symbols>

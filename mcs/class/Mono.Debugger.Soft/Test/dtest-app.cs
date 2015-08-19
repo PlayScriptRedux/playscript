@@ -139,6 +139,18 @@ public struct NestedStruct {
 public struct NestedInner {
 }
 
+public interface IRecStruct {
+	void foo (object o);
+}
+
+struct RecStruct : IRecStruct {
+	public object o;
+
+	public void foo (object o) {
+		this.o = o;
+	}
+}
+
 interface ITest
 {
 	void Foo ();
@@ -284,6 +296,7 @@ public class Tests : TestsBase, ITest2
 		type_load ();
 		regress ();
 		gc_suspend ();
+		set_ip ();
 		if (args.Length > 0 && args [0] == "domain-test")
 			/* This takes a lot of time, so execute it conditionally */
 			domains ();
@@ -293,6 +306,7 @@ public class Tests : TestsBase, ITest2
 			frames_in_native ();
 		if (args.Length > 0 && args [0] == "invoke-single-threaded")
 			new Tests ().invoke_single_threaded ();
+		new Tests ().evaluate_method ();
 		return 3;
 	}
 
@@ -360,6 +374,7 @@ public class Tests : TestsBase, ITest2
 		ss_nested ();
 		ss_regress_654694 ();
 		ss_step_through ();
+		ss_non_user_code ();
 		ss_recursive (1);
 		ss_fp_clobber ();
 	}
@@ -480,6 +495,30 @@ public class Tests : TestsBase, ITest2
 	}
 
 	[MethodImplAttribute (MethodImplOptions.NoInlining)]
+	public static void ss_non_user_code () {
+		non_user_code_1 ();
+		StepNonUserCodeClass.non_user_code_2 ();
+		non_user_code_3 ();
+	}
+
+	[DebuggerNonUserCode]
+	[MethodImplAttribute (MethodImplOptions.NoInlining)]
+	public static void non_user_code_1 () {
+	}
+
+	[DebuggerNonUserCode]
+	class StepNonUserCodeClass {
+		[MethodImplAttribute (MethodImplOptions.NoInlining)]
+		public static void non_user_code_2 () {
+		}
+	}
+
+	[DebuggerNonUserCode]
+	[MethodImplAttribute (MethodImplOptions.NoInlining)]
+	public static void non_user_code_3 () {
+	}
+
+	[MethodImplAttribute (MethodImplOptions.NoInlining)]
 	public static void ss_recursive (int n) {
 		if (n == 10)
 			return;
@@ -590,6 +629,7 @@ public class Tests : TestsBase, ITest2
 		t.vtypes1 (s, arr);
 		vtypes2 (s);
 		vtypes3 (s);
+		vtypes4 ();
 	}
 
 	[MethodImplAttribute (MethodImplOptions.NoInlining)]
@@ -608,6 +648,17 @@ public class Tests : TestsBase, ITest2
 	[MethodImplAttribute (MethodImplOptions.NoInlining)]
 	public static void vtypes3 (AStruct s) {
 		AStruct.static_foo (5);
+	}
+
+	[MethodImplAttribute (MethodImplOptions.NoInlining)]
+	public static void vtypes4_2 (IRecStruct o) {
+	}
+
+	[MethodImplAttribute (MethodImplOptions.NoInlining)]
+	public static void vtypes4 () {
+		IRecStruct s = new RecStruct ();
+		s.foo (s);
+		vtypes4_2 (s);
 	}
 
 	[MethodImplAttribute (MethodImplOptions.NoInlining)]
@@ -1273,6 +1324,35 @@ public class Tests : TestsBase, ITest2
 
 	[MethodImplAttribute (MethodImplOptions.NoInlining)]
 	public static void generic_method<T> () where T : class {
+	}
+
+	[MethodImplAttribute (MethodImplOptions.NoInlining)]
+	public void evaluate_method_2 () {
+	}
+
+	[MethodImplAttribute (MethodImplOptions.NoInlining)]
+	public void evaluate_method () {
+		field_i = 42;
+		evaluate_method_2 ();
+	}
+
+	[MethodImplAttribute (MethodImplOptions.NoInlining)]
+	static void set_ip_1 () {
+	}
+
+	[MethodImplAttribute (MethodImplOptions.NoInlining)]
+	static void set_ip_2 () {
+	}
+
+	[MethodImplAttribute (MethodImplOptions.NoInlining)]
+	public static void set_ip () {
+		int i, j;
+
+		i = 1;
+		set_ip_1 ();
+		i = 5;
+		j = 5;
+		set_ip_2 ();
 	}
 }
 

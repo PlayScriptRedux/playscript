@@ -2315,7 +2315,16 @@ namespace System.Windows.Forms
 					return owner.Focused;
 				}
 			}
-			
+			protected override void Dispose(bool disposing)
+			{
+				if (disposing ) {
+					// Prevents corruption of combobox text by disposed object
+					owner.EnabledChanged -= OwnerEnabledChangedHandler;
+					owner.LostFocus -= OwnerLostFocusHandler;
+				}
+				base.Dispose(disposing);
+			}
+
 			internal override bool ActivateOnShow { get { return false; } }
 		}
 
@@ -2759,6 +2768,10 @@ namespace System.Windows.Forms
 				HighlightedIndex = owner.SelectedIndex;
 
 				CalcListBoxArea ();
+				// If the listbox would extend below the screen, move it above the textbox.
+				Rectangle scrn_rect = Screen.FromControl (owner).Bounds;
+				if (this.Location.Y + this.Height >= scrn_rect.Bottom)
+					this.Location = new Point (this.Location.X, this.Location.Y - (this.Height + owner.TextArea.Height));
 				Show ();
 
 				Refresh ();

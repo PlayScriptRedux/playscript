@@ -99,8 +99,6 @@ inner_start_thread (LPVOID arg)
 
 	result = start_func (t_arg);
 
-	g_assert (!mono_domain_get ());
-
 	mono_thread_info_detach ();
 
 	return result;
@@ -254,6 +252,11 @@ HANDLE
 mono_threads_core_open_thread_handle (HANDLE handle, MonoNativeThreadId tid)
 {
 	return OpenThread (THREAD_ALL_ACCESS, TRUE, tid);
+}
+
+void
+mono_threads_core_set_name (MonoNativeThreadId tid, const char *name)
+{
 }
 
 #endif

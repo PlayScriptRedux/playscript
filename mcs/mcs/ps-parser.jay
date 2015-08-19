@@ -1076,10 +1076,12 @@ class_member_declarations
 	: class_member_declaration
 	  {
 		lexer.parsing_modifiers = true;
+		lexer.parsing_block = 0;
 	  }
 	| class_member_declarations class_member_declaration
 	  {
 		lexer.parsing_modifiers = true;
+		lexer.parsing_block = 0;
 	  }
 	;
 
@@ -2537,10 +2539,12 @@ interface_member_declarations
 	: interface_member_declaration
 	  {
 		lexer.parsing_modifiers = true;
+		lexer.parsing_block = 0;
 	  }
 	| interface_member_declarations interface_member_declaration
 	  {
 		lexer.parsing_modifiers = true;
+		lexer.parsing_block = 0;
 	  }
 	;
 
@@ -3831,6 +3835,14 @@ member_access
 		lbag.AddLocation ($$, GetLocation ($2));
 		$$ = ma;
 	  }
+
+  	| AWAIT DOT identifier_inside_body opt_type_argument_list
+	  {
+		var lt = (LocatedToken) $3;
+		$$ = new MemberAccess (new SimpleName ("await", ((LocatedToken) $1).Location), lt.Value, (TypeArguments) $4, lt.Location);
+		lbag.AddLocation ($$, GetLocation ($2));
+	  }
+
 	| primary_expression DOT_STAR
 	  {
 		var ma = new MemberAccess ((Expression) $1, "any", null, GetLocation($2));
@@ -7016,7 +7028,8 @@ catch_clauses
 		var l = (List<Catch>) $1;
 		
 		Catch c = (Catch) $2;
-		if (l [l.Count - 1].IsGeneral) {
+		var prev_catch = l [l.Count - 1];
+		if (prev_catch.IsGeneral && prev_catch.Filter == null) {
 			report.Error (1017, c.loc, "Try statement already has an empty catch block");
 		}
 		
@@ -7026,10 +7039,13 @@ catch_clauses
 	;
 
 catch_clause 
-	: CATCH block
+	: CATCH opt_catch_filter block
 	  {
 	  	//$$ = new Catch ((Block) $2, GetLocation ($1));
-		$$ = new Catch ((ExplicitBlock) $2, GetLocation ($1));
+		//$$ = new Catch ((ExplicitBlock) $2, GetLocation ($1));
+		var c = new Catch ((ExplicitBlock) $3, GetLocation ($1));
+		c.Filter = (CatchFilterExpression) $2;
+		$$ = c;
 	  }
 	| CATCH open_parens_any IDENTIFIER opt_type CLOSE_PARENS
 	  {
@@ -7057,8 +7073,9 @@ catch_clause
 		lbag.AddLocation (c, GetLocation ($2), GetLocation ($5));
 		$$ = c;
 	  }
-	  block_prepared
+	  opt_catch_filter block_prepared
 	  {
+	 	((Catch) $6).Filter = (CatchFilterExpression) $7;
 		$$ = $6;
 	  }
 	| CATCH open_parens_any error
@@ -7071,6 +7088,18 @@ catch_clause
 		}
 		
 		$$ = new Catch (null, GetLocation ($1));
+	  }
+	;
+
+opt_catch_filter
+	: /* empty */
+	| IF open_parens_any expression CLOSE_PARENS
+	  {
+		if (lang_version <= LanguageVersion.V_5)
+			FeatureIsNotAvailable (GetLocation ($1), "exception filter");
+
+	  	$$ = new CatchFilterExpression ((Expression) $3, GetLocation ($1));
+	  	lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
 	  }
 	;
 

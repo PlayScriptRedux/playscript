@@ -1,39 +1,41 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>8.0.30703</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{07C1F58B-9E99-47F8-A847-79EDA5157DA8}</ProjectGuid>
+    <ProjectGuid>{33BF0182-AC5C-464C-995B-C9CFE74E1A95}</ProjectGuid>
     <OutputType>Library</OutputType>
     <NoWarn>612,618,1699</NoWarn>
-    <OutputPath>bin\Debug\corlib-net_4_5</OutputPath>
+    <OutputPath>./../../class/lib/net_4_5</OutputPath>
     <NoStdLib>True</NoStdLib>
     <NoConfig>True</NoConfig>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>
+    </RootNamespace>
     <AssemblyName>mscorlib</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <UseMSBuildEngine>False</UseMSBuildEngine>
   </PropertyGroup>
+  
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
+    <NoWarn>612,618,1699</NoWarn>
     <Optimize>false</Optimize>
     <DefineConstants>DEBUG;TRACE;INSIDE_CORLIB;LIBC;NET_1_1;NET_2_0;NET_3_0;NET_3_5;NET_4_0;NET_4_5</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <OutputPath>..\lib\net_4_5</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
+    <NoWarn>612,618,1699</NoWarn>
     <Optimize>true</Optimize>
     <DefineConstants>INSIDE_CORLIB;LIBC;NET_1_1;NET_2_0;NET_3_0;NET_3_5;NET_4_0;NET_4_5</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <OutputPath>..\lib\net_4_5</OutputPath>
   </PropertyGroup>
   <!-- Set AddAdditionalExplicitAssemblyReferences to false, otherwise if targetting .NET4.0, 
   Microsoft.NETFramework.props will force a dependency on the assembly System.Core. This
@@ -234,6 +236,14 @@
     <Compile Include="System.Diagnostics.SymbolStore\SymDocumentType.cs" />
     <Compile Include="System.Diagnostics.SymbolStore\SymLanguageType.cs" />
     <Compile Include="System.Diagnostics.SymbolStore\SymLanguageVendor.cs" />
+    <Compile Include="System.Diagnostics.Tracing\EventAttribute.cs" />
+    <Compile Include="System.Diagnostics.Tracing\EventCommand.cs" />
+    <Compile Include="System.Diagnostics.Tracing\EventCommandEventArgs.cs" />
+    <Compile Include="System.Diagnostics.Tracing\EventKeywords.cs" />
+    <Compile Include="System.Diagnostics.Tracing\EventLevel.cs" />
+    <Compile Include="System.Diagnostics.Tracing\EventSource.cs" />
+    <Compile Include="System.Diagnostics.Tracing\EventSourceAttribute.cs" />
+    <Compile Include="System.Diagnostics.Tracing\NonEventAttribute.cs" />
     <Compile Include="System.Diagnostics\ConditionalAttribute.cs" />
     <Compile Include="System.Diagnostics\DebuggableAttribute.cs" />
     <Compile Include="System.Diagnostics\Debugger.cs" />
@@ -280,6 +290,7 @@
     <Compile Include="System.Globalization\PersianCalendar.cs" />
     <Compile Include="System.Globalization\RegionInfo.cs" />
     <Compile Include="System.Globalization\RegionInfo.MonoTouch.cs" />
+    <Compile Include="System.Globalization\SortVersion.cs" />
     <Compile Include="System.Globalization\StringInfo.cs" />
     <Compile Include="System.Globalization\TaiwanCalendar.cs" />
     <Compile Include="System.Globalization\TaiwanLunisolarCalendar.cs" />
@@ -458,6 +469,7 @@
     <Compile Include="System.Reflection\MonoGenericMethod.cs" />
     <Compile Include="System.Reflection\MonoMethod.cs" />
     <Compile Include="System.Reflection\MonoModule.cs" />
+    <Compile Include="System.Reflection\MonoParameterInfo.cs" />
     <Compile Include="System.Reflection\MonoProperty.cs" />
     <Compile Include="System.Reflection\ObfuscateAssemblyAttribute.cs" />
     <Compile Include="System.Reflection\ObfuscationAttribute.cs" />
@@ -495,8 +507,6 @@
     <Compile Include="System.Resources\SatelliteContractVersionAttribute.cs" />
     <Compile Include="System.Resources\UltimateResourceFallbackLocation.cs" />
     <Compile Include="System.Resources\Win32Resources.cs" />
-    <Compile Include="System.Runtime.CompilerServices\SpecialNameAttribute.cs" />
-    <Compile Include="System.Runtime.CompilerServices\StringFreezingAttribute.cs" />
     <Compile Include="System.Runtime.CompilerServices\AccessedThroughPropertyAttribute.cs" />
     <Compile Include="System.Runtime.CompilerServices\AsyncStateMachineAttribute.cs" />
     <Compile Include="System.Runtime.CompilerServices\AsyncTaskMethodBuilder.cs" />
@@ -559,7 +569,9 @@
     <Compile Include="System.Runtime.CompilerServices\RuntimeHelpers.cs" />
     <Compile Include="System.Runtime.CompilerServices\RuntimeWrappedException.cs" />
     <Compile Include="System.Runtime.CompilerServices\ScopelessEnumAttribute.cs" />
+    <Compile Include="System.Runtime.CompilerServices\SpecialNameAttribute.cs" />
     <Compile Include="System.Runtime.CompilerServices\StateMachineAttribute.cs" />
+    <Compile Include="System.Runtime.CompilerServices\StringFreezingAttribute.cs" />
     <Compile Include="System.Runtime.CompilerServices\SuppressIldasmAttribute.cs" />
     <Compile Include="System.Runtime.CompilerServices\TaskAwaiter.cs" />
     <Compile Include="System.Runtime.CompilerServices\TaskAwaiter_T.cs" />
@@ -624,6 +636,18 @@
     <Compile Include="System.Runtime.InteropServices.ComTypes\VARFLAGS.cs" />
     <Compile Include="System.Runtime.InteropServices.ComTypes\VARKIND.cs" />
     <Compile Include="System.Runtime.InteropServices.Expando\IExpando.cs" />
+    <Compile Include="System.Runtime.InteropServices.WindowsRuntime\DefaultInterfaceAttribute.cs" />
+    <Compile Include="System.Runtime.InteropServices.WindowsRuntime\DesignerNamespaceResolveEventArgs.cs" />
+    <Compile Include="System.Runtime.InteropServices.WindowsRuntime\EventRegistrationToken.cs" />
+    <Compile Include="System.Runtime.InteropServices.WindowsRuntime\EventRegistrationTokenTable.cs" />
+    <Compile Include="System.Runtime.InteropServices.WindowsRuntime\IActivationFactory.cs" />
+    <Compile Include="System.Runtime.InteropServices.WindowsRuntime\InterfaceImplementedInVersionAttribute.cs" />
+    <Compile Include="System.Runtime.InteropServices.WindowsRuntime\NamespaceResolveEventArgs.cs" />
+    <Compile Include="System.Runtime.InteropServices.WindowsRuntime\ReadOnlyArrayAttribute.cs" />
+    <Compile Include="System.Runtime.InteropServices.WindowsRuntime\ReturnValueNameAttribute.cs" />
+    <Compile Include="System.Runtime.InteropServices.WindowsRuntime\WindowsRuntimeMarshal.cs" />
+    <Compile Include="System.Runtime.InteropServices.WindowsRuntime\WindowsRuntimeMetadata.cs" />
+    <Compile Include="System.Runtime.InteropServices.WindowsRuntime\WriteOnlyArrayAttribute.cs" />
     <Compile Include="System.Runtime.InteropServices\_Activator.cs" />
     <Compile Include="System.Runtime.InteropServices\_Assembly.cs" />
     <Compile Include="System.Runtime.InteropServices\_AssemblyBuilder.cs" />
@@ -1035,6 +1059,7 @@
     <Compile Include="System.Runtime.Versioning\TargetFrameworkAttribute.cs" />
     <Compile Include="System.Runtime.Versioning\VersioningHelper.cs" />
     <Compile Include="System.Runtime\AssemblyTargetedPatchBandAttribute.cs" />
+    <Compile Include="System.Runtime\GCLargeObjectHeapCompactionMode.cs" />
     <Compile Include="System.Runtime\GCLatencyMode.cs" />
     <Compile Include="System.Runtime\GCSettings.cs" />
     <Compile Include="System.Runtime\MemoryFailPoint.cs" />
@@ -1107,6 +1132,11 @@
     <Compile Include="System.Security.AccessControl\SddlAccessRight.cs" />
     <Compile Include="System.Security.AccessControl\SecurityInfos.cs" />
     <Compile Include="System.Security.AccessControl\SystemAcl.cs" />
+    <Compile Include="System.Security.Claims\Claim.cs" />
+    <Compile Include="System.Security.Claims\ClaimsIdentity.cs" />
+    <Compile Include="System.Security.Claims\ClaimsPrincipal.cs" />
+    <Compile Include="System.Security.Claims\ClaimTypes.cs" />
+    <Compile Include="System.Security.Claims\ClaimValueTypes.cs" />
     <Compile Include="System.Security.Cryptography.X509Certificates\X509Certificate.cs" />
     <Compile Include="System.Security.Cryptography.X509Certificates\X509Certificate20.cs" />
     <Compile Include="System.Security.Cryptography.X509Certificates\X509ContentType.cs" />
@@ -1196,6 +1226,7 @@
     <Compile Include="System.Security.Permissions\EnvironmentPermission.cs" />
     <Compile Include="System.Security.Permissions\EnvironmentPermissionAccess.cs" />
     <Compile Include="System.Security.Permissions\EnvironmentPermissionAttribute.cs" />
+    <Compile Include="System.Security.Permissions\FileDialogPermission.cs" />
     <Compile Include="System.Security.Permissions\FileDialogPermissionAccess.cs" />
     <Compile Include="System.Security.Permissions\FileDialogPermissionAttribute.cs" />
     <Compile Include="System.Security.Permissions\FileIOPermission.cs" />
@@ -1208,6 +1239,7 @@
     <Compile Include="System.Security.Permissions\HostProtectionResource.cs" />
     <Compile Include="System.Security.Permissions\IBuiltInPermission.cs" />
     <Compile Include="System.Security.Permissions\IsolatedStorageContainment.cs" />
+    <Compile Include="System.Security.Permissions\IsolatedStorageFilePermission.cs" />
     <Compile Include="System.Security.Permissions\IsolatedStorageFilePermissionAttribute.cs" />
     <Compile Include="System.Security.Permissions\IsolatedStoragePermission.cs" />
     <Compile Include="System.Security.Permissions\IsolatedStoragePermissionAttribute.cs" />
@@ -1220,8 +1252,10 @@
     <Compile Include="System.Security.Permissions\KeyContainerPermissionFlags.cs" />
     <Compile Include="System.Security.Permissions\PermissionSetAttribute.cs" />
     <Compile Include="System.Security.Permissions\PermissionState.cs" />
+    <Compile Include="System.Security.Permissions\PrincipalPermission.cs" />
     <Compile Include="System.Security.Permissions\PrincipalPermissionAttribute.cs" />
     <Compile Include="System.Security.Permissions\PublisherIdentityPermission.cs" />
+    <Compile Include="System.Security.Permissions\PublisherIdentityPermissionAttribute.cs" />
     <Compile Include="System.Security.Permissions\ReflectionPermission.cs" />
     <Compile Include="System.Security.Permissions\ReflectionPermissionAttribute.cs" />
     <Compile Include="System.Security.Permissions\ReflectionPermissionFlag.cs" />
@@ -1233,10 +1267,12 @@
     <Compile Include="System.Security.Permissions\SecurityPermission.cs" />
     <Compile Include="System.Security.Permissions\SecurityPermissionAttribute.cs" />
     <Compile Include="System.Security.Permissions\SecurityPermissionFlag.cs" />
+    <Compile Include="System.Security.Permissions\SiteIdentityPermission.cs" />
     <Compile Include="System.Security.Permissions\SiteIdentityPermissionAttribute.cs" />
     <Compile Include="System.Security.Permissions\StrongNameIdentityPermission.cs" />
     <Compile Include="System.Security.Permissions\StrongNamePermissionAttribute.cs" />
     <Compile Include="System.Security.Permissions\StrongNamePublicKeyBlob.cs" />
+    <Compile Include="System.Security.Permissions\UIPermission.cs" />
     <Compile Include="System.Security.Permissions\UIPermissionAttribute.cs" />
     <Compile Include="System.Security.Permissions\UIPermissionClipboard.cs" />
     <Compile Include="System.Security.Permissions\UIPermissionWindow.cs" />
@@ -1677,15 +1713,7 @@
     <Compile Include="System\Void.cs" />
     <Compile Include="System\WeakReference.cs" />
     <Compile Include="System\WeakReference_T.cs" />
-    <Compile Include="System\WindowsConsoleDriver.cs" />
-    <Compile Include="System.Reflection\MonoParameterInfo.cs" />
-    <Compile Include="System.Security.Permissions\FileDialogPermission.cs" />
-    <Compile Include="System.Security.Permissions\IsolatedStorageFilePermission.cs" />
-    <Compile Include="System.Security.Permissions\PrincipalPermission.cs" />
-    <Compile Include="System.Security.Permissions\PublisherIdentityPermissionAttribute.cs" />
-    <Compile Include="System.Security.Permissions\SiteIdentityPermission.cs" />
-    <Compile Include="System.Security.Permissions\UIPermission.cs" />
-  </ItemGroup>
+    <Compile Include="System\WindowsConsoleDriver.cs" />  </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
@@ -1694,11 +1722,19 @@
   </Target>
   -->
   <PropertyGroup>
-    <PreBuildEvent>
+    <PreBuildEvent Condition=" '$(OS)' != 'Windows_NT' ">
+
     </PreBuildEvent>
-    <PostBuildEvent>
-      xcopy $(TargetName).* $(ProjectDir)..\lib\net_4_5\ /Y /R /D
-  </PostBuildEvent>
+    <PreBuildEvent Condition=" '$(OS)' == 'Windows_NT' ">
+
+    </PreBuildEvent>
+
+    <PostBuildEvent Condition=" '$(OS)' != 'Windows_NT' ">
+
+    </PostBuildEvent>
+    <PostBuildEvent Condition=" '$(OS)' == 'Windows_NT' ">
+
+    </PostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
   </ItemGroup>
@@ -1706,26 +1742,27 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="resources\collation.core.bin">
+    <EmbeddedResource Include="resources/collation.core.bin">
       <LogicalName>collation.core.bin</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\collation.tailoring.bin">
+    <EmbeddedResource Include="resources/collation.tailoring.bin">
       <LogicalName>collation.tailoring.bin</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\collation.cjkCHS.bin">
+    <EmbeddedResource Include="resources/collation.cjkCHS.bin">
       <LogicalName>collation.cjkCHS.bin</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\collation.cjkCHT.bin">
+    <EmbeddedResource Include="resources/collation.cjkCHT.bin">
       <LogicalName>collation.cjkCHT.bin</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\collation.cjkJA.bin">
+    <EmbeddedResource Include="resources/collation.cjkJA.bin">
       <LogicalName>collation.cjkJA.bin</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\collation.cjkKO.bin">
+    <EmbeddedResource Include="resources/collation.cjkKO.bin">
       <LogicalName>collation.cjkKO.bin</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="resources\collation.cjkKOlv2.bin">
+    <EmbeddedResource Include="resources/collation.cjkKOlv2.bin">
       <LogicalName>collation.cjkKOlv2.bin</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
 </Project>
+

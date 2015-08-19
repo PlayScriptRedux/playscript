@@ -117,23 +117,39 @@ namespace System.IO.MemoryMappedFiles
 			}
 		}
 
-		internal static int Open (string path, FileMode mode, long capacity, MemoryMappedFileAccess access)
+		internal static int Open (string path, FileMode mode, ref long capacity, MemoryMappedFileAccess access)
 		{
 			if (MonoUtil.IsUnix){
 				Stat buf;
 				if (Syscall.stat (path, out buf) == -1)
 					UnixMarshal.ThrowExceptionForLastError ();
 
-				if (capacity > buf.st_size)
-					throw new ArgumentException ("capacity");
+				if (capacity == 0) {
+					// Special files such as FIFOs, sockets, and devices can
+					// have a size of 0. Specifying a capacity for these
+					// also makes little sense, so don't do the check if the
+					// file is one of these.
+					if (buf.st_size == 0 &&
+						(buf.st_mode & (FilePermissions.S_IFCHR |
+						                FilePermissions.S_IFBLK |
+						                FilePermissions.S_IFIFO |
+						                FilePermissions.S_IFSOCK)) == 0) {
+						throw new ArgumentException ("A positive capacity must be specified for a Memory Mapped File backed by an empty file.");
+					}
+
+					capacity = buf.st_size;
+				} else if (capacity < buf.st_size) {
+					throw new ArgumentException ("The capacity may not be smaller than the file size.");
+				}
 
 				int fd = Syscall.open (path, ToUnixMode (mode) | ToUnixMode (access), FilePermissions.DEFFILEMODE);
 
 				if (fd == -1)
 					UnixMarshal.ThrowExceptionForLastError ();
 				return fd;
-			} else
-				throw new NotImplementedException ();
+			}
+
+			throw new NotImplementedException ();
 		}
 		
 		internal static void CloseFD (int fd) {
@@ -281,12 +297,13 @@ namespace System.IO.MemoryMappedFiles
 
 		const int ENAMETOOLONG = 63;
 #else
-		/* MONOTOUCH */
+		/* MONOTOUCH - usr/include/sys/fcntl.h */
 		const int O_CREAT = 0x0200;
 		const int O_TRUNC = 0x0400;
 		const int O_EXCL  = 0x0800;
 
-		const int ENAMETOOLONG = 36;
+		// usr/include/sys/errno.h
+		const int ENAMETOOLONG = 63;
 #endif
 
 		static int ToUnixMode (FileMode mode)
@@ -363,7 +380,7 @@ namespace System.IO.MemoryMappedFiles
 			}
 		}
 
-		internal static int Open (string path, FileMode mode, long capacity, MemoryMappedFileAccess access)
+		internal static int Open (string path, FileMode mode, ref long capacity, MemoryMappedFileAccess access)
 		{
 			long file_size = mono_filesize_from_path (path);
 			if (file_size < 0)
@@ -481,8 +498,10 @@ namespace System.IO.MemoryMappedFiles
 				throw new ArgumentException ("mapName");
 			if (mode == FileMode.Append)
 				throw new ArgumentException ("mode");			
+			if (capacity < 0)
+				throw new ArgumentOutOfRangeException ("capacity");
 
-			int fd = MemoryMapImpl.Open (path, mode, capacity, access);
+			int fd = MemoryMapImpl.Open (path, mode, ref capacity, access);
 			
 			return new MemoryMappedFile () {
 				unix_fd = fd,

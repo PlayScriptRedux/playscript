@@ -937,11 +937,11 @@ Override the automatic cpu detection mechanism. Currently used only on arm.
 The format of the value is as follows:
 .nf
 
-	"armvV [thumb]"
+	"armvV [thumb[2]]"
 
 .fi
 where V is the architecture number 4, 5, 6, 7 and the options can be currently be
-"thunb". Example:
+"thumb" or "thumb2". Example:
 .nf
 
 	MONO_CPU_ARCH="armv4 thumb" mono ...
@@ -1356,6 +1356,8 @@ loader in subtle ways.
 Directories are separated by the platform path separator (colons on unix). Example:
 .B /home/username/lib:/usr/local/mono/lib
 .Sp
+Relative paths are resolved based on the launch-time current directory.
+.Sp
 Alternative solutions to MONO_PATH include: installing libraries into
 the Global Assembly Cache (see gacutil(1)) or having the dependent
 libraries side-by-side with the main executable.
@@ -1534,6 +1536,12 @@ after a SIGSEGV or SIGABRT in unmanaged code.
 This option will suspend the program when a native SIGSEGV is received.
 This is useful for debugging crashes which do not happen under gdb,
 since a live process contains more information than a core file.
+.TP
+\fBcheck-pinvoke-callconv\fR
+This option causes the runtime to check for calling convention
+mismatches when using pinvoke, i.e. mixing cdecl/stdcall. It only
+works on windows. If a mismatch is detected, an
+ExecutionEngineException is thrown.
 .ne
 .RE
 .TP

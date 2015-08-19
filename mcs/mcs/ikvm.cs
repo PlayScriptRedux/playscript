@@ -189,6 +189,8 @@ namespace Mono.CSharp
 		{
 			if (loader.Corlib != null && !(loader.Corlib is AssemblyBuilder)) {
 				Builder.__SetImageRuntimeVersion (loader.Corlib.ImageRuntimeVersion, 0x20000);
+			} else if (module.Compiler.Settings.RuntimeMetadataVersion != null) {
+				Builder.__SetImageRuntimeVersion (module.Compiler.Settings.RuntimeMetadataVersion, 0x20000);
 			} else {
 				// Sets output file metadata version when there is no mscorlib
 				switch (module.Compiler.Settings.StdLibRuntimeVersion) {
@@ -464,12 +466,12 @@ namespace Mono.CSharp
 									return null;
 								}
 
-								if ((an.Flags & AssemblyNameFlags.PublicKey) == (loaded_name.Flags & AssemblyNameFlags.PublicKey) && an.Version.Equals (loaded_name.Version)) {
+								if ((an.Flags & AssemblyNameFlags.PublicKey) == (loaded_name.Flags & AssemblyNameFlags.PublicKey)) {
 									compiler.Report.SymbolRelatedToPreviousError (entry.Item2);
 									compiler.Report.SymbolRelatedToPreviousError (fileName);
 									compiler.Report.Error (1703,
-										"An assembly with the same identity `{0}' has already been imported. Consider removing one of the references",
-										an.FullName);
+										"An assembly `{0}' with the same identity has already been imported. Consider removing one of the references",
+										an.Name);
 									return null;
 								}
 							}

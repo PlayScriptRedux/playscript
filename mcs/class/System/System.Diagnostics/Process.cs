@@ -170,6 +170,8 @@ namespace System.Diagnostics {
 		[MonitoringDescription ("Handle for this process.")]
 		public IntPtr Handle {
 			get {
+				if (process_handle == IntPtr.Zero)
+					throw new InvalidOperationException ("No process is associated with this object.");
 				return(process_handle);
 			}
 		}
@@ -1158,7 +1160,7 @@ namespace System.Diagnostics {
 			
 			if (startInfo.UseShellExecute) {
 				if (!String.IsNullOrEmpty (startInfo.UserName))
-					throw new InvalidOperationException ("UserShellExecute must be false if an explicit UserName is specified when starting a process");
+					throw new InvalidOperationException ("UseShellExecute must be false if an explicit UserName is specified when starting a process");
 				return (Start_shell (startInfo, process));
 			} else {
 				return (Start_noshell (startInfo, process));
@@ -1229,6 +1231,10 @@ namespace System.Diagnostics {
 			int ms = milliseconds;
 			if (ms == int.MaxValue)
 				ms = -1;
+
+			if (process_handle == IntPtr.Zero)
+				throw new InvalidOperationException ("No process is associated with this object.");
+
 
 			DateTime start = DateTime.UtcNow;
 			if (async_output != null && !async_output.IsCompleted) {
@@ -1514,8 +1520,8 @@ namespace System.Diagnostics {
 		[ComVisibleAttribute(false)] 
 		public void CancelErrorRead ()
 		{
-			if (process_handle == IntPtr.Zero || output_stream == null || StartInfo.RedirectStandardOutput == false)
-				throw new InvalidOperationException ("Standard output has not been redirected or process has not been started.");
+			if (process_handle == IntPtr.Zero || error_stream == null || StartInfo.RedirectStandardError == false)
+				throw new InvalidOperationException ("Standard error has not been redirected or process has not been started.");
 
 			if ((async_mode & AsyncModes.SyncOutput) != 0)
 				throw new InvalidOperationException ("OutputStream is not enabled for asynchronous read operations.");

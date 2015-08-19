@@ -120,9 +120,9 @@ alloc_degraded (MonoVTable *vtable, size_t size, gboolean for_mature)
 		if (last_major_gc_warned < stat_major_gcs) {
 			++num_degraded;
 			if (num_degraded == 1 || num_degraded == 3)
-				fprintf (stderr, "Warning: Degraded allocation.  Consider increasing nursery-size if the warning persists.\n");
+				mono_trace (G_LOG_LEVEL_INFO, MONO_TRACE_GC, "Warning: Degraded allocation.  Consider increasing nursery-size if the warning persists.");
 			else if (num_degraded == 10)
-				fprintf (stderr, "Warning: Repeated degraded allocation.  Consider increasing nursery-size.\n");
+				mono_trace (G_LOG_LEVEL_INFO, MONO_TRACE_GC, "Warning: Repeated degraded allocation.  Consider increasing nursery-size.");
 			last_major_gc_warned = stat_major_gcs;
 		}
 		InterlockedExchangeAdd (&degraded_mode, size);
@@ -143,6 +143,34 @@ alloc_degraded (MonoVTable *vtable, size_t size, gboolean for_mature)
 	}
 
 	return p;
+}
+
+static void
+zero_tlab_if_necessary (void *p, size_t size)
+{
+	if (nursery_clear_policy == CLEAR_AT_TLAB_CREATION) {
+		memset (p, 0, size);
+	} else {
+		/*
+		 * This function is called for all allocations in
+		 * TLABs.  TLABs originate from fragments, which are
+		 * initialized to be faux arrays.  The remainder of
+		 * the fragments are zeroed out at initialization for
+		 * CLEAR_AT_GC, so here we just need to make sure that
+		 * the array header is zeroed.  Since we don't know
+		 * whether we're called for the start of a fragment or
+		 * for somewhere in between, we zero in any case, just
+		 * to make sure.
+		 */
+
+		if (size >= sizeof (MonoArray))
+			memset (p, 0, sizeof (MonoArray));
+		else {
+			static guint8 zeros [sizeof (MonoArray)];
+
+			SGEN_ASSERT (0, !memcmp (p, zeros, size), "TLAB segment must be zeroed out.");
+		}
+	}
 }
 
 /*
@@ -273,9 +301,7 @@ mono_gc_alloc_obj_nolock (MonoVTable *vtable, size_t size)
 					g_assert (0);
 				}
 
-				if (nursery_clear_policy == CLEAR_AT_TLAB_CREATION) {
-					memset (p, 0, size);
-				}
+				zero_tlab_if_necessary (p, size);
 			} else {
 				size_t alloc_size = 0;
 				if (TLAB_START)
@@ -304,9 +330,7 @@ mono_gc_alloc_obj_nolock (MonoVTable *vtable, size_t size)
 				TLAB_REAL_END = TLAB_START + alloc_size;
 				TLAB_TEMP_END = TLAB_START + MIN (SGEN_SCAN_START_SIZE, alloc_size);
 
-				if (nursery_clear_policy == CLEAR_AT_TLAB_CREATION) {
-					memset (TLAB_START, 0, alloc_size);
-				}
+				zero_tlab_if_necessary (TLAB_START, alloc_size);
 
 				/* Allocate from the TLAB */
 				p = (void*)TLAB_NEXT;
@@ -361,8 +385,7 @@ mono_gc_try_alloc_obj_nolock (MonoVTable *vtable, size_t size)
 		sgen_set_nursery_scan_start ((char*)p);
 
 		/*FIXME we should use weak memory ops here. Should help specially on x86. */
-		if (nursery_clear_policy == CLEAR_AT_TLAB_CREATION)
-			memset (p, 0, size);
+		zero_tlab_if_necessary (p, size);
 	} else {
 		int available_in_tlab;
 		char *real_end;
@@ -391,8 +414,7 @@ mono_gc_try_alloc_obj_nolock (MonoVTable *vtable, size_t size)
 			if (!p)
 				return NULL;
 
-			if (nursery_clear_policy == CLEAR_AT_TLAB_CREATION)
-				memset (p, 0, size);			
+			zero_tlab_if_necessary (p, size);
 		} else {
 			size_t alloc_size = 0;
 
@@ -408,8 +430,7 @@ mono_gc_try_alloc_obj_nolock (MonoVTable *vtable, size_t size)
 			TLAB_TEMP_END = new_next + MIN (SGEN_SCAN_START_SIZE, alloc_size);
 			sgen_set_nursery_scan_start ((char*)p);
 
-			if (nursery_clear_policy == CLEAR_AT_TLAB_CREATION)
-				memset (new_next, 0, alloc_size);
+			zero_tlab_if_necessary (new_next, alloc_size);
 
 			MONO_GC_NURSERY_TLAB_ALLOC ((mword)new_next, alloc_size);
 		}
@@ -433,12 +454,12 @@ void*
 mono_gc_alloc_obj (MonoVTable *vtable, size_t size)
 {
 	void *res;
+	TLAB_ACCESS_INIT;
 
 	if (!SGEN_CAN_ALIGN_UP (size))
 		return NULL;
 
 #ifndef DISABLE_CRITICAL_REGION
-	TLAB_ACCESS_INIT;
 
 	if (G_UNLIKELY (has_per_allocation_action)) {
 		static int alloc_count;
@@ -477,12 +498,12 @@ void*
 mono_gc_alloc_vector (MonoVTable *vtable, size_t size, uintptr_t max_length)
 {
 	MonoArray *arr;
+	TLAB_ACCESS_INIT;
 
 	if (!SGEN_CAN_ALIGN_UP (size))
 		return NULL;
 
 #ifndef DISABLE_CRITICAL_REGION
-	TLAB_ACCESS_INIT;
 	ENTER_CRITICAL_REGION;
 	arr = mono_gc_try_alloc_obj_nolock (vtable, size);
 	if (arr) {
@@ -514,12 +535,12 @@ mono_gc_alloc_array (MonoVTable *vtable, size_t size, uintptr_t max_length, uint
 {
 	MonoArray *arr;
 	MonoArrayBounds *bounds;
+	TLAB_ACCESS_INIT;
 
 	if (!SGEN_CAN_ALIGN_UP (size))
 		return NULL;
 
 #ifndef DISABLE_CRITICAL_REGION
-	TLAB_ACCESS_INIT;
 	ENTER_CRITICAL_REGION;
 	arr = mono_gc_try_alloc_obj_nolock (vtable, size);
 	if (arr) {
@@ -556,12 +577,12 @@ void*
 mono_gc_alloc_string (MonoVTable *vtable, size_t size, gint32 len)
 {
 	MonoString *str;
+	TLAB_ACCESS_INIT;
 
 	if (!SGEN_CAN_ALIGN_UP (size))
 		return NULL;
 
 #ifndef DISABLE_CRITICAL_REGION
-	TLAB_ACCESS_INIT;
 	ENTER_CRITICAL_REGION;
 	str = mono_gc_try_alloc_obj_nolock (vtable, size);
 	if (str) {

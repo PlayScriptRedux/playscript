@@ -320,10 +320,33 @@ namespace Mono.CSharp
 					return new ULongConstant (ec.BuiltinTypes, ~((ULongConstant) e).Value, e.Location);
 				}
 				if (e is EnumConstant) {
-					e = TryReduceConstant (ec, ((EnumConstant)e).Child);
-					if (e != null)
-						e = new EnumConstant (e, expr_type);
-					return e;
+					var res = TryReduceConstant (ec, ((EnumConstant)e).Child);
+					if (res != null) {
+						//
+						// Numeric promotion upgraded types to int but for enum constant
+						// original underlying constant type is needed
+						//
+						if (res.Type.BuiltinType == BuiltinTypeSpec.Type.Int) {
+							int v = ((IntConstant) res).Value;
+							switch (((EnumConstant) e).Child.Type.BuiltinType) {
+								case BuiltinTypeSpec.Type.UShort:
+								res = new UShortConstant (ec.BuiltinTypes, (ushort) v, e.Location);
+								break;
+								case BuiltinTypeSpec.Type.Short:
+								res = new ShortConstant (ec.BuiltinTypes, (short) v, e.Location);
+								break;
+								case BuiltinTypeSpec.Type.Byte:
+								res = new ByteConstant (ec.BuiltinTypes, (byte) v, e.Location);
+								break;
+								case BuiltinTypeSpec.Type.SByte:
+								res = new SByteConstant (ec.BuiltinTypes, (sbyte) v, e.Location);
+								break;
+							}
+						}
+
+						res = new EnumConstant (res, expr_type);
+					}
+					return res;
 				}
 				return null;
 			}
@@ -1717,27 +1740,27 @@ namespace Mono.CSharp
 						return CreateConstantResult (ec, true);
 					}
 				} else {
-					//if (Convert.ImplicitReferenceConversionExists (d, t)) {
 					if (Convert.ImplicitReferenceConversionExists (d, t, ec, false)) {
-						if (!isPlayScript) {
-							var c = expr as Constant;
-							if (c != null)
-								return CreateConstantResult (ec, !c.IsNull);
-
-							//
-							// Do not optimize for imported type
-							//
-							if (d.MemberDefinition.IsImported && d.BuiltinType != BuiltinTypeSpec.Type.None &&
-								d.MemberDefinition.DeclaringAssembly != t.MemberDefinition.DeclaringAssembly) {
-								return this;
-							}
-						}
-
 						if (isPlayScript) {
 							if (d.MemberDefinition.IsImported && d.BuiltinType != BuiltinTypeSpec.Type.None) {
 								return this;
 							}
 						}
+
+						var c = expr as Constant;
+						if (c != null)
+							return CreateConstantResult (ec, !c.IsNull);
+
+						//
+						// Do not optimize for imported type or dynamic type
+						//
+						if (d.MemberDefinition.IsImported && d.BuiltinType != BuiltinTypeSpec.Type.None &&
+							d.MemberDefinition.DeclaringAssembly != t.MemberDefinition.DeclaringAssembly) {
+							return this;
+						}
+
+						if (d.BuiltinType == BuiltinTypeSpec.Type.Dynamic)
+							return this;
 
 						//
 						// Turn is check into simple null check for implicitly convertible reference types
@@ -2864,8 +2887,14 @@ namespace Mono.CSharp
 		public override void FlowAnalysis (FlowAnalysisContext fc)
 		{
 			if ((oper & Operator.LogicalMask) == 0) {
+				var fc_ontrue = fc.DefiniteAssignmentOnTrue;
+				var fc_onfalse = fc.DefiniteAssignmentOnFalse;
+				fc.DefiniteAssignmentOnTrue = fc.DefiniteAssignmentOnFalse = fc.DefiniteAssignment;
 				left.FlowAnalysis (fc);
+				fc.DefiniteAssignmentOnTrue = fc.DefiniteAssignmentOnFalse = fc.DefiniteAssignment;
 				right.FlowAnalysis (fc);
+				fc.DefiniteAssignmentOnTrue = fc_ontrue;
+				fc.DefiniteAssignmentOnFalse = fc_onfalse;
 				return;
 			}
 
@@ -3229,8 +3258,8 @@ namespace Mono.CSharp
 							}
 						}
 
-						left = ConvertEnumOperandToUnderlyingType (rc, left);
-						right = ConvertEnumOperandToUnderlyingType (rc, right);
+						left = ConvertEnumOperandToUnderlyingType (rc, left, r.IsNullableType);
+						right = ConvertEnumOperandToUnderlyingType (rc, right, l.IsNullableType);
 						return expr;
 					}
 				} else if ((oper == Operator.Addition || oper == Operator.Subtraction)) {
@@ -3245,8 +3274,8 @@ namespace Mono.CSharp
 						// which is not ambiguous with predefined enum operators
 						//
 						if (expr != null) {
-							left = ConvertEnumOperandToUnderlyingType (rc, left);
-							right = ConvertEnumOperandToUnderlyingType (rc, right);
+							left = ConvertEnumOperandToUnderlyingType (rc, left, false);
+							right = ConvertEnumOperandToUnderlyingType (rc, right, false);
 
 							return expr;
 						}
@@ -3775,6 +3804,7 @@ namespace Mono.CSharp
 				}
 			}
 
+
 			right = right.ResolveWithTypeHint (ec, typeHint);
 			if (right == null)
 				return null;
@@ -3784,6 +3814,15 @@ namespace Mono.CSharp
 
 			// Handle PlayScript binary operators that need to be converted to methods.
 			if (isPlayScript) {
+
+				if (oper == Operator.LogicalAnd || oper == Operator.LogicalOr) {
+					// Handle logical operation on Number/double; i.e. ( x:Number && y:Number)
+					if (left.Type.BuiltinType == BuiltinTypeSpec.Type.Double || 
+							right.Type.BuiltinType == BuiltinTypeSpec.Type.Double ) {
+						typeHint = null;
+					}
+				}
+
 				//
 				// Delegate math operations involving null or undefined to the dynamic runtime
 				// to avoid using nullable types (which do not work the way we want)
@@ -3803,8 +3842,10 @@ namespace Mono.CSharp
 				//
 				if ((oper & (Operator.BitwiseMask | Operator.ArithmeticMask | Operator.ShiftMask)) != 0 && oper != Operator.Addition) {
 					if (!(left.Type.IsNumeric || left.Type.IsAsUntyped) || !(right.Type.IsNumeric || right.Type.IsAsUntyped)) {
-						Error_OperatorCannotBeApplied (ec, left, right, oper, loc);
-						return null;
+						if (!(isPlayScript && (left.Type.IsDynamic || right.Type.IsDynamic))) {
+							Error_OperatorCannotBeApplied (ec, left, right, oper, loc);
+							return null;
+						}
 					}
 				}
 
@@ -3833,7 +3874,7 @@ namespace Mono.CSharp
 				}
 
 				if ((typeHint != ec.BuiltinTypes.Bool) && (oper == Operator.LogicalOr || oper == Operator.LogicalAnd) && 
-					(left.Type.BuiltinType != BuiltinTypeSpec.Type.Bool || right.Type.BuiltinType != Mono.CSharp.BuiltinTypeSpec.Type.Bool)) {
+					(left.Type.BuiltinType != BuiltinTypeSpec.Type.Bool || right.Type.BuiltinType != BuiltinTypeSpec.Type.Bool)) {
 					Expression leftExpr = left;
 					Expression rightExpr = right;
 					if (left.Type != right.Type) {
@@ -4332,7 +4373,7 @@ namespace Mono.CSharp
 			return null;
 		}
 
-		static Expression ConvertEnumOperandToUnderlyingType (ResolveContext rc, Expression expr)
+		static Expression ConvertEnumOperandToUnderlyingType (ResolveContext rc, Expression expr, bool liftType)
 		{
 			TypeSpec underlying_type;
 			if (expr.Type.IsNullableType) {
@@ -4356,7 +4397,7 @@ namespace Mono.CSharp
 				break;
 			}
 
-			if (expr.Type.IsNullableType)
+			if (expr.Type.IsNullableType || liftType)
 				underlying_type = rc.Module.PredefinedTypes.Nullable.TypeSpec.MakeGenericType (rc.Module, new[] { underlying_type });
 
 			if (expr.Type == underlying_type)
@@ -6020,9 +6061,10 @@ namespace Mono.CSharp
 			//
 			// First, if an implicit conversion exists from true_expr
 			// to false_expr, then the result type is of type false_expr.Type
-			//
+			// 
 			if (!TypeSpecComparer.IsEqual (true_type, false_type)) {
-				Expression conv = Convert.ImplicitConversion (ec, true_expr, false_type, loc);
+				// The following needs to be up converted to prevent a CS0172 in ActionScript
+				Expression conv = Convert.ImplicitConversion (ec, true_expr, false_type, loc, true);
 				if (conv != null && true_type.BuiltinType != BuiltinTypeSpec.Type.Dynamic) {
 					//
 					// Check if both can convert implicitly to each other's type
@@ -6030,7 +6072,8 @@ namespace Mono.CSharp
 					type = false_type;
 
 					if (false_type.BuiltinType != BuiltinTypeSpec.Type.Dynamic) {
-						var conv_false_expr = Convert.ImplicitConversion (ec, false_expr, true_type, loc);
+						// The following needs to be up converted to prevent a CS0172 in ActionScript
+						var conv_false_expr = Convert.ImplicitConversion (ec, false_expr, true_type, loc, true);
 						//
 						// LAMESPEC: There seems to be hardcoded promotition to int type when
 						// both sides are numeric constants and one side is int constant and
@@ -9804,7 +9847,7 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext rc)
 		{
-			var isPlayScript = rc.FileType != SourceFileType.PlayScript;
+			var isPlayScript = rc.FileType == SourceFileType.PlayScript;
 
 			// PlayScript E4X: Handle E4x accesors.
 			if (isPlayScript && AccessorType != Accessor.Member) {
@@ -9930,7 +9973,7 @@ namespace Mono.CSharp
 
 				// PlayScript - Search for _fn or _ns types for bare functions or namespace classes
 				bool foundFnType = false;
-				if (retval == null && rc.FileType == SourceFileType.PlayScript) {
+				if (isPlayScript && retval == null) {
 					retval = ns.LookupTypeOrNamespace (rc, Name + "_fn", Arity, LookupMode.Normal, loc);
 					if (retval != null) {
 						foundFnType = true;
@@ -11327,6 +11370,10 @@ namespace Mono.CSharp
 			loc = Location.Null;
 		}
 
+		protected override void CloneTo (CloneContext clonectx, Expression target)
+		{
+		}
+
 		public override bool ContainsEmitWithAwait ()
 		{
 			return false;
@@ -12515,6 +12562,7 @@ namespace Mono.CSharp
 			type.Define ();
 			if ((ec.Report.Errors - errors) == 0) {
 				parent.Module.AddAnonymousType (type);
+				type.PrepareEmit ();
 			}
 
 			return type;
@@ -12660,6 +12708,15 @@ namespace Mono.CSharp
 		{
 			ec.Report.Error (828, loc, "An anonymous type property `{0}' cannot be initialized with `{1}'",
 				Name, initializer);
+		}
+	}
+
+	public class CatchFilterExpression : BooleanExpression
+	{
+		public CatchFilterExpression (Expression expr, Location loc)
+			: base (expr)
+		{
+			this.loc = loc;
 		}
 	}
 }

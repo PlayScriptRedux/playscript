@@ -907,8 +907,11 @@ major_ptr_is_in_non_pinned_space (char *ptr, char **start)
 }
 
 static void
-major_iterate_objects (gboolean non_pinned, gboolean pinned, IterateObjectCallbackFunc callback, void *data)
+major_iterate_objects (IterateObjectsFlags flags, IterateObjectCallbackFunc callback, void *data)
 {
+	gboolean sweep = flags & ITERATE_OBJECTS_SWEEP;
+	gboolean non_pinned = flags & ITERATE_OBJECTS_NON_PINNED;
+	gboolean pinned = flags & ITERATE_OBJECTS_PINNED;
 	MSBlockInfo *block;
 
 	FOREACH_BLOCK (block) {
@@ -919,11 +922,19 @@ major_iterate_objects (gboolean non_pinned, gboolean pinned, IterateObjectCallba
 			continue;
 		if (!block->pinned && !non_pinned)
 			continue;
-		if (lazy_sweep)
+		if (sweep && lazy_sweep) {
 			sweep_block (block, FALSE);
+			SGEN_ASSERT (0, block->swept, "Block must be swept after sweeping");
+		}
 
 		for (i = 0; i < count; ++i) {
 			void **obj = (void**) MS_BLOCK_OBJ (block, i);
+			if (!block->swept) {
+				int word, bit;
+				MS_CALC_MARK_BIT (word, bit, obj);
+				if (!MS_MARK_BIT (block, word, bit))
+					continue;
+			}
 			if (MS_OBJ_ALLOCED (obj, block))
 				callback ((char*)obj, block->obj_size, data);
 		}
@@ -1587,22 +1598,20 @@ sweep_block (MSBlockInfo *block, gboolean during_major_collection)
 static inline int
 bitcount (mword d)
 {
-#if SIZEOF_VOID_P == 8
-	/* http://www.jjj.de/bitwizardry/bitwizardrypage.html */
-	d -=  (d>>1) & 0x5555555555555555;
-	d  = ((d>>2) & 0x3333333333333333) + (d & 0x3333333333333333);
-	d  = ((d>>4) + d) & 0x0f0f0f0f0f0f0f0f;
-	d *= 0x0101010101010101;
-	return d >> 56;
+	int count = 0;
+
+#ifdef __GNUC__
+	if (sizeof (mword) == sizeof (unsigned long))
+		count += __builtin_popcountl (d);
+	else
+		count += __builtin_popcount (d);
 #else
-	/* http://aggregate.org/MAGIC/ */
-	d -= ((d >> 1) & 0x55555555);
-	d = (((d >> 2) & 0x33333333) + (d & 0x33333333));
-	d = (((d >> 4) + d) & 0x0f0f0f0f);
-	d += (d >> 8);
-	d += (d >> 16);
-	return (d & 0x0000003f);
+	while (d) {
+		count ++;
+		d &= (d - 1);
+	}
 #endif
+	return count;
 }
 
 static void
@@ -1784,8 +1793,8 @@ count_ref_nonref_objs (void)
 	count_nonpinned_ref = 0;
 	count_nonpinned_nonref = 0;
 
-	major_iterate_objects (TRUE, FALSE, count_nonpinned_callback, NULL);
-	major_iterate_objects (FALSE, TRUE, count_pinned_callback, NULL);
+	major_iterate_objects (ITERATE_OBJECTS_SWEEP_NON_PINNED, count_nonpinned_callback, NULL);
+	major_iterate_objects (ITERATE_OBJECTS_SWEEP_PINNED, count_pinned_callback, NULL);
 
 	total = count_pinned_nonref + count_nonpinned_nonref + count_pinned_ref + count_nonpinned_ref;
 
@@ -2108,7 +2117,7 @@ major_handle_gc_param (const char *opt)
 #ifdef FIXED_HEAP
 	if (g_str_has_prefix (opt, "major-heap-size=")) {
 		const char *arg = strchr (opt, '=') + 1;
-		glong size;
+		size_t size;
 		if (!mono_gc_parse_environment_string_extract_number (arg, &size))
 			return FALSE;
 		ms_heap_num_blocks = (size + MS_BLOCK_SIZE - 1) / MS_BLOCK_SIZE;
@@ -2376,6 +2385,31 @@ major_scan_card_table (gboolean mod_union, SgenGrayQueue *queue)
 	} END_FOREACH_BLOCK;
 }
 
+static void
+major_count_cards (long long *num_total_cards, long long *num_marked_cards)
+{
+	MSBlockInfo *block;
+	long long total_cards = 0;
+	long long marked_cards = 0;
+
+	FOREACH_BLOCK (block) {
+		guint8 *cards = sgen_card_table_get_card_scan_address ((mword) block->block);
+		int i;
+
+		if (!block->has_references)
+			continue;
+
+		total_cards += CARDS_PER_BLOCK;
+		for (i = 0; i < CARDS_PER_BLOCK; ++i) {
+			if (cards [i])
+				++marked_cards;
+		}
+	} END_FOREACH_BLOCK;
+
+	*num_total_cards = total_cards;
+	*num_marked_cards = marked_cards;
+}
+
 #ifdef SGEN_HAVE_CONCURRENT_MARK
 static void
 update_cardtable_mod_union (void)
@@ -2599,6 +2633,7 @@ sgen_marksweep_fixed_init (SgenMajorCollector *collector)
 	collector->post_param_init = post_param_init;
 	collector->is_valid_object = major_is_valid_object;
 	collector->describe_pointer = major_describe_pointer;
+	collector->count_cards = major_count_cards;
 
 	collector->major_ops.copy_or_mark_object = major_copy_or_mark_object_canonical;
 	collector->major_ops.scan_object = major_scan_object;

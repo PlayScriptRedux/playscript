@@ -313,6 +313,8 @@ type_to_simd_type (int type)
 static LLVMTypeRef
 type_to_llvm_type (EmitContext *ctx, MonoType *t)
 {
+	t = mini_replace_type (t);
+
 	if (t->byref)
 		return LLVMPointerType (LLVMInt8Type (), 0);
 	switch (t->type) {
@@ -4397,7 +4399,10 @@ mono_llvm_emit_method (MonoCompile *cfg)
 
 	if (cfg->compile_aot) {
 		LLVMSetLinkage (method, LLVMInternalLinkage);
+#if LLVM_API_VERSION == 0
+		/* This causes an assertion in later LLVM versions */
 		LLVMSetVisibility (method, LLVMHiddenVisibility);
+#endif
 	} else {
 		LLVMSetLinkage (method, LLVMPrivateLinkage);
 	}
@@ -4749,10 +4754,15 @@ mono_llvm_emit_call (MonoCompile *cfg, MonoCallInst *call)
 		case LLVMArgInIReg:
 		case LLVMArgInFPReg: {
 			MonoType *t = (sig->hasthis && i == 0) ? &mono_get_intptr_class ()->byval_arg : sig->params [i - sig->hasthis];
+			int opcode;
 
-			if (!t->byref && (t->type == MONO_TYPE_R8 || t->type == MONO_TYPE_R4)) {
+			opcode = mono_type_to_regmove (cfg, t);
+			if (opcode == OP_FMOVE) {
 				MONO_INST_NEW (cfg, ins, OP_FMOVE);
 				ins->dreg = mono_alloc_freg (cfg);
+			} else if (opcode == OP_LMOVE) {
+				MONO_INST_NEW (cfg, ins, OP_LMOVE);
+				ins->dreg = mono_alloc_lreg (cfg);
 			} else {
 				MONO_INST_NEW (cfg, ins, OP_MOVE);
 				ins->dreg = mono_alloc_ireg (cfg);

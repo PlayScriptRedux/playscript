@@ -108,7 +108,7 @@ namespace Mono.CSharp {
 				return DoFlowAnalysis (fc);
 			}
 
-			if (this is EmptyStatement)
+			if (this is EmptyStatement || loc.IsNull)
 				return true;
 
 			if (fc.UnreachableReported)
@@ -736,11 +736,7 @@ namespace Mono.CSharp {
 				infinite = true;
 			}
 
-			base.Resolve (bc);
-
-			Iterator.Resolve (bc);
-
-			return true;
+			return base.Resolve (bc) && Iterator.Resolve (bc);
 		}
 
 		protected override bool DoFlowAnalysis (FlowAnalysisContext fc)
@@ -924,11 +920,11 @@ namespace Mono.CSharp {
 			var prev_loop = bc.EnclosingLoop;
 			var prev_los = bc.EnclosingLoopOrSwitch;
 			bc.EnclosingLoopOrSwitch = bc.EnclosingLoop = this;
-			Statement.Resolve (bc);
+			var ok = Statement.Resolve (bc);
 			bc.EnclosingLoopOrSwitch = prev_los;
 			bc.EnclosingLoop = prev_loop;
 
-			return true;
+			return ok;
 		}
 
 		//
@@ -3550,8 +3546,9 @@ namespace Mono.CSharp {
 
 						for (ExplicitBlock b = ref_block; b.AnonymousMethodStorey != storey; b = b.Parent.Explicit) {
 							ParametersBlock pb;
+							AnonymousMethodStorey b_storey = b.AnonymousMethodStorey;
 
-							if (b.AnonymousMethodStorey != null) {
+							if (b_storey != null) {
 								//
 								// Don't add storey cross reference for `this' when the storey ends up not
 								// beeing attached to any parent
@@ -3570,21 +3567,23 @@ namespace Mono.CSharp {
 										b.AnonymousMethodStorey.AddCapturedThisField (ec, parent);
 										break;
 									}
-								}
 
-								b.AnonymousMethodStorey.AddParentStoreyReference (ec, storey);
-								b.AnonymousMethodStorey.HoistedThis = storey.HoistedThis;
+								}
 
 								//
 								// Stop propagation inside same top block
 								//
-								if (b.ParametersBlock == ParametersBlock.Original)
+								if (b.ParametersBlock == ParametersBlock.Original) {
+									b_storey.AddParentStoreyReference (ec, storey);
+//									b_storey.HoistedThis = storey.HoistedThis;
 									break;
+								}
 
-								b = b.ParametersBlock;
+								b = pb = b.ParametersBlock;
+							} else {
+								pb = b as ParametersBlock;
 							}
 
-							pb = b as ParametersBlock;
 							if (pb != null && pb.StateMachine != null) {
 								if (pb.StateMachine == storey)
 									break;
@@ -3609,8 +3608,14 @@ namespace Mono.CSharp {
 
 								pb.StateMachine.AddParentStoreyReference (ec, storey);
 							}
-							
-							b.HasCapturedVariable = true;
+
+							//
+							// Add parent storey reference only when this is not captured directly
+							//
+							if (b_storey != null) {
+								b_storey.AddParentStoreyReference (ec, storey);
+								b_storey.HoistedThis = storey.HoistedThis;
+							}
 						}
 					}
 				}
@@ -4136,21 +4141,30 @@ namespace Mono.CSharp {
 			var label = value as LabeledStatement;
 			Block b = block;
 			if (label != null) {
-				do {
-					if (label.Block == b)
-						return label;
-					b = b.Parent;
-				} while (b != null);
+				if (IsLabelVisible (label, b))
+					return label;
+
 			} else {
 				List<LabeledStatement> list = (List<LabeledStatement>) value;
 				for (int i = 0; i < list.Count; ++i) {
 					label = list[i];
-					if (label.Block == b)
+					if (IsLabelVisible (label, b))
 						return label;
 				}
 			}
 
 			return null;
+		}
+
+		static bool IsLabelVisible (LabeledStatement label, Block b)
+		{
+			do {
+				if (label.Block == b)
+					return true;
+				b = b.Parent;
+			} while (b != null);
+
+			return false;
 		}
 
 		public ParameterInfo GetParameterInfo (Parameter p)
@@ -6884,15 +6898,72 @@ namespace Mono.CSharp {
 
 	public class Catch : Statement
 	{
+		class FilterStatement : Statement
+		{
+			readonly Catch ctch;
+
+			public FilterStatement (Catch ctch)
+			{
+				this.ctch = ctch;
+			}
+
+			protected override void CloneTo (CloneContext clonectx, Statement target)
+			{
+			}
+
+			protected override void DoEmit (EmitContext ec)
+			{
+				if (ctch.li != null) {
+					if (ctch.hoisted_temp != null)
+						ctch.hoisted_temp.Emit (ec);
+					else
+						ctch.li.Emit (ec);
+				}
+
+				var expr_start = ec.DefineLabel ();
+				var end = ec.DefineLabel ();
+
+				ec.Emit (OpCodes.Brtrue_S, expr_start);
+				ec.EmitInt (0);
+				ec.Emit (OpCodes.Br, end);
+				ec.MarkLabel (expr_start);
+
+				ctch.Filter.Emit (ec);
+
+				ec.MarkLabel (end);
+				ec.Emit (OpCodes.Endfilter);
+				ec.BeginFilterHandler ();
+				ec.Emit (OpCodes.Pop);
+			}
+
+			protected override bool DoFlowAnalysis (FlowAnalysisContext fc)
+			{
+				ctch.Filter.FlowAnalysis (fc);
+				return true;
+			}
+
+			public override bool Resolve (BlockContext bc)
+			{
+				ctch.Filter = ctch.Filter.Resolve (bc);
+				var c = ctch.Filter as Constant;
+				if (c != null && !c.IsDefaultValue) {
+					bc.Report.Warning (7095, 1, ctch.Filter.Location, "Exception filter expression is a constant");
+				}
+
+				return true;
+			}
+		}
+
 		ExplicitBlock block;
 		LocalVariable li;
 		FullNamedExpression type_expr;
 		CompilerAssign assign;
 		TypeSpec type;
+		LocalTemporary hoisted_temp;
 
 		// The PlayScript error variable (if we're converting from Exception to Error).
 		LocalVariable psErrorLi;
-		
+
 		public Catch (ExplicitBlock block, Location loc)
 		{
 			this.block = block;
@@ -6911,6 +6982,10 @@ namespace Mono.CSharp {
 			get {
 				return type;
 			}
+		}
+
+		public Expression Filter {
+			get; set;
 		}
 
 		public bool IsGeneral {
@@ -6941,34 +7016,47 @@ namespace Mono.CSharp {
 
 		protected override void DoEmit (EmitContext ec)
 		{
-			if (IsGeneral)
-				ec.BeginCatchBlock (ec.BuiltinTypes.Object);
-			else
-				ec.BeginCatchBlock (CatchType);
+			if (Filter != null) {
+				ec.BeginExceptionFilterBlock ();
+				ec.Emit (OpCodes.Isinst, IsGeneral ? ec.BuiltinTypes.Object : CatchType);
 
-			if (li != null) {
-				li.CreateBuilder (ec);
-
-				//
-				// Special case hoisted catch variable, we have to use a temporary variable
-				// to pass via anonymous storey initialization with the value still on top
-				// of the stack
-				//
-				if (li.HoistedVariant != null) {
-					LocalTemporary lt = new LocalTemporary (li.Type);
-					lt.Store (ec);
-
-					// switch to assigning from the temporary variable and not from top of the stack
-					assign.UpdateSource (lt);
-				}
+				if (li != null)
+					EmitCatchVariableStore (ec);
 			} else {
-				ec.Emit (OpCodes.Pop);
+				if (IsGeneral)
+					ec.BeginCatchBlock (ec.BuiltinTypes.Object);
+				else
+					ec.BeginCatchBlock (CatchType);
+
+				if (li != null) {
+					EmitCatchVariableStore (ec);
+				} else {
+					ec.Emit (OpCodes.Pop);
+				}
 			}
 
 			if (psErrorLi != null)
 				psErrorLi.CreateBuilder (ec);
 
 			Block.Emit (ec);
+		}
+
+		void EmitCatchVariableStore (EmitContext ec)
+		{
+			li.CreateBuilder (ec);
+
+			//
+			// Special case hoisted catch variable, we have to use a temporary variable
+			// to pass via anonymous storey initialization with the value still on top
+			// of the stack
+			//
+			if (li.HoistedVariant != null) {
+				hoisted_temp = new LocalTemporary (li.Type);
+				hoisted_temp.Store (ec);
+
+				// switch to assigning from the temporary variable and not from top of the stack
+				assign.UpdateSource (hoisted_temp);
+			}
 		}
 
 		public override bool Resolve (BlockContext ec)
@@ -7026,15 +7114,15 @@ namespace Mono.CSharp {
 							var errAssign = new CompilerAssign (psErrorLi.CreateReferenceExpression (ec, Location.Null), 
 								new Nullable.NullCoalescingOperator (asExpr, newExpr), Location.Null);
 							block.AddScopeStatement (new StatementExpression(errAssign, Location.Null));
-							if (!block.Resolve (ec))
-								Console.WriteLine ("!!! PlayScript Catch block Resolve Issue");
 						}
 					}
 				}
 
+				if (Filter != null) {
+					Block.AddScopeStatement (new FilterStatement (this));
+				}
+
 				Block.SetCatchBlock ();
-				if (!Block.Resolve (ec))
-					Console.WriteLine ("*** PlayScript Catch Block Resolve Issue");
 				return Block.Resolve (ec);
 			}
 		}
@@ -7052,6 +7140,10 @@ namespace Mono.CSharp {
 		{
 			base.MarkReachable (rc);
 
+			var c = Filter as Constant;
+			if (c != null && c.IsDefaultValue)
+				return Reachability.CreateUnreachable ();
+
 			return block.MarkReachable (rc);
 		}
 
@@ -7061,6 +7153,9 @@ namespace Mono.CSharp {
 
 			if (type_expr != null)
 				target.type_expr = (FullNamedExpression) type_expr.Clone (clonectx);
+
+			if (Filter != null)
+				target.Filter = Filter.Clone (clonectx);
 
 			target.block = (ExplicitBlock) clonectx.LookupBlock (block);
 		}
@@ -7231,12 +7326,18 @@ namespace Mono.CSharp {
 
 				ok &= c.Resolve (bc);
 
+				if (c.Filter != null)
+					continue;
+
 				TypeSpec resolved_type = c.CatchType;
 				if (resolved_type == null)
 					continue;
 
 				for (int ii = 0; ii < clauses.Count; ++ii) {
 					if (ii == i)
+						continue;
+
+					if (clauses[ii].Filter != null)
 						continue;
 
 					if (clauses[ii].IsGeneral) {
@@ -7452,7 +7553,7 @@ namespace Mono.CSharp {
 			{
 				var type = li.Type;
 
-				if (type.BuiltinType != BuiltinTypeSpec.Type.IDisposable && !type.ImplementsInterface (bc.BuiltinTypes.IDisposable, false)) {
+				if (type.BuiltinType != BuiltinTypeSpec.Type.IDisposable && !CanConvertToIDisposable (bc, type)) {
 					if (type.IsNullableType) {
 						// it's handled in CreateDisposeCall
 						return;
@@ -7467,6 +7568,16 @@ namespace Mono.CSharp {
 
 					return;
 				}
+			}
+
+			static bool CanConvertToIDisposable (BlockContext bc, TypeSpec type)
+			{
+				var target = bc.BuiltinTypes.IDisposable;
+				var tp = type as TypeParameterSpec;
+				if (tp != null)
+					return Convert.ImplicitTypeParameterConversion (null, tp, target) != null;
+
+				return type.ImplementsInterface (target, false);
 			}
 
 			protected virtual Statement CreateDisposeCall (BlockContext bc, LocalVariable lv)
@@ -7489,7 +7600,7 @@ namespace Mono.CSharp {
 				Statement dispose = new StatementExpression (new Invocation (dispose_mg, null), Location.Null);
 
 				// Add conditional call when disposing possible null variable
-				if (!type.IsStruct || type.IsNullableType)
+				if (!TypeSpec.IsValueType (type) || type.IsNullableType)
 					dispose = new If (new Binary (Binary.Operator.Inequality, lvr, new NullLiteral (loc)), dispose, dispose.loc);
 
 				return dispose;
@@ -7617,12 +7728,12 @@ namespace Mono.CSharp {
 				}
 			}
 
-			base.Resolve (ec);
+			var ok = base.Resolve (ec);
 
 			if (vr != null)
 				vr.IsLockedByStatement = vr_locked;
 
-			return true;
+			return ok;
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Statement t)
@@ -8414,11 +8525,7 @@ namespace Mono.CSharp {
 				}
 			}
 
-			//return statement.Resolve (ec);
-			//d12330eda7746321b4611865d11e932e53ac55b8
-
-			base.Resolve (ec);
-			return true;
+			return base.Resolve (ec);
 		}
 
 		protected override void DoEmit (EmitContext ec)

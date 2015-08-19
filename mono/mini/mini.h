@@ -122,7 +122,7 @@
 #endif
 
 /* Version number of the AOT file format */
-#define MONO_AOT_FILE_VERSION 99
+#define MONO_AOT_FILE_VERSION 100
 
 //TODO: This is x86/amd64 specific.
 #define mono_simd_shuffle_mask(a,b,c,d) ((a) | ((b) << 2) | ((c) << 4) | ((d) << 6))
@@ -522,10 +522,10 @@ extern int mono_break_at_bb_bb_num;
 extern gboolean check_for_pending_exc;
 extern gboolean disable_vtypes_in_regs;
 extern gboolean mono_verify_all;
-extern gboolean mono_dont_free_global_codeman;
 extern gboolean mono_do_x86_stack_align;
 extern const char *mono_build_date;
 extern gboolean mono_do_signal_chaining;
+extern gboolean mono_do_crash_chaining;
 extern gboolean mono_use_llvm;
 extern gboolean mono_do_single_method_regression;
 extern guint32 mono_single_method_regression_opt;
@@ -1412,6 +1412,8 @@ typedef struct {
 	MonoInst *lmf_var;
 	MonoInst *lmf_addr_var;
 
+	MonoInst *stack_inbalance_var;
+
 	unsigned char   *cil_start;
 #ifdef __native_client_codegen__
 	/* this alloc is not aligned, native_code */
@@ -1486,6 +1488,8 @@ typedef struct {
 	guint            has_indirection : 1;
 	guint            has_atomic_add_new_i4 : 1;
 	guint            has_atomic_exchange_i4 : 1;
+	guint            has_atomic_cas_i4 : 1;
+	guint            check_pinvoke_callconv : 1;
 	gpointer         debug_info;
 	guint32          lmf_offset;
     guint16          *intvars;
@@ -1843,6 +1847,10 @@ typedef struct {
 	 * Load AOT JIT info eagerly.
 	 */
 	gboolean load_aot_jit_info_eagerly;
+	/*
+	 * Check for pinvoke calling convention mismatches.
+	 */
+	gboolean check_pinvoke_callconv;
 } MonoDebugOptions;
 
 enum {
@@ -1959,6 +1967,7 @@ MonoInst* mono_compile_create_var_load      (MonoCompile *cfg, gssize var_index)
 MonoInst* mono_compile_create_var_store     (MonoCompile *cfg, gssize var_index, MonoInst *value) MONO_INTERNAL;
 MonoType* mono_type_from_stack_type         (MonoInst *ins) MONO_INTERNAL;
 guint32   mono_alloc_ireg                   (MonoCompile *cfg) MONO_LLVM_INTERNAL;
+guint32   mono_alloc_lreg                   (MonoCompile *cfg) MONO_LLVM_INTERNAL;
 guint32   mono_alloc_freg                   (MonoCompile *cfg) MONO_LLVM_INTERNAL;
 guint32   mono_alloc_preg                   (MonoCompile *cfg) MONO_LLVM_INTERNAL;
 guint32   mono_alloc_dreg                   (MonoCompile *cfg, MonoStackType stack_type) MONO_INTERNAL;
@@ -2116,7 +2125,7 @@ gboolean  mono_aot_get_cached_class_info    (MonoClass *klass, MonoCachedClassIn
 gboolean  mono_aot_get_class_from_name      (MonoImage *image, const char *name_space, const char *name, MonoClass **klass) MONO_INTERNAL;
 MonoJitInfo* mono_aot_find_jit_info         (MonoDomain *domain, MonoImage *image, gpointer addr) MONO_INTERNAL;
 gpointer mono_aot_plt_resolve               (gpointer aot_module, guint32 plt_info_offset, guint8 *code) MONO_INTERNAL;
-void     mono_aot_patch_plt_entry (guint8 *code, gpointer *got, mgreg_t *regs, guint8 *addr) MONO_INTERNAL;
+void     mono_aot_patch_plt_entry           (guint8 *code, guint8 *plt_entry, gpointer *got, mgreg_t *regs, guint8 *addr) MONO_INTERNAL;
 gpointer mono_aot_get_method_from_vt_slot   (MonoDomain *domain, MonoVTable *vtable, int slot) MONO_INTERNAL;
 gpointer mono_aot_create_specific_trampoline   (MonoImage *image, gpointer arg1, MonoTrampolineType tramp_type, MonoDomain *domain, guint32 *code_len) MONO_INTERNAL;
 gpointer mono_aot_get_trampoline            (const char *name) MONO_INTERNAL;
@@ -2329,6 +2338,7 @@ gpointer  mono_arch_get_gsharedvt_call_info     (gpointer addr, MonoMethodSignat
 gboolean  mono_arch_opcode_needs_emulation      (MonoCompile *cfg, int opcode) MONO_INTERNAL;
 gboolean  mono_arch_tail_call_supported         (MonoCompile *cfg, MonoMethodSignature *caller_sig, MonoMethodSignature *callee_sig) MONO_INTERNAL;
 int       mono_arch_translate_tls_offset        (int offset) MONO_INTERNAL;
+gboolean  mono_arch_opcode_supported            (int opcode) MONO_INTERNAL;
 
 #ifdef MONO_ARCH_SOFT_FLOAT_FALLBACK
 gboolean  mono_arch_is_soft_float               (void) MONO_INTERNAL;
@@ -2408,7 +2418,6 @@ gpointer mono_arch_get_gsharedvt_arg_trampoline (MonoDomain *domain, gpointer ar
 void     mono_arch_patch_callsite               (guint8 *method_start, guint8 *code, guint8 *addr) MONO_INTERNAL;
 void     mono_arch_patch_plt_entry              (guint8 *code, gpointer *got, mgreg_t *regs, guint8 *addr) MONO_INTERNAL;
 void     mono_arch_nullify_class_init_trampoline(guint8 *code, mgreg_t *regs) MONO_INTERNAL;
-void     mono_arch_nullify_plt_entry            (guint8 *code, mgreg_t *regs) MONO_INTERNAL;
 int      mono_arch_get_this_arg_reg             (guint8 *code) MONO_INTERNAL;
 gpointer mono_arch_get_this_arg_from_call       (mgreg_t *regs, guint8 *code) MONO_INTERNAL;
 gpointer mono_arch_get_delegate_invoke_impl     (MonoMethodSignature *sig, gboolean has_target) MONO_INTERNAL;
@@ -2436,7 +2445,7 @@ void
 mono_arch_setup_async_callback (MonoContext *ctx, void (*async_cb)(void *fun), gpointer user_data) MONO_INTERNAL;
 
 gboolean
-mono_thread_state_init_from_handle (MonoThreadUnwindState *tctx, MonoNativeThreadId thread_id, MonoNativeThreadHandle thread_handle) MONO_INTERNAL;
+mono_thread_state_init_from_handle (MonoThreadUnwindState *tctx, MonoThreadInfo *info) MONO_INTERNAL;
 
 
 /* Exception handling */
@@ -2647,7 +2656,7 @@ void mono_generic_sharing_cleanup (void) MONO_INTERNAL;
 MonoClass* mini_class_get_container_class (MonoClass *class) MONO_INTERNAL;
 MonoGenericContext* mini_class_get_context (MonoClass *class) MONO_INTERNAL;
 
-MonoType* mini_replace_type (MonoType *type) MONO_INTERNAL;
+MonoType* mini_replace_type (MonoType *type) MONO_LLVM_INTERNAL;
 MonoType* mini_get_basic_type_from_generic (MonoGenericSharingContext *gsctx, MonoType *type) MONO_INTERNAL;
 MonoType* mini_type_get_underlying_type (MonoGenericSharingContext *gsctx, MonoType *type) MONO_INTERNAL;
 MonoMethod* mini_get_shared_method (MonoMethod *method) MONO_INTERNAL;
@@ -2657,7 +2666,7 @@ MonoMethod* mini_get_shared_method_full (MonoMethod *method, gboolean all_vt, gb
 int mini_type_stack_size (MonoGenericSharingContext *gsctx, MonoType *t, int *align) MONO_INTERNAL;
 int mini_type_stack_size_full (MonoGenericSharingContext *gsctx, MonoType *t, guint32 *align, gboolean pinvoke) MONO_INTERNAL;
 void type_to_eval_stack_type (MonoCompile *cfg, MonoType *type, MonoInst *inst) MONO_INTERNAL;
-guint mono_type_to_regmove (MonoCompile *cfg, MonoType *type) MONO_INTERNAL;
+guint mono_type_to_regmove (MonoCompile *cfg, MonoType *type) MONO_LLVM_INTERNAL;
 
 void mono_cfg_add_try_hole (MonoCompile *cfg, MonoExceptionClause *clause, guint8 *start, MonoBasicBlock *bb) MONO_INTERNAL;
 
@@ -2873,6 +2882,12 @@ gboolean SIG_HANDLER_SIGNATURE (mono_chain_signal) MONO_INTERNAL;
 #define MONO_IS_CROSS_COMPILE 1
 #else
 #define MONO_IS_CROSS_COMPILE 0
+#endif
+
+#if defined(__mono_ilp32__)
+#define MONO_IS_ILP32 1
+#else
+#define MONO_IS_ILP32 0
 #endif
 
 #endif /* __MONO_MINI_H__ */

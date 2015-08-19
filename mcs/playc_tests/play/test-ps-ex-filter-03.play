@@ -1,0 +1,19 @@
+// Compiler options: 
+//
+package {
+    public class Foo {
+        public static function Main():int {
+		var x:int = -1;
+		try {
+			throw new Error ();
+		} catch if (x > 0) {
+			return 1;
+		} catch if (x < 0) {
+			return 0;
+		} catch {
+			return 2;
+		}
+		return 99;
+        }
+    }
+}

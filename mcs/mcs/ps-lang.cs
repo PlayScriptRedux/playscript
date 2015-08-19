@@ -593,8 +593,8 @@ namespace Mono.CSharp
 		
 		protected override void CloneTo (CloneContext clonectx, Expression t)
 		{
-			var target = (AsDelete) t;
-			
+			var target = (AsNew) t;
+
 			target.Expr = Expr.Clone (clonectx);
 		}
 		
@@ -1157,7 +1157,8 @@ namespace Mono.CSharp
 
 		protected override bool DoFlowAnalysis (FlowAnalysisContext fc)
 		{
-			throw new NotImplementedException ();
+			// TODO: Is it ok to short-circuit the flow analysis for a getter that has no assignment?...
+			return true;
 		}
 
 		protected override void DoEmit (EmitContext ec)

@@ -28,7 +28,7 @@
 #include <mono/utils/mono-membar.h>
 
 /* mingw is missing InterlockedCompareExchange64 () from winbase.h */
-#ifndef HAVE_DECL_INTERLOCKEDCOMPAREEXCHANGE64
+#if HAVE_DECL_INTERLOCKEDCOMPAREEXCHANGE64==0
 static inline gint64 InterlockedCompareExchange64(volatile gint64 *dest, gint64 exch, gint64 comp)
 {
 	return __sync_val_compare_and_swap (dest, comp, exch);
@@ -167,7 +167,7 @@ static inline void InterlockedWrite16(volatile gint16 *dst, gint16 val)
 	mono_memory_barrier ();
 }
 
-/* Prefer GCC atomic ops if the target supports it (see configure.in). */
+/* Prefer GCC atomic ops if the target supports it (see configure.ac). */
 #elif defined(USE_GCC_ATOMIC_OPS)
 
 static inline gint32 InterlockedCompareExchange(volatile gint32 *dest,

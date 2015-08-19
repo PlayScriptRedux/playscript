@@ -159,12 +159,13 @@ namespace Mono.XBuild.CommandLine {
 				var projectInstances = new List<ProjectInstance> ();
 				if (string.Equals (Path.GetExtension (projectFile), ".sln", StringComparison.OrdinalIgnoreCase)) {
 					var parser = new SolutionParser ();
-					var root = ProjectRootElement.Create ();
+					var root = ProjectRootElement.Create (project_collection);
 					parser.ParseSolution (projectFile, project_collection, root, LogWarning);
 					foreach (var p in project_collection.LoadedProjects)
 						projectInstances.Add (p.CreateProjectInstance ());
 				} else {
 					project = ProjectRootElement.Create (XmlReader.Create (projectFile, settings), project_collection);
+					project.FullPath = projectFile;
 					var pi = new ProjectInstance (project, parameters.Properties, parameters.ToolsVersion, project_collection);
 					projectInstances.Add (pi);
 				}

@@ -381,9 +381,8 @@ namespace _root
 					ConvertToMutable ();
 				#if PERFORMANCE_MODE && DEBUG
 				if (i >= mCount) {
-					return Undefined._undefined;
-					// TODO : Fix this (?)
-					//throw new IndexOutOfRangeException();
+//					// TODO : Fix this (?)
+					throw new IndexOutOfRangeException();
 				}
 				#elif PERFORMANCE_MODE
 				#else

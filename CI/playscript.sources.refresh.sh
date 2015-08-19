@@ -32,16 +32,11 @@ mcs/class/pscorlib/Makefile
 mcs/class/pscorlib_aot/Makefile
 mcs/mcs/Makefile
 mcs/playc/Makefile
-mcs/playc_tests/zynga/Makefile
-mcs/tests/Makefile
-scripts/Makefile.am
 EOF
 echo "$makefile_files"
 #
 # Solution/Project files
 read -d '' project_files <<- EOF
-mcs/class/ICSharpCode.SharpZipLib/ICSharpCode.SharpZipLib-monotouch.csproj
-mcs/class/Mono.CSharp/Mono.CSharp-net_4_0.csproj
 mcs/class/Mono.Optimization/Mono.Optimization.csproj
 mcs/class/Mono.PlayScript/Mono.PlayScript-net_2_0.csproj
 mcs/class/Mono.PlayScript/Mono.PlayScript-net_4_0.csproj
@@ -91,7 +86,6 @@ read -d '' misc_files <<- EOF
 .gitignore
 PlayscriptLogo.png
 README.md
-configure.in
 mcs/class/Microsoft.CSharp/Microsoft.CSharp.RuntimeBinder/RuntimeBinderContext.cs
 mcs/class/Mono.CSharp/Mono.CSharp.dll.sources
 mcs/class/Mono.Optimization/Mono.Optimization.dll.sources

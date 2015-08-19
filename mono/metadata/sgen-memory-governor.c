@@ -215,12 +215,12 @@ log_timming (GGTimingInfo *info)
 	full_timing_buff [0] = '\0';
 
 	if (!info->is_overflow)
-	        sprintf (full_timing_buff, "total %.2fms, bridge %.2fms", info->stw_time / 1000.0f, (int)info->bridge_time / 1000.0f);
+	        sprintf (full_timing_buff, "total %.2fms, bridge %.2fms", info->stw_time / 10000.0f, (int)info->bridge_time / 10000.0f);
 	if (info->generation == GENERATION_OLD)
 	        mono_trace (G_LOG_LEVEL_INFO, MONO_TRACE_GC, "GC_MAJOR%s: (%s) pause %.2fms, %s major %dK/%dK los %dK/%dK",
 	                info->is_overflow ? "_OVERFLOW" : "",
 	                info->reason ? info->reason : "",
-	                (int)info->total_time / 1000.0f,
+	                (int)info->total_time / 10000.0f,
 	                full_timing_buff,
 	                major_collector.section_size * num_major_sections / 1024,
 	                major_collector.section_size * last_major_num_sections / 1024,
@@ -230,7 +230,7 @@ log_timming (GGTimingInfo *info)
 	        mono_trace (G_LOG_LEVEL_INFO, MONO_TRACE_GC, "GC_MINOR%s: (%s) pause %.2fms, %s promoted %dK major %dK los %dK",
 	        		info->is_overflow ? "_OVERFLOW" : "",
 	                info->reason ? info->reason : "",
-	                (int)info->total_time / 1000.0f,
+	                (int)info->total_time / 10000.0f,
 	                full_timing_buff,
 	                (num_major_sections - last_major_num_sections) * major_collector.section_size / 1024,
 	                major_collector.section_size * num_major_sections / 1024,
@@ -384,7 +384,7 @@ sgen_memgov_try_alloc_space (mword size, int space)
 }
 
 void
-sgen_memgov_init (glong max_heap, glong soft_limit, gboolean debug_allowance, double allowance_ratio, double save_target)
+sgen_memgov_init (size_t max_heap, size_t soft_limit, gboolean debug_allowance, double allowance_ratio, double save_target)
 {
 	if (soft_limit)
 		soft_heap_limit = soft_limit;

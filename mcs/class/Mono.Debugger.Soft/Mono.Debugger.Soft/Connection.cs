@@ -44,6 +44,8 @@ namespace Mono.Debugger.Soft
 		public int[] il_offsets;
 		public int[] line_numbers;
 		public int[] column_numbers;
+		public int[] end_line_numbers;
+		public int[] end_column_numbers;
 		public SourceInfo[] source_files;
 	}
 
@@ -147,7 +149,8 @@ namespace Mono.Debugger.Soft
 
 	enum ValueTypeId {
 		VALUE_TYPE_ID_NULL = 0xf0,
-		VALUE_TYPE_ID_TYPE = 0xf1
+		VALUE_TYPE_ID_TYPE = 0xf1,
+		VALUE_TYPE_ID_PARENT_VTYPE = 0xf2
 	}
 
 	[Flags]
@@ -207,12 +210,19 @@ namespace Mono.Debugger.Soft
 		public ValueImpl[] Fields; // for ElementType.ValueType
 		public bool IsEnum; // For ElementType.ValueType
 		public long Id; /* For VALUE_TYPE_ID_TYPE */
+		public int Index; /* For VALUE_TYPE_PARENT_VTYPE */
 	}
 
 	class ModuleInfo {
 		public string Name, ScopeName, FQName, Guid;
 		public long Assembly;
 	}		
+
+	class FieldMirrorInfo {
+		public string Name;
+		public long Parent, TypeId;
+		public int Attrs;
+	}
 
 	enum TokenType {
 		STRING = 0,
@@ -405,7 +415,7 @@ namespace Mono.Debugger.Soft
 		 * with newer runtimes, and vice versa.
 		 */
 		internal const int MAJOR_VERSION = 2;
-		internal const int MINOR_VERSION = 27;
+		internal const int MINOR_VERSION = 34;
 
 		enum WPSuspendPolicy {
 			NONE = 0,
@@ -426,6 +436,7 @@ namespace Mono.Debugger.Soft
 			METHOD = 22,
 			TYPE = 23,
 			MODULE = 24,
+			FIELD = 25,
 			EVENT = 64
 		}
 
@@ -473,7 +484,9 @@ namespace Mono.Debugger.Soft
 			SET_KEEPALIVE = 10,
 			GET_TYPES_FOR_SOURCE_FILE = 11,
 			GET_TYPES = 12,
-			INVOKE_METHODS = 13
+			INVOKE_METHODS = 13,
+			START_BUFFERING = 14,
+			STOP_BUFFERING = 15
 		}
 
 		enum CmdEvent {
@@ -488,7 +501,8 @@ namespace Mono.Debugger.Soft
 			/* FIXME: Merge into GET_INFO when the major protocol version is increased */
 			GET_ID = 5,
 			/* Ditto */
-			GET_TID = 6
+			GET_TID = 6,
+			SET_IP = 7
 		}
 
 		enum CmdEventRequest {
@@ -553,7 +567,12 @@ namespace Mono.Debugger.Soft
 			CMD_TYPE_GET_METHODS_BY_NAME_FLAGS = 15,
 			GET_INTERFACES = 16,
 			GET_INTERFACE_MAP = 17,
-			IS_INITIALIZED = 18
+			IS_INITIALIZED = 18,
+			CREATE_INSTANCE = 19
+		}
+
+		enum CmdField {
+			GET_INFO = 1
 		}
 
 		[Flags]
@@ -833,6 +852,8 @@ namespace Mono.Debugger.Soft
 					return new ValueImpl { Type = etype };
 				case (ElementType)ValueTypeId.VALUE_TYPE_ID_TYPE:
 					return new ValueImpl () { Type = etype, Id = ReadId () };
+				case (ElementType)ValueTypeId.VALUE_TYPE_ID_PARENT_VTYPE:
+					return new ValueImpl () { Type = etype, Index = ReadInt () };
 				default:
 					throw new NotImplementedException ("Unable to handle type " + etype);
 				}
@@ -1151,6 +1172,22 @@ namespace Mono.Debugger.Soft
 			TransportSend (packet, 0, packet.Length);
 		}
 
+		internal void WritePackets (List<byte[]> packets) {
+			// FIXME: Throw ClosedConnectionException () if the connection is closed
+			// FIXME: Throw ClosedConnectionException () if another thread closes the connection
+			// FIXME: Locking
+			int len = 0;
+			for (int i = 0; i < packets.Count; ++i)
+				len += packets [i].Length;
+			byte[] data = new byte [len];
+			int pos = 0;
+			for (int i = 0; i < packets.Count; ++i) {
+				Buffer.BlockCopy (packets [i], 0, data, pos, packets [i].Length);
+				pos += packets [i].Length;
+			}
+			TransportSend (data, 0, data.Length);
+		}
+
 		internal void Close () {
 			closed = true;
 		}
@@ -1357,6 +1394,9 @@ namespace Mono.Debugger.Soft
 			case CommandSet.MODULE:
 				cmd = ((CmdModule)command).ToString ();
 				break;
+			case CommandSet.FIELD:
+				cmd = ((CmdField)command).ToString ();
+				break;
 			case CommandSet.EVENT:
 				cmd = ((CmdEvent)command).ToString ();
 				break;
@@ -1382,6 +1422,33 @@ namespace Mono.Debugger.Soft
 			LoggingStream.Flush ();
 		}
 
+		bool buffer_packets;
+		List<byte[]> buffered_packets = new List<byte[]> ();
+
+		//
+		// Start buffering request/response packets on both the client and the debuggee side.
+		// Packets sent between StartBuffering ()/StopBuffering () must be async, i.e. sent
+		// using Send () and not SendReceive ().
+		//
+		public void StartBuffering () {
+			buffer_packets = true;
+			if (Version.AtLeast (2, 34))
+				VM_StartBuffering ();
+		}
+
+		public void StopBuffering () {
+			if (Version.AtLeast (2, 34))
+				VM_StopBuffering ();
+			buffer_packets = false;
+
+			WritePackets (buffered_packets);
+			if (EnableConnectionLogging) {
+				LoggingStream.WriteLine (String.Format ("Sent {1} packets.", buffered_packets.Count));
+				LoggingStream.Flush ();
+			}
+			buffered_packets.Clear ();
+		}
+
 		/* Send a request and call cb when a result is received */
 		int Send (CommandSet command_set, int command, PacketWriter packet, Action<PacketReader> cb, int count) {
 			int id = IdGenerator;
@@ -1396,20 +1463,30 @@ namespace Mono.Debugger.Soft
 			else
 				encoded_packet = EncodePacket (id, (int)command_set, command, packet.Data, packet.Offset);
 
-			lock (reply_packets_monitor) {
-				reply_cbs [id] = delegate (int packet_id, byte[] p) {
-					if (EnableConnectionLogging)
-						LogPacket (packet_id, encoded_packet, p, command_set, command, watch);
-					/* Run the callback on a tp thread to avoid blocking the receive thread */
-					PacketReader r = new PacketReader (p);
-					cb.BeginInvoke (r, null, null);
-				};
-				reply_cb_counts [id] = count;
+			if (cb != null) {
+				lock (reply_packets_monitor) {
+					reply_cbs [id] = delegate (int packet_id, byte[] p) {
+						if (EnableConnectionLogging)
+							LogPacket (packet_id, encoded_packet, p, command_set, command, watch);
+						/* Run the callback on a tp thread to avoid blocking the receive thread */
+						PacketReader r = new PacketReader (p);
+						cb.BeginInvoke (r, null, null);
+					};
+					reply_cb_counts [id] = count;
+				}
 			}
 
-			WritePacket (encoded_packet);
+			if (buffer_packets)
+				buffered_packets.Add (encoded_packet);
+			else
+				WritePacket (encoded_packet);
 
 			return id;
+		}
+
+		// Send a request without waiting for an answer
+		void Send (CommandSet command_set, int command) {
+			Send (command_set, command, null, null, 0);
 		}
 
 		PacketReader SendReceive (CommandSet command_set, int command, PacketWriter packet) {
@@ -1660,6 +1737,14 @@ namespace Mono.Debugger.Soft
 			return types;
 		}
 
+		internal void VM_StartBuffering () {
+			Send (CommandSet.VM, (int)CmdVM.START_BUFFERING);
+		}
+
+		internal void VM_StopBuffering () {
+			Send (CommandSet.VM, (int)CmdVM.STOP_BUFFERING);
+		}
+
 		/*
 		 * DOMAIN
 		 */
@@ -1739,6 +1824,8 @@ namespace Mono.Debugger.Soft
 			info.line_numbers = new int [n_il_offsets];
 			info.source_files = new SourceInfo [n_il_offsets];
 			info.column_numbers = new int [n_il_offsets];
+			info.end_line_numbers = new int [n_il_offsets];
+			info.end_column_numbers = new int [n_il_offsets];
 			for (int i = 0; i < n_il_offsets; ++i) {
 				info.il_offsets [i] = res.ReadInt ();
 				info.line_numbers [i] = res.ReadInt ();
@@ -1752,6 +1839,13 @@ namespace Mono.Debugger.Soft
 					info.column_numbers [i] = res.ReadInt ();
 				else
 					info.column_numbers [i] = 0;
+				if (Version.AtLeast (2, 32)) {
+					info.end_line_numbers [i] = res.ReadInt ();
+					info.end_column_numbers [i] = res.ReadInt ();
+				} else {
+					info.end_column_numbers [i] = -1;
+					info.end_column_numbers [i] = -1;
+				}
 			}
 
 			return info;
@@ -1889,21 +1983,20 @@ namespace Mono.Debugger.Soft
 			return SendReceive (CommandSet.THREAD, (int)CmdThread.GET_NAME, new PacketWriter ().WriteId (id)).ReadString ();
 		}
 
-		internal FrameInfo[] Thread_GetFrameInfo (long id, int start_frame, int length) {
-			var res = SendReceive (CommandSet.THREAD, (int)CmdThread.GET_FRAME_INFO, new PacketWriter ().WriteId (id).WriteInt (start_frame).WriteInt (length));
-			int count = res.ReadInt ();
-
-			var frames = new FrameInfo [count];
-			for (int i = 0; i < count; ++i) {
-				var f = new FrameInfo ();
-				f.id = res.ReadInt ();
-				f.method = res.ReadId ();
-				f.il_offset = res.ReadInt ();
-				f.flags = (StackFrameFlags)res.ReadByte ();
-				frames [i] = f;
-			}
-
-			return frames;
+		internal void Thread_GetFrameInfo (long id, int start_frame, int length, Action<FrameInfo[]> resultCallaback) {
+			Send (CommandSet.THREAD, (int)CmdThread.GET_FRAME_INFO, new PacketWriter ().WriteId (id).WriteInt (start_frame).WriteInt (length), (res) => {
+				int count = res.ReadInt ();
+				var frames = new FrameInfo[count];
+				for (int i = 0; i < count; ++i) {
+					var f = new FrameInfo ();
+					f.id = res.ReadInt ();
+					f.method = res.ReadId ();
+					f.il_offset = res.ReadInt ();
+					f.flags = (StackFrameFlags)res.ReadByte ();
+					frames [i] = f;
+				}
+				resultCallaback (frames);
+			}, 1);
 		}
 
 		internal int Thread_GetState (long id) {
@@ -1924,6 +2017,10 @@ namespace Mono.Debugger.Soft
 
 		internal long Thread_GetTID (long id) {
 			return SendReceive (CommandSet.THREAD, (int)CmdThread.GET_TID, new PacketWriter ().WriteId (id)).ReadLong ();
+		}
+
+		internal void Thread_SetIP (long id, long method_id, long il_offset) {
+			SendReceive (CommandSet.THREAD, (int)CmdThread.SET_IP, new PacketWriter ().WriteId (id).WriteId (method_id).WriteLong (il_offset));
 		}
 
 		/*
@@ -2133,6 +2230,21 @@ namespace Mono.Debugger.Soft
 		internal bool Type_IsInitialized (long id) {
 			PacketReader r = SendReceive (CommandSet.TYPE, (int)CmdType.IS_INITIALIZED, new PacketWriter ().WriteId (id));
 			return r.ReadInt () == 1;
+		}
+
+		internal long Type_CreateInstance (long id) {
+			PacketReader r = SendReceive (CommandSet.TYPE, (int)CmdType.CREATE_INSTANCE, new PacketWriter ().WriteId (id));
+			return r.ReadId ();
+		}
+
+		/*
+		 * FIELD
+		 */
+
+		internal FieldMirrorInfo Field_GetInfo (long id) {
+			PacketReader r = SendReceive (CommandSet.FIELD, (int)CmdField.GET_INFO, new PacketWriter ().WriteId (id));
+			FieldMirrorInfo info = new FieldMirrorInfo { Name = r.ReadString (), Parent = r.ReadId (), TypeId = r.ReadId (), Attrs = r.ReadInt () };
+			return info;
 		}
 
 		/*
