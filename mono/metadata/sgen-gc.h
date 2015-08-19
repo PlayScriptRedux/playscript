@@ -143,7 +143,7 @@ struct _GCMemSection {
 	char **scan_starts;
 	/* in major collections indexes in the pin_queue for objects that pin this section */
 	void **pin_queue_start;
-	int pin_queue_num_entries;
+	size_t pin_queue_num_entries;
 	size_t num_scan_start;
 };
 
@@ -239,13 +239,19 @@ extern int num_ready_finalizers;
 #define SGEN_CAN_ALIGN_UP(s)		((s) <= SIZE_MAX - (SGEN_ALLOC_ALIGN - 1))
 #define SGEN_ALIGN_UP(s)		(((s)+(SGEN_ALLOC_ALIGN-1)) & ~(SGEN_ALLOC_ALIGN-1))
 
+#if SIZEOF_VOID_P == 4
+#define ONE_P 1
+#else
+#define ONE_P 1ll
+#endif
+
 /*
  * The link pointer is hidden by negating each bit.  We use the lowest
  * bit of the link (before negation) to store whether it needs
  * resurrection tracking.
  */
-#define HIDE_POINTER(p,t)	((gpointer)(~((gulong)(p)|((t)?1:0))))
-#define REVEAL_POINTER(p)	((gpointer)((~(gulong)(p))&~3L))
+#define HIDE_POINTER(p,t)	((gpointer)(~((size_t)(p)|((t)?1:0))))
+#define REVEAL_POINTER(p)	((gpointer)((~(size_t)(p))&~3L))
 
 #ifdef SGEN_ALIGN_NURSERY
 #define SGEN_PTR_IN_NURSERY(p,bits,start,end)	(((mword)(p) & ~((1 << (bits)) - 1)) == (mword)(start))
@@ -491,7 +497,7 @@ void sgen_free_internal (void *addr, int type) MONO_INTERNAL;
 void* sgen_alloc_internal_dynamic (size_t size, int type, gboolean assert_on_failure) MONO_INTERNAL;
 void sgen_free_internal_dynamic (void *addr, size_t size, int type) MONO_INTERNAL;
 
-void** sgen_find_optimized_pin_queue_area (void *start, void *end, int *num) MONO_INTERNAL;
+void** sgen_find_optimized_pin_queue_area (void *start, void *end, size_t *num) MONO_INTERNAL;
 void sgen_find_section_pin_queue_start_end (GCMemSection *section) MONO_INTERNAL;
 void sgen_pin_objects_in_section (GCMemSection *section, ScanCopyContext ctx) MONO_INTERNAL;
 
@@ -499,7 +505,7 @@ void sgen_pin_stats_register_object (char *obj, size_t size);
 void sgen_pin_stats_register_global_remset (char *obj);
 void sgen_pin_stats_print_class_stats (void);
 
-void sgen_sort_addresses (void **array, int size) MONO_INTERNAL;
+void sgen_sort_addresses (void **array, size_t size) MONO_INTERNAL;
 void sgen_add_to_global_remset (gpointer ptr, gpointer obj) MONO_INTERNAL;
 
 int sgen_get_current_collection_generation (void) MONO_INTERNAL;
@@ -560,14 +566,14 @@ Test 1 (compiling corlib):
 #define SGEN_TO_SPACE_GRANULE_IN_BYTES (1 << SGEN_TO_SPACE_GRANULE_BITS)
 
 extern char *sgen_space_bitmap MONO_INTERNAL;
-extern int sgen_space_bitmap_size MONO_INTERNAL;
+extern size_t sgen_space_bitmap_size MONO_INTERNAL;
 
 static inline gboolean
 sgen_nursery_is_to_space (char *object)
 {
-	int idx = (object - sgen_nursery_start) >> SGEN_TO_SPACE_GRANULE_BITS;
-	int byte = idx / 8;
-	int bit = idx & 0x7;
+	size_t idx = (object - sgen_nursery_start) >> SGEN_TO_SPACE_GRANULE_BITS;
+	size_t byte = idx / 8;
+	size_t bit = idx & 0x7;
 
 	SGEN_ASSERT (4, sgen_ptr_in_nursery (object), "object %p is not in nursery [%p - %p]", object, sgen_get_nursery_start (), sgen_get_nursery_end ());
 	SGEN_ASSERT (4, byte < sgen_space_bitmap_size, "byte index %d out of range", byte, sgen_space_bitmap_size);
@@ -605,7 +611,7 @@ typedef struct {
 	SgenObjectOperations serial_ops;
 	SgenObjectOperations parallel_ops;
 
-	void (*prepare_to_space) (char *to_space_bitmap, int space_bitmap_size);
+	void (*prepare_to_space) (char *to_space_bitmap, size_t space_bitmap_size);
 	void (*clear_fragments) (void);
 	SgenFragment* (*build_fragments_get_exclude_head) (void);
 	void (*build_fragments_release_exclude_head) (void);
@@ -662,8 +668,8 @@ struct _SgenMajorCollector {
 	SgenObjectOperations major_ops;
 	SgenObjectOperations major_concurrent_ops;
 
-	void* (*alloc_object) (MonoVTable *vtable, int size, gboolean has_references);
-	void* (*par_alloc_object) (MonoVTable *vtable, int size, gboolean has_references);
+	void* (*alloc_object) (MonoVTable *vtable, size_t size, gboolean has_references);
+	void* (*par_alloc_object) (MonoVTable *vtable, size_t size, gboolean has_references);
 	void (*free_pinned_object) (char *obj, size_t size);
 	void (*iterate_objects) (IterateObjectsFlags flags, IterateObjectCallbackFunc callback, void *data);
 	void (*free_non_pinned_object) (char *obj, size_t size);
@@ -686,7 +692,7 @@ struct _SgenMajorCollector {
 	gboolean (*ptr_is_in_non_pinned_space) (char *ptr, char **start);
 	gboolean (*obj_is_from_pinned_alloc) (char *obj);
 	void (*report_pinned_memory_usage) (void);
-	int (*get_num_major_sections) (void);
+	size_t (*get_num_major_sections) (void);
 	gboolean (*handle_gc_param) (const char *opt);
 	void (*print_gc_param_usage) (void);
 	gboolean (*is_worker_thread) (MonoNativeThreadId thread);
@@ -731,7 +737,7 @@ typedef struct {
 
 SgenRemeberedSet *sgen_get_remset (void) MONO_INTERNAL;
 
-static guint /*__attribute__((noinline)) not sure if this hint is a good idea*/
+static mword /*__attribute__((noinline)) not sure if this hint is a good idea*/
 slow_object_get_size (MonoVTable *vtable, MonoObject* o)
 {
 	MonoClass *klass = vtable->klass;
@@ -762,7 +768,7 @@ slow_object_get_size (MonoVTable *vtable, MonoObject* o)
  * vtable field, is not intact.  This is necessary for the parallel
  * collector.
  */
-static inline guint
+static inline mword
 sgen_par_object_get_size (MonoVTable *vtable, MonoObject* o)
 {
 	mword descr = (mword)vtable->gc_descr;
@@ -789,7 +795,7 @@ sgen_par_object_get_size (MonoVTable *vtable, MonoObject* o)
 	return slow_object_get_size (vtable, o);
 }
 
-static inline guint
+static inline mword
 sgen_safe_object_get_size (MonoObject *obj)
 {
        char *forwarded;
@@ -953,7 +959,7 @@ gboolean sgen_los_object_is_pinned (char *obj) MONO_INTERNAL;
 void sgen_clear_nursery_fragments (void) MONO_INTERNAL;
 void sgen_nursery_allocator_prepare_for_pinning (void) MONO_INTERNAL;
 void sgen_nursery_allocator_set_nursery_bounds (char *nursery_start, char *nursery_end) MONO_INTERNAL;
-mword sgen_build_nursery_fragments (GCMemSection *nursery_section, void **start, int num_entries, SgenGrayQueue *unpin_queue) MONO_INTERNAL;
+mword sgen_build_nursery_fragments (GCMemSection *nursery_section, void **start, size_t num_entries, SgenGrayQueue *unpin_queue) MONO_INTERNAL;
 void sgen_init_nursery_allocator (void) MONO_INTERNAL;
 void sgen_nursery_allocator_init_heavy_stats (void) MONO_INTERNAL;
 void sgen_alloc_init_heavy_stats (void) MONO_INTERNAL;
@@ -1035,7 +1041,7 @@ extern int stat_major_gcs;
 extern guint32 collect_before_allocs;
 extern guint32 verify_before_allocs;
 extern gboolean has_per_allocation_action;
-extern int degraded_mode;
+extern size_t degraded_mode;
 extern int default_nursery_size;
 extern guint32 tlab_size;
 extern NurseryClearPolicy nursery_clear_policy;
@@ -1050,7 +1056,7 @@ extern int do_pin_stats;
 static inline void
 sgen_set_nursery_scan_start (char *p)
 {
-	int idx = (p - (char*)nursery_section->data) / SGEN_SCAN_START_SIZE;
+	size_t idx = (p - (char*)nursery_section->data) / SGEN_SCAN_START_SIZE;
 	char *old = nursery_section->scan_starts [idx];
 	if (!old || old > p)
 		nursery_section->scan_starts [idx] = p;
@@ -1098,10 +1104,8 @@ sgen_dummy_use (gpointer v) {
 #if defined(__GNUC__)
 	__asm__ volatile ("" : "=r"(v) : "r"(v));
 #elif defined(_MSC_VER)
-	__asm {
-		mov eax, v;
-		and eax, eax;
-	};
+	static volatile gpointer ptr;
+	ptr = v;
 #else
 #error "Implement sgen_dummy_use for your compiler"
 #endif

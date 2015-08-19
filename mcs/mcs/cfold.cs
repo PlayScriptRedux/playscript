@@ -390,8 +390,8 @@ namespace Mono.CSharp {
 						return null;
 
 					result = result.Reduce (ec, lt);
-					if (result == null)
-						return null;
+					if (result == null || lt.IsEnum)
+						return result;
 
 					return new EnumConstant (result, lt);
 				}

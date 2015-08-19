@@ -409,7 +409,7 @@ gboolean sgen_try_free_some_memory;
 #define SCAN_START_SIZE	SGEN_SCAN_START_SIZE
 
 static mword pagesize = 4096;
-int degraded_mode = 0;
+size_t degraded_mode = 0;
 
 static mword bytes_pinned_from_failed_allocation = 0;
 
@@ -1020,10 +1020,10 @@ pin_objects_from_addresses (GCMemSection *section, void **start, void **end, voi
 void
 sgen_pin_objects_in_section (GCMemSection *section, ScanCopyContext ctx)
 {
-	int num_entries = section->pin_queue_num_entries;
+	size_t num_entries = section->pin_queue_num_entries;
 	if (num_entries) {
 		void **start = section->pin_queue_start;
-		int reduced_to;
+		size_t reduced_to;
 		reduced_to = pin_objects_from_addresses (section, start, start + num_entries,
 				section->data, section->next_data, ctx);
 		section->pin_queue_num_entries = reduced_to;
@@ -1097,15 +1097,15 @@ sgen_parallel_pin_or_update (void **ptr, void *obj, MonoVTable *vt, SgenGrayQueu
  * Done using a by-the book heap sort. Which has decent and stable performance, is pretty cache efficient.
  */
 void
-sgen_sort_addresses (void **array, int size)
+sgen_sort_addresses (void **array, size_t size)
 {
-	int i;
+	size_t i;
 	void *tmp;
 
 	for (i = 1; i < size; ++i) {
-		int child = i;
+		size_t child = i;
 		while (child > 0) {
-			int parent = (child - 1) / 2;
+			size_t parent = (child - 1) / 2;
 
 			if (array [parent] >= array [child])
 				break;
@@ -1119,7 +1119,7 @@ sgen_sort_addresses (void **array, int size)
 	}
 
 	for (i = size - 1; i > 0; --i) {
-		int end, root;
+		size_t end, root;
 		tmp = array [i];
 		array [i] = array [0];
 		array [0] = tmp;
@@ -1128,7 +1128,7 @@ sgen_sort_addresses (void **array, int size)
 		root = 0;
 
 		while (root * 2 + 1 <= end) {
-			int child = root * 2 + 1;
+			size_t child = root * 2 + 1;
 
 			if (child < end && array [child] < array [child + 1])
 				++child;
@@ -1290,7 +1290,7 @@ precisely_scan_objects_from (void** start_root, void** end_root, char* n_start, 
 		return;
 	case ROOT_DESC_COMPLEX: {
 		gsize *bitmap_data = sgen_get_complex_descriptor_bitmap (desc);
-		int bwords = (*bitmap_data) - 1;
+		gsize bwords = (*bitmap_data) - 1;
 		void **start_run = start_root;
 		bitmap_data++;
 		while (bwords-- > 0) {
@@ -1478,7 +1478,7 @@ precisely_report_roots_from (GCRootReport *report, void** start_root, void** end
 		return;
 	case ROOT_DESC_COMPLEX: {
 		gsize *bitmap_data = sgen_get_complex_descriptor_bitmap (desc);
-		int bwords = (*bitmap_data) - 1;
+		gsize bwords = (*bitmap_data) - 1;
 		void **start_run = start_root;
 		bitmap_data++;
 		while (bwords-- > 0) {
@@ -1721,7 +1721,7 @@ sgen_check_section_scan_starts (GCMemSection *section)
 	size_t i;
 	for (i = 0; i < section->num_scan_start; ++i) {
 		if (section->scan_starts [i]) {
-			guint size = safe_object_get_size ((MonoObject*) section->scan_starts [i]);
+			mword size = safe_object_get_size ((MonoObject*) section->scan_starts [i]);
 			g_assert (size >= sizeof (MonoObject) && size <= MAX_SMALL_OBJ_SIZE);
 		}
 	}
@@ -2288,8 +2288,8 @@ collect_nursery (SgenGrayQueue *unpin_queue, gboolean finish_up_concurrent_mark)
 
 	TV_GETTIME (atv);
 	time_minor_pinning += TV_ELAPSED (btv, atv);
-	SGEN_LOG (2, "Finding pinned pointers: %d in %d usecs", sgen_get_pinned_count (), TV_ELAPSED (btv, atv));
-	SGEN_LOG (4, "Start scan with %d pinned objects", sgen_get_pinned_count ());
+	SGEN_LOG (2, "Finding pinned pointers: %zd in %d usecs", sgen_get_pinned_count (), TV_ELAPSED (btv, atv));
+	SGEN_LOG (4, "Start scan with %zd pinned objects", sgen_get_pinned_count ());
 
 	MONO_GC_CHECKPOINT_3 (GENERATION_NURSERY);
 
@@ -2479,7 +2479,7 @@ scan_nursery_objects (ScanCopyContext ctx)
 }
 
 static void
-major_copy_or_mark_from_roots (int *old_next_pin_slot, gboolean finish_up_concurrent_mark, gboolean scan_mod_union)
+major_copy_or_mark_from_roots (size_t *old_next_pin_slot, gboolean finish_up_concurrent_mark, gboolean scan_mod_union)
 {
 	LOSObject *bigobj;
 	TV_DECLARE (atv);
@@ -2595,7 +2595,7 @@ major_copy_or_mark_from_roots (int *old_next_pin_slot, gboolean finish_up_concur
 	/* identify possible pointers to the insize of large objects */
 	SGEN_LOG (6, "Pinning from large objects");
 	for (bigobj = los_object_list; bigobj; bigobj = bigobj->next) {
-		int dummy;
+		size_t dummy;
 		if (sgen_find_optimized_pin_queue_area (bigobj->data, (char*)bigobj->data + sgen_los_object_size (bigobj), &dummy)) {
 			binary_protocol_pin (bigobj->data, (gpointer)LOAD_VTABLE (bigobj->data), safe_object_get_size (((MonoObject*)(bigobj->data))));
 
@@ -2662,8 +2662,8 @@ major_copy_or_mark_from_roots (int *old_next_pin_slot, gboolean finish_up_concur
 
 	TV_GETTIME (btv);
 	time_major_pinning += TV_ELAPSED (atv, btv);
-	SGEN_LOG (2, "Finding pinned pointers: %d in %d usecs", sgen_get_pinned_count (), TV_ELAPSED (atv, btv));
-	SGEN_LOG (4, "Start scan with %d pinned objects", sgen_get_pinned_count ());
+	SGEN_LOG (2, "Finding pinned pointers: %zd in %d usecs", sgen_get_pinned_count (), TV_ELAPSED (atv, btv));
+	SGEN_LOG (4, "Start scan with %zd pinned objects", sgen_get_pinned_count ());
 
 	major_collector.init_to_space ();
 
@@ -2752,7 +2752,7 @@ major_copy_or_mark_from_roots (int *old_next_pin_slot, gboolean finish_up_concur
 }
 
 static void
-major_start_collection (gboolean concurrent, int *old_next_pin_slot)
+major_start_collection (gboolean concurrent, size_t *old_next_pin_slot)
 {
 	MONO_GC_BEGIN (GENERATION_OLD);
 	binary_protocol_collection_begin (stat_major_gcs, GENERATION_OLD);
@@ -2818,7 +2818,7 @@ join_workers (void)
 }
 
 static void
-major_finish_collection (const char *reason, int old_next_pin_slot, gboolean scan_mod_union)
+major_finish_collection (const char *reason, size_t old_next_pin_slot, gboolean scan_mod_union)
 {
 	LOSObject *bigobj, *prevbo;
 	TV_DECLARE (atv);
@@ -2979,7 +2979,7 @@ major_do_collection (const char *reason)
 {
 	TV_DECLARE (all_atv);
 	TV_DECLARE (all_btv);
-	int old_next_pin_slot;
+	size_t old_next_pin_slot;
 
 	if (disable_major_collections)
 		return FALSE;
@@ -3226,7 +3226,7 @@ sgen_perform_collection (size_t requested_size, int generation_to_collect, const
 	/* this also sets the proper pointers for the next allocation */
 	if (generation_to_collect == GENERATION_NURSERY && !sgen_can_alloc_size (requested_size)) {
 		/* TypeBuilder and MonoMethod are killing mcs with fragmentation */
-		SGEN_LOG (1, "nursery collection didn't find enough room for %zd alloc (%d pinned)", requested_size, sgen_get_pinned_count ());
+		SGEN_LOG (1, "nursery collection didn't find enough room for %zd alloc (%zd pinned)", requested_size, sgen_get_pinned_count ());
 		sgen_dump_pin_queue ();
 		degraded_mode = 1;
 	}
@@ -3746,7 +3746,7 @@ scan_thread_data (void *start_nursery, void *end_nursery, gboolean precise, Gray
 			SGEN_LOG (3, "Skipping non-running thread %p, range: %p-%p, size: %td (state %d)", info, info->stack_start, info->stack_end, (char*)info->stack_end - (char*)info->stack_start, mono_thread_info_run_state (info));
 			continue;
 		}
-		SGEN_LOG (3, "Scanning thread %p, range: %p-%p, size: %td, pinned=%d", info, info->stack_start, info->stack_end, (char*)info->stack_end - (char*)info->stack_start, sgen_get_pinned_count ());
+		SGEN_LOG (3, "Scanning thread %p, range: %p-%p, size: %td, pinned=%zd", info, info->stack_start, info->stack_end, (char*)info->stack_end - (char*)info->stack_start, sgen_get_pinned_count ());
 		if (gc_callbacks.thread_mark_func && !conservative_stack_mark) {
 			UserCopyOrMarkData data = { NULL, queue };
 			set_user_copy_or_mark_data (&data);
@@ -4768,7 +4768,7 @@ mono_gc_base_init (void)
 
 					sgen_nursery_size = val;
 					sgen_nursery_bits = 0;
-					while (1 << (++ sgen_nursery_bits) != sgen_nursery_size)
+					while (ONE_P << (++ sgen_nursery_bits) != sgen_nursery_size)
 						;
 #else
 					sgen_nursery_size = val;
@@ -5070,7 +5070,7 @@ emit_nursery_check (MonoMethodBuilder *mb, int *nursery_check_return_labels)
 	mono_mb_emit_ldarg (mb, 0);
 	mono_mb_emit_icon (mb, DEFAULT_NURSERY_BITS);
 	mono_mb_emit_byte (mb, CEE_SHR_UN);
-	mono_mb_emit_icon (mb, (mword)sgen_get_nursery_start () >> DEFAULT_NURSERY_BITS);
+	mono_mb_emit_ptr (mb, (gpointer)((mword)sgen_get_nursery_start () >> DEFAULT_NURSERY_BITS));
 	nursery_check_return_labels [0] = mono_mb_emit_branch (mb, CEE_BEQ);
 
 	if (!major_collector.is_concurrent) {
@@ -5079,7 +5079,7 @@ emit_nursery_check (MonoMethodBuilder *mb, int *nursery_check_return_labels)
 		mono_mb_emit_byte (mb, CEE_LDIND_I);
 		mono_mb_emit_icon (mb, DEFAULT_NURSERY_BITS);
 		mono_mb_emit_byte (mb, CEE_SHR_UN);
-		mono_mb_emit_icon (mb, (mword)sgen_get_nursery_start () >> DEFAULT_NURSERY_BITS);
+		mono_mb_emit_ptr (mb, (gpointer)((mword)sgen_get_nursery_start () >> DEFAULT_NURSERY_BITS));
 		nursery_check_return_labels [1] = mono_mb_emit_branch (mb, CEE_BNE_UN);
 	}
 #else

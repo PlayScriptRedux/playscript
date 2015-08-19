@@ -4002,13 +4002,13 @@ namespace Mono.CSharp
 			return DoResolveCore (ec, left, right);
 		}
 
-		Expression DoResolveDynamic (ResolveContext ec)
+		Expression DoResolveDynamic (ResolveContext rc)
 		{
 			var lt = left.Type;
 			var rt = right.Type;
 			if (lt.Kind == MemberKind.Void || lt == InternalType.MethodGroup || lt == InternalType.AnonymousMethod ||
 				rt.Kind == MemberKind.Void || rt == InternalType.MethodGroup || rt == InternalType.AnonymousMethod) {
-				Error_OperatorCannotBeApplied (ec, left, right);
+				Error_OperatorCannotBeApplied (rc, left, right);
 				return null;
 			}
 
@@ -4021,35 +4021,35 @@ namespace Mono.CSharp
 			if ((oper & Operator.LogicalMask) != 0) {
 				Expression cond_left, cond_right, expr;
 
-				if (ec.FileType == SourceFileType.PlayScript && ec.Module.Compiler.Settings.NewDynamicRuntime_LogicalOps && (typeHint == ec.BuiltinTypes.Bool)) {
+				if (rc.FileType == SourceFileType.PlayScript && rc.Module.Compiler.Settings.NewDynamicRuntime_LogicalOps && (typeHint == rc.BuiltinTypes.Bool)) {
 					// in the new runtime we convert each side to boolean for logical operations
 					if (lt.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
-						left = new Cast(new TypeExpression(ec.BuiltinTypes.Bool, loc), left, loc).Resolve(ec);
+						left = new Cast(new TypeExpression(rc.BuiltinTypes.Bool, loc), left, loc).Resolve(rc);
 					}
 					if (rt.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
-						right = new Cast(new TypeExpression(ec.BuiltinTypes.Bool, loc), right, loc).Resolve(ec);
+						right = new Cast(new TypeExpression(rc.BuiltinTypes.Bool, loc), right, loc).Resolve(rc);
 					}
-					return DoResolveCore(ec, left, right);
+					return DoResolveCore(rc, left, right);
 				}
 
 				args = new Arguments (2);
 
 				if (lt.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
-					LocalVariable temp = LocalVariable.CreateCompilerGenerated (lt, ec.CurrentBlock, loc);
+					LocalVariable temp = LocalVariable.CreateCompilerGenerated (lt, rc.CurrentBlock, loc);
 
 					var cond_args = new Arguments (1);
-					cond_args.Add (new Argument (new SimpleAssign (temp.CreateReferenceExpression (ec, loc), left).Resolve (ec)));
+					cond_args.Add (new Argument (new SimpleAssign (temp.CreateReferenceExpression (rc, loc), left).Resolve (rc)));
 
 					//
 					// dynamic && bool => IsFalse (temp = left) ? temp : temp && right;
 					// dynamic || bool => IsTrue (temp = left) ? temp : temp || right;
 					//
-					left = temp.CreateReferenceExpression (ec, loc);
+					left = temp.CreateReferenceExpression (rc, loc);
 					if (oper == Operator.LogicalAnd) {
-						expr = DynamicUnaryConversion.CreateIsFalse (ec, cond_args, loc);
+						expr = DynamicUnaryConversion.CreateIsFalse (rc, cond_args, loc);
 						cond_left = left;
 					} else {
-						expr = DynamicUnaryConversion.CreateIsTrue (ec, cond_args, loc);
+						expr = DynamicUnaryConversion.CreateIsTrue (rc, cond_args, loc);
 						cond_left = left;
 					}
 
@@ -4058,9 +4058,17 @@ namespace Mono.CSharp
 					cond_right = new DynamicBinaryExpression (this.oper, this.GetOperatorExpressionTypeName(), args, loc);
 
 				} else {
-					LocalVariable temp = LocalVariable.CreateCompilerGenerated (ec.BuiltinTypes.Bool, ec.CurrentBlock, loc);
+					LocalVariable temp = LocalVariable.CreateCompilerGenerated (rc.BuiltinTypes.Bool, rc.CurrentBlock, loc);
 
-					args.Add (new Argument (temp.CreateReferenceExpression (ec, loc).Resolve (ec)));
+					if (!Convert.ImplicitConversionExists (rc, left, temp.Type) && (oper == Operator.LogicalAnd ? GetOperatorFalse (rc, left, loc) : GetOperatorTrue (rc, left, loc)) == null) {
+						rc.Report.Error (7083, left.Location,
+							"Expression must be implicitly convertible to Boolean or its type `{0}' must define operator `{1}'",
+							lt.GetSignatureForError (), oper == Operator.LogicalAnd ? "false" : "true");
+						return null;
+					}
+
+					args.Add (new Argument (temp.CreateReferenceExpression (rc, loc).Resolve (rc)));
+
 					args.Add (new Argument (right));
 					right = new DynamicBinaryExpression (this.oper, this.GetOperatorExpressionTypeName(), args, loc);
 
@@ -4070,22 +4078,22 @@ namespace Mono.CSharp
 					//
 					if (oper == Operator.LogicalAnd) {
 						cond_left = right;
-						cond_right = temp.CreateReferenceExpression (ec, loc);
+						cond_right = temp.CreateReferenceExpression (rc, loc);
 					} else {
-						cond_left = temp.CreateReferenceExpression (ec, loc);
+						cond_left = temp.CreateReferenceExpression (rc, loc);
 						cond_right = right;
 					}
 
-					expr = new BooleanExpression (new SimpleAssign (temp.CreateReferenceExpression (ec, loc), left));
+					expr = new BooleanExpression (new SimpleAssign (temp.CreateReferenceExpression (rc, loc), left));
 				}
 
-				return new Conditional (expr, cond_left, cond_right, loc).Resolve (ec);
+				return new Conditional (expr, cond_left, cond_right, loc).Resolve (rc);
 			}
 
 			args = new Arguments(2);
 			args.Add(new Argument(left));
 			args.Add(new Argument(right));
-			return new DynamicBinaryExpression (this.oper, this.GetOperatorExpressionTypeName(), args, loc).Resolve(ec);
+			return new DynamicBinaryExpression (this.oper, this.GetOperatorExpressionTypeName(), args, loc).Resolve(rc);
 		}
 
 		Expression DoResolveCore (ResolveContext ec, Expression left_orig, Expression right_orig)
