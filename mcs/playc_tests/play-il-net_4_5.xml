@@ -402,7 +402,7 @@
         <size>33</size>
       </method>
       <method name="Int32 Main()" attrs="150">
-        <size>130</size>
+        <size>134</size>
       </method>
       <method name="Void .ctor()" attrs="6278">
         <size>7</size>
