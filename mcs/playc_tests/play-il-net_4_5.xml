@@ -457,6 +457,16 @@
       </method>
     </type>
   </test>
+  <test name="./play/test-ps-TryTryCatchFilter.play">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>54</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
   <test name="./play/test-ps-ex-filter-01.play">
     <type name="_root.Foo">
       <method name="Int32 Main()" attrs="150">

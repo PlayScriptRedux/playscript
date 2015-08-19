@@ -1,7 +1,8 @@
-// Compiler options: 
+// Compiler options: -psstrict+
 //
 package {
     import System.ApplicationException;
+    import System.NullReferenceException;
 
     public class Foo {
         public static function Main():int {
@@ -9,7 +10,7 @@ package {
 			var x:Boolean = true;
 			try {
 				throw new ApplicationException();
-			} catch (NullReferenceException) if (x) {
+			} catch (e:NullReferenceException) if (x) {
 				throw;
 			}
 		} catch (e:ApplicationException) {
