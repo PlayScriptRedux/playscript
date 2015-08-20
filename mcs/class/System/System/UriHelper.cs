@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using System.Text;
+using System.Collections.Generic;
 
 namespace System {
 	internal class UriHelper {
@@ -8,6 +9,12 @@ namespace System {
 
 		internal static bool IriParsing	{
 			get { return Uri.IriParsing; }
+		}
+
+		[Flags]
+		internal enum FormatFlags {
+			None = 0,
+			HasCharactersToNormalize = 1 << 0,
 		}
 
 		[Flags]
@@ -93,13 +100,69 @@ namespace System {
 			return !SchemeContains (scheme, UriSchemes.Ftp | UriSchemes.Gopher | UriSchemes.Nntp | UriSchemes.Telnet);
 		}
 
-		internal static string Format (string str, string schemeName, UriKind uriKind,
-			UriComponents component, UriFormat uriFormat)
+		internal static bool HasCharactersToNormalize(string str)
+		{
+			if (!IriParsing)
+				return false;
+
+			int len = str.Length;
+			for (int i = 0; i < len; i++) {
+				char c = str [i];
+				if (c != '%')
+					continue;
+
+				int iStart = i;
+				char surrogate;
+				char x = Uri.HexUnescapeMultiByte (str, ref i, out surrogate);
+
+				bool isEscaped = i - iStart > 1;
+				if (!isEscaped)
+					continue;
+
+				if ((x >= 'A' && x <= 'Z') || (x >= 'a' && x <= 'z') || (x >= '0' && x <= '9') || 
+					 x == '-' || x == '.' || x == '_' || x == '~')
+					return true;
+
+				if (x > 0x7f)
+					return true;
+			}
+
+			return false;
+		}
+
+		internal static string FormatAbsolute (string str, string schemeName,
+			UriComponents component, UriFormat uriFormat, FormatFlags formatFlags = FormatFlags.None)
+		{
+			return Format (str, schemeName, UriKind.Absolute, component, uriFormat, formatFlags);
+		}
+
+		internal static string FormatRelative (string str, string schemeName, UriFormat uriFormat)
+		{
+			var formatFlags = FormatFlags.None;
+			if (HasCharactersToNormalize (str))
+				formatFlags |= FormatFlags.HasCharactersToNormalize;
+
+			return Format (str, schemeName, UriKind.Relative, UriComponents.Path, uriFormat, formatFlags);
+		}
+
+		private static string Format (string str, string schemeName, UriKind uriKind,
+			UriComponents component, UriFormat uriFormat, FormatFlags formatFlags)
 		{
 			if (string.IsNullOrEmpty (str))
 				return "";
 
 			UriSchemes scheme = GetScheme (schemeName);
+
+			var reduceBefore = UriSchemes.None;
+			var reduceAfter = UriSchemes.Http | UriSchemes.Https | UriSchemes.NetPipe | UriSchemes.NetTcp;
+
+			if (IriParsing)
+				reduceAfter |= UriSchemes.Ftp;
+			else
+				reduceBefore |= UriSchemes.Ftp;
+
+			if (component == UriComponents.Path && SchemeContains (scheme, reduceBefore))
+				str = Reduce(str);
 
 			var s = new StringBuilder ();
 			int len = str.Length;
@@ -111,23 +174,28 @@ namespace System {
 					char x = Uri.HexUnescapeMultiByte (str, ref i, out surrogate);
 
 					bool isEscaped = i - iStart > 1;
-					s.Append (FormatChar (x, isEscaped, scheme, uriKind, component, uriFormat));
+					s.Append (FormatChar (x, isEscaped, scheme, uriKind, component, uriFormat, formatFlags));
 					if (surrogate != char.MinValue)
 						s.Append (surrogate);
 
 					i--;
 				} else
-					s.Append (FormatChar (c, false, scheme, uriKind, component, uriFormat));
+					s.Append (FormatChar (c, false, scheme, uriKind, component, uriFormat, formatFlags));
 			}
+			
+			str = s.ToString();
 
-			return s.ToString ();
+			if (component == UriComponents.Path && SchemeContains (scheme, reduceAfter))
+				str = Reduce(str);
+
+			return str;
 		}
 
-		internal static string FormatChar (char c, bool isEscaped, UriSchemes scheme, UriKind uriKind,
-			UriComponents component, UriFormat uriFormat)
+		private static string FormatChar (char c, bool isEscaped, UriSchemes scheme, UriKind uriKind,
+			UriComponents component, UriFormat uriFormat, FormatFlags formatFlags)
 		{
 			if (!isEscaped && NeedToEscape (c, scheme, component, uriKind, uriFormat) ||
-				isEscaped && !NeedToUnescape (c, scheme, component, uriKind, uriFormat))
+				isEscaped && !NeedToUnescape (c, scheme, component, uriKind, uriFormat, formatFlags))
 				return HexEscapeMultiByte (c);
 
 			if (c == '\\' && component == UriComponents.Path) {
@@ -149,7 +217,7 @@ namespace System {
 		}
 
 		private static bool NeedToUnescape (char c, UriSchemes scheme, UriComponents component, UriKind uriKind,
-			UriFormat uriFormat)
+			UriFormat uriFormat, FormatFlags formatFlags)
 		{
 			string cStr = c.ToString (CultureInfo.InvariantCulture);
 
@@ -213,7 +281,11 @@ namespace System {
 				if ("-._~".Contains (cStr))
 					return true;
 
-				if (" !\"'()*:<>[]^`{}|".Contains (cStr))
+				if (" !\"'()*<>^`{}|".Contains (cStr))
+					return uriKind != UriKind.Relative ||
+						(formatFlags & FormatFlags.HasCharactersToNormalize) != 0;
+
+				if (":[]".Contains (cStr))
 					return uriKind != UriKind.Relative;
 
 				if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9'))
@@ -239,6 +311,10 @@ namespace System {
 				}
 
 				if ("-._~".Contains (cStr))
+					return true;
+				
+				if ((formatFlags & FormatFlags.HasCharactersToNormalize) != 0 &&
+					"!'()*:[]".Contains (cStr))
 					return true;
 
 				if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9'))
@@ -306,6 +382,75 @@ namespace System {
 			}
 
 			return false;
+		}
+
+		// This is called "compacting" in the MSDN documentation
+		private static string Reduce (string path)
+		{
+			// quick out, allocation-free, for a common case
+			if (path == "/")
+				return path;
+
+			List<string> result = new List<string> ();
+
+			bool begin = true;
+			for (int startpos = 0; startpos < path.Length; ) {
+				int endpos = path.IndexOf ('/', startpos);
+				if (endpos == -1)
+					endpos = path.Length;
+				string current = path.Substring (startpos, endpos-startpos);
+				startpos = endpos + 1;
+				if (begin && current.Length == 0) {
+					begin = false;
+					continue;
+				}
+
+				begin = false;
+				if (current == "..") {
+					int resultCount = result.Count;
+					// in 2.0 profile, skip leading ".." parts
+					if (resultCount == 0) {
+						continue;
+					}
+
+					result.RemoveAt (resultCount - 1);
+					continue;
+				}
+
+				if (!IriParsing)
+					current = current.TrimEnd('.');
+
+				if (current == ".")
+					current = "";
+
+				if (current == "" && startpos < path.Length)
+					continue;
+
+				result.Add (current);
+			}
+
+			if (result.Count == 0)
+				return "/";
+
+			StringBuilder res = new StringBuilder ();
+
+			if (path [0] == '/')
+				res.Append ('/');
+
+			bool first = true;
+			foreach (string part in result) {
+				if (first) {
+					first = false;
+				} else {
+					res.Append ('/');
+				}
+				res.Append(part);
+			}
+
+			if (path [path.Length - 1] == '/')
+				res.Append ('/');
+				
+			return res.ToString();
 		}
 	}
 }
