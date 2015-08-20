@@ -158,7 +158,7 @@ namespace Mono.CSharp
 
 		public readonly Operator Oper;
 		public Expression Expr;
-		Expression enum_conversion;
+		ConvCast.Mode enum_conversion;
 
 		public Unary (Operator op, Expression expr, Location loc)
 		{
@@ -399,7 +399,7 @@ namespace Mono.CSharp
 				return null;
 
 			Expr = best_expr;
-			enum_conversion = Convert.ExplicitNumericConversion (ec, new EmptyExpression (best_expr.Type), underlying_type);
+			enum_conversion = Binary.GetEnumResultCast (underlying_type);
 			type = expr.Type;
 			return EmptyCast.Create (this, type, ec);
 		}
@@ -630,8 +630,11 @@ namespace Mono.CSharp
 			//
 			// Same trick as in Binary expression
 			//
-			if (enum_conversion != null)
-				enum_conversion.Emit (ec);
+			if (enum_conversion != 0) {
+				using (ec.With (BuilderContext.Options.CheckedScope, false)) {
+					ConvCast.Emit (ec, enum_conversion);
+				}
+			}
 		}
 
 		public override void EmitBranchable (EmitContext ec, Label target, bool on_true)
@@ -3255,8 +3258,9 @@ namespace Mono.CSharp
 							return null;
 
 						if ((oper & Operator.BitwiseMask) != 0) {
+
 							expr = EmptyCast.Create (expr, type, rc);
-							AddEnumResultCast (type);
+							enum_conversion = GetEnumResultCast (type);
 
 							if (oper == Operator.BitwiseAnd && left.Type.IsEnum && right.Type.IsEnum) {
 								expr = OptimizeAndOperation (expr);
@@ -4450,7 +4454,7 @@ namespace Mono.CSharp
 					else
 						expr = ConvertEnumAdditionalResult (expr, enum_type, rc);
 
-					AddEnumResultCast (expr.Type);
+					enum_conversion = GetEnumResultCast (expr.Type);
 
 					return expr;
 				}
@@ -4465,7 +4469,7 @@ namespace Mono.CSharp
 				else
 					expr = ConvertEnumAdditionalResult (expr, enum_type, rc);
 
-				AddEnumResultCast (expr.Type);
+				enum_conversion = GetEnumResultCast (expr.Type);
 			}
 
 			return expr;
@@ -4510,7 +4514,7 @@ namespace Mono.CSharp
 			return EmptyCast.Create (expr, result_type, rc);
 		}
 
-		void AddEnumResultCast (TypeSpec type)
+		public static ConvCast.Mode GetEnumResultCast (TypeSpec type)
 		{
 			if (type.IsNullableType)
 				type = Nullable.NullableInfo.GetUnderlyingType (type);
@@ -4520,18 +4524,16 @@ namespace Mono.CSharp
 
 			switch (type.BuiltinType) {
 			case BuiltinTypeSpec.Type.SByte:
-				enum_conversion = ConvCast.Mode.I4_I1;
-				break;
+				return ConvCast.Mode.I4_I1;
 			case BuiltinTypeSpec.Type.Byte:
-				enum_conversion = ConvCast.Mode.I4_U1;
-				break;
+				return ConvCast.Mode.I4_U1;
 			case BuiltinTypeSpec.Type.Short:
-				enum_conversion = ConvCast.Mode.I4_I2;
-				break;
+				return ConvCast.Mode.I4_I2;
 			case BuiltinTypeSpec.Type.UShort:
-				enum_conversion = ConvCast.Mode.I4_U2;
-				break;
+				return ConvCast.Mode.I4_U2;
 			}
+
+			return 0;
 		}
 
 		//
