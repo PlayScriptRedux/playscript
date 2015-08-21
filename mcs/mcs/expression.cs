@@ -500,16 +500,16 @@ namespace Mono.CSharp
 				case BuiltinTypeSpec.Type.Short:
 				case BuiltinTypeSpec.Type.UShort:
 				case BuiltinTypeSpec.Type.Char:
-					return Convert.ImplicitNumericConversion (expr, rc.BuiltinTypes.Int, rc);
+					return Convert.ImplicitNumericConversion (expr, rc.BuiltinTypes.Int, rc, false);
 				}
 			}
 
 			if (op == Operator.UnaryNegation && expr_type.BuiltinType == BuiltinTypeSpec.Type.UInt)
-				return Convert.ImplicitNumericConversion (expr, rc.BuiltinTypes.Long, rc);
+				return Convert.ImplicitNumericConversion (expr, rc.BuiltinTypes.Long, rc, false);
 
 			// PlayScript - implicit conversion of numeric types to bool
 			if (rc.FileType == SourceFileType.PlayScript && op == Operator.LogicalNot && expr.Type != rc.BuiltinTypes.Bool)
-				return Convert.ImplicitNumericConversion (expr, rc.BuiltinTypes.Bool, rc);
+				return Convert.ImplicitNumericConversion (expr, rc.BuiltinTypes.Bool, rc, false);
 
 			return expr;
 		}
@@ -3757,7 +3757,7 @@ namespace Mono.CSharp
 			if (c != null)
 				return c.ConvertImplicitly (type, rc);
 
-			return Convert.ImplicitNumericConversion (expr, type, rc);
+			return Convert.ImplicitNumericConversion (expr, type, rc, false);
 		}
 
 		static bool PsIsNullOrUndefined (ResolveContext ec, Expression expr)

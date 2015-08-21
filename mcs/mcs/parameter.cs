@@ -465,7 +465,7 @@ namespace Mono.CSharp {
 
 				if (atype == pa.CallerLineNumberAttribute) {
 					caller_type = rc.BuiltinTypes.Int;
-					if (caller_type != parameter_type && !Convert.ImplicitNumericConversionExists (caller_type, parameter_type, rc)) {
+					if (caller_type != parameter_type && !Convert.ImplicitNumericConversionExists (caller_type, parameter_type, rc, false)) {
 						rc.Report.Error (4017, attr.Location,
 							"The CallerLineNumberAttribute attribute cannot be applied because there is no standard conversion from `{0}' to `{1}'",
 							caller_type.GetSignatureForError (), parameter_type.GetSignatureForError ());

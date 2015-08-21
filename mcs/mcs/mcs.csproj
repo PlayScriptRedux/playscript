@@ -27,6 +27,7 @@
     <Commandlineparameters>@options-test.rsp</Commandlineparameters>
     <additionalargs>/newdynamic-</additionalargs>
     <ConsolePause>false</ConsolePause>
+    <NoStdLib>true</NoStdLib>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Optimize>True</Optimize>
@@ -36,6 +37,7 @@
     <WarningLevel>4</WarningLevel>
     <OutputPath>bin\Debug</OutputPath>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoStdLib>true</NoStdLib>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug - AST|AnyCPU'">
     <DebugSymbols>True</DebugSymbols>
@@ -55,6 +57,7 @@
     <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
     <WarningLevel>4</WarningLevel>
     <Optimize>False</Optimize>
+    <NoStdLib>true</NoStdLib>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\build\common\Consts.cs">
@@ -202,32 +205,41 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ps-parser.jay" />
-    <None Include="options.rsp">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="options-mcs.rsp">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Include="mcs.exe.sources" />
-    <None Include="options-test.rsp">
+    <None Include="rsp\options-assert-test.rsp">
+      <Link>options-assert-test.rsp</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="options-assert-test.rsp">
+    <None Include="rsp\options-away3d-core-monomac.rsp">
+      <Link>options-away3d-core-monomac.rsp</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="options-pscorlib.rsp">
+    <None Include="rsp\options-mcs.rsp">
+      <Link>options-mcs.rsp</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="options-away3d-core-monomac.rsp">
+    <None Include="rsp\options-pscorlib.rsp">
+      <Link>options-pscorlib.rsp</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="rsp\options-test.rsp">
+      <Link>options-test.rsp</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="rsp\options.rsp">
+      <Link>options.rsp</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="System.Xml">
-      <HintPath>..\class\lib\build\System.Xml.dll</HintPath>
-    </Reference>
     <Reference Include="System">
-      <HintPath>..\class\lib\build\System.dll</HintPath>
+      <HintPath>..\class\lib\net_4_5\System.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Xml">
+      <HintPath>..\class\lib\net_4_5\System.Xml.dll</HintPath>
+    </Reference>
+    <Reference Include="mscorlib">
+      <HintPath>..\class\lib\net_4_5\mscorlib.dll</HintPath>
     </Reference>
   </ItemGroup>
 </Project>

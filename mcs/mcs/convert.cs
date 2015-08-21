@@ -583,7 +583,7 @@ namespace Mono.CSharp {
 				if (expr is Constant)
 					return ((Constant) expr).ConvertImplicitly (t_el, ec);
 
-				return ImplicitNumericConversion (null, expr_type, t_el, ec);
+				return ImplicitNumericConversion (null, expr_type, t_el, ec, false);
 			}
 
 			Expression unwrap;
@@ -597,7 +597,7 @@ namespace Mono.CSharp {
 				if (conv is Constant)
 					conv = ((Constant)conv).ConvertImplicitly (t_el, ec);
 				else
-					conv = ImplicitNumericConversion (conv, expr_type, t_el, ec);
+					conv = ImplicitNumericConversion (conv, expr_type, t_el, ec, false);
 
 				if (conv == null)
 					return null;
@@ -615,19 +615,21 @@ namespace Mono.CSharp {
 		///   expr is the expression to convert, returns a new expression of type
 		///   target_type or null if an implicit conversion is not possible.
 		/// </summary>
-		public static Expression ImplicitNumericConversion (Expression expr, TypeSpec target_type, ResolveContext opt_ec, bool upconvert_only = false)
+		public static Expression ImplicitNumericConversion (Expression expr, TypeSpec target_type, ResolveContext opt_ec, bool upconvert_only)
 		{
 			return ImplicitNumericConversion (expr, expr.Type, target_type, opt_ec, upconvert_only);
 		}
 
-		public static bool ImplicitNumericConversionExists (TypeSpec expr_type, TypeSpec target_type, ResolveContext opt_ec, bool upconvert_only = false)
+		public static bool ImplicitNumericConversionExists (TypeSpec expr_type, TypeSpec target_type, ResolveContext opt_ec, bool upconvert_only)
 		{
 			return ImplicitNumericConversion (null, expr_type, target_type, opt_ec, upconvert_only) != null;
 		}
 
-		static Expression ImplicitNumericConversion (Expression expr, TypeSpec expr_type, TypeSpec target_type, ResolveContext opt_ec, bool upconvert_only = false)
+		static Expression ImplicitNumericConversion (Expression expr, TypeSpec expr_type, TypeSpec target_type, ResolveContext opt_ec, bool upconvert_only)
 		{
-			SourceFileType ft = opt_ec == null ? SourceFileType.CSharp : opt_ec.FileType;
+			//SourceFileType ft = opt_ec == null ? SourceFileType.CSharp : opt_ec.FileType;
+			var isPlayScript = (opt_ec == null) ? false : (opt_ec.FileType == SourceFileType.PlayScript) ? true : false;
+
 			switch (expr_type.BuiltinType) {
 			case BuiltinTypeSpec.Type.SByte:
 				//
@@ -647,7 +649,7 @@ namespace Mono.CSharp {
 				case BuiltinTypeSpec.Type.Decimal:
 					return expr == null ? EmptyExpression.Null : new OperatorCast (expr, target_type);
 				case BuiltinTypeSpec.Type.Bool:
-					if (ft == SourceFileType.PlayScript)
+					if (isPlayScript)
 						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new  IntLiteral(opt_ec.BuiltinTypes, 0, expr.Location)).Resolve(opt_ec);
 					break;
 				}
@@ -673,7 +675,7 @@ namespace Mono.CSharp {
 				case BuiltinTypeSpec.Type.Decimal:
 					return expr == null ? EmptyExpression.Null : new OperatorCast (expr, target_type);
 				case BuiltinTypeSpec.Type.Bool:
-					if (ft == SourceFileType.PlayScript)
+					if (isPlayScript)
 						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new UIntLiteral(opt_ec.BuiltinTypes, 0, expr.Location)).Resolve(opt_ec);
 					break;
 				}
@@ -694,7 +696,7 @@ namespace Mono.CSharp {
 				case BuiltinTypeSpec.Type.Decimal:
 					return expr == null ? EmptyExpression.Null : new OperatorCast (expr, target_type);
 				case BuiltinTypeSpec.Type.Bool:
-					if (ft == SourceFileType.PlayScript)
+					if (isPlayScript)
 						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new IntLiteral(opt_ec.BuiltinTypes, 0, expr.Location)).Resolve(opt_ec);
 					break;
 				}
@@ -718,8 +720,8 @@ namespace Mono.CSharp {
 				case BuiltinTypeSpec.Type.Decimal:
 					return expr == null ? EmptyExpression.Null : new OperatorCast (expr, target_type);
 				case BuiltinTypeSpec.Type.Bool:
-					if (ft == SourceFileType.PlayScript)
-						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new UIntLiteral(opt_ec.BuiltinTypes, 0, expr.Location)).Resolve(opt_ec);
+					if (isPlayScript)
+						return expr == null ? EmptyExpression.Null : new Binary (Binary.Operator.Inequality, expr, new UIntLiteral (opt_ec.BuiltinTypes, 0, expr.Location)).Resolve (opt_ec);
 					break;
 				}
 				break;
@@ -737,15 +739,15 @@ namespace Mono.CSharp {
 				case BuiltinTypeSpec.Type.Decimal:
 					return expr == null ? EmptyExpression.Null : new OperatorCast (expr, target_type);
 				case BuiltinTypeSpec.Type.UInt:
-					if (ft == SourceFileType.PlayScript && !upconvert_only)
+					if (isPlayScript && !upconvert_only)
 						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U4);
 					break;
 				case BuiltinTypeSpec.Type.ULong:
-					if (ft == SourceFileType.PlayScript && !upconvert_only)
+					if (isPlayScript && !upconvert_only)
 						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U8);
 					break;
 				case BuiltinTypeSpec.Type.Bool:
-					if (ft == SourceFileType.PlayScript)
+					if (isPlayScript)
 						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new IntLiteral(opt_ec.BuiltinTypes, 0, expr.Location)).Resolve(opt_ec);
 					break;
 				}
@@ -766,11 +768,11 @@ namespace Mono.CSharp {
 				case BuiltinTypeSpec.Type.Decimal:
 					return expr == null ? EmptyExpression.Null : new OperatorCast (expr, target_type);
 				case BuiltinTypeSpec.Type.Int:
-					if (ft == SourceFileType.PlayScript && !upconvert_only)
+					if (isPlayScript && !upconvert_only)
 						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_I4);
 					break;
 				case BuiltinTypeSpec.Type.Bool:
-					if (ft == SourceFileType.PlayScript)
+					if (isPlayScript)
 						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new UIntLiteral(opt_ec.BuiltinTypes, 0, expr.Location)).Resolve(opt_ec);
 					break;
 				}
@@ -787,19 +789,19 @@ namespace Mono.CSharp {
 				case BuiltinTypeSpec.Type.Decimal:
 					return expr == null ? EmptyExpression.Null : new OperatorCast (expr, target_type);
 				case BuiltinTypeSpec.Type.Int:
-					if (ft == SourceFileType.PlayScript && !upconvert_only)
+					if (isPlayScript && !upconvert_only)
 						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_I4);
 					break;
 				case BuiltinTypeSpec.Type.UInt:
-					if (ft == SourceFileType.PlayScript && !upconvert_only)
+					if (isPlayScript && !upconvert_only)
 						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U4);
 					break;
 				case BuiltinTypeSpec.Type.ULong:
-					if (ft == SourceFileType.PlayScript && !upconvert_only)
+					if (isPlayScript && !upconvert_only)
 						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U8);
 					break;
 				case BuiltinTypeSpec.Type.Bool:
-					if (ft == SourceFileType.PlayScript)
+					if (isPlayScript)
 						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new LongLiteral(opt_ec.BuiltinTypes, 0L, expr.Location)).Resolve (opt_ec);
 					break;
 				}
@@ -816,19 +818,19 @@ namespace Mono.CSharp {
 				case BuiltinTypeSpec.Type.Decimal:
 					return expr == null ? EmptyExpression.Null : new OperatorCast (expr, target_type);
 				case BuiltinTypeSpec.Type.Int:
-					if (ft == SourceFileType.PlayScript && !upconvert_only)
+					if (isPlayScript && !upconvert_only)
 						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_I4);
 					break;
 				case BuiltinTypeSpec.Type.UInt:
-					if (ft == SourceFileType.PlayScript && !upconvert_only)
+					if (isPlayScript && !upconvert_only)
 						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_U4);
 					break;
 				case BuiltinTypeSpec.Type.Long:
-					if (ft == SourceFileType.PlayScript && !upconvert_only)
+					if (isPlayScript && !upconvert_only)
 						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_I8);
 					break;
 				case BuiltinTypeSpec.Type.Bool:
-					if (ft == SourceFileType.PlayScript)
+					if (isPlayScript)
 						return expr == null ? EmptyExpression.Null : new Binary(Binary.Operator.Inequality, expr, new ULongLiteral(opt_ec.BuiltinTypes, 0L, expr.Location)).Resolve(opt_ec);
 					break;
 				}
@@ -863,7 +865,7 @@ namespace Mono.CSharp {
 				//
 				// PlayScript only - from float to int, uint, bool
 				//
-				if (ft == SourceFileType.PlayScript && !upconvert_only) {
+				if (isPlayScript && !upconvert_only) {
 					switch (target_type.BuiltinType) {
 					case BuiltinTypeSpec.Type.Int:
 						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_I4);
@@ -878,7 +880,7 @@ namespace Mono.CSharp {
 				//
 				// PlayScript only - from double to int, uint, float, bool
 				//
-				if (ft == SourceFileType.PlayScript && !upconvert_only) {
+				if (isPlayScript && !upconvert_only) {
 					switch (target_type.BuiltinType) {
 					case BuiltinTypeSpec.Type.Int:
 						return expr == null ? EmptyExpression.Null : new OpcodeCast (expr, target_type, OpCodes.Conv_I4);
@@ -1820,7 +1822,7 @@ namespace Mono.CSharp {
 			// UIntPtr -> long uses ulong
 			//
 
-			SourceFileType ft = rc.FileType;
+			var isPlayScript = rc.FileType == SourceFileType.PlayScript;
 
 			switch (expr.Type.BuiltinType) {
 			case BuiltinTypeSpec.Type.Bool:
@@ -1829,7 +1831,7 @@ namespace Mono.CSharp {
 				// ushort, int, uint, long, ulong,
 				// char, float or decimal
 				//
-				if (ft == SourceFileType.PlayScript) {
+				if (isPlayScript) {
 					switch (target_type.BuiltinType) {
 					case BuiltinTypeSpec.Type.SByte:
 						return new ConvCast(new Conditional(expr, new IntLiteral(rc.BuiltinTypes, 1, expr.Location), new IntLiteral(rc.BuiltinTypes, 0, expr.Location), expr.Location).Resolve (rc), target_type, ConvCast.Mode.I4_I1);
@@ -1880,7 +1882,7 @@ namespace Mono.CSharp {
 
 				// PlayScript explicit casts..
 				case BuiltinTypeSpec.Type.Bool:
-					if (ft == SourceFileType.PlayScript)
+					if (isPlayScript)
 						return new Binary(Binary.Operator.Inequality, expr, new IntLiteral(rc.BuiltinTypes, 0, expr.Location)).Resolve (rc);
 					break;
 				}
@@ -1897,7 +1899,7 @@ namespace Mono.CSharp {
 
 				// PlayScript explicit casts..
 				case BuiltinTypeSpec.Type.Bool:
-					if (ft == SourceFileType.PlayScript)
+					if (isPlayScript)
 						return new Binary(Binary.Operator.Inequality, expr, new UIntLiteral(rc.BuiltinTypes, 0, expr.Location)).Resolve (rc);
 					break;
 				}
@@ -1926,7 +1928,7 @@ namespace Mono.CSharp {
 
 				// PlayScript explicit casts..
 				case BuiltinTypeSpec.Type.Bool:
-					if (ft == SourceFileType.PlayScript)
+					if (isPlayScript)
 						return new Binary(Binary.Operator.Inequality, expr, new IntLiteral(rc.BuiltinTypes, 0, expr.Location)).Resolve (rc);
 					break;
 				}
@@ -1947,7 +1949,7 @@ namespace Mono.CSharp {
 
 				// PlayScript explicit casts..
 				case BuiltinTypeSpec.Type.Bool:
-					if (ft == SourceFileType.PlayScript)
+					if (isPlayScript)
 						return new Binary(Binary.Operator.Inequality, expr, new UIntLiteral(rc.BuiltinTypes, 0, expr.Location)).Resolve (rc);
 					break;
 				}
@@ -1978,7 +1980,7 @@ namespace Mono.CSharp {
 
 				// PlayScript explicit casts..
 				case BuiltinTypeSpec.Type.Bool:
-					if (ft == SourceFileType.PlayScript)
+					if (isPlayScript)
 						return new Binary(Binary.Operator.Inequality, expr, new IntLiteral(rc.BuiltinTypes, 0, expr.Location)).Resolve (rc);
 					break;
 				}
@@ -2003,7 +2005,7 @@ namespace Mono.CSharp {
 
 				// PlayScript explicit casts..
 				case BuiltinTypeSpec.Type.Bool:
-					if (ft == SourceFileType.PlayScript)
+					if (isPlayScript)
 						return new Binary(Binary.Operator.Inequality, expr, new UIntLiteral(rc.BuiltinTypes, 0, expr.Location)).Resolve (rc);
 					break;
 				}
@@ -2032,7 +2034,7 @@ namespace Mono.CSharp {
 
 				// PlayScript explicit casts..
 				case BuiltinTypeSpec.Type.Bool:
-					if (ft == SourceFileType.PlayScript)
+					if (isPlayScript)
 						return new Binary(Binary.Operator.Inequality, expr, new LongLiteral(rc.BuiltinTypes, 0, expr.Location)).Resolve (rc);
 					break;
 				}
@@ -2065,7 +2067,7 @@ namespace Mono.CSharp {
 
 				// PlayScript explicit casts..
 				case BuiltinTypeSpec.Type.Bool:
-					if (ft == SourceFileType.PlayScript)
+					if (isPlayScript)
 						return new Binary(Binary.Operator.Inequality, expr, new ULongLiteral(rc.BuiltinTypes, 0, expr.Location)).Resolve (rc);
 					break;
 				}
@@ -2084,7 +2086,7 @@ namespace Mono.CSharp {
 
 				// PlayScript explicit casts..
 				case BuiltinTypeSpec.Type.Bool:
-					if (ft == SourceFileType.PlayScript)
+					if (isPlayScript)
 						return new Binary(Binary.Operator.Inequality, expr, new CharLiteral(rc.BuiltinTypes, '\x0', expr.Location)).Resolve (rc);
 					break;
 				}
@@ -2119,7 +2121,7 @@ namespace Mono.CSharp {
 
 				// PlayScript explicit casts..
 				case BuiltinTypeSpec.Type.Bool:
-					if (ft == SourceFileType.PlayScript)
+					if (isPlayScript)
 						return new Binary(Binary.Operator.Inequality, expr, new FloatLiteral(rc.BuiltinTypes, 0f, expr.Location)).Resolve (rc);
 					break;
 				}
@@ -2156,7 +2158,7 @@ namespace Mono.CSharp {
 
 				// PlayScript explicit casts..
 				case BuiltinTypeSpec.Type.Bool:
-					if (ft == SourceFileType.PlayScript)
+					if (isPlayScript)
 						return new Binary(Binary.Operator.Inequality, expr, new DoubleLiteral(rc.BuiltinTypes, 0, expr.Location)).Resolve (rc);
 					break;
 				}
@@ -2207,7 +2209,7 @@ namespace Mono.CSharp {
 
 				// PlayScript explicit casts..
 				case BuiltinTypeSpec.Type.Bool:
-					if (ft == SourceFileType.PlayScript)
+					if (isPlayScript)
 						return new Binary(Binary.Operator.Inequality, expr, new DecimalLiteral(rc.BuiltinTypes, 0, expr.Location)).Resolve (rc);
 					break;
 				}
@@ -2449,7 +2451,7 @@ namespace Mono.CSharp {
 					ne = underlying;
 
 				if (ne == null)
-					ne = ImplicitNumericConversion (underlying, real_target, ec);
+					ne = ImplicitNumericConversion (underlying, real_target, ec, false);
 
 				if (ne == null)
 					ne = ExplicitNumericConversion (ec, underlying, real_target);
@@ -2481,7 +2483,7 @@ namespace Mono.CSharp {
 					if (c != null)
 						return c;
 				} else {
-					ne = ImplicitNumericConversion (expr, real_target, ec);
+					ne = ImplicitNumericConversion (expr, real_target, ec, false);
 					if (ne != null)
 						return EmptyCast.Create (ne, target_type, ec);
 

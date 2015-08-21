@@ -587,7 +587,7 @@ namespace Mono.CSharp
 								if (dt.Namespace != CompilerServicesNamespace)
 									continue;
 
-								if (dt.Name == "CallerLineNumberAttribute" && (ptype.BuiltinType == BuiltinTypeSpec.Type.Int || Convert.ImplicitNumericConversionExists (module.Compiler.BuiltinTypes.Int, ptype, null)))
+								if (dt.Name == "CallerLineNumberAttribute" && (ptype.BuiltinType == BuiltinTypeSpec.Type.Int || Convert.ImplicitNumericConversionExists (module.Compiler.BuiltinTypes.Int, ptype, null, false)))
 									mod |= Parameter.Modifier.CallerLineNumber;
 								else if (dt.Name == "CallerFilePathAttribute" && Convert.ImplicitReferenceConversionExists (module.Compiler.BuiltinTypes.String, ptype, null, false))
 									mod |= Parameter.Modifier.CallerFilePath;
