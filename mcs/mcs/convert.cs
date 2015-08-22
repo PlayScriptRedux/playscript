@@ -206,10 +206,12 @@ namespace Mono.CSharp {
 
 		public static bool ImplicitReferenceConversionExists (TypeSpec expr_type, TypeSpec target_type, bool refOnlyTypeParameter, ResolveContext opt_ec, bool upconvert_only)
 		{
+			var isPlayScript = (opt_ec == null) ? false : (opt_ec.FileType == SourceFileType.PlayScript) ? true : false;
+
 			// It's here only to speed things up
-			if (target_type.IsStruct) {
+			if (target_type.IsStruct)
 				return false;
-			}
+
 
 			switch (expr_type.Kind) {
 			case MemberKind.TypeParameter:
@@ -275,7 +277,7 @@ namespace Mono.CSharp {
 					// var args. We want the function to receive 1 parameter of
 					// type array, rather than n parameters.
 					//
-					if (opt_ec != null && opt_ec.FileType == SourceFileType.PlayScript)
+					if (isPlayScript)
 						return false;
 
 					//
@@ -627,7 +629,6 @@ namespace Mono.CSharp {
 
 		static Expression ImplicitNumericConversion (Expression expr, TypeSpec expr_type, TypeSpec target_type, ResolveContext opt_ec, bool upconvert_only)
 		{
-			//SourceFileType ft = opt_ec == null ? SourceFileType.CSharp : opt_ec.FileType;
 			var isPlayScript = (opt_ec == null) ? false : (opt_ec.FileType == SourceFileType.PlayScript) ? true : false;
 
 			switch (expr_type.BuiltinType) {
@@ -903,6 +904,8 @@ namespace Mono.CSharp {
 		//
 		public static bool ImplicitConversionExists (ResolveContext ec, Expression expr, TypeSpec target_type, bool upconvert_only = false)
 		{
+			var isPlayScript = (ec == null) ? false : (ec.FileType == SourceFileType.PlayScript) ? true : false;
+
 			if (ImplicitStandardConversionExists (expr, target_type, ec, upconvert_only))
 				return true;
 
@@ -913,10 +916,10 @@ namespace Mono.CSharp {
 				AnonymousMethodExpression ame = (AnonymousMethodExpression) expr;
 				return ame.ImplicitStandardConversionExists (ec, target_type);
 			}
-			
+
 			if (expr.eclass == ExprClass.MethodGroup) {
 				// PlayScript can implicitly cast unique methods/lambdas to dynamic/delegate types.
-				if (!target_type.IsDelegate && ec.FileType == SourceFileType.PlayScript && 
+				if (isPlayScript && !target_type.IsDelegate && 
 				    (target_type.IsDynamic || target_type == ec.BuiltinTypes.Delegate)) {
 					MethodGroupExpr mg = expr as MethodGroupExpr;
 					if (mg != null && mg.Candidates.Count == 1) {
@@ -932,12 +935,13 @@ namespace Mono.CSharp {
 				return false;
 			}
 
-			// Conversion from __arglist to System.ArgIterator
-			if (expr.Type == InternalType.Arglist)
-				return target_type == ec.Module.PredefinedTypes.ArgIterator.TypeSpec;
+                       // Conversion from __arglist to System.ArgIterator
+                       if (expr.Type == InternalType.Arglist)
+                               return target_type == ec.Module.PredefinedTypes.ArgIterator.TypeSpec;
 
-			return UserDefinedConversion (ec, expr, target_type,
-				UserConversionRestriction.ImplicitOnly | UserConversionRestriction.ProbingOnly, Location.Null) != null;
+                       return UserDefinedConversion (ec, expr, target_type,
+                               UserConversionRestriction.ImplicitOnly | UserConversionRestriction.ProbingOnly, Location.Null) != null;
+
 		}
 
 		//
@@ -1151,7 +1155,7 @@ namespace Mono.CSharp {
 		// by making use of FindMostEncomp* methods. Applies the correct rules separately
 		// for explicit and implicit conversion operators.
 		//
-		static TypeSpec FindMostSpecificSource (List<MethodSpec> list, TypeSpec sourceType, Expression source, bool apply_explicit_conv_rules, ResolveContext opt_ec)
+		static TypeSpec FindMostSpecificSource (ResolveContext rc, List<MethodSpec> list, TypeSpec sourceType, Expression source, bool apply_explicit_conv_rules, ResolveContext opt_ec)
 		{
 			TypeSpec[] src_types_set = null;
 
@@ -1261,7 +1265,7 @@ namespace Mono.CSharp {
 			return UserDefinedConversion (ec, source, target, 0, loc);
 		}
 
-		static void FindApplicableUserDefinedConversionOperators (ResolveContext ec, IList<MemberSpec> operators, Expression source, TypeSpec target, UserConversionRestriction restr, ref List<MethodSpec> candidates)
+		static void FindApplicableUserDefinedConversionOperators (ResolveContext rc, IList<MemberSpec> operators, Expression source, TypeSpec target, UserConversionRestriction restr, ref List<MethodSpec> candidates)
 		{
 			if (source.Type.IsInterface) {
 				// Neither A nor B are interface-types
@@ -1283,11 +1287,11 @@ namespace Mono.CSharp {
 					continue;
 
 				var t = op.Parameters.Types[0];
-				if (source.Type != t && !ImplicitStandardConversionExists (source, t, ec)) {
+				if (source.Type != t && !ImplicitStandardConversionExists (source, t, rc)) {
 					if ((restr & UserConversionRestriction.ImplicitOnly) != 0)
 						continue;
 
-					if (!ImplicitStandardConversionExists (new EmptyExpression (t), source.Type, ec))
+					if (!ImplicitStandardConversionExists (new EmptyExpression (t), source.Type, rc))
 						continue;
 				}
 
@@ -1303,14 +1307,14 @@ namespace Mono.CSharp {
 					if (t.IsNullableType)
 						t = Nullable.NullableInfo.GetUnderlyingType (t);
 
-					if (!ImplicitStandardConversionExists (new EmptyExpression (t), target, ec)) {
+					if (!ImplicitStandardConversionExists (new EmptyExpression (t), target, rc)) {
 						if ((restr & UserConversionRestriction.ImplicitOnly) != 0)
 							continue;
 
 						if (texpr == null)
 							texpr = new EmptyExpression (target);
 
-						if (!ImplicitStandardConversionExists (texpr, t, ec))
+						if (!ImplicitStandardConversionExists (texpr, t, rc))
 							continue;
 					}
 				}
@@ -1325,7 +1329,7 @@ namespace Mono.CSharp {
 		//
 		// User-defined conversions
 		//
-		public static Expression UserDefinedConversion (ResolveContext ec, Expression source, TypeSpec target, UserConversionRestriction restr, Location loc)
+		public static Expression UserDefinedConversion (ResolveContext rc, Expression source, TypeSpec target, UserConversionRestriction restr, Location loc)
 		{
 			List<MethodSpec> candidates = null;
 
@@ -1363,13 +1367,13 @@ namespace Mono.CSharp {
 
 				var operators = MemberCache.GetUserOperator (source_type, Operator.OpType.Implicit, declared_only);
 				if (operators != null) {
-					FindApplicableUserDefinedConversionOperators (ec, operators, source_type_expr, target_type, restr, ref candidates);
+					FindApplicableUserDefinedConversionOperators (rc, operators, source_type_expr, target_type, restr, ref candidates);
 				}
 
 				if (!implicitOnly) {
 					operators = MemberCache.GetUserOperator (source_type, Operator.OpType.Explicit, declared_only);
 					if (operators != null) {
-						FindApplicableUserDefinedConversionOperators (ec, operators, source_type_expr, target_type, restr, ref candidates);
+						FindApplicableUserDefinedConversionOperators (rc, operators, source_type_expr, target_type, restr, ref candidates);
 					}
 				}
 			}
@@ -1379,13 +1383,13 @@ namespace Mono.CSharp {
 
 				var operators = MemberCache.GetUserOperator (target_type, Operator.OpType.Implicit, declared_only);
 				if (operators != null) {
-					FindApplicableUserDefinedConversionOperators (ec, operators, source_type_expr, target_type, restr, ref candidates);
+					FindApplicableUserDefinedConversionOperators (rc, operators, source_type_expr, target_type, restr, ref candidates);
 				}
 
 				if (!implicitOnly) {
 					operators = MemberCache.GetUserOperator (target_type, Operator.OpType.Explicit, declared_only);
 					if (operators != null) {
-						FindApplicableUserDefinedConversionOperators (ec, operators, source_type_expr, target_type, restr, ref candidates);
+						FindApplicableUserDefinedConversionOperators (rc, operators, source_type_expr, target_type, restr, ref candidates);
 					}
 				}
 			}
@@ -1407,11 +1411,11 @@ namespace Mono.CSharp {
 				// Pass original source type to find the best match against input type and
 				// not the unwrapped expression
 				//
-				s_x = FindMostSpecificSource (candidates, source.Type, source_type_expr, !implicitOnly, ec);
+				s_x = FindMostSpecificSource (rc, candidates, source.Type, source_type_expr, !implicitOnly, rc);
 				if (s_x == null)
 					return null;
 
-				t_x = FindMostSpecificTarget (candidates, target, !implicitOnly, ec);
+				t_x = FindMostSpecificTarget (candidates, target, !implicitOnly, rc);
 				if (t_x == null)
 					return null;
 
@@ -1428,15 +1432,18 @@ namespace Mono.CSharp {
 					// Unless running in probing more
 					//
 					if ((restr & UserConversionRestriction.ProbingOnly) == 0) {
-						MethodSpec ambig_arg = null;
+						MethodSpec ambig_arg = candidates [0];
+						most_specific_operator = candidates [1];
+						/*
 						foreach (var candidate in candidates) {
 							if (candidate.ReturnType == t_x)
 								most_specific_operator = candidate;
 							else if (candidate.Parameters.Types[0] == s_x)
 								ambig_arg = candidate;
 						}
+						*/
 
-						ec.Report.Error (457, loc,
+						rc.Report.Error (457, loc,
 							"Ambiguous user defined operators `{0}' and `{1}' when converting from `{2}' to `{3}'",
 							ambig_arg.GetSignatureForError (), most_specific_operator.GetSignatureForError (),
 							source.Type.GetSignatureForError (), target.GetSignatureForError ());
@@ -1452,21 +1459,21 @@ namespace Mono.CSharp {
 			if (s_x != source_type) {
 				var c = source as Constant;
 				if (c != null) {
-					source = c.Reduce (ec, s_x);
+					source = c.Reduce (rc, s_x);
 					if (source == null)
 						c = null;
 				}
 
 				if (c == null) {
 					source = implicitOnly ?
-						ImplicitConversionStandard (ec, source_type_expr, s_x, loc) :
-						ExplicitConversionStandard (ec, source_type_expr, s_x, loc);
+						ImplicitConversionStandard (rc, source_type_expr, s_x, loc) :
+						ExplicitConversionStandard (rc, source_type_expr, s_x, loc);
 				}
 			} else {
 				source = source_type_expr;
 			}
 
-			source = new UserCast (most_specific_operator, source, loc).Resolve (ec);
+			source = new UserCast (most_specific_operator, source, loc).Resolve (rc);
 
 			//
 			// Convert result type when it's different to best operator return type
@@ -1485,19 +1492,19 @@ namespace Mono.CSharp {
 						var unwrap = Nullable.Unwrap.CreateUnwrapped (source);
 
 						source = implicitOnly ?
-							ImplicitConversionStandard (ec, unwrap, target_type, loc) :
-							ExplicitConversionStandard (ec, unwrap, target_type, loc);
+							ImplicitConversionStandard (rc, unwrap, target_type, loc) :
+							ExplicitConversionStandard (rc, unwrap, target_type, loc);
 
 						if (source == null)
 							return null;
 
 						if (target.IsNullableType)
-							source = new Nullable.LiftedConversion (source, unwrap, target).Resolve (ec);
+							source = new Nullable.LiftedConversion (source, unwrap, target).Resolve (rc);
 					}
 				} else {
 					source = implicitOnly ?
-						ImplicitConversionStandard (ec, source, target_type, loc) :
-						ExplicitConversionStandard (ec, source, target_type, loc);
+						ImplicitConversionStandard (rc, source, target_type, loc) :
+						ExplicitConversionStandard (rc, source, target_type, loc);
 
 					if (source == null)
 						return null;
@@ -1510,7 +1517,7 @@ namespace Mono.CSharp {
 			// only non-nullable type we need to lift it manually
 			//
 			if (nullable_source && !s_x.IsNullableType)
-				return new Nullable.LiftedConversion (source, source_type_expr, target).Resolve (ec);
+				return new Nullable.LiftedConversion (source, source_type_expr, target).Resolve (rc);
 
 			//
 			// Target is of nullable type but source type is not, wrap the result expression
@@ -1534,7 +1541,7 @@ namespace Mono.CSharp {
 			if (target_type == null)
 				throw new Exception ("Target type is null");
 
-			e = DoImplicitConversionStandard (ec, expr, target_type, loc, false, upconvert_only);
+			e = ImplicitConversionStandard (ec, expr, target_type, loc, false, upconvert_only);
 			if (e != null)
 				return e;
 
@@ -1559,14 +1566,16 @@ namespace Mono.CSharp {
 		static public Expression ImplicitConversionStandard (ResolveContext ec, Expression expr,
 								     TypeSpec target_type, Location loc)
 		{
-			return DoImplicitConversionStandard (ec, expr, target_type, loc, false, false);
+			return ImplicitConversionStandard (ec, expr, target_type, loc, false, false);
 		}
 
-		static Expression DoImplicitConversionStandard (ResolveContext ec, Expression expr, TypeSpec target_type, Location loc, bool explicit_cast, bool upconvert_only)
+		static Expression ImplicitConversionStandard (ResolveContext ec, Expression expr, TypeSpec target_type, Location loc, bool explicit_cast, bool upconvert_only)
 		{
+			var isPlayScript = (ec == null) ? false : (ec.FileType == SourceFileType.PlayScript) ? true : false;
+
 			if (expr.eclass == ExprClass.MethodGroup){
 				if (!target_type.IsDelegate){
-					if (ec.FileType == SourceFileType.PlayScript && 
+					if (isPlayScript && 
 					    (target_type.IsDynamic || target_type == ec.BuiltinTypes.Delegate)) {
 						MethodGroupExpr mg = expr as MethodGroupExpr;
 						if (mg != null) {
@@ -1627,7 +1636,7 @@ namespace Mono.CSharp {
 			}
 
 			// Auto convert types to type objects..
-			if (ec.FileType == SourceFileType.PlayScript && expr is FullNamedExpression &&
+			if (isPlayScript && expr is FullNamedExpression &&
 			    (target_type.BuiltinType == BuiltinTypeSpec.Type.Type ||
 			    target_type.BuiltinType == BuiltinTypeSpec.Type.Object ||
 			    target_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic)) {
@@ -1747,7 +1756,7 @@ namespace Mono.CSharp {
 
 			if (expr_type == InternalType.AnonymousMethod){
 				AnonymousMethodExpression ame = (AnonymousMethodExpression) expr;
-				if (ec.FileType == SourceFileType.PlayScript && 
+				if (isPlayScript && 
 				    (target_type.IsDynamic || target_type == ec.BuiltinTypes.Delegate)) {
 					var del_type = Delegate.CreateDelegateType (ec, ame.AsParameters, ame.AsReturnType.ResolveAsType(ec), loc);
 					return new Cast(new TypeExpression(del_type, loc), expr, loc).Resolve(ec);
@@ -2440,7 +2449,7 @@ namespace Mono.CSharp {
 			TypeSpec expr_type = expr.Type;
 
 			// Explicit conversion includes implicit conversion and it used for enum underlying types too
-			Expression ne = DoImplicitConversionStandard (ec, expr, target_type, loc, true, false);
+			Expression ne = ImplicitConversionStandard (ec, expr, target_type, loc, true, false);
 			if (ne != null)
 				return ne;
 
