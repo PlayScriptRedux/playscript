@@ -898,15 +898,10 @@ namespace Mono.CSharp {
 
 			return null;
 		}
-
-		//
-		// Full version of implicit conversion
-		//
+			
 		public static bool ImplicitConversionExists (ResolveContext ec, Expression expr, TypeSpec target_type, bool upconvert_only = false)
 		{
-			var isPlayScript = (ec == null) ? false : (ec.FileType == SourceFileType.PlayScript) ? true : false;
-
-			if (ImplicitStandardConversionExists (expr, target_type, ec, upconvert_only))
+			if (ImplicitStandardConversionExists (ec, expr, target_type, upconvert_only))
 				return true;
 
 			if (expr.Type == InternalType.AnonymousMethod) {
@@ -917,31 +912,37 @@ namespace Mono.CSharp {
 				return ame.ImplicitStandardConversionExists (ec, target_type);
 			}
 
+			// Conversion from __arglist to System.ArgIterator
+			if (expr.Type == InternalType.Arglist)
+				return target_type == ec.Module.PredefinedTypes.ArgIterator.TypeSpec;
+
+			return UserDefinedConversion (ec, expr, target_type,
+				UserConversionRestriction.ImplicitOnly | UserConversionRestriction.ProbingOnly, Location.Null) != null;
+		}
+
+		public static bool ImplicitStandardConversionExists (ResolveContext rc, Expression expr, TypeSpec target_type, bool upconvert_only = false)
+		{
+			var isPlayScript = (rc == null) ? false : (rc.FileType == SourceFileType.PlayScript) ? true : false;
+
 			if (expr.eclass == ExprClass.MethodGroup) {
 				// PlayScript can implicitly cast unique methods/lambdas to dynamic/delegate types.
 				if (isPlayScript && !target_type.IsDelegate && 
-				    (target_type.IsDynamic || target_type == ec.BuiltinTypes.Delegate)) {
+				    (target_type.IsDynamic || target_type == rc.BuiltinTypes.Delegate)) {
 					MethodGroupExpr mg = expr as MethodGroupExpr;
 					if (mg != null && mg.Candidates.Count == 1) {
 						return true;
 					}
 				}
-				if (target_type.IsDelegate && ec.Module.Compiler.Settings.Version != LanguageVersion.ISO_1) {
+				if (target_type.IsDelegate && rc.Module.Compiler.Settings.Version != LanguageVersion.ISO_1) {
 					MethodGroupExpr mg = expr as MethodGroupExpr;
 					if (mg != null)
-						return DelegateCreation.ImplicitStandardConversionExists (ec, mg, target_type);
+						return DelegateCreation.ImplicitStandardConversionExists (rc, mg, target_type);
 				}
 
 				return false;
 			}
 
-                       // Conversion from __arglist to System.ArgIterator
-                       if (expr.Type == InternalType.Arglist)
-                               return target_type == ec.Module.PredefinedTypes.ArgIterator.TypeSpec;
-
-                       return UserDefinedConversion (ec, expr, target_type,
-                               UserConversionRestriction.ImplicitOnly | UserConversionRestriction.ProbingOnly, Location.Null) != null;
-
+			return ImplicitStandardConversionExists (expr, target_type, rc, upconvert_only);
 		}
 
 		//
@@ -1155,7 +1156,7 @@ namespace Mono.CSharp {
 		// by making use of FindMostEncomp* methods. Applies the correct rules separately
 		// for explicit and implicit conversion operators.
 		//
-		static TypeSpec FindMostSpecificSource (ResolveContext rc, List<MethodSpec> list, TypeSpec sourceType, Expression source, bool apply_explicit_conv_rules, ResolveContext opt_ec)
+		static TypeSpec FindMostSpecificSource (ResolveContext rc, List<MethodSpec> list, TypeSpec sourceType, Expression source, bool apply_explicit_conv_rules)
 		{
 			TypeSpec[] src_types_set = null;
 
@@ -1181,21 +1182,25 @@ namespace Mono.CSharp {
 				var candidate_set = new List<TypeSpec> ();
 
 				foreach (TypeSpec param_type in src_types_set){
-					if (ImplicitStandardConversionExists (source, param_type, opt_ec))
+					if (ImplicitStandardConversionExists (rc, source, param_type))
 						candidate_set.Add (param_type);
 				}
 
-				if (candidate_set.Count != 0)
-					return FindMostEncompassedType (candidate_set, opt_ec);
+				if (candidate_set.Count != 0) {
+					if (source.eclass == ExprClass.MethodGroup)
+						return InternalType.FakeInternalType;
+
+					return FindMostEncompassedType (candidate_set, rc);
+				}
 			}
 
 			//
 			// Final case
 			//
 			if (apply_explicit_conv_rules)
-				return FindMostEncompassingType (src_types_set, opt_ec);
+				return FindMostEncompassingType (src_types_set, rc);
 			else
-				return FindMostEncompassedType (src_types_set, opt_ec);
+				return FindMostEncompassedType (src_types_set, rc);
 		}
 
 		/// <summary>
@@ -1287,12 +1292,12 @@ namespace Mono.CSharp {
 					continue;
 
 				var t = op.Parameters.Types[0];
-				if (source.Type != t && !ImplicitStandardConversionExists (source, t, rc)) {
+				if (source.Type != t && !ImplicitStandardConversionExists (rc, source, t, false)) {
 					if ((restr & UserConversionRestriction.ImplicitOnly) != 0)
 						continue;
 
-					if (!ImplicitStandardConversionExists (new EmptyExpression (t), source.Type, rc))
-						continue;
+					if (!ImplicitStandardConversionExists (new EmptyExpression (t), source.Type, rc, false))
+							continue;
 				}
 
 				if ((restr & UserConversionRestriction.NullableSourceOnly) != 0 && !t.IsNullableType)
@@ -1411,7 +1416,7 @@ namespace Mono.CSharp {
 				// Pass original source type to find the best match against input type and
 				// not the unwrapped expression
 				//
-				s_x = FindMostSpecificSource (rc, candidates, source.Type, source_type_expr, !implicitOnly, rc);
+				s_x = FindMostSpecificSource (rc, candidates, source.Type, source_type_expr, !implicitOnly);
 				if (s_x == null)
 					return null;
 
@@ -1442,7 +1447,7 @@ namespace Mono.CSharp {
 								ambig_arg = candidate;
 						}
 						*/
-
+						
 						rc.Report.Error (457, loc,
 							"Ambiguous user defined operators `{0}' and `{1}' when converting from `{2}' to `{3}'",
 							ambig_arg.GetSignatureForError (), most_specific_operator.GetSignatureForError (),
@@ -2670,6 +2675,7 @@ namespace Mono.CSharp {
 			}
 			
 			e = ExplicitUserConversion (ec, expr, target_type, loc);
+
 			if (e != null)
 				return e;			
 
