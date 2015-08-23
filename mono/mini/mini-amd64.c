@@ -40,10 +40,6 @@
 #include "debugger-agent.h"
 #include "mini-gc.h"
 
-#ifdef HOST_WIN32
-static gint jit_tls_offset = -1;
-#endif
-
 #ifdef MONO_XEN_OPT
 static gboolean optimize_for_xen = TRUE;
 #else
@@ -1107,15 +1103,8 @@ get_call_info (MonoGenericSharingContext *gsctx, MonoMemPool *mp, MonoMethodSign
 			}
 			/* fall through */
 		case MONO_TYPE_VALUETYPE:
-			add_valuetype (gsctx, sig, ainfo, sig->params [i], FALSE, &gr, &fr, &stack_size);
-			break;
 		case MONO_TYPE_TYPEDBYREF:
-#if defined( HOST_WIN32 ) || defined( __native_client_codegen__ )
 			add_valuetype (gsctx, sig, ainfo, sig->params [i], FALSE, &gr, &fr, &stack_size);
-#else
-			stack_size += sizeof (MonoTypedRef);
-			ainfo->storage = ArgOnStack;
-#endif
 			break;
 		case MONO_TYPE_U8:
 		case MONO_TYPE_I8:
@@ -3404,7 +3393,7 @@ mono_emit_stack_alloc (MonoCompile *cfg, guchar *code, MonoInst* tree)
 	int need_touch = FALSE;
 
 #if defined(HOST_WIN32)
-		need_touch = TRUE;
+	need_touch = TRUE;
 #elif defined(MONO_ARCH_SIGSEGV_ON_ALTSTACK)
 	if (!tree->flags & MONO_INST_INIT)
 		need_touch = TRUE;
@@ -3638,9 +3627,22 @@ guint8*
 mono_amd64_emit_tls_get (guint8* code, int dreg, int tls_offset)
 {
 #ifdef HOST_WIN32
-	g_assert (tls_offset < 64);
-	x86_prefix (code, X86_GS_PREFIX);
-	amd64_mov_reg_mem (code, dreg, (tls_offset * 8) + 0x1480, 8);
+	if (tls_offset < 64) {
+		x86_prefix (code, X86_GS_PREFIX);
+		amd64_mov_reg_mem (code, dreg, (tls_offset * 8) + 0x1480, 8);
+	} else {
+		guint8 *buf [16];
+
+		g_assert (tls_offset < 0x440);
+		/* Load TEB->TlsExpansionSlots */
+		x86_prefix (code, X86_GS_PREFIX);
+		amd64_mov_reg_mem (code, dreg, 0x1780, 8);
+		amd64_test_reg_reg (code, dreg, dreg);
+		buf [0] = code;
+		amd64_branch (code, X86_CC_EQ, code, TRUE);
+		amd64_mov_reg_membase (code, dreg, dreg, (tls_offset * 8) - 0x200, 8);
+		amd64_patch (buf [0], code);
+	}
 #elif defined(__APPLE__)
 	x86_prefix (code, X86_GS_PREFIX);
 	amd64_mov_reg_mem (code, dreg, tls_gs_offset + (tls_offset * 8), 8);
@@ -3757,9 +3759,6 @@ emit_setup_lmf (MonoCompile *cfg, guint8 *code, gint32 lmf_offset, int cfa_offse
 
 	/* These can't contain refs */
 	mini_gc_set_slot_type_from_fp (cfg, lmf_offset + MONO_STRUCT_OFFSET (MonoLMF, previous_lmf), SLOT_NOREF);
-#ifdef HOST_WIN32
-	mini_gc_set_slot_type_from_fp (cfg, lmf_offset + MONO_STRUCT_OFFSET (MonoLMF, lmf_addr), SLOT_NOREF);
-#endif
 	mini_gc_set_slot_type_from_fp (cfg, lmf_offset + MONO_STRUCT_OFFSET (MonoLMF, rip), SLOT_NOREF);
 	mini_gc_set_slot_type_from_fp (cfg, lmf_offset + MONO_STRUCT_OFFSET (MonoLMF, rsp), SLOT_NOREF);
 	/* These are handled automatically by the stack marking code */
@@ -6512,7 +6511,7 @@ mono_arch_emit_prolog (MonoCompile *cfg)
 	MonoBasicBlock *bb;
 	MonoMethodSignature *sig;
 	MonoInst *ins;
-	int alloc_size, pos, i, cfa_offset, quad, max_epilog_size;
+	int alloc_size, pos, i, cfa_offset, quad, max_epilog_size, save_area_offset;
 	guint8 *code;
 	CallInfo *cinfo;
 	MonoInst *lmf_var = cfg->lmf_var;
@@ -6689,7 +6688,6 @@ mono_arch_emit_prolog (MonoCompile *cfg)
 	}
 #endif
 
-#ifndef TARGET_WIN32
 	if (mini_get_debug_options ()->init_stacks) {
 		/* Fill the stack frame with a dummy value to force deterministic behavior */
 	
@@ -6720,43 +6718,38 @@ mono_arch_emit_prolog (MonoCompile *cfg)
 		amd64_mov_reg_membase (code, AMD64_RDI, AMD64_RSP, -8, 8);
 		amd64_mov_reg_membase (code, AMD64_RCX, AMD64_RSP, -16, 8);
 	}
-#endif	
 
 	/* Save LMF */
-	if (method->save_lmf) {
+	if (method->save_lmf)
 		code = emit_setup_lmf (cfg, code, lmf_var->inst_offset, cfa_offset);
-	}
 
 	/* Save callee saved registers */
-	if (TRUE || !method->save_lmf) {
-		gint32 save_area_offset;
+	if (cfg->arch.omit_fp) {
+		save_area_offset = cfg->arch.reg_save_area_offset;
+		/* Save caller saved registers after sp is adjusted */
+		/* The registers are saved at the bottom of the frame */
+		/* FIXME: Optimize this so the regs are saved at the end of the frame in increasing order */
+	} else {
+		/* The registers are saved just below the saved rbp */
+		save_area_offset = cfg->arch.reg_save_area_offset;
+	}
 
-		if (cfg->arch.omit_fp) {
-			save_area_offset = cfg->arch.reg_save_area_offset;
-			/* Save caller saved registers after sp is adjusted */
-			/* The registers are saved at the bottom of the frame */
-			/* FIXME: Optimize this so the regs are saved at the end of the frame in increasing order */
-		} else {
-			/* The registers are saved just below the saved rbp */
-			save_area_offset = cfg->arch.reg_save_area_offset;
-		}
+	for (i = 0; i < AMD64_NREG; ++i) {
+		if (AMD64_IS_CALLEE_SAVED_REG (i) && (cfg->arch.saved_iregs & (1 << i))) {
+			amd64_mov_membase_reg (code, cfg->frame_reg, save_area_offset, i, 8);
 
-		for (i = 0; i < AMD64_NREG; ++i)
-			if (AMD64_IS_CALLEE_SAVED_REG (i) && (cfg->arch.saved_iregs & (1 << i))) {
-				amd64_mov_membase_reg (code, cfg->frame_reg, save_area_offset, i, 8);
-
-				if (cfg->arch.omit_fp) {
-					mono_emit_unwind_op_offset (cfg, code, i, - (cfa_offset - save_area_offset));
-					/* These are handled automatically by the stack marking code */
-					mini_gc_set_slot_type_from_cfa (cfg, - (cfa_offset - save_area_offset), SLOT_NOREF);
-				} else {
-					mono_emit_unwind_op_offset (cfg, code, i, - (-save_area_offset + (2 * 8)));
-					// FIXME: GC
-				}
-
-				save_area_offset += 8;
-				async_exc_point (code);
+			if (cfg->arch.omit_fp) {
+				mono_emit_unwind_op_offset (cfg, code, i, - (cfa_offset - save_area_offset));
+				/* These are handled automatically by the stack marking code */
+				mini_gc_set_slot_type_from_cfa (cfg, - (cfa_offset - save_area_offset), SLOT_NOREF);
+			} else {
+				mono_emit_unwind_op_offset (cfg, code, i, - (-save_area_offset + (2 * 8)));
+				// FIXME: GC
 			}
+
+			save_area_offset += 8;
+			async_exc_point (code);
+		}
 	}
 
 	/* store runtime generic context */
@@ -6953,7 +6946,7 @@ mono_arch_emit_prolog (MonoCompile *cfg)
 		}
 	}
 
-	if (cfg->save_lmf)
+	if (cfg->method->save_lmf)
 		args_clobbered = TRUE;
 
 	if (trace) {
@@ -7909,20 +7902,8 @@ mono_arch_get_delegate_invoke_impl (MonoMethodSignature *sig, gboolean has_targe
 void
 mono_arch_finish_init (void)
 {
-#ifdef HOST_WIN32
-	/* 
-	 * We need to init this multiple times, since when we are first called, the key might not
-	 * be initialized yet.
-	 */
-	jit_tls_offset = mono_get_jit_tls_key ();
-
-	/* Only 64 tls entries can be accessed using inline code */
-	if (jit_tls_offset >= 64)
-		jit_tls_offset = -1;
-#else
-#ifdef MONO_XEN_OPT
+#if !defined(HOST_WIN32) && defined(MONO_XEN_OPT)
 	optimize_for_xen = access ("/proc/xen", F_OK) == 0;
-#endif
 #endif
 }
 
