@@ -26,32 +26,64 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
+using System.IO;
+using System.Net;
 using System.Text;
-
+using System.Globalization;
 
 namespace System {
 	
 	internal class ParserState
 	{
-		public ParserState (string uri)
+		public ParserState (string uri, UriKind kind)
 		{
 			remaining = uri;
+			this.kind = kind;
 			elements  = new UriElements ();
 		}
 		
 		public string remaining;
+		public UriKind kind;
 		public UriElements elements;
+		public string error;
 	}
 	
 	// Parse Uri components (scheme, userinfo, host, query, fragment)
 	// http://www.ietf.org/rfc/rfc3986.txt
 	internal static class UriParseComponents
 	{
-		public static UriElements ParseComponents (string uri)
+		public static UriElements ParseComponents (string uri, UriKind kind, UriParser parser)
 		{
-			ParserState state = new ParserState (uri);
+			UriElements elements;
+			string error;
+
+			if (!TryParseComponents (uri, kind, parser, out elements, out error))
+				throw new UriFormatException (error);
+
+			return elements;
+		}
+
+		public static bool TryParseComponents (string uri, UriKind kind, UriParser parser, out UriElements elements, out string error)
+		{
+			uri = uri.Trim ();
+
+			var ok = true;
+			ParserState state = new ParserState (uri, kind);
+
+			if (uri.Length == 0 && (kind == UriKind.Relative || kind == UriKind.RelativeOrAbsolute)){
+				state.elements.isAbsoluteUri = false;
+				ok = false;
+			}
 			
-			bool ok = ParseScheme (ref state);
+			if (uri.Length <= 1 && kind == UriKind.Absolute) {
+				state.error = "Absolute URI is too short";
+				ok = false;
+			}
+
+			if (ok)
+				ok = ParseFilePath (ref state);
+			if (ok)
+				ok = ParseScheme (ref state);
 			if (ok)
 			    ok = ParseAuthority (ref state);
 			if (ok)
@@ -60,23 +92,139 @@ namespace System {
 			    ok = ParseQuery (ref state);
 			if (ok)
 			    ParseFragment (ref state);
+
+			var scheme = state.elements.scheme;
+			if (string.IsNullOrEmpty (state.elements.host) &&
+				(scheme == Uri.UriSchemeHttp || scheme == Uri.UriSchemeGopher || scheme == Uri.UriSchemeNntp ||
+				scheme == Uri.UriSchemeHttps || scheme == Uri.UriSchemeFtp))
+				state.error = "Invalid URI: The Authority/Host could not be parsed.";
+
+			parser = parser ?? UriParser.GetParser (scheme);
+			if (!string.IsNullOrEmpty (state.elements.host) &&
+				Uri.CheckHostName (state.elements.host) == UriHostNameType.Unknown &&
+				parser is DefaultUriParser)
+				state.error = "Invalid URI: The hostname could not be parsed.";
+
+			if (!string.IsNullOrEmpty (state.error)) {
+				elements = null;
+				error = state.error;
+				return false;
+			}
 			
-			return state.elements;
+			elements = state.elements;
+			error = null;
+			return true;
 		}
+
 				// ALPHA
 		private static bool IsAlpha (char ch)
 		{
 			return (('a' <= ch) && (ch <= 'z')) ||
 				   (('A' <= ch) && (ch <= 'Z'));
 		}
+
+		private static bool ParseFilePath (ref ParserState state)
+		{
+			bool ok = ParseWindowsFilePath (ref state);
+			if (ok)
+				ok = ParseWindowsUNC (ref state);
+			if (ok)
+				ok = ParseUnixFilePath (ref state);
+
+			return ok;
+		}
+
+		private static bool ParseWindowsFilePath (ref ParserState state)
+		{
+			var scheme = state.elements.scheme;
+
+			if (!string.IsNullOrEmpty (scheme) &&
+				 scheme != Uri.UriSchemeFile && UriHelper.IsKnownScheme (scheme))
+				return state.remaining.Length > 0;
+
+			string part = state.remaining;
+
+			if (part.Length > 0 && (part [0] == '/' || part [0] == '\\'))
+				part = part.Substring (1);
+
+			if (part.Length < 2 || part [1] != ':')
+				return state.remaining.Length > 0;
+
+			if (!IsAlpha (part [0])) {
+				if (state.kind == UriKind.Absolute) {
+					state.error = "Invalid URI: The URI scheme is not valid.";
+					return false;
+				}
+				state.elements.isAbsoluteUri = false;
+				state.elements.path = part;
+				return false;
+			}
+
+			if (part.Length > 2 && part [2] != '\\' && part [2] != '/') {
+				state.error = "Relative file path is not allowed.";
+				return false;
+			}
+
+			if (string.IsNullOrEmpty (scheme)) {
+				state.elements.scheme = Uri.UriSchemeFile;
+				state.elements.delimiter = "://";
+			}
+
+			state.elements.path = part.Replace ("\\", "/");
+
+			return false;
+		}
+
+		private static bool ParseWindowsUNC (ref ParserState state)
+		{
+			string part = state.remaining;
+
+			if (part.Length < 2 || part [0] != '\\' || part [1] != '\\')
+				return state.remaining.Length > 0;
+
+			state.elements.scheme = Uri.UriSchemeFile;
+			state.elements.delimiter = "://";
+			state.elements.isUnc = true;
+
+			part = part.TrimStart (new char [] {'\\'});
+			int pos = part.IndexOf ('\\');
+			if (pos > 0) {
+				state.elements.path = part.Substring (pos);
+				state.elements.host = part.Substring (0, pos);
+			} else { // "\\\\server"
+				state.elements.host = part;
+				state.elements.path = String.Empty;
+			}
+			state.elements.path = state.elements.path.Replace ("\\", "/");
+
+			return false;
+		}
+
+		private static bool ParseUnixFilePath (ref ParserState state)
+		{
+			string part = state.remaining;
+
+			if (part.Length < 1 || part [0] != '/' || Path.DirectorySeparatorChar != '/')
+				return state.remaining.Length > 0;
+
+			state.elements.scheme = Uri.UriSchemeFile;
+			state.elements.delimiter = "://";
+			state.elements.isUnixFilePath = true;
+			state.elements.isAbsoluteUri = (state.kind == UriKind.Relative)? false : true;
+
+			if (part.Length >= 2 && part [0] == '/' && part [1] == '/') {
+				part = part.TrimStart (new char [] {'/'});
+				state.elements.path = '/' + part;
+			} else
+				state.elements.path = part;
+
+			return false;
+		}
 		
 		// 3.1) scheme      = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
 		private static bool ParseScheme (ref ParserState state) 
 		{
 			string part = state.remaining;
-			
-			if (!IsAlpha (part [0]))
-				return part.Length > 0;
 			
 			StringBuilder sb = new StringBuilder ();
 			sb.Append (part [0]);
@@ -90,22 +238,79 @@ namespace System {
 				sb.Append (ch);
 			}
 			
-			if (index + 1 <= part.Length && part [index] == ':') {
-				state.elements.scheme = sb.ToString ();
-				state.remaining = part.Substring (index + 1);
+			if (index == 0 || index >= part.Length) {
+				if (state.kind == UriKind.Absolute) {
+					state.error = "Invalid URI: The format of the URI could not be determined.";
+					return false;
+				}
+
+				state.elements.isAbsoluteUri = false;
+				return state.remaining.Length > 0;
+			}
+
+			if (part [index] != ':') {
+				if (state.kind == UriKind.Absolute) {
+					state.error = "Invalid URI: The URI scheme is not valid.";
+					return false;
+				}
+
+				state.elements.isAbsoluteUri = false;
+				return state.remaining.Length > 0;
+			}
+
+			state.elements.scheme = sb.ToString ().ToLowerInvariant ();
+			state.remaining = part.Substring (index);
+
+			// Check scheme name characters as specified in RFC2396.
+			// Note: different checks in 1.x and 2.0
+			if (!Uri.CheckSchemeName (state.elements.scheme)) {
+				if (state.kind == UriKind.Absolute) {
+					state.error = "Invalid URI: The URI scheme is not valid.";
+					return false;
+				}
+
+				state.elements.isAbsoluteUri = false;
+				return state.remaining.Length > 0;
+			}
+
+			if (state.elements.scheme == Uri.UriSchemeFile) {
+				// under Windows all file:// URI are considered UNC, which is not the case other MacOS (e.g. Silverlight)
+#if BOOTSTRAP_BASIC
+				state.elements.isUnc = (Path.DirectorySeparatorChar == '\\');
+#else
+				state.elements.isUnc = Environment.IsRunningOnWindows;
+#endif
+			}
+
+			return ParseDelimiter (ref state);
+		}
+
+		private static bool ParseDelimiter (ref ParserState state)
+		{
+			var delimiter = Uri.GetSchemeDelimiter (state.elements.scheme);
+
+			if (!state.remaining.StartsWith (delimiter)) {
+				if (UriHelper.IsKnownScheme (state.elements.scheme)) {
+					state.error = "Invalid URI: The Authority/Host could not be parsed.";
+					return false;
+				}
+
+				delimiter = ":";
 			}
 				
+			state.elements.delimiter = delimiter;
+
+			state.remaining = state.remaining.Substring (delimiter.Length);
+
 			return state.remaining.Length > 0;
 		}
 		
 		private static bool ParseAuthority (ref ParserState state)
 		{
+			if (state.elements.delimiter != Uri.SchemeDelimiter && state.elements.scheme != Uri.UriSchemeMailto)
+				return state.remaining.Length > 0;
+
 			string part = state.remaining;
-			
-			if (part.Length < 2 || part [0] != '/' || part [1] != '/')
-				return part.Length > 0;
-			
-			state.remaining = part.Substring (2);
 			
 			bool ok = ParseUser (ref state);
 			if (ok)
@@ -152,6 +357,11 @@ namespace System {
 			}
 
 			if (index + 1 <= part.Length && part [index] == '@') {
+				if (state.elements.scheme == Uri.UriSchemeFile) {
+					state.error = "Invalid URI: The hostname could not be parsed.";
+					return false;
+				}
+
 				state.elements.user = sb == null ? "" : sb.ToString ();
 				state.remaining = state.remaining.Substring (index + 1);
 			}
@@ -163,23 +373,59 @@ namespace System {
 		private static bool ParseHost (ref ParserState state)
 		{
 			string part = state.remaining;
+
+			if (state.elements.scheme == Uri.UriSchemeFile && part.Length >= 2 &&
+				(part [0] == '\\' || part [0] == '/') && part [1] == part [0]) {
+				part = part.TrimStart (part [0]);
+				state.remaining = part;
+			}
+
+			if (!ParseWindowsFilePath (ref state))
+				return false;
+
 			StringBuilder sb = new StringBuilder ();
 			
+			var tmpHost = "";
+
+			var possibleIpv6 = false;
+
 			int index;
 			for (index = 0; index < part.Length; index++) {	
 				
 				char ch = part [index];
 				
-				if (ch == '/' || ch == ':' || ch == '#' || ch == '?')
+				if (ch == '/' || ch == '#' || ch == '?')
 					break;
+
+				// Possible IPv6
+				if (string.IsNullOrEmpty (tmpHost) && ch == ':') {
+					tmpHost = sb.ToString ();
+					possibleIpv6 = true;
+				}
 				
 				sb.Append (ch);
+
+				if (possibleIpv6 && ch == ']')
+					break;
 			}
 			
-			if (index  <= part.Length)
-				state.remaining = part.Substring (index);
-			
-			state.elements.host = sb.ToString();
+			if (possibleIpv6) {
+				IPv6Address ipv6addr;
+				if (IPv6Address.TryParse (sb.ToString (), out ipv6addr)) {
+					var ipStr = ipv6addr.ToString (!Uri.IriParsing).Split ('%') [0];
+					state.elements.host = "[" + ipStr + "]";
+					state.elements.scopeId = ipv6addr.ScopeId;
+
+					state.remaining = part.Substring (sb.Length);
+					return state.remaining.Length > 0;
+				}
+				state.elements.host = tmpHost;
+			} else
+				state.elements.host = sb.ToString ();
+
+			state.elements.host = state.elements.host.ToLowerInvariant ();
+
+			state.remaining = part.Substring (state.elements.host.Length);
 				
 			return state.remaining.Length > 0;
 		}
@@ -197,16 +443,31 @@ namespace System {
 			for (index = 1; index < part.Length; index++ ) {
 				char ch = part [index];
 				
-				if (!char.IsDigit (ch))
-					break;
+				if (!char.IsDigit (ch)) {
+					if (ch == '/' || ch == '#' || ch == '?')
+						break;
+
+					state.error = "Invalid URI: Invalid port specified.";
+					return false;
+				}
 				
 				sb.Append (ch);
 			}
-			
+
 			if (index <= part.Length)
 				state.remaining = part.Substring (index);
+
+			if (sb.Length == 0)
+				return state.remaining.Length > 0;
 			
-			state.elements.port = sb.ToString();
+			int port;
+			if (!Int32.TryParse (sb.ToString (), NumberStyles.None, CultureInfo.InvariantCulture, out port) ||
+				port < 0 || port > UInt16.MaxValue) {
+				state.error = "Invalid URI: Invalid port number";
+				return false;
+			}
+
+			state.elements.port = port;
 				
 			return state.remaining.Length > 0;
 		}
@@ -221,7 +482,9 @@ namespace System {
 				
 				char ch = part [index];
 				
-				if (ch == '#' || ch == '?')
+				var supportsQuery = UriHelper.SupportsQuery (state.elements.scheme);
+
+				if (ch == '#' || (supportsQuery && ch == '?'))
 					break;
 				
 				sb.Append (ch);
@@ -238,6 +501,9 @@ namespace System {
 		private static bool ParseQuery (ref ParserState state)
 		{
 			string part = state.remaining;
+
+			if (!UriHelper.SupportsQuery (state.elements.scheme))
+				return part.Length > 0;
 			
 			if (part.Length == 0 || part [0] != '?')
 				return part.Length > 0;

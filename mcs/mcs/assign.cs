@@ -677,6 +677,7 @@ namespace Mono.CSharp {
 		public override void FlowAnalysis (FlowAnalysisContext fc)
 		{
 			source.FlowAnalysis (fc);
+			((FieldExpr) target).SetFieldAssigned (fc);
 		}
 		
 		public bool IsDefaultInitializer {

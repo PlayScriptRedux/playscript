@@ -1,0 +1,22 @@
+// Compiler options: 
+//
+package {
+    import System.ApplicationException;
+
+    public class Foo {
+        public static function Main():int {
+		try {
+			try {
+				throw new ApplicationException();
+			} catch (e:Error) {
+				throw;
+			}
+		} catch (e:ApplicationException) {
+			trace("ok");
+			return 0;
+		}
+		return 1;
+        }
+    }
+}
+

@@ -856,13 +856,13 @@ mono_jit_info_add_aot_module (MonoImage *image, gpointer start, gpointer end)
 {
 	MonoJitInfo *ji;
 
-	mono_appdomains_lock ();
+	g_assert (mono_root_domain);
+	mono_domain_lock (mono_root_domain);
 
 	/*
 	 * We reuse MonoJitInfoTable to store AOT module info,
 	 * this gives us async-safe lookup.
 	 */
-	g_assert (mono_root_domain);
 	if (!mono_root_domain->aot_modules) {
 		mono_root_domain->num_jit_info_tables ++;
 		mono_root_domain->aot_modules = jit_info_table_new (mono_root_domain);
@@ -874,7 +874,7 @@ mono_jit_info_add_aot_module (MonoImage *image, gpointer start, gpointer end)
 	ji->code_size = (guint8*)end - (guint8*)start;
 	jit_info_table_add (mono_root_domain, &mono_root_domain->aot_modules, ji);
 
-	mono_appdomains_unlock ();
+	mono_domain_unlock (mono_root_domain);
 }
 
 void
@@ -985,6 +985,16 @@ mono_jit_info_get_try_block_hole_table_info (MonoJitInfo *ji)
 	}
 }
 
+static int
+try_block_hole_table_size (MonoJitInfo *ji)
+{
+	MonoTryBlockHoleTableJitInfo *table;
+
+	table = mono_jit_info_get_try_block_hole_table_info (ji);
+	g_assert (table);
+	return sizeof (MonoTryBlockHoleTableJitInfo) + table->num_holes * sizeof (MonoTryBlockHoleJitInfo);
+}
+
 MonoArchEHJitInfo*
 mono_jit_info_get_arch_eh_info (MonoJitInfo *ji)
 {
@@ -993,7 +1003,7 @@ mono_jit_info_get_arch_eh_info (MonoJitInfo *ji)
 		if (ji->has_generic_jit_info)
 			ptr += sizeof (MonoGenericJitInfo);
 		if (ji->has_try_block_holes)
-			ptr += sizeof (MonoTryBlockHoleTableJitInfo);
+			ptr += try_block_hole_table_size (ji);
 		return (MonoArchEHJitInfo*)ptr;
 	} else {
 		return NULL;
@@ -1008,7 +1018,7 @@ mono_jit_info_get_cas_info (MonoJitInfo *ji)
 		if (ji->has_generic_jit_info)
 			ptr += sizeof (MonoGenericJitInfo);
 		if (ji->has_try_block_holes)
-			ptr += sizeof (MonoTryBlockHoleTableJitInfo);
+			ptr += try_block_hole_table_size (ji);
 		if (ji->has_arch_eh_info)
 			ptr += sizeof (MonoArchEHJitInfo);
 		return (MonoMethodCasInfo*)ptr;
@@ -2013,7 +2023,7 @@ mono_domain_free (MonoDomain *domain, gboolean force)
 	/* Close dynamic assemblies first, since they have no ref count */
 	for (tmp = domain->domain_assemblies; tmp; tmp = tmp->next) {
 		MonoAssembly *ass = tmp->data;
-		if (!ass->image || !ass->image->dynamic)
+		if (!ass->image || !image_is_dynamic (ass->image))
 			continue;
 		mono_trace (G_LOG_LEVEL_INFO, MONO_TRACE_ASSEMBLY, "Unloading domain %s[%p], assembly %s[%p], ref_count=%d", domain->friendly_name, domain, ass->aname.name, ass, ass->ref_count);
 		if (!mono_assembly_close_except_image_pools (ass))
@@ -2024,7 +2034,7 @@ mono_domain_free (MonoDomain *domain, gboolean force)
 		MonoAssembly *ass = tmp->data;
 		if (!ass)
 			continue;
-		if (!ass->image || ass->image->dynamic)
+		if (!ass->image || image_is_dynamic (ass->image))
 			continue;
 		mono_trace (G_LOG_LEVEL_INFO, MONO_TRACE_ASSEMBLY, "Unloading domain %s[%p], assembly %s[%p], ref_count=%d", domain->friendly_name, domain, ass->aname.name, ass, ass->ref_count);
 		if (!mono_assembly_close_except_image_pools (ass))

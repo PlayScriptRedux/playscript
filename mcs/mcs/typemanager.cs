@@ -132,9 +132,10 @@ namespace Mono.CSharp
 			OperatorsUnaryMutator = UnaryMutator.CreatePredefinedOperatorsTable (this);
 
 			BinaryPromotionsTypes = ConstantFold.CreateBinaryPromotionsTypes (this);
+
 			// PlayScript binary promotion types (includes bool).
 			AsBinaryPromotionsTypes = ConstantFold.CreateAsBinaryPromotionsTypes (this);
-			SwitchUserTypes = Switch.CreateSwitchUserTypes (this);
+//			SwitchUserTypes = Switch.CreateSwitchUserTypes (this);
 
 			types = new BuiltinTypeSpec[] {
 				Object, ValueType, Attribute,
@@ -217,6 +218,7 @@ namespace Mono.CSharp
 		public readonly PredefinedType KeyValuePair;
 		public readonly PredefinedType Hashtable;
 		public readonly PredefinedType List;
+		public readonly TypeSpec[] SwitchUserTypes;
 
 		//
 		// C# 3.0
@@ -408,6 +410,8 @@ namespace Mono.CSharp
 				TaskGeneric.TypeSpec.IsGenericTask = true;
 
 			AsUndefined.Define ();
+
+			SwitchUserTypes = Switch.CreateSwitchUserTypes (module, Nullable.TypeSpec);
 		}
 
 		private void CheckPlayScriptDynamicMode()

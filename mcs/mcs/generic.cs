@@ -632,6 +632,11 @@ namespace Mono.CSharp {
 			spec.SetMetaInfo (type);
 		}
 
+		public void Define (TypeParameter tp)
+		{
+			builder = tp.builder;
+		}
+
 		public void EmitConstraints (GenericTypeParameterBuilder builder)
 		{
 			var attr = GenericParameterAttributes.None;
@@ -1048,20 +1053,6 @@ namespace Mono.CSharp {
 			if (effective_base != null)
 				return effective_base;
 
-//<<<<<<< ours
-//			for (int i = 0; i < types.Length - 1; ++i) {
-//				types [i] = types [i].BaseType;
-//			}
-//
-//				types [types.Length - 1] = BaseType;
-//			} else {
-//				types = types.Select (l => l.BaseType).ToArray ();
-//			}
-//
-//			if (types != null) {
-//				return Convert.FindMostEncompassedType (types, null);
-//			}
-//=======
 			var types = new TypeSpec [HasTypeConstraint ? targs.Length + 1 : targs.Length];
 
 			for (int i = 0; i < targs.Length; ++i) {
@@ -1073,13 +1064,12 @@ namespace Mono.CSharp {
 					continue;
 				}
 
-				types [i] = ((TypeParameterSpec)t).GetEffectiveBase ();
+				var tps = t as TypeParameterSpec;
+				types [i] = tps != null ? tps.GetEffectiveBase () : t;
 			}
 
 			if (HasTypeConstraint)
 				types [types.Length - 1] = BaseType;
-//>>>>>>> theirs
-
 			return effective_base = Convert.FindMostEncompassedType (types, null);
 		}
 
@@ -1376,7 +1366,15 @@ namespace Mono.CSharp {
 
 			if (TypeArguments != null) {
 				foreach (var t in TypeArguments) {
-					if (((TypeParameterSpec) t).IsConvertibleToInterface (iface))
+					var tps = t as TypeParameterSpec;
+					if (tps != null) {
+						if (tps.IsConvertibleToInterface (iface))
+							return true;
+
+						continue;
+					}
+
+					if (t.ImplementsInterface (iface, false))
 						return true;
 				}
 			}
@@ -1484,13 +1482,21 @@ namespace Mono.CSharp {
 			if (tp != null)
 				return Inflate (tp);
 
-			var ac = type as ArrayContainer;
-			if (ac != null) {
-				var et = Inflate (ac.Element);
-				if (et != ac.Element)
-					return ArrayContainer.MakeType (context.Module, et, ac.Rank);
+			var ec = type as ElementTypeSpec;
+			if (ec != null) {
+				var et = Inflate (ec.Element);
+				if (et != ec.Element) {
+					var ac = ec as ArrayContainer;
+					if (ac != null)
+						return ArrayContainer.MakeType (context.Module, et, ac.Rank);
 
-				return ac;
+					if (ec is PointerContainer)
+						return PointerContainer.MakeType (context.Module, et);
+
+					throw new NotImplementedException ();
+				}
+
+				return ec;
 			}
 
 			if (type.Kind == MemberKind.MissingType)

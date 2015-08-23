@@ -743,7 +743,7 @@ namespace Mono.CSharp
 			throw new NotSupportedException ();
 		}
 
-		public override void EncodeAttributeValue (IMemberContext rc, AttributeEncoder enc, TypeSpec targetType)
+		public override void EncodeAttributeValue (IMemberContext rc, AttributeEncoder enc, TypeSpec targetType, TypeSpec parameterType)
 		{
 			throw new NotSupportedException ();
 		}
@@ -825,7 +825,7 @@ namespace Mono.CSharp
 			throw new NotSupportedException ();
 		}
 		
-		public override void EncodeAttributeValue (IMemberContext rc, AttributeEncoder enc, TypeSpec targetType)
+		public override void EncodeAttributeValue (IMemberContext rc, AttributeEncoder enc, TypeSpec targetType, TypeSpec parameterType)
 		{
 			throw new NotSupportedException ();
 		}

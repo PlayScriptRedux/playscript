@@ -90,6 +90,13 @@ namespace System {
 		private string cachedToString;
 		private string cachedLocalPath;
 		private int cachedHashCode;
+		
+		private static bool s_IriParsing;
+
+		internal static bool IriParsing {
+			get { return s_IriParsing; }
+			set { s_IriParsing = value; }
+		}
 
 #if BOOTSTRAP_BASIC
 		private static readonly string hexUpperChars = "0123456789ABCDEF";
@@ -112,7 +119,11 @@ namespace System {
 		public static readonly string UriSchemeNntp = "nntp";
 		public static readonly string UriSchemeNetPipe = "net.pipe";
 		public static readonly string UriSchemeNetTcp = "net.tcp";
-		
+
+		internal static readonly string UriSchemeTelnet = "telnet";
+		internal static readonly string UriSchemeLdap = "ldap";
+		internal static readonly string UriSchemeUuid = "uuid";
+
 		private static readonly string [] knownUriSchemes =
 		{
 			UriSchemeFile,
@@ -127,7 +138,22 @@ namespace System {
 			UriSchemeNetTcp
 		};
 
-		// Constructors		
+		// Constructors
+
+		static Uri()
+		{
+#if NET_4_5
+			IriParsing = true;
+#else
+			IriParsing = false;
+#endif
+
+			var iriparsingVar = Environment.GetEnvironmentVariable ("MONO_URI_IRIPARSING");
+			if (iriparsingVar == "true")
+				IriParsing = true;
+			if (iriparsingVar == "false")
+				IriParsing = false;
+		}
 
 		public Uri (string uriString) : this (uriString, false) 
 		{
@@ -213,9 +239,6 @@ namespace System {
 					success = false;
 					break;
 				}
-
-				if (success && isAbsoluteUri && (path.Length > 0))
-					path = EscapeString (path);
 			}
 		}
 
@@ -256,188 +279,88 @@ namespace System {
 				throw new ArgumentNullException ("baseUri");
 			if (!baseUri.IsAbsoluteUri)
 				throw new ArgumentOutOfRangeException ("baseUri");
-			if (relativeUri == null)
-				relativeUri = String.Empty;
+			if (string.IsNullOrEmpty (relativeUri)) {
+				source = baseUri.OriginalString;
+				ParseUri (UriKind.Absolute);
+				return;
+			}
 
-			// See RFC 2396 Par 5.2 and Appendix C
+			string error;
+			bool startsWithSlash = false;
 
-			// Check Windows UNC (for // it is scheme/host separator)
-			if (relativeUri.Length >= 2 && relativeUri [0] == '\\' && relativeUri [1] == '\\') {
+			UriElements baseEl;
+			if (!UriParseComponents.TryParseComponents (baseUri.OriginalString, UriKind.Absolute, null, out baseEl, out error))
+				throw new UriFormatException (error);
+
+			if (relativeUri.StartsWith (baseEl.scheme + ":"))
+				relativeUri = relativeUri.Substring (baseEl.scheme.Length + 1);
+
+			if (relativeUri.Length >= 1 && relativeUri [0] == '/') {
+				if (relativeUri.Length >= 2 && relativeUri [1] == '/') {
+					source = baseEl.scheme + ":" + relativeUri;
+					ParseUri (UriKind.Absolute);
+					return;
+				}
+
+				relativeUri = relativeUri.Substring (1);
+				startsWithSlash = true;
+			}
+
+			UriElements relativeEl;
+			if (!UriParseComponents.TryParseComponents (relativeUri, UriKind.RelativeOrAbsolute, null, out relativeEl, out error))
+				throw new UriFormatException (error);
+
+			if (relativeEl.isAbsoluteUri) {
 				source = relativeUri;
 				ParseUri (UriKind.Absolute);
 				return;
 			}
 
-			int pos = relativeUri.IndexOf (':');
-			if (pos != -1) {
+			source = baseEl.scheme + baseEl.delimiter;
 
-				int pos2 = relativeUri.IndexOfAny (new char [] {'/', '\\', '?'});
+			if (baseEl.user != null)
+				source += baseEl.user + "@";
 
-				// pos2 < 0 ... e.g. mailto
-				// pos2 > pos ... to block ':' in query part
-				if (pos2 > pos || pos2 < 0) {
-					// in some cases, it is equivanent to new Uri (relativeUri, dontEscape):
-					// 1) when the URI scheme in the 
-					// relative path is different from that
-					// of the baseUri, or
-					// 2) the URI scheme is non-standard
-					// ones (non-standard URIs are always
-					// treated as absolute here), or
-					// 3) the relative URI path is absolute.
-					if (String.CompareOrdinal (baseUri.Scheme, 0, relativeUri, 0, pos) != 0 ||
-					    !IsPredefinedScheme (baseUri.Scheme) ||
-					    (relativeUri.Length > pos + 1 && relativeUri [pos + 1] == '/')) {
-						Uri tmp = null;
-						if (Uri.TryCreate (relativeUri, UriKind.Absolute, out tmp)) {
-							source = relativeUri;
-							ParseUri (UriKind.Absolute);
-							return;
-						} else if (pos == 1) {
-							// special case as this looks like a windows path
-							string msg = ParseAsWindowsAbsoluteFilePath (relativeUri);
-							if (msg != null)
-								throw new UriFormatException (msg);
-						}
-						// otherwise continue with 'full' relativeUri
-					}
-					else
-						relativeUri = relativeUri.Substring (pos + 1);
+			source += baseEl.host;
+
+			if (baseEl.port >= 0)
+				source += ":" + baseEl.port.ToString (CultureInfo.InvariantCulture);
+
+			var canUseBase = true;
+
+			string path;
+			if (!string.IsNullOrEmpty (relativeEl.path) || startsWithSlash) {
+				canUseBase = false;
+				path = relativeEl.path;
+				if (startsWithSlash)
+					path = relativeEl.path;
+				else {
+					var pathEnd = baseEl.path.LastIndexOf ('/');
+					path = (pathEnd > 0)? baseEl.path.Substring (0, pathEnd+1) : "";
+					path += relativeEl.path;
 				}
-			}
+			} else
+				path = baseEl.path;
 
-			this.scheme = baseUri.scheme;
-			this.host = baseUri.host;
-			this.port = baseUri.port;
-			this.userinfo = baseUri.userinfo;
-			this.isUnc = baseUri.isUnc;
-			this.isUnixFilePath = baseUri.isUnixFilePath;
-			this.isOpaquePart = baseUri.isOpaquePart;
+			if ((path.Length == 0 || path [0] != '/') && baseEl.delimiter == SchemeDelimiter)
+				path = "/" + path;
 
-			if (relativeUri.Length == 0) {
-				this.path = baseUri.path;
-				this.query = baseUri.query;
-				this.fragment = baseUri.fragment;
-				return;
-			}
+			source += UriHelper.Reduce (path, true);
 
-			// 8 fragment
-			// Note that in relative constructor, file URI cannot handle '#' as a filename character, but just regarded as a fragment identifier.
-			string original_fragment = String.Empty;
-			pos = relativeUri.IndexOf ('#');
-			if (pos != -1) {
-				original_fragment = relativeUri.Substring (pos);
-				if (userEscaped)
-					fragment = original_fragment;
-				else
-					fragment = "#" + EscapeString (relativeUri.Substring (pos+1));
-				relativeUri = pos == 0 ? String.Empty : relativeUri.Substring (0, pos);
-			}
+			if (relativeEl.query != null) {
+				canUseBase = false;
+				source += "?" + relativeEl.query;
+			} else if (canUseBase && baseEl.query != null)
+				source += "?" + baseEl.query;
 
-			bool consider_query = false;
+			if (relativeEl.fragment != null)
+				source += "#" + relativeEl.fragment;
+			else if (canUseBase && baseEl.fragment != null)
+				source += "#" + baseEl.fragment;
 
-			// 6 query
-			pos = relativeUri.IndexOf ('?');
-			if (pos != -1) {
-				query = relativeUri.Substring (pos);
-				if (!userEscaped)
-					query = EscapeString (query);
-#if !NET_4_0 && !MOBILE
-				consider_query = query.Length > 0;
-#endif
-				relativeUri = pos == 0 ? String.Empty : relativeUri.Substring (0, pos);
-			} else if (relativeUri.Length == 0) {
-				// if there is no relative path then we keep the Query and Fragment from the absolute
-				query = baseUri.query;
-			}
+			ParseUri (UriKind.Absolute);
 
-			if (relativeUri.Length > 0 && relativeUri [0] == '/') {
-				if (relativeUri.Length > 1 && relativeUri [1] == '/') {
-					source = scheme + ':' + relativeUri;
-					ParseUri (UriKind.Absolute);
-					return;
-				} else {
-					path = relativeUri;
-					if (!userEscaped)
-						path = EscapeString (path);
-					return;
-				}
-			}
-			
-			// par 5.2 step 6 a)
-			path = baseUri.path;
-			if ((relativeUri.Length > 0) || consider_query) {
-				pos = path.LastIndexOf ('/');
-				if (pos >= 0) 
-					path = path.Substring (0, pos + 1);
-			}
-
-			if (relativeUri.Length == 0) {
-				// when merging URI the OriginalString is not quite original
-				source = GetLeftPart (UriPartial.Authority) + query + original_fragment;
-				return;
-			}
-	
-			// 6 b)
-			path += relativeUri;
-
-			// 6 c)
-			int startIndex = 0;
-			while (true) {
-				pos = path.IndexOf ("./", startIndex);
-				if (pos == -1)
-					break;
-				if (pos == 0)
-					path = path.Remove (0, 2);
-				else if (path [pos - 1] != '.')
-					path = path.Remove (pos, 2);
-				else
-					startIndex = pos + 1;
-			}
-			
-			// 6 d)
-			if (path.Length > 1 && 
-			    path [path.Length - 1] == '.' &&
-			    path [path.Length - 2] == '/')
-				path = path.Remove (path.Length - 1, 1);
-			
-			// 6 e)
-			startIndex = 0;
-			while (true) {
-				pos = path.IndexOf ("/../", startIndex);
-				if (pos == -1)
-					break;
-				if (pos == 0) {
-					startIndex = 3;
-					continue;
-				}
-				int pos2 = path.LastIndexOf ('/', pos - 1);
-				if (pos2 == -1) {
-					startIndex = pos + 1;
-				} else {
-					if (path.Substring (pos2 + 1, pos - pos2 - 1) != "..")
-						path = path.Remove (pos2 + 1, pos - pos2 + 3);
-					else
-						startIndex = pos + 1;
-				}
-			}
-			
-			// 6 f)
-			if (path.Length > 3 && path.EndsWith ("/..")) {
-				pos = path.LastIndexOf ('/', path.Length - 4);
-				if (pos != -1)
-					if (path.Substring (pos + 1, path.Length - pos - 4) != "..")
-						path = path.Remove (pos + 1, path.Length - pos - 1);
-			}
-			
-			// 6 g)
-			while (path.StartsWith ("/../", StringComparison.Ordinal))
-				path = path.Substring (3);
-			
-			if (!userEscaped)
-				path = EscapeString (path);
-
-			// when merging URI the OriginalString is not quite original
-			source = GetLeftPart (UriPartial.Authority) + path + query + original_fragment;
+			return;
 		}
 		
 		// Properties
@@ -463,13 +386,10 @@ namespace System {
 		public string AbsoluteUri { 
 			get { 
 				EnsureAbsoluteUri ();
-				if (cachedAbsoluteUri == null) {
-					cachedAbsoluteUri = GetLeftPart (UriPartial.Path);
-					if (query.Length > 0)
-						cachedAbsoluteUri += query;
-					if (fragment.Length > 0)
-						cachedAbsoluteUri += fragment;
-				}
+
+				if (cachedAbsoluteUri == null)
+					cachedAbsoluteUri = GetComponents (UriComponents.AbsoluteUri, UriFormat.UriEscaped);
+
 				return cachedAbsoluteUri;
 			} 
 		}
@@ -576,24 +496,29 @@ namespace System {
 				if (cachedLocalPath != null)
 					return cachedLocalPath;
 
+				string unescapedPath = UriHelper.FormatAbsolute (path, scheme,
+					UriComponents.Path, UriFormat.Unescaped, UriHelper.FormatFlags.NoSlashReplace);
+
+				if (path.StartsWith("/") && !unescapedPath.StartsWith("/"))
+					unescapedPath = "/" + unescapedPath;
+
 				if (IsLocalIdenticalToAbsolutePath ()) {
-					cachedLocalPath = Unescape (AbsolutePath);
+					cachedLocalPath = unescapedPath;
 					return cachedLocalPath;
 				}
 
 				if (!IsUnc) {
-					string p = Unescape (path);
 					bool windows = (path.Length > 3 && path [1] == ':' &&
 						(path [2] == '\\' || path [2] == '/'));
 
 					if (windows)
-						cachedLocalPath = p.Replace ('/', '\\');
+						cachedLocalPath = unescapedPath.Replace ('/', '\\');
 					else
-						cachedLocalPath = p;
+						cachedLocalPath = unescapedPath;
 				} else {
 					// support *nix and W32 styles
 					if (path.Length > 1 && path [1] == ':')
-						cachedLocalPath = Unescape (path.Replace (Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar));
+						cachedLocalPath = unescapedPath.Replace (Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
 
 					// LAMESPEC: ok, now we cannot determine
 					// if such URI like "file://foo/bar" is
@@ -603,12 +528,12 @@ namespace System {
 						string h = host;
 						if (path.Length > 0) {
 							if ((path.Length > 1) || (path[0] != '/')) {
-								h += path.Replace ('/', '\\');
+								h += unescapedPath.Replace ('/', '\\');
 							}
 						}
-						cachedLocalPath = "\\\\" + Unescape (h);
+						cachedLocalPath = "\\\\" + h;
 					}  else
-						cachedLocalPath = Unescape (path);
+						cachedLocalPath = unescapedPath;
 				}
 				if (cachedLocalPath.Length == 0)
 					cachedLocalPath = Path.DirectorySeparatorChar.ToString ();
@@ -727,13 +652,8 @@ namespace System {
 			get { return isAbsoluteUri; }
 		}
 
-		// LAMESPEC: source field is supplied in such case that this
-		// property makes sense. For such case that source field is
-		// not supplied (i.e. .ctor(Uri, string), this property
-		// makes no sense. To avoid silly regression it just returns
-		// ToString() value now. See bug #78374.
 		public string OriginalString {
-			get { return source != null ? source : ToString (); }
+			get { return source; }
 		}
 
 		// Methods		
@@ -1095,13 +1015,10 @@ namespace System {
 			if (cachedToString != null) 
 				return cachedToString;
 
-			if (isAbsoluteUri) {
-				cachedToString = Unescape (GetLeftPart (UriPartial.Path), true);
-				AppendQueryAndFragment (ref cachedToString);
-			} else {
-				// Everything is contained in path in this case. 
-				cachedToString = path;
-			}
+			if (isAbsoluteUri)
+				cachedToString = Parser.GetComponentsHelper (this, UriComponents.AbsoluteUri, UriHelper.ToStringUnescape);
+			else
+				cachedToString = UriHelper.FormatRelative (source, scheme, UriHelper.ToStringUnescape);
 
 			return cachedToString;
 		}
@@ -1216,15 +1133,10 @@ namespace System {
 			if (userEscaped)
 				return;
 
-			// non-ascii characters are not escaped for the host name
-			host = EscapeString (host, EscapeCommonHex, false);
 			if (host.Length > 1 && host [0] != '[' && host [host.Length - 1] != ']') {
 				// host name present (but not an IPv6 address)
 				host = host.ToLower (CultureInfo.InvariantCulture);
 			}
-
-			if (isAbsoluteUri && (path.Length > 0))
-				path = EscapeString (path);
 		}
 
 		[Obsolete]
@@ -1354,301 +1266,62 @@ namespace System {
 
 		private bool SupportsQuery ()
 		{
-			return ((scheme != Uri.UriSchemeNntp) && (scheme != Uri.UriSchemeFtp) && (scheme != Uri.UriSchemeFile));
+			return UriHelper.SupportsQuery (scheme);
 		}
 
-		//
-		// This parse method will not throw exceptions on failure
-		//
-		// Returns null on success, or a description of the error in the parsing
-		//
+
 		private string ParseNoExceptions (UriKind kind, string uriString)
 		{
-			//
-			// From RFC 2396 :
-			//
-			//      ^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?
-			//       12            3  4          5       6  7        8 9
-			//			
-			
-			uriString = uriString.Trim();
-			int len = uriString.Length;
+			UriElements elements;
+			string error;
+			if (!UriParseComponents.TryParseComponents (uriString, kind, null, out elements, out error))
+				return error;
 
-			if (len == 0){
-				if (kind == UriKind.Relative || kind == UriKind.RelativeOrAbsolute){
-					isAbsoluteUri = false;
-					return null;
-				}
-			}
-			
-			if (len <= 1 && (kind == UriKind.Absolute))
-				return "Absolute URI is too short";
+			var formatFlags = UriHelper.FormatFlags.None;
+			if (UriHelper.HasCharactersToNormalize (uriString))
+				formatFlags |= UriHelper.FormatFlags.HasUriCharactersToNormalize;
 
-			int pos = 0;
+			if (userEscaped)
+				formatFlags |= UriHelper.FormatFlags.UserEscaped;
 
-			// 1, 2
-			// Identify Windows path, unix path, or standard URI.
-			if (uriString [0] == '/' && Path.DirectorySeparatorChar == '/'){
-				//Unix Path
-				ParseAsUnixAbsoluteFilePath (uriString);
-				if (kind == UriKind.Relative)
-					isAbsoluteUri = false;
-				return null;
-			} else if (uriString.Length >= 2 && uriString [0] == '\\' && uriString [1] == '\\') {
-				//Windows UNC
-				ParseAsWindowsUNC (uriString);
-				return null;
+			if (elements.host != null)
+				formatFlags |= UriHelper.FormatFlags.HasHost;
+
+			scheme = elements.scheme;
+
+			userinfo = elements.user;
+
+			if (elements.host != null) {
+				host = UriHelper.FormatAbsolute (elements.host, scheme,
+					UriComponents.Host, UriFormat.UriEscaped, formatFlags);
 			}
 
+			port = elements.port;
 
-			pos = uriString.IndexOf (':');
-			if (pos == 0) {
-				if (kind == UriKind.Absolute)
-					return "Invalid URI: The format of the URI could not be determined.";
-				isAbsoluteUri = false;
-				path = uriString;
-				return null;
-			} else if (pos < 0) {
-				/* Relative path */
-				isAbsoluteUri = false;
-				path = uriString;
-				return null;
-			} else if (pos == 1) {
-				if (!IsAlpha (uriString [0])) {
-					if (kind == UriKind.Absolute)
-						return "Invalid URI: The URI scheme is not valid.";
-					isAbsoluteUri = false;
-					path = uriString;
-					return null;
-				}
-				// This means 'a:' == windows full path.
-				string msg = ParseAsWindowsAbsoluteFilePath (uriString);
-				if (msg != null)
-					return msg;
-				return null;
-			} 
+			if (port == -1)
+				port = GetDefaultPort (scheme);
 
-			// scheme
-			scheme = uriString.Substring (0, pos).ToLower (CultureInfo.InvariantCulture);
-
-			// Check scheme name characters as specified in RFC2396.
-			// Note: different checks in 1.x and 2.0
-			if (!CheckSchemeName (scheme)) {
-				if (kind == UriKind.Absolute)
-					return "Invalid URI: The URI scheme is not valid.";
-				isAbsoluteUri = false;
-				path = uriString;
-				return null;
-			}
-			
-			scheme = TryGetKnownUriSchemeInstance (scheme);
-
-			// from here we're practically working on uriString.Substring(startpos,endpos-startpos)
-			int startpos = pos + 1;
-			int endpos = uriString.Length;
-
-			// 8 fragment
-			pos = uriString.IndexOf ('#', startpos);
-			if (!IsUnc && pos != -1) {
-				if (userEscaped)
-					fragment = uriString.Substring (pos);
-				else
-					fragment = "#" + EscapeString (uriString.Substring (pos+1));
-
-				endpos = pos;
-			}
-
-			// special case: there is no query part for 'news'
-			if (scheme == Uri.UriSchemeNews) {
-				pos = scheme.Length + 1;
-				path = EscapeString (uriString.Substring (pos, endpos - pos), EscapeNews);
-				return null;
-			}
-
-			// special case: there is no query part for 'nntp', 'file' and 'ftp' but there is an host, port, user...
-			if (SupportsQuery ()) {
-				// 6 query
-				pos = uriString.IndexOf ('?', startpos, endpos-startpos);
-				if (pos != -1) {
-					query = uriString.Substring (pos, endpos-pos);
-					endpos = pos;
-					if (!userEscaped)
-						query = EscapeString (query);
-				}
-			}
-
-			// 3
-			if (IsPredefinedScheme (scheme) && scheme != UriSchemeMailto && (
-				(endpos-startpos < 2) ||
-				(endpos-startpos >= 2 && uriString [startpos] == '/' && uriString [startpos+1] != '/')))				
-				return "Invalid URI: The Authority/Host could not be parsed.";
-			
-			
-			bool startsWithSlashSlash = endpos-startpos >= 2 && uriString [startpos] == '/' && uriString [startpos+1] == '/';
-			bool unixAbsPath = scheme == UriSchemeFile && startsWithSlashSlash && (endpos-startpos == 2 || uriString [startpos+2] == '/');
-			bool windowsFilePath = false;
-			if (startsWithSlashSlash) {
-				if (kind == UriKind.Relative)
-					return "Absolute URI when we expected a relative one";
-				
-				if (scheme != UriSchemeMailto)
-					startpos += 2;
-
-				if (scheme == UriSchemeFile) {
-					int num_leading_slash = 2;
-					for (int i = startpos; i < endpos; i++) {
-						if (uriString [i] != '/')
-							break;
-						num_leading_slash++;
-					}
-					if (num_leading_slash >= 4) {
-						unixAbsPath = false;
-						while (startpos < endpos && uriString[startpos] == '/') {
-							startpos++;
-						}
-					} else if (num_leading_slash >= 3) {
-						startpos += 1;
-					}
-				}
-				
-				if (endpos - startpos > 1 && uriString [startpos + 1] == ':') {
-					unixAbsPath = false;
-					windowsFilePath = true;
-				}
-
-			} else if (!IsPredefinedScheme (scheme)) {
-				path = uriString.Substring(startpos, endpos-startpos);
-				isOpaquePart = true;
-				return null;
-			}
-
-			// 5 path
-			if (unixAbsPath) {
-				pos = -1;
-			} else {
-				pos = uriString.IndexOf ('/', startpos, endpos - startpos);
-				if (pos == -1 && windowsFilePath)
-					pos = uriString.IndexOf ('\\', startpos, endpos - startpos);
-			}
-			if (pos != -1) {
-				path = uriString.Substring (pos, endpos - pos);
-				if (!SupportsQuery ()) {
-					if (scheme != Uri.UriSchemeNntp)
-						path = path.Replace ('\\', '/');
-					path = EscapeString (path, EscapeNews);
-				}
-				endpos = pos;
-			} else {
-				if (scheme != Uri.UriSchemeMailto)
+			if (elements.path != null) {
+				path = UriHelper.FormatAbsolute (elements.path, scheme,
+					UriComponents.Path, UriFormat.UriEscaped, formatFlags);
+				if (elements.delimiter == SchemeDelimiter && string.IsNullOrEmpty(path))
 					path = "/";
 			}
 
-			// 4.a user info
-			if (unixAbsPath)
-				pos = -1;
-			else
-				pos = uriString.IndexOf ('@', startpos, endpos-startpos);
-			if (pos != -1) {
-				// supplying username / password on a file URI is not supported
-				if (scheme == UriSchemeFile)
-					return "Invalid host";
-				userinfo = uriString.Substring (startpos, pos-startpos);
-				startpos = pos + 1;
+			if (elements.query != null) {
+				query = "?" + UriHelper.FormatAbsolute (elements.query, scheme,
+					UriComponents.Query, UriFormat.UriEscaped, formatFlags);
 			}
 
-			// 4.b port
-			bool valid_port = true;
-			port = -1;
-			if (unixAbsPath)
-				pos = -1;
-			else
-				pos = uriString.LastIndexOf (':', endpos-1, endpos-startpos);
-			if (pos != -1 && pos != endpos - 1) {
-				string portStr = uriString.Substring(pos + 1, endpos - (pos + 1));
-				if (portStr.Length > 0 && portStr[portStr.Length - 1] != ']') {
-					if (!Int32.TryParse (portStr, NumberStyles.None, CultureInfo.InvariantCulture, out port) ||
-					    port < 0 || port > UInt16.MaxValue)
-						valid_port = false; // delay reporting
-					else
-						endpos = pos;
-				} else {
-					if (port == -1) {
-						port = GetDefaultPort (scheme);
-					}
-				}
-			} else if (!IsFile) {
-				// if no port is specified by a colon ':' is present then we must ignore it
-				// since it would be part of the host name and, as such, would be invalid
-				if (pos == endpos - 1)
-					endpos--;
-
-				if (port == -1)
-					port = GetDefaultPort (scheme);
-			}
-			
-			// 4 authority
-			uriString = uriString.Substring(startpos, endpos-startpos);
-			host = uriString;
-
-			if (unixAbsPath) {
-				path = Reduce ('/' + uriString, true);
-				host = String.Empty;
-			} else if (host.Length == 2 && host [1] == ':') {
-				if (scheme != UriSchemeFile) {
-					host = host [0].ToString ();
-				} else {
-					// windows filepath
-					path = host + path;
-					host = String.Empty;
-				}
-			} else if (isUnixFilePath) {
-				uriString = "//" + uriString;
-				host = String.Empty;
-			} else if (scheme == UriSchemeFile) {
-				// under Windows all file:// URI are considered UNC, which is not the case other MacOS (e.g. Silverlight)
-#if BOOTSTRAP_BASIC
-				isUnc = isWin32;
-#else
-				isUnc = Environment.IsRunningOnWindows;
-#endif
-			} else if (host.Length == 0 &&
-				   (scheme == UriSchemeHttp || scheme == UriSchemeGopher || scheme == UriSchemeNntp ||
-				    scheme == UriSchemeHttps || scheme == UriSchemeFtp)) {
-				return "Invalid URI: The Authority/Host could not be parsed.";
+			if (elements.fragment != null) {
+				fragment = "#" + UriHelper.FormatAbsolute (elements.fragment, scheme,
+					UriComponents.Fragment, UriFormat.UriEscaped, formatFlags);
 			}
 
-			if (host.Length > 0) {
-				switch (CheckHostName (host)) {
-				case UriHostNameType.Unknown:
-					if ((host [0] == ':') || (host [0] == '@'))
-						return "Invalid URI: The hostname could not be parsed.";
-					if (host.IndexOf (':') != -1)
-						return "Invalid URI: Invalid port specified.";
-					if (Parser is DefaultUriParser || Parser == null)
-						return "Invalid URI: The hostname could not be parsed.";
-					break;
-				case UriHostNameType.IPv6:
-					IPv6Address ipv6addr;
-					if (IPv6Address.TryParse (host, out ipv6addr)) {
-						host = "[" + ipv6addr.ToString (true) + "]";
-						scope_id = ipv6addr.ScopeId;
-					}
-					break;
-				}
-			}
-			// delayed reporting (to throw the expected exception in the right order)
-			if (!valid_port)
-				return "Invalid URI: Invalid port number";
-
-			UriFormatException ex = null;
-			if (Parser != null)
-				Parser.InitializeAndValidate (this, out ex);
-			if (ex != null)
-				return ex.Message;
-
-			if ((scheme != Uri.UriSchemeMailto) && (scheme != Uri.UriSchemeFile)) {
-				path = Reduce (path, CompactEscaped (scheme));
-			}
+			isAbsoluteUri = elements.isAbsoluteUri;
+			isUnc = elements.isUnc;
+			isUnixFilePath = elements.isUnixFilePath;
+			scope_id = elements.scopeId;
 
 			return null;
 		}
@@ -1780,7 +1453,7 @@ namespace System {
 
 		// A variant of HexUnescape() which can decode multi-byte escaped
 		// sequences such as (e.g.) %E3%81%8B into a single character
-		private static char HexUnescapeMultiByte (string pattern, ref int index, out char surrogate) 
+		internal static char HexUnescapeMultiByte (string pattern, ref int index, out char surrogate) 
 		{
 			surrogate = char.MinValue;
 
@@ -1888,6 +1561,7 @@ namespace System {
 			new UriScheme (UriSchemeFile, SchemeDelimiter, -1),
 			new UriScheme (UriSchemeMailto, ":", 25),
 			new UriScheme (UriSchemeNews, ":", 119),
+			new UriScheme (UriSchemeUuid, ":", -1),
 			new UriScheme (UriSchemeNntp, SchemeDelimiter, 119),
 			new UriScheme (UriSchemeGopher, SchemeDelimiter, 70),
 		};
@@ -2072,19 +1746,19 @@ namespace System {
 		//
 		static bool NeedToEscapeDataChar (char b)
 		{
-#if NET_4_0
-			// .NET 4.0 follows RFC 3986 Unreserved Characters
-			return !((b >= 'A' && b <= 'Z') ||
-				 (b >= 'a' && b <= 'z') ||
-				 (b >= '0' && b <= '9') ||
-				 b == '-' || b == '.' || b == '_' || b == '~');
-#else
+			if (IriParsing) {
+				// .NET 4.0 follows RFC 3986 Unreserved Characters
+				return !((b >= 'A' && b <= 'Z') ||
+					 (b >= 'a' && b <= 'z') ||
+					 (b >= '0' && b <= '9') ||
+					 b == '-' || b == '.' || b == '_' || b == '~');
+			}
+
 			return !((b >= 'A' && b <= 'Z') ||
 				 (b >= 'a' && b <= 'z') ||
 				 (b >= '0' && b <= '9') ||
 				 b == '_' || b == '~' || b == '!' || b == '\'' ||
 				 b == '(' || b == ')' || b == '*' || b == '-' || b == '.');
-#endif
 		}
 		
 		public static string EscapeDataString (string stringToEscape)
@@ -2123,27 +1797,15 @@ namespace System {
 		//
 		static bool NeedToEscapeUriChar (char b)
 		{
-			if ((b >= 'A' && b <= 'Z') || (b >= 'a' && b <= 'z') || (b >= '&' && b <= ';'))
+			if ((b >= 'A' && b <= 'Z') || (b >= 'a' && b <= 'z') || (b >= '&' && b <= ';') ||
+				b == '!' || b == '#' || b == '$' || b == '=' || b == '?' || b == '@' || b == '_' || b == '~')
 				return false;
 
-			switch (b) {
-			case '!':
-			case '#':
-			case '$':
-			case '=':
-			case '?':
-			case '@':
-			case '_':
-			case '~':
 #if NET_4_0
-			// .NET 4.0 follows RFC 3986
-			case '[':
-			case ']':
+			if (b == '[' || b == ']')
+				return !IriParsing;
 #endif
-				return false;
-			default:
-				return true;
-			}
+			return true;
 		}
 		
 		public static string EscapeUriString (string stringToEscape)
