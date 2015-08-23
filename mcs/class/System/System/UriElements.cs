@@ -36,19 +36,26 @@ namespace System {
 			delimiter = String.Empty;
 			user = null;
 			host = String.Empty;
-			port = String.Empty;
+			port = -1;
 			path = String.Empty;
 			query = null;
 			fragment = null;
+
+			isAbsoluteUri = true;
 		}
 		
 		public string scheme;
 		public string delimiter;
 		public string user;
 		public string host;
-		public string port;
+		public int port;
 		public string path;
 		public string query;
 		public string fragment;
+
+		public bool isAbsoluteUri;
+		public bool isUnixFilePath;
+		public bool isUnc;
+		public long scopeId;
 	}
 }

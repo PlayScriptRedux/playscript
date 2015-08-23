@@ -19,6 +19,8 @@ namespace System {
 			HasHost = 1 << 2,
 			HasFragmentPercentage = 1 << 3,
 			UserEscaped = 1 << 4,
+			IPv6Host = 1 << 5,
+			NoSlashReplace = 1 << 6,
 		}
 
 		[Flags]
@@ -44,7 +46,7 @@ namespace System {
 
 		private static UriSchemes GetScheme (string schemeName)
 		{
-			schemeName = schemeName.ToLower ();
+			schemeName = schemeName.ToLowerInvariant ();
 
 			if (schemeName == "")
 				return UriSchemes.None;
@@ -186,6 +188,10 @@ namespace System {
 			if (component == UriComponents.Fragment && UriHelper.HasPercentage (str))
 				formatFlags |= UriHelper.FormatFlags.HasFragmentPercentage;
 
+			if (component == UriComponents.Host &&
+				str.Length > 1 && str [0] == '[' && str [str.Length - 1] == ']')
+				 formatFlags |= UriHelper.FormatFlags.IPv6Host;
+
 			UriSchemes scheme = GetScheme (schemeName);
 
 			if (scheme == UriSchemes.Custom && (formatFlags & FormatFlags.HasHost) != 0)
@@ -248,15 +254,17 @@ namespace System {
 			if (!isEscaped && !userEscaped && NeedToEscape (c, scheme, component, uriKind, uriFormat, formatFlags))
 				return HexEscapeMultiByte (c);
 
-			if (isEscaped && (userEscaped || !NeedToUnescape (c, scheme, component, uriKind, uriFormat, formatFlags))) {
-				if (IriParsing && ("<>^{|}".Contains(""+c) || c > 0x7F) &&
+			if (isEscaped && !NeedToUnescape (c, scheme, component, uriKind, uriFormat, formatFlags)) {
+				if (IriParsing &&
+					(c == '<' || c == '>' || c == '^' || c == '{' || c == '|' || c ==  '}' || c > 0x7F) &&
 					(formatFlags & FormatFlags.HasUriCharactersToNormalize) != 0)
 					return HexEscapeMultiByte (c); //Upper case escape
 
 				return cStr; //Keep original case
 			}
 
-			if (c == '\\' && component == UriComponents.Path) {
+			if ((formatFlags & FormatFlags.NoSlashReplace) == 0 &&
+				c == '\\' && component == UriComponents.Path) {
 				if (!IriParsing && uriFormat != UriFormat.UriEscaped &&
 					SchemeContains (scheme, UriSchemes.Http | UriSchemes.Https))
 					return "/";
@@ -274,7 +282,8 @@ namespace System {
 		private static bool NeedToUnescape (char c, UriSchemes scheme, UriComponents component, UriKind uriKind,
 			UriFormat uriFormat, FormatFlags formatFlags)
 		{
-			string cStr = c.ToString (CultureInfo.InvariantCulture);
+			if ((formatFlags & FormatFlags.IPv6Host) != 0)
+				return false;
 
 			if (uriFormat == UriFormat.Unescaped)
 				return true;
@@ -325,7 +334,7 @@ namespace System {
 				if (uriKind == UriKind.Relative)
 					return false;
 
-				if ("$&+,;=@".Contains (cStr))
+				if (c == '$' || c == '&' || c == '+' || c == ',' || c == ';' || c == '=' || c == '@')
 					return true;
 
 				if (c < 0x20 || c == 0x7f)
@@ -333,14 +342,15 @@ namespace System {
 			}
 
 			if (uriFormat == UriFormat.SafeUnescaped || uriFormat == ToStringUnescape) {
-				if ("-._~".Contains (cStr))
+				if (c == '-' || c == '.' || c == '_' || c == '~')
 					return true;
 
-				if (" !\"'()*<>^`{}|".Contains (cStr))
+				if (c == ' ' || c == '!' || c == '"' || c == '\'' || c == '(' || c == ')' || c == '*' ||
+					c == '<' || c == '>' || c == '^' || c == '`' || c == '{' || c == '}' || c == '|')
 					return uriKind != UriKind.Relative ||
 						(IriParsing && (formatFlags & FormatFlags.HasUriCharactersToNormalize) != 0);
 
-				if (":[]".Contains (cStr))
+				if (c == ':' || c == '[' || c == ']')
 					return uriKind != UriKind.Relative;
 
 				if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9'))
@@ -354,7 +364,7 @@ namespace System {
 
 			if (uriFormat == UriFormat.UriEscaped) {
 				if (!IriParsing) {
-					if (".".Contains (cStr)) {
+					if (c == '.') {
 						if (SchemeContains (scheme, UriSchemes.File))
 							return component != UriComponents.Fragment;
 
@@ -365,11 +375,12 @@ namespace System {
 					return false;
 				}
 
-				if ("-._~".Contains (cStr))
+				if (c == '-' || c == '.' || c == '_' || c == '~')
 					return true;
 				
 				if ((formatFlags & FormatFlags.HasUriCharactersToNormalize) != 0 &&
-					"!'()*:[]".Contains (cStr))
+					(c == '!' || c == '\'' || c == '(' || c == ')' || c == '*' ||
+					c == ':' || c == '[' || c == ']'))
 					return true;
 
 				if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9'))
@@ -384,7 +395,8 @@ namespace System {
 		private static bool NeedToEscape (char c, UriSchemes scheme, UriComponents component, UriKind uriKind,
 			UriFormat uriFormat, FormatFlags formatFlags)
 		{
-			string cStr = c.ToString (CultureInfo.InvariantCulture);
+			if ((formatFlags & FormatFlags.IPv6Host) != 0)
+				return false;
 
 			if (c == '?') {
 				if (uriFormat == UriFormat.Unescaped)
@@ -418,7 +430,7 @@ namespace System {
 			}
 
 			if (uriFormat == UriFormat.SafeUnescaped || uriFormat == ToStringUnescape) {
-				if ("%".Contains (cStr))
+				if (c == '%')
 					return uriKind != UriKind.Relative;
 			}
 
@@ -429,12 +441,13 @@ namespace System {
 
 			if (uriFormat == UriFormat.UriEscaped) {
 				if (c < 0x20 || c >= 0x7F)
+					return component != UriComponents.Host;
+
+				if (c == ' ' || c == '"' || c == '%' || c == '<' || c == '>' || c == '^' ||
+					c == '`' || c == '{' || c == '}' || c == '|')
 					return true;
 
-				if (" \"%<>^`{}|".Contains (cStr))
-					return true;
-
-				if ("[]".Contains (cStr))
+				if (c == '[' || c == ']')
 					return !IriParsing;
 
 				if (c == '\\') {
