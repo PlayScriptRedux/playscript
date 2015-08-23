@@ -5781,6 +5781,9 @@ namespace Mono.CSharp {
 				break;
 			}
 
+			if (args == null)
+				return false;
+
 			foreach (var arg in args) {
 				var na = arg as NamedArgument;
 				if (na == null)
