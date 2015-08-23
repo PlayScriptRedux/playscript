@@ -832,7 +832,7 @@ namespace Mono.CSharp
 			args.Add (new Argument (awaiter, Argument.AType.Ref));
 			args.Add (new Argument (new CompilerGeneratedThis (CurrentType, Location), Argument.AType.Ref));
 			using (ec.With (BuilderContext.Options.OmitDebugInfo, true)) {
-				mg.EmitCall (ec, args);
+				mg.EmitCall (ec, args, true);
 			}
 		}
 
@@ -910,7 +910,7 @@ namespace Mono.CSharp
 			args.Add (new Argument (exceptionVariable));
 
 			using (ec.With (BuilderContext.Options.OmitDebugInfo, true)) {
-				mg.EmitCall (ec, args);
+				mg.EmitCall (ec, args, true);
 			}
 		}
 
@@ -934,7 +934,7 @@ namespace Mono.CSharp
 			}
 
 			using (ec.With (BuilderContext.Options.OmitDebugInfo, true)) {
-				mg.EmitCall (ec, args);
+				mg.EmitCall (ec, args, true);
 			}
 		}
 

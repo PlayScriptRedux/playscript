@@ -80,7 +80,7 @@ namespace Mono.CSharp
 		public override void Emit (EmitContext ec)
 		{
 			var call = new CallEmitter ();
-			call.EmitPredefined (ec, oper, arguments, loc);
+			call.Emit (ec, oper, arguments, loc);
 		}
 
 		public override void FlowAnalysis (FlowAnalysisContext fc)
@@ -5653,7 +5653,7 @@ namespace Mono.CSharp
 			var method = res.ResolveMember<MethodSpec> (new ResolveContext (ec.MemberContext), ref arguments);
 			if (method != null) {
 				var call = new CallEmitter ();
-				call.EmitPredefined (ec, method, arguments);
+				call.EmitPredefined (ec, method, arguments, false);
 			}
 		}
 
@@ -6873,7 +6873,7 @@ namespace Mono.CSharp
 			fc.SetVariableAssigned (variable_info);
 		}
 	}
-	
+
 	/// <summary>
 	///   Invocation of methods or delegates.
 	/// </summary>
@@ -7346,18 +7346,15 @@ namespace Mono.CSharp
 			if (mg.IsConditionallyExcluded)
 				return;
 
-			mg.EmitCall (ec, arguments);
+			mg.EmitCall (ec, arguments, false);
 		}
 		
 		public override void EmitStatement (EmitContext ec)
 		{
-			Emit (ec);
+			if (mg.IsConditionallyExcluded)
+				return;
 
-			// 
-			// Pop the return value if there is one
-			//
-			if (type.Kind != MemberKind.Void)
-				ec.Emit (OpCodes.Pop);
+			mg.EmitCall (ec, arguments, true);
 		}
 
 		public override SLE.Expression MakeExpression (BuilderContext ctx)
@@ -9994,6 +9991,11 @@ namespace Mono.CSharp
 			return (type.Kind & dot_kinds) != 0 || type.BuiltinType == BuiltinTypeSpec.Type.Dynamic;
 		}
 
+		static bool IsNullPropagatingValid (TypeSpec type)
+		{
+			return TypeSpec.IsReferenceType (type) || type.IsNullableType;
+		}
+
 		public override Expression LookupNameExpression (ResolveContext rc, MemberLookupRestrictions restrictions)
 		{
 			var isPlayScript = rc.FileType == SourceFileType.PlayScript;
@@ -10077,6 +10079,16 @@ namespace Mono.CSharp
 					restrictions |= MemberLookupRestrictions.PreferStatic;
 				} else {
 					restrictions |= MemberLookupRestrictions.PreferInstance;
+				}
+			}
+
+			if (this is NullMemberAccess) {
+				if (!IsNullPropagatingValid (expr.Type))
+					expr.Error_OperatorCannotBeApplied (rc, loc, "?", expr.Type);
+
+				if (expr_type.IsNullableType) {
+					expr = Nullable.Unwrap.Create (expr, true).Resolve (rc);
+					expr_type = expr.Type;
 				}
 			}
 
@@ -10225,6 +10237,10 @@ namespace Mono.CSharp
 
 			if (sn != null && me.IsStatic && (expr = me.ProbeIdenticalTypeName (rc, expr, sn)) != expr) {
 				sn = null;
+			}
+
+			if (this is NullMemberAccess) {
+				me.NullShortCircuit = true;
 			}
 
 			me = me.ResolveMemberAccess (rc, expr, sn);
@@ -10424,6 +10440,14 @@ namespace Mono.CSharp
 			}
 
 			return ret;
+		}
+	}
+
+	public class NullMemberAccess : MemberAccess
+	{
+		public NullMemberAccess (Expression expr, string identifier, TypeArguments args, Location loc)
+			: base (expr, identifier, args, loc)
+		{
 		}
 	}
 
