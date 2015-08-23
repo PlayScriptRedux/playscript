@@ -17,6 +17,8 @@ namespace System {
 			HasComponentCharactersToNormalize = 1 << 0,
 			HasUriCharactersToNormalize = 1 << 1,
 			HasHost = 1 << 2,
+			HasFragmentPercentage = 1 << 3,
+			UserEscaped = 1 << 4,
 		}
 
 		[Flags]
@@ -42,6 +44,8 @@ namespace System {
 
 		private static UriSchemes GetScheme (string schemeName)
 		{
+			schemeName = schemeName.ToLower ();
+
 			if (schemeName == "")
 				return UriSchemes.None;
 			if (schemeName == Uri.UriSchemeHttp)
@@ -135,6 +139,26 @@ namespace System {
 			return false;
 		}
 
+		internal static bool HasPercentage (string str)
+		{
+			int len = str.Length;
+			for (int i = 0; i < len; i++) {
+				char c = str [i];
+				if (c != '%')
+					continue;
+
+				int iStart = i;
+				char surrogate;
+				char x = Uri.HexUnescapeMultiByte (str, ref i, out surrogate);
+
+				bool isEscaped = i - iStart > 1;
+				if (!isEscaped || x == '%')
+					return true;
+			}
+
+			return false;
+		}
+
 		internal static string FormatAbsolute (string str, string schemeName,
 			UriComponents component, UriFormat uriFormat, FormatFlags formatFlags = FormatFlags.None)
 		{
@@ -158,6 +182,9 @@ namespace System {
 
 			if (UriHelper.HasCharactersToNormalize (str))
 				formatFlags |= UriHelper.FormatFlags.HasComponentCharactersToNormalize;
+
+			if (component == UriComponents.Fragment && UriHelper.HasPercentage (str))
+				formatFlags |= UriHelper.FormatFlags.HasFragmentPercentage;
 
 			UriSchemes scheme = GetScheme (schemeName);
 
@@ -199,25 +226,35 @@ namespace System {
 					char surrogate;
 					char x = Uri.HexUnescapeMultiByte (str, ref i, out surrogate);
 
-					bool isEscaped = i - iStart > 1;
-					s.Append (FormatChar (x, isEscaped, scheme, uriKind, component, uriFormat, formatFlags));
+					string cStr = str.Substring(iStart, i-iStart);
+					s.Append (FormatChar (x, cStr, scheme, uriKind, component, uriFormat, formatFlags));
 					if (surrogate != char.MinValue)
 						s.Append (surrogate);
 
 					i--;
 				} else
-					s.Append (FormatChar (c, false, scheme, uriKind, component, uriFormat, formatFlags));
+					s.Append (FormatChar (c, "" + c, scheme, uriKind, component, uriFormat, formatFlags));
 			}
 			
 			return s.ToString();
 		}
 
-		private static string FormatChar (char c, bool isEscaped, UriSchemes scheme, UriKind uriKind,
+		private static string FormatChar (char c, string cStr, UriSchemes scheme, UriKind uriKind,
 			UriComponents component, UriFormat uriFormat, FormatFlags formatFlags)
 		{
-			if (!isEscaped && NeedToEscape (c, scheme, component, uriKind, uriFormat, formatFlags) ||
-				isEscaped && !NeedToUnescape (c, scheme, component, uriKind, uriFormat, formatFlags))
+			var isEscaped = cStr.Length != 1;
+
+			var userEscaped = (formatFlags & FormatFlags.UserEscaped) != 0;
+			if (!isEscaped && !userEscaped && NeedToEscape (c, scheme, component, uriKind, uriFormat, formatFlags))
 				return HexEscapeMultiByte (c);
+
+			if (isEscaped && (userEscaped || !NeedToUnescape (c, scheme, component, uriKind, uriFormat, formatFlags))) {
+				if (IriParsing && ("<>^{|}".Contains(""+c) || c > 0x7F) &&
+					(formatFlags & FormatFlags.HasUriCharactersToNormalize) != 0)
+					return HexEscapeMultiByte (c); //Upper case escape
+
+				return cStr; //Keep original case
+			}
 
 			if (c == '\\' && component == UriComponents.Path) {
 				if (!IriParsing && uriFormat != UriFormat.UriEscaped &&
@@ -367,6 +404,11 @@ namespace System {
 				//Avoid removing fragment
 				if (component == UriComponents.Path || component == UriComponents.Query)
 					return false;
+
+				if (component == UriComponents.Fragment &&
+					(uriFormat == ToStringUnescape || uriFormat == UriFormat.SafeUnescaped) &&
+					(formatFlags & FormatFlags.HasFragmentPercentage) != 0)
+					return true;
 
 				if (IriParsing)
 					return false;

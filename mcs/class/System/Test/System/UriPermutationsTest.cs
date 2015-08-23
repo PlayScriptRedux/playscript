@@ -34,6 +34,10 @@ namespace MonoTests.System {
 			"a/a{0}?%30#", "a/a?{0}#%30", "a/a%30?#",   // see why on TestChars comment
 		};
 
+		private static readonly string [] specialCases = {
+			"a/a#%#", "a/a#%25#" // '%' cause '#' to escape in some cases
+		};
+
 		private static readonly string [] reduceLocations = {
 			"a/b/{0}", "a/b/{0}a", "a/b/c{0}",
 			"a/b/{0}/a", "a/b/{0}a/a", "a/b/c{0}/a",
@@ -110,13 +114,16 @@ namespace MonoTests.System {
 				action ("" + c);
 		}
 
-		internal static string HexEscapeMultiByte (char character)
+		internal static string HexEscapeMultiByte (char character, bool upper)
 		{
 			const string hex_upper_chars = "0123456789ABCDEF";
+			const string hex_lower_chars = "0123456789abcdef";
+
+			string hex_chars = (upper)? hex_upper_chars : hex_lower_chars;
 			string ret = "";
 			byte [] bytes = Encoding.UTF8.GetBytes (new [] {character});
 			foreach (byte b in bytes)
-				ret += "%" + hex_upper_chars [((b & 0xf0) >> 4)] + hex_upper_chars [((b & 0x0f))];
+				ret += "%" + hex_chars [((b & 0xf0) >> 4)] + hex_chars [((b & 0x0f))];
 
 			return ret;
 		}
@@ -158,14 +165,21 @@ namespace MonoTests.System {
 		private void TestPercentageEncoding (UriToStringDelegate toString, bool testRelative = false, string id = "")
 		{
 			TestChars (unescapedStr => {
-				var sb = new StringBuilder ();
-				foreach (char c in unescapedStr)
-					sb.Append (HexEscapeMultiByte (c));
-				string escapedStr = sb.ToString ();
+				var sbUpper = new StringBuilder ();
+				var sbLower = new StringBuilder ();
+				foreach (char c in unescapedStr) {
+					sbUpper.Append (HexEscapeMultiByte (c, true));
+					sbLower.Append (HexEscapeMultiByte (c, false));
+				}
+				string escapedUpperStr = sbUpper.ToString ();
+				string escapedLowerStr = sbLower.ToString ();
 
 				TestLocations (componentLocations, unescapedStr+id, unescapedStr, toString, testRelative);
-				TestLocations (componentLocations, escapedStr+id, escapedStr, toString, testRelative);
+				TestLocations (componentLocations, escapedUpperStr+id+"[Upper]", escapedUpperStr, toString, testRelative);
+				TestLocations (componentLocations, escapedLowerStr+id+"[Lower]", escapedLowerStr, toString, testRelative);
 			});
+
+			TestLocations (specialCases, id, "", toString, testRelative);
 		}
 
 		private void TestReduce (UriToStringDelegate toString, bool testRelative = true, string id = "")

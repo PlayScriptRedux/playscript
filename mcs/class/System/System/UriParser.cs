@@ -71,6 +71,9 @@ namespace System {
 			if (UriHelper.HasCharactersToNormalize (uri.OriginalString))
 				formatFlags |= UriHelper.FormatFlags.HasUriCharactersToNormalize;
 
+			if (uri.UserEscaped)
+				formatFlags |= UriHelper.FormatFlags.UserEscaped;
+
 			if (!string.IsNullOrEmpty(elements.host))
 				formatFlags |= UriHelper.FormatFlags.HasHost;
 
@@ -80,7 +83,7 @@ namespace System {
 			case UriComponents.Scheme:
 				return scheme;
 			case UriComponents.UserInfo:
-				return elements.user;
+				return elements.user ?? "";
 			case UriComponents.Host:
 				return elements.host;
 			case UriComponents.Port: {
@@ -117,7 +120,7 @@ namespace System {
 
 			if ((components & UriComponents.UserInfo) != 0) {
 				string userinfo = elements.user;
-				if (!String.IsNullOrEmpty (userinfo)) {
+				if (userinfo != null) {
 					sb.Append (elements.user);
 					sb.Append ('@');
 				}
