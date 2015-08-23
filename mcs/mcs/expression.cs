@@ -1552,8 +1552,8 @@ namespace Mono.CSharp
 				}
 			}
 
-			if (expr.Type == InternalType.AnonymousMethod) {
-				ec.Report.Error (837, loc, "The `{0}' operator cannot be applied to a lambda expression or anonymous method",
+			if (expr.Type == InternalType.AnonymousMethod || expr.Type == InternalType.MethodGroup) {
+				ec.Report.Error (837, loc, "The `{0}' operator cannot be applied to a lambda expression, anonymous method, or method group",
 					OperatorName);
 				return null;
 			}
