@@ -6117,17 +6117,10 @@ mono_jit_compile_method_inner (MonoMethod *method, MonoDomain *target_domain, in
 	else
 		shared = NULL;
 
-	/*
-	 * FIXME: lookup_method_inner requires the loader lock.
-	 * FIXME: This is no longer true, can this be dropped ?
-	 */
-	mono_loader_lock ();
 	mono_domain_lock (target_domain);
 
 	/* Check if some other thread already did the job. In this case, we can
        discard the code this thread generated. */
-
-	mono_domain_jit_code_hash_lock (target_domain);
 
 	info = lookup_method_inner (target_domain, method, shared);
 	if (info) {
@@ -6137,18 +6130,18 @@ mono_jit_compile_method_inner (MonoMethod *method, MonoDomain *target_domain, in
 //			printf("Discarding code for method %s\n", method->name);
 		}
 	}
-	
 	if (code == NULL) {
+		/* The lookup + insert is atomic since this is done inside the domain lock */
+		mono_domain_jit_code_hash_lock (target_domain);
 		mono_internal_hash_table_insert (&target_domain->jit_code_hash, cfg->jit_info->d.method, cfg->jit_info);
 		mono_domain_jit_code_hash_unlock (target_domain);
+
 		code = cfg->native_code;
 
 		if (cfg->generic_sharing_context && mono_method_is_generic_sharable (method, FALSE))
 			mono_stats.generics_shared_methods++;
 		if (cfg->gsharedvt)
 			mono_stats.gsharedvt_methods++;
-	} else {
-		mono_domain_jit_code_hash_unlock (target_domain);
 	}
 
 	jinfo = cfg->jit_info;
@@ -6200,7 +6193,6 @@ mono_jit_compile_method_inner (MonoMethod *method, MonoDomain *target_domain, in
 	mono_emit_jit_map (jinfo);
 #endif
 	mono_domain_unlock (target_domain);
-	mono_loader_unlock ();
 
 	vtable = mono_class_vtable (target_domain, method->klass);
 	if (!vtable) {
@@ -6383,7 +6375,9 @@ mono_jit_free_method (MonoDomain *domain, MonoMethod *method)
 
 	mono_domain_lock (domain);
 	g_hash_table_remove (domain_jit_info (domain)->dynamic_code_hash, method);
+	mono_domain_jit_code_hash_lock (domain);
 	mono_internal_hash_table_remove (&domain->jit_code_hash, method);
+	mono_domain_jit_code_hash_unlock (domain);
 	g_hash_table_remove (domain_jit_info (domain)->jump_trampoline_hash, method);
 	mono_conc_hashtable_remove (domain_jit_info (domain)->runtime_invoke_hash, method);
 
