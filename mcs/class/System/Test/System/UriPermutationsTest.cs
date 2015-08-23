@@ -1,6 +1,4 @@
 using System;
-using System.IO;
-using System.Reflection;
 using System.Text;
 using NUnit.Framework;
 
@@ -13,6 +11,7 @@ namespace MonoTests.System {
 		// The generated files should then be used when running the tests in Mono with CreateMode = false
 		private const bool createMode = false;
 
+		// The final location depends on NET_2_0, NET_4_0, NET_4_5.
 		private const string location = "./Test/System/UriPermutationsTest/";
 
 		private const string nonAsciiTestedChars = "☕";
@@ -35,7 +34,8 @@ namespace MonoTests.System {
 		};
 
 		private static readonly string [] specialCases = {
-			"a/a#%#", "a/a#%25#" // '%' cause '#' to escape in some cases
+			"a/a#%#", "a/a#%25#", // '%' cause '#' to escape in some cases
+			"a/%80%81%B8%B9", // invalid utf8 encoding
 		};
 
 		private static readonly string [] reduceLocations = {
@@ -58,22 +58,17 @@ namespace MonoTests.System {
 			"", ".", "..", "...", "%2E", "%2E%2E", "%2E%2E%2E"
 		};
 
-		public static readonly bool IriParsing;
-
-		static UriPermutationsTest ()
-		{
-			FieldInfo iriParsingField = typeof (Uri).GetField ("s_IriParsing",
-				BindingFlags.Static | BindingFlags.GetField | BindingFlags.NonPublic);
-			if (iriParsingField != null)
-				IriParsing = (bool) iriParsingField.GetValue (null);
-		}
-
 		[SetUp]
 		public void Setup()
 		{
 			StringTester.CreateMode = createMode;
-			StringTester.Location = location;
-			StringTester.Location += (IriParsing) ? "IriParsing" : "NoIriParsing";
+#if NET_4_5
+			StringTester.Location = location + "NET_4_5";
+#elif NET_4_0
+			StringTester.Location = location + "NET_4_0";
+#else
+			StringTester.Location = location + "NET_2_0";
+#endif
 		}
 
 		[TearDown]
@@ -197,29 +192,16 @@ namespace MonoTests.System {
 
 		private delegate void TestStringDelegate (UriToStringDelegate toString, bool testRelative = true, string id = "");
 
-		private void TestLocalPath (TestStringDelegate test)
-		{
-			var id = (Path.DirectorySeparatorChar == '/') ? "[UNIX]" : "[MS]";
-			test (uri => uri.LocalPath, false, id);
-
-			if (!createMode)
-				return;
-
-			var altId = (Path.AltDirectorySeparatorChar == '/') ? "[UNIX]" : "[MS]";
-			test (uri => {
-				var result = uri.LocalPath;
-
-				if (uri.Scheme == Uri.UriSchemeFile)
-					result = result.Replace (Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-
-				return result;
-			}, false, altId);
-		}
-
 		[Test]
 		public void PercentageEncoding_AbsoluteUri ()
 		{
 			TestPercentageEncoding (uri => uri.AbsoluteUri);
+		}
+
+		[Test]
+		public void PercentageEncoding_AbsolutePath ()
+		{
+			TestPercentageEncoding (uri => uri.AbsolutePath);
 		}
 
 		[Test]
@@ -265,12 +247,6 @@ namespace MonoTests.System {
 		}
 
 		[Test]
-		public void PercentageEncoding_LocalPath ()
-		{
-			TestLocalPath (TestPercentageEncoding);
-		}
-
-		[Test]
 		public void PercentageEncoding_Query ()
 		{
 			TestPercentageEncoding (uri => uri.Query);
@@ -282,16 +258,49 @@ namespace MonoTests.System {
 			TestPercentageEncoding (uri => uri.ToString (), true);
 		}
 
+		class UriEx : Uri
+		{
+			public UriEx (string s) : base (s)
+			{
+			}
+
+			public string UnescapeString (string s)
+			{
+				return Unescape (s);
+			}
+
+			public static string UnescapeString (string uri, string target)
+			{
+				return new UriEx (uri).UnescapeString (target);
+			}
+		}
+
+		[Test]
+		public void PercentageEncoding_Unescape ()
+		{
+			TestChars (str => {
+				var sbUpper = new StringBuilder ();
+				var sbLower = new StringBuilder ();
+				foreach (char c in str) {
+					sbUpper.Append (HexEscapeMultiByte (c, true));
+					sbLower.Append (HexEscapeMultiByte (c, false));
+				}
+				string escapedUpperStr = sbUpper.ToString ();
+				string escapedLowerStr = sbLower.ToString ();
+
+				StringTester.Assert (str + "[Unescaped]", UriEx.UnescapeString ("file://a/", str));
+				StringTester.Assert (escapedUpperStr + "[EscapedUpper]", UriEx.UnescapeString ("file://a/", escapedUpperStr));
+				StringTester.Assert (escapedLowerStr + "[EscapedLower]", UriEx.UnescapeString ("file://a/", escapedLowerStr));
+			});
+
+			foreach (var str in specialCases)
+				StringTester.Assert (str, UriEx.UnescapeString("file://a/", str));
+		}
+
 		[Test]
 		public void Reduce_AbsoluteUri ()
 		{
 			TestReduce (uri => uri.AbsoluteUri, false);
-		}
-
-		[Test]
-		public void Reduce_LocalPath ()
-		{
-			TestLocalPath (TestReduce);
 		}
 
 		[Test]

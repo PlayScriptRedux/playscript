@@ -6903,6 +6903,7 @@ namespace Mono.CSharp
 		protected Arguments arguments;
 		protected Expression expr;
 		protected MethodGroupExpr mg;
+		bool conditional_access_receiver;
 		
 		public Invocation (Expression expr, Arguments arguments)
 		{
@@ -7015,12 +7016,21 @@ namespace Mono.CSharp
 			return CreateExpressionFactoryCall (ec, "Call", args);
 		}
 
-		protected bool IsInvocationStatement (ResolveContext ec)
+		protected override Expression DoResolve (ResolveContext rc)
 		{
-			return (ec.Statement != null && ec.Statement is StatementExpression && ((StatementExpression)ec.Statement).Expr == this);
+			if (!rc.HasSet (ResolveContext.Options.ConditionalAccessReceiver)) {
+				if (expr.HasConditionalAccess ()) {
+					conditional_access_receiver = true;
+					using (rc.Set (ResolveContext.Options.ConditionalAccessReceiver)) {
+						return DoResolveInvocation (rc);
+					}
+				}
+			}
+
+			return DoResolveInvocation (rc);
 		}
 
-		protected override Expression DoResolve (ResolveContext ec)
+		Expression DoResolveInvocation (ResolveContext ec)
 		{
 			Expression member_expr;
 			bool isPlayScript = ec.FileType == SourceFileType.PlayScript;
@@ -7199,6 +7209,8 @@ namespace Mono.CSharp
 
 			var method = mg.BestCandidate;
 			type = mg.BestCandidateReturnType;
+			if (conditional_access_receiver)
+				type = LiftMemberType (ec, type);
 		
 			if (arguments == null && method.DeclaringType.BuiltinType == BuiltinTypeSpec.Type.Object && method.Name == Destructor.MetadataName) {
 				if (mg.IsBase)
@@ -7307,6 +7319,11 @@ namespace Mono.CSharp
 			return mg.GetSignatureForError ();
 		}
 
+		public override bool HasConditionalAccess ()
+		{
+			return expr.HasConditionalAccess ();
+		}
+
 		//
 		// If a member is a method or event, or if it is a constant, field or property of either a delegate type
 		// or the type dynamic, then the member is invocable
@@ -7346,7 +7363,10 @@ namespace Mono.CSharp
 			if (mg.IsConditionallyExcluded)
 				return;
 
-			mg.EmitCall (ec, arguments, false);
+			if (conditional_access_receiver)
+				mg.EmitCall (ec, arguments, type, false);
+			else
+				mg.EmitCall (ec, arguments, false);
 		}
 		
 		public override void EmitStatement (EmitContext ec)
@@ -7354,7 +7374,10 @@ namespace Mono.CSharp
 			if (mg.IsConditionallyExcluded)
 				return;
 
-			mg.EmitCall (ec, arguments, true);
+			if (conditional_access_receiver)
+				mg.EmitCall (ec, arguments, type, true);
+			else
+				mg.EmitCall (ec, arguments, true);
 		}
 
 		public override SLE.Expression MakeExpression (BuilderContext ctx)
@@ -9812,6 +9835,11 @@ namespace Mono.CSharp
 			return alias + "::" + name;
 		}
 
+		public override bool HasConditionalAccess ()
+		{
+			return false;
+		}
+
 		public override Expression LookupNameExpression (ResolveContext rc, MemberLookupRestrictions restrictions)
 		{
 			if ((restrictions & MemberLookupRestrictions.InvocableOnly) != 0) {
@@ -9983,6 +10011,11 @@ namespace Mono.CSharp
 				expr.Error_OperatorCannotBeApplied (rc, loc, ".", type);
 		}
 
+		public override bool HasConditionalAccess ()
+		{
+			return expr.HasConditionalAccess ();
+		}
+
 		public static bool IsValidDotExpression (TypeSpec type)
 		{
 			const MemberKind dot_kinds = MemberKind.Class | MemberKind.Struct | MemberKind.Delegate | MemberKind.Enum |
@@ -10077,7 +10110,7 @@ namespace Mono.CSharp
 				}
 			}
 
-			if (this is NullMemberAccess) {
+			if (this is ConditionalMemberAccess) {
 				if (!IsNullPropagatingValid (expr.Type)) {
 					expr.Error_OperatorCannotBeApplied (rc, loc, "?", expr.Type);
 					return null;
@@ -10241,8 +10274,8 @@ namespace Mono.CSharp
 				sn = null;
 			}
 
-			if (this is NullMemberAccess) {
-				me.NullShortCircuit = true;
+			if (this is ConditionalMemberAccess) {
+				me.ConditionalAccess = true;
 			}
 
 			me = me.ResolveMemberAccess (rc, expr, sn);
@@ -10445,11 +10478,16 @@ namespace Mono.CSharp
 		}
 	}
 
-	public class NullMemberAccess : MemberAccess
+	public class ConditionalMemberAccess : MemberAccess
 	{
-		public NullMemberAccess (Expression expr, string identifier, TypeArguments args, Location loc)
+		public ConditionalMemberAccess (Expression expr, string identifier, TypeArguments args, Location loc)
 			: base (expr, identifier, args, loc)
 		{
+		}
+
+		public override bool HasConditionalAccess ()
+		{
+			return true;
 		}
 	}
 
@@ -10648,7 +10686,7 @@ namespace Mono.CSharp
 			this.Arguments = args;
 		}
 
-		public bool NullPropagating { get; set; }
+		public bool ConditionalAccess { get; set; }
 
 		public override Location StartLocation {
 			get {
@@ -10665,16 +10703,23 @@ namespace Mono.CSharp
 		// We perform some simple tests, and then to "split" the emit and store
 		// code we create an instance of a different class, and return that.
 		//
-		Expression CreateAccessExpression (ResolveContext ec)
+		Expression CreateAccessExpression (ResolveContext ec, bool conditionalAccessReceiver)
 		{
-			if (NullPropagating && !IsNullPropagatingValid (type)) {
+			Expr = Expr.Resolve (ec);
+			if (Expr == null)
+				return null;
+
+			type = Expr.Type;
+
+			if (ConditionalAccess && !IsNullPropagatingValid (type)) {
 				Error_OperatorCannotBeApplied (ec, loc, "?", type);
 				return null;
 			}
 
 			if (type.IsArray)
 				return new ArrayAccess (this, loc) {
-					NullShortCircuit = NullPropagating
+					ConditionalAccess = ConditionalAccess,
+					ConditionalAccessReceiver = conditionalAccessReceiver
 				};
 
 			if (type.IsPointer)
@@ -10690,9 +10735,14 @@ namespace Mono.CSharp
 
 			var indexers = MemberCache.FindMembers (type, MemberCache.IndexerNameAlias, false);
 			if (indexers != null || type.BuiltinType == BuiltinTypeSpec.Type.Dynamic || type.IsAsDynamicClass) {
-				return new IndexerExpr (indexers, type, this) {
-					NullShortCircuit = NullPropagating
+				var indexer = new IndexerExpr (indexers, type, this) {
+					ConditionalAccess = ConditionalAccess
 				};
+
+				if (conditionalAccessReceiver)
+					indexer.SetConditionalAccessReceiver ();
+
+				return indexer;
 			}
 
 			// PlayScript supports indexer accesses for non-objects
@@ -10720,6 +10770,11 @@ namespace Mono.CSharp
 			return CreateExpressionFactoryCall (ec, "ArrayIndex", args);
 		}
 
+		public override bool HasConditionalAccess ()
+		{
+			return ConditionalAccess || Expr.HasConditionalAccess ();
+		}
+
 		Expression MakePointerAccess (ResolveContext rc, TypeSpec type)
 		{
 			if (Arguments.Count != 1){
@@ -10741,40 +10796,42 @@ namespace Mono.CSharp
 			return new Indirection (p, loc);
 		}
 		
-		protected override Expression DoResolve (ResolveContext ec)
+		protected override Expression DoResolve (ResolveContext rc)
 		{
+			var isPlayScript = rc.FileType == SourceFileType.PlayScript;
+
 			// Handle PlayScript E4X namespace and attribute accessors.
-			if (ec.FileType == SourceFileType.PlayScript && AccessorType != Accessor.ElementAccess) {
+			if (isPlayScript && AccessorType != Accessor.ElementAccess) {
 				if (AccessorType == Accessor.AsE4xAttributeAccess) {
-					return new Invocation(new MemberAccess(Expr, "attribute", loc), Arguments).Resolve (ec);
+					return new Invocation(new MemberAccess(Expr, "attribute", loc), Arguments).Resolve (rc);
 				} else if (AccessorType == Accessor.AsE4xNamespaceAccess) {
-					return new Invocation(new MemberAccess(Expr, "namespace", loc), Arguments).Resolve (ec);
+					return new Invocation(new MemberAccess(Expr, "namespace", loc), Arguments).Resolve (rc);
 				}
 			}
 
-			Expr = Expr.Resolve (ec);
-			if (Expr == null)
+			Expression expr;
+			if (!rc.HasSet (ResolveContext.Options.ConditionalAccessReceiver)) {
+				if (HasConditionalAccess ()) {
+					using (rc.Set (ResolveContext.Options.ConditionalAccessReceiver)) {
+						expr = CreateAccessExpression (rc, true);
+						if (expr == null)
+							return null;
+
+						return expr.Resolve (rc);
+					}
+				}
+			}
+
+			expr = CreateAccessExpression (rc, false);
+			if (expr == null)
 				return null;
 
-			type = Expr.Type;
-
-			// TODO: Create 1 result for Resolve and ResolveLValue ?
-			var res = CreateAccessExpression (ec);
-			if (res == null)
-				return null;
-
-			return res.Resolve (ec);
+			return expr.Resolve (rc);
 		}
 
 		public override Expression DoResolveLValue (ResolveContext ec, Expression rhs)
 		{
-			Expr = Expr.Resolve (ec);
-			if (Expr == null)
-				return null;
-
-			type = Expr.Type;
-
-			var res = CreateAccessExpression (ec);
+			var res = CreateAccessExpression (ec, false);
 			if (res == null)
 				return null;
 
@@ -10855,7 +10912,9 @@ namespace Mono.CSharp
 			loc = l;
 		}
 
-		public bool NullShortCircuit { get; set; }
+		public bool ConditionalAccess { get; set; }
+
+		public bool ConditionalAccessReceiver { get; set; }
 
 		public void AddressOf (EmitContext ec, AddressOp mode)
 		{
@@ -10875,7 +10934,7 @@ namespace Mono.CSharp
 
 		public override Expression CreateExpressionTree (ResolveContext ec)
 		{
-			if (NullShortCircuit)
+			if (ConditionalAccess)
 				Error_NullShortCircuitInsideExpressionTree (ec);
 
 			return ea.CreateExpressionTree (ec);
@@ -10888,7 +10947,7 @@ namespace Mono.CSharp
 
 		public override Expression DoResolveLValue (ResolveContext ec, Expression right_side)
 		{
-			if (NullShortCircuit)
+			if (ConditionalAccess)
 				throw new NotSupportedException ("null propagating operator assignment");
 
 			return DoResolve (ec);
@@ -10913,7 +10972,7 @@ namespace Mono.CSharp
 				UnsafeError (ec, ea.Location);
 			}
 
-			if (NullShortCircuit)
+			if (ConditionalAccessReceiver)
 				type = LiftMemberType (ec, type);
 
 			foreach (Argument a in ea.Arguments) {
@@ -10942,16 +11001,13 @@ namespace Mono.CSharp
 		//
 		// Load the array arguments into the stack.
 		//
-		InstanceEmitter LoadInstanceAndArguments (EmitContext ec, bool duplicateArguments, bool prepareAwait)
+		void LoadInstanceAndArguments (EmitContext ec, bool duplicateArguments, bool prepareAwait)
 		{
-			InstanceEmitter ie;
 			if (prepareAwait) {
-				ie = new InstanceEmitter ();
 				ea.Expr = ea.Expr.EmitToField (ec);
 			} else {
-				ie = new InstanceEmitter (ea.Expr, false);
-				ie.NullShortCircuit = NullShortCircuit;
-				ie.Emit (ec);
+				var ie = new InstanceEmitter (ea.Expr, false);
+				ie.Emit (ec, ConditionalAccess);
 
 				if (duplicateArguments) {
 					ec.Emit (OpCodes.Dup);
@@ -10965,8 +11021,6 @@ namespace Mono.CSharp
 			var dup_args = ea.Arguments.Emit (ec, duplicateArguments, prepareAwait);
 			if (dup_args != null)
 				ea.Arguments = dup_args;
-
-			return ie;
 		}
 
 		public void Emit (EmitContext ec, bool leave_copy)
@@ -10978,12 +11032,15 @@ namespace Mono.CSharp
 					LoadInstanceAndArguments (ec, false, true);
 				}
 
+				if (ConditionalAccessReceiver)
+					ec.ConditionalAccess = new ConditionalAccessContext (type, ec.DefineLabel ());
+
 				var ac = (ArrayContainer) ea.Expr.Type;
-				var inst = LoadInstanceAndArguments (ec, false, false);
+				LoadInstanceAndArguments (ec, false, false);
 				ec.EmitArrayLoad (ac);
 
-				if (NullShortCircuit)
-					inst.EmitResultLift (ec, ((ArrayContainer) ea.Expr.Type).Element, false);
+				if (ConditionalAccessReceiver)
+					ec.CloseConditionalAccess (type.IsNullableType && type != ac.Element ? type : null);
 			}	
 
 			if (leave_copy) {
@@ -11172,7 +11229,7 @@ namespace Mono.CSharp
 
 		public override Expression CreateExpressionTree (ResolveContext ec)
 		{
-			if (NullShortCircuit) {
+			if (ConditionalAccess) {
 				Error_NullShortCircuitInsideExpressionTree (ec);
 			}
 
@@ -11357,6 +11414,11 @@ namespace Mono.CSharp
 
 			if (arguments != null)
 				target.arguments = arguments.Clone (clonectx);
+		}
+
+		public void SetConditionalAccessReceiver ()
+		{
+			conditional_access_receiver = true;
 		}
 
 		public override void SetTypeArguments (ResolveContext ec, TypeArguments ta)

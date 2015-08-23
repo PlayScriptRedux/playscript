@@ -55,7 +55,7 @@ namespace System {
 
 		internal string GetComponentsHelper (Uri uri, UriComponents components, UriFormat format)
 		{
-			UriElements elements = UriParseComponents.ParseComponents (uri.OriginalString.Trim (), UriKind.Absolute, this);
+			UriElements elements = UriParseComponents.ParseComponents (uri.OriginalString.Trim (), UriKind.Absolute);
 
 			string scheme = scheme_name;
 			int dp = default_port;
@@ -74,7 +74,7 @@ namespace System {
 			if (uri.UserEscaped)
 				formatFlags |= UriHelper.FormatFlags.UserEscaped;
 
-			if (!string.IsNullOrEmpty(elements.host))
+			if (!string.IsNullOrEmpty (elements.host))
 				formatFlags |= UriHelper.FormatFlags.HasHost;
 
 			// it's easier to answer some case directly (as the output isn't identical 
@@ -153,7 +153,7 @@ namespace System {
 			if ((components & UriComponents.Path) != 0) {
 				string path = elements.path;
 				if ((components & UriComponents.PathAndQuery) != 0 &&
-					(path.Length == 0 || !path.StartsWith ("/")) &&
+					(path.Length == 0 || !path.StartsWith ("/", StringComparison.Ordinal)) &&
 					elements.delimiter == Uri.SchemeDelimiter)
 					sb.Append ("/");
 				sb.Append (UriHelper.FormatAbsolute (path, scheme, UriComponents.Path, format, formatFlags));
