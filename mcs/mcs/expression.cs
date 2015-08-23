@@ -7211,7 +7211,7 @@ namespace Mono.CSharp
 			type = mg.BestCandidateReturnType;
 			if (conditional_access_receiver)
 				type = LiftMemberType (ec, type);
-		
+
 			if (arguments == null && method.DeclaringType.BuiltinType == BuiltinTypeSpec.Type.Object && method.Name == Destructor.MetadataName) {
 				if (mg.IsBase)
 					ec.Report.Error (250, loc, "Do not directly call your base class Finalize method. It is called automatically from your destructor");
@@ -10049,7 +10049,9 @@ namespace Mono.CSharp
 			} else if (isPlayScript && expr != null) {
 				expr = expr.Resolve (rc, flags);
 			} else if (!isPlayScript) {
-				expr = expr.Resolve (rc, flags);
+				using (rc.Set (ResolveContext.Options.ConditionalAccessReceiver)) {
+					expr = expr.Resolve (rc, flags);
+				}
 			}
 
 			if (expr == null)
@@ -10096,11 +10098,6 @@ namespace Mono.CSharp
 				return new DynamicMemberBinder (Name, args, loc);
 			}
 
-			if (!IsValidDotExpression (expr_type)) {
-				Error_OperatorCannotBeApplied (rc, expr_type);
-				return null;
-			}
-
 			// Add "static/instance" restrictions to lookup.
 			if (isPlayScript) {
 				if (expr is TypeExpression) {
@@ -10110,7 +10107,8 @@ namespace Mono.CSharp
 				}
 			}
 
-			if (this is ConditionalMemberAccess) {
+			var cma = this as ConditionalMemberAccess;
+			if (cma != null) {
 				if (!IsNullPropagatingValid (expr.Type)) {
 					expr.Error_OperatorCannotBeApplied (rc, loc, "?", expr.Type);
 					return null;
@@ -10164,7 +10162,7 @@ namespace Mono.CSharp
 								emg.SetTypeArguments (rc, targs);
 							}
 
-							if (this is ConditionalMemberAccess)
+							if (cma != null)
 								emg.ConditionalAccess = true;
 
 							// Handle any PlayScript extension getter right here (setters are handled in the Assign expression above)
@@ -10277,7 +10275,7 @@ namespace Mono.CSharp
 				sn = null;
 			}
 
-			if (this is ConditionalMemberAccess) {
+			if (cma != null) {
 				me.ConditionalAccess = true;
 			}
 
