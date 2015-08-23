@@ -1,0 +1,17 @@
+// Compiler options: 
+//
+package {
+    public class Foo {
+        public static function Main():int {
+		var msg:String = "playscript";
+		var result:String = msg ?? "NullString";
+		if (result != "playscript") return 1;
+
+		msg = null;
+		result = msg ?? "NullString";
+		if (result != "NullString")  return 2;
+
+		return 0;
+        }
+    }
+}

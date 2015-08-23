@@ -296,6 +296,7 @@ namespace Mono.PlayScript
 %token EXTERN
 %token ASYNC
 %token AWAIT
+%token INTERR_OPERATOR
 
 /* C# keywords which are not really keywords */
 %token GET
@@ -3826,7 +3827,15 @@ member_access
 		$$ = new MemberAccess ((Expression) $1, lt.Value, (TypeArguments) $4, lt.Location);
 		lbag.AddLocation ($$, GetLocation ($2));
 	  }
+	| primary_expression INTERR_OPERATOR DOT identifier_inside_body opt_type_argument_list
+	  {
+		if (lang_version < LanguageVersion.V_6)
+			FeatureIsNotAvailable (GetLocation ($2), "null propagating operator");
 
+		var lt = (LocatedToken) $4;
+		$$ = new NullMemberAccess ((Expression) $1, lt.Value, (TypeArguments) $5, lt.Location);
+		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($3));
+	  }
 	| primary_expression DOT_AT IDENTIFIER
 	  {
 		var lt = (LocatedToken) $3;
@@ -4174,6 +4183,16 @@ element_access
 		}
 		lbag.AddLocation ($$, GetLocation ($4));
 	  }
+  	| primary_expression INTERR_OPERATOR OPEN_BRACKET_EXPR expression_list_arguments CLOSE_BRACKET	
+	  {
+		if (lang_version < LanguageVersion.V_6)
+			FeatureIsNotAvailable (GetLocation ($2), "null propagating operator");
+
+		throw new NotImplementedException ();
+//		$$ = new ElementAccess ((Expression) $1, (Arguments) $4, GetLocation ($3));
+//		lbag.AddLocation ($$, GetLocation ($4));
+	  }
+
 	| primary_expression OPEN_BRACKET_EXPR expression_list_arguments error
 	  {
 		Error_SyntaxError (yyToken);

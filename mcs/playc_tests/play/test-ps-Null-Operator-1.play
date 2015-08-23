@@ -1,0 +1,17 @@
+// Compiler options: 
+//
+package {
+    public class Foo {
+        public static function Main():int {
+		var i:int? = 55;
+		var result:int = i ?? 0;
+		if (result != 55) return 1;
+
+		var ii:int? = null;
+		var result2:int = ii ?? 0;
+		if (result2 != 0)  return 2;
+
+		return 0;
+        }
+    }
+}
