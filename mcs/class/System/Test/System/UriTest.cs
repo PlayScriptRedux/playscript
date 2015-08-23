@@ -604,7 +604,11 @@ namespace MonoTests.System
 			Uri u1 = new Uri("http://localhost:8080/test.aspx?ReturnUrl=%2fSearchDoc%2fSearcher.aspx");
 			Uri u2 = new Uri("http://localhost:8080/test.aspx?ReturnUrl=%252fSearchDoc%252fSearcher.aspx");
 
-			Assert.AreEqual ("http://localhost:8080/test.aspx?ReturnUrl=/SearchDoc/Searcher.aspx", u1.ToString (), "QE1");
+			if (Uri.IriParsing)
+				Assert.AreEqual ("http://localhost:8080/test.aspx?ReturnUrl=%2fSearchDoc%2fSearcher.aspx", u1.ToString (), "QE1");
+			else
+				Assert.AreEqual ("http://localhost:8080/test.aspx?ReturnUrl=/SearchDoc/Searcher.aspx", u1.ToString (), "QE1");
+
 			Assert.AreEqual ("http://localhost:8080/test.aspx?ReturnUrl=%252fSearchDoc%252fSearcher.aspx", u2.ToString (), "QE2");
 		}
 
@@ -844,7 +848,11 @@ namespace MonoTests.System
 		public void Fragment_Escape ()
 		{
 			Uri u = new Uri("http://localhost/index.asp#main#start", false);
-			Assert.AreEqual (u.Fragment, "#main%23start", "#1");
+
+			if (Uri.IriParsing)
+				Assert.AreEqual (u.Fragment, "#main#start", "#1");
+			else
+				Assert.AreEqual (u.Fragment, "#main%23start", "#1");
 
 			u = new Uri("http://localhost/index.asp#main#start", true);
 			Assert.AreEqual (u.Fragment, "#main#start", "#2");
@@ -1071,8 +1079,14 @@ namespace MonoTests.System
 			// IPv6 Address
 			Uri ftp = new Uri ("FTP://[::ffFF:169.32.14.5]/");
 			Assert.AreEqual ("ftp", ftp.Scheme, "#7");
-			Assert.AreEqual ("[0000:0000:0000:0000:0000:FFFF:A920:0E05]", ftp.Host, "#8");
-			Assert.AreEqual ("ftp://[0000:0000:0000:0000:0000:FFFF:A920:0E05]/", ftp.ToString (), "#9");
+
+			if (Uri.IriParsing) {
+				Assert.AreEqual ("[::ffff:169.32.14.5]", ftp.Host, "#8");
+				Assert.AreEqual ("ftp://[::ffff:169.32.14.5]/", ftp.ToString (), "#9");
+			} else {
+				Assert.AreEqual ("[0000:0000:0000:0000:0000:FFFF:A920:0E05]", ftp.Host, "#8");
+				Assert.AreEqual ("ftp://[0000:0000:0000:0000:0000:FFFF:A920:0E05]/", ftp.ToString (), "#9");
+			}
 		}
 
 		[Test]

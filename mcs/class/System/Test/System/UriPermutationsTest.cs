@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Reflection;
 using System.Text;
 using NUnit.Framework;
@@ -34,23 +35,23 @@ namespace MonoTests.System {
 		};
 
 		private static readonly string [] reduceLocations = {
-			"a/b/{0}", "a/b/{0}a", "a/b/a{0}",
-			"a/b/{0}/a", "a/b/{0}a/a", "a/b/a{0}/a",
+			"a/b/{0}", "a/b/{0}a", "a/b/c{0}",
+			"a/b/{0}/a", "a/b/{0}a/a", "a/b/c{0}/a",
 			// Test '\\'
-			"a/b\\{0}", "a/b\\{0}a", "a/b\\a{0}",
-			"a/b\\{0}\\a", "a/b\\{0}a\\a", "a/b\\a{0}\\a",
-			// Test %2F ('/')
-			"a/b%2F{0}", "a/b%2F{0}a", "a/b%2Fa{0}",
-			"a/b/{0}%2Fa", "a/b/{0}a%2Fa", "a/b/a{0}%2Fa",
-			"a/b%2F{0}/a", "a/b%2F{0}a/a", "a/b%2Fa{0}/a",
-			// Test %5C ('\\')
-			"a/b%5C{0}", "a/b%5C{0}a", "a/b%5Ca{0}",
-			"a/b/{0}%5Ca", "a/b/{0}a%5Ca", "a/b/a{0}%5Ca",
-			"a/b%5C{0}/a", "a/b%5C{0}a/a", "a/b%5Ca{0}/a",
+			"a/b\\{0}", "a/b\\{0}a", "a/b\\c{0}",
+			"a/b\\{0}\\a", "a/b\\{0}a\\a", "a/b\\c{0}\\a",
+			// Test '/' %2F
+			"a/b%2F{0}", "a/b%2F{0}a", "a/b%2Fc{0}",
+			"a/b/{0}%2Fa", "a/b/{0}a%2Fa", "a/b/c{0}%2Fa",
+			"a/b%2F{0}/a", "a/b%2F{0}a/a", "a/b%2Fc{0}/a",
+			// Test '\\' %5C
+			"a/b%5C{0}", "a/b%5C{0}a", "a/b%5Cc{0}",
+			"a/b/{0}%5Ca", "a/b/{0}a%5Ca", "a/b/c{0}%5Ca",
+			"a/b%5C{0}/a", "a/b%5C{0}a/a", "a/b%5Cc{0}/a",
 		};
 
 		private static readonly string [] reduceElements = {
-			".", "..", "...", "%2E", "%2E%2E", "%2E%2E%2E"
+			"", ".", "..", "...", "%2E", "%2E%2E", "%2E%2E%2E"
 		};
 
 		public static readonly bool IriParsing;
@@ -167,10 +168,10 @@ namespace MonoTests.System {
 			});
 		}
 
-		private void TestReduce (UriToStringDelegate toString, bool testRelative = true)
+		private void TestReduce (UriToStringDelegate toString, bool testRelative = true, string id = "")
 		{
 			foreach(var el in reduceElements)
-				TestLocations (reduceLocations, el, el, toString, testRelative);
+				TestLocations (reduceLocations, el + id, el, toString, testRelative);
 		}
 
 		private void TestComponent (UriComponents component)
@@ -178,6 +179,27 @@ namespace MonoTests.System {
 			TestPercentageEncoding (uri => uri.GetComponents (component, UriFormat.SafeUnescaped), id: "[SafeUnescaped]");
 			TestPercentageEncoding (uri => uri.GetComponents (component, UriFormat.Unescaped), id: "[Unescaped]");
 			TestPercentageEncoding (uri => uri.GetComponents (component, UriFormat.UriEscaped), id: "[UriEscaped]");
+		}
+
+		private delegate void TestStringDelegate (UriToStringDelegate toString, bool testRelative = true, string id = "");
+
+		private void TestLocalPath (TestStringDelegate test)
+		{
+			var id = (Path.DirectorySeparatorChar == '/') ? "[UNIX]" : "[MS]";
+			test (uri => uri.LocalPath, false, id);
+
+			if (!createMode)
+				return;
+
+			var altId = (Path.AltDirectorySeparatorChar == '/') ? "[UNIX]" : "[MS]";
+			test (uri => {
+				var result = uri.LocalPath;
+
+				if (uri.Scheme == Uri.UriSchemeFile)
+					result = result.Replace (Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+				return result;
+			}, false, altId);
 		}
 
 		[Test]
@@ -231,7 +253,7 @@ namespace MonoTests.System {
 		[Test]
 		public void PercentageEncoding_LocalPath ()
 		{
-			TestPercentageEncoding (uri => uri.LocalPath);
+			TestLocalPath (TestPercentageEncoding);
 		}
 
 		[Test]
@@ -255,7 +277,7 @@ namespace MonoTests.System {
 		[Test]
 		public void Reduce_LocalPath ()
 		{
-			TestReduce (uri => uri.LocalPath, false);
+			TestLocalPath (TestReduce);
 		}
 
 		[Test]
