@@ -4922,6 +4922,10 @@ mono_gc_base_init (void)
 				nursery_clear_policy = CLEAR_AT_GC;
 			} else if (!strcmp (opt, "clear-nursery-at-gc")) {
 				nursery_clear_policy = CLEAR_AT_GC;
+			} else if (!strcmp (opt, "clear-at-tlab-creation")) {
+				nursery_clear_policy = CLEAR_AT_TLAB_CREATION;
+			} else if (!strcmp (opt, "debug-clear-at-tlab-creation")) {
+				nursery_clear_policy = CLEAR_AT_TLAB_CREATION_DEBUG;
 			} else if (!strcmp (opt, "check-scan-starts")) {
 				do_scan_starts_check = TRUE;
 			} else if (!strcmp (opt, "verify-nursery-at-minor-gc")) {
@@ -4950,7 +4954,16 @@ mono_gc_base_init (void)
 				}
 			} else if (g_str_has_prefix (opt, "binary-protocol=")) {
 				char *filename = strchr (opt, '=') + 1;
-				binary_protocol_init (filename);
+				char *colon = strrchr (filename, ':');
+				size_t limit = -1;
+				if (colon) {
+					if (!mono_gc_parse_environment_string_extract_number (colon + 1, &limit)) {
+						sgen_env_var_error (MONO_GC_DEBUG_NAME, "Ignoring limit.", "Binary protocol file size limit must be an integer.");
+						limit = -1;
+					}
+					*colon = '\0';
+				}
+				binary_protocol_init (filename, (long long)limit);
 			} else if (!sgen_bridge_handle_gc_debug (opt)) {
 				sgen_env_var_error (MONO_GC_DEBUG_NAME, "Ignoring.", "Unknown option `%s`.", opt);
 
@@ -4971,14 +4984,15 @@ mono_gc_base_init (void)
 				fprintf (stderr, "  disable-major\n");
 				fprintf (stderr, "  xdomain-checks\n");
 				fprintf (stderr, "  check-concurrent\n");
-				fprintf (stderr, "  clear-at-gc\n");
-				fprintf (stderr, "  clear-nursery-at-gc\n");
+				fprintf (stderr, "  clear-[nursery-]at-gc\n");
+				fprintf (stderr, "  clear-at-tlab-creation\n");
+				fprintf (stderr, "  debug-clear-at-tlab-creation\n");
 				fprintf (stderr, "  check-scan-starts\n");
 				fprintf (stderr, "  no-managed-allocator\n");
 				fprintf (stderr, "  print-allowance\n");
 				fprintf (stderr, "  print-pinning\n");
 				fprintf (stderr, "  heap-dump=<filename>\n");
-				fprintf (stderr, "  binary-protocol=<filename>\n");
+				fprintf (stderr, "  binary-protocol=<filename>[:<file-size-limit>]\n");
 				sgen_bridge_print_gc_debug_usage ();
 				fprintf (stderr, "\n");
 
