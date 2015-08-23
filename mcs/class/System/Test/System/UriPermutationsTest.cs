@@ -20,25 +20,31 @@ namespace MonoTests.System {
 		// Those characters are tested alone.
 		private const string specialTestedChars = "@:?#";
 
+		// Scheme news: and custom: are not tested because there is a strange behavior on .NET 4.5
+		// new Uri("news:a/a%30").ToString() == "news:a/a%30a/a0"
 		private static readonly string [] schemes = {
 			"http://", "https://", "file://", "ftp://", "gopher://", "ldap://", "mailto:",
-			"net.pipe://", "net.tcp://", "news:", "nntp://", "telnet://", "custom:", "custom://"
+			"net.pipe://", "net.tcp://",  "nntp://", "telnet://", "custom://",
+			//"news:", "custom:"
 		};
 
 		private static readonly string [] componentLocations = {
-			"a/a{0}?#1", "a/a?{0}#2", "a/a?#",
+			"a/a{0}?", "b/a{0}#", "c/a?", "d/a#",
 			"a/a{0}?%30#", "a/a?{0}#%30", "a/a%30?#",   // see why on TestChars comment
 		};
 
 		private static readonly string [] reduceLocations = {
 			"a/b/{0}", "a/b/{0}a", "a/b/a{0}",
 			"a/b/{0}/a", "a/b/{0}a/a", "a/b/a{0}/a",
-			// Test '/' %2F
+			// Test '\\'
+			"a/b\\{0}", "a/b\\{0}a", "a/b\\a{0}",
+			"a/b\\{0}\\a", "a/b\\{0}a\\a", "a/b\\a{0}\\a",
+			// Test %2F ('/')
 			"a/b%2F{0}", "a/b%2F{0}a", "a/b%2Fa{0}",
 			"a/b/{0}%2Fa", "a/b/{0}a%2Fa", "a/b/a{0}%2Fa",
 			"a/b%2F{0}/a", "a/b%2F{0}a/a", "a/b%2Fa{0}/a",
-			// Test '\\' %5C
-			"a/b%5C{0}", "a/b%5C{0}a", "a/b%5C{0}",
+			// Test %5C ('\\')
+			"a/b%5C{0}", "a/b%5C{0}a", "a/b%5Ca{0}",
 			"a/b/{0}%5Ca", "a/b/{0}a%5Ca", "a/b/a{0}%5Ca",
 			"a/b%5C{0}/a", "a/b%5C{0}a/a", "a/b%5Ca{0}/a",
 		};

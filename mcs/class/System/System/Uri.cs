@@ -142,7 +142,16 @@ namespace System {
 			UriSchemeNetTcp
 		};
 
-		// Constructors		
+		// Constructors
+
+		static Uri()
+		{
+			var iriparsingVar = Environment.GetEnvironmentVariable ("MONO_URI_IRIPARSING");
+			if (iriparsingVar == "true")
+				IriParsing = true;
+			if (iriparsingVar == "false")
+				IriParsing = false;
+		}
 
 		public Uri (string uriString) : this (uriString, false) 
 		{
@@ -1107,13 +1116,10 @@ namespace System {
 			if (cachedToString != null) 
 				return cachedToString;
 
-			if (isAbsoluteUri) {
-				cachedToString = Unescape (GetLeftPart (UriPartial.Path), true);
-				AppendQueryAndFragment (ref cachedToString);
-			} else {
-				// Everything is contained in path in this case. 
-				cachedToString = path;
-			}
+			if (isAbsoluteUri)
+				cachedToString = Parser.GetComponentsHelper (this, UriComponents.AbsoluteUri, UriHelper.ToStringUnescape);
+			else
+				cachedToString = UriHelper.FormatRelative (source, scheme, UriHelper.ToStringUnescape);
 
 			return cachedToString;
 		}
@@ -1457,7 +1463,7 @@ namespace System {
 
 			var formatFlags = UriHelper.FormatFlags.None;
 			if (UriHelper.HasCharactersToNormalize (uriString))
-				formatFlags |= UriHelper.FormatFlags.HasCharactersToNormalize;
+				formatFlags |= UriHelper.FormatFlags.HasUriCharactersToNormalize;
 
 			// from here we're practically working on uriString.Substring(startpos,endpos-startpos)
 			int startpos = pos + 1;

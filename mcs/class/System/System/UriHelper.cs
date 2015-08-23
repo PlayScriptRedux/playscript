@@ -14,7 +14,9 @@ namespace System {
 		[Flags]
 		internal enum FormatFlags {
 			None = 0,
-			HasCharactersToNormalize = 1 << 0,
+			HasComponentCharactersToNormalize = 1 << 0,
+			HasUriCharactersToNormalize = 1 << 1,
+			HasHost = 1 << 2,
 		}
 
 		[Flags]
@@ -33,6 +35,7 @@ namespace System {
 			Telnet = 1 << 11,
 			Uuid = 1 << 12,
 			Custom = 1 << 13,
+			CustomWithHost = 1 << 14,
 			All = ~0,
 			None = 0
 		}
@@ -76,6 +79,11 @@ namespace System {
 			return (keys & flag) != 0;
 		}
 
+		internal static bool IsKnownScheme(string scheme)
+		{
+			return GetScheme(scheme) != UriSchemes.Custom;
+		}
+
 		internal static string HexEscapeMultiByte (char character)
 		{
 			const string hex_upper_chars = "0123456789ABCDEF";
@@ -97,14 +105,11 @@ namespace System {
 			if (SchemeContains (scheme, UriSchemes.File))
 				return IriParsing;
 
-			return !SchemeContains (scheme, UriSchemes.Ftp | UriSchemes.Gopher | UriSchemes.Nntp | UriSchemes.Telnet);
+			return !SchemeContains (scheme, UriSchemes.Ftp | UriSchemes.Gopher | UriSchemes.Nntp | UriSchemes.Telnet | UriSchemes.News);
 		}
 
 		internal static bool HasCharactersToNormalize(string str)
 		{
-			if (!IriParsing)
-				return false;
-
 			int len = str.Length;
 			for (int i = 0; i < len; i++) {
 				char c = str [i];
@@ -140,7 +145,7 @@ namespace System {
 		{
 			var formatFlags = FormatFlags.None;
 			if (HasCharactersToNormalize (str))
-				formatFlags |= FormatFlags.HasCharactersToNormalize;
+				formatFlags |= FormatFlags.HasUriCharactersToNormalize;
 
 			return Format (str, schemeName, UriKind.Relative, UriComponents.Path, uriFormat, formatFlags);
 		}
@@ -151,19 +156,40 @@ namespace System {
 			if (string.IsNullOrEmpty (str))
 				return "";
 
+			if (UriHelper.HasCharactersToNormalize (str))
+				formatFlags |= UriHelper.FormatFlags.HasComponentCharactersToNormalize;
+
 			UriSchemes scheme = GetScheme (schemeName);
 
-			var reduceBefore = UriSchemes.None;
-			var reduceAfter = UriSchemes.Http | UriSchemes.Https | UriSchemes.NetPipe | UriSchemes.NetTcp;
+			if (scheme == UriSchemes.Custom && (formatFlags & FormatFlags.HasHost) != 0)
+				scheme = UriSchemes.CustomWithHost;
 
-			if (IriParsing)
+			var reduceAfter = UriSchemes.Http | UriSchemes.Https | UriSchemes.File | UriSchemes.NetPipe | UriSchemes.NetTcp;
+
+			if (IriParsing) {
 				reduceAfter |= UriSchemes.Ftp;
-			else
-				reduceBefore |= UriSchemes.Ftp;
+			} else if (component == UriComponents.Path) {
+				if(scheme == UriSchemes.Ftp)
+					str = Reduce (str.Replace ('\\', '/'), !IriParsing);
+				if (scheme == UriSchemes.CustomWithHost)
+					str = Reduce (str.Replace ('\\', '/'), false);
+			}
 
-			if (component == UriComponents.Path && SchemeContains (scheme, reduceBefore))
-				str = Reduce(str);
+			str = FormatString (str, scheme, uriKind, component, uriFormat, formatFlags);
 
+			if (component == UriComponents.Path) {
+				if (SchemeContains (scheme, reduceAfter))
+					str = Reduce (str, !IriParsing);
+				if(IriParsing && scheme == UriSchemes.CustomWithHost)
+					str = Reduce (str, false);
+			}
+
+			return str;
+		}
+
+		private static string FormatString (string str, UriSchemes scheme, UriKind uriKind,
+			UriComponents component, UriFormat uriFormat, FormatFlags formatFlags)
+		{
 			var s = new StringBuilder ();
 			int len = str.Length;
 			for (int i = 0; i < len; i++) {
@@ -183,18 +209,13 @@ namespace System {
 					s.Append (FormatChar (c, false, scheme, uriKind, component, uriFormat, formatFlags));
 			}
 			
-			str = s.ToString();
-
-			if (component == UriComponents.Path && SchemeContains (scheme, reduceAfter))
-				str = Reduce(str);
-
-			return str;
+			return s.ToString();
 		}
 
 		private static string FormatChar (char c, bool isEscaped, UriSchemes scheme, UriKind uriKind,
 			UriComponents component, UriFormat uriFormat, FormatFlags formatFlags)
 		{
-			if (!isEscaped && NeedToEscape (c, scheme, component, uriKind, uriFormat) ||
+			if (!isEscaped && NeedToEscape (c, scheme, component, uriKind, uriFormat, formatFlags) ||
 				isEscaped && !NeedToUnescape (c, scheme, component, uriKind, uriFormat, formatFlags))
 				return HexEscapeMultiByte (c);
 
@@ -203,13 +224,10 @@ namespace System {
 					SchemeContains (scheme, UriSchemes.Http | UriSchemes.Https))
 					return "/";
 
-				if (SchemeContains (scheme, UriSchemes.Http | UriSchemes.Https | UriSchemes.Ftp | UriSchemes.Custom))
+				if (SchemeContains (scheme, UriSchemes.Http | UriSchemes.Https | UriSchemes.Ftp | UriSchemes.CustomWithHost))
 					return (isEscaped && uriFormat != UriFormat.UriEscaped) ? "\\" : "/";
 
-				if (SchemeContains (scheme, UriSchemes.NetPipe | UriSchemes.NetTcp))
-					return "/";
-
-				if (SchemeContains (scheme, UriSchemes.File))
+				if (SchemeContains (scheme, UriSchemes.NetPipe | UriSchemes.NetTcp | UriSchemes.File))
 					return "/";
 			}
 
@@ -283,7 +301,7 @@ namespace System {
 
 				if (" !\"'()*<>^`{}|".Contains (cStr))
 					return uriKind != UriKind.Relative ||
-						(formatFlags & FormatFlags.HasCharactersToNormalize) != 0;
+						(IriParsing && (formatFlags & FormatFlags.HasUriCharactersToNormalize) != 0);
 
 				if (":[]".Contains (cStr))
 					return uriKind != UriKind.Relative;
@@ -313,7 +331,7 @@ namespace System {
 				if ("-._~".Contains (cStr))
 					return true;
 				
-				if ((formatFlags & FormatFlags.HasCharactersToNormalize) != 0 &&
+				if ((formatFlags & FormatFlags.HasUriCharactersToNormalize) != 0 &&
 					"!'()*:[]".Contains (cStr))
 					return true;
 
@@ -327,7 +345,7 @@ namespace System {
 		}
 
 		private static bool NeedToEscape (char c, UriSchemes scheme, UriComponents component, UriKind uriKind,
-			UriFormat uriFormat)
+			UriFormat uriFormat, FormatFlags formatFlags)
 		{
 			string cStr = c.ToString (CultureInfo.InvariantCulture);
 
@@ -350,7 +368,11 @@ namespace System {
 				if (component == UriComponents.Path || component == UriComponents.Query)
 					return false;
 
-				return !IriParsing && uriFormat == UriFormat.UriEscaped;
+				if (IriParsing)
+					return false;
+
+				return uriFormat == UriFormat.UriEscaped ||
+					(uriFormat != UriFormat.Unescaped && (formatFlags & FormatFlags.HasComponentCharactersToNormalize) != 0);
 			}
 
 			if (uriFormat == UriFormat.SafeUnescaped || uriFormat == ToStringUnescape) {
@@ -377,7 +399,7 @@ namespace System {
 					return component != UriComponents.Path ||
 						   SchemeContains (scheme,
 							   UriSchemes.Gopher | UriSchemes.Ldap | UriSchemes.Mailto | UriSchemes.Nntp |
-							   UriSchemes.Telnet);
+							   UriSchemes.Telnet | UriSchemes.News | UriSchemes.Custom);
 				}
 			}
 
@@ -385,7 +407,7 @@ namespace System {
 		}
 
 		// This is called "compacting" in the MSDN documentation
-		private static string Reduce (string path)
+		private static string Reduce (string path, bool trimDots)
 		{
 			// quick out, allocation-free, for a common case
 			if (path == "/")
@@ -417,7 +439,7 @@ namespace System {
 					continue;
 				}
 
-				if (!IriParsing)
+				if (trimDots)
 					current = current.TrimEnd('.');
 
 				if (current == ".")

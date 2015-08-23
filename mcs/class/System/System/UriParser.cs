@@ -50,6 +50,11 @@ namespace System {
 			if ((format < UriFormat.UriEscaped) || (format > UriFormat.SafeUnescaped))
 				throw new ArgumentOutOfRangeException ("format");
 
+			return GetComponentsHelper (uri, components, format);
+		}
+
+		internal string GetComponentsHelper (Uri uri, UriComponents components, UriFormat format)
+		{
 			UriElements elements = UriParseComponents.ParseComponents (uri.OriginalString.Trim ());
 
 			string scheme = scheme_name;
@@ -64,7 +69,10 @@ namespace System {
 
 			var formatFlags = UriHelper.FormatFlags.None;
 			if (UriHelper.HasCharactersToNormalize (uri.OriginalString))
-				formatFlags |= UriHelper.FormatFlags.HasCharactersToNormalize;
+				formatFlags |= UriHelper.FormatFlags.HasUriCharactersToNormalize;
+
+			if (!string.IsNullOrEmpty(elements.host))
+				formatFlags |= UriHelper.FormatFlags.HasHost;
 
 			// it's easier to answer some case directly (as the output isn't identical 
 			// when mixed with others components, e.g. leading slash, # ...)
@@ -82,7 +90,10 @@ namespace System {
 				return String.Empty;
 			}
 			case UriComponents.Path:
-				return UriHelper.FormatAbsolute (IgnoreFirstCharIf (elements.path, '/'), scheme, UriComponents.Path, format, formatFlags);
+				var path = elements.path;
+				if (scheme != Uri.UriSchemeMailto && scheme != Uri.UriSchemeNews)
+					path = IgnoreFirstCharIf (elements.path, '/');
+				return UriHelper.FormatAbsolute (path, scheme, UriComponents.Path, format, formatFlags);
 			case UriComponents.Query:
 				return UriHelper.FormatAbsolute (elements.query, scheme, UriComponents.Query, format, formatFlags);
 			case UriComponents.Fragment:
@@ -101,7 +112,7 @@ namespace System {
 
 			if ((components & UriComponents.Scheme) != 0) {
 				sb.Append (scheme);
-				sb.Append (Uri.GetSchemeDelimiter (scheme));
+				sb.Append (elements.delimiter);
 			}
 
 			if ((components & UriComponents.UserInfo) != 0) {
@@ -137,7 +148,8 @@ namespace System {
 			if ((components & UriComponents.Path) != 0) {
 				string path = elements.path;
 				if ((components & UriComponents.PathAndQuery) != 0 &&
-					(path.Length == 0 || !path.StartsWith ("/")))
+					(path.Length == 0 || !path.StartsWith ("/")) &&
+					scheme != Uri.UriSchemeNews && UriHelper.IsKnownScheme(scheme))
 					sb.Append ("/");
 				sb.Append (UriHelper.FormatAbsolute (path, scheme, UriComponents.Path, format, formatFlags));
 			}
