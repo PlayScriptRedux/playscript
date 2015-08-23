@@ -427,6 +427,26 @@
       </method>
     </type>
   </test>
+  <test name="./play/test-ps-Null-Operator-1.play">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>111</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./play/test-ps-Null-Operator-2.play">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>92</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
   <test name="./play/test-ps-TestTemplate.play">
     <type name="_root.Foo">
       <method name="Int32 Main()" attrs="150">
@@ -491,6 +511,16 @@
     <type name="_root.Foo">
       <method name="Int32 Main()" attrs="150">
         <size>83</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-NullString.as">
+    <type name="_root.DynamicBinaryArithmeticTest">
+      <method name="Int32 Main()" attrs="150">
+        <size>10</size>
       </method>
       <method name="Void .ctor()" attrs="6278">
         <size>7</size>
