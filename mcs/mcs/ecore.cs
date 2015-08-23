@@ -454,6 +454,18 @@ namespace Mono.CSharp {
 		{
 			return type.GetDefinition ().GetSignatureForError ();
 		}
+
+		protected static bool IsNullPropagatingValid (TypeSpec type)
+		{
+			return (TypeSpec.IsReferenceType (type) && type != InternalType.NullLiteral) || type.IsNullableType;
+		}
+
+		protected static TypeSpec LiftMemberType (ResolveContext rc, TypeSpec type)
+		{
+			return TypeSpec.IsValueType (type) && !type.IsNullableType ?
+				Nullable.NullableInfo.MakeType (rc.Module, type) :
+				type;
+		}
 	       
 		/// <summary>
 		///   Resolves an expression and performs semantic analysis on it.
@@ -978,6 +990,11 @@ namespace Mono.CSharp {
 		protected void Error_PointerInsideExpressionTree (ResolveContext ec)
 		{
 			ec.Report.Error (1944, loc, "An expression tree cannot contain an unsafe pointer operation");
+		}
+
+		protected void Error_NullShortCircuitInsideExpressionTree (ResolveContext rc)
+		{
+			rc.Report.Error (8072, loc, "An expression tree cannot contain a null propagating operator");
 		}
 
 		public virtual void FlowAnalysis (FlowAnalysisContext fc)
@@ -3549,13 +3566,6 @@ namespace Mono.CSharp {
 				InstanceExpression.FlowAnalysis (fc);
 		}
 
-		protected static TypeSpec LiftMemberType (ResolveContext rc, TypeSpec type)
-		{
-			return TypeSpec.IsValueType (type) && !type.IsNullableType ?
-				Nullable.NullableInfo.MakeType (rc.Module, type) :
-				type;
-		}
-
 		public bool ResolveInstanceExpression (ResolveContext rc, Expression rhs)
 		{
 			if (!ResolveInstanceExpressionCore (rc, rhs))
@@ -4029,7 +4039,10 @@ namespace Mono.CSharp {
 			if (IsConditionallyExcluded)
 				ec.Report.Error (765, loc,
 					"Partial methods with only a defining declaration or removed conditional methods cannot be used in an expression tree");
-			
+
+			if (NullShortCircuit)
+				Error_NullShortCircuitInsideExpressionTree (ec);
+
 			return new TypeOfMethod (best_candidate, loc);
 		}
 		
@@ -6127,6 +6140,10 @@ namespace Mono.CSharp {
 
 		public override Expression CreateExpressionTree (ResolveContext ec)
 		{
+			if (NullShortCircuit) {
+				Error_NullShortCircuitInsideExpressionTree (ec);
+			}
+
 			return CreateExpressionTree (ec, true);
 		}
 
@@ -6321,8 +6338,11 @@ namespace Mono.CSharp {
 			return null;
 		}
 
-		override public Expression DoResolveLValue (ResolveContext ec, Expression right_side)
+		public override Expression DoResolveLValue (ResolveContext ec, Expression right_side)
 		{
+			if (NullShortCircuit)
+				throw new NotSupportedException ("null propagating operator assignment");
+
 			if (spec is FixedFieldSpec) {
 				// It could be much better error message but we want to be error compatible
 				Error_ValueAssignment (ec, right_side);
@@ -6702,6 +6722,10 @@ namespace Mono.CSharp {
 
 		public override Expression CreateExpressionTree (ResolveContext ec)
 		{
+			if (NullShortCircuit) {
+				Error_NullShortCircuitInsideExpressionTree (ec);
+			}
+
 			Arguments args;
 			if (IsSingleDimensionalArrayLength ()) {
 				args = new Arguments (1);
@@ -6959,6 +6983,9 @@ namespace Mono.CSharp {
 
 		public override Expression DoResolveLValue (ResolveContext ec, Expression right_side)
 		{
+			if (NullShortCircuit)
+				throw new NotSupportedException ("null propagating operator assignment");
+
 			if (right_side == EmptyExpression.OutAccess) {
 				// TODO: best_candidate can be null at this point
 				INamedBlockVariable variable = null;
@@ -6984,7 +7011,7 @@ namespace Mono.CSharp {
 
 			if (!ResolveSetter (ec))
 				return null;
-
+/*
 			if (NullShortCircuit && ec.HasSet (ResolveContext.Options.CompoundAssignmentScope)) {
 				var lifted_type = LiftMemberType (ec, type);
 				if (type != lifted_type) {
@@ -6992,7 +7019,7 @@ namespace Mono.CSharp {
 					return Nullable.Wrap.Create (this, lifted_type);
 				}
 			}
-
+*/
 			return this;
 		}
 
