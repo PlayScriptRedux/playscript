@@ -111,9 +111,9 @@ static int mini_verbose = 0;
  */
 gboolean mono_use_llvm = FALSE;
 
-#define mono_jit_lock() EnterCriticalSection (&jit_mutex)
-#define mono_jit_unlock() LeaveCriticalSection (&jit_mutex)
-static CRITICAL_SECTION jit_mutex;
+#define mono_jit_lock() mono_mutex_lock (&jit_mutex)
+#define mono_jit_unlock() mono_mutex_unlock (&jit_mutex)
+static mono_mutex_t jit_mutex;
 
 static MonoCodeManager *global_codeman;
 
@@ -7121,12 +7121,7 @@ mini_create_jit_domain_info (MonoDomain *domain)
 	info->jit_trampoline_hash = g_hash_table_new (mono_aligned_addr_hash, NULL);
 	info->delegate_trampoline_hash = g_hash_table_new (class_method_pair_hash, class_method_pair_equal);
 	info->llvm_vcall_trampoline_hash = g_hash_table_new (mono_aligned_addr_hash, NULL);
-#ifdef HOST_WIN32
-	// FIXME:
 	info->runtime_invoke_hash = mono_conc_hashtable_new_full (&domain->lock, mono_aligned_addr_hash, NULL, NULL, runtime_invoke_info_free);
-#else
-	info->runtime_invoke_hash = mono_conc_hashtable_new_full (&domain->lock.mutex, mono_aligned_addr_hash, NULL, NULL, runtime_invoke_info_free);
-#endif
 	info->seq_points = g_hash_table_new_full (mono_aligned_addr_hash, NULL, NULL, seq_point_info_free);
 	info->arch_seq_points = g_hash_table_new (mono_aligned_addr_hash, NULL);
 	info->jump_target_hash = g_hash_table_new (NULL, NULL);
@@ -7236,7 +7231,7 @@ mini_init (const char *filename, const char *runtime_version)
 	}
 #endif
 
-	InitializeCriticalSection (&jit_mutex);
+	mono_mutex_init_recursive (&jit_mutex);
 
 	mono_cross_helpers_run ();
 
@@ -7807,9 +7802,9 @@ mini_cleanup (MonoDomain *domain)
 
 	mono_native_tls_free (mono_jit_tls_id);
 
-	DeleteCriticalSection (&jit_mutex);
+	mono_mutex_destroy (&jit_mutex);
 
-	DeleteCriticalSection (&mono_delegate_section);
+	mono_mutex_destroy (&mono_delegate_section);
 
 	mono_code_manager_cleanup ();
 
@@ -8007,9 +8002,9 @@ typedef struct MonoJumpTableChunk {
 } MonoJumpTableChunk;
 
 static MonoJumpTableChunk* g_jumptable;
-#define mono_jumptable_lock() EnterCriticalSection (&jumptable_mutex)
-#define mono_jumptable_unlock() LeaveCriticalSection (&jumptable_mutex)
-static CRITICAL_SECTION jumptable_mutex;
+#define mono_jumptable_lock() mono_mutex_lock (&jumptable_mutex)
+#define mono_jumptable_unlock() mono_mutex_unlock (&jumptable_mutex)
+static mono_mutex_t jumptable_mutex;
 
 static  MonoJumpTableChunk*
 mono_create_jumptable_chunk (guint32 max_entries)
@@ -8024,7 +8019,7 @@ void
 mono_jumptable_init (void)
 {
 	if (g_jumptable == NULL) {
-		InitializeCriticalSection (&jumptable_mutex);
+		mono_mutex_init_recursive (&jumptable_mutex);
 		g_jumptable = mono_create_jumptable_chunk (DEFAULT_JUMPTABLE_CHUNK_ELEMENTS);
 	}
 }
@@ -8080,7 +8075,7 @@ mono_jumptable_cleanup (void)
 			current = prev;
 		}
 		g_jumptable = NULL;
-		DeleteCriticalSection (&jumptable_mutex);
+		mono_mutex_destroy (&jumptable_mutex);
 	}
 }
 

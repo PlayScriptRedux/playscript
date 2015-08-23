@@ -88,9 +88,9 @@ void sys_icache_invalidate (void *start, size_t len);
 #endif
 
 /* This mutex protects architecture specific caches */
-#define mono_mini_arch_lock() EnterCriticalSection (&mini_arch_mutex)
-#define mono_mini_arch_unlock() LeaveCriticalSection (&mini_arch_mutex)
-static CRITICAL_SECTION mini_arch_mutex;
+#define mono_mini_arch_lock() mono_mutex_lock (&mini_arch_mutex)
+#define mono_mini_arch_unlock() mono_mutex_unlock (&mini_arch_mutex)
+static mono_mutex_t mini_arch_mutex;
 
 static gboolean v5_supported = FALSE;
 static gboolean v6_supported = FALSE;
@@ -891,7 +891,7 @@ mono_arch_init (void)
 {
 	const char *cpu_arch;
 
-	InitializeCriticalSection (&mini_arch_mutex);
+	mono_mutex_init_recursive (&mini_arch_mutex);
 #ifdef MONO_ARCH_SOFT_DEBUG_SUPPORTED
 	if (mini_get_debug_options ()->soft_breakpoints) {
 		single_step_func_wrapper = create_function_wrapper (debugger_agent_single_step_from_context);
@@ -2429,7 +2429,7 @@ mono_arch_emit_call (MonoCompile *cfg, MonoCallInst *call)
 				 */
 				float_arg->flags |= MONO_INST_VOLATILE;
 
-				MONO_EMIT_NEW_UNALU (cfg, OP_MOVE, float_arg->dreg, in->dreg);
+				MONO_EMIT_NEW_UNALU (cfg, OP_FMOVE, float_arg->dreg, in->dreg);
 
 				/* We use the dreg to look up the instruction later. The hreg is used to
 				 * emit the instruction that loads the value into the FP reg.
