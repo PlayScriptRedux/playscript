@@ -1329,18 +1329,30 @@ namespace Mono.CSharp {
 			return Parameters;
 		}
 
-		protected override Expression DoResolve (ResolveContext ec)
+		protected override Expression DoResolve (ResolveContext rc)
 		{
-			var isPlayScript = ec.FileType == SourceFileType.PlayScript;
+			var isPlayScript = rc.FileType == SourceFileType.PlayScript;
 
-			if (ec.HasSet (ResolveContext.Options.ConstantScope)) {
-				ec.Report.Error (1706, loc, "Anonymous methods and lambda expressions cannot be used in the current context");
+			if (rc.HasSet (ResolveContext.Options.ConstantScope)) {
+				rc.Report.Error (1706, loc, "Anonymous methods and lambda expressions cannot be used in the current context");
 				return null;
 			}
 
 			//
-			// Set class type, set type
+			// Update top-level block generated duting parsing with actual top-level block
 			//
+			if (rc.HasAny (ResolveContext.Options.FieldInitializerScope | ResolveContext.Options.BaseInitializer) && rc.CurrentMemberDefinition.Parent.PartialContainer.PrimaryConstructorParameters != null) {
+				var tb = rc.ConstructorBlock.ParametersBlock.TopBlock;
+				if (Block.TopBlock != tb) {
+					Block b = Block;
+					while (b.Parent != Block.TopBlock && b != Block.TopBlock)
+						b = b.Parent;
+
+					b.Parent = tb;
+					tb.IncludeBlock (Block, Block.TopBlock);
+					b.ParametersBlock.TopBlock = tb;
+				}
+			}
 
 			eclass = ExprClass.Value;
 
@@ -1351,25 +1363,14 @@ namespace Mono.CSharp {
 			// 
 			type = InternalType.AnonymousMethod;
 
-			if (!DoResolveParameters (ec))
+			if (!DoResolveParameters (rc))
 				return null;
 
-//<<<<<<< HEAD
-//#if !STATIC
-//			// FIXME: The emitted code isn't very careful about reachability
-//			// so, ensure we have a 'ret' at the end
-//			BlockContext bc = ec as BlockContext;
-//			if (bc != null && bc.CurrentBranching != null && bc.CurrentBranching.CurrentUsageVector.IsUnreachable)
-//				bc.NeedReturnLabel ();
-//#endif
-//
 			// Cast to Delgate for PlayScript (forces implicit conversion to Func<> or Action<> delegate types).
 			if (isPlayScript) {
-				return new Cast(new TypeExpression(ec.BuiltinTypes.Delegate, this.Location), this, this.Location).Resolve (ec);
+				return new Cast(new TypeExpression(rc.BuiltinTypes.Delegate, this.Location), this, this.Location).Resolve (rc);
 			}
 
-//=======
-//>>>>>>> d12330eda7746321b4611865d11e932e53ac55b8
 			return this;
 		}
 

@@ -12372,8 +12372,10 @@ namespace Mono.CSharp
 
 		public override void FlowAnalysis (FlowAnalysisContext fc)
 		{
-			foreach (var initializer in initializers)
-				initializer.FlowAnalysis (fc);
+			foreach (var initializer in initializers) {
+				if (initializer != null)
+					initializer.FlowAnalysis (fc);
+			}
 		}
 	}
 	
