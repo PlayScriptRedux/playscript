@@ -1195,6 +1195,7 @@ namespace Mono.CSharp
 			this.addressRequired = addressLoad;
 			NullShortCircuit = false;
 			NullOperatorLabel = new Label ();
+			value_on_stack = false;
 		}
 
 		public void Emit (EmitContext ec)
