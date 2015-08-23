@@ -88,15 +88,15 @@ MonoNativeTlsKey mono_jit_tls_id;
 MONO_FAST_TLS_DECLARE(mono_jit_tls);
 #endif
 
-MonoTraceSpec *mono_jit_trace_calls = NULL;
+MonoTraceSpec *mono_jit_trace_calls;
 gboolean mono_compile_aot = FALSE;
 /* If this is set, no code is generated dynamically, everything is taken from AOT files */
 gboolean mono_aot_only = FALSE;
 /* Whenever to use IMT */
-gboolean mono_use_imt = ARCH_HAVE_IMT;
-MonoMethodDesc *mono_inject_async_exc_method = NULL;
+gboolean mono_use_imt = TRUE;
+MonoMethodDesc *mono_inject_async_exc_method;
 int mono_inject_async_exc_pos;
-MonoMethodDesc *mono_break_at_bb_method = NULL;
+MonoMethodDesc *mono_break_at_bb_method;
 int mono_break_at_bb_bb_num;
 gboolean mono_do_x86_stack_align = TRUE;
 const char *mono_build_date;
@@ -115,9 +115,9 @@ gboolean mono_use_llvm = FALSE;
 #define mono_jit_unlock() LeaveCriticalSection (&jit_mutex)
 static CRITICAL_SECTION jit_mutex;
 
-static MonoCodeManager *global_codeman = NULL;
+static MonoCodeManager *global_codeman;
 
-static GHashTable *jit_icall_name_hash = NULL;
+static GHashTable *jit_icall_name_hash;
 
 static MonoDebugOptions debug_options;
 
@@ -140,6 +140,8 @@ gboolean check_for_pending_exc = TRUE;
 gboolean disable_vtypes_in_regs = FALSE;
 
 static GSList *tramp_infos;
+
+static void register_icalls (void);
 
 gpointer
 mono_realloc_native_code (MonoCompile *cfg)
@@ -1526,7 +1528,7 @@ mono_create_jump_table (MonoCompile *cfg, MonoInst *label, MonoBasicBlock **bbs,
 static MonoMethodSignature *
 mono_get_array_new_va_signature (int arity)
 {
-	static GHashTable *sighash = NULL;
+	static GHashTable *sighash;
 	MonoMethodSignature *res;
 	int i;
 
@@ -2362,8 +2364,8 @@ mono_allocate_stack_slots (MonoCompile *cfg, gboolean backward, guint32 *stack_s
 static mono_byte emul_opcode_hit_cache [(OP_LAST>>EMUL_HIT_SHIFT) + 1] = {0};
 static short emul_opcode_num = 0;
 static short emul_opcode_alloced = 0;
-static short *emul_opcode_opcodes = NULL;
-static MonoJitICallInfo **emul_opcode_map = NULL;
+static short *emul_opcode_opcodes;
+static MonoJitICallInfo **emul_opcode_map;
 
 MonoJitICallInfo *
 mono_find_jit_opcode_emulation (int opcode)
@@ -2952,9 +2954,6 @@ mini_get_tls_offset (MonoTlsKey key)
 	case TLS_KEY_JIT_TLS:
 #ifdef HOST_WIN32
 		offset = mono_get_jit_tls_key ();
-		/* Only 64 tls entries can be accessed using inline code */
-		if (offset >= 64)
-			offset = -1;
 #else
 		offset = mono_get_jit_tls_offset ();
 #endif
@@ -2973,6 +2972,12 @@ mini_get_tls_offset (MonoTlsKey key)
 		g_assert (offset != -1);
 		break;
 	}
+
+#if defined(HOST_WIN32) && defined(TARGET_AMD64)
+	/* Only 64 tls entries can be accessed using inline code */
+	if (offset >= 64)
+		offset = -1;
+#endif
 
 	return offset;
 }
@@ -3006,6 +3011,15 @@ mini_tls_get_supported (MonoCompile *cfg, MonoTlsKey key)
 		return ARCH_HAVE_TLS_GET_REG;
 	else
 		return mini_get_tls_offset (key) != -1;
+}
+
+static gboolean
+mini_tls_key_supported (MonoTlsKey key)
+{
+	if (!MONO_ARCH_HAVE_TLS_GET)
+		return FALSE;
+
+	return mini_get_tls_offset (key) != -1;
 }
 
 MonoInst*
@@ -5831,7 +5845,7 @@ lookup_method (MonoDomain *domain, MonoMethod *method)
 }
 
 #if ENABLE_JIT_MAP
-static FILE* perf_map_file = NULL;
+static FILE* perf_map_file;
 
 void
 mono_enable_jit_map (void)
@@ -6454,9 +6468,9 @@ mono_jit_find_compiled_method_with_jit_info (MonoDomain *domain, MonoMethod *met
 
 gboolean mono_do_single_method_regression = FALSE;
 guint32 mono_single_method_regression_opt = 0;
-MonoMethod *mono_current_single_method = NULL;
-GSList *mono_single_method_list = NULL;
-GHashTable *mono_single_method_hash = NULL;
+MonoMethod *mono_current_single_method;
+GSList *mono_single_method_list;
+GHashTable *mono_single_method_hash;
 
 guint32
 mono_get_optimizations_for_method (MonoMethod *method, guint32 default_opt)
@@ -7253,7 +7267,6 @@ mini_init (const char *filename, const char *runtime_version)
 
 	if (!global_codeman)
 		global_codeman = mono_code_manager_new ();
-	jit_icall_name_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
 
 	memset (&callbacks, 0, sizeof (callbacks));
 	callbacks.create_ftnptr = mini_create_ftnptr;
@@ -7262,13 +7275,12 @@ mini_init (const char *filename, const char *runtime_version)
 	callbacks.set_cast_details = mono_set_cast_details;
 	callbacks.debug_log = mono_debugger_agent_debug_log;
 	callbacks.debug_log_is_enabled = mono_debugger_agent_debug_log_is_enabled;
+	callbacks.tls_key_supported = mini_tls_key_supported;
 
-#ifdef MONO_ARCH_HAVE_IMT
 	if (mono_use_imt) {
 		callbacks.get_vtable_trampoline = mini_get_vtable_trampoline;
 		callbacks.get_imt_trampoline = mini_get_imt_trampoline;
 	}
-#endif
 
 	mono_install_callbacks (&callbacks);
 
@@ -7278,7 +7290,6 @@ mini_init (const char *filename, const char *runtime_version)
 	ticallbacks.thread_state_init_from_handle = mono_thread_state_init_from_handle;
 
 	mono_threads_runtime_init (&ticallbacks);
-
 
 	if (g_getenv ("MONO_DEBUG") != NULL)
 		mini_parse_debug_options ();
@@ -7317,9 +7328,6 @@ mini_init (const char *filename, const char *runtime_version)
 #endif
 
 	mono_trampolines_init ();
-
-	if (!g_thread_supported ())
-		g_thread_init (NULL);
 
 	mono_native_tls_alloc (&mono_jit_tls_id, NULL);
 
@@ -7368,9 +7376,8 @@ mini_init (const char *filename, const char *runtime_version)
 	mono_install_get_class_from_name (mono_aot_get_class_from_name);
  	mono_install_jit_info_find_in_aot (mono_aot_find_jit_info);
 
-	if (debug_options.collect_pagefault_stats) {
+	if (debug_options.collect_pagefault_stats)
 		mono_aot_set_make_unreadable (TRUE);
-	}
 
 	if (runtime_version)
 		domain = mono_init_version (filename, runtime_version);
@@ -7383,14 +7390,12 @@ mini_init (const char *filename, const char *runtime_version)
 		mono_marshal_use_aot_wrappers (TRUE);
 	}
 
-#ifdef MONO_ARCH_HAVE_IMT
 	if (mono_use_imt) {
 		if (mono_aot_only)
 			mono_install_imt_thunk_builder (mono_aot_get_imt_thunk);
 		else
 			mono_install_imt_thunk_builder (mono_arch_build_imt_thunk);
 	}
-#endif
 
 	/*Init arch tls information only after the metadata side is inited to make sure we see dynamic appdomain tls keys*/
 	mono_arch_finish_init ();
@@ -7403,6 +7408,58 @@ mini_init (const char *filename, const char *runtime_version)
 	/* This should come after mono_init () too */
 	mini_gc_init ();
 
+#ifndef DISABLE_JIT
+	mono_create_helper_signatures ();
+#endif
+
+	register_jit_stats ();
+
+#define JIT_CALLS_WORK
+#ifdef JIT_CALLS_WORK
+	/* Needs to be called here since register_jit_icall depends on it */
+	mono_marshal_init ();
+
+	jit_icall_name_hash = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
+
+	mono_arch_register_lowlevel_calls ();
+
+	register_icalls ();
+
+	mono_generic_sharing_init ();
+#endif
+
+#ifdef MONO_ARCH_SIMD_INTRINSICS
+	mono_simd_intrinsics_init ();
+#endif
+
+#if MONO_SUPPORT_TASKLETS
+	mono_tasklets_init ();
+#endif
+
+	if (mono_compile_aot)
+		/*
+		 * Avoid running managed code when AOT compiling, since the platform
+		 * might only support aot-only execution.
+		 */
+		mono_runtime_set_no_exec (TRUE);
+
+#define JIT_RUNTIME_WORKS
+#ifdef JIT_RUNTIME_WORKS
+	mono_install_runtime_cleanup ((MonoDomainFunc)mini_cleanup);
+	mono_runtime_init (domain, mono_thread_start_cb, mono_thread_attach_cb);
+	mono_thread_attach (domain);
+#endif
+
+	mono_profiler_runtime_initialized ();
+
+	MONO_VES_INIT_END ();
+
+	return domain;
+}
+
+static void
+register_icalls (void)
+{
 	mono_add_internal_call ("System.Diagnostics.StackFrame::get_frame_info", 
 				ves_icall_get_frame_info);
 	mono_add_internal_call ("System.Diagnostics.StackTrace::get_trace", 
@@ -7420,19 +7477,6 @@ mini_init (const char *filename, const char *runtime_version)
 	mono_add_internal_call ("System.Diagnostics.Debugger::Mono_UnhandledException_internal",
 				mono_debugger_agent_unhandled_exception);
 #endif
-
-#ifndef DISABLE_JIT
-	mono_create_helper_signatures ();
-#endif
-
-	register_jit_stats ();
-
-#define JIT_CALLS_WORK
-#ifdef JIT_CALLS_WORK
-	/* Needs to be called here since register_jit_icall depends on it */
-	mono_marshal_init ();
-
-	mono_arch_register_lowlevel_calls ();
 
 	/*
 	 * It's important that we pass `TRUE` as the last argument here, as
@@ -7634,41 +7678,10 @@ mini_init (const char *filename, const char *runtime_version)
 	register_icall (mono_object_isinst_with_cache, "mono_object_isinst_with_cache", "object object ptr ptr", FALSE);
 
 	register_icall (mono_debugger_agent_user_break, "mono_debugger_agent_user_break", "void", FALSE);
-#endif
 
 #ifdef TARGET_IOS
 	register_icall (pthread_getspecific, "pthread_getspecific", "ptr ptr", TRUE);
 #endif
-
-	mono_generic_sharing_init ();
-
-#ifdef MONO_ARCH_SIMD_INTRINSICS
-	mono_simd_intrinsics_init ();
-#endif
-
-#if MONO_SUPPORT_TASKLETS
-	mono_tasklets_init ();
-#endif
-
-	if (mono_compile_aot)
-		/* 
-		 * Avoid running managed code when AOT compiling, since the platform
-		 * might only support aot-only execution.
-		 */
-		mono_runtime_set_no_exec (TRUE);
-
-#define JIT_RUNTIME_WORKS
-#ifdef JIT_RUNTIME_WORKS
-	mono_install_runtime_cleanup ((MonoDomainFunc)mini_cleanup);
-	mono_runtime_init (domain, mono_thread_start_cb, mono_thread_attach_cb);
-	mono_thread_attach (domain);
-#endif
-
-	mono_profiler_runtime_initialized ();
-
-	MONO_VES_INIT_END ();
-	
-	return domain;
 }
 
 MonoJitStats mono_jit_stats = {0};
@@ -7999,7 +8012,7 @@ typedef struct MonoJumpTableChunk {
 	/* gpointer entries[total]; */
 } MonoJumpTableChunk;
 
-static MonoJumpTableChunk* g_jumptable = NULL;
+static MonoJumpTableChunk* g_jumptable;
 #define mono_jumptable_lock() EnterCriticalSection (&jumptable_mutex)
 #define mono_jumptable_unlock() LeaveCriticalSection (&jumptable_mutex)
 static CRITICAL_SECTION jumptable_mutex;
