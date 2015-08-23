@@ -1064,7 +1064,8 @@ namespace Mono.CSharp {
 					continue;
 				}
 
-				types [i] = ((TypeParameterSpec)t).GetEffectiveBase ();
+				var tps = t as TypeParameterSpec;
+				types [i] = tps != null ? tps.GetEffectiveBase () : t;
 			}
 
 			if (HasTypeConstraint)
@@ -1488,6 +1489,9 @@ namespace Mono.CSharp {
 					var ac = ec as ArrayContainer;
 					if (ac != null)
 						return ArrayContainer.MakeType (context.Module, et, ac.Rank);
+
+					if (ec is PointerContainer)
+						return PointerContainer.MakeType (context.Module, et);
 
 					throw new NotImplementedException ();
 				}
