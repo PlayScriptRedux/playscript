@@ -8836,12 +8836,26 @@ namespace Mono.CSharp
 			: base (loc)
 		{
 			this.type = type;
-			eclass = ExprClass.Variable;
 		}
 
-		protected override Expression DoResolve (ResolveContext ec)
+		protected override Expression DoResolve (ResolveContext rc)
 		{
+			eclass = ExprClass.Variable;
+
+			var block = rc.CurrentBlock;
+			if (block != null) {
+				var top = block.ParametersBlock.TopBlock;
+				if (top.ThisVariable != null)
+					variable_info = top.ThisVariable.VariableInfo;
+
+			}
+
 			return this;
+		}
+
+		public override Expression DoResolveLValue (ResolveContext rc, Expression right_side)
+		{
+			return DoResolve (rc);
 		}
 
 		public override HoistedVariable GetHoistedVariable (AnonymousExpression ae)
@@ -8876,7 +8890,7 @@ namespace Mono.CSharp
 			}
 		}
 
-		VariableInfo variable_info;
+		protected VariableInfo variable_info;
 
 		public This (Location loc)
 		{
