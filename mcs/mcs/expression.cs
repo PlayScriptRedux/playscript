@@ -10074,7 +10074,7 @@ namespace Mono.CSharp
 			}
 
 			// Add "static/instance" restrictions to lookup.
-			if (rc.FileType == SourceFileType.PlayScript) {
+			if (isPlayScript) {
 				if (expr is TypeExpression) {
 					restrictions |= MemberLookupRestrictions.PreferStatic;
 				} else {
@@ -10083,13 +10083,20 @@ namespace Mono.CSharp
 			}
 
 			if (this is NullMemberAccess) {
-				if (!IsNullPropagatingValid (expr.Type))
+				if (!IsNullPropagatingValid (expr.Type)) {
 					expr.Error_OperatorCannotBeApplied (rc, loc, "?", expr.Type);
+					return null;
+				}
 
 				if (expr_type.IsNullableType) {
 					expr = Nullable.Unwrap.Create (expr, true).Resolve (rc);
 					expr_type = expr.Type;
 				}
+			}
+
+			if (!IsValidDotExpression (expr_type)) {
+				Error_OperatorCannotBeApplied (rc, expr_type);
+				return null;
 			}
 
 			var lookup_arity = Arity;
