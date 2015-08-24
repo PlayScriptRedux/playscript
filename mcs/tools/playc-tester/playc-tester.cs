@@ -862,8 +862,10 @@ namespace TestRunner {
 				}
 
 				if (md.Checked) {
-					checker.HandleFailure (test.FileName, PositiveChecker.TestResult.ILError, decl_type + ": " + m_name + " has a duplicate");
-					return false;
+					// Dup names are allowed to exist in ActionScript
+					//checker.HandleFailure (test.FileName, PositiveChecker.TestResult.ILError, decl_type + ": " + m_name + " has a duplicate");
+					return true;
+					//return false;
 				}
 
 				md.Checked = true;
