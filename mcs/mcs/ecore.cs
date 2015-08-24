@@ -469,7 +469,18 @@ namespace Mono.CSharp {
 
 		protected static bool IsNullPropagatingValid (TypeSpec type)
 		{
-			return (TypeSpec.IsReferenceType (type) && type != InternalType.NullLiteral) || type.IsNullableType;
+			switch (type.Kind) {
+			case MemberKind.Struct:
+				return type.IsNullableType;
+			case MemberKind.Enum:
+			case MemberKind.Void:
+			case MemberKind.PointerType:
+				return false;
+			case MemberKind.InternalCompilerType:
+				return type.BuiltinType == BuiltinTypeSpec.Type.Dynamic;
+			default:
+				return true;
+			}
 		}
 
 		public virtual bool HasConditionalAccess ()
@@ -811,9 +822,12 @@ namespace Mono.CSharp {
 			InvocableOnly = 1,
 			ExactArity = 1 << 2,
 			ReadAccess = 1 << 3,
-			PreferStatic = 1 << 4,     // Used to filter static/non-static for PlayScript
-			PreferInstance = 1 << 5,   // Used to filter static/non-static for PlayScript
-			AsTypeCast = 1 << 6
+			EmptyArguments = 1 << 4,
+			IgnoreArity = 1 << 5,
+			IgnoreAmbiguity = 1 << 6,
+			PreferStatic = 1 << 7,     // Used to filter static/non-static for PlayScript
+			PreferInstance = 1 << 8,   // Used to filter static/non-static for PlayScript
+			AsTypeCast = 1 << 9
 		}
 
 		//
@@ -822,6 +836,13 @@ namespace Mono.CSharp {
 		//
 		public static Expression MemberLookup (IMemberContext rc, bool errorMode, TypeSpec queried_type, string name, int arity, MemberLookupRestrictions restrictions, Location loc)
 		{
+			Boolean isPlayScript;
+			try {
+				isPlayScript = loc.SourceFile.FileType == SourceFileType.PlayScript;
+			} catch {
+				isPlayScript = false;
+			}
+			
 			var members = MemberCache.FindMembers (queried_type, name, false);
 			if (members == null)
 				return null;
@@ -907,24 +928,36 @@ namespace Mono.CSharp {
 				}
 
 				if (non_method != null) {
-					if (ambig_non_method != null && rc != null) {
-						// PlayScript - we resolve ambiguity between identically named static/instance methods based on preference passed
-						// from the caller (which checks to see if a TypeName.blah is used).  This allows us to have identically named 
-						// properties/member vars.
-						if ((restrictions & MemberLookupRestrictions.PreferStatic) != 0 && 
-						    		((non_method.Modifiers & Modifiers.STATIC) != (ambig_non_method.Modifiers & Modifiers.STATIC))) {
-							non_method = (non_method.Modifiers & Modifiers.STATIC) != 0 ? non_method : ambig_non_method;
-						} else if ((restrictions & MemberLookupRestrictions.PreferInstance) != 0 && 
-						           	((non_method.Modifiers & Modifiers.STATIC) != (ambig_non_method.Modifiers & Modifiers.STATIC))) {
-							non_method = (non_method.Modifiers & Modifiers.STATIC) == 0 ? non_method : ambig_non_method;
-						} else {
+					if (!isPlayScript)
+						if (ambig_non_method != null && rc != null && (restrictions & MemberLookupRestrictions.IgnoreAmbiguity) == 0) {
 							var report = rc.Module.Compiler.Report;
 							report.SymbolRelatedToPreviousError (non_method);
 							report.SymbolRelatedToPreviousError (ambig_non_method);
 							report.Error (229, loc, "Ambiguity between `{0}' and `{1}'",
 								non_method.GetSignatureForError (), ambig_non_method.GetSignatureForError ());
 						}
-					}
+
+					if (isPlayScript)
+						if (ambig_non_method != null && rc != null) {
+							// PlayScript - we resolve ambiguity between identically named static/instance methods based on preference passed
+							// from the caller (which checks to see if a TypeName.blah is used).  This allows us to have identically named 
+							// properties/member vars.
+							// ./as/test-as-StaticVsInstanceSameName.as
+							// ./as/test-as-StaticVsInstanceSameNameProp.as
+							if ((restrictions & MemberLookupRestrictions.PreferStatic) != 0 && 
+							    		((non_method.Modifiers & Modifiers.STATIC) != (ambig_non_method.Modifiers & Modifiers.STATIC))) {
+								non_method = (non_method.Modifiers & Modifiers.STATIC) != 0 ? non_method : ambig_non_method;
+							} else if ((restrictions & MemberLookupRestrictions.PreferInstance) != 0 && 
+							           	((non_method.Modifiers & Modifiers.STATIC) != (ambig_non_method.Modifiers & Modifiers.STATIC))) {
+								non_method = (non_method.Modifiers & Modifiers.STATIC) == 0 ? non_method : ambig_non_method;
+							} else {
+								var report = rc.Module.Compiler.Report;
+								report.SymbolRelatedToPreviousError (non_method);
+								report.SymbolRelatedToPreviousError (ambig_non_method);
+								report.Error (229, loc, "Ambiguity between `{0}' and `{1}'",
+									non_method.GetSignatureForError (), ambig_non_method.GetSignatureForError ());
+							}
+						}
 
 					if (non_method is MethodSpec)
 						return new MethodGroupExpr (members, queried_type, loc);
@@ -2642,6 +2675,11 @@ namespace Mono.CSharp {
 			return SimpleNameResolve (ec, right_side);
 		}
 
+		public void Error_NameDoesNotExist (ResolveContext rc)
+		{
+			rc.Report.Error (103, loc, "The name `{0}' does not exist in the current context", Name);
+		}
+
 		protected virtual void Error_TypeOrNamespaceNotFound (IMemberContext ctx)
 		{
 			if (ctx.CurrentType != null) {
@@ -2993,6 +3031,9 @@ namespace Mono.CSharp {
 					return mg;
 				}
 
+				if (Name == "nameof")
+					return new NameOf (this);
+
 				if (errorMode) {
 					if (variable_found) {
 						rc.Report.Error (841, loc, "A local variable `{0}' cannot be used before it is declared", name);
@@ -3038,7 +3079,7 @@ namespace Mono.CSharp {
 
 						e = rc.LookupNamespaceOrType (name, -System.Math.Max (1, Arity), LookupMode.Probing, absolute_ns, loc);
 						if (e != null) {
-							if (e.Type.Arity != Arity) {
+							if (e.Type.Arity != Arity && (restrictions & MemberLookupRestrictions.IgnoreArity) == 0) {
 								Error_TypeArgumentsCannotBeUsed (rc, e.Type, loc);
 								return e;
 							}
@@ -3052,7 +3093,7 @@ namespace Mono.CSharp {
 							}
 						}
 
-						rc.Report.Error (103, loc, "The name `{0}' does not exist in the current context", name);
+						Error_NameDoesNotExist (rc);
 					}
 
 					return ErrorExpression.Instance;

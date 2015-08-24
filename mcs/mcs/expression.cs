@@ -7111,11 +7111,13 @@ namespace Mono.CSharp
 			}
 
 			if (atn != null) {
+//<<<<<<< ours
 				MemberLookupRestrictions lookupRestr = MemberLookupRestrictions.InvocableOnly | MemberLookupRestrictions.ReadAccess;
 				// Allow lookup to return a type for ActionSctipt function style casts.
 				if (isPlayScript && arguments != null && arguments.Count == 1)
 					lookupRestr |= MemberLookupRestrictions.AsTypeCast;
-				member_expr = atn.LookupNameExpression (ec, lookupRestr);
+//				member_expr = atn.LookupNameExpression (ec, lookupRestr);
+				member_expr = atn.LookupNameExpression (ec, MemberLookupRestrictions.InvocableOnly | MemberLookupRestrictions.ReadAccess);
 				if (member_expr != null) {
 					// Handle "function call" style casts in actionscript.
 //					if (isPlayScript && member_expr is TypeExpr && 
@@ -7123,6 +7125,15 @@ namespace Mono.CSharp
 //						var castExpr = new Cast(member_expr, arguments[0].Expr, loc);
 //						return castExpr.Resolve (ec);
 //					}
+//=======
+//				member_expr = atn.LookupNameExpression (ec, MemberLookupRestrictions.InvocableOnly | MemberLookupRestrictions.ReadAccess);
+//				if (member_expr != null) {
+					var name_of = member_expr as NameOf;
+					if (name_of != null) {
+						return name_of.ResolveOverload (ec, arguments);
+					}
+
+//>>>>>>> theirs
 					member_expr = member_expr.Resolve (ec);
 				}
 			} else {
@@ -9802,22 +9813,30 @@ namespace Mono.CSharp
 			}
 		}
 
-		public override FullNamedExpression ResolveAsTypeOrNamespace (IMemberContext ec)
+		public FullNamedExpression CreateExpressionFromAlias (IMemberContext mc)
 		{
-			if (alias == GlobalAlias) {
-				expr = new NamespaceExpression (ec.Module.GlobalRootNamespace, loc);
-				return base.ResolveAsTypeOrNamespace (ec);
-			}
+			if (alias == GlobalAlias)
+				return new NamespaceExpression (mc.Module.GlobalRootNamespace, loc);
 
-			int errors = ec.Module.Compiler.Report.Errors;
-			expr = ec.LookupNamespaceAlias (alias);
+			int errors = mc.Module.Compiler.Report.Errors;
+			var expr = mc.LookupNamespaceAlias (alias);
 			if (expr == null) {
-				if (errors == ec.Module.Compiler.Report.Errors)
-					ec.Module.Compiler.Report.Error (432, loc, "Alias `{0}' not found", alias);
+				if (errors == mc.Module.Compiler.Report.Errors)
+					mc.Module.Compiler.Report.Error (432, loc, "Alias `{0}' not found", alias);
+
 				return null;
 			}
-			
-			return base.ResolveAsTypeOrNamespace (ec);
+
+			return expr;
+		}
+
+		public override FullNamedExpression ResolveAsTypeOrNamespace (IMemberContext mc)
+		{
+			expr = CreateExpressionFromAlias (mc);
+			if (expr == null)
+				return null;
+
+			return base.ResolveAsTypeOrNamespace (mc);
 		}
 
 		protected override Expression DoResolve (ResolveContext ec)
@@ -10361,7 +10380,7 @@ namespace Mono.CSharp
 				nested = MemberCache.FindNestedType (expr_type, Name, Arity);
 				if (nested == null) {
 					if (expr_type == tnew_expr) {
-						Error_IdentifierNotFound (rc, expr_type, Name);
+						Error_IdentifierNotFound (rc, expr_type);
 						return null;
 					}
 
@@ -10403,7 +10422,7 @@ namespace Mono.CSharp
 			return texpr;
 		}
 
-		protected virtual void Error_IdentifierNotFound (IMemberContext rc, TypeSpec expr_type, string identifier)
+		public void Error_IdentifierNotFound (IMemberContext rc, TypeSpec expr_type)
 		{
 			var nested = MemberCache.FindNestedType (expr_type, Name, -System.Math.Max (1, Arity));
 
