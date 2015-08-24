@@ -35,7 +35,7 @@
 
 # the following test is fine, the il verify can not handle mutiple object/func
 # with same name
-./as/test-debug-015.as IGNORE
+# ./as/test-debug-015.as 
 
 ./play/test-debug-004.play
 ./play/test-debug-006.play

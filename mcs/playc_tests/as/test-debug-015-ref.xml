@@ -1,0 +1,135 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<symbols>
+  <files>
+    <file id="1" name="test-debug-015.as" checksum="5c5007d2ed6755682db793ff13a93ee3" />
+  </files>
+  <methods>
+    <method token="0x6000001">
+      <sequencepoints />
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000002">
+      <sequencepoints>
+        <entry il="0x0" row="8" col="41" file_ref="1" hidden="false" />
+        <entry il="0x1" row="9" col="13" file_ref="1" hidden="false" />
+        <entry il="0x6" row="9" col="13" file_ref="1" hidden="false" />
+        <entry il="0xb" row="10" col="9" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000003">
+      <sequencepoints>
+        <entry il="0x0" row="12" col="34" file_ref="1" hidden="false" />
+        <entry il="0x1" row="13" col="13" file_ref="1" hidden="false" />
+        <entry il="0x6" row="13" col="13" file_ref="1" hidden="false" />
+        <entry il="0xb" row="14" col="9" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000004">
+      <sequencepoints>
+        <entry il="0x0" row="16" col="37" file_ref="1" hidden="false" />
+        <entry il="0x1" row="17" col="13" file_ref="1" hidden="false" />
+        <entry il="0x6" row="17" col="13" file_ref="1" hidden="false" />
+        <entry il="0xb" row="18" col="13" file_ref="1" hidden="false" />
+        <entry il="0x13" row="19" col="9" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000005">
+      <sequencepoints>
+        <entry il="0x0" row="21" col="47" file_ref="1" hidden="false" />
+        <entry il="0x1" row="22" col="13" file_ref="1" hidden="false" />
+        <entry il="0x6" row="22" col="13" file_ref="1" hidden="false" />
+        <entry il="0xb" row="23" col="9" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000006">
+      <sequencepoints>
+        <entry il="0x0" row="25" col="44" file_ref="1" hidden="false" />
+        <entry il="0x1" row="26" col="13" file_ref="1" hidden="false" />
+        <entry il="0x6" row="26" col="13" file_ref="1" hidden="false" />
+        <entry il="0xb" row="27" col="13" file_ref="1" hidden="false" />
+        <entry il="0x13" row="28" col="9" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000007">
+      <sequencepoints>
+        <entry il="0x0" row="30" col="54" file_ref="1" hidden="false" />
+        <entry il="0x1" row="31" col="13" file_ref="1" hidden="false" />
+        <entry il="0x6" row="31" col="13" file_ref="1" hidden="false" />
+        <entry il="0xb" row="32" col="9" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000008">
+      <sequencepoints>
+        <entry il="0x0" row="50" col="43" file_ref="1" hidden="false" />
+        <entry il="0x1" row="51" col="25" file_ref="1" hidden="false" />
+        <entry il="0x7" row="52" col="25" file_ref="1" hidden="false" />
+        <entry il="0xd" row="54" col="17" file_ref="1" hidden="false" />
+        <entry il="0x12" row="55" col="13" file_ref="1" hidden="false" />
+        <entry il="0x13" row="55" col="15" file_ref="1" hidden="false" />
+        <entry il="0x18" row="57" col="13" file_ref="1" hidden="false" />
+        <entry il="0x19" row="57" col="19" file_ref="1" hidden="false" />
+        <entry il="0x1f" row="58" col="13" file_ref="1" hidden="false" />
+        <entry il="0x21" row="58" col="15" file_ref="1" hidden="false" />
+        <entry il="0x26" row="59" col="21" file_ref="1" hidden="false" />
+        <entry il="0x2c" row="60" col="13" file_ref="1" hidden="false" />
+        <entry il="0x2d" row="60" col="17" file_ref="1" hidden="false" />
+        <entry il="0x32" row="62" col="13" file_ref="1" hidden="false" />
+        <entry il="0x33" row="62" col="27" file_ref="1" hidden="false" />
+        <entry il="0x3f" row="62" col="37" file_ref="1" hidden="false" />
+        <entry il="0x45" row="63" col="13" file_ref="1" hidden="false" />
+        <entry il="0x46" row="63" col="23" file_ref="1" hidden="false" />
+        <entry il="0x52" row="63" col="33" file_ref="1" hidden="false" />
+        <entry il="0x58" row="65" col="17" file_ref="1" hidden="false" />
+        <entry il="0x5d" row="66" col="13" file_ref="1" hidden="false" />
+        <entry il="0x5e" row="66" col="15" file_ref="1" hidden="false" />
+        <entry il="0x63" row="68" col="13" file_ref="1" hidden="false" />
+        <entry il="0x6b" row="69" col="9" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals>
+        <entry name="f" il_index="0" scope_ref="0" />
+        <entry name="b" il_index="1" scope_ref="0" />
+        <entry name="i" il_index="2" scope_ref="0" />
+        <entry name="foo_m" il_index="3" scope_ref="0" />
+      </locals>
+      <scopes />
+    </method>
+    <method token="0x6000009">
+      <sequencepoints />
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x600000a">
+      <sequencepoints>
+        <entry il="0x0" row="38" col="41" file_ref="1" hidden="false" />
+        <entry il="0x1" row="39" col="13" file_ref="1" hidden="false" />
+        <entry il="0x6" row="39" col="13" file_ref="1" hidden="false" />
+        <entry il="0xb" row="40" col="9" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x600000b">
+      <sequencepoints>
+        <entry il="0x0" row="42" col="34" file_ref="1" hidden="false" />
+        <entry il="0x1" row="43" col="13" file_ref="1" hidden="false" />
+        <entry il="0x6" row="43" col="13" file_ref="1" hidden="false" />
+        <entry il="0xb" row="44" col="9" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals />
+      <scopes />
+    </method>
+  </methods>
+</symbols>
