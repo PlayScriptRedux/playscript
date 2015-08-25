@@ -464,6 +464,10 @@ namespace Mono.CSharp {
 			if (c != null)
 				return !c.IsNull;
 
+			var tc = expr as TypeCast;
+			if (tc != null)
+				return IsNeverNull (tc.Child);
+
 			return false;
 		}
 
