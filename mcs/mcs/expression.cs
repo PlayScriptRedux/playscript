@@ -12223,6 +12223,8 @@ namespace Mono.CSharp
 					return null;
 				eclass = source.eclass;
 				type = source.Type;
+
+				return this;
 			}
 
 			return base.DoResolve (ec);
