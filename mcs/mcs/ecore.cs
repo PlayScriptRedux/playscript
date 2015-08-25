@@ -228,7 +228,7 @@ namespace Mono.CSharp {
 		// This is used if the expression should be resolved as a type or namespace name.
 		// the default implementation fails.   
 		//
-		public virtual TypeSpec ResolveAsType (IMemberContext mc)
+		public virtual TypeSpec ResolveAsType (IMemberContext mc, bool allowUnboundTypeArguments = false)
 		{
 			ResolveContext ec = new ResolveContext (mc);
 			Expression e = Resolve (ec);
@@ -2603,6 +2603,11 @@ namespace Mono.CSharp {
 				(targs == null || targs.Equals (atne.targs));
 		}
 
+		protected void Error_OpenGenericTypeIsNotAllowed (IMemberContext mc)
+		{
+			mc.Module.Compiler.Report.Error (7003, Location, "Unbound generic name is not valid in this context");
+		}
+
 		public override int GetHashCode ()
 		{
 			return Name.GetHashCode ();
@@ -2727,7 +2732,7 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public override FullNamedExpression ResolveAsTypeOrNamespace (IMemberContext mc)
+		public override FullNamedExpression ResolveAsTypeOrNamespace (IMemberContext mc, bool allowUnboundTypeArguments)
 		{
 			// PlayScript - Use absolute namespace resolution, not relative
 			bool absolute_ns =  loc.SourceFile != null && loc.SourceFile.FileType == SourceFileType.PlayScript;
@@ -2743,6 +2748,9 @@ namespace Mono.CSharp {
 
 						return ct;
 					}
+
+					if (!allowUnboundTypeArguments)
+						Error_OpenGenericTypeIsNotAllowed (mc);
 
 					return new GenericOpenTypeExpr (fne.Type, loc);
 				}
@@ -2972,7 +2980,7 @@ namespace Mono.CSharp {
 							rc.Report.Error (135, loc, "`{0}' conflicts with a declaration in a child block", name);
 						}
 
-						return ResolveAsTypeOrNamespace (rc);
+						return ResolveAsTypeOrNamespace (rc, true);
 					}
 				}
 
@@ -2994,7 +3002,7 @@ namespace Mono.CSharp {
 							rc.Report.Error (135, loc, "`{0}' conflicts with a declaration in a child block", name);
 						}
 
-						return ResolveAsTypeOrNamespace (rc);
+						return ResolveAsTypeOrNamespace (rc, true);
 					}
 				}
 
@@ -3162,16 +3170,16 @@ namespace Mono.CSharp {
 			throw new NotSupportedException ("ET");
 		}
 
-		public abstract FullNamedExpression ResolveAsTypeOrNamespace (IMemberContext mc);
+		public abstract FullNamedExpression ResolveAsTypeOrNamespace (IMemberContext mc, bool allowUnboundTypeArguments);
 
 		//
 		// This is used to resolve the expression as a type, a null
 		// value will be returned if the expression is not a type
 		// reference
 		//
-		public override TypeSpec ResolveAsType (IMemberContext mc)
+		public override TypeSpec ResolveAsType (IMemberContext mc, bool allowUnboundTypeArguments = false)
 		{
-			FullNamedExpression fne = ResolveAsTypeOrNamespace (mc);
+			FullNamedExpression fne = ResolveAsTypeOrNamespace (mc, allowUnboundTypeArguments);
 
 			if (fne == null)
 				return null;
@@ -3222,7 +3230,7 @@ namespace Mono.CSharp {
 	/// </summary>
 	public abstract class TypeExpr : FullNamedExpression
 	{
-		public sealed override FullNamedExpression ResolveAsTypeOrNamespace (IMemberContext mc)
+		public sealed override FullNamedExpression ResolveAsTypeOrNamespace (IMemberContext mc, bool allowUnboundTypeArguments)
 		{
 			ResolveAsType (mc);
 			return this;
@@ -3261,7 +3269,7 @@ namespace Mono.CSharp {
 			loc = l;
 		}
 
-		public sealed override TypeSpec ResolveAsType (IMemberContext ec)
+		public sealed override TypeSpec ResolveAsType (IMemberContext mc, bool allowUnboundTypeArguments = false)
 		{
 			return type;
 		}
@@ -3290,7 +3298,7 @@ namespace Mono.CSharp {
 			throw new NotImplementedException ();
 		}
 
-		public override FullNamedExpression ResolveAsTypeOrNamespace (IMemberContext mc)
+		public override FullNamedExpression ResolveAsTypeOrNamespace (IMemberContext mc, bool allowUnboundTypeArguments)
 		{
 			return this;
 		}

@@ -2226,7 +2226,7 @@ namespace Mono.CSharp {
 					return true;
 				}
 					
-				var left = fne.ResolveAsTypeOrNamespace (rc);
+				var left = fne.ResolveAsTypeOrNamespace (rc, true);
 				if (left == null)
 					return true;
 
@@ -2239,7 +2239,7 @@ namespace Mono.CSharp {
 					return true;
 				}
 
-				if (left.Type.IsGenericOrParentIsGeneric) {
+				if (left.Type.IsGenericOrParentIsGeneric && left.Type.GetDefinition () != left.Type) {
 					rc.Report.Error (8071, loc, "Type arguments are not allowed in the nameof operator");
 				}
 

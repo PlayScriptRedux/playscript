@@ -1591,7 +1591,7 @@ namespace Mono.CSharp {
 
 		public virtual void Define (NamespaceContainer ctx)
 		{
-			resolved = expr.ResolveAsTypeOrNamespace (ctx);
+			resolved = expr.ResolveAsTypeOrNamespace (ctx, false);
 			var ns = resolved as NamespaceExpression;
 			if (ns != null)
 				return;
@@ -1655,7 +1655,7 @@ namespace Mono.CSharp {
 
 		public override void Define (NamespaceContainer ctx)
 		{
-			resolved = NamespaceExpression.ResolveAsTypeOrNamespace (ctx);
+			resolved = NamespaceExpression.ResolveAsTypeOrNamespace (ctx, false);
 			if (resolved != null) {
 				resolvedType = resolved.ResolveAsType (ctx);
 			}
@@ -1795,7 +1795,7 @@ namespace Mono.CSharp {
 			// We achieve that by introducing alias-context which redirect any local
 			// namespace or type resolve calls to parent namespace
 			//
-			resolved = NamespaceExpression.ResolveAsTypeOrNamespace (new AliasContext (ctx));
+			resolved = NamespaceExpression.ResolveAsTypeOrNamespace (new AliasContext (ctx), false);
 		}
 	}
 }
