@@ -1611,42 +1611,18 @@ namespace Mono.CSharp
 			get { return "is"; }
 		}
 
+		public LocalVariable Variable { get; set; }
+
 		public override Expression CreateExpressionTree (ResolveContext ec)
 		{
+			if (Variable != null)
+				throw new NotSupportedException ();
+
 			Arguments args = Arguments.CreateForExpressionTree (ec, null,
 				expr.CreateExpressionTree (ec),
 				new TypeOf (probe_type_expr, loc));
 
 			return CreateExpressionFactoryCall (ec, "TypeIs", args);
-		}
-		
-		public override void Emit (EmitContext ec)
-		{
-			if (expr_unwrap != null) {
-				expr_unwrap.EmitCheck (ec);
-				return;
-			}
-
-			expr.Emit (ec);
-
-			// Only to make verifier happy
-			if (probe_type_expr.IsGenericParameter && TypeSpec.IsValueType (expr.Type))
-				ec.Emit (OpCodes.Box, expr.Type);
-
-			ec.Emit (OpCodes.Isinst, probe_type_expr);
-			ec.EmitNull ();
-			ec.Emit (OpCodes.Cgt_Un);
-		}
-
-		public override void EmitBranchable (EmitContext ec, Label target, bool on_true)
-		{
-			if (expr_unwrap != null) {
-				expr_unwrap.EmitCheck (ec);
-			} else {
-				expr.Emit (ec);
-				ec.Emit (OpCodes.Isinst, probe_type_expr);
-			}			
-			ec.Emit (on_true ? OpCodes.Brtrue : OpCodes.Brfalse, target);
 		}
 
 		Expression CreateConstantResult (ResolveContext rc, bool result)
@@ -1664,13 +1640,105 @@ namespace Mono.CSharp
 				new SideEffectConstant (c, this, loc);
 		}
 
-		protected override Expression DoResolve (ResolveContext ec)
+		public override void Emit (EmitContext ec)
+		{
+			EmitLoad (ec);
+
+			if (expr_unwrap == null) {
+				ec.EmitNull ();
+				ec.Emit (OpCodes.Cgt_Un);
+			}
+		}
+
+		public override void EmitBranchable (EmitContext ec, Label target, bool on_true)
+		{
+			EmitLoad (ec);
+			ec.Emit (on_true ? OpCodes.Brtrue : OpCodes.Brfalse, target);
+		}
+
+		void EmitLoad (EmitContext ec)
+		{
+			Label no_value_label = new Label ();
+
+			if (expr_unwrap != null) {
+				expr_unwrap.EmitCheck (ec);
+
+				if (Variable == null)
+					return;
+
+				ec.Emit (OpCodes.Dup);
+				no_value_label = ec.DefineLabel ();
+				ec.Emit (OpCodes.Brfalse_S, no_value_label);
+				expr_unwrap.Emit (ec);
+			} else {
+				expr.Emit (ec);
+
+				// Only to make verifier happy
+				if (probe_type_expr.IsGenericParameter && TypeSpec.IsValueType (expr.Type))
+					ec.Emit (OpCodes.Box, expr.Type);
+
+				ec.Emit (OpCodes.Isinst, probe_type_expr);
+			}
+
+			if (Variable != null) {
+				bool value_on_stack;
+				if (probe_type_expr.IsGenericParameter || probe_type_expr.IsNullableType) {
+					ec.Emit (OpCodes.Dup);
+					ec.Emit (OpCodes.Unbox_Any, probe_type_expr);
+					value_on_stack = true;
+				} else {
+					value_on_stack = false;
+				}
+
+				Variable.CreateBuilder (ec);
+				Variable.EmitAssign (ec);
+
+				if (expr_unwrap != null) {
+					ec.MarkLabel (no_value_label);
+				} else if (!value_on_stack) {
+					Variable.Emit (ec);
+				}
+			}
+		}
+
+		protected override Expression DoResolve (ResolveContext rc)
+		{
+			if (base.DoResolve (rc) == null)
+				return null;
+
+			var res = ResolveResultExpression (rc);
+			if (Variable != null) {
+				if (res is Constant)
+					throw new NotImplementedException ("constant in type pattern matching");
+
+				Variable.Type = probe_type_expr;
+				var bc = rc as BlockContext;
+				if (bc != null)
+					Variable.PrepareAssignmentAnalysis (bc);
+			}
+
+			return res;
+		}
+
+		public override void FlowAnalysis (FlowAnalysisContext fc)
+		{
+			base.FlowAnalysis (fc);
+
+			if (Variable != null)
+				fc.SetVariableAssigned (Variable.VariableInfo, true);
+		}
+
+		Expression ResolveResultExpression (ResolveContext ec)
 		{
 			var isPlayScript = ec.FileType == SourceFileType.PlayScript;
 
-			if (base.DoResolve (ec) == null)
-				return null;
+			TypeSpec d = expr.Type;
+			bool d_is_nullable = false;
 
+
+//			if (base.DoResolve (ec) == null)
+//				return null;
+//
 			// Check to see if right side is an expression which returns a Class (Type).  If so, generate
 			// type check code.
 			if (isPlayScript && as_probe_type_expr != null) {
@@ -1680,8 +1748,11 @@ namespace Mono.CSharp
 				return new Invocation (new MemberAccess(new MemberAccess(new SimpleName("PlayScript", this.loc), "Support", this.loc), "IsCheck", this.loc), arguments).Resolve (ec);
 			}
 
-			TypeSpec d = expr.Type;
-			bool d_is_nullable = false;
+//			=======
+//
+//>>>>>>> 121766abb99b75a30d0f508d24979bed54c9b4a9
+//			TypeSpec d = expr.Type;
+//			bool d_is_nullable = false;
 
 			//
 			// If E is a method group or the null literal, or if the type of E is a reference
@@ -1716,7 +1787,7 @@ namespace Mono.CSharp
 					// D and T are the same value types but D can be null
 					//
 					if (d_is_nullable && !t_is_nullable) {
-						expr_unwrap = Nullable.Unwrap.Create (expr, false);
+						expr_unwrap = Nullable.Unwrap.Create (expr, true);
 						return this;
 					}
 					
