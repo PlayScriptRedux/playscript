@@ -1076,8 +1076,7 @@ class MDocUpdater : MDocCommand
 		
 		MyXmlNodeList todelete = new MyXmlNodeList ();
 		
-		var docNodes = docEnum.GetDocumentationMembers (basefile, type).ToArray();
-		foreach (DocsNodeInfo info in docNodes) {
+		foreach (DocsNodeInfo info in docEnum.GetDocumentationMembers (basefile, type)) {
 			XmlElement oldmember  = info.Node;
 			MemberReference oldmember2 = info.Member;
 			string sig = oldmember2 != null ? memberFormatters [0].GetDeclaration (oldmember2) : null;
@@ -1140,9 +1139,9 @@ class MDocUpdater : MDocCommand
 				if (mm == null) continue;
 
 				if (MDocUpdater.SwitchingToMagicTypes) {
-					// this is a new style API that obviously doesn't exist in the old API. Let's mark
-					// it with apistyle="new", so that it's not displayed for old style APIs
-					mm.SetAttribute ("apistyle", "new");
+					// this is a unified style API that obviously doesn't exist in the classic API. Let's mark
+					// it with apistyle="unified", so that it's not displayed for classic style APIs
+					mm.SetAttribute ("apistyle", "unified");
 				}
 
 				members.AppendChild( mm );
@@ -1247,19 +1246,19 @@ class MDocUpdater : MDocCommand
 			if (!delete && MemberDocsHaveUserContent (member)) {
 				Warning ("Member deletions must be enabled with the --delete option.");
 			} else if (HasDroppedNamespace ()) {
-				// if we're dropping the namespace, add the "old style"
+				// if we're dropping the namespace, add the "classic style"
 				var existingAttribute = member.Attributes ["apistyle"];
 				if (existingAttribute != null) {
-					existingAttribute.Value = "old";
+					existingAttribute.Value = "classic";
 				} else {
 					// add the attribute and do not remove
 					XmlAttribute apistyleAttr = member.OwnerDocument.CreateAttribute ("apistyle");
 
-					apistyleAttr.Value = "old";
+					apistyleAttr.Value = "classic";
 
 					member.Attributes.Append (apistyleAttr);
 				}
-			} else if (!HasDroppedNamespace () && member.Attributes ["apistyle"] != null && member.Attributes ["apistyle"].Value == "new") {
+			} else if (!HasDroppedNamespace () && member.Attributes ["apistyle"] != null && member.Attributes ["apistyle"].Value == "unified") {
 				// do nothing if there's an apistyle=new attribute and we haven't dropped the namespace
 			} else if (!string.IsNullOrWhiteSpace (PreserveTag)) {
 				// do nothing
@@ -1404,44 +1403,49 @@ class MDocUpdater : MDocCommand
 				});
 		}
 		
-		string assemblyInfoNodeFilter = MDocUpdater.HasDroppedNamespace () ? "[@apistyle='new']" : "[not(@apistyle) or @apistyle='old']";
+		string assemblyInfoNodeFilter = MDocUpdater.HasDroppedNamespace () ? "[@apistyle='unified']" : "[not(@apistyle) or @apistyle='classic']";
 
 		AddXmlNode(
-			root.SelectNodes("AssemblyInfo" + assemblyInfoNodeFilter).Cast<XmlElement>().ToArray(),
+			root.SelectNodes ("AssemblyInfo" + assemblyInfoNodeFilter).Cast<XmlElement> ().ToArray (),
 			x => x.SelectSingleNode("AssemblyName").InnerText == type.Module.Assembly.Name.Name,
 			x => WriteElementText(x, "AssemblyName", type.Module.Assembly.Name.Name),
 			() => {
 				XmlElement ass = WriteElement(root, "AssemblyInfo", forceNewElement:true);
 				
-				if (MDocUpdater.HasDroppedNamespace ()) ass.SetAttribute ("apistyle", "new");
+				if (MDocUpdater.HasDroppedNamespace ()) ass.SetAttribute ("apistyle", "unified");
 
-				WriteElementText(ass, "AssemblyName", type.Module.Assembly.Name.Name);
-				if (!no_assembly_versions) {
-					UpdateAssemblyVersions (root, type, true);
-				}
-				else {
-					var versions = ass.SelectNodes ("AssemblyVersion").Cast<XmlNode> ().ToList ();
-					foreach (var version in versions)
-						ass.RemoveChild (version);
-				}
-				if (!string.IsNullOrEmpty (type.Module.Assembly.Name.Culture))
-					WriteElementText(ass, "AssemblyCulture", type.Module.Assembly.Name.Culture);
-				else
-					ClearElement(ass, "AssemblyCulture");
-						
 				
-				// Why-oh-why do we put assembly attributes in each type file?
-				// Neither monodoc nor monodocs2html use them, so I'm deleting them
-				// since they're outdated in current docs, and a waste of space.
-				//MakeAttributes(ass, type.Assembly, true);
-				XmlNode assattrs = ass.SelectSingleNode("Attributes");
-				if (assattrs != null)
-					ass.RemoveChild(assattrs);
-				
-				NormalizeWhitespace(ass);
 
 				return ass;
 			});
+
+		foreach(var ass in root.SelectNodes ("AssemblyInfo" + assemblyInfoNodeFilter).Cast<XmlElement> ())
+		{
+			WriteElementText(ass, "AssemblyName", type.Module.Assembly.Name.Name);
+			if (!no_assembly_versions) {
+				UpdateAssemblyVersions (root, type, true);
+			}
+			else {
+				var versions = ass.SelectNodes ("AssemblyVersion").Cast<XmlNode> ().ToList ();
+				foreach (var version in versions)
+					ass.RemoveChild (version);
+			}
+			if (!string.IsNullOrEmpty (type.Module.Assembly.Name.Culture))
+				WriteElementText(ass, "AssemblyCulture", type.Module.Assembly.Name.Culture);
+			else
+				ClearElement(ass, "AssemblyCulture");
+
+
+			// Why-oh-why do we put assembly attributes in each type file?
+			// Neither monodoc nor monodocs2html use them, so I'm deleting them
+			// since they're outdated in current docs, and a waste of space.
+			//MakeAttributes(ass, type.Assembly, true);
+			XmlNode assattrs = ass.SelectSingleNode("Attributes");
+			if (assattrs != null)
+				ass.RemoveChild(assattrs);
+
+			NormalizeWhitespace(ass);
+		}
 		
 		if (type.IsGenericType ()) {
 				MakeTypeParameters (root, type.GenericParameters, MDocUpdater.HasDroppedNamespace());
@@ -1604,7 +1608,7 @@ class MDocUpdater : MDocCommand
 	static void AddXmlNode (XmlElement[] relevant, Func<XmlElement, bool> valueMatches, Action<XmlElement> setValue, Func<XmlElement> makeNewNode)
 	{
 		bool shouldDuplicate = MDocUpdater.HasDroppedNamespace ();
-		var styleToUse = shouldDuplicate ? ApiStyle.New : ApiStyle.Old;
+		var styleToUse = shouldDuplicate ? ApiStyle.Unified : ApiStyle.Classic;
 		var existing = relevant;
 		bool done = false;
 		bool addedOldApiStyle = false;
@@ -1616,16 +1620,16 @@ class MDocUpdater : MDocCommand
 					done = true;
 				}
 				else {
-					n.AddApiStyle (ApiStyle.Old);
+					n.AddApiStyle (ApiStyle.Classic);
 					addedOldApiStyle = true;
 				}
 			}
 		}
 		if (!done) {
-			if (existing.Count () == 0) {
+			if (!existing.Any ()) {
 				var newNode = makeNewNode ();
 				if (shouldDuplicate && addedOldApiStyle) {
-					newNode.AddApiStyle (ApiStyle.New);
+					newNode.AddApiStyle (ApiStyle.Unified);
 				}
 			}
 			else {
@@ -2176,8 +2180,8 @@ class MDocUpdater : MDocCommand
 				root.RemoveChild (av);
 		}
 
-		string oldNodeFilter = "AssemblyInfo[not(@apistyle) or @apistyle='old']";
-		string newNodeFilter = "AssemblyInfo[@apistyle='new']";
+		string oldNodeFilter = "AssemblyInfo[not(@apistyle) or @apistyle='classic']";
+		string newNodeFilter = "AssemblyInfo[@apistyle='unified']";
 		string thisNodeFilter = MDocUpdater.HasDroppedNamespace () ? newNodeFilter : oldNodeFilter;
 		string thatNodeFilter = MDocUpdater.HasDroppedNamespace () ? oldNodeFilter : newNodeFilter;
 
@@ -2186,7 +2190,7 @@ class MDocUpdater : MDocCommand
 			e = root.OwnerDocument.CreateElement("AssemblyInfo");
 
 			if (MDocUpdater.HasDroppedNamespace ()) {
-				e.SetAttribute ("apistyle", "new");
+				e.SetAttribute ("apistyle", "unified");
 			}
 
 			root.AppendChild(e);
@@ -2194,9 +2198,9 @@ class MDocUpdater : MDocCommand
 
 		var thatNode = (XmlElement) root.SelectSingleNode (thatNodeFilter);
 		if (MDocUpdater.HasDroppedNamespace () && thatNode != null) {
-			// there's an old node, we should add apistyles
-			e.SetAttribute ("apistyle", "new");
-			thatNode.SetAttribute ("apistyle", "old");
+			// there's a classic node, we should add apistyles
+			e.SetAttribute ("apistyle", "unified");
+			thatNode.SetAttribute ("apistyle", "classic");
 		}
 
 		List<XmlNode> matches = e.SelectNodes ("AssemblyVersion").Cast<XmlNode>()
@@ -2214,8 +2218,8 @@ class MDocUpdater : MDocCommand
 				e.AppendChild(c);
 			}
 		}
-		// matches.Count == 0 && !add: ignore -- already not present
 
+		// matches.Count == 0 && !add: ignore -- already not present
 		XmlNodeList avs = e.SelectNodes ("AssemblyVersion");
 		SortXmlNodes (e, avs, new VersionComparer ());
 
@@ -2815,8 +2819,8 @@ static class CecilExtensions {
 }
 
 enum ApiStyle {
-	Old,
-	New
+	Classic,
+	Unified
 }
 
 static class DocUtils {
@@ -3200,7 +3204,7 @@ class DocumentationEnumerator {
 					MDocUpdater.GetDocParameterType (pis [i].ParameterType),
 					typeParams, docTypeParams);
 
-				// if magictypes, replace paramType to "old value" ... so the comparison works
+				// if magictypes, replace paramType to "classic value" ... so the comparison works
 				string originalParamType = paramType;
 				if (MDocUpdater.SwitchingToMagicTypes) {
 					paramType = NativeTypeManager.ConvertFromNativeType (paramType);
@@ -3456,6 +3460,7 @@ class EcmaDocumentationEnumerator : DocumentationEnumerator {
 					if (membersDepth != ecmadocs.Depth - 1 || ecmadocs.NodeType != XmlNodeType.Element)
 						continue;
 					DocumentationMember dm = new DocumentationMember (ecmadocs);
+					
 					string xp = MDocUpdater.GetXPathForMember (dm);
 					XmlElement oldmember = (XmlElement) basefile.SelectSingleNode (xp);
 					MemberReference m;
@@ -3735,7 +3740,7 @@ class DocumentationMember {
 			bool shouldUse = true;
 			try {
 				string apistyle = reader.GetAttribute ("apistyle");
-				shouldUse = string.IsNullOrWhiteSpace(apistyle) || apistyle == "old"; // only use this tag if it's an 'old' style node
+				shouldUse = string.IsNullOrWhiteSpace(apistyle) || apistyle == "classic"; // only use this tag if it's an 'classic' style node
 			}
 			catch (Exception ex) {}
 			switch (reader.Name) {
@@ -3773,15 +3778,15 @@ class DocumentationMember {
 			XmlAttribute l = n.Attributes ["Language"];
 			XmlAttribute v = n.Attributes ["Value"];
 			XmlAttribute apistyle = n.Attributes ["apistyle"];
-			bool shouldUse = apistyle == null || apistyle.Value == "old";
+			bool shouldUse = apistyle == null || apistyle.Value == "classic";
 			if (l != null && v != null && shouldUse)
 				MemberSignatures [l.Value] = v.Value;
 		}
 		MemberType = node.SelectSingleNode ("MemberType").InnerText;
-		XmlNode rt = node.SelectSingleNode ("ReturnValue/ReturnType[not(@apistyle) or @apistyle='old']");
+		XmlNode rt = node.SelectSingleNode ("ReturnValue/ReturnType[not(@apistyle) or @apistyle='classic']");
 		if (rt != null)
 			ReturnType = rt.InnerText;
-		XmlNodeList p = node.SelectNodes ("Parameters/Parameter[not(@apistyle) or @apistyle='old']");
+		XmlNodeList p = node.SelectNodes ("Parameters/Parameter[not(@apistyle) or @apistyle='classic']");
 		if (p.Count > 0) {
 			Parameters = new StringList (p.Count);
 			for (int i = 0; i < p.Count; ++i)
