@@ -1158,7 +1158,7 @@ namespace Mono.CSharp {
 
 					if (other.targs != null) {
 						foreach (var otarg in other.targs) {
-							if (TypeSpecComparer.Override.IsEqual (BaseType, otarg)) {
+							if (TypeSpecComparer.Override.IsEqual (iface, otarg)) {
 								found = true;
 								break;
 							}
