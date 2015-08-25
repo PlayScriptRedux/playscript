@@ -97,7 +97,6 @@ namespace Mono.CSharp {
 			if (reachable) {
 				fc.UnreachableReported = false;
 				var res = DoFlowAnalysis (fc);
-				fc.DefiniteAssignmentOnTrue = fc.DefiniteAssignmentOnFalse = null;
 				return res;
 			}
 
@@ -273,14 +272,11 @@ namespace Mono.CSharp {
 
 		protected override bool DoFlowAnalysis (FlowAnalysisContext fc)
 		{
-			fc.DefiniteAssignmentOnTrue = fc.DefiniteAssignmentOnFalse = fc.DefiniteAssignment;
-
-			expr.FlowAnalysis (fc);
+			expr.FlowAnalysisConditional (fc);
 
 			var da_false = new DefiniteAssignmentBitSet (fc.DefiniteAssignmentOnFalse);
 
 			fc.DefiniteAssignment = fc.DefiniteAssignmentOnTrue;
-			fc.DefiniteAssignmentOnTrue = fc.DefiniteAssignmentOnFalse = null;
 
 			var res = TrueStatement.FlowAnalysis (fc);
 
@@ -445,8 +441,7 @@ namespace Mono.CSharp {
 		{
 			var res = Statement.FlowAnalysis (fc);
 
-			fc.DefiniteAssignmentOnTrue = fc.DefiniteAssignmentOnFalse = fc.DefiniteAssignment;
-			expr.FlowAnalysis (fc);
+			expr.FlowAnalysisConditional (fc);
 
 			fc.DefiniteAssignment = fc.DefiniteAssignmentOnFalse;
 
@@ -604,13 +599,10 @@ namespace Mono.CSharp {
 
 		protected override bool DoFlowAnalysis (FlowAnalysisContext fc)
 		{
-			fc.DefiniteAssignmentOnTrue = fc.DefiniteAssignmentOnFalse = fc.DefiniteAssignment;
-	
-			expr.FlowAnalysis (fc);
+			expr.FlowAnalysisConditional (fc);
 
 			fc.DefiniteAssignment = fc.DefiniteAssignmentOnTrue;
 			var da_false = new DefiniteAssignmentBitSet (fc.DefiniteAssignmentOnFalse);
-			fc.DefiniteAssignmentOnTrue = fc.DefiniteAssignmentOnFalse = null;
 
 			Statement.FlowAnalysis (fc);
 
@@ -749,12 +741,9 @@ namespace Mono.CSharp {
 
 			DefiniteAssignmentBitSet da_false;
 			if (Condition != null) {
-				fc.DefiniteAssignmentOnTrue = fc.DefiniteAssignmentOnFalse = fc.DefiniteAssignment;
-
-				Condition.FlowAnalysis (fc);
+				Condition.FlowAnalysisConditional (fc);
 				fc.DefiniteAssignment = fc.DefiniteAssignmentOnTrue;
 				da_false = new DefiniteAssignmentBitSet (fc.DefiniteAssignmentOnFalse);
-				fc.DefiniteAssignmentOnTrue = fc.DefiniteAssignmentOnFalse = null;
 			} else {
 				da_false = fc.BranchDefiniteAssignment ();
 			}
