@@ -25,14 +25,17 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
+#if NET_4_5
+
 namespace System.ServiceModel.Security
 {
 	public enum X509CertificateValidationMode
 	{
-		None = 0,
-		PeerTrust = 1,
-		ChainTrust = 2,
-		PeerOrChainTrust = 3,
-		Custom = 4,
+		None,
+		PeerTrust,
+		ChainTrust,
+		PeerOrChainTrust,
+		Custom
 	}
 }
+#endif
