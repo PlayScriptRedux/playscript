@@ -3399,6 +3399,14 @@ namespace_or_type_expr
 //		$$ = new QualifiedAliasMember (lt1.Value, lt2.Value, (TypeArguments) $3, lt1.Location);
 //		lbag.AddLocation ($$, GetLocation ($2));
 //	  }
+//	| qualified_alias_member IDENTIFIER generic_dimension
+//	  {
+//		var lt1 = (LocatedToken) $1;
+//		var lt2 = (LocatedToken) $2;
+//
+//		$$ = new QualifiedAliasMember (lt1.Value, lt2.Value, (int) $3, lt1.Location);
+//		lbag.AddLocation ($$, GetLocation ($2));
+//	  }
 	;
 
 member_name
@@ -3410,6 +3418,12 @@ member_name
 		$$ = new MemberAccess ((Expression) $1, lt.Value, (TypeArguments) $4, lt.Location);
 		lbag.AddLocation ($$, GetLocation ($2));
 	  }
+	| namespace_or_type_expr DOT IDENTIFIER generic_dimension
+	  {
+		var lt = (LocatedToken) $3;
+		$$ = new MemberAccess ((Expression) $1, lt.Value, (int) $4, lt.Location);
+		lbag.AddLocation ($$, GetLocation ($2));
+	  }
 	;
 
 simple_name_expr
@@ -3419,6 +3433,12 @@ simple_name_expr
 		var lt = (LocatedToken) $1;
 		$$ = new SimpleName (lt.Value, (TypeArguments)$2, lt.Location);
 	  }
+	  	| IDENTIFIER generic_dimension
+	  {  
+		var lt = (LocatedToken) $1;
+		$$ = new SimpleName (lt.Value, (int) $2, lt.Location);
+	  }
+
 	;
 	
 //
@@ -3765,12 +3785,14 @@ primary_expression
 	;
 
 primary_expression_or_type
-	: IDENTIFIER opt_type_argument_list
-	  {
-	    // primary_expression_or_type
-		var lt = (LocatedToken) $1;
-		$$ = new SimpleName (lt.Value, (TypeArguments)$2, lt.Location);	  
-	  }
+	: simple_name_expr
+
+//	: IDENTIFIER opt_type_argument_list
+//	  {
+//	    // primary_expression_or_type
+//		var lt = (LocatedToken) $1;
+//		$$ = new SimpleName (lt.Value, (TypeArguments)$2, lt.Location);	  
+//	  }
 	| IDENTIFIER GENERATE_COMPLETION {
 		var lt = (LocatedToken) $1;
 	       $$ = new CompletionSimpleName (MemberName.MakeName (lt.Value, null), lt.Location);
@@ -3826,6 +3848,15 @@ member_access
 		var lt = (LocatedToken) $3;
 		$$ = new MemberAccess ((Expression) $1, lt.Value, (TypeArguments) $4, lt.Location);
 		lbag.AddLocation ($$, GetLocation ($2));
+	  }
+	| primary_expression INTERR_OPERATOR DOT identifier_inside_body opt_type_argument_list
+	  {
+		if (lang_version < LanguageVersion.V_6)
+			FeatureIsNotAvailable (GetLocation ($2), "null propagating operator");
+
+		var lt = (LocatedToken) $4;
+		$$ = new ConditionalMemberAccess ((Expression) $1, lt.Value, (TypeArguments) $5, lt.Location);
+		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($3));
 	  }
 	| primary_expression INTERR_OPERATOR DOT identifier_inside_body opt_type_argument_list
 	  {
@@ -3924,6 +3955,14 @@ member_access
 //		$$ = new QualifiedAliasMember (lt1.Value, lt2.Value, (TypeArguments) $3, lt1.Location);
 //		lbag.AddLocation ($$, GetLocation ($2));
 //	  }
+	| qualified_alias_member identifier_inside_body generic_dimension
+	  {
+		var lt1 = (LocatedToken) $1;
+		var lt2 = (LocatedToken) $2;
+
+		$$ = new QualifiedAliasMember (lt1.Value, lt2.Value, (int) $3, lt1.Location);
+		lbag.AddLocation ($$, GetLocation ($2));
+	  }
 	| primary_expression DOT GENERATE_COMPLETION {
 		$$ = new CompletionMemberAccess ((Expression) $1, null,GetLocation ($3));
 	  }
@@ -4587,10 +4626,17 @@ variable_initializer_list
 //		lbag.AddLocation ($$, GetLocation ($3), GetLocation ($5));
 //	  }
 //	;
-	
+typeof_expression
+	: TYPEOF open_parens_any typeof_type_expression CLOSE_PARENS
+	  {
+		$$ = new TypeOf ((FullNamedExpression) $3, GetLocation ($1));
+		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
+	  }
+	;
+
 typeof_type_expression
 	: type_and_void
-	| unbound_type_name
+//	| unbound_type_name
 	| error
 	 {
 	 	Error_TypeExpected (lexer.Location);
@@ -4598,43 +4644,43 @@ typeof_type_expression
 	 }
 	;
 	
-unbound_type_name
-	: identifier_inside_body generic_dimension
-	  {  
-		var lt = (LocatedToken) $1;
-
-		$$ = new SimpleName (lt.Value, (int) $2, lt.Location);
-	  }
-//	| qualified_alias_member identifier_inside_body generic_dimension
-//	  {
-//		var lt1 = (LocatedToken) $1;
-//		var lt2 = (LocatedToken) $2;
+//unbound_type_name
+//	: identifier_inside_body generic_dimension
+//	  {  
+//		var lt = (LocatedToken) $1;
 //
-//		$$ = new QualifiedAliasMember (lt1.Value, lt2.Value, (int) $3, lt1.Location);
-//		lbag.AddLocation ($$, GetLocation ($2));
+//		$$ = new SimpleName (lt.Value, (int) $2, lt.Location);
 //	  }
-	| unbound_type_name DOT identifier_inside_body
-	  {
-		var lt = (LocatedToken) $3;
-		
-		$$ = new MemberAccess ((Expression) $1, lt.Value, lt.Location);		
-	  }
-	| unbound_type_name DOT identifier_inside_body generic_dimension
-	  {
-		var lt = (LocatedToken) $3;
-		
-		$$ = new MemberAccess ((Expression) $1, lt.Value, (int) $4, lt.Location);		
-	  }
-	| namespace_or_type_expr DOT identifier_inside_body generic_dimension
-	  {
-		var tne = (ATypeNameExpression) $1;
-		if (tne.HasTypeArguments)
-			Error_TypeExpected (GetLocation ($4));
-
-		var lt = (LocatedToken) $3;
-		$$ = new MemberAccess (tne, lt.Value, (int) $4, lt.Location);		
-	  }
-	;
+////	| qualified_alias_member identifier_inside_body generic_dimension
+////	  {
+////		var lt1 = (LocatedToken) $1;
+////		var lt2 = (LocatedToken) $2;
+////
+////		$$ = new QualifiedAliasMember (lt1.Value, lt2.Value, (int) $3, lt1.Location);
+////		lbag.AddLocation ($$, GetLocation ($2));
+////	  }
+//	| unbound_type_name DOT identifier_inside_body
+//	  {
+//		var lt = (LocatedToken) $3;
+//		
+//		$$ = new MemberAccess ((Expression) $1, lt.Value, lt.Location);		
+//	  }
+//	| unbound_type_name DOT identifier_inside_body generic_dimension
+//	  {
+//		var lt = (LocatedToken) $3;
+//		
+//		$$ = new MemberAccess ((Expression) $1, lt.Value, (int) $4, lt.Location);		
+//	  }
+//	| namespace_or_type_expr DOT identifier_inside_body generic_dimension
+//	  {
+//		var tne = (ATypeNameExpression) $1;
+//		if (tne.HasTypeArguments)
+//			Error_TypeExpected (GetLocation ($4));
+//
+//		var lt = (LocatedToken) $3;
+//		$$ = new MemberAccess (tne, lt.Value, (int) $4, lt.Location);		
+//	  }
+//	;
 
 generic_dimension
 	: GENERIC_DIMENSION

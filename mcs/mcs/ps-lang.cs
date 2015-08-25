@@ -48,7 +48,7 @@ namespace Mono.CSharp
 			this.loc = loc;
 		}
 
-		public override TypeSpec ResolveAsType (IMemberContext mc)
+		public override TypeSpec ResolveAsType (IMemberContext mc, bool allowUnboundTypeArguments)
 		{
 			return mc.Module.Compiler.BuiltinTypes.AsUntyped;
 		}
@@ -90,7 +90,7 @@ namespace Mono.CSharp
 		{
 		}
 
-		public override TypeSpec ResolveAsType (IMemberContext mc)
+		public override TypeSpec ResolveAsType (IMemberContext mc, bool allowUnboundTypeArguments)
 		{
 			return mc.Module.Compiler.BuiltinTypes.Exception;
 		}
