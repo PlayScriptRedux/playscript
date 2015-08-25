@@ -7111,13 +7111,12 @@ namespace Mono.CSharp
 			}
 
 			if (atn != null) {
-//<<<<<<< ours
 				MemberLookupRestrictions lookupRestr = MemberLookupRestrictions.InvocableOnly | MemberLookupRestrictions.ReadAccess;
 				// Allow lookup to return a type for ActionSctipt function style casts.
 				if (isPlayScript && arguments != null && arguments.Count == 1)
 					lookupRestr |= MemberLookupRestrictions.AsTypeCast;
-//				member_expr = atn.LookupNameExpression (ec, lookupRestr);
-				member_expr = atn.LookupNameExpression (ec, MemberLookupRestrictions.InvocableOnly | MemberLookupRestrictions.ReadAccess);
+				member_expr = atn.LookupNameExpression (ec, lookupRestr);
+				//member_expr = atn.LookupNameExpression (ec, MemberLookupRestrictions.InvocableOnly | MemberLookupRestrictions.ReadAccess);
 				if (member_expr != null) {
 					// Handle "function call" style casts in actionscript.
 //					if (isPlayScript && member_expr is TypeExpr && 
@@ -7125,15 +7124,11 @@ namespace Mono.CSharp
 //						var castExpr = new Cast(member_expr, arguments[0].Expr, loc);
 //						return castExpr.Resolve (ec);
 //					}
-//=======
-//				member_expr = atn.LookupNameExpression (ec, MemberLookupRestrictions.InvocableOnly | MemberLookupRestrictions.ReadAccess);
-//				if (member_expr != null) {
 					var name_of = member_expr as NameOf;
 					if (name_of != null) {
 						return name_of.ResolveOverload (ec, arguments);
 					}
 
-//>>>>>>> theirs
 					member_expr = member_expr.Resolve (ec);
 				}
 			} else {
