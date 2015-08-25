@@ -5163,13 +5163,13 @@ namespace Mono.CSharp {
 
 
 				if (!isPlayScript) // AS allows empty case blocks && AS allows fall throughs
-				if (FallOut) {
-					fc.Report.Error (8070, loc, "Control cannot fall out of switch statement through final case label `{0}'",
-						label.GetSignatureForError ());
-				} else {
-					fc.Report.Error (163, loc, "Control cannot fall through from one case label `{0}' to another",
-						label.GetSignatureForError ());
-				}
+					if (FallOut) {
+						fc.Report.Error (8070, loc, "Control cannot fall out of switch statement through final case label `{0}'",
+							label.GetSignatureForError ());
+					} else {
+						fc.Report.Error (163, loc, "Control cannot fall through from one case label `{0}' to another",
+							label.GetSignatureForError ());
+					}
 				return true;
 			}
 		}
