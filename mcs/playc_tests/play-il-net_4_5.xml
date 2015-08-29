@@ -640,6 +640,19 @@
       </method>
     </type>
   </test>
+  <test name="./as/test-as-Nullable.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>311</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+      <method name="Void .cctor()" attrs="6289">
+        <size>25</size>
+      </method>
+    </type>
+  </test>
   <test name="./as/test-as-Number-1.as">
     <type name="_root.NumberTest">
       <method name="Int32 Main()" attrs="150">

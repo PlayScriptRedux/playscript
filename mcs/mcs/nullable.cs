@@ -1120,6 +1120,8 @@ namespace Mono.CSharp.Nullable
 
 		Expression ConvertExpression (ResolveContext ec)
 		{
+			var isPlayScript = ec.FileType == SourceFileType.PlayScript;
+
 			// TODO: ImplicitConversionExists should take care of this
 			if (left.eclass == ExprClass.MethodGroup)
 				return null;
@@ -1221,10 +1223,11 @@ namespace Mono.CSharp.Nullable
 
 			left = Convert.ImplicitConversion (ec, unwrap ?? left, rtype, loc);
 
-			if (TypeSpec.IsValueType (left.Type) && !left.Type.IsNullableType) {
-				Warning_UnreachableExpression (ec, right.Location);
-				return ReducedExpression.Create (left, this, false).Resolve (ec);
-			}
+			if (!isPlayScript) // I#76, do not optimize this, causing a side effect on || statements (?)
+				if (TypeSpec.IsValueType (left.Type) && !left.Type.IsNullableType) {
+					Warning_UnreachableExpression (ec, right.Location);
+					return ReducedExpression.Create (left, this, false).Resolve (ec);
+				}
 
 			type = rtype;
 			return this;
