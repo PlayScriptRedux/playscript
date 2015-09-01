@@ -1,6 +1,8 @@
 # Travis-CI Build for playscript
 # see travis-ci.org for details
 
+osx_image: xcode6.4
+
 language: c
 
 os:
