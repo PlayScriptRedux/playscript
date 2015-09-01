@@ -705,6 +705,16 @@
       </method>
     </type>
   </test>
+  <test name="./as/test-as-StrictEquality.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>416</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
   <test name="./as/test-as-TestTemplate.as">
     <type name="_root.Foo">
       <method name="Int32 Main()" attrs="150">
