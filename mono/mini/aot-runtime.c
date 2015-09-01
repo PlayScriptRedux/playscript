@@ -1358,8 +1358,6 @@ get_aot_config_hash (MonoAssembly *assembly)
 static void
 aot_cache_init (void)
 {
-	if (mono_aot_only)
-		return;
 	enable_aot_cache = TRUE;
 	in_process = TRUE;
 }
@@ -1705,7 +1703,7 @@ load_aot_module (MonoAssembly *assembly, gpointer user_data)
 	if (mono_security_cas_enabled ())
 		return;
 
-	if (enable_aot_cache && !strcmp (assembly->aname.name, "mscorlib") && !mono_defaults.corlib && !mono_aot_only)
+	if (enable_aot_cache && !strcmp (assembly->aname.name, "mscorlib") && !mono_defaults.corlib)
 		/* Loaded later from mono_aot_get_method () */
 		return;
 
@@ -1716,17 +1714,16 @@ load_aot_module (MonoAssembly *assembly, gpointer user_data)
 		info = NULL;
 	mono_aot_unlock ();
 
-	sofile = NULL;
-
 	if (info) {
 		/* Statically linked AOT module */
+		sofile = NULL;
 		aot_name = g_strdup_printf ("%s", assembly->aname.name);
 		mono_trace (G_LOG_LEVEL_INFO, MONO_TRACE_AOT, "Found statically linked AOT module '%s'.\n", aot_name);
 		globals = info->globals;
 	} else {
-		if (enable_aot_cache)
+		if (enable_aot_cache) {
 			sofile = aot_cache_load_module (assembly, &aot_name);
-		if (!sofile) {
+		} else {
 			char *err;
 			aot_name = g_strdup_printf ("%s%s", assembly->image->name, SHARED_EXT);
 
