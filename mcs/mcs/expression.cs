@@ -1516,61 +1516,71 @@ namespace Mono.CSharp
 			return expr.ContainsEmitWithAwait ();
 		}
 
-		protected override Expression DoResolve (ResolveContext ec)
+		protected Expression ResolveCommon (ResolveContext rc)
 		{
+			var isPlayScript = rc.FileType == SourceFileType.PlayScript;
+
 			// NOTE: We need to distinguish between types and expressions which return a Class object.
-			if (ec.FileType == SourceFileType.PlayScript && (this is Is || this is As)) { 
-				as_probe_type_expr = ProbeType.Resolve (ec);
+			if (isPlayScript && (this is Is || this is As)) { 
+				as_probe_type_expr = ProbeType.Resolve (rc);
 				if (as_probe_type_expr is TypeExpr || as_probe_type_expr is TypeOf) {
 					// Convert typeof to actual type if somebody actually wrote "typeof" in the code.
 					if (as_probe_type_expr is TypeOf) {
 						probe_type_expr = ((TypeOf)as_probe_type_expr).TypeExpression.Type;
 					} else {
-						probe_type_expr = as_probe_type_expr.ResolveAsType (ec);
+						probe_type_expr = as_probe_type_expr.ResolveAsType (rc);
 					}
 					// Resolving to actual concrete types above will cause an Object type to be converted to an Expando.  We
 					// have to reverse this.
-					if (probe_type_expr == ec.Module.PredefinedTypes.AsExpandoObject.Resolve()) {
-						probe_type_expr = ec.BuiltinTypes.Dynamic;
+					if (probe_type_expr == rc.Module.PredefinedTypes.AsExpandoObject.Resolve()) {
+						probe_type_expr = rc.BuiltinTypes.Dynamic;
 					}
 					as_probe_type_expr = null;
 				} else if (as_probe_type_expr.Type.BuiltinType != BuiltinTypeSpec.Type.Type && 
 					as_probe_type_expr.Type.BuiltinType != BuiltinTypeSpec.Type.Dynamic) {
-					ec.Report.Error (7345, loc, "The `{0}' operator cannot be applied to an expression which is not a Class type",
+					rc.Report.Error (7345, loc, "The `{0}' operator cannot be applied to an expression which is not a Class type",
 						OperatorName);
 				}
-			} else {
-				probe_type_expr = ProbeType.ResolveAsType (ec);
-				if (probe_type_expr == null)
-					return null;
 			}
 
-			expr = expr.Resolve (ec);
+			expr = expr.Resolve (rc);
 			if (expr == null)
 				return null;
 
-			// TODO: PlayScript : Fix / probe_type_expr can be null
+			// PlayScript : Avoid - error CS0246: The type or namespace name `expectedType' could not be found.
+			if (!isPlayScript) {
+				ResolveProbeType (rc);
+				if (probe_type_expr == null)
+					return this;
+			}
+
+			// PlayScript : probe_type_expr can be null
 			if (probe_type_expr != null) {
 				if (probe_type_expr.IsStatic) {
-					ec.Report.Error (7023, loc, "The second operand of `is' or `as' operator cannot be static type `{0}'",
+					rc.Report.Error (7023, loc, "The second operand of `is' or `as' operator cannot be static type `{0}'",
 						probe_type_expr.GetSignatureForError ());
 					return null;
 				}
-
+				
 				if (expr.Type.IsPointer || probe_type_expr.IsPointer) {
-					ec.Report.Error (244, loc, "The `{0}' operator cannot be applied to an operand of pointer type",
+					rc.Report.Error (244, loc, "The `{0}' operator cannot be applied to an operand of pointer type",
 						OperatorName);
 					return null;
 				}
 			}
 
 			if (expr.Type == InternalType.AnonymousMethod || expr.Type == InternalType.MethodGroup) {
-				ec.Report.Error (837, loc, "The `{0}' operator cannot be applied to a lambda expression, anonymous method, or method group",
+				rc.Report.Error (837, loc, "The `{0}' operator cannot be applied to a lambda expression, anonymous method, or method group",
 					OperatorName);
 				return null;
 			}
 
 			return this;
+		}
+
+		protected virtual void ResolveProbeType (ResolveContext rc)
+		{
+			probe_type_expr = ProbeType.ResolveAsType (rc);
 		}
 
 		public override void EmitSideEffect (EmitContext ec)
@@ -1601,6 +1611,8 @@ namespace Mono.CSharp
 	public class Is : Probe
 	{
 		Nullable.Unwrap expr_unwrap;
+		MethodSpec number_mg;
+		Arguments number_args;
 
 		public Is (Expression expr, Expression probe_type, Location l)
 			: base (expr, probe_type, l)
@@ -1642,6 +1654,11 @@ namespace Mono.CSharp
 
 		public override void Emit (EmitContext ec)
 		{
+			if (probe_type_expr == null) {
+				EmitConstantMatch (ec);
+				return;
+			}
+
 			EmitLoad (ec);
 
 			if (expr_unwrap == null) {
@@ -1652,8 +1669,64 @@ namespace Mono.CSharp
 
 		public override void EmitBranchable (EmitContext ec, Label target, bool on_true)
 		{
-			EmitLoad (ec);
+			if (probe_type_expr == null) {
+				EmitConstantMatch (ec);
+			} else {
+				EmitLoad (ec);
+			}
+
 			ec.Emit (on_true ? OpCodes.Brtrue : OpCodes.Brfalse, target);
+		}
+
+		void EmitConstantMatch (EmitContext ec)
+		{
+			var no_match = ec.DefineLabel ();
+			var end = ec.DefineLabel ();
+
+			if (expr_unwrap != null) {
+				expr_unwrap.EmitCheck (ec);
+
+				if (ProbeType.IsNull) {
+					ec.EmitInt (0);
+					ec.Emit (OpCodes.Ceq);
+					return;
+				}
+
+				ec.Emit (OpCodes.Brfalse_S, no_match);
+				expr_unwrap.Emit (ec);
+				ProbeType.Emit (ec);
+				ec.Emit (OpCodes.Ceq);
+				ec.Emit (OpCodes.Br_S, end);
+				ec.MarkLabel (no_match);
+				ec.EmitInt (0);
+				ec.MarkLabel (end);
+				return;
+			}
+
+			if (number_args != null && number_args.Count == 3) {
+				var ce = new CallEmitter ();
+				ce.Emit (ec, number_mg, number_args, loc);
+				return;
+			}
+
+			Expr.Emit (ec);
+			ec.Emit (OpCodes.Isinst, ProbeType.Type);
+			ec.Emit (OpCodes.Dup);
+			ec.Emit (OpCodes.Brfalse, no_match);
+
+			if (number_mg != null) {
+				var ce = new CallEmitter ();
+				ce.Emit (ec, number_mg, number_args, loc);
+			} else {
+				ProbeType.Emit (ec);
+				ec.Emit (OpCodes.Ceq);
+			}
+			ec.Emit (OpCodes.Br_S, end);
+			ec.MarkLabel (no_match);
+
+			ec.Emit (OpCodes.Pop);
+			ec.EmitInt (0);
+			ec.MarkLabel (end);
 		}
 
 		void EmitLoad (EmitContext ec)
@@ -1703,8 +1776,16 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext rc)
 		{
-			if (base.DoResolve (rc) == null)
+			var isPlayScript = rc.FileType == SourceFileType.PlayScript;
+
+			if (ResolveCommon (rc) == null)
 				return null;
+
+			type = rc.BuiltinTypes.Bool;
+			eclass = ExprClass.Value;
+
+			if (!isPlayScript && probe_type_expr == null)
+				return ResolveMatchingExpression (rc);
 
 			var res = ResolveResultExpression (rc);
 			if (Variable != null) {
@@ -1726,6 +1807,66 @@ namespace Mono.CSharp
 
 			if (Variable != null)
 				fc.SetVariableAssigned (Variable.VariableInfo, true);
+		}
+
+		protected override void ResolveProbeType (ResolveContext rc)
+		{
+			if (!(ProbeType is TypeExpr) && rc.Module.Compiler.Settings.Version == LanguageVersion.Experimental) {
+				ProbeType = ProbeType.Resolve (rc, ResolveFlags.VariableOrValue | ResolveFlags.MethodGroup | ResolveFlags.Type);
+				if (ProbeType == null)
+					return;
+
+				if (ProbeType.eclass == ExprClass.Type) {
+					probe_type_expr = ProbeType.Type;
+				}
+
+				return;
+			}
+
+			base.ResolveProbeType (rc);
+		}
+
+		Expression ResolveMatchingExpression (ResolveContext rc)
+		{
+			var mc = ProbeType as Constant;
+			if (mc != null) {
+				if (!Convert.ImplicitConversionExists (rc, ProbeType, Expr.Type)) {
+					ProbeType.Error_ValueCannotBeConverted (rc, Expr.Type, false);
+					return null;
+				}
+
+				if (mc.IsNull)
+					return new Binary (Binary.Operator.Equality, Expr, mc).Resolve (rc);
+
+				var c = Expr as Constant;
+				if (c != null) {
+					c = ConstantFold.BinaryFold (rc, Binary.Operator.Equality, c, mc, loc);
+					if (c != null)
+						return c;
+				}
+
+				if (Expr.Type.IsNullableType) {
+					expr_unwrap = new Nullable.Unwrap (Expr);
+					expr_unwrap.Resolve (rc);
+				} else if (ProbeType.Type.IsEnum || (ProbeType.Type.BuiltinType >= BuiltinTypeSpec.Type.Byte && ProbeType.Type.BuiltinType <= BuiltinTypeSpec.Type.Decimal)) {
+					var helper = rc.Module.CreatePatterMatchingHelper ();
+					number_mg = helper.NumberMatcher.Spec;
+
+					//
+					// There are actually 3 arguments but the first one is already on the stack
+					//
+					number_args = new Arguments (3);
+					if (!ProbeType.Type.IsEnum)
+						number_args.Add (new Argument (Expr));
+
+					number_args.Add (new Argument (Convert.ImplicitConversion (rc, ProbeType, rc.BuiltinTypes.Object, loc)));
+					number_args.Add (new Argument (new BoolLiteral (rc.BuiltinTypes, ProbeType.Type.IsEnum, loc)));
+				}
+
+				return this;
+			}
+
+			throw new NotImplementedException ();
 		}
 
 		Expression ResolveResultExpression (ResolveContext ec)
@@ -1768,9 +1909,7 @@ namespace Mono.CSharp
 					d_is_nullable = true;
 				}
 			}
-
-			type = ec.BuiltinTypes.Bool;
-			eclass = ExprClass.Value;
+				
 			TypeSpec t = probe_type_expr;
 			bool t_is_nullable = false;
 			if (t.IsNullableType) {
@@ -1917,8 +2056,7 @@ namespace Mono.CSharp
 	///   Implementation of the `as' operator.
 	/// </summary>
 	public class As : Probe {
-		Expression resolved_type;
-		
+
 		public As (Expression expr, Expression probe_type, Location l)
 			: base (expr, probe_type, l)
 		{
@@ -1949,12 +2087,8 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext ec)
 		{
-			if (resolved_type == null) {
-				resolved_type = base.DoResolve (ec);
-
-				if (resolved_type == null)
-					return null;
-			}
+			if (ResolveCommon (ec) == null)
+				return null;
 
 			bool isPlayScript = ec.FileType == SourceFileType.PlayScript;
 
@@ -9536,135 +9670,6 @@ namespace Mono.CSharp
 		public override object Accept (StructuralVisitor visitor)
 		{
 			return visitor.Visit (this);
-		}
-	}
-
-	public class MatchExpression : Expression
-	{
-		Nullable.Unwrap expr_unwrap;
-		MethodSpec number_mg;
-
-		public MatchExpression (Expression expr, Expression match, Location loc)
-		{
-			Expr = expr;
-			Match = match;
-			this.loc = loc;
-		}
-
-		public Expression Expr { get; private set; }
-		public Expression Match { get; private set; }
-
-		public override bool ContainsEmitWithAwait ()
-		{
-			// TODO: check me
-			return Expr.ContainsEmitWithAwait ();
-		}
-
-		public override Expression CreateExpressionTree (ResolveContext ec)
-		{
-			throw new NotSupportedException ("pattern matching in expression tree");
-		}
-
-		void DefineNumberComparison (ResolveContext rc)
-		{
-		}
-
-		protected override Expression DoResolve (ResolveContext rc)
-		{
-			Expr = Expr.Resolve (rc);
-			Match = Match.Resolve (rc);
-
-			if (Match == null || Expr == null)
-				return null;
-
-			var mc = Match as Constant;
-			if (mc != null) {
-				if (!Convert.ImplicitConversionExists (rc, Match, Expr.Type)) {
-					Match.Error_ValueCannotBeConverted (rc, Expr.Type, false);
-					return null;
-				}
-
-				if (mc.IsNull)
-					return new Binary (Binary.Operator.Equality, Expr, mc).Resolve (rc);
-
-				var c = Expr as Constant;
-				if (c != null) {
-					c = ConstantFold.BinaryFold (rc, Binary.Operator.Equality, c, mc, loc);
-					if (c != null)
-						return c;
-				}
-
-				if (Expr.Type.IsNullableType) {
-					expr_unwrap = new Nullable.Unwrap (Expr);
-					expr_unwrap.Resolve (rc);
-				} else if (Match.Type.BuiltinType >= BuiltinTypeSpec.Type.Byte && Match.Type.BuiltinType <= BuiltinTypeSpec.Type.Decimal) {
-					DefineNumberComparison (rc);
-					Match = Convert.ImplicitConversion (rc, Match, rc.BuiltinTypes.Object, loc);
-				}
-			} else {
-				throw new NotImplementedException ();
-			}
-
-			type = rc.BuiltinTypes.Bool;
-			eclass = ExprClass.Value;
-			return this;
-		}
-
-		public override void Emit (EmitContext ec)
-		{
-			var no_match = ec.DefineLabel ();
-			var end = ec.DefineLabel ();
-
-			if (expr_unwrap != null) {
-				expr_unwrap.EmitCheck (ec);
-
-				if (Match.IsNull) {
-					ec.EmitInt (0);
-					ec.Emit (OpCodes.Ceq);
-					return;
-				}
-
-				ec.Emit (OpCodes.Brfalse_S, no_match);
-				expr_unwrap.Emit (ec);
-				Match.Emit (ec);
-				ec.Emit (OpCodes.Ceq);
-				ec.Emit (OpCodes.Br_S, end);
-				ec.MarkLabel (no_match);
-				ec.EmitInt (0);
-				ec.MarkLabel (end);
-				return;
-			}
-
-			Expr.Emit (ec);
-			ec.Emit (OpCodes.Isinst, Match.Type);
-			ec.Emit (OpCodes.Dup);
-			ec.Emit (OpCodes.Brfalse, no_match);
-
-			if (number_mg != null) {
-				var args = new Arguments (1);
-				args.Add (new Argument (Match));
-				var ce = new CallEmitter ();
-				ce.Emit (ec, number_mg, args, loc);
-			} else {
-				Match.Emit (ec);
-				ec.Emit (OpCodes.Ceq);
-			}
-			ec.Emit (OpCodes.Br_S, end);
-			ec.MarkLabel (no_match);
-
-			ec.Emit (OpCodes.Pop);
-			ec.EmitInt (0);
-			ec.MarkLabel (end);
-		}
-
-		public override void EmitSideEffect (EmitContext ec)
-		{
-			Expr.EmitSideEffect (ec);
-		}
-
-		public override void FlowAnalysis (FlowAnalysisContext fc)
-		{
-			Expr.FlowAnalysis (fc);
 		}
 	}
 

@@ -371,15 +371,6 @@ aot_cache_start (gpointer user_data,
 
 	config = mono_get_aot_cache_config ();
 
-	/* Per-app configuration */
-	for (i = 0; attribute_names [i]; ++i) {
-		if (!strcmp (attribute_names [i], "app")) {
-			config->apps = g_slist_prepend (config->apps, g_strdup (attribute_values [i]));
-			return;
-		}
-	}
-
-	/* Global configuration */
 	for (i = 0; attribute_names [i]; ++i) {
 		if (!strcmp (attribute_names [i], "assemblies")) {
 			char **parts, **ptr;

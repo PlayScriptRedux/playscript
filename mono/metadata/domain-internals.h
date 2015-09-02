@@ -175,7 +175,6 @@ typedef struct
 typedef struct
 {
 	guint32 stack_size;
-	guint32 epilog_size;
 } MonoArchEHJitInfo;
 
 typedef struct {

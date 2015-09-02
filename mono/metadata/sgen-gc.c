@@ -2299,7 +2299,7 @@ collect_nursery (SgenGrayQueue *unpin_queue, gboolean finish_up_concurrent_mark)
 	/* pin cemented objects */
 	sgen_cement_iterate (pin_stage_object_callback, NULL);
 	/* identify pinned objects */
-	sgen_optimize_pin_queue ();
+	sgen_optimize_pin_queue (0);
 	sgen_pinning_setup_section (nursery_section);
 	ctx.scan_func = NULL;
 	ctx.copy_func = NULL;
@@ -2418,7 +2418,7 @@ collect_nursery (SgenGrayQueue *unpin_queue, gboolean finish_up_concurrent_mark)
 	sgen_workers_reset_data ();
 
 	if (objects_pinned) {
-		sgen_optimize_pin_queue ();
+		sgen_optimize_pin_queue (0);
 		sgen_pinning_setup_section (nursery_section);
 	}
 
@@ -2584,7 +2584,7 @@ major_copy_or_mark_from_roots (size_t *old_next_pin_slot, gboolean finish_up_con
 			sgen_cement_reset ();
 	}
 
-	sgen_optimize_pin_queue ();
+	sgen_optimize_pin_queue (0);
 
 	/*
 	 * The concurrent collector doesn't move objects, neither on
@@ -2889,7 +2889,7 @@ major_finish_collection (const char *reason, size_t old_next_pin_slot, gboolean 
 
 		/*This is slow, but we just OOM'd*/
 		sgen_pin_queue_clear_discarded_entries (nursery_section, old_next_pin_slot);
-		sgen_optimize_pin_queue ();
+		sgen_optimize_pin_queue (0);
 		sgen_find_section_pin_queue_start_end (nursery_section);
 		objects_pinned = 0;
 	}
@@ -3835,11 +3835,11 @@ sgen_thread_register (SgenThreadInfo* info, void *addr)
 	binary_protocol_thread_register ((gpointer)mono_thread_info_get_tid (info));
 
 	/* On win32, stack_start_limit should be 0, since the stack can grow dynamically */
-	mono_thread_info_get_stack_bounds (&staddr, &stsize);
-	if (staddr) {
 #ifndef HOST_WIN32
-		info->stack_start_limit = staddr;
+	mono_thread_info_get_stack_bounds (&staddr, &stsize);
 #endif
+	if (staddr) {
+		info->stack_start_limit = staddr;
 		info->stack_end = staddr + stsize;
 	} else {
 		gsize stack_bottom = (gsize)addr;

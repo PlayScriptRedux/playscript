@@ -176,8 +176,6 @@ static GHashTable *ji_to_amodule;
  */
 static gboolean enable_aot_cache = FALSE;
 
-static gboolean mscorlib_aot_loaded;
-
 /* For debugging */
 static gint32 mono_last_aot_method = -1;
 
@@ -1383,7 +1381,6 @@ aot_cache_load_module (MonoAssembly *assembly, char **aot_name)
 	gint exit_status;
 	char *hash;
 	int pid;
-	gboolean enabled;
 
 	*aot_name = NULL;
 
@@ -1392,33 +1389,13 @@ aot_cache_load_module (MonoAssembly *assembly, char **aot_name)
 
 	/* Check in the list of assemblies enabled for aot caching */
 	config = mono_get_aot_cache_config ();
+	for (l = config->assemblies; l; l = l->next) {
+		char *n = l->data;
 
-	enabled = FALSE;
-	if (config->apps) {
-		MonoDomain *domain = mono_domain_get ();
-		MonoAssembly *entry_assembly = domain->entry_assembly;
-
-		for (l = config->apps; l; l = l->next) {
-			char *n = l->data;
-
-			if ((entry_assembly && !strcmp (entry_assembly->aname.name, n)) || (!entry_assembly && !strcmp (assembly->aname.name, n)))
-				break;
-		}
-		if (l)
-			enabled = TRUE;
+		if (!strcmp (assembly->aname.name, n))
+			break;
 	}
-
-	if (!enabled) {
-		for (l = config->assemblies; l; l = l->next) {
-			char *n = l->data;
-
-			if (!strcmp (assembly->aname.name, n))
-				break;
-		}
-		if (l)
-			enabled = TRUE;
-	}
-	if (!enabled)
+	if (!l)
 		return NULL;
 
 	if (!cache_dir) {
@@ -2682,7 +2659,6 @@ decode_exception_debug_info (MonoAotModule *amodule, MonoDomain *domain,
 
 		eh_info = mono_jit_info_get_arch_eh_info (jinfo);
 		eh_info->stack_size = decode_value (p, &p);
-		eh_info->epilog_size = decode_value (p, &p);
 	}
 
 	if (async) {
@@ -2842,7 +2818,8 @@ mono_aot_get_unwind_info (MonoJitInfo *ji, guint32 *unwind_info_len)
 		mono_aot_unlock ();
 	}
 
-	p = amodule->unwind_info + ji->unwind_info;
+	/* The upper 16 bits of ji->unwind_info might contain the epilog offset */
+	p = amodule->unwind_info + (ji->unwind_info & 0xffff);
 	*unwind_info_len = decode_value (p, &p);
 	return p;
 }
@@ -3784,13 +3761,10 @@ mono_aot_get_method (MonoDomain *domain, MonoMethod *method)
 	MonoAotModule *amodule = klass->image->aot_module;
 	guint8 *code;
 
-	if (enable_aot_cache && !amodule && domain->entry_assembly && klass->image == mono_defaults.corlib) {
+	if (enable_aot_cache && !amodule && klass->image == mono_defaults.corlib) {
 		/* This cannot be AOTed during startup, so do it now */
-		if (!mscorlib_aot_loaded) {
-			load_aot_module (klass->image->assembly, NULL);
-			amodule = klass->image->aot_module;
-		}
-		mscorlib_aot_loaded = TRUE;
+		load_aot_module (klass->image->assembly, NULL);
+		amodule = klass->image->aot_module;
 	}
 
 	if (!amodule)

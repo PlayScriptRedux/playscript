@@ -24,7 +24,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <Commandlineparameters>@options-pscorlib.rsp</Commandlineparameters>
+    <Commandlineparameters>@options-test.rsp</Commandlineparameters>
     <additionalargs>/newdynamic-</additionalargs>
     <ConsolePause>false</ConsolePause>
     <NoStdLib>true</NoStdLib>

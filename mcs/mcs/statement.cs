@@ -4329,7 +4329,6 @@ namespace Mono.CSharp {
 			} catch (Exception e) {
 				if (e is CompletionResult || bc.Report.IsDisabled || e is FatalException || bc.Report.Printer is NullReportPrinter || bc.Module.Compiler.Settings.BreakOnInternalError)
 					throw;
-
 				if (bc.CurrentBlock != null) {
 					bc.Report.Error (584, bc.CurrentBlock.StartLocation, "Internal compiler error: {0}", e.Message);
 				} else {
@@ -4349,7 +4348,7 @@ namespace Mono.CSharp {
 			// This emulates the as3 behavior with 1 exception: if you specify a
 			//	return type of '*', but not all code paths return a value, PlayScript
 			//		will consider this a compiler error instead of automatically returing
-			//		undefined in those cases. I think this behavior is favorable.							if (rc.HasNoReturnType && rc.FileType == SourceFileType.PlayScript) {
+			//		undefined in those cases. I think this behavior is favorable.
 			if (isPlayScript && bc.HasNoReturnType) {
 				var ret = new Return (null, EndLocation);
 				ret.Resolve (bc);
