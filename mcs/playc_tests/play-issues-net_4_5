@@ -5,7 +5,7 @@
 # csXXXX.as IGNORE 	: adds test to ignore list
 
 # Issue #80 - Typeof not returning the proper (string) values
-as/test-as-Typeof.as
+./as/test-as-Typeof.as 
 
 # Issue #62 - XML.attributes - Implement function - Currently System.NotImplementedException 
 ./as/test-as-XML-Attributes-Access.as IGNORE

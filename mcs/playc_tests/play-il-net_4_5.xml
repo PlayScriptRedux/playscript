@@ -640,6 +640,70 @@
       </method>
     </type>
   </test>
+  <test name="./as/test-as-LogicalOr-02.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>86</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-as-LogicalOr-03.as">
+    <type name="_root.Foo">
+      <method name="Boolean fx1()" attrs="145">
+        <size>20</size>
+      </method>
+      <method name="Boolean fx2()" attrs="145">
+        <size>26</size>
+      </method>
+      <method name="Int32 Main()" attrs="150">
+        <size>59</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+      <method name="Void .cctor()" attrs="6289">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-as-LogicalOr.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>86</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-as-Modulo.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>54</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-as-NewOperator.as">
+    <type name="_root.Book">
+      <method name="Void .ctor(String, Double)" attrs="6278">
+        <size>22</size>
+      </method>
+    </type>
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>145</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
   <test name="./as/test-as-Nullable.as">
     <type name="_root.Foo">
       <method name="Int32 Main()" attrs="150">
@@ -657,6 +721,36 @@
     <type name="_root.NumberTest">
       <method name="Int32 Main()" attrs="150">
         <size>90</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-as-ObjectInitializerOperator-01.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>436</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-as-ObjectInitializerOperator-02.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>934</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-as-Parentheses.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>58</size>
       </method>
       <method name="Void .ctor()" attrs="6278">
         <size>7</size>
