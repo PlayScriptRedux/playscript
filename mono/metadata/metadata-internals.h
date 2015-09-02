@@ -228,7 +228,7 @@ struct _MonoImage {
 	MonoConcurrentHashTable *field_cache; /*protected by the image lock*/
 
 	/* indexed by typespec tokens. */
-	GHashTable *typespec_cache; /* protected by the image lock */
+	GHashTable *typespec_cache;
 	/* indexed by token */
 	GHashTable *memberref_signatures;
 	GHashTable *helper_signatures;
@@ -317,7 +317,6 @@ struct _MonoImage {
 	MonoDllMap *dll_map;
 
 	/* interfaces IDs from this image */
-	/* protected by the classes lock */
 	MonoBitSet *interface_bitset;
 
 	/* when the image is being closed, this is abused as a list of
