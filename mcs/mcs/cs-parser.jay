@@ -2143,33 +2143,23 @@ operator_declaration
 	  {
 		OperatorDeclaration decl = (OperatorDeclaration) $3;
 		if (decl != null) {
-		
-			if (current_local_parameters.Count < 1) {
-			
-				// This is obviously wrong.. but don't know the correct error to display.
-				Error_SyntaxError (yyToken);		
-			
-			} else {
-					
-				Operator op = new Operator (
-					current_type, decl.optype, decl.ret_type, (Modifiers) $2, 
-					current_local_parameters,
-					(ToplevelBlock) $5, (Attributes) $1, decl.location);
-					
-				if (op.Block == null)
-					op.ParameterInfo.CheckParameters (op);
-
-				if (doc_support) {
-					op.DocComment = tmpComment;
-					Lexer.doc_state = XmlCommentState.Allowed;
-				}
-
-				// Note again, checking is done in semantic analysis
-				current_type.AddOperator (op);
-
-				lbag.AddMember (op, mod_locations, lbag.GetLocations (decl));
+			Operator op = new Operator (
+				current_type, decl.optype, decl.ret_type, (Modifiers) $2, 
+				current_local_parameters,
+				(ToplevelBlock) $5, (Attributes) $1, decl.location);
 				
+			if (op.Block == null)
+				op.ParameterInfo.CheckParameters (op);
+
+			if (doc_support) {
+				op.DocComment = tmpComment;
+				Lexer.doc_state = XmlCommentState.Allowed;
 			}
+
+			// Note again, checking is done in semantic analysis
+			current_type.AddOperator (op);
+
+			lbag.AddMember (op, mod_locations, lbag.GetLocations (decl));
 		}
 		
 		current_local_parameters = null;
@@ -4346,6 +4336,9 @@ is_match_expr
 	  {
 		$$ = new Unary (Unary.Operator.UnaryNegation, (Expression) $2, GetLocation ($1));
 	  }
+	| sizeof_expression
+	| invocation_expression
+	| default_value_expression
 	;
 
 match_type
@@ -7944,6 +7937,7 @@ static string GetTokenName (int token)
 	case Token.OP_AND_ASSIGN:
 	case Token.OP_XOR_ASSIGN:
 	case Token.OP_OR_ASSIGN:
+	case Token.INTERR_OPERATOR:
 		return "<operator>";
 
 	case Token.BOOL:
