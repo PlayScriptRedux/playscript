@@ -3046,8 +3046,8 @@ namespace Mono.CSharp {
 					continue;
 				}
 
-				if (TypeManager.IsGenericType (t))
-					return AllTypesAreFixed (TypeManager.GetTypeArguments (t));
+				if (t.IsGeneric && !AllTypesAreFixed (t.TypeArguments))
+					return false;
 			}
 			
 			return true;
