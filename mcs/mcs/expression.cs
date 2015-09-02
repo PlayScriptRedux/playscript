@@ -8337,12 +8337,6 @@ namespace Mono.CSharp
 				return null;
 			}
 
-			//
-			// Any struct always defines parameterless constructor
-			//
-			if (type.IsStruct && arguments == null)
-				return this;
-
 			if (arguments != null) {
 				arguments.Resolve (ec, out dynamic);
 			} else {
