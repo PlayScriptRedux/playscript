@@ -1655,7 +1655,12 @@ namespace Mono.CSharp
 		public override void Emit (EmitContext ec)
 		{
 			if (probe_type_expr == null) {
-				EmitConstantMatch (ec);
+				if (ProbeType is WildcardPattern) {
+					expr.EmitSideEffect (ec);
+					ProbeType.Emit (ec);
+				} else {
+					EmitPatternMatch (ec);
+				}
 				return;
 			}
 
@@ -1670,7 +1675,7 @@ namespace Mono.CSharp
 		public override void EmitBranchable (EmitContext ec, Label target, bool on_true)
 		{
 			if (probe_type_expr == null) {
-				EmitConstantMatch (ec);
+				EmitPatternMatch (ec);
 			} else {
 				EmitLoad (ec);
 			}
@@ -1678,7 +1683,7 @@ namespace Mono.CSharp
 			ec.Emit (on_true ? OpCodes.Brtrue : OpCodes.Brfalse, target);
 		}
 
-		void EmitConstantMatch (EmitContext ec)
+		void EmitPatternMatch (EmitContext ec)
 		{
 			var no_match = ec.DefineLabel ();
 			var end = ec.DefineLabel ();
@@ -1716,6 +1721,10 @@ namespace Mono.CSharp
 			ec.Emit (OpCodes.Dup);
 			ec.Emit (OpCodes.Brfalse, no_match);
 
+			var rp = ProbeType as RecursivePattern;
+			if (rp != null)
+				ec.RecursivePatternLabel = ec.DefineLabel ();
+
 			if (number_mg != null) {
 				var ce = new CallEmitter ();
 				ce.Emit (ec, number_mg, number_args, loc);
@@ -1724,12 +1733,20 @@ namespace Mono.CSharp
 					ec.Emit (OpCodes.Unbox_Any, probe_type);
 
 				ProbeType.Emit (ec);
-				ec.Emit (OpCodes.Ceq);
+				if (rp != null) {
+					ec.EmitInt (1);
+				} else {
+					ec.Emit (OpCodes.Ceq);
+				}
 			}
 			ec.Emit (OpCodes.Br_S, end);
 			ec.MarkLabel (no_match);
 
 			ec.Emit (OpCodes.Pop);
+
+			if (rp != null)
+				ec.MarkLabel (ec.RecursivePatternLabel);
+
 			ec.EmitInt (0);
 			ec.MarkLabel (end);
 		}
@@ -1817,6 +1834,11 @@ namespace Mono.CSharp
 		protected override void ResolveProbeType (ResolveContext rc)
 		{
 			if (!(ProbeType is TypeExpr) && rc.Module.Compiler.Settings.Version == LanguageVersion.Experimental) {
+				if (ProbeType is PatternExpression) {
+					ProbeType.Resolve (rc);
+					return;
+				}
+
 				//
 				// Have to use session recording because we don't have reliable type probing
 				// mechanism (similar issue as in attributes resolving)
@@ -1831,6 +1853,13 @@ namespace Mono.CSharp
 
 				if (probe_type_expr != null) {
 					type_printer.Merge (rc.Report.Printer);
+					rc.Report.SetPrinter (prev_recorder);
+					return;
+				}
+
+				var vexpr = ProbeType as VarExpr;
+				if (vexpr != null && vexpr.InferType (rc, expr)) {
+					probe_type_expr = vexpr.Type;
 					rc.Report.SetPrinter (prev_recorder);
 					return;
 				}
@@ -1893,7 +1922,13 @@ namespace Mono.CSharp
 				return this;
 			}
 
-			throw new NotImplementedException ();
+			if (ProbeType is PatternExpression) {
+				return this;
+			}
+
+			// TODO: Better error message
+			rc.Report.Error (150, ProbeType.Location, "A constant value is expected");
+			return this;
 		}
 
 		Expression ResolveResultExpression (ResolveContext ec)
@@ -2076,6 +2111,228 @@ namespace Mono.CSharp
 			}
 
 			return ret;
+		}
+	}
+
+	class WildcardPattern : PatternExpression
+	{
+		public WildcardPattern (Location loc)
+			: base (loc)
+		{
+		}
+
+		protected override Expression DoResolve (ResolveContext rc)
+		{
+			eclass = ExprClass.Value;
+			type = rc.BuiltinTypes.Object;
+			return this;
+		}
+
+		public override void Emit (EmitContext ec)
+		{
+			ec.EmitInt (1);
+		}
+	}
+
+	class RecursivePattern : PatternExpression
+	{
+		MethodGroupExpr operator_mg;
+		Expression[] args_comparison;
+		Arguments operator_args;
+
+		public RecursivePattern (ATypeNameExpression typeExpresion, Arguments arguments, Location loc)
+			: base (loc)
+		{
+			Arguments = arguments;
+			TypeExpression = typeExpresion;
+		}
+
+		public Arguments Arguments { get; private set; }
+
+		public ATypeNameExpression TypeExpression { get; private set; }
+
+		protected override Expression DoResolve (ResolveContext rc)
+		{
+			type = TypeExpression.ResolveAsType (rc);
+			if (type == null)
+				return null;
+
+			var operators = MemberCache.GetUserOperator (type, Operator.OpType.Is, true);
+			if (operators == null) {
+				Error_TypeDoesNotContainDefinition (rc, type, Operator.GetName (Operator.OpType.Is) + " operator");
+				return null;
+			}
+
+			var ops = FindMatchingOverloads (operators);
+			if (ops == null) {
+				// TODO: better error message
+				Error_TypeDoesNotContainDefinition (rc, type, Operator.GetName (Operator.OpType.Is) + " operator");
+				return null;
+			}
+
+			bool dynamic_args;
+			Arguments.Resolve (rc, out dynamic_args);
+			if (dynamic_args)
+				throw new NotImplementedException ("dynamic argument");
+
+			var op = FindBestOverload (rc, ops);
+			if (op == null) {
+				// TODO: better error message
+				Error_TypeDoesNotContainDefinition (rc, type, Operator.GetName (Operator.OpType.Is) + " operator");
+				return null;
+			}
+
+			var op_types = op.Parameters.Types;
+			operator_args = new Arguments (op_types.Length);
+			operator_args.Add (new Argument (new EmptyExpression (type)));
+
+			for (int i = 0; i < Arguments.Count; ++i) {
+				// TODO: Needs releasing optimization
+				var lt = new LocalTemporary (op_types [i + 1]);
+				operator_args.Add (new Argument (lt, Argument.AType.Out));
+
+				if (args_comparison == null)
+					args_comparison = new Expression[Arguments.Count];
+
+				int arg_comp_index;
+				Expression expr;
+
+				var arg = Arguments [i];
+				var named = arg as NamedArgument;
+				if (named != null) {
+					arg_comp_index = op.Parameters.GetParameterIndexByName (named.Name) - 1;
+					expr = Arguments [arg_comp_index].Expr;
+				} else {
+					arg_comp_index = i;
+					expr = arg.Expr;
+				}
+
+				if (expr is WildcardPattern) {
+					args_comparison [arg_comp_index] = new EmptyExpression (expr.Type);
+					continue;
+				}
+
+				var recursive = expr as RecursivePattern;
+				if (recursive != null) {
+					recursive.SetParentInstance (lt);
+				}
+
+				expr = Convert.ImplicitConversionRequired (rc, expr, lt.Type, expr.Location);
+				if (expr == null)
+					continue;
+
+				if (expr is RecursivePattern) {
+					args_comparison [arg_comp_index] = expr;
+					continue;
+				}
+
+				// TODO: Better error handling
+				args_comparison [arg_comp_index] = new Binary (Binary.Operator.Equality, lt, expr, expr.Location).Resolve (rc);
+			}
+
+			operator_mg = MethodGroupExpr.CreatePredefined (op, type, loc);
+
+			eclass = ExprClass.Value;
+			return this;
+		}
+
+		List<MethodSpec> FindMatchingOverloads (IList<MemberSpec> members)
+		{
+			int arg_count = Arguments.Count + 1;
+			List<MethodSpec> best = null;
+			foreach (MethodSpec method in members) {
+				var pm = method.Parameters;
+				if (pm.Count != arg_count)
+					continue;
+
+				// TODO: Needs more thorough checks elsewhere to avoid doing this every time
+				bool ok = true;
+				for (int ii = 1; ii < pm.Count; ++ii) {
+					if ((pm.FixedParameters [ii].ModFlags & Parameter.Modifier.OUT) == 0) {
+						ok = false;
+						break;
+					}
+				}
+
+				if (!ok)
+					continue;
+
+				if (best == null)
+					best = new List<MethodSpec> ();
+
+				best.Add (method);
+			}
+
+			return best;
+		}
+
+		MethodSpec FindBestOverload (ResolveContext rc, List<MethodSpec> methods)
+		{
+			for (int ii = 0; ii < Arguments.Count; ++ii) {
+				var arg = Arguments [ii];
+				var expr = arg.Expr;
+				if (expr is WildcardPattern)
+					continue;
+
+				var na = arg as NamedArgument;
+				for (int i = 0; i < methods.Count; ++i) {
+					var pd = methods [i].Parameters;
+
+					int index;
+					if (na != null) {
+						index = pd.GetParameterIndexByName (na.Name);
+						if (index < 1) {
+							methods.RemoveAt (i--);
+							continue;
+						}
+					} else {
+						index = ii + 1;
+					}
+
+					var m = pd.Types [index];
+					if (!Convert.ImplicitConversionExists (rc, expr, m))
+						methods.RemoveAt (i--);
+				}
+			}
+
+			if (methods.Count != 1)
+				return null;
+
+			return methods [0];
+		}
+
+		public override void Emit (EmitContext ec)
+		{
+			EmitBranchable (ec, ec.RecursivePatternLabel, false);
+		}
+
+		public override void EmitBranchable (EmitContext ec, Label target, bool on_true)
+		{
+			operator_mg.EmitCall (ec, operator_args, false);
+			ec.Emit (OpCodes.Brfalse, ec.RecursivePatternLabel);
+			if (args_comparison != null) {
+				foreach (var ac in args_comparison) {
+					ac.EmitBranchable (ec, ec.RecursivePatternLabel, false);
+				}
+			}
+		}
+
+		void SetParentInstance (LocalTemporary instance)
+		{
+			operator_args [0] = new Argument (instance);
+		}
+	}
+
+	abstract class PatternExpression : Expression
+	{
+		protected PatternExpression (Location loc)
+		{
+			this.loc = loc;
+		}
+
+		public override Expression CreateExpressionTree (ResolveContext ec)
+		{
+			throw new NotImplementedException ();
 		}
 	}
 
@@ -2995,11 +3252,16 @@ namespace Mono.CSharp
 		}
 
 		public Binary (Operator oper, Expression left, Expression right)
+			: this (oper, left, right, left.Location)
+		{
+		}
+
+		public Binary (Operator oper, Expression left, Expression right, Location loc)
 		{
 			this.oper = oper;
 			this.left = left;
 			this.right = right;
-			this.loc = left.Location;
+			this.loc = loc;
 		}
 
 		#region Properties
@@ -11909,6 +12171,10 @@ namespace Mono.CSharp
 		public override void Emit (EmitContext ec)
 		{
 			// nothing, as we only exist to not do anything.
+		}
+
+		public override void EmitBranchable (EmitContext ec, Label target, bool on_true)
+		{
 		}
 
 		public override void EmitSideEffect (EmitContext ec)

@@ -239,6 +239,8 @@ sgen_sources = \
 	sgen-archdep.h		\
 	sgen-cardtable.c	\
 	sgen-cardtable.h	\
+	sgen-pointer-queue.c	\
+	sgen-pointer-queue.h	\
 	sgen-pinning.c	\
 	sgen-pinning.h	\
 	sgen-pinning-stats.c	\
@@ -340,4 +342,4 @@ endif
 endif
 
 EXTRA_DIST = make-bundle.pl sample-bundle $(win32_sources) $(unix_sources) $(null_sources) runtime.h \
-		tpool-poll.c tpool-epoll.c tpool-kqueue.c
+		tpool-poll.c tpool-epoll.c tpool-kqueue.c Makefile.am.in

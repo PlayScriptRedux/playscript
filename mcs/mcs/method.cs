@@ -2722,6 +2722,9 @@ namespace Mono.CSharp {
 			Implicit,
 			Explicit,
 
+			// Pattern matching
+			Is,
+
 			// Just because of enum
 			TOP
 		};
@@ -2761,6 +2764,7 @@ namespace Mono.CSharp {
 			names [(int) OpType.AsURightShift] = new string [] { ">>>", "op_UnsignedRightShift" };
 			names [(int) OpType.Implicit] = new string [] { "implicit", "op_Implicit" };
 			names [(int) OpType.Explicit] = new string [] { "explicit", "op_Explicit" };
+			names [(int) OpType.Is] = new string[] { "is", "op_Is" };
 		}
 
 		public Operator (TypeDefinition parent, OpType type, FullNamedExpression ret_type, Modifiers mod_flags, ParametersCompiled parameters,

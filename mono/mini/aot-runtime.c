@@ -1376,7 +1376,7 @@ aot_cache_load_module (MonoAssembly *assembly, char **aot_name)
 {
 	MonoAotCacheConfig *config;
 	GSList *l;
-	char *fname, *tmp2, *aot_options;
+	char *fname, *tmp2, *aot_options, *failure_fname;
 	const char *home;
 	MonoDl *module;
 	gboolean res;
@@ -1384,6 +1384,7 @@ aot_cache_load_module (MonoAssembly *assembly, char **aot_name)
 	char *hash;
 	int pid;
 	gboolean enabled;
+	FILE *failure_file;
 
 	*aot_name = NULL;
 
@@ -1460,6 +1461,17 @@ aot_cache_load_module (MonoAssembly *assembly, char **aot_name)
 		return NULL;
 	cache_count ++;
 
+	/* Check for previous failure */
+	failure_fname = g_strdup_printf ("%s.failure", fname);
+	failure_file = fopen (failure_fname, "r");
+	g_free (failure_fname);
+	if (!failure_file) {
+		mono_trace (G_LOG_LEVEL_MESSAGE, MONO_TRACE_AOT, "AOT: assembly '%s' previously failed to compile '%s' ('%s')... ", assembly->image->name, failure_fname);
+		return NULL;
+	} else {
+		fclose (failure_file);
+	}
+
 	mono_trace (G_LOG_LEVEL_MESSAGE, MONO_TRACE_AOT, "AOT: compiling assembly '%s'... ", assembly->image->name);
 
 	/*
@@ -1471,16 +1483,15 @@ aot_cache_load_module (MonoAssembly *assembly, char **aot_name)
 	 * - fork a new process and do the work there.
 	 */
 	if (in_process) {
-		FILE *logfile;
-		char *logfile_name;
-
-		logfile_name = g_strdup_printf ("%s/aot.log", cache_dir);
-		logfile = fopen (logfile_name, "a+");
-
-		aot_options = g_strdup_printf ("outfile=%s", fname);
+		aot_options = g_strdup_printf ("outfile=%s,internal-logfile=%s.log", fname, fname);
 		/* Maybe due this in another thread ? */
 		res = mono_compile_assembly (assembly, mono_parse_default_optimizations (NULL), aot_options);
-		// FIXME: Cache failures
+		if (!res) {
+			failure_fname = g_strdup_printf ("%s.failure", fname);
+			failure_file = fopen (failure_fname, "a+");
+			fclose (failure_file);
+			g_free (failure_fname);
+		}
 	} else {
 		/*
 		 * - Avoid waiting for the aot process to finish ?
@@ -2087,9 +2098,7 @@ mono_aot_init (void)
 
 	if (g_getenv ("MONO_LASTAOT"))
 		mono_last_aot_method = atoi (g_getenv ("MONO_LASTAOT"));
-#ifdef ENABLE_AOT_CACHE
 	aot_cache_init ();
-#endif
 }
 
 void
@@ -2682,6 +2691,7 @@ decode_exception_debug_info (MonoAotModule *amodule, MonoDomain *domain,
 
 		eh_info = mono_jit_info_get_arch_eh_info (jinfo);
 		eh_info->stack_size = decode_value (p, &p);
+		eh_info->epilog_size = decode_value (p, &p);
 	}
 
 	if (async) {
@@ -2841,8 +2851,7 @@ mono_aot_get_unwind_info (MonoJitInfo *ji, guint32 *unwind_info_len)
 		mono_aot_unlock ();
 	}
 
-	/* The upper 16 bits of ji->unwind_info might contain the epilog offset */
-	p = amodule->unwind_info + (ji->unwind_info & 0xffff);
+	p = amodule->unwind_info + ji->unwind_info;
 	*unwind_info_len = decode_value (p, &p);
 	return p;
 }

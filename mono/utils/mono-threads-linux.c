@@ -1,14 +1,14 @@
 #include <config.h>
 
-#if defined(PLATFORM_LINUX)
+#if defined(__linux__) && !defined(PLATFORM_ANDROID)
 
+#include <mono/utils/mono-threads.h>
 #include <pthread.h>
 
 void
 mono_threads_core_get_stack_bounds (guint8 **staddr, size_t *stsize)
 {
 	pthread_attr_t attr;
-	guint8 *current = (guint8*)&attr;
 
 	*staddr = NULL;
 	*stsize = (size_t)-1;
