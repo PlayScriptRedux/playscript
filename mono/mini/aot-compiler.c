@@ -2333,7 +2333,9 @@ find_typespec_for_class (MonoAotCompile *acfg, MonoClass *klass)
 	if (!acfg->typespec_classes) {
 		acfg->typespec_classes = mono_mempool_alloc0 (acfg->mempool, sizeof (MonoClass*) * len);
 		for (i = 0; i < len; ++i) {
-			acfg->typespec_classes [i] = mono_class_get_full (acfg->image, MONO_TOKEN_TYPE_SPEC | (i + 1), NULL);
+			MonoError error;
+			acfg->typespec_classes [i] = mono_class_get_and_inflate_typespec_checked (acfg->image, MONO_TOKEN_TYPE_SPEC | (i + 1), NULL, &error);
+			g_assert (mono_error_ok (&error)); /* FIXME error handling */
 		}
 	}
 	for (i = 0; i < len; ++i) {
@@ -3537,14 +3539,15 @@ add_wrappers (MonoAotCompile *acfg)
 
 	/* delegate-invoke wrappers */
 	for (i = 0; i < acfg->image->tables [MONO_TABLE_TYPEDEF].rows; ++i) {
+		MonoError error;
 		MonoClass *klass;
 		MonoCustomAttrInfo *cattr;
 		
 		token = MONO_TOKEN_TYPE_DEF | (i + 1);
-		klass = mono_class_get (acfg->image, token);
+		klass = mono_class_get_checked (acfg->image, token, &error);
 
 		if (!klass) {
-			mono_loader_clear_error ();
+			mono_error_cleanup (&error);
 			continue;
 		}
 
@@ -3625,13 +3628,14 @@ add_wrappers (MonoAotCompile *acfg)
 
 	/* array access wrappers */
 	for (i = 0; i < acfg->image->tables [MONO_TABLE_TYPESPEC].rows; ++i) {
+		MonoError error;
 		MonoClass *klass;
 		
 		token = MONO_TOKEN_TYPE_SPEC | (i + 1);
-		klass = mono_class_get (acfg->image, token);
+		klass = mono_class_get_checked (acfg->image, token, &error);
 
 		if (!klass) {
-			mono_loader_clear_error ();
+			mono_error_cleanup (&error);
 			continue;
 		}
 
@@ -3808,13 +3812,14 @@ add_wrappers (MonoAotCompile *acfg)
 
 	/* StructureToPtr/PtrToStructure wrappers */
 	for (i = 0; i < acfg->image->tables [MONO_TABLE_TYPEDEF].rows; ++i) {
+		MonoError error;
 		MonoClass *klass;
 		
 		token = MONO_TOKEN_TYPE_DEF | (i + 1);
-		klass = mono_class_get (acfg->image, token);
+		klass = mono_class_get_checked (acfg->image, token, &error);
 
 		if (!klass) {
-			mono_loader_clear_error ();
+			mono_error_cleanup (&error);
 			continue;
 		}
 
@@ -4273,13 +4278,14 @@ add_generic_instances (MonoAotCompile *acfg)
 	}
 
 	for (i = 0; i < acfg->image->tables [MONO_TABLE_TYPESPEC].rows; ++i) {
+		MonoError error;
 		MonoClass *klass;
 
 		token = MONO_TOKEN_TYPE_SPEC | (i + 1);
 
-		klass = mono_class_get (acfg->image, token);
+		klass = mono_class_get_checked (acfg->image, token, &error);
 		if (!klass || klass->rank) {
-			mono_loader_clear_error ();
+			mono_error_cleanup (&error);
 			continue;
 		}
 
@@ -5600,14 +5606,15 @@ emit_exception_debug_info (MonoAotCompile *acfg, MonoCompile *cfg)
 static guint32
 emit_klass_info (MonoAotCompile *acfg, guint32 token)
 {
-	MonoClass *klass = mono_class_get (acfg->image, token);
+	MonoError error;
+	MonoClass *klass = mono_class_get_checked (acfg->image, token, &error);
 	guint8 *p, *buf;
 	int i, buf_size, res;
 	gboolean no_special_static, cant_encode;
 	gpointer iter = NULL;
 
 	if (!klass) {
-		mono_loader_clear_error ();
+		mono_error_cleanup (&error);
 
 		buf_size = 16;
 
@@ -7835,10 +7842,11 @@ emit_class_name_table (MonoAotCompile *acfg)
 	for (i = 0; i < table_size; ++i)
 		g_ptr_array_add (table, NULL);
 	for (i = 0; i < acfg->image->tables [MONO_TABLE_TYPEDEF].rows; ++i) {
+		MonoError error;
 		token = MONO_TOKEN_TYPE_DEF | (i + 1);
-		klass = mono_class_get (acfg->image, token);
+		klass = mono_class_get_checked (acfg->image, token, &error);
 		if (!klass) {
-			mono_loader_clear_error ();
+			mono_error_cleanup (&error);
 			continue;
 		}
 		full_name = mono_type_get_name_full (mono_class_get_type (klass), MONO_TYPE_NAME_FORMAT_FULL_NAME);
