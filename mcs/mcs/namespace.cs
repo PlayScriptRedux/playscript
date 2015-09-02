@@ -598,20 +598,8 @@ namespace Mono.CSharp {
 
 		public void RemoveContainer (TypeContainer tc)
 		{
-			IList<TypeSpec> found;
-			if (types.TryGetValue (tc.MemberName.Name, out found)) {
-				for (int i = 0; i < found.Count; ++i) {
-					if (tc.MemberName.Arity != found [i].Arity)
-						continue;
-
-					if (found.Count == 1)
-						types.Remove (tc.MemberName.Name);
-					else
-						found.RemoveAt (i);
-				}
-			}
-
-			cached_types.Remove (tc.Basename);
+			types.Remove (tc.MemberName.Basename);
+			cached_types.Remove (tc.MemberName.Basename);
 		}
 
 		public void SetBuiltinType (BuiltinTypeSpec pts)
@@ -968,9 +956,8 @@ namespace Mono.CSharp {
 
 		public override void AddTypeContainer (TypeContainer tc)
 		{
-			string name = tc.Basename;
-
 			var mn = tc.MemberName;
+			var name = mn.Basename;
 			while (mn.Left != null) {
 				mn = mn.Left;
 				name = mn.Name;
