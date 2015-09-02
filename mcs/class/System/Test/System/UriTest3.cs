@@ -184,6 +184,12 @@ namespace MonoTests.System
 
 			Assert.IsTrue (Uri.TryCreate ("http://mono-project.com/☕", UriKind.Absolute, out uri), "highunicode-Absolute");
 			Assert.AreEqual("http://mono-project.com/%E2%98%95", uri.AbsoluteUri, "highunicode-Absolute-AbsoluteUri");
+
+			string mixedCaseUri = "http://mOnO-proJECT.com";
+			uri = new Uri (mixedCaseUri);
+			Uri uri2;
+			Assert.IsTrue (Uri.TryCreate (mixedCaseUri, UriKind.Absolute, out uri2), "mixedcasehost-absolute");
+			Assert.AreEqual (uri.AbsoluteUri, uri2.AbsoluteUri, "mixedcasehost-absoluteuri-absoluteuri");
 		}
 
 		[Test] // TryCreate (String, UriKind, Uri)
@@ -340,6 +346,13 @@ namespace MonoTests.System
 			Uri u2 = null;
 			Assert.AreEqual (0, Uri.Compare (u1, u2, UriComponents.AbsoluteUri, UriFormat.UriEscaped, StringComparison.CurrentCulture), "null-null");
 
+			u1 = new Uri ("http://www.go-mono.com");
+			Assert.AreEqual (1, Uri.Compare (u1, u2, UriComponents.AbsoluteUri, UriFormat.UriEscaped, StringComparison.CurrentCulture), "non-null - null");
+
+			u1 = null;
+			u2 = new Uri ("http://www.go-mono.com");
+			Assert.AreEqual (-1, Uri.Compare (u1, u2, UriComponents.AbsoluteUri, UriFormat.UriEscaped, StringComparison.CurrentCulture), "null - non-null");
+
 			u1 = new Uri ("http://www.go-mono.com/Main Page");
 			u2 = new Uri ("http://www.go-mono.com/Main%20Page");
 			Assert.AreEqual (0, Uri.Compare (u1, u2, UriComponents.AbsoluteUri, UriFormat.Unescaped, StringComparison.CurrentCulture), "http/space-http/%20-unescaped");
@@ -418,13 +431,8 @@ namespace MonoTests.System
 				http.IsBaseOf (null);
 				Assert.Fail ();
 			}
-#if NET_4_0
 			catch (ArgumentNullException) {
 			}
-#else
-			catch (NullReferenceException) {
-			}
-#endif
 		}
 
 		[Test] 

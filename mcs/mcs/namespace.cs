@@ -272,7 +272,7 @@ namespace Mono.CSharp {
 				return null;
 
 			foreach (var ts in found) {
-				if (ts.Arity == arity) {
+				if (ts.Arity == arity || mode == LookupMode.NameOf) {
 					if (best == null) {
 						if ((ts.Modifiers & Modifiers.INTERNAL) != 0 && !ts.MemberDefinition.IsInternalAsPublic (ctx.Module.DeclaringAssembly) && mode != LookupMode.IgnoreAccessibility)
 							continue;
@@ -333,6 +333,12 @@ namespace Mono.CSharp {
 			// TODO MemberCache: Cache more
 			if (arity == 0 && mode == LookupMode.Normal)
 				cached_types.Add (name, best);
+
+			if (best != null) {
+				var dep = best.GetMissingDependencies ();
+				if (dep != null)
+					ImportedTypeDefinition.Error_MissingDependency (ctx, dep, loc);
+			}
 
 			return best;
 		}
@@ -592,8 +598,8 @@ namespace Mono.CSharp {
 
 		public void RemoveContainer (TypeContainer tc)
 		{
-			types.Remove (tc.Basename);
-			cached_types.Remove (tc.Basename);
+			types.Remove (tc.MemberName.Basename);
+			cached_types.Remove (tc.MemberName.Basename);
 		}
 
 		public void SetBuiltinType (BuiltinTypeSpec pts)
@@ -950,9 +956,8 @@ namespace Mono.CSharp {
 
 		public override void AddTypeContainer (TypeContainer tc)
 		{
-			string name = tc.Basename;
-
 			var mn = tc.MemberName;
+			var name = mn.Basename;
 			while (mn.Left != null) {
 				mn = mn.Left;
 				name = mn.Name;
@@ -1591,7 +1596,7 @@ namespace Mono.CSharp {
 
 		public virtual void Define (NamespaceContainer ctx)
 		{
-			resolved = expr.ResolveAsTypeOrNamespace (ctx);
+			resolved = expr.ResolveAsTypeOrNamespace (ctx, false);
 			var ns = resolved as NamespaceExpression;
 			if (ns != null)
 				return;
@@ -1655,7 +1660,7 @@ namespace Mono.CSharp {
 
 		public override void Define (NamespaceContainer ctx)
 		{
-			resolved = NamespaceExpression.ResolveAsTypeOrNamespace (ctx);
+			resolved = NamespaceExpression.ResolveAsTypeOrNamespace (ctx, false);
 			if (resolved != null) {
 				resolvedType = resolved.ResolveAsType (ctx);
 			}
@@ -1795,7 +1800,7 @@ namespace Mono.CSharp {
 			// We achieve that by introducing alias-context which redirect any local
 			// namespace or type resolve calls to parent namespace
 			//
-			resolved = NamespaceExpression.ResolveAsTypeOrNamespace (new AliasContext (ctx));
+			resolved = NamespaceExpression.ResolveAsTypeOrNamespace (new AliasContext (ctx), false);
 		}
 	}
 }

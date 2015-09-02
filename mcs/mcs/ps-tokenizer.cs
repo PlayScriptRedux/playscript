@@ -218,7 +218,7 @@ namespace Mono.PlayScript
 		bool handle_each = false;
 		bool handle_remove_add = false;
 		bool handle_where = false;
-		bool handle_typeof = false;
+//		bool handle_typeof = false;
 		bool handle_for_in = false;
 		bool eat_block = false;
 		int eat_block_braces = 0;
@@ -352,10 +352,10 @@ namespace Mono.PlayScript
 			set { handle_where = value; }
 		}
 
-		public bool TypeOfParsing {
-			get { return handle_typeof; }
-			set { handle_typeof = value; }
-		}
+//		public bool TypeOfParsing {
+//			get { return handle_typeof; }
+//			set { handle_typeof = value; }
+//		}
 
 		public bool ForInParsing {
 			get { return handle_for_in; }
@@ -1328,7 +1328,8 @@ namespace Mono.PlayScript
 			return true;
 		}
 
-		bool parse_less_than ()
+//		bool parse_less_than ()
+		bool parse_less_than (ref int genericDimension)
 		{
 		start:
 			int the_token = token ();
@@ -1360,10 +1361,23 @@ namespace Mono.PlayScript
 			case Token.VOID:
 				break;
 			case Token.OP_GENERICS_GT:
+				genericDimension = 1;
+				return true;
 			case Token.IN:
 			case Token.OUT:
 				return true;
+			case Token.COMMA:
+				do {
+					++genericDimension;
+					the_token = token ();
+				} while (the_token == Token.COMMA);
 
+				if (the_token == Token.OP_GENERICS_GT) {
+					++genericDimension;
+					return true;
+				}
+
+				return false;
 			default:
 				return false;
 			}
@@ -1377,7 +1391,7 @@ namespace Mono.PlayScript
 			else if (the_token == Token.INTERR_NULLABLE || the_token == Token.STAR)
 				goto again;
 			else if (the_token == Token.OP_GENERICS_LT) {
-				if (!parse_less_than ())
+				if (!parse_less_than (ref genericDimension))
 					return false;
 				goto again;
 			} else if (the_token == Token.OPEN_BRACKET) {

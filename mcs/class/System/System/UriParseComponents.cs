@@ -52,57 +52,59 @@ namespace System {
 	// http://www.ietf.org/rfc/rfc3986.txt
 	internal static class UriParseComponents
 	{
-		public static UriElements ParseComponents (string uri, UriKind kind, UriParser parser)
+		public static UriElements ParseComponents (string uri, UriKind kind)
 		{
 			UriElements elements;
 			string error;
 
-			if (!TryParseComponents (uri, kind, parser, out elements, out error))
+			if (!TryParseComponents (uri, kind, out elements, out error))
 				throw new UriFormatException (error);
 
 			return elements;
 		}
 
-		public static bool TryParseComponents (string uri, UriKind kind, UriParser parser, out UriElements elements, out string error)
+		public static bool TryParseComponents (string uri, UriKind kind, out UriElements elements, out string error)
 		{
 			uri = uri.Trim ();
 
-			var ok = true;
 			ParserState state = new ParserState (uri, kind);
+			elements = state.elements;
+			error = null;
 
 			if (uri.Length == 0 && (kind == UriKind.Relative || kind == UriKind.RelativeOrAbsolute)){
 				state.elements.isAbsoluteUri = false;
-				ok = false;
+				return true;
 			}
 			
 			if (uri.Length <= 1 && kind == UriKind.Absolute) {
-				state.error = "Absolute URI is too short";
-				ok = false;
+				error = "Absolute URI is too short";
+				return false;
 			}
 
-			if (ok)
-				ok = ParseFilePath (ref state);
-			if (ok)
-				ok = ParseScheme (ref state);
-			if (ok)
-			    ok = ParseAuthority (ref state);
-			if (ok)
-			    ok = ParsePath (ref state);
-			if (ok)
-			    ok = ParseQuery (ref state);
-			if (ok)
-			    ParseFragment (ref state);
+			bool ok = ParseFilePath (state) &&
+				ParseScheme (state);
 
 			var scheme = state.elements.scheme;
+			UriParser parser = null;
+			if (!string.IsNullOrEmpty (scheme)) {
+				parser = UriParser.GetParser (scheme);
+				if (parser != null && !(parser is DefaultUriParser))
+					return true;
+			}
+
+			ok = ok &&
+				ParseAuthority (state) &&
+				ParsePath (state) &&
+				ParseQuery (state) &&
+				ParseFragment (state);
+
 			if (string.IsNullOrEmpty (state.elements.host) &&
 				(scheme == Uri.UriSchemeHttp || scheme == Uri.UriSchemeGopher || scheme == Uri.UriSchemeNntp ||
 				scheme == Uri.UriSchemeHttps || scheme == Uri.UriSchemeFtp))
 				state.error = "Invalid URI: The Authority/Host could not be parsed.";
 
-			parser = parser ?? UriParser.GetParser (scheme);
 			if (!string.IsNullOrEmpty (state.elements.host) &&
-				Uri.CheckHostName (state.elements.host) == UriHostNameType.Unknown &&
-				parser is DefaultUriParser)
+				Uri.CheckHostName (state.elements.host) == UriHostNameType.Unknown)
 				state.error = "Invalid URI: The hostname could not be parsed.";
 
 			if (!string.IsNullOrEmpty (state.error)) {
@@ -111,8 +113,6 @@ namespace System {
 				return false;
 			}
 			
-			elements = state.elements;
-			error = null;
 			return true;
 		}
 
@@ -123,18 +123,14 @@ namespace System {
 				   (('A' <= ch) && (ch <= 'Z'));
 		}
 
-		private static bool ParseFilePath (ref ParserState state)
+		private static bool ParseFilePath (ParserState state)
 		{
-			bool ok = ParseWindowsFilePath (ref state);
-			if (ok)
-				ok = ParseWindowsUNC (ref state);
-			if (ok)
-				ok = ParseUnixFilePath (ref state);
-
-			return ok;
+			return ParseWindowsFilePath (state) &&
+				ParseWindowsUNC (state) &&
+				ParseUnixFilePath (state);
 		}
 
-		private static bool ParseWindowsFilePath (ref ParserState state)
+		private static bool ParseWindowsFilePath (ParserState state)
 		{
 			var scheme = state.elements.scheme;
 
@@ -175,7 +171,7 @@ namespace System {
 			return false;
 		}
 
-		private static bool ParseWindowsUNC (ref ParserState state)
+		private static bool ParseWindowsUNC (ParserState state)
 		{
 			string part = state.remaining;
 
@@ -186,7 +182,7 @@ namespace System {
 			state.elements.delimiter = "://";
 			state.elements.isUnc = true;
 
-			part = part.TrimStart (new char [] {'\\'});
+			part = part.TrimStart ('\\');
 			int pos = part.IndexOf ('\\');
 			if (pos > 0) {
 				state.elements.path = part.Substring (pos);
@@ -200,7 +196,7 @@ namespace System {
 			return false;
 		}
 
-		private static bool ParseUnixFilePath (ref ParserState state)
+		private static bool ParseUnixFilePath (ParserState state)
 		{
 			string part = state.remaining;
 
@@ -222,7 +218,7 @@ namespace System {
 		}
 		
 		// 3.1) scheme      = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
-		private static bool ParseScheme (ref ParserState state) 
+		private static bool ParseScheme (ParserState state)
 		{
 			string part = state.remaining;
 			
@@ -232,7 +228,7 @@ namespace System {
 			int index;
 			for (index = 1; index < part.Length; index++ ) {
 				char ch = part [index];
-				if (ch != '.' && ch != '-' && ch != '+' && !IsAlpha (ch))
+				if (ch != '.' && ch != '-' && ch != '+' && !IsAlpha (ch) && !Char.IsDigit (ch))
 					break;
 				
 				sb.Append (ch);
@@ -282,14 +278,14 @@ namespace System {
 #endif
 			}
 
-			return ParseDelimiter (ref state);
+			return ParseDelimiter (state);
 		}
 
-		private static bool ParseDelimiter (ref ParserState state)
+		private static bool ParseDelimiter (ParserState state)
 		{
 			var delimiter = Uri.GetSchemeDelimiter (state.elements.scheme);
 
-			if (!state.remaining.StartsWith (delimiter)) {
+			if (!state.remaining.StartsWith (delimiter, StringComparison.Ordinal)) {
 				if (UriHelper.IsKnownScheme (state.elements.scheme)) {
 					state.error = "Invalid URI: The Authority/Host could not be parsed.";
 					return false;
@@ -305,19 +301,14 @@ namespace System {
 			return state.remaining.Length > 0;
 		}
 		
-		private static bool ParseAuthority (ref ParserState state)
+		private static bool ParseAuthority (ParserState state)
 		{
 			if (state.elements.delimiter != Uri.SchemeDelimiter && state.elements.scheme != Uri.UriSchemeMailto)
 				return state.remaining.Length > 0;
-
-			string part = state.remaining;
 			
-			bool ok = ParseUser (ref state);
-			if (ok)
-				ok = ParseHost (ref state);
-			if (ok)
-				ok = ParsePort (ref state);
-			return ok;
+			return ParseUser (state) &&
+				ParseHost (state) &&
+				ParsePort (state);
 		}
 
 		static bool IsUnreserved (char ch)
@@ -333,7 +324,7 @@ namespace System {
 		}
 		
 		// userinfo    = *( unreserved / pct-encoded / sub-delims / ":" )
-		private static bool ParseUser (ref ParserState state)
+		private static bool ParseUser (ParserState state)
 		{
 			string part = state.remaining;
 			StringBuilder sb = null;
@@ -370,7 +361,7 @@ namespace System {
 		}
 		
 		// host        = IP-literal / IPv4address / reg-name
-		private static bool ParseHost (ref ParserState state)
+		private static bool ParseHost (ParserState state)
 		{
 			string part = state.remaining;
 
@@ -380,7 +371,7 @@ namespace System {
 				state.remaining = part;
 			}
 
-			if (!ParseWindowsFilePath (ref state))
+			if (!ParseWindowsFilePath (state))
 				return false;
 
 			StringBuilder sb = new StringBuilder ();
@@ -412,7 +403,14 @@ namespace System {
 			if (possibleIpv6) {
 				IPv6Address ipv6addr;
 				if (IPv6Address.TryParse (sb.ToString (), out ipv6addr)) {
-					var ipStr = ipv6addr.ToString (!Uri.IriParsing).Split ('%') [0];
+#if NET_4_5
+					var ipStr = ipv6addr.ToString (false);
+#else
+					var ipStr = ipv6addr.ToString (true);
+#endif
+					//remove scope
+					ipStr = ipStr.Split ('%') [0];
+
 					state.elements.host = "[" + ipStr + "]";
 					state.elements.scopeId = ipv6addr.ScopeId;
 
@@ -431,7 +429,7 @@ namespace System {
 		}
 		
 		// port          = *DIGIT
-		private static bool ParsePort (ref ParserState state)
+		private static bool ParsePort (ParserState state)
 		{
 			string part = state.remaining;
 			if (part.Length == 0 || part [0] != ':')
@@ -472,7 +470,7 @@ namespace System {
 			return state.remaining.Length > 0;
 		}
 		
-		private static bool ParsePath (ref ParserState state)
+		private static bool ParsePath (ParserState state)
 		{
 			string part = state.remaining;
 			StringBuilder sb = new StringBuilder ();
@@ -498,7 +496,7 @@ namespace System {
 			return state.remaining.Length > 0;
 		}
 		
-		private static bool ParseQuery (ref ParserState state)
+		private static bool ParseQuery (ParserState state)
 		{
 			string part = state.remaining;
 
@@ -529,7 +527,7 @@ namespace System {
 			return state.remaining.Length > 0;
 		}
 		
-		private static bool ParseFragment (ref ParserState state)
+		private static bool ParseFragment (ParserState state)
 		{
 			string part = state.remaining;
 			

@@ -65,7 +65,7 @@ namespace Mono.CSharp
 			this.loc = loc;
 		}
 
-		public override TypeSpec ResolveAsType (IMemberContext ec)
+		public override TypeSpec ResolveAsType (IMemberContext ec, bool allowUnboundTypeArguments)
 		{
 			eclass = ExprClass.Type;
 			type = ec.Module.Compiler.BuiltinTypes.Dynamic;
@@ -730,10 +730,12 @@ namespace Mono.CSharp
 				Expression target;
 				if (isPlayScriptAotMode && !isStatement && type != ret_type) {
 					// PlayScript: If doing an invoke, we have to cast the return type to the type expected by the expression..
-					target = new Cast(new TypeExpression(type, loc), new DelegateInvocation (new MemberAccess (site_field_expr, "Target", loc).Resolve (bc), args, loc), loc).Resolve (bc);
+					target = new Cast(new TypeExpression(type, loc), new DelegateInvocation (new MemberAccess (site_field_expr, "Target", loc).Resolve (bc), args, false, loc), loc).Resolve (bc);
 				} else {
-					target = new DelegateInvocation (new MemberAccess (site_field_expr, "Target", loc).Resolve (bc), args, loc).Resolve (bc);
+					//target = new DelegateInvocation (new MemberAccess (site_field_expr, "Target", loc).Resolve (bc), args, loc).Resolve (bc);
+					target = new DelegateInvocation (new MemberAccess (site_field_expr, "Target", loc).Resolve (bc), args, false, loc).Resolve (bc);
 				}
+
 				if (target != null)
 					target.Emit (ec);
 			}

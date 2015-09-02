@@ -4,7 +4,7 @@ using System.Text;
 using System.Collections.Generic;
 
 namespace System {
-	internal class UriHelper {
+	internal static class UriHelper {
 		internal const UriFormat ToStringUnescape = (UriFormat) 0x7FFF;
 
 		internal static bool IriParsing	{
@@ -21,6 +21,8 @@ namespace System {
 			UserEscaped = 1 << 4,
 			IPv6Host = 1 << 5,
 			NoSlashReplace = 1 << 6,
+			NoReduce = 1 << 7,
+			HasWindowsPath = 1 << 8,
 		}
 
 		[Flags]
@@ -85,20 +87,24 @@ namespace System {
 			return (keys & flag) != 0;
 		}
 
-		internal static bool IsKnownScheme(string scheme)
+		internal static bool IsKnownScheme (string scheme)
 		{
-			return GetScheme(scheme) != UriSchemes.Custom;
+			return GetScheme (scheme) != UriSchemes.Custom;
 		}
 
 		internal static string HexEscapeMultiByte (char character)
 		{
 			const string hex_upper_chars = "0123456789ABCDEF";
-			string ret = "";
-			byte [] bytes = Encoding.UTF8.GetBytes (new [] {character});
-			foreach (byte b in bytes)
-				ret += "%" + hex_upper_chars [((b & 0xf0) >> 4)] + hex_upper_chars [((b & 0x0f))];
 
-			return ret;
+			var sb = new StringBuilder ();
+			byte [] bytes = Encoding.UTF8.GetBytes (new [] {character});
+			foreach (byte b in bytes) {
+				sb.Append ("%");
+				sb.Append (hex_upper_chars [(b & 0xf0) >> 4]);
+				sb.Append (hex_upper_chars [b & 0x0f]);
+			}
+
+			return sb.ToString ();
 		}
 
 		internal static bool SupportsQuery (string scheme)
@@ -106,7 +112,7 @@ namespace System {
 			return SupportsQuery (GetScheme (scheme));
 		}
 
-		internal static bool SupportsQuery(UriSchemes scheme)
+		internal static bool SupportsQuery (UriSchemes scheme)
 		{
 			if (SchemeContains (scheme, UriSchemes.File))
 				return IriParsing;
@@ -114,7 +120,7 @@ namespace System {
 			return !SchemeContains (scheme, UriSchemes.Ftp | UriSchemes.Gopher | UriSchemes.Nntp | UriSchemes.Telnet | UriSchemes.News);
 		}
 
-		internal static bool HasCharactersToNormalize(string str)
+		internal static bool HasCharactersToNormalize (string str)
 		{
 			int len = str.Length;
 			for (int i = 0; i < len; i++) {
@@ -153,8 +159,11 @@ namespace System {
 				char surrogate;
 				char x = Uri.HexUnescapeMultiByte (str, ref i, out surrogate);
 
+				if (x == '%')
+					return true;
+
 				bool isEscaped = i - iStart > 1;
-				if (!isEscaped || x == '%')
+				if (!isEscaped)
 					return true;
 			}
 
@@ -169,11 +178,7 @@ namespace System {
 
 		internal static string FormatRelative (string str, string schemeName, UriFormat uriFormat)
 		{
-			var formatFlags = FormatFlags.None;
-			if (HasCharactersToNormalize (str))
-				formatFlags |= FormatFlags.HasUriCharactersToNormalize;
-
-			return Format (str, schemeName, UriKind.Relative, UriComponents.Path, uriFormat, formatFlags);
+			return Format (str, schemeName, UriKind.Relative, UriComponents.Path, uriFormat, FormatFlags.None);
 		}
 
 		private static string Format (string str, string schemeName, UriKind uriKind,
@@ -183,7 +188,7 @@ namespace System {
 				return "";
 
 			if (UriHelper.HasCharactersToNormalize (str))
-				formatFlags |= UriHelper.FormatFlags.HasComponentCharactersToNormalize;
+				formatFlags |= UriHelper.FormatFlags.HasComponentCharactersToNormalize | FormatFlags.HasUriCharactersToNormalize;
 
 			if (component == UriComponents.Fragment && UriHelper.HasPercentage (str))
 				formatFlags |= UriHelper.FormatFlags.HasFragmentPercentage;
@@ -191,6 +196,11 @@ namespace System {
 			if (component == UriComponents.Host &&
 				str.Length > 1 && str [0] == '[' && str [str.Length - 1] == ']')
 				 formatFlags |= UriHelper.FormatFlags.IPv6Host;
+
+			if (component == UriComponents.Path &&
+				str.Length >= 2 && str [1] != ':' &&
+				('a' <= str [0] && str [0] <= 'z') || ('A' <= str [0] && str [0] <= 'Z'))
+				formatFlags |= UriHelper.FormatFlags.HasWindowsPath;
 
 			UriSchemes scheme = GetScheme (schemeName);
 
@@ -201,8 +211,9 @@ namespace System {
 
 			if (IriParsing) {
 				reduceAfter |= UriSchemes.Ftp;
-			} else if (component == UriComponents.Path) {
-				if(scheme == UriSchemes.Ftp)
+			} else if (component == UriComponents.Path &&
+				(formatFlags & FormatFlags.NoSlashReplace) == 0) {
+				if (scheme == UriSchemes.Ftp)
 					str = Reduce (str.Replace ('\\', '/'), !IriParsing);
 				if (scheme == UriSchemes.CustomWithHost)
 					str = Reduce (str.Replace ('\\', '/'), false);
@@ -210,10 +221,11 @@ namespace System {
 
 			str = FormatString (str, scheme, uriKind, component, uriFormat, formatFlags);
 
-			if (component == UriComponents.Path) {
+			if (component == UriComponents.Path &&
+				(formatFlags & FormatFlags.NoReduce) == 0) {
 				if (SchemeContains (scheme, reduceAfter))
 					str = Reduce (str, !IriParsing);
-				if(IriParsing && scheme == UriSchemes.CustomWithHost)
+				if (IriParsing && scheme == UriSchemes.CustomWithHost)
 					str = Reduce (str, false);
 			}
 
@@ -230,22 +242,32 @@ namespace System {
 				if (c == '%') {
 					int iStart = i;
 					char surrogate;
-					char x = Uri.HexUnescapeMultiByte (str, ref i, out surrogate);
+					bool invalidUnescape;
+					char x = Uri.HexUnescapeMultiByte (str, ref i, out surrogate, out invalidUnescape);
 
-					string cStr = str.Substring(iStart, i-iStart);
-					s.Append (FormatChar (x, cStr, scheme, uriKind, component, uriFormat, formatFlags));
-					if (surrogate != char.MinValue)
-						s.Append (surrogate);
+
+					if (invalidUnescape
+#if !NET_4_0
+						&& uriFormat == UriFormat.SafeUnescaped && char.IsControl (x)
+#endif
+					) {
+						s.Append (c);
+						i = iStart;
+						continue;
+					}
+
+					string cStr = str.Substring (iStart, i-iStart);
+					s.Append (FormatChar (x, surrogate, cStr, scheme, uriKind, component, uriFormat, formatFlags));
 
 					i--;
 				} else
-					s.Append (FormatChar (c, "" + c, scheme, uriKind, component, uriFormat, formatFlags));
+					s.Append (FormatChar (c, char.MinValue, "" + c, scheme, uriKind, component, uriFormat, formatFlags));
 			}
 			
-			return s.ToString();
+			return s.ToString ();
 		}
 
-		private static string FormatChar (char c, string cStr, UriSchemes scheme, UriKind uriKind,
+		private static string FormatChar (char c, char surrogate, string cStr, UriSchemes scheme, UriKind uriKind,
 			UriComponents component, UriFormat uriFormat, FormatFlags formatFlags)
 		{
 			var isEscaped = cStr.Length != 1;
@@ -254,11 +276,15 @@ namespace System {
 			if (!isEscaped && !userEscaped && NeedToEscape (c, scheme, component, uriKind, uriFormat, formatFlags))
 				return HexEscapeMultiByte (c);
 
-			if (isEscaped && !NeedToUnescape (c, scheme, component, uriKind, uriFormat, formatFlags)) {
+			if (isEscaped && (
+#if NET_4_0
+				(userEscaped && c < 0xFF) ||
+#endif
+				!NeedToUnescape (c, scheme, component, uriKind, uriFormat, formatFlags))) {
 				if (IriParsing &&
 					(c == '<' || c == '>' || c == '^' || c == '{' || c == '|' || c ==  '}' || c > 0x7F) &&
 					(formatFlags & FormatFlags.HasUriCharactersToNormalize) != 0)
-					return HexEscapeMultiByte (c); //Upper case escape
+					return cStr.ToUpperInvariant (); //Upper case escape
 
 				return cStr; //Keep original case
 			}
@@ -274,9 +300,17 @@ namespace System {
 
 				if (SchemeContains (scheme, UriSchemes.NetPipe | UriSchemes.NetTcp | UriSchemes.File))
 					return "/";
+
+				if (SchemeContains (scheme, UriSchemes.Custom) &&
+					(formatFlags & FormatFlags.HasWindowsPath) == 0)
+					return "/";
 			}
 
-			return c.ToString (CultureInfo.InvariantCulture);
+			var ret = c.ToString (CultureInfo.InvariantCulture);
+			if (surrogate != char.MinValue)
+				ret += surrogate.ToString (CultureInfo.InvariantCulture);
+
+			return ret;
 		}
 
 		private static bool NeedToUnescape (char c, UriSchemes scheme, UriComponents component, UriKind uriKind,
@@ -322,36 +356,56 @@ namespace System {
 				return false;
 			}
 
-			if (c == '#') {
-				//Avoid creating new fragment
-				if (component == UriComponents.Path || component == UriComponents.Query)
-					return false;
-
+			if (c == '#')
 				return false;
-			}
 
 			if (uriFormat == ToStringUnescape && !IriParsing) {
 				if (uriKind == UriKind.Relative)
 					return false;
 
-				if (c == '$' || c == '&' || c == '+' || c == ',' || c == ';' || c == '=' || c == '@')
+				switch (c) {
+				case '$':
+				case '&':
+				case '+':
+				case ',':
+				case ';':
+				case '=':
+				case '@':
 					return true;
+				}
 
 				if (c < 0x20 || c == 0x7f)
 					return true;
 			}
 
 			if (uriFormat == UriFormat.SafeUnescaped || uriFormat == ToStringUnescape) {
-				if (c == '-' || c == '.' || c == '_' || c == '~')
+				switch (c) {
+				case '-':
+				case '.':
+				case '_':
+				case '~':
 					return true;
-
-				if (c == ' ' || c == '!' || c == '"' || c == '\'' || c == '(' || c == ')' || c == '*' ||
-					c == '<' || c == '>' || c == '^' || c == '`' || c == '{' || c == '}' || c == '|')
+				case ' ':
+				case '!':
+				case '"':
+				case '\'':
+				case '(':
+				case ')':
+				case '*':
+				case '<':
+				case '>':
+				case '^':
+				case '`':
+				case '{':
+				case '}':
+				case '|':
 					return uriKind != UriKind.Relative ||
 						(IriParsing && (formatFlags & FormatFlags.HasUriCharactersToNormalize) != 0);
-
-				if (c == ':' || c == '[' || c == ']')
+				case ':':
+				case '[':
+				case ']':
 					return uriKind != UriKind.Relative;
+				}
 
 				if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9'))
 					return true;
@@ -374,14 +428,28 @@ namespace System {
 
 					return false;
 				}
-
-				if (c == '-' || c == '.' || c == '_' || c == '~')
-					return true;
 				
-				if ((formatFlags & FormatFlags.HasUriCharactersToNormalize) != 0 &&
-					(c == '!' || c == '\'' || c == '(' || c == ')' || c == '*' ||
-					c == ':' || c == '[' || c == ']'))
+				switch (c) {
+				case '-':
+				case '.':
+				case '_':
+				case '~':
 					return true;
+				}
+
+				if ((formatFlags & FormatFlags.HasUriCharactersToNormalize) != 0) {
+					switch (c) {
+					case '!':
+					case '\'':
+					case '(':
+					case ')':
+					case '*':
+					case ':':
+					case '[':
+					case ']':
+						return true;
+					}
+				}
 
 				if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9'))
 					return true;
@@ -405,10 +473,6 @@ namespace System {
 				if (!SupportsQuery (scheme))
 					return component != UriComponents.Fragment;
 
-				//Avoid removing query
-				if (component == UriComponents.Path)
-					return false;
-
 				return false;
 			}
 
@@ -422,11 +486,12 @@ namespace System {
 					(formatFlags & FormatFlags.HasFragmentPercentage) != 0)
 					return true;
 
-				if (IriParsing)
-					return false;
-
+#if NET_4_5
+				return false;
+#else
 				return uriFormat == UriFormat.UriEscaped ||
 					(uriFormat != UriFormat.Unescaped && (formatFlags & FormatFlags.HasComponentCharactersToNormalize) != 0);
+#endif
 			}
 
 			if (uriFormat == UriFormat.SafeUnescaped || uriFormat == ToStringUnescape) {
@@ -443,14 +508,22 @@ namespace System {
 				if (c < 0x20 || c >= 0x7F)
 					return component != UriComponents.Host;
 
-				if (c == ' ' || c == '"' || c == '%' || c == '<' || c == '>' || c == '^' ||
-					c == '`' || c == '{' || c == '}' || c == '|')
+				switch (c) {
+				case ' ':
+				case '"':
+				case '%':
+				case '<':
+				case '>':
+				case '^':
+				case '`':
+				case '{':
+				case '}':
+				case '|':
 					return true;
-
-				if (c == '[' || c == ']')
+				case '[':
+				case ']':
 					return !IriParsing;
-
-				if (c == '\\') {
+				case '\\':
 					return component != UriComponents.Path ||
 						   SchemeContains (scheme,
 							   UriSchemes.Gopher | UriSchemes.Ldap | UriSchemes.Mailto | UriSchemes.Nntp |
@@ -472,42 +545,38 @@ namespace System {
 
 			List<string> result = new List<string> ();
 
-			bool begin = true;
-			for (int startpos = 0; startpos < path.Length; ) {
-				endWithSlash = true;
+			string[] segments = path.Split ('/');
+			int lastSegmentIndex = segments.Length - 1;
+			for (var i = 0; i <= lastSegmentIndex; i++) {
+				string segment = segments [i];
 
-				int endpos = path.IndexOf ('/', startpos);
-				if (endpos == -1)
-					endpos = path.Length;
-				string current = path.Substring (startpos, endpos-startpos);
-				startpos = endpos + 1;
-				if (begin && current.Length == 0) {
-					begin = false;
+				if (i == lastSegmentIndex &&
+					(segment.Length == 0 || segment == ".." || segment == "."))
+					endWithSlash = true;
+
+				if ((i == 0 || i == lastSegmentIndex) && segment.Length == 0)
 					continue;
-				}
 
-				begin = false;
-				if (current == "..") {
+				if (segment == "..") {
 					int resultCount = result.Count;
 					// in 2.0 profile, skip leading ".." parts
-					if (resultCount == 0) {
+					if (resultCount == 0)
 						continue;
-					}
 
 					result.RemoveAt (resultCount - 1);
 					continue;
 				}
 
-				if (current == "." ||
-					(trimDots && current.EndsWith("."))) {
-					current = current.TrimEnd('.');
-					if (current == "" && endpos < path.Length)
+				if (segment == "." ||
+					(trimDots && segment.EndsWith (".", StringComparison.Ordinal))) {
+					segment = segment.TrimEnd ('.');
+					if (segment == "" && i < lastSegmentIndex)
 						continue;
 				}
 
 				endWithSlash = false;
 
-				result.Add (current);
+				result.Add (segment);
 			}
 
 			if (result.Count == 0)
@@ -525,13 +594,13 @@ namespace System {
 				} else {
 					res.Append ('/');
 				}
-				res.Append(part);
+				res.Append (part);
 			}
 
 			if (path [path.Length - 1] == '/' || endWithSlash)
 				res.Append ('/');
 				
-			return res.ToString();
+			return res.ToString ();
 		}
 	}
 }

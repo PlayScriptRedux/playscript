@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 #AC_PREREQ([2.62])
 
-AC_INIT(mono, [3.8.1],
+AC_INIT(mono, [3.10.0001],
         [http://bugzilla.xamarin.com/enter_bug.cgi?classification=Mono])
 
 AC_CONFIG_SRCDIR([README.md])
@@ -139,6 +139,17 @@ case "$host" in
 		need_link_unlink=yes
 		libdl="-ldl"
 		libgc_threads=pthreads
+		with_sigaltstack=no
+		use_sigposix=yes
+		;;
+	*-*-kfreebsd*-gnu)
+		host_win32=no
+		CPPFLAGS="$CPPFLAGS -DGC_FREEBSD_THREADS -D_GNU_SOURCE -D_REENTRANT -DUSE_MMAP -DUSE_MUNMAP -DTHREAD_LOCAL_ALLOC -pthread"
+		libmono_cflags="-D_REENTRANT -DTHREAD_LOCAL_ALLOC -pthread"
+		libmono_ldflags="-lpthread -pthread"
+		libdl="-ldl"
+		libgc_threads=pthreads
+		need_link_unlink=yes
 		with_sigaltstack=no
 		use_sigposix=yes
 		;;
@@ -357,6 +368,7 @@ fi
 AC_SUBST(extra_runtime_ldflags)
 AM_CONDITIONAL(HOST_WIN32, test x$host_win32 = xyes)
 AM_CONDITIONAL(TARGET_WIN32, test x$target_win32 = xyes)
+AM_CONDITIONAL(PLATFORM_GNU, echo x$target_os | grep -q -- -gnu)
 AM_CONDITIONAL(PLATFORM_LINUX, echo x$target_os | grep -q linux)
 AM_CONDITIONAL(PLATFORM_DARWIN, test x$platform_darwin = xyes)
 AM_CONDITIONAL(PLATFORM_SIGPOSIX, test x$use_sigposix = xyes)
@@ -2487,7 +2499,6 @@ TARGET="unknown"
 ACCESS_UNALIGNED="yes"
 
 JIT_SUPPORTED=no
-INTERP_SUPPORTED=no
 LIBC="libc.so.6"
 INTL="libc.so.6"
 SQLITE="libsqlite.so.0"
@@ -2495,12 +2506,11 @@ SQLITE3="libsqlite3.so.0"
 X11="libX11.so"
 GDKX11="libgdk-x11-2.0.so.0"
 GTKX11="libgtk-x11-2.0.so.0"
-XINERAMA="libXinerama.so"
+XINERAMA="libXinerama.so.1"
 
 sizeof_register="SIZEOF_VOID_P"
 
 jit_wanted=true
-interp_wanted=false
 sgen_supported=false
 boehm_supported=true
 case "$host" in
@@ -2565,7 +2575,7 @@ case "$host" in
 			sgen_supported=true
 			AOT_SUPPORTED="yes"
 			;;
-		  openbsd*|freebsd*)
+		  openbsd*|freebsd*|kfreebsd-gnu*)
 			sgen_supported=true
 		        ;;
 		esac
@@ -2587,7 +2597,7 @@ case "$host" in
 			sgen_supported=true
 			AOT_SUPPORTED="yes"
 			;;
-		  openbsd*|freebsd*)
+		  openbsd*|freebsd*|kfreebsd-gnu*)
 			sgen_supported=true
 			;;
 		  mingw*)
@@ -2928,18 +2938,10 @@ if test x$JIT_SUPPORTED = xyes; then
       USEJIT=true
       jit_status="Building and using the JIT"
    else
-      if $interp_wanted; then
-         jit_status="Building the JIT, defaulting to the interpreter"
-      else
-         AC_ERROR(No JIT or interpreter support available or selected.)
-      fi
+      AC_ERROR(No JIT support available or selected.)
    fi
 else
-   if test x$interp_wanted = xtrue; then
-      jit_status="interpreter"
-   else
-      AC_ERROR(No JIT or interpreter support available or selected.)
-   fi
+   AC_ERROR(No JIT support available or selected.)
 fi
 
 AM_CONDITIONAL(USE_JIT, test x$USEJIT = xtrue)
@@ -2960,6 +2962,11 @@ case "$host" in
      *-*-*netbsd*)
 	LIBC="libc.so.12"
 	INTL="libintl.so.0"
+	;;
+     *-*-kfreebsd*-gnu)
+	LIBC="libc.so.0.1"
+	INTL="libc.so.0.1"
+	X11="libX11.so.6"
 	;;
     *-*-*freebsd*)
     	LIBC="libc.so"
@@ -2987,20 +2994,8 @@ case "$host" in
 	done
 	
 	if test "x$X11" = "xlibX11.so"; then
-		AC_MSG_WARN([Could not find X development libs. Do you have the -devel package installed? Assuming libX11.so.6...]);
+		AC_MSG_WARN([Could not find libX11.so. Do you have X.org or XFree86 installed? Assuming libX11.so.6...]);
 		X11=libX11.so.6
-	fi
-	AC_MSG_CHECKING(for the soname of libXinerama.so)
-	for i in $x_libraries $dlsearch_path; do
-		for r in 1 2 3; do
-			if test -f $i/libXinerama.so.$r; then
-				XINERAMA=libXinerama.so.$r
-				AC_MSG_RESULT($XINERAMA)
-			fi
-		done
-	done
-	if test "x$XINERAMA" = "xlibXinerama.so"; then
-		AC_MSG_WARN([Could not find Xinerama development libs. Support for multiple monitors might not work...]);
 	fi
 	;;
 esac
@@ -3353,7 +3348,6 @@ AM_CONDITIONAL(HOST_ARM64, test x$HOST = xARM64)
 AM_CONDITIONAL(CROSS_COMPILE, test "x$host" != "x$target")
 
 AM_CONDITIONAL(JIT_SUPPORTED, test x$JIT_SUPPORTED = xyes)
-AM_CONDITIONAL(INTERP_SUPPORTED, test x$interp_wanted = xtrue)
 AM_CONDITIONAL(INCLUDED_LIBGC, test x$libgc = xincluded)
 
 AC_SUBST(LIBC)
@@ -3373,11 +3367,7 @@ AC_SUBST(LDFLAGS)
 mono_build_root=`pwd`
 AC_SUBST(mono_build_root)
 
-if test x$USEJIT = xtrue; then
-  mono_runtime=mono/mini/mono
-else
-  mono_runtime=mono/interpreter/mint
-fi
+mono_runtime=mono/mini/mono
 AC_SUBST(mono_runtime)
 
 mono_cfg_root=$mono_build_root/runtime
@@ -3574,7 +3564,6 @@ mono/arch/arm/Makefile
 mono/arch/arm64/Makefile
 mono/arch/ia64/Makefile
 mono/arch/mips/Makefile
-mono/interpreter/Makefile
 mono/tests/Makefile
 mono/tests/tests-config
 mono/tests/assemblyresolve/Makefile

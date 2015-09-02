@@ -44,7 +44,6 @@ namespace Mono.CSharp
 	public abstract partial class TypeContainer : MemberCore
 	{
 		public readonly MemberKind Kind;
-		public readonly string Basename;
 
 		protected List<TypeContainer> containers;
 
@@ -70,9 +69,6 @@ namespace Mono.CSharp
 			: base (parent, name, attrs)
 		{
 			this.Kind = kind;
-			if (name != null)
-				this.Basename = name.Basename;
-
 			defined_names = new Dictionary<string, MemberCore> ();
 			defined_static_names = new Dictionary<string, MemberCore> ();
 			defined_instance_names = new Dictionary<string, MemberCore> ();
@@ -148,7 +144,7 @@ namespace Mono.CSharp
 		public virtual void AddPartial (TypeDefinition next_part)
 		{
 			MemberCore mc;
-			(PartialContainer ?? this).defined_names.TryGetValue (next_part.Basename, out mc);
+			(PartialContainer ?? this).defined_names.TryGetValue (next_part.MemberName.Basename, out mc);
 
 			AddPartial (next_part, mc as TypeDefinition);
 		}
@@ -421,7 +417,7 @@ namespace Mono.CSharp
 				containers.Remove (cont);
 
 			var tc = Parent == Module ? Module : this;
-			tc.defined_names.Remove (cont.Basename);
+			tc.defined_names.Remove (cont.MemberName.Basename);
 		}
 
 		public virtual void VerifyMembers ()
@@ -872,7 +868,7 @@ namespace Mono.CSharp
 
 		public override void AddTypeContainer (TypeContainer tc)
 		{
-			AddNameToContainer (tc, tc.Basename);
+			AddNameToContainer (tc, tc.MemberName.Basename);
 
 			base.AddTypeContainer (tc);
 		}
@@ -1510,7 +1506,7 @@ namespace Mono.CSharp
 				CreateMetadataName (sb);
 				TypeBuilder = Module.CreateBuilder (sb.ToString (), TypeAttr, type_size);
 			} else {
-				TypeBuilder = parent_def.TypeBuilder.DefineNestedType (Basename, TypeAttr, null, type_size);
+				TypeBuilder = parent_def.TypeBuilder.DefineNestedType (MemberName.Basename, TypeAttr, null, type_size);
 			}
 
 			if (DeclaringAssembly.Importer != null)
@@ -1588,7 +1584,7 @@ namespace Mono.CSharp
 
 		public SourceMethodBuilder CreateMethodSymbolEntry ()
 		{
-			if (Module.DeclaringAssembly.SymbolWriter == null)
+			if (Module.DeclaringAssembly.SymbolWriter == null || (ModFlags & Modifiers.DEBUGGER_HIDDEN) != 0)
 				return null;
 
 			var source_file = GetCompilationSourceFile ();
@@ -2012,7 +2008,7 @@ namespace Mono.CSharp
 		{
 			base.RemoveContainer (cont);
 			Members.Remove (cont);
-			Cache.Remove (cont.Basename);
+			Cache.Remove (cont.MemberName.Basename);
 		}
 
 		protected virtual bool DoResolveTypeParameters ()
