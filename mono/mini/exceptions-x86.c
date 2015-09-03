@@ -204,7 +204,7 @@ LONG CALLBACK seh_vectored_exception_handler(EXCEPTION_POINTERS* ep)
 
 	switch (er->ExceptionCode) {
 	case EXCEPTION_STACK_OVERFLOW:
-		win32_handle_stack_overflow (ep, sctx);
+		win32_handle_stack_overflow (ep, ctx);
 		break;
 	case EXCEPTION_ACCESS_VIOLATION:
 		W32_SEH_HANDLE_EX(segv);
@@ -250,8 +250,9 @@ void win32_seh_init()
 
 void win32_seh_cleanup()
 {
-	if (mono_old_win_toplevel_exception_filter) SetUnhandledExceptionFilter(mono_old_win_toplevel_exception_filter);
-	RemoveVectoredExceptionHandler (seh_unhandled_exception_filter);
+	if (mono_old_win_toplevel_exception_filter)
+		SetUnhandledExceptionFilter(mono_old_win_toplevel_exception_filter);
+	RemoveVectoredExceptionHandler (mono_win_vectored_exception_handle);
 }
 
 void win32_seh_set_handler(int type, MonoW32ExceptionHandler handler)
