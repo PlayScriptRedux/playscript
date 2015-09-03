@@ -395,6 +395,9 @@ MONO_SIG_HANDLER_FUNC (static, sigprof_signal_handler)
 	if (mono_thread_info_get_small_id () == -1)
 		return; //an non-attached thread got the signal
 
+	if (!mono_domain_get () || !mono_native_tls_get_value (mono_jit_tls_id))
+		return; //thread in the process of dettaching
+
 	hp_save_index = mono_hazard_pointer_save_for_signal_handler ();
 
 	/* If we can't consume a profiling request it means we're the initiator. */
@@ -721,7 +724,11 @@ mono_runtime_setup_stat_profiler (void)
 pid_t
 mono_runtime_syscall_fork ()
 {
-#if defined(SYS_fork)
+#if defined(PLATFORM_ANDROID)
+	/* SYS_fork is defined to be __NR_fork which is not defined in some ndk versions */
+	g_assert_not_reached ();
+	return 0;
+#elif defined(SYS_fork)
 	return (pid_t) syscall (SYS_fork);
 #else
 	g_assert_not_reached ();

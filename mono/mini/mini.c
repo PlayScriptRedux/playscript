@@ -711,9 +711,10 @@ G_GNUC_UNUSED gboolean
 mono_debug_count (void)
 {
 	static int count = 0;
-	count ++;
 	static gboolean inited;
 	static const char *value;
+
+	count ++;
 
 	if (!inited) {
 		value = g_getenv ("COUNT");
@@ -4647,7 +4648,7 @@ create_jit_info (MonoCompile *cfg, MonoMethod *method_to_compile)
 
 			info = mono_jit_info_get_arch_eh_info (jinfo);
 			g_assert (info);
-			info->epilog_size = cfg->epilog_end - cfg->epilog_begin;
+			info->epilog_size = cfg->code_len - cfg->epilog_begin;
 		}
 		jinfo->unwind_info = unwind_desc;
 		g_free (unwind_info);
