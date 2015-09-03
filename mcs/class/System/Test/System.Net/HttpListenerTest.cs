@@ -115,7 +115,7 @@ namespace MonoTests.System.Net {
 					socket.Listen(1);
 				}
 			}
-			catch(Exception ex) {
+			catch(Exception) {
 				//Can be AccessDeniedException(ports 80/443 need root access) or
 				//SocketException because other application is listening
 				return false;
@@ -449,57 +449,6 @@ namespace MonoTests.System.Net {
 			{
 				Event.Close ();
 			}
-		}
-
-		[Test]
-		public void ConnectionReuse ()
-		{
-			var uri = "http://localhost:1338/";
-
-			HttpListener listener = new HttpListener ();
-			listener.Prefixes.Add (uri);
-			listener.Start ();
-
-			IPEndPoint expectedIpEndPoint = CreateListenerRequest (listener, uri);
-
-			Assert.AreEqual (expectedIpEndPoint, CreateListenerRequest (listener, uri), "reuse1");
-			Assert.AreEqual (expectedIpEndPoint, CreateListenerRequest (listener, uri), "reuse2");
-		}
-
-		public IPEndPoint CreateListenerRequest (HttpListener listener, string uri)
-		{
-			IPEndPoint ipEndPoint = null;
-			listener.BeginGetContext ((result) => ipEndPoint = ListenerCallback (result), listener);
-
-			var request = (HttpWebRequest) WebRequest.Create (uri);
-			request.Method = "POST";
-
-			// We need to write something
-			request.GetRequestStream ().Write (new byte [] {(byte)'a'}, 0, 1);
-			request.GetRequestStream ().Dispose ();
-
-			// Send request, socket is created or reused.
-			var response = request.GetResponse ();
-
-			// Close response so socket can be reused.
-			response.Close ();
-
-			return ipEndPoint;
-		}
-
-		public static IPEndPoint ListenerCallback (IAsyncResult result)
-		{
-			var listener = (HttpListener) result.AsyncState;
-			var context = listener.EndGetContext (result);
-			var clientEndPoint = context.Request.RemoteEndPoint;
-
-			// Disposing InputStream should not avoid socket reuse
-			context.Request.InputStream.Dispose ();
-
-			// Close OutputStream to send response
-			context.Response.OutputStream.Close ();
-
-			return clientEndPoint;
 		}
 	}
 }
