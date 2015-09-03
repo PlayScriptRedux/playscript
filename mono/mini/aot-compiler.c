@@ -10,17 +10,6 @@
  * Copyright 2011 Xamarin Inc (http://www.xamarin.com)
  */
 
-/* Remaining AOT-only work:
- * - optimize the trampolines, generate more code in the arch files.
- * - make things more consistent with how elf works, for example, use ELF 
- *   relocations.
- * Remaining generics sharing work:
- * - optimize the size of the data which is encoded.
- * - optimize the runtime loading of data:
- *   - the trampoline code calls mono_jit_info_table_find () to find the rgctx, 
- *     which loads the debugging+exception handling info for the method. This is a 
- *     huge waste of time and code, since the rgctx structure is currently empty.
- */
 #include "config.h"
 #include <sys/types.h>
 #ifdef HAVE_UNISTD_H
@@ -41,7 +30,6 @@
 
 #include <errno.h>
 #include <sys/stat.h>
-
 
 #include <mono/metadata/abi-details.h>
 #include <mono/metadata/tabledefs.h>
@@ -1274,6 +1262,11 @@ arch_emit_specific_trampoline_pages (MonoAotCompile *acfg)
 		g_assert (code - buf == 8);
 		emit_bytes (acfg, buf, code - buf);
 	}
+
+	acfg->tramp_page_code_offsets [MONO_AOT_TRAMP_SPECIFIC] = 16;
+	acfg->tramp_page_code_offsets [MONO_AOT_TRAMP_STATIC_RGCTX] = 16;
+	acfg->tramp_page_code_offsets [MONO_AOT_TRAMP_IMT_THUNK] = 72;
+	acfg->tramp_page_code_offsets [MONO_AOT_TRAMP_GSHAREDVT_ARG] = 16;
 #elif defined(TARGET_ARM64)
 	arm64_emit_specific_trampoline_pages (acfg);
 #endif
