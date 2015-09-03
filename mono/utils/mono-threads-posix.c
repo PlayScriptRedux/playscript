@@ -14,6 +14,7 @@
 #include <mono/utils/mono-threads.h>
 #include <mono/utils/mono-tls.h>
 #include <mono/utils/mono-mmap.h>
+#include <mono/metadata/threads-types.h>
 #include <limits.h>
 
 #include <errno.h>
@@ -372,7 +373,7 @@ mono_threads_init_platform (void)
 	 * FIXME: Use this on all platforms.
 	 * SIGUSR1 is used by dalvik/art.
 	 */
-	no_interrupt_signo = SIGUSR2;
+	no_interrupt_signo = SIGWINCH;
 	g_assert (abort_signo != no_interrupt_signo);
 	mono_posix_add_signal_handler (no_interrupt_signo, suspend_signal_handler, SA_RESTART);
 #endif
