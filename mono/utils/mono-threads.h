@@ -328,17 +328,15 @@ mono_threads_open_thread_handle (HANDLE handle, MonoNativeThreadId tid) MONO_INT
 
 #if !defined(HOST_WIN32)
 
-#if !defined(__MACH__)
 /*Use this instead of pthread_kill */
 int
 mono_threads_pthread_kill (THREAD_INFO_TYPE *info, int signum) MONO_INTERNAL;
-#endif
 
 #endif /* !defined(HOST_WIN32) */
 
 /* Plartform specific functions DON'T use them */
 void mono_threads_init_platform (void) MONO_INTERNAL; //ok
-gboolean mono_threads_core_suspend (THREAD_INFO_TYPE *info) MONO_INTERNAL;
+gboolean mono_threads_core_suspend (THREAD_INFO_TYPE *info, gboolean interrupt_kernel) MONO_INTERNAL;
 gboolean mono_threads_core_resume (THREAD_INFO_TYPE *info) MONO_INTERNAL;
 void mono_threads_platform_register (THREAD_INFO_TYPE *info) MONO_INTERNAL; //ok
 void mono_threads_platform_free (THREAD_INFO_TYPE *info) MONO_INTERNAL;
