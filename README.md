@@ -6,7 +6,7 @@
 
 The CI builds are generously hosted and run on [Travis][travis]
 
-| Git Branch |  Mac OS X |
+| Git Branch |  Mac OS X / Linux |
 | :------ | :------: | :------: |
 | **playscript** | [![master nix][master-nix-badge]][master-nix] |
 
@@ -14,7 +14,7 @@ The CI builds are generously hosted and run on [Travis][travis]
 
 ## What is PlayScript?
 
-PlayScript is an open source Adobe ActionScript compatible compiler and Flash compatible runtime that runs in the Mono .NET environment, targeting mobile devices through the Xamarin platform.   With a combination of Adobe FlashBuilder for Web and Xamarin Studio for mobile complex large scale cross-mobile-web projects can be developed with full IDE, source debugging and intellisense support on all platforms, with access to the full native mobile API's on the mobile platform.
+[PlayScript](https://github.com/PlayScriptRedux/playscript) is an open source Adobe ActionScript compatible compiler and Flash compatible runtime that runs in the Mono .NET environment, targeting mobile devices through the Xamarin platform. With a combination of Adobe FlashBuilder for Web and Xamarin Studio for mobile complex large scale cross-mobile-web projects can be developed with full IDE, source debugging and intellisense support on all platforms, with access to the full native mobile API's on the mobile platform.
 
 In addition to accurate ActionScript language support, the PlayScript compiler also supports a new language - PlayScript - which is derived from both C# and ActionScript.  This new language supports all of the features of C#, including generics, properties, events, value types, operator overloading, async programming, linq, while at the same time being upwards compatible with ActionScript.  The PlayScript language can be used to target both desktop and mobile (via Xamarin), and existing Flash/ActionScript code can easily be converted to PlayScript code by simply renaming files from .as to .play, and fixing a few issues related to the stricter syntax and semantics of the PlayScript language.
 
