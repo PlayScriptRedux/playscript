@@ -1151,7 +1151,7 @@ namespace Mono.CSharp
 			}
 		}
 
-		public virtual void RegisterFieldForInitialization (MemberCore field, FieldInitializer expression)
+		public void RegisterFieldForInitialization (MemberCore field, FieldInitializer expression)
 		{
 			if (IsPartialPart)
 				PartialContainer.RegisterFieldForInitialization (field, expression);
@@ -1164,6 +1164,13 @@ namespace Mono.CSharp
 
 				initialized_static_fields.Add (expression);
 			} else {
+				if (Kind == MemberKind.Struct) {
+					if (Compiler.Settings.Version != LanguageVersion.Experimental) {
+						Report.Error (573, expression.Location, "'{0}': Structs cannot have instance property or field initializers",
+							GetSignatureForError ());
+					}
+				}
+
 				if (initialized_fields == null)
 					initialized_fields = new List<FieldInitializer> (4);
 
@@ -1234,7 +1241,7 @@ namespace Mono.CSharp
 				//
 				// Field is re-initialized to its default value => removed
 				//
-				if (fi.IsDefaultInitializer && ec.Module.Compiler.Settings.Optimize)
+				if (fi.IsDefaultInitializer && Kind != MemberKind.Struct && ec.Module.Compiler.Settings.Optimize)
 					continue;
 
 				ec.AssignmentInfoOffset += fi.AssignmentOffset;
@@ -2910,8 +2917,10 @@ namespace Mono.CSharp
 			if (Kind == MemberKind.Class)
 				c.Initializer = new GeneratedBaseInitializer (Location, PrimaryConstructorBaseArguments);
 
-			if (PrimaryConstructorParameters != null && !is_static)
+			if (PrimaryConstructorParameters != null && !is_static) {
 				c.IsPrimaryConstructor = true;
+				c.caching_flags |= Flags.MethodOverloadsExist;
+			}
 			
 			AddConstructor (c, true);
 			if (PrimaryConstructorBlock == null) {
@@ -2930,6 +2939,7 @@ namespace Mono.CSharp
 			CheckProtectedModifier ();
 
 			if (PrimaryConstructorParameters != null) {
+
 				foreach (Parameter p in PrimaryConstructorParameters.FixedParameters) {
 					if (p.Name == MemberName.Name) {
 						Report.Error (8039, p.Location, "Primary constructor of type `{0}' has parameter of same name as containing type",
@@ -3487,10 +3497,14 @@ namespace Mono.CSharp
 
 		protected override bool DoDefineMembers ()
 		{
-			if (PrimaryConstructorParameters != null)
-				generated_primary_constructor = DefineDefaultConstructor (false);
+			var res = base.DoDefineMembers ();
 
-			return base.DoDefineMembers ();
+			if (PrimaryConstructorParameters != null || (initialized_fields != null && !HasUserDefaultConstructor ())) {
+				generated_primary_constructor = DefineDefaultConstructor (false);
+				generated_primary_constructor.Define ();
+			}
+
+			return res;
 		}
 
 		public override void Emit ()
@@ -3500,14 +3514,14 @@ namespace Mono.CSharp
 			base.Emit ();
 		}
 
-		bool HasExplicitConstructor ()
+		bool HasUserDefaultConstructor ()
 		{
-			foreach (var m in Members) {
+			foreach (var m in PartialContainer.Members) {
 				var c = m as Constructor;
 				if (c == null)
 					continue;
 
-				if (!c.ParameterInfo.IsEmpty)
+				if (!c.IsStatic && c.ParameterInfo.IsEmpty)
 					return true;
 			}
 
@@ -3565,18 +3579,6 @@ namespace Mono.CSharp
 			var ifaces = base.ResolveBaseTypes (out base_class);
 			base_type = Compiler.BuiltinTypes.ValueType;
 			return ifaces;
-		}
-
-		public override void RegisterFieldForInitialization (MemberCore field, FieldInitializer expression)
-		{
-			if ((field.ModFlags & Modifiers.STATIC) == 0 && !HasExplicitConstructor ()) {
-				Report.Error (8054, field.Location, "`{0}': Structs without explicit constructors cannot contain members with initializers",
-					field.GetSignatureForError ());
-
-				return;
-			}
-
-			base.RegisterFieldForInitialization (field, expression);
 		}
 	}
 

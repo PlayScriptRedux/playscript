@@ -1413,6 +1413,8 @@ namespace Mono.CSharp {
 
 		public void Resolve (ResolveContext rc, Parameter p)
 		{
+			var isPlayScript = rc.FileType == SourceFileType.PlayScript;
+
 			var expr = Resolve (rc);
 			if (expr == null) {
 				this.expr = ErrorExpression.Instance;
@@ -1426,17 +1428,19 @@ namespace Mono.CSharp {
 				return;
 
 			// ActionScript allows * and Object types to have default values as well.
-			bool param_is_as_obj = rc.FileType == Mono.CSharp.SourceFileType.PlayScript &&
-				(parameter_type.BuiltinType == Mono.CSharp.BuiltinTypeSpec.Type.Dynamic ||
-				 parameter_type.BuiltinType == Mono.CSharp.BuiltinTypeSpec.Type.Object);
+			bool param_is_as_obj = isPlayScript &&
+				(parameter_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic ||
+				 parameter_type.BuiltinType == BuiltinTypeSpec.Type.Object);
 
-			if (!(expr is Constant || expr is DefaultValueExpression || (expr is New && ((New) expr).IsDefaultStruct))) {
-				if (!param_is_as_obj) {
-					rc.Report.Error (1736, Location,
-						"The expression being assigned to optional parameter `{0}' must be a constant or default value",
-		                 p.Name);
+			if (!param_is_as_obj) { // PlayScript - see check above - tested via as/test-debug-UntypedParameterTest.as
+				if (!(expr is Constant || expr is DefaultValueExpression || (expr is New && ((New)expr).IsGeneratedStructConstructor))) {
+					if (!(expr is ErrorExpression)) {
+						rc.Report.Error (1736, Location,
+							"The expression being assigned to optional parameter `{0}' must be a constant or default value",
+							p.Name);
 
-					return;
+						return;
+					}
 				}
 			}
 

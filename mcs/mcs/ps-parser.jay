@@ -4198,10 +4198,60 @@ non_simple_argument
 		$$ = new Argument ((Expression) $2, Argument.AType.Ref);
 		lbag.AddLocation ($$, GetLocation ($1));
 	  }
+	| REF declaration_expression
+	  {
+		$$ = new Argument ((Expression) $2, Argument.AType.Ref);
+	  }
 	| OUT variable_reference 
 	  { 
 		$$ = new Argument ((Expression) $2, Argument.AType.Out);
 		lbag.AddLocation ($$, GetLocation ($1));
+	  }
+	| OUT declaration_expression
+	  {
+		$$ = new Argument ((Expression) $2, Argument.AType.Out);
+	  }
+	;
+
+declaration_expression
+	: OPEN_PARENS declaration_expression CLOSE_PARENS
+	  {
+		$$ = new ParenthesizedExpression ((Expression) $2, GetLocation ($1));
+		lbag.AddLocation ($$, GetLocation ($1), GetLocation ($3));
+	  }
+/*
+	| CHECKED open_parens_any declaration_expression CLOSE_PARENS
+	  {
+		$$ = new CheckedExpr ((Expression) $3, GetLocation ($1));
+		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
+	  }
+	| UNCHECKED open_parens_any declaration_expression CLOSE_PARENS
+	  {
+		$$ = new UnCheckedExpr ((Expression) $3, GetLocation ($1));
+		lbag.AddLocation ($$, GetLocation ($2), GetLocation ($4));
+	  }
+*/
+	| variable_type identifier_inside_body
+	  {
+		if (lang_version < LanguageVersion.V_6)
+			FeatureIsNotAvailable (GetLocation ($1), "declaration expression");
+
+		var lt = (LocatedToken) $2;
+		var lv = new LocalVariable (current_block, lt.Value, lt.Location);
+		current_block.AddLocalName (lv);
+		$$ = new DeclarationExpression ((FullNamedExpression) $1, lv);
+	  }
+	| variable_type identifier_inside_body ASSIGN expression
+	  {
+		if (lang_version < LanguageVersion.V_6)
+			FeatureIsNotAvailable (GetLocation ($1), "declaration expression");
+
+		var lt = (LocatedToken) $2;
+		var lv = new LocalVariable (current_block, lt.Value, lt.Location);
+		current_block.AddLocalName (lv);
+		$$ = new DeclarationExpression ((FullNamedExpression) $1, lv) {
+			Initializer = (Expression) $4
+		};
 	  }
 	;
 

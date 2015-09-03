@@ -235,11 +235,6 @@ namespace System {
 					success = false;
 					break;
 				}
-
-				if (success && host.Length > 1 && host [0] != '[' && host [host.Length - 1] != ']') {
-					// host name present (but not an IPv6 address)
-					host = host.ToLower (CultureInfo.InvariantCulture);
-				}
 			}
 		}
 
@@ -1147,6 +1142,9 @@ namespace System {
 		{
 			Parse (kind, source);
 
+			if (userEscaped)
+				return;
+
 			if (host.Length > 1 && host [0] != '[' && host [host.Length - 1] != ']') {
 				// host name present (but not an IPv6 address)
 				host = host.ToLower (CultureInfo.InvariantCulture);
@@ -1727,7 +1725,7 @@ namespace System {
 		private UriParser Parser {
 			get {
 				if (parser == null) {
-					parser = UriParser.GetParser (Scheme);
+					parser = UriParser.GetParser (scheme);
 					// no specific parser ? then use a default one
 					if (parser == null)
 						parser = new DefaultUriParser ("*");
@@ -1739,6 +1737,9 @@ namespace System {
 
 		public string GetComponents (UriComponents components, UriFormat format)
 		{
+			if ((components & UriComponents.SerializationInfoString) == 0)
+				EnsureAbsoluteUri ();
+
 			return Parser.GetComponents (this, components, format);
 		}
 
