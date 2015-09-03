@@ -188,10 +188,10 @@ extern LOCK_DECLARE (sgen_interruption_mutex);
 #endif
 
 #ifdef HEAVY_STATISTICS
-extern long long stat_objects_alloced_degraded;
-extern long long stat_bytes_alloced_degraded;
-extern long long stat_copy_object_called_major;
-extern long long stat_objects_copied_major;
+extern guint64 stat_objects_alloced_degraded;
+extern guint64 stat_bytes_alloced_degraded;
+extern guint64 stat_copy_object_called_major;
+extern guint64 stat_objects_copied_major;
 #endif
 
 #define SGEN_ASSERT(level, a, ...) do {	\
@@ -303,27 +303,37 @@ typedef struct {
 	mword desc;
 } GCVTable;
 
-/* these bits are set in the object vtable: we could merge them since an object can be
- * either pinned or forwarded but not both.
- * We store them in the vtable slot because the bits are used in the sync block for
- * other purposes: if we merge them and alloc the sync blocks aligned to 8 bytes, we can change
+/*
+ * We use the lowest three bits in the vtable pointer of objects to tag whether they're
+ * forwarded, pinned, and/or cemented.  These are the valid states:
+ *
+ * | State            | bits |
+ * |------------------+------+
+ * | default          |  000 |
+ * | forwarded        |  001 |
+ * | pinned           |  010 |
+ * | pinned, cemented |  110 |
+ *
+ * We store them in the vtable slot because the bits are used in the sync block for other
+ * purposes: if we merge them and alloc the sync blocks aligned to 8 bytes, we can change
  * this and use bit 3 in the syncblock (with the lower two bits both set for forwarded, that
  * would be an invalid combination for the monitor and hash code).
- * The values are already shifted.
- * The forwarding address is stored in the sync block.
  */
-
-#define SGEN_VTABLE_BITS_MASK 0x3
 
 #include "sgen-tagged-pointer.h"
 
+#define SGEN_VTABLE_BITS_MASK	SGEN_TAGGED_POINTER_MASK
+
 #define SGEN_POINTER_IS_TAGGED_FORWARDED(p)	SGEN_POINTER_IS_TAGGED_1((p))
-#define SGEN_POINTER_TAG_FORWARDED(p)	SGEN_POINTER_TAG_1((p))
+#define SGEN_POINTER_TAG_FORWARDED(p)		SGEN_POINTER_TAG_1((p))
 
 #define SGEN_POINTER_IS_TAGGED_PINNED(p)	SGEN_POINTER_IS_TAGGED_2((p))
-#define SGEN_POINTER_TAG_PINNED(p)	SGEN_POINTER_TAG_2((p))
+#define SGEN_POINTER_TAG_PINNED(p)		SGEN_POINTER_TAG_2((p))
 
-#define SGEN_POINTER_UNTAG_VTABLE(p)	SGEN_POINTER_UNTAG_12((p))
+#define SGEN_POINTER_IS_TAGGED_CEMENTED(p)	SGEN_POINTER_IS_TAGGED_4((p))
+#define SGEN_POINTER_TAG_CEMENTED(p)		SGEN_POINTER_TAG_4((p))
+
+#define SGEN_POINTER_UNTAG_VTABLE(p)		SGEN_POINTER_UNTAG_ALL((p))
 
 /* returns NULL if not forwarded, or the forwarded address */
 #define SGEN_VTABLE_IS_FORWARDED(vtable) (SGEN_POINTER_IS_TAGGED_FORWARDED ((vtable)) ? SGEN_POINTER_UNTAG_VTABLE ((vtable)) : NULL)
@@ -332,6 +342,8 @@ typedef struct {
 #define SGEN_VTABLE_IS_PINNED(vtable) SGEN_POINTER_IS_TAGGED_PINNED ((vtable))
 #define SGEN_OBJECT_IS_PINNED(obj) (SGEN_VTABLE_IS_PINNED (((mword*)(obj))[0]))
 
+#define SGEN_OBJECT_IS_CEMENTED(obj) (SGEN_POINTER_IS_TAGGED_CEMENTED (((mword*)(obj))[0]))
+
 /* set the forwarded address fw_addr for object obj */
 #define SGEN_FORWARD_OBJECT(obj,fw_addr) do {				\
 		*(void**)(obj) = SGEN_POINTER_TAG_FORWARDED ((fw_addr));	\
@@ -339,15 +351,19 @@ typedef struct {
 #define SGEN_PIN_OBJECT(obj) do {	\
 		*(void**)(obj) = SGEN_POINTER_TAG_PINNED (*(void**)(obj)); \
 	} while (0)
+#define SGEN_CEMENT_OBJECT(obj) do {	\
+		*(void**)(obj) = SGEN_POINTER_TAG_CEMENTED (*(void**)(obj)); \
+	} while (0)
+/* Unpins and uncements */
 #define SGEN_UNPIN_OBJECT(obj) do {	\
-		*(void**)(obj) = SGEN_POINTER_UNTAG_2 (*(void**)(obj)); \
+		*(void**)(obj) = SGEN_POINTER_UNTAG_VTABLE (*(void**)(obj)); \
 	} while (0)
 
 /*
  * Since we set bits in the vtable, use the macro to load it from the pointer to
  * an object that is potentially pinned.
  */
-#define SGEN_LOAD_VTABLE(addr)	SGEN_POINTER_UNTAG_12 (*(void**)(addr))
+#define SGEN_LOAD_VTABLE(addr)	SGEN_POINTER_UNTAG_ALL (*(void**)(addr))
 
 /*
 List of what each bit on of the vtable gc bits means. 
@@ -637,6 +653,12 @@ typedef enum {
 	ITERATE_OBJECTS_SWEEP_ALL = ITERATE_OBJECTS_SWEEP | ITERATE_OBJECTS_NON_PINNED | ITERATE_OBJECTS_PINNED
 } IterateObjectsFlags;
 
+typedef struct
+{
+	size_t num_scanned_objects;
+	size_t num_unique_scanned_objects;
+} ScannedObjectCounts;
+
 typedef struct _SgenMajorCollector SgenMajorCollector;
 struct _SgenMajorCollector {
 	size_t section_size;
@@ -682,7 +704,8 @@ struct _SgenMajorCollector {
 	void (*start_nursery_collection) (void);
 	void (*finish_nursery_collection) (void);
 	void (*start_major_collection) (void);
-	void (*finish_major_collection) (void);
+	void (*finish_major_collection) (ScannedObjectCounts *counts);
+	gboolean (*drain_gray_stack) (ScanCopyContext ctx);
 	void (*have_computed_minor_collection_allowance) (void);
 	gboolean (*ptr_is_in_non_pinned_space) (char *ptr, char **start);
 	gboolean (*obj_is_from_pinned_alloc) (char *obj);
@@ -768,7 +791,7 @@ static inline mword
 sgen_obj_get_descriptor (char *obj)
 {
 	MonoVTable *vtable = ((MonoObject*)obj)->vtable;
-	SGEN_ASSERT (0, !SGEN_POINTER_IS_TAGGED_1_OR_2 (vtable), "Object can't be tagged");
+	SGEN_ASSERT (9, !SGEN_POINTER_IS_TAGGED_ANY (vtable), "Object can't be tagged");
 	return sgen_vtable_get_descriptor (vtable);
 }
 
@@ -788,13 +811,14 @@ static inline mword
 sgen_par_object_get_size (MonoVTable *vtable, MonoObject* o)
 {
 	mword descr = (mword)vtable->gc_descr;
-	mword type = descr & 0x7;
+	mword type = descr & DESC_TYPE_MASK;
 
-	if (type == DESC_TYPE_RUN_LENGTH || type == DESC_TYPE_SMALL_BITMAP) {
+	if (type == DESC_TYPE_RUN_LENGTH || type == DESC_TYPE_SMALL_PTRFREE) {
 		mword size = descr & 0xfff8;
-		if (size == 0) /* This is used to encode a string */
-			return offsetof (MonoString, chars) + 2 * mono_string_length_fast ((MonoString*) o) + 2;
+		SGEN_ASSERT (9, size >= sizeof (MonoObject), "Run length object size to small");
 		return size;
+	} else if (descr == SGEN_DESC_STRING) {
+		return offsetof (MonoString, chars) + 2 * mono_string_length_fast ((MonoString*) o) + 2;
 	} else if (type == DESC_TYPE_VECTOR) {
 		int element_size = ((descr) >> VECTOR_ELSIZE_SHIFT) & MAX_ELEMENT_SIZE;
 		MonoArray *array = (MonoArray*)o;

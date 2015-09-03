@@ -1860,6 +1860,7 @@ mono_class_create_runtime_vtable (MonoDomain *domain, MonoClass *class, gboolean
 	char *t;
 	int i, vtable_slots;
 	int imt_table_bytes = 0;
+	int alloc_offset;
 	int gc_bits;
 	guint32 vtable_size, class_size;
 	guint32 cindex;
@@ -1946,14 +1947,27 @@ mono_class_create_runtime_vtable (MonoDomain *domain, MonoClass *class, gboolean
 			MONO_SIZEOF_VTABLE + vtable_slots * sizeof (gpointer);
 	}
 
+	/*
+	 * We want the pointer to the MonoVTable aligned to 8 bytes because SGen uses three
+	 * address bits.  The IMT has an odd number of entries, however, so on 32 bits the
+	 * alignment will be off.  In that case we allocate 4 more bytes and skip over them.
+	 */
+	if (sizeof (gpointer) == 4 && (imt_table_bytes & 7)) {
+		g_assert ((imt_table_bytes & 7) == 4);
+		vtable_size += 4;
+		alloc_offset = 4;
+	} else {
+		alloc_offset = 0;
+	}
+
 	mono_stats.used_class_count++;
 	mono_stats.class_vtable_size += vtable_size;
-	interface_offsets = mono_domain_alloc0 (domain, vtable_size);
 
-	if (ARCH_USE_IMT)
-		vt = (MonoVTable*) ((char*)interface_offsets + imt_table_bytes);
-	else
-		vt = (MonoVTable*) (interface_offsets + class->max_interface_id + 1);
+	interface_offsets = (gpointer*) ((char*)mono_domain_alloc0 (domain, vtable_size) + alloc_offset);
+
+	vt = (MonoVTable*) ((char*)interface_offsets + imt_table_bytes);
+	g_assert (!((gsize)vt & 7));
+
 	vt->klass = class;
 	vt->rank = class->rank;
 	vt->domain = domain;
@@ -4368,7 +4382,6 @@ static inline void *
 mono_object_allocate (size_t size, MonoVTable *vtable)
 {
 	MonoObject *o;
-	mono_stats.new_object_count++;
 	ALLOC_OBJECT (o, vtable, size);
 
 	return o;
@@ -4385,7 +4398,6 @@ static inline void *
 mono_object_allocate_ptrfree (size_t size, MonoVTable *vtable)
 {
 	MonoObject *o;
-	mono_stats.new_object_count++;
 	ALLOC_PTRFREE (o, vtable, size);
 	return o;
 }
@@ -4395,7 +4407,6 @@ mono_object_allocate_spec (size_t size, MonoVTable *vtable)
 {
 	void *o;
 	ALLOC_TYPED (o, size, vtable);
-	mono_stats.new_object_count++;
 
 	return o;
 }
@@ -4879,7 +4890,6 @@ mono_array_new_full (MonoDomain *domain, MonoClass *array_class, uintptr_t *leng
 	else
 		o = mono_gc_alloc_vector (vtable, byte_len, len);
 	array = (MonoArray*)o;
-	mono_stats.new_object_count++;
 
 	bounds = array->bounds;
 #endif
@@ -4964,7 +4974,6 @@ mono_array_new_specific (MonoVTable *vtable, uintptr_t n)
 #else
 	o = mono_gc_alloc_vector (vtable, byte_len, n);
 	ao = (MonoArray*)o;
-	mono_stats.new_object_count++;
 #endif
 
 	if (G_UNLIKELY (profile_allocs))

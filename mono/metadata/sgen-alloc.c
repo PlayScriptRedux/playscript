@@ -51,7 +51,6 @@
 
 #define ALIGN_UP		SGEN_ALIGN_UP
 #define ALLOC_ALIGN		SGEN_ALLOC_ALIGN
-#define ALLOC_ALIGN_BITS	SGEN_ALLOC_ALIGN_BITS
 #define MAX_SMALL_OBJ_SIZE	SGEN_MAX_SMALL_OBJ_SIZE
 #define ALIGN_TO(val,align) ((((guint64)val) + ((align) - 1)) & ~((align) - 1))
 
@@ -68,9 +67,9 @@ enum {
 static gboolean use_managed_allocator = TRUE;
 
 #ifdef HEAVY_STATISTICS
-static long long stat_objects_alloced = 0;
-static long long stat_bytes_alloced = 0;
-static long long stat_bytes_alloced_los = 0;
+static guint64 stat_objects_alloced = 0;
+static guint64 stat_bytes_alloced = 0;
+static guint64 stat_bytes_alloced_los = 0;
 
 #endif
 
@@ -1214,9 +1213,9 @@ sgen_has_managed_allocator (void)
 void
 sgen_alloc_init_heavy_stats (void)
 {
-	mono_counters_register ("# objects allocated", MONO_COUNTER_GC | MONO_COUNTER_LONG, &stat_objects_alloced);	
-	mono_counters_register ("bytes allocated", MONO_COUNTER_GC | MONO_COUNTER_LONG, &stat_bytes_alloced);
-	mono_counters_register ("bytes allocated in LOS", MONO_COUNTER_GC | MONO_COUNTER_LONG, &stat_bytes_alloced_los);
+	mono_counters_register ("# objects allocated", MONO_COUNTER_GC | MONO_COUNTER_ULONG, &stat_objects_alloced);	
+	mono_counters_register ("bytes allocated", MONO_COUNTER_GC | MONO_COUNTER_ULONG, &stat_bytes_alloced);
+	mono_counters_register ("bytes allocated in LOS", MONO_COUNTER_GC | MONO_COUNTER_ULONG, &stat_bytes_alloced_los);
 }
 #endif
 

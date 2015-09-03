@@ -26,12 +26,12 @@
 #include "sgen-protocol.h"
 
 #ifdef HEAVY_STATISTICS
-unsigned long long stat_gray_queue_section_alloc;
-unsigned long long stat_gray_queue_section_free;
-unsigned long long stat_gray_queue_enqueue_fast_path;
-unsigned long long stat_gray_queue_dequeue_fast_path;
-unsigned long long stat_gray_queue_enqueue_slow_path;
-unsigned long long stat_gray_queue_dequeue_slow_path;
+guint64 stat_gray_queue_section_alloc;
+guint64 stat_gray_queue_section_free;
+guint64 stat_gray_queue_enqueue_fast_path;
+guint64 stat_gray_queue_dequeue_fast_path;
+guint64 stat_gray_queue_enqueue_slow_path;
+guint64 stat_gray_queue_dequeue_slow_path;
 #endif
 
 #define GRAY_QUEUE_LENGTH_LIMIT	64
@@ -99,7 +99,7 @@ sgen_gray_object_free_queue_section (GrayQueueSection *section)
 void
 sgen_gray_object_enqueue (SgenGrayQueue *queue, char *obj, mword desc)
 {
-	GrayQueueEntry entry = { obj, desc };
+	GrayQueueEntry entry = SGEN_GRAY_QUEUE_ENTRY (obj, desc);
 
 	HEAVY_STAT (stat_gray_queue_enqueue_slow_path ++);
 

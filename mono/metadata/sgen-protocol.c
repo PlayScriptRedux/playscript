@@ -331,17 +331,17 @@ binary_protocol_collection_force (int generation)
 void
 binary_protocol_collection_begin (int index, int generation)
 {
-	SGenProtocolCollection entry = { index, generation };
+	SGenProtocolCollectionBegin entry = { index, generation };
 	binary_protocol_flush_buffers (FALSE);
-	protocol_entry (SGEN_PROTOCOL_COLLECTION_BEGIN, &entry, sizeof (SGenProtocolCollection));
+	protocol_entry (SGEN_PROTOCOL_COLLECTION_BEGIN, &entry, sizeof (SGenProtocolCollectionBegin));
 }
 
 void
-binary_protocol_collection_end (int index, int generation)
+binary_protocol_collection_end (int index, int generation, long long num_objects_scanned, long long num_unique_objects_scanned)
 {
-	SGenProtocolCollection entry = { index, generation };
+	SGenProtocolCollectionEnd entry = { index, generation, num_objects_scanned, num_unique_objects_scanned };
 	binary_protocol_flush_buffers (FALSE);
-	protocol_entry (SGEN_PROTOCOL_COLLECTION_END, &entry, sizeof (SGenProtocolCollection));
+	protocol_entry (SGEN_PROTOCOL_COLLECTION_END, &entry, sizeof (SGenProtocolCollectionEnd));
 }
 
 void
@@ -351,9 +351,15 @@ binary_protocol_concurrent_start (void)
 }
 
 void
-binary_protocol_concurrent_update_finish (void)
+binary_protocol_concurrent_update (void)
 {
-	protocol_entry (SGEN_PROTOCOL_CONCURRENT_UPDATE_FINISH, NULL, 0);
+	protocol_entry (SGEN_PROTOCOL_CONCURRENT_UPDATE, NULL, 0);
+}
+
+void
+binary_protocol_concurrent_finish (void)
+{
+	protocol_entry (SGEN_PROTOCOL_CONCURRENT_FINISH, NULL, 0);
 }
 
 void
@@ -513,6 +519,13 @@ binary_protocol_scan_vtype_begin (gpointer obj, int size)
 {
 	SGenProtocolScanVTypeBegin entry = { obj, size };
 	protocol_entry (SGEN_PROTOCOL_SCAN_VTYPE_BEGIN, &entry, sizeof (SGenProtocolScanVTypeBegin));
+}
+
+void
+binary_protocol_scan_process_reference (gpointer obj, gpointer ptr, gpointer value)
+{
+	SGenProtocolScanProcessReference entry = { obj, ptr, value };
+	protocol_entry (SGEN_PROTOCOL_SCAN_PROCESS_REFERENCE, &entry, sizeof (SGenProtocolScanProcessReference));
 }
 
 void

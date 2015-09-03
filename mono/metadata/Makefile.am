@@ -249,8 +249,9 @@ sgen_sources = \
 	sgen-major-copy-object.h \
 	sgen-minor-copy-object.h \
 	sgen-copy-object.h \
-	sgen-major-scan-object.h \
+	sgen-marksweep-scan-object-concurrent.h \
 	sgen-minor-scan-object.h \
+	sgen-marksweep-copy-or-mark-object.h	\
 	sgen-protocol.h		\
 	sgen-scan-object.h	\
 	sgen-nursery-allocator.c	\
