@@ -18,8 +18,6 @@ PLATFORMS = darwin linux win32
 PROFILES = \
 	basic \
 	build \
-	net_2_0 \
-	net_3_5	\
 	net_4_0	\
 	net_4_5 \
 	xbuild_12 \
@@ -29,7 +27,8 @@ COMMON_SRCS = \
 	Consts.cs.in			\
 	Locale.cs			\
 	MonoTODOAttribute.cs \
-	basic-profile-check.cs
+	basic-profile-check.cs		\
+	SR.cs
 
 DISTFILES = \
 	README.makefiles		\
