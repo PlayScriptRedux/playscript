@@ -360,6 +360,7 @@ cpu_load (int kind)
 	FILE *f = fopen ("/proc/loadavg", "r");
 	if (f) {
 		len = fread (buffer, 1, sizeof (buffer) - 1, f);
+		fclose (f);
 		if (len > 0) {
 			buffer [len < 511 ? len : 511] = 0;
 			b = buffer;
@@ -374,7 +375,6 @@ cpu_load (int kind)
 				}
 			}
 		}
-		fclose (f);
 	}
 #endif
 	return 0;
@@ -537,7 +537,10 @@ dump_counter (MonoCounter *counter, FILE *outfile) {
 			fprintf (outfile, ENTRY_FMT "%lld\n", counter->name, *(long long *)buffer);
 		break;
 	case MONO_COUNTER_ULONG:
-		fprintf (outfile, ENTRY_FMT "%llu\n", counter->name, *(unsigned long long *)buffer);
+		if ((counter->type & MONO_COUNTER_UNIT_MASK) == MONO_COUNTER_TIME)
+			fprintf (outfile, ENTRY_FMT "%.2f ms\n", counter->name, (double)(*(guint64*)buffer) / 10000.0);
+		else
+			fprintf (outfile, ENTRY_FMT "%llu\n", counter->name, *(unsigned long long *)buffer);
 		break;
 	case MONO_COUNTER_WORD:
 		fprintf (outfile, ENTRY_FMT "%zd\n", counter->name, *(gssize*)buffer);
