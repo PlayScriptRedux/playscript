@@ -1943,7 +1943,9 @@ mono_class_layout_fields (MonoClass *class)
 			}
 		}
 		break;
-	case TYPE_ATTRIBUTE_EXPLICIT_LAYOUT:
+	case TYPE_ATTRIBUTE_EXPLICIT_LAYOUT: {
+		guint8 *ref_bitmap;
+
 		real_size = 0;
 		for (i = 0; i < top; i++) {
 			gint32 align;
@@ -1956,7 +1958,6 @@ mono_class_layout_fields (MonoClass *class)
 			 * There must be info about all the fields in a type if it
 			 * uses explicit layout.
 			 */
-
 			if (mono_field_is_deleted (field))
 				continue;
 			if (field->type->attrs & FIELD_ATTRIBUTE_STATIC)
@@ -1986,12 +1987,47 @@ mono_class_layout_fields (MonoClass *class)
 			 */
 			real_size = MAX (real_size, size + field->offset);
 		}
+
+		if (class->has_references) {
+			ref_bitmap = g_new0 (guint8, real_size / sizeof (gpointer));
+
+			/* Check for overlapping reference and non-reference fields */
+			for (i = 0; i < top; i++) {
+				MonoType *ftype;
+
+				field = &class->fields [i];
+
+				if (mono_field_is_deleted (field))
+					continue;
+				if (field->type->attrs & FIELD_ATTRIBUTE_STATIC)
+					continue;
+				ftype = mono_type_get_underlying_type (field->type);
+				if (MONO_TYPE_IS_REFERENCE (ftype))
+					ref_bitmap [field->offset / sizeof (gpointer)] = 1;
+			}
+			for (i = 0; i < top; i++) {
+				field = &class->fields [i];
+
+				if (mono_field_is_deleted (field))
+					continue;
+				if (field->type->attrs & FIELD_ATTRIBUTE_STATIC)
+					continue;
+
+				if (!MONO_TYPE_IS_REFERENCE (field->type) && ref_bitmap [field->offset / sizeof (gpointer)]) {
+					char *err_msg = g_strdup_printf ("Could not load type '%s' because it contains an object field at offset %d that is incorrectly aligned or overlapped by a non-object field.", class->name, field->offset);
+					mono_class_set_failure (class, MONO_EXCEPTION_TYPE_LOAD, err_msg);
+				}
+			}
+			g_free (ref_bitmap);
+		}
+
 		class->instance_size = MAX (real_size, class->instance_size);
 		if (class->instance_size & (class->min_align - 1)) {
 			class->instance_size += class->min_align - 1;
 			class->instance_size &= ~(class->min_align - 1);
 		}
 		break;
+	}
 	}
 
 	if (layout != TYPE_ATTRIBUTE_EXPLICIT_LAYOUT) {
@@ -2477,7 +2513,7 @@ mono_class_setup_events (MonoClass *class)
 
 	if (class->generic_class) {
 		MonoClass *gklass = class->generic_class->container_class;
-		MonoGenericContext *context;
+		MonoGenericContext *context = NULL;
 
 		mono_class_setup_events (gklass);
 		if (gklass->exception_type) {

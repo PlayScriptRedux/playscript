@@ -470,7 +470,7 @@ mono_decompose_opcode (MonoCompile *cfg, MonoInst *ins)
 			}
 #endif
 			MONO_EMIT_NEW_BIALU (cfg, ins->opcode, ins->dreg, ins->sreg1, ins->sreg2);
-			ins->opcode = OP_NOP;
+			NULLIFY_INS (ins);
 		} else {
 			emulate = TRUE;
 		}
@@ -980,7 +980,7 @@ mono_decompose_long_opts (MonoCompile *cfg)
 					MONO_EMIT_NEW_BIALU (cfg, OP_IOR, d1, d1, d2);
 					MONO_EMIT_NEW_BIALU_IMM (cfg, OP_ICOMPARE_IMM, -1, d1, 0);
 					MONO_EMIT_NEW_BRANCH_BLOCK2 (cfg, next->opcode == OP_LBEQ ? OP_IBEQ : OP_IBNE_UN, next->inst_true_bb, next->inst_false_bb);
-					next->opcode = OP_NOP;
+					NULLIFY_INS (next);
 					break;
 				}
 				case OP_LBGE:
@@ -998,7 +998,7 @@ mono_decompose_long_opts (MonoCompile *cfg)
 					MONO_EMIT_NEW_BRANCH_BLOCK (cfg, OP_IBNE_UN, next->inst_false_bb);
 					MONO_EMIT_NEW_BIALU (cfg, OP_COMPARE, -1, tree->sreg1 + 1, tree->sreg2 + 1);
 					MONO_EMIT_NEW_BRANCH_BLOCK2 (cfg, lbr_decomp [next->opcode - OP_LBEQ][1], next->inst_true_bb, next->inst_false_bb);
-					next->opcode = OP_NOP;
+					NULLIFY_INS (next);
 					break;
 				case OP_LCEQ: {
 					int d1, d2;
@@ -1012,7 +1012,7 @@ mono_decompose_long_opts (MonoCompile *cfg)
 
 					MONO_EMIT_NEW_BIALU_IMM (cfg, OP_ICOMPARE_IMM, -1, d1, 0);
 					MONO_EMIT_NEW_UNALU (cfg, OP_ICEQ, next->dreg, -1);
-					next->opcode = OP_NOP;
+					NULLIFY_INS (next);
 					break;
 				}
 				case OP_LCLT:
@@ -1034,7 +1034,7 @@ mono_decompose_long_opts (MonoCompile *cfg)
 					MONO_START_BB (cfg, set_to_1);
 					MONO_EMIT_NEW_ICONST (cfg, next->dreg, 1);
 					MONO_START_BB (cfg, set_to_0);
-					next->opcode = OP_NOP;
+					NULLIFY_INS (next);
 					break;	
 				}
 				default:
@@ -1066,7 +1066,7 @@ mono_decompose_long_opts (MonoCompile *cfg)
 					MONO_EMIT_NEW_BIALU (cfg, OP_IOR, d1, d1, d2);
 					MONO_EMIT_NEW_BIALU_IMM (cfg, OP_ICOMPARE_IMM, -1, d1, 0);
 					MONO_EMIT_NEW_BRANCH_BLOCK2 (cfg, next->opcode == OP_LBEQ ? OP_IBEQ : OP_IBNE_UN, next->inst_true_bb, next->inst_false_bb);
-					next->opcode = OP_NOP;
+					NULLIFY_INS (next);
 					break;
 				}
 
@@ -1085,7 +1085,7 @@ mono_decompose_long_opts (MonoCompile *cfg)
 					MONO_EMIT_NEW_BRANCH_BLOCK (cfg, OP_IBNE_UN, next->inst_false_bb);
 					MONO_EMIT_NEW_BIALU_IMM (cfg, OP_COMPARE_IMM, -1, low_reg, low_imm);
 					MONO_EMIT_NEW_BRANCH_BLOCK2 (cfg, lbr_decomp [next->opcode - OP_LBEQ][1], next->inst_true_bb, next->inst_false_bb);
-					next->opcode = OP_NOP;
+					NULLIFY_INS (next);
 					break;
 				case OP_LCEQ: {
 					int d1, d2;
@@ -1099,7 +1099,7 @@ mono_decompose_long_opts (MonoCompile *cfg)
 
 					MONO_EMIT_NEW_BIALU_IMM (cfg, OP_ICOMPARE_IMM, -1, d1, 0);
 					MONO_EMIT_NEW_UNALU (cfg, OP_ICEQ, next->dreg, -1);
-					next->opcode = OP_NOP;
+					NULLIFY_INS (next);
 					break;
 				}
 				case OP_LCLT:
@@ -1121,7 +1121,7 @@ mono_decompose_long_opts (MonoCompile *cfg)
 					MONO_START_BB (cfg, set_to_1);
 					MONO_EMIT_NEW_ICONST (cfg, next->dreg, 1);
 					MONO_START_BB (cfg, set_to_0);
-					next->opcode = OP_NOP;
+					NULLIFY_INS (next);
 					break;	
 				}
 				default:
@@ -1330,18 +1330,18 @@ mono_decompose_vtype_opts (MonoCompile *cfg)
 					if (call->vret_in_reg) {
 						MonoCallInst *call2;
 
-						/* Replace the vcall with an integer call */
+						/* Replace the vcall with a scalar call */
 						MONO_INST_NEW_CALL (cfg, call2, OP_NOP);
 						memcpy (call2, call, sizeof (MonoCallInst));
 						switch (ins->opcode) {
 						case OP_VCALL:
-							call2->inst.opcode = OP_CALL;
+							call2->inst.opcode = call->vret_in_reg_fp ? OP_FCALL : OP_CALL;
 							break;
 						case OP_VCALL_REG:
-							call2->inst.opcode = OP_CALL_REG;
+							call2->inst.opcode = call->vret_in_reg_fp ? OP_FCALL_REG : OP_CALL_REG;
 							break;
 						case OP_VCALL_MEMBASE:
-							call2->inst.opcode = OP_CALL_MEMBASE;
+							call2->inst.opcode = call->vret_in_reg_fp ? OP_FCALL_MEMBASE : OP_CALL_MEMBASE;
 							break;
 						}
 						call2->inst.dreg = alloc_preg (cfg);
@@ -1367,12 +1367,19 @@ mono_decompose_vtype_opts (MonoCompile *cfg)
 							break;
 						case 3:
 						case 4:
-							MONO_EMIT_NEW_STORE_MEMBASE (cfg, OP_STOREI4_MEMBASE_REG, dest->dreg, 0, call2->inst.dreg);
+							if (call->vret_in_reg_fp)
+								MONO_EMIT_NEW_STORE_MEMBASE (cfg, OP_STORER4_MEMBASE_REG, dest->dreg, 0, call2->inst.dreg);
+							else
+								MONO_EMIT_NEW_STORE_MEMBASE (cfg, OP_STOREI4_MEMBASE_REG, dest->dreg, 0, call2->inst.dreg);
 							break;
 						case 5:
 						case 6:
 						case 7:
 						case 8:
+							if (call->vret_in_reg_fp) {
+								MONO_EMIT_NEW_STORE_MEMBASE (cfg, OP_STORER8_MEMBASE_REG, dest->dreg, 0, call2->inst.dreg);
+								break;
+							}
 #if SIZEOF_REGISTER == 4
 							/*
 							FIXME Other ABIs might return in different regs than the ones used for LCALL.

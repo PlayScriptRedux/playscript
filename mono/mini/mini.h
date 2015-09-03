@@ -31,6 +31,7 @@
 #include <mono/utils/mono-tls.h>
 #include <mono/utils/atomic.h>
 #include <mono/utils/mono-conc-hashtable.h>
+#include <mono/utils/mono-signal-handler.h>
 
 #define MONO_BREAKPOINT_ARRAY_SIZE 64
 
@@ -51,19 +52,6 @@
  */
 #if defined(HAVE_BOEHM_GC) || defined(HAVE_SGEN_GC)
 #error "The code in mini/ should not depend on these defines."
-#endif
-
-#ifndef G_LIKELY
-#define G_LIKELY(a) (a)
-#define G_UNLIKELY(a) (a)
-#endif
-
-#ifndef G_MAXINT32
-#define G_MAXINT32 2147483647
-#endif
-
-#ifndef G_MININT32
-#define G_MININT32 (-G_MAXINT32 - 1)
 #endif
 
 #ifndef __GNUC__
@@ -851,6 +839,8 @@ struct MonoCallInst {
 	 * calling convention as OP_CALL.
 	 */
 	guint vret_in_reg : 1;
+	/* Whenever vret_in_reg returns fp values */
+	guint vret_in_reg_fp : 1;
 	/* Whenever there is an IMT argument and it is dynamic */
 	guint dynamic_imt_arg : 1;
 	/* Whenever there is an RGCTX argument */
@@ -955,6 +945,14 @@ enum {
 
 #define inst_phi_args   data.op[1].phi_args
 #define inst_eh_block	 data.op[1].exception_clause
+
+static inline void
+mono_inst_set_src_registers (MonoInst *ins, int *regs)
+{
+	ins->sreg1 = regs [0];
+	ins->sreg2 = regs [1];
+	ins->sreg3 = regs [2];
+}
 
 /* instruction description for use in regalloc/scheduling */
 enum {
@@ -2033,7 +2031,6 @@ MONO_API void      mono_print_method_from_ip         (void *ip);
 MONO_API char     *mono_pmip                         (void *ip);
 gboolean  mono_debug_count                  (void) MONO_INTERNAL;
 MONO_API const char* mono_inst_name                  (int op);
-void      mono_inst_set_src_registers       (MonoInst *ins, int *regs) MONO_INTERNAL;
 int       mono_op_to_op_imm                 (int opcode) MONO_INTERNAL;
 int       mono_op_imm_to_op                 (int opcode) MONO_INTERNAL;
 int       mono_load_membase_to_load_mem     (int opcode) MONO_INTERNAL;
@@ -2177,6 +2174,8 @@ guint32  mono_aot_method_hash               (MonoMethod *method) MONO_INTERNAL;
 MonoMethod* mono_aot_get_array_helper_from_wrapper (MonoMethod *method) MONO_INTERNAL;
 guint32  mono_aot_get_got_offset            (MonoJumpInfo *ji) MONO_LLVM_INTERNAL;
 char*    mono_aot_get_method_name           (MonoCompile *cfg) MONO_LLVM_INTERNAL;
+gboolean mono_aot_is_direct_callable        (MonoJumpInfo *patch_info) MONO_LLVM_INTERNAL;
+void     mono_aot_mark_unused_llvm_plt_entry(MonoJumpInfo *patch_info) MONO_LLVM_INTERNAL;
 char*    mono_aot_get_plt_symbol            (MonoJumpInfoType type, gconstpointer data) MONO_LLVM_INTERNAL;
 int      mono_aot_get_method_index          (MonoMethod *method) MONO_LLVM_INTERNAL;
 MonoJumpInfo* mono_aot_patch_info_dup       (MonoJumpInfo* ji) MONO_LLVM_INTERNAL;
@@ -2824,53 +2823,12 @@ void mono_cross_helpers_run (void) MONO_INTERNAL;
 /*
  * Signal handling
  */
-#ifdef MONO_GET_CONTEXT
-#define GET_CONTEXT MONO_GET_CONTEXT
-#endif
 
-#ifndef GET_CONTEXT
-#ifdef HOST_WIN32
-/* seh_vectored_exception_handler () passes in a CONTEXT* */
-#define GET_CONTEXT \
-    void *ctx = context;
-#else
-#ifdef MONO_ARCH_USE_SIGACTION
-#define GET_CONTEXT \
-    void *ctx = context;
-#elif defined(__HAIKU__)
-#define GET_CONTEXT \
-	void *ctx = &regs;
-#else
-#define GET_CONTEXT \
-	void **_p = (void **)&_dummy; \
-	struct sigcontext *ctx = (struct sigcontext *)++_p;
-#endif
-#endif
-#endif
-
-#if defined(MONO_ARCH_USE_SIGACTION) && !defined(HOST_WIN32)
-#define SIG_HANDLER_SIGNATURE(ftn) ftn (int _dummy, siginfo_t *info, void *context)
-#define SIG_HANDLER_FUNC(access, ftn) MONO_SIGNAL_HANDLER_FUNC (access, ftn, (int _dummy, siginfo_t *info, void *context))
-#define SIG_HANDLER_PARAMS _dummy, info, context
-#elif defined(HOST_WIN32)
-#define SIG_HANDLER_SIGNATURE(ftn) ftn (int _dummy, EXCEPTION_POINTERS *info, void *context)
-#define SIG_HANDLER_FUNC(access, ftn) MONO_SIGNAL_HANDLER_FUNC (access, ftn, (int _dummy, EXCEPTION_POINTERS *info, void *context))
-#define SIG_HANDLER_PARAMS _dummy, info, context
-#elif defined(__HAIKU__)
-#define SIG_HANDLER_SIGNATURE(ftn) ftn (int _dummy, void *userData, vregs regs)
-#define SIG_HANDLER_FUNC(access, ftn) MONO_SIGNAL_HANDLER_FUNC (access, ftn, (int _dummy, void *userData, vregs regs))
-#define SIG_HANDLER_PARAMS _dummy, userData, regs
-#else
-#define SIG_HANDLER_SIGNATURE(ftn) ftn (int _dummy)
-#define SIG_HANDLER_FUNC(access, ftn) MONO_SIGNAL_HANDLER_FUNC (access, ftn, (int _dummy))
-#define SIG_HANDLER_PARAMS _dummy
-#endif
-
-void SIG_HANDLER_SIGNATURE (mono_sigfpe_signal_handler)  MONO_INTERNAL;
-void SIG_HANDLER_SIGNATURE (mono_sigill_signal_handler)  MONO_INTERNAL;
-void SIG_HANDLER_SIGNATURE (mono_sigsegv_signal_handler) MONO_INTERNAL;
-void SIG_HANDLER_SIGNATURE (mono_sigint_signal_handler)  MONO_INTERNAL;
-gboolean SIG_HANDLER_SIGNATURE (mono_chain_signal) MONO_INTERNAL;
+void MONO_SIG_HANDLER_SIGNATURE (mono_sigfpe_signal_handler)  MONO_INTERNAL;
+void MONO_SIG_HANDLER_SIGNATURE (mono_sigill_signal_handler)  MONO_INTERNAL;
+void MONO_SIG_HANDLER_SIGNATURE (mono_sigsegv_signal_handler) MONO_INTERNAL;
+void MONO_SIG_HANDLER_SIGNATURE (mono_sigint_signal_handler)  MONO_INTERNAL;
+gboolean MONO_SIG_HANDLER_SIGNATURE (mono_chain_signal) MONO_INTERNAL;
 
 #ifdef MONO_ARCH_HAVE_CREATE_DELEGATE_TRAMPOLINE
 #define ARCH_HAVE_DELEGATE_TRAMPOLINES 1
