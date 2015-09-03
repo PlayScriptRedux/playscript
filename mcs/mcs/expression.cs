@@ -9996,7 +9996,7 @@ namespace Mono.CSharp
 		}
 	}
 
-	public class RefValueExpr : ShimExpression, IAssignMethod
+	public class RefValueExpr : ShimExpression, IAssignMethod, IMemoryLocation
 	{
 		FullNamedExpression texpr;
 
@@ -10018,6 +10018,12 @@ namespace Mono.CSharp
 			return false;
 		}
 
+		public void AddressOf (EmitContext ec, AddressOp mode)
+		{
+			expr.Emit (ec);
+			ec.Emit (OpCodes.Refanyval, type);
+		}
+
 		protected override Expression DoResolve (ResolveContext rc)
 		{
 			expr = expr.Resolve (rc);
@@ -10026,7 +10032,7 @@ namespace Mono.CSharp
 				return null;
 
 			expr = Convert.ImplicitConversionRequired (rc, expr, rc.Module.PredefinedTypes.TypedReference.Resolve (), loc);
-			eclass = ExprClass.Value;
+			eclass = ExprClass.Variable;
 			return this;
 		}
 
