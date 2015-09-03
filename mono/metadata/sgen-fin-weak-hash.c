@@ -30,7 +30,6 @@
 #include "metadata/sgen-gc.h"
 #include "metadata/sgen-gray.h"
 #include "metadata/sgen-protocol.h"
-#include "metadata/sgen-pointer-queue.h"
 #include "utils/dtrace.h"
 #include "utils/mono-counters.h"
 
@@ -74,7 +73,7 @@ tagged_object_apply (void *object, int tag_bits)
 static int
 tagged_object_hash (MonoObject *o)
 {
-	return mono_aligned_addr_hash (tagged_object_get_object (o));
+	return mono_object_hash (tagged_object_get_object (o));
 }
 
 static gboolean
@@ -117,9 +116,6 @@ sgen_collect_bridge_objects (int generation, ScanCopyContext ctx)
 	MonoObject *object;
 	gpointer dummy;
 	char *copy;
-	SgenPointerQueue moved_fin_objects;
-
-	sgen_pointer_queue_init (&moved_fin_objects, INTERNAL_MEM_TEMPORARY);
 
 	if (no_finalize)
 		return;
@@ -158,24 +154,12 @@ sgen_collect_bridge_objects (int generation, ScanCopyContext ctx)
 			SGEN_LOG (5, "Promoting finalization of object %p (%s) (was at %p) to major table", copy, sgen_safe_name (copy), object);
 
 			continue;
-		} else if (copy != (char*)object) {
+		} else {
 			/* update pointer */
-			SGEN_HASH_TABLE_FOREACH_REMOVE (TRUE);
-
-			/* register for reinsertion */
-			sgen_pointer_queue_add (&moved_fin_objects, tagged_object_apply (copy, tag));
-
 			SGEN_LOG (5, "Updating object for finalization: %p (%s) (was at %p)", copy, sgen_safe_name (copy), object);
-
-			continue;
+			SGEN_HASH_TABLE_FOREACH_SET_KEY (tagged_object_apply (copy, tag));
 		}
 	} SGEN_HASH_TABLE_FOREACH_END;
-
-	while (!sgen_pointer_queue_is_empty (&moved_fin_objects)) {
-		sgen_hash_table_replace (hash_table, sgen_pointer_queue_pop (&moved_fin_objects), NULL, NULL);
-	}
-
-	sgen_pointer_queue_free (&moved_fin_objects);
 }
 
 
@@ -188,9 +172,6 @@ sgen_finalize_in_range (int generation, ScanCopyContext ctx)
 	SgenHashTable *hash_table = get_finalize_entry_hash_table (generation);
 	MonoObject *object;
 	gpointer dummy;
-	SgenPointerQueue moved_fin_objects;
-
-	sgen_pointer_queue_init (&moved_fin_objects, INTERNAL_MEM_TEMPORARY);
 
 	if (no_finalize)
 		return;
@@ -220,26 +201,14 @@ sgen_finalize_in_range (int generation, ScanCopyContext ctx)
 					SGEN_LOG (5, "Promoting finalization of object %p (%s) (was at %p) to major table", copy, sgen_safe_name (copy), object);
 
 					continue;
-				} else if (copy != object) {
+				} else {
 					/* update pointer */
-					SGEN_HASH_TABLE_FOREACH_REMOVE (TRUE);
-
-					/* register for reinsertion */
-					sgen_pointer_queue_add (&moved_fin_objects, tagged_object_apply (copy, tag));
-
 					SGEN_LOG (5, "Updating object for finalization: %p (%s) (was at %p)", copy, sgen_safe_name (copy), object);
-
-					continue;
+					SGEN_HASH_TABLE_FOREACH_SET_KEY (tagged_object_apply (copy, tag));
 				}
 			}
 		}
 	} SGEN_HASH_TABLE_FOREACH_END;
-
-	while (!sgen_pointer_queue_is_empty (&moved_fin_objects)) {
-		sgen_hash_table_replace (hash_table, sgen_pointer_queue_pop (&moved_fin_objects), NULL, NULL);
-	}
-
-	sgen_pointer_queue_free (&moved_fin_objects);
 }
 
 /* LOCKING: requires that the GC lock is held */

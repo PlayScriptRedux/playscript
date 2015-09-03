@@ -37,7 +37,6 @@ void
 sgen_init_pinning (void)
 {
 	memset (pin_hash_filter, 0, sizeof (pin_hash_filter));
-	pin_queue.mem_type = INTERNAL_MEM_PIN_QUEUE;
 }
 
 void
