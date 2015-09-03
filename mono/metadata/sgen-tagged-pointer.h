@@ -1,5 +1,5 @@
 /*
- * sgen-pointer-queue.h: A pointer queue that can be sorted.
+ * sgen-tagged-pointer.h: Macros for tagging and untagging pointers.
  *
  * Copyright (C) 2014 Xamarin Inc
  *
@@ -17,20 +17,18 @@
  * Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef __MONO_SGEN_POINTER_QUEUE_H__
-#define __MONO_SGEN_POINTER_QUEUE_H__
+#ifndef __MONO_SGEN_TAGGED_POINTER_H__
+#define __MONO_SGEN_TAGGED_POINTER_H__
 
-typedef struct {
-	void **data;
-	size_t size;
-	size_t next_slot;
-} SgenPointerQueue;
+#define SGEN_POINTER_IS_TAGGED_1(p)	((mword)(p) & 1)
+#define SGEN_POINTER_TAG_1(p)		((void*)((mword)(p) | 1))
+#define SGEN_POINTER_UNTAG_1(p)		((void*)((mword)(p) & ~1))
 
-void sgen_pointer_queue_add (SgenPointerQueue *queue, void *ptr) MONO_INTERNAL;
-void sgen_pointer_queue_clear (SgenPointerQueue *queue) MONO_INTERNAL;
-void sgen_pointer_queue_remove_nulls (SgenPointerQueue *queue) MONO_INTERNAL;
-void sgen_pointer_queue_sort_uniq (SgenPointerQueue *queue) MONO_INTERNAL;
-size_t sgen_pointer_queue_search (SgenPointerQueue *queue, void *addr) MONO_INTERNAL;
-size_t sgen_pointer_queue_find (SgenPointerQueue *queue, void *ptr) MONO_INTERNAL;
+#define SGEN_POINTER_IS_TAGGED_2(p)	((mword)(p) & 2)
+#define SGEN_POINTER_TAG_2(p)		((void*)((mword)(p) | 2))
+#define SGEN_POINTER_UNTAG_2(p)		((void*)((mword)(p) & ~2))
+
+#define SGEN_POINTER_IS_TAGGED_1_OR_2(p)	((mword)(p) & 3)
+#define SGEN_POINTER_UNTAG_12(p)	((void*)((mword)(p) & ~3))
 
 #endif

@@ -222,9 +222,6 @@ sgen_sources = \
 	sgen-gc.c		\
 	sgen-internal.c		\
 	sgen-marksweep.c	\
-	sgen-marksweep-fixed.c	\
-	sgen-marksweep-par.c	\
-	sgen-marksweep-fixed-par.c	\
 	sgen-los.c		\
 	sgen-protocol.c \
 	sgen-bridge.c		\
@@ -271,7 +268,8 @@ sgen_sources = \
 	sgen-layout-stats.c	\
 	sgen-layout-stats.h	\
 	sgen-qsort.c	\
-	sgen-qsort.h
+	sgen-qsort.h	\
+	sgen-tagged-pointer.h
 
 libmonoruntime_la_SOURCES = $(common_sources) $(gc_dependent_sources) $(null_gc_sources) $(boehm_sources)
 libmonoruntime_la_CFLAGS = $(BOEHM_DEFINES)
