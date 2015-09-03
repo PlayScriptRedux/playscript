@@ -11,6 +11,7 @@ class C
 	public static implicit operator S (C c)
 	{
 		++ConversionCalled;
+Console.WriteLine("ConversionCalled");
 		return new S ();
 	}
 }
