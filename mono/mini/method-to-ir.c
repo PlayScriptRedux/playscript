@@ -71,49 +71,35 @@
 
 #define BRANCH_COST 10
 #define INLINE_LENGTH_LIMIT 20
+
+/* These have 'cfg' as an implicit argument */
 #define INLINE_FAILURE(msg) do {									\
-	if ((cfg->method != method) && (method->wrapper_type == MONO_WRAPPER_NONE)) { \
-		if (cfg->verbose_level >= 2)									\
-			printf ("inline failed: %s\n", msg);						\
-		goto inline_failure;											\
+	if ((cfg->method != cfg->current_method) && (cfg->current_method->wrapper_type == MONO_WRAPPER_NONE)) { \
+		inline_failure (cfg, msg);										\
+		goto exception_exit;											\
 	} \
 	} while (0)
 #define CHECK_CFG_EXCEPTION do {\
-		if (cfg->exception_type != MONO_EXCEPTION_NONE)\
-			goto exception_exit;\
+		if (cfg->exception_type != MONO_EXCEPTION_NONE)	\
+			goto exception_exit;						\
 	} while (0)
-#define METHOD_ACCESS_FAILURE do {	\
-		char *method_fname = mono_method_full_name (method, TRUE);	\
-		char *cil_method_fname = mono_method_full_name (cil_method, TRUE);	\
-		mono_cfg_set_exception (cfg, MONO_EXCEPTION_METHOD_ACCESS);		\
-		cfg->exception_message = g_strdup_printf ("Method `%s' is inaccessible from method `%s'\n", cil_method_fname, method_fname);	\
-		g_free (method_fname);	\
-		g_free (cil_method_fname);	\
-		goto exception_exit;	\
+#define METHOD_ACCESS_FAILURE(method, cmethod) do {			\
+		method_access_failure ((cfg), (method), (cmethod));			\
+		goto exception_exit;										\
 	} while (0)
-#define FIELD_ACCESS_FAILURE do {	\
-		char *method_fname = mono_method_full_name (method, TRUE);	\
-		char *field_fname = mono_field_full_name (field);	\
-		mono_cfg_set_exception (cfg, MONO_EXCEPTION_FIELD_ACCESS);		\
-		cfg->exception_message = g_strdup_printf ("Field `%s' is inaccessible from method `%s'\n", field_fname, method_fname);	\
-		g_free (method_fname);	\
-		g_free (field_fname);	\
+#define FIELD_ACCESS_FAILURE(method, field) do {					\
+		field_access_failure ((cfg), (method), (field));			\
 		goto exception_exit;	\
 	} while (0)
 #define GENERIC_SHARING_FAILURE(opcode) do {		\
-		if (cfg->generic_sharing_context) {	\
-            if (cfg->verbose_level > 2) \
-			    printf ("sharing failed for method %s.%s.%s/%d opcode %s line %d\n", method->klass->name_space, method->klass->name, method->name, method->signature->param_count, mono_opcode_name ((opcode)), __LINE__); \
-			mono_cfg_set_exception (cfg, MONO_EXCEPTION_GENERIC_SHARING_FAILED); \
+		if (cfg->gshared) {									\
+			gshared_failure (cfg, opcode, __FILE__, __LINE__);	\
 			goto exception_exit;	\
 		}			\
 	} while (0)
 #define GSHAREDVT_FAILURE(opcode) do {		\
 	if (cfg->gsharedvt) {												\
-		cfg->exception_message = g_strdup_printf ("gsharedvt failed for method %s.%s.%s/%d opcode %s %s:%d", method->klass->name_space, method->klass->name, method->name, method->signature->param_count, mono_opcode_name ((opcode)), __FILE__, __LINE__); \
-		if (cfg->verbose_level >= 2)									\
-			printf ("%s\n", cfg->exception_message); \
-		mono_cfg_set_exception (cfg, MONO_EXCEPTION_GENERIC_SHARING_FAILED); \
+		gsharedvt_failure (cfg, opcode, __FILE__, __LINE__);			\
 		goto exception_exit;											\
 	}																	\
 	} while (0)
@@ -125,6 +111,16 @@
 		if ((cfg)->verbose_level >= 2)						  \
 			printf ("AOT disabled: %s:%d\n", __FILE__, __LINE__);	\
 		(cfg)->disable_aot = TRUE;							  \
+	} while (0)
+#define LOAD_ERROR do { \
+		break_on_unverified ();								\
+		mono_cfg_set_exception (cfg, MONO_EXCEPTION_TYPE_LOAD); \
+		goto exception_exit;									\
+	} while (0)
+
+#define TYPE_LOAD_ERROR(klass) do { \
+		cfg->exception_ptr = klass; \
+		LOAD_ERROR;					\
 	} while (0)
 
 /* Determine whenever 'ins' represents a load of the 'this' argument */
@@ -367,6 +363,60 @@ mono_create_helper_signatures (void)
 	helper_sig_monitor_enter_exit_trampoline_llvm = mono_create_icall_signature ("void object");
 }
 
+static MONO_NEVER_INLINE void
+break_on_unverified (void)
+{
+	if (mini_get_debug_options ()->break_on_unverified)
+		G_BREAKPOINT ();
+}
+
+static MONO_NEVER_INLINE void
+method_access_failure (MonoCompile *cfg, MonoMethod *method, MonoMethod *cil_method)
+{
+	char *method_fname = mono_method_full_name (method, TRUE);
+	char *cil_method_fname = mono_method_full_name (cil_method, TRUE);
+	mono_cfg_set_exception (cfg, MONO_EXCEPTION_METHOD_ACCESS);
+	cfg->exception_message = g_strdup_printf ("Method `%s' is inaccessible from method `%s'\n", cil_method_fname, method_fname);
+	g_free (method_fname);
+	g_free (cil_method_fname);
+}
+
+static MONO_NEVER_INLINE void
+field_access_failure (MonoCompile *cfg, MonoMethod *method, MonoClassField *field)
+{
+	char *method_fname = mono_method_full_name (method, TRUE);
+	char *field_fname = mono_field_full_name (field);
+	mono_cfg_set_exception (cfg, MONO_EXCEPTION_FIELD_ACCESS);
+	cfg->exception_message = g_strdup_printf ("Field `%s' is inaccessible from method `%s'\n", field_fname, method_fname);
+	g_free (method_fname);
+	g_free (field_fname);
+}
+
+static MONO_NEVER_INLINE void
+inline_failure (MonoCompile *cfg, const char *msg)
+{
+	if (cfg->verbose_level >= 2)
+		printf ("inline failed: %s\n", msg);
+	mono_cfg_set_exception (cfg, MONO_EXCEPTION_INLINE_FAILED);
+}
+
+static MONO_NEVER_INLINE void
+gshared_failure (MonoCompile *cfg, int opcode, const char *file, int line)
+{
+	if (cfg->verbose_level > 2)											\
+		printf ("sharing failed for method %s.%s.%s/%d opcode %s line %d\n", cfg->current_method->klass->name_space, cfg->current_method->klass->name, cfg->current_method->name, cfg->current_method->signature->param_count, mono_opcode_name ((opcode)), __LINE__);
+	mono_cfg_set_exception (cfg, MONO_EXCEPTION_GENERIC_SHARING_FAILED);
+}
+
+static MONO_NEVER_INLINE void
+gsharedvt_failure (MonoCompile *cfg, int opcode, const char *file, int line)
+{
+	cfg->exception_message = g_strdup_printf ("gsharedvt failed for method %s.%s.%s/%d opcode %s %s:%d", cfg->current_method->klass->name_space, cfg->current_method->klass->name, cfg->current_method->name, cfg->current_method->signature->param_count, mono_opcode_name ((opcode)), file, line);
+	if (cfg->verbose_level >= 2)
+		printf ("%s\n", cfg->exception_message);
+	mono_cfg_set_exception (cfg, MONO_EXCEPTION_GENERIC_SHARING_FAILED);
+}
+
 /*
  * When using gsharedvt, some instatiations might be verifiable, and some might be not. i.e. 
  * foo<T> (int i) { ldarg.0; box T; }
@@ -378,15 +428,9 @@ mono_create_helper_signatures (void)
 		mono_cfg_set_exception (cfg, MONO_EXCEPTION_GENERIC_SHARING_FAILED); \
 		goto exception_exit;											\
 	}																	\
-	if (mini_get_debug_options ()->break_on_unverified) \
-		G_BREAKPOINT (); \
-	else \
-		goto unverified; \
+	break_on_unverified ();												\
+	goto unverified;													\
 } while (0)
-
-#define LOAD_ERROR do { if (mini_get_debug_options ()->break_on_unverified) G_BREAKPOINT (); else goto load_error; } while (0)
-
-#define TYPE_LOAD_ERROR(klass) do { if (mini_get_debug_options ()->break_on_unverified) G_BREAKPOINT (); else { cfg->exception_ptr = klass; goto load_error; } } while (0)
 
 #define GET_BBLOCK(cfg,tblock,ip) do {	\
 		(tblock) = cfg->cil_offset_to_bb [(ip) - cfg->cil_start]; \
@@ -4689,6 +4733,8 @@ mono_method_check_inlining (MonoCompile *cfg, MonoMethod *method)
 	int i;
 #endif
 
+	if (cfg->disable_inline)
+		return FALSE;
 	if (cfg->generic_sharing_context)
 		return FALSE;
 
@@ -4792,6 +4838,9 @@ mono_method_check_inlining (MonoCompile *cfg, MonoMethod *method)
 				return FALSE;
 	}
 #endif
+
+	if (g_list_find (cfg->dont_inline, method))
+		return FALSE;
 
 	return TRUE;
 }
@@ -6003,9 +6052,14 @@ emit_init_local (MonoCompile *cfg, int local, MonoType *type, gboolean init)
 	}
 }
 
+/*
+ * inline_method:
+ *
+ *   Return the cost of inlining CMETHOD.
+ */
 static int
 inline_method (MonoCompile *cfg, MonoMethod *cmethod, MonoMethodSignature *fsig, MonoInst **sp,
-		guchar *ip, guint real_offset, GList *dont_inline, gboolean inline_always)
+			   guchar *ip, guint real_offset, gboolean inline_always, MonoBasicBlock **out_cbb)
 {
 	MonoInst *ins, *rvar = NULL;
 	MonoMethodHeader *cheader;
@@ -6022,7 +6076,7 @@ inline_method (MonoCompile *cfg, MonoMethod *cmethod, MonoMethodSignature *fsig,
 	guint32 prev_cil_offset_to_bb_len;
 	MonoMethod *prev_current_method;
 	MonoGenericContext *prev_generic_context;
-	gboolean ret_var_set, prev_ret_var_set, virtual = FALSE;
+	gboolean ret_var_set, prev_ret_var_set, prev_disable_inline, virtual = FALSE;
 
 	g_assert (cfg->exception_type == MONO_EXCEPTION_NONE);
 
@@ -6098,11 +6152,12 @@ inline_method (MonoCompile *cfg, MonoMethod *cmethod, MonoMethodSignature *fsig,
 	prev_current_method = cfg->current_method;
 	prev_generic_context = cfg->generic_context;
 	prev_ret_var_set = cfg->ret_var_set;
+	prev_disable_inline = cfg->disable_inline;
 
 	if (*ip == CEE_CALLVIRT && !(cmethod->flags & METHOD_ATTRIBUTE_STATIC))
 		virtual = TRUE;
 
-	costs = mono_method_to_ir (cfg, cmethod, sbblock, ebblock, rvar, dont_inline, sp, real_offset, virtual);
+	costs = mono_method_to_ir (cfg, cmethod, sbblock, ebblock, rvar, sp, real_offset, virtual);
 
 	ret_var_set = cfg->ret_var_set;
 
@@ -6118,6 +6173,7 @@ inline_method (MonoCompile *cfg, MonoMethod *cmethod, MonoMethodSignature *fsig,
 	cfg->current_method = prev_current_method;
 	cfg->generic_context = prev_generic_context;
 	cfg->ret_var_set = prev_ret_var_set;
+	cfg->disable_inline = prev_disable_inline;
 	cfg->inline_depth --;
 
 	if ((costs >= 0 && costs < 60) || inline_always) {
@@ -6171,6 +6227,8 @@ inline_method (MonoCompile *cfg, MonoMethod *cmethod, MonoMethodSignature *fsig,
 
 			cfg->cbb = ebblock;
 		}
+
+		*out_cbb = cfg->cbb;
 
 		if (rvar) {
 			/*
@@ -6228,7 +6286,7 @@ inline_method (MonoCompile *cfg, MonoMethod *cmethod, MonoMethodSignature *fsig,
 #define CHECK_LOCAL(num) if ((unsigned)(num) >= (unsigned)header->num_locals) UNVERIFIED
 #define CHECK_OPSIZE(size) if (ip + size > end) UNVERIFIED
 #define CHECK_UNVERIFIABLE(cfg) if (cfg->unverifiable) UNVERIFIED
-#define CHECK_TYPELOAD(klass) if (!(klass) || (klass)->exception_type) {cfg->exception_ptr = klass; LOAD_ERROR;}
+#define CHECK_TYPELOAD(klass) if (!(klass) || (klass)->exception_type) TYPE_LOAD_ERROR ((klass))
 
 /* offset from br.s -> br like opcodes */
 #define BIG_BRANCH_OFFSET 13
@@ -6650,7 +6708,7 @@ emit_optimized_ldloca_ir (MonoCompile *cfg, unsigned char *ip, unsigned char *en
 		emit_init_local (cfg, local, type, TRUE);
 		return ip + 6;
 	}
-load_error:
+ exception_exit:
 	return NULL;
 }
 
@@ -6848,13 +6906,97 @@ create_magic_tls_access (MonoCompile *cfg, MonoClassField *tls_field, MonoInst *
 }
 
 /*
+ * handle_ctor_call:
+ *
+ *   Handle calls made to ctors from NEWOBJ opcodes.
+ *
+ *   REF_BBLOCK will point to the current bblock after the call.
+ */
+static void
+handle_ctor_call (MonoCompile *cfg, MonoMethod *cmethod, MonoMethodSignature *fsig, int context_used,
+				  MonoInst **sp, guint8 *ip, MonoBasicBlock **ref_bblock, int *inline_costs)
+{
+	MonoInst *vtable_arg = NULL, *callvirt_this_arg = NULL, *ins;
+	MonoBasicBlock *bblock = *ref_bblock;
+
+	if (cmethod->klass->valuetype && mono_class_generic_sharing_enabled (cmethod->klass) &&
+					mono_method_is_generic_sharable (cmethod, TRUE)) {
+		if (cmethod->is_inflated && mono_method_get_context (cmethod)->method_inst) {
+			mono_class_vtable (cfg->domain, cmethod->klass);
+			CHECK_TYPELOAD (cmethod->klass);
+
+			vtable_arg = emit_get_rgctx_method (cfg, context_used,
+												cmethod, MONO_RGCTX_INFO_METHOD_RGCTX);
+		} else {
+			if (context_used) {
+				vtable_arg = emit_get_rgctx_klass (cfg, context_used,
+												   cmethod->klass, MONO_RGCTX_INFO_VTABLE);
+			} else {
+				MonoVTable *vtable = mono_class_vtable (cfg->domain, cmethod->klass);
+
+				CHECK_TYPELOAD (cmethod->klass);
+				EMIT_NEW_VTABLECONST (cfg, vtable_arg, vtable);
+			}
+		}
+	}
+
+	/* Avoid virtual calls to ctors if possible */
+	if (mono_class_is_marshalbyref (cmethod->klass))
+		callvirt_this_arg = sp [0];
+
+	if (cmethod && (cfg->opt & MONO_OPT_INTRINS) && (ins = mini_emit_inst_for_ctor (cfg, cmethod, fsig, sp))) {
+		g_assert (MONO_TYPE_IS_VOID (fsig->ret));
+		CHECK_CFG_EXCEPTION;
+	} else if ((cfg->opt & MONO_OPT_INLINE) && cmethod && !context_used && !vtable_arg &&
+			   mono_method_check_inlining (cfg, cmethod) &&
+			   !mono_class_is_subclass_of (cmethod->klass, mono_defaults.exception_class, FALSE)) {
+		int costs;
+
+		if ((costs = inline_method (cfg, cmethod, fsig, sp, ip, cfg->real_offset, FALSE, &bblock))) {
+			cfg->real_offset += 5;
+
+			*inline_costs += costs - 5;
+			*ref_bblock = bblock;
+		} else {
+			INLINE_FAILURE ("inline failure");
+			// FIXME-VT: Clean this up
+			if (cfg->gsharedvt && mini_is_gsharedvt_signature (cfg, fsig))
+				GSHAREDVT_FAILURE(*ip);
+			mono_emit_method_call_full (cfg, cmethod, fsig, FALSE, sp, callvirt_this_arg, NULL, NULL);
+		}
+	} else if (cfg->gsharedvt && mini_is_gsharedvt_signature (cfg, fsig)) {
+		MonoInst *addr;
+
+		addr = emit_get_rgctx_gsharedvt_call (cfg, context_used, fsig, cmethod, MONO_RGCTX_INFO_METHOD_GSHAREDVT_OUT_TRAMPOLINE);
+		mono_emit_calli (cfg, fsig, sp, addr, NULL, vtable_arg);
+	} else if (context_used &&
+			   ((!mono_method_is_generic_sharable_full (cmethod, TRUE, FALSE, FALSE) ||
+				 !mono_class_generic_sharing_enabled (cmethod->klass)) || cfg->gsharedvt)) {
+		MonoInst *cmethod_addr;
+
+		/* Generic calls made out of gsharedvt methods cannot be patched, so use an indirect call */
+
+		cmethod_addr = emit_get_rgctx_method (cfg, context_used,
+											  cmethod, MONO_RGCTX_INFO_GENERIC_METHOD_CODE);
+
+		mono_emit_calli (cfg, fsig, sp, cmethod_addr, NULL, vtable_arg);
+	} else {
+		INLINE_FAILURE ("ctor call");
+		ins = mono_emit_method_call_full (cfg, cmethod, fsig, FALSE, sp,
+										  callvirt_this_arg, NULL, vtable_arg);
+	}
+ exception_exit:
+	return;
+}
+
+/*
  * mono_method_to_ir:
  *
  *   Translate the .net IL into linear IR.
  */
 int
 mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_bblock, MonoBasicBlock *end_bblock, 
-		   MonoInst *return_var, GList *dont_inline, MonoInst **inline_args, 
+		   MonoInst *return_var, MonoInst **inline_args, 
 		   guint inline_offset, gboolean is_virtual_call)
 {
 	MonoError error;
@@ -6884,13 +7026,13 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 	gboolean dont_verify, dont_verify_stloc, readonly = FALSE;
 	int context_used;
 	gboolean init_locals, seq_points, skip_dead_blocks;
-	gboolean disable_inline, sym_seq_points = FALSE;
+	gboolean sym_seq_points = FALSE;
 	MonoInst *cached_tls_addr = NULL;
 	MonoDebugMethodInfo *minfo;
 	MonoBitSet *seq_point_locs = NULL;
 	MonoBitSet *seq_point_set_locs = NULL;
 
-	disable_inline = is_jit_optimizer_disabled (method);
+	cfg->disable_inline = is_jit_optimizer_disabled (method);
 
 	/* serialization and xdomain stuff may need access to private fields and methods */
 	dont_verify = method->klass->image->assembly->corlib_internal? TRUE: FALSE;
@@ -7019,7 +7161,7 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 		param_types [n + sig->hasthis] = sig->params [n];
 	cfg->arg_types = param_types;
 
-	dont_inline = g_list_prepend (dont_inline, method);
+	cfg->dont_inline = g_list_prepend (cfg->dont_inline, method);
 	if (cfg->method == method) {
 
 		if (cfg->prof_options & MONO_PROFILE_INS_COVERAGE)
@@ -7947,7 +8089,7 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 					}
 					if (!mono_method_can_access_method (method_definition, target_method) &&
 						!mono_method_can_access_method (method, cil_method))
-						METHOD_ACCESS_FAILURE;
+						METHOD_ACCESS_FAILURE (method, cil_method);
 				}
 
 				if (mono_security_core_clr_enabled ())
@@ -8374,8 +8516,7 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 			/* Inlining */
 			if (cmethod && (cfg->opt & MONO_OPT_INLINE) &&
 				(!virtual || !(cmethod->flags & METHOD_ATTRIBUTE_VIRTUAL) || MONO_METHOD_IS_FINAL (cmethod)) &&
-			    !disable_inline && mono_method_check_inlining (cfg, cmethod) &&
-				 !g_list_find (dont_inline, cmethod)) {
+			    mono_method_check_inlining (cfg, cmethod)) {
 				int costs;
 				gboolean always = FALSE;
 
@@ -8387,10 +8528,9 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 					always = TRUE;
 				}
 
- 				costs = inline_method (cfg, cmethod, fsig, sp, ip, cfg->real_offset, dont_inline, always);
+ 				costs = inline_method (cfg, cmethod, fsig, sp, ip, cfg->real_offset, always, &bblock);
 				if (costs) {
 					cfg->real_offset += 5;
-					bblock = cfg->cbb;
 
  					if (!MONO_TYPE_IS_VOID (fsig->ret)) {
 						/* *sp is already set by inline_method */
@@ -9556,27 +9696,6 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 			}
 			*/
 
-			if (cmethod->klass->valuetype && mono_class_generic_sharing_enabled (cmethod->klass) &&
-					mono_method_is_generic_sharable (cmethod, TRUE)) {
-				if (cmethod->is_inflated && mono_method_get_context (cmethod)->method_inst) {
-					mono_class_vtable (cfg->domain, cmethod->klass);
-					CHECK_TYPELOAD (cmethod->klass);
-
-					vtable_arg = emit_get_rgctx_method (cfg, context_used,
-														cmethod, MONO_RGCTX_INFO_METHOD_RGCTX);
-				} else {
-					if (context_used) {
-						vtable_arg = emit_get_rgctx_klass (cfg, context_used,
-							cmethod->klass, MONO_RGCTX_INFO_VTABLE);
-					} else {
-						MonoVTable *vtable = mono_class_vtable (cfg->domain, cmethod->klass);
-
-						CHECK_TYPELOAD (cmethod->klass);
-						EMIT_NEW_VTABLECONST (cfg, vtable_arg, vtable);
-					}
-				}
-			}
-
 			n = fsig->param_count;
 			CHECK_STACK (n);
 
@@ -9589,8 +9708,6 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 				((n < 1) || (!fsig->params [0]->byref && fsig->params [0]->type == MONO_TYPE_STRING)) && 
 				((n < 2) || (!fsig->params [1]->byref && fsig->params [1]->type == MONO_TYPE_STRING))) {
 				MonoInst *iargs [3];
-
-				g_assert (!vtable_arg);
 
 				sp -= n;
 
@@ -9632,8 +9749,6 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 			iargs [0] = NULL;
 
 			if (mini_class_is_system_array (cmethod->klass)) {
-				g_assert (!vtable_arg);
-
 				*sp = emit_get_rgctx_method (cfg, context_used,
 											 cmethod, MONO_RGCTX_INFO_METHOD);
 
@@ -9656,8 +9771,6 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 				/* now call the string ctor */
 				alloc = mono_emit_method_call_full (cfg, cmethod, fsig, FALSE, sp, NULL, NULL, NULL);
 			} else {
-				MonoInst* callvirt_this_arg = NULL;
-				
 				if (cmethod->klass->valuetype) {
 					iargs [0] = mono_compile_create_var (cfg, &cmethod->klass->byval_arg, OP_LOCAL);
 					emit_init_rvar (cfg, iargs [0]->dreg, &cmethod->klass->byval_arg);
@@ -9701,58 +9814,8 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 					MONO_EMIT_NEW_UNALU (cfg, OP_NOT_NULL, -1, alloc->dreg);
 
 				/* Now call the actual ctor */
-				/* Avoid virtual calls to ctors if possible */
-				if (mono_class_is_marshalbyref (cmethod->klass))
-					callvirt_this_arg = sp [0];
-
-
-				if (cmethod && (cfg->opt & MONO_OPT_INTRINS) && (ins = mini_emit_inst_for_ctor (cfg, cmethod, fsig, sp))) {
-					if (!MONO_TYPE_IS_VOID (fsig->ret)) {
-						type_to_eval_stack_type ((cfg), fsig->ret, ins);
-						*sp = ins;
-						sp++;
-					}
-
-					CHECK_CFG_EXCEPTION;
-				} else if ((cfg->opt & MONO_OPT_INLINE) && cmethod && !context_used && !vtable_arg &&
-				    !disable_inline && mono_method_check_inlining (cfg, cmethod) &&
-				    !mono_class_is_subclass_of (cmethod->klass, mono_defaults.exception_class, FALSE) &&
-				    !g_list_find (dont_inline, cmethod)) {
-					int costs;
-
-					if ((costs = inline_method (cfg, cmethod, fsig, sp, ip, cfg->real_offset, dont_inline, FALSE))) {
-						cfg->real_offset += 5;
-						bblock = cfg->cbb;
-
-						inline_costs += costs - 5;
-					} else {
-						INLINE_FAILURE ("inline failure");
-						// FIXME-VT: Clean this up
-						if (cfg->gsharedvt && mini_is_gsharedvt_signature (cfg, fsig))
-							GSHAREDVT_FAILURE(*ip);
-						mono_emit_method_call_full (cfg, cmethod, fsig, FALSE, sp, callvirt_this_arg, NULL, NULL);
-					}
-				} else if (cfg->gsharedvt && mini_is_gsharedvt_signature (cfg, fsig)) {
-					MonoInst *addr;
-
-					addr = emit_get_rgctx_gsharedvt_call (cfg, context_used, fsig, cmethod, MONO_RGCTX_INFO_METHOD_GSHAREDVT_OUT_TRAMPOLINE);
-					mono_emit_calli (cfg, fsig, sp, addr, NULL, vtable_arg);
-				} else if (context_used &&
-						   ((!mono_method_is_generic_sharable_full (cmethod, TRUE, FALSE, FALSE) ||
-							 !mono_class_generic_sharing_enabled (cmethod->klass)) || cfg->gsharedvt)) {
-					MonoInst *cmethod_addr;
-
-					/* Generic calls made out of gsharedvt methods cannot be patched, so use an indirect call */
-
-					cmethod_addr = emit_get_rgctx_method (cfg, context_used,
-						cmethod, MONO_RGCTX_INFO_GENERIC_METHOD_CODE);
-
-					mono_emit_calli (cfg, fsig, sp, cmethod_addr, NULL, vtable_arg);
-				} else {
-					INLINE_FAILURE ("ctor call");
-					ins = mono_emit_method_call_full (cfg, cmethod, fsig, FALSE, sp,
-													  callvirt_this_arg, NULL, vtable_arg);
-				}
+				handle_ctor_call (cfg, cmethod, fsig, context_used, sp, ip, &bblock, &inline_costs);
+				CHECK_CFG_EXCEPTION;
 			}
 
 			if (alloc == NULL) {
@@ -9760,9 +9823,9 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 				EMIT_NEW_TEMPLOAD (cfg, ins, iargs [0]->inst_c0);
 				type_to_eval_stack_type (cfg, &ins->klass->byval_arg, ins);
 				*sp++= ins;
-			}
-			else
+			} else {
 				*sp++ = alloc;
+			}
 			
 			ip += 5;
 			inline_costs += 5;
@@ -9795,14 +9858,13 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 				
 				save_cast_details (cfg, klass, sp [0]->dreg, TRUE, &bblock);
 				costs = inline_method (cfg, mono_castclass, mono_method_signature (mono_castclass), 
-							   iargs, ip, cfg->real_offset, dont_inline, TRUE);
+									   iargs, ip, cfg->real_offset, TRUE, &bblock);
 				reset_cast_details (cfg);
 				CHECK_CFG_EXCEPTION;
 				g_assert (costs > 0);
 				
 				ip += 5;
 				cfg->real_offset += 5;
-				bblock = cfg->cbb;
 
  				*sp++ = iargs [0];
 
@@ -9856,13 +9918,12 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 				iargs [0] = sp [0];
 
 				costs = inline_method (cfg, mono_isinst, mono_method_signature (mono_isinst), 
-							   iargs, ip, cfg->real_offset, dont_inline, TRUE);
+									   iargs, ip, cfg->real_offset, TRUE, &bblock);
 				CHECK_CFG_EXCEPTION;
 				g_assert (costs > 0);
 				
 				ip += 5;
 				cfg->real_offset += 5;
-				bblock = cfg->cbb;
 
 				*sp++= iargs [0];
 
@@ -9914,13 +9975,12 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 					iargs [0] = sp [0];
 
 					costs = inline_method (cfg, mono_castclass, mono_method_signature (mono_castclass), 
-										   iargs, ip, cfg->real_offset, dont_inline, TRUE);
+										   iargs, ip, cfg->real_offset, TRUE, &bblock);
 					CHECK_CFG_EXCEPTION;
 					g_assert (costs > 0);
 				
 					ip += 5;
 					cfg->real_offset += 5;
-					bblock = cfg->cbb;
 
 					*sp++ = iargs [0];
 					inline_costs += costs;
@@ -10141,7 +10201,7 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 			if (!field)
 				LOAD_ERROR;
 			if (!dont_verify && !cfg->skip_visibility && !mono_method_can_access_field (method, field))
-				FIELD_ACCESS_FAILURE;
+				FIELD_ACCESS_FAILURE (method, field);
 			mono_class_init (klass);
 
 			if (is_instance && *ip != CEE_LDFLDA && is_magic_tls_access (field))
@@ -10202,12 +10262,11 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 
 					if (cfg->opt & MONO_OPT_INLINE || cfg->compile_aot) {
 						costs = inline_method (cfg, stfld_wrapper, mono_method_signature (stfld_wrapper), 
-								       iargs, ip, cfg->real_offset, dont_inline, TRUE);
+											   iargs, ip, cfg->real_offset, TRUE, &bblock);
 						CHECK_CFG_EXCEPTION;
 						g_assert (costs > 0);
 						      
 						cfg->real_offset += 5;
-						bblock = cfg->cbb;
 
 						inline_costs += costs;
 					} else {
@@ -10266,9 +10325,8 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 				EMIT_NEW_ICONST (cfg, iargs [3], klass->valuetype ? field->offset - sizeof (MonoObject) : field->offset);
 				if (cfg->opt & MONO_OPT_INLINE || cfg->compile_aot) {
 					costs = inline_method (cfg, wrapper, mono_method_signature (wrapper), 
-										   iargs, ip, cfg->real_offset, dont_inline, TRUE);
+										   iargs, ip, cfg->real_offset, TRUE, &bblock);
 					CHECK_CFG_EXCEPTION;
-					bblock = cfg->cbb;
 					g_assert (costs > 0);
 						      
 					cfg->real_offset += 5;
@@ -11756,7 +11814,7 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 
 				cil_method = cmethod;
 				if (!dont_verify && !cfg->skip_visibility && !mono_method_can_access_method (method, cmethod))
-					METHOD_ACCESS_FAILURE;
+					METHOD_ACCESS_FAILURE (method, cil_method);
 
 				if (mono_security_cas_enabled ()) {
 					if (check_linkdemand (cfg, method, cmethod))
@@ -11980,7 +12038,7 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 					 * stack overflows which is different behavior than the
 					 * non-inlined case, thus disable inlining in this case.
 					 */
-					goto inline_failure;
+					INLINE_FAILURE("localloc");
 
 				MONO_INST_NEW (cfg, ins, OP_LOCALLOC);
 				ins->dreg = alloc_preg (cfg);
@@ -12345,9 +12403,6 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 		}
 	}
 
-	g_slist_free (class_inits);
-	dont_inline = g_list_remove (dont_inline, method);
-
 	if (inline_costs < 0) {
 		char *mname;
 
@@ -12356,27 +12411,15 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 		mono_cfg_set_exception (cfg, MONO_EXCEPTION_INVALID_PROGRAM);
 		cfg->exception_message = g_strdup_printf ("Method %s is too complex.", mname);
 		g_free (mname);
-		cfg->headers_to_free = g_slist_prepend_mempool (cfg->mempool, cfg->headers_to_free, header);
-		mono_basic_block_free (original_bb);
-		return -1;
 	}
 
 	if ((cfg->verbose_level > 2) && (cfg->method == method)) 
 		mono_print_code (cfg, "AFTER METHOD-TO-IR");
 
-	cfg->headers_to_free = g_slist_prepend_mempool (cfg->mempool, cfg->headers_to_free, header);
-	mono_basic_block_free (original_bb);
-	return inline_costs;
+	goto cleanup;
  
  exception_exit:
 	g_assert (cfg->exception_type != MONO_EXCEPTION_NONE);
-	goto cleanup;
-
- inline_failure:
-	goto cleanup;
-
- load_error:
-	mono_cfg_set_exception (cfg, MONO_EXCEPTION_TYPE_LOAD);
 	goto cleanup;
 
  unverified:
@@ -12386,9 +12429,12 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
  cleanup:
 	g_slist_free (class_inits);
 	mono_basic_block_free (original_bb);
-	dont_inline = g_list_remove (dont_inline, method);
+	cfg->dont_inline = g_list_remove (cfg->dont_inline, method);
 	cfg->headers_to_free = g_slist_prepend_mempool (cfg->mempool, cfg->headers_to_free, header);
-	return -1;
+	if (cfg->exception_type)
+		return -1;
+	else
+		return inline_costs;
 }
 
 static int
