@@ -123,6 +123,13 @@
 		LOAD_ERROR;					\
 	} while (0)
 
+#define CHECK_CFG_ERROR do {\
+		if (!mono_error_ok (&cfg->error)) { \
+			mono_cfg_set_exception (cfg, MONO_EXCEPTION_MONO_ERROR);	\
+			goto mono_error_exit; \
+		} \
+	} while (0)
+
 /* Determine whenever 'ins' represents a load of the 'this' argument */
 #define MONO_CHECK_THIS(ins) (mono_method_signature (cfg->method)->hasthis && ((ins)->opcode == OP_MOVE) && ((ins)->sreg1 == cfg->args [0]->dreg))
 
@@ -6613,6 +6620,7 @@ initialize_array_data (MonoMethod *method, gboolean aot, unsigned char *ip, Mono
 	 * call void class [mscorlib]System.Runtime.CompilerServices.RuntimeHelpers::InitializeArray(class [mscorlib]System.Array, valuetype [mscorlib]System.RuntimeFieldHandle)
 	 */
 	if (ip [0] == CEE_DUP && ip [1] == CEE_LDTOKEN && ip [5] == 0x4 && ip [6] == CEE_CALL) {
+		MonoError error;
 		guint32 token = read32 (ip + 7);
 		guint32 field_token = read32 (ip + 2);
 		guint32 field_index = field_token & 0xffffff;
@@ -6621,11 +6629,13 @@ initialize_array_data (MonoMethod *method, gboolean aot, unsigned char *ip, Mono
 		int size = 0;
 		MonoMethod *cmethod;
 		MonoClass *dummy_class;
-		MonoClassField *field = mono_field_from_token (method->klass->image, field_token, &dummy_class, NULL);
+		MonoClassField *field = mono_field_from_token_checked (method->klass->image, field_token, &dummy_class, NULL, &error);
 		int dummy_align;
 
-		if (!field)
+		if (!field) {
+			mono_error_cleanup (&error); /* FIXME don't swallow the error */
 			return NULL;
+		}
 
 		*out_field_token = field_token;
 
@@ -7553,11 +7563,8 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 
 	skip_dead_blocks = !dont_verify;
 	if (skip_dead_blocks) {
-		original_bb = bb = mono_basic_block_split (method, &error);
-		if (!mono_error_ok (&error)) {
-			mono_error_cleanup (&error);
-			UNVERIFIED;
-		}
+		original_bb = bb = mono_basic_block_split (method, &cfg->error);
+		CHECK_CFG_ERROR;
 		g_assert (bb);
 	}
 
@@ -8177,7 +8184,8 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 					} else if (constrained_call) {
 						fsig = mono_method_signature (cmethod);
 					} else {
-						fsig = mono_method_get_signature_full (cmethod, image, token, generic_context);
+						fsig = mono_method_get_signature_checked (cmethod, image, token, generic_context, &cfg->error);
+						CHECK_CFG_ERROR;
 					}
 				}
 
@@ -9709,9 +9717,8 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 			cmethod = mini_get_method (cfg, method, token, NULL, generic_context);
 			if (!cmethod || mono_loader_get_last_error ())
 				LOAD_ERROR;
-			fsig = mono_method_get_signature (cmethod, image, token);
-			if (!fsig)
-				LOAD_ERROR;
+			fsig = mono_method_get_signature_checked (cmethod, image, token, NULL, &cfg->error);
+			CHECK_CFG_ERROR;
 
 			mono_save_token_info (cfg, image, token, cmethod);
 
@@ -10167,10 +10174,9 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 				klass = field->parent;
 			}
 			else {
-				field = mono_field_from_token (image, token, &klass, generic_context);
+				field = mono_field_from_token_checked (image, token, &klass, generic_context, &cfg->error);
+				CHECK_CFG_ERROR;
 			}
-			if (!field)
-				LOAD_ERROR;
 			if (!dont_verify && !cfg->skip_visibility && !mono_method_can_access_field (method, field))
 				FIELD_ACCESS_FAILURE (method, field);
 			mono_class_init (klass);
@@ -10980,9 +10986,8 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 			MONO_INST_NEW (cfg, ins, *ip);
 			--sp;
 			CHECK_OPSIZE (5);
-			klass = mono_class_get_and_inflate_typespec_checked (image, read32 (ip + 1), generic_context, &error);
-			mono_error_cleanup (&error); /* FIXME don't swallow the error */
-			CHECK_TYPELOAD (klass);
+			klass = mono_class_get_and_inflate_typespec_checked (image, read32 (ip + 1), generic_context, &cfg->error);
+			CHECK_CFG_ERROR;
 			mono_class_init (klass);
 
 			context_used = mini_class_check_context_used (cfg, klass);
@@ -11021,9 +11026,8 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 			MONO_INST_NEW (cfg, ins, *ip);
 			--sp;
 			CHECK_OPSIZE (5);
-			klass = mono_class_get_and_inflate_typespec_checked (image, read32 (ip + 1), generic_context, &error);
-			mono_error_cleanup (&error); /* FIXME don't swallow the error */
-			CHECK_TYPELOAD (klass);
+			klass = mono_class_get_and_inflate_typespec_checked (image, read32 (ip + 1), generic_context, &cfg->error);
+			CHECK_CFG_ERROR;
 			mono_class_init (klass);
 
 			context_used = mini_class_check_context_used (cfg, klass);
@@ -12188,16 +12192,14 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 				CHECK_OPSIZE (6);
 				token = read32 (ip + 2);
 				if (mono_metadata_token_table (token) == MONO_TABLE_TYPESPEC && !image_is_dynamic (method->klass->image) && !generic_context) {
-					MonoType *type = mono_type_create_from_typespec_checked (image, token, &error);
-					mono_error_cleanup (&error); /* FIXME don't swallow the error */
-					if (!type)
-						UNVERIFIED;
+					MonoType *type = mono_type_create_from_typespec_checked (image, token, &cfg->error);
+					CHECK_CFG_ERROR;
 
 					val = mono_type_size (type, &ialign);
 				} else {
-					MonoClass *klass = mono_class_get_and_inflate_typespec_checked (image, token, generic_context, &error);
-					mono_error_cleanup (&error); /* FIXME don't swallow the error */
-					CHECK_TYPELOAD (klass);
+					MonoClass *klass = mono_class_get_and_inflate_typespec_checked (image, token, generic_context, &cfg->error);
+					CHECK_CFG_ERROR;
+
 					mono_class_init (klass);
 					val = mono_type_size (&klass->byval_arg, &ialign);
 
@@ -12380,6 +12382,10 @@ mono_method_to_ir (MonoCompile *cfg, MonoMethod *method, MonoBasicBlock *start_b
 	if ((cfg->verbose_level > 2) && (cfg->method == method)) 
 		mono_print_code (cfg, "AFTER METHOD-TO-IR");
 
+	goto cleanup;
+
+mono_error_exit:
+	g_assert (!mono_error_ok (&cfg->error));
 	goto cleanup;
  
  exception_exit:

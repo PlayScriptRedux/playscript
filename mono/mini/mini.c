@@ -53,6 +53,7 @@
 #include <mono/utils/mono-math.h>
 #include <mono/utils/mono-compiler.h>
 #include <mono/utils/mono-counters.h>
+#include <mono/utils/mono-error-internals.h>
 #include <mono/utils/mono-logger-internal.h>
 #include <mono/utils/mono-mmap.h>
 #include <mono/utils/mono-path.h>
@@ -4137,6 +4138,7 @@ mono_codegen (MonoCompile *cfg)
 		if (bb == cfg->bb_exit) {
 			cfg->epilog_begin = cfg->code_len;
 			mono_arch_emit_epilog (cfg);
+			cfg->epilog_end = cfg->code_len;
 		}
 	}
 
@@ -4645,7 +4647,7 @@ create_jit_info (MonoCompile *cfg, MonoMethod *method_to_compile)
 
 			info = mono_jit_info_get_arch_eh_info (jinfo);
 			g_assert (info);
-			info->epilog_size = cfg->code_size - cfg->epilog_begin;
+			info->epilog_size = cfg->epilog_end - cfg->epilog_begin;
 		}
 		jinfo->unwind_info = unwind_desc;
 		g_free (unwind_info);
@@ -5007,6 +5009,7 @@ mini_method_compile (MonoMethod *method, guint32 opts, MonoDomain *domain, JitFl
 
 	if (cfg->gen_seq_points)
 		cfg->seq_points = g_ptr_array_new ();
+	mono_error_init (&cfg->error);
 
 	if (cfg->compile_aot && !try_generic_shared && (method->is_generic || method->klass->generic_container || method_is_gshared)) {
 		cfg->exception_type = MONO_EXCEPTION_GENERIC_SHARING_FAILED;
@@ -5428,7 +5431,7 @@ mini_method_compile (MonoMethod *method, guint32 opts, MonoDomain *domain, JitFl
 	*/
 
 //#define DEBUGSSA "logic_run"
-#define DEBUGSSA_CLASS "Tests"
+//#define DEBUGSSA_CLASS "Tests"
 #ifdef DEBUGSSA
 
 	if (!cfg->disable_ssa) {
@@ -6096,6 +6099,10 @@ mono_jit_compile_method_inner (MonoMethod *method, MonoDomain *target_domain, in
 	}
 	case MONO_EXCEPTION_OUT_OF_MEMORY:
 		ex = mono_domain_get ()->out_of_memory_ex;
+		break;
+	case MONO_EXCEPTION_MONO_ERROR:
+		g_assert (!mono_error_ok (&cfg->error));
+		ex = mono_error_convert_to_exception (&cfg->error);
 		break;
 	default:
 		g_assert_not_reached ();
