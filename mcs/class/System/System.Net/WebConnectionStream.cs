@@ -234,8 +234,7 @@ namespace System.Net
 				return;
 			}
 
-			if (!pending.WaitOne (ReadTimeout))
-				throw new WebException ("The operation has timed out.", WebExceptionStatus.Timeout);
+			pending.WaitOne ();
 			lock (locker) {
 				if (totalRead >= contentLength)
 					return;
@@ -593,14 +592,6 @@ namespace System.Net
 			if (result.EndCalled)
 				return;
 
-			if (sendChunked) {
-				lock (locker) {
-					pendingWrites--;
-					if (pendingWrites <= 0)
-						pending.Set ();
-				}
-			}
-
 			result.EndCalled = true;
 			if (result.AsyncWriteAll) {
 				result.WaitUntilComplete ();
@@ -614,6 +605,14 @@ namespace System.Net
 
 			if (result.GotException)
 				throw result.Exception;
+
+			if (sendChunked) {
+				lock (locker) {
+					pendingWrites--;
+					if (pendingWrites == 0)
+						pending.Set ();
+				}
+			}
 		}
 		
 		public override void Write (byte [] buffer, int offset, int size)
@@ -776,9 +775,7 @@ namespace System.Net
 				if (disposed)
 					return;
 				disposed = true;
-				if (!pending.WaitOne (WriteTimeout)) {
-					throw new WebException ("The operation has timed out.", WebExceptionStatus.Timeout);
-				}
+				pending.WaitOne ();
 				byte [] chunk = Encoding.ASCII.GetBytes ("0\r\n\r\n");
 				string err_msg = null;
 				cnc.Write (request, chunk, 0, chunk.Length, ref err_msg);

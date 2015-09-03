@@ -6,9 +6,6 @@
 
 gtest-230.cs 
 
-# IL Regresssion.
-gtest-409.cs IGNORE
-
-# 
+# Issue #81
 test-903.cs
 
