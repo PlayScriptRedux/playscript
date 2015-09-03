@@ -148,7 +148,6 @@ common_sources = \
 	mono-debug.h		\
 	mono-debug.c		\
 	mono-debug-debugger.h	\
-	mono-debug-debugger.c	\
 	mono-endian.c		\
 	mono-endian.h		\
 	mono-hash.h		\
@@ -174,6 +173,8 @@ common_sources = \
 	profiler-private.h	\
 	rand.h			\
 	rand.c			\
+	remoting.h		\
+	remoting.c		\
 	runtime.c		\
 	security.c		\
 	security.h		\
