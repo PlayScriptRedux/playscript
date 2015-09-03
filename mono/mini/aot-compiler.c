@@ -136,6 +136,7 @@ typedef struct MonoAotOptions {
 	gboolean use_trampolines_page;
 	gboolean no_instances;
 	gboolean gnu_asm;
+	gboolean llvm;
 	int nthreads;
 	int ntrampolines;
 	int nrgctx_trampolines;
@@ -6398,6 +6399,8 @@ mono_aot_parse_options (const char *aot_options, MonoAotOptions *opts)
 			opts->mtriple = g_strdup (arg + strlen ("mtriple="));
 		} else if (str_begins_with (arg, "llvm-path=")) {
 			opts->llvm_path = g_strdup (arg + strlen ("llvm-path="));
+		} else if (!strcmp (arg, "llvm")) {
+			opts->llvm = TRUE;
 		} else if (str_begins_with (arg, "readonly-value=")) {
 			add_readonly_value (opts, arg + strlen ("readonly-value="));
 		} else if (str_begins_with (arg, "info")) {
@@ -6585,6 +6588,7 @@ compile_method (MonoAotCompile *acfg, MonoMethod *method)
 	gboolean skip;
 	int index, depth;
 	MonoMethod *wrapped;
+	JitFlags flags;
 
 	if (acfg->aot_opts.metadata_only)
 		return;
@@ -6629,7 +6633,12 @@ compile_method (MonoAotCompile *acfg, MonoMethod *method)
 	 * the runtime will not see AOT methods during AOT compilation,so it
 	 * does not need to support them by creating a fake GOT etc.
 	 */
-	cfg = mini_method_compile (method, acfg->opts, mono_get_root_domain (), acfg->aot_opts.full_aot ? (JIT_FLAG_AOT|JIT_FLAG_FULL_AOT) : (JIT_FLAG_AOT), 0);
+	flags = JIT_FLAG_AOT;
+	if (acfg->aot_opts.full_aot)
+		flags |= JIT_FLAG_FULL_AOT;
+	if (acfg->llvm)
+		flags |= JIT_FLAG_LLVM;
+	cfg = mini_method_compile (method, acfg->opts, mono_get_root_domain (), flags, 0);
 	mono_loader_clear_error ();
 
 	if (cfg->exception_type == MONO_EXCEPTION_GENERIC_SHARING_FAILED) {
@@ -8867,7 +8876,7 @@ mono_compile_assembly (MonoAssembly *ass, guint32 opts, const char *aot_options)
 		acfg->flags |= MONO_AOT_FILE_FLAG_DEBUG;
 	}
 
-	if (mono_use_llvm) {
+	if (mono_use_llvm || acfg->aot_opts.llvm) {
 		acfg->llvm = TRUE;
 		acfg->aot_opts.asm_writer = TRUE;
 		acfg->flags |= MONO_AOT_FILE_FLAG_WITH_LLVM;
@@ -9002,7 +9011,7 @@ mono_compile_assembly (MonoAssembly *ass, guint32 opts, const char *aot_options)
 
 		res = emit_llvm_file (acfg);
 		if (!res)
-			return FALSE;
+			return 1;
 	}
 #endif
 
