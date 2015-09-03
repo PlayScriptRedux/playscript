@@ -347,6 +347,12 @@ static long long time_major_los_sweep = 0;
 static long long time_major_sweep = 0;
 static long long time_major_fragment_creation = 0;
 
+static SGEN_TV_DECLARE (time_major_conc_collection_start);
+static SGEN_TV_DECLARE (time_major_conc_collection_end);
+
+static SGEN_TV_DECLARE (last_minor_collection_start_tv);
+static SGEN_TV_DECLARE (last_minor_collection_end_tv);
+
 int gc_debug_level = 0;
 FILE* gc_debug_file;
 
@@ -2224,13 +2230,14 @@ collect_nursery (SgenGrayQueue *unpin_queue, gboolean finish_up_concurrent_mark)
 	ScanThreadDataJobData *stdjd;
 	mword fragment_total;
 	ScanCopyContext ctx;
-	TV_DECLARE (all_atv);
-	TV_DECLARE (all_btv);
 	TV_DECLARE (atv);
 	TV_DECLARE (btv);
 
 	if (disable_minor_collections)
 		return TRUE;
+
+	TV_GETTIME (last_minor_collection_start_tv);
+	atv = last_minor_collection_start_tv;
 
 	MONO_GC_BEGIN (GENERATION_NURSERY);
 	binary_protocol_collection_begin (gc_stats.minor_gc_count, GENERATION_NURSERY);
@@ -2264,9 +2271,6 @@ collect_nursery (SgenGrayQueue *unpin_queue, gboolean finish_up_concurrent_mark)
 	g_assert (nursery_section->size >= max_garbage_amount);
 
 	/* world must be stopped already */
-	TV_GETTIME (all_atv);
-	atv = all_atv;
-
 	TV_GETTIME (btv);
 	time_minor_pre_collection_fragment_clear += TV_ELAPSED (atv, btv);
 
@@ -2446,8 +2450,8 @@ collect_nursery (SgenGrayQueue *unpin_queue, gboolean finish_up_concurrent_mark)
 
 	major_collector.finish_nursery_collection ();
 
-	TV_GETTIME (all_btv);
-	gc_stats.minor_gc_time += TV_ELAPSED (all_atv, all_btv);
+	TV_GETTIME (last_minor_collection_end_tv);
+	gc_stats.minor_gc_time += TV_ELAPSED (last_minor_collection_start_tv, last_minor_collection_end_tv);
 
 	if (heap_dump_file)
 		dump_heap ("minor", gc_stats.minor_gc_count - 1, NULL);
@@ -2997,8 +3001,8 @@ major_finish_collection (const char *reason, size_t old_next_pin_slot, gboolean 
 static gboolean
 major_do_collection (const char *reason)
 {
-	TV_DECLARE (all_atv);
-	TV_DECLARE (all_btv);
+	TV_DECLARE (time_start);
+	TV_DECLARE (time_end);
 	size_t old_next_pin_slot;
 
 	if (disable_major_collections)
@@ -3010,13 +3014,13 @@ major_do_collection (const char *reason)
 	}
 
 	/* world must be stopped already */
-	TV_GETTIME (all_atv);
+	TV_GETTIME (time_start);
 
 	major_start_collection (FALSE, &old_next_pin_slot);
 	major_finish_collection (reason, old_next_pin_slot, FALSE);
 
-	TV_GETTIME (all_btv);
-	gc_stats.major_gc_time += TV_ELAPSED (all_atv, all_btv);
+	TV_GETTIME (time_end);
+	gc_stats.major_gc_time += TV_ELAPSED (time_start, time_end);
 
 	/* FIXME: also report this to the user, preferably in gc-end. */
 	if (major_collector.get_and_reset_num_major_objects_marked)
@@ -3028,10 +3032,15 @@ major_do_collection (const char *reason)
 static void
 major_start_concurrent_collection (const char *reason)
 {
+	TV_DECLARE (time_start);
+	TV_DECLARE (time_end);
 	long long num_objects_marked;
 
 	if (disable_major_collections)
 		return;
+
+	TV_GETTIME (time_start);
+	SGEN_TV_GETTIME (time_major_conc_collection_start);
 
 	num_objects_marked = major_collector.get_and_reset_num_major_objects_marked ();
 	g_assert (num_objects_marked == 0);
@@ -3048,14 +3057,21 @@ major_start_concurrent_collection (const char *reason)
 	num_objects_marked = major_collector.get_and_reset_num_major_objects_marked ();
 	MONO_GC_CONCURRENT_START_END (GENERATION_OLD, num_objects_marked);
 
+	TV_GETTIME (time_end);
+	gc_stats.major_gc_time += TV_ELAPSED (time_start, time_end);
+
 	current_collection_generation = -1;
 }
 
 static gboolean
 major_update_or_finish_concurrent_collection (gboolean force_finish)
 {
+	TV_DECLARE (total_start);
+	TV_DECLARE (total_end);
 	SgenGrayQueue unpin_queue;
 	memset (&unpin_queue, 0, sizeof (unpin_queue));
+
+	TV_GETTIME (total_start);
 
 	MONO_GC_CONCURRENT_UPDATE_FINISH_BEGIN (GENERATION_OLD, major_collector.get_and_reset_num_major_objects_marked ());
 	binary_protocol_concurrent_update_finish ();
@@ -3067,6 +3083,10 @@ major_update_or_finish_concurrent_collection (gboolean force_finish)
 		sgen_los_update_cardtable_mod_union ();
 
 		MONO_GC_CONCURRENT_UPDATE_END (GENERATION_OLD, major_collector.get_and_reset_num_major_objects_marked ());
+
+		TV_GETTIME (total_end);
+		gc_stats.major_gc_time += TV_ELAPSED (total_start, total_end);
+
 		return FALSE;
 	}
 
@@ -3077,6 +3097,9 @@ major_update_or_finish_concurrent_collection (gboolean force_finish)
 	 * some remsets.
 	 */
 	wait_for_workers_to_finish ();
+
+	SGEN_TV_GETTIME (time_major_conc_collection_end);
+	gc_stats.major_gc_time_concurrent += SGEN_TV_ELAPSED (time_major_conc_collection_start, time_major_conc_collection_end);
 
 	major_collector.update_cardtable_mod_union ();
 	sgen_los_update_cardtable_mod_union ();
@@ -3096,6 +3119,9 @@ major_update_or_finish_concurrent_collection (gboolean force_finish)
 	sgen_gray_object_queue_deinit (&unpin_queue);
 
 	MONO_GC_CONCURRENT_FINISH_END (GENERATION_OLD, major_collector.get_and_reset_num_major_objects_marked ());
+
+	TV_GETTIME (total_end);
+	gc_stats.major_gc_time += TV_ELAPSED (total_start, total_end) - TV_ELAPSED (last_minor_collection_start_tv, last_minor_collection_end_tv);
 
 	current_collection_generation = -1;
 

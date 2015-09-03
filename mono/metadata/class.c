@@ -2755,6 +2755,28 @@ mono_class_interface_offset (MonoClass *klass, MonoClass *itf) {
 	}
 }
 
+static gboolean mono_array_class_implements_magic_interface (MonoClass *iface, MonoClass *array_class);
+
+static int
+mono_class_array_get_magic_iface_offset (MonoClass *iface, MonoClass *array_class)
+{
+	MonoClass *gtd;
+	int i;
+
+	if (!mono_array_class_implements_magic_interface (iface, array_class))
+		return -1;
+
+	gtd = mono_class_get_generic_type_definition (iface);
+
+	for (i = 0; i < array_class->interface_offsets_count; i++) {
+		if (mono_class_get_generic_type_definition (array_class->interfaces_packed [i]) == gtd) {
+			return array_class->interface_offsets_packed [i];
+		}
+	}
+
+	return -1;
+}
+
 /*
  * mono_class_interface_offset_with_variance:
  * 
@@ -2771,7 +2793,13 @@ mono_class_interface_offset_with_variance (MonoClass *klass, MonoClass *itf, gbo
 	*non_exact_match = FALSE;
 	if (i >= 0)
 		return i;
-	
+
+	i = mono_class_array_get_magic_iface_offset (itf, klass);
+	if (i >= 0) {
+		*non_exact_match = TRUE;
+		return i;
+	}
+
 	if (!mono_class_has_variant_generic_params (itf))
 		return -1;
 
@@ -2919,10 +2947,6 @@ get_implicit_generic_array_interfaces (MonoClass *class, int *num, int *is_enume
 	gboolean internal_enumerator;
 	gboolean eclass_is_valuetype;
 
-	if (!mono_defaults.generic_ilist_class) {
-		*num = 0;
-		return NULL;
-	}
 	internal_enumerator = FALSE;
 	eclass_is_valuetype = FALSE;
 	original_rank = eclass->rank;
@@ -2941,6 +2965,10 @@ get_implicit_generic_array_interfaces (MonoClass *class, int *num, int *is_enume
 			*num = 0;
 			return NULL;
 		}
+	} else {
+		/* disable interface generiation for all arrays. */
+		*num = 0;
+		return NULL;
 	}
 
 	/* 
@@ -3351,6 +3379,7 @@ setup_interface_offsets (MonoClass *class, int cur_slot, gboolean overwrite)
 	 * vtables for compatible interfaces
 	 */
 	array_interfaces = get_implicit_generic_array_interfaces (class, &num_array_interfaces, &is_enumerator);
+	g_assert (!(num_array_interfaces > 0 && !is_enumerator));
 
 	/* compute maximum number of slots and maximum interface id */
 	max_iid = 0;
@@ -3451,51 +3480,16 @@ setup_interface_offsets (MonoClass *class, int cur_slot, gboolean overwrite)
 		set_interface_and_offset (num_ifaces, interfaces_full, interface_offsets_full, class, cur_slot, TRUE);
 
 	if (num_array_interfaces) {
-		if (is_enumerator) {
-			int ienumerator_idx = find_array_interface (class, "IEnumerator`1");
-			int ienumerator_offset = find_interface_offset (num_ifaces, interfaces_full, interface_offsets_full, class->interfaces [ienumerator_idx]);
-			g_assert (ienumerator_offset >= 0);
-			for (i = 0; i < num_array_interfaces; ++i) {
-				ic = array_interfaces [i];
-				if (strcmp (ic->name, "IEnumerator`1") == 0)
-					set_interface_and_offset (num_ifaces, interfaces_full, interface_offsets_full, ic, ienumerator_offset, TRUE);
-				else
-					g_assert_not_reached ();
-				/*g_print ("type %s has %s offset at %d (%s)\n", class->name, ic->name, interface_offsets_full [ic->interface_id], class->interfaces [0]->name);*/
-			}
-		} else {
-			int ilist_offset, icollection_offset, ienumerable_offset, ireadonlylist_offset, ireadonlycollection_offset;
-			int ilist_iface_idx = find_array_interface (class, "IList`1");
-			MonoClass* ilist_class = class->interfaces [ilist_iface_idx];
-			int ireadonlylist_iface_idx = find_array_interface (class, "IReadOnlyList`1");
-			MonoClass* ireadonlylist_class = ireadonlylist_iface_idx != -1 ? class->interfaces [ireadonlylist_iface_idx] : NULL;
-			int icollection_iface_idx = find_array_interface (ilist_class, "ICollection`1");
-			int ienumerable_iface_idx = find_array_interface (ilist_class, "IEnumerable`1");
-			int ireadonlycollection_iface_idx = ireadonlylist_iface_idx != -1 ? find_array_interface (ireadonlylist_class, "IReadOnlyCollection`1") : -1;
-			ilist_offset = find_interface_offset (num_ifaces, interfaces_full, interface_offsets_full, class->interfaces [ilist_iface_idx]);
-			icollection_offset = find_interface_offset (num_ifaces, interfaces_full, interface_offsets_full, ilist_class->interfaces [icollection_iface_idx]);
-			ienumerable_offset = find_interface_offset (num_ifaces, interfaces_full, interface_offsets_full, ilist_class->interfaces [ienumerable_iface_idx]);
-			ireadonlylist_offset = ireadonlylist_iface_idx != -1 ? find_interface_offset (num_ifaces, interfaces_full, interface_offsets_full, class->interfaces [ireadonlylist_iface_idx]) : -1;
-			ireadonlycollection_offset = ireadonlycollection_iface_idx != -1 ? find_interface_offset (num_ifaces, interfaces_full, interface_offsets_full, ireadonlylist_class->interfaces [ireadonlycollection_iface_idx]) : -1;
-			g_assert (ilist_offset >= 0 && icollection_offset >= 0 && ienumerable_offset >= 0);
-			for (i = 0; i < num_array_interfaces; ++i) {
-				int offset;
-				ic = array_interfaces [i];
-				if (ic->generic_class->container_class == mono_defaults.generic_ilist_class)
-					offset = ilist_offset;
-				else if (strcmp (ic->name, "ICollection`1") == 0)
-					offset = icollection_offset;
-				else if (strcmp (ic->name, "IEnumerable`1") == 0)
-					offset = ienumerable_offset;
-				else if (strcmp (ic->name, "IReadOnlyList`1") == 0)
-					offset = ireadonlylist_offset;
-				else if (strcmp (ic->name, "IReadOnlyCollection`1") == 0)
-					offset = ireadonlycollection_offset;
-				else
-					g_assert_not_reached ();
-				set_interface_and_offset (num_ifaces, interfaces_full, interface_offsets_full, ic, offset, TRUE);
-				/*g_print ("type %s has %s offset at %d (%s)\n", class->name, ic->name, offset, class->interfaces [0]->name);*/
-			}
+		int ienumerator_idx = find_array_interface (class, "IEnumerator`1");
+		int ienumerator_offset = find_interface_offset (num_ifaces, interfaces_full, interface_offsets_full, class->interfaces [ienumerator_idx]);
+		g_assert (ienumerator_offset >= 0);
+		for (i = 0; i < num_array_interfaces; ++i) {
+			ic = array_interfaces [i];
+			if (strcmp (ic->name, "IEnumerator`1") == 0)
+				set_interface_and_offset (num_ifaces, interfaces_full, interface_offsets_full, ic, ienumerator_offset, TRUE);
+			else
+				g_assert_not_reached ();
+			/*g_print ("type %s has %s offset at %d (%s)\n", class->name, ic->name, interface_offsets_full [ic->interface_id], class->interfaces [0]->name);*/
 		}
 	}
 
@@ -7920,6 +7914,118 @@ mono_gparam_is_assignable_from (MonoClass *target, MonoClass *candidate)
 	return FALSE;
 }
 
+gboolean
+mono_class_is_magical_array_interface (MonoClass *iface)
+{
+	static MonoClass* generic_ilist_class = NULL;
+	static MonoClass* generic_icollection_class = NULL;
+	static MonoClass* generic_ienumerable_class = NULL;
+	static MonoClass* generic_ireadonlylist_class = NULL;
+	static MonoClass* generic_ireadonlycollection_class = NULL;
+
+	if (!generic_ilist_class) {
+		generic_icollection_class = mono_class_from_name (mono_defaults.corlib,
+			"System.Collections.Generic", "ICollection`1");
+		generic_ienumerable_class = mono_class_from_name (mono_defaults.corlib,
+			"System.Collections.Generic", "IEnumerable`1");
+		generic_ireadonlylist_class = mono_class_from_name (mono_defaults.corlib,
+			"System.Collections.Generic", "IReadOnlyList`1");
+		generic_ireadonlycollection_class = mono_class_from_name (mono_defaults.corlib,
+			"System.Collections.Generic", "IReadOnlyCollection`1");
+
+		mono_memory_barrier ();
+		generic_ilist_class = mono_class_from_name (mono_defaults.corlib,
+			"System.Collections.Generic", "IList`1");
+	}
+
+	iface = mono_class_get_generic_type_definition (iface);
+	return iface == generic_ilist_class ||
+			iface == generic_icollection_class ||
+			iface == generic_ienumerable_class ||
+			iface == generic_ireadonlylist_class ||
+			iface == generic_ireadonlycollection_class;
+}
+
+static MonoClass*
+lower_valuetype_class_for_array_cast (MonoClass *class)
+{
+	switch (class->byval_arg.type) {
+	case MONO_TYPE_I1:
+	case MONO_TYPE_U1:
+		return mono_defaults.byte_class;
+	case MONO_TYPE_I2:
+	case MONO_TYPE_U2:
+		return mono_defaults.int16_class;
+	case MONO_TYPE_I4:
+	case MONO_TYPE_U4:
+		return mono_defaults.int32_class;
+	case MONO_TYPE_I8:
+	case MONO_TYPE_U8:
+		return mono_defaults.int64_class;
+	default:
+		if (class->enumtype && mono_class_enum_basetype (class))
+			return mono_class_from_mono_type (mono_class_enum_basetype (class));
+	}
+	return class;
+}
+
+static gboolean
+mono_array_class_implements_magic_interface (MonoClass *iface, MonoClass *array_class)
+{
+	MonoClass *iface_arg0, *array_arg0;
+
+	if (!array_class->rank)
+		return FALSE;
+
+	if (!mono_class_is_magical_array_interface (iface))
+		return FALSE;
+
+
+	iface_arg0 = mono_class_from_mono_type (iface->generic_class->context.class_inst->type_argv [0]);
+	array_arg0 = array_class->element_class;
+	/* Valuetypes are not compatible with sys.enum, sys.valuetype and sys.object, but mono_class_is_assignable_from will report so. */
+	if (array_arg0->valuetype) {
+		if (iface_arg0 == mono_defaults.enum_class || iface_arg0 == mono_defaults.enum_class->parent || iface_arg0 == mono_defaults.object_class)
+			return FALSE;
+	}
+
+	if (mono_class_is_assignable_from (iface_arg0, array_arg0))
+		return TRUE;
+
+	if (array_arg0->valuetype && iface_arg0->valuetype && lower_valuetype_class_for_array_cast (array_arg0) == lower_valuetype_class_for_array_cast (iface_arg0))
+		return TRUE;
+
+	return FALSE;
+}
+
+static gboolean
+mono_array_class_implements_magic_interface_slow (MonoClass *iface, MonoClass *array_class)
+{
+	MonoClass *iface_arg0, *array_arg0;
+
+	if (!array_class->rank)
+		return FALSE;
+
+	if (!mono_class_is_magical_array_interface (iface))
+		return FALSE;
+
+	iface_arg0 = mono_class_from_mono_type (iface->generic_class->context.class_inst->type_argv [0]);
+	array_arg0 = array_class->element_class;
+	/* Valuetypes are not compatible with sys.enum, sys.valuetype and sys.object, but mono_class_is_assignable_from will report so. */
+	if (array_arg0->valuetype) {
+		if (iface_arg0 == mono_defaults.enum_class || iface_arg0 == mono_defaults.enum_class->parent || iface_arg0 == mono_defaults.object_class)
+			return FALSE;
+	}
+
+	if (mono_class_is_assignable_from_slow (iface_arg0, array_arg0))
+		return TRUE;
+
+	if (array_arg0->valuetype && iface_arg0->valuetype && lower_valuetype_class_for_array_cast (array_arg0) == lower_valuetype_class_for_array_cast (iface_arg0))
+		return TRUE;
+
+	return FALSE;
+}
+
 /**
  * mono_class_is_assignable_from:
  * @klass: the class to be assigned to
@@ -7993,6 +8099,9 @@ mono_class_is_assignable_from (MonoClass *klass, MonoClass *oklass)
 					return TRUE;
 			}
 		}
+
+		if (mono_array_class_implements_magic_interface (klass, oklass))
+			return TRUE;
 		return FALSE;
 	} else if (klass->delegate) {
 		if (mono_class_has_variant_generic_params (klass) && mono_class_is_variant_compatible (klass, oklass, FALSE))
@@ -8123,6 +8232,9 @@ mono_class_implement_interface_slow (MonoClass *target, MonoClass *candidate)
 				mono_error_cleanup (&error);
 				return FALSE;
 			}
+
+			if (mono_array_class_implements_magic_interface_slow (target, candidate))
+				return TRUE;
 
 			for (i = 0; i < candidate->interface_count; ++i) {
 				if (candidate->interfaces [i] == target)
