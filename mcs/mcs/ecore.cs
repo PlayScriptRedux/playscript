@@ -3421,7 +3421,7 @@ namespace Mono.CSharp {
 			return ns.LookupTypeOrNamespace (ctx, name, arity, mode, loc);
 		}
 
-		public override string ToString()
+		public override string ToString ()
 		{
 			return Namespace.Name;
 		}

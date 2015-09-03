@@ -899,7 +899,7 @@ namespace Mono.CSharp
 				if (ue.Alias != null || ue.ResolvedExpression == null)
 					continue;
 
-				sb.AppendFormat("using {0};", ue.ToString());
+				sb.AppendFormat("using {0};", ue.ToString ());
 				sb.Append (Environment.NewLine);
 			}
 
