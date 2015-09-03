@@ -247,14 +247,12 @@ namespace _root {
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
-				Console.WriteLine ("VECTOR");
-
-#if PERFORMANCE_MODE && DEBUG
+#if VECTOR_PERF_MODE && DEBUG
 				if ((i >= mCount) || (i < 0))
 				{
 					throw new IndexOutOfRangeException();
 				}
-#elif PERFORMANCE_MODE
+#elif VECTOR_PERF_MODE
 #else
 				if ((i >= mCount) || (i < 0))
 				{
@@ -266,11 +264,11 @@ namespace _root {
 
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
-#if PERFORMANCE_MODE && DEBUG
+#if VECTOR_PERF_MODE && DEBUG
 				if (i >= mCount) {
 					throw new IndexOutOfRangeException();
 				}
-#elif PERFORMANCE_MODE
+#elif VECTOR_PERF_MODE
 #else
 				if (i >= mCount) {
 					expand((uint)(i+1));
@@ -284,12 +282,12 @@ namespace _root {
 		{
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			get {
-#if PERFORMANCE_MODE && DEBUG
+#if VECTOR_PERF_MODE && DEBUG
 				if (i >= mCount)
 				{
 					throw new IndexOutOfRangeException();
 				}
-#elif PERFORMANCE_MODE
+#elif VECTOR_PERF_MODE
 #else
 				if (i >= mCount)
 				{
@@ -300,11 +298,11 @@ namespace _root {
 			}
 			[MethodImpl(MethodImplOptions.AggressiveInlining)]
 			set {
-#if PERFORMANCE_MODE && DEBUG
+#if VECTOR_PERF_MODE && DEBUG
 				if (i >= mCount) {
 					throw new IndexOutOfRangeException();
 				}
-#elif PERFORMANCE_MODE
+#elif VECTOR_PERF_MODE
 #else
 				if (i >= mCount) {
 					expand((uint)(i+1));
@@ -425,7 +423,7 @@ namespace _root {
 		public void EnsureCapacity(uint size)
 		{
 			if (mArray.Length < size) {
-#if !PERFORMANCE_MODE || DEBUG
+#if !VECTOR_PERF_MODE || DEBUG
 				if (mFixed)
 					throw new InvalidOperationException(ERROR_RESIZING_FIXED);
 #endif
@@ -613,7 +611,7 @@ namespace _root {
 		
 		public T pop() 
 		{
-#if !PERFORMANCE_MODE || DEBUG
+#if !VECTOR_PERF_MODE || DEBUG
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
 #endif
@@ -628,7 +626,7 @@ namespace _root {
 
 		public uint push(T value)
 		{
-#if !PERFORMANCE_MODE || DEBUG
+#if !VECTOR_PERF_MODE || DEBUG
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
 #endif
@@ -641,7 +639,7 @@ namespace _root {
 		
 		public uint push(T value, params T[] args) 
 		{
-#if !PERFORMANCE_MODE || DEBUG
+#if !VECTOR_PERF_MODE || DEBUG
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
 #endif
@@ -662,7 +660,7 @@ namespace _root {
 		
 		public T shift() 
 		{
-#if !PERFORMANCE_MODE || DEBUG
+#if !VECTOR_PERF_MODE || DEBUG
 			if (mFixed)
 				throw new InvalidOperationException(ERROR_RESIZING_FIXED);
 #endif
