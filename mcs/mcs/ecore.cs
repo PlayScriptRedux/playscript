@@ -4261,6 +4261,16 @@ namespace Mono.CSharp {
 				Name, target.GetSignatureForError ());
 		}
 
+		public bool HasAccessibleCandidate (ResolveContext rc)
+		{
+			foreach (var candidate in Candidates) {
+				if (candidate.IsAccessible (rc))
+					return true;
+			}
+
+			return false;
+		}
+
 		public static bool IsExtensionMethodArgument (Expression expr)
 		{
 			//
