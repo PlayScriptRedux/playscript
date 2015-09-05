@@ -765,7 +765,7 @@ slow_object_get_size (MonoVTable *vtable, MonoObject* o)
 	 * mono_array_length_fast not using the object's vtable.
 	 */
 	if (klass == mono_defaults.string_class) {
-		return offsetof (MonoString, chars) + 2 * mono_string_length_fast ((MonoString*) o) + 2;
+		return G_STRUCT_OFFSET (MonoString, chars) + 2 * mono_string_length_fast ((MonoString*) o) + 2;
 	} else if (klass->rank) {
 		MonoArray *array = (MonoArray*)o;
 		size_t size = sizeof (MonoArray) + klass->sizes.element_size * mono_array_length_fast (array);
@@ -818,7 +818,7 @@ sgen_par_object_get_size (MonoVTable *vtable, MonoObject* o)
 		SGEN_ASSERT (9, size >= sizeof (MonoObject), "Run length object size to small");
 		return size;
 	} else if (descr == SGEN_DESC_STRING) {
-		return offsetof (MonoString, chars) + 2 * mono_string_length_fast ((MonoString*) o) + 2;
+		return G_STRUCT_OFFSET (MonoString, chars) + 2 * mono_string_length_fast ((MonoString*) o) + 2;
 	} else if (type == DESC_TYPE_VECTOR) {
 		int element_size = ((descr) >> VECTOR_ELSIZE_SHIFT) & MAX_ELEMENT_SIZE;
 		MonoArray *array = (MonoArray*)o;
@@ -1221,7 +1221,7 @@ gboolean nursery_canaries_enabled (void) MONO_INTERNAL;
 				char* canary_ptr = (char*) (addr) + sgen_safe_object_get_size_unaligned ((MonoObject *) (addr));	\
 				if (!CANARY_VALID(canary_ptr)) {	\
 					char canary_copy[CANARY_SIZE +1];	\
-					strncpy (canary_copy, canary_ptr, 8);	\
+					strncpy (canary_copy, canary_ptr, CANARY_SIZE);	\
 					canary_copy[CANARY_SIZE] = 0;	\
 					g_error ("CORRUPT CANARY:\naddr->%p\ntype->%s\nexcepted->'%s'\nfound->'%s'\n", (char*) addr, ((MonoObject*)addr)->vtable->klass->name, CANARY_STRING, canary_copy);	\
 				} }
