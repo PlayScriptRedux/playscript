@@ -10836,12 +10836,16 @@ namespace Mono.CSharp
 				}
 
 				if (retval == null) {
-					ns.Error_NamespaceDoesNotExist (rc, Name, Arity);
+					ns.Error_NamespaceDoesNotExist (rc, Name, Arity, loc);
 					return null;
 				}
 
-				if (HasTypeArguments)
-					return new GenericTypeExpr (retval.Type, targs, loc);
+				if (Arity > 0) {
+					if (HasTypeArguments)
+						return new GenericTypeExpr (retval.Type, targs, loc);
+
+					targs.Resolve (rc, false);
+				}
 
 				if (!foundFnType)
 					return retval;
@@ -10915,11 +10919,13 @@ namespace Mono.CSharp
 							extMethodName = Name;
 						}
 
-						var methods = rc.LookupExtensionMethod (expr_type, extMethodName, lookup_arity);
+//						var methods = rc.LookupExtensionMethod (Name, lookup_arity);
+						var methods = rc.LookupExtensionMethod (extMethodName, lookup_arity);
+
 						if (methods != null) {
 							var emg = new ExtensionMethodGroupExpr (methods, expr, loc);
 							if (HasTypeArguments) {
-								if (!targs.Resolve (rc))
+								if (!targs.Resolve (rc, false))
 									return null;
 
 								emg.SetTypeArguments (rc, targs);
@@ -10955,8 +10961,9 @@ namespace Mono.CSharp
 
 								return MakeE4xInvocation(rc, "elements", Name).Resolve (rc);
 
-							} else if (expr is TypeExpression) {
+							}
 
+							if (expr is TypeExpression) {
 								switch (expr_type.BuiltinType) {
 								case BuiltinTypeSpec.Type.String:
 									return new MemberAccess(new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, Location), "String", Location), Name, Location).Resolve (rc);
@@ -11045,7 +11052,7 @@ namespace Mono.CSharp
 			me = me.ResolveMemberAccess (rc, expr, sn);
 
 			if (Arity > 0) {
-				if (!targs.Resolve (rc))
+				if (!targs.Resolve (rc, false))
 					return null;
 
 				me.SetTypeArguments (rc, targs);
@@ -11090,15 +11097,14 @@ namespace Mono.CSharp
 				}
 
 				if (retval == null) {
-					ns.Error_NamespaceDoesNotExist (rc, Name, Arity);
+					ns.Error_NamespaceDoesNotExist (rc, Name, Arity, loc);
 				} else if (Arity > 0) {
 					if (HasTypeArguments) {
 						retval = new GenericTypeExpr (retval.Type, targs, loc);
 						if (retval.ResolveAsType (rc) == null)
 							return null;
 					} else {
-						if (!allowUnboundTypeArguments)
-							Error_OpenGenericTypeIsNotAllowed (rc);
+						targs.Resolve (rc, allowUnboundTypeArguments);
 
 						retval = new GenericOpenTypeExpr (retval.Type, loc);
 					}
@@ -11159,8 +11165,7 @@ namespace Mono.CSharp
 				if (HasTypeArguments) {
 					texpr = new GenericTypeExpr (nested, targs, loc);
 				} else {
-					if (!allowUnboundTypeArguments || expr_resolved is GenericTypeExpr) // && HasTypeArguments
-						Error_OpenGenericTypeIsNotAllowed (rc);
+					targs.Resolve (rc, allowUnboundTypeArguments && !(expr_resolved is GenericTypeExpr));
 
 					texpr = new GenericOpenTypeExpr (nested, loc);
 				}

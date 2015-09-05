@@ -1045,7 +1045,7 @@ namespace Mono.CSharp {
 					(parameters[0].ModFlags & Parameter.Modifier.RefOutMask) == 0;
 		}
 
-		public override FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, bool absolute_ns, Location loc)
+		public override FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, Location loc)
 		{
 			if (arity == 0) {
 				var tp = CurrentTypeParameters;
@@ -1056,7 +1056,7 @@ namespace Mono.CSharp {
 				}
 			}
 
-			return base.LookupNamespaceOrType (name, arity, mode, absolute_ns, loc);
+			return base.LookupNamespaceOrType (name, arity, mode, loc);
 		}
 
 		public override void ApplyAttributeBuilder (Attribute a, MethodSpec ctor, byte[] cdata, PredefinedAttributes pa)

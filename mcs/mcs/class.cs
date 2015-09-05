@@ -521,7 +521,7 @@ namespace Mono.CSharp
 				return tc.GetSignatureForError ();
 			}
 
-			public ExtensionMethodCandidates LookupExtensionMethod (TypeSpec extensionType, string name, int arity)
+			public ExtensionMethodCandidates LookupExtensionMethod (string name, int arity)
 			{
 				return null;
 			}
@@ -531,7 +531,7 @@ namespace Mono.CSharp
 				return tc.Parent.LookupNamespaceAlias (name);
 			}
 
-			public FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, bool absolute_ns, Location loc)
+			public FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, Location loc)
 			{
 				if (arity == 0) {
 					var tp = CurrentTypeParameters;
@@ -542,7 +542,7 @@ namespace Mono.CSharp
 					}
 				}
 
-				return tc.Parent.LookupNamespaceOrType (name, arity, mode, absolute_ns, loc);
+				return tc.Parent.LookupNamespaceOrType (name, arity, mode, loc);
 			}
 
 			public SourceFileType FileType 
@@ -2725,7 +2725,7 @@ namespace Mono.CSharp
 		//
 		// Returns: Type or null if they type can not be found.
 		//
-		public override FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, bool absolute_ns, Location loc)
+		public override FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, Location loc)
 		{
 			FullNamedExpression e;
 			if (arity == 0 && Cache.TryGetValue (name, out e) && mode != LookupMode.IgnoreAccessibility)
@@ -2749,7 +2749,7 @@ namespace Mono.CSharp
 					e = new TypeExpression (t, Location.Null);
 				else {
 					var errors = Compiler.Report.Errors;
-					e = Parent.LookupNamespaceOrType (name, arity, mode, absolute_ns, loc);
+					e = Parent.LookupNamespaceOrType (name, arity, mode, loc);
 
 					// TODO: LookupNamespaceOrType does more than just lookup. The result
 					// cannot be cached or the error reporting won't happen

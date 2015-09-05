@@ -108,12 +108,12 @@ namespace Mono.CSharp {
 			throw new NotImplementedException ();
 		}
 
-		public ExtensionMethodCandidates LookupExtensionMethod (TypeSpec extensionType, string name, int arity)
+		public ExtensionMethodCandidates LookupExtensionMethod (string name, int arity)
 		{
 			throw new NotImplementedException ();
 		}
 
-		public FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, bool absolute_ns, Location loc)
+		public FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, Location loc)
 		{
 			throw new NotImplementedException ();
 		}

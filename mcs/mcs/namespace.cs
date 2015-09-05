@@ -1039,7 +1039,7 @@ namespace Mono.CSharp {
 			base.EmitContainer ();
 		}
 
-		public ExtensionMethodCandidates LookupExtensionMethod (IMemberContext invocationContext, TypeSpec extensionType, string name, int arity, int position)
+		public ExtensionMethodCandidates LookupExtensionMethod (IMemberContext invocationContext, string name, int arity, int position)
 		{
 			//
 			// Here we try to resume the search for extension method at the point
@@ -1141,14 +1141,17 @@ namespace Mono.CSharp {
 			return null;
 		}
 
-		public override FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, bool absolute_ns, Location loc)
+		public override FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, Location loc)
 		{
+			// PlayScript - use absolute namespace resolution, not relative
+			bool absolute_ns = loc.SourceFile != null && loc.SourceFile.FileType == SourceFileType.PlayScript;
+
 			//
 			// Only simple names (no dots) will be looked up with this function
 			//
 			FullNamedExpression resolved;
 			for (NamespaceContainer container = this; container != null; container = container.Parent) {
-				resolved = container.Lookup (name, arity, mode, absolute_ns, loc);
+				resolved = container.Lookup (name, arity, mode, loc);
 				if (resolved != null || container.MemberName == null)
 					return resolved;
 
@@ -1239,8 +1242,11 @@ namespace Mono.CSharp {
 			return null;
 		}
 
-		FullNamedExpression Lookup (string name, int arity, LookupMode mode, bool absolute_ns, Location loc)
+		FullNamedExpression Lookup (string name, int arity, LookupMode mode, Location loc)
 		{
+			// PlayScript - use absolute namespace resolution, not relative
+			bool absolute_ns = loc.SourceFile != null && loc.SourceFile.FileType == SourceFileType.PlayScript;
+
 			//
 			// Check whether it's in the namespace.
 			//
@@ -1744,12 +1750,12 @@ namespace Mono.CSharp {
 				throw new NotImplementedException ();
 			}
 
-			public ExtensionMethodCandidates LookupExtensionMethod (TypeSpec extensionType, string name, int arity)
+			public ExtensionMethodCandidates LookupExtensionMethod (string name, int arity)
 			{
 				return null;
 			}
 
-			public FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, bool absolute_ns, Location loc)
+			public FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, Location loc)
 			{
 				var fne = ns.NS.LookupTypeOrNamespace (ns, name, arity, mode, loc);
 				if (fne != null)
@@ -1774,7 +1780,7 @@ namespace Mono.CSharp {
 				}
 
 				if (ns.Parent != null)
-					return ns.Parent.LookupNamespaceOrType (name, arity, mode, absolute_ns, loc);
+					return ns.Parent.LookupNamespaceOrType (name, arity, mode, loc);
 
 				return null;
 			}

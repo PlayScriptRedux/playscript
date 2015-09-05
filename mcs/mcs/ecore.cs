@@ -442,7 +442,7 @@ namespace Mono.CSharp {
 			// a constant, field, property, local variable, or parameter with the same type as the meaning of E as a type-name
 
 			if (left is MemberExpr || left is VariableReference) {
-				var identical_type = rc.LookupNamespaceOrType (name.Name, 0, LookupMode.Probing, false, loc) as TypeExpr;
+				var identical_type = rc.LookupNamespaceOrType (name.Name, 0, LookupMode.Probing, loc) as TypeExpr;
 				if (identical_type != null && identical_type.Type == left.Type)
 					return identical_type;
 			}
@@ -850,9 +850,10 @@ namespace Mono.CSharp {
 			EmptyArguments = 1 << 4,
 			IgnoreArity = 1 << 5,
 			IgnoreAmbiguity = 1 << 6,
-			PreferStatic = 1 << 7,     // Used to filter static/non-static for PlayScript
-			PreferInstance = 1 << 8,   // Used to filter static/non-static for PlayScript
-			AsTypeCast = 1 << 9
+			NameOfExcluded = 1 << 7,
+			PreferStatic = 1 << 8,     // Used to filter static/non-static for PlayScript
+			PreferInstance = 1 << 9,   // Used to filter static/non-static for PlayScript
+			AsTypeCast = 1 << 10
 		}
 
 		//
@@ -2600,7 +2601,7 @@ namespace Mono.CSharp {
 		}
 
 		protected ATypeNameExpression (string name, int arity, Location l)
-			: this (name, new UnboundTypeArguments (arity), l)
+			: this (name, new UnboundTypeArguments (arity, l), l)
 		{
 		}
 
@@ -2640,11 +2641,6 @@ namespace Mono.CSharp {
 			ATypeNameExpression atne = obj as ATypeNameExpression;
 			return atne != null && atne.Name == Name &&
 				(targs == null || targs.Equals (atne.targs));
-		}
-
-		protected void Error_OpenGenericTypeIsNotAllowed (IMemberContext mc)
-		{
-			mc.Module.Compiler.Report.Error (7003, Location, "Unbound generic name is not valid in this context");
 		}
 
 		public override int GetHashCode ()
@@ -2736,17 +2732,14 @@ namespace Mono.CSharp {
 
 			var report = ctx.Module.Compiler.Report;
 
-			// PlayScript - use absolute namespace resolution, not relative
-			bool absolute_ns = loc.SourceFile != null && loc.SourceFile.FileType == SourceFileType.PlayScript;
-
-			var retval = ctx.LookupNamespaceOrType (Name, Arity, LookupMode.IgnoreAccessibility, absolute_ns, loc);
+			var retval = ctx.LookupNamespaceOrType (Name, Arity, LookupMode.IgnoreAccessibility, loc);
 			if (retval != null) {
 				report.SymbolRelatedToPreviousError (retval.Type);
 				ErrorIsInaccesible (ctx, retval.GetSignatureForError (), loc);
 				return;
 			}
 
-			retval = ctx.LookupNamespaceOrType (Name, -System.Math.Max (1, Arity), LookupMode.Probing, absolute_ns, loc);
+			retval = ctx.LookupNamespaceOrType (Name, -System.Math.Max (1, Arity), LookupMode.Probing, loc);
 			if (retval != null) {
 				Error_TypeArgumentsCannotBeUsed (ctx, retval.Type, loc);
 				return;
@@ -2773,10 +2766,7 @@ namespace Mono.CSharp {
 
 		public override FullNamedExpression ResolveAsTypeOrNamespace (IMemberContext mc, bool allowUnboundTypeArguments)
 		{
-			// PlayScript - Use absolute namespace resolution, not relative
-			bool absolute_ns =  loc.SourceFile != null && loc.SourceFile.FileType == SourceFileType.PlayScript;
-
-			FullNamedExpression fne = mc.LookupNamespaceOrType (Name, Arity, LookupMode.Normal, absolute_ns, loc);
+			FullNamedExpression fne = mc.LookupNamespaceOrType (Name, Arity, LookupMode.Normal, loc);
 
 			if (fne != null) {
 				if (fne.Type != null && Arity > 0) {
@@ -2788,8 +2778,7 @@ namespace Mono.CSharp {
 						return ct;
 					}
 
-					if (!allowUnboundTypeArguments)
-						Error_OpenGenericTypeIsNotAllowed (mc);
+					targs.Resolve (mc, allowUnboundTypeArguments);
 
 					return new GenericOpenTypeExpr (fne.Type, loc);
 				}
@@ -2821,21 +2810,16 @@ namespace Mono.CSharp {
 
 		public bool IsPossibleTypeOrNamespace (IMemberContext mc)
 		{
-			// PlayScript - Use absolute namespace resolution, not relative
-			bool absolute_ns =  loc.SourceFile != null && loc.SourceFile.FileType == SourceFileType.PlayScript;
-
-			return mc.LookupNamespaceOrType (Name, Arity, LookupMode.Probing, absolute_ns, loc) != null;
+			return mc.LookupNamespaceOrType (Name, Arity, LookupMode.Probing, loc) != null;
 		}
 
 		public Expression LookupPackageLevelFunction (ResolveContext rc)
 		{
 			bool errorMode = false;
 
-			// PlayScript - Use absolute namespace resolution, not relative
-			bool absolute_ns =  loc.SourceFile != null && loc.SourceFile.FileType == SourceFileType.PlayScript;
-
-			FullNamedExpression fne = rc.LookupNamespaceOrType (Name + "_fn", 0, LookupMode.Normal, absolute_ns, loc);
-			if (fne == null || fne is Namespace) {
+			FullNamedExpression fne = rc.LookupNamespaceOrType (Name + "_fn", 0, LookupMode.Normal, loc);
+//			if (fne == null || fne is Namespace) {
+			if (fne == null) {
 				return null;
 			}
 
@@ -2852,7 +2836,7 @@ namespace Mono.CSharp {
 			me = me.ResolveMemberAccess (rc, null, null);
 
 			if (Arity > 0) {
-				targs.Resolve (rc);
+				targs.Resolve (rc, false);
 				me.SetTypeArguments (rc, targs);
 			}
 
@@ -2869,9 +2853,7 @@ namespace Mono.CSharp {
 			bool variable_found = false;
 			var name = Name;
 
-			// PlayScript - Set is playscript flag, and toggle absolute_ns lookups
 			bool is_playscript = rc.FileType == SourceFileType.PlayScript;
-			bool absolute_ns = is_playscript;
 
 			while (true) {
 
@@ -2993,7 +2975,7 @@ namespace Mono.CSharp {
 					me = me.ResolveMemberAccess (rc, null, null);
 
 					if (Arity > 0) {
-						targs.Resolve (rc);
+						targs.Resolve (rc, false);
 						me.SetTypeArguments (rc, targs);
 					}
 
@@ -3072,13 +3054,13 @@ namespace Mono.CSharp {
 				var mg = NamespaceContainer.LookupStaticUsings (rc, Name, Arity, loc);
 				if (mg != null) {
 					if (Arity > 0) {
-						targs.Resolve (rc);
+						targs.Resolve (rc, false);
 						mg.SetTypeArguments (rc, targs);
 					}
 					return mg;
 				}
 
-				if (Name == "nameof")
+				if ((restrictions & MemberLookupRestrictions.NameOfExcluded) == 0 && Name == "nameof")
 					return new NameOf (this);
 
 				if (errorMode) {
@@ -3110,7 +3092,7 @@ namespace Mono.CSharp {
 						}
 
 						if ((restrictions & MemberLookupRestrictions.InvocableOnly) == 0) {
-							e = rc.LookupNamespaceOrType (name, Arity, LookupMode.IgnoreAccessibility, absolute_ns, loc);
+							e = rc.LookupNamespaceOrType (name, Arity, LookupMode.IgnoreAccessibility, loc);
 							if (e != null) {
 								rc.Report.SymbolRelatedToPreviousError (e.Type);
 								ErrorIsInaccesible (rc, e.GetSignatureForError (), loc);
@@ -3124,7 +3106,7 @@ namespace Mono.CSharp {
 							}
 						}
 
-						e = rc.LookupNamespaceOrType (name, -System.Math.Max (1, Arity), LookupMode.Probing, absolute_ns, loc);
+						e = rc.LookupNamespaceOrType (name, -System.Math.Max (1, Arity), LookupMode.Probing, loc);
 						if (e != null) {
 							if (e.Type.Arity != Arity && (restrictions & MemberLookupRestrictions.IgnoreArity) == 0) {
 								Error_TypeArgumentsCannotBeUsed (rc, e.Type, loc);
@@ -3342,7 +3324,7 @@ namespace Mono.CSharp {
 			return this;
 		}
 
-		public void Error_NamespaceDoesNotExist (IMemberContext ctx, string name, int arity)
+		public void Error_NamespaceDoesNotExist (IMemberContext ctx, string name, int arity, Location loc)
 		{
 			var retval = Namespace.LookupType (ctx, name, arity, LookupMode.IgnoreAccessibility, loc);
 			if (retval != null) {
@@ -3944,7 +3926,7 @@ namespace Mono.CSharp {
 
 			int arity = type_arguments == null ? 0 : type_arguments.Count;
 
-			candidates = candidates.Container.LookupExtensionMethod (candidates.Context, ExtensionExpression.Type, Name, arity, candidates.LookupIndex);
+			candidates = candidates.Container.LookupExtensionMethod (candidates.Context, Name, arity, candidates.LookupIndex);
 			if (candidates == null)
 				return null;
 
@@ -4046,14 +4028,15 @@ namespace Mono.CSharp {
 		bool OverloadResolver.IErrorHandler.ArgumentMismatch (ResolveContext rc, MemberSpec best, Argument arg, int index)
 		{
 			rc.Report.SymbolRelatedToPreviousError (best);
-			rc.Report.Error (1928, loc,
-				"Type `{0}' does not contain a member `{1}' and the best extension method overload `{2}' has some invalid arguments",
-				queried_type.GetSignatureForError (), Name, best.GetSignatureForError ());
 
 			if (index == 0) {
 				rc.Report.Error (1929, loc,
-					"Extension method instance type `{0}' cannot be converted to `{1}'",
-					arg.Type.GetSignatureForError (), ((MethodSpec)best).Parameters.ExtensionMethodType.GetSignatureForError ());
+					"Type `{0}' does not contain a member `{1}' and the best extension method overload `{2}' requires an instance of type `{3}'",
+					queried_type.GetSignatureForError (), Name, best.GetSignatureForError (), ((MethodSpec)best).Parameters.ExtensionMethodType.GetSignatureForError ());
+			} else {
+				rc.Report.Error (1928, loc,
+					"Type `{0}' does not contain a member `{1}' and the best extension method overload `{2}' has some invalid arguments",
+					queried_type.GetSignatureForError (), Name, best.GetSignatureForError ());
 			}
 
 			return true;
@@ -4420,7 +4403,7 @@ namespace Mono.CSharp {
 				return null;
 
 			int arity = type_arguments == null ? 0 : type_arguments.Count;
-			var methods = rc.LookupExtensionMethod (InstanceExpression.Type, Methods[0].Name, arity);
+			var methods = rc.LookupExtensionMethod (Methods[0].Name, arity);
 			if (methods == null)
 				return null;
 
@@ -6097,7 +6080,14 @@ namespace Mono.CSharp {
 					continue;
 
 				if ((restrictions & Restrictions.CovariantDelegate) != 0 && !Delegate.IsTypeCovariant (ec, a.Expr.Type, pt)) {
-					custom_errors.NoArgumentMatch (ec, member);
+					if (a.IsExtensionType) {
+						// TODO: Should report better message type, something similar to CS1928/1929 instead of
+						// CS1061 but that still better than confusing CS0123
+						var ma = new MemberAccess (a.Expr, member.Name, loc);
+						ma.Error_TypeDoesNotContainDefinition (ec, a.Expr.Type, ma.Name);
+					} else {
+						custom_errors.NoArgumentMatch (ec, member);
+					}
 					return false;
 				}
 
