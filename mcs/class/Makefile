@@ -83,7 +83,6 @@ net_2_0_dirs := \
 	System.Web.Extensions		\
 	System.Web.Extensions.Design	\
 	System.Web.DynamicData		\
-	System.Web.Mvc2			\
 	Mono.C5				\
 	Mono.Management			\
 	Mono.Options 			\
@@ -102,7 +101,6 @@ net_2_0_only_dirs := \
 	System.ServiceModel.Web 	\
 	System.Data.Services.Client	\
 	System.Data.Services		\
-	System.Web.Mvc \
 
 pcl_facade_dirs := Facades
 
@@ -194,9 +192,6 @@ net_4_0_dirs := \
 	System.Json.Microsoft \
 	monodoc
 
-net_4_0_only_dirs := \
-	System.ComponentModel.Composition
-
 net_4_5_dirs := \
 	System.Threading.Tasks.Dataflow \
 	System.ComponentModel.Composition.4.5 \
@@ -243,14 +238,13 @@ monotouch_runtime_SUBDIRS := $(monotouch_runtime_dirs)
 mobile_static_SUBDIRS := $(mobile_static_dirs)
 mobile_SUBDIRS := $(mobile_dynamic_dirs)
 xammac_SUBDIRS := $(xammac_dirs)
-net_4_0_SUBDIRS := $(net_2_0_dirs) $(net_4_0_dirs) $(net_4_0_only_dirs) $(xbuild_4_0_dirs)
 net_4_5_SUBDIRS := $(net_2_0_dirs) $(net_4_0_dirs) $(net_4_5_dirs) $(xbuild_4_0_dirs) aot-compiler
 xbuild_12_SUBDIRS := $(xbuild_4_0_dirs)
 xbuild_14_SUBDIRS := $(xbuild_4_0_dirs)
 
 include ../build/rules.make
 
-SUBDIRS = $(net_2_0_dirs) $(net_2_0_only_dirs) $(mobile_static_dirs) $(mobile_dynamic_dirs) $(monotouch_dirs) $(monodroid_dirs) $(xammac_dirs) $(net_4_0_dirs) $(net_4_0_only_dirs) $(net_4_5_dirs)
+SUBDIRS = $(net_2_0_dirs) $(net_2_0_only_dirs) $(mobile_static_dirs) $(mobile_dynamic_dirs) $(monotouch_dirs) $(monodroid_dirs) $(xammac_dirs) $(net_4_0_dirs) $(net_4_5_dirs)
 
 DIST_ONLY_SUBDIRS = dlr aot-compiler $(xbuild_4_0_dirs)
 
