@@ -218,7 +218,7 @@ namespace Mono.CSharp
 		
 		public readonly static Location Null = new Location ();
 		public static bool InEmacs;
-		
+
 		static Location ()
 		{
 			Reset ();
@@ -412,6 +412,13 @@ if (checkpoints.Length <= CheckpointIndex) throw new Exception (String.Format ("
 				if (index == 0)
 					return null;
 				return source_list [index - 1];
+			}
+		}
+
+		public bool IsPlayScript {
+			get {
+				var sourceFile = SourceFile;
+				return sourceFile == null ? false : (sourceFile.FileType == SourceFileType.PlayScript ? true : false);
 			}
 		}
 

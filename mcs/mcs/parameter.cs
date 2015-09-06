@@ -1413,8 +1413,6 @@ namespace Mono.CSharp {
 
 		public void Resolve (ResolveContext rc, Parameter p)
 		{
-			var isPlayScript = rc.FileType == SourceFileType.PlayScript;
-
 			var expr = Resolve (rc);
 			if (expr == null) {
 				this.expr = ErrorExpression.Instance;
@@ -1428,7 +1426,7 @@ namespace Mono.CSharp {
 				return;
 
 			// ActionScript allows * and Object types to have default values as well.
-			bool param_is_as_obj = isPlayScript &&
+			bool param_is_as_obj = rc.IsPlayScript &&
 				(parameter_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic ||
 				 parameter_type.BuiltinType == BuiltinTypeSpec.Type.Object);
 

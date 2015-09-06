@@ -93,8 +93,6 @@ namespace Mono.CSharp {
 		static public Constant BinaryFold (ResolveContext ec, Binary.Operator oper,
 						     Constant left, Constant right, Location loc)
 		{
-			var isPlayScript = ec.FileType == SourceFileType.PlayScript;
-
 			Constant result = null;
 
 			if (left is EmptyConstantCast)
@@ -317,7 +315,7 @@ namespace Mono.CSharp {
 				// In PlayScript, null has the string value "null". In C#, it is the empty string.
 				//
 #if !DISABLE_AS3_NULL_STRINGS
-				var nullString = isPlayScript ? "null" : "";
+				var nullString = ec.IsPlayScript ? "null" : "";
 #else
 				var nullString = "";
 #endif
@@ -334,7 +332,7 @@ namespace Mono.CSharp {
 						return new StringConstant (ec.BuiltinTypes, (string)leftValue + (string)rightValue, left.Location);
 					}
 
-					if (isPlayScript) {
+					if (ec.IsPlayScript) {
 						if (lt == InternalType.NullLiteral)
 							return new StringConstant (ec.BuiltinTypes, nullString + right.GetValue (), left.Location);
 

@@ -251,6 +251,7 @@ namespace Mono.CSharp
 		protected Options flags;
 
 		protected SourceFileType fileType;
+		protected bool isPlayScript;
 
 		//
 		// Whether we are inside an anonymous method.
@@ -304,6 +305,7 @@ namespace Mono.CSharp
 			} else {
 				fileType = SourceFileType.CSharp;
 			}
+			isPlayScript = fileType == SourceFileType.PlayScript ? true : false;
 
 			//
 			// Set dynamic enabled state
@@ -438,6 +440,10 @@ namespace Mono.CSharp
 		public SourceFileType FileType {
 			get { return fileType; }
 			set { fileType = value; }
+		}
+
+		public bool IsPlayScript {
+			get { return isPlayScript; }
 		}
 
 		public bool PsExtended {

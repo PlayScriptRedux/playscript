@@ -862,13 +862,6 @@ namespace Mono.CSharp {
 		//
 		public static Expression MemberLookup (IMemberContext rc, bool errorMode, TypeSpec queried_type, string name, int arity, MemberLookupRestrictions restrictions, Location loc)
 		{
-			Boolean isPlayScript;
-			try {
-				isPlayScript = loc.SourceFile.FileType == SourceFileType.PlayScript;
-			} catch {
-				isPlayScript = false;
-			}
-			
 			var members = MemberCache.FindMembers (queried_type, name, false);
 			if (members == null)
 				return null;
@@ -954,7 +947,7 @@ namespace Mono.CSharp {
 				}
 
 				if (non_method != null) {
-					if (!isPlayScript)
+					if (!loc.IsPlayScript)
 						if (ambig_non_method != null && rc != null && (restrictions & MemberLookupRestrictions.IgnoreAmbiguity) == 0) {
 							var report = rc.Module.Compiler.Report;
 							report.SymbolRelatedToPreviousError (non_method);
@@ -963,7 +956,7 @@ namespace Mono.CSharp {
 								non_method.GetSignatureForError (), ambig_non_method.GetSignatureForError ());
 						}
 
-					if (isPlayScript)
+					if (loc.IsPlayScript)
 						if (ambig_non_method != null && rc != null) {
 							// PlayScript - we resolve ambiguity between identically named static/instance methods based on preference passed
 							// from the caller (which checks to see if a TypeName.blah is used).  This allows us to have identically named 

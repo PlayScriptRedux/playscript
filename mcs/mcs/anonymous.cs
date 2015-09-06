@@ -1331,8 +1331,6 @@ namespace Mono.CSharp {
 
 		protected override Expression DoResolve (ResolveContext rc)
 		{
-			var isPlayScript = rc.FileType == SourceFileType.PlayScript;
-
 			if (rc.HasSet (ResolveContext.Options.ConstantScope)) {
 				rc.Report.Error (1706, loc, "Anonymous methods and lambda expressions cannot be used in the current context");
 				return null;
@@ -1367,7 +1365,7 @@ namespace Mono.CSharp {
 				return null;
 
 			// Cast to Delgate for PlayScript (forces implicit conversion to Func<> or Action<> delegate types).
-			if (isPlayScript) {
+			if (rc.IsPlayScript) {
 				return new Cast(new TypeExpression(rc.BuiltinTypes.Delegate, this.Location), this, this.Location).Resolve (rc);
 			}
 
