@@ -202,6 +202,40 @@
       </method>
     </type>
   </test>
+  <test name="./play/test-ps-008.play">
+    <type name="_root.test">
+      <method name="Int32 Main()" attrs="150">
+        <size>64</size>
+      </method>
+      <method name="Int32 Local()" attrs="145">
+        <size>408</size>
+      </method>
+      <method name="Int32 Imported()" attrs="145">
+        <size>286</size>
+      </method>
+      <method name="System.Object PlayScript.IDynamicClass.__GetDynamicValue(System.String)" attrs="481">
+        <size>35</size>
+      </method>
+      <method name="Boolean PlayScript.IDynamicClass.__TryGetDynamicValue(System.String, System.Object ByRef)" attrs="481">
+        <size>46</size>
+      </method>
+      <method name="Void PlayScript.IDynamicClass.__SetDynamicValue(System.String, System.Object)" attrs="481">
+        <size>37</size>
+      </method>
+      <method name="Boolean PlayScript.IDynamicClass.__DeleteDynamicValue(System.Object)" attrs="481">
+        <size>38</size>
+      </method>
+      <method name="Boolean PlayScript.IDynamicClass.__HasDynamicValue(System.String)" attrs="481">
+        <size>38</size>
+      </method>
+      <method name="System.Collections.IEnumerable PlayScript.IDynamicClass.__GetDynamicNames()" attrs="481">
+        <size>37</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
   <test name="./play/test-ps-009.play">
     <type name="_root.inheritance">
       <method name="Int32 Main()" attrs="150">
@@ -551,6 +585,93 @@
     <type name="_root.Foo">
       <method name="Int32 Main()" attrs="150">
         <size>23</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-as-AbsoluteNS-01.as">
+    <type name="_root.Foo">
+      <method name="Int32 Main()" attrs="150">
+        <size>59</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-as-AbsoluteNS-02.as">
+    <type name="_root.Foo">
+      <method name="System.String slice(System.String)" attrs="150">
+        <size>16</size>
+      </method>
+      <method name="System.String substr(System.String)" attrs="150">
+        <size>33</size>
+      </method>
+      <method name="Int32 Main()" attrs="150">
+        <size>10</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-as-AbsoluteNS-03.as">
+    <type name="_root.Foo">
+      <method name="System.String slice(System.String)" attrs="150">
+        <size>16</size>
+      </method>
+      <method name="System.String substr(System.String)" attrs="150">
+        <size>15</size>
+      </method>
+      <method name="Int32 Main()" attrs="150">
+        <size>10</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-as-AbsoluteNS-04.as">
+    <type name="_root.Foo">
+      <method name="System.String slice(System.String)" attrs="150">
+        <size>16</size>
+      </method>
+      <method name="System.String substr(System.String)" attrs="150">
+        <size>38</size>
+      </method>
+      <method name="Int32 Main()" attrs="150">
+        <size>10</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-as-AbsoluteNS-05.as">
+    <type name="_root.Foo">
+      <method name="System.String slice(System.String)" attrs="150">
+        <size>38</size>
+      </method>
+      <method name="System.String substr(System.String)" attrs="150">
+        <size>38</size>
+      </method>
+      <method name="Int32 Main()" attrs="150">
+        <size>10</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-as-AbsoluteNS-06.as">
+    <type name="_root.Foo">
+      <method name="Int32 len(System.String)" attrs="150">
+        <size>15</size>
+      </method>
+      <method name="Int32 Main()" attrs="150">
+        <size>21</size>
       </method>
       <method name="Void .ctor()" attrs="6278">
         <size>7</size>
@@ -921,6 +1042,26 @@
       </method>
       <method name="Int32 Main()" attrs="150">
         <size>10</size>
+      </method>
+      <method name="Void .ctor()" attrs="6278">
+        <size>7</size>
+      </method>
+    </type>
+  </test>
+  <test name="./as/test-debug-002.as">
+    <type name="_root.Foo">
+      <method name="Void .ctor(Int32, Int32)" attrs="6278">
+        <size>65</size>
+      </method>
+    </type>
+    <type name="_root.Bar">
+      <method name="Void .ctor()" attrs="6278">
+        <size>29</size>
+      </method>
+    </type>
+    <type name="_root.Test">
+      <method name="Int32 Main()" attrs="150">
+        <size>20</size>
       </method>
       <method name="Void .ctor()" attrs="6278">
         <size>7</size>

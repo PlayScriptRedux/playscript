@@ -1,3 +1,4 @@
+// Compiler options: -psstrict-
 package {
     // Test basic class, method, and member declarations
 

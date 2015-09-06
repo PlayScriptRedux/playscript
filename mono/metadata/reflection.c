@@ -11186,8 +11186,8 @@ typebuilder_setup_fields (MonoClass *klass, MonoError *error)
 	mono_error_init (error);
 
 	if (tb->class_size) {
-		if ((tb->packing_size & 0xfffffff0) != 0) {
-			char *err_msg = g_strdup_printf ("Could not load struct '%s' with packing size %d >= 16", klass->name, tb->packing_size);
+		if ((tb->packing_size & 0xffffff00) != 0) {
+			char *err_msg = g_strdup_printf ("Could not load struct '%s' with packing size %d >= 256", klass->name, tb->packing_size);
 			mono_class_set_failure (klass, MONO_EXCEPTION_TYPE_LOAD, err_msg);
 			return;
 		}
@@ -11847,16 +11847,18 @@ mono_reflection_is_valid_dynamic_token (MonoDynamicImage *image, guint32 token)
 }
 
 MonoMethodSignature *
-mono_reflection_lookup_signature (MonoImage *image, MonoMethod *method, guint32 token)
+mono_reflection_lookup_signature (MonoImage *image, MonoMethod *method, guint32 token, MonoError *error)
 {
 	MonoMethodSignature *sig;
 	g_assert (image_is_dynamic (image));
+
+	mono_error_init (error);
 
 	sig = g_hash_table_lookup (((MonoDynamicImage*)image)->vararg_aux_hash, GUINT_TO_POINTER (token));
 	if (sig)
 		return sig;
 
-	return mono_method_signature (method);
+	return mono_method_signature_checked (method, error);
 }
 
 #ifndef DISABLE_REFLECTION_EMIT

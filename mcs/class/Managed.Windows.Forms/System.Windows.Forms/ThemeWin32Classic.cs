@@ -369,7 +369,7 @@ namespace System.Windows.Forms
 			Image image = button.Image;
 			string text = button.Text;
 			Rectangle content_rect = button.PaddingClientRectangle;
-			Size text_size = TextRenderer.MeasureTextInternal (g, text, button.Font, content_rect.Size, button.TextFormatFlags | TextFormatFlags.NoPadding, button.UseCompatibleTextRendering);
+			Size text_size = TextRenderer.MeasureTextInternal (g, text, button.Font, content_rect.Size, button.TextFormatFlags, button.UseCompatibleTextRendering);
 			Size image_size = image == null ? Size.Empty : image.Size;
 
 			textRectangle = Rectangle.Inflate (content_rect, -4, -4);
@@ -545,8 +545,11 @@ namespace System.Windows.Forms
 				var textHeight = excess_height >= 0 ? totalArea.Height - final_image_rect.Height : textSize.Height;
 				final_text_rect = new Rectangle (AlignInRectangle (totalArea, textSize, textAlign).Left, final_image_rect.Bottom + element_spacing, textSize.Width, textHeight);
 				
-				if (final_text_rect.Bottom > totalArea.Bottom)
-					final_text_rect.Y = totalArea.Top;
+				if (final_text_rect.Bottom > totalArea.Bottom) {
+					final_text_rect.Y -= (final_text_rect.Bottom - totalArea.Bottom);
+					if (final_text_rect.Y < totalArea.Top)
+						final_text_rect.Y = totalArea.Top;
+				}
 			}
 
 			if (displayEllipsis) {

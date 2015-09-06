@@ -6878,9 +6878,11 @@ namespace Mono.CSharp
 				} else if ((conv = Convert.ImplicitConversion (ec, false_expr, true_type, loc)) != null) {
 					false_expr = conv;
 				} else {
-					ec.Report.Error (173, true_expr.Location,
-						"Type of conditional expression cannot be determined because there is no implicit conversion between `{0}' and `{1}'",
-						true_type.GetSignatureForError (), false_type.GetSignatureForError ());
+					if (false_type != InternalType.ErrorType) {
+						ec.Report.Error (173, true_expr.Location,
+							"Type of conditional expression cannot be determined because there is no implicit conversion between `{0}' and `{1}'",
+							true_type.GetSignatureForError (), false_type.GetSignatureForError ());
+					}
 					return null;
 				}
 			}
@@ -7061,11 +7063,11 @@ namespace Mono.CSharp
 			var expr_true = fc.DefiniteAssignmentOnTrue;
 			var expr_false = fc.DefiniteAssignmentOnFalse;
 
-			fc.DefiniteAssignment = new DefiniteAssignmentBitSet (expr_true);
+			fc.BranchDefiniteAssignment (expr_true);
 			true_expr.FlowAnalysis (fc);
 			var true_fc = fc.DefiniteAssignment;
 
-			fc.DefiniteAssignment = new DefiniteAssignmentBitSet (expr_false);
+			fc.BranchDefiniteAssignment (expr_false);
 			false_expr.FlowAnalysis (fc);
 
 			fc.DefiniteAssignment &= true_fc;
@@ -9994,7 +9996,7 @@ namespace Mono.CSharp
 		}
 	}
 
-	public class RefValueExpr : ShimExpression, IAssignMethod
+	public class RefValueExpr : ShimExpression, IAssignMethod, IMemoryLocation
 	{
 		FullNamedExpression texpr;
 
@@ -10016,6 +10018,12 @@ namespace Mono.CSharp
 			return false;
 		}
 
+		public void AddressOf (EmitContext ec, AddressOp mode)
+		{
+			expr.Emit (ec);
+			ec.Emit (OpCodes.Refanyval, type);
+		}
+
 		protected override Expression DoResolve (ResolveContext rc)
 		{
 			expr = expr.Resolve (rc);
@@ -10024,7 +10032,7 @@ namespace Mono.CSharp
 				return null;
 
 			expr = Convert.ImplicitConversionRequired (rc, expr, rc.Module.PredefinedTypes.TypedReference.Resolve (), loc);
-			eclass = ExprClass.Value;
+			eclass = ExprClass.Variable;
 			return this;
 		}
 
@@ -10828,12 +10836,16 @@ namespace Mono.CSharp
 				}
 
 				if (retval == null) {
-					ns.Error_NamespaceDoesNotExist (rc, Name, Arity);
+					ns.Error_NamespaceDoesNotExist (rc, Name, Arity, loc);
 					return null;
 				}
 
-				if (HasTypeArguments)
-					return new GenericTypeExpr (retval.Type, targs, loc);
+				if (Arity > 0) {
+					if (HasTypeArguments)
+						return new GenericTypeExpr (retval.Type, targs, loc);
+
+					targs.Resolve (rc, false);
+				}
 
 				if (!foundFnType)
 					return retval;
@@ -10907,11 +10919,13 @@ namespace Mono.CSharp
 							extMethodName = Name;
 						}
 
-						var methods = rc.LookupExtensionMethod (expr_type, extMethodName, lookup_arity);
+//						var methods = rc.LookupExtensionMethod (Name, lookup_arity);
+						var methods = rc.LookupExtensionMethod (extMethodName, lookup_arity);
+
 						if (methods != null) {
 							var emg = new ExtensionMethodGroupExpr (methods, expr, loc);
 							if (HasTypeArguments) {
-								if (!targs.Resolve (rc))
+								if (!targs.Resolve (rc, false))
 									return null;
 
 								emg.SetTypeArguments (rc, targs);
@@ -10947,8 +10961,9 @@ namespace Mono.CSharp
 
 								return MakeE4xInvocation(rc, "elements", Name).Resolve (rc);
 
-							} else if (expr is TypeExpression) {
+							}
 
+							if (expr is TypeExpression) {
 								switch (expr_type.BuiltinType) {
 								case BuiltinTypeSpec.Type.String:
 									return new MemberAccess(new MemberAccess(new SimpleName(PsConsts.PsRootNamespace, Location), "String", Location), Name, Location).Resolve (rc);
@@ -11037,7 +11052,7 @@ namespace Mono.CSharp
 			me = me.ResolveMemberAccess (rc, expr, sn);
 
 			if (Arity > 0) {
-				if (!targs.Resolve (rc))
+				if (!targs.Resolve (rc, false))
 					return null;
 
 				me.SetTypeArguments (rc, targs);
@@ -11082,15 +11097,14 @@ namespace Mono.CSharp
 				}
 
 				if (retval == null) {
-					ns.Error_NamespaceDoesNotExist (rc, Name, Arity);
+					ns.Error_NamespaceDoesNotExist (rc, Name, Arity, loc);
 				} else if (Arity > 0) {
 					if (HasTypeArguments) {
 						retval = new GenericTypeExpr (retval.Type, targs, loc);
 						if (retval.ResolveAsType (rc) == null)
 							return null;
 					} else {
-						if (!allowUnboundTypeArguments)
-							Error_OpenGenericTypeIsNotAllowed (rc);
+						targs.Resolve (rc, allowUnboundTypeArguments);
 
 						retval = new GenericOpenTypeExpr (retval.Type, loc);
 					}
@@ -11151,8 +11165,7 @@ namespace Mono.CSharp
 				if (HasTypeArguments) {
 					texpr = new GenericTypeExpr (nested, targs, loc);
 				} else {
-					if (!allowUnboundTypeArguments || expr_resolved is GenericTypeExpr) // && HasTypeArguments
-						Error_OpenGenericTypeIsNotAllowed (rc);
+					targs.Resolve (rc, allowUnboundTypeArguments && !(expr_resolved is GenericTypeExpr));
 
 					texpr = new GenericOpenTypeExpr (nested, loc);
 				}
@@ -11192,7 +11205,7 @@ namespace Mono.CSharp
 			base.Error_InvalidExpressionStatement (report, LeftExpression.Location);
 		}
 
-		protected override void Error_TypeDoesNotContainDefinition (ResolveContext ec, TypeSpec type, string name)
+		public override void Error_TypeDoesNotContainDefinition (ResolveContext ec, TypeSpec type, string name)
 		{
 			if (ec.Module.Compiler.Settings.Version > LanguageVersion.ISO_2 && !ec.IsRuntimeBinder && MethodGroupExpr.IsExtensionMethodArgument (expr)) {
 				ec.Report.SymbolRelatedToPreviousError (type);
@@ -11771,6 +11784,11 @@ namespace Mono.CSharp
 		public override void FlowAnalysis (FlowAnalysisContext fc)
 		{
 			ea.FlowAnalysis (fc);
+		}
+
+		public override bool HasConditionalAccess ()
+		{
+			return ConditionalAccess || ea.Expr.HasConditionalAccess ();
 		}
 
 		//
@@ -13067,7 +13085,7 @@ namespace Mono.CSharp
 			{
 			}
 
-			protected override void Error_TypeDoesNotContainDefinition (ResolveContext ec, TypeSpec type, string name)
+			public override void Error_TypeDoesNotContainDefinition (ResolveContext ec, TypeSpec type, string name)
 			{
 				if (TypeManager.HasElementType (type))
 					return;
@@ -13149,6 +13167,11 @@ namespace Mono.CSharp
 		{
 			var init = rc.CurrentInitializerVariable;
 			var type = init.Type;
+
+			if (type.IsArray) {
+				target = new ArrayAccess (new ElementAccess (init, args, loc), loc);
+				return true;
+			}
 
 			var indexers = MemberCache.FindMembers (type, MemberCache.IndexerNameAlias, false);
 			if (indexers == null && type.BuiltinType != BuiltinTypeSpec.Type.Dynamic) {

@@ -1,12 +1,14 @@
 // Compiler options: -newdynamic+ -r:./play/Assert.dll
 package
 {
-    import com.adobe.test.Assert;
+	import com.adobe.test.Assert;
 
 	public dynamic class test
 	{
 		public static function Main():int
 		{
+			Assert.errcount = 0;
+
 			var res:int;
 			res = Local ();
 			if (res != 0)
@@ -15,22 +17,20 @@ package
 			res = Imported ();
 			if (res != 0)
 				return res + 20;
-				
-			return 0;
+			
+			return Assert.errcount;
 		}
 		
 		static function Local ():int
 		{
 			var m:test = new test ();
 			m["Prop"] = 500;
-            m.Prop = 400;
-            trace(m.Prop);
-            Assert.expectEq( "m.Prop == 500", true, m.Prop == 500 );
-            Assert.expectEq( "m['Prop'] == 500", true, m["Prop"] == 500 );
-            m.Prop = 100;
-            Assert.expectEq( "m['Prop'] == 100", true, m["Prop"] == 100 );
+            		Assert.expectEq( "m.Prop == 500", true, m.Prop == 500 );
+            		Assert.expectEq( "m['Prop'] == 500", true, m["Prop"] == 500 );
+            		m.Prop = 100;
+            		Assert.expectEq( "m['Prop'] == 100", true, m["Prop"] == 100 );
 			m["Prop"] = 300;
-            Assert.expectEq( "m.Prop != 300", true, m.Prop == 300 );
+			Assert.expectEq( "m.Prop != 300", true, m.Prop == 300 );
 			return 0;
 		}
 		
@@ -51,7 +51,7 @@ package
 			if (m.Prop != 300)
 				return 4;
 				
-			return Assert.errcount;
+			return 0;
 		}
 	}
 }

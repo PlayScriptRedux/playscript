@@ -868,7 +868,7 @@ mono_arch_is_int_overflow (void *sigctx, void *info)
 	MonoContext ctx;
 	guint8* ip;
 
-	mono_arch_sigctx_to_monoctx (sigctx, &ctx);
+	mono_sigctx_to_monoctx (sigctx, &ctx);
 
 	ip = (guint8*)ctx.eip;
 
@@ -2761,6 +2761,9 @@ mono_arch_output_basic_block (MonoCompile *cfg, MonoBasicBlock *bb)
  		case OP_NOT_REACHED:
  		case OP_NOT_NULL:
  			break;
+		case OP_IL_SEQ_POINT:
+			mono_add_seq_point (cfg, bb, ins, code - cfg->native_code);
+			break;
 		case OP_SEQ_POINT: {
 			int i;
 
@@ -5828,6 +5831,7 @@ mono_arch_build_imt_thunk (MonoVTable *vtable, MonoDomain *domain, MonoIMTCheckI
 	}
 
 	nacl_domain_code_validate (domain, &start, size, &code);
+	mono_profiler_code_buffer_new (start, code - start, MONO_PROFILER_CODE_BUFFER_IMT_TRAMPOLINE, NULL);
 
 	return start;
 }
@@ -6101,8 +6105,7 @@ get_delegate_invoke_impl (gboolean has_target, guint32 param_count, guint32 *cod
 		g_assert ((code - start) < code_reserve);
 	}
 
-	nacl_global_codeman_validate(&start, code_reserve, &code);
-	mono_debug_add_delegate_trampoline (start, code - start);
+	nacl_global_codeman_validate (&start, code_reserve, &code);
 
 	if (code_len)
 		*code_len = code - start;
@@ -6117,6 +6120,7 @@ get_delegate_invoke_impl (gboolean has_target, guint32 param_count, guint32 *cod
 		if (!has_target)
 			g_free (buff);
 	}
+	mono_profiler_code_buffer_new (start, code - start, MONO_PROFILER_CODE_BUFFER_DELEGATE_INVOKE, NULL);
 
 	return start;
 }
@@ -6228,6 +6232,7 @@ mono_arch_get_delegate_virtual_invoke_impl (MonoMethodSignature *sig, MonoMethod
 	/* Load the vtable */
 	x86_mov_reg_membase (code, X86_EAX, X86_ECX, MONO_STRUCT_OFFSET (MonoObject, vtable), 4);
 	x86_jump_membase (code, X86_EAX, offset);
+	mono_profiler_code_buffer_new (start, code - start, MONO_PROFILER_CODE_BUFFER_DELEGATE_INVOKE, NULL);
 
 	return start;
 }

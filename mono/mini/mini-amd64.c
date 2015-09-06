@@ -684,17 +684,58 @@ mono_arch_nacl_pad(guint8 *code, int pad)
 }
 #endif
 
+static int
+count_fields_nested (MonoClass *klass)
+{
+	MonoMarshalType *info;
+	guint32 align;
+	int i, count;
+
+	info = mono_marshal_load_type_info (klass);
+	g_assert(info);
+	count = 0;
+	for (i = 0; i < info->num_fields; ++i) {
+		if (MONO_TYPE_ISSTRUCT (info->fields [i].field->type))
+			count += count_fields_nested (mono_class_from_mono_type (info->fields [i].field->type));
+		else
+			count ++;
+	}
+	return count;
+}
+
+static int
+collect_field_info_nested (MonoClass *klass, MonoMarshalField *fields, int index, int offset)
+{
+	MonoMarshalType *info;
+	guint32 align;
+	int i;
+
+	info = mono_marshal_load_type_info (klass);
+	g_assert(info);
+	for (i = 0; i < info->num_fields; ++i) {
+		if (MONO_TYPE_ISSTRUCT (info->fields [i].field->type)) {
+			index = collect_field_info_nested (mono_class_from_mono_type (info->fields [i].field->type), fields, index, info->fields [i].offset);
+		} else {
+			memcpy (&fields [index], &info->fields [i], sizeof (MonoMarshalField));
+			fields [index].offset += offset;
+			index ++;
+		}
+	}
+	return index;
+}
+
 static void
 add_valuetype (MonoGenericSharingContext *gsctx, MonoMethodSignature *sig, ArgInfo *ainfo, MonoType *type,
 			   gboolean is_return,
 			   guint32 *gr, guint32 *fr, guint32 *stack_size)
 {
-	guint32 size, quad, nquads, i;
+	guint32 size, quad, nquads, i, nfields;
 	/* Keep track of the size used in each quad so we can */
 	/* use the right size when copying args/return vars.  */
 	guint32 quadsize [2] = {8, 8};
 	ArgumentClass args [2];
 	MonoMarshalType *info = NULL;
+	MonoMarshalField *fields = NULL;
 	MonoClass *klass;
 	MonoGenericSharingContext tmp_gsctx;
 	gboolean pass_on_stack = FALSE;
@@ -728,12 +769,21 @@ add_valuetype (MonoGenericSharingContext *gsctx, MonoMethodSignature *sig, ArgIn
 		guint32 field_size;
 
 		info = mono_marshal_load_type_info (klass);
-		g_assert(info);
-		for (i = 0; i < info->num_fields; ++i) {
-			field_size = mono_marshal_type_size (info->fields [i].field->type, 
-							   info->fields [i].mspec, 
+		g_assert (info);
+
+		/*
+		 * Collect field information recursively to be able to
+		 * handle nested structures.
+		 */
+		nfields = count_fields_nested (klass);
+		fields = g_new0 (MonoMarshalField, nfields);
+		collect_field_info_nested (klass, fields, 0, 0);
+
+		for (i = 0; i < nfields; ++i) {
+			field_size = mono_marshal_type_size (fields [i].field->type,
+							   fields [i].mspec,
 							   &align, TRUE, klass->unicode);
-			if ((info->fields [i].offset < 8) && (info->fields [i].offset + field_size) > 8) {
+			if ((fields [i].offset < 8) && (fields [i].offset + field_size) > 8) {
 				pass_on_stack = TRUE;
 				break;
 			}
@@ -746,6 +796,7 @@ add_valuetype (MonoGenericSharingContext *gsctx, MonoMethodSignature *sig, ArgIn
 		*stack_size += ALIGN_TO (size, 8);
 		ainfo->storage = ArgOnStack;
 
+		g_free (fields);
 		return;
 	}
 
@@ -773,8 +824,8 @@ add_valuetype (MonoGenericSharingContext *gsctx, MonoMethodSignature *sig, ArgIn
 		 * The X87 and SSEUP stuff is left out since there are no such types in
 		 * the CLR.
 		 */
-		info = mono_marshal_load_type_info (klass);
 		g_assert (info);
+		g_assert (fields);
 
 #ifndef HOST_WIN32
 		if (info->native_size > 16) {
@@ -782,6 +833,7 @@ add_valuetype (MonoGenericSharingContext *gsctx, MonoMethodSignature *sig, ArgIn
 			*stack_size += ALIGN_TO (info->native_size, 8);
 			ainfo->storage = ArgOnStack;
 
+			g_free (fields);
 			return;
 		}
 #else
@@ -809,6 +861,7 @@ add_valuetype (MonoGenericSharingContext *gsctx, MonoMethodSignature *sig, ArgIn
 				}
 			}
 
+			g_free (fields);
 			return;
 		}
 #endif
@@ -820,35 +873,37 @@ add_valuetype (MonoGenericSharingContext *gsctx, MonoMethodSignature *sig, ArgIn
 			guint32 align;
 			ArgumentClass class1;
 		
-			if (info->num_fields == 0)
+			if (nfields == 0)
 				class1 = ARG_CLASS_MEMORY;
 			else
 				class1 = ARG_CLASS_NO_CLASS;
-			for (i = 0; i < info->num_fields; ++i) {
-				size = mono_marshal_type_size (info->fields [i].field->type, 
-											   info->fields [i].mspec, 
+			for (i = 0; i < nfields; ++i) {
+				size = mono_marshal_type_size (fields [i].field->type,
+											   fields [i].mspec,
 											   &align, TRUE, klass->unicode);
-				if ((info->fields [i].offset < 8) && (info->fields [i].offset + size) > 8) {
+				if ((fields [i].offset < 8) && (fields [i].offset + size) > 8) {
 					/* Unaligned field */
 					NOT_IMPLEMENTED;
 				}
 
 				/* Skip fields in other quad */
-				if ((quad == 0) && (info->fields [i].offset >= 8))
+				if ((quad == 0) && (fields [i].offset >= 8))
 					continue;
-				if ((quad == 1) && (info->fields [i].offset < 8))
+				if ((quad == 1) && (fields [i].offset < 8))
 					continue;
 
 				/* How far into this quad this data extends.*/
 				/* (8 is size of quad) */
-				quadsize [quad] = info->fields [i].offset + size - (quad * 8);
+				quadsize [quad] = fields [i].offset + size - (quad * 8);
 
-				class1 = merge_argument_class_from_type (gsctx, info->fields [i].field->type, class1);
+				class1 = merge_argument_class_from_type (gsctx, fields [i].field->type, class1);
 			}
 			g_assert (class1 != ARG_CLASS_NO_CLASS);
 			args [quad] = class1;
 		}
 	}
+
+	g_free (fields);
 
 	/* Post merger cleanup */
 	if ((args [0] == ARG_CLASS_MEMORY) || (args [1] == ARG_CLASS_MEMORY))
@@ -4109,6 +4164,9 @@ mono_arch_output_basic_block (MonoCompile *cfg, MonoBasicBlock *bb)
 		case OP_NOT_REACHED:
 		case OP_NOT_NULL:
 			break;
+		case OP_IL_SEQ_POINT:
+			mono_add_seq_point (cfg, bb, ins, code - cfg->native_code);
+			break;
 		case OP_SEQ_POINT: {
 			int i;
 
@@ -5022,8 +5080,8 @@ mono_arch_output_basic_block (MonoCompile *cfg, MonoBasicBlock *bb)
 			break;
 		case OP_STORER4_MEMBASE_REG:
 			/* This requires a double->single conversion */
-			amd64_sse_cvtsd2ss_reg_reg (code, AMD64_XMM15, ins->sreg1);
-			amd64_sse_movss_membase_reg (code, ins->inst_destbasereg, ins->inst_offset, AMD64_XMM15);
+			amd64_sse_cvtsd2ss_reg_reg (code, MONO_ARCH_FP_SCRATCH_REG, ins->sreg1);
+			amd64_sse_movss_membase_reg (code, ins->inst_destbasereg, ins->inst_offset, MONO_ARCH_FP_SCRATCH_REG);
 			break;
 		case OP_LOADR4_MEMBASE:
 			amd64_sse_movss_reg_membase (code, ins->dreg, ins->inst_basereg, ins->inst_offset);
@@ -6070,8 +6128,8 @@ mono_arch_output_basic_block (MonoCompile *cfg, MonoBasicBlock *bb)
 			break;
 		case OP_EXTRACT_I8:
 			if (ins->inst_c0) {
-				amd64_movhlps_reg_reg (code, AMD64_XMM15, ins->sreg1);
-				amd64_movd_reg_xreg_size (code, ins->dreg, AMD64_XMM15, 8);
+				amd64_movhlps_reg_reg (code, MONO_ARCH_FP_SCRATCH_REG, ins->sreg1);
+				amd64_movd_reg_xreg_size (code, ins->dreg, MONO_ARCH_FP_SCRATCH_REG, 8);
 			} else {
 				amd64_movd_reg_xreg_size (code, ins->dreg, ins->sreg1, 8);
 			}
@@ -6123,11 +6181,11 @@ mono_arch_output_basic_block (MonoCompile *cfg, MonoBasicBlock *bb)
 			amd64_sse_pinsrw_reg_reg_imm (code, ins->dreg, ins->sreg2, ins->inst_c0 * 2 + 1);
 			break;
 		case OP_INSERTX_I8_SLOW:
-			amd64_movd_xreg_reg_size(code, AMD64_XMM15, ins->sreg2, 8);
+			amd64_movd_xreg_reg_size(code, MONO_ARCH_FP_SCRATCH_REG, ins->sreg2, 8);
 			if (ins->inst_c0)
-				amd64_movlhps_reg_reg (code, ins->dreg, AMD64_XMM15);
+				amd64_movlhps_reg_reg (code, ins->dreg, MONO_ARCH_FP_SCRATCH_REG);
 			else
-				amd64_sse_movsd_reg_reg (code, ins->dreg, AMD64_XMM15);
+				amd64_sse_movsd_reg_reg (code, ins->dreg, MONO_ARCH_FP_SCRATCH_REG);
 			break;
 
 		case OP_INSERTX_R4_SLOW:
@@ -7484,7 +7542,7 @@ mono_arch_is_int_overflow (void *sigctx, void *info)
 	int reg;
 	gint64 value;
 
-	mono_arch_sigctx_to_monoctx (sigctx, &ctx);
+	mono_sigctx_to_monoctx (sigctx, &ctx);
 
 	rip = (guint8*)ctx.rip;
 
@@ -7690,13 +7748,10 @@ get_delegate_invoke_impl (gboolean has_target, guint32 param_count, guint32 *cod
 		g_assert ((code - start) < 64);
 	}
 
-	nacl_global_codeman_validate(&start, 64, &code);
-
-	mono_debug_add_delegate_trampoline (start, code - start);
+	nacl_global_codeman_validate (&start, 64, &code);
 
 	if (code_len)
 		*code_len = code - start;
-
 
 	if (mono_jit_map_is_enabled ()) {
 		char *buff;
@@ -7708,6 +7763,7 @@ get_delegate_invoke_impl (gboolean has_target, guint32 param_count, guint32 *cod
 		if (!has_target)
 			g_free (buff);
 	}
+	mono_profiler_code_buffer_new (start, code - start, MONO_PROFILER_CODE_BUFFER_DELEGATE_INVOKE, NULL);
 
 	return start;
 }
@@ -7815,6 +7871,7 @@ mono_arch_get_delegate_virtual_invoke_impl (MonoMethodSignature *sig, MonoMethod
 	/* Load the vtable */
 	amd64_mov_reg_membase (code, AMD64_RAX, AMD64_ARG_REG1, MONO_STRUCT_OFFSET (MonoObject, vtable), 8);
 	amd64_jump_membase (code, AMD64_RAX, offset);
+	mono_profiler_code_buffer_new (start, code - start, MONO_PROFILER_CODE_BUFFER_DELEGATE_INVOKE, NULL);
 
 	return start;
 }
@@ -8025,6 +8082,7 @@ mono_arch_build_imt_thunk (MonoVTable *vtable, MonoDomain *domain, MonoIMTCheckI
 	g_assert (code - start <= size);
 
 	nacl_domain_code_validate(domain, &start, size, &code);
+	mono_profiler_code_buffer_new (start, code - start, MONO_PROFILER_CODE_BUFFER_IMT_TRAMPOLINE, NULL);
 
 	return start;
 }

@@ -293,12 +293,15 @@ namespace Mono.CSharp
 
 		FullNamedExpression ResolveMemberName (IMemberContext context, MemberName mn)
 		{
-			// FIXME: Default namespace lookups to C# resolution semantics (for now).  Need a way to determine if PlayScript absolute
-			// namespace lookups should be used here.
-			bool absolute_ns = false;
+//			// PlayScript - use absolute namespace resolution, not relative
+//			bool absolute_ns = loc.SourceFile != null && loc.SourceFile.FileType == SourceFileType.PlayScript;
+
+//			// FIXME: Default namespace lookups to C# resolution semantics (for now).  Need a way to determine if PlayScript absolute
+//			// namespace lookups should be used here.
+//			bool absolute_ns = false;
 
 			if (mn.Left == null)
-				return context.LookupNamespaceOrType (mn.Name, mn.Arity, LookupMode.Probing, absolute_ns, Location.Null);
+				return context.LookupNamespaceOrType (mn.Name, mn.Arity, LookupMode.Probing, Location.Null);
 
 			var left = ResolveMemberName (context, mn.Left);
 			var ns = left as NamespaceExpression;
@@ -699,12 +702,12 @@ namespace Mono.CSharp
 			return host.GetSignatureForError ();
 		}
 
-		public ExtensionMethodCandidates LookupExtensionMethod (TypeSpec extensionType, string name, int arity)
+		public ExtensionMethodCandidates LookupExtensionMethod (string name, int arity)
 		{
 			return null;
 		}
 
-		public FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, bool absolute_ns, Location loc)
+		public FullNamedExpression LookupNamespaceOrType (string name, int arity, LookupMode mode, Location loc)
 		{
 			if (arity == 0) {
 				var tp = CurrentTypeParameters;
@@ -719,7 +722,7 @@ namespace Mono.CSharp
 				}
 			}
 
-			return host.Parent.LookupNamespaceOrType (name, arity, mode, absolute_ns, loc);
+			return host.Parent.LookupNamespaceOrType (name, arity, mode, loc);
 		}
 
 		public FullNamedExpression LookupNamespaceAlias (string name)

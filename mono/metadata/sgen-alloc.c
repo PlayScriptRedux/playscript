@@ -51,7 +51,6 @@
 
 #define ALIGN_UP		SGEN_ALIGN_UP
 #define ALLOC_ALIGN		SGEN_ALLOC_ALIGN
-#define ALLOC_ALIGN_BITS	SGEN_ALLOC_ALIGN_BITS
 #define MAX_SMALL_OBJ_SIZE	SGEN_MAX_SMALL_OBJ_SIZE
 #define ALIGN_TO(val,align) ((((guint64)val) + ((align) - 1)) & ~((align) - 1))
 
@@ -68,9 +67,9 @@ enum {
 static gboolean use_managed_allocator = TRUE;
 
 #ifdef HEAVY_STATISTICS
-static long long stat_objects_alloced = 0;
-static long long stat_bytes_alloced = 0;
-static long long stat_bytes_alloced_los = 0;
+static guint64 stat_objects_alloced = 0;
+static guint64 stat_bytes_alloced = 0;
+static guint64 stat_bytes_alloced_los = 0;
 
 #endif
 
@@ -188,8 +187,8 @@ mono_gc_alloc_obj_nolock (MonoVTable *vtable, size_t size)
 	/* FIXME: handle OOM */
 	void **p;
 	char *new_next;
-	TLAB_ACCESS_INIT;
 	size_t real_size = size;
+	TLAB_ACCESS_INIT;
 	
 	CANARIFY_SIZE(size);
 
@@ -300,21 +299,22 @@ mono_gc_alloc_obj_nolock (MonoVTable *vtable, size_t size)
 					 * object.  The reason will most likely be that we've
 					 * run out of memory, but there is the theoretical
 					 * possibility that other threads might have consumed
-					 * the freed up memory ahead of us, so doing another
-					 * collection and trying again might actually help.
-					 * Of course the same thing might happen again.
+					 * the freed up memory ahead of us.
 					 *
-					 * Ideally we'd like to detect that case and loop (if
-					 * we always loop we will loop endlessly in the case of
-					 * OOM).  What we do here is give up right away.
+					 * What we do in this case is allocate degraded, i.e.,
+					 * from the major heap.
+					 *
+					 * Ideally we'd like to detect the case of other
+					 * threads allocating ahead of us and loop (if we
+					 * always loop we will loop endlessly in the case of
+					 * OOM).
 					 */
 					sgen_ensure_free_space (real_size);
-					if (degraded_mode)
-						return alloc_degraded (vtable, size, FALSE);
-					else
+					if (!degraded_mode)
 						p = sgen_nursery_alloc (size);
 				}
-				SGEN_ASSERT (0, p, "Out of memory");
+				if (!p)
+					return alloc_degraded (vtable, size, FALSE);
 
 				zero_tlab_if_necessary (p, size);
 			} else {
@@ -327,12 +327,11 @@ mono_gc_alloc_obj_nolock (MonoVTable *vtable, size_t size)
 				if (!p) {
 					/* See comment above in similar case. */
 					sgen_ensure_free_space (tlab_size);
-					if (degraded_mode)
-						return alloc_degraded (vtable, size, FALSE);
-					else
+					if (!degraded_mode)
 						p = sgen_nursery_alloc_range (tlab_size, size, &alloc_size);
 				}
-				SGEN_ASSERT (0, p, "Out of memory");
+				if (!p)
+					return alloc_degraded (vtable, size, FALSE);
 
 				/* Allocate a new TLAB from the current nursery fragment */
 				TLAB_START = (char*)p;
@@ -379,8 +378,8 @@ mono_gc_try_alloc_obj_nolock (MonoVTable *vtable, size_t size)
 {
 	void **p;
 	char *new_next;
-	TLAB_ACCESS_INIT;
 	size_t real_size = size;
+	TLAB_ACCESS_INIT;
 
 	CANARIFY_SIZE(size);
 
@@ -1214,9 +1213,9 @@ sgen_has_managed_allocator (void)
 void
 sgen_alloc_init_heavy_stats (void)
 {
-	mono_counters_register ("# objects allocated", MONO_COUNTER_GC | MONO_COUNTER_LONG, &stat_objects_alloced);	
-	mono_counters_register ("bytes allocated", MONO_COUNTER_GC | MONO_COUNTER_LONG, &stat_bytes_alloced);
-	mono_counters_register ("bytes allocated in LOS", MONO_COUNTER_GC | MONO_COUNTER_LONG, &stat_bytes_alloced_los);
+	mono_counters_register ("# objects allocated", MONO_COUNTER_GC | MONO_COUNTER_ULONG, &stat_objects_alloced);	
+	mono_counters_register ("bytes allocated", MONO_COUNTER_GC | MONO_COUNTER_ULONG, &stat_bytes_alloced);
+	mono_counters_register ("bytes allocated in LOS", MONO_COUNTER_GC | MONO_COUNTER_ULONG, &stat_bytes_alloced_los);
 }
 #endif
 

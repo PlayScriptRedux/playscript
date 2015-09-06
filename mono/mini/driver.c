@@ -1868,6 +1868,8 @@ mono_main (int argc, char* argv[])
 		g_set_prgname (argv[i]);
 	}
 
+	mono_counters_init ();
+
 	if (enable_profile)
 		mono_profiler_load (profile_options);
 
@@ -2000,7 +2002,7 @@ mono_main (int argc, char* argv[])
 			fprintf (stderr, "Corlib not in sync with this runtime: %s\n", error);
 			fprintf (stderr, "Loaded from: %s\n",
 				mono_defaults.corlib? mono_image_get_filename (mono_defaults.corlib): "unknown");
-			fprintf (stderr, "Download a newer corlib or a newer runtime at http://www.go-mono.com/daily.\n");
+			fprintf (stderr, "Download a newer corlib or a newer runtime at http://www.mono-project.com/download.\n");
 			exit (1);
 		}
 

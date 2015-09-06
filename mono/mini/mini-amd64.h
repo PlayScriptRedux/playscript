@@ -122,14 +122,23 @@ struct sigcontext {
 
 #define MONO_ARCH_FP_RETURN_REG AMD64_XMM0
 
-/* xmm15 is reserved for use by some opcodes */
+#ifdef TARGET_WIN32
+/* xmm5 is used as a scratch register */
+#define MONO_ARCH_CALLEE_FREGS 0x1f
+/* xmm6:xmm15 */
+#define MONO_ARCH_CALLEE_SAVED_FREGS (0xffff - 0x3f)
+#define MONO_ARCH_FP_SCRATCH_REG AMD64_XMM5
+#else
+/* xmm15 is used as a scratch register */
 #define MONO_ARCH_CALLEE_FREGS 0x7fff
 #define MONO_ARCH_CALLEE_SAVED_FREGS 0
+#define MONO_ARCH_FP_SCRATCH_REG AMD64_XMM15
+#endif
 
 #define MONO_MAX_XREGS MONO_MAX_FREGS
 
-#define MONO_ARCH_CALLEE_XREGS 0x7fff
-#define MONO_ARCH_CALLEE_SAVED_XREGS 0
+#define MONO_ARCH_CALLEE_XREGS MONO_ARCH_CALLEE_FREGS
+#define MONO_ARCH_CALLEE_SAVED_XREGS MONO_ARCH_CALLEE_SAVED_FREGS
 
 
 #define MONO_ARCH_CALLEE_REGS AMD64_CALLEE_REGS
@@ -151,9 +160,6 @@ struct sigcontext {
 /* fixme: align to 16byte instead of 32byte (we align to 32byte to get 
  * reproduceable results for benchmarks */
 #define MONO_ARCH_CODE_ALIGNMENT 32
-
-#define MONO_ARCH_RETREG1 X86_EAX
-#define MONO_ARCH_RETREG2 X86_EDX
 
 /*This is the max size of the locals area of a given frame. I think 1MB is a safe default for now*/
 #define MONO_ARCH_MAX_FRAME_SIZE 0x100000

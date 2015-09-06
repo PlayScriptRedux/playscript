@@ -19,7 +19,11 @@
 
 #include <errno.h>
 
-#if defined(PLATFORM_ANDROID)
+#if defined(PLATFORM_ANDROID) && !defined(TARGET_ARM64)
+#define USE_TKILL_ON_ANDROID 1
+#endif
+
+#ifdef USE_TKILL_ON_ANDROID
 extern int tkill (pid_t tid, int signal);
 #endif
 
@@ -267,7 +271,7 @@ mono_threads_core_clear_interruption (void)
 int
 mono_threads_pthread_kill (MonoThreadInfo *info, int signum)
 {
-#if defined (PLATFORM_ANDROID)
+#ifdef USE_TKILL_ON_ANDROID
 	int result, old_errno = errno;
 	result = tkill (info->native_handle, signum);
 	if (result < 0) {
@@ -369,9 +373,9 @@ mono_threads_init_platform (void)
 	 * FIXME: Use this on all platforms.
 	 * SIGUSR1 is used by dalvik/art.
 	 */
-	no_interrupt_signo = SIGUSR2;
+	no_interrupt_signo = SIGWINCH;
 	g_assert (abort_signo != no_interrupt_signo);
-	mono_posix_add_signal_handler (abort_signo, suspend_signal_handler, SA_RESTART);
+	mono_posix_add_signal_handler (no_interrupt_signo, suspend_signal_handler, SA_RESTART);
 #endif
 #endif
 }
@@ -404,7 +408,7 @@ mono_threads_core_suspend (MonoThreadInfo *info, gboolean interrupt_kernel)
 {
 	/*FIXME, check return value*/
 #ifdef PLATFORM_ANDROID
-	if (interrupt_kernel)
+	if (!interrupt_kernel)
 		mono_threads_pthread_kill (info, no_interrupt_signo);
 	else
 		mono_threads_pthread_kill (info, mono_thread_get_abort_signal ());

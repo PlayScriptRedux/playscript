@@ -116,7 +116,14 @@ namespace System
 			using (Stream stream = GetMonoTouchData (null)) {
 				return BuildFromStream ("Local", stream);
 			}
-#elif LIBC
+#else
+			if (IsWindows && LocalZoneKey != null) {
+				string name = (string)LocalZoneKey.GetValue ("TimeZoneKeyName");
+				name = TrimSpecial (name);
+				if (name != null)
+					return TimeZoneInfo.FindSystemTimeZoneById (name);
+			}
+
 			var tz = Environment.GetEnvironmentVariable ("TZ");
 			if (tz != null) {
 				if (tz == String.Empty)
@@ -137,15 +144,6 @@ namespace System
 					return null;
 				}
 			}
-#else
-			if (IsWindows && LocalZoneKey != null) {
-				string name = (string)LocalZoneKey.GetValue ("TimeZoneKeyName");
-				name = TrimSpecial (name);
-				if (name != null)
-					return TimeZoneInfo.FindSystemTimeZoneById (name);
-			}
-
-			return null;
 #endif
 		}
 
@@ -426,12 +424,6 @@ namespace System
 				return FromRegistryKey(id, key);
 			}
 #endif
-#if MONODROID
-			var timeZoneInfo = AndroidTimeZones.GetTimeZone (id, id);
-			if (timeZoneInfo == null)
-				throw new TimeZoneNotFoundException ();
-			return timeZoneInfo;
-#else
 			// Local requires special logic that already exists in the Local property (bug #326)
 			if (id == "Local")
 				return Local;
@@ -439,12 +431,16 @@ namespace System
 			using (Stream stream = GetMonoTouchData (id)) {
 				return BuildFromStream (id, stream);
 			}
+#elif MONODROID
+			var timeZoneInfo = AndroidTimeZones.GetTimeZone (id, id);
+			if (timeZoneInfo == null)
+				throw new TimeZoneNotFoundException ();
+			return timeZoneInfo;
 #elif LIBC
 			string filepath = Path.Combine (TimeZoneDirectory, id);
 			return FindSystemTimeZoneByFileName (id, filepath);
 #else
 			throw new NotImplementedException ();
-#endif
 #endif
 		}
 

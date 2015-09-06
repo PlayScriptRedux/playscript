@@ -37,6 +37,7 @@ void
 sgen_init_pinning (void)
 {
 	memset (pin_hash_filter, 0, sizeof (pin_hash_filter));
+	pin_queue.mem_type = INTERNAL_MEM_PIN_QUEUE;
 }
 
 void
@@ -292,6 +293,9 @@ sgen_cement_lookup_or_register (char *obj)
 
 	++hash [i].count;
 	if (hash [i].count == SGEN_CEMENT_THRESHOLD) {
+		SGEN_ASSERT (9, SGEN_OBJECT_IS_PINNED (obj), "Can only cement pinned objects");
+		SGEN_CEMENT_OBJECT (obj);
+
 		if (G_UNLIKELY (MONO_GC_OBJ_CEMENTED_ENABLED())) {
 			MonoVTable *vt G_GNUC_UNUSED = (MonoVTable*)SGEN_LOAD_VTABLE (obj);
 			MONO_GC_OBJ_CEMENTED ((mword)obj, sgen_safe_object_get_size ((MonoObject*)obj),
@@ -304,19 +308,30 @@ sgen_cement_lookup_or_register (char *obj)
 	return FALSE;
 }
 
-void
-sgen_pin_cemented_objects (void)
+static void
+pin_from_hash (CementHashEntry *hash, gboolean has_been_reset)
 {
 	int i;
 	for (i = 0; i < SGEN_CEMENT_HASH_SIZE; ++i) {
-		if (!cement_hash [i].count)
+		if (!hash [i].count)
 			continue;
 
-		SGEN_ASSERT (5, cement_hash [i].count >= SGEN_CEMENT_THRESHOLD, "Cementing hash inconsistent");
+		if (has_been_reset)
+			SGEN_ASSERT (5, hash [i].count >= SGEN_CEMENT_THRESHOLD, "Cementing hash inconsistent");
 
-		sgen_pin_stage_ptr (cement_hash [i].obj);
+		sgen_pin_stage_ptr (hash [i].obj);
 		/* FIXME: do pin stats if enabled */
+
+		SGEN_CEMENT_OBJECT (hash [i].obj);
 	}
+}
+
+void
+sgen_pin_cemented_objects (void)
+{
+	pin_from_hash (cement_hash, TRUE);
+	if (cement_concurrent)
+		pin_from_hash (cement_hash_concurrent, FALSE);
 }
 
 void

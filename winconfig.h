@@ -1,6 +1,10 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+#ifndef _MSC_VER
+#include "cygconfig.h"
+#else
+
 /* The architecture this is running on */
 #if defined(_M_IA64)
 #define ARCHITECTURE "ia64"
@@ -629,4 +633,5 @@
 /* #undef USE_MONO_MUTEX */
 
 /* Version number of package */
-#define VERSION "2.11"
+#define VERSION "3.12.1"
+#endif

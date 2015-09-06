@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 #AC_PREREQ([2.62])
 
-AC_INIT(mono, [3.12.1],
+AC_INIT(mono, [3.99.0],
         [http://bugzilla.xamarin.com/enter_bug.cgi?classification=Mono])
 
 AC_CONFIG_SRCDIR([README.md])
@@ -2299,9 +2299,6 @@ fi
 
 AC_ARG_ENABLE(bcl-opt, [  --disable-bcl-opt	BCL is compiled with no optimizations (allows accurate BCL debugging)], test_bcl_opt=$enableval, test_bcl_opt=yes)
 
-AC_ARG_ENABLE(nunit-tests, [  --enable-nunit-tests	Run the nunit tests of the class library on 'make check'])
-AM_CONDITIONAL(ENABLE_NUNIT_TESTS, [test x$enable_nunit_tests = xyes])
-
 AC_MSG_CHECKING([if big-arrays are to be enabled])
 AC_ARG_ENABLE(big-arrays,  [  --enable-big-arrays	Enable the allocation and indexing of arrays greater than Int32.MaxValue], enable_big_arrays=$enableval, enable_big_arrays=no)
 if test "x$enable_big_arrays" = "xyes" ; then
@@ -2799,7 +2796,18 @@ if test "x$host" != "x$target"; then
 		# in mono-compiler.h		
 		with_tls=pthread
 		target_mach=no
-		;;			
+		;;
+   aarch64*-linux-*)
+		TARGET=ARM64;
+		arch_target=arm64;
+		AC_DEFINE(TARGET_ARM64, 1, [...])
+		AC_DEFINE(TARGET_ANDROID, 1, [...])
+		CPPFLAGS="$CPPFLAGS"
+		# Can't use tls, since it depends on the runtime detection of tls offsets
+		# in mono-compiler.h
+		with_tls=pthread
+		target_mach=no
+		;;
 	aarch64-*)
 		TARGET=ARM64
 		;;
@@ -3199,8 +3207,6 @@ case "x$libgc" in
 		;;
 esac
 
-AC_ARG_WITH(profile2,  [  --with-profile2=yes,no          If you want to install the 2.0/3.5 FX (defaults to yes)],            [], [with_profile2=yes])
-AC_ARG_WITH(profile4,  [  --with-profile4=yes,no          If you want to install the 4.0 FX (defaults to yes)],                [], [with_profile4=yes])
 AC_ARG_WITH(profile4_5,[  --with-profile4_5=yes,no        If you want to install the 4.5 FX (defaults to yes)],                [], [with_profile4_5=yes])
 AC_ARG_WITH(monodroid, [  --with-monodroid=yes,no         If you want to build the MonoDroid assemblies (defaults to no)],     [], [with_monodroid=no])
 AC_ARG_WITH(monotouch, [  --with-monotouch=yes,no,only    If you want to build the MonoTouch assemblies (defaults to no)],     [], [with_monotouch=no])
@@ -3235,7 +3241,7 @@ AC_ARG_WITH(mcs_docs,[  --with-mcs-docs=yes,no         If you want to build the 
 		DISABLE_MCS_DOCS=yes
 	fi
 ])
-if test x$with_profile4 != xyes; then
+if test x$with_profile4_5 != xyes; then
 	DISABLE_MCS_DOCS=yes
 fi
 
@@ -3275,8 +3281,6 @@ dnl Consistency settings
 dnl
 if test x$cross_compiling = xyes -o x$enable_mcs_build = xno; then
    DISABLE_MCS_DOCS=yes
-   with_profile2=no
-   with_profile4=no
    with_profile4_5=no
    with_monodroid=no
    with_monotouch=no
@@ -3299,8 +3303,6 @@ AC_SUBST(OPROFILE_LIBS)
 
 libmono_ldflags="$libmono_ldflags $LIBS"
 
-AM_CONDITIONAL(INSTALL_2_0, [test "x$with_profile2" = xyes])
-AM_CONDITIONAL(INSTALL_4_0, [test "x$with_profile4" = xyes])
 AM_CONDITIONAL(INSTALL_4_5, [test "x$with_profile4_5" = xyes])
 AM_CONDITIONAL(INSTALL_MONODROID, [test "x$with_monodroid" != "xno"])
 AM_CONDITIONAL(INSTALL_MONOTOUCH, [test "x$with_monotouch" != "xno"])
@@ -3683,10 +3685,7 @@ fi
         echo "EXTENSION_MODULE = 1" >> $srcdir/$mcsdir/build/config.make
     fi
 
-	default_profile=net_2_0
-    if test -z "$INSTALL_4_0_TRUE"; then :
-  		default_profile=net_4_0
-    fi
+	default_profile=net_4_5
     if test -z "$INSTALL_MONODROID_TRUE"; then :
   		default_profile=monodroid
     fi
@@ -3744,8 +3743,6 @@ echo "
 	LLVM Back End: $enable_llvm (dynamically loaded: $enable_loadedllvm)
 
    Libraries:
-	.NET 2.0/3.5:  $with_profile2
-	.NET 4.0:      $with_profile4
 	.NET 4.5:      $with_profile4_5
 	MonoDroid:     $with_monodroid
 	MonoTouch:     $with_monotouch

@@ -103,7 +103,7 @@
 #endif
 
 /* Version number of the AOT file format */
-#define MONO_AOT_FILE_VERSION 103
+#define MONO_AOT_FILE_VERSION 104
 
 //TODO: This is x86/amd64 specific.
 #define mono_simd_shuffle_mask(a,b,c,d) ((a) | ((b) << 2) | ((c) << 4) | ((d) << 6))
@@ -111,10 +111,6 @@
 /* Remap printf to g_print (we use a mix of these in the mini code) */
 #ifdef PLATFORM_ANDROID
 #define printf g_print
-#endif
-
-#if !defined(HAVE_KW_THREAD) || !defined(MONO_ARCH_ENABLE_MONO_LMF_VAR)
-#define MONO_JIT_TLS_DATA_HAS_LMF
 #endif
 
 #define MONO_TYPE_IS_PRIMITIVE(t) ((!(t)->byref && ((((t)->type >= MONO_TYPE_BOOLEAN && (t)->type <= MONO_TYPE_R8) || ((t)->type >= MONO_TYPE_I && (t)->type <= MONO_TYPE_U)))))
@@ -333,34 +329,13 @@ typedef struct {
  */
 typedef MonoStackFrameInfo StackFrameInfo;
 
-#define MONO_SEQ_POINT_FLAG_NONEMPTY_STACK 1
-
-typedef struct {
-	int il_offset, native_offset, flags;
-	/* Indexes of successor sequence points */
-	int *next;
-	/* Number of entries in next */
-	int next_len;
-} SeqPoint;
-
-typedef struct {
-	int len;
-	SeqPoint seq_points [MONO_ZERO_LEN_ARRAY];
-} MonoSeqPointInfo;
-
 #if 0
 #define mono_bitset_foreach_bit(set,b,n) \
 	for (b = 0; b < n; b++)\
 		if (mono_bitset_test_fast(set,b))
-#define mono_bitset_foreach_bit_rev(set,b,n) \
-	for (b = n - 1; b >= 0; b--)\
-		if (mono_bitset_test_fast(set,b))
 #else
 #define mono_bitset_foreach_bit(set,b,n) \
 	for (b = mono_bitset_find_start (set); b < n && b >= 0; b = mono_bitset_find_first (set, b))
-#define mono_bitset_foreach_bit_rev(set,b,n) \
-	for (b = mono_bitset_find_last (set, n - 1); b >= 0; b = b ? mono_bitset_find_last (set, b) : -1)
- 
 #endif
 
 /*
@@ -395,11 +370,6 @@ enum {
 		(dest)->inst.dreg = -1;					\
 		MONO_INST_NULLIFY_SREGS (&(dest)->inst);		\
         (dest)->inst.cil_code = (cfg)->ip;  \
-	} while (0)
-
-#define MONO_INST_NEW_CALL_ARG(cfg,dest,op) do {	\
-		(dest) = mono_mempool_alloc0 ((cfg)->mempool, sizeof (MonoCallArgParm));	\
-		(dest)->ins.opcode = (op);	\
 	} while (0)
 
 #define MONO_ADD_INS(b,inst) do {	\
@@ -1446,6 +1416,7 @@ typedef struct {
 	guint            code_len;
 	guint            prolog_end;
 	guint            epilog_begin;
+	guint            epilog_end;
 	regmask_t        used_int_regs;
 	guint32          opt;
 	guint32          prof_options;
@@ -1502,6 +1473,7 @@ typedef struct {
 	guint            uses_simd_intrinsics : 1;
 	guint            keep_cil_nops : 1;
 	guint            gen_seq_points : 1;
+	guint            gen_seq_points_debug_data : 1;
 	guint            explicit_null_checks : 1;
 	guint            compute_gc_maps : 1;
 	guint            soft_breakpoints : 1;
@@ -1597,7 +1569,7 @@ typedef struct {
 	GPtrArray *seq_points;
 
 	/* The encoded sequence point info */
-	MonoSeqPointInfo *seq_point_info;
+	struct MonoSeqPointInfo *seq_point_info;
 
 	/* Method headers which need to be freed after compilation */
 	GSList *headers_to_free;
@@ -1626,6 +1598,9 @@ typedef struct {
 	/* The offsets of the locals area relative to the frame pointer */
 	gint locals_min_stack_offset, locals_max_stack_offset;
 
+	/* The current CFA rule */
+	int cur_cfa_reg, cur_cfa_offset;
+
 	/* The final CFA rule at the end of the prolog */
 	int cfa_reg, cfa_offset;
 
@@ -1638,6 +1613,9 @@ typedef struct {
 	 */
 	guint8 *gc_map;
 	guint32 gc_map_size;
+
+	/* Error handling */
+	MonoError error;
 
 	/* Stats */
 	int stat_allocate_var;
@@ -1674,6 +1652,7 @@ typedef struct {
 	gint32 max_code_size_ratio;
 	gint32 biggest_method_size;
 	gint32 allocated_code_size;
+	gint32 allocated_seq_points_size;
 	gint32 inlineable_methods;
 	gint32 inlined_methods;
 	gint32 basic_blocks;
@@ -1852,7 +1831,11 @@ typedef struct {
 	gboolean suspend_on_unhandled;
 	gboolean dyn_runtime_invoke;
 	gboolean gdb;
-	gboolean gen_seq_points;
+	/*
+	 * Whenever data such as next sequence points and flags is required.
+	 * Next sequence points and flags are required by the debugger agent.
+	 */
+	gboolean gen_seq_points_debug_data;
 	gboolean explicit_null_checks;
 	/*
 	 * Fill stack frames with 0x2a in method prologs. This helps with the
@@ -2251,6 +2234,7 @@ void              mono_monitor_enter_trampoline (mgreg_t *regs, guint8 *code, Mo
 void              mono_monitor_exit_trampoline (mgreg_t *regs, guint8 *code, MonoObject *obj, guint8 *tramp) MONO_INTERNAL;
 gconstpointer     mono_get_trampoline_func (MonoTrampolineType tramp_type);
 gpointer          mini_get_vtable_trampoline (int slot_index) MONO_INTERNAL;
+const char*       mono_get_generic_trampoline_simple_name (MonoTrampolineType tramp_type) MONO_INTERNAL;
 char*             mono_get_generic_trampoline_name (MonoTrampolineType tramp_type) MONO_INTERNAL;
 char*             mono_get_rgctx_fetch_trampoline_name (int slot) MONO_INTERNAL;
 gpointer          mini_get_nullified_class_init_trampoline (void) MONO_INTERNAL;
@@ -2432,8 +2416,6 @@ void     mono_arch_handle_altstack_exception    (void *sigctx, gpointer fault_ad
 gboolean mono_handle_soft_stack_ovf             (MonoJitTlsData *jit_tls, MonoJitInfo *ji, void *ctx, guint8* fault_addr) MONO_INTERNAL;
 void     mono_handle_hard_stack_ovf             (MonoJitTlsData *jit_tls, MonoJitInfo *ji, void *ctx, guint8* fault_addr) MONO_INTERNAL;
 gpointer mono_arch_ip_from_context              (void *sigctx) MONO_INTERNAL;
-void     mono_arch_sigctx_to_monoctx            (void *sigctx, MonoContext *ctx) MONO_INTERNAL;
-void     mono_arch_monoctx_to_sigctx            (MonoContext *mctx, void *ctx) MONO_INTERNAL;
 mgreg_t mono_arch_context_get_int_reg		    (MonoContext *ctx, int reg) MONO_INTERNAL;
 void     mono_arch_context_set_int_reg		    (MonoContext *ctx, int reg, mgreg_t val) MONO_INTERNAL;
 void     mono_arch_flush_register_windows       (void) MONO_INTERNAL;
@@ -2755,8 +2737,6 @@ enum {
 	 */
 	SIMD_VERSION_INDEX_END = 6 
 };
-
-#define MASK(x) (1 << x)
 
 enum {
 	SIMD_COMP_EQ,

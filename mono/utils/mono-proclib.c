@@ -498,6 +498,8 @@ mono_process_get_data_with_error (gpointer pid, MonoProcessData data, MonoProces
 		return get_process_stat_item (rpid, 18, FALSE, error) / get_user_hz ();
 	case MONO_PROCESS_PPID:
 		return get_process_stat_time (rpid, 0, FALSE, error);
+	case MONO_PROCESS_PAGED_BYTES:
+		return get_pid_status_item (rpid, "VmSwap", error, 1024);
 
 		/* Nothing yet */
 	case MONO_PROCESS_END:
@@ -664,3 +666,13 @@ mono_cpu_get_data (int cpu_id, MonoCpuData data, MonoProcessError *error)
 	return value;
 }
 
+int
+mono_atexit (void (*func)(void))
+{
+#ifdef PLATFORM_ANDROID
+	/* Some versions of android libc doesn't define atexit () */
+	return 0;
+#else
+	return atexit (func);
+#endif
+}

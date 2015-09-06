@@ -741,7 +741,9 @@ attribute_section_cont
 	  }
 	| error
 	  {
- 		CheckAttributeTarget (yyToken, GetTokenName (yyToken), GetLocation ($1)); 
+		if (CheckAttributeTarget (yyToken, GetTokenName (yyToken), GetLocation ($1)).Length > 0)
+			Error_SyntaxError (yyToken);
+
  		$$ = null;
 	  }
 	;	
@@ -887,7 +889,7 @@ named_argument
 
 named_argument_expr
 	: expression_or_error
-	| declaration_expression
+//	| declaration_expression
 	;
 	
 opt_named_modifier
@@ -3656,7 +3658,7 @@ declaration_expression
 */
 	| variable_type identifier_inside_body
 	  {
-		if (lang_version < LanguageVersion.V_6)
+		if (lang_version != LanguageVersion.Experimental)
 			FeatureIsNotAvailable (GetLocation ($1), "declaration expression");
 
 		var lt = (LocatedToken) $2;
@@ -3666,7 +3668,7 @@ declaration_expression
 	  }
 	| variable_type identifier_inside_body ASSIGN expression
 	  {
-		if (lang_version < LanguageVersion.V_6)
+		if (lang_version != LanguageVersion.Experimental)
 			FeatureIsNotAvailable (GetLocation ($1), "declaration expression");
 
 		var lt = (LocatedToken) $2;
@@ -5021,7 +5023,7 @@ primary_parameters
 		// Cannot use opt_formal_parameter_list because it can be shared instance for empty parameters
 	  	lbag.AppendToMember (current_container, GetLocation ($1), GetLocation ($3));
 
-		if (lang_version < LanguageVersion.V_6)
+		if (lang_version != LanguageVersion.Experimental)
 			FeatureIsNotAvailable (GetLocation ($1), "primary constructor");
 	  }
 	;
@@ -5927,6 +5929,7 @@ switch_label
 		Error_SyntaxError (yyToken);
 		$$ = new SwitchLabel ((Expression) $2, GetLocation ($1));
 	  }
+/*	  
 	| CASE pattern_expr_invocation COLON
 	  {
 		if (lang_version != LanguageVersion.Experimental)
@@ -5937,6 +5940,7 @@ switch_label
 		};
 		lbag.AddLocation ($$, GetLocation ($3));
 	  }
+*/
 	| DEFAULT_COLON
 	  {
 		$$ = new SwitchLabel (null, GetLocation ($1));

@@ -148,7 +148,6 @@ common_sources = \
 	mono-debug.h		\
 	mono-debug.c		\
 	mono-debug-debugger.h	\
-	mono-debug-debugger.c	\
 	mono-endian.c		\
 	mono-endian.h		\
 	mono-hash.h		\
@@ -174,6 +173,8 @@ common_sources = \
 	profiler-private.h	\
 	rand.h			\
 	rand.c			\
+	remoting.h		\
+	remoting.c		\
 	runtime.c		\
 	security.c		\
 	security.h		\
@@ -249,8 +250,9 @@ sgen_sources = \
 	sgen-major-copy-object.h \
 	sgen-minor-copy-object.h \
 	sgen-copy-object.h \
-	sgen-major-scan-object.h \
+	sgen-marksweep-scan-object-concurrent.h \
 	sgen-minor-scan-object.h \
+	sgen-marksweep-drain-gray-stack.h	\
 	sgen-protocol.h		\
 	sgen-scan-object.h	\
 	sgen-nursery-allocator.c	\

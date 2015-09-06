@@ -52,6 +52,7 @@
 #include <mono/utils/mono-mmap.h>
 
 #include "mini.h"
+#include "seq-points.h"
 #include "image-writer.h"
 #include "dwarfwriter.h"
 #include "mini-gc.h"
@@ -69,18 +70,6 @@
 #define TV_DECLARE(name) gint64 name
 #define TV_GETTIME(tv) tv = mono_100ns_ticks ()
 #define TV_ELAPSED(start,end) (((end) - (start)) / 10)
-
-#ifdef TARGET_WIN32
-#define SHARED_EXT ".dll"
-#elif defined(__ppc__) && defined(TARGET_MACH)
-#define SHARED_EXT ".dylib"
-#elif defined(TARGET_MACH) && defined(TARGET_X86) && !defined(__native_client_codegen__)
-#define SHARED_EXT ".dylib"
-#elif defined(TARGET_MACH) && defined(TARGET_AMD64) && !defined(__native_client_codegen__)
-#define SHARED_EXT ".dylib"
-#else
-#define SHARED_EXT ".so"
-#endif
 
 #define ALIGN_TO(val,align) ((((guint64)val) + ((align) - 1)) & ~((align) - 1))
 #define ALIGN_PTR_TO(ptr,align) (gpointer)((((gssize)(ptr)) + (align - 1)) & (~(align - 1)))
@@ -1934,14 +1923,14 @@ arch_emit_imt_thunk (MonoAotCompile *acfg, int offset, int *tramp_size)
 	code = buf;
 
 	/* Load the mscorlib got address */
-	ppc_ldptr (code, ppc_r11, sizeof (gpointer), ppc_r30);
+	ppc_ldptr (code, ppc_r12, sizeof (gpointer), ppc_r30);
 	/* Load the parameter from the GOT */
 	ppc_load (code, ppc_r0, offset * sizeof (gpointer));
-	ppc_ldptr_indexed (code, ppc_r11, ppc_r11, ppc_r0);
+	ppc_ldptr_indexed (code, ppc_r12, ppc_r12, ppc_r0);
 
 	/* Load and check key */
 	labels [1] = code;
-	ppc_ldptr (code, ppc_r0, 0, ppc_r11);
+	ppc_ldptr (code, ppc_r0, 0, ppc_r12);
 	ppc_cmp (code, 0, sizeof (gpointer) == 8 ? 1 : 0, ppc_r0, MONO_ARCH_IMT_REG);
 	labels [2] = code;
 	ppc_bc (code, PPC_BR_TRUE, PPC_BR_EQ, 0);
@@ -1952,18 +1941,18 @@ arch_emit_imt_thunk (MonoAotCompile *acfg, int offset, int *tramp_size)
 	ppc_bc (code, PPC_BR_TRUE, PPC_BR_EQ, 0);
 
 	/* Loop footer */
-	ppc_addi (code, ppc_r11, ppc_r11, 2 * sizeof (gpointer));
+	ppc_addi (code, ppc_r12, ppc_r12, 2 * sizeof (gpointer));
 	labels [4] = code;
 	ppc_b (code, 0);
 	mono_ppc_patch (labels [4], labels [1]);
 
 	/* Match */
 	mono_ppc_patch (labels [2], code);
-	ppc_ldptr (code, ppc_r11, sizeof (gpointer), ppc_r11);
-	/* r11 now contains the value of the vtable slot */
+	ppc_ldptr (code, ppc_r12, sizeof (gpointer), ppc_r12);
+	/* r12 now contains the value of the vtable slot */
 	/* this is not a function descriptor on ppc64 */
-	ppc_ldptr (code, ppc_r11, 0, ppc_r11);
-	ppc_mtctr (code, ppc_r11);
+	ppc_ldptr (code, ppc_r12, 0, ppc_r12);
+	ppc_mtctr (code, ppc_r12);
 	ppc_bcctr (code, PPC_BR_ALWAYS, 0);
 
 	/* Fail */
@@ -5334,7 +5323,7 @@ emit_exception_debug_info (MonoAotCompile *acfg, MonoCompile *cfg)
 {
 	MonoMethod *method;
 	int i, k, buf_size, method_index;
-	guint32 debug_info_size;
+	guint32 debug_info_size, seq_points_size;
 	guint8 *code;
 	MonoMethodHeader *header;
 	guint8 *p, *buf, *debug_info;
@@ -5358,7 +5347,9 @@ emit_exception_debug_info (MonoAotCompile *acfg, MonoCompile *cfg)
 
 	seq_points = cfg->seq_point_info;
 
-	buf_size = header->num_clauses * 256 + debug_info_size + 2048 + (seq_points ? (seq_points->len * 128) : 0) + cfg->gc_map_size;
+	seq_points_size = seq_point_info_get_write_size (seq_points);
+
+	buf_size = header->num_clauses * 256 + debug_info_size + 2048 + seq_points_size + cfg->gc_map_size;
 	p = buf = g_malloc (buf_size);
 
 	use_unwind_ops = cfg->unwind_ops != NULL;
@@ -5384,6 +5375,15 @@ emit_exception_debug_info (MonoAotCompile *acfg, MonoCompile *cfg)
 	if (jinfo->has_try_block_holes) {
 		MonoTryBlockHoleTableJitInfo *table = mono_jit_info_get_try_block_hole_table_info (jinfo);
 		encode_value (table->num_holes, p, &p);
+	}
+
+	if (jinfo->has_arch_eh_info) {
+		/*
+		 * In AOT mode, the code length is calculated from the address of the previous method,
+		 * which could include alignment padding, so calculating the start of the epilog as
+		 * code_len - epilog_size is correct any more. Save the real code len as a workaround.
+		 */
+		encode_value (jinfo->code_size, p, &p);
 	}
 
 	/* Exception table */
@@ -5555,27 +5555,9 @@ emit_exception_debug_info (MonoAotCompile *acfg, MonoCompile *cfg)
 		}
 	}
 
-	if (seq_points) {
-		int il_offset, native_offset, last_il_offset, last_native_offset, j;
+	if (seq_points)
+		p += seq_point_info_write (seq_points, p);
 
-		encode_value (seq_points->len, p, &p);
-		last_il_offset = last_native_offset = 0;
-		for (i = 0; i < seq_points->len; ++i) {
-			SeqPoint *sp = &seq_points->seq_points [i];
-			il_offset = sp->il_offset;
-			native_offset = sp->native_offset;
-			encode_value (il_offset - last_il_offset, p, &p);
-			encode_value (native_offset - last_native_offset, p, &p);
-			last_il_offset = il_offset;
-			last_native_offset = native_offset;
-
-			encode_value (sp->flags, p, &p);
-			encode_value (sp->next_len, p, &p);
-			for (j = 0; j < sp->next_len; ++j)
-				encode_value (sp->next [j], p, &p);
-		}
-	}
-		
 	g_assert (debug_info_size < buf_size);
 
 	encode_value (debug_info_size, p, &p);
@@ -8641,7 +8623,7 @@ compile_asm (MonoAotCompile *acfg)
 	if (acfg->aot_opts.outfile)
 		outfile_name = g_strdup_printf ("%s", acfg->aot_opts.outfile);
 	else
-		outfile_name = g_strdup_printf ("%s%s", acfg->image->name, SHARED_EXT);
+		outfile_name = g_strdup_printf ("%s%s", acfg->image->name, MONO_SOLIB_EXT);
 
 	tmp_outfile_name = g_strdup_printf ("%s.tmp", outfile_name);
 
@@ -8661,7 +8643,7 @@ compile_asm (MonoAotCompile *acfg)
 
 	g_free (command);
 
-	/*com = g_strdup_printf ("strip --strip-unneeded %s%s", acfg->image->name, SHARED_EXT);
+	/*com = g_strdup_printf ("strip --strip-unneeded %s%s", acfg->image->name, MONO_SOLIB_EXT);
 	printf ("Stripping the binary: %s\n", com);
 	system (com);
 	g_free (com);*/
@@ -8858,7 +8840,7 @@ mono_compile_assembly (MonoAssembly *ass, guint32 opts, const char *aot_options)
 		MonoDebugOptions *opt = mini_get_debug_options ();
 
 		opt->mdb_optimizations = TRUE;
-		opt->gen_seq_points = TRUE;
+		opt->gen_seq_points_debug_data = TRUE;
 
 		if (!mono_debug_enabled ()) {
 			aot_printerrf (acfg, "The soft-debug AOT option requires the --debug option.\n");
@@ -9012,7 +8994,7 @@ mono_compile_assembly (MonoAssembly *ass, guint32 opts, const char *aot_options)
 		if (acfg->aot_opts.outfile)
 			outfile_name = g_strdup_printf ("%s", acfg->aot_opts.outfile);
 		else
-			outfile_name = g_strdup_printf ("%s%s", acfg->image->name, SHARED_EXT);
+			outfile_name = g_strdup_printf ("%s%s", acfg->image->name, MONO_SOLIB_EXT);
 
 		/* 
 		 * Can't use g_file_open_tmp () as it will be deleted at exit, and

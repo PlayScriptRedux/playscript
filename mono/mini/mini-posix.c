@@ -297,6 +297,9 @@ MONO_SIG_HANDLER_FUNC (static, sigusr1_signal_handler)
 #endif
 
 #ifdef SIGPROF
+
+static int profiling_signal_in_use;
+
 #if defined(__ia64__) || defined(__sparc__) || defined(sparc) || defined(__s390__) || defined(s390)
 
 MONO_SIG_HANDLER_FUNC (static, sigprof_signal_handler)
@@ -308,37 +311,6 @@ MONO_SIG_HANDLER_FUNC (static, sigprof_signal_handler)
 }
 
 #else
-
-static int
-get_stage2_signal_handler (void)
-{
-#if defined(PLATFORM_ANDROID)
-	return SIGINFO;
-#elif !defined (SIGRTMIN)
-#ifdef SIGUSR2
-	return SIGUSR2;
-#else
-	return -1;
-#endif /* SIGUSR2 */
-#else
-	static int prof2_signum = -1;
-	int i;
-	if (prof2_signum != -1)
-		return prof2_signum;
-	/* we try to avoid SIGRTMIN and any one that might have been set already */
-	for (i = SIGRTMIN + 2; i < SIGRTMAX; ++i) {
-		struct sigaction sinfo;
-		sigaction (i, NULL, &sinfo);
-		if (sinfo.sa_handler == SIG_DFL && (void*)sinfo.sa_sigaction == (void*)SIG_DFL) {
-			prof2_signum = i;
-			return i;
-		}
-	}
-	/* fallback to the old way */
-	return SIGRTMIN + 2;
-#endif
-}
-
 
 static void
 per_thread_profiler_hit (void *ctx)
@@ -354,7 +326,7 @@ per_thread_profiler_hit (void *ctx)
 		MonoContext mono_context;
 		guchar *ips [call_chain_depth + 1];
 
-		mono_arch_sigctx_to_monoctx (ctx, &mono_context);
+		mono_sigctx_to_monoctx (ctx, &mono_context);
 		ips [0] = MONO_CONTEXT_GET_IP (&mono_context);
 		
 		if (jit_tls != NULL) {
@@ -414,29 +386,35 @@ per_thread_profiler_hit (void *ctx)
 	}
 }
 
-MONO_SIG_HANDLER_FUNC (static, sigprof_stage2_signal_handler)
-{
-	MONO_SIG_HANDLER_GET_CONTEXT;
-
-	per_thread_profiler_hit (ctx);
-
-	mono_chain_signal (MONO_SIG_HANDLER_PARAMS);
-}
-
 MONO_SIG_HANDLER_FUNC (static, sigprof_signal_handler)
 {
 	MonoThreadInfo *info;
 	int old_errno = errno;
-	int hp_save_index = mono_hazard_pointer_save_for_signal_handler ();
+	int hp_save_index;
 	MONO_SIG_HANDLER_GET_CONTEXT;
 
-	FOREACH_THREAD_SAFE (info) {
-		if (mono_thread_info_get_tid (info) == mono_native_thread_id_get ())
-			continue;
-		mono_threads_pthread_kill (info, get_stage2_signal_handler ());
-	} END_FOREACH_THREAD_SAFE;
+	if (mono_thread_info_get_small_id () == -1)
+		return; //an non-attached thread got the signal
 
+	if (!mono_domain_get () || !mono_native_tls_get_value (mono_jit_tls_id))
+		return; //thread in the process of dettaching
+
+	hp_save_index = mono_hazard_pointer_save_for_signal_handler ();
+
+	/* If we can't consume a profiling request it means we're the initiator. */
+	if (!(mono_threads_consume_async_jobs () & MONO_SERVICE_REQUEST_SAMPLE)) {
+		FOREACH_THREAD_SAFE (info) {
+			if (mono_thread_info_get_tid (info) == mono_native_thread_id_get ())
+				continue;
+
+			mono_threads_add_async_job (info, MONO_SERVICE_REQUEST_SAMPLE);
+			mono_threads_pthread_kill (info, profiling_signal_in_use);
+		} END_FOREACH_THREAD_SAFE;
+	}
+
+	mono_thread_info_set_is_async_context (TRUE);
 	per_thread_profiler_hit (ctx);
+	mono_thread_info_set_is_async_context (FALSE);
 
 	mono_hazard_pointer_restore_for_signal_handler (hp_save_index);
 	errno = old_errno;
@@ -706,7 +684,8 @@ mono_runtime_setup_stat_profiler (void)
 			perror ("open /dev/rtc");
 			return;
 		}
-		add_signal_handler (SIGPROF, sigprof_signal_handler);
+		profiling_signal_in_use = SIGPROF;
+		add_signal_handler (profiling_signal_in_use, sigprof_signal_handler);
 		if (ioctl (rtc_fd, RTC_IRQP_SET, freq) == -1) {
 			perror ("set rtc freq");
 			return;
@@ -736,8 +715,8 @@ mono_runtime_setup_stat_profiler (void)
 	if (inited)
 		return;
 	inited = 1;
-	add_signal_handler (get_itimer_signal (), sigprof_signal_handler);
-	add_signal_handler (get_stage2_signal_handler (), sigprof_stage2_signal_handler);
+	profiling_signal_in_use = get_itimer_signal ();
+	add_signal_handler (profiling_signal_in_use, sigprof_signal_handler);
 	setitimer (get_itimer_mode (), &itval, NULL);
 #endif
 }
@@ -746,7 +725,11 @@ mono_runtime_setup_stat_profiler (void)
 pid_t
 mono_runtime_syscall_fork ()
 {
-#if defined(SYS_fork)
+#if defined(PLATFORM_ANDROID)
+	/* SYS_fork is defined to be __NR_fork which is not defined in some ndk versions */
+	g_assert_not_reached ();
+	return 0;
+#elif defined(SYS_fork)
 	return (pid_t) syscall (SYS_fork);
 #else
 	g_assert_not_reached ();

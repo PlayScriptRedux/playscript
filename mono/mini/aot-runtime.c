@@ -58,22 +58,13 @@
 #include <mono/utils/mono-digest.h>
 
 #include "mini.h"
+#include "seq-points.h"
 #include "version.h"
 
 #ifndef DISABLE_AOT
 
 #ifdef TARGET_OSX
 #define ENABLE_AOT_CACHE
-#endif
-
-#ifdef TARGET_WIN32
-#define SHARED_EXT ".dll"
-#elif ((defined(__ppc__) || defined(__powerpc__) || defined(__ppc64__)) || defined(__MACH__)) && !defined(__linux__)
-#define SHARED_EXT ".dylib"
-#elif defined(__APPLE__) && defined(TARGET_X86) && !defined(__native_client_codegen__)
-#define SHARED_EXT ".dylib"
-#else
-#define SHARED_EXT ".so"
 #endif
 
 #define ALIGN_TO(val,align) ((((guint64)val) + ((align) - 1)) & ~((align) - 1))
@@ -1444,7 +1435,7 @@ aot_cache_load_module (MonoAssembly *assembly, char **aot_name)
 	 */
 	hash = get_aot_config_hash (assembly);
 
-	tmp2 = g_strdup_printf ("%s-%s%s", assembly->image->assembly_name, hash, SHARED_EXT);
+	tmp2 = g_strdup_printf ("%s-%s%s", assembly->image->assembly_name, hash, MONO_SOLIB_EXT);
 	fname = g_build_filename (cache_dir, tmp2, NULL);
 	*aot_name = fname;
 	g_free (tmp2);
@@ -1772,13 +1763,21 @@ load_aot_module (MonoAssembly *assembly, gpointer user_data)
 			sofile = aot_cache_load_module (assembly, &aot_name);
 		if (!sofile) {
 			char *err;
-			aot_name = g_strdup_printf ("%s%s", assembly->image->name, SHARED_EXT);
+			aot_name = g_strdup_printf ("%s%s", assembly->image->name, MONO_SOLIB_EXT);
 
 			sofile = mono_dl_open (aot_name, MONO_DL_LAZY, &err);
 
 			if (!sofile) {
 				mono_trace (G_LOG_LEVEL_INFO, MONO_TRACE_AOT, "AOT module '%s' not found: %s\n", aot_name, err);
 				g_free (err);
+
+				aot_name = g_strdup_printf ("%s/mono/aot-cache/%s/%s%s", mono_assembly_getrootdir(), ARCHITECTURE, g_path_get_basename (assembly->image->name), MONO_SOLIB_EXT);
+				sofile = mono_dl_open (aot_name, MONO_DL_LAZY, &err);
+				if (!sofile) {
+					mono_trace (G_LOG_LEVEL_INFO, MONO_TRACE_AOT, "AOT module '%s' not found: %s\n", aot_name, err);
+					g_free (err);
+				}
+
 			}
 		}
 	}
@@ -2585,17 +2584,21 @@ decode_exception_debug_info (MonoAotModule *amodule, MonoDomain *domain,
 	} else {
 		num_holes = try_holes_info_size = 0;
 	}
+
+	if (has_arch_eh_jit_info) {
+		flags |= JIT_INFO_HAS_ARCH_EH_INFO;
+		arch_eh_jit_info_size = sizeof (MonoArchEHJitInfo);
+		/* Overwrite the original code_len which includes alignment padding */
+		code_len = decode_value (p, &p);
+	} else {
+		arch_eh_jit_info_size = 0;
+	}
+
 	/* Exception table */
 	if (has_clauses)
 		num_clauses = decode_value (p, &p);
 	else
 		num_clauses = 0;
-	if (has_arch_eh_jit_info) {
-		flags |= JIT_INFO_HAS_ARCH_EH_INFO;
-		arch_eh_jit_info_size = sizeof (MonoArchEHJitInfo);
-	} else {
-		arch_eh_jit_info_size = 0;
-	}
 
 	if (from_llvm) {
 		MonoJitExceptionInfo *clauses;
@@ -2768,30 +2771,8 @@ decode_exception_debug_info (MonoAotModule *amodule, MonoDomain *domain,
 
 	if (method && has_seq_points) {
 		MonoSeqPointInfo *seq_points;
-		int il_offset, native_offset, last_il_offset, last_native_offset, j;
 
-		int len = decode_value (p, &p);
-
-		seq_points = g_malloc0 (sizeof (MonoSeqPointInfo) + (len - MONO_ZERO_LEN_ARRAY) * sizeof (SeqPoint));
-		seq_points->len = len;
-		last_il_offset = last_native_offset = 0;
-		for (i = 0; i < len; ++i) {
-			SeqPoint *sp = &seq_points->seq_points [i];
-			il_offset = last_il_offset + decode_value (p, &p);
-			native_offset = last_native_offset + decode_value (p, &p);
-
-			sp->il_offset = il_offset;
-			sp->native_offset = native_offset;
-			
-			sp->flags = decode_value (p, &p);
-			sp->next_len = decode_value (p, &p);
-			sp->next = g_new (int, sp->next_len);
-			for (j = 0; j < sp->next_len; ++j)
-				sp->next [j] = decode_value (p, &p);
-
-			last_il_offset = il_offset;
-			last_native_offset = native_offset;
-		}
+		p += seq_point_info_read (&seq_points, p, FALSE);
 
 		mono_domain_lock (domain);
 		g_hash_table_insert (domain_jit_info (domain)->seq_points, method, seq_points);
@@ -3399,14 +3380,14 @@ load_patch_info (MonoAotModule *aot_module, MonoMemPool *mp, int n_patches,
 
 		got_offset = decode_value (p, &p);
 
-		if (aot_module->got [got_offset]) {
+		shared_p = aot_module->blob + mono_aot_get_offset (aot_module->got_info_offsets, got_offset);
+
+		ji->type = decode_value (shared_p, &shared_p);
+
+		/* See load_method () for SFLDA */
+		if (aot_module->got [got_offset] && ji->type != MONO_PATCH_INFO_SFLDA) {
 			/* Already loaded */
-			//printf ("HIT!\n");
 		} else {
-			shared_p = aot_module->blob + mono_aot_get_offset (aot_module->got_info_offsets, got_offset);
-
-			ji->type = decode_value (shared_p, &shared_p);
-
 			res = decode_patch (aot_module, mp, ji, shared_p, &shared_p);
 			if (!res)
 				goto cleanup;
@@ -3574,11 +3555,19 @@ load_method (MonoDomain *domain, MonoAotModule *amodule, MonoImage *image, MonoM
 
 		for (pindex = 0; pindex < n_patches; ++pindex) {
 			MonoJumpInfo *ji = &patches [pindex];
+			gpointer addr;
 
-			if (!amodule->got [got_slots [pindex]]) {
-				amodule->got [got_slots [pindex]] = mono_resolve_patch_target (method, domain, code, ji, TRUE);
+			/*
+			 * For SFLDA, we need to call resolve_patch_target () since the GOT slot could have
+			 * been initialized by load_method () for a static cctor before the cctor has
+			 * finished executing (#23242).
+			 */
+			if (!amodule->got [got_slots [pindex]] || ji->type == MONO_PATCH_INFO_SFLDA) {
+				addr = mono_resolve_patch_target (method, domain, code, ji, TRUE);
 				if (ji->type == MONO_PATCH_INFO_METHOD_JUMP)
-					amodule->got [got_slots [pindex]] = mono_create_ftnptr (domain, amodule->got [got_slots [pindex]]);
+					addr = mono_create_ftnptr (domain, addr);
+				mono_memory_barrier ();
+				amodule->got [got_slots [pindex]] = addr;
 				if (ji->type == MONO_PATCH_INFO_METHOD_JUMP)
 					register_jump_target_got_slot (domain, ji->data.method, &(amodule->got [got_slots [pindex]]));
 			}

@@ -22,9 +22,10 @@ TEST_RESOURCES = \
 TEST_MCS_FLAGS = -r:System.Drawing.dll -r:Mono.Security.dll -r:System.Data -r:System.Xml.dll -r:System.Core.dll -nowarn:618,672,219,67,169,612 \
 	$(foreach f, $(TEST_RESOURCES), -resource:$(f),$(notdir $(f)))
 
-LIB_MCS_FLAGS = -nowarn:618 -d:CONFIGURATION_2_0 -unsafe $(RESOURCE_FILES:%=-resource:%)
+REFERENCE_SOURCES_FLAGS = -d:FEATURE_PAL,SYSTEM_NAMESPACE,MONO
+LIB_MCS_FLAGS = -nowarn:618 -d:CONFIGURATION_2_0 $(REFERENCE_SOURCES_FLAGS) -unsafe $(RESOURCE_FILES:%=-resource:%)
 TEST_MCS_FLAGS += -r:System.Configuration
-PROFILE_ANY_MOBILE := $(filter monotouch monotouch_runtime monodroid xammaci mobile mobile_static, $(PROFILE))
+PROFILE_ANY_MOBILE := $(filter monotouch monotouch_runtime monodroid xammac mobile mobile_static, $(PROFILE))
 
 ifeq (2.1, $(FRAMEWORK_VERSION))
 LIB_MCS_FLAGS += -d:INSIDE_SYSTEM
@@ -55,8 +56,6 @@ LIB_MCS_FLAGS += -d:SECURITY_DEP -d:XML_DEP -r:PrebuiltSystem=$(secxml_libdir)/S
 endif
 
 EXTRA_DISTFILES = \
-	System.Text.RegularExpressions/notes.txt	\
-	System.ComponentModel.Design/Changelog		\
 	Test/test-config-file				\
 	Test/test-config-file-net-2.0			\
 	Test/System.Security.Cryptography.X509Certificates/pkits/ChangeLog	\
