@@ -1,2 +1,0 @@
-#!/bin/sh
-exec /Users/$USER/projects/mono-as3-inst/bin/mono $MONO_OPTIONS /Users/$USER/projects/mono-as3-inst/lib/mono/4.5/mcs.exe "$@"

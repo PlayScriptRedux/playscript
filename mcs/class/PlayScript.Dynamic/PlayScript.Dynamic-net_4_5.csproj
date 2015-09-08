@@ -255,10 +255,4 @@
       <Link>DynamicAttribute.cs</Link>
     </Compile>
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Mono.CSharp\Mono.CSharp-net_4_5.csproj">
-      <Project>{811AC316-9CC2-497D-A45E-7B6B1E0E481B}</Project>
-      <Name>Mono.CSharp-net_4_5</Name>
-    </ProjectReference>
-  </ItemGroup>
 </Project>

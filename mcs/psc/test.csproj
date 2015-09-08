@@ -3,12 +3,13 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>10.0.0</ProductVersion>
+    <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{B5782FD5-CBC6-4194-BF51-A20D55CEBE78}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>test</RootNamespace>
     <AssemblyName>test2</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>
@@ -19,6 +20,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Externalconsole>True</Externalconsole>
+    <NoStdLib>true</NoStdLib>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -27,24 +29,29 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Externalconsole>True</Externalconsole>
+    <NoStdLib>true</NoStdLib>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <ProjectReference Include="..\class\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net_4_0.csproj">
-      <Project>{0BACBE20-34DD-4E24-8B91-87970E8A23B9}</Project>
-      <Name>PlayScript.Dynamic_aot-net_4_0</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\class\pscorlib_aot\pscorlib_aot-net_4_0_monomac.csproj">
-      <Project>{EDBAC91B-2817-479E-8DDF-B24ADDA563A6}</Project>
-      <Name>pscorlib_aot-net_4_0_monomac</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="..\tests\pstest-003.as">
       <Link>pstest-003.as</Link>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\class\PlayScript.Dynamic\PlayScript.Dynamic-net_4_5.csproj">
+      <Project>{5F7F9AF6-CE83-4F13-A25F-355DB2861D43}</Project>
+      <Name>PlayScript.Dynamic-net_4_5</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\class\PlayScript.Optimization\PlayScript.Optimization.csproj">
+      <Project>{4069FC26-5839-4E53-B50C-B7AAF7CD3227}</Project>
+      <Name>PlayScript.Optimization</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\class\pscorlib\pscorlib-net_4_5.csproj">
+      <Project>{EDBACFCB-2817-4A2E-8DDF-B24AEFA56352}</Project>
+      <Name>pscorlib-net_4_5</Name>
+    </ProjectReference>
   </ItemGroup>
 </Project>
