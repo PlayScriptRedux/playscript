@@ -38,11 +38,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Mono.Optimization\Msil.cs" />
-    <Compile Include="Mono.Optimization\InlineAttribute.cs" />
+    <Compile Include="PlayScript.Optimization\InlineAttribute.cs" />
+    <Compile Include="PlayScript.Optimization\Msil.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <ItemGroup>
-    <Folder Include="Mono.Optimization\" />
-  </ItemGroup>
 </Project>

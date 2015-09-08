@@ -215,7 +215,7 @@ net_4_5_dirs := \
 	System.Windows \
 	System.Xml.Serialization \
 	Mono.PlayScript \
-	Mono.Optimization \
+	PlayScript.Optimization \
 	PlayScript.Dynamic \
 	PlayScript.Dynamic_aot \
 	pscorlib \

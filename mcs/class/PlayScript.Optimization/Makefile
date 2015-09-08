@@ -1,7 +1,7 @@
-thisdir = class/Mono.Optimization
+thisdir = class/PlayScript.Optimization
 include ../../build/rules.make
 
-LIBRARY = Mono.Optimization.dll
+LIBRARY = PlayScript.Optimization.dll
 LIBRARY_SNK = ../mono.snk
 LIBRARY_PACKAGE = none
 

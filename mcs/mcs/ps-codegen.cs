@@ -127,13 +127,11 @@ namespace {1} {{
 
 			string fileStr = os.ToString();
 			String path;
+			//TODO: This is an ugly use of try/catch and needs cleaned up
 			try {
-//			if (module.Compiler.Settings.OutputFile.Length > 0) {
-				path = System.IO.Path.Combine (System.IO.Path.GetDirectoryName (System.IO.Path.GetFullPath (module.Compiler.Settings.OutputFile)), "dynamic.g.cs");
-			} catch { //
-				path = System.IO.Path.Combine (System.IO.Path.GetTempPath (), "dynamic.g.cs");
-//				Console.WriteLine ("! Compiler.Settings.OutputFile is not set: {0}", module.Compiler.Settings.OutputFile);
-//				Console.WriteLine ("! Setting to: {0}", path);
+				path = Path.Combine (Path.GetDirectoryName (Path.GetFullPath (module.Compiler.Settings.OutputFile)), "dynamic.g.cs");
+			} catch {
+				path = Path.Combine (Path.GetTempPath (), "dynamic.g.cs");
 			}
 			File.WriteAllText(path, fileStr);
 
@@ -258,8 +256,15 @@ namespace _embed_loaders {{
 			}
 			
 			string fileStr = os.ToString();
-			var path = System.IO.Path.Combine (System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(module.Compiler.Settings.OutputFile)), "embed.g.cs");
-			System.IO.File.WriteAllText(path, fileStr);
+			//TODO: This is an ugly use of try/catch and needs cleaned up
+			String path;
+			try {
+				path = Path.Combine (Path.GetDirectoryName (Path.GetFullPath (module.Compiler.Settings.OutputFile)), "embed.g.cs");
+			} catch {
+				path = Path.Combine (Path.GetTempPath (), "embed.g.cs");
+			}
+
+			File.WriteAllText(path, fileStr);
 			
 			byte[] byteArray = Encoding.ASCII.GetBytes( fileStr );
 			var input = new MemoryStream( byteArray, false );

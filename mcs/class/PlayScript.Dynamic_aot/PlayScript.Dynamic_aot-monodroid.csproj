@@ -62,7 +62,6 @@
     <Folder Include="System\" />
     <Folder Include="PlayScript\DynamicRuntime\" />
   </ItemGroup>
-  <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\CallSite.cs">
       <Link>PlayScript\CallSite.cs</Link>
@@ -253,4 +252,5 @@
       <LastGenOutput>PSBinaryComparison.cs</LastGenOutput>
     </None>
   </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
 </Project>

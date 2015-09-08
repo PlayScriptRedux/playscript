@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<symbols>
+  <files>
+    <file id="1" name="test-debug-Optimization-01.play" checksum="c691a30293fca156238b6628c5422c13" />
+  </files>
+  <methods>
+    <method token="0x6000001">
+      <sequencepoints />
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000002">
+      <sequencepoints>
+        <entry il="0x0" row="10" col="43" file_ref="1" hidden="false" />
+        <entry il="0x1" row="12" col="19" file_ref="1" hidden="false" />
+        <entry il="0x8" row="13" col="13" file_ref="1" hidden="false" />
+        <entry il="0xd" row="14" col="13" file_ref="1" hidden="false" />
+        <entry il="0x15" row="15" col="13" file_ref="1" hidden="false" />
+        <entry il="0x1d" row="19" col="13" file_ref="1" hidden="false" />
+        <entry il="0x25" row="19" col="18" file_ref="1" hidden="false" />
+        <entry il="0x2a" row="20" col="13" file_ref="1" hidden="false" />
+        <entry il="0x35" row="20" col="18" file_ref="1" hidden="false" />
+        <entry il="0x3a" row="21" col="13" file_ref="1" hidden="false" />
+        <entry il="0x41" row="21" col="18" file_ref="1" hidden="false" />
+        <entry il="0x46" row="22" col="13" file_ref="1" hidden="false" />
+        <entry il="0x4c" row="22" col="18" file_ref="1" hidden="false" />
+        <entry il="0x51" row="23" col="13" file_ref="1" hidden="false" />
+        <entry il="0x53" row="23" col="18" file_ref="1" hidden="false" />
+        <entry il="0x58" row="24" col="13" file_ref="1" hidden="false" />
+        <entry il="0x63" row="24" col="18" file_ref="1" hidden="false" />
+        <entry il="0x68" row="25" col="13" file_ref="1" hidden="false" />
+        <entry il="0x6f" row="25" col="18" file_ref="1" hidden="false" />
+        <entry il="0x74" row="26" col="13" file_ref="1" hidden="false" />
+        <entry il="0x7a" row="26" col="18" file_ref="1" hidden="false" />
+        <entry il="0x7f" row="27" col="13" file_ref="1" hidden="false" />
+        <entry il="0x81" row="27" col="18" file_ref="1" hidden="false" />
+        <entry il="0x86" row="28" col="13" file_ref="1" hidden="false" />
+        <entry il="0x91" row="28" col="18" file_ref="1" hidden="false" />
+        <entry il="0x96" row="29" col="13" file_ref="1" hidden="false" />
+        <entry il="0x9d" row="29" col="18" file_ref="1" hidden="false" />
+        <entry il="0xa2" row="31" col="13" file_ref="1" hidden="false" />
+        <entry il="0xaa" row="32" col="9" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals>
+        <entry name="a" il_index="0" scope_ref="0" />
+        <entry name="i" il_index="1" scope_ref="0" />
+        <entry name="j" il_index="2" scope_ref="0" />
+        <entry name="k" il_index="3" scope_ref="0" />
+      </locals>
+      <scopes />
+    </method>
+  </methods>
+</symbols>

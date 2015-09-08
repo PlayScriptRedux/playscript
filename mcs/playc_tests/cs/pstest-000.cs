@@ -1,11 +1,11 @@
+// Compiler options: -r:../class/lib/net_4_5/Play.Optimization.dll
 namespace Test
 {
 	using System;
 	using System.Diagnostics;
-	using Mono.Optimization;
+	using PlayScript.Optimization;
 
 	// Test instrinsic support.
-
 
 	public class Test 
 	{
@@ -76,8 +76,6 @@ namespace Test
 			// for() copy Time 1562ms 15625743
 			// Msil copy Time 536ms 5365352
 			// Array.Copy() Time 537ms 5375153
-
-			Console.ReadKey ();
 		}
 
 		public static void ForCopy()
