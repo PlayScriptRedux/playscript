@@ -1,0 +1,7 @@
+#!/bin/bash
+MONO_RUNTIME='./../../runtime/mono-wrapper' MONO_PATH="./../class/lib/net_4_5::$MONO_PATH" ./../../runtime/mono-wrapper --trace=N:Mono.CSharp ./../class/lib/build/mcs.exe -nostdlib --stacktrace -d:"NET_4_0;NET_4_5" -r:../class/lib/net_4_5/mscorlib.dll -r:../class/lib/net_4_5/System.Core.dll -r:../class/lib/net_4_5/Microsoft.CSharp.dll "$@" > /tmp/ptrace
+cut -d " " -f 4,5 /tmp/ptrace > /tmp/ptrace2
+cd ../../../../mono/mcs/tests
+MONO_RUNTIME='./../../runtime/mono-wrapper' MONO_PATH="./../class/lib/net_4_5::$MONO_PATH" ./../../runtime/mono-wrapper --trace=N:Mono.CSharp ./../class/lib/build/mcs.exe -nostdlib --stacktrace -d:"NET_4_0;NET_4_5" -r:../class/lib/net_4_5/mscorlib.dll -r:../class/lib/net_4_5/System.Core.dll -r:../class/lib/net_4_5/Microsoft.CSharp.dll "$@" > /tmp/mtrace
+cut -d " " -f 4,5 /tmp/mtrace > /tmp/mtrace2
+diffmerge /tmp/mtrace2 /tmp/ptrace2 &
