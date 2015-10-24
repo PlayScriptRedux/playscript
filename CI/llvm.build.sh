@@ -19,7 +19,8 @@ pushd ../${LLVMDIR}
 if [ "${PWD##$i{CURDIR/}}" == "${LLVMDIR}" ]
   git reset --hard
   git clean -d -f
-  git checkout --force mono-3-2-4
+  git checkout master
+  git pull
 fi
 
 ./configure \
