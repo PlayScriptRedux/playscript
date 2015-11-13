@@ -44,9 +44,9 @@
       <Project>{EDBAC91B-2817-479E-8DDF-B24ADDA563A6}</Project>
       <Name>pscorlib_aot-net_monomac</Name>
     </ProjectReference>
-    <ProjectReference Include="..\class\Mono.Optimization\Mono.Optimization.csproj">
+    <ProjectReference Include="..\class\PlayScript.Optimization\PlayScript.Optimization.csproj">
       <Project>{4069FC26-5839-4E53-B50C-B7AAF7CD3227}</Project>
-      <Name>Mono.Optimization</Name>
+      <Name>PlayScript.Optimization</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

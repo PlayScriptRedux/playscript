@@ -1,6 +1,6 @@
 using System;
 
-namespace Mono.Optimization
+namespace PlayScript.Optimization
 {
 	// Msil ops
 	public enum Op {
@@ -296,3 +296,4 @@ namespace Mono.Optimization
 
 	}
 }
+

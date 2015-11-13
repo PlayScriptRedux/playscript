@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>10.0.20506</ProductVersion>
+    <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{08B5AD8B-5F1C-48F4-8B7D-A5D18208281B}</ProjectGuid>
     <OutputType>Exe</OutputType>
@@ -19,7 +19,7 @@
     <DebugType>full</DebugType>
     <Optimize>False</Optimize>
     <OutputPath>.</OutputPath>
-    <DefineConstants>TRACE;DEBUG;NET_4_0;STATIC;NO_SYMBOL_WRITER;NO_AUTHENTICODE;PLAYSCRIPT</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;NET_4_5;STATIC;NO_SYMBOL_WRITER;NO_AUTHENTICODE;PLAYSCRIPT</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <UseVSHostingProcess>false</UseVSHostingProcess>
@@ -53,9 +53,18 @@
     <Optimize>False</Optimize>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Xml" />
-    <Reference Include="System.Core" />
+    <Reference Include="System.Xml">
+      <HintPath>..\class\lib\net_4_5\System.Xml.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Core">
+      <HintPath>..\class\lib\net_4_5\System.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="mscorlib">
+      <HintPath>..\class\lib\net_4_5\mscorlib.dll</HintPath>
+    </Reference>
+    <Reference Include="System">
+      <HintPath>..\class\lib\net_4_5\System.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\build\common\Consts.cs">
@@ -166,8 +175,11 @@
     <Compile Include="..\class\Mono.Security\Mono.Security.Cryptography\CryptoConvert.cs">
       <Link>CryptoConvert.cs</Link>
     </Compile>
-    <Compile Include="">
-      <Link></Link>
+    <Compile Include="..\mcs\cs-parser.cs">
+      <Link>cs-parser.cs</Link>
+    </Compile>
+    <Compile Include="..\mcs\ps-parser.cs">
+      <Link>ps-parser.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup Label="IKVM.Reflection">
@@ -202,11 +214,17 @@
   </Target>
   -->
   <ItemGroup>
-    <Content Include="..\mcs\cs-parser.jay">
-      <Gettext-ScanForTranslations>False</Gettext-ScanForTranslations>
-    </Content>
+    <ProjectReference Include="..\class\PlayScript.Optimization\PlayScript.Optimization.csproj">
+      <Project>{4069FC26-5839-4E53-B50C-B7AAF7CD3227}</Project>
+      <Name>PlayScript.Optimization</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\mcs\ps-parser.jay" />
+    <None Include="..\mcs\cs-parser.jay">
+      <Link>cs-parser.jay</Link>
+    </None>
+    <None Include="..\mcs\ps-parser.jay">
+      <Link>ps-parser.jay</Link>
+    </None>
   </ItemGroup>
 </Project>

@@ -1234,8 +1234,6 @@ namespace Mono.CSharp {
 
 		protected override bool DoResolve (BlockContext ec)
 		{
-			var isPlayScript = ec.FileType == SourceFileType.PlayScript;
-
 			var block_return_type = ec.ReturnType;
 
 			if (expr == null) {
@@ -1263,7 +1261,7 @@ namespace Mono.CSharp {
 				if (ec.CurrentIterator != null) {
 					Error_ReturnFromIterator (ec);
 				} else if (ec.ReturnType != InternalType.ErrorType) {
-					if (ec.HasNoReturnType && isPlayScript) {
+					if (ec.HasNoReturnType && ec.IsPlayScript) {
 						expr = new MemberAccess(new MemberAccess(new SimpleName("PlayScript", loc), "Undefined", loc), "_undefined", loc).Resolve (ec);
 						return true;
 					} else 
@@ -3164,8 +3162,6 @@ namespace Mono.CSharp {
 
 		public override bool Resolve (BlockContext bc)
 		{
-			var isPlayScript = bc.FileType == SourceFileType.PlayScript;
-
 			if ((flags & Flags.Resolved) != 0)
 				return true;
 
@@ -3205,7 +3201,7 @@ namespace Mono.CSharp {
 					continue;
 				}
 
-				if (isPlayScript) {
+				if (bc.IsPlayScript) {
 					if (!allowDynamic && Statement.DynamicOps != 0) 
 						ErrorIllegalDynamic (bc, s.loc);
 					Statement.DynamicOps = 0;
@@ -4313,8 +4309,6 @@ namespace Mono.CSharp {
 
 		public override bool Resolve (BlockContext bc)
 		{
-			var isPlayScript = bc.FileType == SourceFileType.PlayScript;
-
 			// TODO: if ((flags & Flags.Resolved) != 0)
 
 			if (resolved)
@@ -4328,7 +4322,7 @@ namespace Mono.CSharp {
 			//
 			// PlayScript specific setup
 			//
-			if (isPlayScript) {
+			if (bc.IsPlayScript) {
 				PsInitializeDefaultArgs (bc);
 				PsCreateVarArgsArray (bc);
 			}
@@ -4362,7 +4356,7 @@ namespace Mono.CSharp {
 			//	return type of '*', but not all code paths return a value, PlayScript
 			//		will consider this a compiler error instead of automatically returing
 			//		undefined in those cases. I think this behavior is favorable.
-			if (isPlayScript && bc.HasNoReturnType) {
+			if (bc.IsPlayScript && bc.HasNoReturnType) {
 				var ret = new Return (null, EndLocation);
 				ret.Resolve (bc);
 				statements.Add (ret);
@@ -5179,16 +5173,7 @@ namespace Mono.CSharp {
 
 			protected override bool DoFlowAnalysis (FlowAnalysisContext fc)
 			{
-				// TODO: Clean up, FileType can be null on compiler generated code
-				bool isPlayScript; 
-				try {
-					isPlayScript = loc.SourceFile.FileType == SourceFileType.PlayScript;
-				} catch {
-					isPlayScript = false;
-				}
-
-
-				if (!isPlayScript) // AS allows empty case blocks && AS allows fall throughs
+				if (!loc.IsPlayScript) // AS allows empty case blocks && AS allows fall throughs
 					if (FallOut) {
 						fc.Report.Error (8070, loc, "Control cannot fall out of switch statement through final case label `{0}'",
 							label.GetSignatureForError ());
@@ -7304,8 +7289,6 @@ namespace Mono.CSharp {
 
 		public override bool Resolve (BlockContext bc)
 		{
-			var isPlayScript = bc.FileType == SourceFileType.PlayScript;
-
 			using (bc.Set (ResolveContext.Options.CatchScope)) {
 				if (type_expr == null) {
 					if (CreateExceptionVariable (bc.Module.Compiler.BuiltinTypes.Object)) {
@@ -7326,7 +7309,7 @@ namespace Mono.CSharp {
 					} else if (li != null) {
 
 						// For PlayScript catch (e:Error) { convert to catch (Exception __e), then convert to Error in catch block..
-						if (isPlayScript && type == bc.Module.PredefinedTypes.AsError.Resolve ()) {
+						if (bc.IsPlayScript && type == bc.Module.PredefinedTypes.AsError.Resolve ()) {
 
 							// Save old error var so we can use it below
 							psErrorLi = li;
@@ -8954,8 +8937,6 @@ namespace Mono.CSharp {
 
 		public override bool Resolve (BlockContext ec)
 		{
-			var isPlayScript = ec.FileType == SourceFileType.PlayScript;
-
 			// Actionscript can specify a block scope local variable instead of declaring a new local variable.
 			if (varRef != null) {
 				var locVarRef = varRef.Resolve (ec) as LocalVariableReference;
@@ -8993,7 +8974,7 @@ namespace Mono.CSharp {
 			}
 
 			// PlayScript - always check if var is enumerable before doing loop
-			if (isPlayScript && expr != null && 
+			if (ec.IsPlayScript && expr != null && 
 			    (expr.Type.IsClass || expr.Type.IsInterface || expr.Type.BuiltinType == BuiltinTypeSpec.Type.Dynamic)) {
 
 				//

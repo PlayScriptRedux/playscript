@@ -1,6 +1,6 @@
 thisdir := .
 
-SUBDIRS := build jay mcs class playc nunit24 ilasm tools tests errors docs
+SUBDIRS := build jay mcs class psc nunit24 ilasm tools tests errors docs
 
 # Resgen is corlib specific tool
 

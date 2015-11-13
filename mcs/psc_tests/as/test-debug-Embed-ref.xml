@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<symbols>
+  <files>
+    <file id="1" name="test-debug-Embed.as" checksum="ac860d37991e331dec908d130beebec4" />
+    <file id="2" name="embed.g.cs" checksum="7f43e37cef92307104ef91f54a513a6c" />
+  </files>
+  <methods>
+    <method token="0x6000001">
+      <sequencepoints />
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000002">
+      <sequencepoints>
+        <entry il="0x0" row="12" col="37" file_ref="1" hidden="false" />
+        <entry il="0x1" row="14" col="8" file_ref="1" hidden="false" />
+        <entry il="0x2" row="15" col="16" file_ref="1" hidden="false" />
+        <entry il="0x98" row="16" col="4" file_ref="1" hidden="false" />
+        <entry il="0x99" row="16" col="6" file_ref="1" hidden="false" />
+        <entry il="0xb3" row="16" col="22" file_ref="1" hidden="false" />
+        <entry il="0xb4" row="18" col="4" file_ref="1" hidden="false" />
+        <entry il="0xba" row="19" col="4" file_ref="1" hidden="false" />
+        <entry il="0xc1" row="20" col="3" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals>
+        <entry name="imgObj" il_index="0" scope_ref="1" />
+        <entry name="__e" il_index="1" scope_ref="0" />
+        <entry name="e" il_index="2" scope_ref="0" />
+      </locals>
+      <scopes>
+        <entry index="0" start="0x2" end="0x98" />
+        <entry index="1" start="0xb4" end="0xb4" />
+      </scopes>
+    </method>
+    <method token="0x6000003">
+      <sequencepoints>
+        <entry il="0x0" row="10" col="28" file_ref="1" hidden="false" />
+      </sequencepoints>
+      <locals />
+      <scopes />
+    </method>
+    <method token="0x6000004">
+      <sequencepoints />
+      <locals />
+      <scopes />
+    </method>
+  </methods>
+</symbols>

@@ -1518,10 +1518,8 @@ namespace Mono.CSharp
 
 		protected Expression ResolveCommon (ResolveContext rc)
 		{
-			var isPlayScript = rc.FileType == SourceFileType.PlayScript;
-
 			// NOTE: We need to distinguish between types and expressions which return a Class object.
-			if (isPlayScript && (this is Is || this is As)) { 
+			if (rc.IsPlayScript && (this is Is || this is As)) { 
 				as_probe_type_expr = ProbeType.Resolve (rc);
 				if (as_probe_type_expr is TypeExpr || as_probe_type_expr is TypeOf) {
 					// Convert typeof to actual type if somebody actually wrote "typeof" in the code.
@@ -1548,7 +1546,7 @@ namespace Mono.CSharp
 				return null;
 
 			// PlayScript : Avoid - error CS0246: The type or namespace name `expectedType' could not be found.
-			if (!isPlayScript) {
+			if (!rc.IsPlayScript) {
 				ResolveProbeType (rc);
 				if (probe_type_expr == null)
 					return this;
@@ -1801,15 +1799,13 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext rc)
 		{
-			var isPlayScript = rc.FileType == SourceFileType.PlayScript;
-
 			if (ResolveCommon (rc) == null)
 				return null;
 
 			type = rc.BuiltinTypes.Bool;
 			eclass = ExprClass.Value;
 
-			if (!isPlayScript && probe_type_expr == null)
+			if (!rc.IsPlayScript && probe_type_expr == null)
 				return ResolveMatchingExpression (rc);
 
 			var res = ResolveResultExpression (rc);
@@ -1944,8 +1940,6 @@ namespace Mono.CSharp
 
 		Expression ResolveResultExpression (ResolveContext ec)
 		{
-			var isPlayScript = ec.FileType == SourceFileType.PlayScript;
-
 			TypeSpec d = expr.Type;
 			bool d_is_nullable = false;
 
@@ -1955,7 +1949,7 @@ namespace Mono.CSharp
 //
 			// Check to see if right side is an expression which returns a Class (Type).  If so, generate
 			// type check code.
-			if (isPlayScript && as_probe_type_expr != null) {
+			if (ec.IsPlayScript && as_probe_type_expr != null) {
 				var arguments = new Arguments(2);
 				arguments.Add (new Argument(expr));
 				arguments.Add (new Argument(as_probe_type_expr));
@@ -2049,7 +2043,7 @@ namespace Mono.CSharp
 					}
 				} else {
 					if (Convert.ImplicitReferenceConversionExists (d, t, ec, false)) {
-						if (isPlayScript) {
+						if (ec.IsPlayScript) {
 							if (d.MemberDefinition.IsImported && d.BuiltinType != BuiltinTypeSpec.Type.None) {
 								return this;
 							}
@@ -2496,9 +2490,7 @@ namespace Mono.CSharp
 			if (ResolveCommon (ec) == null)
 				return null;
 
-			bool isPlayScript = ec.FileType == SourceFileType.PlayScript;
-
-			if (isPlayScript && as_probe_type_expr != null && !(as_probe_type_expr is TypeExpr)) {
+			if (ec.IsPlayScript && as_probe_type_expr != null && !(as_probe_type_expr is TypeExpr)) {
 				var arguments = new Arguments (2);
 				arguments.Add (new Argument (expr));
 				arguments.Add (new Argument (as_probe_type_expr));
@@ -2512,13 +2504,13 @@ namespace Mono.CSharp
 			bool isRefType = TypeSpec.IsReferenceType (type) || type.IsNullableType;
 
 			// Always "Object" for dynamic type when evaluating PlayScript AS operator (not dynamic CONV call).
-			if (isPlayScript && etype.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
+			if (ec.IsPlayScript && etype.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
 				expr = new Cast(new TypeExpression(ec.BuiltinTypes.Object, expr.Location), expr, expr.Location).Resolve(ec);
 				etype = ec.BuiltinTypes.Object;
 			}
 
 			// Fail if conv type is not ref type or nullable (but allow if PlayScript)
-			if (!isPlayScript && !isRefType) {
+			if (!ec.IsPlayScript && !isRefType) {
 				if (TypeManager.IsGenericParameter (type)) {
 					ec.Report.Error (413, loc,
 						"The `as' operator cannot be used with a non-reference type parameter `{0}'. Consider adding `class' or a reference type constraint",
@@ -2545,7 +2537,7 @@ namespace Mono.CSharp
 
 				// Special case for as check with strings in PlayScript, since there is an implicit
 				// conversion from everything to string.
-				if (isPlayScript && type.BuiltinType == BuiltinTypeSpec.Type.String) {
+				if (ec.IsPlayScript && type.BuiltinType == BuiltinTypeSpec.Type.String) {
 					var arguments = new Arguments (2);
 					arguments.Add (new Argument (expr));
 					arguments.Add (new Argument (new TypeOf (new TypeExpression (ec.BuiltinTypes.String, expr.Location), expr.Location)));
@@ -2571,7 +2563,7 @@ namespace Mono.CSharp
 				}
 
 			} else {
-
+//FIXME
 				// Do PlayScript AS cast..
 
 				bool eIsRefType = TypeSpec.IsReferenceType (etype) || etype.IsNullableType;
@@ -4355,9 +4347,6 @@ namespace Mono.CSharp
 		//
 		bool DoBinaryOperatorPromotion (ResolveContext rc)
 		{
-			// PlayScript will promote any arguments t
-			bool isPlayScript = rc.FileType == SourceFileType.PlayScript;
-
 			TypeSpec ltype = left.Type;
 			if (ltype.IsNullableType) {
 				ltype = Nullable.NullableInfo.GetUnderlyingType (ltype);
@@ -4366,7 +4355,7 @@ namespace Mono.CSharp
 			//
 			// This is numeric promotion code only (NOTE: PlayScript "does" handle bool below)
 			//
-			if (!isPlayScript && ltype.BuiltinType == BuiltinTypeSpec.Type.Bool)
+			if (!rc.IsPlayScript && ltype.BuiltinType == BuiltinTypeSpec.Type.Bool)
 				return true;
 
 			TypeSpec rtype = right.Type;
@@ -4379,7 +4368,7 @@ namespace Mono.CSharp
 			TypeSpec type;
 			Expression expr;
 
-			if (isPlayScript && (lb == BuiltinTypeSpec.Type.Bool || rb == BuiltinTypeSpec.Type.Bool) &&
+			if (rc.IsPlayScript && (lb == BuiltinTypeSpec.Type.Bool || rb == BuiltinTypeSpec.Type.Bool) &&
 				(Oper == Operator.LogicalAnd || Oper == Operator.LogicalOr || 
 					Oper == Operator.Equality || Oper == Operator.Inequality || 
 					Oper == Operator.AsStrictEquality || Oper == Operator.AsStrictInequality)) {
@@ -4507,9 +4496,7 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext ec)
 		{
-			var isPlayScript = ec.FileType == SourceFileType.PlayScript;
-
-			if (isPlayScript) {
+			if (ec.IsPlayScript) {
 				// this prevents a lot of extra operations inside of an if(expr) or while(expr) 
 				// where we dont care about the return value at all and just care about the boolean value
 				// however, x = a || b || c; will still work because its not inside of a boolean expression
@@ -4540,7 +4527,7 @@ namespace Mono.CSharp
 				return null;
 
 			// Handle || operator applied to reference types in PlayScript..
-			if (isPlayScript && oper == Operator.LogicalOr &&
+			if (ec.IsPlayScript && oper == Operator.LogicalOr &&
 				(left.Type.IsClass || left.Type.IsInterface)) {
 				if (typeHint != ec.BuiltinTypes.Bool) {
 					return new Nullable.NullCoalescingOperator (left, right).Resolve (ec);
@@ -4556,7 +4543,7 @@ namespace Mono.CSharp
 			Constant rc = right as Constant;
 
 			// Handle PlayScript binary operators that need to be converted to methods.
-			if (isPlayScript) {
+			if (ec.IsPlayScript) {
 
 				if (oper == Operator.LogicalAnd || oper == Operator.LogicalOr) {
 					// Handle logical operation on Number/double; i.e. ( x:Number && y:Number)
@@ -4585,7 +4572,7 @@ namespace Mono.CSharp
 				//
 				if ((oper & (Operator.BitwiseMask | Operator.ArithmeticMask | Operator.ShiftMask)) != 0 && oper != Operator.Addition) {
 					if (!(left.Type.IsNumeric || left.Type.IsAsUntyped) || !(right.Type.IsNumeric || right.Type.IsAsUntyped)) {
-						if (!(isPlayScript && (left.Type.IsDynamic || right.Type.IsDynamic))) {
+						if (!(ec.IsPlayScript && (left.Type.IsDynamic || right.Type.IsDynamic))) {
 							Error_OperatorCannotBeApplied (ec, left, right, oper, loc);
 							return null;
 						}
@@ -4709,7 +4696,7 @@ namespace Mono.CSharp
 
 			// in PlayScript this is used as an efficient NaN check
 			bool is_playscript_nan_check = false;
-			if (isPlayScript) {
+			if (ec.IsPlayScript) {
 				is_playscript_nan_check = (left.Type.BuiltinType == BuiltinTypeSpec.Type.Double && right.Type.BuiltinType == BuiltinTypeSpec.Type.Double);
 			}
 
@@ -5295,8 +5282,6 @@ namespace Mono.CSharp
 		//
 		Expression ResolveEquality (ResolveContext ec, TypeSpec l, TypeSpec r, bool primitives_only)
 		{
-			var isPlayScript = ec.FileType == SourceFileType.PlayScript;
-
 			Expression result;
 			type = ec.BuiltinTypes.Bool;
 			bool no_arg_conv = false;
@@ -5466,7 +5451,7 @@ namespace Mono.CSharp
 			//
 			// PlayScript - Try equality with any PlayScript/ActionScript implicit conversions
 			//
-			if (ret == null && isPlayScript && (!TypeSpec.IsReferenceType (l) || !TypeSpec.IsReferenceType (r))) {
+			if (ret == null && ec.IsPlayScript && (!TypeSpec.IsReferenceType (l) || !TypeSpec.IsReferenceType (r))) {
 				ret = ResolveOperatorPredefined (ec, ec.BuiltinTypes.AsOperatorsBinaryEquality, no_arg_conv);
 			}
 
@@ -6802,8 +6787,6 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext ec)
 		{
-			var isPlayScript = ec.FileType == SourceFileType.PlayScript;
-
 			expr = expr.Resolve (ec);
 			true_expr = true_expr.Resolve (ec);
 			false_expr = false_expr.Resolve (ec);
@@ -6816,7 +6799,7 @@ namespace Mono.CSharp
 			TypeSpec false_type = false_expr.Type;
 			type = true_type;
 
-			if (isPlayScript && ec.Module.Compiler.Settings.NewDynamicRuntime_Conditional) {
+			if (ec.IsPlayScript && ec.Module.Compiler.Settings.NewDynamicRuntime_Conditional) {
 				// if either true or false are dynamic then we must cast the other to dynamic
 				if (true_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic || false_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
 					if (false_type.BuiltinType != BuiltinTypeSpec.Type.Dynamic) {
@@ -7344,14 +7327,6 @@ namespace Mono.CSharp
 
 		public override void FlowAnalysis (FlowAnalysisContext fc)
 		{
-			// TODO: Clean up, FileType is null when we added an ActionScript _err catch (CompilerGenerated var)
-			bool isPlayScript; 
-			try {
-				isPlayScript = loc.SourceFile.FileType == SourceFileType.PlayScript;
-			} catch {
-				isPlayScript = false;
-			}
-
 			VariableInfo variable_info = VariableInfo;
 			if (variable_info == null)
 				return;
@@ -7360,7 +7335,7 @@ namespace Mono.CSharp
 				return;
 
 			// PlayScript does not consider this an error.
-			if (!isPlayScript)
+			if (!loc.IsPlayScript)
 				fc.Report.Error (165, loc, "Use of unassigned local variable `{0}'", Name);
 
 			variable_info.SetAssigned (fc.DefiniteAssignment, true);
@@ -7809,14 +7784,13 @@ namespace Mono.CSharp
 		Expression DoResolveInvocation (ResolveContext ec)
 		{
 			Expression member_expr;
-			bool isPlayScript = ec.FileType == SourceFileType.PlayScript;
 			bool args_resolved = false;
 			bool dynamic_arg = false;
 
 			var atn = expr as ATypeNameExpression;
 
 			// Handle special casts for dynamic types..
-			if (isPlayScript && arguments != null && arguments.Count == 1) {
+			if (ec.IsPlayScript && arguments != null && arguments.Count == 1) {
 
 				BuiltinTypeSpec.Type castType = BuiltinTypeSpec.Type.None;
 
@@ -7889,7 +7863,7 @@ namespace Mono.CSharp
 			if (atn != null) {
 				MemberLookupRestrictions lookupRestr = MemberLookupRestrictions.InvocableOnly | MemberLookupRestrictions.ReadAccess;
 				// Allow lookup to return a type for ActionSctipt function style casts.
-				if (isPlayScript && arguments != null && arguments.Count == 1)
+				if (ec.IsPlayScript && arguments != null && arguments.Count == 1)
 					lookupRestr |= MemberLookupRestrictions.AsTypeCast;
 				member_expr = atn.LookupNameExpression (ec, lookupRestr);
 				//member_expr = atn.LookupNameExpression (ec, MemberLookupRestrictions.InvocableOnly | MemberLookupRestrictions.ReadAccess);
@@ -7912,7 +7886,7 @@ namespace Mono.CSharp
 			}
 
 			// Handle function style casts in PlayScript
-			if (isPlayScript && arguments != null && arguments.Count == 1) {
+			if (ec.IsPlayScript && arguments != null && arguments.Count == 1) {
 				if (member_expr == null && atn != null) {
 					// if we have no member expression here, then try to resolve again with only ReadAccess
 					member_expr = atn.LookupNameExpression (ec, MemberLookupRestrictions.ReadAccess) as TypeExpr;
@@ -7941,7 +7915,7 @@ namespace Mono.CSharp
 			TypeSpec expr_type = member_expr.Type;
 			if (expr_type.IsDynamic) {
 				return DoResolveDynamic (ec, member_expr);
-			} else if (isPlayScript && expr_type.BuiltinType == BuiltinTypeSpec.Type.Delegate) { // Calls through delegate in PlayScript are dynamic
+			} else if (ec.IsPlayScript && expr_type.BuiltinType == BuiltinTypeSpec.Type.Delegate) { // Calls through delegate in PlayScript are dynamic
 				return DoResolveDynamic (ec, new Cast(new TypeExpression(ec.BuiltinTypes.Dynamic, Location), member_expr, Location).Resolve (ec));
 			}
 
@@ -7974,7 +7948,7 @@ namespace Mono.CSharp
 			}
 
 			// If actionscript, try to resolve dynamic args to avoid a dynamic invoke if possible.
-			if (dynamic_arg && isPlayScript && mg.Candidates.Count > 0) {
+			if (dynamic_arg && ec.IsPlayScript && mg.Candidates.Count > 0) {
 				if (arguments.AsTryResolveDynamicArgs(ec, mg.Candidates)) {
 					dynamic_arg = false;
 				}
@@ -10693,10 +10667,8 @@ namespace Mono.CSharp
 
 		protected override Expression DoResolve (ResolveContext rc)
 		{
-			var isPlayScript = rc.FileType == SourceFileType.PlayScript;
-
 			// PlayScript E4X: Handle E4x accesors.
-			if (isPlayScript && AccessorType != Accessor.Member) {
+			if (rc.IsPlayScript && AccessorType != Accessor.Member) {
 				if (AccessorType == Accessor.AsE4xChildAll) {
 					return MakeE4xInvocation(rc, "children").Resolve (rc);
 				} else if (AccessorType == Accessor.AsE4xDescendantAll) {
@@ -10789,8 +10761,6 @@ namespace Mono.CSharp
 
 		public override Expression LookupNameExpression (ResolveContext rc, MemberLookupRestrictions restrictions)
 		{
-			var isPlayScript = rc.FileType == SourceFileType.PlayScript;
-
 			var sn = expr as SimpleName;
 			const ResolveFlags flags = ResolveFlags.VariableOrValue | ResolveFlags.Type;
 
@@ -10809,9 +10779,9 @@ namespace Mono.CSharp
 					expr = null;
 				}
 			// Add separate BuiltinType for the ActionScript "*" type
-			} else if (isPlayScript && expr != null) {
+			} else if (rc.IsPlayScript && expr != null) {
 				expr = expr.Resolve (rc, flags);
-			} else if (!isPlayScript) {
+			} else if (!rc.IsPlayScript) {
 				using (rc.Set (ResolveContext.Options.ConditionalAccessReceiver)) {
 					expr = expr.Resolve (rc, flags);
 				}
@@ -10826,7 +10796,7 @@ namespace Mono.CSharp
 
 				// PlayScript - Search for _fn or _ns types for bare functions or namespace classes
 				bool foundFnType = false;
-				if (isPlayScript && retval == null) {
+				if (rc.IsPlayScript && retval == null) {
 					retval = ns.LookupTypeOrNamespace (rc, Name + "_fn", Arity, LookupMode.Normal, loc);
 					if (retval != null) {
 						foundFnType = true;
@@ -10866,7 +10836,7 @@ namespace Mono.CSharp
 			}
 
 			// Add "static/instance" restrictions to lookup.
-			if (isPlayScript) {
+			if (rc.IsPlayScript) {
 				if (expr is TypeExpression) {
 					restrictions |= MemberLookupRestrictions.PreferStatic;
 				} else {
@@ -10907,7 +10877,7 @@ namespace Mono.CSharp
 						string extMethodName;
 						bool isAsExtGetter = false;
 						bool isAsExtSetter = false;
-						if (isPlayScript && (restrictions & MemberLookupRestrictions.InvocableOnly) == 0) {
+						if (rc.IsPlayScript && (restrictions & MemberLookupRestrictions.InvocableOnly) == 0) {
 							if ((restrictions & MemberLookupRestrictions.ReadAccess) != 0) {
 								isAsExtGetter = true;
 								extMethodName = "get_" + Name;
@@ -11060,7 +11030,7 @@ namespace Mono.CSharp
 
 			// PlayScript - Add additional restrictions to overload resolution to disambiguate static/instance methods with the
 			// same name and params.
-			if (isPlayScript && (me is MethodGroupExpr) && ((MethodGroupExpr)me).Candidates.Count > 1) {
+			if (rc.IsPlayScript && (me is MethodGroupExpr) && ((MethodGroupExpr)me).Candidates.Count > 1) {
 				me.OverloadRestrictions = (expr is TypeExpr) ? 
 					OverloadResolver.Restrictions.StaticOnly : OverloadResolver.Restrictions.InstanceOnly;
 			}
@@ -11582,10 +11552,8 @@ namespace Mono.CSharp
 		
 		protected override Expression DoResolve (ResolveContext rc)
 		{
-			var isPlayScript = rc.FileType == SourceFileType.PlayScript;
-
 			// Handle PlayScript E4X namespace and attribute accessors.
-			if (isPlayScript && AccessorType != Accessor.ElementAccess) {
+			if (rc.IsPlayScript && AccessorType != Accessor.ElementAccess) {
 				if (AccessorType == Accessor.AsE4xAttributeAccess) {
 					return new Invocation(new MemberAccess(Expr, "attribute", loc), Arguments).Resolve (rc);
 				} else if (AccessorType == Accessor.AsE4xNamespaceAccess) {

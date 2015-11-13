@@ -1,6 +1,6 @@
 using System;
 
-namespace Mono.Optimization
+namespace PlayScript.Optimization
 {
 	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Property, AllowMultiple = false)]
 	public class InlineAttribute : Attribute

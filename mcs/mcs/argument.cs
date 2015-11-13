@@ -196,11 +196,9 @@ namespace Mono.CSharp
 
 		public void Resolve (ResolveContext ec)
 		{
-			var isPlayScript = ec.FileType == SourceFileType.PlayScript;
-
 			// Keep track of the array initializer, we need it to do array type inference when searching for
 			// a matching method.
-			if (isPlayScript) {
+			if (ec.IsPlayScript) {
 				if (Expr is AsArrayInitializer) {
 					InferArrayInitializer = (AsArrayInitializer)Expr;
 				} else if (Expr is AsObjectInitializer) {

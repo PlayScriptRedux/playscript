@@ -1,4 +1,4 @@
 #!/bin/sh
 BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 MONO_DIR="/Library/Frameworks/Mono.Framework/Versions/Current/bin"
-exec "$MONO_DIR/mono" $MONO_OPTIONS "$BIN_DIR/playc.exe" "$@"
+exec "$MONO_DIR/mono" $MONO_OPTIONS "$BIN_DIR/psc.exe" "$@"
