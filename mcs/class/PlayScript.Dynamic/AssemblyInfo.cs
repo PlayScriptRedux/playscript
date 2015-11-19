@@ -8,7 +8,7 @@ using System.Runtime.Versioning;
 [assembly: AssemblyTitle("PlayScript.Dynamic")]
 [assembly: AssemblyDescription("Dynamic support for PlayScript.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Zynga")]
+[assembly: AssemblyCompany("PlayScriptRedux")]
 [assembly: AssemblyProduct("PlayScript")]
 [assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]

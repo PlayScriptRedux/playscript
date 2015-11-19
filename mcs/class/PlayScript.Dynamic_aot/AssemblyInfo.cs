@@ -8,7 +8,7 @@ using System.Runtime.Versioning;
 [assembly: AssemblyTitle("PlayScript.Dynamic_aot")]
 [assembly: AssemblyDescription("AOT dynamic support for PlayScript.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Zynga")]
+[assembly: AssemblyCompany("PlayScriptRedux")]
 [assembly: AssemblyProduct("PlayScript")]
 [assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]

@@ -30,8 +30,8 @@ using System.Reflection;
 
 [assembly: AssemblyTitle ("PlayScript Compiler")]
 [assembly: AssemblyProduct ("PlayScript Compiler")]
-[assembly: AssemblyCopyright ("2013 Zynga, Inc.  2001 - 2009 Novell, Inc.")]
-[assembly: AssemblyCompany ("Zynga, Novell, Inc.")]
+[assembly: AssemblyCopyright ("2015 PlayScriptRedux. 2013 Zynga, Inc.  2001 - 2009 Novell, Inc.")]
+[assembly: AssemblyCompany ("PlayScriptRedux, Zynga, Novell, Inc.")]
 [assembly: AssemblyCulture ("")]
 [assembly: AssemblyConfiguration ("")]
 
