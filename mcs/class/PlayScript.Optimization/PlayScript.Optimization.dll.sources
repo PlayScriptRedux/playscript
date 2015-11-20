@@ -1,3 +1,4 @@
+../../build/common/Consts.cs
+Assembly/AssemblyInfo.cs
 ./PlayScript.Optimization/InlineAttribute.cs
 ./PlayScript.Optimization/Msil.cs
-./Properties/AssemblyInfo.cs

@@ -1,4 +1,5 @@
-./AssemblyInfo.cs
+../../build/common/Consts.cs
+Assembly/AssemblyInfo.cs
 ../pscorlib/AllowDynamicAttribute.cs
 ../pscorlib/Amf/Amf3ClassDef.cs
 ../pscorlib/Amf/Amf3CodeGen.cs

@@ -1,4 +1,5 @@
-./AssemblyInfo.cs
+../../build/common/Consts.cs
+Assembly/AssemblyInfo.cs
 ./Resources/Resource.designer.cs
 ../PlayScript.Dynamic/PlayScript/ActionCreator.cs
 ../PlayScript.Dynamic/PlayScript/AsUntypedAttribute.cs
