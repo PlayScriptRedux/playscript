@@ -129,3 +129,5 @@ tmpinst-dir.stamp
 
 .dirstamp
 support/minizip/*.lo
+mcs.master/mcs.master.userprefs
+

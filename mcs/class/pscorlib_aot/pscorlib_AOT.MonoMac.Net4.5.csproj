@@ -8,7 +8,6 @@
     <ProjectGuid>{EDBAC91B-2817-479E-8DDF-B24ADDA563A6}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>_root</RootNamespace>
-    <AssemblyName>pscorlib_monomac</AssemblyName>
     <UseMSBuildEngine>False</UseMSBuildEngine>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
@@ -24,6 +23,8 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>219</NoWarn>
+    <AssemblyName>pscorlib_monomac</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -36,6 +37,17 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>219</NoWarn>
+    <AssemblyName>pscorlib_monomac</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug-MonoMac|AnyCPU' ">
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug-MonoMac</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <AssemblyName>pscorlib_AOT.MonoMac.Net4.5</AssemblyName>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DebugSymbols>true</DebugSymbols>
+    <DefineConstants>DEBUG;PLATFORM_MONOMAC;OPENGL;PERFORMANCE_MODE</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -963,9 +975,9 @@
     <Folder Include="flash\media\mac\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-net_4_5.csproj">
+    <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_AOT.Net4.5.csproj">
       <Project>{0BACBE20-34DD-4E24-8B91-87970E8A23B9}</Project>
-      <Name>PlayScript.Dynamic_aot-net_4_5</Name>
+      <Name>PlayScript.Dynamic_AOT.Net4.5</Name>
     </ProjectReference>
   </ItemGroup>
 </Project>
