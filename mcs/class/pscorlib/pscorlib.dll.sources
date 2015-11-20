@@ -1,3 +1,5 @@
+../../build/common/Consts.cs
+Assembly/AssemblyInfo.cs
 ./AllowDynamicAttribute.cs
 ./Amf/Amf3ClassDef.cs
 ./Amf/Amf3CodeGen.cs
@@ -17,7 +19,6 @@
 ./Amf/Rocks.cs
 ./ArgumentError.play
 ./Array.cs
-./AssemblyInfo.cs
 ./BindableAttribute.cs
 ./Boolean.cs
 ./Date.play
