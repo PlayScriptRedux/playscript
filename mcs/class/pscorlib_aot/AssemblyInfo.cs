@@ -8,7 +8,7 @@ using System.Runtime.Versioning;
 [assembly: AssemblyTitle("pscorlib_aot")]
 [assembly: AssemblyDescription("Core AOT PlayScript framework library.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Zynga")]
+[assembly: AssemblyCompany("PlayScriptRedux")]
 [assembly: AssemblyProduct("PlayScript")]
 [assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]
