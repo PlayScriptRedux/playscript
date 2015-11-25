@@ -11,8 +11,6 @@ LIB_MCS_FLAGS += -d:PLAYSCRIPT_REPL
 
 PROGRAM = playshell.exe
 
-DISTFILES = repl.txt
-
 CLEAN_FILES = playshell.exe *.mdb
 
 include ../../build/executable.make

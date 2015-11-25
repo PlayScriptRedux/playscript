@@ -43,6 +43,8 @@ if INSTALL_4_5
 bin_SCRIPTS += $(scripts_4_0)
 bin_SCRIPTS += dmcs
 bin_SCRIPTS += xbuild
+bin_SCRIPTS += psc
+bin_SCRIPTS += playshell
 endif
 
 scripts_4_0_umask = \
@@ -153,6 +155,8 @@ EXTRA_DIST =			\
 	xbuild.in			\
 	update_submodules		\
 	mcs.in				\
+	psc.in				\
+	playshell.in			\
 	dmcs.in				\
 	mono-test-install	\
 	mono-heapviz		\
