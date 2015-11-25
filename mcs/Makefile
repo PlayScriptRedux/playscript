@@ -13,7 +13,7 @@ xammac_SUBDIRS := build class
 mobile_SUBDIRS := build class
 mobile_static_SUBDIRS := build class
 net_4_0_SUBDIRS := build class
-net_4_5_SUBDIRS := build mcs psc class nunit24 ilasm tools tests errors docs
+net_4_5_SUBDIRS := build mcs class psc nunit24 ilasm tools tests errors docs
 xbuild_12_SUBDIRS := build class tools/xbuild
 xbuild_14_SUBDIRS := build class tools/xbuild
 
