@@ -191,6 +191,12 @@ net_4_0_dirs := \
 	System.Data.Services \
 	System.Json.Microsoft \
 	System.Data.Entity \
+	Mono.PlayScript \
+	PlayScript.Optimization \
+	PlayScript.Dynamic \
+	PlayScript.Dynamic_aot \
+	pscorlib \
+	pscorlib_aot \
 	monodoc
 
 net_4_5_dirs := \
