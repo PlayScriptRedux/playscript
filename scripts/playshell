@@ -1,4 +1,4 @@
 #!/bin/sh
 BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 LIB_DIR=$BIN_DIR/../lib
-exec $BIN_DIR/mono $MONO_OPTIONS $LIB_DIR/mono/4.5/playc.exe "$@"
+exec $BIN_DIR/mono $MONO_OPTIONS $LIB_DIR/mono/4.5/playshell.exe "$@"
