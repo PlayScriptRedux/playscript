@@ -167,6 +167,18 @@ $(tmpinst)/bin/mcs: $(tmpinst)/bin/mono Makefile
 	echo 'exec "'"$$r/$(tmpinst)/bin/mono"'" "'"$$m/class/lib/build/mcs.exe"'" "$$@"' >> $@ ; \
 	chmod +x $@
 
+$(tmpinst)/bin/psc: $(tmpinst)/bin/mono Makefile
+        echo '#! /bin/sh' > $@ ; \
+        r=`pwd`; m=`cd $(mcs_topdir) && pwd`; \
+        echo 'exec "'"$$r/$(tmpinst)/bin/mono"'" "'"$$m/class/lib/build/psc.exe"'" "$$@"' >> $@ ; \
+        chmod +x $@
+
+$(tmpinst)/bin/playshell: $(tmpinst)/bin/mono Makefile
+        echo '#! /bin/sh' > $@ ; \
+        r=`pwd`; m=`cd $(mcs_topdir) && pwd`; \
+        echo 'exec "'"$$r/$(tmpinst)/bin/mono"'" "'"$$m/class/lib/build/playshell.exe"'" "$$@"' >> $@ ; \
+        chmod +x $@
+
 $(tmpinst)/bin/dmcs: $(tmpinst)/bin/mono Makefile
 	echo '#! /bin/sh' > $@ ; \
 	r=`pwd`; m=`cd $(mcs_topdir) && pwd`; \
