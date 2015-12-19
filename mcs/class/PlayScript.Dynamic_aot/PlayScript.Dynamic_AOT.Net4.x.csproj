@@ -10,19 +10,19 @@
     <RootNamespace>PlayScript.Dynamic</RootNamespace>
     <UseMSBuildEngine>False</UseMSBuildEngine>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <DelaySign>true</DelaySign>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;PLATFORM_GENERIC;BINDERS_RUNTIME_STATS</DefineConstants>
+    <DefineConstants>DEBUG;NET_4_5;PLATFORM_GENERIC;BINDERS_RUNTIME_STATS</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AssemblyName>PlayScript.Dynamic_aot</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -31,10 +31,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
-    <DefineConstants>PLATFORM_GENERIC;BINDERS_RUNTIME_STATS</DefineConstants>
+    <DefineConstants>NET_4_5;PLATFORM_GENERIC;BINDERS_RUNTIME_STATS</DefineConstants>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AssemblyName>PlayScript.Dynamic_aot</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug-MonoMac|AnyCPU' ">
     <Optimize>false</Optimize>
@@ -260,11 +259,14 @@
     <Compile Include="..\PlayScript.Dynamic\PlayScript\RuntimeBinder\RuntimeBinderInternalCompilerException.cs">
       <Link>RuntimeBinderInternalCompilerException.cs</Link>
     </Compile>
-    <Compile Include="AssemblyInfo.cs">
-      <Link>AssemblyInfo.cs</Link>
-    </Compile>
     <Compile Include="Resources\Resource.designer.cs">
       <Link>Resource.designer.cs</Link>
+    </Compile>
+    <Compile Include="Assembly\AssemblyInfo.cs">
+      <Link>Assembly\AssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\build\common\Consts.cs">
+      <Link>Consts.cs</Link>
     </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

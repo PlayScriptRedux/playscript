@@ -16,7 +16,7 @@
     <DebugType>full</DebugType>
     <Optimize>False</Optimize>
     <OutputPath>bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;PLATFORM_MONOMAC;OPENGL;PERFORMANCE_MODE</DefineConstants>
+    <DefineConstants>DEBUG;NET_4_5;PLATFORM_MONOMAC;OPENGL;PERFORMANCE_MODE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
@@ -24,7 +24,6 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>219</NoWarn>
     <AssemblyName>pscorlib_monomac</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -33,12 +32,11 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
-    <DefineConstants>PLATFORM_MONOMAC;OPENGL;PERFORMANCE_MODE</DefineConstants>
+    <DefineConstants>NET_4_5;PLATFORM_MONOMAC;OPENGL;PERFORMANCE_MODE</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>219</NoWarn>
     <AssemblyName>pscorlib_monomac</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug-MonoMac|AnyCPU' ">
     <Optimize>false</Optimize>
@@ -957,8 +955,11 @@
     <Compile Include="..\pscorlib\PlayScript\Hardware.cs">
       <Link>Hardware.cs</Link>
     </Compile>
-    <Compile Include="AssemblyInfo.cs">
-      <Link>AssemblyInfo.cs</Link>
+    <Compile Include="Assembly\AssemblyInfo.cs">
+      <Link>Assembly\AssemblyInfo.cs</Link>
+    </Compile>
+    <Compile Include="..\..\build\common\Consts.cs">
+      <Link>Consts.cs</Link>
     </Compile>
   </ItemGroup>
   <ItemGroup>
@@ -975,9 +976,9 @@
     <Folder Include="flash\media\mac\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_AOT.Net4.5.csproj">
+    <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_AOT.Net4.x.csproj">
       <Project>{0BACBE20-34DD-4E24-8B91-87970E8A23B9}</Project>
-      <Name>PlayScript.Dynamic_AOT.Net4.5</Name>
+      <Name>PlayScript.Dynamic_AOT.Net4.x</Name>
     </ProjectReference>
   </ItemGroup>
 </Project>
