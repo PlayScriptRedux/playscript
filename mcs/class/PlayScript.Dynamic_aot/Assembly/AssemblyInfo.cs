@@ -35,10 +35,10 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyFileVersion (Consts.FxFileVersion)]
 
 [assembly: NeutralResourcesLanguage ("en-US")]
-//[assembly: CLSCompliant (true)]
-[assembly: AssemblyDelaySign (true)]
 
-[assembly: AssemblyKeyFile ("../ecma.pub")]
+//[assembly: CLSCompliant (true)]
+//[assembly: AssemblyDelaySign (true)]
+//[assembly: AssemblyKeyFile ("../ecma.pub")]
 
 [assembly: SecurityCritical]
 
