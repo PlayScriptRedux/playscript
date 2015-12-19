@@ -426,7 +426,8 @@ package flash.geom {
 		}
  	 	
 		public function deltaTransformVector(v:Vector3D):Vector3D {
-			throw new System.NotImplementedException();
+			var x:Number = v.x, y:Number = v.y, z:Number = v.z;
+		    return new Vector3D ((x * rawData[0] + y * rawData[4] + z * rawData[8] + rawData[3]), (x * rawData[1] + y * rawData[5] + z * rawData[9] + rawData[7]), (x * rawData[2] + y * rawData[6] + z * rawData[10] + rawData[11]), 0);
 		}
  	 	
 		public function identity():void {
@@ -612,7 +613,19 @@ package flash.geom {
 		}
  	 	
 		public function transpose():void {
-			throw new System.NotImplementedException();
+			var oRawData:Vector.<Number> = this.rawData;
+			rawData[1] = oRawData[4];
+			rawData[2] = oRawData[8];
+			rawData[3] = oRawData[12];
+			rawData[4] = oRawData[1];
+			rawData[6] = oRawData[9];
+			rawData[7] = oRawData[13];
+			rawData[8] = oRawData[2];
+			rawData[9] = oRawData[6];
+			rawData[11] = oRawData[14];
+			rawData[12] = oRawData[3];
+			rawData[13] = oRawData[7];
+			rawData[14] = oRawData[11];
 		}
 		
 		public var mData:double[] = new double[16];
