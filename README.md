@@ -2,6 +2,8 @@
 
 # PLAYSCRIPT
 
+[![Join the chat at https://gitter.im/PlayScriptRedux/playscript](https://badges.gitter.im/PlayScriptRedux/playscript.svg)](https://gitter.im/PlayScriptRedux/playscript?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ## Current project status
 
 The CI builds are generously hosted and run on [Travis][travis]
