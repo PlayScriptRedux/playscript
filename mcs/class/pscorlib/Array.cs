@@ -315,16 +315,16 @@ namespace _root
 			get {
 				if (mImmutableArray != null)
 					return mImmutableArray.getObjectAt ((uint)i);
-				#if PERFORMANCE_MODEz && DEBUGz
+				#if PERFORMANCE_MODE && DEBUG
 				if ((i >= mCount) || (i < 0))
 				{
 					throw new IndexOutOfRangeException();
 				}
-				#elif PERFORMANCE_MODEz
+				#elif PERFORMANCE_MODE
 				#else
 				if ((i >= mCount) || (i < 0))
 				{
-//					Console.WriteLine ("undef : " + Undefined._undefined);
+					Console.WriteLine ("undef : " + Undefined._undefined);
 					return Undefined._undefined;
 				}
 				#endif
@@ -335,13 +335,13 @@ namespace _root
 			set {
 				if (mImmutableArray != null)
 					ConvertToMutable ();
-				#if PERFORMANCE_MODEz && DEBUGz
+				#if PERFORMANCE_MODE && DEBUG
 				if (i >= mCount) {
 //					return Undefined._undefined;
 					// TODO : Fix this (?)
 					throw new IndexOutOfRangeException();
 				}
-				#elif PERFORMANCE_MODEz
+				#elif PERFORMANCE_MODE
 				#else
 				if (i >= mCount) {
 					expand((uint)(i+1));
