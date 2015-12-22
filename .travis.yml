@@ -47,8 +47,6 @@ branches:
 
 # Notify of build changes
 notifications:
- email:
-  - sushihangover@outlook.com
   webhooks:
     urls:
       - https://webhooks.gitter.im/e/5a4733980460a69b27bb
