@@ -8205,6 +8205,12 @@ namespace Mono.CSharp
 			}
 		}
 
+		public Expression TypeRequested {
+			get {
+				return RequestedType;
+			}
+		}
+
 		//
 		// Returns true for resolved `new S()' when S does not declare parameterless constructor
 		//
@@ -8839,6 +8845,10 @@ namespace Mono.CSharp
 			get {
 				return this.initializers;
 			}
+		}
+
+		public List<Expression> Arguments {
+			get { return this.arguments; }
 		}
 
 		bool CheckIndices (ResolveContext ec, ArrayInitializer probe, int idx, bool specified_dims, int child_bounds)
@@ -9974,6 +9984,10 @@ namespace Mono.CSharp
 	{
 		FullNamedExpression texpr;
 
+		public FullNamedExpression FullNamedExpression {
+			get { return texpr;}
+		}
+
 		public RefValueExpr (Expression expr, FullNamedExpression texpr, Location loc)
 			: base (expr)
 		{
@@ -10504,7 +10518,7 @@ namespace Mono.CSharp
 	/// </summary>
 	public class QualifiedAliasMember : MemberAccess
 	{
-		readonly string alias;
+		public readonly string alias;
 		public static readonly string GlobalAlias = "global";
 
 		public QualifiedAliasMember (string alias, string identifier, Location l)
@@ -12607,7 +12621,17 @@ namespace Mono.CSharp
 	public class ComposedCast : TypeExpr {
 		FullNamedExpression left;
 		ComposedTypeSpecifier spec;
-		
+
+		public FullNamedExpression Left {
+			get { return this.left; }
+		}
+
+		public ComposedTypeSpecifier Spec {
+			get {
+				return this.spec;
+			}
+		}
+
 		public ComposedCast (FullNamedExpression left, ComposedTypeSpecifier spec)
 		{
 			if (spec == null)
@@ -13038,6 +13062,8 @@ namespace Mono.CSharp
 	//
 	class CollectionElementInitializer : Invocation
 	{
+		public readonly bool IsSingle;
+
 		public class ElementInitializerArgument : Argument
 		{
 			public ElementInitializerArgument (Expression e)
@@ -13065,6 +13091,7 @@ namespace Mono.CSharp
 		public CollectionElementInitializer (Expression argument)
 			: base (null, new Arguments (1))
 		{
+			IsSingle = true;
 			base.arguments.Add (new ElementInitializerArgument (argument));
 			this.loc = argument.Location;
 		}
@@ -13072,6 +13099,7 @@ namespace Mono.CSharp
 		public CollectionElementInitializer (List<Expression> arguments, Location loc)
 			: base (null, new Arguments (arguments.Count))
 		{
+			IsSingle = false;
 			foreach (Expression e in arguments)
 				base.arguments.Add (new ElementInitializerArgument (e));
 

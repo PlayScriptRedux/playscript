@@ -49,4 +49,10 @@ branches:
 notifications:
  email:
   - sushihangover@outlook.com
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/4add8b7a4ba62c51fbe2
+    on_success: always  # options: [always|never|change] default: always
+    on_failure: always  # options: [always|never|change] default: always
+    on_start: always     # options: [always|never|change] default: always
 

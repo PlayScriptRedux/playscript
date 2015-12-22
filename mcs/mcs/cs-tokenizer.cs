@@ -305,6 +305,15 @@ namespace Mono.CSharp
 
 		static readonly char[] simple_whitespaces = new char[] { ' ', '\t' };
 
+		public int Column {
+			get {
+				return col;
+			}
+			set {
+				col = value;
+			}
+		}
+			
 		public bool PropertyParsing {
 			get { return handle_get_set; }
 			set { handle_get_set = value; }
@@ -380,6 +389,9 @@ namespace Mono.CSharp
 		public int Line {
 			get {
 				return ref_line;
+			}
+			set {
+				ref_line = value;
 			}
 		}
 

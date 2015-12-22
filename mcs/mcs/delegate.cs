@@ -30,7 +30,7 @@ namespace Mono.CSharp {
 	//
 	public class Delegate : TypeDefinition, IParametersMember
 	{
- 		FullNamedExpression ReturnType;
+ 		public FullNamedExpression ReturnType;
 		readonly ParametersCompiled parameters;
 
 		Constructor Constructor;

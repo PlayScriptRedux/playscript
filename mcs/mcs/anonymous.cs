@@ -995,6 +995,11 @@ namespace Mono.CSharp {
 			}
 		}
 
+		public bool IsAsync {
+			get;
+			internal set;
+		}
+
 		public ReportPrinter TypeInferenceReportPrinter {
 			get; set;
 		}

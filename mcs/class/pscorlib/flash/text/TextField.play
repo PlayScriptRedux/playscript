@@ -178,7 +178,8 @@ package flash.text {
 		}
  	 	
 		public function appendText(newText:String):void {
-			throw new NotImplementedException();
+			this.text = this.text + newText;
+			//throw new NotImplementedException();
 		}
 
 		public function getCharBoundaries(charIndex:int):Rectangle {

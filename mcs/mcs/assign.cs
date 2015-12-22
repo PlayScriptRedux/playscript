@@ -786,6 +786,12 @@ namespace Mono.CSharp {
 		Expression right;
 		Expression left;
 
+		public Binary.Operator Op {
+			get {
+				return op;
+			}
+		}
+
 		public CompoundAssign (Binary.Operator op, Expression target, Expression source)
 			: base (target, source, target.Location)
 		{

@@ -80,12 +80,12 @@ namespace Mono.CSharp
 			this.Name = name;
 			this.FullPathName = path;
 			var ext = Path.GetExtension (path);
-			if (ext.ToLower() == ".as") {
-				FileType = SourceFileType.PlayScript;
-				PsExtended = false;
-			} else if (ext.ToLower() == ".play") {
+			if (String.IsNullOrEmpty(name) || String.IsNullOrEmpty(ext) || ext.ToLower() == ".play") {
 				FileType = SourceFileType.PlayScript;
 				PsExtended = true;
+			} else if (ext.ToLower() == ".as") {
+				FileType = SourceFileType.PlayScript;
+				PsExtended = false;
 			} else {
 				FileType = SourceFileType.CSharp;
 			}
@@ -430,6 +430,279 @@ if (checkpoints.Length <= CheckpointIndex) throw new Exception (String.Format ("
 		}
 
 		#endregion
+	}
+
+	public class SpecialsBag
+	{
+		public enum CommentType
+		{
+			Single,
+			Multi,
+			Documentation,
+			InactiveCode
+		}
+
+		public bool Suppress {
+			get;
+			set;
+		}
+
+		public class SpecialVisitor
+		{
+			public virtual void Visit (Comment comment)
+			{
+			}
+			public virtual void Visit (NewLineToken newLineToken)
+			{
+			}
+			public virtual void Visit (PreProcessorDirective preProcessorDirective)
+			{
+			}
+		}
+		public abstract class SpecialBase
+		{
+			public abstract void Accept (SpecialVisitor visitor);
+		}
+
+		public class Comment : SpecialBase
+		{
+			public readonly CommentType CommentType;
+			public readonly bool StartsLine;
+			public readonly int Line;
+			public readonly int Col;
+			public readonly int EndLine;
+			public readonly int EndCol;
+			public readonly string Content;
+
+			public Comment (CommentType commentType, bool startsLine, int line, int col, int endLine, int endCol, string content)
+			{
+				this.CommentType = commentType;
+				this.StartsLine = startsLine;
+				this.Line = line;
+				this.Col = col;
+				this.EndLine = endLine;
+				this.EndCol = endCol;
+				this.Content = content;
+			}
+
+			public override string ToString ()
+			{
+				return string.Format ("[Comment: CommentType={0}, Line={1}, Col={2}, EndLine={3}, EndCol={4}, Content={5}]", CommentType, Line, Col, EndLine, EndCol, Content);
+			}
+
+			public override void Accept (SpecialVisitor visitor)
+			{
+				visitor.Visit (this);
+			}
+		}
+
+		public class NewLineToken : SpecialBase
+		{
+			public readonly int Line;
+			public readonly int Col;
+			public readonly NewLine NewLine;
+
+			public NewLineToken (int line, int col, NewLine newLine)
+			{
+				this.Line = line;
+				this.Col = col;
+				this.NewLine = newLine;
+			}
+
+			public override void Accept (SpecialVisitor visitor)
+			{
+				visitor.Visit (this);
+			}
+		}
+
+		public class PragmaPreProcessorDirective : PreProcessorDirective
+		{
+			public bool Disalbe { get; set; }
+
+			public int WarningColumn {
+				get;
+				set;
+			}
+
+			public int DisableRestoreColumn {
+				get;
+				set;
+			}
+
+			public List<Constant> Codes = new List<Constant> ();
+
+			public PragmaPreProcessorDirective (int line, int col, int endLine, int endCol, Tokenizer.PreprocessorDirective cmd, string arg) : base (line, col, endLine, endCol, cmd, arg)
+			{
+			}
+		}
+
+		public class LineProcessorDirective : PreProcessorDirective
+		{
+			public int LineNumber { get; set; }
+			public string FileName { get; set; }
+
+			public LineProcessorDirective (int line, int col, int endLine, int endCol, Tokenizer.PreprocessorDirective cmd, string arg) : base (line, col, endLine, endCol, cmd, arg)
+			{
+			}
+		}
+
+		public class PreProcessorDirective : SpecialBase
+		{
+			public readonly int Line;
+			public readonly int Col;
+			public readonly int EndLine;
+			public readonly int EndCol;
+
+			public readonly Tokenizer.PreprocessorDirective Cmd;
+			public readonly string Arg;
+
+			public bool Take = true;
+
+			public PreProcessorDirective (int line, int col, int endLine, int endCol, Tokenizer.PreprocessorDirective cmd, string arg)
+			{
+				this.Line = line;
+				this.Col = col;
+				this.EndLine = endLine;
+				this.EndCol = endCol;
+				this.Cmd = cmd;
+				this.Arg = arg;
+			}
+
+			public override void Accept (SpecialVisitor visitor)
+			{
+				visitor.Visit (this);
+			}
+
+			public override string ToString ()
+			{
+				return string.Format ("[PreProcessorDirective: Line={0}, Col={1}, EndLine={2}, EndCol={3}, Cmd={4}, Arg={5}]", Line, Col, EndLine, EndCol, Cmd, Arg);
+			}
+		}
+
+		public readonly List<SpecialBase> Specials = new List<SpecialBase> ();
+
+		CommentType curComment;
+		bool startsLine;
+		int startLine, startCol;
+		System.Text.StringBuilder contentBuilder = new System.Text.StringBuilder ();
+
+		[Conditional ("FULL_AST")]
+		public void StartComment (CommentType type, bool startsLine, int startLine, int startCol)
+		{
+			if (Suppress)
+				return;
+			inComment = true;
+			curComment = type;
+			this.startsLine = startsLine;
+			this.startLine = startLine;
+			this.startCol = startCol;
+			contentBuilder.Length = 0;
+		}
+
+		[Conditional ("FULL_AST")]
+		public void PushCommentChar (int ch)
+		{
+			if (Suppress)
+				return;
+			if (ch < 0)
+				return;
+			contentBuilder.Append ((char)ch);
+		}
+		[Conditional ("FULL_AST")]
+		public void PushCommentString (string str)
+		{
+			if (Suppress)
+				return;
+			contentBuilder.Append (str);
+		}
+
+		bool inComment;
+		[Conditional ("FULL_AST")]
+		public void EndComment (int endLine, int endColumn)
+		{
+			if (Suppress)
+				return;
+			if (!inComment)
+				return;
+			inComment = false;
+			// Ignore empty comments
+			if (startLine == endLine && startCol == endColumn)
+				return;
+			Specials.Add (new Comment (curComment, startsLine, startLine, startCol, endLine, endColumn, contentBuilder.ToString ()));
+		}
+
+		[Conditional ("FULL_AST")]
+		public void AddPreProcessorDirective (int startLine, int startCol, int endLine, int endColumn, Tokenizer.PreprocessorDirective cmd, string arg)
+		{
+			if (Suppress)
+				return;
+			if (inComment)
+				EndComment (startLine, startCol);
+			switch (cmd) {
+				case Tokenizer.PreprocessorDirective.Pragma:
+					Specials.Add (new PragmaPreProcessorDirective (startLine, startCol, endLine, endColumn, cmd, arg));
+					break;
+				case Tokenizer.PreprocessorDirective.Line:
+					Specials.Add (new LineProcessorDirective (startLine, startCol, endLine, endColumn, cmd, arg));
+					break;
+				default:
+					Specials.Add (new PreProcessorDirective (startLine, startCol, endLine, endColumn, cmd, arg));
+					break;
+			}
+		}
+
+		#if FULL_AST
+		public PragmaPreProcessorDirective SetPragmaDisable(bool disable)
+		{
+			if (Suppress)
+				return null;
+			var pragmaDirective = Specials [Specials.Count - 1] as PragmaPreProcessorDirective;
+			if (pragmaDirective == null)
+				return null;
+			pragmaDirective.Disalbe = disable;
+			return pragmaDirective;
+		}
+		#endif
+
+		public PragmaPreProcessorDirective GetPragmaPreProcessorDirective()
+		{
+			if (Suppress)
+				return null;
+			return Specials [Specials.Count - 1] as PragmaPreProcessorDirective;
+		}
+
+
+		public LineProcessorDirective GetCurrentLineProcessorDirective()
+		{
+			if (Suppress)
+				return null;
+			return Specials [Specials.Count - 1] as LineProcessorDirective;
+		}
+
+		public enum NewLine { Unix, Windows }
+
+		int lastNewLine = -1;
+		int lastNewCol = -1;
+		[Conditional ("FULL_AST")]
+		public void AddNewLine (int line, int col, NewLine newLine)
+		{
+			if (Suppress)
+				return;
+			if (line == lastNewLine && col == lastNewCol)
+				return;
+			lastNewLine = line;
+			lastNewCol = col;
+			Specials.Add (new NewLineToken (line, col, newLine));
+		}
+
+		public void SkipIf ()
+		{
+			if (Specials.Count > 0) {
+				var directive = Specials[Specials.Count - 1] as PreProcessorDirective;
+				if (directive != null)
+					directive.Take = false;
+			}
+		}
 	}
 
 	//

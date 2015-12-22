@@ -189,6 +189,7 @@ namespace Mono.PlayScript
 
 		readonly SeekableStreamReader reader;
 		readonly CompilationSourceFile source_file;
+		public CompilationSourceFile SourceFile { get { return source_file; } }
 		readonly CompilerContext context;
 		readonly Report Report;
 
@@ -326,6 +327,7 @@ namespace Mono.PlayScript
 		static readonly char[] line_default = "default".ToCharArray ();
 
 		static readonly char[] simple_whitespaces = new char[] { ' ', '\t' };
+		internal SpecialsBag sbag;
 
 		public bool ParsingPlayScript {
 			get { return parsing_playscript; }
@@ -472,6 +474,18 @@ namespace Mono.PlayScript
 		public int Line {
 			get {
 				return ref_line;
+			}
+			set {
+				ref_line = value;
+			}
+		}
+
+		public int Column {
+			get {
+				return col;
+			}
+			set {
+				col = value;
 			}
 		}
 

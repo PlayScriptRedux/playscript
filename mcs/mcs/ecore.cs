@@ -7812,4 +7812,48 @@ namespace Mono.CSharp {
 				ec.Module.Compiler.Report.Error (825, loc, "The contextual keyword `var' may only appear within a local variable declaration");
 		}
 	}
-}	
+
+	public class InvalidStatementExpression : Statement
+	{
+		public Expression Expression {
+			get;
+			private set;
+		}
+
+		public InvalidStatementExpression (Expression expr)
+		{
+			this.Expression = expr;
+		}
+
+		public override void Emit (EmitContext ec)
+		{
+			// nothing
+		}
+
+		protected override void DoEmit (EmitContext ec)
+		{
+			// nothing
+		}
+
+		protected override void CloneTo (CloneContext clonectx, Statement target)
+		{
+			// nothing
+		}
+
+		public override Expression CreateExpressionTree (ResolveContext ec)
+		{
+			return null;
+		}
+
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}
+
+		protected override bool DoFlowAnalysis(FlowAnalysisContext fc)
+		{
+			return false;
+		}
+	}
+
+}

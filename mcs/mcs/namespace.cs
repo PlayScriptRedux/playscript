@@ -711,6 +711,12 @@ namespace Mono.CSharp {
 			}
 		}
 
+		public IDictionary<string, bool> Conditionals {
+			get {
+				return conditionals ?? new Dictionary<string, bool> ();
+			}
+		}
+
 		public string FileName {
 			get {
 				return file.Name;
@@ -836,12 +842,14 @@ namespace Mono.CSharp {
 
 		TypeSpec[] types_using_table;
 		Dictionary<string, UsingAliasNamespace> aliases;
+		public readonly MemberName RealMemberName;
 
 		CompilationSourceFile compSourceFile;
 
 		public NamespaceContainer (MemberName name, NamespaceContainer parent)
 			: base (parent, name, null, MemberKind.Namespace)
 		{
+			this.RealMemberName = name;
 			this.Parent = parent;
 			this.ns = parent.NS.AddNamespace (name);
 
@@ -886,7 +894,7 @@ namespace Mono.CSharp {
 				return ns;
 			}
 		}
-
+			
 		public List<UsingNamespace> Usings {
 			get {
 				return clauses;
@@ -1641,6 +1649,72 @@ namespace Mono.CSharp {
 			}
 		}
 
+		public virtual void Accept (StructuralVisitor visitor)
+		{
+			visitor.Visit (this);
+		}
+
+		public override string ToString()
+		{
+			return resolved.ToString();
+		}
+	}
+
+	public class UsingClause
+	{
+		readonly ATypeNameExpression expr;
+		readonly Location loc;
+		protected FullNamedExpression resolved;
+
+		public UsingClause (ATypeNameExpression expr, Location loc)
+		{
+			this.expr = expr;
+			this.loc = loc;
+		}
+
+		#region Properties
+
+		public virtual SimpleMemberName Alias {
+			get {
+				return null;
+			}
+		}
+
+		public Location Location {
+			get {
+				return loc;
+			}
+		}
+
+		public ATypeNameExpression NamespaceExpression	{
+			get {
+				return expr;
+			}
+		}
+
+		public FullNamedExpression ResolvedExpression {
+			get {
+				return resolved;
+			}
+		}
+
+		#endregion
+
+		public string GetSignatureForError ()
+		{
+			return expr.GetSignatureForError ();
+		}
+
+		public virtual void Define (NamespaceContainer ctx)
+		{
+			resolved = expr.ResolveAsTypeOrNamespace (ctx, false);
+		}
+
+		public virtual void Accept (StructuralVisitor visitor)
+		{
+			visitor.Visit (this);
+		}
+
 		public override string ToString()
 		{
 			return resolved.ToString();
@@ -1688,7 +1762,8 @@ namespace Mono.CSharp {
 		public TypeSpec ResolvedType {
 			get { return resolvedType; }
 		}
-	}		
+	}
+
 		
 	public class UsingAliasNamespace : UsingNamespace
 	{

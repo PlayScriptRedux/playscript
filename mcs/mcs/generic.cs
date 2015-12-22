@@ -122,7 +122,13 @@ namespace Mono.CSharp {
 		readonly Location loc;
 		bool resolved;
 		bool resolving;
-		
+
+		public IEnumerable<FullNamedExpression> ConstraintExpressions {
+			get {
+				return constraints;
+			}
+		}
+
 		public Constraints (SimpleMemberName tparam, List<FullNamedExpression> constraints, Location loc)
 		{
 			this.tparam = tparam;
@@ -2136,6 +2142,10 @@ namespace Mono.CSharp {
 	{
 		List<FullNamedExpression> args;
 		TypeSpec[] atypes;
+
+		public List<FullNamedExpression> Args {
+			get { return this.args; }
+		}
 
 		public TypeArguments (params FullNamedExpression[] types)
 		{
