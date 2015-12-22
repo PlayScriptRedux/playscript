@@ -47,11 +47,9 @@ branches:
 
 # Notify of build changes
 notifications:
- email:
-  - sushihangover@outlook.com
   webhooks:
     urls:
-      - https://webhooks.gitter.im/e/5a4733980460a69b27bb
+      - https://webhooks.gitter.im/e/eaa9e3db4cd82f13830a
     on_success: always  # options: [always|never|change] default: always
     on_failure: always  # options: [always|never|change] default: always
     on_start: always     # options: [always|never|change] default: always
