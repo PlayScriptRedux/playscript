@@ -1,18 +1,27 @@
- ![logo](https://raw.githubusercontent.com/PlayScriptRedux/playscript/playscript/PlayscriptLogo.png) 
+![PlayScript](media/Playscript-TransBackground.png) 
 
-# PLAYSCRIPT
+##Current project status:
 
-## Current project status
+| Git Branch | Chat |  Mac OS X / Linux | Windows |
+| :------ | :------: | :------: | :------: |
+| **playscript** | [![gitter playscript][gitter-playscript-badge]][gitter-playscript] | [![master nix][master-nix-badge]][master-nix] | [(UpForGrabs)](https://github.com/PlayScriptRedux/playscript/issues/46) |
 
-The CI builds are generously hosted and run on [Travis][travis]
+* The CI builds are generously hosted and run on [Travis][travis]
 
-| Git Branch |  Mac OS X / Linux |
-| :------ | :------: | :------: |
-| **playscript** | [![master nix][master-nix-badge]][master-nix] |
+##Need Help?
+
+###Issues:
+Post issues on Github [Issues](https://github.com/PlayScriptRedux/playscript/issues)
+
+###Chat:
+[![Join the chat at https://gitter.im/PlayScriptRedux/playScript](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/PlayScriptRedux/playScript?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
+>FYI: The old [Google Group forum](https://groups.google.com/forum/?fromgroups#!forum/playscript) is still available, but we do not have admin access to it and do not track any postings on it.
+
+>If enough interest is seen, a new forum (mail list) can be created, +1 and/or comment on existing [question](https://github.com/PlayScriptRedux/playscript/issues/67) concerning this.
 
 
-
-## What is PlayScript?
+##What is PlayScript?
 
 [PlayScript](https://github.com/PlayScriptRedux/playscript) is an open source Adobe ActionScript compatible compiler and Flash compatible runtime that runs in the Mono .NET environment, targeting mobile devices through the Xamarin platform. With a combination of Adobe FlashBuilder for Web and Xamarin Studio for mobile complex large scale cross-mobile-web projects can be developed with full IDE, source debugging and intellisense support on all platforms, with access to the full native mobile API's on the mobile platform.
 
@@ -22,17 +31,17 @@ Finally, the PlayScript runtime supports a full Stage3D compatible implementatio
 
 The PlayScript compiler and runtime provides a complete toolset for building and running ActionScript based games on mobile via the Xamarin Mono runtime or the web via Adobe Flash.
 
-# How is PlayScript Implemented?
+##How is PlayScript Implemented?
 
 The PlayScript compiler is implemented as an additional front end to the Mono MCS compiler.   Installing the PlayScript version of the Mono framework allows you to compile, with the MCS compiler all three langauges: C#, ActionScript, and PlayScript simply by adding files with .cs, .as, and .play file extensions to the MCS command line.
 
 Likewise with the Xamarin Studio IDE, pointing the Xamarin Studio ".NET Frameworks" preferences page selection to the PlayScript Mono framework allows you to simply add .as or .play files to any C# project, and compile them directly into your Xamarin.iOS or Xamarin.Android project.  You can then compile ActionScript or PlayScript code and debug it on the device just as you would any C# code.  ActionScript code can directly call C# code, and vice versa.
 
-# How is the Stage3D Flash Runtime Implemented?
+##How is the Stage3D Flash Runtime Implemented?
 
 PlayScript includes two libraries: PlayScript.Dynamic_aot.dll, and pscorlib.dll, which implement the basic flash runtime and Stage3D over OpenGL.  Referencing these libraries or the iOS (Monotouch) or Android (MonoDroid) versions of them in your project in Xamarin Studio allows you to run existing Flash Stage3D code with no or little modifications.  (NOTE: A stubbed version of the flash "display" library is included, but is non functional except for various functionality in Bitmap, BitmapData, and TextField).
 
-# Current Status
+##Current Status
 
 The PlayScript and ActionScript compiler front ends are fairly stable at this point (given that they are built on top of the very mature Mono compiler and runtime), but there are still several ActionScript language features that are not fully implemented, and certain constructs that are not parsed or compiled as they are in ActionScript.  Work is ongoing to eliminate these last remaining issues and deliver full ActionScript compatibility and any help with [testing](https://github.com/PlayScriptRedux/playscript/issues), writing tests, and/or project [pull-requests](https://github.com/PlayScriptRedux/playscript/blob/playscript/CONTRIBUTING.md) are welcome.
 
@@ -64,7 +73,7 @@ The PlayScript and ActionScript compiler front ends are fairly stable at this po
 
 Presently we are iterating very rapidly on the runtime and compiler, and binary releases are out of date almost immediately after they are posted.  
 
-We currently recommend that if you wish to use the current alpha versions of the compiler and runtime, you be prepared to build from source and to regularly pull updates from git and rebuild.
+We currently recommend that if you wish to use the current alpha/beta versions of the compiler and runtime, you be prepared to build from source and to regularly pull updates from git and rebuild.
 
 #### Building From Source
 
@@ -82,7 +91,7 @@ http://www.mono-project.com/docs/compiling-mono/windows/
 
 Also, the base pscorlib.dll and PlayScript.Dynamic.dll runtime libraries (minus Stage3D support) will be pre-built and added to the GAC gache in the final mono install.  To use the "monotouch" or "monomac" or "monoandroid" versions of these libraries, use the included .csproj files in the mcs/class folder in this repository.
 
-# How do I use PlayScript from Xamarin Studio?
+##How do I use PlayScript from Xamarin Studio?
 
 1. Build the Mono framework from this repo using the Mono build instructions.   Use --prefix=/Users/myname/playscript-mono-inst to install the framework to a reasonable location on your hard disk.
 2. Open Xamarin Studio, and select Preferences..
@@ -96,7 +105,7 @@ You should now be able to add .as files and .play files to your projects and com
 (NOTE: A modified version of MonoDevelop should be available in the playscript-monodevelop repository that includes full support - including syntax highlighting for both .as and .play files.)
 
 
-## Features:
+##Features:
 
 #### Native Performance
 
@@ -209,16 +218,12 @@ async function AccessTheWebAsync():Task.<int>
 
 ```
 
-## PlayScript Forum
-
-Please post questions/issues on Github [Issues](https://github.com/PlayScriptRedux/playscript/issues)
-
-FYI: The old [Google Group forum](https://groups.google.com/forum/?fromgroups#!forum/playscript) is still available, but we do not have admin access to it and do not track any postings on it.
-
-If enough interest is seen, a new forum can be created, +1 and/or comment on existing [question](https://github.com/PlayScriptRedux/playscript/issues/67) concerning this.
-
 
  [travis]: https://travis-ci.org/
 
  [master-nix-badge]: https://travis-ci.org/PlayScriptRedux/playscript.svg?branch=playscript
  [master-nix]: https://travis-ci.org/PlayScriptRedux/playscript/branches
+ 
+ [gitter-playscript-badge]: https://badges.gitter.im/Join%20Chat.svg
+[gitter-playscript]: https://gitter.im/PlayScriptRedux/playScript?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+
