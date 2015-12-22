@@ -30,6 +30,12 @@ namespace Mono.CSharp
 		Expression expr;
 		AwaitStatement stmt;
 
+		public Expression Expression {
+			get {
+				return expr;
+			}
+		}
+
 		public Await (Expression expr, Location loc)
 		{
 			this.expr = expr;

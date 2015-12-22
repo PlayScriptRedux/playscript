@@ -277,6 +277,12 @@ namespace Mono.CSharp.Linq
 
 		protected RangeVariable identifier;
 
+		public RangeVariable  IntoVariable {
+			get {
+				return identifier;
+			}
+		}
+
 		protected ARangeVariableQueryClause (QueryBlock block, RangeVariable identifier, Expression expr, Location loc)
 			: base (block, expr, loc)
 		{
@@ -449,6 +455,10 @@ namespace Mono.CSharp.Linq
 		Expression element_selector;
 		QueryBlock element_block;
 
+		public Expression ElementSelector {
+			get { return this.element_selector; }
+		}
+
 		public GroupBy (QueryBlock block, Expression elementSelector, QueryBlock elementBlock, Expression keySelector, Location loc)
 			: base (block, keySelector, loc)
 		{
@@ -506,6 +516,10 @@ namespace Mono.CSharp.Linq
 	{
 		QueryBlock inner_selector, outer_selector;
 
+		public RangeVariable JoinVariable {
+			get { return this.GetIntoVariable (); }
+		}
+			
 		public Join (QueryBlock block, RangeVariable lt, Expression inner, QueryBlock outerSelector, QueryBlock innerSelector, Location loc)
 			: base (block, lt, inner, loc)
 		{

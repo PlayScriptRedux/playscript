@@ -707,6 +707,12 @@ namespace Mono.CSharp
 			}
 		}
 
+		public List<FullNamedExpression> TypeBaseExpressions {
+			get {
+				return type_bases;
+			}
+		}
+
 		public bool HasInstanceConstructor {
 			get {
 				return (caching_flags & Flags.HasInstanceConstructor) != 0;

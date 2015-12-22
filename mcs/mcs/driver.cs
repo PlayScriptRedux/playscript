@@ -200,7 +200,21 @@ namespace Mono.CSharp
 				parser.parse ();
 			}
 		}
-		
+
+		public static PlayScriptParser PsParse (SeekableStreamReader reader, SourceFile sourceFile, ModuleContainer module, ParserSession session, Report report, int lineModifier = 0, int colModifier = 0)
+		{
+			var file = new CompilationSourceFile (module, sourceFile);
+			module.AddTypeContainer (file);
+
+			var parser = new PlayScriptParser (reader, file, report, session);
+			parser.parsing_playscript = sourceFile.PsExtended;
+			parser.Lexer.Line += lineModifier;
+			parser.Lexer.Column += colModifier;
+			parser.Lexer.sbag = new SpecialsBag ();
+			parser.parse ();
+			return parser;
+		}
+
 		public static int Main (string[] args)
 		{
 			Location.InEmacs = Environment.GetEnvironmentVariable ("EMACS") == "t";
@@ -441,6 +455,14 @@ namespace Mono.CSharp
 
 			return Report.Errors == 0;
 		}
+	}
+
+	public class CompilerCompilationUnit {
+		public ModuleContainer ModuleCompiled { get; set; }
+		public LocationsBag LocationsBag { get; set; }
+		public SpecialsBag SpecialsBag { get; set; }
+		public IDictionary<string, bool> Conditionals { get; set; }
+		public object LastYYValue { get; set; }
 	}
 
 	//

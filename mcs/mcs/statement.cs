@@ -7416,6 +7416,14 @@ namespace Mono.CSharp {
 		List<Label> redirected_jumps;
 		Label? start_fin_label;
 
+		public Statement Stmt {
+			get { return this.stmt; }
+		}
+
+		public ExplicitBlock Fini {
+			get { return this.fini; }
+		}
+
 		public TryFinally (Statement stmt, ExplicitBlock fini, Location loc)
 			 : base (stmt, loc)
 		{

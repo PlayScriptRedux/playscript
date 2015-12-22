@@ -156,6 +156,12 @@ namespace Mono.CSharp {
 			}
 		}
 
+		public ATypeNameExpression TypeNameExpression {
+			get {
+				return expression;
+			}
+		}
+
 		void AddModuleCharSet (ResolveContext rc)
 		{
 			const string dll_import_char_set = "CharSet";
@@ -1201,16 +1207,26 @@ namespace Mono.CSharp {
 	public partial class Attributes
 	{
 		public readonly List<Attribute> Attrs;
+		#if FULL_AST
+		public readonly List<List<Attribute>> Sections = new List<List<Attribute>> ();
+		#endif
 
 		public Attributes (Attribute a)
 		{
 			Attrs = new List<Attribute> ();
 			Attrs.Add (a);
+			#if FULL_AST
+			Sections.Add (Attrs);
+			#endif
+
 		}
 
 		public Attributes (List<Attribute> attrs)
 		{
 			Attrs = attrs ?? new List<Attribute> ();
+			#if FULL_AST
+			Sections.Add (attrs);
+			#endif
 		}
 
 		public void AddAttribute (Attribute attr)
@@ -1220,7 +1236,11 @@ namespace Mono.CSharp {
 
 		public void AddAttributes (List<Attribute> attrs)
 		{
+			#if FULL_AST
+			Sections.Add (attrs);
+			#else
 			Attrs.AddRange (attrs);
+			#endif
 		}
 
 		public void AttachTo (Attributable attributable, IMemberContext context)

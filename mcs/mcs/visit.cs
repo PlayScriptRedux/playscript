@@ -56,6 +56,10 @@ namespace Mono.CSharp
 			}
 		}
 
+		public virtual void Visit (UsingClause usingClause)
+		{
+		}
+
 		public virtual void Visit (ModuleContainer module)
 		{
 			if (!AutoVisit)
