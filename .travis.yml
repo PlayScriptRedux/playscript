@@ -51,7 +51,7 @@ notifications:
   - sushihangover@outlook.com
   webhooks:
     urls:
-      - https://webhooks.gitter.im/e/4add8b7a4ba62c51fbe2
+      - https://webhooks.gitter.im/e/5a4733980460a69b27bb
     on_success: always  # options: [always|never|change] default: always
     on_failure: always  # options: [always|never|change] default: always
     on_start: always     # options: [always|never|change] default: always
