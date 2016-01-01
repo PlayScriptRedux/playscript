@@ -30,16 +30,13 @@
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
     <TargetFrameworkProfile />
-    <UseMSBuildEngine>False</UseMSBuildEngine>
-    <ProductVersion>8.0.30703</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>TRACE;DEBUG;NET_4_0;PLAYSCRIPT_REPL;</DefineConstants>
+    <DefineConstants>DEBUG;NET_4_5;PLAYSCRIPT_REPL;TRACE;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
@@ -47,7 +44,7 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;NET_4_0;PLAYSCRIPT_REPL;</DefineConstants>
+    <DefineConstants>NET_4_5;PLAYSCRIPT_REPL;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
@@ -56,6 +53,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml" />
+    <Reference Include="Mono.CSharp" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\..\mcs\anonymous.cs">
@@ -238,16 +236,16 @@
     <Compile Include="..\..\mcs\eval.cs">
       <Link>eval.cs</Link>
     </Compile>
-    <Compile Include="..\..\class\Mono.CompilerServices.SymbolWriter\MonoSymbolFile.cs">
+    <Compile Include="..\Mono.CompilerServices.SymbolWriter\MonoSymbolFile.cs">
       <Link>MonoSymbolFile.cs</Link>
     </Compile>
-    <Compile Include="..\..\class\Mono.CompilerServices.SymbolWriter\MonoSymbolTable.cs">
+    <Compile Include="..\Mono.CompilerServices.SymbolWriter\MonoSymbolTable.cs">
       <Link>MonoSymbolTable.cs</Link>
     </Compile>
-    <Compile Include="..\..\class\Mono.CompilerServices.SymbolWriter\SourceMethodBuilder.cs">
+    <Compile Include="..\Mono.CompilerServices.SymbolWriter\SourceMethodBuilder.cs">
       <Link>SourceMethodBuilder.cs</Link>
     </Compile>
-    <Compile Include="..\..\class\Mono.Security\Mono.Security.Cryptography\CryptoConvert.cs">
+    <Compile Include="..\Mono.Security\Mono.Security.Cryptography\CryptoConvert.cs">
       <Link>CryptoConvert.cs</Link>
     </Compile>
   </ItemGroup>

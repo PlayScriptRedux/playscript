@@ -29,10 +29,12 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyProduct("PlayScript")]
 [assembly: AssemblyCopyright("")]
 
+#if !IDE
 [assembly: AssemblyVersion (Consts.FxVersion)]
 [assembly: SatelliteContractVersion (Consts.FxVersion)]
 [assembly: AssemblyInformationalVersion (Consts.FxFileVersion)]
 [assembly: AssemblyFileVersion (Consts.FxFileVersion)]
+#endif
 
 [assembly: NeutralResourcesLanguage ("en-US")]
 

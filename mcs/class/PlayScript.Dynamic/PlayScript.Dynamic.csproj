@@ -3,23 +3,22 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>10.0.0</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{5F7F9AF6-CE83-4F13-A25F-355DB2861D43}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>PlayScript.Dynamic</RootNamespace>
     <AssemblyName>PlayScript.Dynamic</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>False</Optimize>
     <OutputPath>bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;</DefineConstants>
+    <DefineConstants>DEBUG;DYNAMIC_SUPPORT;PLATFORM_GENERIC;IDE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -28,13 +27,27 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug+MonoMac|AnyCPU' ">
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug+MonoMac</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release+MonoMac|AnyCPU' ">
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Release+MonoMac</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Mono.CSharp" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AssemblyInfo.cs" />
     <Compile Include="PlayScript\CallSite.cs" />
     <Compile Include="PlayScript\CallSiteBinder.cs" />
     <Compile Include="PlayScript\ExpressionType.cs" />
@@ -71,6 +84,7 @@
     <Compile Include="PlayScript\RuntimeBinder\RuntimeBinderException.cs" />
     <Compile Include="PlayScript\RuntimeBinder\RuntimeBinderInternalCompilerException.cs" />
     <Compile Include="System\Runtime\CompilerServices\DynamicAttribute.cs" />
+    <Compile Include="Assembly\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

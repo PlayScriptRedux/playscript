@@ -27,20 +27,19 @@ using System.Runtime.InteropServices;
 
 [assembly: AssemblyCompany("PlayScriptRedux")]
 [assembly: AssemblyProduct("PlayScript")]
-[assembly: AssemblyCopyright("")]
+[assembly: AssemblyCopyright("SushiHangover/RobertN 2015")]
 
+#if !IDE
 [assembly: AssemblyVersion (Consts.FxVersion)]
 [assembly: SatelliteContractVersion (Consts.FxVersion)]
 [assembly: AssemblyInformationalVersion (Consts.FxFileVersion)]
 [assembly: AssemblyFileVersion (Consts.FxFileVersion)]
+#endif
 
 [assembly: NeutralResourcesLanguage ("en-US")]
 //[assembly: CLSCompliant (true)]
-[assembly: AssemblyDelaySign (true)]
-
-[assembly: AssemblyKeyFile ("../ecma.pub")]
-
-[assembly: SecurityCritical]
+//[assembly: AssemblyDelaySign (true)]
+//[assembly: SecurityCritical]
 
 [assembly: ComVisible (false)]
 
