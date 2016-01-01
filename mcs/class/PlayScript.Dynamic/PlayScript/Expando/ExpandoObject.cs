@@ -1517,9 +1517,7 @@ namespace PlayScript.Expando {
 	[DebuggerDisplay ("Count = {Count}")]
 	[DebuggerTypeProxy (typeof (ExpandoDebugView))]
 	public class ExpandoObject : IDictionary<string, object>, IDictionary, ISerializable, IDeserializationCallback, IDynamicClass, IKeyEnumerable, IDynamicAccessor<object>, IDynamicAccessorUntyped
-#if NET_4_5
 		, IReadOnlyDictionary<string, object>
-#endif
 	{
 		// The implementation of this class uses a hash table and linked lists
 		// (see: http://msdn2.microsoft.com/en-us/library/ms379571(VS.80).aspx).
@@ -2140,7 +2138,6 @@ namespace PlayScript.Expando {
 			get { return Values; }
 		}
 		
-#if NET_4_5
 		IEnumerable<string> IReadOnlyDictionary<string, object>.Keys {
 			get { return Keys; }
 		}
@@ -2148,8 +2145,7 @@ namespace PlayScript.Expando {
 		IEnumerable<object> IReadOnlyDictionary<string, object>.Values {
 			get { return Values; }
 		}
-#endif
-		
+
 		public KeyCollection Keys {
 			get { return new KeyCollection (this); }
 		}

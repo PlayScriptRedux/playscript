@@ -3,97 +3,48 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>8.0.30703</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{B5CEE056-4092-477A-82B8-6494EA651287}</ProjectGuid>
-    <ProjectTypeGuids>{EFBA0AD7-5A72-4C68-AF49-83D382785DCF};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <ProjectTypeGuids>{FEACFBD2-3405-455C-9665-78FE426C6842};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC};{1FC382B4-0F88-4DBE-994D-7AA7D07975C6}</ProjectTypeGuids>
+    <ProjectGuid>{876BFFD1-CEFA-44DD-9243-A50958EF65DD}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>pscorlib_aotmonodroid</RootNamespace>
-    <AndroidResgenClass>Resource</AndroidResgenClass>
-    <MonoAndroidResourcePrefix>Resources</MonoAndroidResourcePrefix>
-    <MonoAndroidAssetsPrefix>Assets</MonoAndroidAssetsPrefix>
-    <AssemblyName>pscorlib_monodroid</AssemblyName>
+    <RootNamespace>pscorlib_aotmonotouch</RootNamespace>
+    <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
+    <AssemblyName>pscorlib.AOT.Xamarin.iOS</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
+    <DebugSymbols>True</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
+    <Optimize>False</Optimize>
     <OutputPath>bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;PLATFORM_MONODROID;OPENGL;PERFORMANCE_MODE</DefineConstants>
+    <DefineConstants>DEBUG;PLATFORM_MONOTOUCH;OPENGL;PERFORMANCE_MODE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AndroidLinkMode>None</AndroidLinkMode>
-    <ConsolePause>false</ConsolePause>
+    <ConsolePause>False</ConsolePause>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <NoWarn>219</NoWarn>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <Optimize>true</Optimize>
+    <DebugType>none</DebugType>
+    <Optimize>True</Optimize>
     <OutputPath>bin\Release</OutputPath>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
-    <ConsolePause>false</ConsolePause>
+    <ConsolePause>False</ConsolePause>
+    <DefineConstants>PLATFORM_MONOTOUCH;OPENGL;PERFORMANCE_MODE</DefineConstants>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DefineConstants>PLATFORM_MONODROID;OPENGL;PERFORMANCE_MODE</DefineConstants>
-    <NoWarn>219</NoWarn>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'QE|AnyCPU' ">
-    <Optimize>true</Optimize>
-    <OutputPath>bin\QE</OutputPath>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <AndroidUseSharedRuntime>false</AndroidUseSharedRuntime>
-    <ConsolePause>false</ConsolePause>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <DefineConstants>PLATFORM_MONODROID;OPENGL;PERFORMANCE_MODE</DefineConstants>
     <NoWarn>219</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="ICSharpCode.SharpZipLib">
-      <HintPath>..\lib\net_4_5\ICSharpCode.SharpZipLib.dll</HintPath>
-    </Reference>
-    <Reference Include="System, Version=2.0.5.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e">
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="System.Core, Version=2.0.5.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e">
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="System.Xml, Version=2.0.5.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e">
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="System.Json, Version=2.0.5.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35">
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="System.Web.Services, Version=2.0.5.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="Mono.Android, Version=0.0.0.0, Culture=neutral, PublicKeyToken=84e04ff9cfb79065">
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-    <Reference Include="OpenTK-1.0, Version=1.0.0.0, Culture=neutral, PublicKeyToken=84e04ff9cfb79065">
-      <SpecificVersion>False</SpecificVersion>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Resources\" />
-    <Folder Include="ActionScript\" />
-    <Folder Include="flash\" />
-    <Folder Include="flash\filesystem\" />
-    <Folder Include="flash\globalization\" />
-    <Folder Include="flash\external\" />
-    <Folder Include="flash\media\android\" />
-    <Folder Include="mx\" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Web.Services" />
+    <Reference Include="Xamarin.iOS" />
+    <Reference Include="OpenTK-1.0" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\pscorlib\Array.cs">
       <Link>Array.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\AssemblyInfo.cs">
-      <Link>AssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Boolean.cs">
       <Link>Boolean.cs</Link>
@@ -130,9 +81,6 @@
     </Compile>
     <Compile Include="..\pscorlib\Dynamic.play">
       <Link>Dynamic.play</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\DotNetError.play">
-      <Link>DotNetError.play</Link>
     </Compile>
     <Compile Include="..\pscorlib\Error.play">
       <Link>Error.play</Link>
@@ -866,17 +814,14 @@
     <Compile Include="..\pscorlib\ForbidDynamicAttribute.cs">
       <Link>ForbidDynamicAttribute.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\DotNetError.play">
+      <Link>DotNetError.play</Link>
+    </Compile>
     <Compile Include="..\pscorlib\flash\utils\ByteArray.cs">
       <Link>flash\utils\ByteArray.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3ClassDef.cs">
       <Link>Amf\Amf3ClassDef.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\Amf\Amf3CodeGen.cs">
-      <Link>Amf\Amf3CodeGen.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\Amf\Amf3Utils.cs">
-      <Link>Amf\Amf3Utils.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3Object.cs">
       <Link>Amf\Amf3Object.cs</Link>
@@ -884,26 +829,32 @@
     <Compile Include="..\pscorlib\Amf\Amf3Parser.cs">
       <Link>Amf\Amf3Parser.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\Amf\Amf3Reader.cs">
-      <Link>Amf\Amf3Reader.cs</Link>
-    </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3TypeCode.cs">
       <Link>Amf\Amf3TypeCode.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3Writer.cs">
       <Link>Amf\Amf3Writer.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Reader.cs">
+      <Link>Amf\Amf3Reader.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3CodeGen.cs">
+      <Link>Amf\Amf3CodeGen.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Amf\Amf3Utils.cs">
+      <Link>Amf\Amf3Utils.cs</Link>
+    </Compile>
     <Compile Include="..\pscorlib\Amf\DataConverter.cs">
       <Link>Amf\DataConverter.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\Amf\IAmf3Serializable.cs">
-      <Link>Amf\IAmf3Serializable.cs</Link>
+    <Compile Include="..\pscorlib\Amf\Rocks.cs">
+      <Link>Amf\Rocks.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Amf\ReferenceEqualityComparer.cs">
       <Link>Amf\ReferenceEqualityComparer.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\Amf\Rocks.cs">
-      <Link>Amf\Rocks.cs</Link>
+    <Compile Include="..\pscorlib\Amf\IAmf3Serializable.cs">
+      <Link>Amf\IAmf3Serializable.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3String.cs">
       <Link>Amf\Amf3String.cs</Link>
@@ -923,11 +874,11 @@
     <Compile Include="..\pscorlib\Telemetry\Parser.cs">
       <Link>Telemetry\Parser.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\Telemetry\MethodMap.cs">
-      <Link>Telemetry\MethodMap.cs</Link>
-    </Compile>
     <Compile Include="..\pscorlib\Telemetry\Sampler.cs">
       <Link>Telemetry\Sampler.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\Telemetry\MethodMap.cs">
+      <Link>Telemetry\MethodMap.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Telemetry\Log.cs">
       <Link>Telemetry\Log.cs</Link>
@@ -935,17 +886,17 @@
     <Compile Include="..\pscorlib\Telemetry\SymbolTable.cs">
       <Link>Telemetry\SymbolTable.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\media\android\Sound.cs">
-      <Link>flash\media\android\Sound.cs</Link>
-    </Compile>
-    <Compile Include="..\pscorlib\flash\media\android\SoundChannel.cs">
-      <Link>flash\media\android\SoundChannel.cs</Link>
+    <Compile Include="..\pscorlib\PlayScript\Hardware.cs">
+      <Link>PlayScript\Hardware.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Amf\Amf3SerializableAttribute.cs">
       <Link>Amf\Amf3SerializableAttribute.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\PlayScript\Hardware.cs">
-      <Link>PlayScript\Hardware.cs</Link>
+    <Compile Include="..\pscorlib\flash\media\ios\Sound.cs">
+      <Link>flash\media\ios\Sound.cs</Link>
+    </Compile>
+    <Compile Include="..\pscorlib\flash\media\ios\SoundChannel.cs">
+      <Link>flash\media\ios\SoundChannel.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\mx\graphics\codec\IImageEncoder.play">
       <Link>mx\graphics\codec\IImageEncoder.play</Link>
@@ -962,11 +913,14 @@
     <Compile Include="..\pscorlib\flash\display\BitmapData.cs">
       <Link>flash\display\BitmapData.cs</Link>
     </Compile>
+    <Compile Include="..\pscorlib\flash\display3D\Context3DStateCache.cs">
+      <Link>flash\display3D\Context3DStateCache.cs</Link>
+    </Compile>
     <Compile Include="..\pscorlib\PlayScript\ProfilerData.cs">
       <Link>PlayScript\ProfilerData.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\flash\display3D\Context3DStateCache.cs">
-      <Link>flash\display3D\Context3DStateCache.cs</Link>
+    <Compile Include="..\pscorlib\PlayScript\BinJSON.cs">
+      <Link>PlayScript\BinJSON.cs</Link>
     </Compile>
     <Compile Include="..\pscorlib\Amf\ExpandoSerializer.cs">
       <Link>Amf\ExpandoSerializer.cs</Link>
@@ -974,15 +928,12 @@
     <Compile Include="..\pscorlib\Amf\ReflectionSerializer.cs">
       <Link>Amf\ReflectionSerializer.cs</Link>
     </Compile>
-    <Compile Include="..\pscorlib\PlayScript\BinJSON.cs">
-      <Link>PlayScript\BinJSON.cs</Link>
-    </Compile>
+    <Compile Include="Assembly\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic_aot-monodroid.csproj">
-      <Project>{4973150C-B48B-4A3B-987F-230517E1DF86}</Project>
-      <Name>PlayScript.Dynamic_aot-monodroid</Name>
-    </ProjectReference>
+    <None Include="..\pscorlib\pscorlib.dll.sources">
+      <Link>pscorlib.dll.sources</Link>
+    </None>
   </ItemGroup>
-  <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
+  <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />
 </Project>

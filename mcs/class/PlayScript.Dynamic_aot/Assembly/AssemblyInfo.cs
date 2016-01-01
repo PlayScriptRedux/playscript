@@ -21,9 +21,9 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle("PlayScript.Dynamic_aot")]
+[assembly: AssemblyTitle("PlayScript.Dynamic.AOT")]
 [assembly: AssemblyDescription("AOT-based Dynamic support for PlayScript")]
-[assembly: AssemblyDefaultAlias ("PlayScript.Dynamic_aot.dll")]
+[assembly: AssemblyDefaultAlias ("PlayScript.Dynamic.AOT.dll")]
 
 [assembly: AssemblyCompany("PlayScriptRedux")]
 [assembly: AssemblyProduct("PlayScript")]
@@ -35,10 +35,6 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyFileVersion (Consts.FxFileVersion)]
 
 [assembly: NeutralResourcesLanguage ("en-US")]
-
-//[assembly: CLSCompliant (true)]
-//[assembly: AssemblyDelaySign (true)]
-//[assembly: AssemblyKeyFile ("../ecma.pub")]
 
 [assembly: SecurityCritical]
 

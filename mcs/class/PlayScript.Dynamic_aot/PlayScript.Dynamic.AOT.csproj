@@ -3,21 +3,18 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>8.0.30703</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{0BACBE20-34DD-4E24-8B91-87970E8A23B9}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>PlayScript.Dynamic</RootNamespace>
-    <UseMSBuildEngine>False</UseMSBuildEngine>
+    <DelaySign>false</DelaySign>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <DelaySign>true</DelaySign>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;NET_4_5;PLATFORM_GENERIC;BINDERS_RUNTIME_STATS</DefineConstants>
+    <DefineConstants>DEBUG;NET_4_5;PLATFORM_GENERIC;BINDERS_RUNTIME_STATS;IDE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
@@ -35,18 +32,27 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <AssemblyName>PlayScript.Dynamic_aot</AssemblyName>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug-MonoMac|AnyCPU' ">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug+MonoMac|AnyCPU' ">
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug-MonoMac</OutputPath>
+    <OutputPath>bin\Debug+MonoMac</OutputPath>
     <WarningLevel>4</WarningLevel>
-    <AssemblyName>PlayScript.Dynamic_AOT.Net4.5</AssemblyName>
+    <AssemblyName>PlayScript.Dynamic.AOT</AssemblyName>
+    <DebugSymbols>true</DebugSymbols>
+    <DefineConstants>DEBUG;NET_4_5;PLATFORM_MONOMAC;BINDERS_RUNTIME_STATS;IDE</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release+MonoMac|AnyCPU' ">
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release+MonoMac</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <AssemblyName>PlayScript.Dynamic.AOT</AssemblyName>
+    <DefineConstants>NET_4_5;PLATFORM_MONOMAC;BINDERS_RUNTIME_STATS;IDE</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="Microsoft.CSharp">
-      <HintPath>..\lib\net_4_5\Microsoft.CSharp.dll</HintPath>
-    </Reference>
+    <Reference Include="Mono.CSharp" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\PlayScript.Dynamic\PlayScript\CallSite.cs">
