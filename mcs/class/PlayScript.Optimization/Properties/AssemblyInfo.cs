@@ -22,23 +22,24 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle("PlayScript.Optimization")]
-[assembly: AssemblyDescription("PlayScript Optimization")]
+[assembly: AssemblyDescription("PlayScript.Optimization")]
 [assembly: AssemblyDefaultAlias ("PlayScript.Optimization.dll")]
 
 [assembly: AssemblyCompany("PlayScriptRedux")]
 [assembly: AssemblyProduct("PlayScript")]
 [assembly: AssemblyCopyright("")]
 
+#if FRAMEWORK
 [assembly: AssemblyVersion (Consts.FxVersion)]
 [assembly: SatelliteContractVersion (Consts.FxVersion)]
 [assembly: AssemblyInformationalVersion (Consts.FxFileVersion)]
 [assembly: AssemblyFileVersion (Consts.FxFileVersion)]
+[assembly: AssemblyDelaySign (true)]
+[assembly: AssemblyKeyFile ("../ecma.pub")]
+#endif
 
 [assembly: NeutralResourcesLanguage ("en-US")]
 //[assembly: CLSCompliant (true)]
-[assembly: AssemblyDelaySign (true)]
-
-[assembly: AssemblyKeyFile ("../ecma.pub")]
 
 [assembly: SecurityCritical]
 
