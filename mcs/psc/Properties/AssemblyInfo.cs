@@ -30,13 +30,14 @@ using System.Reflection;
 
 [assembly: AssemblyTitle ("PlayScript Compiler")]
 [assembly: AssemblyProduct ("PlayScript Compiler")]
-[assembly: AssemblyCopyright ("2015 PlayScriptRedux. 2013 Zynga, Inc.  2001 - 2009 Novell, Inc.")]
-[assembly: AssemblyCompany ("PlayScriptRedux, Zynga, Novell, Inc.")]
+[assembly: AssemblyDescription ("PlayScript Compiler")]
+[assembly: AssemblyCopyright ("2016 PlayScriptRedux")]
+[assembly: AssemblyCompany ("PlayScriptRedux")]
 [assembly: AssemblyCulture ("")]
 [assembly: AssemblyConfiguration ("")]
 
+#if FRAMEWORK
 [assembly: AssemblyVersion (Consts.MonoVersion)]
 [assembly: AssemblyFileVersion (Consts.FxFileVersion)]
-
-[assembly: AssemblyDescription ("PlayScript Compiler")]
-
+[assembly: AssemblyInformationalVersion (Consts.FxFileVersion)]
+#endif

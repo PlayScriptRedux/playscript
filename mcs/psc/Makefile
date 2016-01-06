@@ -9,8 +9,8 @@ include ../build/rules.make
 EXTRA_DISTFILES = \
 	psc.csproj		\
 	psc.sln		\
-	../../cs-parser.jay		\
-	../../ps-parser.jay		\
+	../mcs/cs-parser.jay		\
+	../mcs/ps-parser.jay		\
 	psc.exe.sources
 
 ifeq (basic, $(PROFILE))
@@ -23,20 +23,21 @@ the_libdir = $(topdir)/class/lib/net_4_5/
 LOCAL_MCS_FLAGS += -lib:$(topdir)/class/lib/net_4_5 -debug
 endif
 
-LOCAL_MCS_FLAGS += -d:STATIC,NO_SYMBOL_WRITER,NO_AUTHENTICODE,PLAYSCRIPT
+LOCAL_MCS_FLAGS += -d:STATIC,NO_SYMBOL_WRITER,NO_AUTHENTICODE,PLAYSCRIPT,FRAMEWORK
 
 PROGRAM_INSTALL_DIR = $(mono_libdir)/mono/4.5
 
 PROGRAM_COMPILE = $(BOOT_COMPILE)
 
-BUILT_SOURCES = ../mcs/cs-parser.cs ../mcs/ps-parser.cs
+# BUILT_SOURCES = ../mcs/cs-parser.cs ../mcs/ps-parser.cs
+BUILT_SOURCES = cs-parser.cs ps-parser.cs
 
-CLEAN_FILES += y.output
+CLEAN_FILES += y.output cs-parser.cs ps-parser.cs
 
-cs-parser.cs: cs-parser.jay $(topdir)/jay/skeleton.cs
+cs-parser.cs: ../mcs/cs-parser.jay $(topdir)/jay/skeleton.cs
 	$(topdir)/jay/jay $(JAY_FLAGS) < $(topdir)/jay/skeleton.cs $< > jay-tmp.out && mv jay-tmp.out $@
 
-ps-parser.cs: ps-parser.jay $(topdir)/jay/skeleton.cs
+ps-parser.cs: ../mcs/ps-parser.jay $(topdir)/jay/skeleton.cs
 	$(topdir)/jay/jay $(JAY_FLAGS) < $(topdir)/jay/skeleton.cs $< > jay-tmp.out && mv jay-tmp.out $@
 
 KEEP_OUTPUT_FILE_COPY = yes
@@ -44,7 +45,7 @@ KEEP_OUTPUT_FILE_COPY = yes
 include ../build/executable.make
 
 debug-parser:
-	rm cs-parser.cs
-	rm ps-parser.cs
+	-rm cs-parser.cs
+	-rm ps-parser.cs
 	$(MAKE) JAY_FLAGS=-cvt
 

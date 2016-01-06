@@ -1,230 +1,193 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>8.0.30703</ProductVersion>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{08B5AD8B-5F1C-48F4-8B7D-A5D18208281B}</ProjectGuid>
-    <OutputType>Exe</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Mono.CSharp</RootNamespace>
-    <AssemblyName>playc</AssemblyName>
-    <FileAlignment>512</FileAlignment>
-    <PlatformTarget>x86</PlatformTarget>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>True</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>False</Optimize>
-    <OutputPath>.</OutputPath>
-    <DefineConstants>TRACE;DEBUG;NET_4_5;STATIC;NO_SYMBOL_WRITER;NO_AUTHENTICODE;PLAYSCRIPT</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <Commandlineparameters>/noconfig "/r:/Users/bcooley/projects/playscript-mono-inst/lib/mono/4.0/mscorlib.dll" -nostdlib "/out:/Users/bcooley/projects/playscript-mono/mcs/mcs/test2.exe" "/r:/Users/bcooley/projects/playscript-mono-inst/lib/mono/4.0/System.dll" "/r:/Users/bcooley/projects/playscript-mono/mcs/class/PlayScript.Dynamic_aot/bin/Debug/PlayScript.Dynamic_aot.dll" "/r:/Users/bcooley/projects/playscript-mono/mcs/class/pscorlib_aot/bin/Debug/pscorlib_aot.dll" "/r:/Users/bcooley/projects/playscript-mono-inst/lib/mono/4.0/System.Core.dll" /nologo /warn:4 /debug:full /optimize- /codepage:utf8 "/define:DEBUG"  /t:exe "/Users/bcooley/projects/playscript-mono/mcs/tests/pstest-003.as"</Commandlineparameters>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <Optimize>True</Optimize>
-    <DefineConstants>TRACE;NET_4_0;STATIC;NO_SYMBOL_WRITER;NO_AUTHENTICODE;PLAYSCRIPT</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <OutputPath>.</OutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug - AST|AnyCPU'">
-    <DebugSymbols>True</DebugSymbols>
-    <OutputPath>.</OutputPath>
-    <DefineConstants>TRACE;DEBUG;NET_4_0;STATIC;NO_SYMBOL_WRITER;NO_AUTHENTICODE;FULL_AST;PLAYSCRIPT</DefineConstants>
-    <DebugType>full</DebugType>
-    <CodeAnalysisLogFile>mcs.exe.CodeAnalysisLog.xml</CodeAnalysisLogFile>
-    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
-    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <CodeAnalysisRuleSetDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\\Rule Sets</CodeAnalysisRuleSetDirectories>
-    <CodeAnalysisIgnoreBuiltInRuleSets>false</CodeAnalysisIgnoreBuiltInRuleSets>
-    <CodeAnalysisRuleDirectories>;C:\Program Files (x86)\Microsoft Visual Studio 10.0\Team Tools\Static Analysis Tools\FxCop\\Rules</CodeAnalysisRuleDirectories>
-    <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
-    <CodeAnalysisFailOnMissingRules>false</CodeAnalysisFailOnMissingRules>
-    <WarningLevel>4</WarningLevel>
-    <Optimize>False</Optimize>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="System.Xml">
-      <HintPath>..\class\lib\net_4_5\System.Xml.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Core">
-      <HintPath>..\class\lib\net_4_5\System.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="mscorlib">
-      <HintPath>..\class\lib\net_4_5\mscorlib.dll</HintPath>
-    </Reference>
-    <Reference Include="System">
-      <HintPath>..\class\lib\net_4_5\System.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="..\build\common\Consts.cs">
-    </Compile>
-    <Compile Include="..\class\Mono.CompilerServices.SymbolWriter\MonoSymbolFile.cs">
-      <Link>MonoSymbolFile.cs</Link>
-    </Compile>
-    <Compile Include="..\class\Mono.CompilerServices.SymbolWriter\MonoSymbolTable.cs">
-      <Link>MonoSymbolTable.cs</Link>
-    </Compile>
-    <Compile Include="..\class\Mono.CompilerServices.SymbolWriter\SourceMethodBuilder.cs">
-      <Link>SourceMethodBuilder.cs</Link>
-    </Compile>
-    <Compile Include="..\mcs\argument.cs" />
-    <Compile Include="..\mcs\assembly.cs" />
-    <Compile Include="AssemblyInfo.cs">
-    </Compile>
-    <Compile Include="..\mcs\anonymous.cs">
-    </Compile>
-    <Compile Include="..\mcs\assign.cs">
-    </Compile>
-    <Compile Include="..\mcs\async.cs" />
-    <Compile Include="..\mcs\attribute.cs">
-    </Compile>
-    <Compile Include="..\mcs\cfold.cs">
-    </Compile>
-    <Compile Include="..\mcs\class.cs">
-    </Compile>
-    <Compile Include="..\mcs\codegen.cs">
-    </Compile>
-    <Compile Include="..\mcs\complete.cs" />
-    <Compile Include="..\mcs\const.cs">
-    </Compile>
-    <Compile Include="..\mcs\constant.cs">
-    </Compile>
-    <Compile Include="..\mcs\convert.cs">
-    </Compile>
-    <Compile Include="..\mcs\context.cs" />
-    <Compile Include="..\mcs\dynamic.cs" />
-    <Compile Include="..\mcs\eval.cs" />
-    <Compile Include="..\mcs\ikvm.cs" />
-    <Compile Include="..\mcs\import.cs" />
-    <Compile Include="..\mcs\lambda.cs">
-    </Compile>
-    <Compile Include="..\mcs\cs-tokenizer.cs">
-    </Compile>
-    <Compile Include="..\mcs\decl.cs">
-    </Compile>
-    <Compile Include="..\mcs\delegate.cs">
-    </Compile>
-    <Compile Include="..\mcs\doc.cs">
-    </Compile>
-    <Compile Include="..\mcs\driver.cs">
-    </Compile>
-    <Compile Include="..\mcs\ecore.cs">
-    </Compile>
-    <Compile Include="..\mcs\enum.cs">
-    </Compile>
-    <Compile Include="..\mcs\expression.cs">
-    </Compile>
-    <Compile Include="..\mcs\flowanalysis.cs">
-    </Compile>
-    <Compile Include="..\mcs\generic.cs" />
-    <Compile Include="..\mcs\iterators.cs">
-    </Compile>
-    <Compile Include="..\mcs\literal.cs">
-    </Compile>
-    <Compile Include="..\mcs\location.cs">
-    </Compile>
-    <Compile Include="..\mcs\membercache.cs" />
-    <Compile Include="..\mcs\method.cs" />
-    <Compile Include="..\mcs\modifiers.cs">
-    </Compile>
-    <Compile Include="..\mcs\namespace.cs">
-    </Compile>
-    <Compile Include="..\mcs\nullable.cs" />
-    <Compile Include="..\tools\monop\outline.cs">
-      <Link>outline.cs</Link>
-    </Compile>
-    <Compile Include="..\mcs\parameter.cs" />
-    <Compile Include="..\mcs\pending.cs" />
-    <Compile Include="..\mcs\property.cs" />
-    <Compile Include="..\mcs\reflection.cs" />
-    <Compile Include="..\mcs\report.cs" />
-    <Compile Include="..\mcs\settings.cs">
-    </Compile>
-    <Compile Include="..\mcs\module.cs">
-    </Compile>
-    <Compile Include="..\mcs\statement.cs">
-    </Compile>
-    <Compile Include="..\mcs\support.cs">
-    </Compile>
-    <Compile Include="..\mcs\typemanager.cs">
-    </Compile>
-    <Compile Include="..\mcs\linq.cs" />
-    <Compile Include="..\mcs\field.cs" />
-    <Compile Include="..\mcs\typespec.cs" />
-    <Compile Include="..\mcs\visit.cs" />
-    <Compile Include="..\mcs\ps-lang.cs" />
-    <Compile Include="..\mcs\ps-tokenizer.cs" />
-    <Compile Include="..\mcs\ps-codegen.cs" />
-    <Compile Include="..\mcs\inliner.cs">
-      <Link>inliner.cs</Link>
-    </Compile>
-    <Compile Include="..\mcs\intrinsics.cs">
-      <Link>intrinsics.cs</Link>
-    </Compile>
-    <Compile Include="..\class\Mono.Security\Mono.Security.Cryptography\CryptoConvert.cs">
-      <Link>CryptoConvert.cs</Link>
-    </Compile>
-    <Compile Include="..\mcs\cs-parser.cs">
-      <Link>cs-parser.cs</Link>
-    </Compile>
-    <Compile Include="..\mcs\ps-parser.cs">
-      <Link>ps-parser.cs</Link>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup Label="IKVM.Reflection">
-    <Compile Include="..\..\external\ikvm\reflect\*.cs">
-      <Visible>False</Visible>
-    </Compile>
-    <Compile Include="..\..\external\ikvm\reflect\Emit\*.cs">
-      <Visible>False</Visible>
-    </Compile>
-    <Compile Include="..\..\external\ikvm\reflect\Metadata\*.cs">
-      <Visible>False</Visible>
-    </Compile>
-    <Compile Include="..\..\external\ikvm\reflect\Reader\*.cs">
-      <Visible>False</Visible>
-    </Compile>
-    <Compile Include="..\..\external\ikvm\reflect\Writer\*.cs">
-      <Visible>False</Visible>
-    </Compile>
-    <Compile Include="..\..\external\ikvm\reflect\Impl\ITypeOwner.cs">
-      <Visible>False</Visible>
-    </Compile>
-    <Compile Include="..\..\external\ikvm\reflect\Impl\SymbolSupport.cs">
-      <Visible>False</Visible>
-    </Compile>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+	<PropertyGroup>
+		<Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+		<Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+		<ProjectGuid>{08B5AD8B-5F1C-48F4-8B7D-A5D18208281B}</ProjectGuid>
+		<OutputType>Exe</OutputType>
+		<AppDesignerFolder>Properties</AppDesignerFolder>
+		<RootNamespace>Mono.PlayScript</RootNamespace>
+		<AssemblyName>psc</AssemblyName>
+		<FileAlignment>512</FileAlignment>
+		<PlatformTarget>anycpu</PlatformTarget>
+		<TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+		<ProductVersion>8.0.30703</ProductVersion>
+		<SchemaVersion>2.0</SchemaVersion>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<DebugSymbols>True</DebugSymbols>
+		<DebugType>full</DebugType>
+		<Optimize>False</Optimize>
+		<OutputPath>bin\Debug</OutputPath>
+		<DefineConstants>TRACE;DEBUG;NET_4_5;STATIC;NO_SYMBOL_WRITER;NO_AUTHENTICODE;PLAYSCRIPT</DefineConstants>
+		<ErrorReport>prompt</ErrorReport>
+		<WarningLevel>4</WarningLevel>
+		<UseVSHostingProcess>false</UseVSHostingProcess>
+		<Commandlineparameters>/noconfig "/r:/Users/bcooley/projects/playscript-mono-inst/lib/mono/4.0/mscorlib.dll" -nostdlib "/out:/Users/bcooley/projects/playscript-mono/mcs/mcs/test2.exe" "/r:/Users/bcooley/projects/playscript-mono-inst/lib/mono/4.0/System.dll" "/r:/Users/bcooley/projects/playscript-mono/mcs/class/PlayScript.Dynamic_aot/bin/Debug/PlayScript.Dynamic_aot.dll" "/r:/Users/bcooley/projects/playscript-mono/mcs/class/pscorlib_aot/bin/Debug/pscorlib_aot.dll" "/r:/Users/bcooley/projects/playscript-mono-inst/lib/mono/4.0/System.Core.dll" /nologo /warn:4 /debug:full /optimize- /codepage:utf8 "/define:DEBUG"  /t:exe "/Users/bcooley/projects/playscript-mono/mcs/tests/pstest-003.as"</Commandlineparameters>
+		<PlatformTarget>anycpu</PlatformTarget>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+		<Optimize>True</Optimize>
+		<DefineConstants>TRACE;NET_4_5;STATIC;NO_SYMBOL_WRITER;NO_AUTHENTICODE;PLAYSCRIPT</DefineConstants>
+		<ErrorReport>prompt</ErrorReport>
+		<WarningLevel>4</WarningLevel>
+		<OutputPath>bin\Release</OutputPath>
+		<PlatformTarget>anycpu</PlatformTarget>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug - AST|AnyCPU'">
+		<DebugSymbols>True</DebugSymbols>
+		<OutputPath>bin\Debug - AST</OutputPath>
+		<DefineConstants>TRACE;DEBUG;NET_4_5;STATIC;NO_SYMBOL_WRITER;NO_AUTHENTICODE;PLAYSCRIPTFULL_AST;PLAYSCRIPT</DefineConstants>
+		<DebugType>full</DebugType>
+		<WarningLevel>4</WarningLevel>
+		<Optimize>False</Optimize>
+		<PlatformTarget>anycpu</PlatformTarget>
+	</PropertyGroup>
+	<ItemGroup>
+		<Reference Include="System.Xml" />
+		<Reference Include="System.Core" />
+		<Reference Include="System" />
+	</ItemGroup>
+	<ItemGroup>
+		<Compile Include="..\build\common\Consts.cs" />
+		<Compile Include="Properties\AssemblyInfo.cs" />
+		<Compile Include="..\class\Mono.CompilerServices.SymbolWriter\MonoSymbolFile.cs">
+			<Link>MonoSymbolFile.cs</Link>
+		</Compile>
+		<Compile Include="..\class\Mono.CompilerServices.SymbolWriter\MonoSymbolTable.cs">
+			<Link>MonoSymbolTable.cs</Link>
+		</Compile>
+		<Compile Include="..\class\Mono.CompilerServices.SymbolWriter\SourceMethodBuilder.cs">
+			<Link>SourceMethodBuilder.cs</Link>
+		</Compile>
+		<Compile Include="..\mcs\argument.cs" />
+		<Compile Include="..\mcs\assembly.cs" />
+		<Compile Include="..\mcs\anonymous.cs" />
+		<Compile Include="..\mcs\assign.cs" />
+		<Compile Include="..\mcs\async.cs" />
+		<Compile Include="..\mcs\attribute.cs" />
+		<Compile Include="..\mcs\cfold.cs" />
+		<Compile Include="..\mcs\class.cs" />
+		<Compile Include="..\mcs\codegen.cs" />
+		<Compile Include="..\mcs\complete.cs" />
+		<Compile Include="..\mcs\const.cs" />
+		<Compile Include="..\mcs\constant.cs" />
+		<Compile Include="..\mcs\convert.cs" />
+		<Compile Include="..\mcs\context.cs" />
+		<Compile Include="..\mcs\dynamic.cs" />
+		<Compile Include="..\mcs\eval.cs" />
+		<Compile Include="..\mcs\ikvm.cs" />
+		<Compile Include="..\mcs\import.cs" />
+		<Compile Include="..\mcs\lambda.cs" />
+		<Compile Include="..\mcs\cs-tokenizer.cs" />
+		<Compile Include="..\mcs\decl.cs" />
+		<Compile Include="..\mcs\delegate.cs">
+		</Compile>
+		<Compile Include="..\mcs\doc.cs">
+		</Compile>
+		<Compile Include="..\mcs\driver.cs">
+		</Compile>
+		<Compile Include="..\mcs\ecore.cs">
+		</Compile>
+		<Compile Include="..\mcs\enum.cs">
+		</Compile>
+		<Compile Include="..\mcs\expression.cs">
+		</Compile>
+		<Compile Include="..\mcs\flowanalysis.cs">
+		</Compile>
+		<Compile Include="..\mcs\generic.cs" />
+		<Compile Include="..\mcs\iterators.cs">
+		</Compile>
+		<Compile Include="..\mcs\literal.cs">
+		</Compile>
+		<Compile Include="..\mcs\location.cs">
+		</Compile>
+		<Compile Include="..\mcs\membercache.cs" />
+		<Compile Include="..\mcs\method.cs" />
+		<Compile Include="..\mcs\modifiers.cs">
+		</Compile>
+		<Compile Include="..\mcs\namespace.cs">
+		</Compile>
+		<Compile Include="..\mcs\nullable.cs" />
+		<Compile Include="..\tools\monop\outline.cs">
+			<Link>outline.cs</Link>
+		</Compile>
+		<Compile Include="..\mcs\parameter.cs" />
+		<Compile Include="..\mcs\pending.cs" />
+		<Compile Include="..\mcs\property.cs" />
+		<Compile Include="..\mcs\reflection.cs" />
+		<Compile Include="..\mcs\report.cs" />
+		<Compile Include="..\mcs\settings.cs" />
+		<Compile Include="..\mcs\module.cs" />
+		<Compile Include="..\mcs\statement.cs" />
+		<Compile Include="..\mcs\support.cs" />
+		<Compile Include="..\mcs\typemanager.cs" />
+		<Compile Include="..\mcs\linq.cs" />
+		<Compile Include="..\mcs\field.cs" />
+		<Compile Include="..\mcs\typespec.cs" />
+		<Compile Include="..\mcs\visit.cs" />
+		<Compile Include="..\mcs\ps-lang.cs" />
+		<Compile Include="..\mcs\ps-tokenizer.cs" />
+		<Compile Include="..\mcs\ps-codegen.cs" />
+		<Compile Include="..\mcs\inliner.cs" />
+		<Compile Include="..\mcs\intrinsics.cs" />
+		<Compile Include="..\class\Mono.Security\Mono.Security.Cryptography\CryptoConvert.cs">
+			<Link>CryptoConvert.cs</Link>
+		</Compile>
+		<Compile Include="cs-parser.cs" />
+		<Compile Include="ps-parser.cs" />
+	</ItemGroup>
+	<ItemGroup Label="IKVM.Reflection">
+		<Compile Include="..\..\external\ikvm\reflect\*.cs">
+			<Visible>False</Visible>
+		</Compile>
+		<Compile Include="..\..\external\ikvm\reflect\Emit\*.cs">
+			<Visible>False</Visible>
+		</Compile>
+		<Compile Include="..\..\external\ikvm\reflect\Metadata\*.cs">
+			<Visible>False</Visible>
+		</Compile>
+		<Compile Include="..\..\external\ikvm\reflect\Reader\*.cs">
+			<Visible>False</Visible>
+		</Compile>
+		<Compile Include="..\..\external\ikvm\reflect\Writer\*.cs">
+			<Visible>False</Visible>
+		</Compile>
+		<Compile Include="..\..\external\ikvm\reflect\Impl\ITypeOwner.cs">
+			<Visible>False</Visible>
+		</Compile>
+		<Compile Include="..\..\external\ikvm\reflect\Impl\SymbolSupport.cs">
+			<Visible>False</Visible>
+		</Compile>
+	</ItemGroup>
+	<Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+	<!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>
   <Target Name="AfterBuild">
   </Target>
   -->
-  <ItemGroup>
-    <ProjectReference Include="..\class\PlayScript.Optimization\PlayScript.Optimization.csproj">
-      <Project>{4069FC26-5839-4E53-B50C-B7AAF7CD3227}</Project>
-      <Name>PlayScript.Optimization</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\mcs\cs-parser.jay">
-      <Link>cs-parser.jay</Link>
-    </None>
-    <None Include="..\mcs\ps-parser.jay">
-      <Link>ps-parser.jay</Link>
-    </None>
-  </ItemGroup>
+	<PropertyGroup>
+		<PreBuildEvent Condition=" '$(OS)' != 'Windows_NT' ">
+$(ProjectDir)..\jay\jay -ct &lt; $(ProjectDir)..\jay\skeleton.cs $(ProjectDir)..\mcs\cs-parser.jay &gt; $(ProjectDir)cs-parser.cs
+$(ProjectDir)..\jay\jay -ct &lt; $(ProjectDir)..\jay\skeleton.cs $(ProjectDir)..\mcs\ps-parser.jay &gt; $(ProjectDir)ps-parser.cs
+    </PreBuildEvent>
+		<PreBuildEvent Condition=" '$(OS)' == 'Windows_NT' ">
+$(ProjectDir)..\jay\jay.exe -ct &lt; $(ProjectDir)..\jay\skeleton.cs $(ProjectDir)..\mcs\cs-parser.jay &gt; $(ProjectDir)cs-parser.cs
+$(ProjectDir)..\jay\jay.exe -ct &lt; $(ProjectDir)..\jay\skeleton.cs $(ProjectDir)..\ps-parser.jay &gt; $(ProjectDir)ps-parser.cs
+    </PreBuildEvent>
+		<PostBuildEvent Condition=" '$(OS)' != 'Windows_NT' ">
+		</PostBuildEvent>
+		<PostBuildEvent Condition=" '$(OS)' == 'Windows_NT' ">
+		</PostBuildEvent>
+	</PropertyGroup>
+	<ItemGroup>
+		<None Include="..\mcs\cs-parser.jay">
+			<Link>cs-parser.jay</Link>
+		</None>
+		<None Include="..\mcs\ps-parser.jay">
+			<Link>ps-parser.jay</Link>
+		</None>
+	</ItemGroup>
 </Project>

@@ -1,4 +1,4 @@
-AssemblyInfo.cs
+Properties/AssemblyInfo.cs
 ../mcs/anonymous.cs
 ../mcs/argument.cs
 ../mcs/ps-lang.cs
