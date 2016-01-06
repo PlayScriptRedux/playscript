@@ -39,8 +39,5 @@ using System.Reflection;
 #if FRAMEWORK
 [assembly: AssemblyVersion (Consts.MonoVersion)]
 [assembly: AssemblyFileVersion (Consts.FxFileVersion)]
-[assembly: SatelliteContractVersion (Consts.FxVersion)]
 [assembly: AssemblyInformationalVersion (Consts.FxFileVersion)]
-[assembly: AssemblyDelaySign (true)]
-[assembly: AssemblyKeyFile ("../ecma.pub")]
 #endif

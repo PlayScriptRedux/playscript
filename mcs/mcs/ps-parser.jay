@@ -22,6 +22,11 @@ using Enum = Mono.CSharp.Enum;
 using Attribute = Mono.CSharp.Attribute;
 using Delegate = Mono.CSharp.Delegate;
 using Nullable = Mono.CSharp.Nullable;
+#if FRAMEWORK
+using PsSys = System;
+#else
+using PsSys = Mono.CSharp;
+#endif
 
 namespace Mono.PlayScript
 {
@@ -160,7 +165,7 @@ namespace Mono.PlayScript
 		// Full AST support members
 		//
 		LocationsBag lbag;
-		List<Tuple<Modifiers, Location>> mod_locations;
+		List<PsSys.Tuple<Modifiers, Location>> mod_locations;
 		Stack<Location> location_stack;
 %}
 
@@ -6716,7 +6721,7 @@ for_statement
 		start_block (GetLocation ($2));
 		current_block.IsCompilerGenerated = true;
 		lexer.ForInParsing = true;
-		$$ = new Tuple<Location,Location>(GetLocation($0), GetLocation($1));
+		$$ = new PsSys.Tuple<Location,Location>(GetLocation($0), GetLocation($1));
 	  }
 	  for_statement_cont
 	  {
@@ -6742,7 +6747,7 @@ for_statement_cont
 				report.Error (7036, GetLocation ($4), "Invalid for each initializer");	
 				$$ = end_block (current_block.StartLocation);
 			} else {
-				var locations = (Tuple<Location,Location>) $0;
+				var locations = (PsSys.Tuple<Location,Location>) $0;
 				
 				Foreach f = new Foreach (blockVar.TypeExpression, blockVar.Variable, (Expression) $4, (Statement) $6, current_block, AsForEachType.ForEachKey, locations.Item1);
 				lbag.AddStatement (f, locations.Item2, GetLocation ($2), GetLocation ($5));
@@ -6757,7 +6762,7 @@ for_statement_cont
 				report.Error (7041, GetLocation ($1), "Invalid iterator initializer");		
 				$$ = end_block (current_block.StartLocation);
 			} else {
-				var locations = (Tuple<Location,Location>) $0;
+				var locations = (PsSys.Tuple<Location,Location>) $0;
 				
 				Foreach f = new Foreach (varRef, (Expression) $4, (Statement) $6, current_block, AsForEachType.ForEachKey, locations.Item1);
 				lbag.AddStatement (f, locations.Item2, GetLocation ($2), GetLocation ($5));
@@ -6771,7 +6776,7 @@ for_statement_cont
 	  {
 	    lexer.ForInParsing = false;
 	  
-		var locations = (Tuple<Location,Location>) $0;
+		var locations = (PsSys.Tuple<Location,Location>) $0;
 
 		For f = new For (locations.Item1);
 		current_block.AddStatement (f);
@@ -6790,7 +6795,7 @@ for_statement_cont
 	  for_condition_and_iterator_part
 	  embedded_statement
 	  {
-		var locations = (Tuple<Location,Location>) $4;
+		var locations = (PsSys.Tuple<Location,Location>) $4;
 		oob_stack.Pop ();
 		if ($5 is EmptyStatement && lexer.peek_token () == Token.OPEN_BRACE)
 			Warning_EmptyStatement (GetLocation ($5));
@@ -6816,7 +6821,7 @@ for_condition_and_iterator_part
 		f.Condition = (BooleanExpression) $1;
 	  }
 	  for_iterator_part {
-		$$ = new Tuple<Location,Location> (GetLocation ($2), (Location) $4);
+		$$ = new PsSys.Tuple<Location,Location> (GetLocation ($2), (Location) $4);
 	  }
 
 	// Handle errors in the case of opt_for_condition being followed by
@@ -6826,7 +6831,7 @@ for_condition_and_iterator_part
 		report.Error (1525, GetLocation ($2), "Unexpected symbol `}'");
 		For f = (For) oob_stack.Peek ();
 		f.Condition = (BooleanExpression) $1;
-		$$ = new Tuple<Location,Location> (GetLocation ($2), GetLocation ($2));
+		$$ = new PsSys.Tuple<Location,Location> (GetLocation ($2), GetLocation ($2));
 	  }
 	;
 
@@ -8188,9 +8193,9 @@ void StoreModifierLocation (object token, Location loc)
 		return;
 
 	if (mod_locations == null)
-  		mod_locations = new List<Tuple<Modifiers, Location>> ();
+  		mod_locations = new List<PsSys.Tuple<Modifiers, Location>> ();
 
-	mod_locations.Add (Tuple.Create ((Modifiers) token, loc));
+	mod_locations.Add (PsSys.Tuple.Create ((Modifiers) token, loc));
 }
 
 [System.Diagnostics.Conditional ("FULL_AST")]
