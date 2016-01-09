@@ -16,27 +16,29 @@ using System;
 using System.Collections.Generic;
 using flash.events;
 
-#if PLATFORM_MONOMAC
+#if PLATFORM_MONOMAC || PLATFORM_XAMMAC
 
-namespace flash.media {
+namespace flash.media
+{
 
 	// We use a partial C# class for platform specific logic
-	partial class Sound {
+	partial class Sound
+	{
 			
-		private SoundChannel channel = new SoundChannel();
+		private SoundChannel channel = new SoundChannel ();
 
-		private void internalLoad(String url)
+		private void internalLoad (String url)
 		{
 			Console.WriteLine ("Sound internalLoad is not implemented for this platform");
 		}
 
-		private SoundChannel internalPlay(double startTime=0, int loops=0, SoundTransform sndTransform=null)
-        {
+		private SoundChannel internalPlay (double startTime = 0, int loops = 0, SoundTransform sndTransform = null)
+		{
 			Console.WriteLine ("Sound internalPlay is not implemented for this platform");
 			return channel;
-        }
+		}
 
-		public static void AsyncDispatchEvents()
+		public static void AsyncDispatchEvents ()
 		{
 			Console.WriteLine ("Sound AsyncDispatchEvents is not implemented for this platform");
 		}

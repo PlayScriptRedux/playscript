@@ -3,33 +3,31 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectTypeGuids>{42C0BBD9-55CE-4FC1-8D90-A7348ABAFB23};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC};{1FC382B4-0F88-4DBE-994D-7AA7D07975C6};{464403D2-EB41-442A-A1F1-9BF858B8865F}</ProjectTypeGuids>
+    <ProjectTypeGuids>{A3F8F2AB-B479-4A4A-A458-A89E7DC349F1};{464403D2-EB41-442A-A1F1-9BF858B8865F}</ProjectTypeGuids>
     <ProjectGuid>{568ACFC0-B52E-4507-99BD-2050E3F3D4E8}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>_root</RootNamespace>
-    <UseMSBuildEngine>False</UseMSBuildEngine>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <AssemblyName>pscorlib.AOT.MonoMac</AssemblyName>
+    <!--    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>-->
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>True</DebugSymbols>
+    <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>False</Optimize>
+    <Optimize>false</Optimize>
     <OutputPath>bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;NET_4_5;PLATFORM_MONOMAC;OPENGL;PERFORMANCE_MODE</DefineConstants>
+    <DefineConstants>DEBUG;NET_4_5;PLATFORM_XAMMAC;OPENGL;PERFORMANCE_MODE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <ConsolePause>False</ConsolePause>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <NoWarn>219</NoWarn>
-    <EnableCodeSigning>false</EnableCodeSigning>
-    <CreatePackage>false</CreatePackage>
-    <EnablePackageSigning>false</EnablePackageSigning>
-    <IncludeMonoRuntime>false</IncludeMonoRuntime>
-    <UseSGen>false</UseSGen>
-    <UseRefCounting>false</UseRefCounting>
+    <ConsolePause>false</ConsolePause>
     <Profiling>false</Profiling>
+    <UseRefCounting>false</UseRefCounting>
+    <UseSGen>false</UseSGen>
+    <IncludeMonoRuntime>false</IncludeMonoRuntime>
+    <CreatePackage>false</CreatePackage>
+    <EnableCodeSigning>false</EnableCodeSigning>
+    <EnablePackageSigning>false</EnablePackageSigning>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -52,17 +50,17 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Core" />
     <Reference Include="System.Xml" />
-    <Reference Include="System.Drawing" />
     <Reference Include="ICSharpCode.SharpZipLib" />
     <Reference Include="System.Web" />
-    <Reference Include="Microsoft.CSharp">
-      <HintPath>..\lib\net_4_5\Microsoft.CSharp.dll</HintPath>
+    <Reference Include="Xamarin.Mac" />
+    <Reference Include="OpenTK">
+      <HintPath>..\..\..\..\..\github\opentk\Source\OpenTK\obj\Debug\OpenTK.dll</HintPath>
+      <Private>False</Private>
     </Reference>
-    <Reference Include="XamMac" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
   </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Compile Include="..\pscorlib\Array.cs">
       <Link>Array.cs</Link>
@@ -982,4 +980,8 @@
       <Name>PlayScript.Dynamic.AOT</Name>
     </ProjectReference>
   </ItemGroup>
+  <!--  <Import Project="..\..\..\..\packages\PlayScript.MSBuild.5.10.2.4\build\PlayScript.MSBuild.Targets" Condition="Exists('..\..\..\..\packages\PlayScript.MSBuild.5.10.2.4\build\PlayScript.MSBuild.Targets')" />-->
+  <Import Project="..\..\..\..\packages\PlayScript.MSBuild.5.10.2.4\build\PlayScript.Mac.MSBuild.targets" Condition="Exists('..\..\..\..\packages\PlayScript.MSBuild.5.10.2.4\build\PlayScript.Mac.MSBuild.targets')" />
+  <!--  <Import Project="$(MSBuildExtensionsPath)\Xamarin\Mac\Xamarin.Mac.CSharp.targets" />-->
+  <!--    <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />-->
 </Project>

@@ -14,7 +14,7 @@
 
 using System;
 
-#if PLATFORM_MONOMAC
+#if PLATFORM_MONOMAC || PLATFORM_XAMMAC
 
 namespace flash.media {
 

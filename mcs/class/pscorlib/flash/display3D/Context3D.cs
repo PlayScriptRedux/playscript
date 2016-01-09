@@ -12,14 +12,23 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-
-
 namespace flash.display3D {
 
 #if PLATFORM_MONOMAC
 	using MonoMac.OpenGL;
 	using MonoMac.AppKit;
 	using FramebufferSlot = MonoMac.OpenGL.FramebufferAttachment;
+#elif PLATFORM_XAMMAC
+	using OpenTK;
+	using OpenTK.Graphics;
+	using OpenTK.Graphics.OpenGL;
+	using OpenTK.Platform.MacOS;
+	using Foundation;
+	using CoreGraphics;
+	using OpenGL;
+	using GLKit;
+	using AppKit;
+	using FramebufferSlot = OpenTK.Graphics.OpenGL.FramebufferAttachment;
 #elif PLATFORM_MONOTOUCH
 	using MonoTouch.OpenGLES;
 	using MonoTouch.UIKit;
@@ -73,7 +82,7 @@ namespace flash.display3D {
 		// Constants
 		//
 
-#if PLATFORM_MONOTOUCH || PLATFORM_MONOMAC
+#if PLATFORM_MONOTOUCH || PLATFORM_MONOMAC || PLATFORM_XAMMAC
 		public const int MaxSamplers = 16;
 #elif PLATFORM_MONODROID
 		public const int MaxSamplers = 8;
@@ -95,10 +104,8 @@ namespace flash.display3D {
 			Mem_Texture,
 			Mem_Texture_Compressed,
 			Mem_Program,
-
 			Length
 		};
-
 
 		//
 		// Properties
@@ -107,7 +114,6 @@ namespace flash.display3D {
 		public string driverInfo { get; private set; }
 
 		public bool enableErrorChecking { get; set; }
-
 
 		/// <summary>
 		/// This method gets invoked whenever Present is called on the context
@@ -123,9 +129,7 @@ namespace flash.display3D {
 		// Methods
 		//
 
-
 #if OPENGL
-
 		// this is the default sampler state
 		public static readonly SamplerState DefaultSamplerState = new SamplerState(
 #if PLATFORM_MONODROID
@@ -137,10 +141,11 @@ namespace flash.display3D {
 												TextureWrapMode.Repeat,
 												TextureWrapMode.Repeat).Intern();
 
-
 		public Context3D(Stage3D stage3D)
 		{
 			mStage3D = stage3D;
+
+			
 
 			// compose driver info string
 			driverInfo = string.Format("OpenGL Vendor={0} Version={1} Renderer={2} GLSL={3}", 
@@ -150,7 +155,6 @@ namespace flash.display3D {
 			                           GL.GetString(StringName.ShadingLanguageVersion));
 			// write driver info to telemetry
 			Telemetry.Session.WriteValue(".platform.3d.driverinfo", driverInfo);
-
 
 			// get default framebuffer for use when restoring rendering to backbuffer
 			GL.GetInteger(GetPName.FramebufferBinding, out mDefaultFrameBufferId);
