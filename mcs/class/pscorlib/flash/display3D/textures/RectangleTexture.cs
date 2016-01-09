@@ -12,21 +12,25 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-namespace flash.display3D.textures {
+namespace flash.display3D.textures
+{
 
 	using flash.utils;
 	using flash.display;
 
-	#if PLATFORM_MONOMAC
+#if PLATFORM_MONOMAC
 	using MonoMac.OpenGL;
-	#elif PLATFORM_MONOTOUCH
+#elif PLATFORM_XAMMAC
+	using OpenTK.Graphics.OpenGL;
+#elif PLATFORM_MONOTOUCH
 	using OpenTK.Graphics.ES20;
-	#elif PLATFORM_MONODROID
+#elif PLATFORM_MONODROID
 	using OpenTK.Graphics.ES20;
 	using TextureTarget = OpenTK.Graphics.ES20.All;
-	#endif
+#endif
 
-	public class RectangleTexture : TextureBase {
+	public class RectangleTexture : TextureBase
+	{
 	
 		#if OPENGL
 
@@ -34,21 +38,23 @@ namespace flash.display3D.textures {
 		// Methods
 		//
 
-		public RectangleTexture(Context3D context)
-			: base(context, TextureTarget.Texture2D)
+		public RectangleTexture (Context3D context)
+			: base (context, TextureTarget.Texture2D)
 		{
 		}
-	
-		public void uploadFromBitmapData(BitmapData source) {
-			throw new System.NotImplementedException();
+
+		public void uploadFromBitmapData (BitmapData source)
+		{
+			throw new System.NotImplementedException ();
 		}
- 	 	
-		public void uploadFromByteArray(ByteArray data, uint byteArrayOffset) {
-			throw new System.NotImplementedException();
+
+		public void uploadFromByteArray (ByteArray data, uint byteArrayOffset)
+		{
+			throw new System.NotImplementedException ();
 		}
 
 		#else
-
+		
 		public void uploadFromBitmapData(BitmapData source) {
 			throw new System.NotImplementedException();
 		}

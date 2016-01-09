@@ -12,26 +12,37 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-namespace flash.display3D.textures {
+namespace flash.display3D.textures
+{
 
 	using flash.events;
-	
-	#if PLATFORM_MONOMAC
-	using MonoMac.OpenGL;
-	#elif PLATFORM_MONOTOUCH
-	using OpenTK.Graphics.ES20;
-	#elif PLATFORM_MONODROID
+#if PLATFORM_MONOMAC
+	using MonoMac.OpenGL;	
+#elif PLATFORM_XAMMAC
+	using OpenTK;
+	using OpenTK.Graphics;
+	using OpenTK.Graphics.OpenGL;
+	using OpenTK.Platform.MacOS;
+	using Foundation;
+	using CoreGraphics;
+	using OpenGL;
+	using GLKit;
+	using AppKit;
+#elif PLATFORM_MONOTOUCH
+	using OpenTK.Graphics.ES20;	
+#elif PLATFORM_MONODROID
 	using OpenTK.Graphics.ES20;
 	using TextureTarget = OpenTK.Graphics.ES20.All;
 	using TextureParameterName = OpenTK.Graphics.ES20.All;
-	#endif
+#endif
 
-	public abstract class TextureBase : EventDispatcher {
+	public abstract class TextureBase : EventDispatcher
+	{
 
 		protected bool mAllocated = false;
 
-		#if OPENGL
-		protected TextureBase(Context3D context, TextureTarget target)
+#if OPENGL
+		protected TextureBase (Context3D context, TextureTarget target)
 		{
 			// store context
 			mContext = context;
@@ -42,50 +53,54 @@ namespace flash.display3D.textures {
 			// generate texture id
 			GL.GenTextures (1, out mTextureId);
 		}
-	
-		public virtual void dispose() {
+
+		public virtual void dispose ()
+		{
 			if (mAlphaTexture != null) {
 				mAlphaTexture.dispose ();
 			}
 
 			// delete texture
-			GL.DeleteTexture(mTextureId);
+			GL.DeleteTexture (mTextureId);
 
 			// decrement stats for compressed texture data
 			if (mCompressedMemoryUsage > 0) {
-				mContext.statsDecrement(Context3D.Stats.Count_Texture_Compressed);
-				mContext.statsSubtract(Context3D.Stats.Mem_Texture_Compressed, mCompressedMemoryUsage);
+				mContext.statsDecrement (Context3D.Stats.Count_Texture_Compressed);
+				mContext.statsSubtract (Context3D.Stats.Mem_Texture_Compressed, mCompressedMemoryUsage);
 				mCompressedMemoryUsage = 0;
 			}
 
 			// decrement stats for un compressed texture data
 			if (mMemoryUsage > 0) {
-				mContext.statsDecrement(Context3D.Stats.Count_Texture);
-				mContext.statsSubtract(Context3D.Stats.Mem_Texture, mMemoryUsage);
+				mContext.statsDecrement (Context3D.Stats.Count_Texture);
+				mContext.statsSubtract (Context3D.Stats.Mem_Texture, mMemoryUsage);
 				mMemoryUsage = 0;
 			}
 		}
 
-		public bool allocated { get { return mAllocated; } set {mAllocated = value;} }
-		public int	 		 textureId 		{get {return mTextureId;}}
-		public TextureTarget textureTarget 	{get {return mTextureTarget;}}
+		public bool allocated { get { return mAllocated; } set { mAllocated = value; } }
+
+		public int	 		 textureId 		{ get { return mTextureId; } }
+
+		public TextureTarget textureTarget 	{ get { return mTextureTarget; } }
+
 		public Texture 		 alphaTexture 	{ get { return mAlphaTexture; } }
 
 		// sets the sampler state associated with this texture
 		// due to the way GL works, sampler states are parameters of texture objects
-		public void setSamplerState(SamplerState state)
+		public void setSamplerState (SamplerState state)
 		{
 			// prevent redundant setting of sampler state
-			if (!state.Equals(mSamplerState)) {
+			if (!state.Equals (mSamplerState)) {
 				// set texture
-				GL.BindTexture(mTextureTarget, mTextureId);
+				GL.BindTexture (mTextureTarget, mTextureId);
 				// apply state to texture
 				GL.TexParameter (mTextureTarget, TextureParameterName.TextureMinFilter, (int)state.MinFilter);
 				GL.TexParameter (mTextureTarget, TextureParameterName.TextureMagFilter, (int)state.MagFilter);
 				GL.TexParameter (mTextureTarget, TextureParameterName.TextureWrapS, (int)state.WrapModeS);
 				GL.TexParameter (mTextureTarget, TextureParameterName.TextureWrapT, (int)state.WrapModeT);
 				if (state.LodBias != 0.0) {
-					throw new System.NotImplementedException("Lod bias setting not supported yet");
+					throw new System.NotImplementedException ("Lod bias setting not supported yet");
 				}
 
 				mSamplerState = state;
@@ -93,42 +108,42 @@ namespace flash.display3D.textures {
 		}
 
 		// adds to the memory usage for this texture
-		protected void trackMemoryUsage(int memory)
+		protected void trackMemoryUsage (int memory)
 		{
 			if (mMemoryUsage == 0) {
-				mContext.statsIncrement(Context3D.Stats.Count_Texture);
+				mContext.statsIncrement (Context3D.Stats.Count_Texture);
 			}
 			mMemoryUsage += memory;
-			mContext.statsAdd(Context3D.Stats.Mem_Texture, memory);
+			mContext.statsAdd (Context3D.Stats.Mem_Texture, memory);
 		}
 
 		// adds to the compressed memory usage for this texture
-		protected void trackCompressedMemoryUsage(int memory)
+		protected void trackCompressedMemoryUsage (int memory)
 		{
 			if (mCompressedMemoryUsage == 0) {
-				mContext.statsIncrement(Context3D.Stats.Count_Texture_Compressed);
+				mContext.statsIncrement (Context3D.Stats.Count_Texture_Compressed);
 			}
 			mCompressedMemoryUsage += memory;
-			mContext.statsAdd(Context3D.Stats.Mem_Texture_Compressed, memory);
+			mContext.statsAdd (Context3D.Stats.Mem_Texture_Compressed, memory);
 
 			// add to normal memory usage as well
-			trackMemoryUsage(memory);
+			trackMemoryUsage (memory);
 		}
 
-		protected readonly Context3D   mContext;
-		private readonly int 		   mTextureId;
+		protected readonly Context3D mContext;
+		private readonly int mTextureId;
 		private readonly TextureTarget mTextureTarget;
-		private SamplerState		   mSamplerState;
+		private SamplerState mSamplerState;
 		protected Texture mAlphaTexture;
-		private int 				   mMemoryUsage;
-		private int 				   mCompressedMemoryUsage;
+		private int mMemoryUsage;
+		private int mCompressedMemoryUsage;
 
-		#else
+#else
 		
 		public virtual void dispose() {
 		}
 
-		#endif
+#endif
 	}
 
 }

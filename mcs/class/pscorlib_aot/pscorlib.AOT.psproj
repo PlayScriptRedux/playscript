@@ -3,10 +3,10 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectTypeGuids>{464403D2-EB41-442A-A1F1-9BF858B8865F}</ProjectTypeGuids>
     <ProjectGuid>{ADBAC91B-2817-479E-8DDF-B24ADDA563A6}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>_root</RootNamespace>
-    <UseMSBuildEngine>False</UseMSBuildEngine>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <AssemblyName>pscorlib_monomac</AssemblyName>
   </PropertyGroup>
@@ -20,6 +20,7 @@
     <WarningLevel>4</WarningLevel>
     <ConsolePause>False</ConsolePause>
     <NoWarn>219</NoWarn>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>none</DebugType>
@@ -31,6 +32,7 @@
     <DefineConstants>PLATFORM_GENERIC;PERFORMANCE_MODE;IDE</DefineConstants>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <NoWarn>219</NoWarn>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -43,7 +45,6 @@
       <HintPath>..\lib\net_4_5\Microsoft.CSharp.dll</HintPath>
     </Reference>
   </ItemGroup>
-  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
     <Compile Include="..\pscorlib\Array.cs">
       <Link>Array.cs</Link>
@@ -946,4 +947,6 @@
       <Name>PlayScript.Dynamic.AOT</Name>
     </ProjectReference>
   </ItemGroup>
+  <Import Project="..\..\..\..\packages\PlayScript.MSBuild.5.10.2.4\build\PlayScript.MSBuild.Targets" Condition="Exists('..\..\..\..\packages\PlayScript.MSBuild.5.10.2.4\build\PlayScript.MSBuild.Targets')" />
+<!--  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />-->
 </Project>

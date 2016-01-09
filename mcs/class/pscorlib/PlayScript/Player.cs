@@ -15,7 +15,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
 using System.Reflection;
 using System.IO;
 using System.Linq;
@@ -23,9 +22,20 @@ using System.Linq;
 using flash.display;
 using flash.utils;
 
+using System.Drawing;
 #if PLATFORM_MONOMAC
 using MonoMac.Foundation;
 using MonoMac.AppKit;
+#elif PLATFORM_XAMMAC
+//using OpenTK;
+//using OpenTK.Graphics;
+//using OpenTK.Graphics.OpenGL;
+//using OpenTK.Platform.MacOS;
+//using Foundation;
+//using CoreGraphics;
+//using OpenGL;
+//using GLKit;
+//using AppKit;
 #elif PLATFORM_MONOTOUCH
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;

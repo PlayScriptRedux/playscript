@@ -19,6 +19,17 @@ using _root;
 #if PLATFORM_MONOMAC
 using MonoMac.OpenGL;
 using BufferUsage = MonoMac.OpenGL.BufferUsageHint;
+#elif PLATFORM_XAMMAC
+using OpenTK;
+using OpenTK.Graphics;
+using OpenTK.Graphics.OpenGL;
+using OpenTK.Platform.MacOS;
+using Foundation;
+using CoreGraphics;
+using OpenGL;
+using GLKit;
+using AppKit;
+using BufferUsage = OpenTK.Graphics.OpenGL.BufferUsageHint;
 #elif PLATFORM_MONOTOUCH
 using OpenTK.Graphics.ES20;
 #elif PLATFORM_MONODROID

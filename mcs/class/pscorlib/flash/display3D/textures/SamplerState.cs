@@ -12,13 +12,22 @@
 //      See the License for the specific language governing permissions and
 //      limitations under the License.
 
-namespace flash.display3D.textures {
-	
+namespace flash.display3D.textures
+{
 	using System;
 	using System.Collections.Generic;
-
 #if PLATFORM_MONOMAC
 	using MonoMac.OpenGL;
+#elif PLATFORM_XAMMAC
+	using OpenTK;
+	using OpenTK.Graphics;
+	using OpenTK.Graphics.OpenGL;
+	using OpenTK.Platform.MacOS;
+	using Foundation;
+	using CoreGraphics;
+	using OpenGL;
+	using GLKit;
+	using AppKit;
 #elif PLATFORM_MONOTOUCH
 	using OpenTK.Graphics.ES20;
 #elif PLATFORM_MONODROID
@@ -31,23 +40,23 @@ namespace flash.display3D.textures {
 	/// </summary>
 	public class SamplerState : IEquatable<SamplerState>
 	{
-#if OPENGL
+		#if OPENGL
 		public readonly TextureMinFilter	MinFilter;
 		public readonly TextureMagFilter	MagFilter;
-		public readonly TextureWrapMode		WrapModeS;
-		public readonly TextureWrapMode		WrapModeT;
-		public readonly float				LodBias;
-		public readonly float 				MaxAniso;
+		public readonly TextureWrapMode WrapModeS;
+		public readonly TextureWrapMode WrapModeT;
+		public readonly float LodBias;
+		public readonly float MaxAniso;
 
-		public SamplerState(TextureMinFilter minFilter, TextureMagFilter magFilter, TextureWrapMode wrapModeS, TextureWrapMode wrapModeT, 
+		public SamplerState (TextureMinFilter minFilter, TextureMagFilter magFilter, TextureWrapMode wrapModeS, TextureWrapMode wrapModeT, 
 		                    float lodBias = 0.0f, float maxAniso = 0.0f)
 		{
 			this.MinFilter = minFilter;
 			this.MagFilter = magFilter;
 			this.WrapModeS = wrapModeS;
 			this.WrapModeT = wrapModeT;
-			this.LodBias   = lodBias;
-			this.MaxAniso  = maxAniso;
+			this.LodBias = lodBias;
+			this.MaxAniso = maxAniso;
 		}
 
 
@@ -56,31 +65,31 @@ namespace flash.display3D.textures {
 		/// Interning will return an object of the same value but makes equality testing faster since 
 		/// it is a reference comparison only.
 		/// </summary>
-		public SamplerState Intern()
+		public SamplerState Intern ()
 		{
-			if (mIsInterned) return this;
+			if (mIsInterned)
+				return this;
 
 			// find intern'd object that equals this
 			// TODO: use hash or dictionary
 			foreach (var intern in sInterns) {
-				if (intern.Equals(this)) {
+				if (intern.Equals (this)) {
 					return intern;
 				}
 			}
 
 			// intern this object
-			sInterns.Add(this);
+			sInterns.Add (this);
 			mIsInterned = true;
 			return this;
 		}
-		
+
 		public override string ToString ()
 		{
 			return string.Format ("[SamplerState min:{0} mag:{1} wrapS:{2} wrapT:{3} bias:{4} aniso:{5}]]", 
-			                      MinFilter, MagFilter, WrapModeS, WrapModeT, LodBias, MaxAniso);
+				MinFilter, MagFilter, WrapModeS, WrapModeT, LodBias, MaxAniso);
 		}
-		
-		#region IEquatable implementation
+
 		public bool Equals (SamplerState other)
 		{
 			// handle reference equality
@@ -92,26 +101,24 @@ namespace flash.display3D.textures {
 				return false;
 
 			return this.MinFilter == other.MinFilter &&
-				this.MagFilter == other.MagFilter &&
-					this.WrapModeS == other.WrapModeS &&
-					this.WrapModeT == other.WrapModeT &&
-					this.LodBias == other.LodBias &&
-					MaxAniso == other.MaxAniso;
+			this.MagFilter == other.MagFilter &&
+			this.WrapModeS == other.WrapModeS &&
+			this.WrapModeT == other.WrapModeT &&
+			this.LodBias == other.LodBias &&
+			MaxAniso == other.MaxAniso;
 		}
-		#endregion
 
-		private bool 				mIsInterned = false;
+		private bool mIsInterned = false;
 
-		private static List<SamplerState> sInterns = new List<SamplerState>();
+		private static List<SamplerState> sInterns = new List<SamplerState> ();
 
-#else
-		#region IEquatable implementation
+		#else
+		
 		public bool Equals (SamplerState other)
 		{
 			throw new NotImplementedException();
 		}
-		#endregion
 
-#endif
+		#endif
 	}
 }

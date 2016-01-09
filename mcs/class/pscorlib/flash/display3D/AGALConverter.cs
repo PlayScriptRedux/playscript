@@ -22,6 +22,8 @@ using flash.utils;
 
 #if PLATFORM_MONOMAC
 using MonoMac.OpenGL;
+#elif PLATFORM_XAMMAC
+using OpenTK.Graphics.OpenGL;
 #elif PLATFORM_MONOTOUCH
 using OpenTK.Graphics.ES20;
 #elif PLATFORM_MONODROID
@@ -891,7 +893,7 @@ namespace flash.display3D
 			}
 
 
-#if PLATFORM_MONOMAC
+#if PLATFORM_MONOMAC || PLATFORM_XAMMAC
 			var glslVersion = 120;
 #elif PLATFORM_MONOTOUCH
 			var glslVersion = 100; // Actually this is glsl 1.20 but in gles it's 1.0
