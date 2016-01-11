@@ -1,0 +1,15 @@
+﻿package PlayScript.Framework.Test
+{
+	import NUnit.Framework.*;
+	import System.*;
+
+	[TestFixture ()]
+	public class Test
+	{
+		[Test ()]
+		public function TestCase():void
+		{
+			
+		}
+	}
+}
