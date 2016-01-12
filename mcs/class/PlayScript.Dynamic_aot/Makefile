@@ -1,7 +1,7 @@
 thisdir = class/PlayScript.Dynamic_aot
 include ../../build/rules.make
 
-LIBRARY = PlayScript.Dynamic_aot.dll
+LIBRARY = PlayScript.Dynamic_AOT.dll
 LIBRARY_SNK = ../mono.snk
 
 LIB_MCS_FLAGS = -d:PLATFORM_GENERIC -keyfile:$(LIBRARY_SNK) -r:System.dll -r:System.Core.dll

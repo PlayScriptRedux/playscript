@@ -16,14 +16,42 @@ using System;
 
 namespace _root
 {
+	[Serializable]
 	[AttributeUsage(AttributeTargets.All, AllowMultiple = false)]
 	public class DeprecatedAttribute : Attribute
 	{
-		public DeprecatedAttribute(string text = "")
+		private string _message;
+		private bool _error;
+
+		public DeprecatedAttribute()
 		{
+			_message = null;
+			_error = false;
 		}
 
-		public string message {get;set;}
+		public DeprecatedAttribute (string message)
+		{
+			_message = message;
+			_error = false;
+		}
+
+		public DeprecatedAttribute (string message, bool error)
+		{
+			_message = message;
+			_error = error;
+		}
+
+		public string message {
+			get { return _message; }
+		}
+
+		public string replacement {
+			get { return _message; }
+			set { _message = replacement; }
+		}
+
+		public bool IsError{
+			get { return _error; }
+		}
 	}
 }
-

@@ -34,9 +34,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ByteArrayTest.play" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Properties\AssemblyInfo.cs" />
     <None Include="packages.config" />
     <None Include="Test.play" />
@@ -51,5 +48,14 @@
       <Project>{ADBAC91B-2817-479E-8DDF-B24ADDA563A6}</Project>
       <Name>pscorlib.AOT</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="_root\" />
+    <Folder Include="_root\fllash\" />
+    <Folder Include="_root\fllash\utils\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="_root\fllash\utils\ByteArrayTest.play" />
+    <Compile Include="_root\ObsoleteAttributeTest.cs" />
   </ItemGroup>
 </Project>
