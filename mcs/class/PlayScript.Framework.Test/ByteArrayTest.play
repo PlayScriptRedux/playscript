@@ -1,0 +1,1126 @@
+﻿package PlayScript.Framework.Test
+{
+	// tamarin-redux/tests/acceptance/as3/ByteArray
+
+	import NUnit.Framework.*;
+//	import System.*;
+
+	import flash.utils.ByteArray;
+	import flash.errors.EOFError;
+	import flash.errors.IOError;
+
+	[TestFixture ()]
+ 	public class ByteArrayTest
+	{
+
+		[Test ()]
+		public function DefaultConstructor():void
+		{
+			var bytearray:ByteArray=new ByteArray();
+			Assert.IsNotNull(bytearray, "ByteArray constructor no args");
+		}
+
+		[Test ()]
+		public function testBasicProperties():void 
+		{
+			var bytearray:ByteArray=new ByteArray();
+
+			// operations on empty bytearray
+			Assert.AreEqual(
+				uint.MinValue,
+				bytearray.length,
+				"ByteArray length of empty"
+			);
+			Assert.AreEqual(
+				"",
+				bytearray.toString(),
+				"ByteArray toString empty"
+			);
+			Assert.AreEqual(
+				uint.MinValue,
+				bytearray.bytesAvailable,
+				"ByteArray available on empty"
+			);
+			Assert.AreEqual(
+				uint.MinValue,
+				bytearray.position,
+				"ByteArray position on empty"
+			);
+			Assert.AreEqual(
+				"bigEndian",
+				bytearray.endian,
+				"ByteArray endianness on empty"
+			);
+		}
+
+		[Test ()]
+		public function testSetLengthAndPosition():void {
+			var bytearray:ByteArray=new ByteArray();
+
+			// Test: setting length to 0 sets position to 0
+			bytearray.writeByte(1);
+			bytearray.writeByte(2);
+
+			Assert.AreEqual(
+				bytearray.length,
+				uint(2),
+				"ByteArray trivial length"
+			);
+			Assert.AreEqual(
+				uint(2),
+				bytearray.position,
+				"ByteArray trivial position"
+			);
+
+			bytearray.length = 0;
+			Assert.AreEqual(
+				uint(0),
+				bytearray.position,
+				"ByteArray position after clearing"
+			);
+
+			// Test: setting position beyond length does not update length.
+			bytearray.length = 0;
+			bytearray.position = 47;
+			Assert.AreEqual(
+				uint(47),
+				bytearray.position,
+				"ByteArray position can exceed length, #1"
+			);
+			Assert.AreEqual(
+				uint(0),
+				bytearray.length,
+				"ByteArray position can exceed length, #2"
+			);
+
+			// Test: writing updates at position > length inserts zero padding and writes
+			// byte at the appropriate position.
+			bytearray.writeByte(12);
+			Assert.AreEqual(
+				uint(48),
+				bytearray.position,
+				"ByteArray position can exceed length, #3"
+			);
+			Assert.AreEqual(
+				uint(48),
+				bytearray.length,
+				"ByteArray position can exceed length, #4"
+			);
+			Assert.AreEqual(
+				int(0),
+				bytearray[11],
+				"ByteArray position can exceed length, #5"
+			);
+			Assert.AreEqual(
+				int(12),
+				bytearray[47],
+				"ByteArray position can exceed length, #6"
+			);
+		}
+
+		[Test ()]
+		public function testBoolean():void 
+		{
+			var bytearray:ByteArray=makeByteArray();
+			bytearray.writeBoolean(true);
+			bytearray.writeBoolean(false);
+			Assert.AreEqual(
+				uint(2),
+				bytearray.position,
+				"ByteArray position after writing Booleans"
+			);
+
+			bytearray.position = 0;
+			Assert.AreEqual(
+				uint(0),
+				bytearray.position,
+				"ByteArray move position to 0"
+			);
+			Assert.AreEqual(
+				true,
+				bytearray.readBoolean(),
+				"ByteArray write/read boolean true"
+			);
+			Assert.AreEqual(
+				false,
+				bytearray.readBoolean(),
+				"ByteArray write/read boolean false"
+			);
+		}
+
+		[Test ()]
+		public function readShortbigEndian():void
+		{
+			for ( var offs:int=0 ; offs < 4 ; offs++ ) {
+				readShort_tests1("bigEndian", offs);
+			}
+		}
+
+		[Test ()]
+		public function readShortlittleEndian():void
+		{
+			for ( var offs:int=0 ; offs < 4 ; offs++ ) {
+				readShort_tests1("littleEndian", offs);
+			}
+		}
+
+		[Test ()]
+		public function readShort2():void
+		{
+			for ( var offs:int=0 ; offs < 4 ; offs++ ) {
+				readShort_tests2(offs);
+			}
+		}
+
+		[Test ()]
+		public function readShort3():void
+		{
+			for ( var offs:int=0 ; offs < 4 ; offs++ ) {
+				readShort_tests3(offs);
+			}
+		}
+
+		// Note: Called from readShort():void
+		// One endianness or the other
+		public function readShort_tests1(endian:String, offset:int):void
+		{
+			var bytearray:ByteArray=makeByteArray(offset);
+			bytearray.endian = endian;
+			bytearray.position=offset;
+			bytearray.writeShort(100);
+			bytearray.writeShort(-200);
+			bytearray.position=offset;
+			Assert.AreEqual(
+				100,
+				bytearray.readShort(),
+				"ByteArray readShort_1 #1 " + endian
+			);
+			Assert.AreEqual(
+				-200,
+				bytearray.readShort(),
+				"ByteArray readShort_1 #2 " + endian
+			);
+			Assert.AreEqual(
+				uint(4+offset),
+				bytearray.position,
+				"ByteArray readShort_1 #3" + endian
+			);
+		}
+
+		// Note: Called from readShort():void
+		// Mixed endianness: write with one, read with the other
+		function readShort_tests2(offset:uint):void
+		{
+			var bytearray:ByteArray=makeByteArray(offset);
+			bytearray.endian = "bigEndian";
+			bytearray.position=offset;
+			bytearray.writeShort(int(0x1234));
+			bytearray.writeShort(int(0xFEDC));
+			bytearray.position=offset;
+			bytearray.endian = "littleEndian";
+			Assert.AreEqual(
+				int(0x3412),
+				bytearray.readShort(),
+				"ByteArray readShort_2 #1"
+			);
+			Assert.AreEqual(
+				unchecked(int(0xFFFFDCFE)),   // Sign extended
+				bytearray.readShort(),
+				"ByteArray readShort_2 #2"
+			);
+			Assert.AreEqual(
+				uint(4+offset),
+				bytearray.position,
+				"ByteArray readShort_2 #3"
+			);
+		}
+
+		// Note: Called from readShort():void
+		// EOF at various offsets and alignments
+		function readShort_tests3(offset:uint):void
+		{
+			var bytearray:ByteArray=makeByteArray(offset);  // use offset to create the alignment
+			bytearray.writeShort(0x1234);
+
+			for ( var i:uint=0 ; i < 2 ; i++ ) {
+				var v:int;
+				expectEOF("ByteArray readShort_3 #1 " + offset + " " + (i+1),
+					(function ():void {
+						bytearray.position = offset + i + 1;
+						v = bytearray.readShort();
+					}));
+			}
+		}
+
+		// One endianness or the other
+		function readUShort_tests1(endian:String, offset:uint) : void
+		{
+			var bytearray:ByteArray=makeByteArray(offset);
+			bytearray.endian = endian;
+			bytearray.position=offset;
+			bytearray.writeShort(100);
+			bytearray.writeShort(unchecked(uint(-200) & 65535));
+			bytearray.position=offset;
+			Assert.AreEqual(
+				uint(100),
+				bytearray.readUnsignedShort(),
+				"ByteArray readUShort_1 #1 " + endian
+			);
+			Assert.AreEqual(
+				unchecked(uint(-200) & 65535),
+				bytearray.readUnsignedShort(),
+				"ByteArray readUShort_1 #2 " + endian
+			);
+			Assert.AreEqual(
+				4+offset,
+				bytearray.position,
+				"ByteArray readUShort_1 #3" + endian
+			);
+		}
+
+		// Mixed endianness: write with one, read with the other
+		function readUShort_tests2(offset:uint) : void
+		{
+			var bytearray:ByteArray=makeByteArray(offset);
+			bytearray.endian = "bigEndian";
+			bytearray.position=offset;
+			bytearray.writeShort(uint(0x1234));
+			bytearray.writeShort(uint(0xFEDC) & 65535);
+			bytearray.position=offset;
+			bytearray.endian = "littleEndian";
+			Assert.AreEqual(
+				uint(0x3412),
+				bytearray.readUnsignedShort(),
+				"ByteArray readUShort_2 #1"
+			);
+			Assert.AreEqual(
+				uint(0xDCFE),
+				bytearray.readUnsignedShort(),
+				"ByteArray readUShort_2 #2"
+			);
+			Assert.AreEqual(
+				4+offset,
+				bytearray.position,
+				"ByteArray readUShort_2 #3"
+			);
+		}
+
+		// EOF at various offsets and alignments
+		function readUShort_tests3(offset:uint) : void
+		{
+			var bytearray:ByteArray=makeByteArray(offset);  // use offset to create the alignment
+			bytearray.writeShort(0x1234);
+
+			for ( var i:uint=0 ; i < 2 ; i++ ) {
+				var v:uint;
+				expectEOF("ByteArray readUShort_3 #1 " + offset + " " + (i+1),
+					(function ():void {
+						bytearray.position = offset + i + 1;
+						v = bytearray.readUnsignedShort();
+					}));
+			}
+		}
+
+		[Test ()]
+		public function readUShortbigEndian():void
+		{
+			for ( var offs:uint=0 ; offs < 4 ; offs++ ) {
+				readUShort_tests1("bigEndian", offs);
+			}
+		}
+
+		[Test ()]
+		public function readUShortlittleEndian():void
+		{
+			for ( var offs:uint=0 ; offs < 4 ; offs++ ) {
+				readUShort_tests1("littleEndian", offs);
+			}
+		}
+
+		[Test ()]
+		public function readUShort2():void
+		{
+			for ( var offs:uint=0 ; offs < 4 ; offs++ ) {
+				readUShort_tests2(offs);
+			}
+		}
+
+		[Test ()]
+		public function readUShort3():void
+		{
+			for ( var offs:uint=0 ; offs < 4 ; offs++ ) {
+				readUShort_tests3(offs);
+			}
+		}
+
+		// One endianness or the other
+		function readInt_tests1(endian:String, offset:uint):void
+		{
+			var bytearray:ByteArray=makeByteArray(offset);
+			bytearray.endian = endian;
+			bytearray.position=offset;
+			bytearray.writeInt(100);
+			bytearray.writeInt(-200);
+			bytearray.position=offset;
+			Assert.AreEqual(
+				int(100),
+				bytearray.readInt(),
+				"ByteArray readInt_1 #1 " + endian
+			);
+			Assert.AreEqual(
+				int(-200),
+				bytearray.readInt(),
+				"ByteArray readInt_1 #2 " + endian
+			);
+			Assert.AreEqual(
+				uint(8+offset),
+				bytearray.position,
+				"ByteArray readInt_1 #3" + endian
+			);
+		}
+
+		// Mixed endianness: write with one, read with the other
+		function readInt_tests2(offset:uint):void
+		{
+			var bytearray:ByteArray=makeByteArray(offset);
+			bytearray.endian = "bigEndian";
+			bytearray.position=offset;
+			bytearray.writeInt(int(0x12345678));
+			bytearray.writeInt(unchecked(int(0xFEDCBA98)));
+			bytearray.position=offset;
+			bytearray.endian = "littleEndian";
+			Assert.AreEqual(
+				int(0x78563412),
+				bytearray.readInt(),
+				"ByteArray readInt_2 #1"
+			);
+			Assert.AreEqual(
+				unchecked(int(0x98BADCFE)),
+				bytearray.readInt(),
+				"ByteArray readInt_2 #2"
+			);
+			Assert.AreEqual(
+				uint(8+offset),
+				bytearray.position,
+				"ByteArray readInt_2 #3"
+			);
+		}
+
+		// EOF at various offsets and alignments
+		function readInt_tests3(offset:uint):void
+		{
+			var bytearray:ByteArray=makeByteArray(offset);  // use offset to create the alignment
+			bytearray.writeInt(0x12345678);
+
+			var v:int;
+			for ( var i:uint=0 ; i < 4 ; i++ ) {
+//				var v:int;
+				expectEOF("ByteArray readInt_3 #1 " + offset + " " + (i+1),
+					(function ():void {
+						bytearray.position = offset + i + 1;
+						v = bytearray.readInt();
+					}));
+			}
+
+			// Testing for wraparound problems when reading with position
+			// much greater than length.  Given that the bytevector size
+			// is 1000, a length of 0xFFFFFFF0 will always wrap around on
+			// a 32-bit system.  On a 64-bit system we depend on the C++
+			// run-time code using uint32_t to represent length and
+			// position; if it did not we might abort due to a too-large
+			// allocation attempt.
+
+			bytearray.length = 1000;
+			expectEOF("ByteArray readInt_3 #2 at position=2^32-16",
+				(function ():void {
+					bytearray.position = 0xFFFFFFF0;
+					v = bytearray.readInt();
+				}));
+		}
+
+		[Test ()]
+		public function readInt_bigEndian():void
+		{
+			for ( var offs:uint=0 ; offs < 4 ; offs++ ) {
+				readInt_tests1("bigEndian", offs);
+			}
+		}
+
+		[Test ()]
+		public function readInt_littleEndian():void
+		{
+			for ( var offs:uint=0 ; offs < 4 ; offs++ ) {
+				readInt_tests1("littleEndian", offs);
+			}
+		}
+
+		[Test ()]
+		public function readInt2():void
+		{
+			for ( var offs:uint=0 ; offs < 4 ; offs++ ) {
+				readInt_tests2(offs);
+			}
+		}
+
+		[Test ()]
+		public function readInt3():void
+		{
+			for ( var offs:uint=0 ; offs < 4 ; offs++ ) {
+				readInt_tests3(offs);
+			}
+		}
+
+
+		// One endianness or the other
+		function readUInt_tests1(endian:String, offset:uint):void
+		{
+			var bytearray:ByteArray=makeByteArray(offset);
+			bytearray.endian = endian;
+			bytearray.position=offset;
+			bytearray.writeUnsignedInt(100);
+			bytearray.writeUnsignedInt(unchecked(uint(-200)));
+			bytearray.position=offset;
+			Assert.AreEqual(
+				uint(100),
+				bytearray.readUnsignedInt(),
+				"ByteArray readUnsignedInt_1 #1 " + endian
+			);
+			Assert.AreEqual(
+				unchecked(uint(-200)),
+				bytearray.readUnsignedInt(),
+				"ByteArray readUnsignedInt_1 #2 " + endian
+			);
+			Assert.AreEqual(
+				uint(8+offset),
+				bytearray.position,
+				"ByteArray readUnsignedInt_1 #3" + endian
+			);
+		}
+
+		// Mixed endianness: write with one, read with the other
+		function readUInt_tests2(offset:uint):void
+		{
+			var bytearray:ByteArray=makeByteArray(offset);
+			bytearray.endian = "bigEndian";
+			bytearray.position=offset;
+			bytearray.writeUnsignedInt(uint(0x12345678));
+			bytearray.writeUnsignedInt(uint(0xFEDCBA98));
+			bytearray.position=offset;
+			bytearray.endian = "littleEndian";
+			Assert.AreEqual(
+				uint(0x78563412),
+				bytearray.readUnsignedInt(),
+				"ByteArray readUnsignedInt_2 #1"
+			);
+			Assert.AreEqual(
+				uint(0x98BADCFE),
+				bytearray.readUnsignedInt(),
+				"ByteArray readUnsignedInt_2 #2"
+			);
+			Assert.AreEqual(
+				8+offset,
+				bytearray.position,
+				"ByteArray readUnsignedInt_2 #3"
+			);
+		}
+
+		// EOF at various offsets and alignments
+		function readUInt_tests3(offset:uint):void
+		{
+			var bytearray:ByteArray=makeByteArray(offset);  // use offset to create the alignment
+			bytearray.writeUnsignedInt(0x12345678);
+
+			for ( var i:uint=0 ; i < 4 ; i++ ) {
+				var v:int;
+				expectEOF("ByteArray readUInt_3 #1 " + offset + " " + (i+1),
+					(function ():void {
+						bytearray.position = offset + i + 1;
+						v = bytearray.readInt();
+					}));
+			}
+		}
+
+		[Test ()]
+		public function readUInt_bigEndian():void
+		{
+			for ( var offs:uint=0 ; offs < 4 ; offs++ ) {
+				readUInt_tests1("bigEndian", offs);
+			}
+		}
+
+		[Test ()]
+		public function readUInt_littleEndian():void
+		{
+			for ( var offs:uint=0 ; offs < 4 ; offs++ ) {
+				readUInt_tests1("littleEndian", offs);
+			}
+		}
+
+		[Test ()]
+		public function readUInt_tests2():void
+		{
+			for ( var offs:uint=0 ; offs < 4 ; offs++ ) {
+				readUInt_tests2(offs);
+			}
+		}
+
+		[Test ()]
+		public function readUInt_tests3():void
+		{
+			for ( var offs:uint=0 ; offs < 4 ; offs++ ) {
+				readUInt_tests3(offs);
+			}
+		}
+
+
+		// One endianness or the other
+		function readFloat_tests1(endian:String, offset:uint):void
+		{
+			var bytearray:ByteArray=makeByteArray(offset);
+			bytearray.endian = endian;
+			bytearray.position=offset;
+			bytearray.writeFloat(1.25);
+			bytearray.writeFloat(12345.5);
+			Assert.AreEqual(
+				8+offset,
+				bytearray.position,
+				"ByteArray writeFloat_1 #1 " + endian
+			);
+			bytearray.position=offset;
+			Assert.AreEqual(
+				1.25,
+				bytearray.readFloat(),
+				"ByteArray readFloat_1 #1 " + endian
+			);
+			Assert.AreEqual(
+				12345.5,
+				bytearray.readFloat(),
+				"ByteArray readFloat_1 #2 " + endian
+			);
+			Assert.AreEqual(
+				8+offset,
+				bytearray.position,
+				"ByteArray readFloat_1 #3" + endian
+			);
+		}
+
+		// Mixed endianness: write with one, read with the other.  
+		function readFloat_tests2(offset:uint):void
+		{
+			var bytearray:ByteArray=makeByteArray(offset);
+			var temp:ByteArray=new ByteArray;
+
+			bytearray.endian = "bigEndian";
+			bytearray.position=offset;
+
+			bytearray.writeFloat(1.25);    // write big
+			bytearray.writeFloat(12345.5); //   endian
+
+			bytearray.endian = "littleEndian";
+			bytearray.position=offset;
+
+			temp.endian = "littleEndian";
+
+			temp.writeFloat(bytearray.readFloat());  // read little endian
+			temp.writeFloat(bytearray.readFloat());  //   and write little endian
+
+			temp.position = 0;
+			temp.endian = "bigEndian";
+			Assert.AreEqual(
+				1.25,
+				temp.readFloat(),
+				"ByteArray readFloat_2 #1"
+			);           // read big endian
+			Assert.AreEqual(
+				12345.5,
+				temp.readFloat(),
+				"ByteArray readFloat_2 #2"
+			);
+		}
+
+		// EOF at various offsets and alignments
+		function readFloat_tests3(offset:uint):void
+		{
+			var bytearray:ByteArray=makeByteArray(offset);  // use offset to create the alignment
+			bytearray.writeFloat(Math.PI);
+
+			for ( var i:uint=0 ; i < 4 ; i++ ) {
+				var v:uint;
+				expectEOF("ByteArray readFloat_3 #1 " + offset + " " + (i+1),
+					(function ():void {
+						bytearray.position = offset + i + 1;
+						v = bytearray.readFloat();
+					}));
+			}
+		}
+
+		[Test ()]
+		public function readFloat_bigEndian():void
+		{
+			for ( var offs:uint=0 ; offs < 4 ; offs++ ) {
+				readFloat_tests1("bigEndian", offs);
+			}
+		}
+
+		[Test ()]
+		public function readFloat_littleEndian():void
+		{
+			for ( var offs:uint=0 ; offs < 4 ; offs++ ) {
+				readFloat_tests1("littleEndian", offs);
+				readFloat_tests2(offs);
+				readFloat_tests3(offs);
+			}
+		}
+
+		[Test ()]
+		public function readFloat2():void
+		{
+			for ( var offs:uint=0 ; offs < 4 ; offs++ ) {
+				readFloat_tests2(offs);
+			}
+		}
+
+		[Test ()]
+		public function readFloat3():void
+		{
+			for ( var offs:uint=0 ; offs < 4 ; offs++ ) {
+				readFloat_tests3(offs);
+			}
+		}
+
+
+		// One endianness or the other
+		function readDouble_tests1(endian:String, offset:uint) : void
+		{
+			var bytearray:ByteArray=makeByteArray(offset);
+			bytearray.endian = endian;
+			bytearray.position=offset;
+			bytearray.writeDouble(1.25);
+			bytearray.writeDouble(12345.5);
+			Assert.AreEqual(
+				uint(16+offset),
+				bytearray.position,
+				"ByteArray writeDouble_1 #1 " + endian
+			);
+			bytearray.position=offset;
+			Assert.AreEqual(
+				double(1.25),
+				bytearray.readDouble(),
+				"ByteArray readDouble_1 #1 " + endian
+			);
+			var t:double = bytearray.readDouble();
+			Assert.AreEqual(
+				12345.5,
+				bytearray.readDouble(),
+				"ByteArray readDouble_1 #2 " + endian
+			);
+			Assert.AreEqual(
+				uint(16+offset),
+				bytearray.position,
+				"ByteArray readDouble_1 #3" + endian
+			);
+		}
+
+		// Mixed endianness: write with one, read with the other.  
+		function readDouble_tests2(offset:uint) : void
+		{
+			var bytearray:ByteArray=makeByteArray(offset);
+			var temp:ByteArray=new ByteArray;
+
+			bytearray.endian = "bigEndian";
+			bytearray.position=offset;
+
+			bytearray.writeDouble(1.25);    // write big
+			bytearray.writeDouble(12345.5); //   endian
+
+			bytearray.endian = "littleEndian";
+			bytearray.position=offset;
+
+			temp.endian = "littleEndian";
+
+			temp.writeDouble(bytearray.readDouble());  // read little endian
+			temp.writeDouble(bytearray.readDouble());  //   and write little endian
+
+			temp.position = 0;
+			temp.endian = "bigEndian";
+			Assert.AreEqual(
+				double(1.25),
+				temp.readDouble(),
+				"ByteArray readDouble_2 #1"
+			);           // read big endian
+			Assert.AreEqual(
+				double(12345.5),
+				temp.readDouble(),
+				"ByteArray readDouble_2 #2"
+			);
+		}
+
+		// EOF at various offsets and alignments
+		function readDouble_tests3(offset:uint) : void
+		{
+			var bytearray:ByteArray=makeByteArray(offset);  // use offset to create the alignment
+			bytearray.writeDouble(Math.PI);
+
+			for ( var i:uint=0 ; i < 8 ; i++ ) {
+				var v:double;
+				expectEOF("ByteArray readDouble_3 #1 " + offset + " " + (i+1),
+					(function ():void {
+						bytearray.position = offset + i + 1;
+						v = bytearray.readDouble();
+					}));
+			}
+		}
+
+		[Test ()]
+		public function readDouble_bigEndian():void
+		{
+			for ( var offs:uint=0 ; offs < 4 ; offs++ ) {
+				readDouble_tests1("bigEndian", offs);
+			}
+		}
+
+		[Test ()]
+		public function readDouble_littleEndian():void
+		{
+			for ( var offs:uint=0 ; offs < 4 ; offs++ ) {
+				readDouble_tests1("littleEndian", offs);
+			}
+		}
+
+		[Test ()]
+		public function readDouble_tests2():void
+		{
+			for ( var offs:uint=0 ; offs < 4 ; offs++ ) {
+				readDouble_tests2(offs);
+			}
+		}
+
+		[Test ()]
+		public function readDouble_tests3() : void
+		{
+			for ( var offs:uint=0 ; offs < 4 ; offs++ ) {
+				readDouble_tests3(offs);
+			}
+		}
+			
+
+		[Test ()]
+		public function testByte() : void
+		{
+			var bytearray:ByteArray = makeByteArray();
+			bytearray.position=0;
+			bytearray.writeByte(-257);
+			bytearray.writeByte(37);
+			Assert.AreEqual(
+				uint(2),
+				bytearray.position,
+				"testByte: ByteArray position"
+			);
+			Assert.AreEqual(
+				uint(2),
+				bytearray.length,
+				"testByte: ByteArray length"
+			);
+			bytearray.position=0;
+			Assert.AreEqual(
+				unchecked(int(-1)),
+				bytearray.readByte(),
+				"ByteArray readByte"
+			);
+			Assert.AreEqual(
+				int(37),
+				bytearray.readByte(),
+				"ByteArray readByte"
+			);
+
+			var v:int;
+			expectEOF("ByteArray readByte EOF",
+				(function ():void {
+					bytearray.position = bytearray.length;
+					v = bytearray.readByte();
+				}));
+		}
+
+		[Test ()]
+		public function testByte1() : void
+		{
+			var bytearray:ByteArray = makeByteArray();
+			bytearray.position=0;
+			bytearray.writeByte(-257);
+			bytearray.writeByte(37);
+			Assert.AreEqual(
+				uint(2),
+				bytearray.position,
+				"testByte: ByteArray position"
+			);
+		}
+
+		[Test ()]
+		public function testByte2() : void
+		{
+			var bytearray:ByteArray = makeByteArray();
+			bytearray.position=0;
+			bytearray.writeByte(-257);
+			bytearray.writeByte(37);
+			Assert.AreEqual(
+				uint(2),
+				bytearray.length,
+				"testByte: ByteArray length"
+			);
+		}
+
+		[Test ()]
+		public function testByte3() : void
+		{
+			var bytearray:ByteArray = makeByteArray();
+			bytearray.position=0;
+			bytearray.writeByte(-257);
+			bytearray.writeByte(37);
+			bytearray.position=0;
+			Assert.AreEqual(
+				unchecked(int(-1)),
+				bytearray.readByte(),
+				"ByteArray readByte"
+			);
+		}
+
+		[Test ()]
+		public function testByte4() : void
+		{
+			var bytearray:ByteArray = makeByteArray();
+			bytearray.position=0;
+			bytearray.writeByte(-257);
+			bytearray.writeByte(37);
+			bytearray.position=0;
+
+			var moveIndex = bytearray.readByte();
+			Assert.AreEqual(
+				int(37),
+				bytearray.readByte(),
+				"ByteArray readByte"
+			);
+		}
+
+		[Test ()]
+		public function testByte5() : void
+		{
+			var bytearray:ByteArray = makeByteArray();
+			bytearray.position=0;
+			bytearray.writeByte(-257);
+			bytearray.writeByte(37);
+			bytearray.position=0;
+
+			var justMovePosition = bytearray.readByte();
+			justMovePosition = bytearray.readByte();
+
+			var v:int;
+			expectEOF("ByteArray readByte EOF",
+				(function ():void {
+					bytearray.position = bytearray.length;
+					v = bytearray.readByte();
+				}));
+		}
+
+		[Test ()]
+		public function testUnsignedByte() : void
+		{
+			var bytearray:ByteArray = makeByteArray();
+			bytearray.position=0;
+			bytearray.writeByte(-259);
+			bytearray.writeByte(37);
+			Assert.AreEqual(
+				uint(2),
+				bytearray.position,
+				"testUnsignedByte: ByteArray position"
+			);
+			Assert.AreEqual(
+				uint(2),
+				bytearray.length,
+				"testUnsignedByte: ByteArray length"
+			);
+			bytearray.position=0;
+			Assert.AreEqual(
+				uint(253),
+				bytearray.readUnsignedByte(),
+				"ByteArray readUnsignedByte"
+			);
+			Assert.AreEqual(
+				uint(37),
+				bytearray.readUnsignedByte(),
+				"ByteArray readUnsignedByte"
+			);
+
+			var v:uint;
+			expectEOF("ByteArray readUnsignedByte EOF",
+				(function ():void {
+					bytearray.position = bytearray.length;
+					v = bytearray.readUnsignedByte();
+				}));
+		}
+
+		[Test ()]
+		public function testUtf() : void
+		{
+			var bytearray:ByteArray = makeByteArray();
+			bytearray.position=0;
+			bytearray.writeUTF("string");
+			Assert.AreEqual(
+				uint(8),
+				bytearray.position,
+				"ByteArray position of utf string"
+			);
+			bytearray.position=0;
+			Assert.AreEqual(
+				uint(8),
+				bytearray.length,
+				"ByteArray length of utf string"
+			);
+			Assert.AreEqual(
+				"string",
+				bytearray.readUTF(),
+				"ByteArray readUTF"
+			);
+
+			// Also see the readUTFBytes case below.
+			//
+			// This is arguably a bug but it's how it currently behaves (Bugzilla 687341).
+			// readUTF will return a string consisting of the characters up to and not including
+			// the NUL, but the position will be updated as if the entire string were consumed.
+			bytearray.length = 0;
+			bytearray.position = 0;
+			bytearray.endian = "bigEndian";
+			bytearray.writeByte(0);
+			bytearray.writeByte(4);
+			bytearray.writeByte(108);
+			bytearray.writeByte(97);
+			bytearray.writeByte(0);
+			bytearray.writeByte(115);
+
+			bytearray.position = 0;
+			Assert.AreEqual(
+				"la",
+				bytearray.readUTF(),
+				"ByteArray readUTF on contents containing NUL: contents"
+			);
+			Assert.AreEqual(
+				uint(6),
+				bytearray.position,
+				"ByteArray readUTF on contents containing NUL: position"
+			);
+
+			// Test EOF in data area
+			expectEOF("ReadUTF EOF in content",
+				(function ():void {
+					bytearray.length = 0;
+					bytearray.endian = "bigEndian";
+					bytearray.writeUTF("super");
+					bytearray[1] = 6; // One too much
+					bytearray.position = 0;
+					bytearray.readUTF();
+				}));
+
+			// Test EOF in length area
+			expectEOF("ReadUTF EOF in length, #1",
+				(function ():void {
+					bytearray.length = 0;
+					bytearray.readUTF();
+				}));
+
+			expectEOF("ReadUTF EOF in length, #2",
+				(function ():void {
+					bytearray.length = 0;
+					bytearray.writeByte(0);
+					bytearray.position = 0;
+					bytearray.readUTF();
+				}));
+
+			// Doc sez: A RangeError will be thrown for writeUTF if the string length exceeds 65535.
+			expectRangeError("RangeError in writeUTF",
+				(function ():void {
+					var s:String = "86868686";
+					while (s.length <= 65535)
+						s = s + s;
+					bytearray.writeUTF(s);
+				}));
+
+			// Skip UTF-8 BOM.
+			// This seems fairly ill-defined and ad-hoc since the BOM is skipped but is accounted for in the byte count,
+			// but it's what we do, so test that we continue to do it...
+			bytearray.length = 0;
+			bytearray.position = 0;
+			bytearray.endian = "bigEndian";
+			bytearray.writeByte(0);
+			bytearray.writeByte(6);
+			bytearray.writeByte(0xEF);
+			bytearray.writeByte(0xBB);
+			bytearray.writeByte(0xBF);
+			bytearray.writeUTFBytes("string");
+			bytearray.position = 0;
+			Assert.AreEqual(
+				"str",
+				bytearray.readUTF(),
+				"ByteArray readUTF skips UTF8 BOM after length bytes but includes it in the length"
+			);
+
+			// TODO: test invalid UTF - we should still get data, in a predictable way (invalid input turns into individual bytes)
+		}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		// Utility to make and pad a ByteArray
+		public function makeByteArray(padding:int=0) : ByteArray
+		{
+			var bytearray:ByteArray=new ByteArray();
+			for ( var i:int=0 ; i < padding ; i++ )
+				bytearray.writeByte(0);
+			return bytearray;
+		}
+
+		// Utility to test for RangeError
+		public function expectRangeError(tag:String, thunk:Function):void
+		{
+			var exn_ok = "No exn";
+			try { 
+				thunk();
+			}
+			catch (e:RangeError) { 
+				exn_ok = "OK"; 
+			}
+			catch (e:Error) { 
+				exn_ok = "Wrong type"; 
+			}
+			Assert.AreEqual("OK", exn_ok, tag);
+		}
+
+		// Utility to test for EOFError
+		public function expectEOF(tag:String, thunk:Function):void
+		{
+			var exn_ok = "No exn";
+			try { 
+				thunk(); 
+			}
+			catch (e:EOFError) { 
+				exn_ok = "OK"; 
+			}
+			catch (e:Error){ 
+				exn_ok = "Wrong type"; 
+			}
+			Assert.AreEqual("OK", exn_ok, tag);
+		}
+
+	}
+}
+

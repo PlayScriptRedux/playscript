@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{27487810-4E81-425E-9D3F-DBF396F86711}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>PlayScript.Framework.Test</RootNamespace>
+    <AssemblyName>PlayScript.Framework.Test</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="nunit.framework">
+      <HintPath>..\..\..\..\packages\NUnit.2.6.4\lib\nunit.framework.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="ByteArrayTest.play" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\AssemblyInfo.cs" />
+    <None Include="packages.config" />
+    <None Include="Test.play" />
+  </ItemGroup>
+  <Import Project="..\..\..\..\packages\PlayScript.MSBuild.5.10.2.4\build\PlayScript.MSBuild.Targets" Condition="Exists('..\..\..\..\packages\PlayScript.MSBuild.5.10.2.4\build\PlayScript.MSBuild.Targets')" />
+  <ItemGroup>
+    <ProjectReference Include="..\PlayScript.Dynamic_aot\PlayScript.Dynamic.AOT.csproj">
+      <Project>{0BACBE20-34DD-4E24-8B91-87970E8A23B9}</Project>
+      <Name>PlayScript.Dynamic.AOT</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\pscorlib_aot\pscorlib.AOT.psproj">
+      <Project>{ADBAC91B-2817-479E-8DDF-B24ADDA563A6}</Project>
+      <Name>pscorlib.AOT</Name>
+    </ProjectReference>
+  </ItemGroup>
+</Project>
