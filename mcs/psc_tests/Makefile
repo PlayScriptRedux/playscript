@@ -47,7 +47,7 @@ test-casts: boot-casts.out mcs-casts.out
 
 ifeq (net_4_5, $(PROFILE))
 TEST_PATTERN = '*.as'
-DEFINES = -compiler-options:"-d:NET_4_0;NET_4_5 -debug -r:../class/lib/net_4_5/PlayScript.Dynamic_AOT.dll -r:../class/lib/net_4_5/pscorlib_AOT.dll -r:../class/lib/net_4_5/System.dll -r:../class/lib/net_4_5/mscorlib.dll -r:../class/lib/net_4_5/System.Core.dll"
+DEFINES = -compiler-options:"-d:NET_4_0;NET_4_5 -debug -r:../class/lib/net_4_5/PlayScript.Dynamic_aot.dll -r:../class/lib/net_4_5/pscorlib_aot.dll -r:../class/lib/net_4_5/System.dll -r:../class/lib/net_4_5/mscorlib.dll -r:../class/lib/net_4_5/System.Core.dll"
 endif
 
 LOCAL_RUNTIME_FLAGS =
