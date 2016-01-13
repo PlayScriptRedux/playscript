@@ -1,4 +1,4 @@
-﻿package PlayScript.Framework.Test
+﻿package _root.flash.utils
 {
 	// tamarin-redux/tests/acceptance/as3/ByteArray
 
@@ -8,6 +8,7 @@
 	import flash.utils.ByteArray;
 	import flash.errors.EOFError;
 	import flash.errors.IOError;
+	import System.IO.*;
 
 	[TestFixture ()]
  	public class ByteArrayTest
@@ -1065,14 +1066,545 @@
 			// TODO: test invalid UTF - we should still get data, in a predictable way (invalid input turns into individual bytes)
 		}
 
+		[Test ()]
+		public function testUtfBytes() : void
+		{
+			var bytearray:ByteArray = makeByteArray();
+			bytearray.position=0;
+			bytearray.writeUTFBytes("string");
+			bytearray.position=0;
+			Assert.AreEqual(
+				uint(6),
+				bytearray.length,
+				"ByteArray length of utf bytes string"
+			);
+			Assert.AreEqual(
+				"string",
+				bytearray.readUTFBytes(6),
+				"ByteArray readUTFBytes"
+			);
 
+			// Also see the readUTF case above.
+			//
+			// This is arguably a bug but it's how it currently behaves (Bugzilla 687341).
+			// readUTF will return a string consisting of the characters up to and not including
+			// the NUL, but the position will be updated as if the entire string were consumed.
+			bytearray.length = 0;
+			bytearray.position = 0;
+			bytearray.endian = "bigEndian";
+			bytearray.writeByte(108);
+			bytearray.writeByte(97);
+			bytearray.writeByte(0);
+			bytearray.writeByte(115);
 
+			bytearray.position = 0;
+			Assert.AreEqual(
+				"la",
+				bytearray.readUTFBytes(4),
+				"ByteArray readUTFBytes on contents containing NUL: contents"
+			);
+			Assert.AreEqual(
+				uint(4),
+				bytearray.position,
+				"ByteArray readUTFBytes on contents containing NUL: position"
+			);
 
+			// Test EOF in data area
+			expectEOF("ReadUTFBytes EOF in content",
+				(function ():void {
+					bytearray.length = 0;
+					bytearray.endian = "bigEndian";
+					bytearray.writeUTF("super");
+					bytearray.position = 2;
+					bytearray.readUTFBytes(6); // one too much
+				}));
 
+			// Skip UTF-8 BOM.
+			// This seems fairly ill-defined and ad-hoc since the BOM is skipped but is accounted for in the byte count,
+			// but it's what we do, so test that we continue to do it...
+			bytearray.length = 0;
+			bytearray.position = 0;
+			bytearray.endian = "bigEndian";
+			bytearray.writeByte(0xEF);
+			bytearray.writeByte(0xBB);
+			bytearray.writeByte(0xBF);
+			bytearray.writeUTFBytes("string");
+			bytearray.position = 0;
+			Assert.AreEqual(
+				"str",
+				bytearray.readUTFBytes(6),
+				"ByteArray readUTFBytes skips UTF8 BOM but includes it in the length"
+			);
 
+			// TODO: test invalid UTF - we should still get data, in a predictable way (invalid input turns into individual bytes)
+		}
 
+		[Test ()]
+		public function testCompressAndUncompress():void
+		{
+			var bytearray:ByteArray = makeByteArray();
+			bytearray.writeUTFBytes("string");
+			bytearray.compress();
+			Assert.AreEqual(
+				"ByteArray length after compress",
+				14,
+				bytearray.length
+			);
+			bytearray.uncompress();
+			Assert.AreEqual(
+				"ByteArray length after uncompress",
+				6,
+				bytearray.length
+			);
+			bytearray.length = 0;
+			bytearray.position = 0;
+			bytearray.writeUTFBytes("string");
+			bytearray.deflate();
+			Assert.AreEqual(
+				"ByteArray length after deflate",
+				8,  // This is what the inflate algorithm produces on 2011-09-22, so we accept it as Truth.
+				bytearray.length
+			);
+			bytearray.inflate();
+			Assert.AreEqual(
+				"ByteArray length after inflate",
+				6,
+				bytearray.length
+			);
+			bytearray.length=0;
+			bytearray.compress();
+			Assert.AreEqual(
+				"ByteArray length after empty compress",
+				0,
+				bytearray.length
+			);
+			bytearray.uncompress();
+			Assert.AreEqual(
+				"ByteArray length after empty uncompress",
+				0,
+				bytearray.length
+			);
+			// Bugzilla 691251: ByteArray uncompress and inflate leak memory if presented with invalid data
+			// We should get an IOError here (not a problem) and in Debug builds we should not assert on exit.
+			bytearray.length = 0;
+			bytearray.position = 0;
+			bytearray.writeUTFBytes("string");
+			bytearray.compress();
 
+			expectIOError("Uncompress on mangled data",
+				(function ():void {
+					bytearray[0] ^= 0x86;
+					bytearray.uncompress();
+				}));
 
+			// Bugzilla 691251: ByteArray uncompress and inflate leak memory if presented with invalid data
+			// We should get an IOError here (not a problem) and in Debug builds we should not assert on exit.
+			bytearray.length = 0;
+			bytearray.position = 0;
+			bytearray.writeUTFBytes("string");
+			bytearray.deflate();
+
+			expectIOError("Inflate on mangled data",
+				(function ():void {
+					bytearray[0] ^= 0x86;
+					bytearray.inflate();
+				}));
+		}
+
+		[Test ()]
+		public function testEndian():void 
+		{
+			var bytearray:ByteArray = makeByteArray();
+			Assert.AreEqual(
+				"bigEndian",
+				bytearray.endian,
+				"get default endian"
+			);
+			bytearray.endian="littleEndian";
+			Assert.AreEqual(
+				"littleEndian",
+				bytearray.endian,
+				"set endian littleEndian"
+			);
+			bytearray.endian="bigEndian";
+			Assert.AreEqual(
+				"bigEndian",
+				bytearray.endian,
+				"set endian bigEndian"
+			);
+			var err="none";
+			try {
+				bytearray.endian="none";
+			} catch (e:Error) {
+				err=e.toString();
+			}
+			Assert.AreEqual(
+				"ArgumentError: Error #2008",
+				err.substring(0,26),
+				"exception thrown when endian is to littleEndian or bigEndian"
+			);
+			Assert.AreEqual(
+				"bigEndian",
+				bytearray.endian,
+				"endian value is uchanged after invalid set"
+			);
+		}
+
+		[Test ()]
+		public function testBracketSyntax() : void {
+			var bytearray:ByteArray = makeByteArray();
+			bytearray.position=0;
+			bytearray.writeByte(10);
+			bytearray.writeByte(11);
+			bytearray.writeByte(12);
+			bytearray.position = 0;
+
+			Assert.AreEqual(
+				12,
+				bytearray[2],
+				"ByteArray get [] syntax"
+			);
+			bytearray[2]=13;
+			Assert.AreEqual(
+				13,
+				bytearray[2],
+				"ByteArray set [] syntax"
+			);
+			// We can write negative values but should read positive values
+			bytearray[2] = -13;
+			Assert.AreEqual(
+				243,
+				bytearray[2],
+				"ByteArray set [] / get [] syntax"
+			);
+			// This is sad, but it is the traditional behavior: reading
+			// outside the range returns undefined, it does not throw or
+			// return 0.  Ergo bytearray "byte" reads are not monotyped.
+			Assert.AreEqual(
+				undefined,
+				bytearray[3],
+				"Bytearray get[] out of range"
+			);
+			// When writing out of range, extend the bytearray and zero-fill
+			bytearray[4] = 37;
+
+			Assert.AreEqual(
+				37,
+				bytearray[4],
+				"ByteArray set[] out of range: changed element"
+			);
+			Assert.AreEqual(
+				uint(5),
+				bytearray.length,
+				"ByteArray set[] out of range: length"
+			);
+			Assert.AreEqual(
+				int(0),
+				bytearray[3],
+				"ByteArray set[] out of range: zero-fill"
+			);
+			// Sanity: all this reading and writing has not changed the position
+			Assert.AreEqual(
+				uint(0),
+				bytearray.position,
+				"ByteArray get[] and set[]: position"
+			);
+			// Sanity: accesses with Atom are correct.  We could have more tests here.
+			var v = {};
+			//v[String.prototype.toLowerCase.call("X")] = 2;  // Defeat most reasonable optimizations
+			v['x'] = 2;
+
+			bytearray[v.x] = 42;
+			Assert.AreEqual(
+				42,
+				bytearray[2],
+				"ByteArray set[] with Atom index"
+			);
+			bytearray[2] = 112;
+			Assert.AreEqual(
+				112,
+				bytearray[v.x],
+				"ByteArray get[] with Atom index"
+			);
+		}
+
+		[Test ()]
+		public function testLengthManipulation() : void {
+			var bytearray:ByteArray = new ByteArray;
+			bytearray.length=10;
+			Assert.AreEqual(
+				0,
+				bytearray[9],
+				"ByteArray empty slots filled with 0"
+			);
+			var bytearray_shrink=new ByteArray;
+			bytearray_shrink.length=10;
+			bytearray_shrink.length=5;
+			Assert.AreEqual(
+				uint(5),
+				bytearray_shrink.length,
+				"ByteArray shrink length"
+			);
+		}
+
+		[Test ()]
+		public function testReadBytes() : void {
+			var bytearray:ByteArray = makeByteArray();
+			bytearray.writeUTF("abcdefghijk");
+			bytearray.position = 0;
+
+			var bytearray2:ByteArray=new ByteArray;
+			bytearray.readBytes(bytearray2,0,0);
+
+			for ( var i:int="a".charCodeAt(0), k:int=0 ; i <= "k".charCodeAt(0) ; i++, k++ )
+				Assert.AreEqual(
+					i,
+					bytearray2[k+2],
+					"readBytes correct content"
+				);
+
+			var bytearray3:ByteArray=new ByteArray;
+			var pos = bytearray.position;
+			bytearray.readBytes(bytearray3,8);
+			Assert.AreEqual(
+				uint(8),
+				bytearray3.length,
+				"ByteArray readBytes 8 length copies values, check size"
+			);
+			Assert.AreEqual(
+				pos, // Position *is not* updated by readBytes()
+				bytearray.position,
+				"ByteArray readBytes 8 length copies values, check position"
+			);
+
+			expectEOF("EOF in readBytes",
+				(function ():void {
+					bytearray.position = 0;
+					bytearray.readBytes(bytearray3, 0, bytearray.length+1);
+				}));
+
+			// Doc sez: A RangeError will be thrown if the value of offset+length exceeds 2^32-1
+			expectRangeError("RangeError in readBytes",
+				(function ():void {
+					bytearray3.position = 0;
+					bytearray.readBytes(bytearray3, 0xFFFFFFFF, 1);
+				}));
+
+			// TODO: test more combinations of offset and count
+		}
+
+		[Test ()]
+		public function testWriteBytes() : void {
+			var bytearray:ByteArray = makeByteArray();
+			for ( var i:int=0 ; i < 10 ; i++ )
+				bytearray.writeByte(i);
+
+			var bytearray4=new ByteArray;
+			bytearray4.writeBytes(bytearray);
+			Assert.AreEqual(
+				uint(10),
+				bytearray4.length,
+				"ByteArray writeBytes: length"
+			);
+
+			Assert.AreEqual(
+				uint(10), // Position *is* updated by writeBytes()
+				bytearray4.position,
+				"ByteArray writeBytes: position"
+			);
+
+			for ( var i:int=0 ; i < 10 ; i++ ) {
+				Assert.AreEqual(
+					i,
+					bytearray4[i],
+					"ByteArray writeBytes: content"
+				);
+			}
+
+			var bytearray5=new ByteArray;
+			bytearray5.writeBytes(bytearray,1,5);
+			Assert.AreEqual(
+				uint(5),
+				bytearray5.length,
+				"ByteArray writeBytes"
+			);
+
+			// TODO: test more combinations of offset and count
+		}
+
+		[Test ()]
+		public function testHasAtomProperty() : void {
+			var bytearray_atom:ByteArray=new ByteArray;
+			bytearray_atom.writeByte(1);
+			bytearray_atom.writeByte(2);
+			bytearray_atom.writeByte(3);
+			Assert.AreEqual(
+				true,
+				1 in bytearray_atom,
+				"ByteArray hasAtomProperty true"
+			);
+			Assert.AreEqual(
+				false,
+				5 in bytearray_atom,
+				"ByteArray hasAtomProperty false"
+			);
+		}
+
+		[Test ()]
+		[Ignore("ByteArray does not have any file-based R/W, why is tamarin-redux testing this?")]
+		public function testFileIO() : void {
+			var bytearray_atom:ByteArray=new ByteArray;
+			bytearray_atom.writeByte(1);
+			bytearray_atom.writeByte(2);
+			bytearray_atom.writeByte(3);
+
+			//File.writeByteArray('test.ba', bytearray_atom);
+			WriteByteArrayToFile("/tmp/test.ba", bytearray_atom);
+
+			//var bytearray_read:ByteArray=File.readByteArray('test.ba');
+			var bytearray_read:ByteArray = ReadByteArrayFromFile("/tmp/test.ba");
+			Assert.AreEqual(
+				uint(3),
+				bytearray_read.length,
+				"ByteArray read/writeFile"
+			);
+
+			var err2="";
+			try {
+				//var bytearray_badread:ByteArray=File.readByteArray('foo.ba');
+				var bytearray_badread:ByteArray=ReadByteArrayFromFile('/tmp/foo.ba');
+			} catch (e:Error) {
+				err2=e.toString();
+			}
+			Assert.AreEqual(
+				"Error: Error #1500",
+				err2.substring(0,18),
+				"ByteArray read/writeFile exception"
+			);
+		}
+
+		[Test ()]
+		public function testBOM() : void {
+			var bytearray_bom:ByteArray=new ByteArray;
+
+			// TODO: toString also skips little-endian and big-endian UTF-16 BOMs (0xFF 0xFE and 0xFE 0xFF).
+			bytearray_bom[0]=0xef;
+			bytearray_bom[1]=0xbb;
+			bytearray_bom[2]=0xbf;
+			bytearray_bom[3]=100;
+			bytearray_bom[4]=97;
+			bytearray_bom[5]=110;
+			bytearray_bom[6]=33;
+			Assert.AreEqual(
+				"dan!",
+				bytearray_bom.toString(),
+				"ByteArray with bom toString"
+			);
+
+			var bytearray_str:ByteArray=new ByteArray;
+			bytearray_str[0]=100;
+			bytearray_str[1]=97;
+			bytearray_str[2]=110;
+			bytearray_str[3]=33;
+			Assert.AreEqual(
+				"dan!",
+				bytearray_str.toString(),
+				"ByteArray with no bom toString"
+			);
+
+			// bad partial sequence
+			var bytearray_bad : ByteArray = new ByteArray();
+			bytearray_bad[0]=0xE4; // 19968
+			bytearray_bad[1]=0xB8;
+			bytearray_bad[2]=0x80;
+			bytearray_bad[3]=0xE4; // bad sequence
+			bytearray_bad[4]=0xE4; // 19968
+			bytearray_bad[5]=0xB8;
+			bytearray_bad[6]=0x80;
+			Assert.AreEqual(
+				"\u4e00\u00E4\u4e00",
+				bytearray_bad.toString(),
+				"ByteArray with partial bad utf-8 sequence"
+			);
+
+			// truncated utf-8 sequence
+			bytearray_bad = new ByteArray();
+			bytearray_bad[0]=0xE4; // truncated sequence
+			bytearray_bad[1]=0xB8;
+			Assert.AreEqual(
+				"\u00E4\u00B8",
+				bytearray_bad.toString(),
+				"ByteArray with truncated utf-8 sequence"
+			);
+
+			// utf-8 sequence > 0x1FFFF
+			bytearray_bad = new ByteArray();
+			bytearray_bad[0]=0xFB; // character == 0x3FFFF
+			bytearray_bad[1]=0xBF;
+			bytearray_bad[2]=0xBF;
+			bytearray_bad[3]=0xBF;
+			bytearray_bad[4]=0xBF;
+			bytearray_bad[5]=0xE4; // 19968
+			bytearray_bad[6]=0xB8;
+			bytearray_bad[7]=0x80;
+			Assert.AreEqual(
+				"\udbbf\udfff\u00BF\u4e00",
+				bytearray_bad.toString(),
+				"ByteArray with out-of-range utf-8 sequence"
+			);
+
+			// compress/uncompress with BOM
+			var bytearray_compress:ByteArray = new ByteArray();
+			bytearray_compress[0]=0xef;
+			bytearray_compress[1]=0xbb;
+			bytearray_compress[2]=0xbf;
+			bytearray_compress[3]=100;
+			bytearray_compress[4]=97;
+			bytearray_compress[5]=110;
+			bytearray_compress[6]=33;
+			// original length = 7
+			var origlength=bytearray_compress.length;
+			bytearray_compress.compress();
+			// test the compressed bytearray values are all different from the original
+			var compressstate=(bytearray_compress[0]==0xef ||
+				bytearray_compress[1]==0xbb ||
+				bytearray_compress[2]==0xbf ||
+				bytearray_compress[3]==100 ||
+				bytearray_compress[4]==97);
+			// check the compressed length = 15 (small strings compress larger in zlib)
+			var compresslength=bytearray_compress.length;
+			bytearray_compress.uncompress();
+			// check the uncompress/compress length should equal original length 7
+			var restoredlength=bytearray_compress.length;
+			var restorestate=(bytearray_compress[0]==0xef &&
+				bytearray_compress[1]==0xbb &&
+				bytearray_compress[2]==0xbf &&
+				bytearray_compress[3]==100 &&
+				bytearray_compress[4]==97 &&
+				bytearray_compress[5]==110 &&
+				bytearray_compress[6]==33
+			);
+			Assert.AreEqual(
+				origlength==compresslength,
+				false,
+				"ByteArray.compress bytearray length is different"
+			);
+			Assert.AreEqual(
+				compressstate,
+				false,
+				"ByteArray.compress bytearray contents differ"
+			);
+			Assert.AreEqual(
+				origlength,
+				restoredlength,
+				"ByteArray.uncompress bytearray length matches before compress"
+			);
+			Assert.AreEqual(
+				restorestate,
+				true,
+				"ByteArray.uncompress uncompressing compressed string matches original"
+			);
+		}
 
 
 
@@ -1106,21 +1638,106 @@
 		}
 
 		// Utility to test for EOFError
-		public function expectEOF(tag:String, thunk:Function):void
+		function expectEOF(tag:String, thunk:Function) : void
 		{
 			var exn_ok = "No exn";
 			try { 
 				thunk(); 
 			}
-			catch (e:EOFError) { 
+			catch (e:EOFError) {
+				trace(e.message);
 				exn_ok = "OK"; 
 			}
 			catch (e:Error){ 
+				trace(e.message);
 				exn_ok = "Wrong type"; 
 			}
 			Assert.AreEqual("OK", exn_ok, tag);
 		}
 
+		// Utility to test for IOError
+		function expectIOError(tag:String, thunk:Function) : void
+		{
+			var exn_ok:String = "No exn";
+			try {
+				thunk(); 
+			}
+			catch (e:IOError) {
+				trace(e.message);
+				exn_ok = "OK"; 
+			}
+			catch (e:Error) {
+				trace(e.message);
+				exn_ok = "Wrong type"; 
+			}
+			Assert.AreEqual("OK", exn_ok, tag);
+		}
+
+		function WriteByteArrayToFile(fileName:String, data:ByteArray) : Boolean
+		{
+			var _FileStream:FileStream;
+			try {
+				// Open file for reading
+				_FileStream = 
+					new FileStream(fileName, FileMode.Create, FileAccess.Write);
+				// Writes a block of bytes to this stream using data from
+				// a byte array.
+				var b:byte;
+				data.position = 0;
+				for ( var i:int=0 ; i < data.length ; i++ ) 
+				{
+					b = byte(data.readByte());
+					_FileStream.WriteByte(b);
+				}
+				// close file stream
+				_FileStream.Close();
+				return true;
+			}
+			catch (_Exception:Error) {
+				trace(_Exception.message);
+				_FileStream.Close();
+			}
+			// error occured, return false
+			return false;
+		}
+
+		function ReadByteArrayFromFile(fileName:String) : ByteArray
+		{
+//			try {
+				// Open file for reading
+			var _FileStream:FileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+				// Writes a block of bytes to this stream using data from
+				// a byte array.
+				var b:byte;
+				var data:ByteArray = new ByteArray();
+				// Read and verify the data.
+				for(var i:int = 0; i < _FileStream.Length; i++)
+				{
+					data[i] = _FileStream.ReadByte();
+				}
+				// close file stream
+				_FileStream.Close();
+				return data;
+//			}
+//			catch (_Exception:Error) {
+//				trace(_Exception.message);
+//			}
+//			// error occured, return false
+//			return false;
+		}
+
+//		private function writeBytesToFile(fileName:String, data:ByteArray) : void 
+//		{ 
+//			var outFile:File = File.desktopDirectory; // dest folder is desktop 
+//			outFile = outFile.resolvePath(fileName);  // name of file to write 
+//			var outStream:FileStream = new FileStream(); 
+//			// open output file stream in WRITE mode 
+//			outStream.open(outFile, FileMode.WRITE); 
+//			// write out the file 
+//			outStream.writeBytes(data, 0, data.length); 
+//			// close it 
+//			outStream.close(); 
+//		}
 	}
 }
 

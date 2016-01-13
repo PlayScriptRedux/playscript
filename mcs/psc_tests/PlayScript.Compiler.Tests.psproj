@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{DCD5CCF3-05C2-4D77-9427-7E282A449672}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>PlayScript.Compiler.Tests</RootNamespace>
+    <AssemblyName>PlayScript.Compiler.Tests</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ConsolePause>false</ConsolePause>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>full</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Externalconsole>true</Externalconsole>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="PlayScript.Dynamic_aot">
+      <HintPath>..\..\..\packages\PlayScript.AOT.5.10.2.1\lib\net45\PlayScript.Dynamic_aot.dll</HintPath>
+    </Reference>
+    <Reference Include="pscorlib_aot">
+      <HintPath>..\..\..\packages\PlayScript.AOT.5.10.2.1\lib\net45\pscorlib_aot.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\AssemblyInfo.cs" />
+    <None Include="packages.config" />
+    <None Include="as\CS7009-MagicArgumentsVariable.as" />
+    <None Include="as\CS7655-dynamic-error.as" />
+    <None Include="as\HelloWorld.as" />
+    <None Include="as\phony-image" />
+    <None Include="as\playscript-embed.png" />
+    <None Include="as\support-test-012a.as" />
+    <None Include="as\support-test-012b.as" />
+    <None Include="as\support-test-012c.as" />
+    <None Include="as\test-NullString.as" />
+    <None Include="as\test-as-001.as" />
+    <None Include="as\test-as-15463.as" />
+    <None Include="as\test-as-ASync-SimpleName.as" />
+    <None Include="as\test-as-AbsoluteNS-01.as" />
+    <None Include="as\test-as-AbsoluteNS-02.as" />
+    <None Include="as\test-as-AbsoluteNS-03.as" />
+    <None Include="as\test-as-AbsoluteNS-04.as" />
+    <None Include="as\test-as-AbsoluteNS-05.as" />
+    <None Include="as\test-as-AbsoluteNS-06.as" />
+    <None Include="as\test-as-AsNonAssignStatementExpression.as" />
+    <None Include="as\test-as-CS0172-IntDoubleConditional.as" />
+    <None Include="as\test-as-CS0172-UIntDoubleConditional.as" />
+    <None Include="as\test-as-CS0172.as" />
+    <None Include="as\test-as-CS0173.as" />
+    <None Include="as\test-as-DoubleTimesDynamic-CS0019.as" />
+    <None Include="as\test-as-Error.as" />
+    <None Include="as\test-as-FunctionStyleCast.as" />
+    <None Include="as\test-as-LogicalOr-02.as" />
+    <None Include="as\test-as-LogicalOr-03.as" />
+    <None Include="as\test-as-LogicalOr.as" />
+    <None Include="as\test-as-Modulo.as" />
+    <None Include="as\test-as-NewOperator.as" />
+    <None Include="as\test-as-Nullable.as" />
+    <None Include="as\test-as-Number-1.as" />
+    <None Include="as\test-as-NumberToPrecision.as" />
+    <None Include="as\test-as-ObjectInitializerOperator-01.as" />
+    <None Include="as\test-as-ObjectInitializerOperator-02.as" />
+    <None Include="as\test-as-Parentheses.as" />
+    <None Include="as\test-as-StaticVsInstanceSameName.as" />
+    <None Include="as\test-as-StaticVsInstanceSameNameProp.as" />
+    <None Include="as\test-as-StrictEquality.as" />
+    <None Include="as\test-as-TestTemplate.as" />
+    <None Include="as\test-as-TryCatch.as" />
+    <None Include="as\test-as-TryCatchError.as" />
+    <None Include="as\test-as-TryCatchErrorExtends.as" />
+    <None Include="as\test-as-TryCatchFinally.as" />
+    <None Include="as\test-as-TryFinally.as" />
+    <None Include="as\test-as-Typeof.as" />
+    <None Include="as\test-as-XML-Attr-Access-2.as" />
+    <None Include="as\test-as-XML-Attr-Access-3.as" />
+    <None Include="as\test-as-XML-Attr-Access.as" />
+    <None Include="as\test-as-XML-Attributes-Access.as" />
+    <None Include="as\test-as-XML-Attributes-Operator.as" />
+    <None Include="as\test-as-XMLAttributeName.as" />
+    <None Include="as\test-as-is-operator-01.as" />
+    <None Include="as\test-as-is-operator-02.as" />
+    <None Include="as\test-debug-001-ref.xml" />
+    <None Include="as\test-debug-001.as" />
+    <None Include="as\test-debug-002-ref.xml" />
+    <None Include="as\test-debug-002.as" />
+    <None Include="as\test-debug-003-ref.xml" />
+    <None Include="as\test-debug-003.as" />
+    <None Include="as\test-debug-004-ref.xml" />
+    <None Include="as\test-debug-004.as" />
+    <None Include="as\test-debug-005-ref.xml" />
+    <None Include="as\test-debug-005.as" />
+    <None Include="as\test-debug-006-ref.xml" />
+    <None Include="as\test-debug-006.as" />
+    <None Include="as\test-debug-007-ref.xml" />
+    <None Include="as\test-debug-007.as" />
+    <None Include="as\test-debug-008-ref.xml" />
+    <None Include="as\test-debug-009-ref.xml" />
+    <None Include="as\test-debug-009.as" />
+    <None Include="as\test-debug-010-ref.xml" />
+    <None Include="as\test-debug-010.as" />
+    <None Include="as\test-debug-011-ref.xml" />
+    <None Include="as\test-debug-011.as" />
+    <None Include="as\test-debug-012-ref.xml" />
+    <None Include="as\test-debug-012.as" />
+    <None Include="as\test-debug-013-ref.xml" />
+    <None Include="as\test-debug-013.as" />
+    <None Include="as\test-debug-014-ref.xml" />
+    <None Include="as\test-debug-014.as" />
+    <None Include="as\test-debug-015-ref.xml" />
+    <None Include="as\test-debug-015.as" />
+    <None Include="as\test-debug-AllowDynamics.as" />
+    <None Include="as\test-debug-ArrayIndexTest-ref.xml" />
+    <None Include="as\test-debug-ArrayIndexTest.as" />
+    <None Include="as\test-debug-AsUntypedTest-ref.xml" />
+    <None Include="as\test-debug-AsUntypedTest.as" />
+    <None Include="as\test-debug-AttributeTest-ref.xml" />
+    <None Include="as\test-debug-AttributeTest.as" />
+    <None Include="as\test-debug-ClassPropertyIndexerTest-ref.xml" />
+    <None Include="as\test-debug-ClassPropertyIndexerTest.as" />
+    <None Include="as\test-debug-CollectionsTest-ref.xml" />
+    <None Include="as\test-debug-CollectionsTest.as" />
+    <None Include="as\test-debug-ConversionTest-ref.xml" />
+    <None Include="as\test-debug-ConversionTest.as" />
+    <None Include="as\test-debug-DivideByZeroTest-ref.xml" />
+    <None Include="as\test-debug-DivideByZeroTest.as" />
+    <None Include="as\test-debug-DynamicBinaryArithmeticTest-ref.xml" />
+    <None Include="as\test-debug-DynamicBinaryArithmeticTest.as" />
+    <None Include="as\test-debug-DynamicBinaryComparisonTest-ref.xml" />
+    <None Include="as\test-debug-DynamicBinaryComparisonTest.as" />
+    <None Include="as\test-debug-DynamicClass-ref.xml" />
+    <None Include="as\test-debug-DynamicClass.as" />
+    <None Include="as\test-debug-Embed-ref.xml" />
+    <None Include="as\test-debug-Embed.as" />
+    <None Include="as\test-debug-EqualityTest-ref.xml" />
+    <None Include="as\test-debug-EqualityTest.as" />
+    <None Include="as\test-debug-EventHandlerTest-ref.xml" />
+    <None Include="as\test-debug-EventHandlerTest.as" />
+    <None Include="as\test-debug-FunctionTest-ref.xml" />
+    <None Include="as\test-debug-FunctionTest.as" />
+    <None Include="as\test-debug-ImplicitStringConversionTest-ref.xml" />
+    <None Include="as\test-debug-ImplicitStringConversionTest.as" />
+    <None Include="as\test-debug-InternalClassTest-ref.xml" />
+    <None Include="as\test-debug-InternalClassTest.as" />
+    <None Include="as\test-debug-NaNTest-ref.xml" />
+    <None Include="as\test-debug-NaNTest.as" />
+    <None Include="as\test-debug-NullStringTest-ref.xml" />
+    <None Include="as\test-debug-NullStringTest.as" />
+    <None Include="as\test-debug-NumberIsFloatTest-ref.xml" />
+    <None Include="as\test-debug-NumberIsFloatTest.as" />
+    <None Include="as\test-debug-RegExpTest-ref.xml" />
+    <None Include="as\test-debug-RegExpTest.as" />
+    <None Include="as\test-debug-ScalarConstructorTest-ref.xml" />
+    <None Include="as\test-debug-ScalarConstructorTest.as" />
+    <None Include="as\test-debug-Undef-ref.xml" />
+    <None Include="as\test-debug-Undef.as" />
+    <None Include="as\test-debug-UndefinedTest-ref.xml" />
+    <None Include="as\test-debug-UndefinedTest.as" />
+    <None Include="as\test-debug-UndefinedvsNull-1.as" />
+    <None Include="as\test-debug-UndefinedvsNull-2.as" />
+    <None Include="as\test-debug-UntypedParameterTest-ref.xml" />
+    <None Include="as\test-debug-UntypedParameterTest.as" />
+    <None Include="as\test-debug-UntypedReturnTypeTest-ref.xml" />
+    <None Include="as\test-debug-UntypedReturnTypeTest.as" />
+    <None Include="as\test-debug-UntypedVariableTest.as" />
+    <None Include="as\test-debug-VarArgsTest-ref.xml" />
+    <None Include="as\test-debug-VarArgsTest.as" />
+    <None Include="as\test-debug-as-I64-2-ref.xml" />
+    <None Include="as\test-debug-as-I64-2.as" />
+    <None Include="as\test-debug-as-I64-3-ref.xml" />
+    <None Include="as\test-debug-as-I64-3.as" />
+    <None Include="as\test-debug-as-I64-4-ref.xml" />
+    <None Include="as\test-debug-as-I64-4.as" />
+    <None Include="as\test-debug-as-I64-5-ref.xml" />
+    <None Include="as\test-debug-as-I64-5.as" />
+    <None Include="as\test-debug-as-I64-6-ref.xml" />
+    <None Include="as\test-debug-as-I64-6.as" />
+    <None Include="as\test-debug-as-I64-7-ref.xml" />
+    <None Include="as\test-debug-as-I64-7.as" />
+    <None Include="as\test-debug-as-I64-8-ref.xml" />
+    <None Include="as\test-debug-as-I64-8.as" />
+    <None Include="as\test-debug-as-I64-ref.xml" />
+    <None Include="as\test-debug-as-I64.as" />
+    <None Include="as\test-ps-issue-119.as" />
+    <None Include="as\test-ps-issue-144.as" />
+    <None Include="as\test-ps-issue-157.as" />
+    <None Include="as\test-ps-issue-207.as" />
+    <None Include="as\test-as-issue111.as" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Main.as" />
+  </ItemGroup>
+  <Import Project="..\..\..\..\packages\PlayScript.MSBuild.5.10.2.4\build\PlayScript.MSBuild.Targets" Condition="Exists('..\..\..\..\packages\PlayScript.MSBuild.5.10.2.4\build\PlayScript.MSBuild.Targets')" />
+</Project>

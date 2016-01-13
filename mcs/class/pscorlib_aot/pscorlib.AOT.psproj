@@ -3,12 +3,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectTypeGuids>{464403D2-EB41-442A-A1F1-9BF858B8865F}</ProjectTypeGuids>
     <ProjectGuid>{ADBAC91B-2817-479E-8DDF-B24ADDA563A6}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>_root</RootNamespace>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <AssemblyName>pscorlib_monomac</AssemblyName>
+    <AssemblyName>pscorlib_AOT</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>True</DebugSymbols>
@@ -948,5 +947,5 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="..\..\..\..\packages\PlayScript.MSBuild.5.10.2.4\build\PlayScript.MSBuild.Targets" Condition="Exists('..\..\..\..\packages\PlayScript.MSBuild.5.10.2.4\build\PlayScript.MSBuild.Targets')" />
-<!--  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />-->
+  <!--  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />-->
 </Project>
