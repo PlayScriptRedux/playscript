@@ -130,8 +130,6 @@
     <Compile Include="..\class\Mono.Security\Mono.Security.Cryptography\CryptoConvert.cs">
       <Link>CryptoConvert.cs</Link>
     </Compile>
-    <Compile Include="cs-parser.cs" />
-    <Compile Include="ps-parser.cs" />
   </ItemGroup>
   <ItemGroup Label="IKVM.Reflection">
     <Compile Include="..\..\external\ikvm\reflect\*.cs">
@@ -157,6 +155,7 @@
     </Compile>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="..\..\..\packages\Jay.MSBuild.0.2.1\build\Jay.MSBuild.Targets" Condition="Exists('..\..\..\packages\Jay.MSBuild.0.2.1\build\Jay.MSBuild.Targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
@@ -164,20 +163,6 @@
   <Target Name="AfterBuild">
   </Target>
   -->
-  <PropertyGroup>
-    <PreBuildEvent Condition=" '$(OS)' != 'Windows_NT' ">
-$(ProjectDir)..\jay\jay -ct &lt; $(ProjectDir)..\jay\skeleton.cs $(ProjectDir)..\mcs\cs-parser.jay &gt; $(ProjectDir)cs-parser.cs
-$(ProjectDir)..\jay\jay -ct &lt; $(ProjectDir)..\jay\skeleton.cs $(ProjectDir)..\mcs\ps-parser.jay &gt; $(ProjectDir)ps-parser.cs
-    </PreBuildEvent>
-    <PreBuildEvent Condition=" '$(OS)' == 'Windows_NT' ">
-$(ProjectDir)..\jay\jay.exe -ct &lt; $(ProjectDir)..\jay\skeleton.cs $(ProjectDir)..\mcs\cs-parser.jay &gt; $(ProjectDir)cs-parser.cs
-$(ProjectDir)..\jay\jay.exe -ct &lt; $(ProjectDir)..\jay\skeleton.cs $(ProjectDir)..\ps-parser.jay &gt; $(ProjectDir)ps-parser.cs
-    </PreBuildEvent>
-    <PostBuildEvent Condition=" '$(OS)' != 'Windows_NT' ">
-    </PostBuildEvent>
-    <PostBuildEvent Condition=" '$(OS)' == 'Windows_NT' ">
-    </PostBuildEvent>
-  </PropertyGroup>
   <ItemGroup>
     <None Include="..\mcs\cs-parser.jay">
       <Link>cs-parser.jay</Link>
@@ -185,6 +170,7 @@ $(ProjectDir)..\jay\jay.exe -ct &lt; $(ProjectDir)..\jay\skeleton.cs $(ProjectDi
     <None Include="..\mcs\ps-parser.jay">
       <Link>ps-parser.jay</Link>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\class\PlayScript.Dynamic_aot\PlayScript.Dynamic.AOT.csproj">
